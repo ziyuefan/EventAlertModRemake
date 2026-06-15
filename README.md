@@ -1,4 +1,5 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+# [GitHubPage](https://ziyuefan.github.io/EventAlertMod_Remake/ "GitHubPage")
 # [ChangLog](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#changlog "ChangLog")
 # [CommandLine](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#命令列"CommandLine")
 # [ScreenShot](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#screenshot-2 "ScreenShot")
