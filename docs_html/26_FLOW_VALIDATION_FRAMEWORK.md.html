@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>26_FLOW_VALIDATION_FRAMEWORK.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eam">EAM 流程驗證與開發回灌框架</h1>
+<h2 id="1">1. 目的</h2>
+<p>EAM 的驗證不能停在 API 限制掃描與 <code>luac -p</code>。本框架補上可重播的行為流程證據：</p>
+<ol>
+<li>靜態限制與架構邊界。</li>
+<li>Lua 5.1 語法。</li>
+<li>離線 Mock 流程。</li>
+<li>WoW Retail／PTR 實機流程。</li>
+<li>JSON／Markdown 報告回灌。</li>
+</ol>
+<p>每一層證據都必須獨立標示；離線通過不得宣稱實機通過。</p>
+<h2 id="2">2. 架構</h2>
+<div class="mermaid">
+flowchart LR
+    A["正式 FlowTestRunner 案例"] --> B["Lua 5.1 Offline Harness"]
+    A --> C["Retail/PTR FlowTestPanel"]
+    B --> D["JSON + Markdown"]
+    C --> E["EAM_FLOW_TEST_REPORT_JSON"]
+    E --> F["WTF SavedVariables"]
+    D --> G["開發環境 TestResults"]
+    F --> H["Import-EAMFlowReport.ps1"]
+    H --> G
+</div>
+
+<table>
+<thead>
+<tr>
+<th>元件</th>
+<th>執行環境</th>
+<th>責任</th>
+<th>發布包</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Debug/FlowTestRunner.lua</code></td>
+<td>離線與遊戲內</td>
+<td>案例註冊、suite、非同步完成、JSON 報告</td>
+<td>是</td>
+</tr>
+<tr>
+<td><code>Debug/FlowTestPanel.lua</code></td>
+<td>Retail／PTR</td>
+<td>測試按鈕、狀態、複製報告</td>
+<td>是</td>
+</tr>
+<tr>
+<td><code>Tests/FlowValidationHarness.lua</code></td>
+<td>Lua 5.1</td>
+<td>Mock WoW API 並直接載入正式模組</td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>Tools/Run-FlowValidation.ps1</code></td>
+<td>開發端</td>
+<td>執行 suite，輸出 JSON／Markdown</td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>Tools/Import-EAMFlowReport.ps1</code></td>
+<td>開發端</td>
+<td>匯入 WTF 或 JSON，驗證 schema</td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>EAM_FLOW_TEST_REPORT_JSON</code></td>
+<td>WoW SavedVariables</td>
+<td>保存最後一次使用者觸發報告字串</td>
+<td>僅資料</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-suite">3. Suite 與內建案例</h2>
+<table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>案例</th>
+<th>驗證內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>quick</td>
+<td><code>boot.initialized</code></td>
+<td>Main 初始化完成</td>
+</tr>
+<tr>
+<td>quick／core</td>
+<td><code>event.custom_roundtrip</code></td>
+<td>自訂事件註冊、派發、移除 handler</td>
+</tr>
+<tr>
+<td>core</td>
+<td><code>scheduler.next_frame</code></td>
+<td>中央 Scheduler 非同步 callback 與 queue 歸零</td>
+</tr>
+<tr>
+<td>quick／core</td>
+<td><code>saved_variables.contract</code></td>
+<td>schema、alerts 與公開 mutation API</td>
+</tr>
+<tr>
+<td>boundary</td>
+<td><code>boundary.safe_scalar</code></td>
+<td>Secret/access helper 的安全普通值路徑</td>
+</tr>
+<tr>
+<td>boundary</td>
+<td><code>runtime_probe.schema</code></td>
+<td>實機能力探針的環境、capability 與摘要結構</td>
+</tr>
+<tr>
+<td>quick／boundary</td>
+<td><code>report.json_roundtrip</code></td>
+<td>JSON serializer 與案例陣列契約</td>
+</tr>
+</tbody>
+</table>
+<p><code>all</code> 會執行全部案例。新增跨模組流程時，需在正式 runner 註冊案例，離線 harness 自動取得同一案例。</p>
+<h2 id="4">4. 離線執行</h2>
+<p>完整驗證：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLuaSyntax.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
+</code></pre>
+
+<p>可用 suite：</p>
+<pre class="codehilite"><code class="language-powershell">.\Tools\Run-FlowValidation.ps1 -Suite quick
+.\Tools\Run-FlowValidation.ps1 -Suite core
+.\Tools\Run-FlowValidation.ps1 -Suite boundary
+.\Tools\Run-FlowValidation.ps1 -Suite all
+</code></pre>
+
+<p>輸出位於 <code>TestResults/</code>，預設不納入 Git。若任何案例為 <code>failed</code> 或 <code>pending</code>，工具回傳 exit code 1。</p>
+<h2 id="5">5. 遊戲內實機流程</h2>
+<p>實機前先執行本機版本與 SymbolicLink 斷言：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
+    -File .\Tools\Test-LocalWoWEnvironment.ps1
+</code></pre>
+
+<p>工具以 WoW 主程式 <code>ProductVersion</code> 比對預期 patch train，並確認 <code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 的 <code>Interface\AddOns\EventAlertMod</code> 仍是指向 <code>D:\EventAlertMod</code> 的 Reparse Point。失敗時回傳 exit code 1，禁止繼續實機簽收；完整 build 與連結證據輸出至 <code>TestResults/</code>。</p>
+<p>非戰鬥中使用：</p>
+<ul>
+<li>Options 底部「流程測試」按鈕。</li>
+<li><code>/eam test</code>：開啟面板。</li>
+<li><code>/eam test quick</code></li>
+<li><code>/eam test core</code></li>
+<li><code>/eam test boundary</code></li>
+<li><code>/eam test all</code></li>
+</ul>
+<p>面板提供 Quick、Core、Boundary、All 與「複製開發報告」按鈕。第一次建立面板若在戰鬥中提出，會延後至 <code>PLAYER_REGEN_ENABLED</code>。</p>
+<p>實機報告只代表 runner 在該客戶端成功執行；RQA 仍需補齊：</p>
+<ul>
+<li>Retail 或 PTR build。</li>
+<li>角色、職業、專精與場景。</li>
+<li>戰鬥／非戰鬥狀態。</li>
+<li>Lua error、taint log、blocked action。</li>
+<li>必要畫面或影片。</li>
+</ul>
+<h2 id="6">6. 開發回灌</h2>
+<p>遊戲內 runner 完成後會更新獨立 SavedVariable：</p>
+<pre class="codehilite"><code class="language-lua">EAM_FLOW_TEST_REPORT_JSON = &quot;{...}&quot;
+</code></pre>
+
+<p>本機開發基準根目錄為：</p>
+<pre class="codehilite"><code class="language-text">D:\World of Warcraft
+</code></pre>
+
+<p>目前已確認 <code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 都有 <code>WTF</code> 與 <code>Interface\AddOns</code>。2026-06-22 的客戶端映射為：</p>
+<table>
+<thead>
+<tr>
+<th>版本樹</th>
+<th>執行檔</th>
+<th>實際版本</th>
+<th>流程證據用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td><code>Wow.exe</code></td>
+<td>12.0.7.68256</td>
+<td>正式服</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.1.0.68209</td>
+<td>12.1 PTR</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.0.7.68182</td>
+<td>12.0.7 PTR</td>
+</tr>
+</tbody>
+</table>
+<p>EAM 實機報告候選路徑依測試客戶端推導：</p>
+<pre class="codehilite"><code class="language-text">D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_ptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+</code></pre>
+
+<p>匯入前必須先確認測試使用的客戶端版本，不得從 Classic 版本樹取證，也不得將帳號或角色名稱寫入文件與報告。<code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 的 <code>Interface\AddOns\EventAlertMod</code> 都是指向 <code>D:\EventAlertMod</code> 的 Windows <code>SymbolicLink</code>；回灌流程只能讀取 WTF，嚴禁以安裝、覆蓋、清理或重建連結處理這些 AddOns 路徑。完整規則見 <code>Docs/27_LOCAL_WOW_ENVIRONMENT.md</code>。</p>
+<p>匯入命令：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
+    -File .\Tools\Import-EAMFlowReport.ps1 `
+    -Path '&lt;EventAlertMod.lua 或 report.json&gt;'
+</code></pre>
+
+<p>輸出位於 <code>TestResults/Imported/</code>。匯入工具不修改 WTF。</p>
+<h2 id="7">7. 報告契約</h2>
+<pre class="codehilite"><code class="language-json">{
+  &quot;schema&quot;: 1,
+  &quot;type&quot;: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
+  &quot;suite&quot;: &quot;all&quot;,
+  &quot;status&quot;: &quot;pass&quot;,
+  &quot;environment&quot;: {
+    &quot;source&quot;: &quot;offline-mock|retail-client&quot;,
+    &quot;interface&quot;: 120007,
+    &quot;initialized&quot;: true,
+    &quot;inCombat&quot;: false,
+    &quot;locale&quot;: &quot;zhTW&quot;
+  },
+  &quot;summary&quot;: {
+    &quot;total&quot;: 7,
+    &quot;passed&quot;: 7,
+    &quot;failed&quot;: 0,
+    &quot;skipped&quot;: 0,
+    &quot;pending&quot;: 0
+  },
+  &quot;cases&quot;: [],
+  &quot;boundaryWarnings&quot;: []
+}
+</code></pre>
+
+<p>報告只能包含測試控制值與確認安全的環境欄位；不得包含 Secret、Protected、完整 SavedVariables、無界限事件日誌或原始 Aura／Cooldown facts。</p>
+<h2 id="8">8. 新增案例規則</h2>
+<ol>
+<li>使用穩定案例 ID：<code>domain.behavior</code>。</li>
+<li>以 <code>FlowTestRunner.registerCase</code> 註冊。</li>
+<li>指定 quick／core／boundary suite。</li>
+<li>同步案例直接回傳 <code>true/false, message</code>。</li>
+<li>非同步案例回傳 <code>"pending"</code>，完成時呼叫 <code>context.complete</code>。</li>
+<li>測試完成後清理 EventRouter handler、Scheduler task 與任何暫時狀態。</li>
+<li>不修改玩家設定；若案例必須測試 mutation，使用複本或完整 rollback。</li>
+<li>更新本文件、測試計畫與問題紀錄。</li>
+</ol>
+<h2 id="9-gate">9. 封裝與發布 gate</h2>
+<p>正式封裝預設執行：</p>
+<ol>
+<li>TOC 路徑與一致性。</li>
+<li>Lua 5.1 語法。</li>
+<li>離線 <code>all</code> 流程。</li>
+<li>敏感資訊掃描。</li>
+<li>zip 排除檢查。</li>
+</ol>
+<p><code>-SkipFlowValidation</code> 只可用於診斷工具環境問題，不得作為正式發布常態。即使封裝通過，仍不代表 Retail／PTR 實機通過。</p>
+<h2 id="10">10. 已知限制</h2>
+<ul>
+<li>Offline Harness 不具 WoW C++ Secret、Forbidden、taint 或 protected frame 語意。</li>
+<li><code>boundary.safe_scalar</code> 只驗證普通安全值路徑；真實 Secret 必須在遊戲內由安全 UI 通道觀察。</li>
+<li>流程面板不執行施法、物品使用、改目標或 secure action。</li>
+<li>報告不自動上傳網路；回灌必須由使用者複製 JSON 或提供 WTF 檔。</li>
+<li>12.1 AuraContainer／AuraButton 行為需另增 PTR 實機案例。</li>
+</ul>
+<h2 id="2026-07-26aura121-suite">2026-07-26：aura121 suite</h2>
+<ul>
+<li>新增 <code>Tests/Mocks/WoW121AuraMock.lua</code>，AuraContainer/AuraButton 使用嚴格方法白名單；未知方法直接失敗。</li>
+<li>新增 <code>aura121</code> suite 與遊戲內「12.1 Aura」按鈕、<code>/eam test aura121</code>。</li>
+<li>案例覆蓋 capability、零 Legacy pipeline、Slot/Group compiler、容器重建、戰鬥 pending、三種 Sound ID 與 no-op revision。</li>
+<li>2026-07-26 本輪離線 <code>aura121</code> 初版為 7/7；補入 12.0.7、migration、ShadowHost 案例後，<code>all</code> 為 17/17。報告位於 <code>TestResults/</code>。</li>
+<li>這些結果只證明 Lua 呼叫契約；PTR Widget、聲音、Forbidden、taint、CPU/GC 仍由 RQA 簽收。</li>
+</ul>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eam">EAM 流程驗證與開發回灌框架</h1>
+<h2 id="1">1. 目的</h2>
+<p>EAM 的驗證不能停在 API 限制掃描與 <code>luac -p</code>。本框架補上可重播的行為流程證據：</p>
+<ol>
+<li>靜態限制與架構邊界。</li>
+<li>Lua 5.1 語法。</li>
+<li>離線 Mock 流程。</li>
+<li>WoW Retail／PTR 實機流程。</li>
+<li>JSON／Markdown 報告回灌。</li>
+</ol>
+<p>每一層證據都必須獨立標示；離線通過不得宣稱實機通過。</p>
+<h2 id="2">2. 架構</h2>
+<div class="mermaid">
+flowchart LR
+    A["正式 FlowTestRunner 案例"] --> B["Lua 5.1 Offline Harness"]
+    A --> C["Retail/PTR FlowTestPanel"]
+    B --> D["JSON + Markdown"]
+    C --> E["EAM_FLOW_TEST_REPORT_JSON"]
+    E --> F["WTF SavedVariables"]
+    D --> G["開發環境 TestResults"]
+    F --> H["Import-EAMFlowReport.ps1"]
+    H --> G
+</div>
+
+<table>
+<thead>
+<tr>
+<th>元件</th>
+<th>執行環境</th>
+<th>責任</th>
+<th>發布包</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Debug/FlowTestRunner.lua</code></td>
+<td>離線與遊戲內</td>
+<td>案例註冊、suite、非同步完成、JSON 報告</td>
+<td>是</td>
+</tr>
+<tr>
+<td><code>Debug/FlowTestPanel.lua</code></td>
+<td>Retail／PTR</td>
+<td>測試按鈕、狀態、複製報告</td>
+<td>是</td>
+</tr>
+<tr>
+<td><code>Tests/FlowValidationHarness.lua</code></td>
+<td>Lua 5.1</td>
+<td>Mock WoW API 並直接載入正式模組</td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>Tools/Run-FlowValidation.ps1</code></td>
+<td>開發端</td>
+<td>執行 suite，輸出 JSON／Markdown</td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>Tools/Import-EAMFlowReport.ps1</code></td>
+<td>開發端</td>
+<td>匯入 WTF 或 JSON，驗證 schema</td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>EAM_FLOW_TEST_REPORT_JSON</code></td>
+<td>WoW SavedVariables</td>
+<td>保存最後一次使用者觸發報告字串</td>
+<td>僅資料</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-suite">3. Suite 與內建案例</h2>
+<table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>案例</th>
+<th>驗證內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>quick</td>
+<td><code>boot.initialized</code></td>
+<td>Main 初始化完成</td>
+</tr>
+<tr>
+<td>quick／core</td>
+<td><code>event.custom_roundtrip</code></td>
+<td>自訂事件註冊、派發、移除 handler</td>
+</tr>
+<tr>
+<td>core</td>
+<td><code>scheduler.next_frame</code></td>
+<td>中央 Scheduler 非同步 callback 與 queue 歸零</td>
+</tr>
+<tr>
+<td>quick／core</td>
+<td><code>saved_variables.contract</code></td>
+<td>schema、alerts 與公開 mutation API</td>
+</tr>
+<tr>
+<td>boundary</td>
+<td><code>boundary.safe_scalar</code></td>
+<td>Secret/access helper 的安全普通值路徑</td>
+</tr>
+<tr>
+<td>boundary</td>
+<td><code>runtime_probe.schema</code></td>
+<td>實機能力探針的環境、capability 與摘要結構</td>
+</tr>
+<tr>
+<td>quick／boundary</td>
+<td><code>report.json_roundtrip</code></td>
+<td>JSON serializer 與案例陣列契約</td>
+</tr>
+</tbody>
+</table>
+<p><code>all</code> 會執行全部案例。新增跨模組流程時，需在正式 runner 註冊案例，離線 harness 自動取得同一案例。</p>
+<h2 id="4">4. 離線執行</h2>
+<p>完整驗證：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLuaSyntax.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
+</code></pre>
+
+<p>可用 suite：</p>
+<pre class="codehilite"><code class="language-powershell">.\Tools\Run-FlowValidation.ps1 -Suite quick
+.\Tools\Run-FlowValidation.ps1 -Suite core
+.\Tools\Run-FlowValidation.ps1 -Suite boundary
+.\Tools\Run-FlowValidation.ps1 -Suite all
+</code></pre>
+
+<p>輸出位於 <code>TestResults/</code>，預設不納入 Git。若任何案例為 <code>failed</code> 或 <code>pending</code>，工具回傳 exit code 1。</p>
+<h2 id="5">5. 遊戲內實機流程</h2>
+<p>實機前先執行本機版本與 SymbolicLink 斷言：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
+    -File .\Tools\Test-LocalWoWEnvironment.ps1
+</code></pre>
+
+<p>工具以 WoW 主程式 <code>ProductVersion</code> 比對預期 patch train，並確認 <code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 的 <code>Interface\AddOns\EventAlertMod</code> 仍是指向 <code>D:\EventAlertMod</code> 的 Reparse Point。失敗時回傳 exit code 1，禁止繼續實機簽收；完整 build 與連結證據輸出至 <code>TestResults/</code>。</p>
+<p>非戰鬥中使用：</p>
+<ul>
+<li>Options 底部「流程測試」按鈕。</li>
+<li><code>/eam test</code>：開啟面板。</li>
+<li><code>/eam test quick</code></li>
+<li><code>/eam test core</code></li>
+<li><code>/eam test boundary</code></li>
+<li><code>/eam test all</code></li>
+</ul>
+<p>面板提供 Quick、Core、Boundary、All 與「複製開發報告」按鈕。第一次建立面板若在戰鬥中提出，會延後至 <code>PLAYER_REGEN_ENABLED</code>。</p>
+<p>實機報告只代表 runner 在該客戶端成功執行；RQA 仍需補齊：</p>
+<ul>
+<li>Retail 或 PTR build。</li>
+<li>角色、職業、專精與場景。</li>
+<li>戰鬥／非戰鬥狀態。</li>
+<li>Lua error、taint log、blocked action。</li>
+<li>必要畫面或影片。</li>
+</ul>
+<h2 id="6">6. 開發回灌</h2>
+<p>遊戲內 runner 完成後會更新獨立 SavedVariable：</p>
+<pre class="codehilite"><code class="language-lua">EAM_FLOW_TEST_REPORT_JSON = &quot;{...}&quot;
+</code></pre>
+
+<p>本機開發基準根目錄為：</p>
+<pre class="codehilite"><code class="language-text">D:\World of Warcraft
+</code></pre>
+
+<p>目前已確認 <code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 都有 <code>WTF</code> 與 <code>Interface\AddOns</code>。2026-06-22 的客戶端映射為：</p>
+<table>
+<thead>
+<tr>
+<th>版本樹</th>
+<th>執行檔</th>
+<th>實際版本</th>
+<th>流程證據用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td><code>Wow.exe</code></td>
+<td>12.0.7.68256</td>
+<td>正式服</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.1.0.68209</td>
+<td>12.1 PTR</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.0.7.68182</td>
+<td>12.0.7 PTR</td>
+</tr>
+</tbody>
+</table>
+<p>EAM 實機報告候選路徑依測試客戶端推導：</p>
+<pre class="codehilite"><code class="language-text">D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_ptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+</code></pre>
+
+<p>匯入前必須先確認測試使用的客戶端版本，不得從 Classic 版本樹取證，也不得將帳號或角色名稱寫入文件與報告。<code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 的 <code>Interface\AddOns\EventAlertMod</code> 都是指向 <code>D:\EventAlertMod</code> 的 Windows <code>SymbolicLink</code>；回灌流程只能讀取 WTF，嚴禁以安裝、覆蓋、清理或重建連結處理這些 AddOns 路徑。完整規則見 <code>Docs/27_LOCAL_WOW_ENVIRONMENT.md</code>。</p>
+<p>匯入命令：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
+    -File .\Tools\Import-EAMFlowReport.ps1 `
+    -Path '&lt;EventAlertMod.lua 或 report.json&gt;'
+</code></pre>
+
+<p>輸出位於 <code>TestResults/Imported/</code>。匯入工具不修改 WTF。</p>
+<h2 id="7">7. 報告契約</h2>
+<pre class="codehilite"><code class="language-json">{
+  &quot;schema&quot;: 1,
+  &quot;type&quot;: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
+  &quot;suite&quot;: &quot;all&quot;,
+  &quot;status&quot;: &quot;pass&quot;,
+  &quot;environment&quot;: {
+    &quot;source&quot;: &quot;offline-mock|retail-client&quot;,
+    &quot;interface&quot;: 120007,
+    &quot;initialized&quot;: true,
+    &quot;inCombat&quot;: false,
+    &quot;locale&quot;: &quot;zhTW&quot;
+  },
+  &quot;summary&quot;: {
+    &quot;total&quot;: 7,
+    &quot;passed&quot;: 7,
+    &quot;failed&quot;: 0,
+    &quot;skipped&quot;: 0,
+    &quot;pending&quot;: 0
+  },
+  &quot;cases&quot;: [],
+  &quot;boundaryWarnings&quot;: []
+}
+</code></pre>
+
+<p>報告只能包含測試控制值與確認安全的環境欄位；不得包含 Secret、Protected、完整 SavedVariables、無界限事件日誌或原始 Aura／Cooldown facts。</p>
+<h2 id="8">8. 新增案例規則</h2>
+<ol>
+<li>使用穩定案例 ID：<code>domain.behavior</code>。</li>
+<li>以 <code>FlowTestRunner.registerCase</code> 註冊。</li>
+<li>指定 quick／core／boundary suite。</li>
+<li>同步案例直接回傳 <code>true/false, message</code>。</li>
+<li>非同步案例回傳 <code>"pending"</code>，完成時呼叫 <code>context.complete</code>。</li>
+<li>測試完成後清理 EventRouter handler、Scheduler task 與任何暫時狀態。</li>
+<li>不修改玩家設定；若案例必須測試 mutation，使用複本或完整 rollback。</li>
+<li>更新本文件、測試計畫與問題紀錄。</li>
+</ol>
+<h2 id="9-gate">9. 封裝與發布 gate</h2>
+<p>正式封裝預設執行：</p>
+<ol>
+<li>TOC 路徑與一致性。</li>
+<li>Lua 5.1 語法。</li>
+<li>離線 <code>all</code> 流程。</li>
+<li>敏感資訊掃描。</li>
+<li>zip 排除檢查。</li>
+</ol>
+<p><code>-SkipFlowValidation</code> 只可用於診斷工具環境問題，不得作為正式發布常態。即使封裝通過，仍不代表 Retail／PTR 實機通過。</p>
+<h2 id="10">10. 已知限制</h2>
+<ul>
+<li>Offline Harness 不具 WoW C++ Secret、Forbidden、taint 或 protected frame 語意。</li>
+<li><code>boundary.safe_scalar</code> 只驗證普通安全值路徑；真實 Secret 必須在遊戲內由安全 UI 通道觀察。</li>
+<li>流程面板不執行施法、物品使用、改目標或 secure action。</li>
+<li>報告不自動上傳網路；回灌必須由使用者複製 JSON 或提供 WTF 檔。</li>
+<li>12.1 AuraContainer／AuraButton 行為需另增 PTR 實機案例。</li>
+</ul>
+<h2 id="2026-07-26aura121-suite">2026-07-26：aura121 suite</h2>
+<ul>
+<li>新增 <code>Tests/Mocks/WoW121AuraMock.lua</code>，AuraContainer/AuraButton 使用嚴格方法白名單；未知方法直接失敗。</li>
+<li>新增 <code>aura121</code> suite 與遊戲內「12.1 Aura」按鈕、<code>/eam test aura121</code>。</li>
+<li>案例覆蓋 capability、零 Legacy pipeline、Slot/Group compiler、容器重建、戰鬥 pending、三種 Sound ID 與 no-op revision。</li>
+<li>2026-07-26 本輪離線 <code>aura121</code> 初版為 7/7；補入 12.0.7、migration、ShadowHost 案例後，<code>all</code> 為 17/17。報告位於 <code>TestResults/</code>。</li>
+<li>這些結果只證明 Lua 呼叫契約；PTR Widget、聲音、Forbidden、taint、CPU/GC 仍由 RQA 簽收。</li>
+</ul>
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

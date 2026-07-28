@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>25_RETAIL_API_CHANGE_INTELLIGENCE.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="retail-api-change-intelligence1200">Retail API Change Intelligence：12.0.0 起始基線</h1>
+<h2 id="1">1. 文件目的與狀態</h2>
+<p>本文件是 EventAlertMod 正式服 AddOn API 變更情報的版本基準。目標不是抄錄完整 changelog，而是把 API 新增、移除、棄用、Secret／Forbidden 規則與 Widget 行為變化，轉成可執行的架構預警、遷移窗口與驗證工作。</p>
+<ul>
+<li>專案範圍：僅 WoW Retail。</li>
+<li>起始基線：12.0.0。</li>
+<li>活動專案 TOC：<code>120007</code>。</li>
+<li>12.1 狀態：PTR／持續修訂；不得宣稱正式相容。</li>
+<li>最後查證：2026-06-21。</li>
+<li>Wiki revision time 均為頁面修訂時間，不是遊戲 patch 發布時間。</li>
+</ul>
+<h2 id="2-apichg">2. APICHG 專家章程</h2>
+<p><code>EAM_API_Change_Intelligence_Expert</code>（<code>APICHG</code>）負責：</p>
+<ol>
+<li>維護版本、TOC、build 狀態、來源 URL、revision ID 與 revision time。</li>
+<li>區分 API 事實、EAM 工程推論與 PTR／Retail 實機結果。</li>
+<li>將變更分成 <code>P0 阻斷</code>、<code>P1 遷移</code>、<code>P2 觀察</code>、<code>無直接影響</code>。</li>
+<li>為 adapter、capability gate、降級路徑與舊路徑退場條件提供提前量。</li>
+<li>在新 PTR、RC、正式版或來源 revision 變動時，觸發影響掃描與文件更新。</li>
+</ol>
+<p>責任邊界：</p>
+<ul>
+<li><code>APICHG</code> 不取代 <code>SEC</code> 的 Secret／taint 安全終審。</li>
+<li><code>APICHG</code> 不取代 <code>AURA121</code> 的 AuraContainer／AuraButton 遷移實作。</li>
+<li><code>APICHG</code> 不取代 <code>RQA</code> 的 PTR／Retail 客戶端證據。</li>
+<li><code>DOC</code> 管來源與狀態一致性，不自行裁決 API 技術真偽。</li>
+</ul>
+<h2 id="3">3. 證據優先序</h2>
+<ol>
+<li>Blizzard 官方公告、PTR／RC development notes。</li>
+<li>Blizzard UI 原始碼或可追溯的版本 diff。</li>
+<li>Warcraft Wiki <code>API_change_summaries</code> 與各 patch API changes 頁，且必須記錄 revision。</li>
+<li>專案 Markdown、活動 TOC 與實際 Lua 命中。</li>
+<li>搜尋摘要只作線索，不得單獨成為架構結論。</li>
+</ol>
+<h2 id="4-1200-1210">4. 12.0.0 至 12.1.0 版本演進</h2>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th style="text-align: right;">TOC</th>
+<th>Wiki revision（UTC）</th>
+<th>與 EAM 直接相關的變更</th>
+<th>策略判讀</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API change summaries</td>
+<td style="text-align: right;">—</td>
+<td><code>6747807</code>，2026-06-19 05:45:08</td>
+<td>提供版本索引與跨版定位入口</td>
+<td>revision 變更即觸發差異複核，不把索引頁當唯一事實</td>
+</tr>
+<tr>
+<td>12.0.0</td>
+<td style="text-align: right;"><code>120000</code></td>
+<td><code>6747189</code>，2026-06-18 08:59:26</td>
+<td>引入 Secret Values 世代、predicate 與大量 API 移除／棄用</td>
+<td>Secret-safe adapter 必須成為服務層基礎，不可把舊數值模型直接搬入 12.x</td>
+</tr>
+<tr>
+<td>12.0.1</td>
+<td style="text-align: right;"><code>120001</code></td>
+<td><code>6747895</code>，2026-06-19 08:48:51</td>
+<td>封堵字串與 StatusBar 等 secret laundering；Secret 冷卻改走 <code>SetCooldownFromDurationObject</code>；部分 Private Aura 呼叫戰鬥中受限</td>
+<td>顯示通道與可讀資料必須分離，<code>pcall</code> 或 UI 中繼不能當繞過</td>
+</tr>
+<tr>
+<td>12.0.5</td>
+<td style="text-align: right;"><code>120005</code></td>
+<td><code>6747894</code>，2026-06-19 08:48:14</td>
+<td>Formatter、DurationObject 零區間行為、Aura 布林值秘密性調整、<code>table.freeze</code>／predicate 變更；預告 Aura overhaul</td>
+<td>Capability gate 必須檢查能力而非散落 patch 字串；先保留穩定路徑</td>
+</tr>
+<tr>
+<td>12.0.7</td>
+<td style="text-align: right;"><code>120007</code></td>
+<td><code>6747893</code>，2026-06-19 08:46:57</td>
+<td><code>C_DurationUtil.CreateDurationTextBinding</code>；受限 unit token 改回傳 nil／預設；<code>debugstack</code>／<code>debuglocals</code> 秘密傳播；Aura refactor 指向 12.1</td>
+<td>目前活動基線；錯誤與除錯輸出也可能攜帶秘密性，Aura 抽取架構需準備退場</td>
+</tr>
+<tr>
+<td>12.1.0</td>
+<td style="text-align: right;"><code>120100</code></td>
+<td><code>6749767</code>，2026-06-20 05:57:01</td>
+<td>AuraContainer／AuraButton、Private Script Objects、Forbidden Partition／Aspects；受限 UnitAura 資料可能全為 secret 或 nil</td>
+<td>既有逐 AuraData／spellID 抽取模型屬 P0 相容性風險；PTR 內容仍需持續追 revision 與實機</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5">5. 變更脈絡</h2>
+<p>12.x 的核心不是單一 API 改名，而是資料權限模型逐步收緊：</p>
+<ol>
+<li>12.0.0 建立 Secret Values 與 predicate 基礎。</li>
+<li>12.0.1 封閉透過字串、StatusBar 或其他 UI 物件洗出秘密資料的路徑。</li>
+<li>12.0.5 把安全顯示導向 Formatter／DurationObject，並預告 Aura 架構重整。</li>
+<li>12.0.7 提供 DurationTextBinding，擴大秘密傳播到除錯輸出，明示 12.1 Aura refactor。</li>
+<li>12.1.0 將 Aura 顯示轉向受控 Container／Button 與 Forbidden 邊界，限制 AddOn 直接抽取敏感 Aura 事實。</li>
+</ol>
+<p>因此 EAM 的長期布局必須從「讀值後自行計算與渲染」轉成「服務層辨識能力、保留合法事實、UI 使用 Blizzard 支援的原生顯示物件」。</p>
+<h2 id="6-eam">6. EAM 架構策略</h2>
+<ul>
+<li>API 邊界集中於 service／adapter，不把版本判斷散落在 Renderer。</li>
+<li>優先 feature detection 與 capability gate；只有在功能語意確定一致時才使用 TOC 判斷。</li>
+<li>PTR 新路徑與現行穩定路徑並存，直到官方契約、UI source 與 RQA 證據符合退場條件。</li>
+<li>Secret／Forbidden 資料不得做算術、比較、字串化、序列化或自訂表 key。</li>
+<li>時間顯示優先 DurationObject、DurationTextBinding 與 Blizzard 支援的 formatter。</li>
+<li>Tooltip scraping 僅能低頻、非戰鬥、明確標記來源，不能覆寫 API 安全事實。</li>
+<li>每次版本變更同時檢查 SavedVariables schema、事件 payload、Frame／Widget 行為、TOC 與封裝設定。</li>
+<li>版本文件不等於實機相容；靜態、Mock、PTR、Retail 四種證據分開簽收。</li>
+</ul>
+<h2 id="7">7. 監控觸發條件</h2>
+<p>遇到下列任一情況，啟動 <code>eam-retail-api-change-intelligence</code> 流程：</p>
+<ul>
+<li><code>API_change_summaries</code> 新增 patch 頁或 revision 改變。</li>
+<li>Blizzard 發布 PTR／RC／正式版 AddOn、Aura 或 UI 限制公告。</li>
+<li>UI source diff 出現新增、移除、棄用、predicate 或 mixin／widget 介面變化。</li>
+<li>TOC／Interface 版本發布或專案目標版本調整。</li>
+<li>Secret、Forbidden、Duration、Aura、Tooltip、FrameXML、事件 payload 行為有新證據。</li>
+<li>EAM 活動 Lua 命中已移除 API、舊全域 API 或不再合法的資料流。</li>
+</ul>
+<h2 id="8">8. 影響輸出格式</h2>
+<p>每次查證至少產出：</p>
+<ol>
+<li>目標版本、前一穩定版、TOC、build 狀態與來源 revision。</li>
+<li>新增／移除／棄用／行為變更清單。</li>
+<li>EAM 命中檔案與行號。</li>
+<li><code>P0／P1／P2／無直接影響</code> 分級。</li>
+<li>立即、PTR 期間、正式版前或後續觀察的處置窗口。</li>
+<li>adapter／capability gate／降級／退場條件。</li>
+<li>已執行與未執行驗證，以及需由 <code>SEC/AURA121/RQA/DOC</code> 簽收的事項。</li>
+</ol>
+<h2 id="9-eam">9. 目前 EAM 判讀</h2>
+<ul>
+<li>目前活動 TOC <code>120007</code> 對應 12.0.7 基線。</li>
+<li>12.1 AuraContainer／AuraButton 尚未落地，既有 AuraService 仍依賴逐筆 AuraData 與 UnitAura 路徑，列為 P0 相容性阻斷。</li>
+<li>Secret 時間資料、戰鬥中框架建立、Scheduler 去重與 deferred state 生命週期另有 P0／P1 技術債；詳見 <code>Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md</code>。</li>
+<li>本文件與 SKILL 的建立沒有修改 Lua，也不能視為 12.1 相容完成。</li>
+</ul>
+<h2 id="10">10. 來源</h2>
+<ul>
+<li><a href="https://warcraft.wiki.gg/wiki/API_change_summaries">Warcraft Wiki API change summaries</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.0/API_changes?oldid=6747189">Patch 12.0.0 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.1/API_changes?oldid=6747895">Patch 12.0.1 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.5/API_changes?oldid=6747894">Patch 12.0.5 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.7/API_changes?oldid=6747893">Patch 12.0.7 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes?oldid=6749767">Patch 12.1.0 API changes</a></li>
+<li><a href="https://us.forums.blizzard.com/en/wow/t/addons-and-auras-in-curse-of-ula%E2%80%99tek/2317456">Blizzard：Addons and Auras in Curse of Ula’tek</a></li>
+</ul>
+<h2 id="2026-07-26121068914">2026-07-26：12.1.0.68914 固定證據</h2>
+<ul>
+<li>本機 <code>_ptr_</code>：12.1.0.68914；對照 Gethe/wow-ui-source commit <code>d3915c78aba77a7a9be76acbfa35c674bbb6abe9</code>。</li>
+<li>本機 <code>_xptr_</code>：12.0.7.68887；對照 commit <code>4383ced30106d51b27e3e86d1987f1552f0d259d</code>。</li>
+<li>AuraContainer sorting 使用 FrameXML 全域 <code>AuraContainerSortMethod</code>／<code>AuraContainerSortDirection</code>；68914 Generated Documentation 沒有登錄這兩表。</li>
+<li><code>UnitAuraSortRule</code> 是 Aura getter 的另一組型別，不可傳入 AuraContainer options。</li>
+<li>EAM 實作與 API 限制矩陣見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
+</ul>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="retail-api-change-intelligence1200">Retail API Change Intelligence：12.0.0 起始基線</h1>
+<h2 id="1">1. 文件目的與狀態</h2>
+<p>本文件是 EventAlertMod 正式服 AddOn API 變更情報的版本基準。目標不是抄錄完整 changelog，而是把 API 新增、移除、棄用、Secret／Forbidden 規則與 Widget 行為變化，轉成可執行的架構預警、遷移窗口與驗證工作。</p>
+<ul>
+<li>專案範圍：僅 WoW Retail。</li>
+<li>起始基線：12.0.0。</li>
+<li>活動專案 TOC：<code>120007</code>。</li>
+<li>12.1 狀態：PTR／持續修訂；不得宣稱正式相容。</li>
+<li>最後查證：2026-06-21。</li>
+<li>Wiki revision time 均為頁面修訂時間，不是遊戲 patch 發布時間。</li>
+</ul>
+<h2 id="2-apichg">2. APICHG 專家章程</h2>
+<p><code>EAM_API_Change_Intelligence_Expert</code>（<code>APICHG</code>）負責：</p>
+<ol>
+<li>維護版本、TOC、build 狀態、來源 URL、revision ID 與 revision time。</li>
+<li>區分 API 事實、EAM 工程推論與 PTR／Retail 實機結果。</li>
+<li>將變更分成 <code>P0 阻斷</code>、<code>P1 遷移</code>、<code>P2 觀察</code>、<code>無直接影響</code>。</li>
+<li>為 adapter、capability gate、降級路徑與舊路徑退場條件提供提前量。</li>
+<li>在新 PTR、RC、正式版或來源 revision 變動時，觸發影響掃描與文件更新。</li>
+</ol>
+<p>責任邊界：</p>
+<ul>
+<li><code>APICHG</code> 不取代 <code>SEC</code> 的 Secret／taint 安全終審。</li>
+<li><code>APICHG</code> 不取代 <code>AURA121</code> 的 AuraContainer／AuraButton 遷移實作。</li>
+<li><code>APICHG</code> 不取代 <code>RQA</code> 的 PTR／Retail 客戶端證據。</li>
+<li><code>DOC</code> 管來源與狀態一致性，不自行裁決 API 技術真偽。</li>
+</ul>
+<h2 id="3">3. 證據優先序</h2>
+<ol>
+<li>Blizzard 官方公告、PTR／RC development notes。</li>
+<li>Blizzard UI 原始碼或可追溯的版本 diff。</li>
+<li>Warcraft Wiki <code>API_change_summaries</code> 與各 patch API changes 頁，且必須記錄 revision。</li>
+<li>專案 Markdown、活動 TOC 與實際 Lua 命中。</li>
+<li>搜尋摘要只作線索，不得單獨成為架構結論。</li>
+</ol>
+<h2 id="4-1200-1210">4. 12.0.0 至 12.1.0 版本演進</h2>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th style="text-align: right;">TOC</th>
+<th>Wiki revision（UTC）</th>
+<th>與 EAM 直接相關的變更</th>
+<th>策略判讀</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API change summaries</td>
+<td style="text-align: right;">—</td>
+<td><code>6747807</code>，2026-06-19 05:45:08</td>
+<td>提供版本索引與跨版定位入口</td>
+<td>revision 變更即觸發差異複核，不把索引頁當唯一事實</td>
+</tr>
+<tr>
+<td>12.0.0</td>
+<td style="text-align: right;"><code>120000</code></td>
+<td><code>6747189</code>，2026-06-18 08:59:26</td>
+<td>引入 Secret Values 世代、predicate 與大量 API 移除／棄用</td>
+<td>Secret-safe adapter 必須成為服務層基礎，不可把舊數值模型直接搬入 12.x</td>
+</tr>
+<tr>
+<td>12.0.1</td>
+<td style="text-align: right;"><code>120001</code></td>
+<td><code>6747895</code>，2026-06-19 08:48:51</td>
+<td>封堵字串與 StatusBar 等 secret laundering；Secret 冷卻改走 <code>SetCooldownFromDurationObject</code>；部分 Private Aura 呼叫戰鬥中受限</td>
+<td>顯示通道與可讀資料必須分離，<code>pcall</code> 或 UI 中繼不能當繞過</td>
+</tr>
+<tr>
+<td>12.0.5</td>
+<td style="text-align: right;"><code>120005</code></td>
+<td><code>6747894</code>，2026-06-19 08:48:14</td>
+<td>Formatter、DurationObject 零區間行為、Aura 布林值秘密性調整、<code>table.freeze</code>／predicate 變更；預告 Aura overhaul</td>
+<td>Capability gate 必須檢查能力而非散落 patch 字串；先保留穩定路徑</td>
+</tr>
+<tr>
+<td>12.0.7</td>
+<td style="text-align: right;"><code>120007</code></td>
+<td><code>6747893</code>，2026-06-19 08:46:57</td>
+<td><code>C_DurationUtil.CreateDurationTextBinding</code>；受限 unit token 改回傳 nil／預設；<code>debugstack</code>／<code>debuglocals</code> 秘密傳播；Aura refactor 指向 12.1</td>
+<td>目前活動基線；錯誤與除錯輸出也可能攜帶秘密性，Aura 抽取架構需準備退場</td>
+</tr>
+<tr>
+<td>12.1.0</td>
+<td style="text-align: right;"><code>120100</code></td>
+<td><code>6749767</code>，2026-06-20 05:57:01</td>
+<td>AuraContainer／AuraButton、Private Script Objects、Forbidden Partition／Aspects；受限 UnitAura 資料可能全為 secret 或 nil</td>
+<td>既有逐 AuraData／spellID 抽取模型屬 P0 相容性風險；PTR 內容仍需持續追 revision 與實機</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5">5. 變更脈絡</h2>
+<p>12.x 的核心不是單一 API 改名，而是資料權限模型逐步收緊：</p>
+<ol>
+<li>12.0.0 建立 Secret Values 與 predicate 基礎。</li>
+<li>12.0.1 封閉透過字串、StatusBar 或其他 UI 物件洗出秘密資料的路徑。</li>
+<li>12.0.5 把安全顯示導向 Formatter／DurationObject，並預告 Aura 架構重整。</li>
+<li>12.0.7 提供 DurationTextBinding，擴大秘密傳播到除錯輸出，明示 12.1 Aura refactor。</li>
+<li>12.1.0 將 Aura 顯示轉向受控 Container／Button 與 Forbidden 邊界，限制 AddOn 直接抽取敏感 Aura 事實。</li>
+</ol>
+<p>因此 EAM 的長期布局必須從「讀值後自行計算與渲染」轉成「服務層辨識能力、保留合法事實、UI 使用 Blizzard 支援的原生顯示物件」。</p>
+<h2 id="6-eam">6. EAM 架構策略</h2>
+<ul>
+<li>API 邊界集中於 service／adapter，不把版本判斷散落在 Renderer。</li>
+<li>優先 feature detection 與 capability gate；只有在功能語意確定一致時才使用 TOC 判斷。</li>
+<li>PTR 新路徑與現行穩定路徑並存，直到官方契約、UI source 與 RQA 證據符合退場條件。</li>
+<li>Secret／Forbidden 資料不得做算術、比較、字串化、序列化或自訂表 key。</li>
+<li>時間顯示優先 DurationObject、DurationTextBinding 與 Blizzard 支援的 formatter。</li>
+<li>Tooltip scraping 僅能低頻、非戰鬥、明確標記來源，不能覆寫 API 安全事實。</li>
+<li>每次版本變更同時檢查 SavedVariables schema、事件 payload、Frame／Widget 行為、TOC 與封裝設定。</li>
+<li>版本文件不等於實機相容；靜態、Mock、PTR、Retail 四種證據分開簽收。</li>
+</ul>
+<h2 id="7">7. 監控觸發條件</h2>
+<p>遇到下列任一情況，啟動 <code>eam-retail-api-change-intelligence</code> 流程：</p>
+<ul>
+<li><code>API_change_summaries</code> 新增 patch 頁或 revision 改變。</li>
+<li>Blizzard 發布 PTR／RC／正式版 AddOn、Aura 或 UI 限制公告。</li>
+<li>UI source diff 出現新增、移除、棄用、predicate 或 mixin／widget 介面變化。</li>
+<li>TOC／Interface 版本發布或專案目標版本調整。</li>
+<li>Secret、Forbidden、Duration、Aura、Tooltip、FrameXML、事件 payload 行為有新證據。</li>
+<li>EAM 活動 Lua 命中已移除 API、舊全域 API 或不再合法的資料流。</li>
+</ul>
+<h2 id="8">8. 影響輸出格式</h2>
+<p>每次查證至少產出：</p>
+<ol>
+<li>目標版本、前一穩定版、TOC、build 狀態與來源 revision。</li>
+<li>新增／移除／棄用／行為變更清單。</li>
+<li>EAM 命中檔案與行號。</li>
+<li><code>P0／P1／P2／無直接影響</code> 分級。</li>
+<li>立即、PTR 期間、正式版前或後續觀察的處置窗口。</li>
+<li>adapter／capability gate／降級／退場條件。</li>
+<li>已執行與未執行驗證，以及需由 <code>SEC/AURA121/RQA/DOC</code> 簽收的事項。</li>
+</ol>
+<h2 id="9-eam">9. 目前 EAM 判讀</h2>
+<ul>
+<li>目前活動 TOC <code>120007</code> 對應 12.0.7 基線。</li>
+<li>12.1 AuraContainer／AuraButton 尚未落地，既有 AuraService 仍依賴逐筆 AuraData 與 UnitAura 路徑，列為 P0 相容性阻斷。</li>
+<li>Secret 時間資料、戰鬥中框架建立、Scheduler 去重與 deferred state 生命週期另有 P0／P1 技術債；詳見 <code>Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md</code>。</li>
+<li>本文件與 SKILL 的建立沒有修改 Lua，也不能視為 12.1 相容完成。</li>
+</ul>
+<h2 id="10">10. 來源</h2>
+<ul>
+<li><a href="https://warcraft.wiki.gg/wiki/API_change_summaries">Warcraft Wiki API change summaries</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.0/API_changes?oldid=6747189">Patch 12.0.0 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.1/API_changes?oldid=6747895">Patch 12.0.1 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.5/API_changes?oldid=6747894">Patch 12.0.5 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.7/API_changes?oldid=6747893">Patch 12.0.7 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes?oldid=6749767">Patch 12.1.0 API changes</a></li>
+<li><a href="https://us.forums.blizzard.com/en/wow/t/addons-and-auras-in-curse-of-ula%E2%80%99tek/2317456">Blizzard：Addons and Auras in Curse of Ula’tek</a></li>
+</ul>
+<h2 id="2026-07-26121068914">2026-07-26：12.1.0.68914 固定證據</h2>
+<ul>
+<li>本機 <code>_ptr_</code>：12.1.0.68914；對照 Gethe/wow-ui-source commit <code>d3915c78aba77a7a9be76acbfa35c674bbb6abe9</code>。</li>
+<li>本機 <code>_xptr_</code>：12.0.7.68887；對照 commit <code>4383ced30106d51b27e3e86d1987f1552f0d259d</code>。</li>
+<li>AuraContainer sorting 使用 FrameXML 全域 <code>AuraContainerSortMethod</code>／<code>AuraContainerSortDirection</code>；68914 Generated Documentation 沒有登錄這兩表。</li>
+<li><code>UnitAuraSortRule</code> 是 Aura getter 的另一組型別，不可傳入 AuraContainer options。</li>
+<li>EAM 實作與 API 限制矩陣見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
+</ul>
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

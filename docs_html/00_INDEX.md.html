@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -444,6 +444,14 @@
 <li>多 AI 專家（子代理）協作開發流程、RACI 矩陣（權責劃分）及 QC 根因分析的工程實施準則。</li>
 </ul>
 </li>
+<li>🧭 <strong><a href="21_RACI_EXPERTS_MATRIX.md.html">專家角色 RACI 矩陣 (Expert RACI)</a></strong><ul>
+<li>24 位 canonical 專家名冊、唯一問責者、證據分級與派工簽收規則。</li>
+</ul>
+</li>
+<li>🔎 <strong><a href="24_EXPERT_COUNCIL_REVIEW_20260621.md.html">2026-06-21 專家會審報告</a></strong><ul>
+<li>Retail 12.1 Aura readiness、Secret／Taint、效能與文件治理的分級檢討結果。</li>
+</ul>
+</li>
 </ul>
 <h3 id="api-architecture-api">🏗️ 系統架構與 API 邊界 (Architecture &amp; API)</h3>
 <ul>
@@ -453,6 +461,14 @@
 </li>
 <li>🛡️ <strong><a href="02_RETAIL_API_BOUNDARIES.md.html">正式服 12.x API 安全防線 (Retail API Boundaries)</a></strong><ul>
 <li>四大核心 Secret 檢查 API、Table 索引安全防禦、與 C++ DurationObject 渲染通道。</li>
+</ul>
+</li>
+<li>📡 <strong><a href="25_RETAIL_API_CHANGE_INTELLIGENCE.md.html">Retail API Change Intelligence：12.0.0 起始基線</a></strong><ul>
+<li>APICHG 版本情報、TOC／revision 矩陣、12.0.0～12.1.0 演進與 EAM 遷移窗口。</li>
+</ul>
+</li>
+<li>🧩 <strong><a href="23_AURA_CONTAINER_IMPLEMENTATION.md.html">Retail 12.1 AuraContainer Native Backend</a></strong><ul>
+<li>68914 API 契約、Native/Legacy 分流、Slot/Group、Aura Sound、SavedVariables v2 與 PTR RQA 清單。</li>
 </ul>
 </li>
 <li>💾 <strong><a href="03_STATE_SCHEMA.md.html">數據狀態 Schema 規範 (State Schema)</a></strong><ul>
@@ -472,6 +488,14 @@
 </li>
 <li>📋 <strong><a href="06_TEST_PLAN_RETAIL.md.html">正式服實機測試計畫 (Test Plan)</a></strong><ul>
 <li>冒煙測試案例、實機戰鬥 taint 檢驗、以及開發版打包安裝驗證方案。</li>
+</ul>
+</li>
+<li>🧪 <strong><a href="26_FLOW_VALIDATION_FRAMEWORK.md.html">流程驗證與開發回灌框架 (Flow Validation)</a></strong><ul>
+<li>共用離線／實機案例、遊戲內測試按鈕、JSON／Markdown 報告與 WTF 回灌流程。</li>
+</ul>
+</li>
+<li>🖥️ <strong><a href="27_LOCAL_WOW_ENVIRONMENT.md.html">本機 WoW 開發環境基準 (Local WoW Environment)</a></strong><ul>
+<li><code>D:\World of Warcraft</code> 的 12.0.7／12.1.0 版本映射、WTF 路徑推導，以及指向 <code>D:\EventAlertMod</code> 的 Windows SymbolicLink 保護規則。</li>
 </ul>
 </li>
 <li>📓 <strong><a href="15_DEVELOPMENT_ISSUE_LOG.md.html">開發瓶頸與避坑日誌 (Development Issue Log)</a></strong><ul>
@@ -521,6 +545,10 @@
 <li>The 4 core Secret/Protected value checking functions, secure table indexing guards, and C++ DurationObject rendering pipelines.</li>
 </ul>
 </li>
+<li>🧩 <strong><a href="23_AURA_CONTAINER_IMPLEMENTATION.md.html">Retail 12.1 AuraContainer Native Backend</a></strong><ul>
+<li>Build 68914 contracts, Native/Legacy routing, Slot/Group, Aura Sound, schema v2, and pending PTR RQA acceptance.</li>
+</ul>
+</li>
 <li>💾 <strong><a href="03_STATE_SCHEMA.md.html">Data State Schema</a></strong><ul>
 <li>Data structures of the zero-allocation cache pool (AuraStatePool), countdown states, and memory recycling strategies.</li>
 </ul>
@@ -540,13 +568,21 @@
 <li>Smoke test scenarios, in-combat taint checks, and local development package verification.</li>
 </ul>
 </li>
+<li>🧪 <strong><a href="26_FLOW_VALIDATION_FRAMEWORK.md.html">Flow Validation and Developer Feedback</a></strong><ul>
+<li>Shared offline/live cases, in-game controls, JSON/Markdown reports, and WTF feedback import.</li>
+</ul>
+</li>
+<li>🖥️ <strong><a href="27_LOCAL_WOW_ENVIRONMENT.md.html">Local WoW Development Environment</a></strong><ul>
+<li>Local 12.0.7/12.1.0 version mapping under <code>D:\World of Warcraft</code>, WTF path derivation, and protection rules for Windows symbolic links targeting <code>D:\EventAlertMod</code>.</li>
+</ul>
+</li>
 <li>📓 <strong><a href="15_DEVELOPMENT_ISSUE_LOG.md.html">Development Issue Log</a></strong><ul>
 <li>A comprehensive log of resolved JIT Aborts, Blizzard protected frame restrictions, and frame clipsChildren issues.</li>
 </ul>
 </li>
 </ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -562,7 +598,7 @@
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -571,7 +607,7 @@
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

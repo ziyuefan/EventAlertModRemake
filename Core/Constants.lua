@@ -33,9 +33,10 @@ local freeze = EAM.Util and EAM.Util.tableFreeze or function(value)
 end
 
 EAM.Constants = freeze({
-    SCHEMA_VERSION = 1,
+    SCHEMA_VERSION = 2,
     ADDON_FLAVOR = "Retail",
-    INTERFACE = 120007,
+    INTERFACE = 120100,
+    LEGACY_INTERFACE = 120007,
     ALERT_KIND_AURA = "aura",
     ALERT_KIND_SPELL_COOLDOWN = "spellCooldown",
     ALERT_KIND_ITEM_COOLDOWN = "itemCooldown",
@@ -48,6 +49,15 @@ EAM.Constants = freeze({
     BOUNDARY_SECRET_VALUE = "secretValue",
     BOUNDARY_TABLE_RESTRICTED = "tableRestricted",
     BOUNDARY_COMBAT_DEFERRED = "combatDeferred",
+    BOUNDARY_NATIVE_AURA_UNAVAILABLE = "nativeAuraUnavailable",
+    BOUNDARY_NATIVE_AURA_LIMITED = "nativeAuraLimited",
+    AURA_BACKEND_NATIVE = "NATIVE",
+    AURA_BACKEND_LEGACY = "LEGACY",
+    AURA_BACKEND_UNSUPPORTED = "UNSUPPORTED",
+    AURA_RULE_NATIVE_SLOT = "NATIVE_SLOT",
+    AURA_RULE_NATIVE_GROUP = "NATIVE_GROUP",
+    AURA_RULE_READABLE_LEGACY = "READABLE_LEGACY",
+    AURA_RULE_DISPLAY_UNSUPPORTED = "DISPLAY_UNSUPPORTED",
 
     -- 7 大獨立告警框架名稱
     ALERT_FRAME_TYPES = freeze({

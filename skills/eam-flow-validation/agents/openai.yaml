@@ -1,0 +1,4 @@
+interface:
+  display_name: "EAM Flow Validation"
+  short_description: "建立並執行 EAM 離線、實機流程驗證與開發回灌報告"
+  default_prompt: "使用 $eam-flow-validation 產生並執行本次 EAM 變更的流程測試與回灌報告。"

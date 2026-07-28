@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -535,38 +535,45 @@ EA_Pos
 </ul>
 <p>它們不應該由 Retail 重寫載入。如果保留在儲存庫中，
 將它們標記為已文檔/unsupported。</p>
+<h2 id="2026-07-26aura-schema-v1-v2">2026-07-26：Aura schema v1 -&gt; v2</h2>
+<ul>
+<li>遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的 player/target Aura 純資料。</li>
+<li>既有 alert 增補 <code>nativeBackend=AUTO</code> 與顯示偏好，不移除未知欄位或舊 <code>EA_*</code> globals。</li>
+<li>遷移失敗會還原遷移前可序列化 DB，並記錄靜態 warning code。</li>
+<li>12.0.7 使用 Legacy backend；12.1 使用 Native 或 Unsupported，不能以 Legacy Secret 掃描補洞。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="migration-considerations">Migration considerations</h1>
-<h2 id="old-behavior-mapping">Old behavior mapping</h2>
-<p>Fee retention:</p>
+<h1 id="_1">遷移注意事項</h1>
+<h2 id="_2">舊行為映射</h2>
+<p>費用保留：</p>
 <ul>
-<li>Get self/debuff alert icon;</li>
-<li>Target buff/debuff alert icon;</li>
-<li>Move the cooling time alarm icon;</li>
-<li>Workpiece cooling diagram of itemID;</li>
-<li>Simple spellID addition/removal workflow;</li>
-<li><code>/eam opt</code> sets the entry point;</li>
-<li><code>/eam show</code>, <code>/eam showt</code>, <code>/eam showc</code>, <code>/eam showa</code> detection process work;</li>
-<li>Cooling behavior switch:</li>
-<li>Remove after cooling is complete;</li>
-<li>Keep cooldown icons away from combat;</li>
-<li>Glows when in use;</li>
-<li>Icon display switching:</li>
-<li>display frame;</li>
-<li>display name;</li>
-<li>Display timer;</li>
-<li>show flash/glow;</li>
-<li>Tooltip additional auxiliary /item ID;</li>
-<li>Name, timer and font size control;</li>
-<li>Minimap option button semantics;</li>
-<li>Localized strings, especially the presence of zhTW, enUS, koKR, zhCN;</li>
-<li>The default/item table can be used after verification on the Retail server.</li>
+<li>取得自我/debuff警報圖示；</li>
+<li>目標增益/減益警報圖示；</li>
+<li>動動冷卻時間警報圖示；</li>
+<li>itemID 的工件冷卻圖示；</li>
+<li>簡單的spellID加入/刪除工作流程；</li>
+<li><code>/eam opt</code> 設定入口點；</li>
+<li><code>/eam show</code>、<code>/eam showt</code>、<code>/eam showc</code>、<code>/eam showa</code>探測流程工作；</li>
+<li>冷卻行為切換：</li>
+<li>冷卻完成後移除；</li>
+<li>讓冷卻圖示遠離戰鬥；</li>
+<li>使用時發光；</li>
+<li>圖示顯示切換：</li>
+<li>顯示框架；</li>
+<li>顯示姓名；</li>
+<li>顯示計時器；</li>
+<li>顯示 flash/glow;</li>
+<li>工具提示附加輔助/item ID；</li>
+<li>名稱、計時器和所在的字體大小控制；</li>
+<li>小地圖選項按鈕語意；</li>
+<li>本地化字串，特別是存在的 zhTW、enUS、koKR、zhCN；</li>
+<li>正式服驗證後可使用預設/物品表。</li>
 </ul>
-<h2 id="old-savedvariables-migration">OLD SavedVariables Migration</h2>
-<p>Old version input:</p>
+<h2 id="savedvariables">舊 SavedVariables 遷移</h2>
+<p>舊版輸入：</p>
 <pre class="codehilite"><code class="language-lua">EA_Config
 EA_Position
 EA_Items
@@ -577,7 +584,7 @@ EA_GrpItems
 EA_Pos
 </code></pre>
 
-<p>Target migration:</p>
+<p>目標遷移：</p>
 <pre class="codehilite"><code class="language-js">EventAlertModDB = {
   schemaVersion: 1,
   profile: {
@@ -600,45 +607,45 @@ EA_Pos
 }
 </code></pre>
 
-<p>Make sure the target variable name is determined by overwriting. if old variable name
-For compatibility, they still require schema marking and migration state.</p>
-<p>Migration rules:</p>
+<p>確信的目標變數名稱被重寫決定。如果舊變數名稱
+為了相容性，它們仍然需要架構標記和遷移狀態。</p>
+<p>遷移規則：</p>
 <ul>
-<li>SavedVariables that never freezes migrations;</li>
-<li>The module stores runtime state in SavedVariables;</li>
-<li>Keep unknown genetic fields under migration safety complementation table or
-  warning list;</li>
-<li>Verify spellID/itemID numeric fields;</li>
-<li>Record the only deleted Classic field as a migration warning;</li>
-<li>Do not delete old fields until the backup or migration settings mail policy has taken effect
-  defined.</li>
+<li>永遠不會凍結遷移的 SavedVariables；</li>
+<li>模組將運行時狀態儲存在 SavedVariables 中；</li>
+<li>在遷移安全性互補表下保留未知的遺傳欄位或
+  警告名單；</li>
+<li>驗證spellID/itemID數字欄位；</li>
+<li>將刪除的唯一經典的欄位記錄為遷移預警；</li>
+<li>在備份或遷移設定信件策略生效之前不要刪除舊字段
+  定義的。</li>
 </ul>
-<h2 id="remove-old-behavior">Remove old behavior</h2>
-<p>Removed from Active's Retail server architecture:</p>
+<h2 id="_3">刪除舊行為</h2>
+<p>從Active的正式伺服器架構中刪除：</p>
 <ul>
-<li>Classic, TBC, Wrath, Cata, Mists TOC and load root;</li>
-<li>Classic behavior of <code>G.WOW_VERSION</code> branches;</li>
-<li>The old decompression of the Classic API returns the phase content layer;</li>
-<li>Old hunter pet happiness/focus only exists in the Classic era branch
-behavior;</li>
-<li>A large number of item ID scans during normal operation;</li>
-<li>Per-diagram timer and per-draw timer refresh chain;</li>
-<li>Tooltip scan as normal source of truth;</li>
-<li>External dependency requirements for core operations.</li>
+<li>Classic、TBC、Wrath、Cata、Mists TOC 和負載根；</li>
+<li><code>G.WOW_VERSION</code> 分支的經典行為；</li>
+<li>經典API的舊解壓縮傳回相內容層；</li>
+<li>老獵人寵物幸福/焦點只存在於經典時代的分支
+  行為；</li>
+<li>大量正常運行時物品ID掃描；</li>
+<li>每個圖示計時器和每個繪圖計時器刷新鏈；</li>
+<li>工具提示掃描作為正常事實來源；</li>
+<li>核心操作的外部依賴要求。</li>
 </ul>
-<h2 id="compatibility-break">Compatibility Break</h2>
-<p>Estimated rest time:</p>
+<h2 id="_4">相容性中斷</h2>
+<p>預計休息時間：</p>
 <ul>
-<li>The old Classic directory is no longer loaded;</li>
-<li>Users relying on legacy specific resources will ignore these warnings;</li>
-<li>Event scripts/configuration may need to be simplified;</li>
-<li>import/export prototype must be redesigned or removed unless it is simply safe
-  path required;</li>
-<li><code>Lib_ZYF</code> helper should be replaced or isolated; do not assume it exists in
-  New core.</li>
+<li>舊的經典目錄不再載入；</li>
+<li>依賴傳統特定資源的使用者會忽略這些警告；</li>
+<li>事件腳本/配置可能需要簡化；</li>
+<li>import/export 原型必須重新設計或刪除，除非是簡單的安全
+  需要路徑；</li>
+<li><code>Lib_ZYF</code> 助手應該被替換或隔離；不要假設它存在於
+  新的核心。</li>
 </ul>
-<h2 id="localization-migration">Localization migration</h2>
-<p>Existing locale files:</p>
+<h2 id="_5">本地化遷移</h2>
+<p>現有的語言環境文件：</p>
 <ul>
 <li><code>locale/localization.comm.lua</code></li>
 <li><code>locale/localization.en.lua</code></li>
@@ -646,20 +653,27 @@ behavior;</li>
 <li><code>locale/localization.cn.lua</code></li>
 <li><code>locale/localization.kr.lua</code></li>
 <li><code>locale/localization.ru.lua</code>
-Keep localization isolated. Don't mix strings into logic modules. Do not add
-The simplified Chinese character string is zhTW.</li>
+保持本地化隔離。不要將字串混合到邏輯模組中。請勿添加
+簡體中文字串為zhTW。</li>
 </ul>
-<h2 id="inheritance-source-processing">Inheritance source processing</h2>
-<p>The current old source code is retained for auditing /reference:</p>
+<h2 id="_6">繼承來源處理</h2>
+<p>目前的舊原始碼保留用於審計/reference：</p>
 <ul>
 <li><code>Classic/</code></li>
 <li><code>TBC/</code></li>
 <li><code>Wrath/</code></li>
 </ul>
-<p>They should not be loaded by Retail overrides. If retained in the repository,
-Mark them as documented /unsupported.</p>
+<p>它們不應該由 Retail 重寫載入。如果保留在儲存庫中，
+將它們標記為已文檔/unsupported。</p>
+<h2 id="2026-07-26aura-schema-v1-v2">2026-07-26：Aura schema v1 -&gt; v2</h2>
+<ul>
+<li>遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的 player/target Aura 純資料。</li>
+<li>既有 alert 增補 <code>nativeBackend=AUTO</code> 與顯示偏好，不移除未知欄位或舊 <code>EA_*</code> globals。</li>
+<li>遷移失敗會還原遷移前可序列化 DB，並記錄靜態 warning code。</li>
+<li>12.0.7 使用 Legacy backend；12.1 使用 Native 或 Unsupported，不能以 Legacy Secret 掃描補洞。</li>
+</ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -675,7 +689,7 @@ Mark them as documented /unsupported.</p>
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -684,7 +698,7 @@ Mark them as documented /unsupported.</p>
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

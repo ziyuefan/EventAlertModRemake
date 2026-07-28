@@ -7,6 +7,14 @@
 傳回形狀、secret/protected 行為和 XML 運行時行為仍然需要
 遊戲內驗證。
 
+## 離線流程驗證限制
+
+`Tests/FlowValidationHarness.lua` 可驗證 Lua 模組契約、事件 round-trip、Scheduler 與報告閉環，但無法重現 WoW C++ Secret／Forbidden／taint／protected frame 語意。
+
+- Mock 通過不得標記為 PTR 或 Retail 實機通過。
+- 測試面板不執行施法、物品使用、改目標或 secure action。
+- 真實 AuraContainer、DurationObject、戰鬥鎖定與污染仍由 `RQA` 實機簽收。
+- 報告不自動上傳；需由使用者複製 JSON 或提供 WTF SavedVariables。
 ## 秘密/受保護的值
 
 正式服可能會返回秘密、受保護、僅供顯示或不可用的光環數據
@@ -72,3 +80,12 @@
 - 工具提示 API（如果保留工具提示顯示）；
 - zhTW/enUS/koKR/zhCN 中的局部渲染；
 - SavedVariables 遷移真實的舊用戶資料。
+
+## 2026-07-26：12.1 尚待實機確認
+
+- 68914 模板實際載入時機、AuraButton Forbidden Aspect 與條件式 access constraints。
+- candidate Spell ID filter 對各種 Secret Aura/單位極性的真實接受範圍。
+- `initializeFrame` 名稱、倒數、層數、Tooltip 的實際顯示與容器裁切。
+- Added/ApplicationsIncreased/Removed 的實際播放次數、音效檔欄位與 output channel。
+- 戰鬥 pending、脫戰重建、Reload UI migration、taint/blocked action 與 CPU/GC。
+- `UNSUPPORTED` 只代表安全停用 Native Aura，不代表功能等同 Legacy。

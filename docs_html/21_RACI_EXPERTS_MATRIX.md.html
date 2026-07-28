@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -416,716 +416,948 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-raci">EventAlertMod 專家角色 RACI 定位職責矩陣</h1>
-<p>為了讓EAM重構專案中的AI專家智庫在協作開發時有章可循，並確保PR審查、履行優化與API安全防禦的責任邊界劃分，本文件正式專案的RACI矩陣。</p>
-<p>後續所有的子代理派工、主代理整合、PR審查與代碼變更，都必須嚴格遵守這個RACI原則。</p>
-<hr />
-<h2 id="1-raci">1. RACI 定義說明</h2>
+<h1 id="eventalertmod-raci">EventAlertMod 專家角色 RACI 矩陣</h1>
+<p>本文件是 EventAlertMod 專家名冊、縮寫與問責關係的唯一基準。所有子代理派工、審查、文件簽收與發布決策均需遵循本矩陣。</p>
+<h2 id="1-raci">1. RACI 定義與硬性規則</h2>
 <ul>
-<li><strong>R (Responsible - 負責執行者)</strong>：負責編寫程式碼、維護資料庫或編寫檔案的主要執行角色。</li>
-<li><strong>A（Accountable - 最終負責人）</strong>：此任務領域的設計決策、架構搭建性與計畫碼安全負有最終責任的角色。 <strong>每個任務領域只能有且有一個A</strong>，其可以對PR進行批准或否決。</li>
-<li><strong>C（諮詢 - 諮詢對象）</strong>：在設計、可行性評估、保密安全防禦或玩家實戰體驗上提供專業建議諮詢的角色。在執行任務時，必須主動向其獲取意見。</li>
-<li><strong>I (Informed - 通知對象)</strong>：任務或設定變更時的通知對象，感知細緻結果以保持各資訊模組同步。</li>
+<li><code>R</code>（Responsible）：負責執行與產出證據。</li>
+<li><code>A</code>（Accountable）：對該任務領域做最終核准或否決；每列必須恰有一個 <code>A</code>。</li>
+<li><code>C</code>（Consulted）：提供專業諮詢，不負最終核准責任。</li>
+<li><code>I</code>（Informed）：接收結果與風險通知。</li>
+<li>同一角色可以是 <code>A/R</code>，但同一任務領域不得出現第二個 <code>A</code>。</li>
+<li>角色定義是派工規格，不代表常駐代理、工具、遊戲客戶端或實機能力已存在。</li>
+<li>靜態、Mock、PTR 與 Retail 實機證據必須分開標記。</li>
 </ul>
-<hr />
-<h2 id="2">2. 專家縮寫對照表</h2>
+<h2 id="2-canonical-24">2. Canonical 專家名冊（24 位）</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">縮寫</th>
-<th style="text-align: left;">專家角色名稱</th>
-<th style="text-align: left;">核心職能領域</th>
+<th>縮寫</th>
+<th>專家角色</th>
+<th>核心職能</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>拱門</strong></td>
-<td style="text-align: left;"><code>EAM_Addon_Architect</code></td>
-<td style="text-align: left;">插件核心架構、Taint避讓、安全鏈控制</td>
+<td><code>ARCH</code></td>
+<td><code>EAM_Addon_Architect</code></td>
+<td>核心架構、載入順序、模組邊界與安全鏈設計</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>SEC</strong></td>
-<td style="text-align: left;"><code>EAM_API_Security_Expert</code></td>
-<td style="text-align: left;">Retail 12.x API 邊界、價值機密 安全防衛</td>
+<td><code>SEC</code></td>
+<td><code>EAM_API_Security_Expert</code></td>
+<td>Retail API、Secret／Protected Data 與 taint 安全決策</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>符合</strong></td>
-<td style="text-align: left;"><code>EAM_Performance_Expert</code></td>
-<td style="text-align: left;">熱路徑零分配 (0-Allocation)、訊框與 GC 節流重複使用</td>
+<td><code>PERF</code></td>
+<td><code>EAM_Performance_Expert</code></td>
+<td>CPU、GC、事件頻率、排程與框架池效能預算</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>使用者介面</strong></td>
-<td style="text-align: left;"><code>EAM_UI_Renderer_Expert</code></td>
-<td style="text-align: left;">渲染器 渲染佈局、IconPool 管理、設定UI佈局</td>
+<td><code>UI</code></td>
+<td><code>EAM_UI_Renderer_Expert</code></td>
+<td>Renderer、IconPool、DurationObject 與設定介面</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>LUA</strong></td>
-<td style="text-align: left;"><code>EAM_Lua_VM_Expert</code></td>
-<td style="text-align: left;">LuaJIT 底層優化、閉包快取、Inline pcall 頭審計</td>
+<td><code>LUA</code></td>
+<td><code>EAM_Lua_VM_Expert</code></td>
+<td>Lua 語義、資料結構、閉包與局部最佳化</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>澳幣</strong></td>
-<td style="text-align: left;"><code>EAM_Security_Auditor</code></td>
-<td style="text-align: left;">官方UI逆向、繞過漏洞與降級策略審計</td>
+<td><code>AUD</code></td>
+<td><code>EAM_Security_Auditor</code></td>
+<td>獨立污染、繞過與 protected chain 稽核</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>使用者體驗</strong></td>
-<td style="text-align: left;"><code>EAM_UX_Gameplay_Expert</code></td>
-<td style="text-align: left;">戰鬥實戰體驗、疫情刷新、文明覺醒</td>
+<td><code>UX</code></td>
+<td><code>EAM_UX_Gameplay_Expert</code></td>
+<td>戰鬥資訊層級、視覺負擔與玩家可用性</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>規格</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Expert</code></td>
-<td style="text-align: left;">13 職業專精配置、資料庫卷校對</td>
+<td><code>SPEC</code></td>
+<td><code>EAM_Class_Expert</code></td>
+<td>職業、專精、英雄天賦與 spellID 資料問責</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>TANK_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Tanks</code></td>
-<td style="text-align: left;">6 大坦克生存Buff與主動減傷預警</td>
+<td><code>TANK_P</code></td>
+<td><code>EAM_Class_Tanks</code></td>
+<td>坦克專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>HEAL_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Healers</code></td>
-<td style="text-align: left;">6 大治療HoT 覆蓋與Proc 急救監控</td>
+<td><code>HEAL_P</code></td>
+<td><code>EAM_Class_Healers</code></td>
+<td>治療專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>MEL_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Melee</code></td>
-<td style="text-align: left;">近戰輸出連續資源節奏與流血DoT 監控</td>
+<td><code>MEL_P</code></td>
+<td><code>EAM_Class_Melee</code></td>
+<td>近戰專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>RNG_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Ranged</code></td>
-<td style="text-align: left;">末端多目標DoT 維持與瞬發 Procs 置頂</td>
+<td><code>RNG_P</code></td>
+<td><code>EAM_Class_Ranged</code></td>
+<td>遠程專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_T</strong></td>
-<td style="text-align: left;"><code>EAM_Tank_Pro</code></td>
-<td style="text-align: left;">頂尖坦克實戰版面與優先建議</td>
+<td><code>PRO_T</code></td>
+<td><code>EAM_Tank_Pro</code></td>
+<td>坦克玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_H</strong></td>
-<td style="text-align: left;"><code>EAM_Healer_Pro</code></td>
-<td style="text-align: left;">頂尖治療實戰版面與團隊框架防備建議</td>
+<td><code>PRO_H</code></td>
+<td><code>EAM_Healer_Pro</code></td>
+<td>治療玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_M</strong></td>
-<td style="text-align: left;"><code>EAM_Melee_DPS_Pro</code></td>
-<td style="text-align: left;">頂尖近戰輸出資源防溢高亮建議</td>
+<td><code>PRO_M</code></td>
+<td><code>EAM_Melee_DPS_Pro</code></td>
+<td>近戰玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_R</strong></td>
-<td style="text-align: left;"><code>EAM_Ranged_DPS_Pro</code></td>
-<td style="text-align: left;">頂尖法系移動實施法與爆發預警建議</td>
+<td><code>PRO_R</code></td>
+<td><code>EAM_Ranged_DPS_Pro</code></td>
+<td>遠程玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>模擬</strong></td>
-<td style="text-align: left;"><code>EAM_Mock_Sandbox_Expert</code></td>
-<td style="text-align: left;">魔獸API虛擬沙盒模擬、單元/整合測試框架維護</td>
+<td><code>MOCK</code></td>
+<td><code>EAM_Mock_Sandbox_Expert</code></td>
+<td>Mock、單元、整合與離線流程測試</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>資料</strong></td>
-<td style="text-align: left;"><code>EAM_Data_Guard_Expert</code></td>
-<td style="text-align: left;">SavedVariables WTF 文件版本架構升級與設定相容防禦</td>
+<td><code>DATA</code></td>
+<td><code>EAM_Data_Guard_Expert</code></td>
+<td>SavedVariables schema、WTF 遷移與設定相容性</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>DEVOPS</strong></td>
-<td style="text-align: left;"><code>EAM_DevOps_Release_Expert</code></td>
-<td style="text-align: left;">自動化發布資源、TOC 偵測、靜態程式碼與語言系分析</td>
+<td><code>DEVOPS</code></td>
+<td><code>EAM_DevOps_Release_Expert</code></td>
+<td>TOC、靜態驗證、封裝、CI 與發布門檻</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>刮刀</strong></td>
-<td style="text-align: left;"><code>EAM_Combat_Scraper_Expert</code></td>
-<td style="text-align: left;">戰鬥日誌分析、動態天賦監控、隱藏武器ID挖掘</td>
+<td><code>SCRAPER</code></td>
+<td><code>EAM_Combat_Scraper_Expert</code></td>
+<td>戰鬥資料候選蒐集，不直接核定事實</td>
+</tr>
+<tr>
+<td><code>APICHG</code></td>
+<td><code>EAM_API_Change_Intelligence_Expert</code></td>
+<td>Retail API 版本差異、遷移窗口與架構預警</td>
+</tr>
+<tr>
+<td><code>AURA121</code></td>
+<td><code>EAM_Aura_121_Migration_Expert</code></td>
+<td>12.1 AuraContainer／AuraButton、Forbidden Aspects 與 Aura 遷移</td>
+</tr>
+<tr>
+<td><code>RQA</code></td>
+<td><code>EAM_Retail_Client_QA_Expert</code></td>
+<td>Retail／PTR 實機測試、taint／錯誤／效能證據簽收</td>
+</tr>
+<tr>
+<td><code>DOC</code></td>
+<td><code>EAM_Documentation_Governance_Expert</code></td>
+<td>Facts-of-Truth、來源與驗證狀態、Markdown／HTML 一致性</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="3-raci">3. RACI 職責矩陣表</h2>
+<h2 id="3-raci">3. 任務領域 RACI</h2>
+<p>為保持表格可驗證，職業智庫與玩家代表不另列欄位；Class DB 與 UI／UX 相關任務預設將其列為 <code>C</code>。</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">任務領域</th>
-<th style="text-align: center;">拱門</th>
-<th style="text-align: center;">美國證券交易委員會</th>
-<th style="text-align: center;">性能</th>
-<th style="text-align: center;">用戶界面</th>
-<th style="text-align: center;">路亞</th>
-<th style="text-align: center;">澳幣</th>
-<th style="text-align: center;">用戶體驗</th>
-<th style="text-align: center;">規格</th>
-<th style="text-align: center;">模擬</th>
-<th style="text-align: center;">數據</th>
-<th style="text-align: center;">Dk固定</th>
-<th style="text-align: center;">刮刀</th>
+<th>任務領域</th>
+<th style="text-align: center;">ARCH</th>
+<th style="text-align: center;">SEC</th>
+<th style="text-align: center;">PERF</th>
+<th style="text-align: center;">UI</th>
+<th style="text-align: center;">LUA</th>
+<th style="text-align: center;">AUD</th>
+<th style="text-align: center;">UX</th>
+<th style="text-align: center;">SPEC</th>
+<th style="text-align: center;">MOCK</th>
+<th style="text-align: center;">DATA</th>
+<th style="text-align: center;">DEVOPS</th>
+<th style="text-align: center;">SCRAPER</th>
+<th style="text-align: center;">APICHG</th>
+<th style="text-align: center;">AURA121</th>
+<th style="text-align: center;">RQA</th>
+<th style="text-align: center;">DOC</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>1.核心（核心路由/路由流程）</strong></td>
-<td style="text-align: center;"><strong>一個</strong></td>
-<td style="text-align: center;">我</td>
+<td>1. Core 路由與排程</td>
+<td style="text-align: center;">A</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>2.服務（資料服務）</strong></td>
-<td style="text-align: center;"><strong>一個</strong></td>
+<td>2. Services 資料層</td>
+<td style="text-align: center;">A</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>3. UI / 渲染器（渲染引擎）</strong></td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;"><strong>一個</strong></td>
+<td>3. UI／Renderer</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>4.保密/感染(安全防禦)</strong></td>
+<td>4. Secret／Taint 安全</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;"><strong>一個</strong></td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">A</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>5.配置與UI面板（設定面板）</strong></td>
+<td>5. Config／Options</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">右</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;"><strong>一個</strong></td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>6。 Class DB（法術資料庫）</strong></td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;"><strong>一個</strong></td>
-<td style="text-align: center;">右</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">R/C</td>
+<td>6. Class DB</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>7.資源並發布（發布資源）</strong></td>
-<td style="text-align: center;"><strong>一個</strong></td>
+<td>7. 封裝與發布</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">右</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>8.測試與模擬（沙盒測試）</strong></td>
+<td>8. Mock／自動／流程測試</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;"><strong>A</strong>/R</td>
-<td style="text-align: center;">我</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>9.資料遷移（WTF遷移）</strong></td>
+<td>9. SavedVariables／WTF 遷移</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;"><strong>A</strong>/R</td>
-<td style="text-align: center;">我</td>
-<td style="text-align: center;">我</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>10. 文件與 Facts-of-Truth</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+</tr>
+<tr>
+<td>11. Retail／PTR 實機驗證</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>12. Retail 12.1 Aura 遷移</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>13. Retail API change intelligence</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 </tr>
 </tbody>
 </table>
-<p><em>註：各職業與PRO玩家專家（TANK_P/HEAL_P/MEL_P/RNG_P/PRO_</em>）在Class DB與UI/Renderer領域的C/I定位維持原狀。 *</p>
-<hr />
-<h2 id="4">4. 各任務領域發展實施原則</h2>
-<h3 id="1">1.核心（核心路由與排程系統）</h3>
+<h2 id="4">4. 新增角色責任邊界</h2>
+<h3 id="apichgretail-api-change-intelligence">APICHG：Retail API change intelligence</h3>
 <ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/Core/EventRouter.lua">Core/EventRouter.lua</a>, <a href="file:///d:/EventAlertMod__EAMCODE_12">Core/Scheduler.lua</a> <a href="檔案:///d:/EventAlertMod/Core/Env.lua">Core/Env.lua</a>, <a href="檔案:///d:/EventAlertMod__EAMCODE_16">Core/Main.lua</a>。</li>
-<li><strong>Accountable (A)審查</strong>：最終由<strong>ARCH</strong>決策，審核事件派發與調度調度任務分發鍊是否具備足夠的隔離與容錯防禦。</li>
-<li><strong>實踐與諮詢</strong>：由 <strong>LUA</strong> 負責實踐，確保事件/定時器調度沒有建立瞬態表或匿名閉包。在優化 OnUpdate 的CPU執行時需諮詢<strong>PERF</strong>。</li>
+<li>從 12.0.0 起維護 API 版本、TOC、Wiki revision、官方公告與 UI 原始碼差異矩陣。</li>
+<li>將新增、移除、棄用、Secret／Forbidden predicate 與 Widget 行為變更轉成 EAM 的 P0／P1／P2 影響、遷移窗口與退場條件。</li>
+<li>提前建立 capability gate、adapter 與相容策略；不得在 PTR 尚未穩定時移除正式版路徑。</li>
+<li>不負責 Secret／taint 最終核准，不得把 Wiki 修訂時間當成 patch 發布日期，也不得宣稱未執行的 PTR／Retail 實機結果。</li>
+<li>版本基準與工作流程分別以 <code>Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code> 及 <code>skills/eam-retail-api-change-intelligence/SKILL.md</code> 為準。</li>
 </ul>
-<h3 id="2_1">2. 服務（資料與業務邏輯服務）</h3>
+<h3 id="aura121retail-121-aura">AURA121：Retail 12.1 Aura 遷移</h3>
 <ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/Services/">Services/</a> 下的五大服務與狀態池（StatePool）機制。</li>
-<li><strong>Accountable (A) 審查</strong>：由<strong>ARCH</strong>審查服務層的資料-視圖解耦度與事件主動機制。</li>
-<li><strong>實務與諮詢</strong>：由 <strong>LUA</strong> 負責分配零 StatePool 的實務與GC防禦。由 <strong>SEC</strong> 諮詢資料讀取是否安全，<strong>PERF</strong> 諮詢事件節流與頻率控制。各職業專精專家提供解答專精能量與動作時間同步的商業諮詢，移植 <strong>DATA</strong> 諮詢與 SavedVariables加載關聯的相容防禦。</li>
+<li>維護 12.0.7／12.1 Aura API build matrix。</li>
+<li>追蹤 Blizzard 公告、官方 UI 原始碼差異與 Warcraft Wiki 修訂。</li>
+<li>定義 AuraContainer／AuraButton、Forbidden Partition／Aspect 與舊 UnitAura 掃描的退場條件。</li>
+<li>明確記錄無法合法保留的逐 spellID、stack、Pandemic 或來源判斷行為。</li>
+<li>不得設計 Secret／Forbidden Aspect 繞過；安全終審仍由 <code>SEC</code> 負責。</li>
 </ul>
-<h3 id="3-ui">3. UI / 渲染器（渲染與佈局引擎）</h3>
+<h3 id="rqaretail-client-qa">RQA：Retail Client QA</h3>
 <ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/UI/Renderer.lua">UI/Renderer.lua</a>, <a href="file:///d:/EventAlertMod/UI/IconPool.lua">UI/IconPool.lua</a>, 7 偏移量偏移框架與大偏移框架與大標座的成長框架與大標座成長框架的大偏移框架與大偏移框架。</li>
-<li><strong>Accountable (A)審查</strong>：由<strong>UI</strong>負最終責任，審核貨架的標準化狀態消耗、按鍵文字綁定解綁與幀級別覆蓋。</li>
-<li><strong>實踐與諮詢</strong>：由 <strong>PERF</strong> 佈局負責靜態關聯偏量算術的實踐，以消除分區尋找飢餓。由 <strong>UX</strong> 諮詢框架的預設座標與流行病輝光的承載形式，四大專業玩家提供實戰預警與框架防盜提示的設定諮詢。</li>
+<li>管理 Retail／PTR build、角色、專精、戰鬥情境與重現步驟。</li>
+<li>收集 taint log、Lua error、事件、CPU、記憶體、GC、畫面或影片證據。</li>
+<li>人類測試者是外部操作與證據來源；沒有客戶端證據時，<code>RQA</code> 只能產出測試設計或判讀結果。</li>
+<li>P0 未關閉、Shadow Host 未經安全與實機雙重簽核時，必須否決發布或啟用。</li>
 </ul>
-<h3 id="4_1">4. 安全防禦與污染控制</h3>
+<h3 id="doc">DOC：文件事實治理</h3>
 <ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/Core/Util.lua">Core/Util.lua</a>中的三個檢查，所有OnUpdate倒數、表格索引、<code>InCombatLockdown()</code>延遲後防禦。</li>
-<li><strong>Accountable (A) 審查</strong>：由<strong>SEC</strong> 審查100%的秘密邊界安全，確保不會因元方法崩潰或污染污染鏈導致行動高峰（Action Blocked）。</li>
-<li><strong>實務與諮詢</strong>：由 <strong>AUD</strong> 負責 <code>C_TooltipInfo</code> 降級、<code>ShadowHostService</code> 吸附等高階疏導進行安全審計與實務。由 <strong>ARCH</strong> 諮詢 UIParent 下框架創設與屬性修改安全性。</li>
+<li>維護事實來源、日期、build 與驗證狀態。</li>
+<li>確保 Markdown 是唯一來源，HTML 僅能單向生成。</li>
+<li>轉換後必須掃描 <code>EAMCODE placeholder</code>、壞連結、表格欄位與專家數量一致性。</li>
+<li>不裁決 API 技術真偽；版本事實由 <code>APICHG</code> 彙整，安全結論由 <code>SEC</code> 核定，Aura 遷移結論由 <code>AURA121</code> 提供。</li>
 </ul>
-<h3 id="5-config-ui-panel">5. Config &amp; UI Panel（設定面板）</h3>
+<h2 id="5">5. 角色去重規則</h2>
 <ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/UI/Options.lua">UI/Options.lua</a>, [Locale/](file:///d:/EventAlertMod/Locale/小地圖。</li>
-<li><strong>Accountable (A) 審查</strong>：由<strong>DATA</strong>負最終責任，審核UI設定值的存檔搭建性與輸入合法性。</li>
-<li><strong>實務與諮詢</strong>：由<strong>UI</strong>負責選項滑桿、能量表單、下拉篩選選單的實務。 <strong>UX</strong>與Pro玩家提供設定佈局的分析性與便利性諮詢。</li>
+<li><code>ARCH</code> 管架構邊界；<code>APICHG</code> 管版本變更情報與遷移提前量；<code>SEC</code> 管 API／Secret 安全決策；<code>AUD</code> 做獨立對抗稽核。</li>
+<li><code>AURA121</code> 負責 Aura 契約遷移，不取代 <code>APICHG</code> 的跨版本情報，也不取代 <code>SEC</code> 的安全終審。</li>
+<li><code>PERF</code> 管量測與預算；<code>LUA</code> 管語言語義與局部最佳化。</li>
+<li><code>UI</code> 管技術實作；<code>UX</code> 與玩家代表提供使用性諮詢。</li>
+<li><code>SPEC</code> 是 Class DB 唯一問責者；<code>SCRAPER</code> 只提供待驗證候選資料。</li>
+<li><code>MOCK</code> 負責離線流程案例與 Mock 證據，不取代 <code>RQA</code>；靜態、語法或模擬通過不得標記為 Retail 實機通過。</li>
+<li><code>DEVOPS</code> 是發布唯一問責者；<code>ARCH/SEC/APICHG/RQA/DOC</code> 提供 gate 意見。</li>
 </ul>
-<h3 id="6-class-db">6. Class DB (職業與英雄天賦資料庫)</h3>
-<ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/Data/SpellArray.lua">Data/SpellArray.lua</a>, 13 職業與 28 英雄天賦預設監控。</li>
-<li><strong>Accountable (A)審查</strong>：由<strong>UX</strong>在大範圍M+或團本實戰中的循環負載下讀取磁帶庫，避免版面雜亂。</li>
-<li><strong>實務與諮詢</strong>：由<strong>SPEC</strong>負責實踐藥劑ID、技能分類、以30%大流行秒數的整理與寫入。由<strong>SCRAPER</strong>負責解析日誌戰鬥動態數據，隱藏或被覆蓋的Buff ID作為數據校驗。</li>
-</ul>
-<h3 id="7">7.資源與發布（發布與資料夾）</h3>
-<ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/Tools/Build-CurseForgePackage.ps1">Tools/Build-CurseForgePackage.ps1</a>, [Tools/CheckLuaSyntax.ps1](file:///d1600cffCOD.發布排除清單。</li>
-<li><strong>Accountable (A)審查</strong>：由<strong>ARCH</strong>審核版本號規範、TOC內容、壓縮目錄結構。</li>
-<li><strong>實務與諮詢</strong>：由 <strong>DEVOPS</strong> 負責自動化預算與發布工具腳本的開發實踐，確保過濾排除路徑乾淨，並諮詢 <strong>SEC/AUD</strong> 是否存在漏洞。</li>
-</ul>
-<h3 id="8">8.測試與模擬（沙盒與模擬測試）</h3>
-<ul>
-<li><strong>變更範圍</strong>：本地配比測試腳本、調味API沙盒模擬環境（Mocking Layer）。</li>
-<li><strong>Accountable (A)審查</strong>：由<strong>MOCK</strong>承擔最終責任，審核測試覆蓋率、測試資料模擬準確性。</li>
-<li><strong>實踐與諮詢</strong>：由<strong>MOCK</strong> 實施沙盒​​與單元測試代碼，向<strong>ARCH/SEC/PERF</strong>諮詢核心代碼的執行語義與安全隔離點，並在預算前與 <strong>DEVOPS</strong>諮詢核心代碼的執行語義與安全隔離點，並在預算前與 <strong>DEVOPS</strong> 的 CI 整合。</li>
-</ul>
-<h3 id="9wtf">9.資料遷移（WTF持久化與設定遷移）</h3>
-<ul>
-<li><strong>變更範圍</strong>：<a href="file:///d:/EventAlertMod/Core/SavedVariables.lua">Core/SavedVariables.lua</a>,歷史版本EA_*設定檔升級邏輯。</li>
-<li><strong>Accountable (A) 審查</strong>：由<strong>DATA</strong>負最終責任，審核WTF資料遷移的損壞升級與防崩潰降級。</li>
-<li><strong>實務與諮詢</strong>：由<strong>DATA</strong>負責實踐，向<strong>ARCH</strong>諮詢資料庫格式，向<strong>UI</strong>諮詢設定變更後的佈局同步。</li>
-</ul>
-<hr />
-<h2 id="5">5.後續開發遵循原則</h2>
+<h2 id="6">6. 派工與簽收檢查</h2>
 <ol>
-<li><strong>公關/實務派工守則</strong>：<ul>
-<li>在啟動任何子代理程式進行編碼之前，主代理程式必須先根據本矩陣，將任務領域的 <strong>R</strong> 專家分派為執行者。</li>
-</ul>
-</li>
-<li><strong>諮詢（C）防護守則</strong>：<ul>
-<li>在開發過程中遇到疑難問題時，必須主動向該任務領域對應的 <strong>C</strong> 專家發起諮詢。</li>
-</ul>
-</li>
-<li><strong>簽準（A）終審守則</strong>：</li>
-<li>子代理提交成果後，主代理在整合前，必須由本矩陣中該任務對應領域的 <strong>A</strong> 專家進行審查與簽發。</li>
+<li>派工前確認任務領域及唯一 <code>A</code>。</li>
+<li>指定 <code>R</code> 的檔案／問題範圍、禁止事項與證據輸出。</li>
+<li>API 結論標示來源、日期、build、revision 與不確定性。</li>
+<li>實作、靜態、Mock、PTR、Retail 狀態不得混用。</li>
+<li>修改 Markdown 後依規範同步 HTML，並掃描 <code>EAMCODE placeholder</code> 污染。</li>
+<li>合併或發布前由該領域唯一 <code>A</code> 簽收；P0 未關閉不得發布。</li>
 </ol>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-expert-role-raci-positioning-responsibility-matrix">EventAlertMod Expert role RACI Positioning responsibility matrix</h1>
-<p>In order to allow the AI expert think tank in the EAM reconstruction project to follow rules when collaborating on development, and to ensure the division of responsibilities between PR review, performance optimization, and API security defense, this document formalizes the RACI matrix of the project.</p>
-<p>All subsequent sub-agent assignments, main agent integration, PR review and code changes must strictly abide by this RACI principle.</p>
-<hr />
-<h2 id="1-raci-definition">1. RACI Definition</h2>
+<h1 id="eventalertmod-raci">EventAlertMod 專家角色 RACI 矩陣</h1>
+<p>本文件是 EventAlertMod 專家名冊、縮寫與問責關係的唯一基準。所有子代理派工、審查、文件簽收與發布決策均需遵循本矩陣。</p>
+<h2 id="1-raci">1. RACI 定義與硬性規則</h2>
 <ul>
-<li><strong>R (Responsible - Responsible Executor)</strong>: The main execution role responsible for writing code, maintaining databases, or writing files.</li>
-<li><strong>A (Accountable - Ultimate Responsible Person)</strong>: The role that has the final responsibility for the design decisions, architectural construction, and project code security in this task area. <strong>Each task area can only have one A</strong>, which can approve or reject the PR.</li>
-<li><strong>C (Consulting - Consulting Object)</strong>: A role that provides professional advice and consultation on design, feasibility assessment, confidentiality and security defense, or actual player experience. You must proactively seek their opinions when performing tasks.</li>
-<li><strong>I (Informed - Notification Object)</strong>: Notification object when tasks or settings are changed, sensing detailed results to keep each information module synchronized.</li>
+<li><code>R</code>（Responsible）：負責執行與產出證據。</li>
+<li><code>A</code>（Accountable）：對該任務領域做最終核准或否決；每列必須恰有一個 <code>A</code>。</li>
+<li><code>C</code>（Consulted）：提供專業諮詢，不負最終核准責任。</li>
+<li><code>I</code>（Informed）：接收結果與風險通知。</li>
+<li>同一角色可以是 <code>A/R</code>，但同一任務領域不得出現第二個 <code>A</code>。</li>
+<li>角色定義是派工規格，不代表常駐代理、工具、遊戲客戶端或實機能力已存在。</li>
+<li>靜態、Mock、PTR 與 Retail 實機證據必須分開標記。</li>
 </ul>
-<hr />
-<h2 id="2-expert-abbreviation-comparison-table">2. Expert abbreviation comparison table</h2>
+<h2 id="2-canonical-24">2. Canonical 專家名冊（24 位）</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Abbreviation</th>
-<th style="text-align: left;">Expert role name</th>
-<th style="text-align: left;">Core functional areas</th>
+<th>縮寫</th>
+<th>專家角色</th>
+<th>核心職能</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>Arch</strong></td>
-<td style="text-align: left;"><code>EAM_Addon_Architect</code></td>
-<td style="text-align: left;">Plug-in core architecture, Taint avoidance, safety chain control</td>
+<td><code>ARCH</code></td>
+<td><code>EAM_Addon_Architect</code></td>
+<td>核心架構、載入順序、模組邊界與安全鏈設計</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>SEC</strong></td>
-<td style="text-align: left;"><code>EAM_API_Security_Expert</code></td>
-<td style="text-align: left;">Retail 12.x API Boundary, Value Confidential Security and Defense</td>
+<td><code>SEC</code></td>
+<td><code>EAM_API_Security_Expert</code></td>
+<td>Retail API、Secret／Protected Data 與 taint 安全決策</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Conforms</strong></td>
-<td style="text-align: left;"><code>EAM_Performance_Expert</code></td>
-<td style="text-align: left;">Hot path zero-allocation (0-Allocation), frame and GC throttling reuse</td>
+<td><code>PERF</code></td>
+<td><code>EAM_Performance_Expert</code></td>
+<td>CPU、GC、事件頻率、排程與框架池效能預算</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>User Interface</strong></td>
-<td style="text-align: left;"><code>EAM_UI_Renderer_Expert</code></td>
-<td style="text-align: left;">Renderer rendering layout, IconPool management, setting UI layout</td>
+<td><code>UI</code></td>
+<td><code>EAM_UI_Renderer_Expert</code></td>
+<td>Renderer、IconPool、DurationObject 與設定介面</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>LUA</strong></td>
-<td style="text-align: left;"><code>EAM_Lua_VM_Expert</code></td>
-<td style="text-align: left;">LuaJIT Low-level optimization, closure cache, Inline pcall header audit</td>
+<td><code>LUA</code></td>
+<td><code>EAM_Lua_VM_Expert</code></td>
+<td>Lua 語義、資料結構、閉包與局部最佳化</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>AUD</strong></td>
-<td style="text-align: left;"><code>EAM_Security_Auditor</code></td>
-<td style="text-align: left;">Official UI reverse engineering, bypass vulnerability and downgrade strategy audit</td>
+<td><code>AUD</code></td>
+<td><code>EAM_Security_Auditor</code></td>
+<td>獨立污染、繞過與 protected chain 稽核</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>User experience</strong></td>
-<td style="text-align: left;"><code>EAM_UX_Gameplay_Expert</code></td>
-<td style="text-align: left;">Actual combat experience, epidemic refresh, civilization awakening</td>
+<td><code>UX</code></td>
+<td><code>EAM_UX_Gameplay_Expert</code></td>
+<td>戰鬥資訊層級、視覺負擔與玩家可用性</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Specifications</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Expert</code></td>
-<td style="text-align: left;">13 professional specialization configuration, database volume proofreading</td>
+<td><code>SPEC</code></td>
+<td><code>EAM_Class_Expert</code></td>
+<td>職業、專精、英雄天賦與 spellID 資料問責</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>TANK_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Tanks</code></td>
-<td style="text-align: left;">6 large tank survival buffs and active damage reduction warning</td>
+<td><code>TANK_P</code></td>
+<td><code>EAM_Class_Tanks</code></td>
+<td>坦克專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>HEAL_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Healers</code></td>
-<td style="text-align: left;">6 major treatment HoT coverage and Proc emergency monitoring</td>
+<td><code>HEAL_P</code></td>
+<td><code>EAM_Class_Healers</code></td>
+<td>治療專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>MEL_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Melee</code></td>
-<td style="text-align: left;">Melee output, continuous resource rhythm and bleeding DoT monitoring</td>
+<td><code>MEL_P</code></td>
+<td><code>EAM_Class_Melee</code></td>
+<td>近戰專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>RNG_P</strong></td>
-<td style="text-align: left;"><code>EAM_Class_Ranged</code></td>
-<td style="text-align: left;">Terminal multi-target DoT maintenance and prompting Procs Top</td>
+<td><code>RNG_P</code></td>
+<td><code>EAM_Class_Ranged</code></td>
+<td>遠程專精監控諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_T</strong></td>
-<td style="text-align: left;"><code>EAM_Tank_Pro</code></td>
-<td style="text-align: left;">Top tank combat layout and priority suggestions</td>
+<td><code>PRO_T</code></td>
+<td><code>EAM_Tank_Pro</code></td>
+<td>坦克玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_H</strong></td>
-<td style="text-align: left;"><code>EAM_Healer_Pro</code></td>
-<td style="text-align: left;">Top treatment practice layout and team framework defense suggestions</td>
+<td><code>PRO_H</code></td>
+<td><code>EAM_Healer_Pro</code></td>
+<td>治療玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_M</strong></td>
-<td style="text-align: left;"><code>EAM_Melee_DPS_Pro</code></td>
-<td style="text-align: left;">Top melee output resource overflow prevention and highlighting suggestions</td>
+<td><code>PRO_M</code></td>
+<td><code>EAM_Melee_DPS_Pro</code></td>
+<td>近戰玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>PRO_R</strong></td>
-<td style="text-align: left;"><code>EAM_Ranged_DPS_Pro</code></td>
-<td style="text-align: left;">Top legal system mobile implementation methods and outbreak early warning suggestions</td>
+<td><code>PRO_R</code></td>
+<td><code>EAM_Ranged_DPS_Pro</code></td>
+<td>遠程玩家實戰諮詢</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Simulation</strong></td>
-<td style="text-align: left;"><code>EAM_Mock_Sandbox_Expert</code></td>
-<td style="text-align: left;">Warcraft API virtual sandbox simulation, unit/integration testing framework maintenance</td>
+<td><code>MOCK</code></td>
+<td><code>EAM_Mock_Sandbox_Expert</code></td>
+<td>Mock、單元、整合與離線流程測試</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Information</strong></td>
-<td style="text-align: left;"><code>EAM_Data_Guard_Expert</code></td>
-<td style="text-align: left;">SavedVariables WTF File version structure upgrade and setting compatibility defense</td>
+<td><code>DATA</code></td>
+<td><code>EAM_Data_Guard_Expert</code></td>
+<td>SavedVariables schema、WTF 遷移與設定相容性</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>DEVOPS</strong></td>
-<td style="text-align: left;"><code>EAM_DevOps_Release_Expert</code></td>
-<td style="text-align: left;">Automatic resource publishing, TOC detection, static code and language system analysis</td>
+<td><code>DEVOPS</code></td>
+<td><code>EAM_DevOps_Release_Expert</code></td>
+<td>TOC、靜態驗證、封裝、CI 與發布門檻</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Scraper</strong></td>
-<td style="text-align: left;"><code>EAM_Combat_Scraper_Expert</code></td>
-<td style="text-align: left;">Combat log analysis, dynamic talent monitoring, hidden weapon ID mining</td>
+<td><code>SCRAPER</code></td>
+<td><code>EAM_Combat_Scraper_Expert</code></td>
+<td>戰鬥資料候選蒐集，不直接核定事實</td>
+</tr>
+<tr>
+<td><code>APICHG</code></td>
+<td><code>EAM_API_Change_Intelligence_Expert</code></td>
+<td>Retail API 版本差異、遷移窗口與架構預警</td>
+</tr>
+<tr>
+<td><code>AURA121</code></td>
+<td><code>EAM_Aura_121_Migration_Expert</code></td>
+<td>12.1 AuraContainer／AuraButton、Forbidden Aspects 與 Aura 遷移</td>
+</tr>
+<tr>
+<td><code>RQA</code></td>
+<td><code>EAM_Retail_Client_QA_Expert</code></td>
+<td>Retail／PTR 實機測試、taint／錯誤／效能證據簽收</td>
+</tr>
+<tr>
+<td><code>DOC</code></td>
+<td><code>EAM_Documentation_Governance_Expert</code></td>
+<td>Facts-of-Truth、來源與驗證狀態、Markdown／HTML 一致性</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="3-raci-responsibility-matrix-table">3. RACI Responsibility Matrix Table</h2>
+<h2 id="3-raci">3. 任務領域 RACI</h2>
+<p>為保持表格可驗證，職業智庫與玩家代表不另列欄位；Class DB 與 UI／UX 相關任務預設將其列為 <code>C</code>。</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Mission Area</th>
-<th style="text-align: center;">Arches</th>
+<th>任務領域</th>
+<th style="text-align: center;">ARCH</th>
 <th style="text-align: center;">SEC</th>
-<th style="text-align: center;">Performance</th>
-<th style="text-align: center;">User Interface</th>
-<th style="text-align: center;">Lures</th>
+<th style="text-align: center;">PERF</th>
+<th style="text-align: center;">UI</th>
+<th style="text-align: center;">LUA</th>
 <th style="text-align: center;">AUD</th>
-<th style="text-align: center;">User Experience</th>
-<th style="text-align: center;">Specs</th>
-<th style="text-align: center;">Simulation</th>
-<th style="text-align: center;">Data</th>
-<th style="text-align: center;">Dk Fixed</th>
-<th style="text-align: center;">Scrapers</th>
+<th style="text-align: center;">UX</th>
+<th style="text-align: center;">SPEC</th>
+<th style="text-align: center;">MOCK</th>
+<th style="text-align: center;">DATA</th>
+<th style="text-align: center;">DEVOPS</th>
+<th style="text-align: center;">SCRAPER</th>
+<th style="text-align: center;">APICHG</th>
+<th style="text-align: center;">AURA121</th>
+<th style="text-align: center;">RQA</th>
+<th style="text-align: center;">DOC</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>1.Core (Core Routing/Routing Process)</strong></td>
-<td style="text-align: center;"><strong>a</strong></td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>2.Service (data service)</strong></td>
-<td style="text-align: center;"><strong>a</strong></td>
+<td>1. Core 路由與排程</td>
+<td style="text-align: center;">A</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
-<td style="text-align: center;">R/C</td>
+<td style="text-align: center;">R</td>
 <td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>3. UI/Renderer (Rendering Engine)</strong></td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;"><strong>a</strong></td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>4. Confidentiality/Infection (Security Defense)</strong></td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;"><strong>a</strong></td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">R/C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-</tr>
-<tr>
-<td style="text-align: left;">**5. Configuration and UI Panel (Settings Panel) **</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">i</td>
-<td style="text-align: center;">i</td>
-<td style="text-align: center;">right</td>
-<td style="text-align: center;">i</td>
-<td style="text-align: center;">i</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">i</td>
-<td style="text-align: center;">i</td>
-<td style="text-align: center;"><strong>a</strong></td>
-<td style="text-align: center;">i</td>
-<td style="text-align: center;">i</td>
-</tr>
-<tr>
-<td style="text-align: left;">**6. Class DB (Spell Database) **</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;"><strong>a</strong></td>
-<td style="text-align: center;">Right</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">R/C</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>7. Resource and release (publish resource)</strong></td>
-<td style="text-align: center;"><strong>a</strong></td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">Right</td>
-<td style="text-align: center;">I</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>8. Testing and Simulation (Sandbox Testing)</strong></td>
 <td style="text-align: center;">C</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">C</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;">I</td>
-<td style="text-align: center;"><strong>A</strong>/R</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>9. Data migration (WTF migration)</strong></td>
+<td>2. Services 資料層</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>3. UI／Renderer</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>4. Secret／Taint 安全</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>5. Config／Options</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>6. Class DB</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>7. 封裝與發布</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>8. Mock／自動／流程測試</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
-<td style="text-align: center;"><strong>A</strong>/R</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>9. SavedVariables／WTF 遷移</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 <td style="text-align: center;">I</td>
 <td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>10. 文件與 Facts-of-Truth</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+</tr>
+<tr>
+<td>11. Retail／PTR 實機驗證</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>12. Retail 12.1 Aura 遷移</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>13. Retail API change intelligence</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
 </tr>
 </tbody>
 </table>
-<p><em>Note: The C/I positioning of each profession and PRO player experts (TANK_P/HEAL_P/MEL_P/RNG_P/PRO_</em>) in the Class DB and UI/Renderer fields remains unchanged. *</p>
-<hr />
-<h2 id="4-development-and-implementation-principles-for-each-task-area">4. Development and implementation principles for each task area</h2>
-<h3 id="1-core-core-routing-and-scheduling-system">1. Core (core routing and scheduling system)</h3>
+<h2 id="4">4. 新增角色責任邊界</h2>
+<h3 id="apichgretail-api-change-intelligence">APICHG：Retail API change intelligence</h3>
 <ul>
-<li><strong>Scope of change</strong>: <a href="file:///d:/EventAlertMod/Core/EventRouter.lua">Core/EventRouter.lua</a>, <a href="file:///d:/EventAlertMod__EAMCODE_12">Core/Scheduler.lua</a> <a href="file:///d:/EventAlertMod/Core/Env.lua">Core/Env.lua</a>, <a href="file:///d:/EventAlertMod__EAMCODE_16">Core/Main.lua</a>.</li>
-<li><strong>Accountable (A) review</strong>: The final decision is made by <strong>ARCH</strong> to review whether the event distribution and scheduling task distribution chain has sufficient isolation and fault-tolerant defense.</li>
-<li><strong>Practice and Consultation</strong>: Practice by <strong>LUA</strong> to ensure that event/timer scheduling does not create transient tables or anonymous closures. <strong>PERF</strong> needs to be consulted when optimizing the CPU execution of OnUpdate.</li>
+<li>從 12.0.0 起維護 API 版本、TOC、Wiki revision、官方公告與 UI 原始碼差異矩陣。</li>
+<li>將新增、移除、棄用、Secret／Forbidden predicate 與 Widget 行為變更轉成 EAM 的 P0／P1／P2 影響、遷移窗口與退場條件。</li>
+<li>提前建立 capability gate、adapter 與相容策略；不得在 PTR 尚未穩定時移除正式版路徑。</li>
+<li>不負責 Secret／taint 最終核准，不得把 Wiki 修訂時間當成 patch 發布日期，也不得宣稱未執行的 PTR／Retail 實機結果。</li>
+<li>版本基準與工作流程分別以 <code>Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code> 及 <code>skills/eam-retail-api-change-intelligence/SKILL.md</code> 為準。</li>
 </ul>
-<h3 id="2-services-data-and-business-logic-services">2. Services (data and business logic services)</h3>
+<h3 id="aura121retail-121-aura">AURA121：Retail 12.1 Aura 遷移</h3>
 <ul>
-<li><strong>Scope of change</strong>: The five major services and status pool (StatePool) mechanisms under <a href="file:///d:/EventAlertMod/Services/">Services/</a>.</li>
-<li><strong>Accountable (A) Review</strong>: Review the service layer's data-view decoupling and event initiative mechanism by <strong>ARCH</strong>.</li>
-<li><strong>Practical and Consulting</strong>: <strong>LUA</strong> is responsible for allocating zero StatePool's practical and GC defense. <strong>SEC</strong> consults whether data reading is safe, <strong>PERF</strong> consults event throttling and frequency control. Specialization experts of each profession provide business consultation on synchronizing specialization energy and action time, and transplant <strong>DATA</strong> to consult on compatible defenses associated with SavedVariables loading.</li>
+<li>維護 12.0.7／12.1 Aura API build matrix。</li>
+<li>追蹤 Blizzard 公告、官方 UI 原始碼差異與 Warcraft Wiki 修訂。</li>
+<li>定義 AuraContainer／AuraButton、Forbidden Partition／Aspect 與舊 UnitAura 掃描的退場條件。</li>
+<li>明確記錄無法合法保留的逐 spellID、stack、Pandemic 或來源判斷行為。</li>
+<li>不得設計 Secret／Forbidden Aspect 繞過；安全終審仍由 <code>SEC</code> 負責。</li>
 </ul>
-<h3 id="3-uirenderer-rendering-and-layout-engine">3. UI/renderer (rendering and layout engine)</h3>
+<h3 id="rqaretail-client-qa">RQA：Retail Client QA</h3>
 <ul>
-<li><strong>Scope of change</strong>: <a href="file:///d:/EventAlertMod/UI/Renderer.lua">UI/Renderer.lua</a>, <a href="file:///d:/EventAlertMod/UI/IconPool.lua">UI/IconPool.lua</a>, 7 Offset offset frame and large offset frame and large scale growth frame and large scale growth frame large offset frame and large offset frame.</li>
-<li><strong>Accountable (A) review</strong>: <strong>UI</strong> is ultimately responsible for reviewing the standardized status consumption of shelves, key text binding and unbinding, and frame level overrides.</li>
-<li><strong>Practice and Consulting</strong>: The <strong>PERF</strong> layout is responsible for the practice of statically associating offset arithmetic to eliminate partition seek starvation. Based on the <strong>UX</strong> consultation framework’s preset coordinates and epidemic glow bearing formats, four major professional players provide practical warning and framework anti-theft setting consultation.</li>
+<li>管理 Retail／PTR build、角色、專精、戰鬥情境與重現步驟。</li>
+<li>收集 taint log、Lua error、事件、CPU、記憶體、GC、畫面或影片證據。</li>
+<li>人類測試者是外部操作與證據來源；沒有客戶端證據時，<code>RQA</code> 只能產出測試設計或判讀結果。</li>
+<li>P0 未關閉、Shadow Host 未經安全與實機雙重簽核時，必須否決發布或啟用。</li>
 </ul>
-<h3 id="4-safety-defense-and-pollution-control">4. Safety defense and pollution control</h3>
+<h3 id="doc">DOC：文件事實治理</h3>
 <ul>
-<li><strong>Scope of change</strong>: Three checks in <a href="file:///d:/EventAlertMod/Core/Util.lua">Core/Util.lua</a>, all OnUpdate countdowns, table indexes, <code>InCombatLockdown()</code> post-delay defense.</li>
-<li><strong>Accountable (A) Review</strong>: Reviewed by <strong>SEC</strong> for 100% secret boundary security to ensure no action spikes (Action Blocked) due to meta-method crashes or contamination chains.</li>
-<li><strong>Practice and Consulting</strong>: <strong>AUD</strong> is responsible for the safety audit and practice of high-level guidance such as <code>C_TooltipInfo</code> downgrade and <code>ShadowHostService</code> adsorption. Consulted by <strong>ARCH</strong> about the security of frame creation and attribute modification under UIParent.</li>
+<li>維護事實來源、日期、build 與驗證狀態。</li>
+<li>確保 Markdown 是唯一來源，HTML 僅能單向生成。</li>
+<li>轉換後必須掃描 <code>EAMCODE placeholder</code>、壞連結、表格欄位與專家數量一致性。</li>
+<li>不裁決 API 技術真偽；版本事實由 <code>APICHG</code> 彙整，安全結論由 <code>SEC</code> 核定，Aura 遷移結論由 <code>AURA121</code> 提供。</li>
 </ul>
-<h3 id="5-config-ui-panel">5. Config &amp; UI Panel</h3>
+<h2 id="5">5. 角色去重規則</h2>
 <ul>
-<li><strong>Scope of change</strong>: <a href="file:///d:/EventAlertMod/UI/Options.lua">UI/Options.lua</a>, [Locale/](file:///d:/EventAlertMod/Locale/Mini map.</li>
-<li><strong>Accountable (A) Review</strong>: <strong>DATA</strong> is ultimately responsible for reviewing the archival construction and input legality of UI settings.</li>
-<li><strong>Practice and Consultation</strong>: <strong>UI</strong> is responsible for the practice of option sliders, energy tables, and drop-down filter menus. <strong>UX</strong> and Pro players provide analytical and convenient consultation on setting layout.</li>
+<li><code>ARCH</code> 管架構邊界；<code>APICHG</code> 管版本變更情報與遷移提前量；<code>SEC</code> 管 API／Secret 安全決策；<code>AUD</code> 做獨立對抗稽核。</li>
+<li><code>AURA121</code> 負責 Aura 契約遷移，不取代 <code>APICHG</code> 的跨版本情報，也不取代 <code>SEC</code> 的安全終審。</li>
+<li><code>PERF</code> 管量測與預算；<code>LUA</code> 管語言語義與局部最佳化。</li>
+<li><code>UI</code> 管技術實作；<code>UX</code> 與玩家代表提供使用性諮詢。</li>
+<li><code>SPEC</code> 是 Class DB 唯一問責者；<code>SCRAPER</code> 只提供待驗證候選資料。</li>
+<li><code>MOCK</code> 負責離線流程案例與 Mock 證據，不取代 <code>RQA</code>；靜態、語法或模擬通過不得標記為 Retail 實機通過。</li>
+<li><code>DEVOPS</code> 是發布唯一問責者；<code>ARCH/SEC/APICHG/RQA/DOC</code> 提供 gate 意見。</li>
 </ul>
-<h3 id="6-class-db-professional-and-hero-talent-database">6. Class DB (Professional and Hero Talent Database)</h3>
-<ul>
-<li><strong>Scope of change</strong>: <a href="file:///d:/EventAlertMod/Data/SpellArray.lua">Data/SpellArray.lua</a>, 13 professions and 28 hero talent default monitoring.</li>
-<li><strong>Accountable (A) review</strong>: <strong>UX</strong> reads the tape library under cyclic load in a wide range of M+ or group-based actual combat to avoid layout clutter.</li>
-<li><strong>Practice and Consultation</strong>: <strong>SPEC</strong> is responsible for practicing the compilation and writing of potion IDs, skill classifications, and 30% pandemic seconds. <strong>SCRAPER</strong> is responsible for parsing the log battle dynamic data, and the hidden or overwritten Buff ID is used as data verification.</li>
-</ul>
-<h3 id="7-resources-and-publishing-publishing-and-folders">7. Resources and publishing (publishing and folders)</h3>
-<ul>
-<li><strong>Scope of changes</strong>: <a href="file:///d:/EventAlertMod/Tools/Build-CurseForgePackage.ps1">Tools/Build-CurseForgePackage.ps1</a>, [Tools/CheckLuaSyntax.ps1](file:///d1600cffCOD. Release exclusion list.</li>
-<li><strong>Accountable (A) review</strong>: The version number specification, TOC content, and compressed directory structure will be reviewed by <strong>ARCH</strong>.</li>
-<li><strong>Practice and Consultation</strong>: <strong>DEVOPS</strong> is responsible for the development practice of automated budget and release tool scripts, ensuring that the filtering and exclusion paths are clean, and consulting <strong>SEC/AUD</strong> whether there are loopholes.</li>
-</ul>
-<h3 id="8-testing-and-simulation-sandbox-and-simulation-testing">8. Testing and simulation (sandbox and simulation testing)</h3>
-<ul>
-<li><strong>Scope of change</strong>: Local matching test script, seasoning API sandbox simulation environment (Mocking Layer).</li>
-<li><strong>Accountable (A) review</strong>: <strong>MOCK</strong> bears the final responsibility for reviewing test coverage and simulation accuracy of test data.</li>
-<li><strong>Practice and Consultation</strong>: <strong>MOCK</strong> implements sandbox and unit test code, consults <strong>ARCH/SEC/PERF</strong> about the execution semantics and security isolation points of the core code, and consults with <strong>DEVOPS</strong> about the execution semantics and security isolation points of the core code before budgeting, and integrates with <strong>DEVOPS</strong>'s CI before budgeting.</li>
-</ul>
-<h3 id="9-data-migration-wtf-persistence-and-setting-migration">9. Data migration (WTF persistence and setting migration)</h3>
-<ul>
-<li><strong>Scope of change</strong>: <a href="file:///d:/EventAlertMod/Core/SavedVariables.lua">Core/SavedVariables.lua</a>, historical version EA_* configuration file upgrade logic.</li>
-<li><strong>Accountable (A) Review</strong>: <strong>DATA</strong> has the final responsibility for reviewing the damage upgrade and anti-crash downgrade of WTF data migration.</li>
-<li><strong>Practice and Consultation</strong>: <strong>DATA</strong> is responsible for the practice, consulting <strong>ARCH</strong> for the database format, and consulting <strong>UI</strong> for layout synchronization after setting changes.</li>
-</ul>
-<hr />
-<h2 id="5-follow-the-principles-for-subsequent-development">5. Follow the principles for subsequent development</h2>
+<h2 id="6">6. 派工與簽收檢查</h2>
 <ol>
-<li><strong>Public Relations/Practical Dispatch Code</strong>:</li>
-<li>Before any subagent can be launched for coding, the master agent must first assign <strong>R</strong> experts in the task area as executors according to this matrix.</li>
-<li><strong>Consultation (C) Protection Code</strong>:<ul>
-<li>When encountering difficult problems during the development process, you must take the initiative to initiate consultation with the <strong>C</strong> experts corresponding to the task area.</li>
-</ul>
-</li>
-<li><strong>Approval (A) Final Approval Rules</strong>:</li>
-<li>After the sub-agent submits the results, it must be reviewed and signed by the <strong>A</strong> expert in the corresponding field of the task in this matrix before integration by the main agent.</li>
+<li>派工前確認任務領域及唯一 <code>A</code>。</li>
+<li>指定 <code>R</code> 的檔案／問題範圍、禁止事項與證據輸出。</li>
+<li>API 結論標示來源、日期、build、revision 與不確定性。</li>
+<li>實作、靜態、Mock、PTR、Retail 狀態不得混用。</li>
+<li>修改 Markdown 後依規範同步 HTML，並掃描 <code>EAMCODE placeholder</code> 污染。</li>
+<li>合併或發布前由該領域唯一 <code>A</code> 簽收；P0 未關閉不得發布。</li>
 </ol>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -1141,7 +1373,7 @@
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -1150,7 +1382,7 @@
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

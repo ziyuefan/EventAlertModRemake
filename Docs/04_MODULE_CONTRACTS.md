@@ -189,23 +189,19 @@
 
 - 僅擁有法術冷卻緩存
 
-## Services/ShadowHostService
+## LegacyReference/Services/ShadowHostService（封存參考，不載入）
 
-輸入：
+狀態：
 
-- 暴風雪的原生 `EssentialCooldownViewer` 和 `Utility` 幀池狀態
-- 動態框架 `Acquire` 和 `Release` 掛鉤
-- 世界進入與再生狀態事件
+- 不列入 `EventAlertMod.toc`，不屬於正式執行期模組。
+- 原始研究碼保留於 `LegacyReference/Services/ShadowHostService.lua`，只供 CDM／FramePool 歷史決策追溯。
+- 正式包排除整個 `LegacyReference/`；Renderer 不查找或吸附 ShadowHost。
 
-輸出：
+封存原因：
 
-- 每個 spellID 映射活動主機圖示幀
-- 非戰鬥中本機幀的零污染不可見設定（Alpha = 0）
-
-狀態變更：
-
-- 僅擁有內部 spellID 到框架映射註冊表
-- 不得在戰鬥中修改安全屬性
+- 12.1 Native AuraContainer 架構不需要以 CooldownViewer 作為影子載體。
+- Hook 官方 frame pool、變更官方框架透明度與層級會擴大 taint、Forbidden 與版本漂移風險。
+- 流程驗證以 `EAM.Services.ShadowHostService == nil` 作為零載入契約。
 
 ## Services/ItemCooldownService
 
@@ -392,3 +388,74 @@
 狀態變更：
 
 - 除了瞬態字串產生器緩衝區之外沒有任何其他
+## Debug/FlowTestRunner
+
+輸入：
+
+- 使用者或 Offline Harness 指定的 `quick/core/boundary/all` suite。
+- EventRouter、Scheduler、SavedVariables、RuntimeProbe 公開 API。
+
+輸出：
+
+- 同步與非同步案例結果。
+- `EAM_FLOW_VALIDATION_REPORT` schema 1 JSON。
+- 最後一次 summary 與獨立 SavedVariable `EAM_FLOW_TEST_REPORT_JSON`。
+
+狀態變更：
+
+- 只擁有瞬時 test session 與最近報告。
+- 離線案例可暫時替換 `EAM.db`／`EAM_DB`，但必須以 `pcall` 保證還原；不得寫入真實 SavedVariables。
+- 不在背景或戰鬥中自動執行。
+
+## Debug/FlowTestPanel
+
+輸入：
+
+- 使用者按鈕或 `/eam test`。
+- FlowTestRunner report callback。
+
+輸出：
+
+- Quick／Core／Boundary／All 按鈕。
+- 可複製 JSON 與本地化摘要。
+
+狀態變更：
+
+- 只擁有 lazy UI 與 pendingOpen。
+- 戰鬥中不得首次建立；延後至 `PLAYER_REGEN_ENABLED`。
+
+## Tests/FlowValidationHarness
+
+輸入：
+
+- Lua 5.1、suite 與輸出路徑。
+
+輸出：
+
+- 直接載入正式模組後的離線 JSON 報告與 exit code。
+
+邊界：
+
+- 不列入 TOC 或正式發布包。
+- Mock 通過不得標記為 Retail／PTR 實機通過。
+
+## 2026-07-26：Native Aura 模組契約
+
+| 模組 | 輸入 | 輸出 | 禁止 |
+| --- | --- | --- | --- |
+| `AuraCapabilityService` | build/API surface | backend snapshot | 只看 TOC 判定 |
+| `AuraRuleCompiler` | 純設定 DB | stable runtime plan | AuraData/UI |
+| `AuraContainerService` | plan/revision | player/target containers | 戰鬥結構修改 |
+| `NativeAuraRenderer` | AuraButton callback | 綁定 Regions | Aura 狀態推導 |
+| `AuraSoundService` | sound rules | registration IDs | 讀 AuraData |
+
+Native 模式與 `AlertManager`／一般 `Renderer` 的契約是「零 Aura state 事件」。
+
+## 2026-07-27：Tooltip 監控 Popup 模組契約
+
+| 模組 | 輸入 | 輸出 | 禁止 |
+| --- | --- | --- | --- |
+| `Services/TooltipMonitorService` | `GameTooltip` post-call、`MODIFIER_STATE_CHANGED`、EAM Popup action | 安全 ID 顯示、脫戰五秒 scalar candidate、action 白名單、SavedVariables 公開 API 呼叫、匿名狀態計數 | 儲存 TooltipData/AuraData/Frame、保留戰鬥候選、讀 UnitAura payload、Hook Blizzard 點擊、模擬右鍵 |
+| `UI/TooltipMonitorMenu` | 服務提供的純 scalar candidate | 游標旁 EAM 自有視窗、監控類型按鈕、Aura／未解析 Macro 手動 ID | 直接寫 EAM_DB、secure action attribute、戰鬥中建立或顯示、保存 Blizzard frame |
+
+Tooltip callback 的責任只到「追加文字與更新 candidate」，不可直接開啟 UI；戰鬥中只可追加安全文字，不可更新 candidate。儲存路由固定如下：Spell → spell cooldown；Item → item cooldown；Aura → 使用者選 player／target；Macro → 只提供已安全解析的 spell/item，未解析時由使用者輸入 ID 並選類型。EAM 自有按鈕透過其 `OnClick` script 提交；只有 `added`／`updated` 由正式 `Options.notifyConfigChanged()` 統一刷新五個下游，`unchanged` 不刷新。

@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -950,34 +950,34 @@
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="warcraft-wiki-main-menu-three-level-traversal-notes">Warcraft Wiki Main Menu Three-Level Traversal Notes</h1>
-<p>This file complements the tree view of the <code>Main Menu</code> on the left side of the <code>API_change_summaries</code> page.</p>
-<p>The goal is not to copy the entire site content, but to establish the navigation index required for EAM Retail server rewriting:</p>
+<h1 id="wiki">魔獸爭霸 Wiki 主選單 三層遍歷筆記</h1>
+<p>本文件補足 <code>API_change_summaries</code> 頁面左側 <code>Main Menu</code> 的樹狀瀏覽。</p>
+<p>目標不是複製整站內容，而是建立EAM正式服重寫所需的導覽索引：</p>
 <ul>
-<li>First level: <code>Main Menu</code> entrance.</li>
-<li>Second level: the main classification or index direction of the entrance page.</li>
-<li>The third layer: represents the API/archive page.</li>
-<li>Level 4: Practical conclusion with EAM rewrite.</li>
+<li>第一層：<code>Main Menu</code> 入口。</li>
+<li>第二層：入口頁面的主要分類或索引方向。</li>
+<li>第三層：代表API /檔案頁。</li>
+<li>第四層：與 EAM rewrite 的實踐結論。</li>
 </ul>
-<h2 id="source-entry">Source entry</h2>
+<h2 id="_1">來源入口</h2>
 <ul>
-<li>https://EAMCODE_0__.wiki.gg/wiki/WoW_API</li>
-<li>https://EAMCODE_0__.wiki.gg/wiki/Lua_functions</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/FrameXML_functions</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/Widget_API</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/Widget_script_handlers</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/XML_schema</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/Events</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/Console_variables</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/Macro_commands</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/Combat_Log</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/COMBAT_LOG_EVENT_UNFILTERED</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/UI_escape_sequences</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/Hyperlinks</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/API_change_summaries</li>
-<li>https://EAMCODE_4__.wiki.gg/wiki/HOWTOs</li>
+<li>https://EAMCODE_3__.wiki.gg/wiki/WoW_API</li>
+<li>https://EAMCODE_3__.wiki.gg/wiki/Lua_functions</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/FrameXML_functions</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Widget_API</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Widget_script_handlers</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/XML_schema</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Events</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Console_variables</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Macro_commands</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Combat_Log</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/COMBAT_LOG_EVENT_UNFILTERED</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/UI_escape_sequences</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Hyperlinks</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_change_summaries</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/HOWTOs</li>
 </ul>
-<h2 id="tree-overview">Tree overview</h2>
+<h2 id="_2">樹概述</h2>
 <pre class="codehilite"><code class="language-text">Warcraft Wiki Main Menu
 ├─ WoW API
 │  ├─ API systems
@@ -1171,10 +1171,10 @@
       └─ not an authoritative Retail 12.x runtime contract
 </code></pre>
 
-<h2 id="eam-implementation-orientation-summary">EAM Implementation Orientation Summary</h2>
+<h2 id="eam">EAM 實施導向摘要</h2>
 <h3 id="wow-api">WoW API</h3>
-<p><code>WoW API</code> is the main runtime API entry. EAM rewrite should preferentially find the corresponding namespace from the API system instead of retaining the old global wrapper.</p>
-<p>Three important layers:</p>
+<p><code>WoW API</code> 是主要運行時 API 入口。 EAM rewrite 應優先從 API 系統找到對應的命名空間，而不是保留舊的全域包裝器。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">WoW API
 ├─ API systems
 │  ├─ C_UnitAuras
@@ -1189,15 +1189,15 @@
 │     └─ boundary checks
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>12.x is only used in the Retail server <code>C_*</code> namespace.</li>
-<li><code>C_Secrets</code> should be encapsulated centrally and do not scatter each UI function.</li>
-<li><code>C_TooltipInfo</code> is a fallback source, not a hot path source of truth.</li>
+<li>12.x 只用於正式服 <code>C_*</code> 命名空間。</li>
+<li><code>C_Secrets</code>應集中封裝，不要散去每個UI功能。</li>
+<li><code>C_TooltipInfo</code> 是後備資料來源，而非熱路徑事實來源。</li>
 </ul>
 <h3 id="lua-api">Lua API</h3>
-<p><code>Lua API</code> Description WoW uses a Lua 5.1 subset and lacks the operating system/archive I/O library.</p>
-<p>Three important layers:</p>
+<p><code>Lua API</code> 說明 WoW 使用 Lua 5.1 子集，且缺少作業系統/檔案 I/O 函式庫。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">Lua API
 ├─ basic functions
 │  ├─ pcall / xpcall
@@ -1212,15 +1212,15 @@
 │  └─ table.isfrozen
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li><code>string.match</code> is not available when using secret derivative tooltip text for which security has not been confirmed.</li>
-<li>Hot path avoidance of transient tables, <code>table.insert</code>, massive <code>pairs</code>.</li>
-<li><code>table.freeze</code> is only used for immutable constants.</li>
+<li><code>string.match</code> 在未確認安全性的秘密衍生性工具提示文字時不可用。</li>
+<li>熱路徑避免瞬態表、<code>table.insert</code>、大量<code>pairs</code>。</li>
+<li><code>table.freeze</code> 只用於不可變常數。</li>
 </ul>
 <h3 id="framexml-api">FrameXML API</h3>
-<p><code>FrameXML function</code> contains UI helper, pool, EventUtil, TooltipUtil, LinkUtil, etc.</p>
-<p>Three important layers:</p>
+<p><code>FrameXML 函數</code> 包含 UI helper、pool、EventUtil、TooltipUtil、LinkUtil 等。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">FrameXML API
 ├─ Mixins / pools
 │  ├─ CreateFramePool
@@ -1235,15 +1235,15 @@
    └─ Toggle*Frame
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>EAM's <code>UI/IconPool.lua</code> can refer to the Blizzard mining pool mode.</li>
-<li>Do not call functions that toggle protected panels during combat.</li>
-<li>TooltipUtil can be used as a reference, but tooltip parsing must be low-frequency and secretly secure.</li>
+<li>EAM 的 <code>UI/IconPool.lua</code> 可以參考暴雪礦池模式。</li>
+<li>請勿在戰鬥中呼叫會切換受保護面板的函數。</li>
+<li>TooltipUtil 可作參考，但工具提示解析必須低頻且秘密安全。</li>
 </ul>
-<h3 id="gadget-api-gadget-script">Gadget API / Gadget Script</h3>
-<p><code>Widget API</code> and <code>Widget script handlers</code> are the basis of the EAM renderer, EventRouter, and scheduler.</p>
-<p>Three important layers:</p>
+<h3 id="api">小工具 API / 小工具腳本</h3>
+<p><code>Widget API</code> 和 <code>Widget script handlers</code> 是 EAM 渲染器、EventRouter、調度器的基礎。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">Widget API
 ├─ Frame
 │  ├─ RegisterEvent
@@ -1270,16 +1270,16 @@
    └─ OnEnterPressed / OnEscapePressed
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li><code>RegisterAllEvents</code> only applies to debug/datamining, not the EAM runtime.</li>
-<li>EAM should have only one EventRouter <code>OnEvent</code>.</li>
-<li>EAM should have only one scheduler <code>OnUpdate</code>.</li>
-<li><code>Cooldown</code> should inherit <code>DurationObject</code> and don't let Lua count seconds per frame.</li>
+<li><code>RegisterAllEvents</code> 只適合 debug/datamining，不適合 EAM 運行時。</li>
+<li>EAM 只應有一個 EventRouter <code>OnEvent</code>。</li>
+<li>EAM 只應有一個排程器 <code>OnUpdate</code>。</li>
+<li><code>Cooldown</code>應承接<code>DurationObject</code>，不要讓Lua每幀算秒。</li>
 </ul>
-<h3 id="xml-architecture">XML Architecture</h3>
-<p><code>XML schema</code> Description XML can build UI, but the Lua Widget API can also do most things.</p>
-<p>Three important layers:</p>
+<h3 id="xml">XML 架構</h3>
+<p><code>XML schema</code> 說明 XML 可以建立 UI，但 Lua Widget API 也可以做大部分事情。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">XML schema
 ├─ Ui
 │  ├─ Include
@@ -1294,15 +1294,15 @@
    └─ Scripts
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>The new architecture can retain the simple XML loader, but the execution time graph should break <code>IconPool</code>.</li>
-<li>Avoid creating a large number of global frame names in XML.</li>
-<li>Avoid XML <code>OnUpdate</code>.</li>
+<li>新架構可保留簡單的 XML 載入程序，但執行時間圖示應破解 <code>IconPool</code>。</li>
+<li>避免在XML內建立大量全域框架名稱。</li>
+<li>避免XML <code>OnUpdate</code>。</li>
 </ul>
-<h3 id="activities">Activities</h3>
-<p><code>Events</code> / <code>Category:API events</code> is the event source for EventRouter.</p>
-<p>Three important layers:</p>
+<h3 id="_3">活動</h3>
+<p><code>Events</code> / <code>Category:API events</code> 是 EventRouter 的事件來源。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">Events
 ├─ UNIT_AURA
 │  ├─ unitTarget
@@ -1318,15 +1318,15 @@
    └─ PLAYER_REGEN_ENABLED
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li><code>UNIT_AURA</code> incremental data is the core entry of AuraService.</li>
-<li>After deleting the Halo instance ID, the complete Halo cannot be found anymore. The service must first cache the security summary.</li>
-<li>Out-of-combat refresh is the arrangement point for border restriction status.</li>
+<li><code>UNIT_AURA</code>增量資料是AuraService核心入口。</li>
+<li>刪除了光環實例ID無法再查出完整的光環，服務要先快取安全摘要。</li>
+<li>脫戰刷新是邊界限制狀態的安排點。</li>
 </ul>
 <h3 id="cvar">CVar</h3>
-<p><code>Console Variables</code> Description CVar can be managed using <code>GetCVar</code> / <code>SetCVar</code> / <code>/console</code>. Some safe CVars cannot be modified in combat.</p>
-<p>Three important layers:</p>
+<p><code>控制台變數</code> 說明 CVar 可以用 <code>GetCVar</code> / <code>SetCVar</code> / <code>/console</code> 管理，部分安全 CVar 不能在戰鬥中修改。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">CVars
 ├─ query
 │  ├─ GetCVar
@@ -1340,15 +1340,15 @@
    └─ cvar_reset
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>EAM cannot rely on CVar to complete the function.</li>
-<li>Secret mandatory CVars should only be placed on instant verification lists.
--Do not modify safety CVar in combat.</li>
+<li>EAM 無法依賴改 CVar 完成功能。</li>
+<li>秘密強制CVars只應放即時驗證清單。
+-不在戰鬥中修改安全CVar。</li>
 </ul>
-<h3 id="macro-command">Macro command</h3>
-<p><code>Macro commands</code> are divided into character, combat and other commands.</p>
-<p>Three important layers:</p>
+<h3 id="_4">巨集命令</h3>
+<p><code>巨集指令</code>分為字元、戰鬥等指令。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">Macro commands
 ├─ character commands
 ├─ combat commands
@@ -1361,15 +1361,15 @@
    └─ /eam export
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>EAM slash commands can only be used for setting, detecting, debugging, and exporting.</li>
-<li>No added combat automation.</li>
-<li>Does not produce cast/use/cancelaura type behavior.</li>
+<li>EAM 斜線指令只能進行設定、探測、偵錯、匯出。</li>
+<li>不增加戰鬥自動化。</li>
+<li>不產生cast/use/cancelaura類行為。</li>
 </ul>
-<h3 id="battle-log">Battle Log</h3>
-<p><code>Combat Log</code> / <code>COMBAT_LOG_EVENT_UNFILTERED</code> was historically a common source of AddOn, but 12.x targets with the EAM rewrite cannot rely on blind scanning.</p>
-<p>Three important layers:</p>
+<h3 id="_5">戰鬥日誌</h3>
+<p><code>Combat Log</code> / <code>COMBAT_LOG_EVENT_UNFILTERED</code> 是歷史上常見的 AddOn 資料來源，但 12.x 目標與 EAM 重寫無法依賴盲掃。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">Combat Log
 ├─ Combat Log window / file
 ├─ COMBAT_LOG_EVENT_UNFILTERED
@@ -1383,15 +1383,15 @@
    └─ use event services instead
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>EAM in 12.x does not use CLEU as the primary source for the Aura /cooldown.</li>
-<li>Only refer to it when necessary when debugging or checking non-hot paths.</li>
-<li>No WeakAura-like combat parser built.</li>
+<li>12.x 的 EAM 不以 CLEU 作為光環/cooldown 主要來源。</li>
+<li>僅在必要時除錯或非熱路徑檢查時參考。</li>
+<li>未建立類似WeakAura的戰鬥解析器。</li>
 </ul>
-<h3 id="escape-sequenceshyperlinks">Escape sequences/hyperlinks</h3>
-<p><code>UI escape strings</code> and <code>Hyperlinks</code> are risk areas for debugging text, tooltips, and importing /export.</p>
-<p>Three important layers:</p>
+<h3 id="_6">轉義序列/超鏈接</h3>
+<p><code>UI escape strings</code> 和 <code>Hyperlinks</code> 是偵錯文字、工具提示、匯入/export 的風險區。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">Escape sequences
 ├─ color
 ├─ texture
@@ -1412,15 +1412,15 @@
    └─ debug-safe export
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>import/export is not suitable for parsing secretly exported hyperlink text.</li>
-<li>Tooltip spellID/itemID Display may be preserved, but must be separated from execution time facts.</li>
-<li>Debugging the need to escape pipe/hyperlink text when exporting.</li>
+<li>import/export 不宜解析秘密匯出的超連結文字。</li>
+<li>工具提示 spellID/itemID 顯示可以保留，但必須和執行時間事實分開。</li>
+<li>偵錯匯出要轉義管道/超連結類文字。</li>
 </ul>
-<h3 id="api-change">API Change</h3>
-<p><code>API Change Summary</code> is the version tracking entry.</p>
-<p>Three important layers:</p>
+<h3 id="api_1">API 更改</h3>
+<p><code>API變更摘要</code>是版本追蹤入口。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">API changes
 ├─ Retail
 │  ├─ 12.0.0
@@ -1439,15 +1439,15 @@
    └─ live validation targets
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>The Retail server patch needs to recheck the 12.x API changes.</li>
-<li>12.0.7 API abstract has been released; still needs to be verified with real machine verification to confirm EAM behavior.</li>
-<li>formatter/duration/table.freeze for 12.0.5 has been written to <code>Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md</code>.</li>
+<li>正式服補丁要重新檢查 12.x API 變更。</li>
+<li>12.0.7 API 摘要已發佈；仍需以實機驗證確認 EAM 行為。</li>
+<li>12.0.5 的 formatter/duration/table.freeze 已寫入 <code>Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md</code>。</li>
 </ul>
-<h3 id="operation-guide">Operation Guide</h3>
-<p><code>HOWTOs</code> is a tutorial page index, suitable as a reference for UI operations, but is not the Retail 12.x API contract.</p>
-<p>Three important layers:</p>
+<h3 id="_7">操作指南</h3>
+<p><code>HOWTOs</code> 是教學頁面索引，適合作為 UI 操作參考，但不是 Retail 12.x API 合約。</p>
+<p>重要三層：</p>
 <pre class="codehilite"><code class="language-text">HOWTOs
 ├─ Getting Started
 │  ├─ Introduction to Lua
@@ -1461,27 +1461,27 @@
    └─ avoid example-grade hot path code
 </code></pre>
 
-<p>Conclusion:</p>
+<p>結論：</p>
 <ul>
-<li>Please refer to the drag box implementation.</li>
-<li>Do not copy closure-heavy examples directly into the runtime hot path.</li>
-<li>Options UI can be kept simple and avoid WeakAura like systems.</li>
+<li>可參考拖曳框實作。</li>
+<li>不要直接複製閉包重的範例到運行時熱路徑。</li>
+<li>選項 UI 可以保留簡單，避免 WeakAura 之類的系統。</li>
 </ul>
-<h2 id="follow-up-suggestions-for-eam-docs">Follow-up suggestions for EAM Docs</h2>
+<h2 id="eam-docs">對 EAM Docs 的後續建議</h2>
 <ul>
-<li><code>Docs/01_ARCHITECTURE.md</code> can be added to this file as an API tour.</li>
-<li><code>Docs/02_RETAIL_API_BOUNDARIES.md</code> should refer to <code>WoW API</code>, <code>C_Secrets</code>, <code>Events</code>, <code>Widget API</code>.</li>
-<li><code>Docs/05_PERFORMANCE_GUIDE.md</code> should refer to <code>WidgetScript</code>, <code>Lua API</code>, <code>Frame:RegisterAllEvents</code>.</li>
-<li><code>Docs/06_TEST_PLAN_RETAIL.md</code> should be added to <code>CVar</code> to enforce confidentiality testing and <code>API change</code> version tracking.</li>
+<li><code>Docs/01_ARCHITECTURE.md</code>可加入本文件作為API導覽。</li>
+<li><code>Docs/02_RETAIL_API_BOUNDARIES.md</code>應引用<code>WoW API</code>、<code>C_Secrets</code>、<code>Events</code>、<code>Widget API</code>。</li>
+<li><code>Docs/05_PERFORMANCE_GUIDE.md</code>應引用<code>Widget腳本</code>、<code>Lua API</code>、<code>Frame:RegisterAllEvents</code>。</li>
+<li><code>Docs/06_TEST_PLAN_RETAIL.md</code>應加入<code>CVar</code>強制保密測試與<code>API變更</code>版本追蹤。</li>
 </ul>
-<h2 id="traversal-restrictions">Traversal restrictions</h2>
+<h2 id="_8">遍歷限制</h2>
 <ul>
-<li>This time is static file browsing, not full site mirroring.</li>
-<li><code>wowuidev</code> appears as a portal in the main menu, but this query did not find a new page that is independent and can be used as a Retail 12.x execution time contract; it is only kept as a background portal.</li>
-<li><code>12.0.7/API_changes</code> found; this file is only for navigation index and does not replace the detailed organization of <code>Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md</code>.</li>
+<li>本次是靜態文件瀏覽，不是全站鏡像。</li>
+<li><code>wowuidev</code> 在主選單中以入口出現，但本查詢未找到獨立、可作為 Retail 12.x 執行時間合約的新版頁面；只保留為背景入口。</li>
+<li><code>12.0.7/API_changes</code> 已找到；本文件僅作導覽索引，不取代 <code>Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md</code> 的詳細整理。</li>
 </ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -1497,7 +1497,7 @@
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -1506,7 +1506,7 @@
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

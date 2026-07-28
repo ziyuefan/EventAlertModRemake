@@ -77,6 +77,7 @@ local canAccessValue = canaccessvalue or function() return true end
 local isSecretValue = issecretvalue or function() return false end
 local isSecretTable = issecrettable or function() return false end
 local hasAnySecretValues = hasanysecretvalues or function() return false end
+local mathHuge = math.huge
 
 function Util.canAccessTable(value)
     if canAccessTable then
@@ -113,16 +114,70 @@ function Util.hasAnySecretValues(value)
     return false
 end
 
+function Util.isSafeValue(value)
+    if value == nil then
+        return true
+    end
+    if Util.isSecretValue(value) or not Util.canAccessValue(value) then
+        return false
+    end
+    return true
+end
+
+function Util.isSafeNumber(value)
+    if not Util.isSafeValue(value) or type(value) ~= "number" then
+        return false
+    end
+    return value == value and value ~= mathHuge and value ~= -mathHuge
+end
+
+function Util.isSafePositiveNumber(value)
+    return Util.isSafeNumber(value) and value > 0
+end
+
+function Util.isSafeNonNegativeNumber(value)
+    return Util.isSafeNumber(value) and value >= 0
+end
+
+function Util.isSafeString(value)
+    return Util.isSafeValue(value) and type(value) == "string"
+end
+
+function Util.isSafeBoolean(value)
+    return Util.isSafeValue(value) and type(value) == "boolean"
+end
+
+function Util.isSafeTableKey(value)
+    if not Util.isSafeValue(value) then
+        return false
+    end
+    local valueType = type(value)
+    return valueType == "string" or valueType == "number" or valueType == "boolean"
+end
+
+function Util.isReadableTable(value)
+    if value == nil or Util.isSecretValue(value) or Util.isSecretTable(value) then
+        return false
+    end
+    if not Util.canAccessTable(value) or Util.hasAnySecretValues(value) then
+        return false
+    end
+    return type(value) == "table"
+end
+
 -- Warning string cache to eliminate runtime string concatenation GC churn
 local warningStringCache = {}
 
 function Util.appendBoundaryWarning(warnings, code, field)
-    if not warnings or not code then
+    if not warnings or not Util.isSafeString(code) then
         return
     end
 
-    if field then
-        local key = code .. ":" .. tostring(field)
+    if field ~= nil then
+        if not Util.isSafeString(field) then
+            return
+        end
+        local key = code .. ":" .. field
         local cached = warningStringCache[key]
         if not cached then
             cached = key
@@ -158,7 +213,7 @@ function Util.readSafeScalar(value, warnings, warningCode, field)
         return nil, true
     end
 
-    if Util.isSecretValue(value) or not Util.canAccessValue(value) then
+    if not Util.isSafeValue(value) then
         Util.appendBoundaryWarning(warnings, warningCode, field)
         return nil, false
     end
@@ -167,12 +222,13 @@ function Util.readSafeScalar(value, warnings, warningCode, field)
 end
 
 function Util.readSafeField(source, key, warnings, warningCode)
-    if not source or type(source) ~= "table" then
+    if source == nil or not Util.isReadableTable(source) then
+        Util.appendBoundaryWarning(warnings, warningCode or EAM.Constants.BOUNDARY_TABLE_RESTRICTED, "table")
         return nil, false
     end
 
-    if not Util.canAccessTable(source) then
-        Util.appendBoundaryWarning(warnings, warningCode or EAM.Constants.BOUNDARY_TABLE_RESTRICTED, "table")
+    if not Util.isSafeTableKey(key) then
+        Util.appendBoundaryWarning(warnings, warningCode or EAM.Constants.BOUNDARY_SECRET_VALUE, "key")
         return nil, false
     end
 

@@ -101,6 +101,10 @@ function IconPool.acquire()
         return icon
     end
 
+    if api.InCombatLockdown and api.InCombatLockdown() then
+        return nil, "combatPoolExhausted"
+    end
+
     return createIcon()
 end
 

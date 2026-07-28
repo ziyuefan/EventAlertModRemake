@@ -64,6 +64,9 @@ local soundAssets = {
 
 -- 延遲加載通知
 function Options.notifyConfigChanged()
+    if EAM.Services.AuraContainerService and EAM.Services.AuraContainerService.requestRebuild then
+        EAM.Services.AuraContainerService.requestRebuild("OPTIONS_CONFIG_CHANGED")
+    end
     if EAM.Services.AuraService and EAM.Services.AuraService.refreshAll then
         EAM.Services.AuraService.refreshAll("OPTIONS_CONFIG_CHANGED")
     end
@@ -77,6 +80,21 @@ function Options.notifyConfigChanged()
     if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
         EAM.UI.Renderer.requestLayout()
     end
+end
+
+function Options.refreshAuraBackendStatus()
+    if not Options.nativeAuraStatusLabel then
+        return
+    end
+    local service = EAM.Services.AuraContainerService
+    local status = service and service.getStatus and service.getStatus() or nil
+    local backend = status and status.backend or EAM.Constants.AURA_BACKEND_UNSUPPORTED
+    local suffix = status and status.pending
+        and (EAM.L.EAM_OPT_AURA_PENDING or "（等待脫戰）")
+        or ""
+    Options.nativeAuraStatusLabel:SetText(
+        (EAM.L.EAM_OPT_AURA_BACKEND or "Aura 後端: ") .. tostring(backend) .. suffix
+    )
 end
 
 -- 取得當前類別對應的 alert list
@@ -299,6 +317,9 @@ local function createCheckbox(parent, text, key, x, y, onChange)
     cb:SetScript("OnClick", function(self)
         if EAM.db and EAM.db.config then
             EAM.db.config[key] = self:GetChecked()
+            if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+                EAM.Modules.SavedVariables.markRevisionChanged()
+            end
             if onChange then
                 onChange(self:GetChecked())
             end
@@ -506,7 +527,11 @@ local function createFrame()
         menuBtn:SetScript("OnClick", function()
             if EAM.db and EAM.db.config then
                 EAM.db.config.soundName = sName
+                if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+                    EAM.Modules.SavedVariables.markRevisionChanged()
+                end
                 soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. sName)
+                Options.notifyConfigChanged()
             end
             soundMenu:Hide()
         end)
@@ -537,7 +562,24 @@ local function createFrame()
     createCheckbox(inner, EAM.L.EAM_OPT_SHOW_DK_RUNE or "顯示 DK 符文提醒", "showDKRune", 180, -226)
     
     createCheckbox(inner, EAM.L.EAM_OPT_ENABLE_ITEM_CD or "啟用物品冷卻監控", "enableItemCooldown", 12, -254)
-    createCheckbox(inner, EAM.L.EAM_OPT_ENABLE_CDM or "吸附官方冷卻監控(CDM)", "enableCDM", 180, -254)
+    local nativeAuraStatusLabel = inner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    nativeAuraStatusLabel:SetPoint("TOPLEFT", inner, "TOPLEFT", 180, -250)
+    nativeAuraStatusLabel:SetWidth(112)
+    nativeAuraStatusLabel:SetJustifyH("LEFT")
+    Options.nativeAuraStatusLabel = nativeAuraStatusLabel
+
+    local nativeAuraRebuildButton = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    nativeAuraRebuildButton:SetSize(54, 20)
+    nativeAuraRebuildButton:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -8, -246)
+    nativeAuraRebuildButton:SetText(EAM.L.EAM_OPT_AURA_REBUILD or "重建")
+    nativeAuraRebuildButton:SetScript("OnClick", function()
+        local service = EAM.Services.AuraContainerService
+        if service and service.requestRebuild then
+            service.requestRebuild("OPTIONS_MANUAL_REBUILD")
+        end
+        Options.refreshAuraBackendStatus()
+    end)
+    Options.refreshAuraBackendStatus()
 
     -- 6 個類別按鈕 (物品冷卻獨立分類，排版壓縮至 32px 以容納第 6 個按鈕而不重疊)
     -- 7 個類別按鈕 (地面效果獨立為第 6 分類，滑桿與能量設定改為第 7 分類)
@@ -573,16 +615,24 @@ local function createFrame()
         end)
     end
 
-    -- 底部關閉按鈕與除錯診斷按鈕並排
-    createRedButton(inner, EAM.L.EAM_OPT_CLOSE_BTN or "關閉設定 (Close)", 12, -490, 160, 36, function()
+    -- 底部操作按鈕：關閉、診斷、流程驗證
+    createRedButton(inner, EAM.L.EAM_OPT_CLOSE_BTN or "關閉設定 (Close)", 12, -490, 104, 36, function()
         frame:Hide()
     end)
 
-    createRedButton(inner, EAM.L.EAM_OPT_DEBUG_BTN or "除錯診斷 (Debug)", 184, -490, 160, 36, function()
+    createRedButton(inner, EAM.L.EAM_OPT_DEBUG_BTN or "除錯診斷 (Debug)", 122, -490, 104, 36, function()
         if EAM.Debug.PromptExport and EAM.Debug.PromptExport.openWindow then
             EAM.Debug.PromptExport.openWindow()
         else
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_DEBUG_NOT_LOADED or "除錯診斷模組尚未加載！"))
+        end
+    end)
+
+    createRedButton(inner, EAM.L.EAM_OPT_FLOW_TEST_BTN or "流程測試", 232, -490, 112, 36, function()
+        if EAM.Debug.FlowTestPanel and EAM.Debug.FlowTestPanel.open then
+            EAM.Debug.FlowTestPanel.open()
+        else
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_FLOW_STATUS_UNAVAILABLE or "流程測試模組尚未載入。"))
         end
     end)
 
@@ -1676,6 +1726,7 @@ function Options.open()
             local soundName = EAM.db.config.soundName or "ShayBell"
             Options.soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. soundName)
         end
+        Options.refreshAuraBackendStatus()
     end
 end
 

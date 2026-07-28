@@ -57,7 +57,10 @@ function Main.initialize()
         end
     end
 
+    initializeModule(EAM.Services.AuraCapabilityService, "AuraCapabilityService")
     initializeModule(EAM.UI.Renderer, "Renderer")
+    initializeModule(EAM.UI.TooltipMonitorMenu, "TooltipMonitorMenu")
+    initializeModule(EAM.Services.TooltipMonitorService, "TooltipMonitorService")
     initializeModule(EAM.Managers.AlertManager, "AlertManager")
     initializeModule(EAM.Services.SpellInfoService, "SpellInfoService")
     initializeModule(EAM.Services.AuraService, "AuraService")
@@ -66,6 +69,7 @@ function Main.initialize()
     initializeModule(EAM.Services.ClassPowerService, "ClassPowerService")
     initializeModule(EAM.Services.GroundEffectService, "GroundEffectService")
     initializeModule(EAM.Services.TotemService, "TotemService")
+    initializeModule(EAM.Services.AuraContainerService, "AuraContainerService")
 
     -- 啟動初始刷新，採用 pcall 故障隔離，防範單一服務崩潰卡死全盤
     if EAM.Services.AuraService then

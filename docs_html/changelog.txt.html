@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -72,8 +72,8 @@
         color: var(--accent-color);
         text-decoration: none;
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -89,7 +89,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -99,7 +99,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -109,25 +109,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -135,12 +135,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -152,24 +152,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -178,23 +178,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -232,7 +232,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -273,7 +273,19 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
         <h1>changelog.txt</h1>
-        <pre><code>-- [Retail  12.1.0  ]2026.06.09
+        <pre><code>-- [Retail  12.1.0 Alpha]2026.07.28
+	-- 12.1 Native AuraContainer：
+	   -- 12.1 使用 Blizzard AuraContainer／AuraButton 建立 player、target 與 group 穩定容器。
+	   -- Native backend 不讀取 UNIT_AURA Secret payload，也不建立舊式 AuraState；12.0.7 保留 Legacy backend。
+	-- GameTooltip ID 與 EAM 自製監控選單：
+	   -- 顯示可安全取得的法術、物品與巨集 ID；光環 ID 優先交由 Blizzard CVar 顯示。
+	   -- 非戰鬥中以精確 Ctrl+Alt 開啟 Popup Menu，依來源路由至法術、光環、物品或巨集對應監控清單。
+	   -- 不攔截右鍵、不 Hook Blizzard secure 點擊路徑，無法安全判定時降級為手動輸入。
+	-- 流程驗證與本機環境防護：
+	   -- 新增離線流程驗證、遊戲內流程測試面板、JSON 報告匯入與本機 WoW patch train／SymbolicLink 檢查。
+	   -- 本版定位為 Alpha；離線 mock 通過不代表 12.1 PTR 實機簽收。
+
+-- [Retail  12.1.0  ]2026.06.09
 	-- 零分配與事件驅動全模組架構重構（完全數據與視圖解耦）：
 	   -- 徹底重構解耦 AuraService、CooldownService、ItemCooldownService、GroundEffectService 與 TotemService 五大數據服務。
 	   -- 五大服務全面改為事件驅動，不再與 Renderer 渲染引擎直接耦合，而是向 EventRouter 拋出 `EAM_*_STATE_CHANGED` 事件。
@@ -343,7 +355,7 @@
 -- [Classic MOP    ]2025.11.26
 -- [Retail  TWW    ]2025.11.26
 	-- 新增俄語，感謝 ZamestoTV 大大協助翻譯。(https://legacy.curseforge.com/members/zamestotv/projects)
-	
+
 -- [Classic MOP    ]2025.11.11
 -- [Retail  TWW    ]2025.11.11
 	--微調顯示秒數小數點進位顯示方式:經典服改用ceil(timeLeft,0);正式服改用floor(timeLeft,0)
@@ -354,8 +366,8 @@
 	--修正:MOP內目標框架上的光環提示已能顯示法術ID
 	--光環數值依照語系不同，中文10000以上會以&quot;万&quot;或&quot;萬&quot;顯示
 		;其他語系則1000以上以 K 顯示，百萬以上以 M 顯示.
-	
-	
+
+
 -- [Classic MOP    ]2025.11.05
 -- [Retail  TWW    ]2025.11.05
 	--增減益光環細項設定增加光環數值顯示，可以自選需求索引及設定標籤(如吸收、報擊)
@@ -363,7 +375,7 @@
 	--更新頻率參考FPS由60FPS改成30FPS,避免過早降低頻率造成秒數更新不準確
 	--新增圖示名稱、倒數、層數字體滑條調整選項，並將調整數字以綠色顯示｝
 	--若倒數選擇框內顯示、此時又有層數時，會將倒數的右下角對齊層數左上角，避免遮擋
-	
+
 -- [Classic MOP    ]2025.10.26
 -- [Retail  TWW    ]2025.10.26
 	--降低偵測物品冷卻時性能開銷。
@@ -384,7 +396,7 @@
 
 -- [Retail  TWW    ]2025.10.03
 -- [Classic MOP    ]2025.10.03
-   -- 增加函數耗時紀錄，並於遊戲內以/tinspect _G.EventAlertMod.TEST 進行觀察    
+   -- 增加函數耗時紀錄，並於遊戲內以/tinspect _G.EventAlertMod.TEST 進行觀察
    -- 增加DK符文列開關
    -- 持續優化改善
 
@@ -394,7 +406,7 @@
 	2.PostionFrame 更新頻率改為1秒
 	3.秒數監測由PositionFrame移動到OnUpdate,並依照每個法術剩餘秒數狀台決定是否繼續,避免大量重複呼叫
 	4.增加防止重入機制
-	
+
 -- [Retail  TWW    ]2025.3.16
 -- 將冷卻相關選項移動到設定視窗直接做勾選
 -- 增加 /eam ExportClassToDef (可簡短為/eam ECTD)
@@ -410,13 +422,13 @@
 -- [Retail  TWW    ]2025.1.10
 -- [Classic CATA   ]2025.1.10
 -- 持續優化
--- 
+--
 
 -- [Retail  TWW    ]2025.1.9
 -- [Classic CATA   ]2025.1.9
 -- 更新API以支援TWW及CATA
 -- 調整更新頻率為0.75秒,剩餘時間低於1秒才改為更新頻率0.09秒, 減少觸發ONUPDATE事件佔用過多CPU時間
--- 
+--
 
 -- [Retail  DF    ]2023.03.23
 -- [Classic WOTLKC]2023.03.23
@@ -558,14 +570,14 @@
    可配合手動施放寵物傷害技能時,最大化傷害.
 -- FontObject(EA_FONT_OBJECT) 儘可能以&quot;TextStatusBarText&quot;為主,
    否則以&quot;ChatFontNoramal&quot;為主
--- Font (EA_Fonts) 拉取系統預設值 STANDARD_TEXT_FONT, 
+-- Font (EA_Fonts) 拉取系統預設值 STANDARD_TEXT_FONT,
    以/dump STANDARD_TEXT_FONT 可能因語系出現不同標準字型檔
--- 以上兩項可於 EventAlertMod_InitVar.lua進行修改  
--- 將大部分框架層級由HIGH降至MEDIUM ,嘗試減少與其他框架遮擋現象 
+-- 以上兩項可於 EventAlertMod_InitVar.lua進行修改
+-- 將大部分框架層級由HIGH降至MEDIUM ,嘗試減少與其他框架遮擋現象
 -- 圖示大小每次滑動調整值由5改為1
 -- 當偵測OmniCC被載入且EAM也啟用倒數陰影功能時, 強制關閉EAM的倒數陰影
-   避免被OmniCC攔截顯示造成干擾   
-   
+   避免被OmniCC攔截顯示造成干擾
+
 ----------------------------
 -- [SL] 2020.10.18
 ----------------------------
@@ -602,7 +614,7 @@
 -- 修改非光環式地面效果的比對PATTERN使之可以在PTR比對到
     例如:116011(主動力之符文)、342130(被動力之符文)
     (註:這類效果需要在自身增減益輸入施法ID,而非BUFF ID,須特別注意)
-	
+
 ----------------------------
 -- [SL] 2020.08.16
 ----------------------------
@@ -619,7 +631,7 @@
 -- 更新版本號到8.2
 -- 修復:由於播放音效API不再支援PATH形式,所以產生錯誤
         目前全都到https://wow.tools/files/ 找到對應ID代入
-		
+
 ----------------------------
 -- [BFA] 2019.06.07
 ----------------------------
@@ -655,7 +667,7 @@
 -- 修復非光環式技能會顯示到自身以外玩家的問題
 -- 修復堆疊數字閃爍問題
    (可在EventAlert_IconOption.lua內找到EventAlert_Icon_Options_Frame_AdjustTimerFontSize來修改比例)
-   
+
 ----------------------------
 -- [BFA] 2018.09.29
 ----------------------------
@@ -674,17 +686,17 @@
 -- 支援無光環之技能持續秒數,請在本職業提示模組輸入&quot;技能法術ID&quot;
    程式會自動抓取技能提示內的持續時間,若抓取不到,請查閱修改localization.tw.lua內
    的EA_XCMD_SPELL_DURATION_PATTERN1, EA_XCMD_SPELL_DURATION_PATTERN2的正則表達式
-   
+
    例如暴風雪(190356),鏡像(55342),冰霜之球(84714),力之符文(116011)等等
    P.S. 116011是符文持續時間,116014是在符文有效範圍內才會出現的BUFF
-   
+
 ----------------------------
 -- [BFA] 2018.08.25
 ----------------------------
 -- 新增指令 /eam NewLineByIconCount (2~n)
 	在冷卻模組部份,每隔多少圖示自動跳到下一列
--- 新增指令 /eam UpdateInterval 
-   控制OnUpdate頻率 , 超過0.1秒則小數點顯示會不正常, 但是較不會延遲   
+-- 新增指令 /eam UpdateInterval
+   控制OnUpdate頻率 , 超過0.1秒則小數點顯示會不正常, 但是較不會延遲
 -- 一些特殊指令會在設定圖示的滑鼠提示顯示
 
 ----------------------------
@@ -714,7 +726,7 @@
 -- [LEG] 2017.06.29
 ----------------------------
 -- 修復因加入物品CD功能而導致技能CD失常的現象
--- 
+--
 ----------------------------
 -- [LEG] 2017.06.26
 ----------------------------
@@ -727,7 +739,7 @@
 ----------------------------
 -- 針對力之符文(116014)做特別處理
    (SPELL_SUMMON事件紀錄開始時間,EventAlert_Buffs_Update函式強迫寫入持續時間10秒)
--- 修正UIDropDownMenu調用不完全的問題(toc加入另外兩個lua的路徑)   
+-- 修正UIDropDownMenu調用不完全的問題(toc加入另外兩個lua的路徑)
 
 ----------------------------
 -- [LEG] 2017.06.21
@@ -743,11 +755,11 @@
    輸入後若無法馬上作用請/rl或/reload 重載UI
    若曾經建立過該法術ID但沒有輸入過秒數或秒數錯誤，則請先刪除，再重新建立。
    之後再找時間改善
-   
+
 -- 計數文字改為黃色並且加上陰影
 
 -- 堆疊文字加大並加上陰影
-   
+
 ----------------------------
 --[LEG] 2017.06.19
 ----------------------------
@@ -785,7 +797,7 @@
    簡單說，每次更版時，將保留屬於玩家自己的設定。
    遊戲內可以輸入 EA_Config.變數名稱=指定內容 的格式來變更並儲存。
 -- 設置圖標增加了控制變數 OPTION_ICON, 並在/eam minimap 切換顯示的同時也變更該變數
-   以作為下次載入依據。   
+   以作為下次載入依據。
 -- 增加參數 /eam showeaconfig, /eam showeaposition 來顯示玩家設置內容
 -- 修正簡體版、英文版本地化文件內容錯誤造成星界能量無法顯示
 -- 獵人寵物集中值改到圖形介面內做勾選式開關，並移除HUNTER_ShowPetFocus變數
@@ -804,24 +816,24 @@
 
 -- 設置圖標可用右鍵移動
    (拖曳後之新位置將被暴雪自動存到各角色下的layout-local.txt，上線時將自動還原到最後位置)
-   
+
 -- 新增: 輸入 /eam scdremovewhencooldown 直接切換EA_Config2.SCD_RemoveWhenCooldown變數來控制
    冷卻框架行為(true表示單一技能冷卻完成即消失,false表示即使完成也不消失)
    (不會存檔，下次登入時仍會按照Addons\EventAlertMod\EventAlertMod.lua內的設置)
-   
+
 -- 新增: 輸入 /eam scdnocombatstillkeep 直接切換EA_Config2.SCD_NocombatStillKeep變數來控制
    冷卻框架行為(true表示脫離戰鬥仍然保持框架，false表示脫離戰鬥冷卻框架消失)
    (不會存檔，下次登入時仍會按照Addons\EventAlertMod\EventAlertMod.lua內的設置)
-   
+
 -- 計時器若在框體外(0.65倍框體大小)，則堆疊數字調大(0.45倍框體大小)
    ;計時器若在框體內(0.5倍框體大小)，堆疊數字大小調小(0.3倍框體大小)
-   
+
 -- 在增減益下方顯示value1,value2,value3(若有的話),期能顯示吸收值
 
 -- 修正:當技能額外提示輸入了非職業所屬之技能ID時
    ，會讓自身增減益模塊的若干BUFF產生錯誤，包含了不顯示時間或不正確的時間。
-   
--- 修正:條件式群組技能的存檔未納入新的副資源代碼，導致無法正確反應使用者的設置。 
+
+-- 修正:條件式群組技能的存檔未納入新的副資源代碼，導致無法正確反應使用者的設置。
    (加入薩滿元能MAELSTROM、祕法充能ARCANE_CHARGES、惡魔獵人的魔怒FURY、魔痛PAIN)
 ----------------------------
 -- [LEG] 2016.08.16
@@ -858,7 +870,7 @@
 
 -- BUFF 與 DEBUFF的滑鼠提示不再只是技能說明，而是當前的狀態數值，
    ，法術冷卻的框架則維持技能說明
-   
+
 -- 堆疊次數小於2皆不顯示計數值，避免出現1的狀況。
 
 -- 連擊點數最大值若為6 則以6作為高亮值, 連擊點數若為8或5 則以5做為高亮值
@@ -890,23 +902,23 @@
 
 -- &quot;圖示位置選項&quot;按鈕更名為:&quot;圖示位置&amp;職業特殊能量&quot;(簡體:&quot;图示位置&amp;副资源&quot;)
    以便於讓大家知道要去哪邊啟用關閉這些特殊POWER。
-   
--- EA_Config2變數更名:   
+
+-- EA_Config2變數更名:
 	--脫離戰鬥後是否保持技能冷卻框架
-		SCD_NocombatStillKeep	= true,			
+		SCD_NocombatStillKeep	= true,
 	--當冷卻框架之技能達到可施放條件時高亮
-		SCD_GlowWhenUsable		= true ,		
-	--單一技能冷卻完成即移除(true:要移除/false:不移除)	
+		SCD_GlowWhenUsable		= true ,
+	--單一技能冷卻完成即移除(true:要移除/false:不移除)
 		SCD_RemoveWhenCooldown	= true,
 	--剩餘多少秒開始使用小數點一位顯示(使用0則完全不會有小數點)
-		UseFloatSec	= 1,		
+		UseFloatSec	= 1,
 	--是否顯示死騎符文(true:顯示/false:不顯示)
 		DK_ShowRunes = false,
 	--是否顯示獵人寵物集中值
-		HUNTER_ShowPetFocus	= true,		
+		HUNTER_ShowPetFocus	= true,
 	--獵人寵物集中值高亮條件值(0表示不高亮)
 		HUNTER_GlowPetFocus 	= 50,
-		
+
 
 --------------
 -- [LEG] 2016.07.26--
@@ -947,668 +959,690 @@
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
         <h1>changelog.txt</h1>
-        <pre><code>--[Retail 12.1.0]2026.06.09
-	-- Zero allocation and event-driven full module architecture reconstruction (complete data and view decoupling):
-	   -- Completely reconstruct and decouple the five major data services AuraService, CooldownService, ItemCooldownService, GroundEffectService and TotemService.
-	   -- The five major services have been completely changed to event-driven and are no longer directly coupled with the Renderer rendering engine. Instead, the `EAM_*_STATE_CHANGED` event is thrown to EventRouter.
---Introducing an exclusive zero-allocation state buffer pool (such as AuraStatePool, etc.) into the data service, binding releaseFunc when obtaining the state object, completely eliminating runtime GC memory garbage.
-	--Introducing AlertManager intermediary controller and Scheduler throttling:
-	   --Introduced AlertManager to uniformly manage and process five types of change events. After the icon is hidden, the state objects are recycled into their respective Pools.
--- Use Scheduler to implement asynchronous throttling and batch layout updates, effectively eliminating Layout Churn (typesetting jitter) and repeated calculations in high-frequency battles.
-	-- Shadow Host technology implementation and UI privilege escalation avoidance:
-	   -- Create a new ShadowHostService to perform transparency and level downgrade Hook on the official cooling manager (CDM) icon when out of combat.
--- Implement parasitic rendering and cascade layout avoidance, EAM icons are automatically mounted to the official Shadow Host, 100% avoiding the risk of Taint Chain contamination caused by layout arithmetic and SetPoint in combat.
-	   -- Solve the problem of ClipsChildren clipping and Cooldown spiral black screen occlusion. In parasitic mode, the skill name is automatically placed at the bottom and the privilege is elevated FrameLevel + 10.
-	   --Supports dynamic CDM Shadow Host enable/disable switch, providing complete setting panel buttons and multilingual entries.
--- 16 major new and high-frequency Warcraft event integrations:
-	   -- Replace COMBAT_LOG_EVENT_UNFILTERED with UNIT_SPELLCAST_SUCCEEDED (CLEU) to capture non-Aura ground effects (e.g. orbs, blizzards).
-	   -- Replace high-frequency energy updates with UNIT_POWER_FREQUENT events and overwrite them with COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED event reaction talents.
-	   -- Subscribe to SPELL_ACTIVATION_OVERLAY_GLOW_SHOW / HIDE native golden bright frame to synchronize EAM with the shortcut column Proc glow.
-	-- Static JIT Compilation performance optimization and fault isolation:
--- Completely removed the `pcall` predicate traversal in the OnUpdate core loop, and introduced the `timerTokenPool` zero allocation delay schedule to ensure that the hot path LuaJIT can be 100% compiled by Trace Compiler.
-	   -- Configure parameterized isolation defense for EventRouter OnEvent distribution and Scheduler task callback, so that errors reported by a single sub-module will not affect the entire domain.
-	--Automated packaging and publishing tool (Build-CurseForgePackage.ps1) security upgrade:
--- Fixed the allowedExtensions missing `.blp` image file bug to ensure that custom UI buttons and texture resources are not missing.
-	   -- Optimize regular matching of sensitive information to prevent misjudgment. The EAM code is written to defend against World of Warcraft Secrecy restrictions.
-	   -- Use @() to force Get-Content to be an array type and fix the System.Char Trim crash bug caused by single-line files.
+        <pre><code>-- [Retail  12.1.0 Alpha]2026.07.28
+	-- 12.1 Native AuraContainer：
+	   -- 12.1 使用 Blizzard AuraContainer／AuraButton 建立 player、target 與 group 穩定容器。
+	   -- Native backend 不讀取 UNIT_AURA Secret payload，也不建立舊式 AuraState；12.0.7 保留 Legacy backend。
+	-- GameTooltip ID 與 EAM 自製監控選單：
+	   -- 顯示可安全取得的法術、物品與巨集 ID；光環 ID 優先交由 Blizzard CVar 顯示。
+	   -- 非戰鬥中以精確 Ctrl+Alt 開啟 Popup Menu，依來源路由至法術、光環、物品或巨集對應監控清單。
+	   -- 不攔截右鍵、不 Hook Blizzard secure 點擊路徑，無法安全判定時降級為手動輸入。
+	-- 流程驗證與本機環境防護：
+	   -- 新增離線流程驗證、遊戲內流程測試面板、JSON 報告匯入與本機 WoW patch train／SymbolicLink 檢查。
+	   -- 本版定位為 Alpha；離線 mock 通過不代表 12.1 PTR 實機簽收。
 
---[Retail 12.0.7]2026.06.06
-	-- Specialization and occupation name dynamics API Localization reconstruction:
--- Use GetSpecializationInfoForClassID API to dynamically obtain the official localized specialization text of the current language client.
-	   -- Create a CLASS_TOKEN_TO_ID comparison table to support dynamic name loading of all 13 professions and specializations, remove the hard coding of specialization names, and provide dual-track fallback.
-	-- Cleaning of hard-coded strings in the entire project and completing dictionaries of five major language families:
-	   -- Extract ClassPowerService, GroundEffectService, ItemCooldownService default prefix and fallback names.
--- Extract Options setting interface checkbox/slider, alignment and growth direction drop-down options, Slash console command instructions and print prompts.
-	   --Complete 144 entries of zhTW (Taiwan Traditional Chinese), zhCN (Simplified Chinese), enUS (English bottom level), koKR (Korean) and ruRU (Russian).
-	-- ClassPower Core resource security and debugging enhancements:
-	   -- Deploy pcall isolation and issecretvalue defense for detectClassPower and updatePower.
--- Prevent Fatal Error crash caused by size comparison when energy value mutates to Secret Table during battle.
-	-- EventRouter/Scheduler Fault isolation:
-	   -- Add parameterized pcall fault isolation for OnEvent loop and Scheduler timed task callback.
-	   -- Ensure that when a single module is abnormal or reports an error, it will not cause other modules to crash or interrupt scheduled cleanup.
+-- [Retail  12.1.0  ]2026.06.09
+	-- 零分配與事件驅動全模組架構重構（完全數據與視圖解耦）：
+	   -- 徹底重構解耦 AuraService、CooldownService、ItemCooldownService、GroundEffectService 與 TotemService 五大數據服務。
+	   -- 五大服務全面改為事件驅動，不再與 Renderer 渲染引擎直接耦合，而是向 EventRouter 拋出 `EAM_*_STATE_CHANGED` 事件。
+	   -- 數據服務中引入專屬零分配狀態緩衝池（如 AuraStatePool 等），取得狀態物件時綁定 releaseFunc，完全消滅運行期 GC 記憶體垃圾。
+	-- 引入 AlertManager 中介控制器與 Scheduler 節流：
+	   -- 引入 AlertManager 統一管理與處理五類變更事件，在圖示隱藏後多型回收 state 物件至各自 Pool 中。
+	   -- 利用 Scheduler 實現非同步節流與批次排版更新，有效消除高頻戰鬥中的 Layout Churn (排版抖動) 與重複計算。
+	-- 影子載體技術 (Shadow Host) 實作與 UI 提權避讓：
+	   -- 新建 ShadowHostService，在脫戰狀態下對官方冷卻管理器 (CDM) 圖示進行透明度與層級降級 Hook。
+	   -- 實作寄生渲染與級聯排版避讓，EAM 圖示自動掛載至官方影子載體，100% 避開戰鬥中 layout 算術與 SetPoint 產生的 Taint Chain 污染風險。
+	   -- 解決 ClipsChildren 剪裁與 Cooldown 螺旋黑幕遮擋問題，寄生模式下自動將技能名稱置底並提權 FrameLevel + 10。
+	   -- 支援動態 CDM 影子載體啟用/關閉開關，提供完整的設定面板按鈕與多語系詞條。
+	-- 16 大全新與高頻魔獸事件整合：
+	   -- 以 UNIT_SPELLCAST_SUCCEEDED 替代 COMBAT_LOG_EVENT_UNFILTERED (CLEU) 捕獲無光環地面效果（如寶珠、暴風雪）。
+	   -- 以 UNIT_POWER_FREQUENT 事件替代高頻能量更新，以 COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED 事件反應天賦覆蓋。
+	   -- 訂閱 SPELL_ACTIVATION_OVERLAY_GLOW_SHOW / HIDE 原生金色亮框，使 EAM 與快捷列 Proc 發光同步。
+	-- 靜態 JIT 編譯性能優化與故障隔離：
+	   -- 徹底移除了 OnUpdate 核心循環中 `pcall` predicate 遍歷，引入 `timerTokenPool` 零分配延時排程，確保熱路徑 LuaJIT 可 100% 被 Trace Compiler 編譯。
+	   -- 為 EventRouter OnEvent 分發與 Scheduler 任務 callback 配置參數化隔離防禦，單個子模組報錯不波及全域。
+	-- 自動化打包發佈工具 (Build-CurseForgePackage.ps1) 安全升級：
+	   -- 修正 allowedExtensions 漏掉 `.blp` 圖檔 Bug，確保自訂 UI 按鈕與貼圖資源不缺失。
+	   -- 優化敏感資訊正則匹配，防止誤判 EAM 代碼中為防衛魔獸 Secrecy 限制而編寫的程式碼。
+	   -- 使用 @() 強制 Get-Content 為陣列型別，修復單行文件引發的 System.Char Trim crash Bug。
 
---[Retail 12.0.7]2026.05.30
---Reconstruct the ground effect monitoring (GroundEffectService.lua) to implement the Tooltip Scraping mechanism in five major client language families and multiple languages:
-	   -- Supports enUS/enGB, zhTW, zhCN, koKR, ruRU.
-	   -- Use numerically-indexed arrays with Util.tableFreeze to lock the regex matching pattern, eliminating the GC and CPU consumption of Lua string hashing and table lookup.
-	   -- Automatically identify the `GetLocale()` language, and seamlessly downgrade to English if the match fails, or retain the manually set default safety time.
--- Added multi-module alarm framework (Multi-Frame) architecture, completely splitting 7 independent alarm frames!
-	-- Supports own Aura (selfAura), target Aura (targetAura), skill cooldown (spellCooldown), item cooldown (itemCooldown), professional energy (classPower), ground effect (groundEffect), and totem frame.
--- Each frame has a completely independent X/Y coordinate, and simultaneously displays the corresponding translucent label positioning background in the &quot;Mobile Reminder Frame&quot; mode, supporting independent mouse dragging and position storage.
-	-- Implement continuous numeric index layout optimization policy for ultimate performance (use table.freeze to lock the LAYOUT_OFFSETS direction offset static array), use a single arithmetic multiplication to replace multiple If-Else conditional branches, and eliminate string hash search and CPU collision overhead!
--- Added &quot;No Halo Ground Skill Monitoring&quot; service (GroundEffectService.lua) [NEW]:
-	   -- Monitoring SPELL_CAST_SUCCESS, supports &quot;Tooltip dynamic analysis&quot; and &quot;manual time setting &amp; one-click capture and filling&quot; dual-track timing mode.
-	   -- Read once at the moment of casting, no longer polling Tooltip in OnUpdate, 100% avoid CPU loss, and use Scheduler for centralized delayed expiration release.
--- Added &quot;Totem Monitoring&quot; service (TotemService.lua) [NEW]: Call 12.x native C_Totems.GetTotemInfo to directly read totems such as shamans, arrange them closely in real time and follow the growth direction vector.
-	-- Added &quot;Professional Special Energy Monitoring&quot; service (ClassPowerService.lua) [NEW]: Dynamically presents core energy (holy energy, combo points, fragments, infuriating energy, arcane charging, etc.) according to occupation, using Classic Icon + central large-scale digital font display, and automatically hides when it returns to 0.
--- Reshape the Position &amp; Energy settings panel into a two-column Premium layout with a width of 560px: left Sliders &amp; 7 Alert Frame growth menus, right career energy Checkboxes, symmetrical and open.
-	-- Implemented the ground effect polymorphic switching panel in the Popup spell condition window, integrating &quot;Enable dynamic Tooltip capture Checkbox&quot;, &quot;Manually set time EditBox&quot; and &quot;One-click capture Button&quot; for easy operation.
---Upgraded the /eam doctor (RuntimeProbe) diagnostic module to provide young people with detailed testing and debugging information on real-time multi-frame coordinates, growth direction, and new Service loading status.
+-- [Retail  12.0.7  ]2026.06.06
+	-- 專精與職業名稱動態 API 本地化重構：
+	   -- 使用 GetSpecializationInfoForClassID API 動態獲取當前語系客戶端官方的本地化專精文字。
+	   -- 建立 CLASS_TOKEN_TO_ID 對照表，支援全部 13 職業與專精的動態名稱加載，移除專精名稱的硬編碼，提供雙軌 fallback。
+	-- 全專案硬編碼字串清掃與五大語系字典補齊：
+	   -- 提取 ClassPowerService、GroundEffectService、ItemCooldownService 預設前綴與回退名稱。
+	   -- 提取 Options 設定介面 checkbox/slider、對齊與成長方向下拉選項、Slash 控制台命令說明與 print 提示。
+	   -- 補全 zhTW (台灣繁中)、zhCN (簡體中文)、enUS (英文底層)、koKR (韓文) 與 ruRU (俄文) 之 144 個詞條。
+	-- ClassPower 核心資源安全與偵錯加強：
+	   -- 為 detectClassPower 與 updatePower 部署 pcall 隔離與 issecretvalue 防衛。
+	   -- 防止戰鬥中能量數值突變為 Secret Table 時大小比較造成的 Fatal Error 崩潰。
+	-- EventRouter/Scheduler 故障隔離：
+	   -- 為 OnEvent 循環與 Scheduler 定時任務 callback 追加參數化 pcall 故障隔離。
+	   -- 確保單一模組異常或報錯時，不會引發其他模組崩潰或定時清理中斷。
 
---[Retail 12.0.7]2026.05.29
-	-- Comprehensive remodeling and performance optimization for WoW Retail 12.0.7 Retail server!
-	-- Implementation 12.0.7 native `C_DurationUtil.CreateDurationTextBinding` time text countdown linked to `SetCooldownFromDurationObject` ring shadow.
--- CooldownService The ultimate reconstruction of the service layer, introducing the Service-Layer Write Gating throttle and IsZero judgment, eliminating the pairs/ipairs iterator, and achieving completely zero GC memory allocation for the hot path.
-	-- 100% Pure Lua dynamically reshapes the Classic setting interface (EAM left main setting window, right position/slider and 20 special energy check boxes, right ScrollBox scrolling spell management list, independent spell condition Popup window).
--- Implement the &quot;X&quot; one-click quick delete button at the end of the list line, support EditBox to directly add it by pressing the ENTER key, and click the spell to automatically bring the ID into the input box.
-	-- Introducing Combat Lockdown Guard and out-of-combat delayed response windowing, perfect isolation from Taint.
--- Added and optimized one-click &quot;Debug Diagnosis and Export UI Window&quot;, automatically collects detailed environment, missing API, settings, alerts and runtime stats into compact JSON-like format, and is equipped with a &quot;Copy to Clipboard&quot; function to facilitate teenagers to report directly to AI.
+-- [Retail  12.0.7  ]2026.05.30
+	-- 重構地面效果監控 (GroundEffectService.lua)，實現 5 大客戶端語系多國語言 Tooltip 解析 (Tooltip Scraping) 機制：
+	   -- 支援 enUS/enGB, zhTW, zhCN, koKR, ruRU。
+	   -- 採用 numerically-indexed 陣列配合 Util.tableFreeze 鎖定 regex 匹配模式，消除 Lua 字串雜湊與 table lookup 的 GC 與 CPU 消耗。
+	   -- 自動識別 `GetLocale()` 語系，如果匹配失敗則無縫降級至英文，或保留手動設定的預設安全時間。
+	-- 新增多模組告警框架 (Multi-Frame) 架構，徹底拆分 7 大獨立告警框架！
+	-- 支援自身光環 (selfAura)、目標光環 (targetAura)、技能冷卻 (spellCooldown)、物品冷卻 (itemCooldown)、職業能量 (classPower)、地面效果 (groundEffect)、圖騰 (totem) 框架。
+	-- 每個框架擁有完全獨立的 X/Y 座標，並在「移動提醒框架」模式下同步顯露對應半透明標籤定位背景，支援滑鼠個別獨立拖曳與位置儲存。
+	-- 實現極致效能的連續數字索引 Layout 優化政策（以 table.freeze 鎖定 LAYOUT_OFFSETS 方向偏移靜態陣列），利用單一算術乘法取代多重 If-Else 條件分支，消除字串雜湊查找與 CPU 碰撞開銷！
+	-- 新增「無光環地面技能監控」服務 (GroundEffectService.lua) [NEW]：
+	   -- 監聽 SPELL_CAST_SUCCESS，支援「Tooltip 動態解析」與「手動設定時間 &amp; 一鍵擷取填入」雙軌計時模式。
+	   -- 施放瞬間讀取一次，完全不在 OnUpdate 輪詢 Tooltip，100% 避免 CPU 損耗，並以 Scheduler 進行集中延遲到期釋放。
+	-- 新增「圖騰監控」服務 (TotemService.lua) [NEW]：調用 12.x 原生 C_Totems.GetTotemInfo 直讀薩滿等圖騰，即時靠攏排列並遵循成長方向向量。
+	-- 新增「職業特殊能量監控」服務 (ClassPowerService.lua) [NEW]：依職業動態呈現核心能量 (聖能、連擊點、碎片、真氣、秘法充能等)，採用經典 Icon + 中央大號層數字體顯示，歸 0 自動隱藏。
+	-- 重塑 Position &amp; Energy 設定面板為 560px 寬度的雙分欄 Premium 佈局：左 Sliders &amp; 7大 Alert Frame 成長選單，右職業能量 Checkboxes，對稱開闊。
+	-- 在 Popup 法術條件視窗中實作地面效果多態切換面板，整合「啟用動態 Tooltip 擷取 Checkbox」、「手動設定時間 EditBox」與「一鍵擷取 Button」，操作得心應手。
+	-- 升級 /eam doctor (RuntimeProbe) 診斷模組，為少年欸目標性提供實時多框架座標、成長方向、新 Service 載入狀態的詳細測試與除錯資訊。
 
--- [Classic MOP ]2025.11.26
--- [Retail TWW ]2025.11.26
-	-- Added Russian language, thanks to ZamestoTV for helping with the translation. (https://legacy.curseforge.com/members/zamestotv/projects)
-	
--- [Classic MOP ]2025.11.11
--- [Retail TWW ]2025.11.11
---Fine-tuning the decimal point display mode for displaying seconds: the Classic server uses ceil(timeLeft,0); the Retail server uses floor(timeLeft,0)
-		, we hope to be as close as possible to the official display logic.
-	--Correction: UnitAura in GetDebuffIndexOfSpellID and GetBuffIndexOfSpellID returned due to version
-		The difference in transmission methods causes MOP to be unable to read the value correctly, causing the halo to not disappear (it is regarded as a permanent halo)
-	--Correction: The GCD in the cooldown module still uses the old return method due to the MOP Halo API, causing the skill cooldown to not disappear.
---Amendment: The Aura prompt on the target frame in MOP can now display the spell ID.
-	--The halo value depends on the language. In Chinese, values above 10,000 will be displayed as &quot;ten thousand&quot; or &quot;ten thousand&quot;.
-		;In other languages, numbers above 1,000 are displayed as K, and numbers above one million are displayed as M.
-	
-	
--- [Classic MOP ]2025.11.05
--- [Retail TWW ]2025.11.05
-	--Increase and debuff halo detailed settings to increase the halo value display, and you can choose the demand index and setting label (such as absorption, retaliation)
-	  (The value set in /eam ShowAuraValueWhenOver is no longer referenced)
---The update frequency reference FPS is changed from 60FPS to 30FPS to avoid prematurely reducing the frequency and causing inaccurate seconds update
-	--Add icon name, countdown, and layer number font slider adjustment options, and display the adjustment numbers in green}
-	--If the countdown selection box is displayed and there are layers at this time, the lower right corner of the countdown will be aligned with the upper left corner of the layer to avoid occlusion.
-	
--- [Classic MOP ]2025.10.26
--- [Retail TWW ]2025.10.26
-	--Reduce the performance overhead when detecting items when cooling down.
---Fixed the display of non-halo skill durations (Blizzard, Frost Ball, etc.).
-	--Remove GCD countdown.
+-- [Retail  12.0.7  ]2026.05.29
+	-- 針對 WoW Retail 12.0.7 正式服進行全面重塑與效能優化！
+	-- 實作 12.0.7 原生 `C_DurationUtil.CreateDurationTextBinding` 時間文字倒數與 `SetCooldownFromDurationObject` 圓環陰影連動。
+	-- CooldownService 服務層極致重構，引進 Service-Layer Write Gating 節流閥與 IsZero 判定，消滅 pairs/ipairs 迭代器，達成 hot path 完全零 GC 記憶體分配。
+	-- 100% Pure Lua 動態重塑經典設定介面（EAM 左側主設定視窗、右側位置/滑桿與 20 種特殊能量勾選、右側 ScrollBox 捲動法術管理清單、獨立法術條件 Popup 視窗）。
+	-- 實作清單行尾端「X」一鍵快速刪除按鈕，支援 EditBox 按 ENTER 鍵直接新增，且點選法術自動帶入 ID 到輸入框中。
+	-- 引入戰鬥開啟保護 (Combat Lockdown Guard) 與脫戰延遲響應開窗，完美與 Taint 隔離。
+	-- 新增與優化一鍵「除錯診斷與匯出 UI 視窗」，自動收集詳細環境、缺失 API、設定、alerts 與 runtime stats 轉成 compact JSON-like 格式，並配備「複製到剪貼簿」功能以便於少年欸直接回報給 AI。
 
--- [Classic MOP ]2025.10.22
--- [Retail TWW ]2025.10.22
-	-- Fixed the problem that the halo detection of MOP version fails due to using the new version 11.2.5 API: C_UnitAuras.GetUnitAuraBySpellID().
-	--Fixed the issue that the scheduled refresh countdown event could not be triggered in the MOP version, and changed the event from ACTIONBAR_UPDATE_COOLDOWN to ACTIONBAR_UPDATE_STATE.
+-- [Classic MOP    ]2025.11.26
+-- [Retail  TWW    ]2025.11.26
+	-- 新增俄語，感謝 ZamestoTV 大大協助翻譯。(https://legacy.curseforge.com/members/zamestotv/projects)
 
--- [Retail TWW ]2025.10.17
--- [Classic MOP ]2025.10.17
+-- [Classic MOP    ]2025.11.11
+-- [Retail  TWW    ]2025.11.11
+	--微調顯示秒數小數點進位顯示方式:經典服改用ceil(timeLeft,0);正式服改用floor(timeLeft,0)
+		,期能盡量與官方顯示邏輯接近
+	--修正:GetDebuffIndexOfSpellID及GetBuffIndexOfSpellID內的UnitAura因版本回
+		傳方式差異導致MOP無法正確讀取數值，導致光環不消失(被視同常駐光環)
+	--修正:cooldown模組內的GCD因MOP光環API仍使用舊式返回方式導致技能冷卻不消失
+	--修正:MOP內目標框架上的光環提示已能顯示法術ID
+	--光環數值依照語系不同，中文10000以上會以&quot;万&quot;或&quot;萬&quot;顯示
+		;其他語系則1000以上以 K 顯示，百萬以上以 M 顯示.
 
-	--Fixed halo prompt error
---Fixed the problem that the halo with duration does not disappear after it ends
-	--Added item cooling detection switch, turning it off can improve performance.
 
--- [Retail TWW ]2025.10.03
--- [Classic MOP ]2025.10.03
-   -- Add function time-consuming records and observe them in the game using /tinspect _G.EventAlertMod.TEST
-   -- Add DK rune column switch
-   -- Continuous optimization and improvement
+-- [Classic MOP    ]2025.11.05
+-- [Retail  TWW    ]2025.11.05
+	--增減益光環細項設定增加光環數值顯示，可以自選需求索引及設定標籤(如吸收、報擊)
+	  (/eam ShowAuraValueWhenOver 設定的數值不再參考)
+	--更新頻率參考FPS由60FPS改成30FPS,避免過早降低頻率造成秒數更新不準確
+	--新增圖示名稱、倒數、層數字體滑條調整選項，並將調整數字以綠色顯示｝
+	--若倒數選擇框內顯示、此時又有層數時，會將倒數的右下角對齊層數左上角，避免遮擋
 
--- [Retail TWW ]2025.7.29
--- Try to further adjust performance to reduce performance consumption and GC pressure:
-	1. Change the scheduled update from OnUpdate to C_Timer
-2.PostionFrame Update frequency changed to 1 second
-	3. Seconds monitoring is moved from PositionFrame to OnUpdate, and the decision is made whether to continue based on the remaining seconds of each spell to avoid a large number of repeated calls.
-	4. Add reentrancy prevention mechanism
-	
--- [Retail TWW ]2025.3.16
--- Move cooling-related options to the settings window and check them directly
--- Add /eam ExportClassToDef (can be shortened to /eam ECTD)
-   Export the spell setting lua table of each module of this profession, 以便後續放到SpellArray.lua as the default value
--- No longer create a spell cache table. It is recommended to install HeroDBC instead of the spell item correspondence table.
--- Increase the number of spell ID digits to 7 digits
+-- [Classic MOP    ]2025.10.26
+-- [Retail  TWW    ]2025.10.26
+	--降低偵測物品冷卻時性能開銷。
+	--修復非光環式技能持續時間顯示(暴風雪、冰霜之球等)。
+	--移除GCD倒數。
 
--- [Retail TWW ]2025.1.29
--- Further reduce CPU usage
--- EventAlertMod.lua Split into several modules for easy maintenance
---Fix some bugs
+-- [Classic MOP    ]2025.10.22
+-- [Retail  TWW    ]2025.10.22
+	-- 修正因使用新版 11.2.5 API：C_UnitAuras.GetUnitAuraBySpellID()，導致 MOP 版本光環偵測失效的問題。
+	-- 修復定時刷新倒數事件在 MOP 版本中無法觸發的情況，將事件由 ACTIONBAR_UPDATE_COOLDOWN 改為 ACTIONBAR_UPDATE_STATE。
 
--- [Retail TWW ]2025.1.10
--- [Classic CATA ]2025.1.10
--- Continuous optimization
+-- [Retail  TWW    ]2025.10.17
+-- [Classic MOP    ]2025.10.17
+
+	--修復光環提示錯誤
+	--修復有持續時間的光環結束不消失問題
+	--增加物品冷卻偵測開關，關閉可以提升效能。
+
+-- [Retail  TWW    ]2025.10.03
+-- [Classic MOP    ]2025.10.03
+   -- 增加函數耗時紀錄，並於遊戲內以/tinspect _G.EventAlertMod.TEST 進行觀察
+   -- 增加DK符文列開關
+   -- 持續優化改善
+
+-- [Retail  TWW    ]2025.7.29
+-- 嘗試進一步調整性能,減少性能消耗與GC壓力:
+	1.將定時更新由OnUpdate改為C_Timer
+	2.PostionFrame 更新頻率改為1秒
+	3.秒數監測由PositionFrame移動到OnUpdate,並依照每個法術剩餘秒數狀台決定是否繼續,避免大量重複呼叫
+	4.增加防止重入機制
+
+-- [Retail  TWW    ]2025.3.16
+-- 將冷卻相關選項移動到設定視窗直接做勾選
+-- 增加 /eam ExportClassToDef (可簡短為/eam ECTD)
+   匯出該職業各模組法術設定lua table, 以便後續放到SpellArray.lua 作為預設值
+-- 不再建立法術快取表, 建議安裝HeroDBC 代替法術物品對應表
+-- 提高法術ID位數至7位數
+
+-- [Retail  TWW    ]2025.1.29
+-- 進一步減少CPU使用率
+-- EventAlertMod.lua 拆成數個模組方便維護
+-- 修復一些bug
+
+-- [Retail  TWW    ]2025.1.10
+-- [Classic CATA   ]2025.1.10
+-- 持續優化
 --
 
--- [Retail TWW ]2025.1.9
--- [Classic CATA ]2025.1.9
--- Update API to support TWW and CATA
---Adjust the update frequency to 0.75 seconds. Only when the remaining time is less than 1 second, change the update frequency to 0.09 seconds to reduce the excessive CPU time occupied by triggering ONUPDATE events.
+-- [Retail  TWW    ]2025.1.9
+-- [Classic CATA   ]2025.1.9
+-- 更新API以支援TWW及CATA
+-- 調整更新頻率為0.75秒,剩餘時間低於1秒才改為更新頻率0.09秒, 減少觸發ONUPDATE事件佔用過多CPU時間
 --
 
---[Retail DF]2023.03.23
+-- [Retail  DF    ]2023.03.23
 -- [Classic WOTLKC]2023.03.23
--- DF: Update version number to 10.0.7
--- Significantly move functions and variables from the global space (_G) to the plugin-specific space level (_G.EventAlertMod) to reduce mutual interference
--- Fixed some minor bugs
+-- DF:更新版號到10.0.7
+-- 大幅度將函數與變數從全域空間(_G)移動到插件專屬空間階層(_G.EventAlertMod),以減少互相干擾
+-- 修正一些小bug
 
---[Retail DF]2023.02.24
+-- [Retail  DF    ]2023.02.24
 -- [Classic WOTLKC]2023.02.24
--- DF: Tips for increasing vitality (Vigor)
--- DF: Fixed the issue where the mouse prompt cannot display MACRO&#x27;s spell ID.
+-- DF:增加活力(精力Vigor)提示
+-- DF:修復滑鼠提示無法顯示MACRO的法術ID
 
---[Retail DF]2023.02.18
+-- [Retail  DF    ]2023.02.18
 -- [Classic WOTLKC]2023.02.18
--- The establishment of the item spell cache table is changed to a coroutine method to avoid lagging.
--- DF: Supports Evoker profession, supports Essence display
+-- 物品法術快取表的建立改以協程方式獲取,以避免卡頓
+-- DF: 支援喚能師(Evoker)職業、支援龍能(Essence)顯示
 
 
---[Retail DF]2022.12.22
+-- [Retail  DF    ]2022.12.22
 -- [Classic WOTLKC]2022.12.22
--- Fix proportion sorting
+-- 修復比重排序
 
---[Retail DF]2022.11.18
+-- [Retail  DF    ]2022.11.18
 -- [Classic WOTLKC]2022.11.18
--- DF: Fixed mouse prompt spell ID and item ID display
--- DF: Remove /eam basefontsize directive
--- DF: Add /eam StackFontSize nSize instructions to change the stacking layer size (case-insensitive, you can also use /eam sfs nSize instead)
--- DF: Add /eam TimerFontSize nSize to change the timing number size (not case sensitive, you can also use /eam tfs nSize instead)
--- DF: Add /eam SNameFontSize nSize to change the spell name size (not case sensitive, you can also use /eam nfs nSize instead)
--- WOTLKC: Test compatibility OK
+-- DF:修復鼠標提示法術ID與物品ID顯示
+-- DF:移除 /eam basefontsize 指令
+-- DF:增加 /eam StackFontSize nSize 指令以改變堆疊層數大小(不分大小寫,亦可以/eam sfs nSize代替)
+-- DF:增加 /eam TimerFontSize nSize 以改變計時數字大小(不分大小寫,亦可以/eam tfs nSize代替)
+-- DF:增加 /eam SNameFontSize nSize 以改變法術名稱大小(不分大小寫,亦可以/eam nfs nSize代替)
+-- WOTLKC:測試相容性OK
 
 -- [Classic WOTLKC]2022.10.28
---[Retail DF]2022.10.28
--- DF: Change Button and CheckButton use templates to display normally
--- DF: Remove unused attributes in XML to avoid WARNING errors
--- WOTLKC: Compatibility test OK
+-- [Retail  DF    ]2022.10.28
+-- DF:異動Button及CheckButton使用模板,以使正常顯示
+-- DF:移除XML內未用屬性避免WARNING報錯
+-- WOTLKC: 相容性測試OK
 ----------------------------
 -- [Classic WOTLKC]2022.10.18
---[Retail SL]2022.10.18
--- The cooling module will temporarily no longer detect the cooling of backpack items to improve performance (the cooling of backpack items will not be detected)
+-- [Retail  SL    ]2022.10.18
+-- 冷卻模組暫時不再偵測背包物品冷卻以增進效能(背包物品的冷卻將偵測不到)
 ----------------------------
 -- [Classic WOTLKC]2022.10.01
 ----------------------------
---Fixed the errors caused by related specialization functions in the WLK version and made them compatible with the SL version
+-- 修復相關專精函數造成WLK版本之錯誤,並與SL版本相容
 ----------------------------
 -- [Classic WOTLKC]2022.09.27
 ----------------------------
---Fix BUFF display
+-- 修復BUFF顯示
 ----------------------------
 -- [Classic WOTLKC] 2022.09.26
 ----------------------------
--- Re-use SL 9.2.5 version of EAM as the basic version of WOTLKC
---Fixed the display of DK runes, the rune icons are mainly based on the current field
---Fixed the display of DK symbols
+-- 以SL 9.2.5 版本之EAM重新作為WOTLKC之基礎版本
+-- 修復DK符文顯示,符文圖示以當前領域為主
+-- 修復DK符能顯示
 ----------------------------
 -- [Classic WOTLKC] 2022.08.22
 ----------------------------
--- TOC Architecture update, version update
+-- TOC 架構更新, 版本更新
 ----------------------------
 -- [Classic TBC] 2021.06.25
 ----------------------------
---Reply pet concentration value display
--- Optimize mana display
---Fixed the lag in item spell cooling
--- Item and spell caches are no longer created by players. Instead, the cache is updated every time a new version is released.
+-- 回覆寵物集中值顯示
+-- 優化法力顯示
+-- 修復物品法術冷卻之卡頓
+-- 物品法術快取不再由玩家建立,改為每次釋出新版本更新快取
+
 ----------------------------
 -- [Classic TBC] 2021.06.22
 ----------------------------
--- Prevent errors caused by using specialization-related APIs
+-- 防止使用專精相關API而導致報錯
 
 ----------------------------
 -- [Classic TBC] 2021.05.22
 ----------------------------
--- Remove event:ACTIVE_GROUP_TALENT
--- Add event: UNIT_SPELLCAST_SUCCEEDED, and change the parameter order to comply with version regulations
+-- 移除事件:ACTIVE_GROUP_TALENT
+-- 加入事件:UNIT_SPELLCAST_SUCCEEDED,並改變為符合版本規定之參數順序
 
 ----------------------------
 -- [Classic TBC] 2021.05.21
 ----------------------------
--- Modify the TBC version based on SL 2021.04.14, so it inherits this version and previous features
--- Increase the display of mana value and display the mana percentage
+-- 基於SL 2021.04.14 進行修改TBC版本,故繼承該版本及之前特性
+-- 增加顯示法力值,並顯示法力百分比
 
 ----------------------------
 -- [SL] 2021.06.26
 ----------------------------
--- Optimize performance and reduce lag
+-- 優化效能,減少卡頓
 
 ----------------------------
 -- [SL] 2021.04.14
 ----------------------------
---Improve the accuracy of item cooldown display (Comparison priority: Equipped items (Inventory) &gt; Backpack items (Bag) &gt; First created database (EA_SPELL_ITEM))
--- Special processing is done for the ID of the engineering enchanted nitro thruster (GetItemSpell obtains 55004, but uses the trigger to 54861)
--- Added the spell name to the spell ID in the item mouse tooltip.
+-- 改善物品冷卻顯示正確性(比對優先級:已裝備物品(Inventory) &gt; 背包物品(Bag) &gt; 第一次建立的資料庫(EA_SPELL_ITEM))
+-- 針對工程附魔硝基推進器的ID做特別處理(GetItemSpell取得皆為55004,但使用觸發皆為54861)
+-- 於物品滑鼠提示內的法術ID增加顯示法術名稱
 
 ----------------------------
 -- [SL] 2020.12.26
 ----------------------------
--- Demon Hunter Revenge Specialization and Scourge Specialization use the Fury resource in the same way, while Pain is no longer used.
--- Please do not use Magic Pain in conditional skills.
--- As a druid, put combo points in the first grid, energy in the second grid, and rage in the third grid.
--- When Druid balances specialization, the star energy is placed in the first grid, and the combo points are placed in the fourth grid.
---Fixed the issue where combo point resources are not updated when switching specializations
--- ShowAuraValueWhenOver default value changed to 10
+-- 惡魔獵人復仇專精與災虐專精統一使用魔怒(Fury)資源,魔痛(Pain)已不再使用
+-- 條件技能內請勿再使用魔痛
+-- 德魯伊時將連擊點數放第一格,能量放第二格,怒氣放第三格
+-- 德魯伊平衡專精時將星能改放在第一格,連擊點數放第四格
+-- 修正切換專精時連擊點數資源不更新的問題
+-- ShowAuraValueWhenOver預設值改為10
 
 ----------------------------
 -- [SL] 2020.11.17
 ----------------------------
--- Change the background transparency of spell details so that it does not interfere with other frames
--- Fixed the green background problem of spell text in spell detail setting
--- Fixed: ESC cannot close the frame issue when the ESC close prompt function is enabled.
-   In addition, the skill reminder part is still not closed by ESC, and ESC will become the display open
-   Off, press once to turn off, press once to turn on, and can be turned on and off during battle.
+-- 變更法術細部設定背景透明度,使其不與其他框架干擾
+-- 修正法術細部設定法術文字綠色背景問題
+-- 修正:啟用ESC關閉提示功能時,ESC無法關閉框架問題,
+   另技能提醒的部份仍不受ESC關閉,且ESC將成為顯示開
+   關,按一次關、按一次開, 並可戰鬥中開關
 ----------------------------
 
 -- [SL] 2020.11.03
 ----------------------------
--- Fixed DK rune error report
+-- 修正DK符文報錯
 
 ----------------------------
 -- [SL] 2020.11.01
 ----------------------------
--- Change the DK rune pattern to match the version
---The number of runes will show specialization, such as evil runes, frost runes, and blood runes
---The basic font size value is changed to custom, and it no longer scales with the icon size.
-   You can enter /eam BaseFontSize nSize to customize the size
-   The timing, stacking, and name will be scaled equally outside or inside the box using this basic value.
-   有興趣者可以到EventAlert_IconOptions.lua Find function
-EventAlert_Icon_Options_Frame_AdjustTimerFontSize can be modified by yourself
-   The default value for first execution is 26
--- Killing animation... adjusted, and can be played by /eam play
--- Added and added mouse prompt auxiliary instructions for Minimap gears
+-- 變更DK符文圖案,使其符合版本
+-- 符文數量會顯示專精,例如:穢邪符文、冰霜符文、血魄符文
+-- 字型基礎大小值改為自訂, 不再跟隨圖示大小縮放
+   可輸入 /eam BaseFontSize nSize 自訂大小
+   而計時、堆疊、名稱將以這個基礎值做框外或框內等比例縮放
+   有興趣者可以到EventAlert_IconOptions.lua 找函數
+   EventAlert_Icon_Options_Frame_AdjustTimerFontSize自行修改
+   首次執行預設值為26
+-- 斬殺動畫...調整, 並且可以/eam play 播放
+-- 新增及增加Minimap齒輪的滑鼠提示輔助說明
 
 ----------------------------
 -- [SL] 2020.10.26
 ----------------------------
---Fix combo point highlighting and always highlight it at the maximum value (may differ depending on specialization and talent)
---Fixed the focus value highlighting of hunter pets, and set the highlight to 50 by default.
-   It can be used in conjunction with manually casting pet damage skills to maximize damage.
--- FontObject(EA_FONT_OBJECT) Try to use &quot;TextStatusBarText&quot; as the main one,
-   Otherwise, &quot;ChatFontNoramal&quot; is the main one
--- Font (EA_Fonts) pulls the system default value STANDARD_TEXT_FONT,
-   With /dump STANDARD_TEXT_FONT there may be different standard font files depending on the language.
--- The above two items can be modified in EventAlertMod_InitVar.lua
--- Reduce the level of most frames from HIGH to MEDIUM to try to reduce occlusion with other frames
---The icon size adjustment value for each slide is changed from 5 to 1
--- When detecting that OmniCC is loaded and EAM also enables the reciprocal shadow function, force the reciprocal shadow of EAM to be turned off
-   Avoid interference caused by OmniCC interception and display
-   
+-- 修復連擊點高亮, 並一律以最大值高亮(依專精天賦可能不同)
+-- 修復獵人寵物集中值高亮,並預設50高亮,
+   可配合手動施放寵物傷害技能時,最大化傷害.
+-- FontObject(EA_FONT_OBJECT) 儘可能以&quot;TextStatusBarText&quot;為主,
+   否則以&quot;ChatFontNoramal&quot;為主
+-- Font (EA_Fonts) 拉取系統預設值 STANDARD_TEXT_FONT,
+   以/dump STANDARD_TEXT_FONT 可能因語系出現不同標準字型檔
+-- 以上兩項可於 EventAlertMod_InitVar.lua進行修改
+-- 將大部分框架層級由HIGH降至MEDIUM ,嘗試減少與其他框架遮擋現象
+-- 圖示大小每次滑動調整值由5改為1
+-- 當偵測OmniCC被載入且EAM也啟用倒數陰影功能時, 強制關閉EAM的倒數陰影
+   避免被OmniCC攔截顯示造成干擾
+
 ----------------------------
 -- [SL] 2020.10.18
 ----------------------------
--- Change the arcane charging pattern
---Fixed Warlock error
--- DK increases the display of the number of available runes, and highlights it if there are 6 available runes.
--- DK can switch the display of runes through /eam ShowRunesBar
+-- 變更秘法充能圖案
+-- 修正術士報錯
+-- DK 增加可用符文數量顯示,若達6個可用符文則高亮
+-- DK 可透過/eam ShowRunesBar 切換顯示符文列
 
 ----------------------------
 -- [SL] 2020.10.17
 ----------------------------
---Fixed Qi display
---Fixed tank DH resource display (Magic Pain)
---The Dark Priest&#x27;s madness value reaches the plague requirement value of 50, highlighted
--- The frenzied fighting rage reaches the rage requirement value of 80, highlighted
--- The martial rage reaches the maximum damage requirement of 40 for beheading, highlighted
--- The anti-war rage reaches the required value of 40 to ignore pain, highlighted
--- The Balance Druid star can reach the Starfall spell requirement of 50 Highlights
--- Increase the font size (you need to adjust the icon size before the font size will be adjusted accordingly)
+-- 修復真氣顯示
+-- 修復坦DH資源顯示(魔痛)
+-- 暗牧瘋狂值達到瘟疫需求值50高亮
+-- 狂戰怒氣達到暴怒需求值80高亮
+-- 武戰怒氣達到斬殺最大傷害需求值40高亮
+-- 防戰怒氣達到無視苦痛需求值40高亮
+-- 平衡德魯伊星能達到星隕術需求值50高亮
+-- 加大字體(須調整圖示大小才會跟著調整字體大小)
 ----------------------------
 -- [SL] 2020.10.04
 ----------------------------
--- wrap GetSpellDurationByDesc() into Lib_ZYF
+-- 包裝 GetSpellDurationByDesc() 到 Lib_ZYF
 
 ----------------------------
 -- [SL] 2020.08.23
 ----------------------------
---Fixed the display issue of warlock soul fragments and fragments
---Numbers are not displayed in the repair ability frame
+--修復術士靈魂碎片及碎塊顯示問題
+--修復能力框架內不顯示數字
 
 ----------------------------
 -- [SL] 2020.08.22
 ----------------------------
--- Modify the comparison PATTERN of non-halo ground effects so that they can be compared on the PTR
-    For example: 116011 (rune of active power), 342130 (rune of passive power)
-    (Note: This type of effect requires entering the cast ID in the self-gain and debuff, not the BUFF ID. Special attention must be paid)
-	
+-- 修改非光環式地面效果的比對PATTERN使之可以在PTR比對到
+    例如:116011(主動力之符文)、342130(被動力之符文)
+    (註:這類效果需要在自身增減益輸入施法ID,而非BUFF ID,須特別注意)
+
 ----------------------------
 -- [SL] 2020.08.16
 ----------------------------
---Update TOC version number to 9.0 (90001)
---In response to Blizzard&#x27;s changes in the operation of the background, make relevant modifications to make the display normal.
---LibButtonGLow&#x27;s highlighting function is broken, use LibCustomGLow instead
-   LibStub(&quot;LibCustomGlow-1.0&quot;).ButtonGlow_Start(eaf) and
+--更新TOC版本號到9.0(90001)
+--因應暴雪對backdrop的操作異動做相關修改使顯示正常
+--LibButtonGLow的高亮函式壞掉,改用LibCustomGLow的
+   LibStub(&quot;LibCustomGlow-1.0&quot;).ButtonGlow_Start(eaf)及
    LibStub(&quot;LibCustomGlow-1.0&quot;).ButtonGlow_Stop(eaf)
---I forgot to change anything else
+--其他忘記改了啥東西
 
 ----------------------------
 -- [BFA] 2019.06.27
 ----------------------------
--- Update version number to 8.2
---Fixed: An error occurred because the audio playback API no longer supports the PATH format.
-        Currently, all go to https://wow.tools/files/ to find the corresponding ID and substitute it.
-		
+-- 更新版本號到8.2
+-- 修復:由於播放音效API不再支援PATH形式,所以產生錯誤
+        目前全都到https://wow.tools/files/ 找到對應ID代入
+
 ----------------------------
 -- [BFA] 2019.06.07
 ----------------------------
--- Correction: Monk Qi display (LIGHTFORCE changed to CHI)
+-- 修正:武僧真氣顯示(LIGHTFORCE均改為CHI)
 
 ----------------------------
 -- [BFA] 2018.11.24
 ----------------------------
--- Correction: /eam iconappespelltip option function, so that the mouse prompt can be turned on and off normally, and the mouse click can also be penetrated
+-- 修正:/eam iconappespelltip 選項功能,使其可以正常開關滑鼠提示,也允許滑鼠點擊穿透
 
 ----------------------------
 -- [BFA] 2018.11.05
 ----------------------------
--- Added option to highlight when conditions are met in group condition skill prompts
--- If it is a talent skill but it is not clicked, it will not be judged or displayed.
-   (Based on the spell ID of the first set of sub-conditions and the current specialization)
+-- 群組條件技能提示增加條件滿足時高亮的選項
+-- 若屬於天賦技能,但未點出,則不會進行判斷與顯示
+   (以第一組子條件的法術ID以及當前專精作為依據)
+
 ----------------------------
 -- [BFA] 2018.10.12
 ----------------------------
---Fixed: The problem of self and target debuff not showing red and green
---Fixed: Skill cooling module icon flickering problem
--- Optimization: Creating cache tables corresponding to items and spells is no longer severely lagging (but there is still a slight lag)
-        It will prompt you with the cache creation progress. It is recommended to wait patiently for the cache creation to be completed.
-		(In order to avoid serious lag, the completion is spread out to 250 seconds, so the waiting time will be longer than before)
---Skill cooldown increases the setting of the red text prompt for the remaining seconds (please set it in the gear)
--- The red text prompt of the remaining seconds is enlarged by 10% (enlarged by the countdown number inside or outside the box)
---A comparison regular expression has been added to the non-halo skill duration so that crow hunting can be determined
+-- 修復:自身與目標debuff 不顯示紅色與綠色的問題
+-- 修復:技能冷卻模組圖示閃爍問題
+-- 優化:建立物品法術對應快取表不再嚴重卡頓(但仍然有一點小卡)
+        並會提示建立快取進度,建議耐心等待快取建立完成.
+		(為了避免嚴重卡頓而分攤到250秒內完成,所以會比之前等待時間更久)
+-- 技能冷卻增加剩餘秒數紅字提示之設定(請於齒輪內設定)
+-- 剩餘秒數紅字提示放大10%大小依(依框內或框外之倒數數字放大)
+-- 非光環式技能持續時間增加了一個比對正則式, 讓烏鴉獵殺可以被判定到
 
 ----------------------------
 -- [BFA] 2018.10.02
 ----------------------------
---Fixed the issue where non-halo skills would be displayed to players other than yourself
---Fixed stacked number flickering issue
-(EventAlert_Icon_Options_Frame_AdjustTimerFontSize can be found in EventAlert_IconOption.lua to modify the ratio)
-   
+-- 修復非光環式技能會顯示到自身以外玩家的問題
+-- 修復堆疊數字閃爍問題
+   (可在EventAlert_IconOption.lua內找到EventAlert_Icon_Options_Frame_AdjustTimerFontSize來修改比例)
+
 ----------------------------
 -- [BFA] 2018.09.29
 ----------------------------
--- PositionFrame(), TarPositionFrame(0, ScdPositionFrame() are no longer updated as soon as there is an event
-   Changed to regularly updating icons every 0.1 seconds in order to significantly reduce CPU usage and avoid a large number of events during team battles.
-   LAG
+-- PositionFrame(), TarPositionFrame(0, ScdPositionFrame()不再一有事件就更新
+   改以每0.1秒定時更新圖示,以求大幅降低cpu使用率, 從而避免團戰時大量事件引起
+   的LAG
 
 ----------------------------
 -- [BFA] 2018.09.03
 ----------------------------
--- Improved the accuracy of non-Aura continuous effects
+-- 加強非光環式持續效果正確性
 
 ----------------------------
 -- [BFA] 2018.08.29
 ----------------------------
--- To support the duration of skills without Aura, please enter the &quot;Skill Spell ID&quot; in the prompt module of this profession.
-   The program will automatically capture the duration in the skill prompt. If it cannot be captured, please check and modify localization.tw.lua.
-   Regular expression of EA_XCMD_SPELL_DURATION_PATTERN1, EA_XCMD_SPELL_DURATION_PATTERN2
-   
-   For example, Blizzard (190356), Mirror Image (55342), Ball of Frost (84714), Rune of Power (116011), etc.
-   P.S. 116011 is the duration of the rune, and 116014 is the BUFF that will only appear within the effective range of the rune.
-   
+-- 支援無光環之技能持續秒數,請在本職業提示模組輸入&quot;技能法術ID&quot;
+   程式會自動抓取技能提示內的持續時間,若抓取不到,請查閱修改localization.tw.lua內
+   的EA_XCMD_SPELL_DURATION_PATTERN1, EA_XCMD_SPELL_DURATION_PATTERN2的正則表達式
+
+   例如暴風雪(190356),鏡像(55342),冰霜之球(84714),力之符文(116011)等等
+   P.S. 116011是符文持續時間,116014是在符文有效範圍內才會出現的BUFF
+
 ----------------------------
 -- [BFA] 2018.08.25
 ----------------------------
--- New instructions /eam NewLineByIconCount (2~n)
-	In the cooling module section, every icon automatically jumps to the next column.
--- New instructions /eam UpdateInterval
-   Control the OnUpdate frequency. If it exceeds 0.1 seconds, the decimal point display will be abnormal, but there will be less delay.
--- Some special commands will be displayed in the mouse prompts of the settings icon
+-- 新增指令 /eam NewLineByIconCount (2~n)
+	在冷卻模組部份,每隔多少圖示自動跳到下一列
+-- 新增指令 /eam UpdateInterval
+   控制OnUpdate頻率 , 超過0.1秒則小數點顯示會不正常, 但是較不會延遲
+-- 一些特殊指令會在設定圖示的滑鼠提示顯示
 
 ----------------------------
 -- [LEG] 2017.09.01
 ----------------------------
--- Fix - Fix the problem that the main menu settings cannot be saved
--- Fix - Fix the error caused by the change of reference parameter type in 7.3 PlaySound function
+-- 修正- 修復主選單設置無法保存問題
+-- 修正- 修復7.3 PlaySound函數因引用參數類型改變造成的錯誤
 ----------------------------
--- Destruction Warlock&#x27;s shards will be displayed to the decimal point
+-- 毀滅術士的碎片會顯示到小數點
 ----------------------------
 -- [LEG] 2017.07.09
 ----------------------------
--- Add summoning totem spell monitoring, enter the summoning spell ID in your own BUFF
-   For example, runes of power, shamanic totems, mind-benders, etc.
--- /eam showc If enabled, add display summoning spell ID
+-- 增加招喚圖騰型法術監控，在自身BUFF內輸入招喚型施法法術ID
+   例如力之符文、薩滿圖騰、屈心魔等等
+-- /eam showc 若啟用，增加顯示招喚型法術ID
 
 ----------------------------
 -- [LEG] 2017.07.01
 ----------------------------
--- Added Evil DK Dark Arbiter support
--- Change yellow font back to white font
---Fixed cooldown timing error
--- Fixed the issue where the prompt does not disappear when the skill cooldown ends (/eam scdremovewhencooldown is equal to false)
-   , the bug that some skills disappeared after cooling down
+-- 加入邪DK黑暗仲裁者支援
+-- 黃色字體改回白色字體
+-- 修復冷卻計時錯誤
+-- 修復在技能冷卻結束時提示不消失的狀態下(/eam scdremovewhencooldown 等於false 時)
+   ,部份技能卻在冷卻在完成消失的BUG
 
 ----------------------------
 -- [LEG] 2017.06.29
 ----------------------------
---Fixed the phenomenon of abnormal skill CD caused by adding item CD function
+-- 修復因加入物品CD功能而導致技能CD失常的現象
 --
 ----------------------------
 -- [LEG] 2017.06.26
 ----------------------------
--- Adjust again the order in which UIDropDownMenu related files are referenced in the .toc file (XML must be referenced earlier than the LUA file, and LibStub must be referenced earlier)
+-- 再次調整.toc檔內引用UIDropDownMenu相關檔案的順序(XML必須比LUA檔更早引用,且LibStub必須更早引用)
 
--- BUFF,DEBUFF Additional values (value1~3) If it exceeds 10,000, it will be displayed in units of 10,000
+-- BUFF,DEBUFF 額外數值(value1~3) 若超過1萬則以萬為單位顯示
 
 ----------------------------
 -- [LEG] 2017.06.23
 ----------------------------
--- Special treatment for Rune of Power (116014)
-   (SPELL_SUMMON event recording start time, EventAlert_Buffs_Update function forces writing duration of 10 seconds)
--- Fixed the problem of incomplete UIDropDownMenu calling (toc adds the paths of two other Lua)
+-- 針對力之符文(116014)做特別處理
+   (SPELL_SUMMON事件紀錄開始時間,EventAlert_Buffs_Update函式強迫寫入持續時間10秒)
+-- 修正UIDropDownMenu調用不完全的問題(toc加入另外兩個lua的路徑)
 
 ----------------------------
 -- [LEG] 2017.06.21
 ----------------------------
--- For the taint problem, call UIDropDownMenu to correct the use of the function library and the new version of the LibButtonGlow1.0 function library to reduce the generation of taint
+-- 針對taint 問題調用 UIDropDownMenu修正用函式庫及新版的 LibButtonGlow1.0 函式庫來降低taint的產生
 
--- The skill cooldown increases the item cooldown, but you cannot enter the item ID (Item ID). You can only enter the cast spell ID to create it. You can use /eam showc to query.
-   However, if the item&#x27;s CD is &quot;usable&quot;, it can be queried through GetSpellBaseCooldown (spell ID), and the program will automatically identify it.
-However, if it is triggered by specific conditions and has a built-in CD, the player needs to manually enter a fixed value. Currently, the more inconvenient method is to use the input format of the spell ID.
-   Enter the cooling seconds separated by a semicolon (;). For example
-   Cypher&#x27;s secret is just enter 208052;30
-   Absorption Shield Necklace 207452;30
-   If it does not work immediately after input, please /rl or /reload to reload the UI.
-If the spell ID has been created before but the seconds have not been entered or the seconds are incorrect, please delete it first and then create it again.
-   Find time to improve later
-   
--- Change the count text to yellow and add a shadow
+-- 技能冷卻增加了物品冷卻，但是不可以輸入物品ID(Item ID),只能輸入施放的法術ID萊建立，可使用/eam showc 來查詢，
+   然而物品的CD若是&quot;使用型&quot;則可以透過GetSpellBaseCooldown(法術ID)來查詢,程式會自動判別
+   但若是特定條件觸發且有內置CD的則需要玩家手動輸入固定值，目前用比較不方便的作法就是在法術ID的輸入格式
+   後面以分號(;)隔開輸入冷卻秒數。例如
+   賽弗斯的祕密就輸入208052;30
+   吸收盾項鍊 207452;30
+   輸入後若無法馬上作用請/rl或/reload 重載UI
+   若曾經建立過該法術ID但沒有輸入過秒數或秒數錯誤，則請先刪除，再重新建立。
+   之後再找時間改善
 
--- Stacked text is enlarged and shadowed
-   
+-- 計數文字改為黃色並且加上陰影
+
+-- 堆疊文字加大並加上陰影
+
 ----------------------------
 --[LEG] 2017.06.19
 ----------------------------
---Fixed the nil access error caused by the cooling module sort pre-job accessing an empty table
+-- 修復冷卻模塊排序前置作業存取到空的表格產生的nil 存取錯誤
 
 ----------------------------
 -- [LEG] 2017.06.16
 ----------------------------
--- The skill cooling module can now set the proportion order (the other 4 items have no effect for the time being, and it is recommended not to set them)
+-- 技能冷卻模塊現在可以設定比重排序了(其他4項暫時無效果，建議不要設定)
 
---Conditional group skills move the combo points from &quot;Combo Point Action Type&quot; to &quot;Object Energy Action Type&quot;
+-- 條件式群組技能將連擊點由&quot;連擊點異動類&quot;移到&quot;對象能量異動類&quot;
 
---Fixed the problem of conditional group skill combo point failure
+-- 修復條件式群組技能連擊點失效問題
 
---Fixed the problem that the third specialization of conditional group skills cannot be checked
+-- 修復條件式群組技能第三個專精無法勾選問題
 
---Fixed the error that the gain and debuff triggered by items in the cross-class gain and debuff area could not be displayed.
---Fixed the problem after converting astral energy to UpdateSinglePower function
-   There are still errors caused by code snippets referencing the old function UpdateLunarPower.
+-- 修復跨職業增減益區由物品觸發的增減益無法顯示的錯誤。
 
--- Star Energy changed a pattern to give it a more &quot;star&quot; feel.
+-- 修復在星界能量轉換到UpdateSinglePower函數處理後
+   仍有程式碼片段引用舊函數UpdateLunarPower 所導致的錯誤。
 
---Adjust the logic of highlighting professional resources: Furious warrior anger combined with rage skills will highlight if it is above 85. If the talent is a bit massacre, it will be highlighted if it is above 70
---Adjusted the logic of highlighting professional resources: Dark Priest&#x27;s madness value. If the talent is set to Remnant Void, it will be highlighted if it is above 65.
+-- 星能變更了一個圖案，使其較有&quot;星&quot;的感覺。
 
---Adjust the logic of highlighting professional resources: the Balanced Virtue Star will be highlighted if it reaches 40 stars in Star Surge.
+-- 調整職業資源高亮邏輯:狂怒戰士怒氣配合暴怒技能，85以上高亮，若天賦有點大屠殺，則70以上高亮
+
+-- 調整職業資源高亮邏輯:暗牧瘋狂值，若天賦點了殘遺虛無，則65以上就高亮。
+
+-- 調整職業資源高亮邏輯:平衡德星能達到星湧術40星能需求就高亮
 
 ----------------------------
 -- [LEG] 2016.08.27
 ----------------------------
--- The variables in EA_Config2 will only become the default values for the first installation, and all subsequent changes will be saved
-   EA_Config is archived and used as the source for next loading.
-Simply put, every time the version is updated, the player&#x27;s own settings will be retained.
-   In the game, you can enter the format of EA_Config.Variable name=specified content to change and save.
--- The control variable OPTION_ICON is added to the setting icon, and the variable is also changed when the /eam minimap switches the display.
-   Use it as a basis for next loading.   
---Added parameters /eam showeaconfig, /eam showeaposition to display player settings
--- Fixed an error in the localization file content of the Simplified and English versions that caused the astral energy to be unable to be displayed.
--- Change the hunter pet focus value to a check switch in the graphical interface, and remove the HUNTER_ShowPetFocus variable
---Fixed the error that even if the option to only display player casts is checked, the buffs and debuffs of others will still be displayed (the self variable is not stored correctly)
-   (The problematic BUFF/DEBUFF ID must be deleted and rebuilt)
--- The function of displaying value, value, value3 uses a lower limit value EA_Config.ShowAuraValueWhenOver to decide whether to display it.
-   The current default lower limit is 1000
--- [Unfinished]: N seconds highlight prompt for self/target&#x27;s BUFF/DEBUFF countdown
--- [Unfinished]: Try to separate special resources from own buffs
--- [Unfinished]: ENERGY frame disappears after war
+-- EA_Config2 內的變數將只成為首次安裝的預設值，之後的所有變更將存入
+   EA_Config存檔並作為下次載入之來源。
+   簡單說，每次更版時，將保留屬於玩家自己的設定。
+   遊戲內可以輸入 EA_Config.變數名稱=指定內容 的格式來變更並儲存。
+-- 設置圖標增加了控制變數 OPTION_ICON, 並在/eam minimap 切換顯示的同時也變更該變數
+   以作為下次載入依據。
+-- 增加參數 /eam showeaconfig, /eam showeaposition 來顯示玩家設置內容
+-- 修正簡體版、英文版本地化文件內容錯誤造成星界能量無法顯示
+-- 獵人寵物集中值改到圖形介面內做勾選式開關，並移除HUNTER_ShowPetFocus變數
+-- 修復即使勾選僅顯示玩家施放之選項仍會顯示他人增減益的錯誤(self變數未正確儲存)
+   (有問題的BUFF/DEBUFF ID 必須刪除重建)
+-- 顯示value,value,value3 的功能以一個下限值EA_Config.ShowAuraValueWhenOver來決定是否顯示。
+   目前預設下限值為1000
+-- [未完成]:自身/目標的BUFF/DEBUFF倒數N秒高亮提示
+-- [未完成]:嘗試將特殊資源與自身BUFF分開
+-- [未完成]:ENERGY框架脫戰後消失
 
 ----------------------------
 -- [LEG] 2016.08.22
 ----------------------------
--- Setting icon available /eam minimap switch enable/disable
+-- 設置圖標可用 /eam minimap 切換啟用/關閉
 
--- The setting icon can be moved with the right click
-(The new position after dragging will be automatically saved by Blizzard to the layout-local.txt under each character, and will be automatically restored to the last position when online)
-   
--- New: Enter /eam scdremovewhencooldown to directly switch the EA_Config2.SCD_RemoveWhenCooldown variable to control
-   Cooling frame behavior (true means that a single skill will disappear when the cooling is completed, false means that it will not disappear even if it is completed)
-   (It will not be archived, and the settings in AddOn\EventAlertMod\EventAlertMod.lua will still be followed the next time you log in)
--- New: Enter /eam scdnocombatstillkeep to directly switch the EA_Config2.SCD_NocombatStillKeep variable to control
-   Cooling frame behavior (true means the frame will still be maintained after leaving combat, false means the cooling frame will disappear after leaving combat)
-   (It will not be archived, and the settings in AddOn\EventAlertMod\EventAlertMod.lua will still be followed the next time you log in)
-   
--- If the timer is outside the frame (0.65 times the frame size), increase the stacking number (0.45 times the frame size)
-;If the timer is inside the frame (0.5 times the frame size), reduce the stacking number size (0.3 times the frame size)
-   
--- Display value1, value2, value3 (if any) below the gain and loss, and the absorption value can be displayed in the future.
+-- 設置圖標可用右鍵移動
+   (拖曳後之新位置將被暴雪自動存到各角色下的layout-local.txt，上線時將自動還原到最後位置)
 
--- Correction: When a skill additionally prompts you to enter a skill ID that does not belong to a profession
-   , which will cause errors in several BUFFs of its own gain and debuff modules, including not displaying the time or incorrect time.
---Fixed: The archive of conditional group skills did not include the new secondary resource code, resulting in the failure to correctly reflect the user&#x27;s settings. 
-   (Added shamanic energy MAELSTROM, arcane charging ARCANE_CHARGES, demon hunter&#x27;s FURY, and demonic pain PAIN)
+-- 新增: 輸入 /eam scdremovewhencooldown 直接切換EA_Config2.SCD_RemoveWhenCooldown變數來控制
+   冷卻框架行為(true表示單一技能冷卻完成即消失,false表示即使完成也不消失)
+   (不會存檔，下次登入時仍會按照Addons\EventAlertMod\EventAlertMod.lua內的設置)
+
+-- 新增: 輸入 /eam scdnocombatstillkeep 直接切換EA_Config2.SCD_NocombatStillKeep變數來控制
+   冷卻框架行為(true表示脫離戰鬥仍然保持框架，false表示脫離戰鬥冷卻框架消失)
+   (不會存檔，下次登入時仍會按照Addons\EventAlertMod\EventAlertMod.lua內的設置)
+
+-- 計時器若在框體外(0.65倍框體大小)，則堆疊數字調大(0.45倍框體大小)
+   ;計時器若在框體內(0.5倍框體大小)，堆疊數字大小調小(0.3倍框體大小)
+
+-- 在增減益下方顯示value1,value2,value3(若有的話),期能顯示吸收值
+
+-- 修正:當技能額外提示輸入了非職業所屬之技能ID時
+   ，會讓自身增減益模塊的若干BUFF產生錯誤，包含了不顯示時間或不正確的時間。
+
+-- 修正:條件式群組技能的存檔未納入新的副資源代碼，導致無法正確反應使用者的設置。
+   (加入薩滿元能MAELSTROM、祕法充能ARCANE_CHARGES、惡魔獵人的魔怒FURY、魔痛PAIN)
 ----------------------------
 -- [LEG] 2016.08.16
 ----------------------------
--- Demon Hunter increases PAIN energy (tank)
---Adjust the frame text proportion (adjust according to the icon size proportion)
--- Add a gear icon near the minimap and click to open the main settings window
-, and display hints when the mouse hovers
+-- 惡魔獵人增加PAIN 能量(坦克)
+-- 調整框架文字比例(隨圖示大小比例調整)
+-- 在小地圖附近增加一個齒輪圖示可點擊開啟主設定視窗
+   ，並在鼠標懸停時顯示提示說明
 
 ----------------------------
 -- [LEG] 2016.08.11
 ----------------------------
--- Correction: A line of code in the update rune function will cause an error when logging into the game from DK
---Fixed: Fixed an issue where charging skills would hide the frame after being consumed only once when SCD_RemoveWhenCooldown is enabled.
---The talents in the conditional group skills are changed to specializations, the number is increased to 4, and the specialization names are displayed. Displayed according to the maximum number of specializations
--- Add demon hunter related code
+-- 修正:更新符文函數內的一行程式碼在DK登入遊戲時會造成報錯
+-- 修正:充能型技能在SCD_RemoveWhenCooldown啟用時，只消耗一次就把框架隱藏的問題。
+-- 條件式群組技能內的天賦改為專精，增加為4個,並顯示專精名稱。依照最大專精數量顯示
+-- 增加惡魔獵人相關程式碼
 
 ----------------------------
 -- [LEG] 2016.08.09
 ----------------------------
---Adjustment: DK rune frame disappears after battle
---Adjustment: The DK rune frame is attached above its own BUFF and grows in the same direction as the BUFF.
---Adjustment: The proportion of the DK rune cooldown countdown number is reduced.
---Adjustment: Remove the DK_ShowRunes variable in EventAlertMod.lua and enable and disable it in the graphical interface
--- Added: pet BUFF/DEBUFF support, displayed as its own BUFF/DEBUFF module
--- Supplementary explanation: Pet skill cooling support is displayed in the skill cooling module (it was added in the early stage, but no explanation was added)
--- Correction: Unchecking special professional resources can now take effect immediately
--- Correction: The default spell IDs are deleted according to the version and outdated spell IDs are added and a large number of 7.0 spell IDs are added (may not satisfy everyone)
+-- 調整:DK符文框架脫戰後消失
+-- 調整:DK符文框架附掛在自身BUFF的上方，並與BUFF同方向成長
+-- 調整:DK符文冷卻倒數數字比例調小
+-- 調整:移除EventAlertMod.lua內DK_ShowRunes變數，改為在圖形介面啟用關閉
+-- 新增:寵物BUFF/DEBUFF支援，以自身BUFF/DEBUFF模塊顯示
+-- 補充說明:寵物技能冷卻支援，以技能冷卻模塊顯示(早期已增加，但未加入說明)
+-- 修正:特殊職業資源取消勾選現在能即時生效
+-- 修正:預設法術ID因應版本刪除過時法術ID並加入大量7.0法術ID (可能無法滿足所有人)
 
----------------
+--------------
 -- [LEG] 2016.08.01
----------------
---Adjust the display size of DK runes to solve the lag problem
--- BUFF and DEBUFF mouse prompts are no longer just skill descriptions, but current status values.
-   , the spell cooling framework maintains the skill description
-   
--- If the number of stacks is less than 2, the count value will not be displayed to avoid the situation of 1.
+--------------
+-- 調整DK符文顯示大小, 解決卡頓問題
 
--- If the maximum number of combo points is 6, then 6 will be used as the highlight value. If the number of combo points is 8 or 5, then 5 will be used as the highlight value.
+-- BUFF 與 DEBUFF的滑鼠提示不再只是技能說明，而是當前的狀態數值，
+   ，法術冷卻的框架則維持技能說明
 
---If the profession is a thief, change the OFFSET of energy from -2 to -1
+-- 堆疊次數小於2皆不顯示計數值，避免出現1的狀況。
 
--- Change the spacing adjustment display to an integer
+-- 連擊點數最大值若為6 則以6作為高亮值, 連擊點數若為8或5 則以5做為高亮值
 
----------------
+-- 若職業為盜賊則將能量的OFFSET 由-2改為-1
+
+-- 將間距調整顯示改為整數
+
+--------------
 -- [LEG] 2016.07.27
----------------
+--------------
 
--- Group condition skill prompts can now display the specified pattern normally, and new special energy support has been added.
+-- 群組條件技能提示可以正常顯示指定圖案了，並加入新的特殊能量支援
 
--- When adding a new spell, by default only the BUFF/DEBUFF cast by the player will be displayed.
-   (This option can be seen on the gear after clicking the spell)
+-- 新增法術時，預設僅顯示為玩家本人施放的BUFF/DEBUFF
+   (點法術後的齒輪可以可見此選項)
 
--- Corrected the problem that when decimals are displayed after counting down N seconds, special energy will also have decimal points.
-   (Stagger with timeLeft~=floor(timeLeft))
+-- 修正當啟用倒數N秒後顯示小數時會讓特殊能量也出現小數點的問題
+   (以timeLeft~=floor(timeLeft)來錯開)
 
--- Fixed the problem that EA_Config2.IsKeepGlowSCD does not work
--- Add mouse prompts.
-   And use the EA_Config2.ICON_APPEND_SPELL_TIP variable as a switch
+-- 修正EA_Config2.IsKeepGlowSCD 無法作用的問題
 
---The initial default value is to turn off all professional special energy
+-- 增加鼠標提示。
+   並以EA_Config2.ICON_APPEND_SPELL_TIP 變數作為開關
 
---The initial default value is to turn off the kill prompt (star flashing)
+-- 初始預設值為關閉所有職業特殊能量
 
--- The &quot;Icon Location Options&quot; button was renamed: &quot;Icon Location &amp; Occupational Special Energy&quot; (Simplified: &quot;Icon Location &amp; Sub-Resources&quot;)
-   In order to let everyone know where to turn on and off these special POWER.
-   
--- EA_Config2 variable renamed:
---Whether to maintain the skill cooldown frame after leaving combat
-		SCD_NocombatStillKeep = true,
-	--Highlighted when the skill of the cooling frame reaches the conditions for casting
-		SCD_GlowWhenUsable = true ,
-	--Single skill will be removed after cooling down (true: to be removed /false: not to be removed)
-		SCD_RemoveWhenCooldown = true,
-	--The remaining seconds will be displayed with one decimal point (using 0 means there will be no decimal point at all)
-		UseFloatSec = 1,
-	--Whether to display death knight runes (true: display /false: do not display)
+-- 初始預設值為關閉斬殺提示(星芒閃爍)
+
+-- &quot;圖示位置選項&quot;按鈕更名為:&quot;圖示位置&amp;職業特殊能量&quot;(簡體:&quot;图示位置&amp;副资源&quot;)
+   以便於讓大家知道要去哪邊啟用關閉這些特殊POWER。
+
+-- EA_Config2變數更名:
+	--脫離戰鬥後是否保持技能冷卻框架
+		SCD_NocombatStillKeep	= true,
+	--當冷卻框架之技能達到可施放條件時高亮
+		SCD_GlowWhenUsable		= true ,
+	--單一技能冷卻完成即移除(true:要移除/false:不移除)
+		SCD_RemoveWhenCooldown	= true,
+	--剩餘多少秒開始使用小數點一位顯示(使用0則完全不會有小數點)
+		UseFloatSec	= 1,
+	--是否顯示死騎符文(true:顯示/false:不顯示)
 		DK_ShowRunes = false,
---Whether to display the hunter pet concentration value
-		HUNTER_ShowPetFocus = true,
-	--Hunter pet concentration value highlighting condition value (0 means no highlighting)
-		HUNTER_GlowPetFocus = 50,
-		
+	--是否顯示獵人寵物集中值
+		HUNTER_ShowPetFocus	= true,
+	--獵人寵物集中值高亮條件值(0表示不高亮)
+		HUNTER_GlowPetFocus 	= 50,
 
----------------
+
+--------------
 -- [LEG] 2016.07.26--
----------------
+--------------
 
--- Added new arcane charging resources (maximum value highlighted)
--- Added new shaman energy resources (maximum value highlighted)
+-- 新增秘法充能資源(最大值高亮)
+-- 新增薩滿元能資源(最大值高亮)
 
----------------
+--------------
 -- [LEG] 2016.07.25--
----------------
+--------------
 
--- Warrior/Bear will not trigger UNIT_POWER when its anger returns to zero, resulting in the inability to disappear after its anger frame returns to zero.
-, so add the UNIT_FRUQUENT event to refresh the anger frame.
+-- 戰士/熊由於怒氣歸零時不會觸發UNIT_POWER，導致怒氣框架歸零後無法消失
+  ，所以增加 UNIT_FRUQUENT 事件來刷新怒氣框架。
 
---The death knight rune display is 6. Due to a judgment error in CreateFrames_SpecialFrames_Show
-  Resulting in no refresh. Corrected. Rune colors change with specialization.
+-- 死騎符文顯示6的問題。由於CreateFrames_SpecialFrames_Show內判定錯誤
+  導致沒有刷新。已修正。符文顏色隨專精轉換。
 
--- Add a variable to EA_Config2 in EventAlertMod.lua: DK_ShowRunes to decide
-  Whether to display runes. (true:display/false:not display)
+-- 在EventAlertMod.lua內的EA_Config2增加一個變數:DK_ShowRunes 來決定
+  是否顯示符文。(true:顯示/false:不顯示)
 
--- The corresponding monk currently only has energy when brewing wine, Fengxing has energy/qi, and Mistweaver only has mana but no energy or qi.
-Make corresponding adjustments.
+-- 對應武僧目前釀酒只有能量，風行有能量/真氣，織霧只有法力沒有能量真氣
+  做對應的調整。
 
--- Added a variable for whether the hunter pet focus is displayed, which is determined by EA_Config2.HUNTER_ShowPetFocus
+-- 增加獵人寵物集中是否顯示的變數，由EA_Config2.HUNTER_ShowPetFocus來決定
 
---Increase the highlight condition value of hunter pet concentration value. 0 means no highlight is displayed. The default value is 50.
-   (The pet’s basic attack will have increased damage if it is concentrated more than 50 times)
+-- 增加獵人寵物集中值高亮條件值, 0表示不顯示高亮,預設值50。
+   (寵物基本攻擊50集中以上有增傷)
 
--- The dark animal husbandry madness value will be highlighted when it reaches the upper limit.
+-- 暗牧瘋狂值達到上限會高亮
 
--- The decimal point variable is changed to UseFloatSec, which means that only one decimal point will be displayed if it is less than this second.
-   If 0, it means it will not be displayed at all.
---Bird D The sun and moon energy are removed, leaving only the star energy.</code></pre>
+-- 小數點變數變更為UseFloatSec, 表示低於此秒數才會使用小數點一位顯示
+   若0 則表示完全不會顯示
+
+-- 鳥D 日月能移除，只剩下星能。
+</code></pre>
     </div>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -1617,7 +1651,7 @@ Make corresponding adjustments.
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

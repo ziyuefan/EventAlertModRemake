@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -547,35 +547,35 @@
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-quality-control-and-root-cause-analysis-guidelines-qc-and-root-cause-analysis-guidelines">EventAlertMod Quality Control and Root Cause Analysis Guidelines (QC and Root Cause Analysis Guidelines)</h1>
-<p>Boy! In order to ensure the program code quality of EAM during reconstruction and future development and avoid planting the same bug repeatedly, this document formally combines the control quality of enterprise management (TQM), the seven new QC methods, the 5 whys (WHY-WHYDE), fish chart factor analysis, matrix strategy evaluation and Gantt, the mental method of chart phase analysis.
-All subsequent sub-agents must follow this QC guideline when conducting problem troubleshooting, plan design (implementation plan) and PR review.</p>
+<h1 id="eventalertmod-qc">EventAlertMod 品質控制與要因分析指引（QC 與根本原因分析指引）</h1>
+<p>少年欸！為確保EAM在重構與日後開發中的程序代碼質量，避免在同一個Bug上反覆栽種，本文件正式將企業管理學的控製品質（TQM）、新QC七大手段、5個為什麼（WHY-WHYDE）、魚圖要因分析、矩陣對策評估與甘特，圖時相分析的精神法。
+後續所有子代理進行問題排查、方案設計（實施方案）與PR審查，均須遵循此QC指引。</p>
 <hr />
-<h2 id="1-5-whys-why-why-factor-analysis-implementation-specifications">1. 5 Whys (WHY-WHY factor analysis) implementation specifications</h2>
-<p>When any bug, Taint outbreak or Lua error occurs in EAM, the main agent and sub-agent must not directly try to modify the program code. They must first perform <strong>5 why analysis</strong> in the <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> record and ask "why" 5 times in a row until the root cause (Root Cause) is found.</p>
-<h3 id="example-iszero-bryn-crisis-collapse-analysis-in-combat">Example: IsZero() Bryn Crisis Collapse Analysis in Combat</h3>
+<h2 id="1-5-whys-why-why">1. 5 Whys (WHY-WHY要因分析) 實施規範</h2>
+<p>當 EAM 出現任何 Bug、Taint 爆發或 Lua 報錯時，主代理與子代理不得直接嘗試修改程序碼，必須先在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> 記錄中進行 <strong>5 個為什麼分析</strong>，連續追問 5 次「為什麼」，直到根本原因（Root Cause）。</p>
+<h3 id="iszero">範例：戰鬥中 IsZero() 布林危機崩潰分析</h3>
 <ul>
-<li><strong>Why 1 (one question)</strong>: Why does the plug-in program and crash the UI when OnUpdate is executed?<ul>
-<li><em>Answer</em>: Because in <code>Renderer.lua:97</code> a direct Boolean judgment is made on the return value of <code>durationObj:IsZero()</code> (<code>if durationObj:IsZero() then</code>).</li>
+<li><strong>為什麼1（一問）</strong>：為什麼OnUpdate執行時外掛程式並崩潰UI？<ul>
+<li><em>答</em>：因為在<code>Renderer.lua:97</code>對<code>durationObj:IsZero()</code>的傳回值進行了直接布林判斷（<code>if durationObj:IsZero() then</code>）。</li>
 </ul>
 </li>
-<li><strong>Why 2 (second question)</strong>: Why does <code>IsZero()</code> cause a crash?</li>
-<li><em>Answer</em>: Because the <code>DurationObject</code> represents the confidentiality limit returned by the Aura in combat, its IsZero()<code>method is a protected</code>Secret Boolean`.</li>
-<li><strong>Why 3 (Three Questions)</strong>: Why can’t the protected <code>Secret Boolean</code> do Bollinger judgment?<ul>
-<li><em>Answer</em>: Because the World of Warcraft 12.x engine prevents AddOn crystals from being determined by API to assist combat decision-making, it is strictly prohibited to execute Boolean Test instructions on Secret Boolean in Lua.</li>
+<li><strong>為什麼2（二問）</strong>：為什麼 <code>IsZero()</code> 會引發崩潰？</li>
+<li><em>答</em>：因為該 <code>DurationObject</code> 代表的光環在戰鬥中返回保密限制，其<code>IsZero()</code>方法是一個受保護的<code>Secret Boolean</code>。</li>
+<li><strong>為什麼3（三問）</strong>：為什麼受保護的<code>秘密布爾</code>不能做布林判斷？<ul>
+<li><em>答</em>：因為魔獸世界 12.x 引擎為了阻止 AddOn 水晶由 API 判定來輔助戰鬥決策，嚴禁在 Lua 中對 Secret Boolean 執行布林芥末指令（Boolean Test）。</li>
 </ul>
 </li>
-<li><strong>Why 4 (four questions)</strong>: Why do we have to call <code>IsZero()</code> in OnUpdate?<ul>
-<li><em>Answer</em>: Because the <code>UNIT_AURA</code> event in combat will be officially throttled, and in the secret state we cannot obtain the remaining time to pre-schedule the scheduler, the renderer must poll this predicate to actively restore the icon when the Aura disappears.</li>
+<li><strong>為什麼4（四問）</strong>：為什麼我們非要在OnUpdate中呼叫<code>IsZero()</code>？<ul>
+<li><em>回答</em>：因為戰鬥中<code>UNIT_AURA</code>事件會被官方節流，且秘密狀態下我們無法取得剩餘時間以預排調度器，必須在渲染器輪詢該謂詞以便在光環消失時主動恢復圖示。</li>
 </ul>
 </li>
-<li><strong>Why 5 (Five Questions/Root Reasons)</strong>: Why was there no protection before?</li>
-<li><em>Answer</em>: Because the renderer lacks pre-detection and security wrapping of Secret Value, and does not know that the return value of <code>IsZero()</code> is a Secret.</li>
-<li><strong>Basic Countermeasure</strong>: Introduce <code>safeCheckIsZero</code>, use <code>Util.isSecretValue</code> to filter the returned value, and if it is a Secret, perform the Boolean test yourself.</li>
+<li><strong>為什麼5（五問/根本原因）</strong>：為什麼之前沒有防護？</li>
+<li><em>答</em>：因為渲染器缺乏對Secret Value的前置檢測與安全包裹，且不知道<code>IsZero()</code>的傳回值和是Secret。</li>
+<li><strong>根本對策</strong>：引入<code>safeCheckIsZero</code>，利用<code>Util.isSecretValue</code>過濾回傳值，若為Secret則本身進行布林測試。</li>
 </ul>
 <hr />
-<h2 id="2-fishbone-diagram-ishikawa-diagram-factor-analysis-template">2. Fishbone Diagram (Ishikawa Diagram) factor analysis template</h2>
-<p>When encountering complex systemic problems (such as "not a single ICON appears" or "the UI is severely stuck in the high-level combat"), a fishbone diagram must be used to analyze from the following five dimensions:</p>
+<h2 id="2-ishikawa-diagram">2. 魚骨圖 (Ishikawa Diagram) 要因分析模板</h2>
+<p>在遇到複雜的系統性問題時（例如「一個 ICON 都沒有出現」或「戰鬥高層中 UI 嚴重卡頓」），必須使用魚骨圖從以下五個維度進行分析：</p>
 <pre class="codehilite"><code class="language-text">  【人 (Agent)】                   【機 (Client/WoW API)】         【料 (SavedVariables/Data)】
   - 載入順序快取 nil 漏配           - 12.x Secrecy 加密與限制       - 舊 SavedVariables 資料遷移失效
   - 靜態變數被提早快取             - 事件節流與 CLEU 事件停用       - 預設 Alerts 表為空 (WTF遺失)
@@ -590,92 +590,92 @@ All subsequent sub-agents must follow this QC guideline when conducting problem 
 </code></pre>
 
 <ul>
-<li><strong>People (Agent/Developer)</strong>: AI agent's code loading sequence, quick fetch logic, and improper use of static variables.</li>
-<li>** Machine (Client / WoW API)**: Behavior changes, encryption restrictions, event throttling for Warcraft client API.</li>
-<li><strong>Data (SavedVariables / Data)</strong>: database structure, default profile, localization strings.</li>
-<li><strong>Method (algorithm/logical process)</strong>: algorithm cost, loop design, event registration, GC garbage generation rate.</li>
-<li><strong>Ring (Environment/Game State)</strong>: In combat/not in combat, low FPS, a lot of Buff special fears.</li>
+<li><strong>人（代理/開發人員）</strong>：AI代理的程式碼載入順序、快速取邏輯、靜態變數使用不當。</li>
+<li>** 機器 (Client / WoW API)**：魔獸客戶端 API 的行為變更、加密限制、事件節流。</li>
+<li><strong>資料 (SavedVariables / Data)</strong>：資料庫架構、預設設定檔、在地化字串。</li>
+<li><strong>法（演算法/邏輯流程）</strong>：演算法費用、迴圈設計、事件註冊、GC垃圾產生率。</li>
+<li><strong>環（環境/遊戲狀態）</strong>：戰鬥中/非戰鬥中、低FPS、大量Buff特殊恐懼。</li>
 </ul>
 <hr />
-<h2 id="3-countermeasure-matrix">3. Countermeasure Matrix</h2>
-<p>When designing complex plans in <code>implementation_plan.md</code>, at least <strong>two entrepreneurial plans</strong> must be proposed and quantitatively evaluated in the form of a matrix diagram (1 to 5 points, with 5 dividing the best), and finally some with the highest comprehensive scores are obtained.</p>
-<h3 id="example-evaluation-of-strategies-to-solve-the-secret-countdown-problem-in-combat">Example: Evaluation of strategies to solve the secret countdown problem in combat</h3>
+<h2 id="3countermeasure-matrix">3.對策擬定與評估矩陣（Countermeasure Matrix）</h2>
+<p>在<code>implementation_plan.md</code>中設計複雜方案時，必須提出至少<strong>兩個創業方案</strong>，並以矩陣圖的形式進行量化評分評估（1~5分，5分割最），最終得出一些綜合得分最高者。</p>
+<h3 id="_1">例：解決戰鬥中秘密倒數問題的對策評估</h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Countermeasures</th>
-<th style="text-align: center;">Effect (effect)</th>
-<th style="text-align: center;">Breathing (breathing)</th>
-<th style="text-align: center;">Enough hunger (Low GC/CPU)</th>
-<th style="text-align: center;">Safety risk (Low pollution/Secret)</th>
-<th style="text-align: center;">Comprehensive score</th>
-<th style="text-align: center;">Decision</th>
+<th style="text-align: left;">對策方案</th>
+<th style="text-align: center;">效果（效果）</th>
+<th style="text-align: center;">呼吸（呼吸）</th>
+<th style="text-align: center;">足夠的飢餓 (Low GC/CPU)</th>
+<th style="text-align: center;">安全風險（低污染/Secret）</th>
+<th style="text-align: center;">綜合分數</th>
+<th style="text-align: center;">決策</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>Countermeasure A: Forcibly use Tooltip Scraping in each frame OnUpdate crawling time</strong></td>
+<td style="text-align: left;"><strong>對策 A：強行利用 Tooltip Scraping 在每幀 OnUpdate 爬取時間</strong></td>
 <td style="text-align: center;">2</td>
 <td style="text-align: center;">4</td>
-<td style="text-align: center;">1 (cliff string GC)</td>
-<td style="text-align: center;">2 (extremely easy to be contaminated)</td>
+<td style="text-align: center;">1 (絕壁字符串GC)</td>
+<td style="text-align: center;">2（極易被污染）</td>
 <td style="text-align: center;"><strong>9</strong></td>
-<td style="text-align: center;">Elimination</td>
+<td style="text-align: center;">淘汰</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Countermeasure B: Use Shadow Host adsorption to produce adsorption official CooldownViewer</strong></td>
+<td style="text-align: left;"><strong>對策B：使用Shadow Host 吸附生吸附官方CooldownViewer</strong></td>
 <td style="text-align: center;">5</td>
 <td style="text-align: center;">3</td>
-<td style="text-align: center;">5 (100% avoidance layout)</td>
-<td style="text-align: center;">4 (safety isolation)</td>
+<td style="text-align: center;">5（100%避讓佈局）</td>
+<td style="text-align: center;">4（安全隔離）</td>
 <td style="text-align: center;"><strong>17</strong></td>
-<td style="text-align: center;">** (Adopt backup)**</td>
+<td style="text-align: center;"><strong>（採納備用）</strong></td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Countermeasure C: AuraService Description parsing + renderer dual-rail IsZero Alternative recycling</strong></td>
+<td style="text-align: left;"><strong>對策 C：AuraService 說明解析 + 渲染器雙軌 IsZero 替代品回收</strong></td>
 <td style="text-align: center;">5</td>
 <td style="text-align: center;">5</td>
-<td style="text-align: center;">4 (only poll on countdown)</td>
-<td style="text-align: center;">5 (explode with safeCheck)</td>
+<td style="text-align: center;">4（僅在倒數時輪詢）</td>
+<td style="text-align: center;">5（利用safeCheck爆炸）</td>
 <td style="text-align: center;"><strong>19</strong></td>
-<td style="text-align: center;"><strong>Best Adopted</strong></td>
+<td style="text-align: center;"><strong>最佳採納</strong></td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="4-gantt-chart-scheduling-and-dependency-spirit-gantt-spirit">4. Gantt Chart Scheduling and Dependency Spirit (Gantt Spirit)</h2>
-<p>In <code>task.md</code>, the <strong>Dependency</strong> and <strong>Critical Path</strong> of the Gantt chart must be reflected to prevent the sub-agent developed by the tool from "idling due to unready pre-program code" or "high correlation program code conflict".</p>
-<h3 id="scheduling-principles">Scheduling principles:</h3>
+<h2 id="4gantt-spirit">4.甘特圖排程與依賴精神（Gantt Spirit）</h2>
+<p>在 <code>task.md</code> 中，必須反映甘特圖的<strong>依賴關係（Dependency）</strong>與<strong>關鍵路徑（Critical Path）</strong>，以防止工具開發的子代理發生「因前置方案碼未就緒而空轉」或「高關聯方案碼衝突」。</p>
+<h3 id="_2">程排原則：</h3>
 <ol>
-<li><strong>Dependency Guard (dependency)</strong>: Clearly mark dependencies in <code>task.md</code>. For example:<ul>
-<li><code>[ ] Task C (AuraService Refactored) [Depends on: Task A (EventRouter Revised)]</code></li>
+<li><strong>Dependency Guard (依賴)</strong>：在 <code>task.md</code> 中明確標誌依賴關係。例如：<ul>
+<li><code>[ ] 任務 C (AuraService 重構) [依賴：任務 A (EventRouter 改版)]</code></li>
 </ul>
 </li>
-<li><strong>Critical Path First (Critical Path First)</strong>: Prioritize tasks that determine the stability of the architecture (such as Core, SavedVariables), and allocate the most expensive resources with first-level review experts.</li>
-<li><strong>Milestone Gate (milestone level)</strong>: At the end of each stage, Milestone must be set for quality inspection (such as: <code>luac -p</code> check, <code>/eam doctor</code> diagnosis passed), otherwise the stage cannot be entered.</li>
+<li><strong>關鍵路徑優先（關鍵路徑優先）</strong>：將決定架構穩定性（如Core, SavedVariables）的任務排在最前面，與一級審查專家分配最昂貴的資源。</li>
+<li><strong>Milestone Gate (里程碑關卡)</strong>：每個階段結束時，必須設定 Milestone 進行品質查核（如：<code>luac -p</code>檢查，<code>/eam doctor</code>診斷通過），否則無法進入階段。</li>
 </ol>
 <hr />
-<h2 id="5-implementation-of-the-new-seven-qc-methods-in-eam">5. Implementation of the new seven QC methods in EAM</h2>
+<h2 id="5-qc-eam">5. 新的 QC 七大手段在 EAM 的落地</h2>
 <ol>
-<li><strong>Relationship Diagram Method (RelationsDiagram)</strong>:<ul>
-<li><em>Application</em>: Clarify the causal propagation network between EAM internal events (such as <code>EAM_AURA_STATE_CHANGED</code>) and WoW events (such as <code>UNIT_AURA</code>) to prevent event storms and infinite returns.</li>
+<li><strong>關係圖法（RelationsDiagram）</strong>：<ul>
+<li><em>應用</em>：釐清EAM內部事件（如<code>EAM_AURA_STATE_CHANGED</code>）與WoW事件（如<code>UNIT_AURA</code>）之間的因果傳播網絡，防止事件風暴與無限傳回。</li>
 </ul>
 </li>
-<li><strong>Systematic Chart</strong>:<ul>
-<li><em>Application</em>: Layer large refactoring goals (such as "12.1.0 zero allocation") into sub-module changes (AuraService pooling, CooldownService pooling, AlertManager duplication, renderer multi-type rendering).</li>
+<li><strong>系統圖法（Systematic Chart）</strong>：<ul>
+<li><em>應用</em>：將巨集大的重構目標（如「12.1.0 零分配」）分層分層為子模組變更（AuraService池化、CooldownService池化、AlertManager重複、渲染器多型渲染）。</li>
 </ul>
 </li>
-<li><strong>Matrix Diagram</strong>:<ul>
-<li><em>Application</em>: The <strong><a href="file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md.html">Docs/21_RACI_EXPERTS_MATRIX.md</a></strong> that has been implemented in this case is used to clarify the responsibilities of experts and development tasks.</li>
+<li>** 矩陣圖法（Matrix Diagram）**：<ul>
+<li><em>應用</em>：即本案已落地的<strong><a href="file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md.html">Docs/21_RACI_EXPERTS_MATRIX.md</a></strong>，用於釐清專家與開發任務的責任對照。</li>
 </ul>
 </li>
-<li><strong>PDPC method (Process Decision Program Chart/Process Decision Program Chart)</strong>:</li>
-<li><em>Application</em>: Before writing the program code, predict all possible abnormal paths (such as: the official API returns nil, the data is not cached, and limits are set during combat), and prepare backup countermeasures such as <code>pcall</code> fault isolation, <code>safeCheckIsZero</code> and <code>Util.isSecretValue</code> in advance in the program code.</li>
-<li><strong>Arrow Bar Chart Method (Arrow Chart)</strong>:</li>
-<li><em>Application</em>: Clarify the work order of sub-agent artifacts, avoid multiple agents from writing the same file at the same time, and ensure smooth merging of version branches.</li>
+<li><strong>PDPC法 (Process Decision Program Chart / 流程決定計畫畫圖)</strong>：</li>
+<li><em>應用</em>：在程式碼編寫前，預測所有可能的異常路徑（如：官方API返回nil、資料未快取、戰鬥中設定限制），並在程式碼中預先準備<code>pcall</code>故障隔離、<code>safeCheckIsZero</code>和<code>Util.isSecretValue</code>等後備備用對策。</li>
+<li><strong>箭條圖法（箭頭圖）</strong>：</li>
+<li><em>應用</em>：理清子代理的工件工作順序，避免多個代理同時寫入同一個文件，確保版本分支的平滑合併。</li>
 </ol>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -691,7 +691,7 @@ All subsequent sub-agents must follow this QC guideline when conducting problem 
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -700,7 +700,7 @@ All subsequent sub-agents must follow this QC guideline when conducting problem 
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

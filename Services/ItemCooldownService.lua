@@ -145,11 +145,12 @@ local function refreshAlert(alert, eventName)
     end
 
     local startTime, duration, isEnabled = cItem.GetItemCooldown(alert.itemID)
-    local isSecret = Util.isSecretTable(startTime) or Util.isSecretTable(duration)
+    local hasSafeTiming = Util.isSafeNumber(startTime) and Util.isSafeNumber(duration)
+    local hasSafeEnabled = isEnabled == nil or Util.isSafeBoolean(isEnabled)
 
     -- Determine shown state prior to allocation (O(1) filtering)
     local shouldShow = false
-    if not isSecret and type(startTime) == "number" and type(duration) == "number" and duration > 0 then
+    if hasSafeTiming and hasSafeEnabled and duration > 0 then
         if isEnabled ~= false then
             shouldShow = true
         end

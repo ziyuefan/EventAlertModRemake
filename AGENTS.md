@@ -16,6 +16,7 @@
   - 後續開發與 AI 協作的絕對指導文件，一律以 `AGENTS.md` 以及其內文指名之 `.md` 文件為唯一事實與 Facts-of-Truth 參考。
 - HTML版本成人人類（少年欸）在瀏覽器中觀看易讀使用，AI在讀寫器與參考時，必須一律以`.md`原檔為唯一基準，不得以HTML作為開發事實參考。
   - 當`./Docs/*.md`或`./AGENTS.md`修改時包含心智圖（Mermaid）、表格、流程圖、映像時，必須執行轉換工具（`batch_convert_docs.py`），在`./docs_html`內多產生一個同名的__EAMCODE___檔（例如檔案）。
+  - 文件轉換預設使用 `$env:EAM_DOCS_OFFLINE='1'; python .\Tools\batch_convert_docs.py`，禁止未經少年欸明確授權就把 Markdown 全文送往外部翻譯服務。
 ## 必讀文件
 在更改程式碼之前，請先閱讀以下文件：
 
@@ -41,6 +42,11 @@
 - `Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md`
 - `Docs/21_RACI_EXPERTS_MATRIX.md`
 - `Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md`
+- `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`
+- `Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md`
+- `Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`
+- `Docs/26_FLOW_VALIDATION_FRAMEWORK.md`
+- `Docs/27_LOCAL_WOW_ENVIRONMENT.md`
 舊討論脈絡可參考：
 
 - `DevDocument/ChatGPT/EventAlertMod_ChatGPT_Discussion_Context.md`
@@ -52,6 +58,18 @@
 - 架構方向：事件驅動、低GC、模組化、可維護。
 - 使用者體驗：保留EAM「比WeakAuras簡單、輕量、專注光環與冷卻提醒」的定位。
 - 現有資料表、地化字符串、斜線命令語意與使用者行為視覺化可保留；內部架構應重新設計。
+
+## 本機 WoW 開發環境基準
+
+- 本機 WoW 安裝根目錄：`D:\World of Warcraft`；EAM 實體專案根目錄：`D:\EventAlertMod`。
+- 2026-07-26 唯讀確認：`_retail_` 為 12.0.7.68453、`_ptr_` 為 12.1.0.68914、`_xptr_` 為 12.0.7.68887。版本與 build 會更新，每次實機驗證前仍須重讀執行檔版本。
+- 實機驗證前先執行 `Tools/Test-LocalWoWEnvironment.ps1`；該工具以主程式 `ProductVersion` 斷言 patch train，並檢查 AddOns Reparse Point 仍指向實體專案。斷言失敗時不得繼續部署或實機簽收。
+- `_retail_`、`_ptr_`、`_xptr_` 的 `Interface\AddOns\EventAlertMod` 均為 Windows `SymbolicLink`，目標是 `D:\EventAlertMod`。所有開發修改只可作用於實體專案根目錄。
+- 嚴禁對上述連結路徑執行刪除、搬移、覆蓋、解壓縮部署、`robocopy /MIR`、連結重建或任何可能追蹤 Reparse Point 的遞迴清理；不得把連結當成可替換的插件副本。
+- 操作任何版本的 AddOns 前，先以 `Get-Item -Force` 驗證 `LinkType`、`Target` 與 `ReparsePoint`。若不是連到 `D:\EventAlertMod`，立即停止並回報。
+- Classic 不屬於本專案支援範圍，且本機 Classic 路徑型態不一致：部分為 SymbolicLink、部分為實體目錄或不存在，絕不可套用同一刪除／部署假設。
+- `WTF` 路徑必須由版本目錄動態組合並先以 `Test-Path` 驗證；未經任務需要，不讀取或列出 `WTF\Account` 下的帳號與角色資料。
+- 本機路徑只作為開發基準，不能成為插件執行期依賴。完整規則見 `Docs/27_LOCAL_WOW_ENVIRONMENT.md`。
 
 ## 硬性限制
 

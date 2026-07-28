@@ -11,6 +11,7 @@ Responsibility:
 - Verify TOC load paths validity.
 - Verify TOC consistency against physical files to prevent unlisted module leaks.
 - Run Lua 5.1 syntax checks.
+- Run offline flow validation and retain JSON/Markdown evidence.
 - Scan for sensitive keys, tokens, and webhooks.
 - Build Dist/EventAlertMod_MN_yyyyMMdd_HHmmss.zip.
 
@@ -25,6 +26,7 @@ param(
     [string]$ExpansionCode = "MN",
     [switch]$IncludeDocs,
     [switch]$SkipLuaCheck,
+    [switch]$SkipFlowValidation,
     [switch]$DevMode,
     [string]$LuaCompiler = "C:\Program Files (x86)\Lua\5.1\luac.exe"
 )
@@ -243,6 +245,18 @@ if (-not $SkipLuaCheck) {
     }
 }
 
+# 3b. Run offline flow validation
+if (-not $SkipFlowValidation) {
+    $flowScript = Join-Path $workspace "Tools\Run-FlowValidation.ps1"
+    if (-not (Test-Path -LiteralPath $flowScript)) {
+        throw "Missing flow validation script: $flowScript"
+    }
+
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $flowScript -Suite all -OutputDirectory "TestResults"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Offline flow validation failed."
+    }
+}
 # 4. Verify version format match
 $packDate = Get-Date -Format "yyyyMMdd"
 $packTime = Get-Date -Format "HHmmss"

@@ -1,3 +1,15 @@
+-- [Retail  12.1.0 Alpha]2026.07.28
+	-- 12.1 Native AuraContainer：
+	   -- 12.1 使用 Blizzard AuraContainer／AuraButton 建立 player、target 與 group 穩定容器。
+	   -- Native backend 不讀取 UNIT_AURA Secret payload，也不建立舊式 AuraState；12.0.7 保留 Legacy backend。
+	-- GameTooltip ID 與 EAM 自製監控選單：
+	   -- 顯示可安全取得的法術、物品與巨集 ID；光環 ID 優先交由 Blizzard CVar 顯示。
+	   -- 非戰鬥中以精確 Ctrl+Alt 開啟 Popup Menu，依來源路由至法術、光環、物品或巨集對應監控清單。
+	   -- 不攔截右鍵、不 Hook Blizzard secure 點擊路徑，無法安全判定時降級為手動輸入。
+	-- 流程驗證與本機環境防護：
+	   -- 新增離線流程驗證、遊戲內流程測試面板、JSON 報告匯入與本機 WoW patch train／SymbolicLink 檢查。
+	   -- 本版定位為 Alpha；離線 mock 通過不代表 12.1 PTR 實機簽收。
+
 -- [Retail  12.1.0  ]2026.06.09
 	-- 零分配與事件驅動全模組架構重構（完全數據與視圖解耦）：
 	   -- 徹底重構解耦 AuraService、CooldownService、ItemCooldownService、GroundEffectService 與 TotemService 五大數據服務。

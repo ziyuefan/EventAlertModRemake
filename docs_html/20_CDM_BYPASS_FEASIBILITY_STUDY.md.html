@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -542,54 +542,61 @@ end
 </ul>
 </li>
 </ol>
+<h2 id="2026-07-26">2026-07-26 結論：停止採用</h2>
+<ul>
+<li>ShadowHost/CDM 不再列入 <code>EventAlertMod.toc</code>，Renderer 亦移除 host lookup。</li>
+<li>設定頁原 <code>enableCDM</code> 控制項改為 Native Aura backend/pending 狀態與手動重建。</li>
+<li>本文件僅保留歷史可行性研究，不是現行架構，也不得恢復為 12.1 Secret Aura 繞過方案。</li>
+<li>現行方案為 Blizzard 公開 AuraContainer/AuraButton 契約，見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 <h1 id="docs20_cdm_bypass_feasibility_studymd">Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</h1>
-<h1 id="1210-shadow-host-technology-shadow-host-breathing-evaluation-and-implementation-plan-borrowing-the-official-cooldownviewer-to-bypass-combat-secrettaint-restrictions">12.1.0 Shadow Host technology (Shadow Host) breathing evaluation and implementation plan: borrowing the official CooldownViewer to bypass combat secret/Taint restrictions</h1>
-<p>This document provides an in-depth design of the technical architecture for using the <strong>CooldownViewer (cooling manager /CDM)</strong> built into the Retail server of World of Warcraft 12.0.7 / 12.1.0 as the "Shadow Host" to solve the secret value and Taint Tunnels of EAM in combat.</p>
+<h1 id="1210-shadow-hostcooldownviewertaint">12.1.0 影子載體技術（Shadow Host）呼吸評估與實施方案：借用官方CooldownViewer繞過戰鬥秘密/Taint限制</h1>
+<p>本文件針對利用魔獸世界 12.0.7 / 12.1.0 正式服內建的 <strong>CooldownViewer (冷卻管理器/CDM)</strong>作為「影子載體（Shadow Host）」，以解決 EAM 戰鬥中秘密價值與 Taint Tunnels 之方案，進行深度設計技術架構。</p>
 <hr />
-<h2 id="1-technical-principles-what-is-shadow-host">1. Technical principles: What is "Shadow Host"?</h2>
-<p>In the Retail server 12.x environment, the cooldown time /Aura (such as timeLeft, expirationTime) obtained during battle has been limited (secret value), and dynamically modifying the UI layout during battle can easily cause an Action Blocked crash.</p>
-<p>The official built-in <code>EssentialCooldownViewer</code> and <code>UtilityCooldownViewer</code> are Blizzard's grafted security frameworks, giving full update, positioning and countdown privileges in combat.</p>
-<p><strong>Shadow Host Technology (Shadow Host)</strong>:
-1. <strong>Mirror Initialization</strong>: Outside of combat, set the frame of the official CooldownViewer to transparent (Alpha = 0) or to the lowest frame level (BACKGROUND, -100), making it completely invisible on the screen.
-2. <strong>Parasite notification</strong>: Mount the beautification icon of EAM as a subframe (added) to the official corresponding cooling icon.
-3. <strong>No code synchronization</strong>: Use the built-in parent-child cascade rendering of the WoW engine:
-* When the official icon is shown/hidden, the EAM icon will <strong>automatically</strong> display /Hide.
-* When the official icon is moved or rearranged (layout), the icon topology of EAM.
-    * Due to the reliance on the rendering level linkage of the basic C++ engine, <strong>there is no need to execute any Lua program code during combat to control the display and position, achieving 0-Taint and 0-GC combat synchronization</strong>.</p>
+<h2 id="shadow-host">一、技術原理：什麼是「影子載體（Shadow Host）」？</h2>
+<p>在正式服 12.x 環境中，戰鬥中取得冷卻/aura 時間（如 timeLeft, expirationTime）已被限制（秘密值），且在戰鬥中動態修改 UI 佈局極易引發 Action Blocked 崩潰。</p>
+<p>官方內建的 <code>EssentialCooldownViewer</code> 和 <code>UtilityCooldownViewer</code> 是暴雪的嫁接安全框架，在戰鬥中完全更新、定位與倒數的特權。</p>
+<p><strong>影子載體技術(Shadow Host)</strong>：
+1. <strong>鏡像初始化</strong>：在戰鬥外，將官方 CooldownViewer 的幀設置為透明（Alpha = 0）或降至最低幀級別（BACKGROUND, -100），使螢幕上完全不可見。
+2. <strong>寄生通知</strong>：將 EAM 的美化圖示作為子框架掛載（已新增）到官方對應的冷卻圖示上。
+3. <strong>無程式碼同步</strong>：利用WoW引擎內建的父子級聯渲染：
+    * 當官方圖示顯示/隱藏時，EAM的圖示會<strong>自動</strong>顯示/Hide。
+* 官方圖示移動或重排（佈局）時，EAM 的圖示拓樸。
+    * 由於依賴基礎C++引擎的渲染級聯動，<strong>戰鬥中不需要執行任何Lua程式碼來控制顯示與位置，實現0-Taint與0-GC戰鬥同步</strong>。</p>
 <pre class="codehilite"><code class="language-text"> Blizzard CooldownViewer (Shadow Host) [Alpha = 0, Secure Frame]
    └── (Parent-Child Bind)
         └── EAM Custom Icon (Parasitic Frame) [Alpha = 1, Display Only]
 </code></pre>
 
 <hr />
-<h2 id="2-regional-analysis-and-api-boundary-audit">2. Regional analysis and API boundary audit</h2>
-<h3 id="1-official-api-and-spellid-restrictions">1. Official API and SpellID restrictions</h3>
+<h2 id="api">二、地域分析與API 邊界審計</h2>
+<h3 id="1-api-spellid">1. 官方 API 與 SpellID 限制</h3>
 <ul>
-<li><strong>Feature</strong>: <code>C_CooldownViewer</code> only allows tracking of "SpellIDs built and supported by Blizzard's official database".</li>
-<li><strong>Evaluation</strong>: For professional ultimate moves (such as Paladin Wings 31884, Warrior Reckless 1719) and core Buff/DoT, there is official built-in support. However, the official CDM cannot load the rare/temporary SpellID customized by the player.
-<strong><em>*</em></strong>Strategy: EAM uses <strong>dual-rail drive</strong>:</li>
-<li><strong>Shadow Host Track (Track A)</strong>: For the officially supported core SpellID, enable Shadow Host mount to gain 100% combat stability.<ul>
-<li><strong>Regular Data Track (Track B)</strong>: For custom or unofficially supported spells, downgrade to using EAM's own timers and safe fallback rendering.</li>
+<li><strong>特性</strong>：<code>C_CooldownViewer</code>僅允許追蹤「暴雪官方資料庫內建並支援的SpellID」。</li>
+<li><strong>評估</strong>：對於職業大招（如聖騎翅膀31884、戰士魯莽1719）及核心Buff/DoT，官方內建內建支援。但對於玩家自訂的稀有/臨時SpellID，官方CDM無法載入。</li>
+<li><strong><em>*</em>*策略：EAM採用</strong>雙軌驅動**：</li>
+<li><strong>影子載體軌道（軌道A）</strong>：為了官方支援的核心SpellID，啟用影子載體掛載，獲得100%戰鬥穩定性。<ul>
+<li><strong>常規資料軌（Track B）</strong>：對於自訂或非官方支援的法術，降級使用EAM自身的計時器與安全回退渲染。</li>
 </ul>
 </li>
 </ul>
-<h3 id="2-taint-and-combat-lockdown-avoidance">2. Taint and Combat Lockdown avoidance</h3>
+<h3 id="2-taintcombat-lockdown">2. Taint與戰鬥鎖定（Combat Lockdown）避讓</h3>
 <ul>
-<li><strong>Modification issue</strong>: If you call <code>SetParent</code>, <code>SetPoint</code> or the official framework during combat, it will directly cause the crash of <code>try to modify security framework</code>.</li>
-<li><strong>Solution</strong>:<ol>
-<li><strong>Binding outside combat</strong>: All <code>SetParent</code>, <code>SetPoint</code>, <code>SetAlpha</code> operation restrictions are performed in <code>PLAYER_REGEN_ENABLED</code> (out of combat) or <code>ADDON_LOADED</code> (when loading).</li>
+<li><strong>修改問題</strong>：若在戰鬥中呼叫<code>SetParent</code>、<code>SetPoint</code>或官方框架，會直接引發<code>嘗試修改安全框架</code>崩潰。</li>
+<li><strong>解決方案</strong>：<ol>
+<li><strong>戰鬥外綁定</strong>：所有<code>SetParent</code>、<code>SetPoint</code>、<code>SetAlpha</code>操作限制均在<code>PLAYER_REGEN_ENABLED</code>（脫戰）或<code>ADDON_LOADED</code>（載入時）進行。</li>
 </ol>
 </li>
-<li><strong>Dialogue during battle</strong>: During battle (when <code>InCombatLockdown()</code> is true), EAM is definitely not an official framework for any writing operations, and can only allow parasitic sub-frameworks to be driven by the C++ engine.</li>
+<li><strong>戰鬥中對話</strong>：戰鬥中（<code>InCombatLockdown()</code>為true時），EAM絕對不是官方框架進行任何寫入操作，只能讓寄生的子框架受C++引擎驅動。</li>
 </ul>
 <hr />
-<h2 id="3-implementation-concept-code-proof-of-concept">3. Implementation concept code (Proof of Concept)</h2>
-<h3 id="1-shadow-the-official-cooldownviewer">1. Shadow the official CooldownViewer</h3>
-<p>In non-combat conditions, make the official main frame transparent and reduce the frame level.</p>
+<h2 id="proof-of-concept">三、實作概念碼（Proof of Concept）</h2>
+<h3 id="1cooldownviewer">1.影子化官方CooldownViewer</h3>
+<p>在非戰鬥狀態下，對官方主要框架進行透明化，並降低框架等級。</p>
 <pre class="codehilite"><code class="language-lua">local function MakeHostInvisible(hostFrame)
     if not hostFrame or InCombatLockdown() then return end
 
@@ -611,8 +618,8 @@ local function InitShadowHosts()
 end
 </code></pre>
 
-<h3 id="2-parasitic-mount-and-layout-level-association">2. Parasitic mount and layout level association</h3>
-<p>Get the official icon pool (usually FramePool or a static queue) and set the EAM icon on it.</p>
+<h3 id="2">2. 寄生掛載與佈局等級聯</h3>
+<p>取得官方圖示池（通常為 FramePool 或靜態佇列），將 EAM 圖示設定在其上。</p>
 <pre class="codehilite"><code class="language-lua">local function AnchorParasiticIcon(eamIcon, hostIcon)
     if InCombatLockdown() then return end
 
@@ -631,49 +638,56 @@ end
 </code></pre>
 
 <hr />
-<h2 id="four-risks-and-defense-strategies-diversified-plans">Four risks and defense strategies (diversified plans)</h2>
+<h2 id="_1">四風險與防禦策略（分散計畫）</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Risk Projects</th>
-<th style="text-align: left;">Impact</th>
-<th style="text-align: left;">Defense and Optimization Strategies</th>
+<th style="text-align: left;">風險項目</th>
+<th style="text-align: left;">影響</th>
+<th style="text-align: left;">防禦與優化策略</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>Official Layout Change</strong></td>
-<td style="text-align: left;">Blizzard changed the method of obtaining sub-nodes of <code>EssentialCooldownViewer</code> in 12.1.0</td>
-<td style="text-align: left;">Using dynamic references and feature checks, if the sub-icon cannot be obtained, it will automatically downgrade and close the "Moon Carrier" and return to orbit B.</td>
+<td style="text-align: left;"><strong>官方布局变更</strong></td>
+<td style="text-align: left;">暴雪在12.1.0改变了<code>EssentialCooldownViewer</code>的子节点获取方式</td>
+<td style="text-align: left;">采用动态引用与特征检查，若无法获取子图标，自动降级关闭“月球载体”，返回至轨道B。</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Special vehicle override during battle</strong></td>
-<td style="text-align: left;">When entering the vehicle, the official host is hidden, causing the EAM parasite icon to also disappear</td>
-<td style="text-align: left;">This is expected behavior (in compliance with <code>hideWhenActionBarIsOverriden</code>). If the player wants to keep it, he can manually call the EAM icon to escalate or copy it.</td>
+<td style="text-align: left;"><strong>戰鬥中特殊載具覆蓋</strong></td>
+<td style="text-align: left;">進入載具時，官方主機隱藏，導致EAM寄生圖示也消失</td>
+<td style="text-align: left;">這是預期行為（符合 <code>hideWhenActionBarIsOverriden</code>）。如果玩家想要保留，可對 EAM 圖示手動呼叫提權或複製。</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Combat Contamination Spread</strong></td>
-<td style="text-align: left;">If the icon of EAM contains the "Click to Cast" or "Safe Operation" button</td>
-<td style="text-align: left;"><strong>Hard Rules</strong>: EAM's icon only serves as a "pure visual renderer (display only)", does not register any click events on /Mouse-, is not responsible for security events, and clicks to ferment security events.</td>
+<td style="text-align: left;"><strong>戰鬥污染擴散</strong></td>
+<td style="text-align: left;">如果 EAM 的圖示包含「點擊投射」或「安全操作」按鈕</td>
+<td style="text-align: left;"><strong>硬性規定</strong>：EAM的圖示僅作為「純視覺渲染器（僅顯示）」，不註冊任何點擊/Mouse-點擊事件，不承擔安全事件，並點擊發酵安全事件。</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="5-next-stage-execution-steps-1210-refactoring-checklist">5. Next stage execution steps (12.1.0 Refactoring Checklist)</h2>
+<h2 id="1210">五、 下一階段執行步驟 (12.1.0 重構清單)</h2>
 <ol>
-<li><strong>Phase 1 (Investigation and Clues Capture)</strong>:</li>
-<li>In the out-of-combat state, use the error detection tool to dump the official <code>EssentialCooldownViewer</code> sub-object structure and determine the entity variables of its Icon Pool.</li>
-<li><strong>Second stage (one-way scenario)</strong>:<ul>
-<li>In the program test code, try setting <code>EssentialCooldownViewer</code> to Alpha = 0 and start to see whether the pollution warning of EditMode will be raised.</li>
+<li><strong>第一階段（調查與線索抓取）</strong>：</li>
+<li>在脫戰狀態下，使用錯誤偵訊工具傾倒官方 <code>EssentialCooldownViewer</code> 的子物體結構，確定其 Icon Pool 的實體變數。</li>
+<li><strong>第二階段（單向場景）</strong>：<ul>
+<li>在程式測試程式碼中，嘗試將 <code>EssentialCooldownViewer</code> 設定 Alpha = 0，並開始是否會引發 EditMode 的污染警告。</li>
 </ul>
 </li>
-<li><strong>The third phase (dual-track distribution official service)</strong>:<ul>
-<li>Add character binding logic to <code>Renderer.lua</code>.</li>
+<li><strong>第三階段（雙軌配送正式服）</strong>：<ul>
+<li>在 <code>Renderer.lua</code> 中加入角色綁定邏輯。</li>
 </ul>
 </li>
 </ol>
+<h2 id="2026-07-26">2026-07-26 結論：停止採用</h2>
+<ul>
+<li>ShadowHost/CDM 不再列入 <code>EventAlertMod.toc</code>，Renderer 亦移除 host lookup。</li>
+<li>設定頁原 <code>enableCDM</code> 控制項改為 Native Aura backend/pending 狀態與手動重建。</li>
+<li>本文件僅保留歷史可行性研究，不是現行架構，也不得恢復為 12.1 Secret Aura 繞過方案。</li>
+<li>現行方案為 Blizzard 公開 AuraContainer/AuraButton 契約，見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
+</ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -689,7 +703,7 @@ end
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -698,7 +712,7 @@ end
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

@@ -82,6 +82,21 @@ function PromptExport.buildDetailed()
     end
     add('  },\n')
 
+    -- Flow validation summary
+    add('  "flowValidation": {\n')
+    local flowSummary = snapshot and snapshot.derived and snapshot.derived.flowValidation
+    if flowSummary then
+        add('    "available": true,\n')
+        add('    "total": ' .. tostring(flowSummary.total or 0) .. ',\n')
+        add('    "passed": ' .. tostring(flowSummary.passed or 0) .. ',\n')
+        add('    "failed": ' .. tostring(flowSummary.failed or 0) .. ',\n')
+        add('    "skipped": ' .. tostring(flowSummary.skipped or 0) .. ',\n')
+        add('    "pending": ' .. tostring(flowSummary.pending or 0) .. '\n')
+    else
+        add('    "available": false\n')
+    end
+    add('  },\n')
+
     -- EAM Frame 狀態探查
     add('  "alertFrame": {\n')
     local frameNames = { "selfAura", "targetAura", "spellCooldown", "itemCooldown", "classPower", "groundEffect", "totem" }

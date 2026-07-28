@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -487,18 +487,18 @@ Module: Core/EventRouter
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="plan-document-interpretation-and-concept-specification">Plan document interpretation and concept specification</h1>
-<p>This file is a development dependency of EventAlertMod Retail rewrite. All officially loaded project files must contain "File System Annotations", which are used to save the module concept, responsibility boundaries and future measurement standards.</p>
-<h2 id="core-rules">Core Rules</h2>
+<h1 id="_1">計劃檔解與理念規範</h1>
+<p>本文件是 EventAlertMod Retail rewrite 的開發相依性。所有正式載入的方案文件都必須包含「檔案系統註解」，用於保存模組理念、責任邊界與日後衡量標準。</p>
+<h2 id="_2">核心規則</h2>
 <ul>
-<li>Every officially loaded <code>.lua</code> file must have a module comment at the bottom of the file.</li>
-<li>The annotation needs to explain "why this file exists", not just "what this file does".</li>
-<li>Annotate the data to be recorded, the variable state, and the module boundaries that cannot be crossed.</li>
-<li>Restrictions on hot paths, Secret Values, Protected Data, SavedVariables, and UI framework change-related files must be clearly written.</li>
-<li>Comments should be kept concise and maintainable; do not write long declarations that are out of touch with the plan.</li>
-<li>When the module responsibility changes, the file annotation and <code>Docs/04_MODULE_CONTRACTS.md</code> must be updated simultaneously.</li>
+<li>每個正式載入的 <code>.lua</code> 檔案都要在檔案底部放置模組註解。</li>
+<li>註解需說明「這個文件為什麼存在」，不只描述「這個文件做什麼」。</li>
+<li>註解要記錄資料、可變狀態、不可跨越的模組邊界。</li>
+<li>熱路徑、Secret Values、Protected Data、SavedVariables、UI框架變更相關文件，必須明確寫出限制。</li>
+<li>註解應保持簡潔、可維護；不要寫成與計畫脫節的長篇宣言。</li>
+<li>當模組責任變更時，必須同步更新檔案註解與<code>Docs/04_MODULE_CONTRACTS.md</code>。</li>
 </ul>
-<h2 id="suggested-format">Suggested format</h2>
+<h2 id="_3">建議格式</h2>
 <pre class="codehilite"><code class="language-lua">--[[
 EventAlertMod Retail Rewrite
 Module: Core/EventRouter
@@ -522,40 +522,40 @@ Module: Core/EventRouter
 ]]
 </code></pre>
 
-<h2 id="items-that-must-be-recorded">Items that must be recorded</h2>
+<h2 id="_4">必須記錄的項目</h2>
 <ul>
-<li><code>Module</code>: module name and path.</li>
-<li><code>Concept</code>: design reasons and trade-offs.</li>
-<li><code>Responsibility</code>: what status and actions this file has.</li>
-<li><code>Borders</code>: What this file cannot do.</li>
-<li><code>Complete Note</code>: If it is on the hot path, indicate the assignment, loop, string, and UI writing gate control policy.</li>
-<li><code>Note on Retail server API</code>: If using WoW API, record the version assumptions and actual machine verification requirements.</li>
-<li><code>Secret/Protected data note</code>: If you come into contact with Aura/cooldown/unit data, record the safe reading and downgrade strategies.</li>
-<li><code>Taint note</code>: If you come into contact with UI framework, Blizzard framework, combat blockade, and protected routes, how to record them to avoid contaminating secure/protected paths.</li>
+<li><code>Module</code>：模組名稱與路徑。</li>
+<li><code>理念</code>：設計理由與取捨。</li>
+<li><code>責任</code>：該檔案擁有哪些狀態與行為。</li>
+<li><code>邊界</code>：此檔案不能做什麼。</li>
+<li><code>完成註意</code>：若在熱路徑上，說明指派、循環、字串、UI寫入門控策略。</li>
+<li><code>正式服API注意</code>：若使用WoW API，記錄版本假設與實機驗證需求。</li>
+<li><code>Secret/Protected數據注意</code>：若接觸aura/cooldown/unit數據，記錄安全讀取與降級策略。</li>
+<li><code>Taint注意</code>：若接觸UI框架、暴雪框架、戰鬥封鎖、保護路線，如何記錄避免污染 secure/protected路徑。</li>
 </ul>
-<h2 id="required-annotations">Required annotations</h2>
+<h2 id="_5">所需的註解</h2>
 <ul>
-<li>Do not annotate main single-line properties.</li>
-<li>Do not add a lot of description annotations to hot paths.</li>
-<li>Do not use annotations to promise functionality that has not yet been implemented or verified.</li>
-<li>Do not provide real-world verification of the official WoW server unless it has actually been loaded for testing.</li>
+<li>不要註解主要的單行屬性。</li>
+<li>不要在熱路徑加入大量記述註解解。</li>
+<li>不要用註解解承諾尚未實現或尚未驗證的功能。</li>
+<li>不要提供WoW正式服實機驗證，除非確實已載入測試。</li>
 </ul>
-<h2 id="requirements-for-future-development">Requirements for future development</h2>
-<p>When adding or refactoring any loaded formal files, first complete the file system annotations and then implement the logic. If a file is only <code>LegacyReference</code>, <code>ReferenceLibs</code> or external reserved data, the original type can be retained, but it cannot be used as a template for new architectural styles.</p>
-<h2 id="backup-rules-before-modification">Backup rules before modification</h2>
-<p>Any files must be backed up to the <code>backup/</code> folder in the project root directory before being deleted, moved, overwritten, or modified. The backup archive name uses the original archive name plus the <code>__yyyyMMddHHmmss</code> suffix, for example <code>Renderer.lua__20260526122904</code>.
-The purpose of this rule is not to replace version control, but to provide a source of recovery for this project before a complete commit history has been established. When related to batch operations, all file backups should be completed before starting to modify the actual files; if the original files do not exist, you need to return first and do not create a blank backup.</p>
-<h2 id="develop-problem-recording-rules">Develop problem recording rules</h2>
-<p>Bottlenecks, limitations, errors, tool failures, API uncertainties and solutions encountered during the development process must be additionally recorded in <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>. This record is used to reduce repeated trial and error in the future and save context during AI handover/token.
-Sufficient judgment information should be retained when recording: date, symptoms, cause judgment, tried methods, effective solutions and follow-up precautions. Unresolved issues need to be clearly marked as "unresolved" to avoid future agents judging them as completed.</p>
-<h2 id="project-specific-skill-rules">Project-specific skill rules</h2>
-<p>If a process is found to reoccur during the development process, and the process is stable enough to describe trigger conditions, pre-checks, operating steps, risks and verification methods, a special SKILL for the EventAlertMod project should be generated. This type of SKILL is used to reduce repetitive instruction instructions, reduce context /token, and enable future agents to execute projects consistently.
-Processes suitable for conversion to SKILL include budget release, Lua static verification, WoW API query, SavedVariables migration check, secret boundary review, file synchronization and language file synchronization. Processes that have not yet been verified, still require a lot of manual judgment, or involve sensitive information are not suitable for hardware automation SKILL.</p>
-<h2 id="taint-control-annotation-rules">Taint control annotation rules</h2>
-<p>For files involving UI framework, Blizzard framework, Combat Lockdown, and secure/protected routes, the file system annotation must describe the risks and methods of pollution avoidance. Common key points include: whether to use orphan frameworks, whether to contact UIParent, whether anchor/visibility/attribute will be changed during combat, whether there may be secret/protected values, and whether to hook the Blizzard framework.
-If the program code deliberately avoids certain Blizzard API or hook methods, the reason should be retained in the comments so that the pollution can be avoided from being reintroduced during future refactorings.</p>
+<h2 id="_6">對未來開發的要求</h2>
+<p>新增或需重構任何載入正式文件時，先補齊文件體系註解，再實作邏輯。若某個文件只是 <code>LegacyReference</code>、<code>ReferenceLibs</code> 或外部保留數據，可保留原類型，但不得作為新架構風格範本。</p>
+<h2 id="_7">修改前備份規則</h2>
+<p>任何檔案在刪除、移移、覆寫或修改前，都必須先備份到專案根目錄的 <code>backup/</code> 資料夾。 備份檔案名稱使用原始檔案名稱加上 <code>__yyyyMMddHHmmss</code> 後綴，例如 <code>Renderer.lua__20260526122904</code>。
+此規則的目的不是取代版本控制，而是提供本專案在未建立完整提交歷史前的恢復來源。批次作業相關時，應先完成所有檔案備份，再開始修改實際；若原始檔案不存在，需先返回，不得建立空白備份。</p>
+<h2 id="_8">開發問題記錄規則</h2>
+<p>開發過程遇到瓶頸、限制、錯誤、工具失敗、API 不確定性與解決方式，都必須追加記錄到<code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。此記錄用於減少日後重複試錯，並在 AI 交接時節省上下文/token。
+記錄時應保留足夠的判斷資訊：日期、症狀、原因判斷、已嘗試方法、有效解法與後續注意事項。未解決問題需明確標示為「未解決」，避免未來代理判斷為已完成。</p>
+<h2 id="_9">專案專屬技能規則</h2>
+<p>若開發流程中發現某個流程反復出現，且已流程穩定到可描述觸發條件、前置檢查、操作步驟、風險與驗證方式，應產生EventAlertMod專案專用SKILL。此類SKILL用於降低重複指令說明、減少上下文/token，並讓未來代理人能夠一致執行專案這些。
+適合轉成 SKILL 的流程包含預算發佈、Lua靜態驗證、WoW API 查詢、SavedVariables遷移檢查、秘密邊界審查、檔案同步與語系檔案同步。尚未驗證、仍需大量人工判斷或涉及敏感資訊的流程，不適用於硬體自動化SKILL。</p>
+<h2 id="taint">Taint 控制註解規則</h2>
+<p>涉及UI框架、暴雪框架、戰鬥鎖定、secure/protected路線的檔案，檔案系統註解必須說明污染避免風險與方式。常見重點包括：是否使用孤兒框架、是否接觸UIParent、是否會在戰鬥中改anchor/visibility/attribute、是否可能存在secret/protected值、是否會hook暴雪框架。</p>
+<p>若程式碼刻意避免某些Blizzard API或hook方式，應在註解中保留原因，未來重構時將污染重新避免引入。</p>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -571,7 +571,7 @@ If the program code deliberately avoids certain Blizzard API or hook methods, th
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -580,7 +580,7 @@ If the program code deliberately avoids certain Blizzard API or hook methods, th
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

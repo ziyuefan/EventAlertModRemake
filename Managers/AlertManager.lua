@@ -106,7 +106,7 @@ local function updateGlowForActiveStates(spellID, hasGlow)
 end
 
 local function onGlowShow(_, spellID)
-    if not spellID or Util.isSecretValue(spellID) then
+    if not Util.isSafePositiveNumber(spellID) or not Util.isSafeTableKey(spellID) then
         return
     end
     glowSpells[spellID] = true
@@ -114,7 +114,7 @@ local function onGlowShow(_, spellID)
 end
 
 local function onGlowHide(_, spellID)
-    if not spellID or Util.isSecretValue(spellID) then
+    if not Util.isSafePositiveNumber(spellID) or not Util.isSafeTableKey(spellID) then
         return
     end
     glowSpells[spellID] = nil
@@ -137,12 +137,12 @@ function AlertManager.initialize()
 end
 
 function AlertManager.onAlertStateChanged(_, state, frameName)
-    if not state or not state.id then
+    if not state or not Util.isSafeTableKey(state.id) then
         return
     end
 
     -- 被動裝飾：若此 spellID 當前正處於發光狀態，自動套用發光屬性
-    if state.spellID and glowSpells[state.spellID] then
+    if Util.isSafeTableKey(state.spellID) and glowSpells[state.spellID] then
         state.overlayGlow = true
     end
 

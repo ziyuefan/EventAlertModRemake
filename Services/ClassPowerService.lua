@@ -100,8 +100,6 @@ local POWER_TYPE_CONFIGS = {
     }
 }
 
-local issecretvalue = issecretvalue or function() return false end
-
 -- 動態偵測玩家當前形態下的主要核心能量
 local function detectClassPower()
     if not api.UnitPowerType then
@@ -109,7 +107,7 @@ local function detectClassPower()
     end
 
     local ok, powerType, powerToken = pcall(api.UnitPowerType, "player")
-    if not ok or not powerType then
+    if not ok or not EAM.Util.isSafeNumber(powerType) then
         if EAM.addDebugLog then
             EAM.addDebugLog("ClassPowerService", "detectClassPower", "UnitPowerType query failed or was restricted.")
         end
@@ -125,7 +123,7 @@ local function detectClassPower()
         ClassPowerService.activeName = config.name
         
         local thOk, thVal = pcall(config.getThreshold)
-        ClassPowerService.overflowThreshold = thOk and thVal or nil
+        ClassPowerService.overflowThreshold = thOk and EAM.Util.isSafeNumber(thVal) and thVal or nil
     else
         ClassPowerService.activePowerType = nil
         ClassPowerService.activeConfigKey = nil
@@ -161,13 +159,15 @@ function ClassPowerService.updatePower()
     local current = 0
     if enabled and api.UnitPower then
         local ok, val = pcall(api.UnitPower, "player", powerType)
-        if ok and val then
+        if ok and EAM.Util.isSafeNumber(val) then
             current = val
+        else
+            current = nil
         end
     end
 
     -- 🛡️ 核心安全防禦：高頻戰鬥中若能量數據突然變為 Secret，絕不與 0 進行大小比較
-    local isSecret = issecretvalue(current) or (type(current) == "table")
+    local isSecret = not EAM.Util.isSafeNumber(current)
     local id = "classPower_" .. powerType
 
     if EAM.addDebugLog then

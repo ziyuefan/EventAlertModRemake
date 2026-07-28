@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>23_AURA_CONTAINER_IMPLEMENTATION.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="retail-121-auracontainer-native-backend">Retail 12.1 AuraContainer Native Backend 實作規格</h1>
+<h2 id="_1">文件狀態</h2>
+<ul>
+<li>實作基準：Retail 12.1.0 build 68914。</li>
+<li>程式狀態：Native backend、Legacy 隔離、流程 mock 與報告入口已完成。</li>
+<li>驗證狀態：Lua 5.1 離線流程已通過；尚未在 <code>_ptr_</code> 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。</li>
+<li>支援範圍：Retail only；Classic 不在本專案範圍。</li>
+</ul>
+<h2 id="api">API 事實基準</h2>
+<p>68914 已確認以下公開契約：</p>
+<table>
+<thead>
+<tr>
+<th>能力</th>
+<th>68914 契約</th>
+<th>EAM 使用方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>容器</td>
+<td><code>CreateFrame("AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")</code></td>
+<td>只在脫戰建立</td>
+</tr>
+<tr>
+<td>單格</td>
+<td><code>AddAuraSlot(slotKey, filterString, options)</code></td>
+<td>player/target 各保留第一條穩定規則</td>
+</tr>
+<tr>
+<td>群組</td>
+<td><code>AddAuraGroup(groupKey, filterString, options)</code></td>
+<td>合併相同 unit/filter/caster 規則</td>
+</tr>
+<tr>
+<td>佈局</td>
+<td><code>SetAuraGroupLayout(groupKey, layout)</code></td>
+<td>脫戰一次套用</td>
+</tr>
+<tr>
+<td>排序</td>
+<td><code>AuraContainerSortMethod.Default</code>、<code>AuraContainerSortDirection.Normal</code></td>
+<td>FrameXML 全域表，不使用 <code>Enum.*</code></td>
+</tr>
+<tr>
+<td>外觀</td>
+<td><code>CustomAuraButtonTemplate</code> 與 <code>initializeFrame</code></td>
+<td>在存取限制套用前綁定 Region</td>
+</tr>
+<tr>
+<td>名稱</td>
+<td><code>AuraButton:SetSpellName(FontString)</code></td>
+<td>由 Blizzard 寫入文字，不讀 AuraData</td>
+</tr>
+<tr>
+<td>倒數</td>
+<td><code>SetDurationCooldown</code>、<code>SetDurationText</code></td>
+<td>由 Blizzard/DurationObject 更新</td>
+</tr>
+<tr>
+<td>層數</td>
+<td><code>SetApplicationCount(FontString)</code></td>
+<td>不由 Lua 讀取 applications</td>
+</tr>
+<tr>
+<td>音效</td>
+<td><code>C_UnitAuras.AddAuraSound</code> / <code>RemoveAuraSound</code></td>
+<td>管理三種 trigger 的註冊 ID</td>
+</tr>
+</tbody>
+</table>
+<p>公開 API 沒有 <code>RemoveAuraSlot</code> 或 <code>RemoveAuraGroup</code>。刪除規則時，EAM 會建立新容器、成功後才停用舊容器；不修改 Blizzard 私有 mixin。</p>
+<h2 id="_2">架構</h2>
+<div class="mermaid">
+flowchart LR
+    SV["EAM_DB Aura 設定"] --> CAP["AuraCapabilityService"]
+    CAP --> COMP["AuraRuleCompiler"]
+    COMP --> PLAN["穩定 Runtime Plan"]
+    PLAN --> CONT["AuraContainerService"]
+    CONT --> SLOT["AuraSlot"]
+    CONT --> GROUP["AuraGroup"]
+    SLOT --> BTN["Blizzard AuraButton"]
+    GROUP --> BTN
+    PLAN --> SOUND["AuraSoundService"]
+    BTN --> NATIVE["Blizzard 圖示/倒數/層數/Tooltip"]
+</div>
+
+<p>Native 路徑不得建立 <code>AuraState</code>，不得送出 <code>EAM_AURA_STATE_CHANGED</code>，不得進入 <code>AlertManager</code>、一般 <code>Renderer</code>、<code>IconPool</code> 或 Scheduler expiration token。</p>
+<p>12.0.7 的 Legacy 路徑仍保留：</p>
+<pre class="codehilite"><code class="language-text">Readable AuraData -&gt; AuraService -&gt; AlertManager -&gt; Renderer -&gt; IconPool
+</code></pre>
+
+<p>12.1 若 Native API 不完整，後端狀態為 <code>UNSUPPORTED</code>；不得偷偷回退到可能讀取 Secret AuraData 的 Legacy 路徑。</p>
+<h2 id="_3">模組責任</h2>
+<table>
+<thead>
+<tr>
+<th>模組</th>
+<th>責任</th>
+<th>禁止事項</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AuraCapabilityService</code></td>
+<td>Interface 初篩、feature detection、後端選擇</td>
+<td>只看版號就宣稱 Native</td>
+</tr>
+<tr>
+<td><code>AuraRuleCompiler</code></td>
+<td>設定轉 <code>NATIVE_SLOT/GROUP</code>、<code>READABLE_LEGACY</code>、<code>DISPLAY_UNSUPPORTED</code></td>
+<td>讀即時 AuraData、操作 UI</td>
+</tr>
+<tr>
+<td><code>AuraContainerService</code></td>
+<td>脫戰建立、revision/fingerprint、pending rebuild</td>
+<td>戰鬥中改容器結構</td>
+</tr>
+<tr>
+<td><code>NativeAuraRenderer</code></td>
+<td><code>initializeFrame</code> Region 綁定與靜態錨點</td>
+<td>OnUpdate、OnShow/OnHide 狀態推導</td>
+</tr>
+<tr>
+<td><code>AuraSoundService</code></td>
+<td>註冊與解除 Sound ID</td>
+<td>從 AuraData 推導事件</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">規則編譯</h2>
+<ul>
+<li>key 僅由 SavedVariables 的普通 <code>alertID</code> 產生，格式為 <code>EAM_SLOT_*</code> 或 <code>EAM_GROUP_*</code>。</li>
+<li><code>includeSpellIDs</code> 僅使用玩家設定中的普通正整數 Spell ID。</li>
+<li>每個 unit 的第一條規則編譯為 Slot；其餘相同 unit/filter/caster 規則合併為 Group。</li>
+<li>未指定 filter 時，player 推導為 <code>HELPFUL</code>、target 推導為 <code>HARMFUL</code>，並記錄 <code>auraFilterInferred</code> limitation。</li>
+<li>Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性標記 <code>secretIdentityFilterMayBeRejected</code>，須 PTR 驗證。</li>
+<li>fingerprint 包含 schema、revision、backend、規則 key/filter 與 sound 設定；未變更時不重建。</li>
+</ul>
+<h2 id="_5">戰鬥生命週期</h2>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> Ready
+    Ready --> Pending: "戰鬥中設定變更"
+    Pending --> Pending: "更多變更只更新 pending revision"
+    Pending --> Rebuild: "PLAYER_REGEN_ENABLED"
+    Rebuild --> Ready: "新容器配置成功"
+    Rebuild --> Ready: "失敗則保留舊容器並回報"
+</div>
+
+<p>68914 FrameXML 已允許 AddOn 在戰鬥中建立 AuraContainer；EAM 仍採「只在脫戰改結構」的保守工程政策。這是 EAM 政策，不應誤寫成 68914 API 限制事實。</p>
+<h2 id="_6">音效策略</h2>
+<ul>
+<li>全域 <code>showSound</code> 在 Native backend 預設只註冊 <code>Added</code>，沿用既有音效選單資產。</li>
+<li>每條 Aura alert 可明確提供 <code>added</code>、<code>applicationsIncreased</code>、<code>removed</code> 設定。</li>
+<li>相同 fingerprint 不重複註冊；刪除或重建前精確呼叫 <code>RemoveAuraSound</code>。</li>
+<li>離線測試只證明註冊 ID 生命週期，不證明遊戲實際播放次數或音量通道。</li>
+</ul>
+<h2 id="savedvariables-v2">SavedVariables v2</h2>
+<ul>
+<li><code>schemaVersion = 2</code>。</li>
+<li>v1 遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的可序列化 Aura 設定。</li>
+<li>遷移中途失敗會還原遷移前可序列化 DB，並寫入靜態 warning code。</li>
+<li>Alert 可保存 filter、顯示偏好與 sound 純資料；不得保存 Frame、ScriptObject、DurationObject 或 AuraContainer。</li>
+<li>相同 alert/options 再次送入回傳 <code>unchanged</code>，不增加 revision。</li>
+</ul>
+<h2 id="_7">驗證入口</h2>
+<p>離線：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite aura121
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
+</code></pre>
+
+<p>遊戲內：</p>
+<pre class="codehilite"><code class="language-text">/eam test aura121
+</code></pre>
+
+<p>流程面板亦提供「12.1 Aura」按鈕。報告寫入 <code>EAM_FLOW_TEST_REPORT_JSON</code>，可用 <code>Tools/Import-EAMFlowReport.ps1</code> 回灌。</p>
+<h2 id="ptr-rqa">PTR RQA 必測</h2>
+<ol>
+<li><code>_ptr_</code> build 與 SymbolicLink 前檢通過。</li>
+<li>player helpful Slot、target harmful Slot、至少一個多 Aura Group。</li>
+<li>圖示、名稱、原生倒數、swipe、層數與 Tooltip。</li>
+<li>candidate filter 對 Secret Aura 的真實限制與降級。</li>
+<li>Added、ApplicationsIncreased、Removed 實際聲音次數與解除。</li>
+<li>戰鬥中修改設定只 pending，脫戰只重建一次。</li>
+<li>無 forbidden action、taint、blocked action、Lua error。</li>
+<li>Native Aura 熱路徑無 EAM AuraState、legacy getter、每圖示 OnUpdate 或 Scheduler token。</li>
+<li>Reload UI 後 schema v2 與舊 <code>EA_*</code> SavedVariables 保留。</li>
+<li>Cooldown、ItemCooldown、ClassPower、GroundEffect、Totem 回歸。</li>
+</ol>
+<p>完成以上簽收前，只能稱為「68914 契約實作與離線流程通過」，不得稱為「12.1 PTR 實機通過」。</p>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="retail-121-auracontainer-native-backend">Retail 12.1 AuraContainer Native Backend 實作規格</h1>
+<h2 id="_1">文件狀態</h2>
+<ul>
+<li>實作基準：Retail 12.1.0 build 68914。</li>
+<li>程式狀態：Native backend、Legacy 隔離、流程 mock 與報告入口已完成。</li>
+<li>驗證狀態：Lua 5.1 離線流程已通過；尚未在 <code>_ptr_</code> 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。</li>
+<li>支援範圍：Retail only；Classic 不在本專案範圍。</li>
+</ul>
+<h2 id="api">API 事實基準</h2>
+<p>68914 已確認以下公開契約：</p>
+<table>
+<thead>
+<tr>
+<th>能力</th>
+<th>68914 契約</th>
+<th>EAM 使用方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>容器</td>
+<td><code>CreateFrame("AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")</code></td>
+<td>只在脫戰建立</td>
+</tr>
+<tr>
+<td>單格</td>
+<td><code>AddAuraSlot(slotKey, filterString, options)</code></td>
+<td>player/target 各保留第一條穩定規則</td>
+</tr>
+<tr>
+<td>群組</td>
+<td><code>AddAuraGroup(groupKey, filterString, options)</code></td>
+<td>合併相同 unit/filter/caster 規則</td>
+</tr>
+<tr>
+<td>佈局</td>
+<td><code>SetAuraGroupLayout(groupKey, layout)</code></td>
+<td>脫戰一次套用</td>
+</tr>
+<tr>
+<td>排序</td>
+<td><code>AuraContainerSortMethod.Default</code>、<code>AuraContainerSortDirection.Normal</code></td>
+<td>FrameXML 全域表，不使用 <code>Enum.*</code></td>
+</tr>
+<tr>
+<td>外觀</td>
+<td><code>CustomAuraButtonTemplate</code> 與 <code>initializeFrame</code></td>
+<td>在存取限制套用前綁定 Region</td>
+</tr>
+<tr>
+<td>名稱</td>
+<td><code>AuraButton:SetSpellName(FontString)</code></td>
+<td>由 Blizzard 寫入文字，不讀 AuraData</td>
+</tr>
+<tr>
+<td>倒數</td>
+<td><code>SetDurationCooldown</code>、<code>SetDurationText</code></td>
+<td>由 Blizzard/DurationObject 更新</td>
+</tr>
+<tr>
+<td>層數</td>
+<td><code>SetApplicationCount(FontString)</code></td>
+<td>不由 Lua 讀取 applications</td>
+</tr>
+<tr>
+<td>音效</td>
+<td><code>C_UnitAuras.AddAuraSound</code> / <code>RemoveAuraSound</code></td>
+<td>管理三種 trigger 的註冊 ID</td>
+</tr>
+</tbody>
+</table>
+<p>公開 API 沒有 <code>RemoveAuraSlot</code> 或 <code>RemoveAuraGroup</code>。刪除規則時，EAM 會建立新容器、成功後才停用舊容器；不修改 Blizzard 私有 mixin。</p>
+<h2 id="_2">架構</h2>
+<div class="mermaid">
+flowchart LR
+    SV["EAM_DB Aura 設定"] --> CAP["AuraCapabilityService"]
+    CAP --> COMP["AuraRuleCompiler"]
+    COMP --> PLAN["穩定 Runtime Plan"]
+    PLAN --> CONT["AuraContainerService"]
+    CONT --> SLOT["AuraSlot"]
+    CONT --> GROUP["AuraGroup"]
+    SLOT --> BTN["Blizzard AuraButton"]
+    GROUP --> BTN
+    PLAN --> SOUND["AuraSoundService"]
+    BTN --> NATIVE["Blizzard 圖示/倒數/層數/Tooltip"]
+</div>
+
+<p>Native 路徑不得建立 <code>AuraState</code>，不得送出 <code>EAM_AURA_STATE_CHANGED</code>，不得進入 <code>AlertManager</code>、一般 <code>Renderer</code>、<code>IconPool</code> 或 Scheduler expiration token。</p>
+<p>12.0.7 的 Legacy 路徑仍保留：</p>
+<pre class="codehilite"><code class="language-text">Readable AuraData -&gt; AuraService -&gt; AlertManager -&gt; Renderer -&gt; IconPool
+</code></pre>
+
+<p>12.1 若 Native API 不完整，後端狀態為 <code>UNSUPPORTED</code>；不得偷偷回退到可能讀取 Secret AuraData 的 Legacy 路徑。</p>
+<h2 id="_3">模組責任</h2>
+<table>
+<thead>
+<tr>
+<th>模組</th>
+<th>責任</th>
+<th>禁止事項</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AuraCapabilityService</code></td>
+<td>Interface 初篩、feature detection、後端選擇</td>
+<td>只看版號就宣稱 Native</td>
+</tr>
+<tr>
+<td><code>AuraRuleCompiler</code></td>
+<td>設定轉 <code>NATIVE_SLOT/GROUP</code>、<code>READABLE_LEGACY</code>、<code>DISPLAY_UNSUPPORTED</code></td>
+<td>讀即時 AuraData、操作 UI</td>
+</tr>
+<tr>
+<td><code>AuraContainerService</code></td>
+<td>脫戰建立、revision/fingerprint、pending rebuild</td>
+<td>戰鬥中改容器結構</td>
+</tr>
+<tr>
+<td><code>NativeAuraRenderer</code></td>
+<td><code>initializeFrame</code> Region 綁定與靜態錨點</td>
+<td>OnUpdate、OnShow/OnHide 狀態推導</td>
+</tr>
+<tr>
+<td><code>AuraSoundService</code></td>
+<td>註冊與解除 Sound ID</td>
+<td>從 AuraData 推導事件</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">規則編譯</h2>
+<ul>
+<li>key 僅由 SavedVariables 的普通 <code>alertID</code> 產生，格式為 <code>EAM_SLOT_*</code> 或 <code>EAM_GROUP_*</code>。</li>
+<li><code>includeSpellIDs</code> 僅使用玩家設定中的普通正整數 Spell ID。</li>
+<li>每個 unit 的第一條規則編譯為 Slot；其餘相同 unit/filter/caster 規則合併為 Group。</li>
+<li>未指定 filter 時，player 推導為 <code>HELPFUL</code>、target 推導為 <code>HARMFUL</code>，並記錄 <code>auraFilterInferred</code> limitation。</li>
+<li>Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性標記 <code>secretIdentityFilterMayBeRejected</code>，須 PTR 驗證。</li>
+<li>fingerprint 包含 schema、revision、backend、規則 key/filter 與 sound 設定；未變更時不重建。</li>
+</ul>
+<h2 id="_5">戰鬥生命週期</h2>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> Ready
+    Ready --> Pending: "戰鬥中設定變更"
+    Pending --> Pending: "更多變更只更新 pending revision"
+    Pending --> Rebuild: "PLAYER_REGEN_ENABLED"
+    Rebuild --> Ready: "新容器配置成功"
+    Rebuild --> Ready: "失敗則保留舊容器並回報"
+</div>
+
+<p>68914 FrameXML 已允許 AddOn 在戰鬥中建立 AuraContainer；EAM 仍採「只在脫戰改結構」的保守工程政策。這是 EAM 政策，不應誤寫成 68914 API 限制事實。</p>
+<h2 id="_6">音效策略</h2>
+<ul>
+<li>全域 <code>showSound</code> 在 Native backend 預設只註冊 <code>Added</code>，沿用既有音效選單資產。</li>
+<li>每條 Aura alert 可明確提供 <code>added</code>、<code>applicationsIncreased</code>、<code>removed</code> 設定。</li>
+<li>相同 fingerprint 不重複註冊；刪除或重建前精確呼叫 <code>RemoveAuraSound</code>。</li>
+<li>離線測試只證明註冊 ID 生命週期，不證明遊戲實際播放次數或音量通道。</li>
+</ul>
+<h2 id="savedvariables-v2">SavedVariables v2</h2>
+<ul>
+<li><code>schemaVersion = 2</code>。</li>
+<li>v1 遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的可序列化 Aura 設定。</li>
+<li>遷移中途失敗會還原遷移前可序列化 DB，並寫入靜態 warning code。</li>
+<li>Alert 可保存 filter、顯示偏好與 sound 純資料；不得保存 Frame、ScriptObject、DurationObject 或 AuraContainer。</li>
+<li>相同 alert/options 再次送入回傳 <code>unchanged</code>，不增加 revision。</li>
+</ul>
+<h2 id="_7">驗證入口</h2>
+<p>離線：</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite aura121
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
+</code></pre>
+
+<p>遊戲內：</p>
+<pre class="codehilite"><code class="language-text">/eam test aura121
+</code></pre>
+
+<p>流程面板亦提供「12.1 Aura」按鈕。報告寫入 <code>EAM_FLOW_TEST_REPORT_JSON</code>，可用 <code>Tools/Import-EAMFlowReport.ps1</code> 回灌。</p>
+<h2 id="ptr-rqa">PTR RQA 必測</h2>
+<ol>
+<li><code>_ptr_</code> build 與 SymbolicLink 前檢通過。</li>
+<li>player helpful Slot、target harmful Slot、至少一個多 Aura Group。</li>
+<li>圖示、名稱、原生倒數、swipe、層數與 Tooltip。</li>
+<li>candidate filter 對 Secret Aura 的真實限制與降級。</li>
+<li>Added、ApplicationsIncreased、Removed 實際聲音次數與解除。</li>
+<li>戰鬥中修改設定只 pending，脫戰只重建一次。</li>
+<li>無 forbidden action、taint、blocked action、Lua error。</li>
+<li>Native Aura 熱路徑無 EAM AuraState、legacy getter、每圖示 OnUpdate 或 Scheduler token。</li>
+<li>Reload UI 後 schema v2 與舊 <code>EA_*</code> SavedVariables 保留。</li>
+<li>Cooldown、ItemCooldown、ClassPower、GroundEffect、Totem 回歸。</li>
+</ol>
+<p>完成以上簽收前，只能稱為「68914 契約實作與離線流程通過」，不得稱為「12.1 PTR 實機通過」。</p>
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

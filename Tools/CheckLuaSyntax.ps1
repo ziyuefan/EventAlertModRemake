@@ -35,7 +35,8 @@ $sourceRoots = @(
     "UI",
     "Debug",
     "Data",
-    "Locale"
+    "Locale",
+    "Tests"
 )
 
 $files = foreach ($root in $sourceRoots) {

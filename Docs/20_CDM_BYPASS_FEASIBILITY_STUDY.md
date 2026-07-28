@@ -106,3 +106,10 @@ end
     * 在程式測試程式碼中，嘗試將 `EssentialCooldownViewer` 設定 Alpha = 0，並開始是否會引發 EditMode 的污染警告。
 3. **第三階段（雙軌配送正式服）**：
     * 在 `Renderer.lua` 中加入角色綁定邏輯。
+
+## 2026-07-26 結論：停止採用
+
+- ShadowHost/CDM 不再列入 `EventAlertMod.toc`，Renderer 亦移除 host lookup。
+- 設定頁原 `enableCDM` 控制項改為 Native Aura backend/pending 狀態與手動重建。
+- 本文件僅保留歷史可行性研究，不是現行架構，也不得恢復為 12.1 Secret Aura 繞過方案。
+- 現行方案為 Blizzard 公開 AuraContainer/AuraButton 契約，見 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`。

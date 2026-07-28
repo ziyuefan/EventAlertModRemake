@@ -156,3 +156,11 @@
 - 具有計時器回呼的物品範圍掃描；
 - 除錯標籤和查找輸出中的字串格式；
 - 全域意外變數導致生命週期和 GC 行為不明確。
+
+## 2026-07-26：Native Aura 效能預算
+
+- 戰鬥 Aura 更新由 Blizzard AuraContainer/AuraButton 處理；EAM 熱路徑配置、AuraState、OnUpdate 與 Scheduler token 皆為 0。
+- 規則只在登入、專精/設定變更與脫戰 pending commit 時編譯。
+- fingerprint 未變更時不建立新容器、不重註冊 sound。
+- 相容規則合併為 AuraGroup；player/target 各保留第一條 Slot PoC。
+- 舊容器停用後只保留計數，不保存每次重建的 Lua 配對表。
