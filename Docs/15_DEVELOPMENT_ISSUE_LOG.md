@@ -27,6 +27,69 @@
 ```
 ## 記錄
 
+### 2026-07-28 README 導覽連結仍指向舊儲存庫（已解決）
+
+- 狀態：已解決；README 內所有專案導覽連結已改為 `ziyuefan/EventAlertMod_Remake` 的 `main` 路徑。
+- 情境：Alpha 發布前核對 GitHub 儲存庫與 Pages 導覽。
+- 症狀：ChangLog、CommandLine 與 ScreenShot 的重複連結仍指向舊 `EventAlertModAll`；ScreenShot fragment 也使用本 README 不存在的 `#screenshot-2`。
+- 原因判斷：README 沿用舊 repo 的絕對連結，儲存庫改造後沒有同步路徑與章節錨點。
+- 已嘗試方法：先列出所有 `github.com`／`github.io` 連結，再核對實際 `##命令列` 與 `## 截圖` 標題，避免只更換 repo 名稱。
+- 有效解法：ChangLog 直接連到本 repo `main/changelog.txt`；CommandLine 與 ScreenShot 分別連到本 repo README 的 `#命令列` 與 `#截圖`。
+- 後續注意事項：儲存庫搬移、改名或章節標題變更時，發布前必須搜尋舊 owner／repo 與失效 fragment；Pages 網址維持 `https://ziyuefan.github.io/EventAlertMod_Remake/`。
+
+### 2026-07-28 Release ZIP 的根 readme.html 與 Pages 內容漂移（已解決）
+
+- 狀態：已解決；文件轉換流程已建立單一 HTML 來源。
+- 情境：Alpha ZIP 通過第一次封裝後，進一步核對包內說明檔與 GitHub Pages 產物。
+- 症狀：`docs_html/README.md.html` 已包含 12.1 Alpha、Native Aura 與 Tooltip 監控說明，但根 `readme.html` 最後更新於 2026-06-11；標準包會收錄後者。
+- 原因判斷：批次轉換器只更新 `docs_html/README.md.html`，打包器卻讀取根 `readme.html`，兩份生成檔沒有同步契約。
+- 已嘗試方法：沒有手動覆寫後直接發布，先比對兩個檔案的時間、大小與 Alpha 關鍵字。
+- 有效解法：`batch_convert_docs.py` 每次轉換根 `README.md` 後，將 Pages 產物同步到根 `readme.html`；封裝指南同步指定該唯一來源。
+- 後續注意事項：只要 README 或轉換器有變更，發布前都必須先執行離線 HTML 重建，再執行標準封裝與 ZIP 內容核對。
+
+### 2026-07-28 Alpha 封裝被停載 ShadowHost 死碼擋下（已解決）
+
+- 狀態：已解決；標準封裝、Lua 語法、離線流程與敏感資訊掃描均通過。
+- 情境：準備將 12.1 Native Aura、流程驗證與 GameTooltip 自製監控選單發布為 GitHub Alpha prerelease。
+- 症狀：第一次執行 `Tools/Build-CurseForgePackage.ps1` 時，TOC 一致性閘門回報 `Services/ShadowHostService.lua` 未列入 TOC，拒絕產生 ZIP。
+- 原因判斷：12.1 改造已從 TOC 與 Renderer 停用 ShadowHost，但舊研究檔仍位於正式 `Services/`。標準打包器會複製整個服務目錄；若只放寬檢查，死碼仍會進入正式包。
+- 已嘗試方法：沒有使用 `-SkipLuaCheck` 或修改白名單繞過。另遇到桌面端 sandbox helper `setup refresh had errors`，內建補丁工具無法啟動；WindowsApps 的 patch 啟動器又被拒絕執行，最後改用本機 npm Codex 套件內相同的 `--codex-run-as-apply-patch` 入口。
+- 有效解法：先備份原檔，再以 `git mv` 將 ShadowHost 完整封存到 `LegacyReference/Services/ShadowHostService.lua`；同步把模組契約改成封存參考。正式包既不載入也不收錄該檔，研究歷史仍可追溯。
+- 驗證結果：TOC consistency 無未列入 Lua/XML；正式載入 Lua `41/41` 語法通過；離線 `all` suite `24/24` 通過；敏感資訊掃描通過；產物為 `Dist/EventAlertMod_MN_20260728_123720.zip`。
+- 後續注意事項：停載模組不得留在正式打包目錄。若需要保留研究碼，必須放入發布工具明確排除的 `LegacyReference/`，且文件不可再把它列為執行期契約。
+
+### 2026-06-22 PTR／XPTR 版本映射與 EventAlertMod SymbolicLink 安全基準（已解決，需持續複查）
+
+- 狀態：本機版本與 Reparse Point 已唯讀確認；後續每次安裝、清理或實機驗證前需重新檢查。
+- 情境：使用者指定 `D:\World of Warcraft` 為 WoW 根目錄，並補充 `_ptr_` 為至暗之夜 12.1.0、`_xptr_` 為至暗之夜 12.0.7；各版本 AddOns 可能以 Windows 連結指向實體專案 `D:\EventAlertMod`。
+- 症狀：若把 `Interface\AddOns\EventAlertMod` 當成一般插件副本進行刪除、覆蓋、解壓縮或鏡像同步，可能破壞 SymbolicLink，甚至讓遞迴工具誤作用到實體專案。
+- 原因判斷：Battle.net 版本資料夾名稱不足以單獨證明 build；各版本的 EventAlertMod 路徑型態也不一致，必須分別讀取執行檔版本與 `LinkType`／`Target`／`ReparsePoint`。
+- 已嘗試方法：第一個唯讀查詢因 PowerShell 不接受 `foreach { } | Format-Table` 的寫法而在解析期停止；第二次誤假設 PTR 使用 `Wow.exe`，因實際檔名是 `WowT.exe` 而停止。兩次都沒有修改檔案。最終一致性檢查又因以 `Tools/Test-...` 正斜線字串搜尋 Windows 文件中的 `.\Tools\Test-...` 反斜線命令而產生假陰性；改以檔名本身與語意欄位檢查。第二版又把完整版本字串錯套到只負責流程命令的 SKILL，形成責任範圍假陰性；最終改為按文件責任分層斷言。
+- 有效解法：先列出版本根目錄第一層執行檔，再讀取 VersionInfo。確認 `_retail_` 為 12.0.7.68256、`_ptr_` 為 12.1.0.68209、`_xptr_` 為 12.0.7.68182；前三者 EventAlertMod 均為指向 `D:\EventAlertMod` 的 `SymbolicLink`。另確認 `_classic_`、`_classic_ptr_` 為同目標 SymbolicLink，`_classic_era_` 為實體目錄，`_classic_era_ptr_` 不存在該插件路徑。 已新增 `Tools/Test-LocalWoWEnvironment.ps1`，以 patch train 與 Reparse Point／Target 作為實機測試前置斷言並產生 JSON／Markdown 證據。
+- 後續注意事項：EAM 只支援 Retail；Classic 路徑不得作為測試或部署目標。對 `_retail_`、`_ptr_`、`_xptr_` 的 AddOns 連結禁止刪除、搬移、覆蓋、解壓縮、`robocopy /MIR` 或重建。任何連結維護必須另行說明風險並取得明確授權。
+
+### 2026-06-21 建立離線／實機流程驗證與開發回灌閉環（已完成離線，待實機）
+
+- 狀態：離線流程、JSON／Markdown 報告與回灌工具已通過；Retail／PTR 面板與按鈕待實機驗證。
+- 情境：使用者要求開發過程除了限制與語法驗證，也必須能自行產生流程測試、在遊戲內按鈕執行並把報告回饋到開發環境。
+- 症狀：原專案只有 `luac -p`、RuntimeProbe 與人工測試清單，無法重播 EventRouter、Scheduler、SavedVariables 與報告匯出流程，也沒有 Mock／實機共用案例或 WTF 回灌格式。
+- 原因判斷：靜態與語法只能證明程式可解析，不能證明跨模組生命週期、非同步 callback、handler 清理及報告 schema 正常；人工測試若無結構化報告，後續開發也無法追溯。
+- 已嘗試方法：建立 `FlowTestRunner`、`FlowTestPanel`、Lua 5.1 Offline Harness、PowerShell runner／importer、獨立 SavedVariable 與 `eam-flow-validation` SKILL。工具過程另遇到桌面端 sandbox helper 無法初始化，需在已授權專案範圍內改用具唯一命中檢查的 PowerShell 精確寫入；第一次替代雙引號時誤用反斜線轉義，造成 `Slash.lua` 出現 `unexpected symbol near '\'`，經 `luac -p` 定位後改用 PowerShell 單引號常值修復；此外遇到 skill short description 24 字元不足、JavaScript 編排反引號／PowerShell suite 插值衝突、Windows PowerShell 5.1 對無 BOM UTF-8 的 cp950 誤讀，以及報告工具漏初始化 `$utf8`。HTML 轉換器另會產生含 CR 的純空白行，初版清理規則未涵蓋 CR，經 `git diff --check` 定位後改以行尾 lookahead 清除。
+- 有效解法：使用長度合格介面說明；寫檔命令以佔位字元還原反引號；含中文的 `.ps1` 使用 UTF-8 BOM；明確初始化輸出 UTF-8 encoding。離線 `all` suite 共 7 案例全數通過，JSON、Markdown 與 importer round-trip 成功。
+- 驗證結果：`Lua syntax OK: 35 files`；`passed=7, failed=0, skipped=0, pending=0`；回灌來源正確保留 `offline-mock`。
+- 後續注意事項：需在 Retail／PTR 非戰鬥中執行 `/eam test all`，確認面板 template、複製按鈕、Scheduler callback、WTF 寫回、taint／Lua error 與 ReloadUI。Mock 通過不得宣稱實機通過。
+
+### 2026-06-21 建立 API Change Intelligence 專家與 12.0.0 基準（已建立，待持續維護）
+
+- 狀態：專家、RACI、版本基準與專案 SKILL 已建立；API 情報需隨 PTR／正式版與來源 revision 持續維護。
+- 情境：使用者要求建立 API CHANGE 專家，從 12.0.0 起理解 Retail AddOn API 演進，以便提前布局未來架構與遷移策略。
+- 症狀：既有 `SEC` 與 `AURA121` 分別負責安全終審及 Aura 遷移，但缺少跨版本追蹤 TOC、revision、官方公告、UI source diff 與遷移窗口的唯一問責角色。
+- 原因判斷：12.0.0 至 12.1.0 的變化是 Secret Values、反 laundering、DurationObject／Formatter、DurationTextBinding、Forbidden 與 AuraContainer 連續演進；若只在 API 移除後被動修補，會錯失 adapter、capability gate 與舊路徑退場的準備期。
+- 已嘗試方法：查證 Warcraft Wiki `API_change_summaries` 與 12.0.0、12.0.1、12.0.5、12.0.7、12.1.0 頁面 revision；建立 `eam-retail-api-change-intelligence` SKILL。`init_skill.py` 首次因 23 字元的 `short_description` 未達 25 字元而只建立骨架；`generate_openai_yaml.py` 又先遇到 cmd 引號拆解與 Windows Python `cp950` 無法解碼 UTF-8；Codex 編排層兩次 Base64 嘗試因缺少 `TextEncoder` 與 `btoa` 而在命令送出前停止；`apply_patch` 亦受 `setup refresh had errors` 阻斷。
+- 有效解法：新增 `APICHG`（`EAM_API_Change_Intelligence_Expert`）並設為第 13 個 RACI 領域唯一 `A/R`；以至少 25 字元的說明重新產生介面，改用 PowerShell 單引號保留參數，並以本次程序限定的 `PYTHONUTF8=1` 成功建立 `agents/openai.yaml`；文件修改使用已授權、目標明確的非互動 PowerShell UTF-8 寫入。
+- 資料來源：Warcraft Wiki MediaWiki revision 與 Blizzard 官方 12.1 Addons／Auras 公告；Wiki revision time 僅代表頁面修訂時間，不是 patch 發布日期。
+- 後續注意事項：12.1 頁面仍在 PTR 期間持續修訂；需監控 revision、官方 UI source 與實機證據。`APICHG` 不取代 `SEC` 安全終審、`AURA121` Aura 遷移或 `RQA` 客戶端簽收。本次未修改 Lua。
+
 ### 2026-06-09 PowerShell Get-Content 在讀取單行檔案時索引 System.Char 導致 MethodNotFound 崩潰（已解決）
 
 - 狀態：已解決
@@ -649,3 +712,43 @@
   - 重構程式碼已成功寫入，4個Lua檔 `AuraService.lua`、`GroundEffectService.lua`、`TotemService.lua` 與 `UI/Renderer.lua` 皆 100% 通過 `luac -p` 的靜態語法安全性檢討。
 - 後續注意事項：
 - 在WoW正式服啟動EAM，高度切換Buff與冷卻時觀察記憶體曲線完全是否水平不上升，並確認當光環逼近時能準確自動消失，完全消除戰鬥污染與JIT中止。
+### 2026-06-21 Retail 12.1 Aura readiness 與專家治理會審（未解決）
+
+- 狀態：未解決；專家治理已更新，Lua 技術問題待後續修復與 Retail／PTR 實機驗證。
+- 症狀：活動 TOC 仍為 `120007`；`AuraService` 仍依賴逐筆 AuraData、`UNIT_AURA` 與 `GetAuraDataByAuraInstanceID`，尚無 AuraContainer／AuraButton 實作。另發現 Secret 時間回流算術、ItemCooldown 標量 Secret 檢查錯誤、IconPool 戰鬥中可能建立框架、Scheduler 任務堆積與 StatePool 懸空引用風險。
+- 原因判斷：12.1 Aura 契約已改為由 Aura Container／Button 在引擎內追蹤與顯示受限光環；既有 12.0.7 抽取模型不能直接延伸。原專家群亦缺少 12.1 Aura 遷移、Retail 實機證據與文件事實治理的唯一問責角色。
+- 已嘗試方法：由 API／Aura、安全效能、架構治理三席子代理進行互不重疊的唯讀審查；主代理執行 32 個 Lua 檔案 `luac -p` 與 P0 靜態掃描，並查證 Blizzard 公告與 Warcraft Wiki 12.1.0 API changes 2026-06-20 修訂。
+- 有效解法：新增 `AURA121`、`RQA`、`DOC` 三位專家，將 canonical 名冊調整為 23 位，重建 RACI 並要求每領域唯一 `A`。本次只完成治理與風險定級，未修改 Lua。
+- 後續注意事項：12.1 Aura 遷移、Secret 時間資料清理、戰鬥中框架建立、排程取消／去重及 deferred state 生命週期均須另案修復。完成前不得宣稱 12.1 相容或 Retail 實機通過。
+
+### 2026-06-21 Codex 沙箱與網路查證工具限制（已繞過，無專案資料損失）
+
+- 狀態：已繞過；工具環境問題，不是專案程式錯誤。
+- 症狀：沙箱程序初始化曾回報 `setup refresh had errors`；Web 搜尋／直接開頁遭服務端 `403 Forbidden`；修改前取得時間戳時一度因自動授權用量上限被拒絕。
+- 原因判斷：Codex 執行環境與搜尋後端限制，非路徑、Git、Lua 或 Warcraft Wiki 內容問題。
+- 已嘗試方法：停止重複高風險嘗試，改用經授權的唯讀沙箱外命令與 Warcraft Wiki MediaWiki API；用量限制發生後先停止寫入並取得使用者明確授權。
+- 有效解法：在使用者授權後恢復命令，先建立專案規範要求的真實備份，再進行文件修改。
+- 後續注意事項：遇到相同沙箱或查證限制時，必須區分工具故障與專案故障；不得以未查證快取冒充最新 API 事實。
+
+### 2026-07-26 12.1 Native Aura 改造工具與流程問題
+
+- 狀態：工具問題已繞過；12.1 PTR 實機項目仍待驗證。
+- 症狀：標準 `apply_patch` 因 Codex Windows sandbox refresh 失敗；`apply_patch.bat` 的 WindowsApps 執行檔在升權程序被拒絕。第一次 Harness 又引用不存在的 `Core/StatePool.lua`；Windows `rg Locale\*.lua` glob 未展開；嚴格 AuraButton mock 把允許的 `eamNativeRegions` 資料欄位誤判為未知 API。
+- 原因判斷：前三項屬本機工具/路徑模型，最後一項屬 mock 將 runtime 資料欄位與方法查找混為一談，不是產品 Lua API 錯誤。
+- 已嘗試方法：先保留完整備份，改用 Codex apply-patch executable 的臨時副本執行標準 patch 協定；以 `rg --files` 確認沒有 StatePool 模組；改用 `rg -g '*.lua'`；在 strict mock 只白名單 `eamNativeRegions` nil 讀取。文件轉換因原腳本可能外傳 Markdown 到 Google 而被安全審查拒絕；安裝 user-site `markdown 3.10.2` 後，為工具新增 `EAM_DOCS_OFFLINE=1` 網路前閘門並離線轉換 34 份文件。
+- 有效解法：所有正式修改仍由 apply-patch 協定完成；刪除 AuraService Tooltip duration 的 `now + scrapedDuration` 偽造路徑；Lua 語法 40/40，`aura121` 初版 7/7，最終 `all` 17/17。migration 測試一度因最後斷言回傳 table 而非布林 `true` 被誤標 fail，改成明確 `~= nil` 後通過。失敗報告保留於 `TestResults/`，不得刪除以掩蓋試誤。HTML 轉換預設採離線模式；外部翻譯必須取得明確授權。
+- 後續注意事項：任務結束前移除 `%TEMP%\codex-apply-patch-20260726.exe`。68914 sorting enum 來自 FrameXML 而非 Generated Documentation；Aura Sound 欄位、實際播放、Forbidden Aspect、candidate filter 與 taint 仍須 `_ptr_` 實機驗證。
+
+### 2026-07-27 GameTooltip ID 與自有 Popup 監控流程（離線已完成，待 PTR／XPTR 實機）
+
+- 狀態：Spell／Item／Macro ID 與 EAM 自有 Popup 已完成；Aura 採官方 ID 顯示加手動輸入；離線 boundary／all 通過，實機尚未簽收。
+- 情境：使用者要求 Tooltip 顯示法術、光環、物品與巨集 ID，並依圖示來源加入對應監控清單；原始構想為 Ctrl+Alt+右鍵。
+- 症狀：觀察型全域滑鼠事件不能阻止 Blizzard 原右鍵行為，物品右鍵可能使用／裝備；Hook action button 或 AuraButton 會進入 secure／Forbidden／taint 風險。12.1 UnitAura TooltipData 的 ID 亦不是可依賴的公開穩定契約。
+- 原因判斷：安全方案必須把使用者確認移到 EAM 自有 frame，並把 Aura ID 的「顯示」與「程式讀取」分離。12.1 官方提供 `tooltipShowAuraSpellIDs`，但該 CVar 不跨 session 保存。
+- 已嘗試方法：由 API Change、Aura 契約與流程測試三席專家分別查證 PTR 68914 FrameXML、Secret／Forbidden 邊界與 mock 案例；標準 `apply_patch` 再次因 sandbox refresh 失敗，沿用已授權的 Codex apply-patch 臨時執行檔。第一次禁用模式搜尋因 PowerShell 雙引號使正規式失效，改用 `rg -F -e`；第一次 boundary 為 harness 未載入 Locale 而 4/8，補載入後又因 mock 缺 `Enum.PowerType` 在案例前中止，補齊正式客戶端必有表後通過。失敗報告保留，不刪除。
+- 有效解法：`TooltipMonitorService` 只保存脫戰五秒 scalar candidate；Spell／Item 僅讀安全 `data.id`；Macro 只接受安全 `GetAction` 來源，其餘降級手動輸入；UnitAura callback 完全不讀 payload。Tooltip callback 不直接開 UI，戰鬥中也不保存 candidate；後續精確 Ctrl+Alt 才開啟 `TooltipMonitorMenu`。提交前 action 另經安全字串與四種白名單，只有 `added`／`updated` 通知刷新，`unchanged` 不刷新。CVar 不可用時五語系改為手動已知 Aura ID 提示，RuntimeProbe 只輸出匿名計數。
+- 流程強化：離線 Harness 不再以假的 `open()` 取代 Popup，而是建立真 Frame/EditBox/Button，透過 `button:Click()` 與綁定的 `OnClick` 提交；載入正式 `UI/Options.lua`，驗證 AuraContainer／Aura／Cooldown／ItemCooldown／Renderer 五個下游。每個寫入案例使用隔離 DB 且在成功／拋錯兩路保證還原。新增 Secret scalar/action/table-key guard、callback 零 UI、focus/combat replay/type/hidden/TTL/完整 chord/latest、Macro resolved/manual、Aura player/target/CVar fallback，以及 JSON／人類報告 ID 遮蔽。
+- 專家修正：API Change 終審指出舊文件仍把 AuraInstanceID／時間算術當成 12.1 指導、Macro processing metadata 私有性與 CVar 不可用誤導；Secret/taint 終審指出 action scalar 未防護與戰鬥候選可跨出戰；流程終審指出 OnClick 繞過、刷新 spy 過淺及 Secret-key false negative。上述 P1 均已修正並加入回歸案例。
+- 終審收斂：API Change 複核最終為 P0=0、P1=0；剩餘兩個 P2（模組檔頭未揭露 private metadata、戰鬥中顯示不可用 Ctrl+Alt 提示）亦已關閉。戰鬥中仍可追加安全 ID，但只有成功建立脫戰 candidate 才顯示操作提示。
+- 驗證結果：Lua 5.1 語法通過 42/42；禁用模式掃描只命中 EAM 自有按鈕 `OnClick`；TOC 所有 Lua 路徑存在；文件 Tooltip 標題唯一、五語系鍵齊全；`boundary` 10/10（`TestResults/EAM_FlowValidation_boundary_20260728_120708.json`），`all` 24/24（`TestResults/EAM_FlowValidation_all_20260728_120708.json`）。真 Popup 初次測試因未重新產生已消耗 candidate 而 7/9，失敗報告 `TestResults/EAM_FlowValidation_boundary_20260727_042850.json` 保留。
+- 後續注意事項：必須在 `_ptr_` 12.1 與 `_xptr_` 12.0.7 依 `Docs/06_TEST_PLAN_RETAIL.md` 實測 Tooltip 類型、CVar、Popup、戰鬥拒絕、原始點擊行為與 taint／blocked action／Forbidden 錯誤；離線 pass 不得宣稱實機通過。

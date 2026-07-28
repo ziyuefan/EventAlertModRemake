@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -421,7 +421,15 @@
 <p>這次審計是靜態的。沒有 WoW Retail 12.x 用戶端可用，因此 API 名稱，
 傳回形狀、secret/protected 行為和 XML 運行時行為仍然需要
 遊戲內驗證。</p>
-<h2 id="_3">秘密/受保護的值</h2>
+<h2 id="_3">離線流程驗證限制</h2>
+<p><code>Tests/FlowValidationHarness.lua</code> 可驗證 Lua 模組契約、事件 round-trip、Scheduler 與報告閉環，但無法重現 WoW C++ Secret／Forbidden／taint／protected frame 語意。</p>
+<ul>
+<li>Mock 通過不得標記為 PTR 或 Retail 實機通過。</li>
+<li>測試面板不執行施法、物品使用、改目標或 secure action。</li>
+<li>真實 AuraContainer、DurationObject、戰鬥鎖定與污染仍由 <code>RQA</code> 實機簽收。</li>
+<li>報告不自動上傳；需由使用者複製 JSON 或提供 WTF SavedVariables。</li>
+</ul>
+<h2 id="_4">秘密/受保護的值</h2>
 <p>正式服可能會返回秘密、受保護、僅供顯示或不可用的光環數據
 和冷卻狀態。重寫必須安全降級：</p>
 <ul>
@@ -431,11 +439,11 @@
 <li>沒有捏造持續時間/expiration/cooldown事實；</li>
 <li>僅當請求 debug/export 時偵錯邊界警告。</li>
 </ul>
-<h2 id="_4">戰鬥限制</h2>
+<h2 id="_5">戰鬥限制</h2>
 <p>某些 UI 或資料更新可能不安全或在戰鬥中不可用。繁重的工作，
 快取建置、佈局重建和類似遷移的操作必須延遲
 或節流。</p>
-<h2 id="_5">不支援的分支</h2>
+<h2 id="_6">不支援的分支</h2>
 <p>重寫不支援：</p>
 <ul>
 <li>經典</li>
@@ -447,7 +455,7 @@
 <li>特定於區域的經典相容性分支</li>
 </ul>
 <p>舊目錄可能保留在儲存庫中，僅供參考。</p>
-<h2 id="_6">目前來源風險</h2>
+<h2 id="_7">目前來源風險</h2>
 <p>首次透過審核發現以下風險：</p>
 <ul>
 <li>主線中混合正式服和遺留相容性分支；</li>
@@ -463,11 +471,11 @@
 <li><code>EventAlert_ImportExport.lua</code> 具有原型全域變數並被註解掉
   載入順序。</li>
 </ul>
-<h2 id="_7">使用者介面限制</h2>
+<h2 id="_8">使用者介面限制</h2>
 <p>目前 XML 建立大型靜態選項面板和許多全域框架名稱。的
 重寫應該更喜歡較小的選項表面和池化運行時圖標，但是
 刪除之前必須先映射現有的 UI 行為。</p>
-<h2 id="_8">需要正式服驗證的領域</h2>
+<h2 id="_9">需要正式服驗證的領域</h2>
 <ul>
 <li>準確的 <code>C_UnitAuras</code> 安全存取行為；</li>
 <li>精確的 <code>C_Spell.GetSpellCooldown</code> 結構化回傳行為；</li>
@@ -480,76 +488,102 @@
 <li>zhTW/enUS/koKR/zhCN 中的局部渲染；</li>
 <li>SavedVariables 遷移真實的舊用戶資料。</li>
 </ul>
+<h2 id="2026-07-26121">2026-07-26：12.1 尚待實機確認</h2>
+<ul>
+<li>68914 模板實際載入時機、AuraButton Forbidden Aspect 與條件式 access constraints。</li>
+<li>candidate Spell ID filter 對各種 Secret Aura/單位極性的真實接受範圍。</li>
+<li><code>initializeFrame</code> 名稱、倒數、層數、Tooltip 的實際顯示與容器裁切。</li>
+<li>Added/ApplicationsIncreased/Removed 的實際播放次數、音效檔欄位與 output channel。</li>
+<li>戰鬥 pending、脫戰重建、Reload UI migration、taint/blocked action 與 CPU/GC。</li>
+<li><code>UNSUPPORTED</code> 只代表安全停用 Native Aura，不代表功能等同 Legacy。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="known-limitations">Known limitations</h1>
-<h2 id="instant-verification-gap">Instant verification gap</h2>
-<p>This audit is static. There is no WoW Retail 12.x client available, hence the API name,
-Return shape, secret/protected behavior and XML runtime behavior are still required
-In-game verification.</p>
-<h2 id="secretprotected-value">Secret/protected value</h2>
-<p>Live servers may return secret, protected, display-only, or unavailable Halo data
-and cooling status. Rewrites must be downgraded safely:</p>
+<h1 id="_1">已知限制</h1>
+<h2 id="_2">即時驗證差距</h2>
+<p>這次審計是靜態的。沒有 WoW Retail 12.x 用戶端可用，因此 API 名稱，
+傳回形狀、secret/protected 行為和 XML 運行時行為仍然需要
+遊戲內驗證。</p>
+<h2 id="_3">離線流程驗證限制</h2>
+<p><code>Tests/FlowValidationHarness.lua</code> 可驗證 Lua 模組契約、事件 round-trip、Scheduler 與報告閉環，但無法重現 WoW C++ Secret／Forbidden／taint／protected frame 語意。</p>
 <ul>
-<li>Only the icons are displayed;</li>
-<li>Only the safe name /icon/stacks is known;</li>
-<li>Timing mode <code>protected</code>, <code>displayOnly</code> or <code>unknown</code>;</li>
-<li>No fabrication of duration/expiration/cooldown fact;</li>
-<li>Debug boundary warning only when requesting debug/export.</li>
+<li>Mock 通過不得標記為 PTR 或 Retail 實機通過。</li>
+<li>測試面板不執行施法、物品使用、改目標或 secure action。</li>
+<li>真實 AuraContainer、DurationObject、戰鬥鎖定與污染仍由 <code>RQA</code> 實機簽收。</li>
+<li>報告不自動上傳；需由使用者複製 JSON 或提供 WTF SavedVariables。</li>
 </ul>
-<h2 id="combat-restrictions">Combat restrictions</h2>
-<p>Some UI or profile updates may be unsafe or unavailable during combat. heavy work,
-Cache creation, layout rebuilding, and migration-like operations must be delayed
-Or throttling.</p>
-<h2 id="unsupported-branches">Unsupported branches</h2>
-<p>Rewriting is not supported:</p>
+<h2 id="_4">秘密/受保護的值</h2>
+<p>正式服可能會返回秘密、受保護、僅供顯示或不可用的光環數據
+和冷卻狀態。重寫必須安全降級：</p>
 <ul>
-<li>Classic</li>
-<li>Mists of Pandaria Classic server</li>
-<li>Catastrophe and Rebirth Classic server Competition</li>
-<li>Wrath of the Lich King Classic server</li>
-<li>The Burning Crusade Classic</li>
-<li>era</li>
-<li>Region-specific Classic compatibility branches</li>
+<li>僅圖示顯示；</li>
+<li>僅已知安全名稱/icon/stacks；</li>
+<li>定時模式 <code>protected</code>、<code>displayOnly</code> 或 <code>unknown</code>；</li>
+<li>沒有捏造持續時間/expiration/cooldown事實；</li>
+<li>僅當請求 debug/export 時偵錯邊界警告。</li>
 </ul>
-<p>Old catalogs may remain in the repository for reference only.</p>
-<h2 id="current-source-risk">Current source risk</h2>
-<p>The following risks were discovered through the audit for the first time:</p>
+<h2 id="_5">戰鬥限制</h2>
+<p>某些 UI 或資料更新可能不安全或在戰鬥中不可用。繁重的工作，
+快取建置、佈局重建和類似遷移的操作必須延遲
+或節流。</p>
+<h2 id="_6">不支援的分支</h2>
+<p>重寫不支援：</p>
 <ul>
-<li>Mixing Retail servers and legacy compatibility branches in the main line;</li>
-<li>Legacy TOC still exists at the root;</li>
-<li>Currently TOC and <code>Lib_ZYF</code> which are required by many runtime mods;</li>
-<li>Large spell/item data table;</li>
-<li>Item range scanning in <code>EventAlert_ItemSpellCache.lua</code>;</li>
-<li>Recursive timer scheduling and per-resource OnUpdate scripts;</li>
-<li>Extensive use of global variables and unexpected global variables;</li>
-<li>Tooltips and Aura that may conflict with protected material API assumptions;</li>
-<li>There is a duplicate /archived file under <code>Main/</code>, its name is garbled, and
+<li>經典</li>
+<li>熊貓人之謎經典服</li>
+<li>浩劫與重生經典服賽</li>
+<li>巫妖王之怒經典服</li>
+<li>TBC 經典</li>
+<li>時代</li>
+<li>特定於區域的經典相容性分支</li>
+</ul>
+<p>舊目錄可能保留在儲存庫中，僅供參考。</p>
+<h2 id="_7">目前來源風險</h2>
+<p>首次透過審核發現以下風險：</p>
+<ul>
+<li>主線中混合正式服和遺留相容性分支；</li>
+<li>遺留的 TOC 仍然存在於根部；</li>
+<li>目前 TOC 和許多運行時模組所需的 <code>Lib_ZYF</code> ；</li>
+<li>大型法術/item資料表；</li>
+<li><code>EventAlert_ItemSpellCache.lua</code> 中的物品範圍掃描；</li>
+<li>遞迴計時器調度和每個資源 OnUpdate 腳本；</li>
+<li>廣泛的全域變數使用和意外全域變數；</li>
+<li>可能與受保護資料衝突的工具提示和光環 API 假設；</li>
+<li><code>Main/</code> 下有重複的 /archived 文件，其名稱為亂碼，且
   <code>DevDocument/ChatGPT/</code>;</li>
-<li><code>EventAlert_ImportExport.lua</code> has prototype global variables and is annotated
-  Loading order.</li>
+<li><code>EventAlert_ImportExport.lua</code> 具有原型全域變數並被註解掉
+  載入順序。</li>
 </ul>
-<h2 id="user-interface-restrictions">User interface restrictions</h2>
-<p>Currently XML builds a large static options panel and many global frame names. of
-The rewrite should prefer a smaller options surface and pooled runtime icons, but
-Existing UI behavior must be mapped before removal.</p>
-<h2 id="areas-that-require-retail-server-verification">Areas that require Retail server verification</h2>
+<h2 id="_8">使用者介面限制</h2>
+<p>目前 XML 建立大型靜態選項面板和許多全域框架名稱。的
+重寫應該更喜歡較小的選項表面和池化運行時圖標，但是
+刪除之前必須先映射現有的 UI 行為。</p>
+<h2 id="_9">需要正式服驗證的領域</h2>
 <ul>
-<li>Accurate <code>C_UnitAuras</code> secure access behavior;</li>
-<li>Exact <code>C_Spell.GetSpellCooldown</code> structured postback behavior;</li>
-<li>exact <code>C_Item.GetItemCooldown</code> direct itemID behavior;</li>
-<li><code>C_Secrets</code> Availability and return behavior;</li>
-<li>Cooling charging behavior;</li>
-<li>Target Aura update payload;</li>
-<li>Combat restrictions on all planned UI operations;</li>
-<li>tooltip API (if the tooltip is left displayed);</li>
-<li>Partial rendering in zhTW/enUS/koKR/zhCN;</li>
-<li>SavedVariables Migrate real old user profiles.</li>
+<li>準確的 <code>C_UnitAuras</code> 安全存取行為；</li>
+<li>精確的 <code>C_Spell.GetSpellCooldown</code> 結構化回傳行為；</li>
+<li>精確的 <code>C_Item.GetItemCooldown</code> 直接 itemID 行為；</li>
+<li><code>C_Secrets</code> 可用性和退貨行為；</li>
+<li>冷卻充能行為；</li>
+<li>目標光環更新有效負載；</li>
+<li>對所有計劃中的 UI 操作的戰鬥限制；</li>
+<li>工具提示 API（如果保留工具提示顯示）；</li>
+<li>zhTW/enUS/koKR/zhCN 中的局部渲染；</li>
+<li>SavedVariables 遷移真實的舊用戶資料。</li>
+</ul>
+<h2 id="2026-07-26121">2026-07-26：12.1 尚待實機確認</h2>
+<ul>
+<li>68914 模板實際載入時機、AuraButton Forbidden Aspect 與條件式 access constraints。</li>
+<li>candidate Spell ID filter 對各種 Secret Aura/單位極性的真實接受範圍。</li>
+<li><code>initializeFrame</code> 名稱、倒數、層數、Tooltip 的實際顯示與容器裁切。</li>
+<li>Added/ApplicationsIncreased/Removed 的實際播放次數、音效檔欄位與 output channel。</li>
+<li>戰鬥 pending、脫戰重建、Reload UI migration、taint/blocked action 與 CPU/GC。</li>
+<li><code>UNSUPPORTED</code> 只代表安全停用 Native Aura，不代表功能等同 Legacy。</li>
 </ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -565,7 +599,7 @@ Existing UI behavior must be mapped before removal.</p>
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -574,7 +608,7 @@ Existing UI behavior must be mapped before removal.</p>
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

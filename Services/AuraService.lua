@@ -36,8 +36,6 @@ local Util = EAM.Util
 local AuraStatePool
 local SpellInfoService = EAM.Services and EAM.Services.SpellInfoService
 
-local scrapedDurationCache = {} -- [spellID] = duration (O(1) 靜態快取，消滅戰鬥高頻 scraping 重複開銷)
-
 local AuraService = {
     states = {},
     unitCaches = {
@@ -258,54 +256,6 @@ local function removeCachedAura(unit, auraInstanceID)
     return spellID, count
 end
 
--- [[
--- 🚀 C_TooltipInfo.GetUnitBuffByAuraInstanceID / GetUnitDebuffByAuraInstanceID 安全解析器
--- 0-UI 依賴、0-GC 排版開銷，完全廢棄並嚴禁使用已遭移除的 TooltipUtil.SurfaceArgs！
--- ]]
-local function scrapeAuraTooltipDuration(unit, auraInstanceID, isDebuff)
-    if not api.C_TooltipInfo then return nil end
-    
-    local queryFunc = isDebuff 
-        and api.C_TooltipInfo.GetUnitDebuffByAuraInstanceID 
-        or api.C_TooltipInfo.GetUnitBuffByAuraInstanceID
-        
-    if not queryFunc then return nil end
-
-    local data = queryFunc(unit, auraInstanceID)
-    if not data or not canaccesstable(data) or not data.lines then
-        return nil
-    end
-
-    local locale = api.GetLocale and api.GetLocale() or "enUS"
-    if locale == "enGB" then locale = "enUS" end
-    
-    local patterns = Util.MULTI_LOCALE_PATTERNS 
-        and (Util.MULTI_LOCALE_PATTERNS[locale] or Util.MULTI_LOCALE_PATTERNS.enUS)
-        
-    if not patterns then return nil end
-
-    for i = 1, #data.lines do
-        local line = data.lines[i]
-        if line and canaccesstable(line) then
-            local text = line.leftText
-            -- 🛡️ 核心防禦：確保 text 絕非 Secret Value 且可安全讀取
-            if text and not issecretvalue(text) and canaccessvalue(text) then
-                for j = 1, #patterns do
-                    local sec = string.match(text, patterns[j])
-                    if sec then
-                        local num = tonumber(sec)
-                        if num and num > 0 then
-                            return num
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return nil
-end
-
 local function readAuraIntoState(unit, state, auraData, eventName, apiName)
     if not auraData or type(auraData) ~= "table" or not canaccesstable(auraData) then
         return false
@@ -344,11 +294,12 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
 
     -- 🌡️ 完美的 DoT Pandemic (傳染累加) 原生預測
     -- 僅在是有害技能(isDebuff) 且有原生預測 API 時執行
-    if isDebuff and api.C_UnitAuras and api.C_UnitAuras.GetRefreshExtendedDuration and api.C_UnitAuras.GetAuraBaseDuration then
+    if isDebuff and Util.isSafePositiveNumber(auraInstanceID)
+        and api.C_UnitAuras and api.C_UnitAuras.GetRefreshExtendedDuration and api.C_UnitAuras.GetAuraBaseDuration then
         local extendedDur = api.C_UnitAuras.GetRefreshExtendedDuration(unit, auraInstanceID)
         local baseDur = api.C_UnitAuras.GetAuraBaseDuration(unit, auraInstanceID)
         
-        if extendedDur and baseDur and not issecretvalue(extendedDur) and not issecretvalue(baseDur) then
+        if Util.isSafePositiveNumber(extendedDur) and Util.isSafePositiveNumber(baseDur) then
             -- 若當前重鑄預測時間小於基礎時間的 130% 限制，代表正處於最佳的 Pandemic 傳染窗口！
             if extendedDur < (baseDur * 1.305) then
                 state.pandemicReady = true
@@ -360,49 +311,23 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
     
     local hasValidTimer = false
 
-    -- 若受到 secret 受限，優先抓取法術說明的持續時間當作持續時間
-    if isSecret then
-        local scrapedDur = nil
-        if state.spellID and not issecretvalue(state.spellID) and canaccessvalue(state.spellID) then
-            scrapedDur = scrapedDurationCache[state.spellID]
-            if scrapedDur == nil then
-                scrapedDur = scrapeAuraTooltipDuration(unit, auraInstanceID, isDebuff) or false
-                scrapedDurationCache[state.spellID] = scrapedDur
-            end
-        end
-
-        if scrapedDur and scrapedDur > 0 then
-            local now = api.GetTime and api.GetTime() or 0
-            state.timer.mode = EAM.Constants.TIMER_NUMERIC
-            state.timer.startTime = now
-            state.timer.duration = scrapedDur
-            state.timer.expirationTime = now + scrapedDur
-            state.factsSafe = true
-            
-            if api.C_DurationUtil and api.C_DurationUtil.CreateDuration then
-                state.timer.durationObject = api.C_DurationUtil.CreateDuration(scrapedDur)
-            else
-                state.timer.durationObject = nil
-            end
-            hasValidTimer = true
-        end
-    end
-
-    -- 12.0 優選 (非 Secret 或在無 Scraped 備份時)：如果 C_UnitAuras.GetAuraDuration 可用，直接獲取原生 DurationObject！
-    if not hasValidTimer and api.C_UnitAuras and api.C_UnitAuras.GetAuraDuration then
+    -- 12.0 優選：DurationObject 只作 display-only，不回讀受限時間 scalar。
+    if not hasValidTimer and Util.isSafePositiveNumber(auraInstanceID)
+        and api.C_UnitAuras and api.C_UnitAuras.GetAuraDuration then
         local durationObj = api.C_UnitAuras.GetAuraDuration(unit, auraInstanceID)
         if durationObj then
-            state.timer.mode = EAM.Constants.TIMER_NUMERIC
+            state.timer.mode = EAM.Constants.TIMER_DISPLAY_ONLY
             state.timer.durationObject = durationObj
-            state.timer.startTime = expirationTime
-            state.timer.duration = duration
-            state.timer.expirationTime = expirationTime
+            state.timer.startTime = nil
+            state.timer.duration = nil
+            state.timer.expirationTime = nil
             hasValidTimer = true
         end
     end
 
     -- 普通非 Secret 時間通道
-    if not hasValidTimer and not isSecret and duration and expirationTime and type(duration) == "number" and type(expirationTime) == "number" and duration > 0 then
+    if not hasValidTimer and not isSecret
+        and Util.isSafePositiveNumber(duration) and Util.isSafeNumber(expirationTime) then
         state.timer.mode = EAM.Constants.TIMER_NUMERIC
         state.timer.startTime = expirationTime - duration
         state.timer.duration = duration
@@ -410,36 +335,13 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
         hasValidTimer = true
     end
 
-    -- 若仍無有效計時器且非 Secret (或無 Scraped 備份)，嘗試降級 Tooltip 解析
+    -- 無安全數字或 DurationObject 時，只標示 protected/none，不偽造 expirationTime。
     if not hasValidTimer then
-        local scrapedDur = nil
-        if state.spellID and not issecretvalue(state.spellID) and canaccessvalue(state.spellID) then
-            scrapedDur = scrapedDurationCache[state.spellID]
-            if scrapedDur == nil then
-                scrapedDur = scrapeAuraTooltipDuration(unit, auraInstanceID, isDebuff) or false
-                scrapedDurationCache[state.spellID] = scrapedDur
-            end
-        end
-
-        if scrapedDur and scrapedDur > 0 then
-            local now = api.GetTime and api.GetTime() or 0
-            state.timer.mode = EAM.Constants.TIMER_NUMERIC
-            state.timer.startTime = now
-            state.timer.duration = scrapedDur
-            state.timer.expirationTime = now + scrapedDur
-            state.factsSafe = true
-            
-            if api.C_DurationUtil and api.C_DurationUtil.CreateDuration then
-                state.timer.durationObject = api.C_DurationUtil.CreateDuration(scrapedDur)
-            end
-            hasValidTimer = true
+        if isSecret then
+            state.factsSafe = false
+            state.timer.mode = EAM.Constants.TIMER_PROTECTED
         else
-            if isSecret then
-                state.factsSafe = false
-                state.timer.mode = EAM.Constants.TIMER_PROTECTED
-            else
-                state.timer.mode = EAM.Constants.TIMER_NONE
-            end
+            state.timer.mode = EAM.Constants.TIMER_NONE
         end
     end
 
@@ -639,6 +541,15 @@ function AuraService.onRegenEnabled()
 end
 
 function AuraService.initialize()
+    local capability = EAM.Services.AuraCapabilityService
+    if capability and not capability.initialized then
+        capability.initialize()
+    end
+    if capability and not capability.isLegacy() then
+        AuraService.backendDisabled = true
+        return false, "nativeOrUnsupportedBackend"
+    end
+
     AuraStatePool.initialize()
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "initialize", "AuraService initialized with AuraStatePool.")
@@ -652,6 +563,10 @@ function AuraService.initialize()
 end
 
 function AuraService.refreshUnit(unit, eventName)
+    local capability = EAM.Services.AuraCapabilityService
+    if capability and not capability.isLegacy() then
+        return false, "legacyBackendDisabled"
+    end
     if not EAM.db or not EAM.db.alerts then
         return
     end
@@ -659,6 +574,10 @@ function AuraService.refreshUnit(unit, eventName)
 end
 
 function AuraService.onUnitAura(_, unit, updateInfo)
+    local capability = EAM.Services.AuraCapabilityService
+    if capability and not capability.isLegacy() then
+        return
+    end
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "onUnitAura", "unit=" .. tostring(unit) .. ", hasUpdateInfo=" .. tostring(updateInfo ~= nil))
     end

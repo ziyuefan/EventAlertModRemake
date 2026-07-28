@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -641,231 +641,229 @@ EAM 目前需要的是簡單、可控制、低GC的事件驅動架構，不需�
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="curseforge-lib-category-plugin-survey">CurseForge Lib Category Plugin Survey</h1>
-<p>This document investigates the WoW library class plug-ins that can be found on CurseForge and whose names or uses are close to <code>Lib*</code>, and evaluates whether they are suitable for rewriting in the Retail server of EventAlertMod.</p>
-<h2 id="investigation-principles">Investigation Principles</h2>
+<h1 id="curseforge-lib">CurseForge Lib 類別插件調查</h1>
+<p>本文件調查 CurseForge 上可查到、名稱或用途接近 <code>Lib*</code> 的 WoW 庫類插件，評估其是否適合 EventAlertMod 正式服重寫。</p>
+<h2 id="_1">調查原則</h2>
 <ul>
-<li>No new hard dependencies have been added.</li>
-<li>Don't break lightweight positioning of EAM.</li>
-<li>Do not introduce Classic/MOP phase content layer as the formal architecture core.</li>
-<li>No need to introduce high-precision scans, checks, queries, or heavily configured libraries.</li>
-<li>If adopted, only opt-in or soft dependency can be used.</li>
-<li>All libraries still need to be verified for Retail 12.x real machine loading before use.</li>
+<li>未新增硬依賴。</li>
+<li>不破壞 EAM 的輕量定位。</li>
+<li>不引入 Classic/MOP 相內容層作為正式架構核心。</li>
+<li>無需引入高精度掃描、檢查、查詢或大量配置的庫。</li>
+<li>若採用，只能走 opt-in 或 soft dependency。</li>
+<li>所有庫使用前仍需做Retail 12.x實機載入驗證。</li>
 </ul>
-<h2 id="summary-of-conclusion">Summary of conclusion</h2>
-<p>Currently, there are only two categories of candidates most worthy of retaining observations:</p>
+<h2 id="_2">結論摘要</h2>
+<p>目前最值得保留觀察值的候選只有兩類：</p>
 <ul>
-<li><code>LibSharedMedia-3.0</code>: Optional, used for font, sound effects, and material menus. Suitable for option phase re-evaluation.</li>
-<li><code>LibCustomGlow</code>: optional, used to illustrate the luminous effect. The project has retained the old version of the reference library, and you can give priority to concepts. Hard dependence is not recommended.
-The remaining libraries are currently not recommended to be included in the EAM core. Most of the reasons are that they are too heavy, have inconsistent uses, are updated, have too long dependencies, or overlap with the self-built EventRouter/Scheduler/SavedVariables direction of EAM.</li>
+<li><code>LibSharedMedia-3.0</code>：可選，用於字體、音效、材質選單。適合選項階段再評估。</li>
+<li><code>LibCustomGlow</code>：任選，用於圖示發光效果。專案已保留舊版參考庫，可優先搶先概念，不建議硬依賴。
+其餘庫目前不建議納入 EAM 核心，原因多半是過重、用途不符、更新、依賴太鍊長，或與 EAM 自建的 EventRouter/Scheduler/SavedVariables 方向重疊。</li>
 </ul>
-<h2 id="candidate-evaluation">Candidate evaluation</h2>
+<h2 id="_3">候選評估</h2>
 <table>
 <thead>
 <tr>
-<th>Library</th>
-<th>CurseForge Status</th>
-<th>Possible Uses</th>
-<th>Evaluation</th>
-<th>Recommendations</th>
+<th>圖書館</th>
+<th>CurseForge 狀態</th>
+<th>可能用途</th>
+<th>評估</th>
+<th>建議</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Ace 3</td>
-<td>Retail 12.0.x, mass download, complete AddOn framework</td>
-<td>life cycle, SV, events, configuration, GUI</td>
-<td>Complete functions but overweight, overlapping with EAM self-built Core/EventRouter/Scheduler/SV</td>
+<td>王牌3</td>
+<td>Retail 12.0.x，大量下載，完整AddOn框架</td>
+<td>生命週期、SV、事件、配置、GUI</td>
+<td>功能完整但過重，與 EAM 自建 Core/EventRouter/Scheduler/SV 重疊</td>
 <td></td>
 </tr>
 <tr>
 <td>CallbackHandler-1.0</td>
-<td>Retail server, there is AceEvent background purpose</td>
-<td>Callback registry</td>
-<td>EAM already has EventRouter, insufficient demand</td>
+<td>正式服，有 AceEvent 背景用途</td>
+<td>回呼註冊表</td>
+<td>EAM 已有EventRouter，需求不足</td>
 <td></td>
 </tr>
 <tr>
 <td>LibInit</td>
-<td>Retail server, packaging most components of Ace3</td>
-<td>Simplified Ace3 settings</td>
-<td>Will be forced to bring Ace3/LibStub/CallbackHandler/AceDB/AceGUI, etc., too heavy</td>
-<td>Not used</td>
+<td>正式服，包裝 Ace3 大部分元件</td>
+<td>簡化 Ace3 設定</td>
+<td>會硬帶 Ace3/LibStub/CallbackHandler/AceDB/AceGUI 等，過重</td>
+<td>不採用</td>
 </tr>
 <tr>
 <td>LibSharedMedia-3.0</td>
-<td>Retail 12.0.5, processing font /sound/texture</td>
-<td>Select fonts, sound effects, and materials in options</td>
-<td>Related to EAM UI settings, optional integration of fonts, sound effects, and materials</td>
+<td>Retail 12.0.5，處理字體/sound/texture</td>
+<td>options 裡選字體、音效、材質</td>
+<td>與 EAM UI 設定有關，可進行可選集成字體、音效、材質</td>
 <td></td>
 </tr>
 <tr>
 <td>LibCustomGlow</td>
-<td>Retail server 12.0.x, customized lighting</td>
-<td>Icon highlighted /glow</td>
-<td>Old EAM has used similar dependencies; the new architecture can automatically simplify lighting</td>
-<td>Reference concept, no hard dependency for the time being</td>
+<td>正式服12.0.x，定制發光</td>
+<td>圖標突出顯示/glow</td>
+<td>舊 EAM 已使用過類似依賴；新架構可自動簡化發光</td>
+<td>參考概念，暫時不硬依賴</td>
 </tr>
 <tr>
 <td>LibDataBroker-1.1</td>
-<td>Old LDB, mainly provides broker display</td>
-<td>Mini map /data Broker</td>
-<td>Requires display ecosystem, EAM does not require broker</td>
-<td>Not used</td>
+<td>老牌LDB，主要提供經紀商展示</td>
+<td>小地圖/data 經紀人</td>
+<td>需配展示生態系統，EAM 不需要經紀商</td>
+<td>不採用</td>
 </tr>
 <tr>
 <td>LibDBIcon-1.0</td>
-<td>Retail server 12.0.x, requires LibDataBroker</td>
-<td>Mini map icon</td>
-<td>Can make mini map icon, but will introduce LDB/LibStub dependency chain</td>
-<td>Not used, priority is given to building simple buttons by yourself</td>
+<td>正式服12.0.x，需LibDataBroker</td>
+<td>小地圖圖標</td>
+<td>可做小地圖圖標，但會引入 LDB/LibStub 依賴鏈</td>
+<td>不採用，優先自建簡單按鈕</td>
 </tr>
 <tr>
 <td>LibQTip-1.0</td>
-<td>Retail 10.0.7, multi-column prompts</td>
-<td>Option /debug tooltips</td>
-<td>Used to debug UI, older version, EAM does not require complex tooltips</td>
-<td>Not used</td>
+<td>Retail 10.0.7，多列提示</td>
+<td>選項/debug 工具提示</td>
+<td>用途偏除錯 UI，版本較舊，EAM 不需要複雜的工具提示</td>
+<td>不採用</td>
 </tr>
 <tr>
 <td>LibRangeCheck-3.0</td>
-<td>Retail 12.0.x, scope checking</td>
-<td>Target scope gating</td>
-<td>EAM core is Aura/cooldown alerting, no scope engine is required</td>
-<td>Not used</td>
+<td>Retail 12.0.x，範圍檢查</td>
+<td>目標範圍選通</td>
+<td>EAM核心是aura/cooldown警報，不需要範圍引擎</td>
+<td>不採用</td>
 </tr>
 <tr>
 <td>LibDeflate</td>
-<td>Retail 8.x, compression/decompression</td>
-<td>import/export compression</td>
-<td>Can be used for large-scale import and export, but currently does not use WA-style sharing system</td>
-<td>Not used yet</td>
+<td>Retail 8.x，壓縮/解壓縮</td>
+<td>import/export 壓縮</td>
+<td>可用於大型匯入匯出，但目前不做WA式分享系統</td>
+<td>暫不採用</td>
 </tr>
 <tr>
-<td>Library: Serialization</td>
-<td>Marked obsolete, old version</td>
-<td>Serialization</td>
-<td>And does not meet tax purposes</td>
-<td>Not adopted</td>
+<td>庫：序列化</td>
+<td>已標記廢棄，舊版</td>
+<td>連載</td>
+<td>且稅收用途不符</td>
+<td>不採用</td>
 </tr>
 <tr>
 <td>LibDualSpec-1.0</td>
-<td>Retail 12.0.x, AceDB specification introduction</td>
-<td>Specific specification profile</td>
-<td>Rely on AceDB idea, EAM SV self-built architecture</td>
-<td>Not used</td>
+<td>Retail 12.0.x，AceDB 規格簡介</td>
+<td>特定規格設定檔</td>
+<td>依賴AceDB思路，EAM SV自建架構</td>
+<td>不採用</td>
 </tr>
 <tr>
 <td>LibGroupInSpecT</td>
-<td>Retail 11.x, group inspection/spec cache</td>
-<td>group alert /spec condition</td>
-<td>inspect/communication/cache will be introduced, biased and non-core</td>
-<td>Not used</td>
+<td>Retail 11.x，群組檢查/spec快取</td>
+<td>群組警報/spec 條件</td>
+<td>會引入inspect/communication/cache，偏重且非核心</td>
+<td>不採用</td>
 </tr>
 <tr>
 <td>LibWindow-1.1</td>
-<td>Retail 9.x, Window Frame Helper</td>
-<td>Active Window</td>
-<td>Small but outdated functionality, EAM UI can handle it yourself</td>
-<td>Not adopted</td>
+<td>Retail 9.x，窗框幫手</td>
+<td>活動窗</td>
+<td>功能小但過舊，EAM UI 可自行處理</td>
+<td>不採用</td>
 </tr>
 </tbody>
 </table>
-<h2 id="alternative-options-available">Alternative options available</h2>
+<h2 id="_4">可採用候選選項</h2>
 <h3 id="libsharedmedia-30">LibSharedMedia-3.0</h3>
-<p>Purpose:</p>
+<p>用途：</p>
 <ul>
-<li>Provides media registry across AddOn.</li>
-<li>Suitable for future <code>UI/Options.lua</code> font, sound effects, and material menus.</li>
+<li>提供跨 AddOn 的媒體註冊表。</li>
+<li>適合日後的<code>UI/Options.lua</code>字型、音效、材質選單。</li>
 </ul>
-<p>Advantages:</p>
+<p>優點：</p>
 <ul>
-<li>CurseForge shows support for Retail 12.0.5.</li>
-<li>Natural intersection with EAM's sound /font/icon texture options.</li>
+<li>CurseForge 顯示支援 Retail 12.0.5。</li>
+<li>與 EAM 的聲音/font/icon 紋理選項有自然交集。</li>
 </ul>
-<p>Limitations:</p>
+<p>限制：</p>
 <ul>
-<li>Should not be RequiredDeps.</li>
-<li>Renderer hot paths should not be made dependent on it.</li>
-<li>The media list should only be queried when the option is on.</li>
+<li>不應成為 RequiredDeps。</li>
+<li>不應讓渲染器熱路徑依賴它。</li>
+<li>只應在選項開啟時查詢媒體清單。</li>
 </ul>
-<p>Suggested integration methods:</p>
+<p>建議整合方式：</p>
 <pre class="codehilite"><code class="language-text">OptionalDeps: LibSharedMedia-3.0
 if LibStub and LibStub(&quot;LibSharedMedia-3.0&quot;, true) then
     -- options-only integration
 end
 </code></pre>
 
-<p>Current decision: keep the candidate and not join immediately.</p>
+<p>目前決策：保留候選，不立即加入。</p>
 <h3 id="libcustomglow">LibCustomGlow</h3>
-<p>Purpose:</p>
+<p>用途：</p>
 <ul>
-<li>Icon glow/pixel glow/button glow.</li>
+<li>圖示發光/像素發光/按鈕發光。</li>
 </ul>
-<p>Advantages:</p>
+<p>優點：</p>
 <ul>
-<li>Old EAM already has a reference to <code>LibCustomGlow-1.0</code>.</li>
-<li>The visual semantics of "highlighted when cooldown is available" can be quickly restored.</li>
+<li>舊 EAM 已有 <code>LibCustomGlow-1.0</code> 參考資料。</li>
+<li>可快速還原「冷卻可用時會高亮」的視覺語意。</li>
 </ul>
-<p>Limitations:</p>
+<p>限制：</p>
 <ul>
-<li>Currently the project has removed officially loaded external dependencies.</li>
-<li>If added directly, it will return to the old <code>LibStub</code> dependency chain.</li>
-<li>New renderer that effectively improves materials or Blizzard's temporary effect replacements.</li>
+<li>目前專案已移除正式加載的外部依賴。</li>
+<li>如果直接加入，會回到舊 <code>LibStub</code> 依賴鏈。</li>
+<li>新的渲染器可有效提高材質或暴雪的臨時效果替代。</li>
 </ul>
-<p>Suggested integration methods:
-- Phase 1: Only refer to the concept of <code>ReferenceLibs/LegacyLibs/LibCustomGlow-1.0</code>.
-- Second stage: If the self-made cost is too high, then discuss soft dependencies.</p>
-<p>Current decision-making: refer to the concept and do not rely on it.</p>
-<h2 id="clarify-the-reasons-for-not-adopting">Clarify the reasons for not adopting</h2>
+<p>建議整合方式：
+- 第一階段：僅參考 <code>ReferenceLibs/LegacyLibs/LibCustomGlow-1.0</code> 的概念。
+- 第二階段：若自製成本過高，再討論軟依賴。</p>
+<p>目前決策：參考概念，不硬依賴。</p>
+<h2 id="_5">明確不採用原因</h2>
 <h3 id="ace3-libinit">Ace3 / LibInit</h3>
-<p>Ace3 is a complete framework, including life cycle, SavedVariables, events, configuration, GUI, timer and other capabilities. These capabilities overlap with the EAM self-built core rewritten on the Retail server and will increase the loading cost. LibInit is the Ace3 packaging layer again, which will hard-wire more modules.
-EAM What is currently needed is a simple, controllable, low GC event-driven architecture that does not require framing.</p>
+<p>Ace3 是完整的框架，包含生命週期、SavedVariables、事件、配置、GUI、定時器等能力。這些能力與 EAM 正式服重寫的自建核心重疊，而且會增加載入成本。 LibInit 又是 Ace3 封裝層，會硬帶更多模組。
+EAM 目前需要的是簡單、可控制、低GC的事件驅動架構，不需要框架化。</p>
 <h3 id="libdatabroker-libdbicon">LibDataBroker / LibDBIcon</h3>
-<p>Mini map icons can be created by yourself. Introducing LDB/DBIcon can change the simple function to LibStub + LDB + DBIcon dependency chain, which is not in line with the current "no hard dependencies" direction.</p>
+<p>小地圖圖示可以自建。引入 LDB/DBIcon 即可簡單功能變為 LibStub + LDB + DBIcon 依賴鏈，不符合目前「無硬依賴」方向。</p>
 <h3 id="libqtip">LibQTip</h3>
-<p>EAM Multi-column tooltips are not required. Debug export to output compact text, no need for complex tooltip framework.</p>
+<p>EAM 不需要多列工具提示。除錯導出要輸出緊湊的文本，不需要複雜的工具提示框架。</p>
 <h3 id="librangecheck-libgroupinspect">LibRangeCheck / LibGroupInSpecT</h3>
-<p>These libraries have additional querying, checking, or caching behavior. EAM core is not a raid helper and does not require a group spec/range engine.</p>
-<h3 id="libdeflate-serialization-class">LibDeflate / Serialization class</h3>
-<p>This may only be needed if large import/export shared formats are built in the future. EAM explicitly does not build complex sharing systems such as WeakAura, so it is not used for the time being.</p>
-<h2 id="source">Source</h2>
+<p>這些庫有額外的查詢、檢查或快取行為。 EAM核心不是raid助手，也不需要群組spec/range引擎。</p>
+<h3 id="libdeflate">LibDeflate / 序列化類</h3>
+<p>只有在將來建立大型 import/export 共享格式時才可能需要。 EAM 明確不做 WeakAura 之類的複雜共享系統，因此暫時不採用。</p>
+<h2 id="_6">來源</h2>
 <ul>
-<li><a href="https://www.curseforge.com/wow/AddOn/ace3">Ace3 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/callbackhandler/source">CallbackHandler-1.0 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libinit">LibInit - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libsharedmedia-3-0">LibSharedMedia-3.0 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libcustomglow/files/2625790">LibCustomGlow - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libdatabroker-1-1">LibDataBroker-1.1 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libdbicon-1-0">LibDBIcon-1.0 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libqtip-1-0">LibQTip-1.0 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/librangecheck-3-0">LibRangeCheck-3.0 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libdeflate">LibDeflate - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libdualspec-1-0/files/all">LibDualSpec-1.0 - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libgroupinspect">LibGroupInSpecT - CurseForge</a></li>
-<li><a href="https://www.curseforge.com/wow/AddOn/libwindow-1-1/files">LibWindow-1.1 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/ace3">Ace3 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/callbackhandler/source">CallbackHandler-1.0 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libinit">LibInit - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libsharedmedia-3-0">LibSharedMedia-3.0 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libcustomglow/files/2625790">LibCustomGlow - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libdatabroker-1-1">LibDataBroker-1.1 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libdbicon-1-0">LibDBIcon-1.0 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libqtip-1-0">LibQTip-1.0 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/librangecheck-3-0">LibRangeCheck-3.0 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libdeflate">LibDeflate - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libdualspec-1-0/files/all">LibDualSpec-1.0 - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libgroupinspect">LibGroupInSpecT - CurseForge</a></li>
+<li><a href="https://www.curseforge.com/wow/addons/libwindow-1-1/files">LibWindow-1.1 - CurseForge</a></li>
 </ul>
-<h2 id="follow-up-suggestions">Follow-up suggestions</h2>
-<p>Short term:</p>
+<h2 id="_7">後續建議</h2>
+<p>短期：</p>
 <ul>
-<li>Does not add any library dependencies.</li>
-<li>Make the renderer glow first with minimum effect.</li>
-<li>
-<p>Options font/sound effects list uses built-in media first.
-Medium:</p>
-</li>
-<li>
-<p>If the user strongly needs to cross the AddOn media menu, then evaluate the <code>LibSharedMedia-3.0</code> soft dependency.</p>
-</li>
-<li>If the cost of self-made glow is too high, re-evaluate the <code>LibCustomGlow</code> soft dependency.</li>
+<li>不增加任何函式庫依賴。</li>
+<li>渲染器發光先自製最小效果。</li>
+<li>選項字體/音效清單先用內建媒體。</li>
 </ul>
-<p>Long term:</p>
+<p>中：</p>
 <ul>
-<li>All third-party libraries must be reviewed first by setting <code>ReferenceLibs</code>.
--You can officially join TOC only after passing the Retail server verification.</li>
+<li>若使用者強烈需要跨AddOn媒體選單，再評估<code>LibSharedMedia-3.0</code>軟依賴。</li>
+<li>若自製的glow成本過高，再評估<code>LibCustomGlow</code>軟依賴。</li>
+</ul>
+<p>長期：</p>
+<ul>
+<li>所有第三方函式庫必須投入 <code>ReferenceLibs</code> 先審查。
+-經過正式服實機驗證後，才可正式加入TOC。</li>
 </ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -881,7 +879,7 @@ Medium:</p>
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -890,7 +888,7 @@ Medium:</p>
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

@@ -58,6 +58,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_VALIDATE or "/eam validate - 同 /eam doctor")
     printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示除錯摘要")
     printLine(EAM.L.EAM_SLASH_HELP_EXPORT or "/eam export - 輸出精簡 AI debug 狀態")
+    printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick|core|boundary|all] - 開啟或執行流程驗證")
     printLine(EAM.L.EAM_SLASH_HELP_ADD or "/eam add <spellID> - 新增 player aura")
     printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam add target <spellID> - 新增 target aura")
     printLine(EAM.L.EAM_SLASH_HELP_ADD_CD or "/eam add cd <spellID> - 新增 spell cooldown")
@@ -174,6 +175,15 @@ local function handleSlash(input)
         end
     elseif (command == "doctor" or command == "validate") and EAM.Debug.RuntimeProbe then
         EAM.Debug.RuntimeProbe.printReport()
+    elseif command == "test" and EAM.Debug.FlowTestPanel then
+        local suite = commandIterator()
+        if suite then
+            suite = string.lower(suite)
+            EAM.Debug.FlowTestPanel.open(true)
+            EAM.Debug.FlowTestPanel.runSuite(suite)
+        else
+            EAM.Debug.FlowTestPanel.open()
+        end
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()
     elseif command == "add" or command == "remove" then

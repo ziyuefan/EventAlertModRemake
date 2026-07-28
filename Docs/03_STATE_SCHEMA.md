@@ -14,6 +14,14 @@ EA_ScdItems
 EA_GrpItems
 EA_Pos
 ```
+
+## Schema v2：Native Aura 設定
+
+- `EAM_DB.schemaVersion = 2`，v1 Aura alert 會保存可序列化遷移備份。
+- Alert 可保存 `nativeBackend`、`auraFilter`、`showStacks`、`showName`、`showCountdown` 與純資料 `sound`。
+- `Frame`、`ScriptObject`、`DurationObject`、`AuraContainer` 與 AuraButton 不得寫入 SavedVariables。
+- Runtime plan、fingerprint、pending revision 與 sound registration ID 只存在記憶體。
+- 相同設定再次送入回傳 `unchanged`，revision 不變。
 觀察到 default/runtime 同伴：
 ```lua
 EA_Config2

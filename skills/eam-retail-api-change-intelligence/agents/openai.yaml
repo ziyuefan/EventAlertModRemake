@@ -1,0 +1,4 @@
+interface:
+  display_name: "EAM API Change Intelligence"
+  short_description: "持續追蹤 Retail API 版本差異、風險與遷移窗口"
+  default_prompt: "使用 $eam-retail-api-change-intelligence 查證最新 Retail API 變更並產出 EAM 影響與遷移計畫。"

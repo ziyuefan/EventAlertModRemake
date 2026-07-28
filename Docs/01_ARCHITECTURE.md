@@ -208,3 +208,11 @@
 8.針對新服務重建斜線指令並除錯導出器。
 9. 從活動負載中刪除舊版 TOC 和 Classic/MOP 相容性分支。
 10.執行靜態檢查，然後立即進行正式服裝驗證。
+
+## 2026-07-26：12.1 Native Aura 分流
+
+- 12.1：`EAM_DB -> AuraCapabilityService -> AuraRuleCompiler -> AuraContainerService -> AuraSlot/AuraGroup -> Blizzard AuraButton`。
+- 12.0.7：保留 `AuraService -> AlertManager -> Renderer -> IconPool` Legacy 路徑。
+- Native Aura 不建立 AuraState、不送 `EAM_AURA_STATE_CHANGED`、不使用 Renderer Scheduler token。
+- 12.1 capability 缺失時為 `UNSUPPORTED`，不得回退到 Secret AuraData 掃描。
+- 完整生命週期見 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`。

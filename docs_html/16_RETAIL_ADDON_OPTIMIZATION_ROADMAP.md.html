@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -517,113 +517,127 @@
 5.下一步應繼續實機驗證<code>UNIT_AURA</code> delta/full有效負載、DurationObject / DurationTextBinding整合、戰鬥佈局延遲、選項模板污染日誌。</li>
 <li>實機確認後再補舊 EAM group/special power 行為、Options 啟用切換與 CurseForge <code>120007</code> 遊戲版本 ID。</li>
 </ol>
+<h2 id="2026-07-26">2026-07-26 路線狀態</h2>
+<ul>
+<li>Phase 1/2：能力層、規則編譯、schema v2、Legacy 隔離與安全 scalar/key 防護已完成。</li>
+<li>Phase 3：player/target AuraContainer、Slot/Group、initializeFrame、脫戰 batch rebuild、Aura Sound 已完成 68914 契約 PoC。</li>
+<li>Phase 4：嚴格離線流程與遊戲內報告入口完成；本輪 <code>all</code> suite 為 17/17。</li>
+<li>尚未完成：<code>_ptr_</code> 實機 RQA、taint/Forbidden、實際 sound、Reload UI 與效能簽收。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="retail-server-addon-research-and-eventalertmod-optimization-route">Retail server AddOn research and EventAlertMod optimization route</h1>
-<p>This document compiles the research results discussed on 2026-05-26 on the Warcraft Wiki, Blizzard Forum, WoWInterface, CurseForge and Reddit AddOn, and plans the optimization matters and goals for the rewrite of the EventAlertMod Retail server.</p>
-<p>This document is not an actual machine verification report. All Retail 12.x behavior still requires loading tests in the WoW Retail / PTR client.</p>
-<h2 id="investigate-sources">Investigate sources</h2>
+<h1 id="addon-eventalertmod">正式服 AddOn 研究與 EventAlertMod 最佳化路線</h1>
+<p>本文件整理 2026-05-26 對魔獸爭霸 Wiki、暴雪論壇、WoWInterface、CurseForge 與 Reddit AddOn 討論的研究結果，規劃 EventAlertMod 正式服重寫的優化事項與目標。</p>
+<p>本文件不是實機驗證報告。所有 Retail 12.x 行為仍需在 WoW Retail / PTR client 中載入測試。</p>
+<h2 id="_1">調查來源</h2>
 <ul>
-<li>Warcraft Wiki: <code>API_change_summaries</code>, <code>Patch_12.0.0/API_changes</code>, <code>Patch_12.0.5/API_changes</code>, <code>Patch_12.0.7/API_changes</code>10EAMCODE_9__.</li>
-<li>Blizzard Forum: Discussions about Secret Values, UnitHealth, movement speed, PvP scoreboard, blocked action / taint in UI and Macro, Bug Report.</li>
-<li>WoWInterface: cells, TweaksUI: cooldown time, threat board, ViksUI, item upgrade quality icon, etc. Midnight update log.</li>
-<li>CurseForge: Midnight Sensei, MidnightSimpleAuras, Cooldown Cursor Manager, CooldownViewer Loader, MidnightCD, Enhance QoL and other project pages and change log files.</li>
-<li>Network and author feedback on 12.0 / 12.0.5 / Midnight AddOn API in Reddit: r/wow, r/WowUI, r/wowaddons, r/CompetitiveWoW.</li>
+<li>魔獸爭霸維基：<code>API_change_summaries</code>、<code>Patch_12.0.0/API_changes</code>、<code>Patch_12.0.5/API_changes</code>、<code>Patch_12.0.7/API_changes</code>10EAMCODE_9__。</li>
+<li>暴風雪論壇：UI and Macro、Bug Report 中關於 Secret Values、UnitHealth、移動速度、PvP 記分板、blocked action / taint 的討論。</li>
+<li>WoWInterface：細胞、TweaksUI：冷卻時間、威脅板、ViksUI、物品升級品質圖示等午夜更新日誌。</li>
+<li>CurseForge：Midnight Sensei、MidnightSimpleAuras、Cooldown Cursor Manager、Cooldown Manager Loader、MidnightCD、Enhance QoL 等專案頁與變更記錄檔。</li>
+<li>Reddit：r/wow、r/WowUI、r/wowaddons、r/CompetitiveWoW 中關於 12.0 / 12.0.5 / Midnight AddOn API 的網絡與作者回饋。</li>
 </ul>
-<h2 id="latest-api-conclusion">Latest API conclusion</h2>
+<h2 id="api">最新API結論</h2>
 <ul>
-<li>12.0.0 is the core starting point for Secret Values with AddOn versus API limitations.</li>
-<li>The most important for EAM in 12.0.5: API verbs, <code>table.freeze</code>, <code>table.isfrozen</code>, formatters, DurationObject, Aura field confidentiality adjustment, cooldown time <code>ignoreGCD</code>.</li>
-<li>12.0.7 API digested, TOC to <code>120007</code>; currently has minor direct core impact on EAM, but added <code>C_DurationUtil.CreateDurationTextBinding</code> exists, <code>C_DurationUtil.CreateManualClock</code>, and removed <code>C_DurationUtil.GetCurrentTime</code>.</li>
-<li><code>GetEventCPUUsage</code>, <code>GetFunctionCPUUsage</code>, <code>GetScriptCPUUsage</code> can be used as on-demand analysis candidates and cannot be placed in the hot path.</li>
-<li>Secret Values ​​is not a single field problem, but a general limitation in contaminated execution paths; it cannot be bypassed by <code>pcall</code>, comparison failure fallback, or tooltip grabbing.</li>
+<li>12.0.0 是 Secret Values 與 AddOn 對抗 API 限制的核心起點。</li>
+<li>12.0.5對EAM最重要：API謂詞、<code>table.freeze</code>、<code>table.isfrozen</code>、格式化程式、DurationObject、光環欄位保密調整、冷卻時間<code>ignoreGCD</code>。</li>
+<li>12.0.7 API 摘要已，TOC 為 <code>120007</code>；目前對 EAM 的直接核心影響較小，但新增 <code>C_DurationUtil.CreateDurationTextBinding</code> 存在、<code>C_DurationUtil.CreateManualClock</code>，並刪除 <code>C_DurationUtil.GetCurrentTime</code>。</li>
+<li><code>GetEventCPUUsage</code>、<code>GetFunctionCPUUsage</code>、<code>GetScriptCPUUsage</code> 可作按需分析候选，不可放入热路径。</li>
+<li>Secret Values 不是單一欄位問題，而是受污染的執行路徑下的普遍限制；不能靠 <code>pcall</code>、比較失敗回退或工具提示抓取繞過。</li>
 </ul>
-<h2 id="community-and-cheat-trends">Community and cheat trends</h2>
+<h2 id="_2">社群與外掛趨勢</h2>
 <ul>
-<li>Authors generally switch from "read the Aura/cooldown value and make your own judgment" to "let the Blizzard gadget / DurationObject display".</li>
-<li>Several plug-ins have been changed to value-by-value <code>issecretvalue</code> checks, and no longer only determine whether they are restricted based on context flags.</li>
-<li>Some Halo uptime plugins abandon combat Aura spellID comparison and instead use cast events and safe window prompts, but must be marked as derived and cannot pretend to be Halo facts.</li>
-<li>Cooldown plug-ins are obviously integrated with Blizzard CooldownViewer, DurationObject, cursor/HUD display and CDM configuration files to assist development.</li>
-<li>Nameplates, unit frames, PvP scoreboards, unit names / GUID / UnitIsUnit, movement speed, health/power type data are high risk in Midnight and EAM should not be included in core alert matching.</li>
-<li>Tooltip text may also contain secret values; tooltip parsing must be performed infrequently, checked line by line, and degraded quietly on failure.</li>
-<li>Taint/blocked actions are still a common pain point; avoiding polluting protected frames is more important than suppressing bugs after the fact.</li>
+<li>作者普遍從「閱讀光環/cooldown數值後自行判斷」轉向「讓暴雪小工具 / DurationObject 顯示」。</li>
+<li>多個插件改為逐值 <code>issecretvalue</code> 檢查，不再只根據上下文標誌判斷是否受限。</li>
+<li>一些光環正常運行時間類插件放棄戰鬥光環spellID比較，改用cast事件與安全窗口提示，但必須標記為派生，不可冒充光環事實。</li>
+<li>Cooldown類外掛明顯往Blizzard Cooldown Manager整合、DurationObject、cursor/HUD顯示與CDM設定檔輔助發展。</li>
+<li>銘牌、單位框架、PvP計分板、單位名稱 / GUID / UnitIsUnit、移動速度、生命值/power類資料在午夜中風險高，EAM 不應將它們納入核心警報匹配。</li>
+<li>工具提示文字也可能包含秘密值；工具提示解析必須低頻、逐行檢查、失敗安靜降級。</li>
+<li>污染/受阻動作仍然是常見的痛點；避免污染受保護的框架比事後壓制錯誤更重要。</li>
 </ul>
-<h2 id="eam-optimization-overall-goal">EAM Optimization overall goal</h2>
+<h2 id="eam">EAM 最佳化總目標</h2>
 <ol>
-<li>Maintain the lightweight positioning of EAM: simple, spellID-oriented, easier than WeakAuras.</li>
-<li>Rewrite the data layer as "security fact/derivative /displayOnly / boundaryWarnings" to clearly separate.</li>
-<li>The renderer prioritizes the Blizzard widget / DurationObject to avoid Lua’s own countdown and string cleaning.</li>
-<li>Adopt value-by-value security checks for Secret Values ​​and do not rely on single context protection.</li>
-<li>Try to support the Blizzard CooldownViewer ecosystem, but do not rely on external plug-ins.</li>
-<li>Reduce the risk of contamination: do not take safety actions, do not modify the protection framework, and do not hook up to the Blizzard protection chain.</li>
-<li>All debug/profiling/exports are on-demand and do not enter the hot path.</li>
+<li>保持EAM的輕量定位：簡單、spellID導向、比WeakAuras容易。</li>
+<li>將資料層改寫為「安全事實/衍生/displayOnly / boundaryWarnings」明確分離。</li>
+<li>渲染器以Blizzard widget / DurationObject 為優先，避免Lua 自行倒數與字串清理。
+4.對Secret Values採逐值安全檢查，不依賴單一上下文保護。
+5.盡量支援Blizzard Cooldown Manager生態，但不硬依賴外部插件。</li>
+<li>降低污染風險：不接安全動作、不修改保護框架、不掛鉤暴雪保護鏈。
+7.所有debug/profiling/export都採按需，不進熱路徑。</li>
 </ol>
-<h2 id="priority-p0-bottom-line-of-security-and-compatibility">Priority P0: Bottom line of security and compatibility</h2>
+<h2 id="p0">優先權 P0：安全與相容底線</h2>
 <ul>
-<li>The TOC is currently fixed <code>120007</code>; the backup tool, CurseForge game version ID and actual machine verification must be confirmed before release.</li>
-<li>Establish a unified confidential and secure reading adapter for AuraService, CooldownService, and ItemCooldownService to avoid scattered judgments on each service.</li>
-<li>Disable Aura <code>spellID</code> from not checking the secret before direct comparison; if it is unsafe, the state changes to <code>boundaryLimited</code>.</li>
-<li>Disable tooltip columns without checking <code>string.match</code>.</li>
-<li>The renderer does not read back the cool frame getter as a fact.</li>
-<li>Defer any layout changes that may affect the frame structure while under combat lock.</li>
+<li>TOC目前已固定<code>120007</code>；發布前需同步確認備份工具、CurseForge遊戲版本ID與實機驗證。</li>
+<li>對AuraService、CooldownService、ItemCooldownService建立統一保密安全讀取適配器，避免各服務散落判斷。</li>
+<li>禁止aura <code>spellID</code> 直接比較前未檢查秘密；若不安全，狀態轉為<code>boundaryLimited</code>。</li>
+<li>禁止工具提示列未檢查就<code>string.match</code>。</li>
+<li>渲染器不讀回冷卻幀獲取器作為事實。</li>
+<li>戰鬥鎖定下延後任何可能影響框架結構的佈局變更。</li>
 </ul>
-<h2 id="priority-p1-stabilization-of-core-functions">Priority P1: Stabilization of core functions</h2>
+<h2 id="p1">優先權 P1：核心功能穩定化</h2>
 <ul>
-<li>Player Halo: Firstly, it supports the safe and absolutely safe self-buff/debuff; when it is unsafe, the icon/name or protected timer is displayed.</li>
-<li>Target Aura: Only track <code>target</code>, avoid target target/focus target/nameplate extension.</li>
-<li>Spell cooldown: Uses <code>C_Spell</code> structured return; takes precedence over <code>DurationObject</code>; supports <code>ignoreGCD</code>.</li>
-<li>Item cooling: direct itemID monitoring; no large-scale item scanning.</li>
-<li>State Model: Each alarm is clearly labeled <code>factsSafe</code>, <code>timer.mode</code>, <code>source.api</code>, <code>boundaryWarnings</code>.</li>
-<li>Debug snapshot: output facts/export/boundaryWarnings/environment, do not output unsafe raw values.</li>
+<li>玩家光環：首先支援安全絕對的自身buff/debuff；不安全時顯示圖示/name或受保護的計時器。</li>
+<li>目標光環：只追蹤<code>target</code>，避免目標目標/焦點目標/銘牌延伸。</li>
+<li>法術冷卻：使用<code>C_Spell</code>結構化回報；優先<code>DurationObject</code>；支持<code>ignoreGCD</code>。</li>
+<li>物品冷卻：直接itemID監控；不做大規模物品掃描。</li>
+<li>狀態模型：每個警報都明確標示<code>factsSafe</code>、<code>timer.mode</code>、<code>source.api</code>、<code>boundaryWarnings</code>。</li>
+<li>偵錯快照：輸出事實/匯出/boundaryWarnings/環境，不輸出不安全的原始值。</li>
 </ul>
-<h2 id="priority-p2-full-vs-low-gc">Priority P2: Full vs. Low GC</h2>
+<h2 id="p2gc">優先權 P2：完全與低GC</h2>
 <ul>
-<li>Add the scheduler task table to the pool to avoid repeated scheduling configurations.</li>
-<li>AuraService scan changed to "delta first + full update unit single scan" to avoid repeated scanning of the same units for each alert.</li>
-<li>The renderer gates the full value of <code>SetText</code>, <code>SetTexture</code>, <code>SetCooldown</code>, <code>SetPoint</code>.</li>
-<li>Reuse icon state and service state objects to avoid rendering and building a new table each time.</li>
-<li>On-demand analysis works on 12.0.7 CPU usage API, but is off by default.</li>
+<li>將排程器任務表加入池，避免重複排程配置。</li>
+<li>AuraService 掃描改為“delta 優先 + 完整更新單位單次掃描”，避免每個警報重複掃描相同單位。</li>
+<li>渲染器對<code>SetText</code>、<code>SetTexture</code>、<code>SetCooldown</code>、<code>SetPoint</code>全面值門控。</li>
+<li>將圖示狀態與服務狀態物件重複使用，每次避免渲染建置新表。</li>
+<li>按需分析可研究 12.0.7 CPU 用法 API，但預設為關閉。</li>
 </ul>
-<h2 id="priority-p3-user-experience">Priority P3: User experience</h2>
+<h2 id="p3">優先 P3：使用者體驗</h2>
 <ul>
-<li>Keep simple semantics such as <code>/eam adds spellID</code>, <code>/eam deletes spellID</code>, and <code>/eam debug</code>.</li>
-<li>Options only perform necessary functions: adding/deleting and enabling switching of player Aura, target Aura, spell cooldown, and item cooldown.</li>
-<li>Added a simple UI state of "data protected" to avoid displaying errors to general users.</li>
-<li>Optionally provide CDM-related assistance: open the Blizzard Cooldown Viewer and prompt users to have cooldowns managed by CDM that are not suitable for EAM reading.</li>
+<li>保留<code>/eam新增spellID</code>、<code>/eam刪除spellID</code>、<code>/eam偵錯</code>這樣簡單的語意。</li>
+<li>選項只做必要功能：玩家光環、目標光環、法術冷卻、物品冷卻的新增/刪除與啟用切換。</li>
+<li>加入「資料受保護」的簡單 UI 狀態，不向一般使用者顯示錯誤。</li>
+<li>可選擇提供CDM相關輔助：開啟暴雪冷卻檢視器、提示使用者由CDM管理不適合EAM讀取的冷卻。</li>
 </ul>
-<h2 id="priority-p4-documentation-testing-and-release">Priority P4: Documentation, Testing and Release</h2>
+<h2 id="p4">優先 P4：文件、測試與發布</h2>
 <ul>
-<li>Update <code>Docs/06_TEST_PLAN_RETAIL.md</code>: Added 12.0.7, DurationObject, secret tooltip, taint log, combat lock test.</li>
-<li>Create project-specific SKILL candidates:</li>
-<li>EAM folder and version synchronization.</li>
-<li>EAM WoW API Verification and file writeback.</li>
-<li>EAM Secret / Taint review.</li>
-<li>EAM Lua static verification and hot path scanning.</li>
-<li>Append to <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> when tool limit or API trap is encountered.</li>
+<li>更新<code>Docs/06_TEST_PLAN_RETAIL.md</code>：新增12.0.7、DurationObject、秘密工具提示、污染日誌、戰鬥鎖定測試。</li>
+<li>建立專案專用 SKILL 候選：</li>
+<li>EAM 資料夾與版本同步。</li>
+<li>EAM WoW API 驗證與檔案回寫。</li>
+<li>EAM Secret / Taint 審查。</li>
+<li>EAM Lua靜態驗證與熱路徑掃描。</li>
+<li>遇到工具限製或 API 陷阱，追加到 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
 </ul>
-<h2 id="not-included-in-the-target">Not included in the target</h2>
+<h2 id="_3">不納入目標</h2>
 <ul>
-<li>No combat automation.</li>
-<li>Not making WeakAura script engine.</li>
-<li>Don't do PvP Enemy clickable frame.</li>
-<li>Disbelief in combat log reconstruction secret facts.</li>
-<li>Don't rebuild protected layouts in battle.</li>
-<li>Don’t treat tooltip scraping as a core source of data.</li>
-<li>Classic / MOP Classic / Cata / Wrath / Era are not supported.</li>
+<li>不做戰鬥自動化。</li>
+<li>不做WeakAura腳本引擎。</li>
+<li>不做 PvP 敵人可點選框架。</li>
+<li>不相信戰鬥日誌重建秘密事實。</li>
+<li>不在戰鬥中重建受保護的佈局。</li>
+<li>不要把工具提示抓取當成核心資料來源。</li>
+<li>不支援Classic / MOP Classic / Cata / Wrath / Era。</li>
 </ul>
-<h2 id="next-step-suggestions">Next step suggestions</h2>
+<h2 id="_4">下一步建議</h2>
 <ol>
-<li>P0 safe reading, rendering combat delay, and scheduling task pool have been completed.</li>
-<li>Completed the first version of P1/P2: SavedVariables add/remove API, Slash add/remove, AuraService <code>UNIT_AURA</code> snapshot addition aware cache, debugging and debugging.</li>
-<li>The second half of P2 has been completed: AuraService fully updates the unit system in a single scan, with the minimum option to add/remove panel.</li>
-<li>P3 has actual measurement results: The user confirmed on the 12.0.7 PTR client that the <code>C_DurationUtil.CreateDurationTextBinding</code> minimum sample can be displayed normally.</li>
-<li>The next step should be to continue the actual machine verification of <code>UNIT_AURA</code> delta/full payload, DurationObject / DurationTextBinding integration, combat layout delay, and option template pollution log.</li>
-<li>After confirming the real machine, add the old EAM group/special power behavior, Options enable switching and CurseForge <code>120007</code> game version ID.</li>
+<li>已完成P0安全讀取、渲染戰鬥延遲、調度任務池。</li>
+<li>已完成 P1/P2 初版：SavedVariables add/remove API、Slash add/remove、AuraService <code>UNIT_AURA</code>快照增補感知快取、除錯除錯。
+3.已完成P2後半：AuraService全面更新單位系統單次掃描、選項最小可新增/remove面板。</li>
+<li>P3已有實測結果：用戶於12.0.7 PTR客戶端確認<code>C_DurationUtil.CreateDurationTextBinding</code>最小樣本可正常顯示。
+5.下一步應繼續實機驗證<code>UNIT_AURA</code> delta/full有效負載、DurationObject / DurationTextBinding整合、戰鬥佈局延遲、選項模板污染日誌。</li>
+<li>實機確認後再補舊 EAM group/special power 行為、Options 啟用切換與 CurseForge <code>120007</code> 遊戲版本 ID。</li>
 </ol>
+<h2 id="2026-07-26">2026-07-26 路線狀態</h2>
+<ul>
+<li>Phase 1/2：能力層、規則編譯、schema v2、Legacy 隔離與安全 scalar/key 防護已完成。</li>
+<li>Phase 3：player/target AuraContainer、Slot/Group、initializeFrame、脫戰 batch rebuild、Aura Sound 已完成 68914 契約 PoC。</li>
+<li>Phase 4：嚴格離線流程與遊戲內報告入口完成；本輪 <code>all</code> suite 為 17/17。</li>
+<li>尚未完成：<code>_ptr_</code> 實機 RQA、taint/Forbidden、實際 sound、Reload UI 與效能簽收。</li>
+</ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -639,7 +653,7 @@
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -648,7 +662,7 @@
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

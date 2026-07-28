@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -569,16 +569,24 @@
 <li>除錯標籤和查找輸出中的字串格式；</li>
 <li>全域意外變數導致生命週期和 GC 行為不明確。</li>
 </ul>
+<h2 id="2026-07-26native-aura">2026-07-26：Native Aura 效能預算</h2>
+<ul>
+<li>戰鬥 Aura 更新由 Blizzard AuraContainer/AuraButton 處理；EAM 熱路徑配置、AuraState、OnUpdate 與 Scheduler token 皆為 0。</li>
+<li>規則只在登入、專精/設定變更與脫戰 pending commit 時編譯。</li>
+<li>fingerprint 未變更時不建立新容器、不重註冊 sound。</li>
+<li>相容規則合併為 AuraGroup；player/target 各保留第一條 Slot PoC。</li>
+<li>舊容器停用後只保留計數，不保存每次重建的 Lua 配對表。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="performance-guide">Performance Guide</h1>
-<h2 id="hot-path-candidates">Hot path candidates</h2>
-<p>Current mainline hot path candidates:</p>
+<h1 id="_1">效能指南</h1>
+<h2 id="_2">熱路徑候選者</h2>
+<p>目前主線熱路徑候選人：</p>
 <ul>
 <li><code>Main/EventAlert_Core.lua</code></li>
-<li>Event dispatch and handlers</li>
+<li>事件調度和處理程序</li>
 <li><code>COMBAT_LOG_EVENT_UNFILTERED</code></li>
 <li><code>UNIT_AURA</code></li>
 <li><code>BAG_UPDATE_COOLDOWN</code></li>
@@ -586,7 +594,7 @@
 <li><code>SPELL_UPDATE_CHARGES</code></li>
 <li><code>SPELL_UPDATE_USABLE</code></li>
 <li><code>ACTIONBAR_UPDATE_COOLDOWN</code></li>
-<li>Use code /coroutine to perform a lookup scan</li>
+<li>使用代碼/coroutine 進行查找掃描</li>
 <li><code>Main/EventAlert_Aura_Self.lua</code></li>
 <li><code>Buffs_Update</code></li>
 <li><code>OnUpdate</code></li>
@@ -601,25 +609,25 @@
 <li><code>UpdateScdFrame</code></li>
 <li><code>ScdPositionFrames</code></li>
 <li><code>Main/EventAlert_ItemSpellCache.lua</code></li>
-<li>Item range scan builder</li>
+<li>物品範圍掃描建構器</li>
 <li><code>Main/EventAlert_SpecialPower.lua</code></li>
-<li>Resource /power updated</li>
-<li>rune OnUpdate script</li>
+<li>資源/power 更新</li>
+<li>符文 OnUpdate 腳本</li>
 <li><code>Main/EventAlert_CreateFrames.lua</code></li>
-<li>Frame creation and scrolling list generation</li>
+<li>框架創建和滾動列表生成</li>
 <li><code>Main/EventAlert_EAFun.lua</code></li>
-<li>Layout configuration, tool tips, timer text, debugging label assistant</li>
+<li>版面配置、工具提示、計時器文字、偵錯標籤助手</li>
 </ul>
-<h2 id="current-onupdate-c_timer-usage">Current OnUpdate / C_Timer usage</h2>
-<p>Observed mainline usage:</p>
+<h2 id="onupdate-c_timer">目前 OnUpdate / C_Timer 用法</h2>
+<p>觀察到的主線使用情況：</p>
 <ul>
 <li><code>EventAlert_Core.lua</code></li>
-<li>recurses <code>C_Timer.After(tempInterval, RecurringFrameUpdate)</code></li>
-<li>FPS - Adjusted the cadence of position /special frame updates</li>
-<li><code>C_Timer.NewTicker(1 / GetFramerate(), function() ...)</code> is used to find</li>
+<li>遞迴 <code>C_Timer.After(tempInterval, RecurringFrameUpdate)</code></li>
+<li>FPS-調整了位置 /special 幀更新的節奏</li>
+<li><code>C_Timer.NewTicker(1 / GetFramerate(), function() ...)</code> 用來查找</li>
 <li><code>EventAlert_Aura_Self.lua</code></li>
-<li><code>G:OnUpdate(spellId)</code> for Aura timer refresh</li>
-<li>previously assigned <strong>E​​​AMCODE_5</strong>
+<li><code>G:OnUpdate(spellId)</code> 用於光環計時器刷新</li>
+<li>在先前指派 <code>tempFunc = function() G.OnUpdate(spellId) end</code>
     <code>C_Timer.After(delay, tempFunc)</code></li>
 <li><code>EventAlert_Aura_Target.lua</code></li>
 <li><code>C_Timer.After(delay, G.OnTarUpdate, G, spellId)</code></li>
@@ -627,62 +635,62 @@
 <li><code>C_Timer.After(nextInterval, G.OnSCDUpdate, G, sid)</code></li>
 <li><code>EventAlert_ItemSpellCache.lua</code></li>
 <li><code>C_Timer.NewTicker(0.01, function() ...)</code></li>
-<li><code>C_Timer.After(1, ProcessBatch)</code> for batch scan continuation</li>
+<li><code>C_Timer.After(1, ProcessBatch)</code> 用於批次掃描繼續</li>
 <li><code>EventAlert_SpecialPower.lua</code></li>
-<li>Each rune <code>SetScript("OnUpdate", function(self, elapsedTime) ...)</code></li>
-<li><code>C_Timer.After</code> for life bloom refresh</li>
+<li>每個符文 <code>SetScript("OnUpdate", function(self, elapsedTime) ...)</code></li>
+<li><code>C_Timer.After</code> 用於生命綻放刷新</li>
 <li><code>EventAlert_Util.lua</code></li>
-<li>Call <code>Lib_ZYF:StopOnUpdate(eaf)</code> during frame cleaning</li>
+<li>幀清理中呼叫 <code>Lib_ZYF:StopOnUpdate(eaf)</code></li>
 </ul>
-<p>Rewrite rules:</p>
+<p>重寫規則：</p>
 <ul>
-<li>Replace them with a central dispatcher.</li>
-<li>Dispatcher callback records should be reusable and keyed by alert/service ID.</li>
-<li>No per-icon timers and closures assigned in repeated refresh paths.</li>
+<li>用一個中央調度程式取代它們。</li>
+<li>調度程序回呼記錄應可重複使用，並由alert/service ID 鍵入。</li>
+<li>重複刷新路徑中沒有每個圖示計時器和閉包分配。</li>
 </ul>
-<h2 id="allocation-policy">Allocation policy</h2>
-<p>Use <code>table.create</code> for:</p>
+<h2 id="_3">分配政策</h2>
+<p>使用 <code>table.create</code> 用於：</p>
 <ul>
-<li>Configure alert array
--Activity status array</li>
-<li>dirty queue</li>
-<li>Illustrated pool records</li>
-<li>Scheduler operation records</li>
-<li>Debug ring buffer</li>
+<li>配置警報陣列</li>
+<li>活動狀態數組</li>
+<li>骯髒的隊列</li>
+<li>圖示池記錄</li>
+<li>排程程式作業記錄</li>
+<li>除錯環形緩衝區</li>
 <li>
-<p>Default profile template
-Avoid being in the hot path:</p>
+<p>預設設定檔模板
+避免在熱路徑中：</p>
 </li>
 <li>
-<p>Transient table for each Aura</p>
+<p>每個光環的瞬態表</p>
 </li>
-<li><code>table.insert</code> when direct numeric index allocation is sufficient</li>
-<li><code>pairs</code>/<code>ipairs</code> where deterministic numeric loops are available</li>
-<li>Temporary string construction</li>
-<li>Anonymous callback function</li>
+<li><code>table.insert</code> 當直接數字索引分配就足夠了</li>
+<li><code>pairs</code>/<code>ipairs</code> 其中確定性數字循環可用</li>
+<li>臨時字串構建</li>
+<li>匿名回呼函數</li>
 </ul>
-<h2 id="tablefreeze-strategy">table.freeze strategy</h2>
-<p>Freeze only:</p>
+<h2 id="freeze">表.freeze 策略</h2>
+<p>僅凍結：</p>
 <ul>
-<li>constant</li>
-<li>enumerate</li>
-<li>status name</li>
-<li>Mode description</li>
-<li>Immutable default field configuration file</li>
-<li>Static module contracts</li>
+<li>常數</li>
+<li>列舉</li>
+<li>狀態名稱</li>
+<li>模式描述</li>
+<li>不可變的預設欄位設定文件</li>
+<li>靜態模組合約</li>
 </ul>
-<p>Never freeze:</p>
+<p>切勿凍結：</p>
 <ul>
 <li>SavedVariables</li>
-<li>Halo/cooldown state during runtime</li>
-<li>Illustration of rendering status</li>
-<li>UI framework record</li>
-<li>Scheduler queue</li>
-<li>pool object</li>
-<li>Debug snapshot</li>
+<li>運行時光環/cooldown狀態</li>
+<li>圖示渲染狀態</li>
+<li>UI框架記錄</li>
+<li>調度程序佇列</li>
+<li>池對象</li>
+<li>除錯快照</li>
 </ul>
-<h2 id="ui-writing-strategy">UI writing strategy</h2>
-<p>The renderer must cache the last rendered value and skip no-op writes:</p>
+<h2 id="ui">UI 寫入策略</h2>
+<p>渲染器必須快取最後渲染的值並跳過無操作寫入：</p>
 <ul>
 <li><code>SetText</code></li>
 <li><code>SetTexture</code></li>
@@ -692,42 +700,50 @@ Avoid being in the hot path:</p>
 <li><code>SetSize</code></li>
 <li><code>Show</code> / <code>Hide</code></li>
 </ul>
-<p>The layout should be batched:</p>
+<p>佈局應該是批量的：</p>
 <ol>
-<li>Collect dirty layout keys.</li>
-<li>Hide the parent frame.</li>
-<li>Only apply the changed location /sizes.</li>
-<li>Show the parent frame once.</li>
+<li>收集髒佈局鍵。</li>
+<li>隱藏父框架。</li>
+<li>僅套用變更的位置/sizes。</li>
+<li>顯示一次父框架。</li>
 </ol>
-<h2 id="combatlow-fps-throttling">combat/low-FPS throttling</h2>
-<p>Heavy work must be blocked, delayed, or degraded when:</p>
+<h2 id="-fps">戰鬥/低-FPS 節流</h2>
+<p>在以下情況下，繁重的工作必須被阻止、延遲或降級：</p>
 <ul>
-<li><code>InCombatLockdown()</code> is true;</li>
-<li>FPS is below the configured threshold;</li>
-<li>The work requires large scans;</li>
-<li>Protected /secret boundary reached.</li>
+<li><code>InCombatLockdown()</code> 為 true；</li>
+<li>FPS 低於配置的閾值；</li>
+<li>工作需要大掃描；</li>
+<li>達到受保護的/secret 邊界。</li>
 </ul>
-<p>Allowed downgrade behavior:</p>
+<p>允許的降級行為：</p>
 <ul>
-<li>Show only the security icon /name;</li>
-<li>Mark the timer as <code>unknown</code>, <code>protected</code> or <code>displayOnly</code>;</li>
-<li>Skip optional item caching process;</li>
-<li>Schedule non-combat refreshes.</li>
+<li>僅顯示安全性圖示/name；</li>
+<li>將計時器標記為 <code>unknown</code>、<code>protected</code> 或 <code>displayOnly</code>；</li>
+<li>跳過可選項目快取進程；</li>
+<li>安排非戰鬥刷新。</li>
 </ul>
-<h2 id="current-configuration-risk">Current configuration risk</h2>
-<p>For the first time, an audit identified these possible sources:</p>
+<h2 id="_4">目前配置風險</h2>
+<p>首次透過審核發現了這些可能的來源：</p>
 <ul>
-<li>Repeat Aura scan cycle for more than 1..40 useful and harmful exponents;</li>
-<li><code>AuraUtil.ForEachAura</code> callback use;</li>
-<li>Tooltip call post hook and tooltip parsing path;</li>
-<li><code>C_Timer.After(function() ...)</code> closure allocation in Aura update;</li>
-<li>Dynamic frame creation in cooldown update backup;</li>
-<li>Item range scanning with timer callback;</li>
-<li>Bugfix string formatting in label and search output;</li>
-<li>Unexpected global variables lead to unclear lifetime and GC behavior.</li>
+<li>重複光環掃描循環超過 1..40 個有用且有害的指數；</li>
+<li><code>AuraUtil.ForEachAura</code> 回呼使用；</li>
+<li>工具提示呼叫後掛鉤和工具提示解析路徑；</li>
+<li>aura 更新中的 <code>C_Timer.After(function() ...)</code> 閉包分配；</li>
+<li>冷卻更新後備中的動態影格建立；</li>
+<li>具有計時器回呼的物品範圍掃描；</li>
+<li>除錯標籤和查找輸出中的字串格式；</li>
+<li>全域意外變數導致生命週期和 GC 行為不明確。</li>
+</ul>
+<h2 id="2026-07-26native-aura">2026-07-26：Native Aura 效能預算</h2>
+<ul>
+<li>戰鬥 Aura 更新由 Blizzard AuraContainer/AuraButton 處理；EAM 熱路徑配置、AuraState、OnUpdate 與 Scheduler token 皆為 0。</li>
+<li>規則只在登入、專精/設定變更與脫戰 pending commit 時編譯。</li>
+<li>fingerprint 未變更時不建立新容器、不重註冊 sound。</li>
+<li>相容規則合併為 AuraGroup；player/target 各保留第一條 Slot PoC。</li>
+<li>舊容器停用後只保留計數，不保存每次重建的 Lua 配對表。</li>
 </ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -743,7 +759,7 @@ Avoid being in the hot path:</p>
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -752,7 +768,7 @@ Avoid being in the hot path:</p>
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

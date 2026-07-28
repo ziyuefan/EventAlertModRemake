@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -738,324 +738,324 @@ EventAlertMod 正式服重寫
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 <p>--[[ EAM_FILE_COMMENTARY
-EventAlertMod Retail server rewrite
-Mod: File/21_RETAIL_12X_NEW_EVENTS_INVESTIGATION
-File: Docs\21_RETAIL_12X_NEW_EVENTS_INVESTIGATION.md</p>
-<p>Concept:
-- Detailed records of the traction effects, payloads, and specific application scenarios in EAM module reconstruction of the 16 newly introduced or high-end events in World of Warcraft 12.x/Midnight-era.
-- Maintain documentation and code consistency.
+EventAlertMod 正式服重寫
+模組：文件/21_RETAIL_12X_NEW_EVENTS_INVESTIGATION
+文件：Docs\21_RETAIL_12X_NEW_EVENTS_INVESTIGATION.md</p>
+<p>理念：
+- 詳細記錄魔獸世界12.x / Midnight-era下新引入或高端的16個事件的牽引作用、引數（Payload）及在EAM模組重構中的具體應用場景。
+- 保持文件與程式碼的一致性。
 ]]</p>
-<h1 id="worldofwarcraft-retail-server-12x-midnight-era-new-and-high-frequency-event-investigation-report">WorldofWarcraft Retail server 12.x / Midnight Era New and High Frequency Event Investigation Report</h1>
-<p>Boy! Based on the 16 core events you provided for secondary and additional events, we have completed our investigation of the latest AddOn API of World of Warcraft 12.x. The following is the underlying principle of each event, the payload arguments and the specific integration design plan of EAM.</p>
+<h1 id="12x">魔獸世界正式服12.x / 午夜時代全新與高頻事件調查報告</h1>
+<p>少年欸！針對您提供二次與追加的16個核心事件，完成我們對魔獸世界12.x最新AddOn API的調查，以下為各事件的底層原理、有效負載引數及EAM的具體整合設計方案。</p>
 <hr />
-<h2 id="1-detailed-investigation-and-payload-description-of-the-first-batch-of-events">1. Detailed investigation and payload description of the first batch of events</h2>
-<h3 id="activity-1-combat_log_message">📌Activity 1: <code>COMBAT_LOG_MESSAGE</code></h3>
+<h2 id="1">1. 第一批事件詳細調查與有效負載說明</h2>
+<h3 id="1combat_log_message">📌活動 1：<code>COMBAT_LOG_MESSAGE</code></h3>
 <ul>
-<li><strong>Preliminary Effect</strong>: New events introduced after patch 12.0.0. Since the official moved the traditional <code>COMBAT_LOG_EVENT_UNFILTERED</code> (CLEU) out of the AddOn plug-in access rights, and set <code>CombatLogGetCurrentEventInfo()</code> to OK (Taint scheme codes cannot be read), the official provided this event as an alternative to the floating combat text (__EAMCODE_4) floating text.</li>
-<li><strong>Argument payload</strong>:</li>
-<li><code>Arg 1 (messageText)</code>: string - An organized and localized combat text string (eg: "Your Ignite Cleave training target is 262 points of fire.").<ul>
-<li><code>Arg 2 (r)</code>: number - The red color value channel of the text display.</li>
-<li><code>Arg 3 (g)</code>: number - The green color value channel of the text display.</li>
-<li><code>Arg 4 (b)</code>: Blue value channel for numeric-text display.</li>
-<li><code>Arg 5 (displayType)</code>: string/number - The type or style of the message.</li>
+<li><strong>初步作用</strong>：補丁12.0.0後新引進的事件。由於官方將傳統的 <code>COMBAT_LOG_EVENT_UNFILTERED</code> (CLEU) 移出 AddOn 插件存取權限，且將 <code>CombatLogGetCurrentEventInfo()</code> 設定為確定（被污染的方案碼無法讀取），官方提供了該事件作為浮動戰鬥文字（__EAMCODE_4）浮動文字的替代方案。</li>
+<li><strong>引數有效負載</strong>：</li>
+<li><code>Arg 1 (messageText)</code>: string - 已整理好且在地化的戰鬥文字字符串（例如：「你的點燃順劈斬訓練目標262點火焰。」）。<ul>
+<li><code>Arg 2 (r)</code>: number - 文字顯示的紅色顏色值通道。</li>
+<li><code>Arg 3 (g)</code>: number - 文字顯示的綠色顏色值通道。</li>
+<li><code>Arg 4 (b)</code>: 數字-文字顯示的藍色值通道。</li>
+<li><code>Arg 5 (displayType)</code>: string/number - 訊息的類型或樣式。</li>
 </ul>
 </li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li><strong>Restrictions</strong>: This event does not contain formatted data such as <code>spellID</code>, <code>sourceGUID</code>, <code>destGUID</code>, etc., only plain text and colors. The CPU used for regular expression inference has load capacity and does not have version robustness.<ul>
-<li><strong>Application</strong>: EAM registers it to <code>EventRouter</code> as a debug/trace log. When the user turns on the debug mode, it is directly output as an extraordinary combat event stream, without involving the core Aura/cooldown timing facts.</li>
-</ul>
-</li>
-</ul>
-<hr />
-<h3 id="activity-2-combat_text_update">📌Activity 2: <code>COMBAT_TEXT_UPDATE</code></h3>
-<ul>
-<li><strong>Initial Function</strong>: World of Warcraft's traditional floating combat text (floating combat text) update event. Triggered when the combat status of the monitored unit (default needs to be set with <code>CombatTextSetActiveUnit</code>, usually <code>"player"</code>, <code>"target"</code>, <code>"pet"</code>) occurs.</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (combatTextType)</code>: string - combat text type (for example: <code>"SPELL_AURA_START"</code>, <code>"DAMAGE"</code>, <code>"HEAL"</code>, <code>"ENERGY"</code>, <code>__EAMCODE___10</code>110EAMCODE_9__110EAMCO</li>
-</ul>
-</li>
-<li><strong>EAM Integration Strategy</strong>:
-*Mainly used for <code>EventRouter</code> debugging and tracking monitoring. When <code>AuraService</code> suddenly fails due to security restrictions, it can be used as a defensive auxiliary log to obtain the <code>"SPELL_AURA_START"</code> status.</li>
-</ul>
-<hr />
-<h3 id="activity-3-unit_spellcast_sent">📌Activity 3: <code>UNIT_SPELLCAST_SENT</code></h3>
-<ul>
-<li><strong>Preliminary effect</strong>: Triggered when the monitored unit sends a spell casting request to the server (it takes effect at this time and has not actually been successfully cast, at this time the GCD judgment or the beginning of the spell).</li>
-<li><strong>Argument payload</strong>:</li>
-<li><code>Arg 1 (unitTarget)</code>: string - spellcasting unit (e.g. <code>"player"</code>, <code>"party1"</code>).<ul>
-<li><code>Arg 2 (targetName)</code>: string - target name.</li>
-<li><code>Arg 3 (castGUID)</code>: string - The unique GUID of the execution method.</li>
-<li><code>Arg 4 (spellID)</code>: Number - Spell ID.</li>
-</ul>
-</li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li><strong>Casting pre-response mechanism</strong> available for EAM. At the moment of singing (Cast) or sending instant force, if the corresponding spellID is in the monitoring list, AlertState can be pre-created and rendered to increase the speed of visual feedback. If <code>UNIT_SPELLCAST_FAILED_QUIET</code> or <code>UNIT_SPELLCAST_FAILED</code> is subsequently received, clean it up immediately to avoid ghost retention.</li>
-</ul>
-<hr />
-<h3 id="activity-4-unit_spellcast_succeeded">📌Activity 4: <code>UNIT_SPELLCAST_SUCCEEDED</code></h3>
-<ul>
-<li><strong>Initial effect</strong>: Triggered when the monitored unit successfully casts the trigger.</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (unitTarget)</code>: string - The casting unit.</li>
-<li><code>Arg 2 (castGUID)</code>: string - Casting unique GUID.</li>
-<li><code>Arg 3 (spellID)</code>: Number - Spell ID.</li>
-</ul>
-</li>
-<li><strong>EAM Integration Strategy</strong>:<ul>
-<li><strong>Core Refactoring Alternative</strong>: This is the <strong>Star Saving API</strong> for <code>GroundEffectService</code> (ground effects monitoring) under 12.x! Since CLEU is closed, we directly modify <code>GroundEffectService</code> to register <code>UNIT_SPELLCAST_SUCCEEDED</code>.</li>
-</ul>
-</li>
-<li>When <code>unitTarget == "player"</code> and <code>spellID</code> is the ground skill we monitor (such as Blizzard, Ice Orb), the duration of triggering the skill is countdown. This API is 100% transparent to CLEU and is 100% Retail server security API, with no risk of contamination or isolation.</li>
-</ul>
-<hr />
-<h3 id="activity-5-unit_spellcast_failed_quiet">📌Activity 5: <code>UNIT_SPELLCAST_FAILED_QUIET</code></h3>
-<ul>
-<li><strong>Initial effect</strong>: Triggered when a unit's spellcasting fails and does not trigger the standard UI error voice (such as GCD conflict rejected by the server).</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (unitTarget)</code>: string - The casting unit.</li>
-<li><code>Arg 2 (castGUID)</code>: string - Counter spellcasting GUID.</li>
-<li><code>Arg 3 (spellID)</code>: Number - Spell ID.</li>
-</ul>
-</li>
-<li><strong>EAM Integration Strategy</strong>:
-    <em>Used for </em><em>defensive status reset</em>*. When the player's own event is captured, if the basic state or singing timing of the spellID exists, it will be restored and released as soon as possible to ensure accurate synchronization of the UI state.</li>
-</ul>
-<hr />
-<h3 id="activity-6-current_spell_cast_changed">📌Activity 6: <code>CURRENT_SPELL_CAST_CHANGED</code></h3>
-<ul>
-<li><strong>Triggering effect</strong>: Triggered when the player's current spell casting (singing/guiding) changes.</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (cancelledCast)</code>: boolean - Whether the previous execution method was cancelled.</li>
-</ul>
-</li>
-<li><strong>EAM Integration Strategy</strong>:<ul>
-<li>Cast/Channeling auxiliary monitoring for EAM. <code>If ​​canceledCast == true</code> means that the casting was interrupted or hidden due to movement, EAM can instantly display the associated alert icon.</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li><strong>限制</strong>：此事件不包含 <code>spellID</code>、<code>sourceGUID</code>、<code>destGUID</code> 等格式化數據，只有純文字與顏色，由此做正則表達式推理的 CPU 負載能力且不具備版本健壯性。<ul>
+<li><strong>應用</strong>：EAM將其註冊至<code>EventRouter</code>作為debug/trace日誌，在用戶開啟除錯模式時直接輸出為非凡性卓越的戰鬥事件流，不涉及核心光環/冷卻計時事實。</li>
 </ul>
 </li>
 </ul>
 <hr />
-<h3 id="activity-7-spell_activation_overlay_hide">📌Activity 7: <code>SPELL_ACTIVATION_OVERLAY_HIDE</code></h3>
+<h3 id="2combat_text_update">📌活動 2：<code>COMBAT_TEXT_UPDATE</code></h3>
 <ul>
-<li><strong>Crack Effect</strong>: Triggered when the translucent "Magic Trigger Map Tip (C_SpellActivationOverlay)" in the center of the crack UI screen disappears.</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (spellID)</code>: number - the magic ID of the on-screen prompt to disappear.</li>
+<li><strong>最初作用</strong>：魔獸世界傳統的浮動戰鬥文字（浮動戰鬥文本）更新事件。當被監控的單位（預設需用 <code>CombatTextSetActiveUnit</code> 設定，通常是<code>"player"</code>、<code>"target"</code>、<code>"pet"</code>）發生戰鬥狀態更新時觸發。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (combatTextType)</code>: string - 戰鬥文字類型（例如：<code>"SPELL_AURA_START"</code>, <code>"DAMAGE"</code>, <code>"HEAL"</code>, <code>"ENERGY"</code>, <code>__EAMCODE___10</code>110EAMCODE_9__110EAMCO</li>
 </ul>
 </li>
-<li><strong>EAM Integration Strategy</strong>:
-    *Used to monitor the disappearance of large screen textures. This is different from the glow of the hotbar, but it indicates that the magic's progress animation in the center has ended.</li>
+<li><strong>EAM 整合策略</strong>：
+*主要用於<code>EventRouter</code>除錯追蹤監控，在<code>AuraService</code>因安全限制突然失效時，可作為取得<code>"SPELL_AURA_START"</code>狀態的防禦性輔助日誌。</li>
 </ul>
 <hr />
-<h3 id="activity-8-unit_power_frequent">📌Activity 8: <code>UNIT_POWER_FREQUENT</code></h3>
+<h3 id="3unit_spellcast_sent">📌活動 3：<code>UNIT_SPELLCAST_SENT</code></h3>
 <ul>
-<li><strong>Unit triggering effect</strong>: A high-frequency triggering version when the monitored energy value (holy energy, combo points, infuriating energy, etc.) changes. The traditional <code>UNIT_POWER_UPDATE</code> has official throttling, but this event ensures instant triggering during rapid impact.</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (unitTarget)</code>: string - Energy change unit.</li>
-<li><code>Arg 2 (powerTypeToken)</code>: string - energy type (e.g. <code>"COMBO_POINTS"</code>, <code>"HOLY_POWER"</code>).</li>
+<li><strong>初步作用</strong>：當被監控的單位發送施法請求給伺服器時觸發（此時生效尚未真正施放成功，此時GCD判斷或唱法開始階段）。</li>
+<li><strong>引數有效負載</strong>：</li>
+<li><code>Arg 1 (unitTarget)</code>: 字串 - 施法單位（如 <code>"player"</code>, <code>"party1"</code>）。<ul>
+<li><code>Arg 2 (targetName)</code>: 字符串 - 目標名稱。</li>
+<li><code>Arg 3 (castGUID)</code>: string - 執行法的唯一 GUID。</li>
+<li><code>Arg 4 (spellID)</code>: 數字 - 法術ID。</li>
 </ul>
 </li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li><strong>NO DELAY UPDATE</strong>: Bring it to <code>ClassPowerService</code> speed! In addition to registering <code>UNIT_POWER_UPDATE</code>, register <code>UNIT_POWER_FREQUENT</code> at the same time, so that the reaction visual delay triggered by resources such as combo points, holy energy, and infuriating energy reaches 0ms, greatly optimizing the smoothness of the operation.</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li>可用於 EAM 的<strong>施法預響應機制</strong>。在唱法（Cast）或瞬間發力發送的瞬間，若對應 spellID 在監控名單中，可預先建立 AlertState 並渲染，提升視覺回饋速度。如果後續收到 <code>UNIT_SPELLCAST_FAILED_QUIET</code> 或 <code>UNIT_SPELLCAST_FAILED</code>，則立即清理，避免幽靈滯留。</li>
 </ul>
 <hr />
-<h2 id="2-the-second-batch-of-incident-investigations-and-payload-details">2. The second batch of incident investigations and payload details</h2>
-<h3 id="activity-9-spell_update_cooldown">📌Activity 9: <code>SPELL_UPDATE_COOLDOWN</code></h3>
+<h3 id="4unit_spellcast_succeeded">📌活動 4：<code>UNIT_SPELLCAST_SUCCEEDED</code></h3>
 <ul>
-<li><strong>Brake effect</strong>: Triggered when any skill cooldown enters, the cooldown status changes, or the cooldown is completed.</li>
-<li><strong>Argument payload</strong>: No arguments.</li>
-<li><strong>EAM Integration Strategy</strong>:<ul>
-<li>This event is the core event of <code>CooldownService</code>. Whenever triggered, CooldownService will rescan the skill cooldown list of the monitoring point in an O(1) reaction manner to ensure that the timing meter displays accurately.</li>
+<li><strong>初步作用</strong>：當被監控的單位成功施放扳機時觸發。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (unitTarget)</code>: string - 施法單位。</li>
+<li><code>Arg 2 (castGUID)</code>: string - 施法唯一 GUID。</li>
+<li><code>Arg 3 (spellID)</code>: 數字 - 法術ID。</li>
+</ul>
+</li>
+<li><strong>EAM 整合策略</strong>：<ul>
+<li><strong>核心重構替代方案</strong>：這是12.x下<code>GroundEffectService</code> (地面效果監控)的<strong>救明星API</strong>！由於CLEU被封閉，我們直接將<code>GroundEffectService</code>修改為註冊<code>UNIT_SPELLCAST_SUCCEEDED</code>。</li>
+</ul>
+</li>
+<li>當<code>unitTarget == "player"</code>且<code>spellID</code>為我們監控的地面技能（如暴風雪、寒冰寶珠）時，觸發該技能的持續時間倒數。此API 100%透視了CLEU，且100%為正式服安全性API，完全沒有污染被隔離的風險。</li>
+</ul>
+<hr />
+<h3 id="5unit_spellcast_failed_quiet">📌活動 5：<code>UNIT_SPELLCAST_FAILED_QUIET</code></h3>
+<ul>
+<li><strong>初步作用</strong>：當單位的施法失敗且不觸發標準的UI錯誤語音（例如GCD衝突被伺服器拒絕）時觸發。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (unitTarget)</code>: string - 施法單位。</li>
+<li><code>Arg 2 (castGUID)</code>: string - 對抗施法 GUID。</li>
+<li><code>Arg 3 (spellID)</code>: 數字 - 法術ID。</li>
+</ul>
+</li>
+<li><strong>EAM 整合策略</strong>：
+    <em>用於</em><em>防禦性狀態重置</em>*。當擷取到玩家本身的此事件時，若該 spellID 的基本狀態或唱法計時存在，第一時間將其恢復釋放，確保UI的狀態精準同步。</li>
+</ul>
+<hr />
+<h3 id="6current_spell_cast_changed">📌活動 6：<code>CURRENT_SPELL_CAST_CHANGED</code></h3>
+<ul>
+<li><strong>觸發作用</strong>：玩家當前的施法（唱法/引導）發生改變時觸發。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (cancelledCast)</code>: boolean - 前一次執行法是否取消。</li>
+</ul>
+</li>
+<li><strong>EAM 整合策略</strong>：<ul>
+<li>用於 EAM 的 Cast/Channeling 輔助監控。 <code>如果cancelledCast == true</code>，代表施法被打斷或因移動隱藏，EAM 能夠即時將關聯的警報圖示。</li>
 </ul>
 </li>
 </ul>
 <hr />
-<h3 id="activity-10-spell_update_usable">📌Activity 10: <code>SPELL_UPDATE_USABLE</code></h3>
+<h3 id="7spell_activation_overlay_hide">📌活動 7：<code>SPELL_ACTIVATION_OVERLAY_HIDE</code></h3>
 <ul>
-<li><strong>Initial effect</strong>: Triggered when the spell's availability (Usable) status changes (such as the energy value is sufficient/casting, or the skill casting conditions are met/cancelled).</li>
-<li><strong>Argument payload</strong>: No arguments.</li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li>Can be used as an opportunity for <code>CooldownService</code> auxiliary detection. In debugging mode, record this sending event to help troubleshoot the bug that some cooldown skills are not displayed as available after CD transfer due to insufficient resources.</li>
-</ul>
-<hr />
-<h3 id="activity-11-spell_update_uses">📌Activity 11: <code>SPELL_UPDATE_USES</code></h3>
-<ul>
-<li><strong>Preliminary Effect</strong>: Newly introduced events in World of Warcraft 12.x. Triggered when the "Uses" or "Charges" of certain spells change.</li>
-<li><strong>Argument payload</strong>:</li>
-<li><code>Arg 1 (spellID)</code>: Number - Spell ID.<ul>
-<li><code>Arg 2 (uses__EEAMCODE_3__)</code>: number - the remaining number of times to use.</li>
+<li><strong>裂紋作用</strong>：當裂紋UI螢幕中央的半透明「魔法觸發貼圖提示（C_SpellActivationOverlay）」消失時觸發。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (spellID)</code>: 數字 - 螢幕提示消失的魔法ID。</li>
 </ul>
 </li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li>When the number of skill charges or available times changes, the <code>charges</code> value corresponding to the skill in <code>CooldownService</code> can be updated immediately, and the value of <code>charges</code> corresponding to the skill can be updated when it is exhausted and waits for the overall full scan to improve reaction efficiency.</li>
+<li><strong>EAM 整合策略</strong>：
+    *用於監控螢幕大型幕貼圖過程的消失。這與快捷列的發光不同，但它代表該魔法在中央的過程動畫已經結束。</li>
 </ul>
 <hr />
-<h3 id="activity-12-spell_activation_overlay_glow_hide">📌Activity 12: <code>SPELL_ACTIVATION_OVERLAY_GLOW_HIDE</code></h3>
+<h3 id="8unit_power_frequent">📌活動 8：<code>UNIT_POWER_FREQUENT</code></h3>
 <ul>
-<li><strong>Initial role</strong>:<strong> is a key event! </strong>Different from <code>SPELL_ACTIVATION_OVERLAY_HIDE</code> (the central crescent map of the firefly disappears), it refers to the event where the <strong>quick column skill icon's golden glowing bright frame (the operation column glows)</strong> disappears. The corresponding event is <code>SPELL_ACTIVATION_OVERLAY_GLOW_SHOW</code>.</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (spellID)</code>: Number - the magic ID of the golden glowing disappearing box.</li>
+<li><strong>單位觸發作用</strong>：被監控的能量值（聖能、連擊點、真氣等）發生變更時的高頻觸發版本。傳統的<code>UNIT_POWER_UPDATE</code>有官方節流，而此事件在急速衝擊時能確保即時觸發。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (unitTarget)</code>: string - 能量變更單位。</li>
+<li><code>Arg 2 (powerTypeToken)</code>: 字串 - 能量類型（如 <code>"COMBO_POINTS"</code>, <code>"HOLY_POWER"</code>）。</li>
 </ul>
 </li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li><strong>Perfect icon highlight synchronization</strong>: We should listen to <code>SPELL_ACTIVATION_OVERLAY_GLOW_SHOW</code> and <code>SPELL_ACTIVATION_OVERLAY_GLOW_HIDE</code>.<ul>
-<li>When the player triggers the Proc (such as the fire spell's big fire ball, the ice spell's ice finger bright frame), the official will trigger <code>SHOW</code>. If EAM currently displays the skill icon, we will display a glowing bright frame on it; when receiving <code>HIDE</code>, the glow will be hidden. This way you can achieve 100% synchronization with the official button lighting!</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li><strong>無延遲更新</strong>：將其引入<code>ClassPowerService</code>速度！除註冊<code>UNIT_POWER_UPDATE</code>外，同時註冊<code>UNIT_POWER_FREQUENT</code>，使連擊點、聖能、真氣等資源觸發的反應視覺達到0ms延遲，大幅優化操作流暢度。</li>
+</ul>
+<hr />
+<h2 id="2payload">2.第二批事件調查與Payload詳細說明</h2>
+<h3 id="9spell_update_cooldown">📌活動 9：<code>SPELL_UPDATE_COOLDOWN</code></h3>
+<ul>
+<li><strong>煞車作用</strong>：任一技能冷卻進入、冷卻狀態變更或冷卻完成時觸發。</li>
+<li><strong>引數有效負載</strong>：無引數。</li>
+<li><strong>EAM 整合策略</strong>：<ul>
+<li>此事件為 <code>CooldownService</code> 的核心事件。每當觸發時，CooldownService 會對監控點的技能冷卻清單進行 O(1) 的反應方式重新掃描，確保計時儀表準確顯示。</li>
 </ul>
 </li>
 </ul>
 <hr />
-<h2 id="3-detailed-investigation-and-payload-description-of-the-third-batch-of-emergencies">3. Detailed investigation and payload description of the third batch of emergencies</h2>
-<h3 id="event-13-bag_update_cooldown">📌Event 13: <code>BAG_UPDATE_COOLDOWN</code></h3>
+<h3 id="10spell_update_usable">📌活動 10：<code>SPELL_UPDATE_USABLE</code></h3>
 <ul>
-<li><strong>Initial effect</strong>: Triggered when any item in the backpack (such as hearthstone, usable accessories, potions, etc.) enters cooling, the cooling status changes, or the cooling ends.</li>
-<li><strong>Argument payload</strong>: No arguments.</li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li>This event is triggered by the core event of <code>ItemCooldownService</code> item monitoring cooldown. At this time, the currently monitored item cooling information will be rescanned and updated to the UI, avoiding the OnUpdate polling CPU header for backpack cooling.</li>
+<li><strong>初步作用</strong>：當法術的可用性（Usable）狀態改變時觸發（如能量值足夠/施放、或技能施放條件被滿足/取消）。</li>
+<li><strong>引數有效負載</strong>：無引數。</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li>可做為 <code>CooldownService</code> 輔助探測可用的時機。在除錯模式下，記錄此發送事件，幫助排查部分冷卻技能因資源不足而在 CD 轉完後沒有顯示為可用的 bug。</li>
 </ul>
 <hr />
-<h3 id="activity-14-cooldown_viewer_spell_override_updated">📌Activity 14: <code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code></h3>
+<h3 id="11spell_update_uses">📌活動 11：<code>SPELL_UPDATE_USES</code></h3>
 <ul>
-<li><strong>Initial function</strong>: <strong>Warcraft 12.x initial CooldownViewer (cooling manager /CDM) dedicated internal event</strong>. When the magic overlay relationship (magic override, because talent, form, or some special status causes one magic to be replaced by another magic, such as Shaman Frost Shock becomes Ice Fury) changes due to client triggers.</li>
-<li><strong>Argument payload</strong>:<ul>
-<li><code>Arg 1 (overriddenSpellID)</code>: number - Overwritten/newly replaced weapon ID.</li>
+<li><strong>初步作用</strong>：魔獸世界12.x新引入事件。當某些法術的「可用次數/使用次數（Uses）」或「充能次數（Charges）」改變時觸發。</li>
+<li><strong>引數有效負載</strong>：</li>
+<li><code>Arg 1 (spellID)</code>: 數字 - 法術ID。<ul>
+<li><code>Arg 2 (uses__EEAMCODE_3__)</code>: number - 剩餘次數使用。</li>
 </ul>
 </li>
-<li><code>Arg 2 (originalSpellID)</code>: number - Original paper ID.</li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li><strong>Solve the timing bug of skill coverage</strong>: Very useful for EAM's cooling monitoring! In the past, when a player clicked on the first talent to change the effect ID, EAM could not dynamically follow it. We will listen to this event in <code>CooldownService</code>. When we sense that the monitored action is overwritten, we will dynamically update the status <code>spellID</code> or parameter monitoring to the new ID after overwriting, perfectly avoiding cooling failures.</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li>可針對技能充能次數或可用次數改變時，即時更新 <code>CooldownService</code> 中技能對應的 <code>charges</code> 數值，耗盡等待整體的全掃描，提高反應效率。</li>
 </ul>
 <hr />
-<h3 id="activity-15-assisted_combat_action_spell_cast">📌Activity 15: <code>ASSISTED_COMBAT_ACTION_SPELL_CAST</code></h3>
+<h3 id="12spell_activation_overlay_glow_hide">📌活動 12：<code>SPELL_ACTIVATION_OVERLAY_GLOW_HIDE</code></h3>
 <ul>
-<li><strong>Initial function</strong>: The auxiliary casting trigger event newly introduced in Warcraft 12.x for "auxiliary functions (auxiliary combat/auxiliary click/press and hold to cast continuously)". Triggered when the player casts magic while using the assist system.</li>
-<li><strong>Argument payload</strong>: Usually marked <code>spellID</code> and <code>castGUID</code> etc.</li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li>This is a new internal assisted spellcasting event. EAM registers it to <code>EventRouter</code> as a debugging trace. When the player turns on the ultimate auxiliary casting and triggers this event, it can be used to assist the double dissolution of <code>UNIT_SPELLCAST_SUCCEEDED</code> to eliminate missed judgments during extreme high-pressure casting.</li>
+<li><strong>初始作用</strong>：<strong>是一個關鍵的事件！ </strong>與<code>SPELL_ACTIVATION_OVERLAY_HIDE</code>（螢中央月牙貼圖消失）不同，是指<strong>快捷列技能圖示金色發光亮框（操作列發光）</strong>消失的事件。其對應的事件是<code>SPELL_ACTIVATION_OVERLAY_GLOW_SHOW</code>。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (spellID)</code>: 數字 - 金色發光亮消失框的魔法ID。</li>
+</ul>
+</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li><strong>完美的圖示亮框同步</strong>：我們應該監聽 <code>SPELL_ACTIVATION_OVERLAY_GLOW_SHOW</code> 和 <code>SPELL_ACTIVATION_OVERLAY_GLOW_HIDE</code>。<ul>
+<li>當玩家觸發Proc（如火法的大火球、冰法的冰指亮框）時，官方會觸發<code>SHOW</code>，如果EAM目前顯示了該技能圖標，我們在其上顯示發光亮框；收到<code>HIDE</code>時隱藏發光。這樣就可以實現與官方按鈕發光100%同步！</li>
+</ul>
+</li>
 </ul>
 <hr />
-<h3 id="activity-16-actionbar_update_state">📌Activity 16: <code>ACTIONBAR_UPDATE_STATE</code></h3>
+<h2 id="3">3. 第三批突發事件詳細調查和有效負載說明</h2>
+<h3 id="13bag_update_cooldown">📌事件13：<code>BAG_UPDATE_COOLDOWN</code></h3>
 <ul>
-<li><strong>Initial role</strong>: Quick column status update event. Triggered when the status of any skill or item on the shortcut bar changes (such as graying out, brightening, availability, cooldown, etc.).</li>
-<li><strong>Argument payload</strong>: No arguments.</li>
-<li><strong>EAM Integration Strategy</strong>:</li>
-<li>Mainly for debugging and tracking records, and triggering <code>CooldownService</code> and <code>ItemCooldownService</code> for defensive batch refresh in special states (such as switching action bar pages) to ensure that the screen icons are consistent.</li>
+<li><strong>作用最初</strong>：當背包中任何物品（如爐石、使用型飾品、藥水等）進入冷卻、冷卻狀態改變或冷卻結束時觸發。</li>
+<li><strong>引數有效負載</strong>：無引數。</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li>此事件為 <code>ItemCooldownService</code> 物品監控冷卻的核心事件觸發。此時會重新掃描目前被監控的物品冷卻資訊並更新至 UI，避免了 OnUpdate 輪詢背包冷卻的 CPU 頭。</li>
 </ul>
 <hr />
-<h2 id="eam-full-event-integration-function-list-eam-event-correspondence">EAM full event integration function list (EAM event correspondence)</h2>
+<h3 id="14cooldown_viewer_spell_override_updated">📌活動 14：<code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code></h3>
+<ul>
+<li><strong>初始作用</strong>：<strong>魔獸12.x初始CooldownViewer (冷卻管理器/CDM)專用內部事件</strong>。當魔法覆蓋關係（魔法覆蓋，因為即天賦、形態或某些特殊狀態，使一個魔法被另一種魔法替換，例如薩滿冰霜震擊變成冰怒）因客戶端觸發而發生變更時。</li>
+<li><strong>引數有效負載</strong>：<ul>
+<li><code>Arg 1 (overriddenSpellID)</code>: number - 被覆蓋/新取代的武器ID。</li>
+</ul>
+</li>
+<li><code>Arg 2 (originalSpellID)</code>: number - 原始紙張ID。</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li><strong>解決技能覆蓋的計時Bug</strong>：對EAM的冷卻監控非常有用！以往玩家點了第一天賦使效ID變更時，EAM無法時間動態緊在。我們將在<code>CooldownService</code>監聽此事件，當感知到被監控的動作被覆蓋時，動態將狀態的<code>spellID</code>或參數監控更新為覆蓋後的新ID，完美避免冷卻故障。</li>
+</ul>
+<hr />
+<h3 id="15assisted_combat_action_spell_cast">📌活動 15：<code>ASSISTED_COMBAT_ACTION_SPELL_CAST</code></h3>
+<ul>
+<li><strong>最初作用</strong>：魔獸12.x針對「輔助功能（輔助戰鬥/輔助點擊/按住連續施法）」新引入的輔助施法觸發事件。當玩家使用輔助系統時進行魔法施放時觸發。</li>
+<li><strong>引數有效負載</strong>：通常標示 <code>spellID</code> 及 <code>castGUID</code> 等。</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li>這是一個全新的內部輔助施法事件。 EAM將其註冊至<code>EventRouter</code>作為偵錯追蹤。當玩家開啟了終極輔助施法且觸發此事件時，可用於輔助<code>UNIT_SPELLCAST_SUCCEEDED</code>的雙重溶解，排除極限高壓施法時漏判。</li>
+</ul>
+<hr />
+<h3 id="16actionbar_update_state">📌活動 16：<code>ACTIONBAR_UPDATE_STATE</code></h3>
+<ul>
+<li><strong>最初作用</strong>：快捷列狀態更新事件。當快捷列上的任何技能、物品的狀態（例如變灰、變亮、可用性、冷卻等）改變時觸發。</li>
+<li><strong>引數有效負載</strong>：無引數。</li>
+<li><strong>EAM 整合策略</strong>：</li>
+<li>主要做偵錯追蹤記錄，以及在特殊狀態下（如切換動作條頁）觸發 <code>CooldownService</code> 和 <code>ItemCooldownService</code> 做防禦性批次刷新，確保螢幕圖示一致。</li>
+</ul>
+<hr />
+<h2 id="eameam">EAM全事件整合作用一覽表（EAM事件對應）</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Event name</th>
-<th style="text-align: left;">Trigger frequency</th>
-<th style="text-align: left;">EAM receiving module</th>
-<th style="text-align: left;">Main function</th>
+<th style="text-align: left;">事件名稱</th>
+<th style="text-align: left;">觸發頻率</th>
+<th style="text-align: left;">EAM 接收模組</th>
+<th style="text-align: left;">主要作用</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;"><code>COMBAT_LOG_MESSAGE</code></td>
-<td style="text-align: left;">Extremely high (in combat)</td>
-<td style="text-align: left;"><code>EventRouter</code> (debug)</td>
-<td style="text-align: left;">Debug log stream output, do not participate in participation facts</td>
+<td style="text-align: left;">極高 (戰鬥中)</td>
+<td style="text-align: left;"><code>EventRouter</code>（除錯）</td>
+<td style="text-align: left;">除錯日誌流輸出，不參與參與事實</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>COMBAT_TEXT_UPDATE</code></td>
-<td style="text-align: left;">Medium to High</td>
-<td style="text-align: left;"><code>EventRouter</code> (bug detection)</td>
-<td style="text-align: left;">Debug log and auxiliary Aura update</td>
+<td style="text-align: left;">中高</td>
+<td style="text-align: left;"><code>EventRouter</code>（錯誤偵）</td>
+<td style="text-align: left;">除錯日誌與輔助光環更新</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>UNIT_SPELLCAST_SENT</code></td>
-<td style="text-align: left;">Medium to High</td>
-<td style="text-align: left;"><code>CooldownService</code> / User Interface</td>
-<td style="text-align: left;">Casting a spell to activate the initial response mechanism</td>
+<td style="text-align: left;">中高</td>
+<td style="text-align: left;"><code>CooldownService</code> / 使用者介面</td>
+<td style="text-align: left;">施法啟動初步回應機制</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>UNIT_SPELLCAST_SUCCEEDED</code></td>
-<td style="text-align: left;">Medium to High</td>
+<td style="text-align: left;">中高</td>
 <td style="text-align: left;"><code>GroundEffectService</code></td>
-<td style="text-align: left;"><strong>VictoriaCLEU, 100% security monitoring technology</strong></td>
+<td style="text-align: left;"><strong>VictoriaCLEU，100%安全監控技術</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>UNIT_SPELLCAST_FAILED_QUIET</code></td>
-<td style="text-align: left;">Low</td>
+<td style="text-align: left;">低</td>
 <td style="text-align: left;"><code>CooldownService</code></td>
-<td style="text-align: left;">Defensive recovery on spellcasting failure</td>
+<td style="text-align: left;">施法失敗時防禦性恢復</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>CURRENT_SPELL_CAST_CHANGED</code></td>
-<td style="text-align: left;">Low</td>
-<td style="text-align: left;"><code>CooldownService</code> / User Interface</td>
-<td style="text-align: left;">Icon reset on cancel/cancel</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;"><code>CooldownService</code> / 使用者介面</td>
+<td style="text-align: left;">取消/取消時的圖示重新設定</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>SPELL_ACTIVATION_OVERLAY_HIDE</code></td>
-<td style="text-align: left;">Medium-low</td>
+<td style="text-align: left;">中低</td>
 <td style="text-align: left;"><code>AlertManager</code></td>
-<td style="text-align: left;">Large screen center map hint hidden</td>
+<td style="text-align: left;">大型螢幕中央貼圖提示隱藏</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>SPELL_ACTIVATION_OVERLAY_GLOW_HIDE</code></td>
-<td style="text-align: left;">Medium-Low</td>
-<td style="text-align: left;"><code>AlertManager</code> / User Interface</td>
-<td style="text-align: left;"><strong>Hidden simultaneously with the gold bright frame of the contract quick column</strong></td>
+<td style="text-align: left;">中低</td>
+<td style="text-align: left;"><code>AlertManager</code> / 使用者介面</td>
+<td style="text-align: left;"><strong>與合約快速列金色亮框同步隱藏</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>SPELL_ACTIVATION_OVERLAY_GLOW_SHOW</code></td>
-<td style="text-align: left;">Medium-Low</td>
-<td style="text-align: left;"><code>AlertManager</code> / User Interface</td>
-<td style="text-align: left;"><strong>Highlight simultaneously with simple column gold highlight frame</strong></td>
+<td style="text-align: left;">中低</td>
+<td style="text-align: left;"><code>AlertManager</code> / 使用者介面</td>
+<td style="text-align: left;"><strong>與簡潔列金色亮框同步高亮</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>UNIT_POWER_FREQUENT</code></td>
-<td style="text-align: left;">Extremely high (in combat)</td>
+<td style="text-align: left;">極高 (戰鬥中)</td>
 <td style="text-align: left;"><code>ClassPowerService</code></td>
-<td style="text-align: left;"><strong>Career energy update (holy power/combo points) 0ms delay</strong></td>
+<td style="text-align: left;"><strong>職業能量更新（聖能/連擊點）0ms延遲</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>SPELL_UPDATE_COOLDOWN</code></td>
-<td style="text-align: left;">Chinese</td>
+<td style="text-align: left;">中文</td>
 <td style="text-align: left;"><code>CooldownService</code></td>
-<td style="text-align: left;">Cooling Technology Facts Rescan</td>
+<td style="text-align: left;">冷卻技術事實重新掃描</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>SPELL_UPDATE_USABLE</code></td>
-<td style="text-align: left;">Chinese</td>
+<td style="text-align: left;">中文</td>
 <td style="text-align: left;"><code>CooldownService</code></td>
-<td style="text-align: left;">Skill Availability Status Update</td>
+<td style="text-align: left;">技能可用性狀態更新</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>SPELL_UPDATE_USES</code></td>
-<td style="text-align: left;">Chinese</td>
+<td style="text-align: left;">中文</td>
 <td style="text-align: left;"><code>CooldownService</code></td>
-<td style="text-align: left;">The remaining available number of skills changes instantly</td>
+<td style="text-align: left;">技能剩餘可用次數即時變更</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>BAG_UPDATE_COOLDOWN</code></td>
-<td style="text-align: left;">Chinese</td>
+<td style="text-align: left;">中文</td>
 <td style="text-align: left;"><code>ItemCooldownService</code></td>
-<td style="text-align: left;">Item Cooldown Facts Rescan</td>
+<td style="text-align: left;">物品冷卻事實重新掃描</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code></td>
-<td style="text-align: left;">Low</td>
+<td style="text-align: left;">低</td>
 <td style="text-align: left;"><code>CooldownService</code></td>
-<td style="text-align: left;"><strong>Modify dynamic skill override/override update</strong></td>
+<td style="text-align: left;"><strong>修改動態技能覆蓋/覆蓋更新</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>ASSISTED_COMBAT_ACTION_SPELL_CAST</code></td>
-<td style="text-align: left;">Chinese</td>
-<td style="text-align: left;"><code>EventRouter</code> (bug fix)</td>
-<td style="text-align: left;">Double judgment leakage prevention mechanism for auxiliary spellcasting</td>
+<td style="text-align: left;">中文</td>
+<td style="text-align: left;"><code>EventRouter</code>（除錯）</td>
+<td style="text-align: left;">輔助施法之雙重判定防漏機制</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>ACTIONBAR_UPDATE_STATE</code></td>
-<td style="text-align: left;">Medium to high</td>
-<td style="text-align: left;"><code>CooldownService</code> (error detection)</td>
-<td style="text-align: left;">Action column switching or status synchronization refresh timing</td>
+<td style="text-align: left;">中高</td>
+<td style="text-align: left;"><code>CooldownService</code>（錯誤偵）</td>
+<td style="text-align: left;">動作列切換或狀態同步刷新時機</td>
 </tr>
 </tbody>
 </table>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -1071,7 +1071,7 @@ File: Docs\21_RETAIL_12X_NEW_EVENTS_INVESTIGATION.md</p>
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -1080,7 +1080,7 @@ File: Docs\21_RETAIL_12X_NEW_EVENTS_INVESTIGATION.md</p>
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

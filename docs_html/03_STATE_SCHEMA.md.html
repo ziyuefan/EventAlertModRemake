@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -429,7 +429,15 @@ EA_GrpItems
 EA_Pos
 </code></pre>
 
-<p>觀察到 default/runtime 同伴：</p>
+<h2 id="schema-v2native-aura">Schema v2：Native Aura 設定</h2>
+<ul>
+<li><code>EAM_DB.schemaVersion = 2</code>，v1 Aura alert 會保存可序列化遷移備份。</li>
+<li>Alert 可保存 <code>nativeBackend</code>、<code>auraFilter</code>、<code>showStacks</code>、<code>showName</code>、<code>showCountdown</code> 與純資料 <code>sound</code>。</li>
+<li><code>Frame</code>、<code>ScriptObject</code>、<code>DurationObject</code>、<code>AuraContainer</code> 與 AuraButton 不得寫入 SavedVariables。</li>
+<li>Runtime plan、fingerprint、pending revision 與 sound registration ID 只存在記憶體。</li>
+<li>相同設定再次送入回傳 <code>unchanged</code>，revision 不變。
+觀察到 default/runtime 同伴：</li>
+</ul>
 <pre class="codehilite"><code class="language-lua">EA_Config2
 EA_ShowScrollSpells
 EA_ShowScrollSpell_YPos
@@ -611,9 +619,9 @@ importFrame, exportFrame, MyAddonFrame, tempFunc
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="state-mode">State mode</h1>
-<h2 id="savedvariables-review">SavedVariables Review</h2>
-<p>Currently TOC declares these SavedVariables:</p>
+<h1 id="_1">狀態模式</h1>
+<h2 id="savedvariables">SavedVariables 審核</h2>
+<p>當前 TOC 聲明這些 SavedVariables：</p>
 <pre class="codehilite"><code class="language-lua">EA_Config
 EA_Position
 EA_Items
@@ -624,30 +632,38 @@ EA_GrpItems
 EA_Pos
 </code></pre>
 
-<p>Observed default/runtime companion:</p>
+<h2 id="schema-v2native-aura">Schema v2：Native Aura 設定</h2>
+<ul>
+<li><code>EAM_DB.schemaVersion = 2</code>，v1 Aura alert 會保存可序列化遷移備份。</li>
+<li>Alert 可保存 <code>nativeBackend</code>、<code>auraFilter</code>、<code>showStacks</code>、<code>showName</code>、<code>showCountdown</code> 與純資料 <code>sound</code>。</li>
+<li><code>Frame</code>、<code>ScriptObject</code>、<code>DurationObject</code>、<code>AuraContainer</code> 與 AuraButton 不得寫入 SavedVariables。</li>
+<li>Runtime plan、fingerprint、pending revision 與 sound registration ID 只存在記憶體。</li>
+<li>相同設定再次送入回傳 <code>unchanged</code>，revision 不變。
+觀察到 default/runtime 同伴：</li>
+</ul>
 <pre class="codehilite"><code class="language-lua">EA_Config2
 EA_ShowScrollSpells
 EA_ShowScrollSpell_YPos
 </code></pre>
 
-<p><code>EA_Config</code> currently stores display and behavior switches, such as frames
-visibility, name/timer/flash display, sound, font size, backup alert,
-Target's own debuff filtering, cooling behavior, rune display and Aura value
-threshold.</p>
-<p><code>EA_Position</code> stores anchor points, offsets, debuff color settings, and targets
-Layout flags, SCD offsets, execution icon settings, boss-level logic, and
-Cooling display settings.</p>
-<p><code>EA_Items</code>, <code>EA_AltItems</code>, <code>EA_TarItems</code>, <code>EA_ScdItems</code> and <code>EA_GrpItems</code>
-Stores configured alert spell /item/group entries. their current exact area
-The shape is legacy and should be migrated by the version manager, not frozen.</p>
-<p><code>EA_Pos</code> stores shared location data for each category through <code>G.Pos</code>.</p>
-<h2 id="current-global-country-audits">Current global country audits</h2>
-<p>Namespace:</p>
+<p><code>EA_Config</code> 目前儲存顯示和行為切換，例如框架
+可見性、名稱/timer/flash 顯示、聲音、字體大小、備用警報、
+目標自身減益過濾、冷卻行為、符文顯示和光環值
+閾值。</p>
+<p><code>EA_Position</code> 儲存錨點、偏移、debuff 顏色設定、目標
+佈局標誌、SCD 偏移量、執行圖示設定、boss 級邏輯，以及
+冷卻顯示設定。</p>
+<p><code>EA_Items</code>、<code>EA_AltItems</code>、<code>EA_TarItems</code>、<code>EA_ScdItems</code> 與 <code>EA_GrpItems</code>
+儲存配置的警報法術/item/group條目。他們目前的確切領域
+shape 是遺留的，應該由版本管理器遷移，而不是凍結。</p>
+<p><code>EA_Pos</code> 透過 <code>G.Pos</code> 儲存每個類別的共用位置資料。</p>
+<h2 id="_2">目前全球國家審計</h2>
+<p>命名空間：</p>
 <pre class="codehilite"><code class="language-lua">_G.EventAlertMod
 G -- addon namespace from ...
 </code></pre>
 
-<p>Main namespace runtime table:</p>
+<p>主要命名空間運行時表：</p>
 <pre class="codehilite"><code class="language-lua">G.Pos
 G.SPELLINFO_SELF
 G.SPELLINFO_TARGET
@@ -669,7 +685,7 @@ G.RUNE_MAPPING
 G.Auras
 </code></pre>
 
-<p>Global Family:</p>
+<p>全球家庭：</p>
 <pre class="codehilite"><code class="language-lua">EA_CLASS*
 EA_SPELL_POWER*
 EA_X*
@@ -679,7 +695,7 @@ SLASH_EVENTALERTMOD1
 SLASH_EVENTALERTMOD2
 </code></pre>
 
-<p>Main XML/UI global variables:</p>
+<p>主要 XML/UI 全域變數：</p>
 <pre class="codehilite"><code class="language-lua">EA_Main_Frame
 EA_Version_Frame
 EA_Options_Frame
@@ -695,15 +711,15 @@ EA_Anchor_Frame*
 EA_MinimapOption
 </code></pre>
 
-<p>Notable unexpected global candidates discovered through job scanning:</p>
+<p>透過作業掃描發現的值得注意的意外全域候選者：</p>
 <pre class="codehilite"><code class="language-lua">auraData, eaf, eaf2, EAEXF, EAItems, EASCDFrame, EA_icon, EA_rank,
 EA_timeLeft, currentBuffs, startTime, duration, expirationTime, timeLeft,
 usable, spellId, spellName, icon, frame, importButton, exportButton,
 importFrame, exportFrame, MyAddonFrame, tempFunc
 </code></pre>
 
-<p>Overrides should move them to mod-owned local state or explicit
-Namespace field.</p>
+<p>重寫應將它們移至模組擁有的本地狀態或顯式
+命名空間欄位。</p>
 <h2 id="alertstate">AlertState</h2>
 <pre class="codehilite"><code class="language-js">AlertState = {
   id: &quot;string&quot;,
@@ -803,7 +819,7 @@ Namespace field.</p>
 }
 </code></pre>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -819,7 +835,7 @@ Namespace field.</p>
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -828,7 +844,7 @@ Namespace field.</p>
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

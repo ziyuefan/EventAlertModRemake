@@ -36,7 +36,7 @@ Retail API 注意:
 local addonName, EAM = ...
 
 EAM.name = addonName
-EAM.version = "Retail_12.0.7_Rewrite"
+EAM.version = "Retail_12.1_Native_Aura"
 EAM.isRetailOnly = true
 
 EAM.Modules = EAM.Modules or {}
@@ -54,15 +54,27 @@ EAM.API = {
     UnitIsUnit = UnitIsUnit,
     UnitClass = UnitClass,
     UnitPower = UnitPower,
+    UnitPowerType = UnitPowerType,
     GetFramerate = GetFramerate,
     GetBuildInfo = GetBuildInfo,
     GetLocale = GetLocale,
+    GetActionInfo = GetActionInfo,
+    GetMacroSpell = GetMacroSpell,
+    GetMacroItem = GetMacroItem,
+    GetCursorPosition = GetCursorPosition,
+    GetCurrentKeyBoardFocus = GetCurrentKeyBoardFocus,
+    IsControlKeyDown = IsControlKeyDown,
+    IsAltKeyDown = IsAltKeyDown,
+    IsShiftKeyDown = IsShiftKeyDown,
+    IsMetaKeyDown = IsMetaKeyDown,
     debugprofilestop = debugprofilestop,
     GetEventCPUUsage = GetEventCPUUsage,
     GetFunctionCPUUsage = GetFunctionCPUUsage,
     GetScriptCPUUsage = GetScriptCPUUsage,
     GameTooltip_AddMoneyLine = GameTooltip_AddMoneyLine,
     SetTooltipMoney = SetTooltipMoney,
+    TooltipDataProcessor = TooltipDataProcessor,
+    TooltipDataType = Enum and Enum.TooltipDataType,
     canaccesstable = canaccesstable or function(t) return type(t) == "table" end,
     canaccessvalue = canaccessvalue or function() return true end,
     issecretvalue = issecretvalue or function() return false end,
@@ -75,6 +87,7 @@ EAM.API = {
     C_DurationUtil = C_DurationUtil,
     C_UIFileAsset = C_UIFileAsset,
     C_AddOns = C_AddOns,
+    C_CVar = C_CVar,
     C_Secrets = C_Secrets,
 }
 

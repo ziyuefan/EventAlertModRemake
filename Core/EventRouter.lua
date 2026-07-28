@@ -84,6 +84,33 @@ function EventRouter.register(event, handler)
     handlers.count = count
 end
 
+function EventRouter.unregister(event, handler)
+    if not event or not handler then
+        return false
+    end
+
+    local handlers = EventRouter.handlers[event]
+    local count = handlers and handlers.count or 0
+    for index = 1, count do
+        if handlers[index] == handler then
+            handlers[index] = handlers[count]
+            handlers[count] = nil
+            handlers.count = count - 1
+
+            if handlers.count == 0 then
+                EventRouter.handlers[event] = nil
+                local isCustom = string.sub(event, 1, 4) == "EAM_"
+                if frame and not isCustom then
+                    frame:UnregisterEvent(event)
+                end
+            end
+            return true
+        end
+    end
+
+    return false
+end
+
 -- 派發自訂事件
 function EventRouter.fire(event, ...)
     if not event then

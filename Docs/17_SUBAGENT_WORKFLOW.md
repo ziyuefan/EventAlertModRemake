@@ -86,9 +86,9 @@
 
 ## RACI 專家分工與PR審查原則
 
-為了讓 16 位 AI 專家在不同開發任務的定位明確，專案實施 RACI (Responsible, Accountable, Consulted, Informed) 分工定位。
+為了讓 24 位 AI 專家在不同開發任務中的定位明確，專案實施 RACI（Responsible、Accountable、Consulted、Informed）分工。
 
-詳細RACI矩陣配置與原則見：[Docs/21_RACI_EXPERTS_MATRIX.md](file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md)。
+完整名冊、縮寫與 RACI 矩陣以 [Docs/21_RACI_EXPERTS_MATRIX.md](21_RACI_EXPERTS_MATRIX.md) 為唯一基準。
 後續所有子代理派工時需注意：
 1. **R (Responsible)**：派工時，應指定被屬於該任務領域 **R** 的專家作為子代理的角色與職能（例如修改 Class DB 時指派 `EAM_Class_Expert`）。
 2. **A (Accountable)**：子代理提交 PR 或結果後，主代理必須遷移到該任務領域 **A** 的專家進行審查與批准。
@@ -98,7 +98,7 @@
 
 為確保程式碼品質與開發的嚴謹性，本專案導入5 Whys (WHY-WHY要因分析)、魚骨圖、對策評估矩陣與PDPC異常防禦機制。
 
-詳細QC規格與指引請見：[Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md](file:///d:/EventAlertMod/Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md)。
+詳細QC規格與指引請見：[Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md](22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md)。
 後續開發遵循要求：
 1. **Bug診斷**：遇到任何運行時崩潰或邏輯Bug，必須先執行**5個為什麼分析**與**魚骨圖要因分析**，追查根本原因，並讀取問題記錄中。
 2. **對策擬定**：設計複雜方案時，必須在 `implementation_plan.md` 提出至少兩個候選方案，並以對策矩陣從效果、吸力、感覺、安全等維度進行量化評分。
@@ -115,35 +115,49 @@
 
 ---
 
-## 預定義子代理專家目錄 (預定義子代理專家)
-本專案預先配置了16個子代理專家角色，封面API安全、執行優化、Lua基礎、UI渲染與13個職業的實戰監控專家團。主代理與開發者可在需要時，直接透過專家的職務定位進行派工與呼叫：
+## 預定義子代理專家目錄（24 位）
 
-### 1. 核心開發與架構專家
-* **EAM_API_Security_Expert (API 與安全防禦專家)**
-* **職責**：專注12.x API邊界與Secret/Protected值限制審查，解析安全原則讀取（`issecretvalue`、`canaccessvalue`、`canaccesstable`）、`DurationObject`雙軌安全通道與Tooltip Scraping降級預警。
-* **EAM_Performance_Expert（符合污染控制專家）**
-    * **職責**：主導Hot Path零GC（零時分配）控制、Taint避讓策略（非安全框架隔離、InCombatLockdown限制延遲）、以及`IconPool`框架重複使用最佳化。
-* **EAM_UI_Renderer_Expert（UI 與渲染架構專家）**
-    * **職責**：專注UI與資料嚴格分離（渲染器只消費歸一化狀態）、`IconPool`與`CooldownFrame`渲染管理、選項選單版面與12.0.7原生文字綁定的實作。
-* **EAM_Addon_Architect (插件開發與架構專家)**
-    * **職責**：魔獸世界插件開發專家，熟悉FrameXML、Taint 、安全模板、SavedVariables結構與主流插件協作架構。
-* **EAM_Lua_VM_Expert (Lua虛擬機器與編譯最佳化專家)**
-    * **職責**：關注0-GC演算、閉包優化、記憶體管理、本地Inline pcall 匿名閉包開銷與底層元表機制評估。
-* **EAM_Security_Auditor (安全性與 Taint 稽核專家)**
-* **職責**：針對「原生ScrollingMessageFrame原始解密法」、「一鍵硬體事件提權宏」、「官方UI資料爬蟲（UI Scraping）」等高漏洞漏洞進行生命防週期阻塞與優化平穩降級稽核。
+本節提供派工時的角色摘要；完整縮寫、責任邊界及唯一問責者以 `Docs/21_RACI_EXPERTS_MATRIX.md` 為準。
 
-### 2.玩家體驗與實戰監控專家
-* **EAM_UX_Gameplay_Expert（玩法與UX體驗專家）**
-* **職責**：熟悉12.x各職業、疫情機制刷新點提示、DOT/BUFF監控、視覺疲勞優化與戰鬥場景動態載入避讓。
-* **EAM_Class_Expert (職業專精專家代表)**
-    * **職責**：代表13個職業、39個專精進行實戰監控配置與最佳化，提供30%的疫情臨界秒數與資源防災閾值。
-* **EAM_Class_Tanks (坦克專精智庫)**
-* **職責**：代表血DK、復仇DH、防騎、防戰、酒僧、熊德6大坦克，針對主動減傷、生存Buff與Boss尖峰傷害減傷預警給予配置建議。
-* **EAM_Class_Healers (治療專精智庫)**
-* **職責**：代表補德、神/戒牧、補僧、補薩、補騎、恩補喚能師6大治療，針對多目標HoT覆蓋、隨機觸發過程與團隊框架藍耗提供實戰建議。
-* **EAM_Class_Melee (近戰DPS專精智庫)**
-    * **職責**：代表賊、戰、DH、聖騎、DK、武僧、增強薩、貓德，針對能量/符文連續資源節奏與DOT流血的流行病刷新提供建議。
-* **EAM_Class_Ranged（遠端DPS專精智庫）**
-    * **職責**：代表法、術、暗牧、鳥德、要素薩、獵、喚能師，針對多目標DoT維持、過程瞬時發置頂與移動可用技能引導提供建議。
-* **EAM_Tank_Pro (頂尖坦克玩家代表)**、**EAM_Healer_Pro (頂尖治療玩家代表)**、**EAM_Melee_DPS_Pro (近戰輸出玩家代表)**、**EAM_Ranged_DPS_Pro (遠程輸出玩家代表)**
-* **職責**：分別代表各個目標，以高玩實戰視角為EAM提供極限狀態監控與視線優先級建議。
+### 證據等級與能力邊界
+
+- `文件已查證`：具有官方公告、官方 UI 原始碼或 Warcraft Wiki 修訂來源。
+- `靜態通過`：只代表語法或靜態掃描通過。
+- `Mock 通過`：只代表模擬環境通過。
+- `PTR 實機通過`：需記錄 PTR build、操作步驟與結果。
+- `Retail 實機通過`：需記錄正式服 build、角色／場景、taint 與 Lua error 證據。
+- 子代理角色只是派工規格，不代表常駐代理、遊戲客戶端或實機能力已存在。沒有 WoW 客戶端與人類操作證據時，不得宣稱實機通過。
+
+### 1. 核心、API 與渲染（6 位）
+
+- `EAM_Addon_Architect`：核心架構、模組邊界、載入順序與安全鏈設計。
+- `EAM_API_Security_Expert`：Retail API、Secret／Protected Data 與 taint 安全決策。
+- `EAM_Performance_Expert`：CPU、GC、事件頻率與框架池效能預算。
+- `EAM_UI_Renderer_Expert`：Renderer、IconPool、DurationObject 與設定介面。
+- `EAM_Lua_VM_Expert`：Lua 語義、資料結構、閉包與局部熱路徑最佳化。
+- `EAM_Security_Auditor`：獨立檢查污染、繞過與 protected chain 風險，不參與自行核准其稽核對象。
+
+### 2. 玩家體驗與職業監控（10 位）
+
+- `EAM_UX_Gameplay_Expert`：資訊層級、視覺負擔與戰鬥可用性。
+- `EAM_Class_Expert`：職業、專精、英雄天賦與 spellID 資料負責人。
+- `EAM_Class_Tanks`、`EAM_Class_Healers`、`EAM_Class_Melee`、`EAM_Class_Ranged`：四類專精智庫。
+- `EAM_Tank_Pro`、`EAM_Healer_Pro`、`EAM_Melee_DPS_Pro`、`EAM_Ranged_DPS_Pro`：玩家實戰諮詢席，不可取代 API 或實機證據。
+
+### 3. 測試、資料、發布與治理（8 位）
+
+- `EAM_Mock_Sandbox_Expert`：Mock、單元與整合測試；不得把模擬結果稱為實機結果。
+- `EAM_Data_Guard_Expert`：SavedVariables schema、WTF 遷移與設定相容性。
+- `EAM_DevOps_Release_Expert`：TOC、靜態驗證、封裝、CI 與發布門檻。
+- `EAM_Combat_Scraper_Expert`：戰鬥資料候選蒐集；輸出必須再經 SPEC／SEC 驗證。
+- `EAM_API_Change_Intelligence_Expert`（`APICHG`）：從 12.0.0 起追蹤 API change summaries、TOC／revision、官方公告與 UI source diff，產出版本差異、遷移窗口與架構預警。
+- `EAM_Aura_121_Migration_Expert`（`AURA121`）：12.1 AuraContainer／AuraButton、Forbidden Aspects、UnitAura 退場條件與行為遷移。
+- `EAM_Retail_Client_QA_Expert`（`RQA`）：Retail／PTR 實機案例、taint log、Lua error、CPU／GC 證據與驗證簽收。無遊戲環境時只能設計與判讀測試。
+- `EAM_Documentation_Governance_Expert`（`DOC`）：Facts-of-Truth、來源日期、驗證狀態、Markdown→HTML 單向同步與 `EAMCODE placeholder` 污染門檻。
+
+### 新增角色禁止事項
+
+- `APICHG` 不得取代 `SEC` 的安全終審，不得把 Wiki revision time 當成 patch 發布日期，也不得宣稱未執行的 PTR／Retail 實機結果。
+- `AURA121` 不得設計 Secret／Forbidden Aspect 繞過；通用安全終審仍由 `SEC` 負責。
+- `RQA` 不得自行宣稱未執行的客戶端測試通過，也不得由被測模組作者自行取代。
+- `DOC` 不得裁決 API 技術真偽；API 事實由 `SEC/AURA121` 提供，文件角色負責來源與狀態一致性。

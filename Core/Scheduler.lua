@@ -100,12 +100,18 @@ end
 
 function Scheduler.after(delay, callback, owner)
     if not callback then
-        return
+        return false, "callbackUnavailable"
+    end
+
+    if delay == nil then
+        delay = 0
+    elseif not Util.isSafeNonNegativeNumber(delay) then
+        return false, "unsafeDelay"
     end
 
     local count = Scheduler.count + 1
     local task = acquireTask()
-    task.dueAt = (api.GetTime and api.GetTime() or 0) + (delay or 0)
+    task.dueAt = (api.GetTime and api.GetTime() or 0) + delay
     task.callback = callback
     task.owner = owner
     Scheduler.tasks[count] = task
@@ -114,4 +120,5 @@ function Scheduler.after(delay, callback, owner)
     if frame then
         frame:SetScript("OnUpdate", onUpdate)
     end
+    return true
 end

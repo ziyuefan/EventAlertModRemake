@@ -40,7 +40,6 @@ local _, EAM = ...
 local api = EAM.API
 local Util = EAM.Util
 local IconPool = EAM.UI.IconPool
-local ShadowHostService = EAM.Services.ShadowHostService
 
 local Renderer = {
     frames = {},
@@ -102,10 +101,13 @@ end
 
 local function onLegacyTimerUpdate()
     local now = api.GetTime and api.GetTime() or 0
+    if not Util.isSafeNumber(now) then
+        return
+    end
     local hasTimer = false
     
     for icon, expirationTime in pairs(activeLegacyTimers) do
-        local timeLeft = expirationTime - now
+        local timeLeft = Util.isSafeNumber(expirationTime) and expirationTime - now or 0
         if timeLeft > 0 then
             hasTimer = true
             local text
@@ -138,7 +140,7 @@ local function onLegacyTimerUpdate()
 end
 
 function Renderer.registerLegacyTimer(icon, expirationTime)
-    if not icon or not expirationTime then return end
+    if not icon or not Util.isSafeNumber(expirationTime) then return end
     activeLegacyTimers[icon] = expirationTime
     
     if not legacyTimerFrame then
@@ -422,12 +424,7 @@ function Renderer.render(alertState, frameName)
         icon.isParasite = nil
     end
 
-    -- 影子載體動態吸附與傳統排版切換 (已放棄與 CDM 掛勾，強制設為 false)
-    local useCDM = false
     local hostIcon = nil
-    if useCDM and ShadowHostService then
-        hostIcon = ShadowHostService.GetHostIcon(alertState.spellID or alertState.id, alertState.name, alertState.icon)
-    end
     local shouldBeParasite = (hostIcon ~= nil)
     
     if icon.isParasite ~= shouldBeParasite then
@@ -609,7 +606,7 @@ function Renderer.render(alertState, frameName)
             rendered.cooldownDuration = nil
         end
         Renderer.unregisterLegacyTimer(icon)
-    elseif timer and timer.startTime and timer.duration and timer.duration > 0 then
+    elseif timer and Util.isSafeNumber(timer.startTime) and Util.isSafePositiveNumber(timer.duration) then
         if rendered.cooldownStart ~= timer.startTime or rendered.cooldownDuration ~= timer.duration then
             icon.cooldown:SetCooldown(timer.startTime, timer.duration)
             rendered.cooldownStart = timer.startTime
@@ -624,7 +621,7 @@ function Renderer.render(alertState, frameName)
         end
         
         -- 走降級定時 OnUpdate 字串倒數通道
-        if timer.expirationTime and not Util.isSecretValue(timer.expirationTime) then
+        if Util.isSafeNumber(timer.expirationTime) then
             Renderer.registerLegacyTimer(icon, timer.expirationTime)
         else
             Renderer.unregisterLegacyTimer(icon)
@@ -669,15 +666,16 @@ function Renderer.render(alertState, frameName)
         end
     end
 
-    if icon.overlay and icon.cooldown then
-        pcall(function()
-            icon.overlay:SetFrameLevel(icon.cooldown:GetFrameLevel() + 5)
-        end)
+    if icon.overlay and icon.cooldown and icon.cooldown.GetFrameLevel then
+        local cooldownLevel = icon.cooldown:GetFrameLevel()
+        if Util.isSafeNumber(cooldownLevel) then
+            icon.overlay:SetFrameLevel(cooldownLevel + 5)
+        end
     end
 
     -- 註冊/更新 Scheduler 延時回收 token
     local duration = timer and timer.duration
-    if duration and duration > 0 then
+    if Util.isSafePositiveNumber(duration) then
         if rendered.activeToken then
             rendered.activeToken.active = false
             rendered.activeToken = nil

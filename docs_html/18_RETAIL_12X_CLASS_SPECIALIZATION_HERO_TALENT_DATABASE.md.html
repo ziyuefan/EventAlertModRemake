@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -644,232 +644,232 @@
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-12x-midnight-professional-specialization-and-hero-talent-extreme-practical-database-1207">EventAlertMod 12.x Midnight professional specialization and hero talent extreme practical database (12.0.7)</h1>
-<p>This document records in detail the core monitoring configuration and actual combat calibration indicators of <strong>13 professions, 39 specializations</strong>, and <strong>28 hero talents</strong> supported by EventAlertMod (EAM) in the official version 12.0.7 of the World of Warcraft server. This information serves as an authoritative reference for AddOn localization option filtering, one-click loading of default values, and future AI agent maintenance of equipment libraries.</p>
+<h1 id="eventalertmod-12x-1207">EventAlertMod 12.x 午夜職業專精與英雄天賦極限實戰資料庫(12.0.7)</h1>
+<p>本文件詳細記載了EventAlertMod（EAM）在魔獸世界服正式12.0.7版本中，所支援的<strong>13個職業、39個專精</strong>，以及<strong>28個英雄天賦</strong>的核心監控配置與實戰校對指標。此資料作為AddOn本地化選項篩選、一鍵載入預設值以及未來AI代理維護裝備庫時的權威參考資料。</p>
 <hr />
-<h2 id="explanation-of-monitoring-configuration-field-attributes">🛠️ Explanation of monitoring configuration field attributes</h2>
-<p>In the library configuration, in addition to the commonly used <code>id</code> (weapon ID) and <code>type</code> (weapon monitoring type, such as <code>Aura</code>, <code>spellCooldown</code>), we have also configured the following advanced attributes for actual combat optimization:</p>
+<h2 id="_1">🛠️ 監控配置欄位屬性解釋</h2>
+<p>在庫配置中，除了常用的<code>id</code>（武器ID）與<code>type</code>（武器監控類型，如<code>aura</code>、<code>spellCooldown</code>）之外，我們也為實戰優化配置了下列進階屬性：</p>
 <ul>
-<li><strong><code>unit</code></strong>: The monitored unit target, usually <code>"player"</code> (the player itself) or <code>"target"</code> (the current target), and the pet is <code>"pet"</code>.</li>
-<li><strong><code>pandemicTime</code></strong>: Pandemic Glow (unknown bright frame)** Effect prompts have been rearranged.</li>
-<li><strong><code>maxStacksAlert</code></strong>: Number of overflow foolproof layers. When the number of layers reaches this value, a highlight or special window will be used to remind the player to occupy resources to prevent waste.</li>
-<li><strong><code>minStacksAlert</code></strong>: Minimum alarm level. The alarm (or attention reminder) will start when the number of occurrence levels reaches this value.</li>
-<li><strong><code>showValue</code></strong>: Numerical monitoring. It is mainly used to protect the absorption amount (such as the warrior ignores pain, the monk's wine of god), and the dynamic value will be displayed on the icon.</li>
-<li><strong><code>glowOnApply</code></strong>: Glows when cast. Enables highlight glow immediately when the halo is applied.</li>
-<li><strong><code>grayOnMove</code></strong>: Mobile is grayed out. When the player is detected to be moving and there is no movement casting buff, the icon will reduce the drainage level (Alpha = 0.3), indicating that the spell cannot be cast.</li>
-<li><strong><code>moveBuffs</code></strong>: List of mobile casting buffs. As long as the player has the Buffs in this list (such as Ice Float, Suspension, Spirit Walker's Gift), the icon will not be grayed out even while moving.</li>
-<li><strong><code>burstFilterActive</code></strong>: Outbreak alert flag. When a specific outbreak buff (such as burning) is activated, the epidemic of this infectious disease will be automatically lit or a low-priority alarm will be prompted to reduce line of sight interference.</li>
+<li><strong><code>unit</code></strong>：監控的單位目標，通常為<code>"player"</code>（玩家本身）或<code>"target"</code>（當前目標），寵物為<code>"pet"</code>。</li>
+<li><strong><code>pandemicTime</code></strong>: Pandemic Glow（未知亮框）** 效果提示重新整理。</li>
+<li><strong><code>maxStacksAlert</code></strong>：溢位防呆層數。當有層數達到此值時，會以高亮或特殊視窗提醒玩家佔用資源，以防止浪費。</li>
+<li><strong><code>minStacksAlert</code></strong>：最低警報層數。當發生層數達到此值時才開始警報（或註意提醒）。</li>
+<li><strong><code>showValue</code></strong>：數值監控。主要用於防護吸收量（如戰士無視苦痛、武僧天神酒），會在圖示上動態數值。</li>
+<li><strong><code>glowOnApply</code></strong>：施放時發光。當光環應用時立即啟用高亮發光。</li>
+<li><strong><code>grayOnMove</code></strong>：移動置灰。當感知到玩家移動且無移動施法Buff時，圖示會降低排水度（Alpha = 0.3），提示無法施放。</li>
+<li><strong><code>moveBuffs</code></strong>: 移動施法 Buff 清單。只要玩家身上有此列表中的 Buff（如冰浮、懸空、靈行者之賜），即使在移動中，圖標也不置灰。</li>
+<li><strong><code>burstFilterActive</code></strong>：爆發警報標記。當特定的爆發Buff（如燃燒）啟動時，自動點亮此傳染病的流行病或提示低優先級警報，減少視線幹擾。</li>
 </ul>
 <hr />
-<h2 id="30-pandemic-critical-seconds-accurate-proofreading">📌 30% Pandemic Critical Seconds Accurate Proofreading</h2>
-<p>In the official World of Warcraft server, DoT/HoT refresh follows the <strong>Pandemic (lossless inheritance) rules</strong>, that is, when the remaining time is less than "30% of the original base duration", it is refreshed, and the remaining time can be used in the next round without loss.</p>
-<h3 id="core-dothot-epidemic-time-school-correction-and-modification-table">Core DoT/HoT epidemic time school correction and modification table</h3>
+<h2 id="30-pandemic">📌 30% Pandemic 臨界秒數精確校對</h2>
+<p>在魔獸世界正式服中，DoT/HoT刷新遵循<strong>大流行（無損繼承）規則</strong>，即在剩餘時間低於「原始基礎持續時間的30%」時重新整理，可將剩餘時間無損下一輪。</p>
+<h3 id="dothot">核心DoT/HoT疫情時間學校對與修改表</h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Occupation and specialization</th>
-<th style="text-align: left;">Skill name (spell name)</th>
-<th style="text-align: left;">Code ID (code ID)</th>
-<th style="text-align: left;">Base duration</th>
-<th style="text-align: left;"><strong>30% critical value</strong></th>
-<th style="text-align: left;">Actual combat proofreading and output cycle reasons</th>
+<th style="text-align: left;">職業與專精</th>
+<th style="text-align: left;">技能名稱（法術名稱）</th>
+<th style="text-align: left;">符碼 ID (符碼 ID)</th>
+<th style="text-align: left;">基礎持續時間</th>
+<th style="text-align: left;"><strong>30% 臨界值</strong></th>
+<th style="text-align: left;">實戰校對與輸出循環原因</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>Hunter (Beast Control)</strong></td>
-<td style="text-align: left;">Pet Frenzy (Frenzy)</td>
+<td style="text-align: left;"><strong>獵人 (野獸控制)</strong></td>
+<td style="text-align: left;">寵物狂亂 (Frenzy)</td>
 <td style="text-align: left;">268877</td>
-<td style="text-align: left;">268877 268877 268877 8.0 seconds</td>
-<td style="text-align: left;"><strong>2.4 seconds</strong></td>
-<td style="text-align: left;">Beastmaster's Frenzy base lasts 8s. The old version 1.8s 6s error message, in actual combat will cause the barb to be too late and quickly form a 3-stack gap. 2.4s is perfectly on the low side.</td>
+<td style="text-align: left;">268877 268877 268877 8.0 秒</td>
+<td style="text-align: left;"><strong>2.4 秒</strong></td>
+<td style="text-align: left;">獸王狂亂基礎持續8s。舊版1.8s 6s錯誤提示，實戰中會導致倒刺過遲快速形成3疊層斷檔。 2.4s完美為矮點。</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Hunter (Shooting/Survival)</strong></td>
-<td style="text-align: left;">Black Arrow (Black Arrow)</td>
+<td style="text-align: left;"><strong>獵人（射擊/生存）</strong></td>
+<td style="text-align: left;">黑箭（黑箭）</td>
 <td style="text-align: left;">430703</td>
-<td style="text-align: left;">430703 430703 430703 18.0 seconds</td>
-<td style="text-align: left;"><strong>5.4 seconds</strong></td>
-<td style="text-align: left;">The Black Arrow of the Dark Ranger hero talent has a core DoT of 18s, and the 30% critical should be 5.4s.</td>
+<td style="text-align: left;">430703 430703 430703 18.0 秒</td>
+<td style="text-align: left;"><strong>5.4 秒</strong></td>
+<td style="text-align: left;">黑暗遊俠英雄天賦的黑箭為18s的核心DoT，30%臨界應為5.4s。</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Paladin (Holy)</strong></td>
-<td style="text-align: left;">Dawn</td>
-<td style="text-align: left;">Dawn 427447</td>
-<td style="text-align: left;">427447 8.0 seconds</td>
-<td style="text-align: left;"><strong>2.4 seconds</strong></td>
-<td style="text-align: left;">Dawn of Sun Herald hero talent lasts 8 seconds. 2.4 seconds can make up for the dawn in time and maintain the best treatment/damage coverage.</td>
+<td style="text-align: left;"><strong>聖騎士（神聖）</strong></td>
+<td style="text-align: left;">曙光</td>
+<td style="text-align: left;">曙光427447</td>
+<td style="text-align: left;">427447 8.0 秒</td>
+<td style="text-align: left;"><strong>2.4 秒</strong></td>
+<td style="text-align: left;">烈日先驅英雄天賦之曙光持續8秒。 2.4秒能在時間補上曙光，維持最佳治療/傷害覆蓋率。</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Evoker (Supplement)</strong></td>
-<td style="text-align: left;">Obsidian Power (Ebon Might)</td>
+<td style="text-align: left;"><strong>喚能師(增補)</strong></td>
+<td style="text-align: left;">黑曜力 (Ebon Might)</td>
 <td style="text-align: left;">395152</td>
-<td style="text-align: left;">395152 395152 395152 5.0 seconds</td>
-<td style="text-align: left;"><strong>1.5 seconds</strong></td>
-<td style="text-align: left;">Supplements the core buff base for 5 seconds. 1.5 seconds is the perfect refresh point. Premature casting of defense will disrupt the charging rhythm.</td>
+<td style="text-align: left;">395152 395152 395152 5.0 秒</td>
+<td style="text-align: left;"><strong>1.5 秒</strong></td>
+<td style="text-align: left;">增補核心Buff基礎持續5秒。 1.5秒為完美刷新點，防禦過早施法打亂蓄力節奏。</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Warlock (Hell Summoning)</strong></td>
-<td style="text-align: left;">Wither (Wither)</td>
+<td style="text-align: left;"><strong>術士（地獄召喚）</strong></td>
+<td style="text-align: left;">枯萎術 (Wither)</td>
 <td style="text-align: left;">427821</td>
-<td style="text-align: left;">427821 427821 427821 14.0 seconds</td>
-<td style="text-align: left;"><strong>4.2 seconds</strong></td>
-<td style="text-align: left;">Replacement Corruption/Sacrifice, 14s base duration, 30% is 4.2s.</td>
+<td style="text-align: left;">427821 427821 427821 14.0 秒</td>
+<td style="text-align: left;"><strong>4.2 秒</strong></td>
+<td style="text-align: left;">取代術腐蝕/獻祭，14s基礎持續，30%為4.2s。</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Druid (Feral)</strong></td>
-<td style="text-align: left;">Wild Thorns (Vine)</td>
+<td style="text-align: left;"><strong>德魯伊（野性）</strong></td>
+<td style="text-align: left;">荒野荊棘（藤蔓）</td>
 <td style="text-align: left;">426821</td>
-<td style="text-align: left;">426821 426821 426821 12.0 seconds</td>
-<td style="text-align: left;"><strong>3.6 seconds</strong></td>
-<td style="text-align: left;">The Wild Thorns of the Wild Stalker hero talent lasts 12s, 30%</td>
+<td style="text-align: left;">426821 426821 426821 12.0 秒</td>
+<td style="text-align: left;"><strong>3.6 秒</strong></td>
+<td style="text-align: left;">荒野追獵者英雄天賦的荒野荊棘持續12s，30%</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Rogue (Thug/Subtlety)</strong></td>
-<td style="text-align: left;">Flawless Form</td>
+<td style="text-align: left;"><strong>盜賊（暴徒/敏銳）</strong></td>
+<td style="text-align: left;">完美無瑕(Flawless Form)</td>
 <td style="text-align: left;">429311</td>
-<td style="text-align: left;">429311 429311 429311 12.0 seconds</td>
-<td style="text-align: left;"><strong>3.6 seconds</strong></td>
-<td style="text-align: left;">Deceiver core buff base lasts 12s, 30% should be 3.6s.</td>
+<td style="text-align: left;">429311 429311 429311 12.0 秒</td>
+<td style="text-align: left;"><strong>3.6 秒</strong></td>
+<td style="text-align: left;">欺詐者核心Buff基礎持續12s，30%應為3.6s。</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="resource-overflow-prevention-and-high-energy-prevention-solution-strategy-resource-safety-margin">⚡ Resource overflow prevention and high-energy prevention solution strategy (resource safety margin)</h2>
-<p>In combat, overflow of core resources must be prevented. The definition of EAM is configured with "critical layers" and "anti-fixation threshold", giving players a strong glowing highlight prompt when resources are about to overflow, and prioritizing consumption.</p>
+<h2 id="_2">⚡ 資源防溢位與高能防解決策略（資源安全邊際）</h2>
+<p>在戰鬥中，必須預防核心資源的溢出。 EAM的定義配置了「臨界層數」與「防固定閾值」，在即將資源溢出時給予玩家強烈的發光高亮提示，優先消耗。</p>
 <ol>
-<li><strong>Mage: Arcane - Void Precision (382445)</strong></li>
-<li><strong>Mechanism</strong>: Maximum 2 levels. When the number of layers = 2, the next arcane impact/barrage will disappear.</li>
-<li><strong>Foolproof</strong>: <code>maxStacksAlert = 2</code>. When the number of layers reaches 2, the icon will glow strongly to guide the consumption, preventing subsequent layers of Archmage's Touch from being wasted due to missile casting.</li>
-<li><strong>Mage: Skysplitter - Magic Shard (Splinter, 444621)</strong></li>
-<li><strong>Mechanism</strong>: Automatically released up to level 8.</li>
-<li><strong>Foolproof</strong>: <code>maxStacksAlert = 8</code>.</li>
-<li><strong>Shaman: Enhancement - Maelstrom Weapon (344179)</strong></li>
-<li><strong>Mechanism</strong>: The talent can be upgraded to 10 levels, but if it is not released at 10 levels, subsequent melee white words and storm strikes will cause the clue vortex to fail.</li>
-<li><strong>Foolproof</strong>: <code>maxStacksAlert = 10</code>. When reaching the 10th floor, the vortex weapon icon on the headset turns to a super glowing state, forcing the player to intersperse instant lightning bolts/elemental shocks.</li>
-<li><strong>Warrior: Weapons/Protection - Colossus Might (434947)</strong></li>
-<li><strong>Mechanism</strong>: Maximum 10 layers, providing a large amount of skill damage gain.</li>
-<li><strong>Foolproof</strong>: <code>maxStacksAlert = 10</code>, <code>minStacksAlert = 3</code>. It is inconspicuous when there are less than 3 layers, but when it reaches 10 layers, it will start to explode and highlight, prompting the player to enter a violent killing or actively venting force output.</li>
-<li><strong>Warlock: Demonology - Demon Core (Demon Core, 264173)</strong></li>
-<li><strong>Mechanism</strong>: Up to 4 layers can be stored. If it reaches level 4 without consuming it, the core generated when the imp dies or the tyrant disappears will malfunction and be lost.</li>
-<li><strong>Foolproof</strong>: <code>maxStacksAlert = 4</code>. Forced to highlight when 4 layers are reached, prompting immediate casting of Demonic Arrow.</li>
-<li><strong>Death Knight: Blood - Bone Shield (Bone Shield, 195181)</strong></li>
-<li><strong>Mechanism</strong>: Anti-tank core. It needs to be maintained above 5 layers to enjoy the full damage reduction and bone shield gain.</li>
-<li><strong>Modify foolproofing</strong>: <code>minStacksAlert = 5</code> (actual in 12.0.7, originally 3). When the number of layers of the player's bone shield is lower than 5, the icon will trigger a highlighted head (foolproof warning), prompting the player to cast the Host Split Guidance.</li>
+<li><strong>法師：秘法 - 虛空精準 (Void Precision, 382445)</strong></li>
+<li><strong>機制</strong>：最大2層。當層數=2時，下一個秘法衝擊/彈幕必消。</li>
+<li><strong>防呆</strong>：<code>maxStacksAlert = 2</code>。當層數達到2時，圖示強烈發光，引導消耗，防止後續大法師之觸因飛彈施放造成層數浪費。</li>
+<li><strong>法師：裂空者 - 魔法碎片 (Splinter, 444621)</strong></li>
+<li><strong>機制</strong>：最高至8層自動釋放。</li>
+<li><strong>防呆</strong>：<code>maxStacksAlert = 8</code>。</li>
+<li><strong>薩滿：增強 - 渦渦武器 (Maelstrom Weapon, 344179)</strong></li>
+<li><strong>機制</strong>：天賦可升級至10層，但滿10層若不釋放，後續近戰白字與風暴打擊會造成線索渦流失敗。</li>
+<li><strong>防呆</strong>：<code>maxStacksAlert = 10</code>。到達10樓時，耳機渦流武器圖示轉為特大發光狀態，強制玩家穿插瞬發閃電箭/元素衝擊。</li>
+<li><strong>戰士：武器/防護 - 巨像之力 (Colossus Might, 434947)</strong></li>
+<li><strong>機制</strong>：最大10層，提供大量技能傷害增益。</li>
+<li><strong>防呆</strong>：<code>maxStacksAlert = 10</code>, <code>minStacksAlert = 3</code>。小於3層時不顯眼，但疊滿10層時啟動爆發高亮，提示玩家進入狂暴斬殺或主動洩力輸出。</li>
+<li><strong>術士：惡魔學問 - 惡魔核心 (惡魔核心, 264173)</strong></li>
+<li><strong>機制</strong>：最大可儲存4層。若達到4層而不消耗，小鬼死亡或暴君消失時產生的核心將發生故障損失。</li>
+<li><strong>防呆</strong>：<code>maxStacksAlert = 4</code>。在滿4層時強制高亮，提示立即施放瞬發惡魔之箭。</li>
+<li><strong>死亡騎士：血液 - 骸骨之盾 (Bone Shield, 195181)</strong></li>
+<li><strong>機制</strong>：防戰坦核心。需維持在5層以上才能享受完整減傷與骨盾增益。</li>
+<li><strong>修改防呆</strong>：<code>minStacksAlert = 5</code> (12.0.7實戰，原為3)。當玩家骨盾層數低於5層時，圖示觸發高亮頭部（防呆警告），促使玩家施放主機分裂指引。</li>
 </ol>
 <hr />
-<h2 id="burst-period-de-noising">🔇Burst period De-noising</h2>
-<p>During the outbreak period, the player's GCD is extremely compact. At this time, EAM should enter the "burst strategy mode" and trigger "noise icons" such as irrelevant conventional cooling, defense and protection, and focus all resources on the core trigger output and short CD burst skills.</p>
-<h3 id="wake-up-and-highlight-filtering-rules-burst-filtering">Wake-up and highlight filtering rules (Burst Filtering)</h3>
+<h2 id="burst-period-de-noising">🔇 爆發超載噪音與噪音優先級 (Burst period De-noising)</h2>
+<p>在爆發期，玩家的GCD極為緊湊。此時，EAM應進入「爆發策略模式」，引發無關的常規冷卻、防禦防護等「雜訊圖示」，而應將視線全部資源集中在核心觸發輸出與短CD爆發技上。</p>
+<h3 id="burst-filtering">喚醒與高亮篩選規則（Burst Filtering）</h3>
 <ul>
-<li><strong>Mage (Fire-Burn 190319 Period)</strong>:</li>
-<li><strong>HIDDEN</strong>: An epidemic of deadly triggers from hidden live bombs (live bombs, 117828). Because the burning period is all instantaneous Pyroblast and Fire Blast, manually replenishing bombs is a serious waste of GCD and DPS loss.<ul>
-<li><strong>Highlight</strong>: Strongly highlight "Pyroblast! (48107)" and "Frostfire Empowerment (444625)".</li>
+<li><strong>法師（火焰-燃燒190319期間）</strong>：</li>
+<li><strong>隱藏</strong>：隱藏活動炸彈（活彈，117828）的流行病致命引發。因為燃燒期間全為瞬發炎爆術與火焰衝擊，手動補炸彈是嚴重的GCD浪費與DPS流失。<ul>
+<li><strong>高亮</strong>：強烈高亮「炎爆術！(48107)」與「霜火賦能(444625)」。</li>
 </ul>
 </li>
-<li><strong>Warlock (Affliction - Summon Dark Eye 205180 / Rot Soul Rot 198590 Period)</strong>:</li>
-<li><strong>Highlight</strong>: Enlarge the display of the epidemic area of ​​Agony and Wither by 1.2 times, and adjust the critical second glow to red buttocks. Ensure 100% DoT coverage during the outbreak period, and squeeze out every bit of damage to increase.</li>
-<li><strong>Death Knight (Frost - Pillar of Frost 51271 Period)</strong>:<ul>
-<li><strong>Disarm</strong>: Icon that activates survival skills such as Anti-Magic Goggles and Frozen Fortitude (move to purple or hide cooldown).</li>
+<li><strong>術士 (痛苦 - 召喚黑眼 205180 / 腐靈魂爛 198590 期間)</strong>：</li>
+<li><strong>高亮</strong>：將痛楚（Agony）、枯萎術（Wither）的疫情區域顯示放大1.2倍，加上臨界秒數發光調整為紅色臀部。確保爆發期100%覆蓋DoT，乾榨每一點增傷。</li>
+<li><strong>死亡騎士 (冰霜 - 冰霜之柱 51271 期間)</strong>：<ul>
+<li><strong>解除</strong>：激發反魔法護目鏡、冰封之韌等生存技能的圖示（移至紫色或隱藏冷卻）。</li>
 </ul>
 </li>
-<li><strong>Highlight</strong>: Highlight the instant annihilation of Remorseless Winter (196770) and Killing Machine (51270).</li>
-<li><strong>Paladin (Retribution - Avenging Wrath 31884 period)</strong>:<ul>
-<li><strong>Highlight</strong>: Set the Holy Hammer (431398) and Holy Will (223817) to be highlighted and displayed in the center to guide the insertion of non-destructive skills.</li>
+<li><strong>高亮</strong>：大高亮冷酷嚴冬(Remorseless Winter, 196770)與殺戮機器(51270)的瞬間發湮滅。</li>
+<li><strong>聖騎士 (懲戒 - 復仇之怒 31884 期間)</strong>：<ul>
+<li><strong>高亮</strong>：將聖天之鎚(431398)與神聖意志(223817)設定為高亮，置中顯示，以引導無損技能插入。</li>
 </ul>
 </li>
 </ul>
 <hr />
-<h2 id="move-and-move-to-get-dynamic-guidance-of-skills-dynamic-projection-and-gray-display">🏃 Move and move to get dynamic guidance of skills (dynamic projection and gray display)</h2>
-<p>In the highly dynamic Great Rift and raid battles of 12.0.7, casting decisions during movement are the watershed that distinguishes top ranged/healing players. The design of EAM implements "action dynamic guidance":
-When there is a player <strong>moving state</strong> (<code>GetUnitSpeed("player") &gt; 0</code>), and there is <strong>no movement casting buff</strong> on him (such as the mage "Ice Floe", the shaman "Spirit Walker's Gift", the evocation master "Hanging"):
-* <strong>Reading Skill</strong>: Automatically grayed out (Alpha = 0.3), indicating that it cannot be cast at the moment to avoid interruption of player reading.
-* <strong>Instant skill/Trigger skill</strong>: Maintain 100% brightness or highlight to guide players to keep GCD running when moving.
-* <strong>Once the player obtains the Movement Casting Buff, or stops moving</strong>: All skills immediately return to normal.</p>
-<h3 id="reading-skill-graying-and-transient-highlighting-mapping-table">Reading skill graying and transient highlighting mapping table</h3>
+<h2 id="_3">🏃 移動走位可以獲得技能動態引導（動態投射和灰顯）</h2>
+<p>在12.0.7的高動態大祕境與團本戰鬥中，走位期間的施法判定是區分頂尖遠程/治療玩家的分水嶺。 EAM的設計實作了「行動動態引導」：
+當有玩家<strong>移動狀態</strong>（<code>GetUnitSpeed("player") &gt; 0</code>），且身上<strong>沒有移動施法Buff</strong>（如法師「浮冰」、薩滿「靈行者之賜」、喚能師「懸空」）時：
+* <strong>讀條技能</strong>：自動置灰（Alpha = 0.3），提示目前無法施放，避免玩家原地讀條中斷。
+* <strong>瞬發技能/觸發技能</strong>：維持100%亮度或高亮，引導玩家在走位時維持GCD運轉。
+* <strong>一旦玩家獲得移動施法Buff，或停止移動</strong>：所有技能立即恢復正常。</p>
+<h3 id="_4">讀條技能置灰與瞬態發高亮映射表</h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Profession and Specialization</th>
-<th style="text-align: left;">Moving Spellcasting Protection Buff ID (not grayed out)</th>
-<th style="text-align: left;">[Greyed] reading skill while moving (Alpha 0.3)</th>
-<th style="text-align: left;">[Highlighted/Normal] prompt skill while moving</th>
+<th style="text-align: left;">職業與專精</th>
+<th style="text-align: left;">移動施法防護Buff ID (不置灰)</th>
+<th style="text-align: left;">移動中【置灰】的讀條技能(Alpha 0.3)</th>
+<th style="text-align: left;">移動中【高亮/正常】的瞬發技能</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong>Mage (Arcane)</strong></td>
-<td style="text-align: left;">Ice Floe (108839)</td>
-<td style="text-align: left;">Arcane Blast (5143), Awakening (12051)</td>
-<td style="text-align: left;">Arcane Barrage (30451), Instant Arcane Missile (only with Energy Saving Casting Buff)</td>
+<td style="text-align: left;"><strong>法師(秘法)</strong></td>
+<td style="text-align: left;">浮冰(108839)</td>
+<td style="text-align: left;">秘法衝擊 (5143)、喚醒 (12051)</td>
+<td style="text-align: left;">秘法彈幕 (30451)、瞬發秘法飛彈 (僅在有節能施法 Buff 下)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Mage</strong></td>
-<td style="text-align: left;">Ice Floe (108839)</td>
-<td style="text-align: left;">Fireball (133), Flame Storm (2120)</td>
-<td style="text-align: left;">(48107), Phoenix Flame (257541), Scorch (2948, with mobile casting talent)</td>
+<td style="text-align: left;"><strong>法師</strong></td>
+<td style="text-align: left;">浮冰(108839)</td>
+<td style="text-align: left;">火球術 (133)、烈焰風暴 (2120)</td>
+<td style="text-align: left;">(48107)、鳳凰之焰 (257541)、灼燒 (2948, 有移動施法天賦)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Mage (Frost)</strong></td>
-<td style="text-align: left;">Ice Floe (108839)</td>
-<td style="text-align: left;">Ice Arrow (116), Glacier Spear (228597)</td>
-<td style="text-align: left;">Ice Spear (30455), Instant Ice Storm (when there is brain freeze)</td>
+<td style="text-align: left;"><strong>法師(冰霜)</strong></td>
+<td style="text-align: left;">浮冰(108839)</td>
+<td style="text-align: left;">寒冰箭 (116)、 冰川長槍 (228597)</td>
+<td style="text-align: left;">冰槍術(30455)、瞬間發冰風暴(有腦凍結時)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Druid (Balance)</strong></td>
-<td style="text-align: left;">None (requires regular casting)</td>
-<td style="text-align: left;">Wrath (5176), Starfire (2912)</td>
-<td style="text-align: left;">Starsurge (78674), Starfall (191034), Moonfire/Sunfire</td>
+<td style="text-align: left;"><strong>德魯伊 (平衡)</strong></td>
+<td style="text-align: left;">無（需常規施法）</td>
+<td style="text-align: left;">憤怒 (5176)、星火術 (2912)</td>
+<td style="text-align: left;">星術湧 (78674)、星辰墜落 (191034)、月火/陽火術</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Warlock (Universal)</strong></td>
-<td style="text-align: left;">None (requires regular casting)</td>
-<td style="text-align: left;">Shadowbolt (686), Incinerate (29722), Catastrophic Rapture (319697), Hand of Gul'dan</td>
-<td style="text-align: left;">Agony (980), Blight (427821), Instant Demonic Arrow (with Demonic Core)</td>
+<td style="text-align: left;"><strong>術士（通用）</strong></td>
+<td style="text-align: left;">無（需常規施法）</td>
+<td style="text-align: left;">暗影箭 (686)、燒盡 (29722)、災難狂歡 (319697)、古爾丹之手</td>
+<td style="text-align: left;">痛楚 (980)、枯萎術 (427821)、瞬發惡魔之箭 (有惡魔核心時)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Shaman (Elemental)</strong></td>
-<td style="text-align: left;">Gift of the Spirit Walker (79206)</td>
-<td style="text-align: left;">Lightning Bolt (188196), Lava Burst (51505, without instant buff)</td>
-<td style="text-align: left;">Storm (452201, instant), Earth Shock (8042), Flame Shock (452201, instant), Earth Shock (8042), Flame Shock (183891, 12891) (183899)</td>
+<td style="text-align: left;"><strong>薩滿 (元素)</strong></td>
+<td style="text-align: left;">靈行者之賜 (79206)</td>
+<td style="text-align: left;">閃電箭 (188196)、熔岩爆裂 (51505, 無瞬發 Buff 時)</td>
+<td style="text-align: left;">狂風暴雨 (452201, 瞬發)、大地震擊 (8042)、烈焰震擊 (452201, 瞬發)、大地震擊 (8042)、烈焰震擊 (183891, 12891) (183899)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong>Evocation Master (Destruction)</strong></td>
-<td style="text-align: left;">Suspension (358267)</td>
-<td style="text-align: left;">Proximity (356995), Blush Firefly (361461)</td>
-<td style="text-align: left;">Azure Strike (362969)</td>
+<td style="text-align: left;"><strong>喚能師(破滅)</strong></td>
+<td style="text-align: left;">懸空 (358267)</td>
+<td style="text-align: left;">鄰近(356995)、腮紅螢(361461)</td>
+<td style="text-align: left;">蔚藍打擊(362969)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="1207-expert-review-modification-and-optimization-solution-record">⚖️ 12.0.7 Expert review modification and optimization solution record</h2>
-<p>In the review meeting of the All Experts Joint Meeting on 2026-06-06, representatives of various professions and players proposed the following modifications for the monitoring of tanks and melee/remote survival buffs, and have been 100% written back to <code>Data/SpellArray.lua</code>:</p>
+<h2 id="1207">⚖️ 12.0.7 專家會審修改與最佳化解決記錄</h2>
+<p>在2026-06-06的全體專家聯席會議審定會議中，各職業與玩家代表針對坦克與近戰/遠程生存Buff的監控提出了以下修改，並已100%回寫至<code>Data/SpellArray.lua</code>中：</p>
 <ol>
-<li><strong>Skeleton Shield (DK Blood)</strong>:</li>
-<li><strong>Resolution</strong>: Change the minimum number of alert levels <code>minStacksAlert</code> from 3 to <strong>5</strong>. In actual high-level combat, if the bone shield is below 5 layers, it is a high-risk state, and early warning is required.</li>
-<li><strong>Demon Spike (DH Revenge)</strong>:</li>
-<li><strong>Resolution</strong>: Added <code>glowRequiresCharge = true</code> (refill will be prompted only when the hand is charged) and <code>vacuumAlert</code> (yellow defense blank warning color will be issued when there are no spikes and no charge).</li>
-<li><strong>Shield of Justice (Paladin Protection)</strong>:</li>
-<li><strong>Resolution</strong>: Added <code>holyPowerOverflowAlert = 5</code> (the anti-overflow bit is forced to be highlighted when the Holy Energy reaches 5 blocks), and when <code>glowRequiresHolyPower = 3</code>, the refill light is allowed.</li>
-<li><strong>Shield Block (Warrior Protection)</strong>:</li>
-<li><strong>Resolution</strong>: Added <code>vacuumAlert = true</code>, and added a red outage warning when there is no blocking buff and the blocking charge is available.</li>
-<li><strong>Ignore Pain (Warrior Protection)</strong>:</li>
-<li><strong>Resolution</strong>: Enabling <code>showPercentOfMaxHP = true</code> will display absorbed shield amount as a percentage of max health. When it is greater than the upper limit of 85%, it becomes darker (anti-seepage brushing), and when it is less than 10% and the anger is sufficient, it is weakly triggered.</li>
-<li><strong>Iron××(Druid Guardian)</strong>:</li>
-<li><strong>Resolution</strong>: ** Completely remove the invalid <code>pandemicTime = 1.8</code> **. The iron mechanism ×× is independently timed by the upper level and cannot be refilled or rearranged. Changed to <code>showTotalStacks = true</code> (shows how many total stacks there are currently), and enabled <code>rageOverflowAlert</code> to highlight the anger-reducing prompt when rage &gt;= 90 and stacks &lt; 2.</li>
-<li><strong>Wild Thorns (Druid Feral)</strong>:</li>
-<li><strong>Resolution</strong> modified: <code>pandemicTime</code> is <strong>1.8 seconds</strong> (was 4.5 seconds). The basic duration of Wild Vine is 6 seconds, and the 30% critical value is 1.8 seconds. Setting it to 4.5 will cause the bright frame to be invalid as soon as it is applied.</li>
-<li><strong>Drunken Master (Monk Robin)</strong>:</li>
-<li><strong>Resolution</strong>: Introducing <code>dynamicStaggerScaling = true</code>, the three-color rendering of Drunken Master no longer refers to Blizzard's maximum health shot, but is instead determined by "shot with blood deduction per second" (green: &lt;3% | yellow: 3%~6% | red: &gt;=6%). The combination of Tianshen wine and quenching elixir of 8 layers or above glows golden and bright.</li>
-<li><strong>Storm (Shaman enhancement)</strong>:</li>
-<li><strong>Resolution</strong>: Added [Stormbringer] hero talent core to trigger <code>Storm (ID: 452201)</code>, which will be forced to light up when triggered.</li>
-<li><strong>Core Treatment HoT Dual Track Epidemic Unlock</strong>:<ul>
-<li><strong>Resolution</strong>: Subsequent reconstruction of AuraService should lift the <code>isDebuff</code> restriction so that Helpful Aura (such as Rejuvenation and Mist of Resurrection) can also experience the Pandemic Glow of lossless inheritance.</li>
+<li><strong>骸骨之盾 (DK 鮮血)</strong>：</li>
+<li><strong>決議</strong>：將最少警報層數 <code>minStacksAlert</code> 由 3 修改為 <strong>5</strong>。高層實戰中低於 5 層骨盾屬於高危險狀態，必須提早預警。</li>
+<li><strong>惡魔尖刺（DH復仇）</strong>：</li>
+<li><strong>決議</strong>：新增<code>glowRequiresCharge = true</code>（手上有充能才提示續杯）與<code>vacuumAlert</code>（無尖刺且無充能時發出/黃色防禦空白警告色）。</li>
+<li><strong>正義盾擊（聖騎防護）</strong>：</li>
+<li><strong>決議</strong>：新增<code>holyPowerOverflowAlert = 5</code>（聖能滿5格時強制高亮防溢位），且<code>glowRequiresHolyPower = 3</code>時允許續杯發光。</li>
+<li><strong>盾牌格擋（戰士防護）</strong>：</li>
+<li><strong>決議</strong>：新增<code>vacuumAlert = true</code>，加上無格擋Buff且格擋充能可用時，彈出紅色斷檔警告。</li>
+<li><strong>無視苦痛（戰士防護）</strong>：</li>
+<li><strong>決議</strong>：啟用<code>showPercentOfMaxHP = true</code>將吸收盾量以最大生命值百分比顯示。當大於85%上限時變暗（防滲過刷），低於10%且怒氣足時微弱觸發。</li>
+<li><strong>鐵××（德魯伊守護者）</strong>：</li>
+<li><strong>決議</strong>：<strong>徹底刪除無效的<code>pandemicTime = 1.8</code> </strong>。鐵機制××為高層獨立計時，無法續杯重新整理。改為<code>showTotalStacks = true</code>（顯示目前總共有多少層數），並在怒氣 &gt;= 90 且層數 &lt; 2 時啟用<code>rageOverflowAlert</code>高亮消怒提示。</li>
+<li><strong>荒野荊棘（德魯伊野性）</strong>：</li>
+<li><strong>決議</strong>修改：<code>pandemicTime</code> 為 <strong>1.8 秒</strong>（原為 4.5 秒）。荒野之藤基礎持續 6 秒，30% 臨界值為 1.8 秒，設定 4.5 會導致剛套用即無效亮框。</li>
+<li><strong>醉拳(武僧羅賓)</strong>：</li>
+<li><strong>決議</strong>：引入<code>dynamicStaggerScaling = true</code>，醉拳三色渲染不再參考暴雪最大血量射擊，改以「每秒扣血射擊」判定（綠色:&lt;3% | 黃色: 3%~6% | 紅色：&gt;=6%）。天神酒與8層以上淬鏈靈藥實作組合發光金色高亮。</li>
+<li><strong>狂風暴雨 (薩滿增強)</strong>：</li>
+<li><strong>決議</strong>：新增【風暴使者】英雄天賦核心觸發<code>狂風暴雨(ID:452201)</code>，觸發時強制亮起發光。</li>
+<li><strong>核心治療HoT雙軌疫情解鎖</strong>：<ul>
+<li><strong>決議</strong>：後續AuraService重構應解除<code>isDebuff</code>限制，使Helpful Aura（如回春術、復甦之霧）也能經歷無損繼承的Pandemic Glow。</li>
 </ul>
 </li>
 </ol>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -885,7 +885,7 @@ When there is a player <strong>moving state</strong> (<code>GetUnitSpeed("player
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -894,7 +894,7 @@ When there is a player <strong>moving state</strong> (<code>GetUnitSpeed("player
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

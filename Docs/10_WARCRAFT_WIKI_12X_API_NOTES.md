@@ -712,3 +712,12 @@ EAM 12.x 架構應用採用：
 - 工具提示解析只作低頻後備。
 - 渲染器不查API。
 - SavedVariables 永遠不儲存執行時間/secret 狀態。
+
+## 12.1.0 build 68914 實作核對（2026-07-26）
+
+- `CustomAuraContainerTemplate`、`CustomAuraButtonTemplate`、`SetUnit`、`AddAuraSlot`、`AddAuraGroup`、`SetAuraGroupLayout` 已納入 feature detection。
+- 排序型別來自 FrameXML 全域 `AuraContainerSortMethod`／`AuraContainerSortDirection`，不是 `Enum.UnitAuraSortRule`。
+- 公開 API 沒有 Remove Slot/Group；EAM 使用成功後換代、停用舊容器。
+- AuraButton 公開綁定使用 `SetIcon`、`SetDurationCooldown`、`SetDurationText`、`SetApplicationCount`、`SetSpellName`。
+- `C_UnitAuras.AddAuraSound`／`RemoveAuraSound` 與三種 trigger 已實作 ID 生命週期；實際播放待 PTR。
+- 固定證據版本與完整限制見 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`、`Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`。

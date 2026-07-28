@@ -126,3 +126,45 @@ EAM 狀態，消耗轉儲大量日誌。
 - 沒有戰鬥日誌垃圾/無用。
 - 沒有大型專案倉儲轉儲。
 - 字串僅在發生時建構明確的匯出指令。
+## 流程驗證報告
+
+流程測試使用獨立 schema，不與一般 DebugSnapshot 混合：
+
+```js
+{
+  schema: 1,
+  type: "EAM_FLOW_VALIDATION_REPORT",
+  suite: "quick|core|boundary|all",
+  status: "pass|fail",
+  environment: {
+    source: "offline-mock|retail-client",
+    interface: "number",
+    initialized: "boolean",
+    inCombat: "boolean",
+    locale: "string"
+  },
+  summary: {
+    total: "number",
+    passed: "number",
+    failed: "number",
+    skipped: "number",
+    pending: "number"
+  },
+  cases: [
+    {
+      id: "string",
+      suite: "string",
+      status: "pass|fail|skip|pending",
+      durationMs: "number",
+      message: "safe string"
+    }
+  ],
+  boundaryWarnings: []
+}
+```
+
+限制：
+
+- 不輸出 Secret／Protected 值、完整 SavedVariables 或原始 Aura／Cooldown facts。
+- `source` 必須保留，不能把 Offline Mock 改寫成 Retail／PTR。
+- 遊戲內最後報告以字串保存於 `EAM_FLOW_TEST_REPORT_JSON`，僅供使用者回灌。

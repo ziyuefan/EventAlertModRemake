@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -442,8 +442,8 @@
 <li>不使用<code>forceinsecure</code>，不嘗試繞過污染，也不加入壓制暴雪阻止行動的解決方法。</li>
 <li>發現污染、被阻止的動作、戰鬥鎖定錯誤時，需記錄到<code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
 </ul>
-<h2 id="aura-api">目前 Aura API 使用審核</h2>
-<p>目前主線參考：</p>
+<h2 id="aura-api">Aura API 世代邊界</h2>
+<p>下列 API 僅作 12.0.7 舊路徑與遷移稽核參考，不得直接帶入 12.1 Native backend：</p>
 <ul>
 <li><code>C_UnitAuras.GetBuffDataByIndex</code></li>
 <li><code>C_UnitAuras.GetDebuffDataByIndex</code></li>
@@ -461,14 +461,14 @@
 <li><code>GameTooltip:SetUnitAura</code></li>
 <li>舊版 <code>UnitAura</code> / <code>select(10, UnitAura(...))</code> 後備路徑</li>
 </ul>
-<p>重寫規則：</p>
+<p>12.1 Native backend 規則：</p>
 <ul>
-<li>Aura 事實必須來自安全結構化的正式服 Aura 數據，以穩定的 <code>NeverSecret</code> <code>AuraInstanceID</code> 為錨定。</li>
-<li><strong>阻止光環整合</strong>：對於不需要的或垃圾/無用光環，請利用本機「C_UnitAuras.AddBlockedAura(unit, auraInstanceID)」將過濾委託給 C++ 引擎。只有當插件的執行路徑完全不受污染時才必須呼叫此方法 (<code>AllowedWhenUntainted</code>)。</li>
-<li><strong>本機雙管道持續時間</strong>：偏好透過 <code>C_UnitAuras.GetAuraDuration</code> 檢索 C++ 黑盒 <code>DurationObject</code> 並直接提供給本機小工具（<code>CooldownFrame:SetCooldownFromDurationObject</code> 和 __EA__MCODE_13）。</li>
-<li><strong>大流行預測</strong>：DoT刷新檢查必須在戰鬥中將<code>C_UnitAuras.GetRefreshExtendedDuration(unit, auraInstanceID)</code>與<code>GetAuraBaseDuration * 1.3</code>進行比較，以繞過受限的數字<code>timeLeft</code>檢查。</li>
-<li>如果一个值是secret/protected/display-only，则标记<code>boundaryLimited</code>并且不要强制它通过正常的Lua比较或表键逻辑。</li>
-<li>不要將廣泛的遺留 UnitAura 解包映射保留為體系結構。</li>
+<li>不把 AuraInstanceID 視為 <code>NeverSecret</code> 穩定錨點，不呼叫 index／slot／instance-ID Aura getter，也不保存 AuraData。</li>
+<li>Aura 追蹤與顯示交由 <code>AuraContainer</code>／<code>AuraButton</code> 原生契約；EAM 只在 <code>initializeFrame</code> 綁定官方允許的顯示 Region。</li>
+<li>不對 <code>GetRefreshExtendedDuration</code>、<code>GetAuraBaseDuration</code>、duration、expirationTime 或 timeLeft 做 Lua 算術／比較來推導 Pandemic；無安全普通數字事實時必須降級。</li>
+<li>不在 Native backend 呼叫 <code>AddBlockedAura</code>／<code>ClearBlockedAuras</code>；若未來另案採用，必須先取得 12.1 文件與 PTR taint 證據。</li>
+<li>任何 Secret／protected／display-only 值不得字串化、比較、運算、序列化、作為 table key 或傳入自訂不安全鏈。</li>
+<li>12.0.7 舊資料抽取只能保留在明確隔離的相容路徑，不能回流 12.1 Native runtime。</li>
 </ul>
 <h2 id="api_1">当前冷却时间 API 使用情况审核</h2>
 <p>目前主線參考：</p>
@@ -562,14 +562,34 @@
 <li>配置的外部框架相依性。</li>
 <li><code>forceinsecure</code> 或任何 taint 繞過、抑制被阻止操作的解決方法。</li>
 </ul>
+<h2 id="2026-07-26121-auracontainer">2026-07-26：12.1 AuraContainer 邊界</h2>
+<ul>
+<li>Native 模式不註冊或解析 <code>UNIT_AURA</code>，也不呼叫 index/slot/instance-ID Aura getter。</li>
+<li><code>initializeFrame</code> 只綁定 Icon、DurationCooldown、DurationText、ApplicationCount 與 SpellName Region；不讀 AuraData。</li>
+<li>AuraButton 不以 <code>OnShow</code>、<code>OnHide</code>、<code>IsShown</code>、Hook 或事件推導狀態。</li>
+<li>Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性必須標 limitation。</li>
+<li>68914 允許戰鬥建立容器，但 EAM 仍採脫戰結構修改政策。</li>
+</ul>
+<h2 id="2026-07-27gametooltip-id-eam-popup">2026-07-27：GameTooltip ID 與 EAM 自有 Popup 邊界</h2>
+<ul>
+<li><code>TooltipDataProcessor.AddTooltipPostCall</code> 依 TooltipDataType 全域註冊；callback 立即以 <code>tooltip == GameTooltip</code> 排除其他 Tooltip。初始化必須冪等，因 FrameXML 沒有對應的解除註冊 API。</li>
+<li>post-call callback 只可追加 Tooltip 顯示文字與更新純 scalar candidate，不得在 callback 內建立、顯示或操作 Popup UI；Popup 只能由後續 <code>MODIFIER_STATE_CHANGED</code> 事件開啟。</li>
+<li>Spell／Item 僅在整個 <code>TooltipData</code> 與 <code>data.id</code> 通過 Secret/access/正整數檢查後顯示與暫存；候選只保留五秒且只含普通 scalar。</li>
+<li>Macro 不使用 <code>TooltipData.id</code>。<code>GameTooltip:GetProcessingTooltipInfo()</code> 與 getter metadata 是 PTR 68914 FrameXML 的實務來源，不是穩定 Generated API 契約；只有安全且來源為 <code>GetAction</code> 時，才以 action slot 呼叫 <code>GetActionInfo</code>，再由 <code>GetMacroSpell</code>／<code>GetMacroItem</code> 解析。任何 API、來源或值不可用時，一律降級為手動輸入法術／物品 ID。</li>
+<li>UnitAura callback 絕不讀取 <code>TooltipData</code>、AuraData、AuraButton、Aura index／slot／instance ID，也不解析剩餘時間或 Tooltip 文字。12.1 優先由官方 session CVar <code>tooltipShowAuraSpellIDs=1</code> 顯示 Aura ID；CVar 不存在、設定失敗或回讀失敗時，Tooltip／Popup 必須明示「官方 ID 顯示不可用」，只接受使用者輸入已知 ID。</li>
+<li>不使用 Ctrl+Alt+右鍵：<code>GLOBAL_MOUSE_DOWN</code> 只能觀察，不能抑制物品使用、裝備或 Blizzard action；12.1 AuraButton 又具 Forbidden Aspects。安全互動改為游標停留後按下精確 <code>Ctrl+Alt</code>，開啟 EAM 自有 Popup，再點擊 EAM 按鈕確認。</li>
+<li>Popup 不 Hook／覆寫 Blizzard <code>OnClick</code>、<code>OnMouseDown</code>、<code>OnMouseUp</code>，不註冊 secure action attribute，不模擬滑鼠事件。戰鬥、鍵盤焦點、Secret／不可讀值、缺少必要檢查 API、Tooltip 已隱藏、Tooltip 類型改變或候選逾時時一律 fail-closed；戰鬥中可追加安全顯示文字，但不得建立可於出戰後重播的 candidate。</li>
+<li>寫入只經 <code>SavedVariables.add*Alert()</code>；<code>action</code> 必須先通過安全字串與四種 EAM action 白名單。只有 <code>added</code>／<code>updated</code> 通知服務刷新，<code>unchanged</code> 不增加 revision，也不觸發不必要刷新。</li>
+<li>同型 Tooltip 的 generation／owner identity 沒有可安全依賴的公開契約；目前以最新 post-call 覆寫、五秒 TTL、shown 與 tooltip type 共同約束，仍須 PTR 快速切換實測。初始化採單次冪等，若載入當下 API 能力暫缺不會重試，以避免無解除 API 的 PostCall 重複註冊。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="retail-server-api-boundary">Retail server API boundary</h1>
-<h2 id="retail-server-12x-assumptions">Retail server 12.x assumptions</h2>
-<p>This rewrite targets Retail 12.x/Midnight-era API. All API notes in this file are considered file assumptions unless they have been loaded and tested on WoW Retail.</p>
-<p>Prefer namespaces:</p>
+<h1 id="api">正式服 API 邊界</h1>
+<h2 id="12x">正式服 12.x 假設</h2>
+<p>本重寫目標為 Retail 12.x / Midnight-era API。除非已在 WoW Retail 實機載入測試，否則本文件所有 API 筆記都視為文件假設。</p>
+<p>優先使用命名空間：</p>
 <ul>
 <li><code>C_AddOns</code></li>
 <li><code>C_Spell</code></li>
@@ -577,21 +597,23 @@
 <li><code>C_UnitAuras</code></li>
 <li><code>C_TooltipInfo</code></li>
 <li><code>AuraUtil</code></li>
-<li><code>C_Timer</code> Only via central dispatcher or explicit non-thermal settings
-The legacy decompression return phase content layer is not retained unless there are clear, strict, and documented Retail server security fallbacks.</li>
+<li><code>C_Timer</code> 僅透過中央調度程序或明確非熱設定</li>
 </ul>
-<h2 id="pollution-control-policy">Pollution Control Policy</h2>
-<p>The Warcraft Wiki's safe execution/taint document states that AddOn and <code>/script</code> are untrusted sources; once taint enters the protected/secure path, Blizzard UI actions may be starved during combat. EAM Avoiding polluting modifications must be considered an architectural boundary, not just a bug.</p>
-<p>Implementation rules:
-- No hooking, overwriting, redefining or monkey-patching Blizzard secure/protected functions, FrameXML core functions, action buttons, unit frames, nameplates, spell casting, targeting, item usage related paths.
-- Do not modify the protected frame's properties, parent, anchors, size, visibility, templates or click behavior in combat.
-- Not identifying secret/protected values, runtime caches, debugging objects or AddOn callbacks that could pollute the Blizzard framework's security chain.
-- EventRouter uses orphan frames; the frames are rendered for display only and do not assume safe operation or protected interaction.
-- When UIPalent frames are required, limit them to unprotected display purposes; if <code>InCombatLockdown()</code> is true, defer structural UI changes.
-- No use of <code>forceinsecure</code>, no attempts to bypass contamination, and no workarounds to suppress Blizzard blocking actions.
-- When contamination, blocked actions, or combat lock errors are discovered, they need to be logged to <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</p>
-<h2 id="currently-aura-api-uses-review">Currently Aura API uses review</h2>
-<p>Current main line reference:</p>
+<p>除非有明確、嚴格且已文件化的正式服安全後備，不保留舊式解壓縮返回相內容層。</p>
+<h2 id="_1">污染控制政策</h2>
+<p>Warcraft Wiki 的安全執行 / taint 文件指出，AddOn 與 <code>/script</code> 屬於不受信任來源；一旦 taint 進入 protected/secure 路徑，戰鬥中可能會導致 Blizzard UI 動作被匱乏。 EAM 必須把避免污染修改視為架構邊界，而不只視為 bug。</p>
+<p>實行規則：</p>
+<ul>
+<li>不鉤、覆寫、重新定義或猴子補丁 Blizzard secure/protected 函數、FrameXML 核心函數、動作按鈕、單位框架、銘牌、法術施法、瞄準、物品使用相關路徑。</li>
+<li>不在戰鬥中修改受保護框架的屬性、父級、錨點、大小、可見性、模板或點擊行為。</li>
+<li>不把secret/protected值、運行時快取、偵錯物件或addon回呼確定可能污染安全鏈的暴雪框架。</li>
+<li>EventRouter 使用孤兒框架；渲染框架僅作顯示，不承擔安全操作或受保護的互動。</li>
+<li>需要 UIParent 訊框時，限定為非 protected 顯示用途；若 <code>InCombatLockdown()</code> 為 true，延後結構性 UI 變更。</li>
+<li>不使用<code>forceinsecure</code>，不嘗試繞過污染，也不加入壓制暴雪阻止行動的解決方法。</li>
+<li>發現污染、被阻止的動作、戰鬥鎖定錯誤時，需記錄到<code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
+</ul>
+<h2 id="aura-api">Aura API 世代邊界</h2>
+<p>下列 API 僅作 12.0.7 舊路徑與遷移稽核參考，不得直接帶入 12.1 Native backend：</p>
 <ul>
 <li><code>C_UnitAuras.GetBuffDataByIndex</code></li>
 <li><code>C_UnitAuras.GetDebuffDataByIndex</code></li>
@@ -607,17 +629,19 @@ The legacy decompression return phase content layer is not retained unless there
 <li><code>AuraUtil.ForEachAura</code></li>
 <li><code>AuraUtil.FindAuraByName</code></li>
 <li><code>GameTooltip:SetUnitAura</code></li>
-<li>Legacy <code>UnitAura</code> / <code>select(10, UnitAura(...))</code> fallback path</li>
+<li>舊版 <code>UnitAura</code> / <code>select(10, UnitAura(...))</code> 後備路徑</li>
 </ul>
-<p>Rewrite rules:
-- Aura facts must come from securely structured Retail server Aura data, anchored by stable <code>NeverSecret</code> <code>AuraInstanceID</code>.
-- <strong>Block Halo Integration</strong>: For unwanted or junk/useless Halos, utilize native "C_UnitAuras.AddBlockedAura(unit, auraInstanceID)" to delegate filtering to the C++ engine. This method (<code>AllowedWhenUntainted</code>) must only be called if the plugin's execution path is completely untainted.
-- <strong>Native Dual Pipe Duration</strong>: Preference for retrieving the C++ black box <code>DurationObject</code> via <code>C_UnitAuras.GetAuraDuration</code> and serving it directly to native gadgets (<code>CooldownFrame:SetCooldownFromDurationObject</code> and __EA__MCODE_13).
-- <strong>Pandemic Prediction</strong>: DoT refresh checks must compare <code>C_UnitAuras.GetRefreshExtendedDuration(unit, auraInstanceID)</code> with <code>GetAuraBaseDuration * 1.3</code> in combat to bypass the restricted number <code>timeLeft</code> check.
-- If a value is secret/protected/display-only, mark <code>boundaryLimited</code> and do not force it to pass normal Lua comparison or table key logic.
-- Don't keep the extensive legacy UnitAura unpacking mapping as architecture.</p>
-<h2 id="current-cooling-time-api-usage-review">Current cooling time API usage review</h2>
-<p>Current main line reference:</p>
+<p>12.1 Native backend 規則：</p>
+<ul>
+<li>不把 AuraInstanceID 視為 <code>NeverSecret</code> 穩定錨點，不呼叫 index／slot／instance-ID Aura getter，也不保存 AuraData。</li>
+<li>Aura 追蹤與顯示交由 <code>AuraContainer</code>／<code>AuraButton</code> 原生契約；EAM 只在 <code>initializeFrame</code> 綁定官方允許的顯示 Region。</li>
+<li>不對 <code>GetRefreshExtendedDuration</code>、<code>GetAuraBaseDuration</code>、duration、expirationTime 或 timeLeft 做 Lua 算術／比較來推導 Pandemic；無安全普通數字事實時必須降級。</li>
+<li>不在 Native backend 呼叫 <code>AddBlockedAura</code>／<code>ClearBlockedAuras</code>；若未來另案採用，必須先取得 12.1 文件與 PTR taint 證據。</li>
+<li>任何 Secret／protected／display-only 值不得字串化、比較、運算、序列化、作為 table key 或傳入自訂不安全鏈。</li>
+<li>12.0.7 舊資料抽取只能保留在明確隔離的相容路徑，不能回流 12.1 Native runtime。</li>
+</ul>
+<h2 id="api_1">当前冷却时间 API 使用情况审核</h2>
+<p>目前主線參考：</p>
 <ul>
 <li><code>C_Spell.GetSpellCooldown</code></li>
 <li><code>C_Spell.GetSpellBaseCooldown</code></li>
@@ -627,89 +651,109 @@ The legacy decompression return phase content layer is not retained unless there
 <li><code>C_Spell.GetSpellLink</code></li>
 <li><code>C_Spell.IsSpellUsable</code></li>
 <li><code>C_Spell.DoesSpellExist</code></li>
-<li>Old version global <code>GetSpellCooldown</code>, <code>GetSpellInfo</code>, <code>GetSpellTexture</code>,
-<code>GetSpellLink</code>, <code>GetSpellCharges</code>, <code>IsUsableSpell</code></li>
+<li>旧版全域 <code>GetSpellCooldown</code>、<code>GetSpellInfo</code>、<code>GetSpellTexture</code>、
+  <code>GetSpellLink</code>、<code>GetSpellCharges</code>、<code>IsUsableSpell</code></li>
 <li><code>C_Secrets.ShouldSpellCooldownBeSecret</code></li>
-<li>GCD Spell ID <code>61304</code></li>
+<li>GCD 法術 ID <code>61304</code></li>
 </ul>
-<p>Rewrite rules:</p>
+<p>重寫規則：</p>
 <ul>
-<li>Prefer structured <code>C_Spell</code> returns.</li>
-<li>Treat cooldown facts as unavailable when secret/protected.</li>
-<li>Do not fake the cooldown start, duration, or expiration time.</li>
-<li>Avoid repeated cooldown queries every frame.</li>
+<li>偏好結構化的 <code>C_Spell</code> 回報。</li>
+<li>當秘密/protected時，將冷卻事實視為不可用。</li>
+<li>請勿偽造冷卻時間開始、持續時間或到期時間。</li>
+<li>避免每幀重複的冷卻時間查詢。</li>
 </ul>
-<h2 id="current-item-cooldown-api-use-review">Current item cooldown API Use review</h2>
-<p>Current main line reference:</p>
+<h2 id="api_2">目前物品冷卻 API 使用審核</h2>
+<p>目前主線參考：</p>
 <ul>
 <li><code>C_Item.GetItemCooldown</code></li>
 <li><code>C_Item.GetItemSpell</code></li>
 <li><code>C_Item.DoesItemExistByID</code></li>
-<li><code>C_Container.GetItemCooldown</code> as a fallback for an alias layer</li>
-<li>Old version global <code>GetItemCooldown</code>, <code>GetItemSpell</code></li>
+<li><code>C_Container.GetItemCooldown</code> 作為一個別名層的後備</li>
+<li>舊版全域 <code>GetItemCooldown</code>、<code>GetItemSpell</code></li>
 <li><code>GetInventoryItemCooldown</code></li>
 <li><code>GetInventoryItemID</code></li>
-<li>Optional <code>HeroDBC.DBC.ItemSpell</code></li>
-<li>Large item range scanning in <code>EventAlert_ItemSpellCache.lua</code></li>
+<li>可選 <code>HeroDBC.DBC.ItemSpell</code></li>
+<li><code>EventAlert_ItemSpellCache.lua</code> 中的大物品範圍掃描</li>
 </ul>
-<p>Rewrite rules:</p>
+<p>重寫規則：</p>
 <ul>
-<li>First supports direct itemID cooling time monitoring.</li>
-<li>Do not scan a wide range of items during normal operation.</li>
-<li>Any item-spell relationship cache must be opt-in, idle-only, interruptible,
-  FPS Awareness and combat awareness.</li>
+<li>首先支援直接itemID冷卻時間監控。</li>
+<li>請勿在正常運作時掃描大範圍的項目。</li>
+<li>任何物品-法術關係快取必須是選擇加入的、僅空閒的、可中斷的、
+  FPS 意識和戰鬥意識。</li>
 </ul>
-<h2 id="current-specialization-and-localization-api-review">Current specialization and localization API review</h2>
-<p>Current main line reference:</p>
+<h2 id="api_3">目前專業化和在地化 API 審核</h2>
+<p>目前主線參考：</p>
 <ul>
 <li><code>GetSpecializationInfoForClassID</code></li>
 <li><code>GetClassInfo</code></li>
 <li><code>GetSpecializationInfo</code></li>
 </ul>
-<p>Rewrite rules:</p>
+<p>重寫規則：</p>
 <ul>
-<li><strong>DYNAMIC LOCALIZATION</strong>: Use native API to query for match strings that are dynamically aligned with the client's current language setting, rather than hardcoding localization specialization or class names in the configuration UI.</li>
-<li><strong>Canonical dropdown filtering</strong>: Map category tags to category IDs (use static enum mapping, e.g. <code>CLASS_TOKEN_TO_ID</code> matches WoW category ID). Dynamically retrieve the canonical name via <code>GetSpecializationInfoForClassID(classID, specIndex)</code> (where <code>classID</code> is a number between 1 and 13 and <code>specIndex</code> is a number between 1 and 4).</li>
-<li><strong>Dual Path Fallback</strong>: When native localization API returns <code>nil</code> or null, use a static localization table (<code>EAM.L</code>) to implement reliable fallback mapping to ensure that UI elements always have readable names.</li>
+<li><strong>動態本地化</strong>：使用本機 API 來查詢與客戶端當前語言設定動態對齊的匹配字串，而不是在配置 UI 中對本地化專業化或類別名稱進行硬編碼。</li>
+<li><strong>規範下拉過濾</strong>：將類別標記映射到類別 ID（使用靜態枚舉映射，例如 <code>CLASS_TOKEN_TO_ID</code> 匹配 WoW 類別 ID）。透過 <code>GetSpecializationInfoForClassID(classID, specIndex)</code> 動態檢索規範名稱（其中 <code>classID</code> 是 1 到 13 之間的數字，<code>specIndex</code> 是 1 到 4 之間的數字）。</li>
+<li><strong>雙路徑回退</strong>：當本機本地化 API 傳回 <code>nil</code> 或空值時，使用靜態本地化表 (<code>EAM.L</code>) 實作可靠的回退映射，以確保 UI 元件始終具有可讀的名稱。</li>
 </ul>
-<h2 id="secretprotected-value-policy">Secret/Protected Value Policy</h2>
-<p>When data is not secure or available:</p>
+<h2 id="_2">秘密/受保護價值政策</h2>
+<p>當數據不安全或不可用時：</p>
 <ul>
-<li><strong>Four security checks API</strong>:</li>
-<li><code>issecretvalue(value)</code>: Check if a value is classified as secret.</li>
-<li><code>canaccessvalue(value)</code>: Determine whether the current context has permission to read a certain value.</li>
-<li><code>canaccesstable(table)</code>: Evaluates whether the table's keys and values ​​are readable.</li>
-<li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Check whether the table structure is restricted or contains secrets.</li>
-<li><strong>Table Index Protection (Critical)</strong>:</li>
-<li>AddOn MUST NOT index standard Lua tables using unvalidated keys that may be "secret values" (e.g. returning <code>spellId</code> or <code>text</code> during combat restrictions).</li>
-<li>Attempting to index a table using a key produces a fatal error: "Attempting to index a table that cannot be indexed using a key."</li>
-<li>Always use "if not issecretvalue(key) and canaccesstable(tbl) then ... end" to protect table lookups.</li>
-<li><strong>Data-Driven Tooltips and Privacy Defense</strong>:</li>
-<li>A direct <code>C_TooltipInfo</code> query (<code>GetUnitBuffByAuraInstanceID</code>) in the combat return structure <code>TooltipData</code> may be marked as a "secret table".</li>
-<li>When parsing static values ​​from <code>line.leftText</code>, be sure to use "if text and not issecretvalue(text) and canaccessvalue(text) then ... end" to prevent secret propagation.</li>
-<li><strong>None <code>TooltipUtil.SurfaceArgs</code></strong>: In 12.x/Midnight, the tooltip table is displayed natively. The <code>TooltipUtil.SurfaceArgs</code> helper has been completely removed; trying to call it throws a fatal "nil value" Lua error.</li>
-<li>Continue rendering safe state such as icon/name if available.</li>
-<li>Use timer mode <code>protected</code>, <code>displayOnly</code> or <code>unknown</code>.</li>
-<li>Added boundary warning for debugging status.</li>
-<li>Schedule non-combat refreshes only when it is safe to do so.</li>
-<li>Never confuse guesswork with fact.</li>
-<li>Never pass unsafe values ​​into the secure/protected UI chain.</li>
+<li><strong>四個安全性檢查 API</strong>：</li>
+<li><code>issecretvalue(value)</code>：檢查某個值是否被分類為秘密。</li>
+<li><code>canaccessvalue(value)</code>：確定目前上下文是否有權讀取某個值。</li>
+<li><code>canaccesstable(table)</code>：評估表的鍵和值是否可讀。</li>
+<li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>：檢查表格結構是否受限或包含機密。</li>
+<li><strong>表格索引保護（嚴重）</strong>：</li>
+<li>AddOns 絕對不能使用可能是「秘密值」的未經驗證的鍵來索引標準 Lua 表（例如，在戰鬥限制期間傳回 <code>spellId</code> 或 <code>text</code>）。</li>
+<li>嘗試使用金鑰對資料表進行索引會產生致命錯誤：「嘗試對無法使用金鑰進行索引的表進行索引」。</li>
+<li>總是使用「if not issecretvalue(key) and canaccesstable(tbl) then ... end」來保護表格查找。</li>
+<li><strong>資料驅動的工具提示與保密防禦</strong>：</li>
+<li>戰鬥返回結構 <code>TooltipData</code> 中的直接 <code>C_TooltipInfo</code> 查詢 (<code>GetUnitBuffByAuraInstanceID</code>) 可能被標記為「秘密表」。</li>
+<li>從 <code>line.leftText</code> 解析靜態值時，請務必使用「if text and not issecretvalue(text) and canaccessvalue(text) then ... end」來防止秘密傳播。</li>
+<li><strong>無 <code>TooltipUtil.SurfaceArgs</code></strong>：在 12.x / Midnight 中，工具提示表是原生顯示的。 <code>TooltipUtil.SurfaceArgs</code> 幫助器被<strong>完全刪除</strong>；嘗試呼叫它會拋出致命的「nil value」Lua 錯誤。</li>
+<li>繼續渲染安全狀態，例如 icon/name（如果可用）。</li>
+<li>使用計時器模式 <code>protected</code>、<code>displayOnly</code> 或 <code>unknown</code>。</li>
+<li>為偵錯狀態新增邊界警告。</li>
+<li>僅在安全的情況下才安排非戰鬥刷新。</li>
+<li>切勿將猜測值與事實混為一談。</li>
+<li>切勿將不安全的值傳遞到 secure/protected UI 鏈中。</li>
 </ul>
-<h2 id="intentionally-avoided-apimode">Intentionally avoided API/mode</h2>
+<h2 id="api_4">有意避免的 API/模式</h2>
 <ul>
-<li>Classic API branch.</li>
-<li>MOP/Cata/Wrath/TBC API returns the mapping.</li>
-<li><code>RegisterAllEvents</code>.</li>
-<li>Tooltip scan as normal source (only use it for low frequency static duration crawl fallback).</li>
-<li><code>TooltipUtil.SurfaceArgs</code> usage (always let the native engine display parameters).</li>
-<li>Scan a large number of items ID/combat during login.</li>
-<li>Each icon <code>SetScript("OnUpdate")</code>.</li>
-<li>Duplicate <code>C_Timer.After(function() ...)</code> chain in hot path.</li>
-<li>Configured external frame dependencies.</li>
-<li><code>forceinsecure</code> or any taint workaround to bypass or suppress blocked operations.</li>
+<li>經典 API 分支。</li>
+<li>MOP/Cata/Wrath/TBC API 傳回映射。</li>
+<li><code>RegisterAllEvents</code>。</li>
+<li>工具提示掃描作為普通資料來源（僅將其用於低頻靜態持續時間抓取回退）。</li>
+<li><code>TooltipUtil.SurfaceArgs</code> 用法（始終讓本機引擎顯示參數）。</li>
+<li>登入期間掃描大量物品 ID/combat。</li>
+<li>每個圖示<code>SetScript("OnUpdate")</code>。</li>
+<li>熱路徑中重複的<code>C_Timer.After(function() ...)</code>鏈。</li>
+<li>配置的外部框架相依性。</li>
+<li><code>forceinsecure</code> 或任何 taint 繞過、抑制被阻止操作的解決方法。</li>
+</ul>
+<h2 id="2026-07-26121-auracontainer">2026-07-26：12.1 AuraContainer 邊界</h2>
+<ul>
+<li>Native 模式不註冊或解析 <code>UNIT_AURA</code>，也不呼叫 index/slot/instance-ID Aura getter。</li>
+<li><code>initializeFrame</code> 只綁定 Icon、DurationCooldown、DurationText、ApplicationCount 與 SpellName Region；不讀 AuraData。</li>
+<li>AuraButton 不以 <code>OnShow</code>、<code>OnHide</code>、<code>IsShown</code>、Hook 或事件推導狀態。</li>
+<li>Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性必須標 limitation。</li>
+<li>68914 允許戰鬥建立容器，但 EAM 仍採脫戰結構修改政策。</li>
+</ul>
+<h2 id="2026-07-27gametooltip-id-eam-popup">2026-07-27：GameTooltip ID 與 EAM 自有 Popup 邊界</h2>
+<ul>
+<li><code>TooltipDataProcessor.AddTooltipPostCall</code> 依 TooltipDataType 全域註冊；callback 立即以 <code>tooltip == GameTooltip</code> 排除其他 Tooltip。初始化必須冪等，因 FrameXML 沒有對應的解除註冊 API。</li>
+<li>post-call callback 只可追加 Tooltip 顯示文字與更新純 scalar candidate，不得在 callback 內建立、顯示或操作 Popup UI；Popup 只能由後續 <code>MODIFIER_STATE_CHANGED</code> 事件開啟。</li>
+<li>Spell／Item 僅在整個 <code>TooltipData</code> 與 <code>data.id</code> 通過 Secret/access/正整數檢查後顯示與暫存；候選只保留五秒且只含普通 scalar。</li>
+<li>Macro 不使用 <code>TooltipData.id</code>。<code>GameTooltip:GetProcessingTooltipInfo()</code> 與 getter metadata 是 PTR 68914 FrameXML 的實務來源，不是穩定 Generated API 契約；只有安全且來源為 <code>GetAction</code> 時，才以 action slot 呼叫 <code>GetActionInfo</code>，再由 <code>GetMacroSpell</code>／<code>GetMacroItem</code> 解析。任何 API、來源或值不可用時，一律降級為手動輸入法術／物品 ID。</li>
+<li>UnitAura callback 絕不讀取 <code>TooltipData</code>、AuraData、AuraButton、Aura index／slot／instance ID，也不解析剩餘時間或 Tooltip 文字。12.1 優先由官方 session CVar <code>tooltipShowAuraSpellIDs=1</code> 顯示 Aura ID；CVar 不存在、設定失敗或回讀失敗時，Tooltip／Popup 必須明示「官方 ID 顯示不可用」，只接受使用者輸入已知 ID。</li>
+<li>不使用 Ctrl+Alt+右鍵：<code>GLOBAL_MOUSE_DOWN</code> 只能觀察，不能抑制物品使用、裝備或 Blizzard action；12.1 AuraButton 又具 Forbidden Aspects。安全互動改為游標停留後按下精確 <code>Ctrl+Alt</code>，開啟 EAM 自有 Popup，再點擊 EAM 按鈕確認。</li>
+<li>Popup 不 Hook／覆寫 Blizzard <code>OnClick</code>、<code>OnMouseDown</code>、<code>OnMouseUp</code>，不註冊 secure action attribute，不模擬滑鼠事件。戰鬥、鍵盤焦點、Secret／不可讀值、缺少必要檢查 API、Tooltip 已隱藏、Tooltip 類型改變或候選逾時時一律 fail-closed；戰鬥中可追加安全顯示文字，但不得建立可於出戰後重播的 candidate。</li>
+<li>寫入只經 <code>SavedVariables.add*Alert()</code>；<code>action</code> 必須先通過安全字串與四種 EAM action 白名單。只有 <code>added</code>／<code>updated</code> 通知服務刷新，<code>unchanged</code> 不增加 revision，也不觸發不必要刷新。</li>
+<li>同型 Tooltip 的 generation／owner identity 沒有可安全依賴的公開契約；目前以最新 post-call 覆寫、五秒 TTL、shown 與 tooltip type 共同約束，仍須 PTR 快速切換實測。初始化採單次冪等，若載入當下 API 能力暫缺不會重試，以避免無解除 API 的 PostCall 重複註冊。</li>
 </ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -725,7 +769,7 @@ The legacy decompression return phase content layer is not retained unless there
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -734,7 +778,7 @@ The legacy decompression return phase content layer is not retained unless there
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

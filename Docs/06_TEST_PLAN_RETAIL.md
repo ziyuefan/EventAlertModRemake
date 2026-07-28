@@ -3,6 +3,30 @@
 
 此文件通行證未執行任何即時正式服驗證。
 
+## 固定驗證流水線
+
+每次功能或架構變更依序執行：
+
+1. Secret／taint／熱路徑／TOC 靜態限制掃描。
+2. `Tools/CheckLuaSyntax.ps1`：Lua 5.1 語法。
+3. `Tools/Run-FlowValidation.ps1 -Suite all`：離線 Mock 流程。
+4. Retail／PTR 使用 `/eam test all` 或 Options「流程測試」按鈕。
+5. `Tools/Import-EAMFlowReport.ps1`：將 JSON 或 WTF 報告回灌開發環境。
+
+證據狀態必須分為靜態、語法、Mock、PTR、Retail。離線流程通過不能取代實機。
+
+### 離線流程案例
+
+- Main 初始化。
+- EventRouter 自訂事件 round-trip 與 handler 清理。
+- Scheduler 下一幀 callback 與 queue 歸零。
+- SavedVariables schema／API 契約。
+- Secret-safe scalar 普通值路徑。
+- RuntimeProbe schema。
+- JSON report round-trip。
+
+詳細規格見 `Docs/26_FLOW_VALIDATION_FRAMEWORK.md`。
+
 ## 靜態檢查
 
 - 確認僅正式服 TOC 處於活動狀態以進行重寫。
@@ -146,3 +170,29 @@
 - `github-issue` 輸出排除大量日誌和敏感的僅限本地的混亂。
 - 導出不會自動運作。
 - `/eam 匯出` 包含資料庫修訂、aura 快取計數、渲染器可見/deferred 計數和邊界警告計數。
+
+## 2026-07-26：12.1 Aura 驗證矩陣
+
+- 離線入口：`Tools/Run-FlowValidation.ps1 -Suite aura121`；全回歸使用 `-Suite all`。
+- 嚴格 mock 會拒絕未知 AuraContainer/AuraButton 方法，並計數 legacy getter、Slot/Group mutation 與 Sound ID。
+- 遊戲內入口：`/eam test aura121` 或流程面板「12.1 Aura」。
+- 必須在 `_ptr_` 實測 player Slot、target Slot、多 Aura Group、原生倒數、Tooltip、三種 Sound trigger、戰鬥 pending、taint/forbidden action。
+- 離線 pass 不得替代 RQA PTR 簽收；詳細清單見 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`。
+
+## 2026-07-27：Tooltip ID／Popup 流程驗證矩陣
+
+- 離線入口沿用 `Tools/Run-FlowValidation.ps1 -Suite boundary`；全回歸使用 `-Suite all`，不新增獨立測試按鈕。遊戲內沿用流程面板「邊界流程」與 JSON 報告回灌。
+- `tooltip_monitor.capability`：四種 post-call 各只註冊一次；重複 initialize 不得增加 callback；必須載入真正的 Popup frame，且按鈕必須綁定 `OnClick`；12.1 必須成功啟用 `tooltipShowAuraSpellIDs`。
+- `tooltip_monitor.offline_spell_item_routes`：真 Popup 顯示精確 ID／action，透過 `button:Click()` 分派 `OnClick` 後寫入隔離 DB；`added` 必須走正式 `Options.notifyConfigChanged()` 的 AuraContainer／Aura／Cooldown／ItemCooldown／Renderer 五個下游，第二次 `unchanged` 不增加 revision 或刷新。
+- `tooltip_monitor.offline_macro_resolution`：`TooltipData.id` 放入錯誤值，安全 `GetAction` 路徑須解析並實際提交 spell/item；非 `GetAction` 來源須以手動 ID 分別提交 spell/item。
+- `tooltip_monitor.offline_aura_manual_route`：Secret TooltipData 欄位讀取次數必須為零；真 Popup 以普通數字分別提交 player／target Aura；CVar 能力關閉時 Tooltip 與 Popup 必須使用手動已知 ID 提示。
+- `tooltip_monitor.offline_fail_closed`：callback 當下、戰鬥開窗、戰鬥中 hover 後出戰重播、EditBox 焦點、Tooltip 類型變更、Tooltip 隱藏、五秒逾時、額外 Shift／Meta、缺 Ctrl／Alt 均不得開啟；同類型連續候選必須取最後一筆。
+- `tooltip_monitor.offline_secret_scalars`：Secret spell、macro、manual 與 action 必須零算術、零字串化、零 table-key 操作、零 SavedVariables 寫入；受監控 table proxy 必須先自證能攔截 Secret key。
+- `tooltip_monitor.offline_db_isolation`：隔離 DB 與五下游 spy 在 callback 成功及刻意拋錯兩路都必須還原原 reference。
+- `runtime_probe.schema`：建立已知候選後序列化完整 snapshot 並建立人類可讀 lines，兩種輸出都不得出現候選 ID，狀態只能含匿名計數。
+- 每個寫入案例以獨立 DB 執行並在 `pcall` 後還原 `EAM.db`／`EAM_DB`，不可用 remove 動作污染 revision 來清理測試。
+- 2026-07-28 最終離線結果：`boundary` 10/10（`TestResults/EAM_FlowValidation_boundary_20260728_120708.json`）；`all` 24/24（`TestResults/EAM_FlowValidation_all_20260728_120708.json`）。第一次真 Popup 測試因未重新產生已消耗的 candidate 而 7/9，失敗報告 `TestResults/EAM_FlowValidation_boundary_20260727_042850.json` 保留追溯；中間通過報告亦保留。
+- `_ptr_` 實機：分別懸停 Spellbook、Action Bar Macro、Bag Item、player/target Aura；核對 ID 行、Ctrl+Alt Popup 位置、ESC／取消、added／unchanged、ReloadUI 後 CVar 重設、戰鬥拒絕、無 blocked action／taint／Forbidden 錯誤。
+- `_xptr_` 12.0.7 實機：Spell／Item／Macro 路由仍須工作；Aura 官方 CVar 若不存在，Tooltip／Popup 必須明示手動已知 ID，不得回退讀 AuraData。
+- 明確驗證原 Blizzard 行為未被攔截：一般左／右鍵操作與未按修飾鍵時應完全維持客戶端原行為。
+- 補測同型 Tooltip 快速切換的 generation／owner、初始化時 Tooltip API 暫缺、`/reload`／LoD，以及 Popup 開啟後立即進戰；離線 mock 不得替代這些 PTR 時序與 taint 證據。

@@ -25,6 +25,10 @@ graph TD
     E -->|Throttle & Batch| F[Renderer]
     F -->|Draw| G[UI / Icons]
 ```
+
+## 2026-07-26 實作狀態
+
+本藍圖原先以抽取/Redux 為主要設計。12.1 build 68914 的正式實作已改為 AuraContainer Native backend；Native Aura 不再進入 Redux AuraState、AlertManager 或 Renderer。12.0.7 Readable Legacy 才保留本文件的狀態管線。新事實來源為 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`。
 ---
 
 ## 二、 AuraStatePool：低GC儲存池設計

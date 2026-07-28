@@ -85,6 +85,7 @@ function DebugState.snapshot()
         derived = {
             migrationReport = savedVariables and savedVariables.migrationReport or nil,
             dbRevision = db and db.revision or 0,
+            flowValidation = EAM.Debug.FlowTestRunner and EAM.Debug.FlowTestRunner.getLastSummary() or nil,
             auraCache = auraService and {
                 playerInstances = countTableEntries(auraService.unitCaches and auraService.unitCaches.player and auraService.unitCaches.player.byInstance),
                 targetInstances = countTableEntries(auraService.unitCaches and auraService.unitCaches.target and auraService.unitCaches.target.byInstance),

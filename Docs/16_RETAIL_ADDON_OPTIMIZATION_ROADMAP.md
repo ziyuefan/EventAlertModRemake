@@ -100,3 +100,10 @@
 4. P3已有實測結果：用戶於12.0.7 PTR客戶端確認`C_DurationUtil.CreateDurationTextBinding`最小樣本可正常顯示。
 5.下一步應繼續實機驗證`UNIT_AURA` delta/full有效負載、DurationObject / DurationTextBinding整合、戰鬥佈局延遲、選項模板污染日誌。
 6. 實機確認後再補舊 EAM group/special power 行為、Options 啟用切換與 CurseForge `120007` 遊戲版本 ID。
+
+## 2026-07-26 路線狀態
+
+- Phase 1/2：能力層、規則編譯、schema v2、Legacy 隔離與安全 scalar/key 防護已完成。
+- Phase 3：player/target AuraContainer、Slot/Group、initializeFrame、脫戰 batch rebuild、Aura Sound 已完成 68914 契約 PoC。
+- Phase 4：嚴格離線流程與遊戲內報告入口完成；本輪 `all` suite 為 17/17。
+- 尚未完成：`_ptr_` 實機 RQA、taint/Forbidden、實際 sound、Reload UI 與效能簽收。

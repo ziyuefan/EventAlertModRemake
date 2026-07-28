@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        
+
     :root {
         --base-font-size: 16px;
         --bg-color: #0f172a;
@@ -20,7 +20,7 @@
         --code-color: #f1f5f9;
     }
 
-        
+
     html, body {
         overflow-x: hidden;
     }
@@ -35,33 +35,33 @@
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         color: var(--heading-color);
         margin-top: 1.5em;
         margin-bottom: 0.5em;
         font-weight: 600;
     }
-    
+
     h1 {
         font-size: 2.2rem;
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
         color: var(--accent-color);
     }
-    
+
     h2 {
         font-size: 1.7rem;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 8px;
         color: var(--heading-color);
     }
-    
+
     h3 {
         font-size: 1.35rem;
         color: var(--heading-color);
     }
-    
+
     h4 {
         font-size: 1.15rem;
         color: var(--accent-color);
@@ -70,35 +70,35 @@
         border-radius: 6px;
         display: inline-block;
     }
-    
+
     a {
         color: var(--accent-color);
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    
+
     a:hover {
         color: var(--accent-color);
         text-decoration: underline;
         opacity: 0.8;
     }
-    
+
     ul, ol {
         padding-left: 24px;
         margin-bottom: 20px;
     }
-    
+
     li {
         margin-bottom: 6px;
     }
-    
+
     hr {
         border: 0;
         height: 1px;
         background: var(--border-color);
         margin: 30px 0;
     }
-    
+
     code {
         font-family: 'Fira Code', 'Courier New', Courier, monospace;
         background-color: var(--panel-bg);
@@ -107,7 +107,7 @@
         color: var(--code-color);
         font-size: 0.9em;
     }
-    
+
     pre {
         background-color: var(--panel-bg);
         padding: 16px;
@@ -116,14 +116,14 @@
         border: 1px solid var(--border-color);
         margin: 20px 0;
     }
-    
+
     pre code {
         background-color: transparent;
         padding: 0;
         border-radius: 0;
         color: var(--text-color);
     }
-    
+
     blockquote {
         border-left: 4px solid var(--accent-color);
         padding: 10px 20px;
@@ -133,7 +133,7 @@
         color: var(--text-color);
         opacity: 0.85;
     }
-    
+
     img {
         max-width: 100%;
         height: auto;
@@ -142,7 +142,7 @@
         margin: 20px 0;
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
@@ -153,29 +153,29 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         border: 1px solid var(--border-color);
     }
-    
+
     th, td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     th {
         background-color: var(--bg-color);
         color: var(--accent-color);
         font-weight: 600;
         border-bottom: 2px solid var(--border-color);
     }
-    
+
     tr:last-child td {
         border-bottom: none;
     }
-    
+
     tr:hover {
         background-color: var(--panel-bg);
         opacity: 0.95;
     }
-    
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -186,7 +186,7 @@
         border: 1px solid var(--border-color);
         margin: 25px 0;
     }
-    
+
     /* Back Button */
     .back-btn {
         display: inline-flex;
@@ -200,13 +200,13 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
-    
+
     .back-btn:hover {
         background-color: var(--border-color);
         color: var(--accent-color);
         text-decoration: none;
     }
-    
+
     @media (max-width: 600px) {
         body {
             padding: 20px 10px;
@@ -215,8 +215,8 @@
             font-size: 1.8rem;
         }
     }
-    
-        
+
+
     /* Top Nav Bar Styles */
     .top-nav-bar {
         position: fixed;
@@ -232,7 +232,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    
+
     .nav-container {
         max-width: 1000px;
         height: 100%;
@@ -242,7 +242,7 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .nav-logo {
         font-family: 'Outfit', sans-serif;
         font-size: 1.2rem;
@@ -252,25 +252,25 @@
         letter-spacing: 0.5px;
         transition: color 0.3s ease;
     }
-    
+
     .nav-logo:hover {
         color: var(--heading-color);
         text-decoration: none;
         opacity: 0.9;
     }
-    
+
     .nav-controls {
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    
+
     .nav-control-group {
         display: flex;
         align-items: center;
         gap: 8px;
     }
-    
+
     .nav-label {
         font-size: 0.8rem;
         color: var(--text-color);
@@ -278,12 +278,12 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .control-options {
         display: flex;
         gap: 4px;
     }
-    
+
     .nav-btn {
         background: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -295,24 +295,24 @@
         transition: all 0.2s ease;
         outline: none;
     }
-    
+
     .nav-btn:hover {
         border-color: var(--accent-color);
         color: var(--heading-color);
     }
-    
+
     .nav-btn.active {
         background: var(--accent-color);
         color: var(--bg-color);
         border-color: var(--accent-color);
         font-weight: 600;
     }
-    
+
     .nav-theme-dots {
         display: flex;
         gap: 6px;
     }
-    
+
     .theme-dot {
         width: 18px;
         height: 18px;
@@ -321,23 +321,23 @@
         border: 2px solid transparent;
         transition: transform 0.1s ease, border-color 0.2s ease;
     }
-    
+
     .theme-dot:hover {
         transform: scale(1.2);
     }
-    
+
     .theme-dot.active {
         border-color: #ffffff;
         box-shadow: 0 0 0 2px var(--accent-color);
     }
-    
+
     .dot-blue { background-color: #38bdf8; }
     .dot-red { background-color: #ef4444; }
     .dot-green { background-color: #22c55e; }
     .dot-black { background-color: #000000; border: 1px solid #334155; }
     .dot-gray { background-color: #71717a; }
     .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
-    
+
     /* Responsive adjustment */
     @media (max-width: 768px) {
         .top-nav-bar {
@@ -375,7 +375,7 @@
     </style>
 </head>
 <body>
-    
+
     <div class="top-nav-bar">
         <div class="nav-container">
             <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
@@ -538,29 +538,69 @@ EAM 狀態，消耗轉儲大量日誌。</p>
 <li>沒有大型專案倉儲轉儲。</li>
 <li>字串僅在發生時建構明確的匯出指令。</li>
 </ul>
+<h2 id="_5">流程驗證報告</h2>
+<p>流程測試使用獨立 schema，不與一般 DebugSnapshot 混合：</p>
+<pre class="codehilite"><code class="language-js">{
+  schema: 1,
+  type: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
+  suite: &quot;quick|core|boundary|all&quot;,
+  status: &quot;pass|fail&quot;,
+  environment: {
+    source: &quot;offline-mock|retail-client&quot;,
+    interface: &quot;number&quot;,
+    initialized: &quot;boolean&quot;,
+    inCombat: &quot;boolean&quot;,
+    locale: &quot;string&quot;
+  },
+  summary: {
+    total: &quot;number&quot;,
+    passed: &quot;number&quot;,
+    failed: &quot;number&quot;,
+    skipped: &quot;number&quot;,
+    pending: &quot;number&quot;
+  },
+  cases: [
+    {
+      id: &quot;string&quot;,
+      suite: &quot;string&quot;,
+      status: &quot;pass|fail|skip|pending&quot;,
+      durationMs: &quot;number&quot;,
+      message: &quot;safe string&quot;
+    }
+  ],
+  boundaryWarnings: []
+}
+</code></pre>
+
+<p>限制：</p>
+<ul>
+<li>不輸出 Secret／Protected 值、完整 SavedVariables 或原始 Aura／Cooldown facts。</li>
+<li><code>source</code> 必須保留，不能把 Offline Mock 改寫成 Retail／PTR。</li>
+<li>遊戲內最後報告以字串保存於 <code>EAM_FLOW_TEST_REPORT_JSON</code>，僅供使用者回灌。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="ai-prompt-export-structure">AI prompt export structure</h1>
-<h2 id="purpose">Purpose</h2>
-<p>Mainly for debugging and exporting. It exists to aid users or artificial intelligence agents in checking
-EAM status, which consumes a large amount of log dumps.</p>
-<p>Model:</p>
+<h1 id="ai">AI提示匯出架構</h1>
+<h2 id="_1">目的</h2>
+<p>主要是進行除錯導出。它的存在是為了幫助用戶或人工智慧代理進行檢查
+EAM 狀態，消耗轉儲大量日誌。</p>
+<p>型號：</p>
 <ul>
-<li><code>debug-min</code>: Compact structure and fast support.</li>
-<li><code>analysis-full</code>: Detailed but limited status for architectural /debug analysis.</li>
-<li><code>github-issue</code>: User-readable problem payload.</li>
+<li><code>debug-min</code>：結構緊湊，可快速支援。</li>
+<li><code>analysis-full</code>：用於架構/debug 分析的詳細但有限的狀態。</li>
+<li><code>github-issue</code>：使用者可讀取的問題負載。</li>
 </ul>
-<h2 id="need-to-separate">Need to separate</h2>
-<p>Exports must be separated:
-- Facts: direct, safe API information;
-- Export: calculate UI/rendering status;
-- Manual annotations: the most important annotations from users;
-- boundaryWarnings: secret /protected/unsafe data restriction;
-- Environment: Construction, area settings, combat status, FPS, plug-in version.</p>
-<p>Don't confuse guesswork with facts.</p>
-<h2 id="simple-mode">Simple mode</h2>
+<h2 id="_2">需要分離</h2>
+<p>導出必須分開：
+- 事實：直接、安全的 API 資料；
+- 匯出：計算UI/渲染狀態；
+- 人工註記：使用者最重要的註解；
+- boundaryWarnings：秘密/protected/不安全資料限制；
+- 環境：建造、區域設定、戰鬥狀態、FPS、外掛程式版本。</p>
+<p>不要將猜測值與事實混為一談。</p>
+<h2 id="_3">簡潔模式</h2>
 <pre class="codehilite"><code class="language-js">{
   schema: 1,
   mode: &quot;debug-min|analysis-full|github-issue&quot;,
@@ -604,7 +644,7 @@ EAM status, which consumes a large amount of log dumps.</p>
 }
 </code></pre>
 
-<h2 id="example">example</h2>
+<p>＃＃例子</p>
 <pre class="codehilite"><code class="language-js">{
   schema: 1,
   mode: &quot;debug-min&quot;,
@@ -655,17 +695,57 @@ EAM status, which consumes a large amount of log dumps.</p>
 }
 </code></pre>
 
-<h2 id="export-restrictions">Export restrictions</h2>
+<h2 id="_4">出口限制</h2>
 <ul>
-<li>No automatic export.</li>
-<li>No unlimited halo list.</li>
-<li>Default does not have a complete SavedVariables dump.</li>
-<li>No battle log garbage/useless.</li>
-<li>No large project warehouse dumps.</li>
-<li>Strings only construct explicit export instructions when they occur.</li>
+<li>沒有自動導出。</li>
+<li>沒有無限制的光環列表。</li>
+<li>預設沒有完整的 SavedVariables 轉儲。</li>
+<li>沒有戰鬥日誌垃圾/無用。</li>
+<li>沒有大型專案倉儲轉儲。</li>
+<li>字串僅在發生時建構明確的匯出指令。</li>
+</ul>
+<h2 id="_5">流程驗證報告</h2>
+<p>流程測試使用獨立 schema，不與一般 DebugSnapshot 混合：</p>
+<pre class="codehilite"><code class="language-js">{
+  schema: 1,
+  type: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
+  suite: &quot;quick|core|boundary|all&quot;,
+  status: &quot;pass|fail&quot;,
+  environment: {
+    source: &quot;offline-mock|retail-client&quot;,
+    interface: &quot;number&quot;,
+    initialized: &quot;boolean&quot;,
+    inCombat: &quot;boolean&quot;,
+    locale: &quot;string&quot;
+  },
+  summary: {
+    total: &quot;number&quot;,
+    passed: &quot;number&quot;,
+    failed: &quot;number&quot;,
+    skipped: &quot;number&quot;,
+    pending: &quot;number&quot;
+  },
+  cases: [
+    {
+      id: &quot;string&quot;,
+      suite: &quot;string&quot;,
+      status: &quot;pass|fail|skip|pending&quot;,
+      durationMs: &quot;number&quot;,
+      message: &quot;safe string&quot;
+    }
+  ],
+  boundaryWarnings: []
+}
+</code></pre>
+
+<p>限制：</p>
+<ul>
+<li>不輸出 Secret／Protected 值、完整 SavedVariables 或原始 Aura／Cooldown facts。</li>
+<li><code>source</code> 必須保留，不能把 Offline Mock 改寫成 Retail／PTR。</li>
+<li>遊戲內最後報告以字串保存於 <code>EAM_FLOW_TEST_REPORT_JSON</code>，僅供使用者回灌。</li>
 </ul>
     </div>
-    
+
     <!-- Mermaid Dynamic Render Script -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
@@ -681,7 +761,7 @@ EAM status, which consumes a large amount of log dumps.</p>
             }
         });
     </script>
-    
+
     <script>
         function translatePage(lang) {
             document.querySelectorAll('.lang-content').forEach(el => {
@@ -690,7 +770,7 @@ EAM status, which consumes a large amount of log dumps.</p>
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             if (lang === 'zh-TW') {
                 const zhContent = document.getElementById('doc-content-zh');
                 if (zhContent) zhContent.classList.add('active');

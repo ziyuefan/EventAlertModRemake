@@ -125,3 +125,10 @@ EventAlertModDB = {
 
 它們不應該由 Retail 重寫載入。如果保留在儲存庫中，
 將它們標記為已文檔/unsupported。
+
+## 2026-07-26：Aura schema v1 -> v2
+
+- 遷移前保存 `migrationBackups.auraSchemaV1` 的 player/target Aura 純資料。
+- 既有 alert 增補 `nativeBackend=AUTO` 與顯示偏好，不移除未知欄位或舊 `EA_*` globals。
+- 遷移失敗會還原遷移前可序列化 DB，並記錄靜態 warning code。
+- 12.0.7 使用 Legacy backend；12.1 使用 Native 或 Unsupported，不能以 Legacy Secret 掃描補洞。

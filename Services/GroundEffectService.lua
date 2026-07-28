@@ -100,7 +100,7 @@ end
 -- 低頻 Tooltip 持續時間解析器 (支援 zhTW/zhCN/enUS/koKR/ruRU，極致效能與 numerically indexed loops)
 local function parseTooltipDuration(spellID)
     -- 🛡️ Table 索引與 Secret 防禦：若 spellID 為 Secret 則拒絕處理
-    if not spellID or issecretvalue(spellID) then
+    if not Util.isSafePositiveNumber(spellID) then
         return nil
     end
 
@@ -109,7 +109,11 @@ local function parseTooltipDuration(spellID)
     end
 
     local data = api.C_TooltipInfo.GetSpellByID(spellID)
-    if not data or not canaccesstable(data) or not data.lines then
+    if not Util.isReadableTable(data) then
+        return nil
+    end
+    local lines, linesSafe = Util.readSafeField(data, "lines")
+    if not linesSafe or type(lines) ~= "table" then
         return nil
     end
 
@@ -120,11 +124,11 @@ local function parseTooltipDuration(spellID)
 
     local patterns = Util.MULTI_LOCALE_PATTERNS[locale] or Util.MULTI_LOCALE_PATTERNS.enUS
 
-    for i = 1, #data.lines do
-        local line = data.lines[i]
-        if line and canaccesstable(line) then
-            local text = line.leftText
-            if text and not issecretvalue(text) and canaccessvalue(text) then
+    for i = 1, #lines do
+        local line = lines[i]
+        if Util.isReadableTable(line) then
+            local text, textSafe = Util.readSafeField(line, "leftText")
+            if textSafe and Util.isSafeString(text) then
                 for j = 1, #patterns do
                     local sec = string.match(text, patterns[j])
                     if sec then

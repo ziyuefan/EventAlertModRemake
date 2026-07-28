@@ -172,6 +172,13 @@ local function collectCapabilities(snapshot, runFrameProbe)
 
     addGlobalCapability(snapshot, "tooltip.moneyLine", "GameTooltip_AddMoneyLine", api.GameTooltip_AddMoneyLine, "12.0.7 PTR tooltip money path")
     addAvoidCapability(snapshot, "tooltip.setMoney", "SetTooltipMoney", api.SetTooltipMoney, "舊 money tooltip path；存在也避免使用")
+    addFunctionCapability(snapshot, "tooltip.postCall", "TooltipDataProcessor.AddTooltipPostCall", api.TooltipDataProcessor, "AddTooltipPostCall", "EAM ID display callback")
+    addGlobalCapability(snapshot, "tooltip.actionInfo", "GetActionInfo", api.GetActionInfo, "macro action source verification")
+    addGlobalCapability(snapshot, "tooltip.macroSpell", "GetMacroSpell", api.GetMacroSpell, "macro spell resolution")
+    addGlobalCapability(snapshot, "tooltip.macroItem", "GetMacroItem", api.GetMacroItem, "macro item resolution")
+    addFunctionCapability(snapshot, "tooltip.auraIDCVar", "C_CVar.SetCVar", api.C_CVar, "SetCVar", "12.1 tooltipShowAuraSpellIDs session capability")
+    addGlobalCapability(snapshot, "tooltip.modifierCtrl", "IsControlKeyDown", api.IsControlKeyDown, "EAM Popup modifier chord")
+    addGlobalCapability(snapshot, "tooltip.modifierAlt", "IsAltKeyDown", api.IsAltKeyDown, "EAM Popup modifier chord")
 
     addGlobalCapability(snapshot, "secret.canAccessTable", "canaccesstable", api.canaccesstable, "Secret boundary predicate")
     addGlobalCapability(snapshot, "secret.canAccessValue", "canaccessvalue", api.canaccessvalue, "Secret boundary predicate")
@@ -230,6 +237,16 @@ function RuntimeProbe.snapshot(options)
     }
 
     collectCapabilities(snapshot, runFrameProbe)
+    local auraCapability = EAM.Services.AuraCapabilityService
+    local auraContainer = EAM.Services.AuraContainerService
+    local auraSound = EAM.Services.AuraSoundService
+    snapshot.nativeAura = {
+        capability = auraCapability and auraCapability.getSnapshot and auraCapability.getSnapshot() or nil,
+        container = auraContainer and auraContainer.getStatus and auraContainer.getStatus() or nil,
+        sound = auraSound and auraSound.getStatus and auraSound.getStatus() or nil,
+    }
+    local tooltipMonitor = EAM.Services.TooltipMonitorService
+    snapshot.tooltipMonitor = tooltipMonitor and tooltipMonitor.getStatus and tooltipMonitor.getStatus() or nil
     snapshot.summary = countStatuses(snapshot.capabilities)
 
     return snapshot
@@ -254,6 +271,34 @@ function RuntimeProbe.buildLines(snapshot)
         summary.deferred or 0,
         summary.avoid or 0,
         summary.warning or 0)
+
+    local nativeAura = snapshot.nativeAura or {}
+    local nativeCapability = nativeAura.capability or {}
+    local nativeContainer = nativeAura.container or {}
+    local nativeSound = nativeAura.sound or {}
+    lines[#lines + 1] = stringFormat(
+        "nativeAura: backend=%s, pending=%s, rebuild=%d, failed=%d, slots=%d, groups=%d, sounds=%d, limitation=%s",
+        tostring(nativeCapability.selectedBackend or "UNSUPPORTED"),
+        tostring(nativeContainer.pending == true),
+        nativeContainer.rebuildCount or 0,
+        nativeContainer.failedRebuildCount or 0,
+        nativeContainer.nativeSlotCount or 0,
+        nativeContainer.nativeGroupCount or 0,
+        nativeSound.activeCount or 0,
+        tostring(nativeCapability.limitationReason or nativeContainer.lastReason or "none")
+    )
+
+    local tooltipMonitor = snapshot.tooltipMonitor or {}
+    lines[#lines + 1] = stringFormat(
+        "tooltipMonitor: callbacks=%d, auraIDCVar=%s, candidates=%d, menus=%d, commits=%d, rejects=%d, reason=%s",
+        tooltipMonitor.postCallCount or 0,
+        tostring(tooltipMonitor.auraIDDisplayEnabled == true),
+        tooltipMonitor.candidateCount or 0,
+        tooltipMonitor.menuOpenCount or 0,
+        tooltipMonitor.commitCount or 0,
+        tooltipMonitor.rejectCount or 0,
+        tostring(tooltipMonitor.lastReason or "none")
+    )
 
     -- 7 大獨立告警框架的偵測診斷 (為少年欸目標性提供實機測試資訊)
     lines[#lines + 1] = "|cff00ff96EAM Multi-Frame Diagnostics|r"

@@ -1,10 +1,35 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 # [GitHubPage](https://ziyuefan.github.io/EventAlertMod_Remake/ "GitHubPage")
-# [ChangLog](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#changlog "ChangLog")
-# [CommandLine](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#命令列"CommandLine")
-# [ScreenShot](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#screenshot-2 "ScreenShot")
+# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
+# [CommandLine](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#命令列 "CommandLine")
+# [ScreenShot](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#截圖 "ScreenShot")
 
 ---
+
+#### [正式服 12.1.0 Alpha] 2026.07.28
+- 12.1 改採 Blizzard Native AuraContainer／AuraButton；12.0.7 保留 Legacy backend，不在 12.1 讀取 `UNIT_AURA` Secret payload。
+- GameTooltip 顯示可安全取得的法術、物品與巨集 ID；光環 ID 優先交由 Blizzard CVar 顯示。
+- 在非戰鬥中可用精確 `Ctrl+Alt` 開啟 EAM 自製監控選單，依法術／光環／物品／巨集來源路由至既有監控清單。
+- 新增離線流程驗證、遊戲內測試面板、報告匯入工具與本機 WoW 版本／符號連結檢查。
+- 本版定位為 Alpha；離線驗證不等於 PTR 實機簽收，Tooltip 互動、Secret 邊界與戰鬥污染仍需在 12.1 PTR 驗證。
+
+---
+
+## 開發與實機流程驗證
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLuaSyntax.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
+```
+
+遊戲內請在非戰鬥中使用 `/eam test` 或 Options 的「流程測試」按鈕。報告可複製，或在 ReloadUI／登出後從 WTF 的 `EAM_FLOW_TEST_REPORT_JSON` 匯入：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Import-EAMFlowReport.ps1 -Path '<EventAlertMod.lua 或 report.json>'
+```
+
+Mock 通過不代表 Retail／PTR 實機通過。完整規格見 `Docs/26_FLOW_VALIDATION_FRAMEWORK.md`。
+
 #### [正式服12.1.0]2026.06.09
 - 零分配與事件驅動全模組架構重構（資料完全與視圖解耦）
 - 引入AlertManager控制器與節流調度器
@@ -361,8 +386,8 @@ SCD_NocombatStillKeep=真，
 - 暗牧瘋狂值達到上限會高亮
 - 小數點變數變更為UseFloatSec，表示低於此秒數將使用小數點同時顯示若0則表示完全不會顯示
 - 鳥D日月能移除，極限下星能。
-# [ChangLog](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#changlog "ChangLog")
-# [ScreenShot](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#screenshot-2 "ScreenShot")
+# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
+# [ScreenShot](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#截圖 "ScreenShot")
 
 ##命令列
 
@@ -407,7 +432,7 @@ SCD_NocombatStillKeep=真，
 
 * 以改變作用名稱大小(不分大小寫,也可以/eam nfs nSize代替)*
 
-# [ChangLog](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#changlog "ChangLog")
+# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
 
 ## 截圖
 
@@ -423,6 +448,12 @@ SCD_NocombatStillKeep=真，
 ![EAM小地圖](https://truth.bahamut.com.tw/s01/202008/154db1c0ef239cd20035d3b91c2a140f.JPG)
 ![EAM小地圖提示](https://truth.bahamut.com.tw/s01/202008/f1ee8bd0327ecd95f6d2ffea2f06d7ae.JPG)
 
-# [ChangLog](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#changlog "ChangLog")
-# [CommandLine](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#命令列"CommandLine")
-# [ScreenShot](https://github.com/ziyuefan/EventAlertModAll/blob/main/README.md#screenshot-2 "ScreenShot")
+# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
+# [CommandLine](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#命令列 "CommandLine")
+# [ScreenShot](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#截圖 "ScreenShot")
+## Retail 12.1 AuraContainer 狀態（2026-07-26）
+
+- TOC 同時宣告 `120007, 120100`，支援共享實體專案的 12.0.7 Legacy 與 12.1 Native 分流。
+- 12.1 使用 Blizzard `AuraContainer`／`AuraButton` 追蹤與顯示 Aura；EAM 不解析 `UNIT_AURA` Secret payload，也不建立 Native AuraState。
+- 設定頁會顯示目前 Aura backend、戰鬥 pending 狀態與手動重建按鈕；流程面板提供「12.1 Aura」suite。
+- 離線 mock 通過不等於 PTR 實機通過。完整架構、限制與簽收項目見 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`。

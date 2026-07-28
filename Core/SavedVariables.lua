@@ -66,6 +66,7 @@ local defaults = {
         }
     },
     config = {
+        auraBackend = "AUTO",
         showFrame = true,
         showSpellName = true,
         showTimeVal = true,
@@ -118,6 +119,134 @@ local defaults = {
         powerVigor = true,
     }
 }
+
+local function copySerializable(value, seen)
+    local valueType = type(value)
+    if valueType == "nil" or valueType == "boolean" or valueType == "number" or valueType == "string" then
+        return value
+    end
+    if valueType ~= "table" then
+        return nil
+    end
+    seen = seen or {}
+    if seen[value] then
+        return nil
+    end
+    seen[value] = true
+    local copy = {}
+    for key, nestedValue in pairs(value) do
+        local keyType = type(key)
+        if keyType == "string" or keyType == "number" then
+            local copiedValue = copySerializable(nestedValue, seen)
+            if copiedValue ~= nil then
+                copy[key] = copiedValue
+            end
+        end
+    end
+    seen[value] = nil
+    return copy
+end
+
+local function serializableValuesEqual(left, right, seen)
+    if type(left) ~= type(right) then
+        return false
+    end
+    if type(left) ~= "table" then
+        return left == right
+    end
+    seen = seen or {}
+    if seen[left] == right then
+        return true
+    end
+    seen[left] = right
+    for key, value in pairs(left) do
+        if not serializableValuesEqual(value, right[key], seen) then
+            return false
+        end
+    end
+    for key in pairs(right) do
+        if left[key] == nil then
+            return false
+        end
+    end
+    return true
+end
+
+local function restoreSerializable(target, backup)
+    wipe(target)
+    for key, value in pairs(backup) do
+        target[key] = value
+    end
+end
+
+local function migrateAuraListV1(list)
+    if type(list) ~= "table" then
+        return
+    end
+    for _, alert in pairs(list) do
+        if type(alert) == "table" then
+            if alert.nativeBackend == nil then
+                alert.nativeBackend = "AUTO"
+            end
+            if alert.showStacks == nil then
+                alert.showStacks = true
+            end
+            if alert.showName == nil then
+                alert.showName = true
+            end
+            if alert.showCountdown == nil then
+                alert.showCountdown = true
+            end
+        end
+    end
+end
+
+local function migrateV1ToV2(db)
+    db.migrationBackups = type(db.migrationBackups) == "table" and db.migrationBackups or {}
+    if db.migrationBackups.auraSchemaV1 == nil then
+        db.migrationBackups.auraSchemaV1 = copySerializable({
+            playerAuras = db.alerts and db.alerts.playerAuras or {},
+            targetAuras = db.alerts and db.alerts.targetAuras or {},
+        })
+    end
+    if type(db.alerts) == "table" then
+        migrateAuraListV1(db.alerts.playerAuras)
+        migrateAuraListV1(db.alerts.targetAuras)
+    end
+    db.schemaVersion = 2
+end
+
+local MIGRATIONS = {
+    [1] = migrateV1ToV2,
+}
+
+local function runMigrations(db)
+    local version = tonumber(db.schemaVersion) or 1
+    if version > EAM.Constants.SCHEMA_VERSION then
+        db.migrationWarnings = type(db.migrationWarnings) == "table" and db.migrationWarnings or {}
+        db.migrationWarnings[#db.migrationWarnings + 1] = "futureSchemaPreserved"
+        return false
+    end
+
+    while version < EAM.Constants.SCHEMA_VERSION do
+        local migration = MIGRATIONS[version]
+        if not migration then
+            db.migrationWarnings = type(db.migrationWarnings) == "table" and db.migrationWarnings or {}
+            db.migrationWarnings[#db.migrationWarnings + 1] = "migrationPathMissing"
+            return false
+        end
+        local rollback = copySerializable(db)
+        local ok = pcall(migration, db)
+        if not ok then
+            restoreSerializable(db, rollback)
+            db.migrationWarnings = type(db.migrationWarnings) == "table" and db.migrationWarnings or {}
+            db.migrationWarnings[#db.migrationWarnings + 1] = "migrationFailed"
+            return false
+        end
+        version = tonumber(db.schemaVersion) or version
+    end
+    return true
+end
 
 SavedVariables.defaults = defaults
 
@@ -283,9 +412,7 @@ end
 
 function SavedVariables.initialize()
     EAM_DB = EAM_DB or {}
-    if EAM_DB.schemaVersion ~= EAM.Constants.SCHEMA_VERSION then
-        EAM_DB.schemaVersion = EAM.Constants.SCHEMA_VERSION
-    end
+    runMigrations(EAM_DB)
 
     copyMissingDefaults(EAM_DB, defaults)
 
@@ -362,6 +489,14 @@ function SavedVariables.getAlertList(kind, unit)
     return getAlertList(EAM.db, kind, unit)
 end
 
+function SavedVariables.markRevisionChanged()
+    if type(EAM.db) ~= "table" then
+        return false
+    end
+    touchRevision(EAM.db)
+    return true, EAM.db.revision
+end
+
 function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
     local db = EAM.db
     if type(db) ~= "table" then
@@ -381,9 +516,49 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
     end
 
     if list[id] then
-        list[id].enabled = true
-        touchRevision(db)
-        return true, id, "enabled"
+        local existing = list[id]
+        local changed = false
+        if existing.enabled ~= true then
+            existing.enabled = true
+            changed = true
+        end
+        if options and existing.fromPlayer ~= (options.fromPlayer == true or nil) then
+            existing.fromPlayer = options.fromPlayer == true or nil
+            changed = true
+        end
+        if kind == EAM.Constants.ALERT_KIND_AURA and options then
+            local auraFilter = nil
+            if options.auraFilter == "HELPFUL" or options.auraFilter == "HARMFUL" then
+                auraFilter = options.auraFilter
+            end
+            if auraFilter and existing.auraFilter ~= auraFilter then
+                existing.auraFilter = auraFilter
+                changed = true
+            end
+            local fields = { "showStacks", "showName", "showCountdown" }
+            for index = 1, #fields do
+                local field = fields[index]
+                if options[field] ~= nil and existing[field] ~= (options[field] == true) then
+                    existing[field] = options[field] == true
+                    changed = true
+                end
+            end
+            if options.sound ~= nil then
+                local sound = copySerializable(options.sound)
+                if not serializableValuesEqual(existing.sound, sound) then
+                    existing.sound = sound
+                    changed = true
+                end
+            end
+        end
+        if changed then
+            touchRevision(db)
+            if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
+                EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+            end
+            return true, id, "updated"
+        end
+        return true, id, "unchanged"
     end
 
     list[id] = {
@@ -394,8 +569,19 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         unit = unit,
         enabled = true,
         fromPlayer = options and options.fromPlayer == true or nil,
+        nativeBackend = kind == EAM.Constants.ALERT_KIND_AURA and "AUTO" or nil,
+        auraFilter = kind == EAM.Constants.ALERT_KIND_AURA and options
+            and (options.auraFilter == "HELPFUL" or options.auraFilter == "HARMFUL")
+            and options.auraFilter or nil,
+        showStacks = kind == EAM.Constants.ALERT_KIND_AURA and (not options or options.showStacks ~= false) or nil,
+        showName = kind == EAM.Constants.ALERT_KIND_AURA and (not options or options.showName ~= false) or nil,
+        showCountdown = kind == EAM.Constants.ALERT_KIND_AURA and (not options or options.showCountdown ~= false) or nil,
+        sound = kind == EAM.Constants.ALERT_KIND_AURA and options and copySerializable(options.sound) or nil,
     }
     touchRevision(db)
+    if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    end
     return true, id, "added"
 end
 
@@ -423,6 +609,9 @@ function SavedVariables.removeAlert(kind, unit, spellID, itemID)
 
     list[id] = nil
     touchRevision(db)
+    if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    end
     return true, id, "removed"
 end
 

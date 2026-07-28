@@ -4,7 +4,9 @@ import re
 import glob
 import sys
 import subprocess
+import shutil
 
+# 設定 EAM_DOCS_OFFLINE=1 時，翻譯函式會在任何外部請求前回傳原文。
 # Ensure markdown library is installed
 try:
     import markdown
@@ -23,6 +25,7 @@ import random
 
 CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".translation_cache.json")
 TRANSLATION_CACHE = {}
+OFFLINE_MODE = os.environ.get("EAM_DOCS_OFFLINE") == "1"
 
 def post_process_translation(text, src_lang, dest_lang):
     if dest_lang == "zh-TW":
@@ -238,6 +241,8 @@ def is_chinese_text(text):
 
 def translate_chunk(chunk_text, src_lang="zh-TW", dest_lang="en"):
     if not chunk_text.strip():
+        return chunk_text
+    if OFFLINE_MODE:
         return chunk_text
         
     # Check cache first
@@ -685,6 +690,12 @@ def should_convert(content):
     has_flowchart = "心智圖" in content or "流程圖" in content or "flowchart" in content.lower()
     return has_mermaid or has_image or has_table or has_flowchart
 
+def write_html_file(dest_path, full_html):
+    # 來源文件可能保留歷史行尾空白；產出頁面統一正規化，避免每次重建產生髒補丁。
+    normalized_html = re.sub(r"[ \t]+(?=\r?$)", "", full_html, flags=re.MULTILINE)
+    with open(dest_path, "w", encoding="utf-8") as f:
+        f.write(normalized_html)
+
 def convert_to_html(md_path, dest_dir, force_convert=False):
     filename = os.path.basename(md_path)
     # Output file matches: full filename suffix with .html (e.g. filename.md.html)
@@ -1030,8 +1041,7 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
 </html>
 """
 
-    with open(dest_path, "w", encoding="utf-8") as f:
-        f.write(full_html)
+    write_html_file(dest_path, full_html)
     return True
 
 def convert_txt_to_html(txt_path, dest_dir):
@@ -1164,8 +1174,7 @@ Recommended Solution: Directly use your browser's built-in "Translate to English
 </body>
 </html>
 """
-    with open(dest_path, "w", encoding="utf-8") as f:
-        f.write(full_html)
+    write_html_file(dest_path, full_html)
     return True
 
 def main():
@@ -1197,6 +1206,13 @@ def main():
         if os.path.exists(md_path):
             if convert_to_html(md_path, dest_dir, force_convert=True):
                 converted_count += 1
+
+    # Release ZIP 收錄根 readme.html；永遠由 Pages 的 README 產物同步，避免雙份 HTML 漂移。
+    readme_html_source = os.path.join(dest_dir, "README.md.html")
+    readme_html_path = os.path.join(workspace, "readme.html")
+    if os.path.exists(readme_html_source):
+        shutil.copyfile(readme_html_source, readme_html_path)
+        print("Synchronized root readme.html from docs_html/README.md.html")
                 
     # Convert changelog.txt
     changelog_txt = os.path.join(workspace, "changelog.txt")
@@ -1208,7 +1224,6 @@ def main():
     index_src_path = os.path.join(dest_dir, "00_INDEX.md.html")
     index_html_path = os.path.join(dest_dir, "index.html")
     if os.path.exists(index_src_path):
-        import shutil
         shutil.copyfile(index_src_path, index_html_path)
         print("Generated index.html from 00_INDEX.md.html")
             
