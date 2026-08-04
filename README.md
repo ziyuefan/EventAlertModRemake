@@ -1,8 +1,8 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-# [GitHubPage](https://ziyuefan.github.io/EventAlertMod_Remake/ "GitHubPage")
-# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
-# [CommandLine](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#命令列 "CommandLine")
-# [ScreenShot](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#截圖 "ScreenShot")
+# [GitHubPage](https://ziyuefan.github.io/EventAlertModRemake/ "GitHubPage")
+# [ChangLog](https://github.com/ziyuefan/EventAlertModRemake/blob/main/changelog.txt "ChangLog")
+# [CommandLine](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#命令列 "CommandLine")
+# [ScreenShot](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#截圖 "ScreenShot")
 
 ---
 
