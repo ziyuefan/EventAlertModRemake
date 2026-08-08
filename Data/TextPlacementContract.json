@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "type": "EAM_TEXT_PLACEMENT_CONTRACT",
+  "title": "EventAlertMod Text Placement Contract",
+  "defaultTimer": "OUTSIDE_TOP",
+  "defaultApplications": "INSIDE_BOTTOM_RIGHT",
+  "fontSize": {
+    "minimum": 8,
+    "maximum": 32
+  },
+  "placements": [
+    { "id": "INSIDE_CENTER", "point": "CENTER", "relativePoint": "CENTER", "x": 0, "y": 0 },
+    { "id": "INSIDE_TOP", "point": "TOP", "relativePoint": "TOP", "x": 0, "y": -2 },
+    { "id": "INSIDE_TOP_RIGHT", "point": "TOPRIGHT", "relativePoint": "TOPRIGHT", "x": -2, "y": -2 },
+    { "id": "INSIDE_RIGHT", "point": "RIGHT", "relativePoint": "RIGHT", "x": -2, "y": 0 },
+    { "id": "INSIDE_BOTTOM_RIGHT", "point": "BOTTOMRIGHT", "relativePoint": "BOTTOMRIGHT", "x": -2, "y": 2 },
+    { "id": "INSIDE_BOTTOM", "point": "BOTTOM", "relativePoint": "BOTTOM", "x": 0, "y": 2 },
+    { "id": "INSIDE_BOTTOM_LEFT", "point": "BOTTOMLEFT", "relativePoint": "BOTTOMLEFT", "x": 2, "y": 2 },
+    { "id": "INSIDE_LEFT", "point": "LEFT", "relativePoint": "LEFT", "x": 2, "y": 0 },
+    { "id": "INSIDE_TOP_LEFT", "point": "TOPLEFT", "relativePoint": "TOPLEFT", "x": 2, "y": -2 },
+    { "id": "OUTSIDE_TOP_AT_LEFT", "point": "BOTTOMLEFT", "relativePoint": "TOPLEFT", "x": 0, "y": 2 },
+    { "id": "OUTSIDE_LEFT_AT_TOP", "point": "TOPRIGHT", "relativePoint": "TOPLEFT", "x": -4, "y": 0 },
+    { "id": "OUTSIDE_TOP", "point": "BOTTOM", "relativePoint": "TOP", "x": 0, "y": 2 },
+    { "id": "OUTSIDE_TOP_AT_RIGHT", "point": "BOTTOMRIGHT", "relativePoint": "TOPRIGHT", "x": 0, "y": 2 },
+    { "id": "OUTSIDE_RIGHT_AT_TOP", "point": "TOPLEFT", "relativePoint": "TOPRIGHT", "x": 4, "y": 0 },
+    { "id": "OUTSIDE_RIGHT", "point": "LEFT", "relativePoint": "RIGHT", "x": 4, "y": 0 },
+    { "id": "OUTSIDE_RIGHT_AT_BOTTOM", "point": "BOTTOMLEFT", "relativePoint": "BOTTOMRIGHT", "x": 4, "y": 0 },
+    { "id": "OUTSIDE_BOTTOM_AT_RIGHT", "point": "TOPRIGHT", "relativePoint": "BOTTOMRIGHT", "x": 0, "y": -2 },
+    { "id": "OUTSIDE_BOTTOM", "point": "TOP", "relativePoint": "BOTTOM", "x": 0, "y": -2 },
+    { "id": "OUTSIDE_BOTTOM_AT_LEFT", "point": "TOPLEFT", "relativePoint": "BOTTOMLEFT", "x": 0, "y": -2 },
+    { "id": "OUTSIDE_LEFT_AT_BOTTOM", "point": "BOTTOMRIGHT", "relativePoint": "BOTTOMLEFT", "x": -4, "y": 0 },
+    { "id": "OUTSIDE_LEFT", "point": "RIGHT", "relativePoint": "LEFT", "x": -4, "y": 0 }
+  ]
+}

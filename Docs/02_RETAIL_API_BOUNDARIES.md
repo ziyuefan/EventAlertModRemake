@@ -173,3 +173,11 @@ Warcraft Wiki 的安全執行 / taint 文件指出，AddOn 與 `/script` 屬於�
 - Popup 不 Hook／覆寫 Blizzard `OnClick`、`OnMouseDown`、`OnMouseUp`，不註冊 secure action attribute，不模擬滑鼠事件。戰鬥、鍵盤焦點、Secret／不可讀值、缺少必要檢查 API、Tooltip 已隱藏、Tooltip 類型改變或候選逾時時一律 fail-closed；戰鬥中可追加安全顯示文字，但不得建立可於出戰後重播的 candidate。
 - 寫入只經 `SavedVariables.add*Alert()`；`action` 必須先通過安全字串與四種 EAM action 白名單。只有 `added`／`updated` 通知服務刷新，`unchanged` 不增加 revision，也不觸發不必要刷新。
 - 同型 Tooltip 的 generation／owner identity 沒有可安全依賴的公開契約；目前以最新 post-call 覆寫、五秒 TTL、shown 與 tooltip type 共同約束，仍須 PTR 快速切換實測。初始化採單次冪等，若載入當下 API 能力暫缺不會重試，以避免無解除 API 的 PostCall 重複註冊。
+
+
+## 2026-08-08：UnitPower 與 PTR8 邊界補充
+
+- `UnitPower`、`UnitPowerMax`、`UnitPowerPercent` 在戰鬥／Secret context 不得由 Lua 讀取並做算術、比較、字串化或 table key；EAM 只在 predicate 明確允許的非戰鬥安全數字路徑讀取。
+- 使用者提供的 `StatusBar:SetUnit`、`SetPowerTextFontString`、`SetOnUpdateMode` 尚未在 PTR 12.1.0.69189 公開生成文件中證實；在新 build 未提供官方文件前不得硬編碼。
+- 主要資源 Secret 顯示採單向 C-level sink：`StatusBar:SetValue` 或 `Texture:SetRadialProgressBarPercent`；不讀回 widget 值。
+- PTR8 Pandemic／Dispel APIs 僅於 initializeFrame 建立 Region／texture；不讀 `Shown`、不建立自製 ticker，停用容器清除由 Blizzard 管理。

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ziyuefan.github.io/EventAlertModRemake/schemas/eam-text-placement-contract-v1.json",
+  "title": "EventAlertMod Text Placement Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "type", "title", "defaultTimer", "defaultApplications", "fontSize", "placements"],
+  "properties": {
+    "schema": { "const": 1 },
+    "type": { "const": "EAM_TEXT_PLACEMENT_CONTRACT" },
+    "title": { "type": "string" },
+    "defaultTimer": { "const": "OUTSIDE_TOP" },
+    "defaultApplications": { "const": "INSIDE_BOTTOM_RIGHT" },
+    "fontSize": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum", "maximum"],
+      "properties": {
+        "minimum": { "const": 8 },
+        "maximum": { "const": 32 }
+      }
+    },
+    "placements": {
+      "type": "array",
+      "minItems": 21,
+      "maxItems": 21,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "point", "relativePoint", "x", "y"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^(INSIDE|OUTSIDE)_[A-Z_]+$" },
+          "point": { "enum": ["CENTER", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "TOPLEFT"] },
+          "relativePoint": { "enum": ["CENTER", "TOP", "TOPRIGHT", "RIGHT", "BOTTOMRIGHT", "BOTTOM", "BOTTOMLEFT", "LEFT", "TOPLEFT"] },
+          "x": { "type": "number" },
+          "y": { "type": "number" }
+        }
+      }
+    }
+  }
+}

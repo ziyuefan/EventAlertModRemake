@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ziyuefan.github.io/EventAlertModRemake/schemas/eam-live-validation-report-v1.json",
+  "title": "EventAlertMod Human-Observed Live Validation Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "type", "purpose", "matrixVersion", "status", "session", "environment", "automation", "capabilities", "summary", "cases", "boundaryWarnings"],
+  "$defs": {
+    "buildFlag": {
+      "oneOf": [
+        { "type": "boolean" },
+        { "const": "unknown" }
+      ]
+    }
+  },
+  "properties": {
+    "schema": { "const": 1 },
+    "type": { "const": "EAM_LIVE_VALIDATION_REPORT" },
+    "purpose": { "const": "rqa-signoff" },
+    "matrixVersion": { "type": "string", "const": "2026-08-08.1" },
+    "status": { "enum": ["pass", "fail", "incomplete"] },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "phase", "reloadSequence", "resumedAfterReload", "humanObserved"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "phase": { "enum": ["active", "complete"] },
+        "reloadSequence": { "type": "integer", "minimum": 0 },
+        "resumedAfterReload": { "type": "boolean" },
+        "humanObserved": { "const": true }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product", "executionSource", "clientChannel", "declaredInstallation", "declaredInstallationEvidence", "patch", "build", "interface", "isTestBuild", "isTestBuildKnown", "buildFlags", "source", "channelValidation"],
+      "properties": {
+        "product": { "const": "wow_retail" },
+        "executionSource": { "enum": ["client", "offline-mock"] },
+        "clientChannel": { "enum": ["PTR", "XPTR", "RETAIL", "OFFLINE", "UNCONFIRMED"] },
+        "declaredInstallation": { "enum": ["_ptr_", "_xptr_", "_retail_", "offline", "unconfirmed"] },
+        "declaredInstallationEvidence": { "enum": ["user-asserted", "harness", "none"] },
+        "patch": { "type": "string" },
+        "build": { "type": ["string", "number"] },
+        "buildDate": { "type": ["string", "number"] },
+        "interface": { "type": "integer" },
+        "targetInterface": { "type": "integer" },
+        "projectID": { "type": ["integer", "string"] },
+        "isTestBuild": { "type": "boolean" },
+        "isTestBuildKnown": { "type": "boolean" },
+        "buildFlags": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["isPublicTestClient", "isTestBuild", "isBetaBuild"],
+          "properties": {
+            "isPublicTestClient": { "$ref": "#/$defs/buildFlag" },
+            "isTestBuild": { "$ref": "#/$defs/buildFlag" },
+            "isBetaBuild": { "$ref": "#/$defs/buildFlag" }
+          }
+        },
+        "locale": { "type": "string" },
+        "source": { "type": "string" },
+        "channelValidation": { "enum": ["pass", "mismatch", "unconfirmed"] }
+      }
+    },
+    "automation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gameInputAutomated", "reloadUIAutomated", "playerOperated"],
+      "properties": {
+        "gameInputAutomated": { "const": false },
+        "reloadUIAutomated": { "const": false },
+        "playerOperated": { "const": true }
+      }
+    },
+    "capabilities": { "type": "object" },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "required", "passed", "failed", "blocked", "pending"],
+      "properties": {
+        "total": { "type": "integer", "const": 34 },
+        "required": { "type": "integer", "const": 34 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "blocked": { "type": "integer", "minimum": 0 },
+        "pending": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 34,
+      "maxItems": 34,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "category", "required", "status", "note"],
+        "properties": {
+          "id": { "type": "string" },
+          "category": { "type": "string" },
+          "required": { "const": true },
+          "status": { "enum": ["pending", "pass", "fail", "blocked"] },
+          "note": { "type": "string", "maxLength": 500 }
+        }
+      }
+    },
+    "boundaryWarnings": { "type": "array", "items": { "type": "string" } }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "pass" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "session": {
+            "properties": {
+              "phase": { "const": "complete" },
+              "reloadSequence": { "minimum": 1 },
+              "resumedAfterReload": { "const": true }
+            }
+          },
+          "environment": {
+            "properties": {
+              "executionSource": { "const": "client" },
+              "declaredInstallationEvidence": { "const": "user-asserted" },
+              "isTestBuildKnown": { "const": true },
+              "buildFlags": {
+                "anyOf": [
+                  { "properties": { "isPublicTestClient": { "type": "boolean" } } },
+                  { "properties": { "isTestBuild": { "type": "boolean" } } },
+                  { "properties": { "isBetaBuild": { "type": "boolean" } } }
+                ]
+              },
+              "channelValidation": { "const": "pass" }
+            }
+          },
+          "summary": {
+            "properties": {
+              "passed": { "const": 34 },
+              "failed": { "const": 0 },
+              "blocked": { "const": 0 },
+              "pending": { "const": 0 }
+            }
+          },
+          "cases": {
+            "items": {
+              "properties": { "status": { "const": "pass" } }
+            }
+          },
+          "boundaryWarnings": { "maxItems": 0 }
+        }
+      }
+    }
+  ]
+}

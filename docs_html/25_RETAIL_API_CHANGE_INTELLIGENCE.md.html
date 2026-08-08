@@ -422,9 +422,9 @@
 <ul>
 <li>專案範圍：僅 WoW Retail。</li>
 <li>起始基線：12.0.0。</li>
-<li>活動專案 TOC：<code>120007</code>。</li>
+<li>活動專案 TOC：<code>120007, 120100</code>，同一套程式以 capability gate 區分 12.0.7 與 12.1。</li>
 <li>12.1 狀態：PTR／持續修訂；不得宣稱正式相容。</li>
-<li>最後查證：2026-06-21。</li>
+<li>最後查證：2026-08-08。</li>
 <li>Wiki revision time 均為頁面修訂時間，不是遊戲 patch 發布時間。</li>
 </ul>
 <h2 id="2-apichg">2. APICHG 專家章程</h2>
@@ -551,10 +551,13 @@
 </ol>
 <h2 id="9-eam">9. 目前 EAM 判讀</h2>
 <ul>
-<li>目前活動 TOC <code>120007</code> 對應 12.0.7 基線。</li>
-<li>12.1 AuraContainer／AuraButton 尚未落地，既有 AuraService 仍依賴逐筆 AuraData 與 UnitAura 路徑，列為 P0 相容性阻斷。</li>
-<li>Secret 時間資料、戰鬥中框架建立、Scheduler 去重與 deferred state 生命週期另有 P0／P1 技術債；詳見 <code>Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md</code>。</li>
-<li>本文件與 SKILL 的建立沒有修改 Lua，也不能視為 12.1 相容完成。</li>
+<li>12.0.7 保留 readable Legacy Aura 路徑；12.1 已具 AuraContainer／AuraButton Native backend，並在離線 strict mock 驗證初始化期設定與零 Legacy Aura pipeline。</li>
+<li>Native backend 已落地不等於 PTR 簽收。圖示、單一倒數、applications、target transition、Forbidden Aspect、戰鬥限制與 taint 仍需 <code>_ptr_</code> 真人證據。</li>
+<li>冷卻顯示集中經 <code>Core/DurationAdapter.lua</code>：<code>CreateDuration()</code> 與 <code>CreateDurationTextBinding()</code> 都先無參數建立，再以公開 setter 設定；不再假設建構參數或 <code>Unbind()</code>。</li>
+<li>12.1 <code>SPELL_UPDATE_COOLDOWN</code> payload 可提供 <code>spellID</code>、<code>baseSpellID</code> 與 <code>itemID</code>。EAM 以安全 ID 做目標刷新，缺值時才回到合併刷新。</li>
+<li>UnitPower 採雙通道：predicate 判定可讀的次要資源可輸出安全 numeric state；可能為 Secret 的主要資源只把 <code>UnitPowerPercent()</code> 直接送入 Blizzard 支援的 StatusBar／radial sink，不讀回、不比較、不匯出原始值。</li>
+<li><code>AuraContainerUtil.AddDispelTypeTexture</code> 只視為驅散類型外觀能力，不取代任意 proc／Pandemic Glow。</li>
+<li>本輪離線流程與能力分類測試不能視為 12.1 PTR 或 12.0.7 實機相容完成。</li>
 </ul>
 <h2 id="10">10. 來源</h2>
 <ul>
@@ -573,169 +576,66 @@
 <li>AuraContainer sorting 使用 FrameXML 全域 <code>AuraContainerSortMethod</code>／<code>AuraContainerSortDirection</code>；68914 Generated Documentation 沒有登錄這兩表。</li>
 <li><code>UnitAuraSortRule</code> 是 Aura getter 的另一組型別，不可傳入 AuraContainer options。</li>
 <li>EAM 實作與 API 限制矩陣見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
+</ul>
+<h2 id="2026-08-01durationaura-unitpower">2026-08-01：Duration、冷卻、Aura 外觀與 UnitPower 佈局</h2>
+<h3 id="api">API 事實</h3>
+<ul>
+<li>Duration factory 與 DurationTextBinding factory 均為無參數建立，再透過 ScriptObject setter 配置；EAM 以單一 adapter 管生命週期。</li>
+<li><code>SPELL_UPDATE_COOLDOWN</code> 在 12.1 可攜帶 <code>itemID</code>，物品冷卻不應只等待 <code>BAG_UPDATE_COOLDOWN</code>。</li>
+<li><code>UnitPowerPercent(unitToken, powerType, unmodified, curve)</code> 可產生適合原生顯示 sink 的百分比；<code>C_Secrets.ShouldUnitPowerBeSecret</code>、<code>ShouldUnitPowerMaxBeSecret</code> 與 <code>GetPowerTypeSecrecy</code> 用於先分類能力。</li>
+<li>StatusBar／radial sink 能接受 Secret 輸入，不代表 AddOn 可從 widget 讀回普通數字；該路徑只能顯示，不得成為 EAM 自訂判斷、序列化或觸發條件。</li>
+<li>68914 CustomAuraButton 的 dispel texture 是特定 Aura 外觀能力，不能推論成任意 border／Glow API。</li>
+</ul>
+<h3 id="_1">實作與驗證狀態</h3>
+<ul>
+<li><code>ClassPowerService</code> 已修正事件參數與資源選擇，優先處理 Holy Power、Combo Points、Soul Shards、Chi、Arcane Charges 等次要資源；安全值 <code>1</code> 不再被 Renderer 當成「無層數」隱藏。</li>
+<li><code>UnitPowerCapabilityProbe</code> 只能由玩家按鈕啟動，輸出能力分類與人工 pass／fail／blocked；<code>rawValuesCollected</code> 固定為 <code>false</code>。</li>
+<li>離線 mock 已證明安全 numeric 次要資源與 Secret 原生 sink 資料流可達；實際職業、專精、戰鬥限制與視覺更新仍需 <code>_ptr_</code> 12.1 與 <code>_xptr_</code> 12.0.7 玩家實測。</li>
+</ul>
+<p>固定來源：</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">68914 Unit API documentation source</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">68914 Secret predicate documentation source</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_AuraContainer/Blizzard_AuraContainerFrameProviders.lua">68914 AuraContainer frame provider</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_AuraContainer/Blizzard_CustomAuraButton.lua">68914 CustomAuraButton implementation</a></li>
+</ul>
+<h2 id="2026-08-08ptr8-unitpower-api">2026-08-08：PTR8 與 UnitPower 公開 API 固定證據</h2>
+<h3 id="ptr8-api">PTR8 API 事實</h3>
+<ul>
+<li>固定來源為 Gethe/wow-ui-source PTR commit <code>a520b6c27bb897e6be2333b6cc2be36d52c7c11b</code>，版本 <code>12.1.0.69189</code>。</li>
+<li><code>AuraButton:AddPandemicRegion(region)</code>、<code>RemovePandemicRegion(index)</code>、<code>ClearPandemicRegions()</code> 是 Pandemic Region 合約；EAM 只在規則明確要求時建立 texture 並於 <code>initializeFrame</code> 綁定，不讀 <code>Enum.SecretAspect.Shown</code>，不建立自己的 OnUpdate。</li>
+<li><code>AuraButton:AddDispelTypeTexture(texture, options)</code> 使用 <code>showAlways</code>、Harmful/Helpful 與 <code>Enum.CustomAuraButtonDispelTypeStealableFilter</code>；<code>showAlways=true</code> 時不輸出無作用的 <code>stealableFilter</code>。新程式不依賴 AuraBorder deprecated alias。</li>
+<li>停用 <code>AuraContainer</code> 時由 Blizzard 清除 AuraButton 與 ItemEnchantment 顯示資料；框架仍可存在。此行為已加入 strict mock，PTR 實機仍待簽收。</li>
+<li>PTR8 的 tooltip 200ms throttle、duration 0 bug fix 與 OnSizeChanged exploit fix 是 Blizzard 行為，不由 EAM 自製輪詢或 exploit。</li>
+</ul>
+<h3 id="unitpower-api">UnitPower API 事實與否定結論</h3>
+<ul>
+<li>同一 PTR commit 的 <code>SimpleStatusBarAPIDocumentation.lua</code>、<code>UnitDocumentation.lua</code> 與 <code>SecretPredicateAPIDocumentation.lua</code> 未證實 <code>StatusBar:SetUnit</code>、<code>SetPowerTextFontString</code>、<code>SetOnUpdateMode</code>；不得將使用者提供的三個方法當成公開 API 或硬依賴。</li>
+<li>可確認的 Secret 顯示路徑是 <code>UnitPowerPercent()</code> 取得分類結果後單向送入 <code>StatusBar:SetValue()</code> 或 <code>Texture:SetRadialProgressBarPercent()</code>；禁止讀回 widget、比較、字串化或序列化 Secret 值。</li>
+<li><code>ClassPowerService</code> 只有在 <code>C_Secrets.ShouldUnitPowerBeSecret</code>／<code>ShouldUnitPowerMaxBeSecret</code> 明確可用且回傳 <code>false</code> 時才讀取普通數字；戰鬥中所有 UnitPower/Max 讀取延後至 <code>PLAYER_REGEN_ENABLED</code>。</li>
+<li><code>UnitPowerCapabilityProbe</code> 的 <code>statusBarSecretSink</code> 僅保留初始化相容欄位，實際通過仍須 case <code>accepted</code> 加玩家視覺 pass；文件或離線 mock 不升格為 PTR 實機證據。</li>
+</ul>
+<p>固定來源：</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua">SimpleStatusBar API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua">SimpleTextureBase API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">Unit API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">Secret predicate API 12.1.0.69189</a></li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="retail-api-change-intelligence1200">Retail API Change Intelligence：12.0.0 起始基線</h1>
-<h2 id="1">1. 文件目的與狀態</h2>
-<p>本文件是 EventAlertMod 正式服 AddOn API 變更情報的版本基準。目標不是抄錄完整 changelog，而是把 API 新增、移除、棄用、Secret／Forbidden 規則與 Widget 行為變化，轉成可執行的架構預警、遷移窗口與驗證工作。</p>
-<ul>
-<li>專案範圍：僅 WoW Retail。</li>
-<li>起始基線：12.0.0。</li>
-<li>活動專案 TOC：<code>120007</code>。</li>
-<li>12.1 狀態：PTR／持續修訂；不得宣稱正式相容。</li>
-<li>最後查證：2026-06-21。</li>
-<li>Wiki revision time 均為頁面修訂時間，不是遊戲 patch 發布時間。</li>
-</ul>
-<h2 id="2-apichg">2. APICHG 專家章程</h2>
-<p><code>EAM_API_Change_Intelligence_Expert</code>（<code>APICHG</code>）負責：</p>
-<ol>
-<li>維護版本、TOC、build 狀態、來源 URL、revision ID 與 revision time。</li>
-<li>區分 API 事實、EAM 工程推論與 PTR／Retail 實機結果。</li>
-<li>將變更分成 <code>P0 阻斷</code>、<code>P1 遷移</code>、<code>P2 觀察</code>、<code>無直接影響</code>。</li>
-<li>為 adapter、capability gate、降級路徑與舊路徑退場條件提供提前量。</li>
-<li>在新 PTR、RC、正式版或來源 revision 變動時，觸發影響掃描與文件更新。</li>
-</ol>
-<p>責任邊界：</p>
-<ul>
-<li><code>APICHG</code> 不取代 <code>SEC</code> 的 Secret／taint 安全終審。</li>
-<li><code>APICHG</code> 不取代 <code>AURA121</code> 的 AuraContainer／AuraButton 遷移實作。</li>
-<li><code>APICHG</code> 不取代 <code>RQA</code> 的 PTR／Retail 客戶端證據。</li>
-<li><code>DOC</code> 管來源與狀態一致性，不自行裁決 API 技術真偽。</li>
-</ul>
-<h2 id="3">3. 證據優先序</h2>
-<ol>
-<li>Blizzard 官方公告、PTR／RC development notes。</li>
-<li>Blizzard UI 原始碼或可追溯的版本 diff。</li>
-<li>Warcraft Wiki <code>API_change_summaries</code> 與各 patch API changes 頁，且必須記錄 revision。</li>
-<li>專案 Markdown、活動 TOC 與實際 Lua 命中。</li>
-<li>搜尋摘要只作線索，不得單獨成為架構結論。</li>
-</ol>
-<h2 id="4-1200-1210">4. 12.0.0 至 12.1.0 版本演進</h2>
-<table>
-<thead>
-<tr>
-<th>版本</th>
-<th style="text-align: right;">TOC</th>
-<th>Wiki revision（UTC）</th>
-<th>與 EAM 直接相關的變更</th>
-<th>策略判讀</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>API change summaries</td>
-<td style="text-align: right;">—</td>
-<td><code>6747807</code>，2026-06-19 05:45:08</td>
-<td>提供版本索引與跨版定位入口</td>
-<td>revision 變更即觸發差異複核，不把索引頁當唯一事實</td>
-</tr>
-<tr>
-<td>12.0.0</td>
-<td style="text-align: right;"><code>120000</code></td>
-<td><code>6747189</code>，2026-06-18 08:59:26</td>
-<td>引入 Secret Values 世代、predicate 與大量 API 移除／棄用</td>
-<td>Secret-safe adapter 必須成為服務層基礎，不可把舊數值模型直接搬入 12.x</td>
-</tr>
-<tr>
-<td>12.0.1</td>
-<td style="text-align: right;"><code>120001</code></td>
-<td><code>6747895</code>，2026-06-19 08:48:51</td>
-<td>封堵字串與 StatusBar 等 secret laundering；Secret 冷卻改走 <code>SetCooldownFromDurationObject</code>；部分 Private Aura 呼叫戰鬥中受限</td>
-<td>顯示通道與可讀資料必須分離，<code>pcall</code> 或 UI 中繼不能當繞過</td>
-</tr>
-<tr>
-<td>12.0.5</td>
-<td style="text-align: right;"><code>120005</code></td>
-<td><code>6747894</code>，2026-06-19 08:48:14</td>
-<td>Formatter、DurationObject 零區間行為、Aura 布林值秘密性調整、<code>table.freeze</code>／predicate 變更；預告 Aura overhaul</td>
-<td>Capability gate 必須檢查能力而非散落 patch 字串；先保留穩定路徑</td>
-</tr>
-<tr>
-<td>12.0.7</td>
-<td style="text-align: right;"><code>120007</code></td>
-<td><code>6747893</code>，2026-06-19 08:46:57</td>
-<td><code>C_DurationUtil.CreateDurationTextBinding</code>；受限 unit token 改回傳 nil／預設；<code>debugstack</code>／<code>debuglocals</code> 秘密傳播；Aura refactor 指向 12.1</td>
-<td>目前活動基線；錯誤與除錯輸出也可能攜帶秘密性，Aura 抽取架構需準備退場</td>
-</tr>
-<tr>
-<td>12.1.0</td>
-<td style="text-align: right;"><code>120100</code></td>
-<td><code>6749767</code>，2026-06-20 05:57:01</td>
-<td>AuraContainer／AuraButton、Private Script Objects、Forbidden Partition／Aspects；受限 UnitAura 資料可能全為 secret 或 nil</td>
-<td>既有逐 AuraData／spellID 抽取模型屬 P0 相容性風險；PTR 內容仍需持續追 revision 與實機</td>
-</tr>
-</tbody>
-</table>
-<h2 id="5">5. 變更脈絡</h2>
-<p>12.x 的核心不是單一 API 改名，而是資料權限模型逐步收緊：</p>
-<ol>
-<li>12.0.0 建立 Secret Values 與 predicate 基礎。</li>
-<li>12.0.1 封閉透過字串、StatusBar 或其他 UI 物件洗出秘密資料的路徑。</li>
-<li>12.0.5 把安全顯示導向 Formatter／DurationObject，並預告 Aura 架構重整。</li>
-<li>12.0.7 提供 DurationTextBinding，擴大秘密傳播到除錯輸出，明示 12.1 Aura refactor。</li>
-<li>12.1.0 將 Aura 顯示轉向受控 Container／Button 與 Forbidden 邊界，限制 AddOn 直接抽取敏感 Aura 事實。</li>
-</ol>
-<p>因此 EAM 的長期布局必須從「讀值後自行計算與渲染」轉成「服務層辨識能力、保留合法事實、UI 使用 Blizzard 支援的原生顯示物件」。</p>
-<h2 id="6-eam">6. EAM 架構策略</h2>
-<ul>
-<li>API 邊界集中於 service／adapter，不把版本判斷散落在 Renderer。</li>
-<li>優先 feature detection 與 capability gate；只有在功能語意確定一致時才使用 TOC 判斷。</li>
-<li>PTR 新路徑與現行穩定路徑並存，直到官方契約、UI source 與 RQA 證據符合退場條件。</li>
-<li>Secret／Forbidden 資料不得做算術、比較、字串化、序列化或自訂表 key。</li>
-<li>時間顯示優先 DurationObject、DurationTextBinding 與 Blizzard 支援的 formatter。</li>
-<li>Tooltip scraping 僅能低頻、非戰鬥、明確標記來源，不能覆寫 API 安全事實。</li>
-<li>每次版本變更同時檢查 SavedVariables schema、事件 payload、Frame／Widget 行為、TOC 與封裝設定。</li>
-<li>版本文件不等於實機相容；靜態、Mock、PTR、Retail 四種證據分開簽收。</li>
-</ul>
-<h2 id="7">7. 監控觸發條件</h2>
-<p>遇到下列任一情況，啟動 <code>eam-retail-api-change-intelligence</code> 流程：</p>
-<ul>
-<li><code>API_change_summaries</code> 新增 patch 頁或 revision 改變。</li>
-<li>Blizzard 發布 PTR／RC／正式版 AddOn、Aura 或 UI 限制公告。</li>
-<li>UI source diff 出現新增、移除、棄用、predicate 或 mixin／widget 介面變化。</li>
-<li>TOC／Interface 版本發布或專案目標版本調整。</li>
-<li>Secret、Forbidden、Duration、Aura、Tooltip、FrameXML、事件 payload 行為有新證據。</li>
-<li>EAM 活動 Lua 命中已移除 API、舊全域 API 或不再合法的資料流。</li>
-</ul>
-<h2 id="8">8. 影響輸出格式</h2>
-<p>每次查證至少產出：</p>
-<ol>
-<li>目標版本、前一穩定版、TOC、build 狀態與來源 revision。</li>
-<li>新增／移除／棄用／行為變更清單。</li>
-<li>EAM 命中檔案與行號。</li>
-<li><code>P0／P1／P2／無直接影響</code> 分級。</li>
-<li>立即、PTR 期間、正式版前或後續觀察的處置窗口。</li>
-<li>adapter／capability gate／降級／退場條件。</li>
-<li>已執行與未執行驗證，以及需由 <code>SEC/AURA121/RQA/DOC</code> 簽收的事項。</li>
-</ol>
-<h2 id="9-eam">9. 目前 EAM 判讀</h2>
-<ul>
-<li>目前活動 TOC <code>120007</code> 對應 12.0.7 基線。</li>
-<li>12.1 AuraContainer／AuraButton 尚未落地，既有 AuraService 仍依賴逐筆 AuraData 與 UnitAura 路徑，列為 P0 相容性阻斷。</li>
-<li>Secret 時間資料、戰鬥中框架建立、Scheduler 去重與 deferred state 生命週期另有 P0／P1 技術債；詳見 <code>Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md</code>。</li>
-<li>本文件與 SKILL 的建立沒有修改 Lua，也不能視為 12.1 相容完成。</li>
-</ul>
-<h2 id="10">10. 來源</h2>
-<ul>
-<li><a href="https://warcraft.wiki.gg/wiki/API_change_summaries">Warcraft Wiki API change summaries</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.0/API_changes?oldid=6747189">Patch 12.0.0 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.1/API_changes?oldid=6747895">Patch 12.0.1 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.5/API_changes?oldid=6747894">Patch 12.0.5 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.7/API_changes?oldid=6747893">Patch 12.0.7 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes?oldid=6749767">Patch 12.1.0 API changes</a></li>
-<li><a href="https://us.forums.blizzard.com/en/wow/t/addons-and-auras-in-curse-of-ula%E2%80%99tek/2317456">Blizzard：Addons and Auras in Curse of Ula’tek</a></li>
-</ul>
-<h2 id="2026-07-26121068914">2026-07-26：12.1.0.68914 固定證據</h2>
-<ul>
-<li>本機 <code>_ptr_</code>：12.1.0.68914；對照 Gethe/wow-ui-source commit <code>d3915c78aba77a7a9be76acbfa35c674bbb6abe9</code>。</li>
-<li>本機 <code>_xptr_</code>：12.0.7.68887；對照 commit <code>4383ced30106d51b27e3e86d1987f1552f0d259d</code>。</li>
-<li>AuraContainer sorting 使用 FrameXML 全域 <code>AuraContainerSortMethod</code>／<code>AuraContainerSortDirection</code>；68914 Generated Documentation 沒有登錄這兩表。</li>
-<li><code>UnitAuraSortRule</code> 是 Aura getter 的另一組型別，不可傳入 AuraContainer options。</li>
-<li>EAM 實作與 API 限制矩陣見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
-</ul>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

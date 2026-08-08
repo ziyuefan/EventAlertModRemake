@@ -530,6 +530,9 @@
 <li>不得寫入高頻運轉時狀態</li>
 <li>不得結凍 SavedVariables</li>
 <li>在使用者觸發的配置變更後增加 <code>EAM_DB.revision</code></li>
+<li><code>EAM_DB.schemaVersion = 3</code>；<code>config.textLayout</code> 持有 timer／applications 的白名單位置與 8–32 字級。</li>
+<li><code>updateTextLayout()</code> 對 no-op 回傳 <code>unchanged</code> 且不提高 revision；真實變更只提高一次。</li>
+<li>遇到較新的未知 schema 時不得修改原始 <code>_G.EAM_DB</code>；只建立目前版本的 transient runtime defaults 並回報 <code>futureSchemaPreserved</code>，防止舊版覆寫新格式。</li>
 </ul>
 <h2 id="coreperformance">Core/Performance</h2>
 <p>輸入：</p>
@@ -703,6 +706,29 @@
 <li>框架創建應該在初始化期間或僅在受控增長期間發生</li>
 <li>當池為空時，不得在戰鬥中創建新的圖標框架</li>
 </ul>
+<h2 id="uitextplacement">UI/TextPlacement</h2>
+<p>輸入：</p>
+<ul>
+<li><code>Data/TextPlacementContract.json</code> 對應的 21 個固定 placement ID。</li>
+<li><code>EAM_DB.config.textLayout.timer/applications</code> 與字級。</li>
+</ul>
+<p>輸出：</p>
+<ul>
+<li>經白名單解析的 <code>point/relativePoint/x/y</code>。</li>
+<li>僅對 EAM 自建 FontString 執行 <code>ClearAllPoints</code>、<code>SetPoint</code> 與 <code>SetFont</code>。</li>
+</ul>
+<p>狀態變更：</p>
+<ul>
+<li>不持有 runtime 狀態，不讀 AuraData／倒數文字／applications 原值。</li>
+<li>執行期 Lua 映射必須與 <code>Data/TextPlacementContract.json</code> 由 <code>Tools/Test-ValidationContracts.ps1</code> 交叉驗證。</li>
+</ul>
+<h2 id="uinativeaurarenderer">UI/NativeAuraRenderer</h2>
+<ul>
+<li>只在 12.1 AuraButton <code>initializeFrame</code> 期間建立並完成 EAM 的 icon／cooldown／timer／applications／name 子元件；回呼結束後不追蹤、不重排也不修改已限制的按鈕。</li>
+<li>不讀取 Native AuraButton 的受限文字或 Aura payload；文字位置／字級改變直接重套 EAM 自建 Region，戰鬥中只設 pending，於 <code>PLAYER_REGEN_ENABLED</code> 後回放，不重建 AuraContainer。</li>
+<li>文字字級滑桿拖曳期間預覽一般 Renderer；<code>OnMouseUp</code>／<code>OnHide</code> 只提交一次 Native container rebuild。icon size／spacing、swipe alpha 與雙倒數診斷同樣每次手勢最多要求一次 rebuild。</li>
+<li>12.0.7 通用 Renderer 與 12.1 Native renderer 共用 <code>UI/TextPlacement</code>，不得各自維護位置分支。</li>
+</ul>
 <h2 id="uirenderer">UI/Renderer</h2>
 <p>輸入：</p>
 <ul>
@@ -719,6 +745,8 @@
 <li>從不取得aura/cooldown數據</li>
 <li>控制所有昂貴的 UI 寫入</li>
 <li>推遲戰鬥中的結構佈局變化和首次圖標獲取</li>
+<li><code>applyTextLayout()</code> 必須立即重套現有 EAM icon 的 timer／applications 位置與字級及 name 字級；戰鬥中只設 pending，於 <code>PLAYER_REGEN_ENABLED</code> 後回放。</li>
+<li><code>layout()</code>、<code>requestLayout()</code>、render 內文字定位與移動模式遇戰鬥都不得執行 <code>SetPoint</code>／<code>SetSize</code>／<code>SetFont</code>，只能保留 dirty／blocked／pending 狀態。</li>
 </ul>
 <h2 id="uioptions">UI/Options</h2>
 <p>輸入：</p>
@@ -741,6 +769,8 @@
 <ul>
 <li>僅 UI 小部件和明確配置值</li>
 <li>如果正式服阻止或面臨受保護的 UI 變更的風險，則必須在戰鬥中延遲首次框架創建</li>
+<li>timer／applications 位置變更一次更新 SavedVariables，立即重套一般 icon 與脫戰 Native Region，不要求 container rebuild；字級 slider 拖曳則分為即時預覽與結束拖曳單次 Native reapply。</li>
+<li>icon size／spacing slider 拖曳期間只更新一般 layout，結束手勢才要求一次 Native 結構重建。</li>
 </ul>
 <h2 id="uislash">UI/Slash</h2>
 <p>輸入：</p>
@@ -786,13 +816,13 @@
 <h2 id="debugflowtestrunner">Debug/FlowTestRunner</h2>
 <p>輸入：</p>
 <ul>
-<li>使用者或 Offline Harness 指定的 <code>quick/core/boundary/all</code> suite。</li>
+<li>使用者或 Offline Harness 指定的 <code>quick/core/boundary/aura121/all</code> suite。</li>
 <li>EventRouter、Scheduler、SavedVariables、RuntimeProbe 公開 API。</li>
 </ul>
 <p>輸出：</p>
 <ul>
 <li>同步與非同步案例結果。</li>
-<li><code>EAM_FLOW_VALIDATION_REPORT</code> schema 1 JSON。</li>
+<li><code>EAM_FLOW_VALIDATION_REPORT</code> schema 2 JSON，明列 <code>purpose</code>、<code>matrixVersion</code>、<code>executionSource</code> 與 client identity。</li>
 <li>最後一次 summary 與獨立 SavedVariable <code>EAM_FLOW_TEST_REPORT_JSON</code>。</li>
 </ul>
 <p>狀態變更：</p>
@@ -811,11 +841,28 @@
 <ul>
 <li>Quick／Core／Boundary／All 按鈕。</li>
 <li>可複製 JSON 與本地化摘要。</li>
+<li>提供「真人實機簽收」入口，但不自動執行任何遊戲輸入。</li>
 </ul>
 <p>狀態變更：</p>
 <ul>
 <li>只擁有 lazy UI 與 pendingOpen。</li>
 <li>戰鬥中不得首次建立；延後至 <code>PLAYER_REGEN_ENABLED</code>。</li>
+</ul>
+<h2 id="debugvalidationenvironment">Debug/ValidationEnvironment</h2>
+<ul>
+<li>將玩家宣告的 <code>_ptr_</code>、<code>_xptr_</code>、<code>_retail_</code> 與 <code>GetBuildInfo</code>、Interface 及三個原始 test-build 旗標交叉核對；報告同時保留 aggregate 與 <code>buildFlags</code>，不可只保留合併結果。</li>
+<li>來源只能標記為 <code>ptr-live-manual</code>、<code>xptr-live-manual</code>、<code>retail-live-manual</code> 或 <code>offline-mock</code>；不由路徑猜測客戶端。</li>
+<li>mismatch／unconfirmed 必須寫入 <code>boundaryWarnings</code>，不得產生 pass。</li>
+</ul>
+<h2 id="debuglivetestsession-debuglivetestpanel">Debug/LiveTestSession 與 Debug/LiveTestPanel</h2>
+<ul>
+<li>依 <code>Data/LiveValidationMatrix.json</code> 管理 34 案玩家人工觀察、500 字元備註、<code>/reload</code> checkpoint 與 schema 1 JSON。</li>
+<li>不施法、不使用物品、不執行巨集、不切換目標、不合成輸入、不呼叫 <code>ReloadUI</code>。</li>
+<li>start、案例狀態／備註、checkpoint、reload 恢復與 complete 的 session 寫入在戰鬥中一律回傳 <code>combatDeferred</code>。</li>
+<li>checkpoint 保存本次載入專屬 boot token；同次載入呼叫 resume 必須回傳 <code>sameLoadRejected</code>，只有玩家自行 <code>/reload</code> 後重建的 table identity 才能恢復。</li>
+<li>session 必須跨一次玩家自行執行的 <code>/reload</code>，34 案全 pass、test-build 身分已知且環境無警告，才可從 <code>active</code> 進入 <code>complete</code>；<code>active</code> phase 即使其餘條件齊全也只能輸出 <code>incomplete</code>。</li>
+<li>備註中的絕對路徑、UNC、SavedVariables、WTF 與 Account 片段必須在 producer 先遮蔽；<code>Data/LiveValidationMatrix.json</code> 固定 <code>personalDataAllowed=false</code>。</li>
+<li>離線 fixture 永遠維持 <code>incomplete</code>；匯入器另行重算摘要、矩陣與客戶端身分。</li>
 </ul>
 <h2 id="testsflowvalidationharness">Tests/FlowValidationHarness</h2>
 <p>輸入：</p>
@@ -856,9 +903,9 @@
 </tr>
 <tr>
 <td><code>AuraContainerService</code></td>
-<td>plan/revision</td>
-<td>player/target containers</td>
-<td>戰鬥結構修改</td>
+<td>plan／結構 fingerprint</td>
+<td>player/target containers、pending／reloadRequired 狀態</td>
+<td>戰鬥結構修改、單次載入建立超過 18 個容器</td>
 </tr>
 <tr>
 <td><code>NativeAuraRenderer</code></td>
@@ -904,492 +951,17 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="_1">模組合約</h1>
-<h2 id="_2">所有權規則</h2>
-<ul>
-<li><code>SavedVariables</code> 擁有持久配置表和遷移。</li>
-<li>服務擁有運行時事實。</li>
-<li><code>Renderer</code> 擁有渲染的 UI 狀態。</li>
-<li><code>IconPool</code> 擁有框架物件。</li>
-<li><code>Scheduler</code> 擁有應有的工作。</li>
-<li><code>DebugState</code> 擁有 debug/session 快照。</li>
-<li>靜態常數可能會被凍結。運行時狀態和 SavedVariables 絕不能
-  被凍結。</li>
-<li>每個主動載入的來源檔案必須以模組註解區塊開頭
-  記錄目的、設計理念、所有權、變更邊界，以及
-  保養注意事項。當模組合約發生變化時，請保持此評論最新。
-  請參閱“Docs/12_CODE_COMMENTARY_GUIDE.md”。</li>
-</ul>
-<h2 id="coreenv">Core/Env</h2>
-<p>輸入：</p>
-<ul>
-<li>外掛名稱和命名空間</li>
-<li>正式服建置/flavor API</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>外掛程式命名空間</li>
-<li>本地 API 別名表</li>
-<li>僅限正式服的防護結果</li>
-</ul>
-<p>狀態變更：
-- 可以初始化外掛名稱空間一次
-- 不得改變 SavedVariables</p>
-<h2 id="coreutil">Core/Util</h2>
-<p>輸入：</p>
-<ul>
-<li>原始 Lua/WoW 表 API</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li><code>CreateTable</code>、<code>FreezeTable</code>、<code>IsFrozen</code>、泳池助手、安全擦除/release、
-  穩定的枚舉助手，除錯斷言</li>
-<li>Secret/protected 值安全讀取助手：</li>
-<li><code>readSafeField</code></li>
-<li><code>readSafeScalar</code></li>
-<li><code>markBoundary</code></li>
-<li><code>appendBoundaryWarning</code></li>
-<li><code>clearTimer</code></li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅擁有輔助本地池</li>
-</ul>
-<h2 id="coreconstants">Core/Constants</h2>
-<p>輸入：</p>
-<ul>
-<li>模組載入後無</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>凍結枚舉表、模組名稱、事件名稱、狀態常數、模式
-  版本、哨兵常數，例如 <code>UNKNOWN</code> 和 <code>EMPTY</code></li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>凍結後沒有</li>
-</ul>
-<h2 id="coreeventrouter">Core/EventRouter</h2>
-<p>輸入：</p>
-<ul>
-<li>模組事件註冊</li>
-<li>暴雪事件</li>
-</ul>
-<p>輸出：
-- 透過參數化 <code>pcall</code> 錯誤隔離來分派對已註冊模組處理程序的調用，確保一個模組處理程序中的故障不會阻止其他註冊者</p>
-<p>狀態變更：</p>
-<ul>
-<li>擁有事件框架與事件註冊表</li>
-<li>每個活動報名沒有關閉分配</li>
-</ul>
-<h2 id="corescheduler">Core/Scheduler</h2>
-<p>輸入：</p>
-<ul>
-<li>模組請求的到期作業</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>在保護性 <code>pcall</code> 隔離下進行回呼度調度，確保捕獲作業運行時故障並且不會破壞全域程式碼框架</li>
-<li>無論回呼成功與否，安全佇列清理和任務記錄回收</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>擁有一個 OnUpdate 框架、到期佇列、可重複使用作業記錄和任務池</li>
-<li>沒有每個圖示的調度表</li>
-</ul>
-<h2 id="coresavedvariables">Core/SavedVariables</h2>
-<p>輸入：</p>
-<ul>
-<li>
-<p>舊版全域變數：<code>EA_Config</code>、<code>EA_Position</code>、<code>EA_Items</code>、<code>EA_AltItems</code>、
-  <code>EA_TarItems</code>、<code>EA_ScdItems</code>、<code>EA_GrpItems</code>、<code>EA_Pos</code>
-輸出：</p>
-</li>
-<li>
-<p>版本化的活動設定文件</p>
-</li>
-<li>遷移報告</li>
-<li>驗證警告</li>
-<li>使用者觸發的警報添加/remove光環、法術冷卻和物品冷卻的API</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>在載入/migration/config變更期間可能會改變SavedVariables</li>
-<li>不得寫入高頻運轉時狀態</li>
-<li>不得結凍 SavedVariables</li>
-<li>在使用者觸發的配置變更後增加 <code>EAM_DB.revision</code></li>
-</ul>
-<h2 id="coreperformance">Core/Performance</h2>
-<p>輸入：</p>
-<ul>
-<li><code>GetFramerate</code>，戰鬥鎖定狀態，選用<code>debugprofilestop</code></li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>節流決策、分析樣本、共享表池</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅擁有分析/session 計數器</li>
-</ul>
-<h2 id="servicesauraservice">Services/AuraService</h2>
-<p>輸入：</p>
-<ul>
-<li>設定玩家/target光環警報</li>
-<li><code>UNIT_AURA</code>、<code>PLAYER_TARGET_CHANGED</code>、登入/world 事件</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li><code>EAM_AURA_STATE_CHANGED</code> 事件透過參數化狀態和 frameName 觸發到 EventRouter</li>
-<li>從 <code>AuraStatePool</code> 分配的標準化 <code>AuraState</code> 和 <code>AlertState</code></li>
-<li>邊界警告</li>
-<li>由單位和 <code>auraInstanceID</code> 鍵入的增量感知光環緩存</li>
-<li>配置修訂感知警報索引，按單元鍵入並配置 spellID</li>
-<li>完整更新回退掃描每個追蹤單元/filter一次，重建單元光環緩存，並將不匹配的配置警報標記為非活動狀態</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅擁有 aura 運行時快取和 <code>AuraStatePool</code></li>
-<li>不得創建 UI 框架</li>
-<li>不得寫入 SavedVariables</li>
-<li>當 SavedVariables 版本變更時可能會重建警報索引</li>
-</ul>
-<h2 id="managersalertmanager">Managers/AlertManager</h2>
-<p>輸入：</p>
-<ul>
-<li>來自 EventRouter 的 <code>EAM_AURA_STATE_CHANGED</code>、<code>EAM_COOLDOWN_STATE_CHANGED</code>、<code>EAM_ITEM_COOLDOWN_STATE_CHANGED</code>、<code>EAM_GROUND_EFFECT_STATE_CHANGED</code> 和 <code>EAM_TOTEM_STATE_CHANGED</code> 事件</li>
-<li>配置警報列表</li>
-</ul>
-<p>輸出：
--batch/throttled 呼叫包裝在佈局批次控制中的 <code>Renderer.render</code> (<code>Renderer.BeginBatch</code> / <code>Renderer.EndBatch</code>)
-- 在 UI 隱藏渲染完成後，透過 <code>state.releaseFunc(state)</code> 回收多類型狀態表以回收非活動狀態（Aura、Cooldown、Item、GroundEffect、Totem）</p>
-<p>狀態變更：</p>
-<ul>
-<li>擁有掛起的更新佇列和節流調度程序狀態</li>
-<li>不擁有 AlertState、SavedVariables 或 UI 圖標</li>
-</ul>
-<h2 id="servicescooldownservice">Services/CooldownService</h2>
-<p>輸入：</p>
-<ul>
-<li>配置法術冷卻時間警報</li>
-<li>與冷卻相關的事件和調度程序後備刻度</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>標準化 <code>CooldownState</code> 和 <code>AlertState</code></li>
-<li>髒警報 ID</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅擁有法術冷卻緩存</li>
-</ul>
-<h2 id="legacyreferenceservicesshadowhostservice">LegacyReference/Services/ShadowHostService（封存參考，不載入）</h2>
-<p>狀態：</p>
-<ul>
-<li>不列入 <code>EventAlertMod.toc</code>，不屬於正式執行期模組。</li>
-<li>原始研究碼保留於 <code>LegacyReference/Services/ShadowHostService.lua</code>，只供 CDM／FramePool 歷史決策追溯。</li>
-<li>正式包排除整個 <code>LegacyReference/</code>；Renderer 不查找或吸附 ShadowHost。</li>
-</ul>
-<p>封存原因：</p>
-<ul>
-<li>12.1 Native AuraContainer 架構不需要以 CooldownViewer 作為影子載體。</li>
-<li>Hook 官方 frame pool、變更官方框架透明度與層級會擴大 taint、Forbidden 與版本漂移風險。</li>
-<li>流程驗證以 <code>EAM.Services.ShadowHostService == nil</code> 作為零載入契約。</li>
-</ul>
-<h2 id="servicesitemcooldownservice">Services/ItemCooldownService</h2>
-<p>輸入：</p>
-<ul>
-<li>設定 itemID 警報</li>
-<li>物品冷卻事件</li>
-<li>可選的顯式快取建置命令</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>標準化 <code>ItemCooldownState</code> 和 <code>AlertState</code></li>
-<li>快取狀態</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>擁有物品冷卻運轉時緩存</li>
-<li>任何物品-法術映射快取都必須是增量且可中斷的</li>
-</ul>
-<h2 id="servicesspellinfoservice">Services/SpellInfoService</h2>
-<p>輸入：</p>
-<ul>
-<li>spellID/itemID 尋找請求</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>安全名稱/icon/link 可用事實</li>
-<li>有界查找緩存，僅儲存安全欄位和邊界警告</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>擁有查找緩存</li>
-<li>必須避免激烈的戰鬥查詢循環</li>
-</ul>
-<h2 id="servicesclasspowerservice">Services/ClassPowerService</h2>
-<p>輸入：</p>
-<ul>
-<li>配置類別資源選項</li>
-<li>玩家電源事件（UNIT_POWER_UPDATE、UNIT_MAXPOWER、PLAYER_TALENT_UPDATE）</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>當前等級功率類型的動態中央堆疊編號和 AlertState，在功率更新期間受到 <code>pcall</code> 隔離和 <code>issecretvalue</code> 檢查的保護，以繞過戰鬥中的限制值 /table 運行時異常</li>
-<li>直接佈局渲染到 classPower 框架</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>除了調度事件狀態更新和防禦邊界記錄之外，沒有其他操作</li>
-</ul>
-<h2 id="servicesgroundeffectservice">Services/GroundEffectService</h2>
-<p>輸入：</p>
-<ul>
-<li>配置的地面效果（動態/manual模式）</li>
-<li>未過濾的戰鬥日誌事件（SPELL_CAST_SUCCESS）</li>
-<li>施法成功期間低頻 C_TooltipInfo.GetSpellByID 查找</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li><code>EAM_GROUND_EFFECT_STATE_CHANGED</code> 事件觸發到 EventRouter 並帶有狀態和 frameName</li>
-<li>從 <code>GroundEffectStatePool</code> 分配的標準化 <code>GroundEffectState</code> 和 <code>AlertState</code></li>
-<li>透過 Scheduler.after 安排發布計時器</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅擁有地面效應活動計時器表、activeStates 快取和 <code>GroundEffectStatePool</code></li>
-</ul>
-<h2 id="servicestotemservice">Services/TotemService</h2>
-<p>輸入：</p>
-<ul>
-<li>薩滿圖騰事件 (PLAYER_TOTEM_UPDATE)</li>
-<li>本機 C_Totems.GetTotemInfo API 更新</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li><code>EAM_TOTEM_STATE_CHANGED</code> 事件觸發到 EventRouter 並帶有狀態和 frameName</li>
-<li>從 <code>TotemStatePool</code> 分配的標準化 <code>TotemState</code> 和 <code>AlertState</code></li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅擁有 activeStates 快取和 <code>TotemStatePool</code></li>
-</ul>
-<h2 id="uiiconpool">UI/IconPool</h2>
-<p>輸入：</p>
-<ul>
-<li>所需的圖示數量/class</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>取得/released圖示框記錄</li>
-<li>預熱非活動圖示以避免創建戰鬥中框架</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>擁有框架、紋理、冷卻區域、FontStrings</li>
-<li>框架創建應該在初始化期間或僅在受控增長期間發生</li>
-<li>當池為空時，不得在戰鬥中創建新的圖標框架</li>
-</ul>
-<h2 id="uirenderer">UI/Renderer</h2>
-<p>輸入：</p>
-<ul>
-<li><code>IconRenderState</code></li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>可見的UI狀態</li>
-<li>佈局批次控制端點 (<code>Renderer.BeginBatch</code> / <code>Renderer.EndBatch</code>) 以延遲昂貴的 X/Y 佈局計算</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅改變 UI 框架</li>
-<li>從不取得aura/cooldown數據</li>
-<li>控制所有昂貴的 UI 寫入</li>
-<li>推遲戰鬥中的結構佈局變化和首次圖標獲取</li>
-</ul>
-<h2 id="uioptions">UI/Options</h2>
-<p>輸入：</p>
-<ul>
-<li>活躍的個人資料</li>
-<li>類別標記到類別 ID 映射表 (<code>CLASS_TOKEN_TO_ID</code>)</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>透過 <code>SavedVariables</code> 配置變更</li>
-<li>使用本機「GetSpecializationInfoForClassID(classID, specIndex)」和強大的靜態後備表進行動態、本地化專業化下拉過濾，確保 100% 本地化類別 /spec UI 文本，無需硬編碼</li>
-<li>用於明確 add/remove 操作的最小遊戲內面板：</li>
-<li>玩家光環spellID</li>
-<li>目標光環spellID</li>
-<li>法術冷卻時間spellID</li>
-<li>物品冷卻時間itemID</li>
-<li>用戶觸發變更成功後立即刷新服務</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅 UI 小部件和明確配置值</li>
-<li>如果正式服阻止或面臨受保護的 UI 變更的風險，則必須在戰鬥中延遲首次框架創建</li>
-</ul>
-<h2 id="uislash">UI/Slash</h2>
-<p>輸入：</p>
-<ul>
-<li><code>/eam</code> 指令文本</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>設定操作、狀態文字、偵錯匯出請求</li>
-<li>針對玩家光環、目標光環、法術冷卻時間和物品冷卻時間的簡單“/eam添加”和“/eam刪除”命令</li>
-</ul>
-<p>狀態變更：
-- 可呼叫模組API；不得直接編輯服務內部
-- 僅透過「Core/SavedVariables」寫入持久警報配置</p>
-<h2 id="debugdebugstate">Debug/DebugState</h2>
-<p>輸入：</p>
-<ul>
-<li>模組狀態快照</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>緊湊的<code>DebugSnapshot</code></li>
-<li>來自服務狀態的聚合邊界警告</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>僅擁有瞬時除錯記錄</li>
-</ul>
-<h2 id="debugpromptexport">Debug/PromptExport</h2>
-<p>輸入：</p>
-<ul>
-<li><code>DebugSnapshot</code></li>
-<li>匯出模式：<code>debug-min</code>、<code>analysis-full</code>、<code>github-issue</code></li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>類似 JSON 的緊湊文本</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>除了瞬態字串產生器緩衝區之外沒有任何其他</li>
-</ul>
-<h2 id="debugflowtestrunner">Debug/FlowTestRunner</h2>
-<p>輸入：</p>
-<ul>
-<li>使用者或 Offline Harness 指定的 <code>quick/core/boundary/all</code> suite。</li>
-<li>EventRouter、Scheduler、SavedVariables、RuntimeProbe 公開 API。</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>同步與非同步案例結果。</li>
-<li><code>EAM_FLOW_VALIDATION_REPORT</code> schema 1 JSON。</li>
-<li>最後一次 summary 與獨立 SavedVariable <code>EAM_FLOW_TEST_REPORT_JSON</code>。</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>只擁有瞬時 test session 與最近報告。</li>
-<li>離線案例可暫時替換 <code>EAM.db</code>／<code>EAM_DB</code>，但必須以 <code>pcall</code> 保證還原；不得寫入真實 SavedVariables。</li>
-<li>不在背景或戰鬥中自動執行。</li>
-</ul>
-<h2 id="debugflowtestpanel">Debug/FlowTestPanel</h2>
-<p>輸入：</p>
-<ul>
-<li>使用者按鈕或 <code>/eam test</code>。</li>
-<li>FlowTestRunner report callback。</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>Quick／Core／Boundary／All 按鈕。</li>
-<li>可複製 JSON 與本地化摘要。</li>
-</ul>
-<p>狀態變更：</p>
-<ul>
-<li>只擁有 lazy UI 與 pendingOpen。</li>
-<li>戰鬥中不得首次建立；延後至 <code>PLAYER_REGEN_ENABLED</code>。</li>
-</ul>
-<h2 id="testsflowvalidationharness">Tests/FlowValidationHarness</h2>
-<p>輸入：</p>
-<ul>
-<li>Lua 5.1、suite 與輸出路徑。</li>
-</ul>
-<p>輸出：</p>
-<ul>
-<li>直接載入正式模組後的離線 JSON 報告與 exit code。</li>
-</ul>
-<p>邊界：</p>
-<ul>
-<li>不列入 TOC 或正式發布包。</li>
-<li>Mock 通過不得標記為 Retail／PTR 實機通過。</li>
-</ul>
-<h2 id="2026-07-26native-aura">2026-07-26：Native Aura 模組契約</h2>
-<table>
-<thead>
-<tr>
-<th>模組</th>
-<th>輸入</th>
-<th>輸出</th>
-<th>禁止</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AuraCapabilityService</code></td>
-<td>build/API surface</td>
-<td>backend snapshot</td>
-<td>只看 TOC 判定</td>
-</tr>
-<tr>
-<td><code>AuraRuleCompiler</code></td>
-<td>純設定 DB</td>
-<td>stable runtime plan</td>
-<td>AuraData/UI</td>
-</tr>
-<tr>
-<td><code>AuraContainerService</code></td>
-<td>plan/revision</td>
-<td>player/target containers</td>
-<td>戰鬥結構修改</td>
-</tr>
-<tr>
-<td><code>NativeAuraRenderer</code></td>
-<td>AuraButton callback</td>
-<td>綁定 Regions</td>
-<td>Aura 狀態推導</td>
-</tr>
-<tr>
-<td><code>AuraSoundService</code></td>
-<td>sound rules</td>
-<td>registration IDs</td>
-<td>讀 AuraData</td>
-</tr>
-</tbody>
-</table>
-<p>Native 模式與 <code>AlertManager</code>／一般 <code>Renderer</code> 的契約是「零 Aura state 事件」。</p>
-<h2 id="2026-07-27tooltip-popup">2026-07-27：Tooltip 監控 Popup 模組契約</h2>
-<table>
-<thead>
-<tr>
-<th>模組</th>
-<th>輸入</th>
-<th>輸出</th>
-<th>禁止</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Services/TooltipMonitorService</code></td>
-<td><code>GameTooltip</code> post-call、<code>MODIFIER_STATE_CHANGED</code>、EAM Popup action</td>
-<td>安全 ID 顯示、脫戰五秒 scalar candidate、action 白名單、SavedVariables 公開 API 呼叫、匿名狀態計數</td>
-<td>儲存 TooltipData/AuraData/Frame、保留戰鬥候選、讀 UnitAura payload、Hook Blizzard 點擊、模擬右鍵</td>
-</tr>
-<tr>
-<td><code>UI/TooltipMonitorMenu</code></td>
-<td>服務提供的純 scalar candidate</td>
-<td>游標旁 EAM 自有視窗、監控類型按鈕、Aura／未解析 Macro 手動 ID</td>
-<td>直接寫 EAM_DB、secure action attribute、戰鬥中建立或顯示、保存 Blizzard frame</td>
-</tr>
-</tbody>
-</table>
-<p>Tooltip callback 的責任只到「追加文字與更新 candidate」，不可直接開啟 UI；戰鬥中只可追加安全文字，不可更新 candidate。儲存路由固定如下：Spell → spell cooldown；Item → item cooldown；Aura → 使用者選 player／target；Macro → 只提供已安全解析的 spell/item，未解析時由使用者輸入 ID 並選類型。EAM 自有按鈕透過其 <code>OnClick</code> script 提交；只有 <code>added</code>／<code>updated</code> 由正式 <code>Options.notifyConfigChanged()</code> 統一刷新五個下游，<code>unchanged</code> 不刷新。</p>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

@@ -19,9 +19,13 @@ local AuraContainerService = {
     pending = false,
     pendingRevision = nil,
     current = nil,
+    createdContainerCount = 0,
+    maxCreatedContainerCount = 18,
     retiredContainerCount = 0,
+    reloadRequired = false,
     rebuildCount = 0,
     failedRebuildCount = 0,
+    settingsDirty = false,
     lastPlan = nil,
     lastReason = nil,
 }
@@ -57,17 +61,22 @@ local function createContainer()
     if not api.CreateFrame then
         return nil, "createFrameUnavailable"
     end
+    if AuraContainerService.createdContainerCount >= AuraContainerService.maxCreatedContainerCount then
+        AuraContainerService.reloadRequired = true
+        return nil, "nativeReloadRequired"
+    end
     local ok, container = pcall(api.CreateFrame, "AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")
     if not ok or not container then
         return nil, "nativeContainerCreationFailed"
     end
+    AuraContainerService.createdContainerCount = AuraContainerService.createdContainerCount + 1
     return container
 end
 
-local function buildCommonOptions(rule)
+local function buildCommonOptions(rule, container, slotIndex)
     local options = {
         templateNames = { "CustomAuraButtonTemplate" },
-        initializeFrame = EAM.UI.NativeAuraRenderer.initializeFrame,
+        initializeFrame = EAM.UI.NativeAuraRenderer.createInitializer(rule, container, slotIndex),
         candidateFilters = rule.candidateFilters,
     }
     if AuraContainerSortMethod and AuraContainerSortMethod.Default ~= nil then
@@ -88,12 +97,11 @@ local function configureContainer(container, unit, plan)
     for index = 1, #plan.rules do
         local rule = plan.rules[index]
         if rule.unit == unit and rule.backend == Constants.AURA_RULE_NATIVE_SLOT then
-            local options = buildCommonOptions(rule)
-            local auraButton = container:AddAuraSlot(rule.slotKey, rule.filterString, options)
             slotIndex = slotIndex + 1
-            EAM.UI.NativeAuraRenderer.anchorSlot(auraButton, container, slotIndex, rule.layout)
+            local options = buildCommonOptions(rule, container, slotIndex)
+            container:AddAuraSlot(rule.slotKey, rule.filterString, options)
         elseif rule.unit == unit and rule.backend == Constants.AURA_RULE_NATIVE_GROUP then
-            local options = buildCommonOptions(rule)
+            local options = buildCommonOptions(rule, container, nil)
             options.maxFrameCount = #rule.alertIDs
             options.layout = rule.layout
             container:AddAuraGroup(rule.groupKey, rule.filterString, options)
@@ -175,6 +183,10 @@ function AuraContainerService.requestRebuild(reason)
     if capability.clientInterface < Constants.INTERFACE then
         return false, "legacyBackend"
     end
+    if capability.nativeRuntimeAllowed ~= true then
+        AuraContainerService.lastReason = capability.limitationReason or "nativePtrOnlyGate"
+        return false, AuraContainerService.lastReason
+    end
     if inCombat() then
         AuraContainerService.pending = true
         AuraContainerService.pendingRevision = EAM.db and EAM.db.revision or 0
@@ -195,13 +207,29 @@ function AuraContainerService.requestRebuild(reason)
         disableContainer(probeContainer)
         AuraContainerService.pending = false
         AuraContainerService.pendingRevision = nil
+        AuraContainerService.reloadRequired = false
+        AuraContainerService.settingsDirty = false
         AuraContainerService.lastReason = "unchanged"
         return true, "unchanged"
     end
 
+    if AuraContainerService.current
+        and AuraContainerService.createdContainerCount + 2 > AuraContainerService.maxCreatedContainerCount
+    then
+        AuraContainerService.pending = false
+        AuraContainerService.pendingRevision = nil
+        AuraContainerService.reloadRequired = true
+        AuraContainerService.lastReason = "nativeReloadRequired"
+        return false, "nativeReloadRequired"
+    end
+
     local containers, failure = buildNativeContainers(plan, probeContainer)
     if not containers then
-        AuraContainerService.failedRebuildCount = AuraContainerService.failedRebuildCount + 1
+        if failure == "nativeReloadRequired" then
+            AuraContainerService.reloadRequired = true
+        else
+            AuraContainerService.failedRebuildCount = AuraContainerService.failedRebuildCount + 1
+        end
         AuraContainerService.lastReason = failure or "nativeRebuildFailed"
         return false, AuraContainerService.lastReason
     end
@@ -212,6 +240,8 @@ function AuraContainerService.requestRebuild(reason)
     AuraContainerService.rebuildCount = AuraContainerService.rebuildCount + 1
     AuraContainerService.pending = false
     AuraContainerService.pendingRevision = nil
+    AuraContainerService.reloadRequired = false
+    AuraContainerService.settingsDirty = false
     AuraContainerService.lastReason = reason or "rebuilt"
 
     if EAM.Services.AuraSoundService then
@@ -220,9 +250,19 @@ function AuraContainerService.requestRebuild(reason)
     return true, "rebuilt"
 end
 
+function AuraContainerService.markSettingsDirty(reason)
+    AuraContainerService.settingsDirty = true
+    AuraContainerService.lastReason = reason or "settingsDirty"
+    return true, "settingsDirty"
+end
+
 function AuraContainerService.onCombatEnd()
     if AuraContainerService.pending then
         AuraContainerService.requestRebuild("PLAYER_REGEN_ENABLED")
+    end
+    local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+    if nativeRenderer and nativeRenderer.onCombatEnd then
+        nativeRenderer.onCombatEnd()
     end
 end
 
@@ -261,8 +301,12 @@ function AuraContainerService.getStatus()
         backend = capability and capability.selectedBackend or Constants.AURA_BACKEND_UNSUPPORTED,
         pending = AuraContainerService.pending,
         pendingRevision = AuraContainerService.pendingRevision,
+        reloadRequired = AuraContainerService.reloadRequired,
+        createdContainerCount = AuraContainerService.createdContainerCount,
+        maxCreatedContainerCount = AuraContainerService.maxCreatedContainerCount,
         rebuildCount = AuraContainerService.rebuildCount,
         failedRebuildCount = AuraContainerService.failedRebuildCount,
+        settingsDirty = AuraContainerService.settingsDirty,
         retiredContainerCount = AuraContainerService.retiredContainerCount,
         limitationCount = limitationCount,
         lastReason = AuraContainerService.lastReason,

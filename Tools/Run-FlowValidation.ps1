@@ -70,7 +70,7 @@ catch {
     throw "Invalid flow validation JSON: $($_.Exception.Message)"
 }
 
-if ($report.type -ne "EAM_FLOW_VALIDATION_REPORT" -or [int]$report.schema -ne 1) {
+if ($report.type -ne "EAM_FLOW_VALIDATION_REPORT" -or [int]$report.schema -ne 2) {
     throw "Unsupported flow report schema or type."
 }
 
@@ -113,6 +113,11 @@ Write-Host "FLOW_REPORT_JSON=$jsonPath"
 Write-Host "FLOW_REPORT_MARKDOWN=$markdownPath"
 Write-Host "FLOW_SUMMARY=passed:$($report.summary.passed),failed:$($report.summary.failed),skipped:$($report.summary.skipped),pending:$($report.summary.pending)"
 
-if ($luaExitCode -ne 0 -or [int]$report.summary.failed -gt 0 -or [int]$report.summary.pending -gt 0) {
+if ($luaExitCode -ne 0 -or
+    $report.status -ne "pass" -or
+    [int]$report.summary.failed -gt 0 -or
+    [int]$report.summary.skipped -gt 0 -or
+    [int]$report.summary.pending -gt 0 -or
+    @($report.boundaryWarnings).Count -gt 0) {
     exit 1
 }

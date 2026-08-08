@@ -62,10 +62,26 @@ local soundAssets = {
     ShaolinFootball = "Interface\\AddOns\\EventAlertMod\\Media\\Music\\ShaolinFootball.mp3",
 }
 
--- 延遲加載通知
-function Options.notifyConfigChanged()
-    if EAM.Services.AuraContainerService and EAM.Services.AuraContainerService.requestRebuild then
-        EAM.Services.AuraContainerService.requestRebuild("OPTIONS_CONFIG_CHANGED")
+-- Native Aura 結構只能在重建窗口套用；一般設定先標記待套用。
+local function markAuraSettingsDirty(reason)
+    local service = EAM.Services and EAM.Services.AuraContainerService
+    if service and service.markSettingsDirty then
+        service.markSettingsDirty(reason or "OPTIONS_CONFIG_CHANGED")
+        return true
+    end
+    if service and service.requestRebuild then
+        service.requestRebuild(reason or "OPTIONS_CONFIG_CHANGED")
+        return true
+    end
+    return false
+end
+
+function Options.notifyConfigChanged(rebuildNative)
+    if rebuildNative ~= false then
+        markAuraSettingsDirty("OPTIONS_CONFIG_CHANGED")
+        if Options.refreshAuraBackendStatus then
+            Options.refreshAuraBackendStatus()
+        end
     end
     if EAM.Services.AuraService and EAM.Services.AuraService.refreshAll then
         EAM.Services.AuraService.refreshAll("OPTIONS_CONFIG_CHANGED")
@@ -80,6 +96,26 @@ function Options.notifyConfigChanged()
     if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
         EAM.UI.Renderer.requestLayout()
     end
+    if EAM.UI.Renderer and EAM.UI.Renderer.applyCooldownStyle then
+        EAM.UI.Renderer.applyCooldownStyle()
+    end
+end
+
+function Options.notifyTextLayoutChanged(reapplyNative)
+    if EAM.UI.Renderer and EAM.UI.Renderer.applyTextLayout then
+        EAM.UI.Renderer.applyTextLayout()
+    end
+    if reapplyNative then
+        markAuraSettingsDirty("OPTIONS_NATIVE_TEXT_LAYOUT_CHANGED")
+        Options.refreshAuraBackendStatus()
+    end
+end
+
+local function notifyGroundEffectConfigChanged()
+    local service = EAM.Services.GroundEffectService
+    if service and service.onConfigChanged then
+        service.onConfigChanged()
+    end
 end
 
 function Options.refreshAuraBackendStatus()
@@ -89,9 +125,14 @@ function Options.refreshAuraBackendStatus()
     local service = EAM.Services.AuraContainerService
     local status = service and service.getStatus and service.getStatus() or nil
     local backend = status and status.backend or EAM.Constants.AURA_BACKEND_UNSUPPORTED
-    local suffix = status and status.pending
-        and (EAM.L.EAM_OPT_AURA_PENDING or "（等待脫戰）")
-        or ""
+    local suffix = ""
+    if status and status.reloadRequired then
+        suffix = " (/reload)"
+    elseif status and status.settingsDirty then
+        suffix = EAM.L.EAM_OPT_AURA_SETTINGS_DIRTY or "（待套用）"
+    elseif status and status.pending then
+        suffix = EAM.L.EAM_OPT_AURA_PENDING or "（等待脫戰）"
+    end
     Options.nativeAuraStatusLabel:SetText(
         (EAM.L.EAM_OPT_AURA_BACKEND or "Aura 後端: ") .. tostring(backend) .. suffix
     )
@@ -240,7 +281,13 @@ local function batchOperation(action)
         end
     end
     
+    if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+        EAM.Modules.SavedVariables.markRevisionChanged()
+    end
     Options.notifyConfigChanged()
+    if Options.currentCategory == 6 then
+        notifyGroundEffectConfigChanged()
+    end
     Options.refreshList()
 end
 
@@ -261,11 +308,14 @@ function Options.addAlertToCurrentCategory(id)
     elseif Options.currentCategory == 5 then
         ok, alertID, status = saved.addItemCooldownAlert(id)
     elseif Options.currentCategory == 6 then
-        ok, alertID, status = saved.addAlert("groundEffect", "player", id)
+        ok, alertID, status = saved.addGroundEffectAlert(id)
     end
     
     if ok then
         Options.notifyConfigChanged()
+        if Options.currentCategory == 6 then
+            notifyGroundEffectConfigChanged()
+        end
         Options.refreshList()
         print(string.format(EAM.L.EAM_OPT_ADD_SUCCESS or "|cff00ff96EAM|r 成功新增監控提醒 [ID: %s]", id))
     else
@@ -288,11 +338,14 @@ function Options.removeAlertFromCurrentCategory(id)
     elseif Options.currentCategory == 5 then
         ok, alertID, status = saved.removeItemCooldownAlert(id)
     elseif Options.currentCategory == 6 then
-        ok, alertID, status = saved.removeAlert("groundEffect", "player", id)
+        ok, alertID, status = saved.removeGroundEffectAlert(id)
     end
     
     if ok then
         Options.notifyConfigChanged()
+        if Options.currentCategory == 6 then
+            notifyGroundEffectConfigChanged()
+        end
         Options.refreshList()
         print(string.format(EAM.L.EAM_OPT_DEL_SUCCESS or "|cff00ff96EAM|r 成功移除監控提醒 [ID: %s]", id))
     else
@@ -353,14 +406,14 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
     slider:SetValueStep(step)
     slider:SetObeyStepOnDrag(true)
     slider:SetSize(width or 160, 16)
-    
+
     local sliderText = slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sliderText:SetPoint("BOTTOMLEFT", slider, "TOPLEFT", 0, 5)
     sliderText:SetText(text)
-    
+
     local valText = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     valText:SetPoint("BOTTOMRIGHT", slider, "TOPRIGHT", 0, 5)
-    
+
     local function updateText(val)
         if isPercent then
             valText:SetText(math.floor(val * 100) .. "%")
@@ -370,7 +423,25 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
             valText:SetText(math.floor(val))
         end
     end
-    
+
+    local isTextLayoutSlider = key == "fontSizeSpellName"
+        or key == "fontSizeTimeVal"
+        or key == "fontSizeStack"
+    local isNativeStructureSlider = key == "iconSize" or key == "iconSpacing"
+    local isNativeVisualSlider = key == "cooldownSwipeAlpha"
+    local function commitNativeChange()
+        if not slider.eamNativeChangeDirty then
+            return
+        end
+        slider.eamNativeChangeDirty = false
+        if isTextLayoutSlider then
+            Options.notifyTextLayoutChanged(true)
+        elseif isNativeStructureSlider or isNativeVisualSlider then
+            markAuraSettingsDirty("OPTIONS_NATIVE_STRUCTURE_CHANGED")
+            Options.refreshAuraBackendStatus()
+        end
+    end
+
     slider:SetScript("OnShow", function(self)
         if EAM.db and EAM.db.config then
             local val = EAM.db.config[key]
@@ -387,15 +458,49 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
             updateText(val)
         end
     end)
-    
+
     slider:SetScript("OnValueChanged", function(self, val)
-        if EAM.db and EAM.db.config then
+        if not EAM.db or not EAM.db.config then
+            return
+        end
+
+        updateText(val)
+        local changed = false
+        local savedVariables = EAM.Modules.SavedVariables
+        if key == "fontSizeTimeVal" and savedVariables and savedVariables.updateTextLayout then
+            local ok, state = savedVariables.updateTextLayout("timer", nil, val)
+            changed = ok == true and state == "updated"
+        elseif key == "fontSizeStack" and savedVariables and savedVariables.updateTextLayout then
+            local ok, state = savedVariables.updateTextLayout("applications", nil, val)
+            changed = ok == true and state == "updated"
+        elseif key == "cooldownSwipeAlpha" and savedVariables and savedVariables.updateConfigNumber then
+            local ok, state = savedVariables.updateConfigNumber(key, val)
+            changed = ok == true and state == "updated"
+        elseif EAM.db.config[key] ~= val then
             EAM.db.config[key] = val
-            updateText(val)
-            Options.notifyConfigChanged()
+            changed = true
+            if savedVariables and savedVariables.markRevisionChanged then
+                savedVariables.markRevisionChanged()
+            end
+        end
+
+        if changed then
+            if isTextLayoutSlider then
+                self.eamNativeChangeDirty = true
+                Options.notifyTextLayoutChanged(false)
+            elseif isNativeStructureSlider or isNativeVisualSlider then
+                self.eamNativeChangeDirty = true
+                Options.notifyConfigChanged(false)
+            else
+                Options.notifyConfigChanged()
+            end
         end
     end)
-    
+    if isTextLayoutSlider or isNativeStructureSlider or isNativeVisualSlider then
+        slider:HookScript("OnMouseUp", commitNativeChange)
+        slider:HookScript("OnHide", commitNativeChange)
+    end
+
     return slider
 end
 
@@ -455,20 +560,25 @@ local function createFrame()
     togglePosBtn:SetText(EAM.L.EAM_OPT_POS_AND_POWER_BTN or "圖示位置與能量設定")
     local tFont = togglePosBtn:GetFontString()
     if tFont then tFont:SetTextColor(0.95, 0.85, 0.2, 1) end
-    togglePosBtn:SetScript("OnClick", function()
+    local function togglePositionFrame()
         if Options.posFrame:IsShown() then
             Options.posFrame:Hide()
         else
             Options.posFrame:Show()
             Options.listFrame:Hide()
         end
-    end)
+    end
+    togglePosBtn:SetScript("OnClick", togglePositionFrame)
 
     -- 6 個核心複選框
     createCheckbox(inner, EAM.L.EAM_OPT_ENABLE_FRAME or "啟用提醒框架", "showFrame", 12, -46)
     createCheckbox(inner, EAM.L.EAM_OPT_SHOW_SPELL_NAME or "顯示法術名稱", "showSpellName", 180, -46)
     createCheckbox(inner, EAM.L.EAM_OPT_SHOW_TIME_VAL or "顯示倒數秒數", "showTimeVal", 12, -74)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_CHANGE_IN_OUT or "框架內外切換", "showChangeInOut", 180, -74)
+    local textLayoutButton = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    textLayoutButton:SetSize(160, 24)
+    textLayoutButton:SetPoint("TOPLEFT", inner, "TOPLEFT", 180, -70)
+    textLayoutButton:SetText(EAM.L.EAM_OPT_TEXT_LAYOUT_BTN or "倒數／堆疊位置設定")
+    textLayoutButton:SetScript("OnClick", togglePositionFrame)
     createCheckbox(inner, EAM.L.EAM_OPT_SHOW_FLASH or "啟用全螢幕閃爍", "showFlash", 12, -102)
     createCheckbox(inner, EAM.L.EAM_OPT_SHOW_SOUND or "啟用音效警告", "showSound", 180, -102)
 
@@ -571,7 +681,7 @@ local function createFrame()
     local nativeAuraRebuildButton = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
     nativeAuraRebuildButton:SetSize(54, 20)
     nativeAuraRebuildButton:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -8, -246)
-    nativeAuraRebuildButton:SetText(EAM.L.EAM_OPT_AURA_REBUILD or "重建")
+    nativeAuraRebuildButton:SetText(EAM.L.EAM_OPT_AURA_APPLY or "套用")
     nativeAuraRebuildButton:SetScript("OnClick", function()
         local service = EAM.Services.AuraContainerService
         if service and service.requestRebuild then
@@ -692,7 +802,7 @@ local function createFrame()
     createSlider(posInner, EAM.L.EAM_OPT_SLIDER_FONT_CD or "秒數倒數字型 (CD Font)", "fontSizeTimeVal", 8, 32, 1, 140, -175, 110)
     
     createSlider(posInner, EAM.L.EAM_OPT_SLIDER_FONT_STACK or "堆疊層數字型 (Stack Font)", "fontSizeStack", 8, 32, 1, 16, -225, 110)
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_SHADOW_ALPHA or "倒數陰影透明度 (Shadow Alpha)", "cooldownShadow", 0, 1, 0.05, 140, -225, 110, true)
+    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_SHADOW_ALPHA or "倒數轉圈透明度 (Swipe Alpha)", "cooldownSwipeAlpha", 0, 1, 0.05, 140, -225, 110, true)
 
     -- 告警框架成長方向設定標題
     local dirTitle = posInner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -781,16 +891,8 @@ local function createFrame()
     
     createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_CLASS_POWER or "職業能量成長", "classPower", 16, -415)
 
-    -- 秒數倒數顯示在框內 (timerInside) Checkbox，帶有安全CENTER自回彈
-    createCheckbox(posInner, EAM.L.EAM_OPT_TIMER_INSIDE or "秒數倒數顯示在框內", "timerInside", 16, -455, function(checked)
-        if not checked and EAM.db and EAM.db.config and EAM.db.config.timerPosition == "CENTER" then
-            EAM.db.config.timerPosition = "TOP"
-        end
-        Options.notifyConfigChanged()
-    end)
-
-    -- 仿 createDirectionDropdown 實作的 100% 零 Taint 倒數文字對齊位置下拉選單
-    local function createTimerPositionDropdown(parent, labelText, x, y)
+    -- 倒數與 applications 共用 21 點白名單位置，避免任意字串進入 SetPoint。
+    local function createTextPlacementDropdown(parent, labelText, kind, x, y)
         local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
         label:SetTextColor(0.85, 0.75, 0.65, 1)
@@ -800,30 +902,23 @@ local function createFrame()
         btn:SetSize(110, 20)
         btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
 
-        local posNames = {
-            CENTER = "正中央",
-            TOP = "上方",
-            BOTTOM = "下方",
-            LEFT = "左方",
-            RIGHT = "右方",
-            TOPLEFT = "左上角",
-            TOPRIGHT = "右上角",
-            BOTTOMLEFT = "左下角",
-            BOTTOMRIGHT = "右下角",
-        }
+        local function placementText(placement)
+            local key = "EAM_PLACEMENT_" .. placement
+            return EAM.L[key] or placement
+        end
 
         local function updateBtnText()
             if EAM.db and EAM.db.config then
-                local p = EAM.db.config.timerPosition or "TOP"
-                btn:SetText(posNames[p] or (EAM.L.EAM_ALIGN_TOP or "上方"))
+                local placement = EAM.UI.TextPlacement.getPlacement(EAM.db.config, kind)
+                btn:SetText(placementText(placement))
             end
         end
 
         btn:SetScript("OnShow", updateBtnText)
 
         local menu = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
-        menu:SetSize(110, 184)
-        menu:SetPoint("TOPLEFT", btn, "BOTTOMLEFT", 0, -2)
+        menu:SetSize(236, 226)
+        menu:SetPoint("BOTTOMLEFT", btn, "TOPLEFT", 0, 2)
         menu:SetFrameStrata("DIALOG")
         menu:SetBackdrop({
             bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -835,57 +930,44 @@ local function createFrame()
         menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
         menu:Hide()
 
-        local menuButtons = {}
+        local options = EAM.UI.TextPlacement.orderedPlacements
+        for index = 1, #options do
+            local placement = options[index]
+            local column = math.floor((index - 1) / 11)
+            local row = (index - 1) % 11
+            local menuButton = api.CreateFrame("Button", nil, menu)
+            menuButton:SetSize(112, 18)
+            menuButton:SetPoint("TOPLEFT", menu, "TOPLEFT", 3 + column * 116, -3 - row * 20)
+            menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
 
-        local function rebuildMenu()
-            for _, b in ipairs(menuButtons) do
-                b:Hide()
-            end
-            wipe(menuButtons)
+            local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 5, 0)
+            menuButtonText:SetText(placementText(placement))
 
-            local inside = EAM.db and EAM.db.config and EAM.db.config.timerInside
-            local options = {}
-            if inside then
-                options = { "CENTER", "TOP", "BOTTOM", "LEFT", "RIGHT", "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
-            else
-                options = { "TOP", "BOTTOM", "LEFT", "RIGHT", "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
-            end
-
-            menu:SetSize(110, #options * 20 + 6)
-
-            for idx, key in ipairs(options) do
-                local menuBtn = api.CreateFrame("Button", nil, menu)
-                menuBtn:SetSize(104, 18)
-                menuBtn:SetPoint("TOPLEFT", menu, "TOPLEFT", 3, -3 - (idx - 1) * 20)
-                menuBtn:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-                
-                local menuBtnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                menuBtnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
-                menuBtnText:SetText(posNames[key] or key)
-                
-                menuBtn:SetScript("OnClick", function()
-                    if EAM.db and EAM.db.config then
-                        EAM.db.config.timerPosition = key
+            menuButton:SetScript("OnClick", function()
+                local savedVariables = EAM.Modules.SavedVariables
+                if savedVariables and savedVariables.updateTextLayout then
+                    local ok, state = savedVariables.updateTextLayout(kind, placement, nil)
+                    if ok and state == "updated" then
                         updateBtnText()
-                        Options.notifyConfigChanged()
-                        menu:Hide()
+                        Options.notifyTextLayoutChanged(true)
                     end
-                end)
-                table.insert(menuButtons, menuBtn)
-            end
+                end
+                menu:Hide()
+            end)
         end
 
         btn:SetScript("OnClick", function()
             if menu:IsShown() then
                 menu:Hide()
             else
-                rebuildMenu()
                 menu:Show()
             end
         end)
     end
 
-    createTimerPositionDropdown(posInner, EAM.L.EAM_OPT_TIMER_ALIGN or "秒數倒數對齊位置", 140, -455)
+    createTextPlacementDropdown(posInner, EAM.L.EAM_OPT_TIMER_ALIGN or "秒數倒數位置", "timer", 16, -455)
+    createTextPlacementDropdown(posInner, EAM.L.EAM_OPT_APPLICATIONS_ALIGN or "堆疊層數位置", "applications", 140, -455)
 
     -- ---------------------------------------------------
     -- 【右側欄位】：職業特殊能量條件監控
@@ -1568,8 +1650,14 @@ local function createFrame()
         local d = Options.currentEditingAlert
         if d then
             if d.kind == "groundEffect" then
-                d.durationMode = condFrame.durationModeCb:GetChecked() and "TOOLTIP" or "MANUAL"
-                d.manualDuration = tonumber(condFrame.manualDurationEditBox:GetText()) or 8
+                local savedVariables = EAM.Modules.SavedVariables
+                if savedVariables and savedVariables.updateGroundEffectAlert then
+                    savedVariables.updateGroundEffectAlert(
+                        d.spellID,
+                        condFrame.durationModeCb:GetChecked() and "AUTO" or "MANUAL",
+                        condFrame.manualDurationEditBox:GetText()
+                    )
+                end
             else
                 d.stackThreshold = condFrame.stackSlider:GetValue()
                 d.stackGlowThreshold = condFrame.glowSlider:GetValue()
@@ -1584,6 +1672,9 @@ local function createFrame()
             end
             
             Options.notifyConfigChanged()
+            if d.kind == "groundEffect" then
+                notifyGroundEffectConfigChanged()
+            end
             condFrame:Hide()
             Options.refreshList()
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_COND_SAVE_SUCCESS or "條件已儲存。"))
@@ -1642,7 +1733,7 @@ function Options.openConditionsFrame(data)
         cf.manualDurationEditBox:Show()
         cf.scrapeBtn:Show()
 
-        cf.durationModeCb:SetChecked(data.durationMode == "TOOLTIP" or data.durationMode == nil)
+        cf.durationModeCb:SetChecked(data.durationMode == "AUTO" or data.durationMode == "TOOLTIP" or data.durationMode == nil)
         cf.manualDurationEditBox:SetText(tostring(data.manualDuration or 8))
 
         -- 隱藏一般的 sliders

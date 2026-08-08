@@ -519,8 +519,9 @@ end
     <code>C_UnitAuras.GetAuraDuration(unit, auraInstanceID)</code> 取得底層的 <code>DurationObject</code>。</li>
 <li><strong>執行步驟</strong>：
     1.渲染器取得<code>timer.durationObject</code>。
-    2.呼叫<code>C_DurationUtil.CreateDurationTextBinding(durationObject,圖示.timerText)</code>。
-    3.呼叫<code>icon.cooldown:SetCooldownFromDurationObject(durationObject)</code>。</li>
+    2.無參數呼叫 <code>C_DurationUtil.CreateDurationTextBinding()</code> 建立 binding。
+    3.依序呼叫 <code>SetFontString(圖示.timerText)</code>、<code>SetDuration(durationObject)</code>、<code>SetFormatter(formatter)</code>，再啟用 binding。
+    4.呼叫 <code>icon.cooldown:SetCooldownFromDurationObject(durationObject)</code>。</li>
 <li><strong>優勢</strong>：
     圖示上的秒數倒數與轉圈渲染完全由遊戲客戶端 C++ 高階的計時器驅動，<strong>完全不需要註冊 Lua OnUpdate 腳本</strong>，達成 0 頭顱與 0 記憶體。</li>
 </ul>
@@ -529,7 +530,7 @@ end
 <li><strong>原理</strong>：
 當<code>DurationObject</code>不可用時（例如非戰鬥技能冷卻、手動設定的地面效果時間、或PTR API降級時），返回傳統的Lua倒數。</li>
 <li><strong>執行步驟</strong>：<ol>
-<li>取消 <code>icon.timerText</code> 的臨時綁定。</li>
+<li>停用原生 binding，並在能力存在時呼叫 <code>SetToDefaults()</code>；不得假設存在 <code>Unbind()</code>。</li>
 <li>提示圖示註冊到 <code>EAM.Core.Scheduler</code> 集中式排程器。
 3.調度器使用單一的<code>OnUpdate</code>以0.1秒的間隔（節流）計算<code>timeLeft</code>，並更新文字。</li>
 </ol>
@@ -559,147 +560,17 @@ end
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="1210-auraauraserviceaurastatepool">12.1.0 Aura重構：AuraService解耦合、AuraStatePool設計與雙軌渲染藍圖</h1>
-<p>本檔案定義了 EventAlertMod (EAM) 進入 12.1.0 世代的核心重構規劃，旨在徹底解耦資料來源與 UI 渲染、減輕 Lua VM 戰鬥記憶體疼痛 (GC Churn)，並完整正式服 12.x C++ Native Duration Binding 通道。</p>
-<h2 id="push-event-driven-pull">一、架構演進：從 Push 連線到 Event-Driven Pull</h2>
-<h3 id="1">1.目前狀況痛點</h3>
-<p>在 12.0.7 中，<code>AuraService.lua</code> 直接呼叫了 <code>UI/Renderer.lua</code> 的 <code>Renderer.render</code> 和 <code>Renderer.requestLayout</code>。這導致了以下弊端：
-* <strong>高耦合性</strong>：<code>AuraService</code> 必須知道 <code>Renderer</code> 的接口，這使得無法在無 UI 的環境下對資料庫與事件車輛層進行獨立的單元測試（測試單元）。
-* <strong>Layout Churn（排版迭代）</strong>：在 <code>UNIT_AURA</code> 增量更新中，多個光環同時變更會觸發多次 <code>render</code>，導致渲染器重複計算 UI 座標（Layout），浪費 CPU 時間。</p>
-<h3 id="2">2.解耦目標</h3>
-<p>引入<strong>AlertManager</strong>（控制器層）作為加入。
-* <code>AuraService</code>：純資料服務，只監聽並承載 <code>UNIT_AURA</code> 事件，將光環的實體事實寫入 <code>AuraStatePool</code>。資料變更後，僅向 <code>EventRouter</code> 主動 <code>EAM_AURA_STATE_CHANGED</code> 事件。
-* <code>AlertManager</code>：此監聽事件，使用者負責設定（警報清單、啟用標記）做過濾與渲染決策，並以節流（Throttle）或批次（Batch）的方式請求<code>Renderer</code>更新。
-* <code>Renderer</code> : 純視圖渲染層，只接收包裝好的渲染狀態，透過 IconPool 刷寫到畫面上。</p>
-<div class="mermaid">
-graph TD
-    A[Wow UNIT_AURA Event] --> B[AuraService]
-    B -->|Wipe & Populate| C[(AuraStatePool)]
-    B -->|Fire Event| D[EventRouter]
-    D -->|EAM_AURA_STATE_CHANGED| E[AlertManager]
-    E -->|Pull states| C
-    E -->|Throttle & Batch| F[Renderer]
-    F -->|Draw| G[UI / Icons]
-</div>
 
-<h2 id="2026-07-26">2026-07-26 實作狀態</h2>
-<h2 id="redux-121-build-68914-auracontainer-native-backendnative-aura-redux-aurastatealertmanager-renderer1207-readable-legacy-docs23_aura_container_implementationmd">本藍圖原先以抽取/Redux 為主要設計。12.1 build 68914 的正式實作已改為 AuraContainer Native backend；Native Aura 不再進入 Redux AuraState、AlertManager 或 Renderer。12.0.7 Readable Legacy 才保留本文件的狀態管線。新事實來源為 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</h2>
-<h2 id="aurastatepoolgc">二、 AuraStatePool：低GC儲存池設計</h2>
-<p>為消除戰鬥熱路徑中分配與恢復Lua表的GC壓力和卡頓，12.1.0將推廣母公司的<strong>AuraStatePool</strong>。</p>
-<h3 id="1_1">1.結構設計</h3>
-<ul>
-<li>使用 <code>table.create(preallocatedSize, 0)</code> 預先指派指定連線空間的大小，主要指派給 <code>player</code> 和 <code>target</code> 的活動狀態。</li>
-<li><strong>恢復佇列(恢復佇列)</strong>：</li>
-<li>當光環消失時，狀態表不會被 <code>nil</code> 掉，而是呼叫 <code>resetState()</code> 抹除其動態內容，並放入 <code>AuraStatePool.recycleBin</code> 中。<ul>
-<li>新光環觸發時，優先從 <code>recycleBin</code> 中 <code>acquire</code> 舊表復用，只有在 Pool 乾涸時才建立新物件。</li>
-</ul>
-</li>
-</ul>
-<h3 id="2_1">2.核心程式碼設計</h3>
-<pre class="codehilite"><code class="language-lua">local AuraStatePool = {
-    active = {},
-    recycleBin = {},
-    binSize = 0,
-}
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-function AuraStatePool.initialize()
-    -- 預先建立 80 個 AuraState 對象備用
-    for i = 1, 80 do
-        local state = table.create(0, 16)
-        state.timer = table.create(0, 4)
-        state.source = table.create(0, 3)
-        state.boundaryWarnings = table.create(0, 4)
-
-        AuraStatePool.recycleBin[i] = state
-    end
-    AuraStatePool.binSize = 80
-end
-
-function AuraStatePool.acquire()
-    if AuraStatePool.binSize &gt; 0 then
-        local state = AuraStatePool.recycleBin[AuraStatePool.binSize]
-        AuraStatePool.recycleBin[AuraStatePool.binSize] = nil
-        AuraStatePool.binSize = AuraStatePool.binSize - 1
-        return state
-    else
-        -- 溢出時才分配新對象
-        local state = table.create(0, 16)
-        state.timer = table.create(0, 4)
-        state.source = table.create(0, 3)
-        state.boundaryWarnings = table.create(0, 4)
-        return state
-    end
-end
-
-function AuraStatePool.release(state)
-    -- 清洗狀態，防止殘留資料污染
-    state.id = nil
-    state.spellID = nil
-    state.name = nil
-    state.icon = nil
-    state.stacks = nil
-    state.active = false
-    state.shown = false
-    wipe(state.timer)
-    wipe(state.source)
-    wipe(state.boundaryWarnings)
-
-    AuraStatePool.binSize = AuraStatePool.binSize + 1
-    AuraStatePool.recycleBin[AuraStatePool.binSize] = state
-end
-</code></pre>
-
-<h3 id="3">3.秘密價值指數安全防禦</h3>
-<p>在戰鬥中，如果未用驗證的Key對自訂表進行索引，一旦該Key為秘密值，Lua就會發生致命的崩潰。
-* <strong>規則</strong>：在將 <code>spellID</code>、<code>auraInstanceID</code> 等欄位寫入任何雜補索引（如 <code>cache.byInstance[id]</code> 或 <code>alertIndex[spellID]</code>）之前，必須先以 <code>issecretvalue 進行防禦。
-* **降級**：若Key為Secret，此光環直接寫入固定的</code>EAM.Constants.FALLBACK_SECRET_KEY`，不進行動態雜湊映射。</p>
-<hr />
-<h2 id="c-native-binding-lua-onupdate">三、雙軌渲染：C++ Native Binding 與 Lua OnUpdate 降級通道通道</h2>
-<p>為了最大化發揮 WoW 12.x 的引擎完成，渲染器將採用<strong>雙軌化時間顯示渲染托盤</strong>。</p>
-<h3 id="1-a0-lua-cpu">1. 軌道A：原生持續時間綁定（首選，0-Lua-CPU）</h3>
-<ul>
-<li><strong>原理</strong>：
-    <code>C_UnitAuras.GetAuraDuration(unit, auraInstanceID)</code> 取得底層的 <code>DurationObject</code>。</li>
-<li><strong>執行步驟</strong>：
-    1.渲染器取得<code>timer.durationObject</code>。
-    2.呼叫<code>C_DurationUtil.CreateDurationTextBinding(durationObject,圖示.timerText)</code>。
-    3.呼叫<code>icon.cooldown:SetCooldownFromDurationObject(durationObject)</code>。</li>
-<li><strong>優勢</strong>：
-    圖示上的秒數倒數與轉圈渲染完全由遊戲客戶端 C++ 高階的計時器驅動，<strong>完全不需要註冊 Lua OnUpdate 腳本</strong>，達成 0 頭顱與 0 記憶體。</li>
-</ul>
-<h3 id="2blua-onupdate-central-scheduler">2.軌道B：Lua OnUpdate Central Scheduler (降級通道)</h3>
-<ul>
-<li><strong>原理</strong>：
-當<code>DurationObject</code>不可用時（例如非戰鬥技能冷卻、手動設定的地面效果時間、或PTR API降級時），返回傳統的Lua倒數。</li>
-<li><strong>執行步驟</strong>：<ol>
-<li>取消 <code>icon.timerText</code> 的臨時綁定。</li>
-<li>提示圖示註冊到 <code>EAM.Core.Scheduler</code> 集中式排程器。
-3.調度器使用單一的<code>OnUpdate</code>以0.1秒的間隔（節流）計算<code>timeLeft</code>，並更新文字。</li>
-</ol>
-</li>
-<li><strong>安全防禦</strong>：
-在 Scheduler 內更新文字前，必須先使用 <code>issecretvalue(timeLeft)</code> 保證數字可安全存取的時間，否則將文字顯示為 <code>"unknown"</code>，徹底杜絕 Indexing/Arithmetic with Secret 報錯。</li>
-</ul>
-<hr />
-<h2 id="1210">四、12.1.0模組化目錄結構預期</h2>
-<p>12.1.0的重構將進一步優化模組結構，如下所示：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod/
-├── Core/
-│   ├── EventRouter.lua      (單一事件分派器)
-│   └── Scheduler.lua        (集中式 OnUpdate 排程器，驅動 Track B)
-├── Services/
-│   ├── AuraService.lua      (純數據服務，操作 AuraStatePool)
-│   └── CooldownService.lua  (純數據服務)
-├── Managers/
-│   └── AlertManager.lua     (新增：決策與邏輯過濾層，解耦 UI 與 Service)
-├── UI/
-│   ├── Renderer.lua         (純渲染層，支持 C++ Native Binding 雙軌渲染)
-│   ├── IconPool.lua         (Icon 緩衝物件池)
-│   └── Options.lua          (設定面板，防戰鬥 Taint)
-└── Locale/
-    └── Common.lua           (語系註冊入口，無熱路徑消耗)
-</code></pre>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

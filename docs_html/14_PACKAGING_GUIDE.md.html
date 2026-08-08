@@ -492,7 +492,7 @@
 <pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -SkipLuaCheck
 </code></pre>
 
-<p>僅診斷工具環境問題時跳過離線流程驗證：</p>
+<p>僅診斷工具環境問題時跳過離線 Flow 與 JSON／Lua 契約驗證：</p>
 <pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -SkipFlowValidation
 </code></pre>
 
@@ -506,6 +506,7 @@
 <li>TOC 路徑驗證。</li>
 <li>Lua 語法檢查，除非明確使用 <code>-SkipLuaCheck</code>。</li>
 <li>離線 <code>all</code> 流程驗證，除非診斷性使用 <code>-SkipFlowValidation</code>；正式發布不得常態跳過。</li>
+<li><code>Tools/Test-ValidationContracts.ps1</code> 的 JSON Schema、21 點／34 案 Lua 同步、continuity drift、TOC 與 PowerShell AST 驗證；需要 PowerShell 7 <code>pwsh</code>。此 gate 與 Flow 共用診斷性 <code>-SkipFlowValidation</code>，正式發布不得跳過。</li>
 <li><code>TestResults/</code>、<code>Tests/</code> 與 <code>Tools/</code> 不進正式包。</li>
 <li>zip排除檢查，確認沒有legacy/reference/tools/backup/dev資料夾。</li>
 </ul>
@@ -520,116 +521,22 @@
 <li>資源成功不代表WoW正式服實機驗證完成。</li>
 <li>若 TOC <code>## Version</code> 與當日日期不一致，壓縮工具會停止。</li>
 <li>發布前仍需依<code>Docs/06_TEST_PLAN_RETAIL.md</code>做正式服實機測試。</li>
+<li>封裝 gate 通過仍只代表離線契約，不能取代 <code>_ptr_</code>／<code>_xptr_</code> 真人矩陣。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="curseforge">CurseForge 預算指南</h1>
-<p>本文件定義 EventAlertMod Retail rewrite 的發佈資源規則。</p>
-<h2 id="_1">快速指令</h2>
-<p>日後用戶只需輸入：</p>
-<pre class="codehilite"><code class="language-text">打包
-</code></pre>
 
-<p>就執行：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1
-</code></pre>
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-<p>或使用者只需輸入：</p>
-<pre class="codehilite"><code class="language-text">打包開發版
-</code></pre>
-
-<p>就執行：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -DevMode
-</code></pre>
-
-<p>除非使用者附加指定參數，否則不需要再次詢問。</p>
-<h2 id="_2">版本命名</h2>
-<p>TOC 版本名稱必須符合：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod_資料片簡稱_打包年月日
-</code></pre>
-
-<p>目前資料片名稱固定為：</p>
-<pre class="codehilite"><code class="language-text">MN
-</code></pre>
-
-<p>範例：</p>
-<pre class="codehilite"><code class="language-text">## Version: EventAlertMod_MN_20260504
-</code></pre>
-
-<h2 id="_3">備用檔名</h2>
-<p>zip檔名必須符合：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod_資料片簡稱_打包年月日_打包時分秒.zip
-</code></pre>
-
-<p>範例：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod_MN_20260504_205216.zip
-</code></pre>
-
-<h2 id="_4">預設預設內容</h2>
-<ul>
-<li><code>EventAlertMod.toc</code></li>
-<li><code>README.md</code></li>
-<li><code>readme.html</code></li>
-<li><code>changelog.txt</code></li>
-<li><code>Core/</code></li>
-<li><code>Services/</code></li>
-<li><code>UI/</code></li>
-<li><code>Debug/</code></li>
-<li><code>Data/</code></li>
-<li><code>Locale/</code></li>
-<li><code>媒體/</code></li>
-</ul>
-<h2 id="_5">預設排除內容</h2>
-<ul>
-<li><code>LegacyReference/</code></li>
-<li><code>ReferenceLibs/</code></li>
-<li><code>Tools/</code></li>
-<li><code>備份/</code></li>
-<li><code>.github/</code></li>
-<li><code>.vscode/</code></li>
-<li><code>文檔/</code></li>
-<li><code>Dist/_stage/</code></li>
-</ul>
-<h2 id="_6">可選參數</h2>
-<p>包含文件與 AGENTS：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -IncludeDocs
-</code></pre>
-
-<p>跳過Lua語法檢查：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -SkipLuaCheck
-</code></pre>
-
-<p>僅診斷工具環境問題時跳過離線流程驗證：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -SkipFlowValidation
-</code></pre>
-
-<p>開發版本壓縮（將整個專案資料壓縮，不過濾，排除 .git/ 和 Dist/）：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -DevMode
-</code></pre>
-
-<h2 id="_7">驗證要求</h2>
-<p>預算流程必須完成：</p>
-<ul>
-<li>TOC 路徑驗證。</li>
-<li>Lua 語法檢查，除非明確使用 <code>-SkipLuaCheck</code>。</li>
-<li>離線 <code>all</code> 流程驗證，除非診斷性使用 <code>-SkipFlowValidation</code>；正式發布不得常態跳過。</li>
-<li><code>TestResults/</code>、<code>Tests/</code> 與 <code>Tools/</code> 不進正式包。</li>
-<li>zip排除檢查，確認沒有legacy/reference/tools/backup/dev資料夾。</li>
-</ul>
-<h2 id="html">HTML 說明檔案轉換</h2>
-<ul>
-<li>對於 <code>Docs/</code> 下或根目錄 <code>AGENTS.md</code> 涉及表格、圖像、心智圖與流程圖的 Markdown 文件，應執行 HTML 轉換工具，在 <code>docs_html/</code> 底下產生一個同名的 <code>.html</code> 文件（如 __10）。</li>
-<li><code>Tools/batch_convert_docs.py</code> 會把 <code>docs_html/README.md.html</code> 同步成根目錄 <code>readme.html</code>；正式包的 HTML 說明以該 Pages 產物為唯一來源。發布前不得只改 <code>README.md</code> 而跳過轉換。</li>
-<li>開發與AI自動協作時，一律以<code>.md</code>檔案為絕對的Facts-of-Truth參考。 <code>.html</code>版本供人類好讀與預覽使用，不可被自動化AI開發的配置或方案碼邏輯之引用。</li>
-</ul>
-<h2 id="_8">注意事項</h2>
-<ul>
-<li>資源成功不代表WoW正式服實機驗證完成。</li>
-<li>若 TOC <code>## Version</code> 與當日日期不一致，壓縮工具會停止。</li>
-<li>發布前仍需依<code>Docs/06_TEST_PLAN_RETAIL.md</code>做正式服實機測試。</li>
-</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

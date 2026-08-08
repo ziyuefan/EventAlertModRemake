@@ -1,0 +1,4 @@
+interface:
+  display_name: "EAM 驗證契約"
+  short_description: "驗證 EAM JSON、Lua 契約同步與實機回灌門檻"
+  default_prompt: "使用 $eam-validation-contracts 驗證 EAM 的 JSON、Lua 契約與 PTR／XPTR 回灌門檻。"

@@ -500,88 +500,17 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="_1">已知限制</h1>
-<h2 id="_2">即時驗證差距</h2>
-<p>這次審計是靜態的。沒有 WoW Retail 12.x 用戶端可用，因此 API 名稱，
-傳回形狀、secret/protected 行為和 XML 運行時行為仍然需要
-遊戲內驗證。</p>
-<h2 id="_3">離線流程驗證限制</h2>
-<p><code>Tests/FlowValidationHarness.lua</code> 可驗證 Lua 模組契約、事件 round-trip、Scheduler 與報告閉環，但無法重現 WoW C++ Secret／Forbidden／taint／protected frame 語意。</p>
-<ul>
-<li>Mock 通過不得標記為 PTR 或 Retail 實機通過。</li>
-<li>測試面板不執行施法、物品使用、改目標或 secure action。</li>
-<li>真實 AuraContainer、DurationObject、戰鬥鎖定與污染仍由 <code>RQA</code> 實機簽收。</li>
-<li>報告不自動上傳；需由使用者複製 JSON 或提供 WTF SavedVariables。</li>
-</ul>
-<h2 id="_4">秘密/受保護的值</h2>
-<p>正式服可能會返回秘密、受保護、僅供顯示或不可用的光環數據
-和冷卻狀態。重寫必須安全降級：</p>
-<ul>
-<li>僅圖示顯示；</li>
-<li>僅已知安全名稱/icon/stacks；</li>
-<li>定時模式 <code>protected</code>、<code>displayOnly</code> 或 <code>unknown</code>；</li>
-<li>沒有捏造持續時間/expiration/cooldown事實；</li>
-<li>僅當請求 debug/export 時偵錯邊界警告。</li>
-</ul>
-<h2 id="_5">戰鬥限制</h2>
-<p>某些 UI 或資料更新可能不安全或在戰鬥中不可用。繁重的工作，
-快取建置、佈局重建和類似遷移的操作必須延遲
-或節流。</p>
-<h2 id="_6">不支援的分支</h2>
-<p>重寫不支援：</p>
-<ul>
-<li>經典</li>
-<li>熊貓人之謎經典服</li>
-<li>浩劫與重生經典服賽</li>
-<li>巫妖王之怒經典服</li>
-<li>TBC 經典</li>
-<li>時代</li>
-<li>特定於區域的經典相容性分支</li>
-</ul>
-<p>舊目錄可能保留在儲存庫中，僅供參考。</p>
-<h2 id="_7">目前來源風險</h2>
-<p>首次透過審核發現以下風險：</p>
-<ul>
-<li>主線中混合正式服和遺留相容性分支；</li>
-<li>遺留的 TOC 仍然存在於根部；</li>
-<li>目前 TOC 和許多運行時模組所需的 <code>Lib_ZYF</code> ；</li>
-<li>大型法術/item資料表；</li>
-<li><code>EventAlert_ItemSpellCache.lua</code> 中的物品範圍掃描；</li>
-<li>遞迴計時器調度和每個資源 OnUpdate 腳本；</li>
-<li>廣泛的全域變數使用和意外全域變數；</li>
-<li>可能與受保護資料衝突的工具提示和光環 API 假設；</li>
-<li><code>Main/</code> 下有重複的 /archived 文件，其名稱為亂碼，且
-  <code>DevDocument/ChatGPT/</code>;</li>
-<li><code>EventAlert_ImportExport.lua</code> 具有原型全域變數並被註解掉
-  載入順序。</li>
-</ul>
-<h2 id="_8">使用者介面限制</h2>
-<p>目前 XML 建立大型靜態選項面板和許多全域框架名稱。的
-重寫應該更喜歡較小的選項表面和池化運行時圖標，但是
-刪除之前必須先映射現有的 UI 行為。</p>
-<h2 id="_9">需要正式服驗證的領域</h2>
-<ul>
-<li>準確的 <code>C_UnitAuras</code> 安全存取行為；</li>
-<li>精確的 <code>C_Spell.GetSpellCooldown</code> 結構化回傳行為；</li>
-<li>精確的 <code>C_Item.GetItemCooldown</code> 直接 itemID 行為；</li>
-<li><code>C_Secrets</code> 可用性和退貨行為；</li>
-<li>冷卻充能行為；</li>
-<li>目標光環更新有效負載；</li>
-<li>對所有計劃中的 UI 操作的戰鬥限制；</li>
-<li>工具提示 API（如果保留工具提示顯示）；</li>
-<li>zhTW/enUS/koKR/zhCN 中的局部渲染；</li>
-<li>SavedVariables 遷移真實的舊用戶資料。</li>
-</ul>
-<h2 id="2026-07-26121">2026-07-26：12.1 尚待實機確認</h2>
-<ul>
-<li>68914 模板實際載入時機、AuraButton Forbidden Aspect 與條件式 access constraints。</li>
-<li>candidate Spell ID filter 對各種 Secret Aura/單位極性的真實接受範圍。</li>
-<li><code>initializeFrame</code> 名稱、倒數、層數、Tooltip 的實際顯示與容器裁切。</li>
-<li>Added/ApplicationsIncreased/Removed 的實際播放次數、音效檔欄位與 output channel。</li>
-<li>戰鬥 pending、脫戰重建、Reload UI migration、taint/blocked action 與 CPU/GC。</li>
-<li><code>UNSUPPORTED</code> 只代表安全停用 Native Aura，不代表功能等同 Legacy。</li>
-</ul>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

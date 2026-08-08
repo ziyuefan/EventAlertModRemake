@@ -6,7 +6,7 @@ import sys
 import subprocess
 import shutil
 
-# 設定 EAM_DOCS_OFFLINE=1 時，翻譯函式會在任何外部請求前回傳原文。
+# 設定 EAM_DOCS_OFFLINE=1 時，翻譯入口會在任何外部請求前回傳不可用。
 # Ensure markdown library is installed
 try:
     import markdown
@@ -290,6 +290,8 @@ def translate_chunk(chunk_text, src_lang="zh-TW", dest_lang="en"):
 def translate_via_google_api(text, src_lang="zh-TW", dest_lang="en"):
     if not text.strip():
         return ""
+    if OFFLINE_MODE:
+        return None
     try:
         text = text.replace('\r\n', '\n')
         
@@ -696,6 +698,45 @@ def write_html_file(dest_path, full_html):
     with open(dest_path, "w", encoding="utf-8") as f:
         f.write(normalized_html)
 
+HREF_ATTRIBUTE_PATTERN = re.compile(
+    r'(?P<prefix>\bhref\s*=\s*)(?P<quote>["\'])(?P<target>.*?)(?P=quote)',
+    re.IGNORECASE,
+)
+
+def rewrite_local_markdown_links(html_content):
+    """把已轉換到 docs_html 根目錄的本機 Markdown 連結改成 HTML。"""
+    def replace_href(match):
+        target = match.group("target")
+        parsed = urllib.parse.urlsplit(target)
+        if parsed.scheme or parsed.netloc or target.startswith(("//", "/", "#")):
+            return match.group(0)
+
+        path = parsed.path.replace("\\", "/")
+        lower_path = path.lower()
+        if lower_path.startswith("../docs/"):
+            output_path = path[len("../Docs/"):]
+        elif lower_path.startswith("docs/"):
+            output_path = path[len("Docs/"):]
+        elif path.startswith("../"):
+            output_path = path[3:]
+        elif path.startswith("./"):
+            output_path = path[2:]
+        elif "/" not in path:
+            output_path = path
+        else:
+            return match.group(0)
+
+        if "/" in output_path or not output_path.lower().endswith(".md"):
+            return match.group(0)
+
+        rewritten = urllib.parse.urlunsplit(
+            ("", "", output_path + ".html", parsed.query, parsed.fragment)
+        )
+        quote = match.group("quote")
+        return f'{match.group("prefix")}{quote}{rewritten}{quote}'
+
+    return HREF_ATTRIBUTE_PATTERN.sub(replace_href, html_content)
+
 def convert_to_html(md_path, dest_dir, force_convert=False):
     filename = os.path.basename(md_path)
     # Output file matches: full filename suffix with .html (e.g. filename.md.html)
@@ -749,9 +790,7 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
     if content_zh:
         processed_content_zh = pattern.sub(r'\n<div class="mermaid">\n\1\n</div>\n', content_zh)
         html_content_zh = markdown.markdown(processed_content_zh, extensions=['extra', 'codehilite', 'toc'])
-        html_content_zh = re.sub(r'href="Docs/([^"]+?)\.md"', r'href="\1.md.html"', html_content_zh)
-        html_content_zh = re.sub(r'href="([^"]+?)\.md"', r'href="\1.md.html"', html_content_zh)
-        html_content_zh = re.sub(r'href="\.\./Docs/([^"]+?)\.md"', r'href="\1.md.html"', html_content_zh)
+        html_content_zh = rewrite_local_markdown_links(html_content_zh)
     else:
         html_content_zh = """
         <div class="translation-fallback">
@@ -763,9 +802,7 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
     if content_en:
         processed_content_en = pattern.sub(r'\n<div class="mermaid">\n\1\n</div>\n', content_en)
         html_content_en = markdown.markdown(processed_content_en, extensions=['extra', 'codehilite', 'toc'])
-        html_content_en = re.sub(r'href="Docs/([^"]+?)\.md"', r'href="\1.md.html"', html_content_en)
-        html_content_en = re.sub(r'href="([^"]+?)\.md"', r'href="\1.md.html"', html_content_en)
-        html_content_en = re.sub(r'href="\.\./Docs/([^"]+?)\.md"', r'href="\1.md.html"', html_content_en)
+        html_content_en = rewrite_local_markdown_links(html_content_en)
     else:
         html_content_en = """
         <div class="translation-fallback">
@@ -1178,7 +1215,8 @@ Recommended Solution: Directly use your browser's built-in "Translate to English
     return True
 
 def main():
-    load_cache()
+    if not OFFLINE_MODE:
+        load_cache()
     workspace = "d:/EventAlertMod"
     docs_dir = os.path.join(workspace, "Docs")
     dest_dir = os.path.join(workspace, "docs_html")

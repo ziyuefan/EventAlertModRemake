@@ -1,3 +1,13 @@
+-- [Retail  12.1.0 PTR8 Alpha 2]2026.08.08
+    -- PTR8 Native Aura：
+       -- 接入 AuraButton Pandemic region 與 Dispel texture options；showAlways、stealable 與樣式以白名單編譯。
+       -- 停用 AuraContainer 時清除按鈕與武器附魔 assignment；設定變更標記 dirty，非戰鬥中手動重建。
+    -- UnitPower 安全路徑：
+       -- 安全普通數字只在 C_Secrets predicate 明確允許且非戰鬥時讀取；戰鬥中延後至 PLAYER_REGEN_ENABLED。
+       -- 可能為 Secret 的百分比只單向送入 StatusBar／radial sink，不讀回、不比較、不序列化。
+    -- 測試與發布：
+       -- 真人矩陣擴充為 34 案；離線 Lua 47 檔、Flow 54/54、Validation Contracts 208/208 通過。
+       -- 本版仍為 Alpha prerelease；離線與封裝通過不代表 PTR／XPTR／Retail 實機簽收。
 -- [Retail  12.1.0 Alpha]2026.07.28
 	-- 12.1 Native AuraContainer：
 	   -- 12.1 使用 Blizzard AuraContainer／AuraButton 建立 player、target 與 group 穩定容器。

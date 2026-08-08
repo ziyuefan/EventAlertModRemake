@@ -465,14 +465,19 @@ EAM `CooldownService` 實施規則：
 * **綁定**：橢圓曲線與 `DurationObject` 一併綁定至 Status/Progress Bar 或 Cooldown 控制項（例如 `statusBar:SetColorCurve(curve, durationObject)`）。
 * **優勢**：所有的數學比較與顏色轉換都發生在 C++ 語法層，**100% 避免了 Lua 完全恢復了的 Taint，且免去了每幀 OnUpdate 垃圾恢復壓力**！
 
-### 📝 12.0.7 突破 FontString 與 Cooldown 顯示綁定
-* **`C_DurationUtil.CreateDurationTextBinding(durationObject, fontString)`**：
-- 在 12.0.7 中，可以直接將 `DurationObject` 與 FontString 進行綁定綁定。倒數秒數文字直接在 C++ 渲染更新，免去了 Lua 每幀法術符串的負擔。
-    - 清除時必須使用 `timerBinding:Unbind()` 且對 FontString 呼叫 `fontString:ClearText()`（12.0.1 引入，取消文字秘密方面，防止秘密錨點污染）。
-* **`冷卻時間:SetCooldownFromDurationObject(durationObject [, clearIfZero])`**：
-- Cooldown遮罩專用的手動綁定。當為零跨距時，設定`clearIfZero = true`會由手動引擎自動清除Swipe遮罩。
+### 12.0.7 FontString 與 Cooldown 顯示綁定
 
-魔獸爭霸維基`ScriptObject DurationObject`說明DurationObject用來讓原始端對可能秘密的時間資料做計算，然後把結果回傳給Lua。它在`C_DurationUtil.CreateDuration()`建立時，也同時有光環、施法、法術書冷卻時間等API回傳，並可傳給`Cooldown:SetCooldownFromDurationObject()`或 `StatusBar:SetTimerDuration()`。
+* **`C_DurationUtil.CreateDurationTextBinding()`**：
+  - Factory 不接受 `DurationObject` 或 `FontString` 參數。先無參數建立 binding，再依序呼叫 `SetFontString()`、`SetDuration()`、`SetFormatter()`，最後使用 `SetEnabled(true)` 或 `Enable()`。
+  - 倒數文字由原生端更新，不需要為每個圖示建立 Lua `OnUpdate`。
+  - 公開契約不保證存在 `Unbind()`。釋放時應先 `Disable()` 或 `SetEnabled(false)`，再於能力存在時呼叫 `SetToDefaults()`；不得呼叫猜測的方法。
+* **`C_DurationUtil.CreateDuration()`**：
+  - Factory 不接受 start／duration 參數。只有已確認安全的普通數字，才可在建立後呼叫 `DurationObject:SetTimeFromStart(startTime, duration)`。
+  - API 提供的 Secret `DurationObject` 只可原樣交給 Blizzard 支援的 widget／binding，不讀回、不比較、不序列化。
+* **`Cooldown:SetCooldownFromDurationObject(durationObject [, clearIfZero])`**：
+  - Cooldown swipe 專用的原生綁定；零區間可由 `clearIfZero = true` 交給原生端處理。
+
+`DurationObject` 用來讓原生端處理可能為 Secret 的時間資料。它可由 `C_DurationUtil.CreateDuration()` 建立，也可能由光環、施法或冷卻 API 提供，並可傳給 `Cooldown:SetCooldownFromDurationObject()` 或其他明確接受 DurationObject 的 widget。
 12.x規劃方向是刪除剩餘時間API，改用duration物件：
 ```lua
 C_ActionBar.GetActionCooldownRemaining
@@ -721,3 +726,17 @@ EAM 12.x 架構應用採用：
 - AuraButton 公開綁定使用 `SetIcon`、`SetDurationCooldown`、`SetDurationText`、`SetApplicationCount`、`SetSpellName`。
 - `C_UnitAuras.AddAuraSound`／`RemoveAuraSound` 與三種 trigger 已實作 ID 生命週期；實際播放待 PTR。
 - 固定證據版本與完整限制見 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`、`Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`。
+
+
+## 2026-08-08 PTR8／UnitPower 追加筆記
+
+- PTR8 的 Pandemic 狀態必須用 `AuraButton:AddPandemicRegion`，不讀 Region 的 `Shown` Secret aspect，也不以 EAM OnUpdate 重造 Blizzard Pandemic window。
+- Dispel 邊框必須用 `AddDispelTypeTexture(texture, options)`；`showAlways` 覆蓋其他條件，不能把 `stealable=true` 或舊 AuraBorder alias 當成替代品。
+- 停用 AuraContainer 會清除所屬 AuraButton／ItemEnchantment 顯示資料，但不代表框架被銷毀。
+- UnitPower 的公開生成文件未證實 `StatusBar:SetUnit`、`SetPowerTextFontString`、`SetOnUpdateMode`。已確認的 12.1 Secret sink 是 StatusBar `SetValue` 與 Texture `SetRadialProgressBarPercent` 的單向輸入。
+- EAM 不在戰鬥中呼叫 `UnitPower`、`UnitPowerMax` 或 `UnitPowerPercent`；`ClassPowerService` 與能力探針在戰鬥中回報 `combatDeferred`，離戰後由事件恢復。
+
+官方 PTR 12.1.0.69189 生成 API：
+
+- [UnitDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua)
+- [SimpleStatusBarAPIDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua)

@@ -580,168 +580,17 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="_1">效能指南</h1>
-<h2 id="_2">熱路徑候選者</h2>
-<p>目前主線熱路徑候選人：</p>
-<ul>
-<li><code>Main/EventAlert_Core.lua</code></li>
-<li>事件調度和處理程序</li>
-<li><code>COMBAT_LOG_EVENT_UNFILTERED</code></li>
-<li><code>UNIT_AURA</code></li>
-<li><code>BAG_UPDATE_COOLDOWN</code></li>
-<li><code>SPELL_UPDATE_COOLDOWN</code></li>
-<li><code>SPELL_UPDATE_CHARGES</code></li>
-<li><code>SPELL_UPDATE_USABLE</code></li>
-<li><code>ACTIONBAR_UPDATE_COOLDOWN</code></li>
-<li>使用代碼/coroutine 進行查找掃描</li>
-<li><code>Main/EventAlert_Aura_Self.lua</code></li>
-<li><code>Buffs_Update</code></li>
-<li><code>OnUpdate</code></li>
-<li><code>PositionFrames</code></li>
-<li><code>Main/EventAlert_Aura_Target.lua</code></li>
-<li><code>TarBuffs_Update</code></li>
-<li><code>OnTarUpdate</code></li>
-<li><code>TarPositionFrames</code></li>
-<li><code>Main/EventAlert_Cooldown.lua</code></li>
-<li><code>OnSCDUpdate</code></li>
-<li><code>ScdBuffs_Update</code></li>
-<li><code>UpdateScdFrame</code></li>
-<li><code>ScdPositionFrames</code></li>
-<li><code>Main/EventAlert_ItemSpellCache.lua</code></li>
-<li>物品範圍掃描建構器</li>
-<li><code>Main/EventAlert_SpecialPower.lua</code></li>
-<li>資源/power 更新</li>
-<li>符文 OnUpdate 腳本</li>
-<li><code>Main/EventAlert_CreateFrames.lua</code></li>
-<li>框架創建和滾動列表生成</li>
-<li><code>Main/EventAlert_EAFun.lua</code></li>
-<li>版面配置、工具提示、計時器文字、偵錯標籤助手</li>
-</ul>
-<h2 id="onupdate-c_timer">目前 OnUpdate / C_Timer 用法</h2>
-<p>觀察到的主線使用情況：</p>
-<ul>
-<li><code>EventAlert_Core.lua</code></li>
-<li>遞迴 <code>C_Timer.After(tempInterval, RecurringFrameUpdate)</code></li>
-<li>FPS-調整了位置 /special 幀更新的節奏</li>
-<li><code>C_Timer.NewTicker(1 / GetFramerate(), function() ...)</code> 用來查找</li>
-<li><code>EventAlert_Aura_Self.lua</code></li>
-<li><code>G:OnUpdate(spellId)</code> 用於光環計時器刷新</li>
-<li>在先前指派 <code>tempFunc = function() G.OnUpdate(spellId) end</code>
-    <code>C_Timer.After(delay, tempFunc)</code></li>
-<li><code>EventAlert_Aura_Target.lua</code></li>
-<li><code>C_Timer.After(delay, G.OnTarUpdate, G, spellId)</code></li>
-<li><code>EventAlert_Cooldown.lua</code></li>
-<li><code>C_Timer.After(nextInterval, G.OnSCDUpdate, G, sid)</code></li>
-<li><code>EventAlert_ItemSpellCache.lua</code></li>
-<li><code>C_Timer.NewTicker(0.01, function() ...)</code></li>
-<li><code>C_Timer.After(1, ProcessBatch)</code> 用於批次掃描繼續</li>
-<li><code>EventAlert_SpecialPower.lua</code></li>
-<li>每個符文 <code>SetScript("OnUpdate", function(self, elapsedTime) ...)</code></li>
-<li><code>C_Timer.After</code> 用於生命綻放刷新</li>
-<li><code>EventAlert_Util.lua</code></li>
-<li>幀清理中呼叫 <code>Lib_ZYF:StopOnUpdate(eaf)</code></li>
-</ul>
-<p>重寫規則：</p>
-<ul>
-<li>用一個中央調度程式取代它們。</li>
-<li>調度程序回呼記錄應可重複使用，並由alert/service ID 鍵入。</li>
-<li>重複刷新路徑中沒有每個圖示計時器和閉包分配。</li>
-</ul>
-<h2 id="_3">分配政策</h2>
-<p>使用 <code>table.create</code> 用於：</p>
-<ul>
-<li>配置警報陣列</li>
-<li>活動狀態數組</li>
-<li>骯髒的隊列</li>
-<li>圖示池記錄</li>
-<li>排程程式作業記錄</li>
-<li>除錯環形緩衝區</li>
-<li>
-<p>預設設定檔模板
-避免在熱路徑中：</p>
-</li>
-<li>
-<p>每個光環的瞬態表</p>
-</li>
-<li><code>table.insert</code> 當直接數字索引分配就足夠了</li>
-<li><code>pairs</code>/<code>ipairs</code> 其中確定性數字循環可用</li>
-<li>臨時字串構建</li>
-<li>匿名回呼函數</li>
-</ul>
-<h2 id="freeze">表.freeze 策略</h2>
-<p>僅凍結：</p>
-<ul>
-<li>常數</li>
-<li>列舉</li>
-<li>狀態名稱</li>
-<li>模式描述</li>
-<li>不可變的預設欄位設定文件</li>
-<li>靜態模組合約</li>
-</ul>
-<p>切勿凍結：</p>
-<ul>
-<li>SavedVariables</li>
-<li>運行時光環/cooldown狀態</li>
-<li>圖示渲染狀態</li>
-<li>UI框架記錄</li>
-<li>調度程序佇列</li>
-<li>池對象</li>
-<li>除錯快照</li>
-</ul>
-<h2 id="ui">UI 寫入策略</h2>
-<p>渲染器必須快取最後渲染的值並跳過無操作寫入：</p>
-<ul>
-<li><code>SetText</code></li>
-<li><code>SetTexture</code></li>
-<li><code>SetAlpha</code></li>
-<li><code>SetCooldown</code></li>
-<li><code>SetPoint</code></li>
-<li><code>SetSize</code></li>
-<li><code>Show</code> / <code>Hide</code></li>
-</ul>
-<p>佈局應該是批量的：</p>
-<ol>
-<li>收集髒佈局鍵。</li>
-<li>隱藏父框架。</li>
-<li>僅套用變更的位置/sizes。</li>
-<li>顯示一次父框架。</li>
-</ol>
-<h2 id="-fps">戰鬥/低-FPS 節流</h2>
-<p>在以下情況下，繁重的工作必須被阻止、延遲或降級：</p>
-<ul>
-<li><code>InCombatLockdown()</code> 為 true；</li>
-<li>FPS 低於配置的閾值；</li>
-<li>工作需要大掃描；</li>
-<li>達到受保護的/secret 邊界。</li>
-</ul>
-<p>允許的降級行為：</p>
-<ul>
-<li>僅顯示安全性圖示/name；</li>
-<li>將計時器標記為 <code>unknown</code>、<code>protected</code> 或 <code>displayOnly</code>；</li>
-<li>跳過可選項目快取進程；</li>
-<li>安排非戰鬥刷新。</li>
-</ul>
-<h2 id="_4">目前配置風險</h2>
-<p>首次透過審核發現了這些可能的來源：</p>
-<ul>
-<li>重複光環掃描循環超過 1..40 個有用且有害的指數；</li>
-<li><code>AuraUtil.ForEachAura</code> 回呼使用；</li>
-<li>工具提示呼叫後掛鉤和工具提示解析路徑；</li>
-<li>aura 更新中的 <code>C_Timer.After(function() ...)</code> 閉包分配；</li>
-<li>冷卻更新後備中的動態影格建立；</li>
-<li>具有計時器回呼的物品範圍掃描；</li>
-<li>除錯標籤和查找輸出中的字串格式；</li>
-<li>全域意外變數導致生命週期和 GC 行為不明確。</li>
-</ul>
-<h2 id="2026-07-26native-aura">2026-07-26：Native Aura 效能預算</h2>
-<ul>
-<li>戰鬥 Aura 更新由 Blizzard AuraContainer/AuraButton 處理；EAM 熱路徑配置、AuraState、OnUpdate 與 Scheduler token 皆為 0。</li>
-<li>規則只在登入、專精/設定變更與脫戰 pending commit 時編譯。</li>
-<li>fingerprint 未變更時不建立新容器、不重註冊 sound。</li>
-<li>相容規則合併為 AuraGroup；player/target 各保留第一條 Slot PoC。</li>
-<li>舊容器停用後只保留計數，不保存每次重建的 Lua 配對表。</li>
-</ul>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

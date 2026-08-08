@@ -212,11 +212,13 @@ loadModule("Core/Env.lua")
 EAM.FlowTestEnvironment = "offline-mock"
 loadModule("Core/Util.lua")
 loadModule("Core/Constants.lua")
+loadModule("Core/DurationAdapter.lua")
 loadModule("Core/EventRouter.lua")
 loadModule("Core/Scheduler.lua")
 loadModule("Core/SavedVariables.lua")
 loadModule("Locale/Common.lua")
 loadModule("Locale/enUS.lua")
+loadModule("Debug/ValidationEnvironment.lua")
 EAM.Modules.SavedVariables.initialize()
 EAM.Modules.Main = {
     initialized = true,
@@ -224,10 +226,18 @@ EAM.Modules.Main = {
 loadModule("UI/TooltipMonitorMenu.lua")
 loadModule("Services/AuraCapabilityService.lua")
 loadModule("Managers/AuraRuleCompiler.lua")
+loadModule("UI/TextPlacement.lua")
+loadModule("UI/IconPool.lua")
 loadModule("UI/NativeAuraRenderer.lua")
+loadModule("UI/Renderer.lua")
 loadModule("Services/AuraSoundService.lua")
 loadModule("Services/AuraService.lua")
 loadModule("Services/AuraContainerService.lua")
+loadModule("Services/CooldownService.lua")
+loadModule("Services/ItemCooldownService.lua")
+loadModule("Services/GroundEffectService.lua")
+loadModule("Services/TotemService.lua")
+loadModule("Services/ClassPowerService.lua")
 loadModule("Services/TooltipMonitorService.lua")
 loadModule("UI/Options.lua")
 if flowMock then
@@ -244,6 +254,8 @@ EAM.Services.AuraContainerService.initialize()
 EAM.Services.TooltipMonitorService.initialize()
 loadModule("Debug/RuntimeProbe.lua")
 loadModule("Debug/FlowTestRunner.lua")
+loadModule("Debug/UnitPowerCapabilityProbe.lua")
+loadModule("Debug/LiveTestSession.lua")
 
 local completedReport = nil
 local completedJSON = nil
@@ -296,6 +308,11 @@ io.write(string.format(
     outputPath
 ))
 
-if (summary.failed or 0) > 0 or (summary.pending or 0) > 0 then
+if completedReport.status ~= "pass"
+    or (summary.failed or 0) > 0
+    or (summary.skipped or 0) > 0
+    or (summary.pending or 0) > 0
+    or #(completedReport.boundaryWarnings or {}) > 0
+then
     os.exit(1)
 end

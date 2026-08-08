@@ -5,7 +5,7 @@ Module: Services/TotemService
 
 理念:
 - 作為圖騰（主要是薩滿的 4 大圖騰插槽）的事實監控層。
-- 使用 12.x 原生 C_Totems.GetTotemInfo 直讀 API，獲得高效率且 100% 準確的圖騰運行期狀態。
+- 使用 12.x 全域 GetTotemInfo 與 GetTotemDuration API 取得圖騰事實與原生時間物件。
 - 當圖騰插槽更新時，即時渲染至獨立的 totem 告警框架中，並遵循選定的成長方向。
 
 責任:
@@ -27,10 +27,11 @@ local _, EAM = ...
 
 local api = EAM.API
 local Util = EAM.Util
+local DurationAdapter = EAM.Modules.DurationAdapter
 local TotemStatePool = nil
 
 local TotemService = {
-    activeStates = {} -- [slot] = state
+    activeStates = {}, -- [slot] = state
 }
 
 EAM.Services.TotemService = TotemService
@@ -47,6 +48,7 @@ function TotemStatePool.initialize()
     -- 預先建立 4 個 TotemState 對象備用
     for i = 1, 4 do
         local state = Util.tableCreate(0, 16)
+        state.boundaryWarnings = Util.tableCreate(2, 0)
         state.timer = Util.tableCreate(0, 4)
         TotemStatePool.recycleBin[i] = state
     end
@@ -61,6 +63,7 @@ function TotemStatePool.acquire()
         TotemStatePool.binSize = TotemStatePool.binSize - 1
     else
         state = Util.tableCreate(0, 16)
+        state.boundaryWarnings = Util.tableCreate(2, 0)
         state.timer = Util.tableCreate(0, 4)
     end
     state.releaseFunc = TotemStatePool.release
@@ -78,37 +81,85 @@ function TotemStatePool.release(state)
     state.stacks = nil
     state.active = false
     state.shown = false
+    state.factsSafe = false
+    state.boundaryLimited = false
     state.releaseFunc = nil
+    wipe(state.boundaryWarnings)
     wipe(state.timer)
     
     TotemStatePool.binSize = TotemStatePool.binSize + 1
     TotemStatePool.recycleBin[TotemStatePool.binSize] = state
 end
 
+local function triggerState(state)
+    local router = EAM.Modules.EventRouter
+    if router then
+        router.trigger("EAM_TOTEM_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.totem)
+    end
+end
+
+local function applyNativeDuration(slot, state)
+    if type(api.GetTotemDuration) ~= "function" then
+        return false
+    end
+    local ok, durationObject = pcall(api.GetTotemDuration, slot)
+    if not ok then
+        return false
+    end
+    state.timer.durationObject = durationObject
+    return true
+end
+
+local function preserveBoundaryState(slot, code)
+    local state = TotemService.activeStates[slot]
+    if not state then
+        return
+    end
+    state.factsSafe = false
+    wipe(state.boundaryWarnings)
+    Util.clearTimer(state.timer, EAM.Constants.TIMER_PROTECTED)
+    if applyNativeDuration(slot, state) then
+        state.timer.mode = EAM.Constants.TIMER_DISPLAY_ONLY
+    end
+    Util.markBoundary(state, "totem", code)
+    triggerState(state)
+end
+
 -- 刷新單個圖騰插槽狀態
 function TotemService.refreshSlot(slot)
-    if not api.C_Totems or not api.C_Totems.GetTotemInfo then
+    if type(api.GetTotemInfo) ~= "function" then
         return
     end
 
-    local haveTotem, name, startTime, duration, icon = api.C_Totems.GetTotemInfo(slot)
+    local ok, haveTotem, name, startTime, duration, icon = pcall(api.GetTotemInfo, slot)
+    if not ok or not Util.isSafeBoolean(haveTotem) then
+        preserveBoundaryState(slot, "slotSecret")
+        return
+    end
 
-    -- 如果圖騰存在，且 name 非空
-    if haveTotem and name and name ~= "" then
-        local hasDuration = duration and duration > 0
+    if haveTotem == true then
+        if not Util.isSafeString(name) or name == "" then
+            preserveBoundaryState(slot, "identitySecret")
+            return
+        end
+
+        local timingFieldsSafe = Util.isSafeNumber(startTime) and Util.isSafeNumber(duration)
+        local hasDuration = timingFieldsSafe and Util.isSafePositiveNumber(duration)
         local state = TotemService.activeStates[slot]
         
         if state then
             -- 覆蓋現有屬性
             state.name = name
-            state.icon = icon or 136243
+            if Util.isSafePositiveNumber(icon) then
+                state.icon = icon
+            end
         else
             state = TotemStatePool.acquire()
             state.id = "totem_" .. slot
             state.kind = "totem"
             state.spellID = slot -- 使用 slot 作為區分 ID
             state.name = name
-            state.icon = icon or 136243
+            state.icon = Util.isSafePositiveNumber(icon) and icon or 136243
             state.stacks = 0
             state.active = true
             state.shown = true
@@ -116,32 +167,34 @@ function TotemService.refreshSlot(slot)
             TotemService.activeStates[slot] = state
         end
 
-        state.timer.mode = hasDuration and EAM.Constants.TIMER_NUMERIC or EAM.Constants.TIMER_NONE
-        state.timer.startTime = startTime or 0
-        state.timer.duration = duration or 0
-        state.timer.expirationTime = hasDuration and (startTime + duration) or 0
-
-        -- 若 12.x C_DurationUtil 可用，手動為有持續時間的圖騰建立 DurationObject 以對接 Native Binding
-        if hasDuration and api.C_DurationUtil and api.C_DurationUtil.CreateDuration then
-            state.timer.durationObject = api.C_DurationUtil.CreateDuration(duration)
+        state.factsSafe = timingFieldsSafe
+        state.boundaryLimited = false
+        wipe(state.boundaryWarnings)
+        if hasDuration then
+            Util.clearTimer(state.timer, EAM.Constants.TIMER_NUMERIC)
+            state.timer.startTime = startTime
+            state.timer.duration = duration
+            state.timer.expirationTime = startTime + duration
+            if not applyNativeDuration(slot, state) and DurationAdapter then
+                state.timer.durationObject = DurationAdapter.createFromStart(startTime, duration)
+            end
+        elseif timingFieldsSafe then
+            Util.clearTimer(state.timer, EAM.Constants.TIMER_NONE)
         else
-            state.timer.durationObject = nil
+            Util.clearTimer(state.timer, EAM.Constants.TIMER_PROTECTED)
+            if applyNativeDuration(slot, state) then
+                state.timer.mode = EAM.Constants.TIMER_DISPLAY_ONLY
+            end
+            Util.markBoundary(state, "totem", "timingProtected")
         end
-        
-        local router = EAM.Modules.EventRouter
-        if router then
-            router.trigger("EAM_TOTEM_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.totem)
-        end
+        triggerState(state)
     else
         -- 釋放此插槽圖示
         local state = TotemService.activeStates[slot]
         if state then
             state.shown = false
             
-            local router = EAM.Modules.EventRouter
-            if router then
-                router.trigger("EAM_TOTEM_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.totem)
-            end
+            triggerState(state)
             
             TotemService.activeStates[slot] = nil
         end
@@ -156,7 +209,7 @@ function TotemService.scanAll()
 end
 
 -- 事件接收器
-function TotemService.onEvent(_, event, slot)
+function TotemService.onEvent(event, slot)
     if event == "PLAYER_TOTEM_UPDATE" and slot then
         TotemService.refreshSlot(slot)
     else

@@ -5,7 +5,7 @@
 
 - 實作基準：Retail 12.1.0 build 68914。
 - 程式狀態：Native backend、Legacy 隔離、流程 mock 與報告入口已完成。
-- 驗證狀態：Lua 5.1 離線流程已通過；尚未在 `_ptr_` 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。
+- 驗證狀態：Lua 5.1 離線流程與初始化期 mutation mock 已通過；尚未在 `_ptr_` 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。
 - 支援範圍：Retail only；Classic 不在本專案範圍。
 
 ## API 事實基準
@@ -23,9 +23,18 @@
 | 名稱 | `AuraButton:SetSpellName(FontString)` | 由 Blizzard 寫入文字，不讀 AuraData |
 | 倒數 | `SetDurationCooldown`、`SetDurationText` | 由 Blizzard/DurationObject 更新 |
 | 層數 | `SetApplicationCount(FontString)` | 不由 Lua 讀取 applications |
+| 邊框 | `AuraContainerUtil.AddDispelTypeTexture` | 只用於 Blizzard 定義的驅散類型外觀，不當成任意 Glow |
 | 音效 | `C_UnitAuras.AddAuraSound` / `RemoveAuraSound` | 管理三種 trigger 的註冊 ID |
 
 公開 API 沒有 `RemoveAuraSlot` 或 `RemoveAuraGroup`。刪除規則時，EAM 會建立新容器、成功後才停用舊容器；不修改 Blizzard 私有 mixin。
+
+### 68914 初始化與顯示邊界
+
+- `AuraButton`、Cooldown、FontString、錨點、字級、swipe 與 Blizzard 輔助 texture 都只在 `initializeFrame` callback 內設定。初始化完成後不追蹤按鈕並直接 mutation。
+- 一般模式呼叫 `Cooldown:SetHideCountdownNumbers(true)`，只保留 `SetDurationText` 的一組原生倒數，避免 CooldownFrameTemplate 內建數字與 EAM DurationText 重疊。
+- 「雙倒數診斷」刻意同時顯示兩種原生機制，只供玩家比較開始、中段、結束的同步性。切換後須於脫戰重建 Native container；不可在既有 AuraButton 上即時修改。
+- `AddDispelTypeTexture` 表達的是驅散類型／官方 Aura 外觀，不是可任意套用的 proc、Pandemic 或監控命中 Glow。EAM 保留既有 Glow 語意，Native border 能力另列實機觀察，不混用。
+- 圖示存在但時間或 applications 空白，可能是 Secret／display-only、無正 duration、applications 小於等於 1，或目標 Aura 身分切換；不得以猜測秒數或層數補值。
 
 ## 架構
 
@@ -70,7 +79,7 @@ Readable AuraData -> AuraService -> AlertManager -> Renderer -> IconPool
 - 每個 unit 的第一條規則編譯為 Slot；其餘相同 unit/filter/caster 規則合併為 Group。
 - 未指定 filter 時，player 推導為 `HELPFUL`、target 推導為 `HARMFUL`，並記錄 `auraFilterInferred` limitation。
 - Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性標記 `secretIdentityFilterMayBeRejected`，須 PTR 驗證。
-- fingerprint 包含 schema、revision、backend、規則 key/filter 與 sound 設定；未變更時不重建。
+- fingerprint 只包含 schema、backend、layout、實際規則 key/filter 與必要 sound 設定，不包含無關的全域 revision；實際容器輸入未變更時不重建。
 
 ## 戰鬥生命週期
 
@@ -93,9 +102,9 @@ stateDiagram-v2
 - 相同 fingerprint 不重複註冊；刪除或重建前精確呼叫 `RemoveAuraSound`。
 - 離線測試只證明註冊 ID 生命週期，不證明遊戲實際播放次數或音量通道。
 
-## SavedVariables v2
+## SavedVariables v4
 
-- `schemaVersion = 2`。
+- `schemaVersion = 4`；Aura v2 設定仍由既有 migration 保留，v4 另加入地面效果 duration mode 與顯示設定。
 - v1 遷移前保存 `migrationBackups.auraSchemaV1` 的可序列化 Aura 設定。
 - 遷移中途失敗會還原遷移前可序列化 DB，並寫入靜態 warning code。
 - Alert 可保存 filter、顯示偏好與 sound 純資料；不得保存 Frame、ScriptObject、DurationObject 或 AuraContainer。
@@ -122,13 +131,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.p
 
 1. `_ptr_` build 與 SymbolicLink 前檢通過。
 2. player helpful Slot、target harmful Slot、至少一個多 Aura Group。
-3. 圖示、名稱、原生倒數、swipe、層數與 Tooltip。
-4. candidate filter 對 Secret Aura 的真實限制與降級。
-5. Added、ApplicationsIncreased、Removed 實際聲音次數與解除。
-6. 戰鬥中修改設定只 pending，脫戰只重建一次。
-7. 無 forbidden action、taint、blocked action、Lua error。
-8. Native Aura 熱路徑無 EAM AuraState、legacy getter、每圖示 OnUpdate 或 Scheduler token。
-9. Reload UI 後 schema v2 與舊 `EA_*` SavedVariables 保留。
-10. Cooldown、ItemCooldown、ClassPower、GroundEffect、Totem 回歸。
+3. 一般模式只有一組倒數；雙倒數診斷模式兩組同步，關閉後恢復單一倒數。
+4. 圖示、名稱、原生倒數、swipe、層數、驅散 border 與 Tooltip。
+5. target 快速切換、戰鬥開始／結束與 Aura 更新時，不得出現 Lua error；空白時間／層數需記錄當時能力分類，不猜值。
+6. candidate filter 對 Secret Aura 的真實限制與降級。
+7. Added、ApplicationsIncreased、Removed 實際聲音次數與解除。
+8. 戰鬥中修改設定只 pending，脫戰只重建一次。
+9. 無 forbidden action、taint、blocked action、Lua error。
+10. Native Aura 熱路徑無 EAM AuraState、legacy getter、每圖示 OnUpdate 或 Scheduler token。
+11. Reload UI 後 schema v4 與舊 `EA_*` SavedVariables 保留。
+12. Cooldown、ItemCooldown、ClassPower、GroundEffect、Totem 回歸。
 
 完成以上簽收前，只能稱為「68914 契約實作與離線流程通過」，不得稱為「12.1 PTR 實機通過」。
+
+
+## 2026-08-08 PTR8 實作增量
+
+- Native Aura initializer 現在按規則選擇性呼叫 `AddPandemicRegion`，並以 `AddDispelTypeTexture(texture, options)` 建立官方驅散外觀；不使用 AuraBorder deprecated alias。
+- `showAlways` 與 stealable filter 由 compiler 白名單化，避免 SavedVariables 任意字串穿透。Pandemic／Dispel capability、實際綁定數與 Blizzard 管理的 Pandemic 更新責任會出現在 renderer snapshot。
+- 設定滑桿與文字位置不再自動重建 Native Container；先標記 `settingsDirty`，由使用者按「套用」在合法窗口重建，避免反覆建立 Container。
+- 停用容器的清除行為已在 strict mock 驗證，仍需 PTR 12.1 觀察 AuraButton／ItemEnchantment 框架保留與重啟生命週期。

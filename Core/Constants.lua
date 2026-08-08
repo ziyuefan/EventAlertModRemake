@@ -33,13 +33,21 @@ local freeze = EAM.Util and EAM.Util.tableFreeze or function(value)
 end
 
 EAM.Constants = freeze({
-    SCHEMA_VERSION = 2,
+    SCHEMA_VERSION = 4,
+    TEXT_LAYOUT_SCHEMA_VERSION = 1,
+    TEXT_PLACEMENT_TIMER_DEFAULT = "OUTSIDE_TOP",
+    TEXT_PLACEMENT_APPLICATIONS_DEFAULT = "INSIDE_BOTTOM_RIGHT",
+    TEXT_FONT_SIZE_MIN = 8,
+    TEXT_FONT_SIZE_MAX = 32,
     ADDON_FLAVOR = "Retail",
     INTERFACE = 120100,
     LEGACY_INTERFACE = 120007,
     ALERT_KIND_AURA = "aura",
     ALERT_KIND_SPELL_COOLDOWN = "spellCooldown",
     ALERT_KIND_ITEM_COOLDOWN = "itemCooldown",
+    ALERT_KIND_GROUND_EFFECT = "groundEffect",
+    GROUND_DURATION_AUTO = "AUTO",
+    GROUND_DURATION_MANUAL = "MANUAL",
     TIMER_NONE = "none",
     TIMER_NUMERIC = "numeric",
     TIMER_DISPLAY_ONLY = "displayOnly",

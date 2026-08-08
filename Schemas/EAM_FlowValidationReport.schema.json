@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ziyuefan.github.io/EventAlertModRemake/schemas/eam-flow-validation-report-v2.json",
+  "title": "EventAlertMod Flow Validation Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "type", "purpose", "matrixVersion", "suite", "status", "generatedAtSessionMs", "session", "environment", "summary", "cases", "boundaryWarnings"],
+  "$defs": {
+    "buildFlag": {
+      "oneOf": [
+        { "type": "boolean" },
+        { "const": "unknown" }
+      ]
+    }
+  },
+  "properties": {
+    "schema": { "const": 2 },
+    "type": { "const": "EAM_FLOW_VALIDATION_REPORT" },
+    "purpose": { "enum": ["offline-contract", "capability-probe"] },
+    "matrixVersion": { "const": "2026-08-08.1" },
+    "suite": { "enum": ["quick", "core", "boundary", "aura121", "all"] },
+    "status": { "enum": ["pass", "fail", "incomplete"] },
+    "generatedAtSessionMs": { "type": "number", "minimum": 0 },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "humanObserved", "gameInputAutomated"],
+      "properties": {
+        "phase": { "const": "complete" },
+        "humanObserved": { "const": false },
+        "gameInputAutomated": { "const": false }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product", "executionSource", "clientChannel", "declaredInstallation", "interface", "isTestBuild", "isTestBuildKnown", "buildFlags", "source", "channelValidation", "addon", "addonVersion", "flavor", "initialized", "inCombat"],
+      "properties": {
+        "product": { "const": "wow_retail" },
+        "executionSource": { "enum": ["client", "offline-mock", "unknown"] },
+        "clientChannel": { "enum": ["PTR", "XPTR", "RETAIL", "OFFLINE", "UNCONFIRMED"] },
+        "declaredInstallation": { "enum": ["_ptr_", "_xptr_", "_retail_", "offline", "unconfirmed"] },
+        "declaredInstallationEvidence": { "enum": ["user-asserted", "harness", "none"] },
+        "patch": { "type": "string" },
+        "build": { "type": ["string", "number"] },
+        "buildDate": { "type": "string" },
+        "interface": { "type": "number" },
+        "targetInterface": { "type": "number" },
+        "projectID": { "type": "number" },
+        "isTestBuild": { "type": "boolean" },
+        "isTestBuildKnown": { "type": "boolean" },
+        "buildFlags": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["isPublicTestClient", "isTestBuild", "isBetaBuild"],
+          "properties": {
+            "isPublicTestClient": { "$ref": "#/$defs/buildFlag" },
+            "isTestBuild": { "$ref": "#/$defs/buildFlag" },
+            "isBetaBuild": { "$ref": "#/$defs/buildFlag" }
+          }
+        },
+        "source": { "type": "string" },
+        "channelValidation": { "enum": ["pass", "mismatch", "unconfirmed"] },
+        "locale": { "type": "string" },
+        "addon": { "const": "EventAlertMod" },
+        "addonVersion": { "type": "string" },
+        "flavor": { "const": "Retail" },
+        "initialized": { "type": "boolean" },
+        "inCombat": { "type": "boolean" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passed", "failed", "skipped", "pending"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "pending": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["completed", "durationMs", "id", "message", "status", "suite"],
+        "properties": {
+          "completed": { "type": "boolean" },
+          "durationMs": { "type": "number", "minimum": 0 },
+          "id": { "type": "string", "minLength": 1 },
+          "message": { "type": "string" },
+          "status": { "enum": ["pass", "fail", "skip", "pending"] },
+          "suite": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "boundaryWarnings": { "type": "array", "items": { "type": "string" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "purpose": { "const": "offline-contract" } } },
+      "then": {
+        "properties": {
+          "environment": {
+            "properties": {
+              "executionSource": { "const": "offline-mock" },
+              "source": { "const": "offline-mock" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "pass" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "properties": { "channelValidation": { "const": "pass" } }
+          },
+          "summary": {
+            "properties": {
+              "failed": { "const": 0 },
+              "skipped": { "const": 0 },
+              "pending": { "const": 0 }
+            }
+          },
+          "cases": {
+            "items": {
+              "properties": {
+                "completed": { "const": true },
+                "status": { "const": "pass" }
+              }
+            }
+          },
+          "boundaryWarnings": { "maxItems": 0 }
+        }
+      }
+    }
+  ]
+}

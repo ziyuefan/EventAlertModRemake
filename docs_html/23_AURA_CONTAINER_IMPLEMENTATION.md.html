@@ -421,7 +421,7 @@
 <ul>
 <li>實作基準：Retail 12.1.0 build 68914。</li>
 <li>程式狀態：Native backend、Legacy 隔離、流程 mock 與報告入口已完成。</li>
-<li>驗證狀態：Lua 5.1 離線流程已通過；尚未在 <code>_ptr_</code> 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。</li>
+<li>驗證狀態：Lua 5.1 離線流程與初始化期 mutation mock 已通過；尚未在 <code>_ptr_</code> 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。</li>
 <li>支援範圍：Retail only；Classic 不在本專案範圍。</li>
 </ul>
 <h2 id="api">API 事實基準</h2>
@@ -481,6 +481,11 @@
 <td>不由 Lua 讀取 applications</td>
 </tr>
 <tr>
+<td>邊框</td>
+<td><code>AuraContainerUtil.AddDispelTypeTexture</code></td>
+<td>只用於 Blizzard 定義的驅散類型外觀，不當成任意 Glow</td>
+</tr>
+<tr>
 <td>音效</td>
 <td><code>C_UnitAuras.AddAuraSound</code> / <code>RemoveAuraSound</code></td>
 <td>管理三種 trigger 的註冊 ID</td>
@@ -488,6 +493,14 @@
 </tbody>
 </table>
 <p>公開 API 沒有 <code>RemoveAuraSlot</code> 或 <code>RemoveAuraGroup</code>。刪除規則時，EAM 會建立新容器、成功後才停用舊容器；不修改 Blizzard 私有 mixin。</p>
+<h3 id="68914">68914 初始化與顯示邊界</h3>
+<ul>
+<li><code>AuraButton</code>、Cooldown、FontString、錨點、字級、swipe 與 Blizzard 輔助 texture 都只在 <code>initializeFrame</code> callback 內設定。初始化完成後不追蹤按鈕並直接 mutation。</li>
+<li>一般模式呼叫 <code>Cooldown:SetHideCountdownNumbers(true)</code>，只保留 <code>SetDurationText</code> 的一組原生倒數，避免 CooldownFrameTemplate 內建數字與 EAM DurationText 重疊。</li>
+<li>「雙倒數診斷」刻意同時顯示兩種原生機制，只供玩家比較開始、中段、結束的同步性。切換後須於脫戰重建 Native container；不可在既有 AuraButton 上即時修改。</li>
+<li><code>AddDispelTypeTexture</code> 表達的是驅散類型／官方 Aura 外觀，不是可任意套用的 proc、Pandemic 或監控命中 Glow。EAM 保留既有 Glow 語意，Native border 能力另列實機觀察，不混用。</li>
+<li>圖示存在但時間或 applications 空白，可能是 Secret／display-only、無正 duration、applications 小於等於 1，或目標 Aura 身分切換；不得以猜測秒數或層數補值。</li>
+</ul>
 <h2 id="_2">架構</h2>
 <div class="mermaid">
 flowchart LR
@@ -553,7 +566,7 @@ flowchart LR
 <li>每個 unit 的第一條規則編譯為 Slot；其餘相同 unit/filter/caster 規則合併為 Group。</li>
 <li>未指定 filter 時，player 推導為 <code>HELPFUL</code>、target 推導為 <code>HARMFUL</code>，並記錄 <code>auraFilterInferred</code> limitation。</li>
 <li>Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性標記 <code>secretIdentityFilterMayBeRejected</code>，須 PTR 驗證。</li>
-<li>fingerprint 包含 schema、revision、backend、規則 key/filter 與 sound 設定；未變更時不重建。</li>
+<li>fingerprint 只包含 schema、backend、layout、實際規則 key/filter 與必要 sound 設定，不包含無關的全域 revision；實際容器輸入未變更時不重建。</li>
 </ul>
 <h2 id="_5">戰鬥生命週期</h2>
 <div class="mermaid">
@@ -574,9 +587,9 @@ stateDiagram-v2
 <li>相同 fingerprint 不重複註冊；刪除或重建前精確呼叫 <code>RemoveAuraSound</code>。</li>
 <li>離線測試只證明註冊 ID 生命週期，不證明遊戲實際播放次數或音量通道。</li>
 </ul>
-<h2 id="savedvariables-v2">SavedVariables v2</h2>
+<h2 id="savedvariables-v4">SavedVariables v4</h2>
 <ul>
-<li><code>schemaVersion = 2</code>。</li>
+<li><code>schemaVersion = 4</code>；Aura v2 設定仍由既有 migration 保留，v4 另加入地面效果 duration mode 與顯示設定。</li>
 <li>v1 遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的可序列化 Aura 設定。</li>
 <li>遷移中途失敗會還原遷移前可序列化 DB，並寫入靜態 warning code。</li>
 <li>Alert 可保存 filter、顯示偏好與 sound 純資料；不得保存 Frame、ScriptObject、DurationObject 或 AuraContainer。</li>
@@ -597,211 +610,39 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.p
 <ol>
 <li><code>_ptr_</code> build 與 SymbolicLink 前檢通過。</li>
 <li>player helpful Slot、target harmful Slot、至少一個多 Aura Group。</li>
-<li>圖示、名稱、原生倒數、swipe、層數與 Tooltip。</li>
+<li>一般模式只有一組倒數；雙倒數診斷模式兩組同步，關閉後恢復單一倒數。</li>
+<li>圖示、名稱、原生倒數、swipe、層數、驅散 border 與 Tooltip。</li>
+<li>target 快速切換、戰鬥開始／結束與 Aura 更新時，不得出現 Lua error；空白時間／層數需記錄當時能力分類，不猜值。</li>
 <li>candidate filter 對 Secret Aura 的真實限制與降級。</li>
 <li>Added、ApplicationsIncreased、Removed 實際聲音次數與解除。</li>
 <li>戰鬥中修改設定只 pending，脫戰只重建一次。</li>
 <li>無 forbidden action、taint、blocked action、Lua error。</li>
 <li>Native Aura 熱路徑無 EAM AuraState、legacy getter、每圖示 OnUpdate 或 Scheduler token。</li>
-<li>Reload UI 後 schema v2 與舊 <code>EA_*</code> SavedVariables 保留。</li>
+<li>Reload UI 後 schema v4 與舊 <code>EA_*</code> SavedVariables 保留。</li>
 <li>Cooldown、ItemCooldown、ClassPower、GroundEffect、Totem 回歸。</li>
 </ol>
 <p>完成以上簽收前，只能稱為「68914 契約實作與離線流程通過」，不得稱為「12.1 PTR 實機通過」。</p>
+<h2 id="2026-08-08-ptr8">2026-08-08 PTR8 實作增量</h2>
+<ul>
+<li>Native Aura initializer 現在按規則選擇性呼叫 <code>AddPandemicRegion</code>，並以 <code>AddDispelTypeTexture(texture, options)</code> 建立官方驅散外觀；不使用 AuraBorder deprecated alias。</li>
+<li><code>showAlways</code> 與 stealable filter 由 compiler 白名單化，避免 SavedVariables 任意字串穿透。Pandemic／Dispel capability、實際綁定數與 Blizzard 管理的 Pandemic 更新責任會出現在 renderer snapshot。</li>
+<li>設定滑桿與文字位置不再自動重建 Native Container；先標記 <code>settingsDirty</code>，由使用者按「套用」在合法窗口重建，避免反覆建立 Container。</li>
+<li>停用容器的清除行為已在 strict mock 驗證，仍需 PTR 12.1 觀察 AuraButton／ItemEnchantment 框架保留與重啟生命週期。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="retail-121-auracontainer-native-backend">Retail 12.1 AuraContainer Native Backend 實作規格</h1>
-<h2 id="_1">文件狀態</h2>
-<ul>
-<li>實作基準：Retail 12.1.0 build 68914。</li>
-<li>程式狀態：Native backend、Legacy 隔離、流程 mock 與報告入口已完成。</li>
-<li>驗證狀態：Lua 5.1 離線流程已通過；尚未在 <code>_ptr_</code> 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。</li>
-<li>支援範圍：Retail only；Classic 不在本專案範圍。</li>
-</ul>
-<h2 id="api">API 事實基準</h2>
-<p>68914 已確認以下公開契約：</p>
-<table>
-<thead>
-<tr>
-<th>能力</th>
-<th>68914 契約</th>
-<th>EAM 使用方式</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>容器</td>
-<td><code>CreateFrame("AuraContainer", nil, UIParent, "CustomAuraContainerTemplate")</code></td>
-<td>只在脫戰建立</td>
-</tr>
-<tr>
-<td>單格</td>
-<td><code>AddAuraSlot(slotKey, filterString, options)</code></td>
-<td>player/target 各保留第一條穩定規則</td>
-</tr>
-<tr>
-<td>群組</td>
-<td><code>AddAuraGroup(groupKey, filterString, options)</code></td>
-<td>合併相同 unit/filter/caster 規則</td>
-</tr>
-<tr>
-<td>佈局</td>
-<td><code>SetAuraGroupLayout(groupKey, layout)</code></td>
-<td>脫戰一次套用</td>
-</tr>
-<tr>
-<td>排序</td>
-<td><code>AuraContainerSortMethod.Default</code>、<code>AuraContainerSortDirection.Normal</code></td>
-<td>FrameXML 全域表，不使用 <code>Enum.*</code></td>
-</tr>
-<tr>
-<td>外觀</td>
-<td><code>CustomAuraButtonTemplate</code> 與 <code>initializeFrame</code></td>
-<td>在存取限制套用前綁定 Region</td>
-</tr>
-<tr>
-<td>名稱</td>
-<td><code>AuraButton:SetSpellName(FontString)</code></td>
-<td>由 Blizzard 寫入文字，不讀 AuraData</td>
-</tr>
-<tr>
-<td>倒數</td>
-<td><code>SetDurationCooldown</code>、<code>SetDurationText</code></td>
-<td>由 Blizzard/DurationObject 更新</td>
-</tr>
-<tr>
-<td>層數</td>
-<td><code>SetApplicationCount(FontString)</code></td>
-<td>不由 Lua 讀取 applications</td>
-</tr>
-<tr>
-<td>音效</td>
-<td><code>C_UnitAuras.AddAuraSound</code> / <code>RemoveAuraSound</code></td>
-<td>管理三種 trigger 的註冊 ID</td>
-</tr>
-</tbody>
-</table>
-<p>公開 API 沒有 <code>RemoveAuraSlot</code> 或 <code>RemoveAuraGroup</code>。刪除規則時，EAM 會建立新容器、成功後才停用舊容器；不修改 Blizzard 私有 mixin。</p>
-<h2 id="_2">架構</h2>
-<div class="mermaid">
-flowchart LR
-    SV["EAM_DB Aura 設定"] --> CAP["AuraCapabilityService"]
-    CAP --> COMP["AuraRuleCompiler"]
-    COMP --> PLAN["穩定 Runtime Plan"]
-    PLAN --> CONT["AuraContainerService"]
-    CONT --> SLOT["AuraSlot"]
-    CONT --> GROUP["AuraGroup"]
-    SLOT --> BTN["Blizzard AuraButton"]
-    GROUP --> BTN
-    PLAN --> SOUND["AuraSoundService"]
-    BTN --> NATIVE["Blizzard 圖示/倒數/層數/Tooltip"]
-</div>
 
-<p>Native 路徑不得建立 <code>AuraState</code>，不得送出 <code>EAM_AURA_STATE_CHANGED</code>，不得進入 <code>AlertManager</code>、一般 <code>Renderer</code>、<code>IconPool</code> 或 Scheduler expiration token。</p>
-<p>12.0.7 的 Legacy 路徑仍保留：</p>
-<pre class="codehilite"><code class="language-text">Readable AuraData -&gt; AuraService -&gt; AlertManager -&gt; Renderer -&gt; IconPool
-</code></pre>
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-<p>12.1 若 Native API 不完整，後端狀態為 <code>UNSUPPORTED</code>；不得偷偷回退到可能讀取 Secret AuraData 的 Legacy 路徑。</p>
-<h2 id="_3">模組責任</h2>
-<table>
-<thead>
-<tr>
-<th>模組</th>
-<th>責任</th>
-<th>禁止事項</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AuraCapabilityService</code></td>
-<td>Interface 初篩、feature detection、後端選擇</td>
-<td>只看版號就宣稱 Native</td>
-</tr>
-<tr>
-<td><code>AuraRuleCompiler</code></td>
-<td>設定轉 <code>NATIVE_SLOT/GROUP</code>、<code>READABLE_LEGACY</code>、<code>DISPLAY_UNSUPPORTED</code></td>
-<td>讀即時 AuraData、操作 UI</td>
-</tr>
-<tr>
-<td><code>AuraContainerService</code></td>
-<td>脫戰建立、revision/fingerprint、pending rebuild</td>
-<td>戰鬥中改容器結構</td>
-</tr>
-<tr>
-<td><code>NativeAuraRenderer</code></td>
-<td><code>initializeFrame</code> Region 綁定與靜態錨點</td>
-<td>OnUpdate、OnShow/OnHide 狀態推導</td>
-</tr>
-<tr>
-<td><code>AuraSoundService</code></td>
-<td>註冊與解除 Sound ID</td>
-<td>從 AuraData 推導事件</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_4">規則編譯</h2>
-<ul>
-<li>key 僅由 SavedVariables 的普通 <code>alertID</code> 產生，格式為 <code>EAM_SLOT_*</code> 或 <code>EAM_GROUP_*</code>。</li>
-<li><code>includeSpellIDs</code> 僅使用玩家設定中的普通正整數 Spell ID。</li>
-<li>每個 unit 的第一條規則編譯為 Slot；其餘相同 unit/filter/caster 規則合併為 Group。</li>
-<li>未指定 filter 時，player 推導為 <code>HELPFUL</code>、target 推導為 <code>HARMFUL</code>，並記錄 <code>auraFilterInferred</code> limitation。</li>
-<li>Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性標記 <code>secretIdentityFilterMayBeRejected</code>，須 PTR 驗證。</li>
-<li>fingerprint 包含 schema、revision、backend、規則 key/filter 與 sound 設定；未變更時不重建。</li>
-</ul>
-<h2 id="_5">戰鬥生命週期</h2>
-<div class="mermaid">
-stateDiagram-v2
-    [*] --> Ready
-    Ready --> Pending: "戰鬥中設定變更"
-    Pending --> Pending: "更多變更只更新 pending revision"
-    Pending --> Rebuild: "PLAYER_REGEN_ENABLED"
-    Rebuild --> Ready: "新容器配置成功"
-    Rebuild --> Ready: "失敗則保留舊容器並回報"
-</div>
-
-<p>68914 FrameXML 已允許 AddOn 在戰鬥中建立 AuraContainer；EAM 仍採「只在脫戰改結構」的保守工程政策。這是 EAM 政策，不應誤寫成 68914 API 限制事實。</p>
-<h2 id="_6">音效策略</h2>
-<ul>
-<li>全域 <code>showSound</code> 在 Native backend 預設只註冊 <code>Added</code>，沿用既有音效選單資產。</li>
-<li>每條 Aura alert 可明確提供 <code>added</code>、<code>applicationsIncreased</code>、<code>removed</code> 設定。</li>
-<li>相同 fingerprint 不重複註冊；刪除或重建前精確呼叫 <code>RemoveAuraSound</code>。</li>
-<li>離線測試只證明註冊 ID 生命週期，不證明遊戲實際播放次數或音量通道。</li>
-</ul>
-<h2 id="savedvariables-v2">SavedVariables v2</h2>
-<ul>
-<li><code>schemaVersion = 2</code>。</li>
-<li>v1 遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的可序列化 Aura 設定。</li>
-<li>遷移中途失敗會還原遷移前可序列化 DB，並寫入靜態 warning code。</li>
-<li>Alert 可保存 filter、顯示偏好與 sound 純資料；不得保存 Frame、ScriptObject、DurationObject 或 AuraContainer。</li>
-<li>相同 alert/options 再次送入回傳 <code>unchanged</code>，不增加 revision。</li>
-</ul>
-<h2 id="_7">驗證入口</h2>
-<p>離線：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite aura121
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
-</code></pre>
-
-<p>遊戲內：</p>
-<pre class="codehilite"><code class="language-text">/eam test aura121
-</code></pre>
-
-<p>流程面板亦提供「12.1 Aura」按鈕。報告寫入 <code>EAM_FLOW_TEST_REPORT_JSON</code>，可用 <code>Tools/Import-EAMFlowReport.ps1</code> 回灌。</p>
-<h2 id="ptr-rqa">PTR RQA 必測</h2>
-<ol>
-<li><code>_ptr_</code> build 與 SymbolicLink 前檢通過。</li>
-<li>player helpful Slot、target harmful Slot、至少一個多 Aura Group。</li>
-<li>圖示、名稱、原生倒數、swipe、層數與 Tooltip。</li>
-<li>candidate filter 對 Secret Aura 的真實限制與降級。</li>
-<li>Added、ApplicationsIncreased、Removed 實際聲音次數與解除。</li>
-<li>戰鬥中修改設定只 pending，脫戰只重建一次。</li>
-<li>無 forbidden action、taint、blocked action、Lua error。</li>
-<li>Native Aura 熱路徑無 EAM AuraState、legacy getter、每圖示 OnUpdate 或 Scheduler token。</li>
-<li>Reload UI 後 schema v2 與舊 <code>EA_*</code> SavedVariables 保留。</li>
-<li>Cooldown、ItemCooldown、ClassPower、GroundEffect、Totem 回歸。</li>
-</ol>
-<p>完成以上簽收前，只能稱為「68914 契約實作與離線流程通過」，不得稱為「12.1 PTR 實機通過」。</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

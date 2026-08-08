@@ -35,6 +35,11 @@ local AuraCapabilityService = {
     hasAuraSound = false,
     hasAuraSoundEnum = false,
     hasDurationObject = false,
+    clientIsPublicTest = false,
+    clientIsTestBuild = false,
+    clientIsBetaBuild = false,
+    testBuildKnown = false,
+    nativeRuntimeAllowed = false,
     canUseSpellIDCandidateFilter = false,
     spellIDCandidateFilterRestricted = true,
     selectedBackend = Constants.AURA_BACKEND_UNSUPPORTED,
@@ -59,6 +64,15 @@ function AuraCapabilityService.initialize()
     AuraCapabilityService.clientVersion = version
     AuraCapabilityService.clientBuild = build
     AuraCapabilityService.clientInterface = tonumber(interfaceVersion) or 0
+    AuraCapabilityService.clientIsPublicTest = api.IsPublicTestClient and api.IsPublicTestClient() == true or false
+    AuraCapabilityService.clientIsTestBuild = api.IsTestBuild and api.IsTestBuild() == true or false
+    AuraCapabilityService.clientIsBetaBuild = api.IsBetaBuild and api.IsBetaBuild() == true or false
+    AuraCapabilityService.testBuildKnown = type(api.IsPublicTestClient) == "function"
+        and type(api.IsTestBuild) == "function"
+        and type(api.IsBetaBuild) == "function"
+    AuraCapabilityService.nativeRuntimeAllowed = AuraCapabilityService.clientInterface >= Constants.INTERFACE
+        and AuraCapabilityService.clientIsPublicTest
+        and AuraCapabilityService.clientIsTestBuild
 
     local unitAuras = api.C_UnitAuras
     AuraCapabilityService.hasAuraSound = type(unitAuras) == "table"
@@ -76,9 +90,12 @@ function AuraCapabilityService.initialize()
     AuraCapabilityService.hasDurationObject = type(api.C_DurationUtil) == "table"
         and type(api.C_DurationUtil.CreateDuration) == "function"
 
-    if AuraCapabilityService.clientInterface >= Constants.INTERFACE then
+    if AuraCapabilityService.clientInterface >= Constants.INTERFACE and AuraCapabilityService.nativeRuntimeAllowed then
         AuraCapabilityService.selectedBackend = Constants.AURA_BACKEND_UNSUPPORTED
         AuraCapabilityService.limitationReason = "containerProbePending"
+    elseif AuraCapabilityService.clientInterface >= Constants.INTERFACE then
+        AuraCapabilityService.selectedBackend = Constants.AURA_BACKEND_UNSUPPORTED
+        AuraCapabilityService.limitationReason = "nativePtrOnlyGate"
     else
         AuraCapabilityService.selectedBackend = Constants.AURA_BACKEND_LEGACY
         AuraCapabilityService.limitationReason = nil
@@ -95,6 +112,7 @@ function AuraCapabilityService.acceptContainer(container)
     AuraCapabilityService.hasAuraGroupLayout = hasMethod(container, "SetAuraGroupLayout")
 
     if AuraCapabilityService.clientInterface >= Constants.INTERFACE
+        and AuraCapabilityService.nativeRuntimeAllowed
         and AuraCapabilityService.hasAuraContainer
         and AuraCapabilityService.hasAuraGroup
         and AuraCapabilityService.hasAuraSlot
@@ -108,7 +126,9 @@ function AuraCapabilityService.acceptContainer(container)
     AuraCapabilityService.selectedBackend = AuraCapabilityService.clientInterface < Constants.INTERFACE
         and Constants.AURA_BACKEND_LEGACY
         or Constants.AURA_BACKEND_UNSUPPORTED
-    AuraCapabilityService.limitationReason = "nativeContainerContractMissing"
+    AuraCapabilityService.limitationReason = AuraCapabilityService.clientInterface >= Constants.INTERFACE
+        and (AuraCapabilityService.nativeRuntimeAllowed and "nativeContainerContractMissing" or "nativePtrOnlyGate")
+        or "nativeContainerContractMissing"
     AuraCapabilityService.canUseSpellIDCandidateFilter = false
     return false
 end
@@ -145,6 +165,11 @@ function AuraCapabilityService.getSnapshot()
         hasAuraSound = AuraCapabilityService.hasAuraSound,
         hasAuraSoundEnum = AuraCapabilityService.hasAuraSoundEnum,
         hasDurationObject = AuraCapabilityService.hasDurationObject,
+        clientIsPublicTest = AuraCapabilityService.clientIsPublicTest,
+        clientIsTestBuild = AuraCapabilityService.clientIsTestBuild,
+        clientIsBetaBuild = AuraCapabilityService.clientIsBetaBuild,
+        testBuildKnown = AuraCapabilityService.testBuildKnown,
+        nativeRuntimeAllowed = AuraCapabilityService.nativeRuntimeAllowed,
         canUseSpellIDCandidateFilter = AuraCapabilityService.canUseSpellIDCandidateFilter,
         spellIDCandidateFilterRestricted = AuraCapabilityService.spellIDCandidateFilterRestricted,
         soundTriggerAdded = AuraCapabilityService.soundTriggerAdded,

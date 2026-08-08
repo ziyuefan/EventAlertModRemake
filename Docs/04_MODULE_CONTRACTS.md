@@ -119,6 +119,9 @@
 - 不得寫入高頻運轉時狀態
 - 不得結凍 SavedVariables
 - 在使用者觸發的配置變更後增加 `EAM_DB.revision`
+- `EAM_DB.schemaVersion = 3`；`config.textLayout` 持有 timer／applications 的白名單位置與 8–32 字級。
+- `updateTextLayout()` 對 no-op 回傳 `unchanged` 且不提高 revision；真實變更只提高一次。
+- 遇到較新的未知 schema 時不得修改原始 `_G.EAM_DB`；只建立目前版本的 transient runtime defaults 並回報 `futureSchemaPreserved`，防止舊版覆寫新格式。
 
 ## Core/Performance
 
@@ -303,6 +306,30 @@
 - 框架創建應該在初始化期間或僅在受控增長期間發生
 - 當池為空時，不得在戰鬥中創建新的圖標框架
 
+## UI/TextPlacement
+
+輸入：
+
+- `Data/TextPlacementContract.json` 對應的 21 個固定 placement ID。
+- `EAM_DB.config.textLayout.timer/applications` 與字級。
+
+輸出：
+
+- 經白名單解析的 `point/relativePoint/x/y`。
+- 僅對 EAM 自建 FontString 執行 `ClearAllPoints`、`SetPoint` 與 `SetFont`。
+
+狀態變更：
+
+- 不持有 runtime 狀態，不讀 AuraData／倒數文字／applications 原值。
+- 執行期 Lua 映射必須與 `Data/TextPlacementContract.json` 由 `Tools/Test-ValidationContracts.ps1` 交叉驗證。
+
+## UI/NativeAuraRenderer
+
+- 只在 12.1 AuraButton `initializeFrame` 期間建立並完成 EAM 的 icon／cooldown／timer／applications／name 子元件；回呼結束後不追蹤、不重排也不修改已限制的按鈕。
+- 不讀取 Native AuraButton 的受限文字或 Aura payload；文字位置／字級改變直接重套 EAM 自建 Region，戰鬥中只設 pending，於 `PLAYER_REGEN_ENABLED` 後回放，不重建 AuraContainer。
+- 文字字級滑桿拖曳期間預覽一般 Renderer；`OnMouseUp`／`OnHide` 只提交一次 Native container rebuild。icon size／spacing、swipe alpha 與雙倒數診斷同樣每次手勢最多要求一次 rebuild。
+- 12.0.7 通用 Renderer 與 12.1 Native renderer 共用 `UI/TextPlacement`，不得各自維護位置分支。
+
 ## UI/Renderer
 
 輸入：
@@ -320,6 +347,8 @@
 - 從不取得aura/cooldown數據
 - 控制所有昂貴的 UI 寫入
 - 推遲戰鬥中的結構佈局變化和首次圖標獲取
+- `applyTextLayout()` 必須立即重套現有 EAM icon 的 timer／applications 位置與字級及 name 字級；戰鬥中只設 pending，於 `PLAYER_REGEN_ENABLED` 後回放。
+- `layout()`、`requestLayout()`、render 內文字定位與移動模式遇戰鬥都不得執行 `SetPoint`／`SetSize`／`SetFont`，只能保留 dirty／blocked／pending 狀態。
 
 ## UI/Options
 
@@ -343,6 +372,8 @@
 
 - 僅 UI 小部件和明確配置值
 - 如果正式服阻止或面臨受保護的 UI 變更的風險，則必須在戰鬥中延遲首次框架創建
+- timer／applications 位置變更一次更新 SavedVariables，立即重套一般 icon 與脫戰 Native Region，不要求 container rebuild；字級 slider 拖曳則分為即時預覽與結束拖曳單次 Native reapply。
+- icon size／spacing slider 拖曳期間只更新一般 layout，結束手勢才要求一次 Native 結構重建。
 
 ## UI/Slash
 
@@ -392,13 +423,13 @@
 
 輸入：
 
-- 使用者或 Offline Harness 指定的 `quick/core/boundary/all` suite。
+- 使用者或 Offline Harness 指定的 `quick/core/boundary/aura121/all` suite。
 - EventRouter、Scheduler、SavedVariables、RuntimeProbe 公開 API。
 
 輸出：
 
 - 同步與非同步案例結果。
-- `EAM_FLOW_VALIDATION_REPORT` schema 1 JSON。
+- `EAM_FLOW_VALIDATION_REPORT` schema 2 JSON，明列 `purpose`、`matrixVersion`、`executionSource` 與 client identity。
 - 最後一次 summary 與獨立 SavedVariable `EAM_FLOW_TEST_REPORT_JSON`。
 
 狀態變更：
@@ -418,11 +449,28 @@
 
 - Quick／Core／Boundary／All 按鈕。
 - 可複製 JSON 與本地化摘要。
+- 提供「真人實機簽收」入口，但不自動執行任何遊戲輸入。
 
 狀態變更：
 
 - 只擁有 lazy UI 與 pendingOpen。
 - 戰鬥中不得首次建立；延後至 `PLAYER_REGEN_ENABLED`。
+
+## Debug/ValidationEnvironment
+
+- 將玩家宣告的 `_ptr_`、`_xptr_`、`_retail_` 與 `GetBuildInfo`、Interface 及三個原始 test-build 旗標交叉核對；報告同時保留 aggregate 與 `buildFlags`，不可只保留合併結果。
+- 來源只能標記為 `ptr-live-manual`、`xptr-live-manual`、`retail-live-manual` 或 `offline-mock`；不由路徑猜測客戶端。
+- mismatch／unconfirmed 必須寫入 `boundaryWarnings`，不得產生 pass。
+
+## Debug/LiveTestSession 與 Debug/LiveTestPanel
+
+- 依 `Data/LiveValidationMatrix.json` 管理 34 案玩家人工觀察、500 字元備註、`/reload` checkpoint 與 schema 1 JSON。
+- 不施法、不使用物品、不執行巨集、不切換目標、不合成輸入、不呼叫 `ReloadUI`。
+- start、案例狀態／備註、checkpoint、reload 恢復與 complete 的 session 寫入在戰鬥中一律回傳 `combatDeferred`。
+- checkpoint 保存本次載入專屬 boot token；同次載入呼叫 resume 必須回傳 `sameLoadRejected`，只有玩家自行 `/reload` 後重建的 table identity 才能恢復。
+- session 必須跨一次玩家自行執行的 `/reload`，34 案全 pass、test-build 身分已知且環境無警告，才可從 `active` 進入 `complete`；`active` phase 即使其餘條件齊全也只能輸出 `incomplete`。
+- 備註中的絕對路徑、UNC、SavedVariables、WTF 與 Account 片段必須在 producer 先遮蔽；`Data/LiveValidationMatrix.json` 固定 `personalDataAllowed=false`。
+- 離線 fixture 永遠維持 `incomplete`；匯入器另行重算摘要、矩陣與客戶端身分。
 
 ## Tests/FlowValidationHarness
 
@@ -445,7 +493,7 @@
 | --- | --- | --- | --- |
 | `AuraCapabilityService` | build/API surface | backend snapshot | 只看 TOC 判定 |
 | `AuraRuleCompiler` | 純設定 DB | stable runtime plan | AuraData/UI |
-| `AuraContainerService` | plan/revision | player/target containers | 戰鬥結構修改 |
+| `AuraContainerService` | plan／結構 fingerprint | player/target containers、pending／reloadRequired 狀態 | 戰鬥結構修改、單次載入建立超過 18 個容器 |
 | `NativeAuraRenderer` | AuraButton callback | 綁定 Regions | Aura 狀態推導 |
 | `AuraSoundService` | sound rules | registration IDs | 讀 AuraData |
 

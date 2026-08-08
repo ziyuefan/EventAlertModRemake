@@ -1,8 +1,11 @@
 # EventAlertMod Rewrite .gitignore
 backup/
 Dist/
+deploy/
 scratch/
 .codex/
 *.zip
 *.log
 TestResults/
+__pycache__/
+*.pyc

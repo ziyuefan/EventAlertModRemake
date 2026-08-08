@@ -571,159 +571,17 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="_1">子代理程式工作流程規劃</h1>
-<p>本文件定義 EventAlertMod 開發時規劃並使用子代理程式。目標是讓大型工作可額外、可延期、可控制風險；不是把任務全部外包，也不是所有不必要的協調成本增加。</p>
-<h2 id="_2">基本原則</h2>
-<ul>
-<li>只有在使用者已授權子代理、且任務可拆除時才能使用明確的邊界。</li>
-<li>主代理先判斷關鍵路徑（關鍵路徑）：下一步立即停止的工作必須由主代理自己處理。</li>
-<li>子代理程式處理 sidecar 任務（旁路任務）：可完成、具體、可驗收、不停止主代理下一步。</li>
-<li>不重複派工；同一問題存在子代理結果時，除非有新證據或不同角度，不再派第二個做同樣分析。</li>
-<li>程式修改型子代理程式必須有明確的書寫範圍，避免多個代理程式改同一個檔案。</li>
-<li>所有分代理結果均需由主代理整合與最終判斷，不直接視為已驗證事實。</li>
-</ul>
-<h2 id="_3">適合使用子代理人的姿勢</h2>
-<ul>
-<li>大型重寫頻道中，可精密互不重疊模組：</li>
-<li><code>Services/AuraService.lua</code></li>
-<li><code>Services/CooldownService.lua</code></li>
-<li><code>UI/Renderer.lua</code></li>
-<li><code>Debug/PromptExport.lua</code></li>
-<li>API 查詢與文件整理可和本地實作家具，例如：</li>
-<li>12.x API 更改來源複核。</li>
-<li>秘密價值/污染討論整理。</li>
-<li>DurationObject / DurationTextBinding 實踐方式比較。</li>
-<li>驗證與掃描可與修復零件，例如：</li>
-<li>搜尋舊API直接呼叫。</li>
-<li>檢查<code>table.freeze</code>錯誤用。</li>
-<li>檢查 <code>C_Timer.After(function() ...)</code> 熱路徑。</li>
-<li>對 Docs 與 AGENTS 進行一致性檢查。</li>
-<li>大量文件中文化、術語統一、測試清單補齊。</li>
-<li>Package / CurseForge 發布流程的旁路檢查，例如排除清單、TOC 版本、zip 命名規則。</li>
-</ul>
-<h2 id="_4">不適合使用子代理人的姿勢</h2>
-<ul>
-<li>小型單檔修改，主代理可直接完成。</li>
-<li>下一步完全依賴該結果，等待子代理改為拖慢關鍵路徑。</li>
-<li>需要立即判斷使用者意圖、風險或授權的操作。</li>
-<li>涉及刪除、搬遷、覆寫大量檔案，而尚未備份與範圍確認。</li>
-<li>高修改連接，例如同時改變 <code>SavedVariables</code> schema、migration、Options UI、Slash command 且尚未開始開始範圍。</li>
-<li>尚無明確的探索性問題。</li>
-</ul>
-<h2 id="_5">角色使用建議</h2>
-<ul>
-<li>explorer：用於特定問題的複雜調查，例如「尋找活動 Lua 中所有冷卻時間 API 通話」。
--worker：用於可分割的實作，例如「只修改UI/Options.lua，新增某個設定欄位，不碰SavedVariables」。
-除非任務有明確理由，子代理程式使用預設繼承模型；不指定較昂貴或不同模型。</li>
-</ul>
-<h2 id="_6">派工模板</h2>
-<pre class="codehilite"><code class="language-text">你是 EventAlertMod Retail rewrite 的 subagent。
 
-範圍：
-- 只能處理：&lt;檔案或問題範圍&gt;
-- 不得修改：&lt;明確排除範圍&gt;
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-必要規則：
-- Retail only。
-- 不支援 Classic / MOP / Cata / Wrath / Era。
-- 不繞過 Secret / Protected Data。
-- 避免 taint；不 hook secure/protected chain。
-- 修改任何既有檔案前需先備份到 backup/。
-- 不還原他人變更。
-
-輸出：
-- 完成事項。
-- 修改檔案。
-- 驗證方式與結果。
-- 未驗證事項。
-- 風險與建議。
-</code></pre>
-
-<h2 id="_7">主代理整合規則</h2>
-<ul>
-<li>分代理完成後，主代理需快速審查結果與文件差異。</li>
-<li>若子代理程式修改方案代碼，主代理程式仍需執行專案靜態驗證。</li>
-<li>若子代理提供 API 資訊，主代理人需標明來源系統：</li>
-<li>官方文件或魔獸爭霸Wiki。</li>
-<li>用戶提供。</li>
-<li>搜尋索引。</li>
-<li>實機驗證。</li>
-<li>若子代理程式遇到工具限制、API不確定性或錯誤，需追加至<code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
-<li><strong>Markdown 絕對事實與 HTML 轉換守則</strong>：</li>
-<li>本專案與子代理程式開發協作的絕對指導文件，一律以 <code>AGENTS.md</code> 及其內文指名之 <code>.md</code> 檔案為唯一事實與 Facts-of-Truth 參考。</li>
-<li>HTML 版本人類好讀與預覽使用。子代理執行開發、唯讀分析與回寫時，必須一律以 <code>.md</code> 原檔為唯一事實基準，不得以 HTML 文件作為事實參考。</li>
-<li>任務若修改了文件下的 <code>.md</code> 檔案或 <code>AGENTS.md</code>，必須於修改後執行轉換工具，更新 <code>docs_html/</code> 下對應的 <code>.html</code> 檔案以確保一致性。</li>
-</ul>
-<h2 id="raci-pr">RACI 專家分工與PR審查原則</h2>
-<p>為了讓 24 位 AI 專家在不同開發任務中的定位明確，專案實施 RACI（Responsible、Accountable、Consulted、Informed）分工。</p>
-<p>完整名冊、縮寫與 RACI 矩陣以 <a href="21_RACI_EXPERTS_MATRIX.md.html">Docs/21_RACI_EXPERTS_MATRIX.md</a> 為唯一基準。
-後續所有子代理派工時需注意：
-1. <strong>R (Responsible)</strong>：派工時，應指定被屬於該任務領域 <strong>R</strong> 的專家作為子代理的角色與職能（例如修改 Class DB 時指派 <code>EAM_Class_Expert</code>）。
-2. <strong>A (Accountable)</strong>：子代理提交 PR 或結果後，主代理必須遷移到該任務領域 <strong>A</strong> 的專家進行審查與批准。
-3. <strong>C（諮詢）</strong>：子代理在開發中遇到疑難問題時，必須主動向該任務領域被來自 <strong>C</strong> 的專家諮詢。</p>
-<h2 id="_8">專案品質管制與要因分析原則</h2>
-<p>為確保程式碼品質與開發的嚴謹性，本專案導入5 Whys (WHY-WHY要因分析)、魚骨圖、對策評估矩陣與PDPC異常防禦機制。</p>
-<p>詳細QC規格與指引請見：<a href="22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md.html">Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md</a>。
-後續開發遵循要求：
-1. <strong>Bug診斷</strong>：遇到任何運行時崩潰或邏輯Bug，必須先執行<strong>5個為什麼分析</strong>與<strong>魚骨圖要因分析</strong>，追查根本原因，並讀取問題記錄中。
-2. <strong>對策擬定</strong>：設計複雜方案時，必須在 <code>implementation_plan.md</code> 提出至少兩個候選方案，並以對策矩陣從效果、吸力、感覺、安全等維度進行量化評分。
-3. <strong>相依排程</strong>：<code>task.md</code> 任務必須標示依賴（關係甘特圖精神），確保任務開發不會發生衝突。</p>
-<h2 id="eam">EAM 專案優先使用案例</h2>
-<ol>
-<li>Retail API 變更覆核與 Docs 回寫。</li>
-<li>Secret / taint 風險審查。</li>
-<li>AuraService 12.1.0 重構前置調查。</li>
-<li>渲染器 / DurationObject / DurationTextBinding 實作比較。</li>
-<li>SavedVariables 遷移測試案例整理。</li>
-<li>預算與 CurseForge 發布檢查。</li>
-</ol>
-<hr />
-<h2 id="24">預定義子代理專家目錄（24 位）</h2>
-<p>本節提供派工時的角色摘要；完整縮寫、責任邊界及唯一問責者以 <code>Docs/21_RACI_EXPERTS_MATRIX.md</code> 為準。</p>
-<h3 id="_9">證據等級與能力邊界</h3>
-<ul>
-<li><code>文件已查證</code>：具有官方公告、官方 UI 原始碼或 Warcraft Wiki 修訂來源。</li>
-<li><code>靜態通過</code>：只代表語法或靜態掃描通過。</li>
-<li><code>Mock 通過</code>：只代表模擬環境通過。</li>
-<li><code>PTR 實機通過</code>：需記錄 PTR build、操作步驟與結果。</li>
-<li><code>Retail 實機通過</code>：需記錄正式服 build、角色／場景、taint 與 Lua error 證據。</li>
-<li>子代理角色只是派工規格，不代表常駐代理、遊戲客戶端或實機能力已存在。沒有 WoW 客戶端與人類操作證據時，不得宣稱實機通過。</li>
-</ul>
-<h3 id="1-api-6">1. 核心、API 與渲染（6 位）</h3>
-<ul>
-<li><code>EAM_Addon_Architect</code>：核心架構、模組邊界、載入順序與安全鏈設計。</li>
-<li><code>EAM_API_Security_Expert</code>：Retail API、Secret／Protected Data 與 taint 安全決策。</li>
-<li><code>EAM_Performance_Expert</code>：CPU、GC、事件頻率與框架池效能預算。</li>
-<li><code>EAM_UI_Renderer_Expert</code>：Renderer、IconPool、DurationObject 與設定介面。</li>
-<li><code>EAM_Lua_VM_Expert</code>：Lua 語義、資料結構、閉包與局部熱路徑最佳化。</li>
-<li><code>EAM_Security_Auditor</code>：獨立檢查污染、繞過與 protected chain 風險，不參與自行核准其稽核對象。</li>
-</ul>
-<h3 id="2-10">2. 玩家體驗與職業監控（10 位）</h3>
-<ul>
-<li><code>EAM_UX_Gameplay_Expert</code>：資訊層級、視覺負擔與戰鬥可用性。</li>
-<li><code>EAM_Class_Expert</code>：職業、專精、英雄天賦與 spellID 資料負責人。</li>
-<li><code>EAM_Class_Tanks</code>、<code>EAM_Class_Healers</code>、<code>EAM_Class_Melee</code>、<code>EAM_Class_Ranged</code>：四類專精智庫。</li>
-<li><code>EAM_Tank_Pro</code>、<code>EAM_Healer_Pro</code>、<code>EAM_Melee_DPS_Pro</code>、<code>EAM_Ranged_DPS_Pro</code>：玩家實戰諮詢席，不可取代 API 或實機證據。</li>
-</ul>
-<h3 id="3-8">3. 測試、資料、發布與治理（8 位）</h3>
-<ul>
-<li><code>EAM_Mock_Sandbox_Expert</code>：Mock、單元與整合測試；不得把模擬結果稱為實機結果。</li>
-<li><code>EAM_Data_Guard_Expert</code>：SavedVariables schema、WTF 遷移與設定相容性。</li>
-<li><code>EAM_DevOps_Release_Expert</code>：TOC、靜態驗證、封裝、CI 與發布門檻。</li>
-<li><code>EAM_Combat_Scraper_Expert</code>：戰鬥資料候選蒐集；輸出必須再經 SPEC／SEC 驗證。</li>
-<li><code>EAM_API_Change_Intelligence_Expert</code>（<code>APICHG</code>）：從 12.0.0 起追蹤 API change summaries、TOC／revision、官方公告與 UI source diff，產出版本差異、遷移窗口與架構預警。</li>
-<li><code>EAM_Aura_121_Migration_Expert</code>（<code>AURA121</code>）：12.1 AuraContainer／AuraButton、Forbidden Aspects、UnitAura 退場條件與行為遷移。</li>
-<li><code>EAM_Retail_Client_QA_Expert</code>（<code>RQA</code>）：Retail／PTR 實機案例、taint log、Lua error、CPU／GC 證據與驗證簽收。無遊戲環境時只能設計與判讀測試。</li>
-<li><code>EAM_Documentation_Governance_Expert</code>（<code>DOC</code>）：Facts-of-Truth、來源日期、驗證狀態、Markdown→HTML 單向同步與 <code>EAMCODE placeholder</code> 污染門檻。</li>
-</ul>
-<h3 id="_10">新增角色禁止事項</h3>
-<ul>
-<li><code>APICHG</code> 不得取代 <code>SEC</code> 的安全終審，不得把 Wiki revision time 當成 patch 發布日期，也不得宣稱未執行的 PTR／Retail 實機結果。</li>
-<li><code>AURA121</code> 不得設計 Secret／Forbidden Aspect 繞過；通用安全終審仍由 <code>SEC</code> 負責。</li>
-<li><code>RQA</code> 不得自行宣稱未執行的客戶端測試通過，也不得由被測模組作者自行取代。</li>
-<li><code>DOC</code> 不得裁決 API 技術真偽；API 事實由 <code>SEC/AURA121</code> 提供，文件角色負責來源與狀態一致性。</li>
-</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

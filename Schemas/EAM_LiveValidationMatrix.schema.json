@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ziyuefan.github.io/EventAlertModRemake/schemas/eam-live-validation-matrix-v1.json",
+  "title": "EventAlertMod Human Validation Matrix",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "type", "matrixVersion", "product", "operationPolicy", "clients", "cases"],
+  "properties": {
+    "schema": { "const": 1 },
+    "type": { "const": "EAM_LIVE_VALIDATION_MATRIX" },
+    "matrixVersion": { "const": "2026-08-08.1" },
+    "product": { "const": "wow_retail" },
+    "operationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["humanInputOnly", "automatedGameplayInput", "automatedReloadUI", "offlinePassIsLivePass", "personalDataAllowed"],
+      "properties": {
+        "humanInputOnly": { "const": true },
+        "automatedGameplayInput": { "const": false },
+        "automatedReloadUI": { "const": false },
+        "offlinePassIsLivePass": { "const": false },
+        "personalDataAllowed": { "const": false }
+      }
+    },
+    "clients": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["_ptr_", "_xptr_", "_retail_"],
+      "properties": {
+        "_ptr_": { "$ref": "#/$defs/ptr" },
+        "_xptr_": { "$ref": "#/$defs/xptr" },
+        "_retail_": { "$ref": "#/$defs/retail" }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 34,
+      "maxItems": 34,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "category", "required", "procedure"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^live\\.[a-z0-9_.]+$" },
+          "category": { "type": "string", "minLength": 1 },
+          "required": { "const": true },
+          "procedure": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "ptr": {
+      "type": "object", "additionalProperties": false,
+      "required": ["channel", "patch", "interface"],
+      "properties": { "channel": { "const": "PTR" }, "patch": { "const": "12.1.0" }, "interface": { "const": 120100 } }
+    },
+    "xptr": {
+      "type": "object", "additionalProperties": false,
+      "required": ["channel", "patch", "interface"],
+      "properties": { "channel": { "const": "XPTR" }, "patch": { "const": "12.0.7" }, "interface": { "const": 120007 } }
+    },
+    "retail": {
+      "type": "object", "additionalProperties": false,
+      "required": ["channel", "patch", "interface"],
+      "properties": { "channel": { "const": "RETAIL" }, "patch": { "const": "12.0.7" }, "interface": { "const": 120007 } }
+    }
+  }
+}

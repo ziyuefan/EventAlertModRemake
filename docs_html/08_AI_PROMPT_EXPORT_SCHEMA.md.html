@@ -581,169 +581,17 @@ EAM 狀態，消耗轉儲大量日誌。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="ai">AI提示匯出架構</h1>
-<h2 id="_1">目的</h2>
-<p>主要是進行除錯導出。它的存在是為了幫助用戶或人工智慧代理進行檢查
-EAM 狀態，消耗轉儲大量日誌。</p>
-<p>型號：</p>
-<ul>
-<li><code>debug-min</code>：結構緊湊，可快速支援。</li>
-<li><code>analysis-full</code>：用於架構/debug 分析的詳細但有限的狀態。</li>
-<li><code>github-issue</code>：使用者可讀取的問題負載。</li>
-</ul>
-<h2 id="_2">需要分離</h2>
-<p>導出必須分開：
-- 事實：直接、安全的 API 資料；
-- 匯出：計算UI/渲染狀態；
-- 人工註記：使用者最重要的註解；
-- boundaryWarnings：秘密/protected/不安全資料限制；
-- 環境：建造、區域設定、戰鬥狀態、FPS、外掛程式版本。</p>
-<p>不要將猜測值與事實混為一談。</p>
-<h2 id="_3">簡潔模式</h2>
-<pre class="codehilite"><code class="language-js">{
-  schema: 1,
-  mode: &quot;debug-min|analysis-full|github-issue&quot;,
-  environment: {
-    addon: &quot;EventAlertMod&quot;,
-    addonVersion: &quot;string?&quot;,
-    interface: &quot;number?&quot;,
-    build: &quot;string?&quot;,
-    locale: &quot;string?&quot;,
-    inCombat: &quot;boolean&quot;,
-    fps: &quot;number?&quot;,
-    retailOnly: true
-  },
-  facts: {
-    alertCount: &quot;number&quot;,
-    alerts: [
-      {
-        id: &quot;string&quot;,
-        kind: &quot;aura|spellCooldown|itemCooldown&quot;,
-        spellID: &quot;number?&quot;,
-        itemID: &quot;number?&quot;,
-        unit: &quot;string?&quot;,
-        name: &quot;string?&quot;,
-        icon: &quot;number|string?&quot;,
-        stacks: &quot;number?&quot;,
-        timerMode: &quot;none|numeric|displayOnly|protected|unknown&quot;,
-        active: &quot;boolean&quot;,
-        sourceAPI: &quot;string?&quot;
-      }
-    ]
-  },
-  derived: {
-    visibleIcons: &quot;number&quot;,
-    dirtyQueues: { aura: &quot;number&quot;, cooldown: &quot;number&quot;, item: &quot;number&quot; },
-    schedulerJobs: &quot;number&quot;
-  },
-  boundaryWarnings: [
-    { id: &quot;string?&quot;, code: &quot;string&quot;, note: &quot;string&quot; }
-  ],
-  humanNotes: [&quot;string&quot;]
-}
-</code></pre>
 
-<p>＃＃例子</p>
-<pre class="codehilite"><code class="language-js">{
-  schema: 1,
-  mode: &quot;debug-min&quot;,
-  environment: {
-    addon: &quot;EventAlertMod&quot;,
-    interface: 120000,
-    locale: &quot;zhTW&quot;,
-    inCombat: false,
-    fps: 118,
-    retailOnly: true
-  },
-  facts: {
-    alertCount: 2,
-    alerts: [
-      {
-        id: &quot;aura:player:12345&quot;,
-        kind: &quot;aura&quot;,
-        spellID: 12345,
-        unit: &quot;player&quot;,
-        name: &quot;Example Buff&quot;,
-        timerMode: &quot;numeric&quot;,
-        active: true,
-        sourceAPI: &quot;C_UnitAuras&quot;
-      },
-      {
-        id: &quot;spellCooldown:67890&quot;,
-        kind: &quot;spellCooldown&quot;,
-        spellID: 67890,
-        timerMode: &quot;protected&quot;,
-        active: true,
-        sourceAPI: &quot;C_Spell&quot;
-      }
-    ]
-  },
-  derived: {
-    visibleIcons: 2,
-    dirtyQueues: { aura: 0, cooldown: 0, item: 0 },
-    schedulerJobs: 1
-  },
-  boundaryWarnings: [
-    {
-      id: &quot;spellCooldown:67890&quot;,
-      code: &quot;SPELL_COOLDOWN_SECRET&quot;,
-      note: &quot;Timer details unavailable; icon-only render used.&quot;
-    }
-  ],
-  humanNotes: []
-}
-</code></pre>
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-<h2 id="_4">出口限制</h2>
-<ul>
-<li>沒有自動導出。</li>
-<li>沒有無限制的光環列表。</li>
-<li>預設沒有完整的 SavedVariables 轉儲。</li>
-<li>沒有戰鬥日誌垃圾/無用。</li>
-<li>沒有大型專案倉儲轉儲。</li>
-<li>字串僅在發生時建構明確的匯出指令。</li>
-</ul>
-<h2 id="_5">流程驗證報告</h2>
-<p>流程測試使用獨立 schema，不與一般 DebugSnapshot 混合：</p>
-<pre class="codehilite"><code class="language-js">{
-  schema: 1,
-  type: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
-  suite: &quot;quick|core|boundary|all&quot;,
-  status: &quot;pass|fail&quot;,
-  environment: {
-    source: &quot;offline-mock|retail-client&quot;,
-    interface: &quot;number&quot;,
-    initialized: &quot;boolean&quot;,
-    inCombat: &quot;boolean&quot;,
-    locale: &quot;string&quot;
-  },
-  summary: {
-    total: &quot;number&quot;,
-    passed: &quot;number&quot;,
-    failed: &quot;number&quot;,
-    skipped: &quot;number&quot;,
-    pending: &quot;number&quot;
-  },
-  cases: [
-    {
-      id: &quot;string&quot;,
-      suite: &quot;string&quot;,
-      status: &quot;pass|fail|skip|pending&quot;,
-      durationMs: &quot;number&quot;,
-      message: &quot;safe string&quot;
-    }
-  ],
-  boundaryWarnings: []
-}
-</code></pre>
-
-<p>限制：</p>
-<ul>
-<li>不輸出 Secret／Protected 值、完整 SavedVariables 或原始 Aura／Cooldown facts。</li>
-<li><code>source</code> 必須保留，不能把 Offline Mock 改寫成 Retail／PTR。</li>
-<li>遊戲內最後報告以字串保存於 <code>EAM_FLOW_TEST_REPORT_JSON</code>，僅供使用者回灌。</li>
-</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->
