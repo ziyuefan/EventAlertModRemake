@@ -111,8 +111,9 @@ end
     `C_UnitAuras.GetAuraDuration(unit, auraInstanceID)` 取得底層的 `DurationObject`。
 * **執行步驟**：
     1.渲染器取得`timer.durationObject`。
-    2.呼叫`C_DurationUtil.CreateDurationTextBinding(durationObject,圖示.timerText)`。
-    3.呼叫`icon.cooldown:SetCooldownFromDurationObject(durationObject)`。
+    2.無參數呼叫 `C_DurationUtil.CreateDurationTextBinding()` 建立 binding。
+    3.依序呼叫 `SetFontString(圖示.timerText)`、`SetDuration(durationObject)`、`SetFormatter(formatter)`，再啟用 binding。
+    4.呼叫 `icon.cooldown:SetCooldownFromDurationObject(durationObject)`。
 * **優勢**：
     圖示上的秒數倒數與轉圈渲染完全由遊戲客戶端 C++ 高階的計時器驅動，**完全不需要註冊 Lua OnUpdate 腳本**，達成 0 頭顱與 0 記憶體。
 
@@ -120,7 +121,7 @@ end
 * **原理**：
 當`DurationObject`不可用時（例如非戰鬥技能冷卻、手動設定的地面效果時間、或PTR API降級時），返回傳統的Lua倒數。
 * **執行步驟**：
-    1. 取消 `icon.timerText` 的臨時綁定。
+    1. 停用原生 binding，並在能力存在時呼叫 `SetToDefaults()`；不得假設存在 `Unbind()`。
     2. 提示圖示註冊到 `EAM.Core.Scheduler` 集中式排程器。
     3.調度器使用單一的`OnUpdate`以0.1秒的間隔（節流）計算`timeLeft`，並更新文字。
 * **安全防禦**：

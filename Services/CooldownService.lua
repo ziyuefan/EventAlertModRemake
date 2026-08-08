@@ -43,6 +43,24 @@ local CooldownService = {
 
 EAM.Services.CooldownService = CooldownService
 
+local function getDurationObject(callback, spellID, ignoreGCD)
+    if type(callback) ~= "function" then
+        return nil
+    end
+    local ok, durationObject = pcall(callback, spellID, ignoreGCD)
+    if ok then
+        return durationObject
+    end
+    return nil
+end
+
+local function setProtectedTimer(state, durationObject, warningField)
+    state.factsSafe = false
+    Util.clearTimer(state.timer, EAM.Constants.TIMER_PROTECTED)
+    state.timer.durationObject = durationObject
+    Util.markBoundary(state, "cooldown", warningField)
+end
+
 -- 低 GC 的 CooldownState 物件快取池
 CooldownStatePool = {
     recycleBin = {},
@@ -156,10 +174,11 @@ local function refreshAlert(alert, eventName)
     -- 1. Check Charges first
     local isChargeBased = false
     local currentCharges, maxCharges
+    local chargesInfo = nil
     local chargesSafe = false
 
     if cSpell.GetSpellCharges then
-        local chargesInfo = cSpell.GetSpellCharges(alert.spellID)
+        chargesInfo = cSpell.GetSpellCharges(alert.spellID)
         if type(chargesInfo) == "table" and Util.canAccessTable(chargesInfo) then
             local cur, curSafe = Util.readSafeField(chargesInfo, "currentCharges", nil, "charges")
             local mx, mxSafe = Util.readSafeField(chargesInfo, "maxCharges", nil, "charges")
@@ -265,11 +284,11 @@ local function refreshAlert(alert, eventName)
     -- 5. Determine active state and populate TimerState with Service-Layer Write Gating
     if isChargeBased then
         if chargesSafe then
-            if cooldownInfo and infoSafe then
+            if chargesInfo then
                 local start, startSafe = Util.readSafeField(chargesInfo, "cooldownStartTime", state.boundaryWarnings, "charges")
                 local dur, durSafe = Util.readSafeField(chargesInfo, "cooldownDuration", state.boundaryWarnings, "charges")
-                
-                if startSafe and durSafe and type(start) == "number" and type(dur) == "number" then
+
+                if startSafe and durSafe and Util.isSafeNumber(start) and Util.isSafePositiveNumber(dur) then
                     state.factsSafe = true
                     
                     if state.timer.startTime ~= start or state.timer.duration ~= dur or state.timer.mode ~= EAM.Constants.TIMER_NUMERIC then
@@ -280,19 +299,25 @@ local function refreshAlert(alert, eventName)
                         state.timer.durationObject = cSpell.GetSpellChargeDuration and cSpell.GetSpellChargeDuration(alert.spellID) or nil
                     end
                 else
-                    state.factsSafe = false
-                    state.timer.mode = EAM.Constants.TIMER_PROTECTED
-                    state.timer.durationObject = cSpell.GetSpellChargeDuration and cSpell.GetSpellChargeDuration(alert.spellID) or nil
+                    setProtectedTimer(
+                        state,
+                        getDurationObject(cSpell.GetSpellChargeDuration, alert.spellID),
+                        "chargeTimingProtected"
+                    )
                 end
             else
-                state.factsSafe = false
-                state.timer.mode = EAM.Constants.TIMER_PROTECTED
-                state.timer.durationObject = cSpell.GetSpellChargeDuration and cSpell.GetSpellChargeDuration(alert.spellID) or nil
+                setProtectedTimer(
+                    state,
+                    getDurationObject(cSpell.GetSpellChargeDuration, alert.spellID),
+                    "chargeTimingUnavailable"
+                )
             end
         else
-            state.factsSafe = false
-            state.timer.mode = EAM.Constants.TIMER_PROTECTED
-            state.timer.durationObject = cSpell.GetSpellChargeDuration and cSpell.GetSpellChargeDuration(alert.spellID) or nil
+            setProtectedTimer(
+                state,
+                getDurationObject(cSpell.GetSpellChargeDuration, alert.spellID),
+                "chargeFactsProtected"
+            )
         end
     else
         if infoSafe and type(startTime) == "number" and type(duration) == "number" then
@@ -304,9 +329,11 @@ local function refreshAlert(alert, eventName)
                 state.timer.durationObject = cSpell.GetSpellCooldownDuration and cSpell.GetSpellCooldownDuration(alert.spellID, true) or nil
             end
         else
-            state.factsSafe = false
-            state.timer.mode = EAM.Constants.TIMER_PROTECTED
-            state.timer.durationObject = cSpell.GetSpellCooldownDuration and cSpell.GetSpellCooldownDuration(alert.spellID, true) or nil
+            setProtectedTimer(
+                state,
+                getDurationObject(cSpell.GetSpellCooldownDuration, alert.spellID, true),
+                "timingProtected"
+            )
         end
     end
 
@@ -378,6 +405,22 @@ function CooldownService.refreshAll(eventName)
     refreshAll(eventName or "manual")
 end
 
-function CooldownService.onCooldownEvent(eventName)
+function CooldownService.onCooldownEvent(eventName, spellID, baseSpellID)
+    if eventName == "SPELL_UPDATE_COOLDOWN" then
+        local hasTarget = false
+        if Util.isSafePositiveNumber(spellID) then
+            CooldownService.refreshSpell(spellID, eventName)
+            hasTarget = true
+        end
+        if Util.isSafePositiveNumber(baseSpellID)
+            and (not Util.isSafePositiveNumber(spellID) or baseSpellID ~= spellID)
+        then
+            CooldownService.refreshSpell(baseSpellID, eventName)
+            hasTarget = true
+        end
+        if hasTarget then
+            return
+        end
+    end
     refreshAll(eventName)
 end

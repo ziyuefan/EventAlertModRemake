@@ -47,6 +47,8 @@
 - `Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`
 - `Docs/26_FLOW_VALIDATION_FRAMEWORK.md`
 - `Docs/27_LOCAL_WOW_ENVIRONMENT.md`
+- `Docs/28_PROJECT_CONTINUITY.md`
+- `Data/ProjectContinuity.json`
 舊討論脈絡可參考：
 
 - `DevDocument/ChatGPT/EventAlertMod_ChatGPT_Discussion_Context.md`
@@ -62,7 +64,7 @@
 ## 本機 WoW 開發環境基準
 
 - 本機 WoW 安裝根目錄：`D:\World of Warcraft`；EAM 實體專案根目錄：`D:\EventAlertMod`。
-- 2026-07-26 唯讀確認：`_retail_` 為 12.0.7.68453、`_ptr_` 為 12.1.0.68914、`_xptr_` 為 12.0.7.68887。版本與 build 會更新，每次實機驗證前仍須重讀執行檔版本。
+- 2026-08-08 唯讀確認：`_retail_` 為 12.0.7.68974、`_ptr_` 為 12.1.0.69189、`_xptr_` 為 12.0.7.68887。版本與 build 會更新，每次實機驗證前仍須重讀執行檔版本。
 - 實機驗證前先執行 `Tools/Test-LocalWoWEnvironment.ps1`；該工具以主程式 `ProductVersion` 斷言 patch train，並檢查 AddOns Reparse Point 仍指向實體專案。斷言失敗時不得繼續部署或實機簽收。
 - `_retail_`、`_ptr_`、`_xptr_` 的 `Interface\AddOns\EventAlertMod` 均為 Windows `SymbolicLink`，目標是 `D:\EventAlertMod`。所有開發修改只可作用於實體專案根目錄。
 - 嚴禁對上述連結路徑執行刪除、搬移、覆蓋、解壓縮部署、`robocopy /MIR`、連結重建或任何可能追蹤 Reparse Point 的遞迴清理；不得把連結當成可替換的插件副本。

@@ -82,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -In
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -SkipLuaCheck
 ```
-僅診斷工具環境問題時跳過離線流程驗證：
+僅診斷工具環境問題時跳過離線 Flow 與 JSON／Lua 契約驗證：
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -SkipFlowValidation
 ```
@@ -97,6 +97,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -De
 - TOC 路徑驗證。
 - Lua 語法檢查，除非明確使用 `-SkipLuaCheck`。
 - 離線 `all` 流程驗證，除非診斷性使用 `-SkipFlowValidation`；正式發布不得常態跳過。
+- `Tools/Test-ValidationContracts.ps1` 的 JSON Schema、21 點／34 案 Lua 同步、continuity drift、TOC 與 PowerShell AST 驗證；需要 PowerShell 7 `pwsh`。此 gate 與 Flow 共用診斷性 `-SkipFlowValidation`，正式發布不得跳過。
 - `TestResults/`、`Tests/` 與 `Tools/` 不進正式包。
 - zip排除檢查，確認沒有legacy/reference/tools/backup/dev資料夾。
 
@@ -111,3 +112,4 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -De
 - 資源成功不代表WoW正式服實機驗證完成。
 - 若 TOC `## Version` 與當日日期不一致，壓縮工具會停止。
 - 發布前仍需依`Docs/06_TEST_PLAN_RETAIL.md`做正式服實機測試。
+- 封裝 gate 通過仍只代表離線契約，不能取代 `_ptr_`／`_xptr_` 真人矩陣。

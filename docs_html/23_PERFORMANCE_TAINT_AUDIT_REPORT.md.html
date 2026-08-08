@@ -529,127 +529,22 @@ local offsetY = dy * dist
 </ul>
 <hr />
 <h2 id="raci">RACI 權責分工與審查結論</h2>
-<p>本報告審查<a href="file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md.html">Docs/21_RACI_EXPERTS_MATRIX.md</a>規範，由<strong>性能與污染控制專家</strong>負責（Responsible），為<strong>主代理</strong>提供核心技術決策諮詢。
+<p>本報告審查<a href="file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md">Docs/21_RACI_EXPERTS_MATRIX.md</a>規範，由<strong>性能與污染控制專家</strong>負責（Responsible），為<strong>主代理</strong>提供核心技術決策諮詢。
 * **在下一個重構週期中，應立即針對<code>UI/Renderer.lua</code>與<code>UI/IconPool.lua</code>進行局部重構，實現“時間字符串存儲”、“無pcall直接呼叫”以及“戰鬥中CreateFrame延遲防禦”，以確保AddOnMCO兼容時的最高低衛”，絕對兼容</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="onupdate">實施與污染控制審查報表：統一OnUpdate與版本面偏移</h1>
-<blockquote>
-<p>[!注意]
-本文件由 EAM Performance &amp; Taint Control Expert 撰寫，旨在評估 EventAlertMod 重構版本中統一（legacyTimer）的兼容超時、LAYOUT_OFFSETS 靜態偏移陣列的算術分配性能，並識別戰鬥中潛在的隱性垃圾性分配問題。</p>
-</blockquote>
-<hr />
-<h2 id="1onupdatelegacytimer">1.統一OnUpdate計時器（legacyTimer）有效的頭部審查</h2>
-<p><code>UI/Renderer.lua</code>秒中的<code>legacyTimer</code>負責在不使用即時持續時間綁定時，提供備用的倒數顯示（尤其在$_​​_EAMCODE_2__ &lt; 3.05$時提供小數點後單倒數）。其相容機制為使用唯一的隱含監聽監聽框架<code>OnUpdate</code>，操作<code>activeLegacyTimers</code>和<code>activeDurationObjects</code>來更新圖示的<code>timerText</code>。</p>
-<h3 id="11">1.1 完全優勢</h3>
-<ul>
-<li><strong>單一一幀集中驅動</strong>：避免了每個圖示或每個香水各自綁定 <code>OnUpdate</code> 的高額設計。當沒有啟動任務時，會呼叫<code>legacyTimerFrame:SetScript("OnUpdate", nil)</code>解除綁定，保持CPU零佔用。</li>
-<li><strong>孤兒框架隔離</strong>：<code>legacyTimerFrame</code>為無父級的框架（<code>CreateFrame("Frame")</code>），完全與<code>UIParent</code>核心鏈解耦，消除了事件派發過程中的污染傳播風險。</li>
-</ul>
-<h3 id="12-gc">1.2 可運行的開銷與GC瓶頸分析</h3>
-<p>在創建戰鬥環境（例如 60-120 FPS，擁有多個活動監控圖示）下，目前的實踐存在顯著的 GC 與 CPU 頭：
-1. <strong>牆壁的字符串清理（GC堆垃圾主要來源）</strong>：
-    * 在 <code>onLegacyTimerUpdate</code> 中，每個畫面都會對所有活動圖示執行：
-        <code>lua
-        if timeLeft &lt; 3.05 then
-            text = string.format("%.1f", timeLeft)
-        else
-            text = string.format("%d", math.ceil(timeLeft))
-        end</code>
-* 在Lua VM中，<code>string.format</code>會產生全新的字符串物件。在60 FPS下，若有5個圖示同時倒數，一秒將配置$60 \times 5 = 300$個字串。這會直接加速GC觸發，造成幀率（停止微卡頓）。
-2. <strong><code>pairs</code>雜湊表重複頭錢</strong>：
-* 使用 <code>pairs(activeLegacyTimers)</code> 來遍歷遍歷活動。在 LuaJIT 中，若遍歷雜湊表（Hash 部分），JIT 編譯器可能無法有效進行 Trace Compiler 編譯，且迭代過程中對錶進行 <code>activeLegacyTimers[icon] = nil</code> 的刪除操作很容易，導致內部 Hash 結構與 GC 後續重整。
-3. <strong><code>pcall</code>導致JIT Trace Abort</strong>：
-    * 在 <code>activeDurationObjects</code> 迭代中，呼叫了 <code>safeCheckIsZero(durationObj)</code>，其內部包含 <code>pcall(durationObj.IsZero, durationObj)</code>。
-* 在 LuaJIT 中，<code>pcall</code> 會直接導致目前的 Trace 編譯失敗（Trace Abort），使得 OnUpdate 的核心執行路徑只能回到低效率的解釋器模式執行，大幅增加了每一幀的 CPU 算術與呼叫高峰。</p>
-<hr />
-<h2 id="2-7layout_offsets">2. 7大框架靜態關聯（LAYOUT_OFFSETS）庫</h2>
-<p>EAM定義了7個大的獨立框架，並在排版時利用<code>EAM.Constants.LAYOUT_OFFSETS</code>做地震預警：</p>
-<pre class="codehilite"><code class="language-lua">LAYOUT_OFFSETS = freeze({
-    freeze({ 1, 0 }),  -- 1 = RIGHT (向右成長)
-    freeze({ -1, 0 }), -- 2 = LEFT (向左成長)
-    freeze({ 0, 1 }),  -- 3 = UP (向上成長)
-    freeze({ 0, -1 })  -- 4 = DOWN (向下成長)
-})
-</code></pre>
 
-<h3 id="21-cpu">2.1 CPU算術費用補償</h3>
-<p>在 <code>layout(frameName)</code> 執行時，其定位計算為：</p>
-<pre class="codehilite"><code class="language-lua">local offset = EAM.Constants.LAYOUT_OFFSETS[dirIdx]
-local dx, dy = offset[1], offset[2]
-...
-local dist = (layoutIndex - 1) * (size + spacing)
-local offsetX = dx * dist
-local offsetY = dy * dist
-</code></pre>
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-<ul>
-<li><strong>術算</strong>：首先對舊版 EventAlert 的休眠 <code>if-else</code> 或 <code>switch</code> 分支判定（如 <code>if dir == 1 then x = ... else ...</code>），以連續數字索引可能符合判別，完全消除了 CPU 分支錯誤的預測分支錯誤的預測值，可能符合了決定分支錯誤的預測分支可能符合了數據代碼分支錯誤的預測（Branchpretion）可能符合判別，完全消除了 CPU 分支錯誤的預測（Branchpretion）可能符合判別，消除了 CPU 分支錯誤的預測值（Branchpretion）可能符合判別，完全消除了 CPU 分支錯誤的預測（Branchpretion）可能符合了 CPU 分支錯誤的預測（Branch_3%），CPU 分支錯誤的預測（Branch_3%）可能符合了 CPU 分支錯誤的預測（Branchpretion）可能符合了 CPU 分支錯誤的預測（Branch_38）可能符合了 CPU 分支錯誤的預測（Branch_3%）。分支錯誤的預測值，可能符合了CPUBranchpretion）完全判別，可能符合 CPU 分支錯誤。</li>
-<li><strong>唯讀凍結</strong>：使用了<code>table.freeze</code>確保填入在執行期間被不可竄改，兼顧安全與便攜性。</li>
-<li>**查表頭頭評估：雖然每次定位都需要從 <code>LAYOUT_OFFSETS</code> 讀取內部表元素，但在實際運行中，<code>layout</code> 僅在圖標增減或設定變更時被觸發（由 <code>BeginBatch/EndBatch</code> 節流，並非在熱路徑設計中產生的決策路徑類型的研究類型的研究類型。</li>
-</ul>
-<hr />
-<h2 id="3gc">3.戰鬥中隱性污染排放與GC堆垃圾分配評估</h2>
-<p>透過深入研究進程進程碼，我們發現以下在戰鬥中高頻事件與渲染下，可能導致隱性Taint洩漏或GC堆垃圾分配的關鍵問題：</p>
-<h3 id="31-taint-combat-lockdown">3.1 隱性 Taint 洩漏與戰鬥鎖定 (Combat Lockdown)</h3>
-<ol>
-<li><strong>戰鬥中動態<code>CreateFrame</code>（高風險點）</strong>：</li>
-<li>雖然<code>ensureParent</code>具備<code>InCombatLockdown</code>守衛，但在<code>Renderer.render</code>中，如果<code>IconPool</code>的可以緩衝圖標用盡例如（在中同時觸發多個戰鬥天賦/冷卻/魔法，使得激活數量大於前置的16個），會觸發`IconPool.acv)(
-        <code>lua
-        local function createIcon()
-            local button = api.CreateFrame("Frame", name, UIParent)
-            ...
-            local cooldown = api.CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")</code></li>
-<li><strong>風險</strong>：在戰鬥鎖定期間呼叫<code>CreateFrame("Frame", name, UIParent)</code>且加載了官方的<code>CooldownFrameTemplate</code>，可能會污染雪內部的安全模板鏈，並高機率觸發「Action block by an addon」錯誤。</li>
-<li><strong>影子載體(Shadow Host)寄生模式的潛在Taint傳播(極高風險點)</strong>：</li>
-<li>雖然目前 <code>useCDM</code> 已強制設定 <code>false</code>，但若啟用此模式，則可將 EAM 的圖示寄生在官方的 <code>CooldownViewer</code> 或 ActionButton：
-        <code>lua
-        icon:SetParent(hostIcon)
-        icon:ClearAllPoints()
-        icon:SetAllPoints(hostIcon)</code></li>
-<li><strong>風險</strong>：官方的<code>CooldownViewer</code>與ActionButton屬於高度受保護的安全/受保護框架。非安全的EAM圖示在戰鬥中呼叫<code>SetParent</code>附加到安全框架上，當暴雪UI嘗試重新排版或該安全框架時，會操作其子系統包含不安全框架導致整個鏈執行被標記為污染，進而引發了操作按鈕被淹沒、無法點擊的致命錯誤。</li>
-</ol>
-<h3 id="32-gc">3.2 隱性GC堆垃圾分配</h3>
-<ol>
-<li><strong>熱路徑中的匿名閉包<code>pcall</code></strong>：<ul>
-<li>在 <code>Renderer.render</code> 中：
-    <code>lua
-    pcall(function()
-        icon:SetFrameStrata("MEDIUM")
-        icon:SetFrameLevel(hostIcon:GetFrameLevel() + 10)
-    end)</code></li>
-</ul>
-</li>
-<li>渲染更新（如下面的資料、冷卻更新）時，都會在熱路徑中動態分配這兩個匿名閉包函數，並呼叫 <code>pcall</code>。這不僅會阻塞 LuaJIT VM 的 Trace 編譯，還會產生持續的 GC 垃圾佔用。<ul>
-<li>*註：<code>icon.overlay</code> 與 <code>icon.cooldown</code> 皆為 EAM 內部建立的框架，其方法是 100% 確定存在的，根本不需要使用 <code>pcall</code> 進行防護。 *</li>
-</ul>
-</li>
-</ol>
-<hr />
-<h2 id="4">4.具體重構與最佳化建議</h2>
-<p>為了消除上述設想並實現 EAM 重寫版本的最大完成和零污染點要求，建議實施以下最佳化重構：</p>
-<h3 id="41-__eamcode_1__">4.1 刪除字符串與__分配EAMCODE_1__迭代：引入「時間字符串儲存」與「集合連結串列」</h3>
-<ul>
-<li><strong>時間字符串儲存（時間文字伺服器）</strong>：
-預先產生 $0.0$ 到 $3.0$ 秒（間隔 0.1 秒，共 30 個）以及 $3$ 到 $3600$ 秒的整數串表。在 OnUpdate 中，透過數值計算直接索引此儲存表，將初始化初始化初始值。</li>
-<li><strong>最近鏈結/數值指數排列</strong>：
-將使用 <code>activeLegacyTimers</code> 改為數值索引的互連，間隙使用 <code>for i = 1, count</code> 進行數字循環迭代，去掉 <code>pairs</code> 在路徑雜下的迭代器分配與表頭。</li>
-</ul>
-<h3 id="42-pcall">4.2 移除熱路徑 <code>pcall</code> 與匿名閉包</h3>
-<ul>
-<li>刪除 <code>Renderer.render</code> 中對自建框架的 <code>pcall(function() ... end)</code> 包裝，改為直接賦值或使用預先好的定義靜態輔助函數，避免高頻分配。</li>
-</ul>
-<h3 id="43-createframe-setparent">4.3 強制執行戰鬥中 <code>CreateFrame</code> 與 <code>SetParent</code> 延遲</h3>
-<ul>
-<li>在<code>IconPool.acquire()</code>中加入<code>InCombatLockdown</code>檢測。若在戰鬥中且無可用圖標，應降級或將其加入延遲渲染佇列（<code>deferRender</code>），嚴禁在鎖定戰鬥呼叫期間<code>api.CreateFrame</code>。</li>
-<li>徹底廢除或嚴格限制影子載體（Shadow Host）寄生模式在戰鬥中的<code>SetParent</code>行為，避免任何與Secure Frame的直接父親連結。</li>
-</ul>
-<hr />
-<h2 id="raci">RACI 權責分工與審查結論</h2>
-<p>本報告審查<a href="file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md.html">Docs/21_RACI_EXPERTS_MATRIX.md</a>規範，由<strong>性能與污染控制專家</strong>負責（Responsible），為<strong>主代理</strong>提供核心技術決策諮詢。
-* **在下一個重構週期中，應立即針對<code>UI/Renderer.lua</code>與<code>UI/IconPool.lua</code>進行局部重構，實現“時間字符串存儲”、“無pcall直接呼叫”以及“戰鬥中CreateFrame延遲防禦”，以確保AddOnMCO兼容時的最高低衛”，絕對兼容</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

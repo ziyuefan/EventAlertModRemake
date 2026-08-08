@@ -34,7 +34,7 @@ local util = EAM.Util or {}
 local api = EAM.API or {}
 
 local FlowTestRunner = {
-    schemaVersion = 1,
+    schemaVersion = 2,
     cases = {},
     caseCount = 0,
     running = false,
@@ -210,29 +210,29 @@ local function matchesSuite(definition, suite)
 end
 
 local function buildEnvironment()
-    local inCombat = false
-    if api.InCombatLockdown then
-        local value = api.InCombatLockdown()
-        if type(value) == "boolean" then
-            inCombat = value
-        end
+    local validationEnvironment = EAM.Debug and EAM.Debug.ValidationEnvironment
+    local environment, warnings
+    if validationEnvironment and validationEnvironment.snapshot then
+        environment, warnings = validationEnvironment.snapshot()
+    else
+        environment = {
+            product = "wow_retail",
+            executionSource = "unknown",
+            clientChannel = "UNCONFIRMED",
+            declaredInstallation = "unconfirmed",
+            interface = 0,
+            source = "environment-module-unavailable",
+            channelValidation = "unconfirmed",
+        }
+        warnings = { "validationEnvironmentUnavailable" }
     end
 
-    local locale = nil
-    if api.GetLocale then
-        locale = safeScalar(api.GetLocale())
-    end
-
-    return {
-        addon = "EventAlertMod",
-        addonVersion = safeScalar(EAM.version) or "unknown",
-        interface = EAM.Constants and EAM.Constants.INTERFACE or 0,
-        flavor = EAM.Constants and EAM.Constants.ADDON_FLAVOR or "Retail",
-        initialized = EAM.Modules and EAM.Modules.Main and EAM.Modules.Main.initialized == true or false,
-        inCombat = inCombat,
-        locale = locale or "unknown",
-        source = safeScalar(EAM.FlowTestEnvironment) or "retail-client",
-    }
+    environment.addon = "EventAlertMod"
+    environment.addonVersion = safeScalar(EAM.version) or "unknown"
+    environment.flavor = EAM.Constants and EAM.Constants.ADDON_FLAVOR or "Retail"
+    environment.initialized = EAM.Modules and EAM.Modules.Main and EAM.Modules.Main.initialized == true or false
+    environment.inCombat = api.InCombatLockdown and api.InCombatLockdown() == true or false
+    return environment, warnings
 end
 
 local function finalizeSession(session)
@@ -263,13 +263,36 @@ local function finalizeSession(session)
         end
     end
 
+    local environment, environmentWarnings = buildEnvironment()
+    for index = 1, #environmentWarnings do
+        session.boundaryWarnings[#session.boundaryWarnings + 1] = environmentWarnings[index]
+    end
+
+    local reportStatus = STATUS_PASS
+    if summary.failed > 0 then
+        reportStatus = STATUS_FAIL
+    elseif summary.skipped > 0
+        or summary.pending > 0
+        or environment.channelValidation ~= "pass"
+        or #session.boundaryWarnings > 0
+    then
+        reportStatus = "incomplete"
+    end
+
     local report = {
         schema = FlowTestRunner.schemaVersion,
         type = "EAM_FLOW_VALIDATION_REPORT",
+        purpose = environment.executionSource == "offline-mock" and "offline-contract" or "capability-probe",
+        matrixVersion = "2026-08-08.1",
         suite = session.suite,
-        status = summary.failed == 0 and summary.pending == 0 and STATUS_PASS or STATUS_FAIL,
+        status = reportStatus,
         generatedAtSessionMs = nowMilliseconds(),
-        environment = buildEnvironment(),
+        session = {
+            phase = "complete",
+            humanObserved = false,
+            gameInputAutomated = false,
+        },
+        environment = environment,
         summary = summary,
         cases = session.results,
         boundaryWarnings = session.boundaryWarnings,
@@ -563,6 +586,113 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
+    id = "aura121.container.creation_bounded",
+    primarySuite = "aura121",
+    suites = { aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "container lifecycle bound mock is offline only"
+        end
+
+        local service = EAM.Services.AuraContainerService
+        local originalDB = EAM.db
+        local fieldNames = {
+            "pending",
+            "pendingRevision",
+            "current",
+            "createdContainerCount",
+            "maxCreatedContainerCount",
+            "retiredContainerCount",
+            "reloadRequired",
+            "rebuildCount",
+            "failedRebuildCount",
+            "lastPlan",
+            "lastReason",
+        }
+        local snapshot = {}
+        for index = 1, #fieldNames do
+            local field = fieldNames[index]
+            snapshot[field] = service[field]
+        end
+
+        local ok, result, message = pcall(function()
+            EAM.db = buildAura121TestDB(129)
+            service.pending = false
+            service.pendingRevision = nil
+            service.current = nil
+            service.createdContainerCount = 0
+            service.maxCreatedContainerCount = 18
+            service.retiredContainerCount = 0
+            service.reloadRequired = false
+            service.rebuildCount = 0
+            service.failedRebuildCount = 0
+            service.lastPlan = nil
+            service.lastReason = nil
+            mock.resetTrace()
+
+            local firstBuilt = service.requestRebuild("boundedInitial")
+            local successfulRebuilds = firstBuilt and 1 or 0
+            local deniedReason
+            for index = 1, 9 do
+                local spellID = 5000 + index
+                local alertID = "aura:player:" .. tostring(spellID)
+                EAM.db.alerts.playerAuras[alertID] = {
+                    id = alertID,
+                    kind = "aura",
+                    unit = "player",
+                    spellID = spellID,
+                    enabled = true,
+                    auraFilter = "HELPFUL",
+                }
+                local rebuilt, reason = service.requestRebuild("boundedStructuralChange")
+                if rebuilt then
+                    successfulRebuilds = successfulRebuilds + 1
+                else
+                    deniedReason = reason
+                    break
+                end
+            end
+
+            local status = service.getStatus()
+            local valid = firstBuilt == true
+                and successfulRebuilds == 9
+                and deniedReason == "nativeReloadRequired"
+                and status.createdContainerCount == 18
+                and status.maxCreatedContainerCount == 18
+                and status.retiredContainerCount == 16
+                and status.rebuildCount == 9
+                and status.failedRebuildCount == 0
+                and status.reloadRequired == true
+                and status.lastReason == "nativeReloadRequired"
+                and mock.trace.containerCreates == 18
+            local detail = valid and "native containers are capped at 18 per load and then require /reload"
+                or string.format(
+                    "container bound mismatch successes=%d reason=%s created=%d retired=%d rebuilds=%d reload=%s",
+                    successfulRebuilds,
+                    tostring(deniedReason),
+                    status.createdContainerCount,
+                    status.retiredContainerCount,
+                    status.rebuildCount,
+                    tostring(status.reloadRequired)
+                )
+            return valid, detail
+        end)
+
+        EAM.db = originalDB
+        for index = 1, #fieldNames do
+            local field = fieldNames[index]
+            service[field] = snapshot[field]
+        end
+        mock.setCombat(false)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
     id = "aura121.sound.lifecycle",
     primarySuite = "aura121",
     suites = { aura121 = true },
@@ -648,7 +778,7 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
-    id = "aura121.saved_variables.migration_v1_v2",
+    id = "aura121.saved_variables.migration_v1_v4",
     primarySuite = "aura121",
     suites = { aura121 = true },
     run = function()
@@ -678,21 +808,960 @@ FlowTestRunner.registerCase({
                 itemCooldowns = {},
                 groundEffects = {},
             },
-            config = {},
+            config = {
+                timerInside = false,
+                timerPosition = "TOPLEFT",
+                stackInside = true,
+                stackPosition = "RIGHT",
+                fontSizeTimeVal = 21,
+                fontSizeStack = 22,
+            },
         }
         saved.initialize()
         local alert = EAM_DB.alerts.playerAuras["aura:player:4001"]
         local backup = EAM_DB.migrationBackups and EAM_DB.migrationBackups.auraSchemaV1
-        local valid = EAM_DB.schemaVersion == 2
+        local textLayout = EAM_DB.config and EAM_DB.config.textLayout
+        local textLayoutBackup = EAM_DB.migrationBackups and EAM_DB.migrationBackups.textLayoutV2
+        local valid = EAM_DB.schemaVersion == 4
+            and EAM_DB.revision == 9
             and EAM_DB.customField == "preserve-me"
             and alert and alert.unknownField == "keep"
             and alert.nativeBackend == "AUTO"
             and backup ~= nil
             and backup.playerAuras ~= nil
             and backup.playerAuras["aura:player:4001"] ~= nil
+            and textLayout ~= nil
+            and textLayout.timer.placement == "OUTSIDE_TOP_AT_LEFT"
+            and textLayout.timer.fontSize == 21
+            and textLayout.applications.placement == "INSIDE_RIGHT"
+            and textLayout.applications.fontSize == 22
+            and textLayoutBackup ~= nil
+            and textLayoutBackup.timerInside == false
+            and textLayoutBackup.timerPosition == "TOPLEFT"
+            and textLayoutBackup.stackInside == true
+            and textLayoutBackup.stackPosition == "RIGHT"
+            and textLayoutBackup.fontSizeTimeVal == 21
+            and textLayoutBackup.fontSizeStack == 22
         EAM_DB = originalGlobalDB
         EAM.db = originalDB
-        return valid, valid and "schema v1 migrated with backup and unknown fields preserved" or "schema v1 migration contract mismatch"
+        return valid, valid and "schema v1 migrated through v4 with backups and unknown fields preserved" or "schema v1-v4 migration contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.saved_variables.future_schema_preserved",
+    primarySuite = "aura121",
+    suites = { aura121 = true },
+    run = function()
+        if EAM.FlowTestEnvironment ~= "offline-mock" then
+            return STATUS_SKIP, "future schema fixture is offline only"
+        end
+        local saved = EAM.Modules.SavedVariables
+        local originalGlobalDB = EAM_DB
+        local originalDB = EAM.db
+        local report = saved.migrationReport
+        local originalPreserved = report.futureSchemaPreserved
+        local originalVersion = report.futureSchemaVersion
+        local futureDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION + 50,
+            revision = 77,
+            sentinel = {
+                nested = "keep",
+            },
+            config = {
+                textLayout = {
+                    schema = 99,
+                    timer = {
+                        placement = "FUTURE_ONLY",
+                        fontSize = 77,
+                    },
+                },
+            },
+        }
+        EAM_DB = futureDB
+        local runtimeDB = saved.initialize()
+        local valid = rawequal(EAM_DB, futureDB)
+            and not rawequal(runtimeDB, futureDB)
+            and futureDB.schemaVersion == EAM.Constants.SCHEMA_VERSION + 50
+            and futureDB.revision == 77
+            and futureDB.sentinel.nested == "keep"
+            and futureDB.config.textLayout.schema == 99
+            and futureDB.config.textLayout.timer.placement == "FUTURE_ONLY"
+            and futureDB.config.textLayout.timer.fontSize == 77
+            and runtimeDB.schemaVersion == EAM.Constants.SCHEMA_VERSION
+            and runtimeDB.futureSchemaSourceVersion == EAM.Constants.SCHEMA_VERSION + 50
+            and runtimeDB.migrationWarnings[1] == "futureSchemaPreserved"
+            and rawequal(EAM.db, runtimeDB)
+            and report.futureSchemaPreserved == true
+            and report.futureSchemaVersion == EAM.Constants.SCHEMA_VERSION + 50
+        EAM_DB = originalGlobalDB
+        EAM.db = originalDB
+        report.futureSchemaPreserved = originalPreserved
+        report.futureSchemaVersion = originalVersion
+        return valid, valid and "future schema source remains field-compatible while runtime uses safe defaults"
+            or "future schema preservation contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.text_layout.contract_all_placements",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local textPlacement = EAM.UI and EAM.UI.TextPlacement
+        if not textPlacement then
+            return false, "TextPlacement unavailable"
+        end
+        local seen = {}
+        local valid = #textPlacement.orderedPlacements == 21
+        for index = 1, #textPlacement.orderedPlacements do
+            local placement = textPlacement.orderedPlacements[index]
+            local definition = textPlacement.placements[placement]
+            if seen[placement]
+                or type(definition) ~= "table"
+                or type(definition[1]) ~= "string"
+                or type(definition[2]) ~= "string"
+                or type(definition[3]) ~= "number"
+                or type(definition[4]) ~= "number"
+            then
+                valid = false
+                break
+            end
+            seen[placement] = true
+        end
+        return valid, valid and "21 canonical text placements are unique and complete" or "text placement contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.native.initialize_only_binding",
+    primarySuite = "aura121",
+    suites = { aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        if not mock or not nativeRenderer then
+            return STATUS_SKIP, "native text layout mock is offline only"
+        end
+        local originalDB = EAM.db
+        local originalApplyCount = nativeRenderer.textLayoutApplyCount
+        local originalInitializedCount = nativeRenderer.initializedButtonCount
+        local ok, result, message = pcall(function()
+            EAM.db = buildAura121TestDB(126)
+            EAM.db.config.textLayout = {
+                schema = 1,
+                timer = { placement = "OUTSIDE_RIGHT_AT_TOP", fontSize = 18 },
+                applications = { placement = "OUTSIDE_BOTTOM_AT_LEFT", fontSize = 20 },
+            }
+            EAM.db.config.fontSizeSpellName = 12
+            EAM.db.config.cooldownSwipeAlpha = 0.35
+            EAM.db.config.nativeAuraDualCountdownProbe = false
+            mock.resetTrace()
+            local button = mock.createAuraButtonForTest()
+            local initializer = nativeRenderer.createInitializer({
+                style = {
+                    showCountdown = true,
+                    showStacks = true,
+                    showName = true,
+                },
+                layout = {
+                    elementWidth = 40,
+                    elementSpacing = 6,
+                },
+            }, nil, nil)
+            initializer(button)
+            local timerPoint = button.durationText and button.durationText.lastPoint
+            local applicationsPoint = button.applicationCount and button.applicationCount.lastPoint
+            local initialValid = button.eamNativeInitialized == true
+                and button.durationText ~= nil
+                and button.applicationCount ~= nil
+                and button.spellName ~= nil
+                and timerPoint and timerPoint.point == "TOPLEFT"
+                and timerPoint.relativePoint == "TOPRIGHT"
+                and timerPoint.x == 4 and timerPoint.y == 0
+                and applicationsPoint and applicationsPoint.point == "TOPLEFT"
+                and applicationsPoint.relativePoint == "BOTTOMLEFT"
+                and applicationsPoint.x == 0 and applicationsPoint.y == -2
+                and button.durationText.fontSize == 18
+                and button.applicationCount.fontSize == 20
+                and button.spellName.fontSize == 12
+                and button.cooldown.hideCountdownNumbers == true
+                and button.cooldown.swipeAlpha == 0.35
+
+            mock.lockAuraButtonForTest(button)
+            local pointsBefore = mock.trace.regionSetPoints
+            local fontsBefore = mock.trace.regionSetFonts
+            local reapplied, reapplyReason = nativeRenderer.applyTextLayout()
+            local mutationAllowed = pcall(function()
+                button:SetSize(50, 50)
+            end)
+            local valid = initialValid
+                and reapplied == false
+                and reapplyReason == "nativeRebuildRequired"
+                and mutationAllowed == false
+                and mock.trace.postInitializationMutations == 1
+                and mock.trace.regionSetPoints == pointsBefore
+                and mock.trace.regionSetFonts == fontsBefore
+                and mock.trace.auraGetterCalls == 0
+            return valid, valid and "native bindings stay inside initializeFrame and post-init mutation is rejected"
+                or "native initialize-only binding contract mismatch"
+        end)
+        EAM.db = originalDB
+        nativeRenderer.textLayoutApplyCount = originalApplyCount
+        nativeRenderer.initializedButtonCount = originalInitializedCount
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.text_layout.general_reapply_combat_deferred",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local renderer = EAM.UI and EAM.UI.Renderer
+        if not mock or not renderer then
+            return STATUS_SKIP, "general renderer text layout mock is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalFrames = renderer.frames
+        local originalPending = renderer.textLayoutPending
+        local originalCombat = mock.inCombat
+        local ok, result, message = pcall(function()
+            EAM.db = buildAura121TestDB(128)
+            EAM.db.config.textLayout = {
+                schema = 1,
+                timer = { placement = "OUTSIDE_RIGHT_AT_TOP", fontSize = 18 },
+                applications = { placement = "OUTSIDE_BOTTOM_AT_LEFT", fontSize = 20 },
+            }
+            local icon = mock.createAuraButtonForTest()
+            icon.overlay = icon
+            icon.timerText = icon:CreateFontString()
+            icon.stackText = icon:CreateFontString()
+            icon.nameText = icon:CreateFontString()
+            icon.rendered = {}
+            renderer.frames = {
+                fixture = {
+                    parent = nil,
+                    icons = { fixture = icon },
+                    order = {},
+                    orderCount = 0,
+                    layoutDirty = false,
+                    layoutBlocked = false,
+                },
+            }
+
+            mock.setCombat(false)
+            local applied, appliedCount = renderer.applyTextLayout()
+            local firstTimerPoint = icon.timerText.lastPoint
+            local firstApplicationsPoint = icon.stackText.lastPoint
+            local initialValid = applied == true
+                and appliedCount == 1
+                and firstTimerPoint and firstTimerPoint.point == "TOPLEFT"
+                and firstTimerPoint.relativePoint == "TOPRIGHT"
+                and firstTimerPoint.x == 4 and firstTimerPoint.y == 0
+                and firstApplicationsPoint and firstApplicationsPoint.point == "TOPLEFT"
+                and firstApplicationsPoint.relativePoint == "BOTTOMLEFT"
+                and firstApplicationsPoint.x == 0 and firstApplicationsPoint.y == -2
+                and icon.timerText.fontSize == 18
+                and icon.stackText.fontSize == 20
+
+            EAM.db.config.textLayout.timer.placement = "INSIDE_TOP_LEFT"
+            EAM.db.config.textLayout.timer.fontSize = 22
+            EAM.db.config.textLayout.applications.placement = "OUTSIDE_LEFT_AT_BOTTOM"
+            EAM.db.config.textLayout.applications.fontSize = 24
+            mock.setCombat(true)
+            local pointsBeforeLayout = mock.trace.regionSetPoints
+            local layoutDeferred, layoutDeferredReason = renderer.requestLayout("fixture")
+            local layoutRemainedUnchanged = layoutDeferred == false
+                and layoutDeferredReason == "combatDeferred"
+                and renderer.frames.fixture.layoutDirty == true
+                and renderer.frames.fixture.layoutBlocked == true
+                and mock.trace.regionSetPoints == pointsBeforeLayout
+            local deferred, deferredReason = renderer.applyTextLayout()
+            local remainedUnchanged = icon.timerText.lastPoint == firstTimerPoint
+                and icon.stackText.lastPoint == firstApplicationsPoint
+                and icon.timerText.fontSize == 18
+                and icon.stackText.fontSize == 20
+                and renderer.textLayoutPending == true
+
+            mock.setCombat(false)
+            renderer.onCombatEnd()
+            local finalTimerPoint = icon.timerText.lastPoint
+            local finalApplicationsPoint = icon.stackText.lastPoint
+            local valid = initialValid
+                and layoutRemainedUnchanged
+                and deferred == false
+                and deferredReason == "combatDeferred"
+                and remainedUnchanged
+                and renderer.textLayoutPending == false
+                and renderer.frames.fixture.layoutDirty == false
+                and renderer.frames.fixture.layoutBlocked == false
+                and finalTimerPoint and finalTimerPoint.point == "TOPLEFT"
+                and finalTimerPoint.relativePoint == "TOPLEFT"
+                and finalTimerPoint.x == 2 and finalTimerPoint.y == -2
+                and finalApplicationsPoint and finalApplicationsPoint.point == "BOTTOMRIGHT"
+                and finalApplicationsPoint.relativePoint == "BOTTOMLEFT"
+                and finalApplicationsPoint.x == -4 and finalApplicationsPoint.y == 0
+                and icon.timerText.fontSize == 22
+                and icon.stackText.fontSize == 24
+            return valid, valid and "existing general icons reapply text layout immediately and once after combat"
+                or "general renderer text layout reapply mismatch"
+        end)
+        EAM.db = originalDB
+        renderer.frames = originalFrames
+        renderer.textLayoutPending = originalPending
+        mock.setCombat(originalCombat)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.renderer.combat_first_activation_deferred",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local renderer = EAM.UI and EAM.UI.Renderer
+        local iconPool = EAM.UI and EAM.UI.IconPool
+        if not mock or not renderer or not iconPool then
+            return STATUS_SKIP, "renderer first-activation mock is offline only"
+        end
+
+        local originalFrames = renderer.frames
+        local originalDeferred = renderer.deferred
+        local originalDeferredCount = renderer.deferredCount
+        local originalTextLayoutPending = renderer.textLayoutPending
+        local originalPrewarmPending = renderer.prewarmPending
+        local originalAnchorTogglePending = renderer.anchorTogglePending
+        local originalAcquire = iconPool.acquire
+        local originalRender = renderer.render
+        local originalCombat = mock.inCombat
+        local acquireCalls = 0
+        local replayCalls = 0
+        local ok, result, message = pcall(function()
+            renderer.frames = {}
+            renderer.deferred = {}
+            renderer.deferredCount = 0
+            renderer.textLayoutPending = false
+            renderer.prewarmPending = false
+            renderer.anchorTogglePending = false
+            renderer.frames.fixture = {
+                parent = api.CreateFrame("Frame"),
+                icons = {},
+                order = {},
+                orderCount = 0,
+                layoutDirty = false,
+                layoutBlocked = false,
+            }
+            iconPool.acquire = function()
+                acquireCalls = acquireCalls + 1
+                error("IconPool.acquire reached during combat")
+            end
+
+            mock.resetTrace()
+            mock.setCombat(true)
+            local rendered, reason = renderer.render({
+                id = "combat-first-activation",
+                shown = true,
+                name = "Deferred",
+            }, "fixture")
+            local fixture = renderer.frames.fixture
+            local deferredWithoutStructure = rendered == false
+                and reason == "combatDeferred"
+                and acquireCalls == 0
+                and renderer.deferredCount == 1
+                and fixture.layoutDirty == true
+                and fixture.layoutBlocked == true
+                and mock.trace.regionSetPoints == 0
+                and mock.trace.regionSetFonts == 0
+
+            renderer.render = function()
+                replayCalls = replayCalls + 1
+                return true, "replayed"
+            end
+            mock.setCombat(false)
+            renderer.onCombatEnd()
+            renderer.onCombatEnd()
+            local valid = deferredWithoutStructure
+                and replayCalls == 1
+                and renderer.deferredCount == 0
+                and next(renderer.deferred) == nil
+            return valid, valid and "combat first activation performs no pool or region structure and replays once"
+                or "combat first-activation deferral mismatch"
+        end)
+        renderer.frames = originalFrames
+        renderer.deferred = originalDeferred
+        renderer.deferredCount = originalDeferredCount
+        renderer.textLayoutPending = originalTextLayoutPending
+        renderer.prewarmPending = originalPrewarmPending
+        renderer.anchorTogglePending = originalAnchorTogglePending
+        iconPool.acquire = originalAcquire
+        renderer.render = originalRender
+        mock.setCombat(originalCombat)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.renderer.combat_existing_icon_display_only",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local renderer = EAM.UI and EAM.UI.Renderer
+        if not mock or not renderer then
+            return STATUS_SKIP, "renderer existing-icon mock is offline only"
+        end
+
+        local originalFrames = renderer.frames
+        local originalDeferred = renderer.deferred
+        local originalDeferredCount = renderer.deferredCount
+        local originalTextLayoutPending = renderer.textLayoutPending
+        local originalPrewarmPending = renderer.prewarmPending
+        local originalAnchorTogglePending = renderer.anchorTogglePending
+        local originalCombat = mock.inCombat
+        local displayCalls = 0
+        local nameClearAllPointsCalls = 0
+        local nameSetPointCalls = 0
+        local nameSetFontObjectCalls = 0
+        local function displayCall()
+            displayCalls = displayCalls + 1
+        end
+        local function createTextRegion()
+            return {
+                ClearAllPoints = function()
+                end,
+                SetPoint = function()
+                end,
+                SetSize = function()
+                end,
+                SetFont = function()
+                end,
+                SetFontObject = function()
+                end,
+                SetText = displayCall,
+                ClearText = displayCall,
+            }
+        end
+
+        local ok, result, message = pcall(function()
+            local nameText = createTextRegion()
+            nameText.ClearAllPoints = function()
+                nameClearAllPointsCalls = nameClearAllPointsCalls + 1
+            end
+            nameText.SetPoint = function()
+                nameSetPointCalls = nameSetPointCalls + 1
+            end
+            nameText.SetFontObject = function()
+                nameSetFontObjectCalls = nameSetFontObjectCalls + 1
+            end
+            local icon = {
+                isParasite = false,
+                rendered = {
+                    nameInside = true,
+                },
+                timerText = createTextRegion(),
+                stackText = createTextRegion(),
+                nameText = nameText,
+                cooldown = {
+                    SetCooldown = displayCall,
+                },
+                glowBorder = {
+                    Show = displayCall,
+                    Hide = displayCall,
+                },
+                SetParent = function()
+                end,
+                ClearAllPoints = function()
+                end,
+                SetPoint = function()
+                end,
+                SetSize = function()
+                end,
+                SetFont = function()
+                end,
+                Show = displayCall,
+            }
+            renderer.frames = {
+                fixture = {
+                    parent = api.CreateFrame("Frame"),
+                    icons = {
+                        ["combat-existing"] = icon,
+                    },
+                    order = { "combat-existing" },
+                    orderCount = 1,
+                    layoutDirty = false,
+                    layoutBlocked = false,
+                },
+            }
+            renderer.deferred = {}
+            renderer.deferredCount = 0
+            renderer.textLayoutPending = false
+            renderer.prewarmPending = false
+            renderer.anchorTogglePending = false
+            mock.setCombat(true)
+            renderer.render({
+                id = "combat-existing",
+                shown = true,
+                name = "Updated in combat",
+                stacks = 2,
+            }, "fixture")
+            local fixture = renderer.frames.fixture
+            local combatSafe = nameClearAllPointsCalls == 0
+                and nameSetPointCalls == 0
+                and nameSetFontObjectCalls == 0
+                and displayCalls > 0
+                and renderer.textLayoutPending == true
+                and icon.rendered.name == "Updated in combat"
+                and icon.rendered.stacks == "2"
+                and icon.rendered.nameInside == true
+                and icon.rendered.nameLayoutPending == true
+                and icon.rendered.pendingNameInside == false
+                and fixture.layoutDirty == true
+                and fixture.layoutBlocked == true
+
+            mock.setCombat(false)
+            renderer.onCombatEnd()
+            renderer.onCombatEnd()
+            local valid = combatSafe
+                and nameClearAllPointsCalls == 1
+                and nameSetPointCalls == 1
+                and nameSetFontObjectCalls == 1
+                and icon.rendered.nameInside == false
+                and icon.rendered.nameLayoutPending == nil
+                and icon.rendered.pendingNameInside == nil
+                and fixture.layoutDirty == false
+                and fixture.layoutBlocked == false
+            return valid, valid and "existing icon keeps display-only combat updates and applies name layout once after combat"
+                or "existing icon combat name-layout deferral mismatch"
+        end)
+        renderer.frames = originalFrames
+        renderer.deferred = originalDeferred
+        renderer.deferredCount = originalDeferredCount
+        renderer.textLayoutPending = originalTextLayoutPending
+        renderer.prewarmPending = originalPrewarmPending
+        renderer.anchorTogglePending = originalAnchorTogglePending
+        mock.setCombat(originalCombat)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.renderer.combat_parasite_release_deferred",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local renderer = EAM.UI and EAM.UI.Renderer
+        local iconPool = EAM.UI and EAM.UI.IconPool
+        if not mock or not renderer or not iconPool then
+            return STATUS_SKIP, "renderer parasite-release mock is offline only"
+        end
+
+        local originalFrames = renderer.frames
+        local originalDeferred = renderer.deferred
+        local originalDeferredCount = renderer.deferredCount
+        local originalTextLayoutPending = renderer.textLayoutPending
+        local originalPrewarmPending = renderer.prewarmPending
+        local originalAnchorTogglePending = renderer.anchorTogglePending
+        local originalRelease = iconPool.release
+        local originalCombat = mock.inCombat
+        local setParentCalls = 0
+        local releaseCalls = 0
+        local ok, result, message = pcall(function()
+            local token = { active = true }
+            local icon = {
+                isParasite = true,
+                rendered = {
+                    activeToken = token,
+                },
+                SetParent = function()
+                    setParentCalls = setParentCalls + 1
+                end,
+            }
+            renderer.frames = {
+                fixture = {
+                    parent = api.CreateFrame("Frame"),
+                    icons = {
+                        ["combat-parasite-hide"] = icon,
+                    },
+                    order = { "combat-parasite-hide" },
+                    orderCount = 1,
+                    layoutDirty = false,
+                    layoutBlocked = false,
+                },
+            }
+            renderer.deferred = {}
+            renderer.deferredCount = 0
+            renderer.textLayoutPending = false
+            renderer.prewarmPending = false
+            renderer.anchorTogglePending = false
+            iconPool.release = function(releasedIcon)
+                if releasedIcon == icon then
+                    releaseCalls = releaseCalls + 1
+                end
+            end
+
+            mock.setCombat(true)
+            local hidden, reason = renderer.render({
+                id = "combat-parasite-hide",
+                shown = false,
+            }, "fixture")
+            local fixture = renderer.frames.fixture
+            local combatSafe = hidden == false
+                and reason == "combatDeferred"
+                and setParentCalls == 0
+                and releaseCalls == 0
+                and icon.releasePending == true
+                and icon.isParasite == true
+                and icon.rendered.activeToken == nil
+                and token.active == false
+                and fixture.icons["combat-parasite-hide"] == icon
+                and fixture.orderCount == 1
+                and fixture.layoutDirty == true
+                and fixture.layoutBlocked == true
+                and renderer.deferredCount == 1
+
+            mock.setCombat(false)
+            renderer.onCombatEnd()
+            renderer.onCombatEnd()
+            local valid = combatSafe
+                and setParentCalls == 1
+                and releaseCalls == 1
+                and icon.releasePending == nil
+                and icon.isParasite == nil
+                and fixture.icons["combat-parasite-hide"] == nil
+                and fixture.orderCount == 0
+                and renderer.deferredCount == 0
+                and next(renderer.deferred) == nil
+            return valid, valid and "combat parasite release defers reparenting and releases once after combat"
+                or "combat parasite release deferral mismatch"
+        end)
+        renderer.frames = originalFrames
+        renderer.deferred = originalDeferred
+        renderer.deferredCount = originalDeferredCount
+        renderer.textLayoutPending = originalTextLayoutPending
+        renderer.prewarmPending = originalPrewarmPending
+        renderer.anchorTogglePending = originalAnchorTogglePending
+        iconPool.release = originalRelease
+        mock.setCombat(originalCombat)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.renderer.combat_initialize_prewarm_deferred",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local renderer = EAM.UI and EAM.UI.Renderer
+        local iconPool = EAM.UI and EAM.UI.IconPool
+        local router = EAM.Modules and EAM.Modules.EventRouter
+        if not mock or not renderer or not iconPool or not router then
+            return STATUS_SKIP, "renderer prewarm mock is offline only"
+        end
+
+        local originalFrames = renderer.frames
+        local originalDeferred = renderer.deferred
+        local originalDeferredCount = renderer.deferredCount
+        local originalTextLayoutPending = renderer.textLayoutPending
+        local originalPrewarmPending = renderer.prewarmPending
+        local originalAnchorTogglePending = renderer.anchorTogglePending
+        local originalPrewarm = iconPool.prewarm
+        local originalCreateFrame = api.CreateFrame
+        local originalRegister = router.register
+        local originalCombat = mock.inCombat
+        local prewarmCalls = 0
+        local createFrameCalls = 0
+        local ok, result, message = pcall(function()
+            renderer.frames = {}
+            renderer.deferred = {}
+            renderer.deferredCount = 0
+            renderer.textLayoutPending = false
+            renderer.prewarmPending = false
+            renderer.anchorTogglePending = false
+            iconPool.prewarm = function()
+                prewarmCalls = prewarmCalls + 1
+            end
+            api.CreateFrame = function(...)
+                createFrameCalls = createFrameCalls + 1
+                return originalCreateFrame(...)
+            end
+            router.register = function()
+            end
+
+            mock.setCombat(true)
+            renderer.initialize()
+            local combatCreateFrameCalls = createFrameCalls
+            local deferredSafely = prewarmCalls == 0
+                and combatCreateFrameCalls == 0
+                and renderer.prewarmPending == true
+            mock.setCombat(false)
+            renderer.onCombatEnd()
+            renderer.onCombatEnd()
+            local valid = deferredSafely
+                and prewarmCalls == 1
+                and renderer.prewarmPending == false
+            return valid, valid and "combat initialize defers all frame creation and prewarms once after combat"
+                or "combat initialize prewarm deferral mismatch"
+        end)
+        renderer.frames = originalFrames
+        renderer.deferred = originalDeferred
+        renderer.deferredCount = originalDeferredCount
+        renderer.textLayoutPending = originalTextLayoutPending
+        renderer.prewarmPending = originalPrewarmPending
+        renderer.anchorTogglePending = originalAnchorTogglePending
+        iconPool.prewarm = originalPrewarm
+        api.CreateFrame = originalCreateFrame
+        router.register = originalRegister
+        mock.setCombat(originalCombat)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.icon_pool.direct_prewarm_combat_guard",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local iconPool = EAM.UI and EAM.UI.IconPool
+        if not mock or not iconPool then
+            return STATUS_SKIP, "icon-pool prewarm guard mock is offline only"
+        end
+
+        local originalCreateFrame = api.CreateFrame
+        local originalCombat = mock.inCombat
+        local originalCreated = iconPool.created
+        local originalInactiveCount = iconPool.inactiveCount
+        local createFrameCalls = 0
+        local ok, result, message = pcall(function()
+            api.CreateFrame = function(...)
+                createFrameCalls = createFrameCalls + 1
+                return originalCreateFrame(...)
+            end
+            mock.setCombat(true)
+            local prewarmed, reason = iconPool.prewarm(originalCreated + 1)
+            local valid = prewarmed == false
+                and reason == "combatDeferred"
+                and createFrameCalls == 0
+                and iconPool.created == originalCreated
+                and iconPool.inactiveCount == originalInactiveCount
+            return valid, valid and "direct prewarm rejects combat without creating frames"
+                or "direct prewarm combat guard mismatch"
+        end)
+        api.CreateFrame = originalCreateFrame
+        for index = iconPool.inactiveCount, originalInactiveCount + 1, -1 do
+            iconPool.inactive[index] = nil
+        end
+        iconPool.inactiveCount = originalInactiveCount
+        iconPool.created = originalCreated
+        mock.setCombat(originalCombat)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.renderer.anchor_toggle_combat_replay",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local renderer = EAM.UI and EAM.UI.Renderer
+        if not mock or not renderer then
+            return STATUS_SKIP, "renderer anchor-toggle mock is offline only"
+        end
+
+        local originalFrames = renderer.frames
+        local originalDeferred = renderer.deferred
+        local originalDeferredCount = renderer.deferredCount
+        local originalTextLayoutPending = renderer.textLayoutPending
+        local originalPrewarmPending = renderer.prewarmPending
+        local originalAnchorTogglePending = renderer.anchorTogglePending
+        local originalIsMoving = renderer.isMoving
+        local originalToggleAnchors = renderer.toggleAnchors
+        local originalCombat = mock.inCombat
+        local replayCalls = 0
+        local ok, result, message = pcall(function()
+            renderer.frames = {}
+            renderer.deferred = {}
+            renderer.deferredCount = 0
+            renderer.textLayoutPending = false
+            renderer.prewarmPending = false
+            renderer.anchorTogglePending = false
+            renderer.isMoving = originalIsMoving
+            mock.setCombat(true)
+            local toggled, reason = renderer.toggleAnchors()
+            local queued = toggled == false
+                and reason == "combatDeferred"
+                and renderer.anchorTogglePending == true
+                and renderer.isMoving == originalIsMoving
+
+            renderer.toggleAnchors = function()
+                replayCalls = replayCalls + 1
+                renderer.isMoving = not renderer.isMoving
+                return true, renderer.isMoving
+            end
+            mock.setCombat(false)
+            renderer.onCombatEnd()
+            renderer.onCombatEnd()
+            local valid = queued
+                and replayCalls == 1
+                and renderer.anchorTogglePending == false
+                and renderer.isMoving ~= originalIsMoving
+            return valid, valid and "anchor toggle queues in combat and replays once after combat"
+                or "anchor toggle combat replay mismatch"
+        end)
+        renderer.frames = originalFrames
+        renderer.deferred = originalDeferred
+        renderer.deferredCount = originalDeferredCount
+        renderer.textLayoutPending = originalTextLayoutPending
+        renderer.prewarmPending = originalPrewarmPending
+        renderer.anchorTogglePending = originalAnchorTogglePending
+        renderer.isMoving = originalIsMoving
+        renderer.toggleAnchors = originalToggleAnchors
+        mock.setCombat(originalCombat)
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.text_layout.font_bounds",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local textPlacement = EAM.UI and EAM.UI.TextPlacement
+        if not textPlacement then
+            return false, "TextPlacement unavailable"
+        end
+        local below = textPlacement.getFontSize({ textLayout = { timer = { fontSize = 2 } } }, "timer")
+        local above = textPlacement.getFontSize({ textLayout = { applications = { fontSize = 90 } } }, "applications")
+        local valid = below == EAM.Constants.TEXT_FONT_SIZE_MIN
+            and above == EAM.Constants.TEXT_FONT_SIZE_MAX
+        return valid, valid and "text font sizes clamp to 8-32" or "text font size bounds mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.text_layout.revision_once",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if not saved or not saved.updateTextLayout then
+            return false, "SavedVariables text layout updater unavailable"
+        end
+        local originalDB = EAM.db
+        EAM.db = buildAura121TestDB(127)
+        EAM.db.config.textLayout = {
+            schema = 1,
+            timer = { placement = "OUTSIDE_TOP", fontSize = 14 },
+            applications = { placement = "INSIDE_BOTTOM_RIGHT", fontSize = 12 },
+        }
+        EAM.db.config.fontSizeTimeVal = 14
+        EAM.db.config.fontSizeStack = 12
+        local originalRevision = EAM.db.revision
+        local unchanged, unchangedState = saved.updateTextLayout("timer", "OUTSIDE_TOP", 14)
+        local updated, updatedState, updatedRevision = saved.updateTextLayout("timer", "OUTSIDE_LEFT", 19)
+        local duplicate, duplicateState = saved.updateTextLayout("timer", "OUTSIDE_LEFT", 19)
+        local valid = unchanged == true
+            and unchangedState == "unchanged"
+            and updated == true
+            and updatedState == "updated"
+            and updatedRevision == originalRevision + 1
+            and duplicate == true
+            and duplicateState == "unchanged"
+            and EAM.db.revision == originalRevision + 1
+            and EAM.db.config.fontSizeTimeVal == 19
+        EAM.db = originalDB
+        return valid, valid and "text layout revision changes exactly once" or "text layout revision contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.text_layout.options_native_reapply_only",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local options = EAM.UI and EAM.UI.Options
+        local renderer = EAM.UI and EAM.UI.Renderer
+        local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        local containerService = EAM.Services and EAM.Services.AuraContainerService
+        if not options or not renderer or not nativeRenderer or not containerService then
+            return false, "text layout notification dependencies unavailable"
+        end
+
+        local originalGeneralApply = renderer.applyTextLayout
+        local originalNativeApply = nativeRenderer.applyTextLayout
+        local originalRequestRebuild = containerService.requestRebuild
+        local originalMarkSettingsDirty = containerService.markSettingsDirty
+        local generalApplyCount = 0
+        local nativeApplyCount = 0
+        local rebuildCount = 0
+        local dirtyCount = 0
+        local ok, result = pcall(function()
+            renderer.applyTextLayout = function()
+                generalApplyCount = generalApplyCount + 1
+                return true
+            end
+            nativeRenderer.applyTextLayout = function()
+                nativeApplyCount = nativeApplyCount + 1
+                return true
+            end
+            containerService.requestRebuild = function()
+                rebuildCount = rebuildCount + 1
+                return true
+            end
+            containerService.markSettingsDirty = function()
+                dirtyCount = dirtyCount + 1
+                return true
+            end
+
+            options.notifyTextLayoutChanged(false)
+            options.notifyTextLayoutChanged(true)
+            options.notifyConfigChanged(false)
+            local textRouteValid = generalApplyCount == 2
+                and nativeApplyCount == 0
+                and rebuildCount == 0
+                and dirtyCount == 1
+            options.notifyConfigChanged(false)
+            options.notifyConfigChanged(true)
+            return textRouteValid and dirtyCount == 2 and rebuildCount == 0
+        end)
+        renderer.applyTextLayout = originalGeneralApply
+        nativeRenderer.applyTextLayout = originalNativeApply
+        containerService.requestRebuild = originalRequestRebuild
+        containerService.markSettingsDirty = originalMarkSettingsDirty
+        local valid = ok and result == true
+        return valid, valid and "Native text/config changes mark settings dirty until manual rebuild"
+            or "text layout notification routing mismatch"
     end,
 })
 
@@ -818,6 +1887,7 @@ local function installTooltipRefreshSpies(mock)
     local auraContainerService = services.AuraContainerService
     local auraService = services.AuraService
     local originalAuraContainerRefresh = auraContainerService.requestRebuild
+    local originalAuraSettingsDirty = auraContainerService.markSettingsDirty
     local originalAuraRefresh = auraService.refreshAll
     local originalCooldownService = services.CooldownService
     local originalItemService = services.ItemCooldownService
@@ -835,6 +1905,9 @@ local function installTooltipRefreshSpies(mock)
     auraContainerService.requestRebuild = function()
         mock.recordConfigRefresh("auraContainer")
     end
+    auraContainerService.markSettingsDirty = function()
+        mock.recordConfigRefresh("auraContainer")
+    end
     auraService.refreshAll = function()
         mock.recordConfigRefresh("aura")
     end
@@ -850,6 +1923,7 @@ local function installTooltipRefreshSpies(mock)
 
     return function()
         auraContainerService.requestRebuild = originalAuraContainerRefresh
+        auraContainerService.markSettingsDirty = originalAuraSettingsDirty
         auraService.refreshAll = originalAuraRefresh
         if originalCooldownService then
             originalCooldownService.refreshAll = originalCooldownRefresh
@@ -1514,5 +2588,985 @@ FlowTestRunner.registerCase({
         local valid = string.find(encoded, '"schema":1', 1, true) ~= nil
             and string.find(encoded, '"cases":[', 1, true) ~= nil
         return valid, valid and "JSON serializer contract available" or "JSON serializer contract invalid"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "live_test.offline_cannot_signoff",
+    primarySuite = "boundary",
+    suites = { boundary = true },
+    run = function()
+        local live = EAM.Debug and EAM.Debug.LiveTestSession
+        if not live then
+            return false, "LiveTestSession unavailable"
+        end
+        local originalSession = _G.EAM_LIVE_TEST_SESSION
+        local originalReport = _G.EAM_LIVE_TEST_REPORT_JSON
+        local originalProfile = _G.EAM_VALIDATION_PROFILE
+        _G.EAM_LIVE_TEST_SESSION = nil
+        _G.EAM_LIVE_TEST_REPORT_JSON = nil
+        _G.EAM_VALIDATION_PROFILE = nil
+
+        local ok, result = pcall(function()
+            local mock = EAM.FlowTestMock
+            mock.setCombat(true)
+            local combatStart, combatStartReason = live.start("_ptr_")
+            mock.setCombat(false)
+            local started = live.start("_ptr_")
+            local initial = live.buildReport()
+
+            mock.setCombat(true)
+            local combatNote, combatNoteReason = live.setCaseNote(live.cases[1].id, "blocked in combat")
+            local combatReload, combatReloadReason = live.prepareReload()
+            local combatComplete, combatCompleteReason = live.complete()
+            mock.setCombat(false)
+
+            local slash = string.char(92)
+            local privatePath = "D:" .. slash .. "World of Warcraft"
+                .. slash .. "_ptr_" .. slash .. "WTF"
+                .. slash .. "Account" .. slash .. "PRIVATE"
+            local privacySaved = live.setCaseNote(live.cases[1].id, privatePath)
+            local privacyReport, privacyJSON = live.buildReport()
+            local privacyRedacted = privacySaved == true
+                and privacyReport.cases[1].note == "[privacy-redacted]"
+                and string.find(privacyJSON, "privacyNoteRedacted", 1, true) ~= nil
+                and string.find(privacyJSON, "World of Warcraft", 1, true) == nil
+            local uncNote = slash .. slash .. "server"
+                .. slash .. "share"
+                .. slash .. "SavedVariables"
+                .. slash .. "EventAlertMod.lua"
+            local uncSaved = live.setCaseNote(live.cases[1].id, uncNote)
+            local uncReport, uncJSON = live.buildReport()
+            local uncRedacted = uncSaved == true
+                and uncReport.cases[1].note == "[privacy-redacted]"
+                and string.find(uncJSON, "server", 1, true) == nil
+            live.setCaseNote(live.cases[1].id, "offline fixture")
+
+            for index = 1, #live.cases do
+                live.setCaseStatus(live.cases[index].id, "pass", "offline fixture")
+            end
+            local noReloadComplete, noReloadReason, noReloadReport = live.complete()
+            local _, noReloadJSON = live.buildReport()
+            local checkpoint = live.prepareReload()
+            local sameLoadResumed, sameLoadReason = live.resumePendingReload()
+            live.getState().reloadCheckpoint.bootToken = {}
+            local resumed = live.resumePendingReload()
+            local finalReport, finalJSON = live.buildReport()
+            local hasGroundEvidence = type(finalReport.capabilities.groundEffectStatus) == "table"
+                and type(finalReport.capabilities.groundEffectStatus.compiledAlertCount) == "number"
+            local cancelled = live.cancel()
+            local cancelCleared = live.getState() == nil and _G.EAM_LIVE_TEST_REPORT_JSON == nil
+            local restarted = live.start("_xptr_")
+            local restartProfile = live.getState()
+            local restartedAsXPTR = restartProfile
+                and restartProfile.declaredInstallation == "_xptr_"
+            local cancelledRestart = live.cancel()
+            return combatStart == false
+                and combatStartReason == "combatDeferred"
+                and started == true
+                and initial.status == "incomplete"
+                and initial.summary.pending == #live.cases
+                and combatNote == false
+                and combatNoteReason == "combatDeferred"
+                and combatReload == false
+                and combatReloadReason == "combatDeferred"
+                and combatComplete == false
+                and combatCompleteReason == "combatDeferred"
+                and privacyRedacted
+                and uncRedacted
+                and noReloadComplete == false
+                and noReloadReason == "reloadRequired"
+                and noReloadReport.status == "incomplete"
+                and string.find(noReloadJSON, "reloadCheckpointNotCompleted", 1, true) ~= nil
+                and checkpoint == true
+                and sameLoadResumed == false
+                and sameLoadReason == "sameLoadRejected"
+                and resumed == true
+                and finalReport.session.resumedAfterReload == true
+                and finalReport.session.reloadSequence == 1
+                and finalReport.summary.passed == #live.cases
+                and finalReport.status == "incomplete"
+                and string.find(finalJSON, "offlineCannotSignoff", 1, true) ~= nil
+                and hasGroundEvidence
+                and cancelled == true
+                and cancelCleared
+                and restarted == true
+                and restartedAsXPTR
+                and cancelledRestart == true
+                and (EAM.FlowTestMock and EAM.FlowTestMock.trace.gameplayAutomationCalls or 0) == 0
+        end)
+
+        _G.EAM_LIVE_TEST_SESSION = originalSession
+        _G.EAM_LIVE_TEST_REPORT_JSON = originalReport
+        _G.EAM_VALIDATION_PROFILE = originalProfile
+        if EAM.FlowTestMock then
+            EAM.FlowTestMock.setCombat(false)
+        end
+        local valid = ok and result == true
+        return valid, valid and "offline session, privacy, combat, reload, and live signoff fail-closed passed"
+            or "live session fail-closed mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "live_test.privacy_unc_anywhere",
+    primarySuite = "boundary",
+    suites = { boundary = true },
+    run = function()
+        local live = EAM.Debug and EAM.Debug.LiveTestSession
+        local mock = EAM.FlowTestMock
+        if not live or not mock then
+            return STATUS_SKIP, "live privacy producer mock is offline only"
+        end
+
+        local originalSession = _G.EAM_LIVE_TEST_SESSION
+        local originalReport = _G.EAM_LIVE_TEST_REPORT_JSON
+        local originalProfile = _G.EAM_VALIDATION_PROFILE
+        local originalCombat = mock.inCombat
+        _G.EAM_LIVE_TEST_SESSION = nil
+        _G.EAM_LIVE_TEST_REPORT_JSON = nil
+        _G.EAM_VALIDATION_PROFILE = nil
+
+        local ok, result = pcall(function()
+            mock.setCombat(false)
+            local started = live.start("_ptr_")
+            local caseID = live.cases[1].id
+            local slash = string.char(92)
+            local redactedNote = "[privacy-redacted]"
+            local pureUNC = slash .. slash .. "privacy-host-pure" .. slash .. "share-pure"
+            local leadingUNC = "  \t" .. slash .. slash .. "privacy-host-leading" .. slash .. "share-leading"
+            local embeddedUNC = "manual observation at "
+                .. slash .. slash .. "privacy-host-embedded" .. slash .. "share-embedded"
+                .. " during probe"
+            local safeNote = "safe path"
+                .. slash .. "segment and isolated pair " .. slash .. slash .. " without share separator"
+
+            local function redactsEntireValue(note, marker)
+                local saved = live.setCaseNote(caseID, note)
+                local report, reportJSON = live.buildReport()
+                return saved == true
+                    and report.cases[1].note == redactedNote
+                    and string.find(reportJSON, marker, 1, true) == nil
+                    and string.find(reportJSON, "privacyNoteRedacted", 1, true) ~= nil
+            end
+
+            local pureRedacted = redactsEntireValue(pureUNC, "privacy-host-pure")
+            local leadingRedacted = redactsEntireValue(leadingUNC, "privacy-host-leading")
+            local embeddedRedacted = redactsEntireValue(embeddedUNC, "privacy-host-embedded")
+            local safeSaved = live.setCaseNote(caseID, safeNote)
+            local safeReport, safeJSON = live.buildReport()
+            local safePreserved = safeSaved == true
+                and safeReport.cases[1].note == safeNote
+                and string.find(safeJSON, "privacyNoteRedacted", 1, true) == nil
+            return started == true
+                and pureRedacted
+                and leadingRedacted
+                and embeddedRedacted
+                and safePreserved
+        end)
+
+        _G.EAM_LIVE_TEST_SESSION = originalSession
+        _G.EAM_LIVE_TEST_REPORT_JSON = originalReport
+        _G.EAM_VALIDATION_PROFILE = originalProfile
+        mock.setCombat(originalCombat)
+        local valid = ok and result == true
+        return valid, valid and "UNC privacy values redact at start, after whitespace, and inline while safe slashes remain"
+            or "UNC privacy producer sanitization mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "live_test.client_completion_gate",
+    primarySuite = "boundary",
+    suites = { boundary = true },
+    run = function()
+        local live = EAM.Debug and EAM.Debug.LiveTestSession
+        local mock = EAM.FlowTestMock
+        if not live or not mock then
+            return STATUS_SKIP, "client completion gate mock is offline only"
+        end
+
+        local originalSession = _G.EAM_LIVE_TEST_SESSION
+        local originalReport = _G.EAM_LIVE_TEST_REPORT_JSON
+        local originalProfile = _G.EAM_VALIDATION_PROFILE
+        local originalEnvironment = EAM.FlowTestEnvironment
+        local originalInterface = mock.interface
+        local originalCombat = mock.inCombat
+        _G.EAM_LIVE_TEST_SESSION = nil
+        _G.EAM_LIVE_TEST_REPORT_JSON = nil
+        _G.EAM_VALIDATION_PROFILE = nil
+
+        local ok, result = pcall(function()
+            EAM.FlowTestEnvironment = nil
+            mock.interface = EAM.Constants.INTERFACE
+            mock.setCombat(false)
+            local started = live.start("_ptr_")
+            for index = 1, #live.cases do
+                live.setCaseStatus(live.cases[index].id, "pass", "client-shaped offline fixture")
+            end
+            local checkpoint = live.prepareReload()
+            local sameLoadResumed, sameLoadReason = live.resumePendingReload()
+            live.getState().reloadCheckpoint.bootToken = {}
+            local resumed = live.resumePendingReload()
+            local activeReport = live.buildReport()
+            local completed, completeReason, completeReport = live.complete()
+            return started == true
+                and checkpoint == true
+                and sameLoadResumed == false
+                and sameLoadReason == "sameLoadRejected"
+                and resumed == true
+                and activeReport.status == "incomplete"
+                and activeReport.session.phase == "active"
+                and activeReport.summary.passed == #live.cases
+                and #activeReport.boundaryWarnings == 0
+                and completed == true
+                and completeReason == "complete"
+                and completeReport.status == "pass"
+                and completeReport.session.phase == "complete"
+                and completeReport.session.reloadSequence == 1
+                and completeReport.environment.executionSource == "client"
+                and completeReport.environment.channelValidation == "pass"
+                and completeReport.environment.isTestBuildKnown == true
+                and completeReport.environment.isTestBuild == true
+                and completeReport.environment.buildFlags.isPublicTestClient == true
+                and #completeReport.boundaryWarnings == 0
+        end)
+
+        _G.EAM_LIVE_TEST_SESSION = originalSession
+        _G.EAM_LIVE_TEST_REPORT_JSON = originalReport
+        _G.EAM_VALIDATION_PROFILE = originalProfile
+        EAM.FlowTestEnvironment = originalEnvironment
+        mock.interface = originalInterface
+        mock.setCombat(originalCombat)
+        local valid = ok and result == true
+        return valid, valid and "active phase cannot pass; complete phase requires reload and every client-shaped case"
+            or "client completion gate mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "environment.client_profile_crosscheck",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local validation = EAM.Debug and EAM.Debug.ValidationEnvironment
+        if not mock or not validation then
+            return STATUS_SKIP, "client profile switching mock is offline only"
+        end
+        local originalEnvironment = EAM.FlowTestEnvironment
+        local originalInterface = mock.interface
+        local originalProfile = _G.EAM_VALIDATION_PROFILE
+        EAM.FlowTestEnvironment = nil
+        mock.interface = EAM.Constants.LEGACY_INTERFACE
+        validation.setDeclaredInstallation("_xptr_")
+        local xptr = validation.snapshot()
+        validation.setDeclaredInstallation("_ptr_")
+        local mismatch = validation.snapshot()
+        EAM.FlowTestEnvironment = originalEnvironment
+        mock.interface = originalInterface
+        _G.EAM_VALIDATION_PROFILE = originalProfile
+
+        local valid = xptr.clientChannel == "XPTR"
+            and xptr.declaredInstallation == "_xptr_"
+            and xptr.patch == "12.0.7"
+            and xptr.interface == EAM.Constants.LEGACY_INTERFACE
+            and xptr.source == "xptr-live-manual"
+            and xptr.channelValidation == "pass"
+            and mismatch.clientChannel == "PTR"
+            and mismatch.channelValidation == "mismatch"
+        return valid, valid and "XPTR 12.0.7 identity and PTR mismatch cross-check passed" or "client profile cross-check mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "duration.adapter.contract",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local adapter = EAM.Modules and EAM.Modules.DurationAdapter
+        if not mock or not adapter then
+            return STATUS_SKIP, "DurationAdapter strict mock is offline only"
+        end
+        mock.resetTrace()
+        local fontString = mock.createAuraButtonForTest():CreateFontString()
+        local durationObject = adapter.createFromStart(12, 30)
+        local binding = adapter.createTextBinding(durationObject, fontString)
+        local released = adapter.releaseTextBinding(binding)
+        local valid = durationObject ~= nil
+            and durationObject.startTime == 12
+            and durationObject.duration == 30
+            and binding ~= nil
+            and binding.fontString == fontString
+            and binding.durationObject == durationObject
+            and binding.formatter ~= nil
+            and binding.enabled == false
+            and binding.reset == true
+            and released == true
+            and mock.trace.durationCreates == 1
+            and mock.trace.durationSetTimeCalls == 1
+            and mock.trace.durationBindingCreates == 1
+            and mock.trace.durationBindingEnables == 1
+        return valid, valid and "DurationObject and text binding use the 12.x no-argument factory lifecycle"
+            or "DurationAdapter lifecycle mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.spell.duration_contract",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.CooldownService
+        local cSpell = api.C_Spell
+        if not mock or not service or not cSpell then
+            return false, "CooldownService dependencies unavailable"
+        end
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalCharges = cSpell.GetSpellCharges
+        local originalCooldown = cSpell.GetSpellCooldown
+        local originalDuration = cSpell.GetSpellCooldownDuration
+        local marker = { source = "official-spell-duration" }
+        local ok, result = pcall(function()
+            EAM.db = {
+                revision = 820001,
+                alerts = {
+                    spellCooldowns = {
+                        ["spellCooldown:player:50101"] = {
+                            id = "spellCooldown:player:50101",
+                            enabled = true,
+                            spellID = 50101,
+                        },
+                    },
+                },
+            }
+            service.states = {}
+            cSpell.GetSpellCharges = function()
+                return nil
+            end
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 50101 then
+                    return { startTime = 20, duration = 15, isEnabled = true, isOnGCD = false }
+                end
+                return nil
+            end
+            cSpell.GetSpellCooldownDuration = function(spellID)
+                return spellID == 50101 and marker or nil
+            end
+            service.updateAlertList()
+            local state = service.refreshSpell(50101, "offlineFixture")
+            local numericValid = state ~= nil
+                and state.shown == true
+                and state.timer.mode == EAM.Constants.TIMER_NUMERIC
+                and state.timer.startTime == 20
+                and state.timer.duration == 15
+                and state.timer.expirationTime == 35
+                and state.timer.durationObject == marker
+            local secretTime = mock.createSecretScalar()
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 50101 then
+                    return {
+                        startTime = secretTime,
+                        duration = secretTime,
+                        isEnabled = true,
+                        isOnGCD = false,
+                    }
+                end
+                return nil
+            end
+            mock.resetTrace()
+            local protectedState = service.refreshSpell(50101, "offlineSecretFixture")
+            local protectedValid = protectedState == state
+                and state.factsSafe == false
+                and state.boundaryLimited == true
+                and state.boundaryWarnings[1] == "cooldown:timingProtected"
+                and state.timer.mode == EAM.Constants.TIMER_PROTECTED
+                and state.timer.startTime == nil
+                and state.timer.duration == nil
+                and state.timer.expirationTime == nil
+                and state.timer.durationObject == marker
+                and mock.trace.secretScalarOperations == 0
+            return numericValid and protectedValid
+        end)
+        EAM.db = originalDB
+        service.states = originalStates
+        cSpell.GetSpellCharges = originalCharges
+        cSpell.GetSpellCooldown = originalCooldown
+        cSpell.GetSpellCooldownDuration = originalDuration
+        local valid = ok and result == true
+        return valid, valid and "spell cooldown clears stale numerics and keeps only official DurationObject at the Secret boundary"
+            or "spell cooldown duration contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "totem.duration_secret_boundary",
+    primarySuite = "boundary",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.TotemService
+        if not mock or not service or type(api.GetTotemInfo) ~= "function" then
+            return STATUS_SKIP, "Totem strict mock is offline only"
+        end
+        local originalStates = service.activeStates
+        local originalTotems = mock.totems
+        local ok, result = pcall(function()
+            service.activeStates = {}
+            mock.totems = {
+                [1] = {
+                    name = "Mock Totem",
+                    startTime = 50,
+                    duration = 30,
+                    icon = 136102,
+                    spellID = 90001,
+                },
+            }
+            service.TotemStatePool.initialize()
+            service.refreshSlot(1)
+            local state = service.activeStates[1]
+            local numericValid = state ~= nil
+                and state.timer.mode == EAM.Constants.TIMER_NUMERIC
+                and state.timer.startTime == 50
+                and state.timer.duration == 30
+                and state.timer.expirationTime == 80
+                and state.timer.durationObject ~= nil
+
+            local secretTime = mock.createSecretScalar()
+            mock.totems[1].startTime = secretTime
+            mock.totems[1].duration = secretTime
+            mock.resetTrace()
+            service.refreshSlot(1)
+            local protectedValid = state.factsSafe == false
+                and state.boundaryLimited == true
+                and state.boundaryWarnings[1] == "totem:timingProtected"
+                and state.timer.mode == EAM.Constants.TIMER_DISPLAY_ONLY
+                and state.timer.startTime == nil
+                and state.timer.duration == nil
+                and state.timer.expirationTime == nil
+                and state.timer.durationObject ~= nil
+                and mock.trace.secretScalarOperations == 0
+            return numericValid and protectedValid
+        end)
+        service.activeStates = originalStates
+        mock.totems = originalTotems
+        local valid = ok and result == true
+        return valid, valid and "Totem uses global APIs and clears unsafe numeric timing while preserving native duration"
+            or "Totem duration boundary contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.item.targeted_121",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.ItemCooldownService
+        local cItem = api.C_Item
+        if not mock or not service or not cItem then
+            return STATUS_SKIP, "item cooldown strict mock is offline only"
+        end
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalGetItemCooldown = cItem.GetItemCooldown
+        local originalGetItemNameByID = cItem.GetItemNameByID
+        local originalGetItemIconByID = cItem.GetItemIconByID
+        local reads = 0
+        local ok, result = pcall(function()
+            EAM.db = {
+                revision = 820002,
+                alerts = {
+                    itemCooldowns = {
+                        ["itemCooldown:player:55123"] = {
+                            id = "itemCooldown:player:55123",
+                            enabled = true,
+                            itemID = 55123,
+                        },
+                    },
+                },
+            }
+            service.states = {}
+            cItem.GetItemCooldown = function(itemID)
+                reads = reads + 1
+                if itemID == 55123 then
+                    return 40, 25, true
+                end
+                return 0, 0, true
+            end
+            cItem.GetItemNameByID = function(itemID)
+                return "Mock Item " .. itemID
+            end
+            cItem.GetItemIconByID = function()
+                return 134400
+            end
+            service.updateAlertList()
+            mock.resetTrace()
+            service.onCooldownEvent("SPELL_UPDATE_COOLDOWN", nil, nil, nil, nil, 99999)
+            local readsAfterWrongItem = reads
+            service.onCooldownEvent("SPELL_UPDATE_COOLDOWN")
+            local readsAfterMergedRefresh = reads
+            service.onCooldownEvent("SPELL_UPDATE_COOLDOWN", nil, nil, nil, nil, 55123)
+            local state = service.states["itemCooldown:player:55123"]
+            return readsAfterWrongItem == 0
+                and readsAfterMergedRefresh == 1
+                and reads == 2
+                and state ~= nil
+                and state.shown == true
+                and state.source.event == "SPELL_UPDATE_COOLDOWN"
+                and state.timer.mode == EAM.Constants.TIMER_NUMERIC
+                and state.timer.startTime == 40
+                and state.timer.duration == 25
+                and state.timer.durationObject ~= nil
+                and state.timer.durationObject.startTime == 40
+                and state.timer.durationObject.duration == 25
+                and mock.trace.durationCreates == 1
+                and mock.trace.durationSetTimeCalls == 1
+        end)
+        EAM.db = originalDB
+        service.states = originalStates
+        cItem.GetItemCooldown = originalGetItemCooldown
+        cItem.GetItemNameByID = originalGetItemNameByID
+        cItem.GetItemIconByID = originalGetItemIconByID
+        local valid = ok and result == true
+        return valid, valid and "12.1 itemID targets one item and missing itemID safely falls back to merged refresh"
+            or "12.1 targeted item cooldown refresh mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ground.duration_resolution_chain",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local service = EAM.Services and EAM.Services.GroundEffectService
+        local cSpell = api.C_Spell
+        local cTooltipInfo = api.C_TooltipInfo
+        if not service or not cSpell or not cTooltipInfo then
+            return false, "GroundEffectService dependencies unavailable"
+        end
+        local originalDB = EAM.db
+        local originalDescription = cSpell.GetSpellDescription
+        local originalSpellInfo = cSpell.GetSpellInfo
+        local originalTooltip = cTooltipInfo.GetSpellByID
+        local originalLocale = api.GetLocale
+        local scheduler = EAM.Modules.Scheduler
+        local originalAfter = scheduler and scheduler.after
+        local ok, result = pcall(function()
+            EAM.db = {
+                revision = 820003,
+                alerts = {
+                    groundEffects = {
+                        ["groundEffect:player:61001"] = { id = "groundEffect:player:61001", enabled = true, spellID = 61001, durationMode = "AUTO", manualDuration = 8 },
+                        ["groundEffect:player:61002"] = { id = "groundEffect:player:61002", enabled = true, spellID = 61002, durationMode = "AUTO", manualDuration = 8 },
+                        ["groundEffect:player:61003"] = { id = "groundEffect:player:61003", enabled = true, spellID = 61003, durationMode = "AUTO", manualDuration = 9 },
+                        ["groundEffect:player:61004"] = { id = "groundEffect:player:61004", enabled = true, spellID = 61004, durationMode = "MANUAL", manualDuration = 11 },
+                    },
+                },
+            }
+            api.GetLocale = function()
+                return "enUS"
+            end
+            cSpell.GetSpellDescription = function(spellID)
+                if spellID == 61001 then
+                    return "Lasts 12 sec."
+                elseif spellID == 61004 then
+                    return "Lasts 99 sec."
+                end
+                return nil
+            end
+            cSpell.GetSpellInfo = function(spellID)
+                return { name = "Ground " .. spellID, iconID = 136243 }
+            end
+            cTooltipInfo.GetSpellByID = function(spellID)
+                if spellID == 61002 then
+                    return {
+                        lines = {
+                            { type = api.TooltipDataLineType.SpellDescription, leftText = "For 7 sec." },
+                        },
+                    }
+                end
+                return { lines = {} }
+            end
+            if scheduler then
+                scheduler.after = function()
+                    return true
+                end
+            end
+            local refreshed, count = service.onConfigChanged()
+            local d1, s1 = service.scrapeDuration(61001)
+            local d2, s2 = service.scrapeDuration(61002)
+            local d3, s3 = service.scrapeDuration(61003)
+            local d4, s4 = service.scrapeDuration(61004)
+            local triggered, triggerSource = service.triggerGroundEffect(61003)
+            local state = service.activeStates[61003]
+            return refreshed == true
+                and count == 4
+                and d1 == 12 and s1 == "spellDescription"
+                and d2 == 7 and s2 == "tooltipDescription"
+                and d3 == 9 and s3 == "manualFallback"
+                and d4 == 11 and s4 == "manual"
+                and triggered == true and triggerSource == "manualFallback"
+                and state ~= nil
+                and state.timer.duration == 9
+                and state.source.api == "manualFallback"
+                and state.boundaryWarnings[1] == "groundDurationManualFallback"
+        end)
+        EAM.db = originalDB
+        api.GetLocale = originalLocale
+        cSpell.GetSpellDescription = originalDescription
+        cSpell.GetSpellInfo = originalSpellInfo
+        cTooltipInfo.GetSpellByID = originalTooltip
+        if scheduler then
+            scheduler.after = originalAfter
+        end
+        wipe(service.activeAlerts)
+        wipe(service.activeStates)
+        local valid = ok and result == true
+        return valid, valid and "ground duration resolves spell text, tooltip text, manual fallback, and manual override"
+            or "ground duration resolution chain mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.cooldown_swipe_alpha",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local iconPool = EAM.UI and EAM.UI.IconPool
+        if not iconPool then
+            return false, "IconPool unavailable"
+        end
+        local cooldown = api.CreateFrame("Cooldown", nil, nil, "CooldownFrameTemplate")
+        local icon = { cooldown = cooldown }
+        local applied = iconPool.applyCooldownStyle(icon, { cooldownSwipeAlpha = 0.4 })
+        local middle = cooldown.swipeAlpha
+        iconPool.applyCooldownStyle(icon, { cooldownSwipeAlpha = -1 })
+        local minimum = cooldown.swipeAlpha
+        iconPool.applyCooldownStyle(icon, { cooldownSwipeAlpha = 2 })
+        local maximum = cooldown.swipeAlpha
+        local valid = applied == true and middle == 0.4 and minimum == 0 and maximum == 1
+        return valid, valid and "cooldown swipe alpha applies and clamps to 0..1"
+            or "cooldown swipe alpha contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.native.ptr8_region_options",
+    primarySuite = "aura121",
+    suites = { aura121 = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        if not mock or not nativeRenderer then
+            return STATUS_SKIP, "PTR8 AuraButton mock is offline only"
+        end
+        local originalDB = EAM.db
+        local originalPandemicCapability = nativeRenderer.nativePandemicRegionCapabilityCount
+        local originalPandemicBound = nativeRenderer.pandemicRegionBoundCount
+        local originalBorderCapability = nativeRenderer.nativeBorderCapabilityCount
+        local originalDispelBound = nativeRenderer.nativeDispelTextureBoundCount
+        local ok, result = pcall(function()
+            EAM.db = buildAura121TestDB(820006)
+            mock.resetTrace()
+            local button = mock.createAuraButtonForTest()
+            local initializer = nativeRenderer.createInitializer({
+                style = {
+                    showPandemic = true,
+                    dispelMode = "STEALABLE",
+                    dispelStyle = "BORDER_WITH_ICON",
+                },
+            }, nil, nil)
+            initializer(button)
+            local dispel = button.dispelTypeTextures[1]
+            local options = dispel and dispel.options or nil
+            local filterEnum = Enum.CustomAuraButtonDispelTypeStealableFilter
+            local styleEnum = Enum.CustomAuraButtonDispelTypeTextureStyle
+            return mock.trace.pandemicRegionAdds == 1
+                and mock.trace.dispelTextureAdds == 1
+                and #button.pandemicRegions == 1
+                and options ~= nil
+                and options.showAlways == false
+                and options.showWhenHelpful == true
+                and options.showWhenHarmful == false
+                and options.stealableFilter == filterEnum.Stealable
+                and options.style == styleEnum.BorderWithIcon
+                and nativeRenderer.nativePandemicRegionCapabilityCount == originalPandemicCapability + 1
+                and nativeRenderer.pandemicRegionBoundCount == originalPandemicBound + 1
+                and nativeRenderer.nativeBorderCapabilityCount == originalBorderCapability + 1
+                and nativeRenderer.nativeDispelTextureBoundCount == originalDispelBound + 1
+                and mock.trace.auraGetterCalls == 0
+                and mock.trace.postInitializationMutations == 0
+        end)
+        EAM.db = originalDB
+        nativeRenderer.nativePandemicRegionCapabilityCount = originalPandemicCapability
+        nativeRenderer.pandemicRegionBoundCount = originalPandemicBound
+        nativeRenderer.nativeBorderCapabilityCount = originalBorderCapability
+        nativeRenderer.nativeDispelTextureBoundCount = originalDispelBound
+        local valid = ok and result == true
+        return valid, valid and "PTR8 Pandemic Region and stealable Dispel options bind during initializeFrame"
+            or "PTR8 AuraButton region/options binding mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.container.disable_clears_assignments",
+    primarySuite = "aura121",
+    suites = { aura121 = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "AuraContainer strict mock is offline only"
+        end
+        local ok, result = pcall(function()
+            mock.resetTrace()
+            local container = CreateFrame("AuraContainer")
+            local button = container:AddAuraSlot("EAM_PTR8_CLEAR", "HELPFUL", {
+                initializeFrame = function(frame)
+                    frame:SetIcon({})
+                    frame:SetDurationCooldown({})
+                    frame:SetDurationText({})
+                    frame:SetApplicationCount({})
+                    frame:SetSpellName({})
+                end,
+            })
+            container:SetEnabled(false)
+            return #container.buttons == 1
+                and container.buttons[1] == button
+                and rawget(button, "icon") == nil
+                and rawget(button, "cooldown") == nil
+                and rawget(button, "durationText") == nil
+                and rawget(button, "applicationCount") == nil
+                and rawget(button, "spellName") == nil
+                and mock.trace.auraAssignmentsCleared == 1
+                and mock.trace.containerMutations == 2
+        end)
+        local valid = ok and result == true
+        return valid, valid and "disabled AuraContainer clears AuraButton assignments while retaining the frame"
+            or "disabled AuraContainer clear contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "unitpower.combat_deferred_no_reads",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.ClassPowerService
+        if not mock or not service then
+            return STATUS_SKIP, "UnitPower strict mock is offline only"
+        end
+        local originalCombat = mock.inCombat
+        mock.setCombat(true)
+        mock.resetTrace()
+        local detected, updated, updateReason = service.detectClassPower(), nil, nil
+        updated, updateReason = service.updatePower()
+        service.onEvent("UNIT_POWER_FREQUENT", "player", "HOLY_POWER")
+        local valid = detected == false
+            and updated == false
+            and updateReason == "combatDeferred"
+            and service.getStatus().lastResultClass == "combatDeferred"
+            and mock.trace.unitPowerReads == 0
+            and mock.trace.unitPowerMaxReads == 0
+        mock.setCombat(originalCombat)
+        return valid, valid and "combat UnitPower reads are deferred without polling secret values"
+            or "combat UnitPower read guard mismatch"
+    end,
+})
+FlowTestRunner.registerCase({
+    id = "aura121.native.dual_countdown_diagnostic",
+    primarySuite = "aura121",
+    suites = { aura121 = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        if not mock or not nativeRenderer then
+            return STATUS_SKIP, "Native Aura diagnostic mock is offline only"
+        end
+        local originalDB = EAM.db
+        local originalDualCount = nativeRenderer.dualCountdownButtonCount
+        local originalBorderCount = nativeRenderer.nativeBorderCapabilityCount
+        local ok, result = pcall(function()
+            EAM.db = buildAura121TestDB(820004)
+            EAM.db.config.nativeAuraDualCountdownProbe = true
+            local button = mock.createAuraButtonForTest()
+            local initializer = nativeRenderer.createInitializer({
+                style = { showCountdown = false, showStacks = false, showName = false },
+            }, nil, nil)
+            initializer(button)
+            return button.cooldown ~= nil
+                and button.cooldown.hideCountdownNumbers == false
+                and button.durationText ~= nil
+                and rawget(button, "applicationCount") == nil
+                and rawget(button, "spellName") == nil
+                and nativeRenderer.dualCountdownButtonCount == originalDualCount + 1
+                and nativeRenderer.nativeBorderCapabilityCount == originalBorderCount + 1
+        end)
+        EAM.db = originalDB
+        nativeRenderer.dualCountdownButtonCount = originalDualCount
+        nativeRenderer.nativeBorderCapabilityCount = originalBorderCount
+        local valid = ok and result == true
+        return valid, valid and "dual countdown remains an explicit diagnostic mode sharing Native aura duration"
+            or "dual countdown diagnostic contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.compiler.style_fingerprint",
+    primarySuite = "aura121",
+    suites = { aura121 = true, boundary = true },
+    run = function()
+        local compiler = EAM.Managers and EAM.Managers.AuraRuleCompiler
+        if not compiler then
+            return false, "AuraRuleCompiler unavailable"
+        end
+        local firstDB = buildAura121TestDB(820005)
+        firstDB.config.textLayout = firstDB.config.textLayout or {
+            schema = 1,
+            timer = { placement = "OUTSIDE_RIGHT_AT_TOP", fontSize = 18 },
+            applications = { placement = "OUTSIDE_BOTTOM_AT_LEFT", fontSize = 20 },
+        }
+        local firstPlan = compiler.compile(firstDB, { backend = EAM.Constants.AURA_BACKEND_NATIVE })
+        local rule = firstDB.alerts.playerAuras["aura:player:1001"]
+        if not rule then
+            for _, candidate in pairs(firstDB.alerts.playerAuras) do
+                rule = candidate
+                break
+            end
+        end
+        if not rule then
+            return false, "Aura fixture unavailable"
+        end
+        rule.showCountdown = false
+        firstDB.config.textLayout.timer.placement = "INSIDE_TOP_LEFT"
+        firstDB.revision = firstDB.revision + 1
+        local secondPlan = compiler.compile(firstDB, { backend = EAM.Constants.AURA_BACKEND_NATIVE })
+        local valid = firstPlan.fingerprint ~= secondPlan.fingerprint
+        return valid, valid and "Native style and text placement participate in the compiler fingerprint"
+            or "Native style fingerprint did not change"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "unitpower.secondary_and_secret_sink",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.ClassPowerService
+        local probe = EAM.Debug and EAM.Debug.UnitPowerCapabilityProbe
+        local renderer = EAM.UI and EAM.UI.Renderer
+        if not mock or not service or not probe or not renderer then
+            return STATUS_SKIP, "UnitPower strict mock is offline only"
+        end
+        local originalDB = EAM.db
+        local originalRender = renderer.render
+        local originalPowerType = mock.unitPowerType
+        local originalPowerToken = mock.unitPowerToken
+        local captured = nil
+        local ok, result = pcall(function()
+            EAM.db = { config = { powerHoly = true, powerRage = true } }
+            renderer.render = function(state, frameType)
+                captured = {
+                    id = state.id,
+                    shown = state.shown,
+                    displayValue = state.displayValue,
+                    stacks = state.stacks,
+                    frameType = frameType,
+                }
+                return true
+            end
+            mock.unitPowerType = api.PowerType and api.PowerType.Mana or 0
+            mock.unitPowerToken = "MANA"
+            mock.setUnitPowerScenario(
+                "PALADIN",
+                { [9] = 1, [0] = 100 },
+                { [9] = 5, [0] = 100 },
+                {},
+                {}
+            )
+            mock.resetTrace()
+            local detected = service.detectClassPower()
+            local updated, updateReason = service.updatePower()
+            local readsBeforeMismatch = mock.trace.unitPowerReads
+            service.onEvent("UNIT_POWER_FREQUENT", "player", "MANA")
+            local mismatchIgnored = mock.trace.unitPowerReads == readsBeforeMismatch
+            service.onEvent("UNIT_POWER_FREQUENT", "player", "HOLY_POWER")
+            local matchingRead = mock.trace.unitPowerReads == readsBeforeMismatch + 1
+            local safeValid = detected == true
+                and updated == true
+                and updateReason == "rendered"
+                and service.getActivePowerType() == 9
+                and service.getStatus().selectedFrom == "classSecondary"
+                and captured ~= nil
+                and captured.displayValue == 1
+                and captured.stacks == nil
+                and mismatchIgnored
+                and matchingRead
+
+            mock.setUnitPowerScenario("PALADIN", {}, { [9] = 5 }, { [9] = true }, {})
+            service.detectClassPower()
+            local secretUpdated, secretReason = service.updatePower()
+            local secretValid = secretUpdated == false
+                and secretReason == "secret"
+                and service.getStatus().lastResultClass == "secret"
+                and mock.trace.secretScalarOperations == 0
+
+            mock.unitPowerType = 1
+            mock.unitPowerToken = "RAGE"
+            mock.setUnitPowerScenario(
+                "PALADIN",
+                { [9] = 1 },
+                { [9] = 5, [1] = 100 },
+                { [1] = true },
+                {}
+            )
+            service.detectClassPower()
+            mock.resetTrace()
+            local started, report, reportJSON = probe.start()
+            local primary = report and report.cases and report.cases[1]
+            local selected = report and report.cases and report.cases[2]
+            local markedPrimary = probe.markVisual("unitpower.primary.native_percent", "pass")
+            local markedSelected = probe.markVisual("unitpower.selected.safe_or_native", "pass")
+            local activeReport = probe.buildReport()
+            local stopped, stoppedReport = probe.stop()
+            local reportValid = started == true
+                and report.type == "EAM_UNIT_POWER_CAPABILITY_REPORT"
+                and report.rawValuesCollected == false
+                and report.environment.executionSource == "offline-mock"
+                and report.status ~= "pass"
+                and primary.resultClass == "secret"
+                and primary.statusBarSink == "accepted"
+                and primary.radialSink == "accepted"
+                and selected.resultClass == "safe-number"
+                and markedPrimary == true
+                and markedSelected == true
+                and activeReport.status == "active"
+                and activeReport.session.active == true
+                and activeReport.cases[1].visualObservation == "pass"
+                and activeReport.cases[2].visualObservation == "pass"
+                and stopped == true
+                and stoppedReport.status == "incomplete"
+                and stoppedReport.session.active == false
+                and stoppedReport.session.stoppedAtSessionMs ~= nil
+                and reportJSON ~= nil
+                and string.find(reportJSON, "currentPower", 1, true) == nil
+                and string.find(reportJSON, "maxPower", 1, true) == nil
+                and string.find(reportJSON, "percentValue", 1, true) == nil
+                and mock.trace.secretScalarOperations == 0
+            return safeValid and secretValid and reportValid
+        end)
+        renderer.render = originalRender
+        EAM.db = originalDB
+        mock.unitPowerType = originalPowerType
+        mock.unitPowerToken = originalPowerToken
+        mock.setUnitPowerScenario("PALADIN", {}, {}, {}, {})
+        local valid = ok and result == true
+        return valid, valid and "secondary UnitPower shows 1, filters events, and Secret percent only reaches native sinks"
+            or "UnitPower safe/secret capability contract mismatch"
     end,
 })

@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ziyuefan.github.io/EventAlertModRemake/schemas/eam-unit-power-capability-report-v1.json",
+  "title": "EventAlertMod UnitPower Capability Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "type",
+    "purpose",
+    "status",
+    "rawValuesCollected",
+    "session",
+    "environment",
+    "automation",
+    "capabilities",
+    "cases",
+    "boundaryWarnings"
+  ],
+  "$defs": {
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "role",
+        "powerTypeAvailable",
+        "resultClass",
+        "statusBarSink",
+        "radialSink",
+        "visualObservation"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "role": { "enum": ["primary", "selected"] },
+        "powerTypeAvailable": { "type": "boolean" },
+        "resultClass": {
+          "enum": ["pending", "secret", "safe-number", "nil", "error", "unavailable", "inaccessible"]
+        },
+        "statusBarSink": { "enum": ["not-run", "accepted", "rejected"] },
+        "radialSink": { "enum": ["not-run", "accepted", "rejected", "unavailable"] },
+        "visualObservation": { "enum": ["pending", "pass", "fail", "blocked"] }
+      }
+    }
+  },
+  "properties": {
+    "schema": { "const": 1 },
+    "type": { "const": "EAM_UNIT_POWER_CAPABILITY_REPORT" },
+    "purpose": { "const": "capability-probe" },
+    "status": { "enum": ["active", "incomplete", "pass", "fail", "blocked"] },
+    "rawValuesCollected": { "const": false },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active", "startedAtSessionMs", "visualObservation"],
+      "properties": {
+        "active": { "type": "boolean" },
+        "startedAtSessionMs": { "type": "number", "minimum": 0 },
+        "stoppedAtSessionMs": { "type": "number", "minimum": 0 },
+        "visualObservation": { "enum": ["pending", "pass", "fail", "blocked"] }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "product",
+        "executionSource",
+        "clientChannel",
+        "declaredInstallation",
+        "declaredInstallationEvidence",
+        "patch",
+        "build",
+        "interface",
+        "source",
+        "channelValidation"
+      ],
+      "properties": {
+        "product": { "const": "wow_retail" },
+        "executionSource": { "enum": ["client", "offline-mock"] },
+        "clientChannel": { "enum": ["PTR", "XPTR", "RETAIL", "OFFLINE", "UNCONFIRMED"] },
+        "declaredInstallation": { "enum": ["_ptr_", "_xptr_", "_retail_", "offline", "unconfirmed"] },
+        "declaredInstallationEvidence": { "enum": ["user-asserted", "harness", "none"] },
+        "patch": { "type": "string" },
+        "build": { "type": ["string", "number"] },
+        "interface": { "type": "integer" },
+        "source": { "type": "string" },
+        "channelValidation": { "enum": ["pass", "mismatch", "unconfirmed"] }
+      }
+    },
+    "automation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["playerOperated", "gameInputAutomated", "restrictionCVarModified"],
+      "properties": {
+        "playerOperated": { "const": true },
+        "gameInputAutomated": { "const": false },
+        "restrictionCVarModified": { "const": false }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unitPower",
+        "unitPowerMax",
+        "unitPowerPercent",
+        "shouldUnitPowerBeSecret",
+        "shouldUnitPowerMaxBeSecret",
+        "getPowerTypeSecrecy",
+        "statusBarSecretSink",
+        "radialProgressSecretSink",
+        "radialSinkRequired"
+      ],
+      "properties": {
+        "unitPower": { "type": "boolean" },
+        "unitPowerMax": { "type": "boolean" },
+        "unitPowerPercent": { "type": "boolean" },
+        "shouldUnitPowerBeSecret": { "type": "boolean" },
+        "shouldUnitPowerMaxBeSecret": { "type": "boolean" },
+        "getPowerTypeSecrecy": { "type": "boolean" },
+        "statusBarSecretSink": { "type": "boolean" },
+        "radialProgressSecretSink": { "type": "boolean" },
+        "radialSinkRequired": { "type": "boolean" }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/case" },
+            {
+              "properties": {
+                "id": { "const": "unitpower.primary.native_percent" },
+                "role": { "const": "primary" }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/case" },
+            {
+              "properties": {
+                "id": { "const": "unitpower.selected.safe_or_native" },
+                "role": { "const": "selected" }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    },
+    "boundaryWarnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "pass" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "session": {
+            "required": ["stoppedAtSessionMs"],
+            "properties": {
+              "active": { "const": false },
+              "visualObservation": { "const": "pass" }
+            }
+          },
+          "environment": {
+            "properties": {
+              "executionSource": { "const": "client" },
+              "declaredInstallationEvidence": { "const": "user-asserted" },
+              "channelValidation": { "const": "pass" }
+            }
+          },
+          "capabilities": {
+            "properties": {
+              "unitPowerPercent": { "const": true },
+              "statusBarSecretSink": { "const": true }
+            }
+          },
+          "cases": {
+            "items": {
+              "properties": {
+                "powerTypeAvailable": { "const": true },
+                "statusBarSink": { "const": "accepted" },
+                "visualObservation": { "const": "pass" }
+              }
+            }
+          },
+          "boundaryWarnings": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "properties": { "radialSinkRequired": { "const": true } },
+            "required": ["radialSinkRequired"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "cases": {
+            "items": {
+              "properties": { "radialSink": { "const": "accepted" } }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

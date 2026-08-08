@@ -28,6 +28,7 @@ local _, EAM = ...
 
 local api = EAM.API
 local Util = EAM.Util
+local DurationAdapter = EAM.Modules.DurationAdapter
 local ItemCooldownStatePool
 
 local ItemCooldownService = {
@@ -188,11 +189,8 @@ local function refreshAlert(alert, eventName)
         state.timer.duration = duration
         state.timer.expirationTime = startTime + duration
         
-        if api.C_DurationUtil and api.C_DurationUtil.CreateDuration then
-            state.timer.durationObject = api.C_DurationUtil.CreateDuration(duration)
-        else
-            state.timer.durationObject = nil
-        end
+        state.timer.durationObject = DurationAdapter
+            and DurationAdapter.createFromStart(startTime, duration) or nil
     end
 
     state.source.event = eventName
@@ -228,6 +226,7 @@ function ItemCooldownService.initialize()
     local router = EAM.Modules.EventRouter
     if router then
         router.register("BAG_UPDATE_COOLDOWN", ItemCooldownService.onCooldownEvent)
+        router.register("SPELL_UPDATE_COOLDOWN", ItemCooldownService.onCooldownEvent)
     end
 end
 
@@ -257,9 +256,17 @@ function ItemCooldownService.refreshAll(eventName)
     refreshAll(eventName or "manual")
 end
 
-function ItemCooldownService.onCooldownEvent(eventName)
+function ItemCooldownService.onCooldownEvent(eventName, spellID, baseSpellID, category, startRecoveryCategory, itemID)
     if EAM.addDebugLog then
         EAM.addDebugLog("ItemCooldownService", "onCooldownEvent", "Event: " .. tostring(eventName))
+    end
+    if eventName == "SPELL_UPDATE_COOLDOWN" then
+        if Util.isSafePositiveNumber(itemID) then
+            ItemCooldownService.refreshItem(itemID, eventName)
+        else
+            refreshAll(eventName)
+        end
+        return
     end
     refreshAll(eventName)
 end

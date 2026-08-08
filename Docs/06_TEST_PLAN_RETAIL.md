@@ -196,3 +196,46 @@
 - `_xptr_` 12.0.7 實機：Spell／Item／Macro 路由仍須工作；Aura 官方 CVar 若不存在，Tooltip／Popup 必須明示手動已知 ID，不得回退讀 AuraData。
 - 明確驗證原 Blizzard 行為未被攔截：一般左／右鍵操作與未按修飾鍵時應完全維持客戶端原行為。
 - 補測同型 Tooltip 快速切換的 generation／owner、初始化時 Tooltip API 暫缺、`/reload`／LoD，以及 Popup 開啟後立即進戰；離線 mock 不得替代這些 PTR 時序與 taint 證據。
+
+## 2026-07-28：文字版面與 PTR／XPTR 真人簽收矩陣
+
+- 正規化事實來源：`Data/TextPlacementContract.json`（21 點、字級 8–32）與 `Data/LiveValidationMatrix.json`（34 案、版本 `2026-08-08.1`）。
+- 離線命令：`Tools/CheckLuaSyntax.ps1`、`Tools/Run-FlowValidation.ps1 -Suite all`、`Tools/Test-ValidationContracts.ps1`。
+- 遊戲內入口：非戰鬥中使用 `/eam test live` 或流程面板「真人實機簽收」。玩家必須先選擇 `_ptr_`／`_xptr_`／`_retail_`；宣告值會和 client build、Interface 與 test-build 能力交叉驗證。
+- EAM 只記錄玩家觀察；不自動停留 Tooltip、不點按按鈕、不施法、不用物品、不執行巨集、不改目標，也不呼叫 `ReloadUI`。
+- `_ptr_` 12.1 必測：Spellbook、Action Bar Macro、Bag Item、player／target Aura、非戰鬥加入、戰鬥拒絕、Popup 取消／提交／重複提交、Blizzard 原輸入、generation、LoD、taint／blocked action／Forbidden、timer／applications 版面、正常單倒數、雙倒數診斷、法術／物品冷卻、地面效果解析與 fallback、swipe alpha、target Aura 生命週期、Native border capability 與 UnitPower 原生 sink。
+- `_xptr_` 12.0.7 必測同一組案例；Aura ID CVar 與 12.1 Native 能力不存在時必須明示 Legacy／fallback，不得讀取 AuraData 補猜。UnitPower 主要資源使用 StatusBar fallback，不要求 radial API。
+- timer 至少驗證框內、框外，以及字級 8／14／32；applications 必須涵蓋框內九點、框外八角邊與四面，以及字級 8／12／32。
+- `_ptr_` 另需連續調整文字位置／字級與 icon size／spacing 至少 30 次：文字改變不得增加 `createdContainerCount`；結構改變到達 18 個容器上限後必須保留現有畫面並回報 `nativeReloadRequired`，不得再建立 AuraContainer。
+- `/reload` 案例必須先按「建立 /reload 檢查點」，再由玩家自行輸入 `/reload`；回來後 `resumedAfterReload=true` 且 `reloadSequence>=1`。
+- checkpoint 後若未實際 reload 就直接呼叫 resume，必須回傳 `sameLoadRejected`；玩家完成 `/reload` 後才可因 boot generation 改變而恢復。
+- 即使 34 案已全部標為 pass，尚未完成上述 `/reload` 時，`LiveTestSession.complete()` 必須回傳 `reloadRequired`，報告必須保留 `reloadCheckpointNotCompleted` 且不得直接複製為 pass。
+- `pass` 另要求 `phase=complete`、`isTestBuildKnown=true`、`channelValidation=pass`、三個原始 `buildFlags` 至少一個可觀察且由匯入器重算結果與 aggregate 一致、summary 與 29 筆 cases 一致且 `boundaryWarnings` 為空。
+- 任何備註不得包含帳號、角色、伺服器、磁碟絕對路徑、WTF 或 Account 片段；遊戲內先遮蔽，開發端匯入器再拒絕遺漏案例。
+- 完成後可直接複製記憶體內最新的 `EAM_LIVE_VALIDATION_REPORT` JSON 回報。若改由 WTF SavedVariables 匯入，完成報告後必須再由玩家自行 `/reload` 或正常登出，讓最新 JSON 寫回磁碟；回報必須保留 `_ptr_`／`_xptr_` 身分，不得包含帳號、角色、伺服器或絕對路徑。
+- 2026-07-29 最新離線結果：Lua 語法 45/45、Flow `all` 42/42（`TestResults/EAM_FlowValidation_all_20260729_153728.json`）、JSON／Lua／TOC／PowerShell／匯入器契約 119/119。Flow 報告明示 `purpose=offline-contract`、`executionSource/source=offline-mock`、`clientChannel=OFFLINE`；這些只證明離線契約，不是 PTR／XPTR／Retail 實機簽收。
+- 契約反例已固定驗證：缺 `/reload` 的 pass、未知 test-build 身分、raw 全 unknown 卻宣稱 known、raw 全 false 卻宣稱 aggregate true、raw true 卻宣稱 aggregate false、隱私路徑、summary 與 cases 不一致、Flow schema 1 都必須被拒絕；完整合成 Live pass 僅驗證匯入器正向路徑，標記為 `synthetic contract only` 且不列為 PTR 證據。
+- 本機環境前置斷言 3/3：`_retail_` 12.0.7、`_ptr_` 12.1.0、`_xptr_` 12.0.7，三個 EAM Reparse Point 都指向 `D:\EventAlertMod`；這只解除版本／連結阻擋，不是遊戲流程簽收。
+- 2026-07-28 唯讀檢查使用者指定的 PTR SavedVariables：只含 Flow schema 1，匯入結果為 `legacy-unverified`、exit code 1；尚無現行 34 案真人報告，故 `_ptr_` 與 `_xptr_` 實機狀態都維持「待玩家簽收」。
+
+## 2026-08-01：PTR 回報與 UnitPower 擴充矩陣
+
+- 流程面板新增「雙倒數診斷」與「UnitPower 能力」按鈕。前者只切換 Native Aura 顯示模式並脫戰重建；後者只接受玩家操作後的視覺標記，不施法、不切專精、不進出戰鬥。
+- 雙倒數案例只用於人工觀察共用 DurationObject 的兩種顯示器是否同步；不得讀回 FontString，也不得把同步視為兩個獨立資料源互證。正常模式必須回到單倒數。
+- `EAM_UNIT_POWER_CAPABILITY_REPORT` 只允許結果分類與 sink accepted/rejected，不得包含 power、max、percent 原值。回報必須同時提供 `_ptr_`、`_xptr_` 或 `_retail_` 身分。
+- target Aura 文字空白案例需區分單層、永久、同 Spell ID 不同施法者與真正失效；僅有圖示而無時間／層數不能直接判定為 bug。
+- 12.1 Native border 案例只判定 `AddDispelTypeTexture` capability；它不是 Pandemic、Proc 或任意條件 Glow 的替代品。
+- 本輪新增離線契約覆蓋 DurationAdapter、法術／物品冷卻、地面效果三層解析、swipe alpha、雙倒數診斷、style fingerprint 與 UnitPower Secret sink。離線 `all` 為 54/54；PTR／XPTR／Retail 34 案仍全數待玩家簽收。
+
+
+## 2026-08-08 PTR8 與 UnitPower 新增簽收案例
+
+`Data/LiveValidationMatrix.json` 已升版為 `2026-08-08.1`、共 34 案，新增：
+
+- `live.aura.native_pandemic_region`
+- `live.aura.native_dispel_options`
+- `live.aura.container_disable_clear`
+- `live.unitpower.combat_deferred`
+- `live.aura.duration_zero_regression`
+
+離線 strict mock 已覆蓋前三項與 UnitPower 戰鬥讀取防線；PTR、XPTR、Retail 仍需玩家在正確客戶端手動執行，並於報告標明 `PTR`／`XPTR`／`RETAIL`、build、`/reload` checkpoint 與視覺觀察。離線 pass 不得升格為實機 pass。

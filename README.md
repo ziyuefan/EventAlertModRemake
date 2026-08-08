@@ -1,16 +1,19 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-# [GitHubPage](https://ziyuefan.github.io/EventAlertMod_Remake/ "GitHubPage")
-# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
-# [CommandLine](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#命令列 "CommandLine")
-# [ScreenShot](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#截圖 "ScreenShot")
+# [GitHubPage](https://ziyuefan.github.io/EventAlertModRemake/ "GitHubPage")
+# [ChangLog](https://github.com/ziyuefan/EventAlertModRemake/blob/main/changelog.txt "ChangLog")
+# [CommandLine](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#命令列 "CommandLine")
+# [ScreenShot](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#截圖 "ScreenShot")
 
 ---
 
-#### [正式服 12.1.0 Alpha] 2026.07.28
+#### [正式服 12.1.0 PTR8 Alpha 2] 2026.08.08
 - 12.1 改採 Blizzard Native AuraContainer／AuraButton；12.0.7 保留 Legacy backend，不在 12.1 讀取 `UNIT_AURA` Secret payload。
 - GameTooltip 顯示可安全取得的法術、物品與巨集 ID；光環 ID 優先交由 Blizzard CVar 顯示。
 - 在非戰鬥中可用精確 `Ctrl+Alt` 開啟 EAM 自製監控選單，依法術／光環／物品／巨集來源路由至既有監控清單。
-- 新增離線流程驗證、遊戲內測試面板、報告匯入工具與本機 WoW 版本／符號連結檢查。
+- timer 與 applications 可各自選擇 21 個框內／框外位置，字級可設 8–32。12.0.7 一般 EAM 圖示可直接重套文字；12.1 Native AuraButton 的文字、swipe 與錨點只在 `initializeFrame` 設定，滑桿提交後於脫戰重建一次容器。單次載入最多建立 18 個 Native 容器，超限時明示需 `/reload`。
+- 修正 DurationObject／DurationTextBinding 建構與釋放契約、12.1 物品冷卻事件、地面效果說明秒數與手動 fallback、冷卻 swipe 透明度，以及次要 UnitPower 資源顯示；Secret 主要資源只走原生顯示 sink，不讀回數值。
+- 接入 PTR8 AuraButton Pandemic region、Dispel texture options 與停用 AuraContainer 清除契約；Native 設定只在初始化期套用，修改後於非戰鬥手動重建。
+- 新增離線流程驗證、遊戲內能力面板、34 案真人簽收工作台、雙倒數診斷、UnitPower 能力報告、嚴格 JSON 匯入與 continuity drift gate；本輪通過 Lua 47 檔、Flow `all` 54/54、Validation Contracts 208/208。報告的 `purpose=offline-contract`、`executionSource/source=offline-mock`、`clientChannel=OFFLINE` 只代表離線契約，不是 PTR／XPTR／Retail 實機簽收。
 - 本版定位為 Alpha；離線驗證不等於 PTR 實機簽收，Tooltip 互動、Secret 邊界與戰鬥污染仍需在 12.1 PTR 驗證。
 
 ---
@@ -18,17 +21,20 @@
 ## 開發與實機流程驗證
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLuaSyntax.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
+pwsh -NoProfile -File .\Tools\CheckLuaSyntax.ps1
+pwsh -NoProfile -File .\Tools\Run-FlowValidation.ps1 -Suite all
+pwsh -NoProfile -File .\Tools\Test-ValidationContracts.ps1
 ```
 
-遊戲內請在非戰鬥中使用 `/eam test` 或 Options 的「流程測試」按鈕。報告可複製，或在 ReloadUI／登出後從 WTF 的 `EAM_FLOW_TEST_REPORT_JSON` 匯入：
+遊戲內能力檢查請用 `/eam test`；PTR／XPTR 真人簽收請用 `/eam test live`，選擇實際客戶端後由玩家手動完成 34 案。EAM 不會自動操作角色、Tooltip、按鈕或 `/reload`。未跨過玩家自行執行的 `/reload`、測試版本身分未知、案例未全數通過或仍有警告時，報告不得完成。備註不可包含帳號、角色、伺服器、WTF 或絕對路徑。面板直接複製的是記憶體內最新 JSON；若要從 WTF 匯入，完成報告後必須由玩家再輸入 `/reload` 或正常登出，SavedVariables 才會寫入最新內容：
+
+UnitPower 能力測試在 `/eam test` 點「UnitPower 能力」，由玩家自行產生／消耗資源、切換專精及進出戰鬥，再對兩個原生顯示標記 pass／fail／blocked。輸出的 `EAM_UNIT_POWER_CAPABILITY_REPORT` 只含能力分類與人工結果，不含 current／max／percent 原值。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Import-EAMFlowReport.ps1 -Path '<EventAlertMod.lua 或 report.json>'
+pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 -Path '<EventAlertMod.lua 或 report.json>' -ReportType Auto
 ```
 
-Mock 通過不代表 Retail／PTR 實機通過。完整規格見 `Docs/26_FLOW_VALIDATION_FRAMEWORK.md`。
+Mock 通過不代表 Retail／PTR 實機通過。完整規格見 [Docs/26_FLOW_VALIDATION_FRAMEWORK.md](https://github.com/ziyuefan/EventAlertModRemake/blob/main/Docs/26_FLOW_VALIDATION_FRAMEWORK.md)。
 
 #### [正式服12.1.0]2026.06.09
 - 零分配與事件驅動全模組架構重構（資料完全與視圖解耦）
@@ -386,8 +392,8 @@ SCD_NocombatStillKeep=真，
 - 暗牧瘋狂值達到上限會高亮
 - 小數點變數變更為UseFloatSec，表示低於此秒數將使用小數點同時顯示若0則表示完全不會顯示
 - 鳥D日月能移除，極限下星能。
-# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
-# [ScreenShot](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#截圖 "ScreenShot")
+# [ChangLog](https://github.com/ziyuefan/EventAlertModRemake/blob/main/changelog.txt "ChangLog")
+# [ScreenShot](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#截圖 "ScreenShot")
 
 ##命令列
 
@@ -432,7 +438,7 @@ SCD_NocombatStillKeep=真，
 
 * 以改變作用名稱大小(不分大小寫,也可以/eam nfs nSize代替)*
 
-# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
+# [ChangLog](https://github.com/ziyuefan/EventAlertModRemake/blob/main/changelog.txt "ChangLog")
 
 ## 截圖
 
@@ -448,9 +454,9 @@ SCD_NocombatStillKeep=真，
 ![EAM小地圖](https://truth.bahamut.com.tw/s01/202008/154db1c0ef239cd20035d3b91c2a140f.JPG)
 ![EAM小地圖提示](https://truth.bahamut.com.tw/s01/202008/f1ee8bd0327ecd95f6d2ffea2f06d7ae.JPG)
 
-# [ChangLog](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/changelog.txt "ChangLog")
-# [CommandLine](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#命令列 "CommandLine")
-# [ScreenShot](https://github.com/ziyuefan/EventAlertMod_Remake/blob/main/README.md#截圖 "ScreenShot")
+# [ChangLog](https://github.com/ziyuefan/EventAlertModRemake/blob/main/changelog.txt "ChangLog")
+# [CommandLine](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#命令列 "CommandLine")
+# [ScreenShot](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#截圖 "ScreenShot")
 ## Retail 12.1 AuraContainer 狀態（2026-07-26）
 
 - TOC 同時宣告 `120007, 120100`，支援共享實體專案的 12.0.7 Legacy 與 12.1 Native 分流。

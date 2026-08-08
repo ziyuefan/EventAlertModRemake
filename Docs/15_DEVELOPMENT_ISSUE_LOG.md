@@ -27,15 +27,38 @@
 ```
 ## 記錄
 
+### 2026-07-29 Alpha 2 文件基線與 Pages 轉換器錯誤（已解決）
+
+- 狀態：TOC、最新離線證據、轉換器根因與 Pages 產物已同步，發布前文件閘門通過。PTR／XPTR 真人矩陣狀態不變，仍未簽收。
+- 情境：GitHub Alpha 2 發布前同步 repo `main`、GitHub Pages 與 Release ZIP 內的版本、README 及驗證證據。
+- 症狀：TOC 仍停在 `EventAlertMod_MN_20260728`；README、測試計畫與流程框架仍引用 Flow 35/35、Contracts 109/109；HTML 轉換器把外部 GitHub `.md` URL 錯加 `.html`，離線模式又把未翻譯原文當成英文結果，讓新驗證段落在中英文頁籤各出現一次。
+- 原因判斷：發布日期與離線 gate 沒有在文件重建前同步；連結後處理使用不分 URL 類型的通用正規式；`EAM_DOCS_OFFLINE=1` 在翻譯入口回傳原文，而非明確回傳「翻譯不可用」。
+- 已嘗試方法：官方 `functions.apply_patch` 與一般終端命令在 Codex Windows sandbox 遇到 `helper_unknown_error: setup refresh had errors`；唯讀查詢改走已授權的同範圍程序，正式來源修改則改用本機 npm Codex 套件的官方 `--codex-run-as-apply-patch` 協定，不以 PowerShell 字串改寫檔案。直接執行檔第一次仍沿用 cmd 啟動器的雙引號反斜線轉義，補丁因無法命中而零修改；移除多餘轉義後成功。第一次 Pages 驗證則因 PowerShell 不允許把 `foreach` statement 直接接管線而產生 `An empty pipe element is not allowed`，改為先收集陣列再格式化。全程維持 `EAM_DOCS_OFFLINE=1`，不把 Markdown 送往外部翻譯服務。
+- 有效解法：TOC 更新為 `EventAlertMod_MN_20260729`；最新證據統一為 Lua 45/45、Flow 42/42、Validation Contracts 119/119，Flow artifact 為 `TestResults/EAM_FlowValidation_all_20260729_153728.json`，並明示 `purpose=offline-contract`、`executionSource/source=offline-mock`、`clientChannel=OFFLINE`。轉換器只改寫本機相對 Markdown 連結，保留外部 GitHub URL；離線翻譯明確回傳不可用，讓第二語言頁籤顯示 fallback，不再複製原文。
+- 歷史污染邊界：先前針對本次追蹤新增行、功能檔與指定文件的有限盤點，以 65 行既有 `EAM`＋`CODE` marker／file URI 作為基線；本輪另以 `git grep -n -E '[E]AMCODE|file:/{3}' HEAD -- '*.md'` 對全部 HEAD Markdown 廣義重掃，得到 71 行（62 行 marker、9 行 URI）。兩者 glob／範圍不同，不可互相比較；本次允許修改檔新增增量為 0，歷史污染另案清理。
+- 驗證結果：轉換器 `unittest` 4/4；離線重建 34 個來源並同步 Pages／Release README；指定 artifact 經 schema 2 契約驗證為 42/42，SHA-256 `12D5F123A72D46DA16277DB4C833B3AE3EEF0BEEAD9772F4A43E4C3A339AEE09`；Lua 45/45、Validation Contracts 119/119。README、Pages README 與 Release README 的最新 artifact 段落各 1 次，外部 GitHub `.md.html` 誤連結為 0；35 個 Pages HTML 的相對 `href` 均有實體目標，5 個本專案 GitHub／Pages URL 均為 HTTP 200。允許來源 marker／file URI 命中行 21→21、新測試 0，36 份 HTML 由 140→70（去除離線雙語重複，增量 -70）；`git diff --check` exit 0，只有既有 LF／CRLF 轉換提示。
+- 後續注意事項：不得用離線 artifact 冒充 PTR／XPTR／Retail 實機證據；GitHub Alpha 身分由 prerelease metadata 表示，Release ZIP 必須使用正常白名單模式，不得使用 `-DevMode`。
+
+### 2026-07-29 Native Aura 容器生命週期、戰鬥排版與實機報告證據可偽造（程式已解決，待 PTR 簽收）
+
+- 狀態：四項 P1 已完成程式與離線契約修正；SEC／AURA121 第二次終審進行中，PTR／XPTR 真人矩陣仍未簽收。
+- 情境：12.1 Native Aura 文字版面、18 案真人簽收報告與開發端 JSON 匯入器的最終專家審查。
+- 症狀：AuraContainer 每次 fingerprint 改變都建立新 player／target Frame，舊 Frame 無法銷毀；一般 Renderer 的 public defer 可被 render 內部 helper 繞過；`prepareReload()` 後可在同次載入直接 resume；raw build flags 與 aggregate 可互相矛盾；producer 亦可能在 phase 尚為 active 時產生 pass 外觀。
+- 原因判斷：fingerprint 錯把全域 revision 當結構事實，文字設定也透過 container rebuild 套用；戰鬥守衛只放在外層 API；reload checkpoint 沒有載入世代 identity；Schema 只檢查 raw 欄位存在，匯入器未重新計算。
+- 已嘗試方法：原生 `apply_patch` 與一般 PowerShell 啟動器持續遇到 `setup refresh had errors`；改用本機 Codex `--codex-run-as-apply-patch` 後，Windows 原生參數層又先移除 patch 內雙引號，造成一次立即發現並修正的無效 Lua `__mode = k`。所有既有檔案均先建立時間戳備份，未碰 WoW AddOns SymbolicLink。
+- 有效解法：Native renderer 以 weak-key registry 直接重套 EAM FontString，文字改變不再重建容器；一般 Renderer 的 text／layout／toggleAnchors 全部在戰鬥中延後；Aura fingerprint 移除 revision 並納入真實 layout，容器每次載入最多建立 18 個，超限保留現況並要求 `/reload`；checkpoint 加入 boot token table identity，同載入回傳 `sameLoadRejected`；active phase 固定 incomplete；匯入器驗證 Flow schema 2 並由三個 raw flags 重算 known／aggregate；producer 先遮蔽 UNC 與 SavedVariables 路徑。
+- 驗證結果：Lua 語法 45/45；最新離線 Flow `all` 42/42，報告 `TestResults/EAM_FlowValidation_all_20260729_153728.json`；Validation Contracts 119/119。Flow 報告為 `purpose=offline-contract`、`executionSource/source=offline-mock`、`clientChannel=OFFLINE`；以上均不是 PTR／XPTR／Retail 實機證據。
+- 後續注意事項：由玩家在 `_ptr_` 12.1 完成至少 30 次文字／結構調整、戰鬥內外與真正 `/reload`，核對 `createdContainerCount` 上限、`sameLoadRejected`、Forbidden／taint／blocked action 與框外裁切；`_xptr_` 12.0.7 仍需完成同一份 18 案矩陣。讀取 WTF 前必須先由玩家 `/reload` 或正常登出。
+
 ### 2026-07-28 README 導覽連結仍指向舊儲存庫（已解決）
 
-- 狀態：已解決；README 內所有專案導覽連結已改為 `ziyuefan/EventAlertMod_Remake` 的 `main` 路徑。
+- 狀態：已解決；README 內所有專案導覽連結已改為 `ziyuefan/EventAlertModRemake` 的 `main` 路徑。
 - 情境：Alpha 發布前核對 GitHub 儲存庫與 Pages 導覽。
 - 症狀：ChangLog、CommandLine 與 ScreenShot 的重複連結仍指向舊 `EventAlertModAll`；ScreenShot fragment 也使用本 README 不存在的 `#screenshot-2`。
 - 原因判斷：README 沿用舊 repo 的絕對連結，儲存庫改造後沒有同步路徑與章節錨點。
 - 已嘗試方法：先列出所有 `github.com`／`github.io` 連結，再核對實際 `##命令列` 與 `## 截圖` 標題，避免只更換 repo 名稱。
 - 有效解法：ChangLog 直接連到本 repo `main/changelog.txt`；CommandLine 與 ScreenShot 分別連到本 repo README 的 `#命令列` 與 `#截圖`。
-- 後續注意事項：儲存庫搬移、改名或章節標題變更時，發布前必須搜尋舊 owner／repo 與失效 fragment；Pages 網址維持 `https://ziyuefan.github.io/EventAlertMod_Remake/`。
+- 後續注意事項：儲存庫搬移、改名或章節標題變更時，發布前必須搜尋舊 owner／repo 與失效 fragment；Pages 網址維持 `https://ziyuefan.github.io/EventAlertModRemake/`。
 
 ### 2026-07-28 Release ZIP 的根 readme.html 與 Pages 內容漂移（已解決）
 
@@ -752,3 +775,121 @@
 - 終審收斂：API Change 複核最終為 P0=0、P1=0；剩餘兩個 P2（模組檔頭未揭露 private metadata、戰鬥中顯示不可用 Ctrl+Alt 提示）亦已關閉。戰鬥中仍可追加安全 ID，但只有成功建立脫戰 candidate 才顯示操作提示。
 - 驗證結果：Lua 5.1 語法通過 42/42；禁用模式掃描只命中 EAM 自有按鈕 `OnClick`；TOC 所有 Lua 路徑存在；文件 Tooltip 標題唯一、五語系鍵齊全；`boundary` 10/10（`TestResults/EAM_FlowValidation_boundary_20260728_120708.json`），`all` 24/24（`TestResults/EAM_FlowValidation_all_20260728_120708.json`）。真 Popup 初次測試因未重新產生已消耗 candidate 而 7/9，失敗報告 `TestResults/EAM_FlowValidation_boundary_20260727_042850.json` 保留。
 - 後續注意事項：必須在 `_ptr_` 12.1 與 `_xptr_` 12.0.7 依 `Docs/06_TEST_PLAN_RETAIL.md` 實測 Tooltip 類型、CVar、Popup、戰鬥拒絕、原始點擊行為與 taint／blocked action／Forbidden 錯誤；離線 pass 不得宣稱實機通過。
+
+### 2026-07-28 Timer／applications 版面契約與真人回報鏈（離線已完成，待 PTR／XPTR）
+
+- 狀態：產品與離線驗證工具已完成；`_ptr_` 12.1、`_xptr_` 12.0.7 的 18 案真人簽收仍未完成。
+- 情境：使用者回報 timer inside／outside 設定無效，且要求 applications 可選框內／框外完整方位與字級；同時要求在 Codex 不操作遊戲的前提下，建立可回灌的人工能力／流程證據與 JSON 事實來源。
+- 症狀：通用 Renderer 與 12.1 NativeAuraRenderer 各自維護不同錨點；Native 路徑固定把倒數與堆疊放在框內。舊 Flow schema 1 又只帶 `retail-client` 類型來源，無法可信區分 `_ptr_`、`_xptr_` 與離線 Mock。WTF 檔案若未在報告完成後再次 `/reload`／正常登出，磁碟內容仍是舊報告。
+- 原因判斷：文字位置缺少單一白名單契約與版本化 SavedVariables；能力探針、人工簽收與離線 Mock 混用同一報告語意；SavedVariables 的記憶體狀態與磁碟保存時機未在 UI 明示。12.1 AuraButton 的 FontString 必須在 `initializeFrame` 設定，不能在任意更新路徑修改官方 Widget 結構。
+- 已嘗試方法：由 UI／版面、12.1 API／taint、流程探針三席專家做互不重疊唯讀審查；查證 12.1 AuraButton 初始化限制；新增 21 點 JSON／Lua 契約、schema v3 遷移、字級 8–32、18 案真人矩陣、client identity 交叉檢查、`/reload` checkpoint 與可信匯入器。未使用任何遊戲自動輸入。
+- 工具問題：標準 `apply_patch` 與一般命令因 Codex Windows sandbox `setup refresh had errors` 無法啟動；改用經授權的 Codex 原生 apply-patch 模式後，Windows PowerShell 5.1 又會移除原生參數內的裸雙引號，需以反斜線轉義後再傳遞。新契約工具初版另有 PowerShell `and`、JSON regex 跳脫與語系鍵前綴假設錯誤，均由 AST／schema／交叉比對測試攔下並修正。
+- 有效解法：`Data/TextPlacementContract.json` 作為版面事實，`UI/TextPlacement.lua` 只載入靜態白名單映射；兩種 Renderer 共用此模組。`Data/LiveValidationMatrix.json` 與四份 `Schemas/*.json` 固化報告／矩陣／版面契約；`LiveTestSession` 僅保存玩家人工觀察，不施法、不用物品、不執行巨集、不改目標、不呼叫 `ReloadUI`。匯入器重算摘要、身分與矩陣，Flow schema 1 固定標為 `legacy-unverified`。
+- 驗證結果：Lua 45/45；Flow `all` 30/30；JSON／Lua／TOC／PowerShell 契約 72/72；schema 2 `offline-mock` 可回灌但不升格實機；offline Live fixture 與 schema 1 Flow 均以非零退出拒收；回灌 Markdown 未含磁碟絕對路徑、`Users` 或 `Account`。本機 WoW 版本／Reparse Point 前置斷言通過 3/3。
+- 流程固化：新增 `skills/eam-validation-contracts/SKILL.md`。Python 3.14 缺少 PyYAML，改用本機已有 `PyYAML 6.0.3` 的 Python 3.13，並以單次 `PYTHONUTF8=1` 避免 cp950 誤讀；官方 `quick_validate.py` 回傳 `Skill is valid!`。
+- PTR 參考結果：使用者指定的 `_ptr_` SavedVariables 經唯讀、隱私淨化匯入，只含 Flow schema 1，因此為 `legacy-unverified`。必須先在 PTR 載入新版、完成人工矩陣，並再次由玩家 `/reload` 或正常登出寫回最新 JSON。
+- 後續注意事項：實機時先執行 `Tools/Test-LocalWoWEnvironment.ps1`；完成後若直接複製面板 JSON，不需額外保存；若從 WTF 匯入，必須再 `/reload`／登出。實機仍需檢查 Tooltip、Popup、原 Blizzard 點擊、戰鬥轉換、Aura CVar、Native Widget、taint、blocked action 與 Forbidden。
+
+### 2026-08-01 EAM-20260801-PTR121-AURA-DUAL-COUNTDOWN：Native Aura 雙倒數與初始化限制
+
+- 狀態：程式與離線契約已修正；待 PTR 12.1 與 12.0.7 降級實機驗證。
+- 症狀：PTR 12.1 同一光環同時顯示 Blizzard Cooldown 內建數字與 EAM DurationText，兩套倒數高度同步；舊版面流程另會在 `initializeFrame` 後重新 `SetPoint`／`SetFont`。
+- 原因判斷：`SetDurationCooldown` 與 `SetDurationText` 同時接收同一個 Aura DurationObject；68914 在初始化回呼完成後限制 AuraButton 與其子元件，後置重排屬 Forbidden 風險。
+- 已嘗試方法：查核固定 build FrameXML；把 slot 錨點、FontString、Cooldown、swipe、文字顯示選項全部移入初始化回呼；strict mock 在回呼結束後鎖定 button 與 child region。
+- 有效解法：正常模式 `SetHideCountdownNumbers(true)` 只保留 EAM 一套文字；流程面板可明確切換雙倒數診斷，並以脫戰容器重建套用。離線案例驗證後置 mutation 必須失敗。
+- 後續注意事項：雙倒數只供玩家觀察開始、中段與最後三秒；兩者不是獨立資料源，禁止 `GetText()` 讀回比較。完成診斷後應關閉。
+
+### 2026-08-01 EAM-20260801-COOLDOWN-DURATION-CONTRACT：DurationObject 與倒數 binding 生命週期
+
+- 狀態：已修正並離線通過；待 PTR／XPTR／Retail 法術與充能冷卻實機驗證。
+- 症狀：冷卻圖示有 swipe 但沒有倒數文字，原服務曾把 duration 直接傳給 `CreateDuration`，Renderer 也曾把 duration/fontString 當作 binding factory 參數並假設存在 `Unbind`。
+- 原因判斷：12.x 契約為無參數 factory，再呼叫 `SetTimeFromStart`；DurationTextBinding 亦為無參數建立，再逐一設定 FontString、Duration、Formatter 與 enabled 狀態。
+- 已嘗試方法：建立 `Core/DurationAdapter.lua` 集中正確 factory、formatter、binding 與釋放降級；冷卻、物品、圖騰、地面效果與 Renderer 共用同一生命週期。
+- 有效解法：正確建立 DurationObject，優先 `SetCooldownFromDurationObject`，安全普通數字保留 `SetCooldown(start, duration)` fallback；離線案例驗證 factory 次數與 binding setter。
+- 後續注意事項：PTR／XPTR 必須分別測普通冷卻、GCD 排除與充能回充；離線 mock 不代表 C++ Duration 顯示實機通過。
+
+### 2026-08-01 EAM-20260801-ITEM-COOLDOWN-EVENT：12.1 itemID 定向刷新
+
+- 狀態：已修正並離線通過；待玩家實際使用物品驗證。
+- 症狀：PTR 12.1 已加入監控的物品使用後沒有圖示或倒數。
+- 原因判斷：服務只監聽 `BAG_UPDATE_COOLDOWN`，沒有處理 12.1 `SPELL_UPDATE_COOLDOWN` 的第五個 `itemID` 參數，因而錯過定向物品更新。
+- 已嘗試方法：加入 12.1 事件分支，只在安全正整數 itemID 時呼叫 `refreshItem`；沒有 itemID 時不把 spell 事件誤當成全背包掃描。
+- 有效解法：監控 itemID 可定向建立 ItemCooldownState，並透過 DurationAdapter 建立倒數；錯誤 itemID 零 API 讀取的離線案例已通過。
+- 後續注意事項：需實測背包消耗品、裝備主動效果、共享冷卻與 `/reload`；確認其他 itemID 事件不誤觸。
+
+### 2026-08-01 EAM-20260801-GROUND-DURATION-RESOLUTION：地面效果自動秒數與手動 fallback
+
+- 狀態：已修正並離線通過；待多語系 PTR／XPTR 實機驗證。
+- 症狀：地面效果沒有可靠持續時間；舊資料又可能以字串 key 保存，runtime 以數字 spellID 索引時無法命中。
+- 原因判斷：地面效果需要 canonical key 與預先編譯的數字索引；動態剩餘時間不可由 Tooltip 推測，但靜態技能說明中的明確秒數可在非戰鬥低頻解析。
+- 已嘗試方法：schema v4 遷移 ground alert key；建立非戰鬥解析鏈 `C_Spell.GetSpellDescription`、Tooltip `SpellDescription` line、manual fallback；施法熱路徑只讀 cache。
+- 有效解法：解析成功標記 `spellDescription`／`tooltipDescription`；失敗採使用者秒數並記錄 `groundDurationManualFallback`；手動模式永遠優先使用設定值。
+- 後續注意事項：需確認 zhTW／enUS 實際說明格式、無秒數技能、戰鬥中設定延後與重新施放覆蓋到期排程。
+
+### 2026-08-01 EAM-20260801-PTR121-TARGET-AURA-LIFECYCLE：target Aura 文字空白與 Native border 邊界
+
+- 狀態：持續調查；已補離線契約與 29 案人工程序，尚無足夠 PTR 證據判定單一根因。
+- 症狀：使用者觀察到 target Aura 偶爾保留圖示但沒有剩餘時間與層數，並詢問 12.1 新 Aura border 是否可取代 Glow。
+- 原因判斷：官方行為在 applications 小於等於 1 時清空層數；永久或零 expiration Aura 停用 duration binding；`fromPlayer=false` 亦可能匹配同 Spell ID 的其他施法者。`AddDispelTypeTexture` 只涵蓋官方驅散／靜態邊框。
+- 已嘗試方法：把 showCountdown/showStacks/showName、文字位置與字級納入 compiler fingerprint 與 initializer；新增 target transition 人工案例與 native border capability 布林報告。
+- 有效解法：目前只能正確分類並避免誤判；不以原生 border 冒充 Pandemic／Proc／任意條件 Glow，也不讀回 Secret 文字。
+- 後續注意事項：PTR 需記錄目標切換、單層到多層、有限到永久、同技能其他施法者與 player/target Slot/Group；若重現仍非上述官方狀態，再提供匿名 JSON 與畫面。
+
+### 2026-08-01 EAM-20260801-UNITPOWER-CAPABILITY：次要資源數字與主要資源原生 sink
+
+- 狀態：程式與離線 capability probe 已完成；待 PTR 12.1 與 XPTR 12.0.7 玩家實測。
+- 症狀：舊服務只依 `UnitPowerType` 選目前主要資源，聖能、連擊點、靈魂碎片、真氣、秘法充能等次要資源多數選不到；數值 1 又被 Aura stacks 規則隱藏。
+- 原因判斷：職業次要資源需依 class priority 與 `UnitPowerMax` 選擇；安全數字不應借用 applications 大於 1 才顯示的語意。主要資源可能為 Secret，只能走官方 widget sink。
+- 已嘗試方法：加入 `UnitPowerMax`／`UnitPowerPercent` 與 C_Secrets predicate；次要資源優先、事件 token 過濾、`displayValue` 顯示 1；建立玩家啟停的 StatusBar／radial capability probe。
+- 有效解法：安全數字進一般 Renderer；Secret percent 只直接傳入 StatusBar／radial，不比較、不讀回、不序列化。報告只輸出 `safe-number`／`secret`／`nil`／`error` 與 sink accepted/rejected。
+- 後續注意事項：玩家自行切專精、產生／消耗／歸零與進出戰鬥；EAM 不設定限制 CVar、不施法、不操作角色。需回傳 `EAM_UNIT_POWER_CAPABILITY_REPORT` 並標明客戶端。
+
+### 2026-08-01 EAM-20260801-CONTINUITY-CONTRACT：專案脈絡與試錯防漂移
+
+- 狀態：已完成，納入契約 gate。
+- 症狀：長期任務經多次上下文壓縮後，容易混淆已確認事實、推論、離線結果與尚未執行的實機簽收，也可能重複已證明錯誤的 API 用法。
+- 原因判斷：AGENTS 是規範、Issue Log 是完整時間線、Live Matrix 是人工案例，三者都不適合單獨承擔當前專案狀態。
+- 已嘗試方法：建立 `Docs/28_PROJECT_CONTINUITY.md`、`Data/ProjectContinuity.json` 與 Draft 2020-12 Schema；以穩定 fact／inference／work／trial／unverified ID 分離資料責任。
+- 有效解法：人類先讀 Docs/28，代理再讀 JSON；work item 連到本檔唯一 issue ID；PTR／XPTR／Retail pass 必須有真人證據，離線 50/50 不可升格。
+- 驗證結果：Lua 47 檔語法通過、Flow `all` 50/50。契約初跑的 186/188 來自兩條仍要求 Native 初始化後直接重套文字的過時斷言；改成「拖曳預覽不重建、提交只重建一次、Native child initialization-only」後為 188/188，再加入 continuity 與五語系功能鍵唯一性 gate 後最終為 198/198。
+- 工具試錯：`Test-ValidationContracts.ps1` 有 `#requires -Version 7.0`，Windows PowerShell 5.1 只會在執行前拒絕，必須使用 `pwsh`。多檔補丁若後續檔案定位失敗，前面檔案可能已套用；失敗後必須逐檔核對，高風險文件改採單檔小補丁。
+- 後續注意事項：每次重大實機結果或決策變更都要同步更新 snapshotVersion、JSON 與 Docs/28；詳細過程仍只追加到本 Issue Log，不把整段時間線複製進 JSON。
+
+
+### 2026-08-08 EAM-20260808-PTR8-UNITPOWER：PTR8 API 與 UnitPower 公開契約
+
+- 狀態：程式、strict mock 與離線 36/36 Aura121 案例通過；PTR／XPTR／Retail 實機未簽收。
+- 症狀：需求提供 `StatusBar:SetUnit`、`SetPowerTextFontString`、`SetOnUpdateMode` 作為新式 UnitPower 例，但官方 PTR 12.1.0.69189 生成文件與唯讀 FrameXML 掃描未找到這三個一般 StatusBar API。
+- 原因判斷：來源可能是未公開或更晚 build；目前不能把未驗證方法當成正式依賴。官方可確認的 Secret sink 是 `StatusBar:SetValue` 與 `Texture:SetRadialProgressBarPercent`。
+- 已嘗試方法：查閱 Unit、SecretPredicate、SimpleStatusBar、SimpleTextureBase 生成文件與 PTR source；將 `ClassPowerService` predicate 改為 fail-closed，戰鬥中讀值改為 `combatDeferred`，離戰後由 `PLAYER_REGEN_ENABLED` 恢復。
+- 有效解法：安全普通數字只在 predicate 明確 false 且非戰鬥時使用；Secret percent 只單向送 native sink，報告不保存原值。探針的 sink 初始化不等於視覺接受，必須由玩家按鈕標記 accepted／pass。
+- 後續事項：若要採用三個未證實方法，需提供目標 build 的官方生成文件或實機 API probe；PTR 需測資源增減、戰鬥內外、零值與 `/reload`。
+
+### 2026-08-08 EAM-20260808-PTR8-AURABUTTON：Pandemic／Dispel／Container 清除
+
+- 狀態：`AddPandemicRegion`、`AddDispelTypeTexture` options 與 disabled container clear 已接入 initializeFrame 與 strict mock；PTR 實機待簽收。
+- 症狀：舊實作只偵測 `AddDispelTypeTexture` 存在，沒有實際傳入 texture/options，也沒有 Pandemic region。
+- 原因判斷：PTR8 需使用實際 API 名稱與 options precedence；`showAlways` 會覆蓋 harmful/helpful/stealable 條件，不可把 deprecated AuraBorder 當新契約。
+- 已嘗試方法：增加 compiler 白名單、renderer 初始化期綁定、mock trace 與 3 個 offline cases；Native settings 改為 `settingsDirty` 待手動套用。
+- 有效解法：只在明確規則啟用 Pandemic 時建立 Region；Dispel options 由安全 enum 映射；停用容器 mock 清除按鈕 assignment 但保留 frame。
+- 後續事項：PTR 12.1 觀察 Pandemic Window 顯示、showAlways precedence、AuraButton／ItemEnchantment 清除與重啟，不讀 Secret `Shown`。
+
+
+### 2026-08-08 EAM-20260808-CONTINUITY-JSON-EDIT：資料契約更新時的替換風險
+
+- 狀態：已解決。
+- 症狀：以 PowerShell 正則替換 continuity JSON 的數字欄位時，群組參照與替換文字相鄰，暫時產生字面值 `$154$254`，並使 `ProjectContinuity.json` 無法解析。
+- 原因判斷：PowerShell replacement string 對 `$1`、`$2` 的群組語法在後接數字時會被解讀成其他群組編號；不是 JSON schema 或程式邏輯錯誤。
+- 已嘗試方法：先以現場檔案診斷換行與欄位，再使用作業開始時建立的 backup 還原單一 JSON；未還原其他程式或文件變更。
+- 有效解法：改用唯一字串／索引插入與直接數字替換，立即執行 `ConvertFrom-Json` 及 `EAM_ProjectContinuity.schema.json` 驗證；最後契約 gate 為 207/207。
+- 後續注意事項：JSON 維護避免使用含數字相鄰的未加括號 replacement group；修改 continuity 後必須重跑 schema、importer、snapshot 與 privacy checks。
+
+### 2026-08-08 EAM-20260808-ALPHA2-PACKAGE：Alpha 2 標準封裝副檔名篩選
+
+- 狀態：已修正並通過本機發布 gate；GitHub prerelease 與 Pages 遠端驗證另由本次發布流程執行。
+- 症狀：標準封裝首次執行時，把 `Data` 目錄下的 JSON 判定為未列入 TOC 的 Lua／XML，因而中止封裝。
+- 原因判斷：Windows PowerShell 5.1 對 `Get-ChildItem -LiteralPath` 搭配 `-Include` 的行為與預期不一致，未可靠限制回傳副檔名。
+- 已嘗試方法：重現錯誤後檢查封裝器輸入集合，確認不是 TOC 遺漏；改以檔案 `Extension` 明確白名單篩選 `.lua`／`.xml`。
+- 有效解法：封裝器只對 Lua／XML 執行 TOC 完整性檢查；契約測試新增 PowerShell 5.1 回歸條件，禁止恢復舊 `-Include` 寫法。
+- 驗證結果：Lua 語法 47 檔通過、Flow 54/54、驗證契約 208/208、文件轉換單元測試 4/4、本機 WoW 版本與 Reparse Point 3/3；標準 ZIP 已成功產生。以上均屬離線／本機證據，不等同 PTR 實機簽收。
+- 後續注意事項：GitHub Release 只上傳 `Dist` 內最終 ZIP 資產；`Dist/`、`deploy/`、`backup/` 與 `TestResults/` 不納入 Git，Release 必須標記為 Alpha prerelease。

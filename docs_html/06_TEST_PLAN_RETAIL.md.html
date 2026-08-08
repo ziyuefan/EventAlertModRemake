@@ -611,205 +611,60 @@
 <li>明確驗證原 Blizzard 行為未被攔截：一般左／右鍵操作與未按修飾鍵時應完全維持客戶端原行為。</li>
 <li>補測同型 Tooltip 快速切換的 generation／owner、初始化時 Tooltip API 暫缺、<code>/reload</code>／LoD，以及 Popup 開啟後立即進戰；離線 mock 不得替代這些 PTR 時序與 taint 證據。</li>
 </ul>
+<h2 id="2026-07-28-ptrxptr">2026-07-28：文字版面與 PTR／XPTR 真人簽收矩陣</h2>
+<ul>
+<li>正規化事實來源：<code>Data/TextPlacementContract.json</code>（21 點、字級 8–32）與 <code>Data/LiveValidationMatrix.json</code>（34 案、版本 <code>2026-08-08.1</code>）。</li>
+<li>離線命令：<code>Tools/CheckLuaSyntax.ps1</code>、<code>Tools/Run-FlowValidation.ps1 -Suite all</code>、<code>Tools/Test-ValidationContracts.ps1</code>。</li>
+<li>遊戲內入口：非戰鬥中使用 <code>/eam test live</code> 或流程面板「真人實機簽收」。玩家必須先選擇 <code>_ptr_</code>／<code>_xptr_</code>／<code>_retail_</code>；宣告值會和 client build、Interface 與 test-build 能力交叉驗證。</li>
+<li>EAM 只記錄玩家觀察；不自動停留 Tooltip、不點按按鈕、不施法、不用物品、不執行巨集、不改目標，也不呼叫 <code>ReloadUI</code>。</li>
+<li><code>_ptr_</code> 12.1 必測：Spellbook、Action Bar Macro、Bag Item、player／target Aura、非戰鬥加入、戰鬥拒絕、Popup 取消／提交／重複提交、Blizzard 原輸入、generation、LoD、taint／blocked action／Forbidden、timer／applications 版面、正常單倒數、雙倒數診斷、法術／物品冷卻、地面效果解析與 fallback、swipe alpha、target Aura 生命週期、Native border capability 與 UnitPower 原生 sink。</li>
+<li><code>_xptr_</code> 12.0.7 必測同一組案例；Aura ID CVar 與 12.1 Native 能力不存在時必須明示 Legacy／fallback，不得讀取 AuraData 補猜。UnitPower 主要資源使用 StatusBar fallback，不要求 radial API。</li>
+<li>timer 至少驗證框內、框外，以及字級 8／14／32；applications 必須涵蓋框內九點、框外八角邊與四面，以及字級 8／12／32。</li>
+<li><code>_ptr_</code> 另需連續調整文字位置／字級與 icon size／spacing 至少 30 次：文字改變不得增加 <code>createdContainerCount</code>；結構改變到達 18 個容器上限後必須保留現有畫面並回報 <code>nativeReloadRequired</code>，不得再建立 AuraContainer。</li>
+<li><code>/reload</code> 案例必須先按「建立 /reload 檢查點」，再由玩家自行輸入 <code>/reload</code>；回來後 <code>resumedAfterReload=true</code> 且 <code>reloadSequence&gt;=1</code>。</li>
+<li>checkpoint 後若未實際 reload 就直接呼叫 resume，必須回傳 <code>sameLoadRejected</code>；玩家完成 <code>/reload</code> 後才可因 boot generation 改變而恢復。</li>
+<li>即使 34 案已全部標為 pass，尚未完成上述 <code>/reload</code> 時，<code>LiveTestSession.complete()</code> 必須回傳 <code>reloadRequired</code>，報告必須保留 <code>reloadCheckpointNotCompleted</code> 且不得直接複製為 pass。</li>
+<li><code>pass</code> 另要求 <code>phase=complete</code>、<code>isTestBuildKnown=true</code>、<code>channelValidation=pass</code>、三個原始 <code>buildFlags</code> 至少一個可觀察且由匯入器重算結果與 aggregate 一致、summary 與 29 筆 cases 一致且 <code>boundaryWarnings</code> 為空。</li>
+<li>任何備註不得包含帳號、角色、伺服器、磁碟絕對路徑、WTF 或 Account 片段；遊戲內先遮蔽，開發端匯入器再拒絕遺漏案例。</li>
+<li>完成後可直接複製記憶體內最新的 <code>EAM_LIVE_VALIDATION_REPORT</code> JSON 回報。若改由 WTF SavedVariables 匯入，完成報告後必須再由玩家自行 <code>/reload</code> 或正常登出，讓最新 JSON 寫回磁碟；回報必須保留 <code>_ptr_</code>／<code>_xptr_</code> 身分，不得包含帳號、角色、伺服器或絕對路徑。</li>
+<li>2026-07-29 最新離線結果：Lua 語法 45/45、Flow <code>all</code> 42/42（<code>TestResults/EAM_FlowValidation_all_20260729_153728.json</code>）、JSON／Lua／TOC／PowerShell／匯入器契約 119/119。Flow 報告明示 <code>purpose=offline-contract</code>、<code>executionSource/source=offline-mock</code>、<code>clientChannel=OFFLINE</code>；這些只證明離線契約，不是 PTR／XPTR／Retail 實機簽收。</li>
+<li>契約反例已固定驗證：缺 <code>/reload</code> 的 pass、未知 test-build 身分、raw 全 unknown 卻宣稱 known、raw 全 false 卻宣稱 aggregate true、raw true 卻宣稱 aggregate false、隱私路徑、summary 與 cases 不一致、Flow schema 1 都必須被拒絕；完整合成 Live pass 僅驗證匯入器正向路徑，標記為 <code>synthetic contract only</code> 且不列為 PTR 證據。</li>
+<li>本機環境前置斷言 3/3：<code>_retail_</code> 12.0.7、<code>_ptr_</code> 12.1.0、<code>_xptr_</code> 12.0.7，三個 EAM Reparse Point 都指向 <code>D:\EventAlertMod</code>；這只解除版本／連結阻擋，不是遊戲流程簽收。</li>
+<li>2026-07-28 唯讀檢查使用者指定的 PTR SavedVariables：只含 Flow schema 1，匯入結果為 <code>legacy-unverified</code>、exit code 1；尚無現行 34 案真人報告，故 <code>_ptr_</code> 與 <code>_xptr_</code> 實機狀態都維持「待玩家簽收」。</li>
+</ul>
+<h2 id="2026-08-01ptr-unitpower">2026-08-01：PTR 回報與 UnitPower 擴充矩陣</h2>
+<ul>
+<li>流程面板新增「雙倒數診斷」與「UnitPower 能力」按鈕。前者只切換 Native Aura 顯示模式並脫戰重建；後者只接受玩家操作後的視覺標記，不施法、不切專精、不進出戰鬥。</li>
+<li>雙倒數案例只用於人工觀察共用 DurationObject 的兩種顯示器是否同步；不得讀回 FontString，也不得把同步視為兩個獨立資料源互證。正常模式必須回到單倒數。</li>
+<li><code>EAM_UNIT_POWER_CAPABILITY_REPORT</code> 只允許結果分類與 sink accepted/rejected，不得包含 power、max、percent 原值。回報必須同時提供 <code>_ptr_</code>、<code>_xptr_</code> 或 <code>_retail_</code> 身分。</li>
+<li>target Aura 文字空白案例需區分單層、永久、同 Spell ID 不同施法者與真正失效；僅有圖示而無時間／層數不能直接判定為 bug。</li>
+<li>12.1 Native border 案例只判定 <code>AddDispelTypeTexture</code> capability；它不是 Pandemic、Proc 或任意條件 Glow 的替代品。</li>
+<li>本輪新增離線契約覆蓋 DurationAdapter、法術／物品冷卻、地面效果三層解析、swipe alpha、雙倒數診斷、style fingerprint 與 UnitPower Secret sink。離線 <code>all</code> 為 54/54；PTR／XPTR／Retail 34 案仍全數待玩家簽收。</li>
+</ul>
+<h2 id="2026-08-08-ptr8-unitpower">2026-08-08 PTR8 與 UnitPower 新增簽收案例</h2>
+<p><code>Data/LiveValidationMatrix.json</code> 已升版為 <code>2026-08-08.1</code>、共 34 案，新增：</p>
+<ul>
+<li><code>live.aura.native_pandemic_region</code></li>
+<li><code>live.aura.native_dispel_options</code></li>
+<li><code>live.aura.container_disable_clear</code></li>
+<li><code>live.unitpower.combat_deferred</code></li>
+<li><code>live.aura.duration_zero_regression</code></li>
+</ul>
+<p>離線 strict mock 已覆蓋前三項與 UnitPower 戰鬥讀取防線；PTR、XPTR、Retail 仍需玩家在正確客戶端手動執行，並於報告標明 <code>PTR</code>／<code>XPTR</code>／<code>RETAIL</code>、build、<code>/reload</code> checkpoint 與視覺觀察。離線 pass 不得升格為實機 pass。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="_1">正式服測試計劃</h1>
-<p>此文件通行證未執行任何即時正式服驗證。</p>
-<h2 id="_2">固定驗證流水線</h2>
-<p>每次功能或架構變更依序執行：</p>
-<ol>
-<li>Secret／taint／熱路徑／TOC 靜態限制掃描。</li>
-<li><code>Tools/CheckLuaSyntax.ps1</code>：Lua 5.1 語法。</li>
-<li><code>Tools/Run-FlowValidation.ps1 -Suite all</code>：離線 Mock 流程。</li>
-<li>Retail／PTR 使用 <code>/eam test all</code> 或 Options「流程測試」按鈕。</li>
-<li><code>Tools/Import-EAMFlowReport.ps1</code>：將 JSON 或 WTF 報告回灌開發環境。</li>
-</ol>
-<p>證據狀態必須分為靜態、語法、Mock、PTR、Retail。離線流程通過不能取代實機。</p>
-<h3 id="_3">離線流程案例</h3>
-<ul>
-<li>Main 初始化。</li>
-<li>EventRouter 自訂事件 round-trip 與 handler 清理。</li>
-<li>Scheduler 下一幀 callback 與 queue 歸零。</li>
-<li>SavedVariables schema／API 契約。</li>
-<li>Secret-safe scalar 普通值路徑。</li>
-<li>RuntimeProbe schema。</li>
-<li>JSON report round-trip。</li>
-</ul>
-<p>詳細規格見 <code>Docs/26_FLOW_VALIDATION_FRAMEWORK.md</code>。</p>
-<h2 id="_4">靜態檢查</h2>
-<ul>
-<li>確認僅正式服 TOC 處於活動狀態以進行重寫。</li>
-<li>當針對 Retail 12.0.7 時，確認 TOC 介面為 <code>120007</code>。</li>
-<li>確認未載入 Classic/MOP/Cata/Wrath/TBC 來源根。</li>
-<li>搜尋意外的全域變數。</li>
-<li>搜尋 <code>C_Timer.After(function</code>.</li>
-<li>搜尋每幀/per-icon <code>SetScript("OnUpdate")</code>。</li>
-<li>搜尋大型物品 ID 掃描循環。</li>
-<li>搜尋應用於 SavedVariables 或運行時狀態的 <code>table.freeze</code>。</li>
-<li>搜尋舊版 <code>UnitAura</code> 解包路徑。</li>
-<li>搜尋舊的全域 <code>GetSpellCooldown</code> 解包假設。</li>
-<li>在秘密檢查之前搜尋不安全光環<code>spellID</code>比較。</li>
-<li>搜尋用作事實的 Cooldown 小部件 getter 讀回。</li>
-<li>搜尋戰鬥中框架創建或佈局變更。</li>
-</ul>
-<h2 id="reloadui">登入 / ReloadUI</h2>
-<ul>
-<li>在 Retail 12.x 中載入插件。</li>
-<li>確認登入時沒有 Lua 錯誤。</li>
-<li>確認SavedVariables遷移一次並保持可寫入。</li>
-<li>確認「/reload」保留設定檔和位置。</li>
-<li>確認已停用的警報保持停用狀態。</li>
-</ul>
-<h2 id="_5">斜線指令</h2>
-<ul>
-<li><code>/eam opt</code> 開啟選項。</li>
-<li>在影格存在之前在戰鬥中呼叫的「/eam opt」不應建立受保護的操作或污染錯誤。</li>
-<li><code>/eam help</code> 列印指令摘要。</li>
-<li><code>/eam add &lt;spellID&gt;</code> 新增玩家光環警報。</li>
-<li><code>/eam add target &lt;spellID&gt;</code> 新增目標光環警報。</li>
-<li><code>/eam add cd &lt;spellID&gt;</code> 新增法術冷卻時間警報。</li>
-<li><code>/eam add item &lt;itemID&gt;</code> 新增物品冷卻警報。</li>
-<li><code>/eam remove &lt;spellID&gt;</code> 刪除玩家光環警報。</li>
-<li><code>/eam 刪除目標 &lt;spellID&gt;</code> 刪除目標光環警報。</li>
-<li><code>/eam remove cd &lt;spellID&gt;</code> 刪除法術冷卻時間警報。</li>
-<li><code>/eam 刪除物品 &lt;itemID&gt;</code> 刪除物品冷卻警報。</li>
-<li><code>/eam export</code> 列印緊湊的提示/debug export。</li>
-<li><code>/eam show</code> 切換自我光環 spellID 偵測。</li>
-<li><code>/eam showt</code> 切換目標光環 spellID 偵測。</li>
-<li><code>/eam showc</code> 切換強制轉換 spellID 偵測。</li>
-<li><code>/eam showa</code> 是可選的並且顯然是可停止的。</li>
-<li><code>/eam MiniMap</code> 切換小地圖選項按鈕。</li>
-<li><code>/eam MiniMap Reset</code> 重設小地圖位置。</li>
-<li><code>/eam SCDRemoveWhenCooldown</code></li>
-<li><code>/eam SCDNocombatStillKeep</code></li>
-<li><code>/eam SCDGlowWhenUsable</code></li>
-<li><code>/eam IconAppenSpellTip</code></li>
-<li><code>/eam ShowRunesBar</code></li>
-<li>name/timer/stack 文字的字體大小指令。</li>
-<li>新的除錯導出命令僅根據需要產生緊湊的輸出。</li>
-</ul>
-<h2 id="ui">選項 UI 測試</h2>
-<ul>
-<li>使用「/eam opt」開啟脫離戰鬥的選項面板。</li>
-<li>確認數字 ID 編輯框僅接受數字。</li>
-<li>從面板中新增/remove玩家光環、目標光環、法術冷卻時間和物品冷卻時間條目。</li>
-<li>確認每個成功的按鈕操作都會增加 SavedVariables 修訂版並刷新符合的服務。</li>
-<li>確認無效或空 ID 顯示簡短的狀態訊息，而不會引發 Lua 錯誤。</li>
-<li>確認關閉並重新開啟面板不會重複重新建立小工具。</li>
-<li>在建立面板之前在戰鬥中打開“/eam opt”，並確認EAM列印一條延遲訊息而不是建構幀。</li>
-<li>在面板已經存在後，在戰鬥中開啟“/eam opt”，並確認 show/hide 不會污染安全 UI 路徑。</li>
-</ul>
-<h2 id="_6">玩家光環測試</h2>
-<ul>
-<li>透過 spellID 新增玩家增益並出現確認圖示。</li>
-<li>透過「/eam add <spellID>」、「/reload」加入玩家增益，並確認其持續存在。</li>
-<li>透過<code>/eam刪除&lt;spellID&gt;</code>刪除該buff並確認圖示隱藏。</li>
-<li>透過 spellID 新增玩家減益並出現確認圖示。</li>
-<li>確認堆疊計數更新。</li>
-<li>確認計時器文字僅在安全時出現。</li>
-<li>當duration/expiration不可用時，確認圖示保持穩定。</li>
-<li>確認player/pet符合行為符合設定。</li>
-<li>確認空閒時沒有高頻全掃描。</li>
-<li>確認 <code>UNIT_AURA</code> 增量更新過程 <code>addedAuras</code>、<code>updatedAuraInstanceIDs</code> 和 <code>removedAuraInstanceIDs</code>。</li>
-<li>當 <code>updateInfo</code> 為零或標記為完全更新時，確認完全更新回退仍然有效。</li>
-<li>確認完整更新回退會針對每個相關過濾器掃描一次設備，並且不會針對每個配置的警報掃描一次。</li>
-<li>確認完整掃描中未配置的光環警報被標記為非活動狀態。</li>
-</ul>
-<h2 id="_7">目標光環測試</h2>
-<ul>
-<li>透過 spellID 新增目標 buff/debuff。</li>
-<li>透過<code>/eam新增目標&lt;spellID&gt;</code>和<code>/eam刪除目標&lt;spellID&gt;</code>新增/remove目標光環。</li>
-<li>快速改變目標。</li>
-<li>明確的目標。</li>
-<li>確認目標清除將所有配置的目標光環警報標記為非活動狀態。</li>
-<li>進入/leave戰鬥並啟動目標警報。</li>
-<li>確認陳舊的目標圖示已被刪除或標記為非活動狀態。</li>
-<li>確認自身減益過濾有效。</li>
-</ul>
-<h2 id="_8">法術冷卻測試</h2>
-<ul>
-<li>透過 spellID 加入法術冷卻時間。</li>
-<li>施展法術並確認冷卻圖示/timer。</li>
-<li>確認基於衝鋒的法術的衝鋒更新。</li>
-<li>確認 GCD-only 冷卻時間不會錯誤地顯示為真實冷卻時間。</li>
-<li>確認安全時可用的發光符合 <code>C_Spell.IsSpellUsable</code>。</li>
-<li>確認沒有按法術計時器攪拌。</li>
-</ul>
-<h2 id="_9">物品冷卻測試</h2>
-<ul>
-<li>增加直接 itemID 冷卻時間。</li>
-<li>如果支持，請使用裝備的物品和庫存物品。</li>
-<li>確認物品冷卻事件刷新。</li>
-<li>確認預設未建置物品法術快取。</li>
-<li>在戰鬥之外開始可選的快取建置。</li>
-<li>確認快取在戰鬥中和低 FPS 下暫停。</li>
-</ul>
-<h2 id="_10">戰鬥測試</h2>
-<ul>
-<li>使用主動 self/target/cooldown 警報進入戰鬥。</li>
-<li>確認沒有受保護的操作錯誤。</li>
-<li>確認 EAM 訊框更新不會產生污染/阻止操作錯誤。</li>
-<li>確認不安全的資料會降級而不是崩潰。</li>
-<li>確認如果池在戰鬥中耗盡，則首次圖示創建將被推遲。</li>
-<li>確認延遲版面配置在 <code>PLAYER_REGEN_ENABLED</code> 之後刷新。</li>
-<li>確認戰鬥中沒有開始大量緩存建置。</li>
-<li>確認戰鬥結束後運行非戰鬥刷新。</li>
-</ul>
-<h2 id="1207-api">正式服 12.0.7/午夜 API 測試</h2>
-<ul>
-<li>確認 <code>C_DurationUtil.CreateDurationTextBinding</code> 存在並確定它是否有利於 EAM 計時器標籤。</li>
-<li>2026-05-29 PTR 注意：使用者確認最小 <code>C_DurationUtil.CreateDurationTextBinding</code> 範例在 12.0.7 PTR 用戶端中正常顯示。</li>
-<li>確認<code>C_DurationUtil.CreateManualClock</code>存在且不需要不安全的Lua倒數使用。</li>
-<li>確認 EAM 不會呼叫已刪除的 <code>C_DurationUtil.GetCurrentTime</code>。</li>
-<li>確認 <code>GetEventCPUUsage</code>、<code>GetFunctionCPUUsage</code> 和 <code>GetScriptCPUUsage</code> 僅適用於 debug/profiling 指令，不適用於執行時間熱路徑。</li>
-<li>確認靜態表上的 <code>table.freeze</code> / <code>table.isfrozen</code> 行為，並驗證 SavedVariables/runtime 狀態沒有被凍結。</li>
-<li>確認「冷卻：SetCooldownFromDurationObject()」適用於 EAM 僅顯示計時器狀態。</li>
-<li>確認 <code>FontString:ClearText()</code> 清除文本，沒有污染或過時的秘密文本問題。</li>
-<li>確認未來的 EAM <code>DurationTextBinding</code> 適配器保留綁定引用，在回收圖示時停用 /releases 它，並在 API 不可用時安全回退。</li>
-</ul>
-<h2 id="_11">本地化測試</h2>
-<ul>
-<li>enUS 載入。</li>
-<li>zhTW 僅載入並包含繁體中文字串。</li>
-<li>zhCN/koKR/ruRU 舊字串如果保留，將保持隔離。</li>
-<li>遺失的語言環境字串安全回退。</li>
-</ul>
-<h2 id="_12">偵錯匯出測試</h2>
-<ul>
-<li><code>debug-min</code> 輸出包括環境、事實、衍生計數和警告。</li>
-<li><code>analysis-full</code> 輸出包含緊湊的每個警報狀態。</li>
-<li><code>github-issue</code> 輸出排除大量日誌和敏感的僅限本地的混亂。</li>
-<li>導出不會自動運作。</li>
-<li><code>/eam 匯出</code> 包含資料庫修訂、aura 快取計數、渲染器可見/deferred 計數和邊界警告計數。</li>
-</ul>
-<h2 id="2026-07-26121-aura">2026-07-26：12.1 Aura 驗證矩陣</h2>
-<ul>
-<li>離線入口：<code>Tools/Run-FlowValidation.ps1 -Suite aura121</code>；全回歸使用 <code>-Suite all</code>。</li>
-<li>嚴格 mock 會拒絕未知 AuraContainer/AuraButton 方法，並計數 legacy getter、Slot/Group mutation 與 Sound ID。</li>
-<li>遊戲內入口：<code>/eam test aura121</code> 或流程面板「12.1 Aura」。</li>
-<li>必須在 <code>_ptr_</code> 實測 player Slot、target Slot、多 Aura Group、原生倒數、Tooltip、三種 Sound trigger、戰鬥 pending、taint/forbidden action。</li>
-<li>離線 pass 不得替代 RQA PTR 簽收；詳細清單見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
-</ul>
-<h2 id="2026-07-27tooltip-idpopup">2026-07-27：Tooltip ID／Popup 流程驗證矩陣</h2>
-<ul>
-<li>離線入口沿用 <code>Tools/Run-FlowValidation.ps1 -Suite boundary</code>；全回歸使用 <code>-Suite all</code>，不新增獨立測試按鈕。遊戲內沿用流程面板「邊界流程」與 JSON 報告回灌。</li>
-<li><code>tooltip_monitor.capability</code>：四種 post-call 各只註冊一次；重複 initialize 不得增加 callback；必須載入真正的 Popup frame，且按鈕必須綁定 <code>OnClick</code>；12.1 必須成功啟用 <code>tooltipShowAuraSpellIDs</code>。</li>
-<li><code>tooltip_monitor.offline_spell_item_routes</code>：真 Popup 顯示精確 ID／action，透過 <code>button:Click()</code> 分派 <code>OnClick</code> 後寫入隔離 DB；<code>added</code> 必須走正式 <code>Options.notifyConfigChanged()</code> 的 AuraContainer／Aura／Cooldown／ItemCooldown／Renderer 五個下游，第二次 <code>unchanged</code> 不增加 revision 或刷新。</li>
-<li><code>tooltip_monitor.offline_macro_resolution</code>：<code>TooltipData.id</code> 放入錯誤值，安全 <code>GetAction</code> 路徑須解析並實際提交 spell/item；非 <code>GetAction</code> 來源須以手動 ID 分別提交 spell/item。</li>
-<li><code>tooltip_monitor.offline_aura_manual_route</code>：Secret TooltipData 欄位讀取次數必須為零；真 Popup 以普通數字分別提交 player／target Aura；CVar 能力關閉時 Tooltip 與 Popup 必須使用手動已知 ID 提示。</li>
-<li><code>tooltip_monitor.offline_fail_closed</code>：callback 當下、戰鬥開窗、戰鬥中 hover 後出戰重播、EditBox 焦點、Tooltip 類型變更、Tooltip 隱藏、五秒逾時、額外 Shift／Meta、缺 Ctrl／Alt 均不得開啟；同類型連續候選必須取最後一筆。</li>
-<li><code>tooltip_monitor.offline_secret_scalars</code>：Secret spell、macro、manual 與 action 必須零算術、零字串化、零 table-key 操作、零 SavedVariables 寫入；受監控 table proxy 必須先自證能攔截 Secret key。</li>
-<li><code>tooltip_monitor.offline_db_isolation</code>：隔離 DB 與五下游 spy 在 callback 成功及刻意拋錯兩路都必須還原原 reference。</li>
-<li><code>runtime_probe.schema</code>：建立已知候選後序列化完整 snapshot 並建立人類可讀 lines，兩種輸出都不得出現候選 ID，狀態只能含匿名計數。</li>
-<li>每個寫入案例以獨立 DB 執行並在 <code>pcall</code> 後還原 <code>EAM.db</code>／<code>EAM_DB</code>，不可用 remove 動作污染 revision 來清理測試。</li>
-<li>2026-07-28 最終離線結果：<code>boundary</code> 10/10（<code>TestResults/EAM_FlowValidation_boundary_20260728_120708.json</code>）；<code>all</code> 24/24（<code>TestResults/EAM_FlowValidation_all_20260728_120708.json</code>）。第一次真 Popup 測試因未重新產生已消耗的 candidate 而 7/9，失敗報告 <code>TestResults/EAM_FlowValidation_boundary_20260727_042850.json</code> 保留追溯；中間通過報告亦保留。</li>
-<li><code>_ptr_</code> 實機：分別懸停 Spellbook、Action Bar Macro、Bag Item、player/target Aura；核對 ID 行、Ctrl+Alt Popup 位置、ESC／取消、added／unchanged、ReloadUI 後 CVar 重設、戰鬥拒絕、無 blocked action／taint／Forbidden 錯誤。</li>
-<li><code>_xptr_</code> 12.0.7 實機：Spell／Item／Macro 路由仍須工作；Aura 官方 CVar 若不存在，Tooltip／Popup 必須明示手動已知 ID，不得回退讀 AuraData。</li>
-<li>明確驗證原 Blizzard 行為未被攔截：一般左／右鍵操作與未按修飾鍵時應完全維持客戶端原行為。</li>
-<li>補測同型 Tooltip 快速切換的 generation／owner、初始化時 Tooltip API 暫缺、<code>/reload</code>／LoD，以及 Popup 開啟後立即進戰；離線 mock 不得替代這些 PTR 時序與 taint 證據。</li>
-</ul>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

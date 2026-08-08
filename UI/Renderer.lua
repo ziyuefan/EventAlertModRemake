@@ -40,6 +40,8 @@ local _, EAM = ...
 local api = EAM.API
 local Util = EAM.Util
 local IconPool = EAM.UI.IconPool
+local TextPlacement = EAM.UI.TextPlacement
+local DurationAdapter = EAM.Modules.DurationAdapter
 
 local Renderer = {
     frames = {},
@@ -48,7 +50,20 @@ local Renderer = {
     iconSize = 40,
     spacing = 6,
     isMoving = false,
+    textLayoutPending = false,
+    prewarmPending = false,
+    anchorTogglePending = false,
 }
+
+local function releaseTimerBinding(icon)
+    if not icon or not icon.timerBinding then
+        return
+    end
+    if DurationAdapter then
+        DurationAdapter.releaseTextBinding(icon.timerBinding)
+    end
+    icon.timerBinding = nil
+end
 
 EAM.UI.Renderer = Renderer
 
@@ -90,8 +105,12 @@ local function onDurationTimerExpired(token)
     end
 
     local icon = token.icon
-    if icon and icon.rendered and icon.rendered.activeToken == token then
+    if icon and icon.rendered
+        and icon.rendered.activeToken == token
+        and token.expTime == icon.rendered.scheduledExpirationTime
+    then
         icon.rendered.activeToken = nil
+        icon.rendered.scheduledExpirationTime = nil
         token.active = false
         Renderer.render({ id = token.alertID, shown = false }, token.frameName)
     end
@@ -241,13 +260,122 @@ local function setTextIfChanged(fontString, rendered, key, value)
     end
 end
 
+local function applyNameLayoutToIcon(icon, nameInside)
+    if not icon or not icon.rendered or not icon.nameText then
+        return false
+    end
+
+    local rendered = icon.rendered
+    if rendered.nameInside == nameInside then
+        rendered.nameLayoutPending = nil
+        rendered.pendingNameInside = nil
+        return false
+    end
+
+    if api.InCombatLockdown and api.InCombatLockdown() then
+        rendered.nameLayoutPending = true
+        rendered.pendingNameInside = nameInside
+        return false, "combatDeferred"
+    end
+
+    local refFrame = icon.overlay or icon
+    icon.nameText:ClearAllPoints()
+    if nameInside then
+        icon.nameText:SetPoint("BOTTOM", refFrame, "BOTTOM", 0, 2)
+        icon.nameText:SetFontObject("GameFontHighlightSmall")
+    else
+        icon.nameText:SetPoint("TOP", refFrame, "BOTTOM", 0, -2)
+        icon.nameText:SetFontObject("GameFontNormalSmall")
+    end
+    rendered.nameInside = nameInside
+    rendered.nameLayoutPending = nil
+    rendered.pendingNameInside = nil
+    return true
+end
+
 local function inCombat()
     return api.InCombatLockdown and api.InCombatLockdown()
+end
+
+local function applyTextLayoutToIcon(icon, config)
+    if not icon or not icon.rendered or not icon.timerText or not icon.stackText then
+        return false
+    end
+
+    local rendered = icon.rendered
+    local refFrame = icon.overlay or icon
+    local timerPlacement = TextPlacement.getPlacement(config, "timer")
+    local applicationsPlacement = TextPlacement.getPlacement(config, "applications")
+    local timerFontSize = TextPlacement.getFontSize(config, "timer")
+    local applicationsFontSize = TextPlacement.getFontSize(config, "applications")
+    local nameFontSize = config and config.fontSizeSpellName or 12
+    if not Util.isSafePositiveNumber(nameFontSize) then
+        nameFontSize = 12
+    end
+
+    if rendered.timerPlacement ~= timerPlacement then
+        TextPlacement.apply(icon.timerText, refFrame, timerPlacement)
+        rendered.timerPlacement = timerPlacement
+    end
+    if rendered.applicationsPlacement ~= applicationsPlacement then
+        TextPlacement.apply(icon.stackText, refFrame, applicationsPlacement)
+        rendered.applicationsPlacement = applicationsPlacement
+    end
+    if rendered.timerFontSize ~= timerFontSize then
+        TextPlacement.applyFont(icon.timerText, timerFontSize)
+        rendered.timerFontSize = timerFontSize
+    end
+    if rendered.applicationsFontSize ~= applicationsFontSize then
+        TextPlacement.applyFont(icon.stackText, applicationsFontSize)
+        rendered.applicationsFontSize = applicationsFontSize
+    end
+    if icon.nameText and rendered.nameFontSize ~= nameFontSize then
+        TextPlacement.applyFont(icon.nameText, nameFontSize)
+        rendered.nameFontSize = nameFontSize
+    end
+    return true
+end
+
+function Renderer.applyTextLayout()
+    if inCombat() then
+        Renderer.textLayoutPending = true
+        return false, "combatDeferred"
+    end
+
+    local config = EAM.db and EAM.db.config or nil
+    local updated = 0
+    for _, fState in pairs(Renderer.frames) do
+        for _, icon in pairs(fState.icons) do
+            if applyTextLayoutToIcon(icon, config) then
+                updated = updated + 1
+            end
+        end
+    end
+    Renderer.textLayoutPending = false
+    return true, updated
+end
+
+function Renderer.applyCooldownStyle()
+    local config = EAM.db and EAM.db.config or nil
+    local updated = 0
+    for _, frameState in pairs(Renderer.frames) do
+        for _, icon in pairs(frameState.icons or {}) do
+            if IconPool.applyCooldownStyle(icon, config) then
+                updated = updated + 1
+            end
+        end
+    end
+    return true, updated
 end
 
 -- 核心 Layout 排版演算法 (極致靜態陣列優化版)
 local function layout(frameName)
     local fState = initFrameState(frameName)
+    if inCombat() then
+        fState.layoutDirty = true
+        fState.layoutBlocked = true
+        return false, "combatDeferred"
+    end
     local parent = ensureParent(frameName)
     if not parent then
         fState.layoutBlocked = true
@@ -308,6 +436,7 @@ local function layout(frameName)
 
     fState.layoutDirty = false
     fState.layoutBlocked = false
+    return true, "updated"
 end
 
 -- 請求重新排版
@@ -322,8 +451,13 @@ function Renderer.requestLayout(frameName)
     local fState = initFrameState(frameName)
     if fState then
         fState.layoutDirty = true
-        layout(frameName)
+        if inCombat() then
+            fState.layoutBlocked = true
+            return false, "combatDeferred"
+        end
+        return layout(frameName)
     end
+    return false, "frameUnavailable"
 end
 
 -- 延遲戰鬥中渲染
@@ -346,7 +480,12 @@ function Renderer.initialize()
     end
 
     if IconPool.prewarm then
-        IconPool.prewarm()
+        if inCombat() then
+            Renderer.prewarmPending = true
+        else
+            local prewarmed = IconPool.prewarm()
+            Renderer.prewarmPending = prewarmed == false
+        end
     end
 
     local router = EAM.Modules.EventRouter
@@ -372,8 +511,10 @@ function Renderer.render(alertState, frameName)
     local fState = initFrameState(frameName)
     local parent = fState.parent
     if not parent and inCombat() then
+        fState.layoutDirty = true
+        fState.layoutBlocked = true
         deferRender(alertState, frameName)
-        return
+        return false, "combatDeferred"
     end
 
     -- 確保 parent frame 存在
@@ -384,10 +525,28 @@ function Renderer.render(alertState, frameName)
     end
 
     local icon = fState.icons[alertState.id]
+    if not icon and inCombat() then
+        fState.layoutDirty = true
+        fState.layoutBlocked = true
+        deferRender(alertState, frameName)
+        return false, "combatDeferred"
+    end
 
     -- 圖示隱藏/釋放處理
     if not alertState.shown then
         if icon then
+            if icon.isParasite and inCombat() then
+                if icon.rendered and icon.rendered.activeToken then
+                    icon.rendered.activeToken.active = false
+                    icon.rendered.activeToken = nil
+                end
+                icon.releasePending = true
+                fState.layoutDirty = true
+                fState.layoutBlocked = true
+                deferRender(alertState, frameName)
+                return false, "combatDeferred"
+            end
+            icon.releasePending = nil
             if icon.rendered and icon.rendered.activeToken then
                 icon.rendered.activeToken.active = false
                 icon.rendered.activeToken = nil
@@ -426,152 +585,82 @@ function Renderer.render(alertState, frameName)
 
     local hostIcon = nil
     local shouldBeParasite = (hostIcon ~= nil)
-    
+    local rendered = icon.rendered
+
     if icon.isParasite ~= shouldBeParasite then
-        icon.isParasite = shouldBeParasite
-        if shouldBeParasite then
-            icon:SetParent(hostIcon)
-            icon:ClearAllPoints()
-            icon:SetAllPoints(hostIcon)
-            -- 🛡️ 提權 Frame Level 確保 EAM 圖示及其文字不被暴雪原生元件遮擋
-            pcall(function()
-                icon:SetFrameStrata("MEDIUM")
-                icon:SetFrameLevel(hostIcon:GetFrameLevel() + 10)
-            end)
+        if inCombat() then
+            rendered.parasiteLayoutPending = true
+            fState.layoutDirty = true
+            fState.layoutBlocked = true
+            deferRender(alertState, frameName)
         else
-            icon:SetParent(parent)
-            icon:ClearAllPoints()
-            -- 恢復預設層級
-            pcall(function()
-                icon:SetFrameStrata("MEDIUM")
-                icon:SetFrameLevel(parent:GetFrameLevel() + 1)
-            end)
+            if shouldBeParasite then
+                icon:SetParent(hostIcon)
+                icon:ClearAllPoints()
+                icon:SetAllPoints(hostIcon)
+                -- 🛡️ 提權 Frame Level 確保 EAM 圖示及其文字不被暴雪原生元件遮擋
+                pcall(function()
+                    icon:SetFrameStrata("MEDIUM")
+                    icon:SetFrameLevel(hostIcon:GetFrameLevel() + 10)
+                end)
+            else
+                icon:SetParent(parent)
+                icon:ClearAllPoints()
+                -- 恢復預設層級
+                pcall(function()
+                    icon:SetFrameStrata("MEDIUM")
+                    icon:SetFrameLevel(parent:GetFrameLevel() + 1)
+                end)
+            end
+            icon.isParasite = shouldBeParasite
+            rendered.parasiteLayoutPending = nil
+            fState.layoutDirty = true
         end
-        fState.layoutDirty = true
+    else
+        rendered.parasiteLayoutPending = nil
     end
 
-    local rendered = icon.rendered
     if alertState.icon and rendered.icon ~= alertState.icon then
         icon.texture:SetTexture(alertState.icon)
         rendered.icon = alertState.icon
     end
 
-    local refFrame = icon.overlay or icon
-
-    -- 根據 timerInside 與 timerPosition 對齊秒數倒數文字位置 (使用快取避免 redundant SetPoint)
-    local timerInside = EAM.db and EAM.db.config and EAM.db.config.timerInside
-    local timerPos = EAM.db and EAM.db.config and EAM.db.config.timerPosition or "TOP"
-    
-    if rendered.timerInside ~= timerInside or rendered.timerPos ~= timerPos then
-        icon.timerText:ClearAllPoints()
-        if timerInside then
-            if timerPos == "CENTER" then
-                icon.timerText:SetPoint("CENTER", refFrame, "CENTER", 0, 0)
-            elseif timerPos == "TOP" then
-                icon.timerText:SetPoint("TOP", refFrame, "TOP", 0, -2)
-            elseif timerPos == "BOTTOM" then
-                icon.timerText:SetPoint("BOTTOM", refFrame, "BOTTOM", 0, 2)
-            elseif timerPos == "LEFT" then
-                icon.timerText:SetPoint("LEFT", refFrame, "LEFT", 2, 0)
-            elseif timerPos == "RIGHT" then
-                icon.timerText:SetPoint("RIGHT", refFrame, "RIGHT", -2, 0)
-            elseif timerPos == "TOPLEFT" then
-                icon.timerText:SetPoint("TOPLEFT", refFrame, "TOPLEFT", 2, -2)
-            elseif timerPos == "TOPRIGHT" then
-                icon.timerText:SetPoint("TOPRIGHT", refFrame, "TOPRIGHT", -2, -2)
-            elseif timerPos == "BOTTOMLEFT" then
-                icon.timerText:SetPoint("BOTTOMLEFT", refFrame, "BOTTOMLEFT", 2, 2)
-            elseif timerPos == "BOTTOMRIGHT" then
-                icon.timerText:SetPoint("BOTTOMRIGHT", refFrame, "BOTTOMRIGHT", -2, 2)
-            else
-                icon.timerText:SetPoint("CENTER", refFrame, "CENTER", 0, 0)
-            end
-        else
-            if timerPos == "TOP" then
-                icon.timerText:SetPoint("BOTTOM", refFrame, "TOP", 0, 2)
-            elseif timerPos == "BOTTOM" then
-                icon.timerText:SetPoint("TOP", refFrame, "BOTTOM", 0, -2)
-            elseif timerPos == "LEFT" then
-                icon.timerText:SetPoint("RIGHT", refFrame, "LEFT", -4, 0)
-            elseif timerPos == "RIGHT" then
-                icon.timerText:SetPoint("LEFT", refFrame, "RIGHT", 4, 0)
-            elseif timerPos == "TOPLEFT" then
-                icon.timerText:SetPoint("BOTTOMRIGHT", refFrame, "TOPLEFT", -2, 2)
-            elseif timerPos == "TOPRIGHT" then
-                icon.timerText:SetPoint("BOTTOMLEFT", refFrame, "TOPRIGHT", 2, 2)
-            elseif timerPos == "BOTTOMLEFT" then
-                icon.timerText:SetPoint("TOPRIGHT", refFrame, "BOTTOMLEFT", -2, -2)
-            elseif timerPos == "BOTTOMRIGHT" then
-                icon.timerText:SetPoint("TOPLEFT", refFrame, "BOTTOMRIGHT", 2, -2)
-            else
-                icon.timerText:SetPoint("BOTTOM", refFrame, "TOP", 0, 2)
-            end
-        end
-        rendered.timerInside = timerInside
-        rendered.timerPos = timerPos
-    end
-
-    -- 根據 stackInside 與 stackPosition 對齊堆疊數文字位置
-    local stackInside = true
-    if EAM.db and EAM.db.config and EAM.db.config.stackInside ~= nil then
-        stackInside = EAM.db.config.stackInside
-    end
-    local stackPos = EAM.db and EAM.db.config and EAM.db.config.stackPosition or "BOTTOMRIGHT"
-    
-    if rendered.stackInside ~= stackInside or rendered.stackPos ~= stackPos then
-        icon.stackText:ClearAllPoints()
-        if stackInside then
-            if stackPos == "BOTTOMRIGHT" then
-                icon.stackText:SetPoint("BOTTOMRIGHT", refFrame, "BOTTOMRIGHT", -1, 1)
-            elseif stackPos == "BOTTOMLEFT" then
-                icon.stackText:SetPoint("BOTTOMLEFT", refFrame, "BOTTOMLEFT", 1, 1)
-            elseif stackPos == "TOPRIGHT" then
-                icon.stackText:SetPoint("TOPRIGHT", refFrame, "TOPRIGHT", -1, -1)
-            elseif stackPos == "TOPLEFT" then
-                icon.stackText:SetPoint("TOPLEFT", refFrame, "TOPLEFT", 1, -1)
-            elseif stackPos == "CENTER" then
-                icon.stackText:SetPoint("CENTER", refFrame, "CENTER", 0, 0)
-            else
-                icon.stackText:SetPoint("BOTTOMRIGHT", refFrame, "BOTTOMRIGHT", -1, 1)
-            end
-        else
-            if stackPos == "TOP" then
-                icon.stackText:SetPoint("BOTTOM", refFrame, "TOP", 0, 2)
-            elseif stackPos == "BOTTOM" then
-                icon.stackText:SetPoint("TOP", refFrame, "BOTTOM", 0, -2)
-            elseif stackPos == "LEFT" then
-                icon.stackText:SetPoint("RIGHT", refFrame, "LEFT", -4, 0)
-            elseif stackPos == "RIGHT" then
-                icon.stackText:SetPoint("LEFT", refFrame, "RIGHT", 4, 0)
-            else
-                icon.stackText:SetPoint("BOTTOMRIGHT", refFrame, "BOTTOMRIGHT", -1, 1)
-            end
-        end
-        rendered.stackInside = stackInside
-        rendered.stackPos = stackPos
-    end
-
-    local stacks = alertState.stacks
-    if stacks and (Util.isSecretValue(stacks) or not Util.canAccessValue(stacks)) then
-        stacks = ""
+    local config = EAM.db and EAM.db.config or nil
+    if inCombat() then
+        Renderer.textLayoutPending = true
     else
-        stacks = (stacks and stacks > 1) and tostring(stacks) or ""
+        applyTextLayoutToIcon(icon, config)
+    end
+    IconPool.applyCooldownStyle(icon, config)
+
+    local stacks = alertState.displayValue
+    if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
+        stacks = ""
+    elseif stacks ~= nil then
+        stacks = Util.isSafeNonNegativeNumber(stacks) and tostring(stacks) or ""
+    else
+        stacks = alertState.stacks
+        if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
+            stacks = ""
+        else
+            stacks = (Util.isSafeNumber(stacks) and stacks > 1) and tostring(stacks) or ""
+        end
     end
     setTextIfChanged(icon.stackText, rendered, "stacks", stacks)
 
     local nameInside = shouldBeParasite
     if rendered.nameInside ~= nameInside then
-        icon.nameText:ClearAllPoints()
-        if nameInside then
-            -- 寄生模式下，為了防止 ClipsChildren 裁切，將技能名稱移至圖示內側底端並設為 Highlight 顯色
-            icon.nameText:SetPoint("BOTTOM", refFrame, "BOTTOM", 0, 2)
-            icon.nameText:SetFontObject("GameFontHighlightSmall")
+        if inCombat() then
+            rendered.nameLayoutPending = true
+            rendered.pendingNameInside = nameInside
+            fState.layoutDirty = true
+            fState.layoutBlocked = true
         else
-            -- 一般模式下，字放在圖示下方，恢復預設 Normal 顏色
-            icon.nameText:SetPoint("TOP", refFrame, "BOTTOM", 0, -2)
-            icon.nameText:SetFontObject("GameFontNormalSmall")
+            applyNameLayoutToIcon(icon, nameInside)
         end
-        rendered.nameInside = nameInside
+    elseif rendered.nameLayoutPending then
+        rendered.nameLayoutPending = nil
+        rendered.pendingNameInside = nil
     end
 
     local name = alertState.name or ""
@@ -579,19 +668,12 @@ function Renderer.render(alertState, frameName)
 
     -- Cooldown 與 DurationObject 倒數雙軌管道渲染
     local timer = alertState.timer
-    local useNativeBinding = false
-    if timer and timer.durationObject and api.C_DurationUtil and api.C_DurationUtil.CreateDurationTextBinding then
-        useNativeBinding = true
-    end
+    local useNativeBinding = timer and timer.durationObject and DurationAdapter ~= nil
 
     if useNativeBinding then
         if rendered.durationObject ~= timer.durationObject then
-            if icon.timerBinding then
-                if type(icon.timerBinding.Unbind) == "function" then
-                    icon.timerBinding:Unbind()
-                end
-            end
-            icon.timerBinding = api.C_DurationUtil.CreateDurationTextBinding(timer.durationObject, icon.timerText)
+            releaseTimerBinding(icon)
+            icon.timerBinding = DurationAdapter.createTextBinding(timer.durationObject, icon.timerText)
             
             if icon.cooldown.SetCooldownFromDurationObject then
                 icon.cooldown:SetCooldownFromDurationObject(timer.durationObject)
@@ -602,10 +684,17 @@ function Renderer.render(alertState, frameName)
             end
 
             rendered.durationObject = timer.durationObject
+            rendered.durationBindingAvailable = icon.timerBinding ~= nil
             rendered.cooldownStart = nil
             rendered.cooldownDuration = nil
         end
-        Renderer.unregisterLegacyTimer(icon)
+        if icon.timerBinding then
+            Renderer.unregisterLegacyTimer(icon)
+        elseif Util.isSafeNumber(timer.expirationTime) then
+            Renderer.registerLegacyTimer(icon, timer.expirationTime)
+        else
+            Renderer.unregisterLegacyTimer(icon)
+        end
     elseif timer and Util.isSafeNumber(timer.startTime) and Util.isSafePositiveNumber(timer.duration) then
         if rendered.cooldownStart ~= timer.startTime or rendered.cooldownDuration ~= timer.duration then
             icon.cooldown:SetCooldown(timer.startTime, timer.duration)
@@ -613,12 +702,7 @@ function Renderer.render(alertState, frameName)
             rendered.cooldownDuration = timer.duration
             rendered.durationObject = nil
         end
-        if icon.timerBinding then
-            if type(icon.timerBinding.Unbind) == "function" then
-                icon.timerBinding:Unbind()
-            end
-            icon.timerBinding = nil
-        end
+        releaseTimerBinding(icon)
         
         -- 走降級定時 OnUpdate 字串倒數通道
         if Util.isSafeNumber(timer.expirationTime) then
@@ -638,12 +722,8 @@ function Renderer.render(alertState, frameName)
         rendered.cooldownStart = nil
         rendered.cooldownDuration = nil
         rendered.durationObject = nil
-        if icon.timerBinding then
-            if type(icon.timerBinding.Unbind) == "function" then
-                icon.timerBinding:Unbind()
-            end
-            icon.timerBinding = nil
-        end
+        rendered.durationBindingAvailable = nil
+        releaseTimerBinding(icon)
         Renderer.unregisterLegacyTimer(icon)
         if icon.timerText then
             if icon.timerText.ClearText then
@@ -673,32 +753,46 @@ function Renderer.render(alertState, frameName)
         end
     end
 
-    -- 註冊/更新 Scheduler 延時回收 token
-    local duration = timer and timer.duration
-    if Util.isSafePositiveNumber(duration) then
-        if rendered.activeToken then
-            rendered.activeToken.active = false
-            rendered.activeToken = nil
-        end
-        
-        local token = acquireToken()
-        token.icon = icon
-        token.expTime = timer.expirationTime
-        token.active = true
-        token.frameName = frameName
-        token.alertID = alertState.id
-        
-        rendered.activeToken = token
-        
-        local Scheduler = EAM.Modules.Scheduler
-        if Scheduler and Scheduler.after then
-            Scheduler.after(duration, onDurationTimerExpired, token)
+    -- 只在安全 expiration 改變時重排；中途重繪不得從完整 duration 重新計時。
+    local expirationTime = timer and timer.expirationTime
+    local now = api.GetTime and api.GetTime() or nil
+    if Util.isSafeNumber(expirationTime) and Util.isSafeNumber(now) then
+        local remaining = expirationTime - now
+        if Util.isSafePositiveNumber(remaining)
+            and rendered.scheduledExpirationTime ~= expirationTime
+        then
+            if rendered.activeToken then
+                rendered.activeToken.active = false
+                rendered.activeToken = nil
+            end
+
+            local token = acquireToken()
+            token.icon = icon
+            token.expTime = expirationTime
+            token.active = true
+            token.frameName = frameName
+            token.alertID = alertState.id
+
+            rendered.activeToken = token
+            rendered.scheduledExpirationTime = expirationTime
+
+            local Scheduler = EAM.Modules.Scheduler
+            if Scheduler and Scheduler.after then
+                Scheduler.after(remaining, onDurationTimerExpired, token)
+            end
+        elseif not Util.isSafePositiveNumber(remaining) then
+            if rendered.activeToken then
+                rendered.activeToken.active = false
+                rendered.activeToken = nil
+            end
+            rendered.scheduledExpirationTime = nil
         end
     else
         if rendered.activeToken then
             rendered.activeToken.active = false
             rendered.activeToken = nil
         end
+        rendered.scheduledExpirationTime = nil
     end
 
     icon:Show()
@@ -718,6 +812,13 @@ function Renderer.onCombatEnd()
         ensureParent(fName)
     end
 
+    if Renderer.prewarmPending and IconPool.prewarm then
+        local prewarmed = IconPool.prewarm()
+        if prewarmed ~= false then
+            Renderer.prewarmPending = false
+        end
+    end
+
     if Renderer.deferredCount > 0 then
         for id, item in pairs(Renderer.deferred) do
             Renderer.deferred[id] = nil
@@ -728,14 +829,32 @@ function Renderer.onCombatEnd()
     end
 
     for fName, fState in pairs(Renderer.frames) do
+        for _, icon in pairs(fState.icons) do
+            local rendered = icon.rendered
+            if rendered and rendered.nameLayoutPending then
+                applyNameLayoutToIcon(icon, rendered.pendingNameInside)
+            end
+        end
         if fState.layoutDirty or fState.layoutBlocked then
             layout(fName)
         end
+    end
+    if Renderer.textLayoutPending then
+        Renderer.applyTextLayout()
+    end
+    if Renderer.anchorTogglePending then
+        Renderer.anchorTogglePending = false
+        Renderer.toggleAnchors()
     end
 end
 
 -- 7 大告警框架同步拖曳與位置調整模式開關
 function Renderer.toggleAnchors()
+    if inCombat() then
+        Renderer.anchorTogglePending = not Renderer.anchorTogglePending
+        return false, "combatDeferred"
+    end
+    Renderer.anchorTogglePending = false
     Renderer.isMoving = not Renderer.isMoving
 
     local nameLabels = {
@@ -805,4 +924,5 @@ function Renderer.toggleAnchors()
     else
         print("|cff00ff96EAM|r " .. (EAM.L.EAM_MOVE_MODE_OFF or "已關閉「多框架移動模式」並成功套用新排版。"))
     end
+    return true, Renderer.isMoving
 end

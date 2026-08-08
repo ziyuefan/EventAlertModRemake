@@ -417,7 +417,10 @@
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 <h1 id="eventalertmod-ai">EventAlertMod 正式服裝重寫：AI 上下文</h1>
-<h2 id="_1">專案概要</h2>
+<h2 id="_1">優先續接路由</h2>
+<p>重新進入專案、發生上下文壓縮或需要確認目前進度時，先讀 <code>Docs/28_PROJECT_CONTINUITY.md</code>，再讀 <code>Data/ProjectContinuity.json</code>。前者提供人類可讀決策與實機待辦；後者以嚴格 Schema 分離 facts、inferences、work items、trials 與 unverified。詳細試錯只追到 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> 的穩定 issue ID，不以本文件或舊對話摘要猜測目前狀態。</p>
+<p>目前續接快照為 <code>2026-08-08.1</code>；離線通過不得取代 PTR、XPTR 或 Retail 真人簽收。</p>
+<h2 id="_2">專案概要</h2>
 <p>EventAlertMod (EAM) 是一個用於輕量級光環的魔獸世界插件，
 冷卻的時間和物品冷卻。冷卻的身份很簡單：顯示很重要
 屬性和物品狀態為關鍵圖標，而不會成為 WeakAuras 克隆。</p>
@@ -425,7 +428,7 @@
 午夜時代的 API 是預期的衍生性商品。現有經典、熊貓之謎經典服、
 Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 僅歷史行為，不得加工新架構。</p>
-<h2 id="_2">重寫方向</h2>
+<h2 id="_3">重寫方向</h2>
 <p>目前的原始碼樹保留了許多行為，但混合了相容性
 分支、UI建置、光環掃描、冷卻專案、緩存產生、
 特殊資源、斜線指令、全域變數、本地化和框架佈局
@@ -451,7 +454,7 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 <li><code>Debug/DebugState.lua</code></li>
 <li><code>Debug/PromptExport.lua</code></li>
 </ul>
-<h2 id="_3">不可協商的界限</h2>
+<h2 id="_4">不可協商的界限</h2>
 <ul>
 <li>沒有秘密值可以繞過。</li>
 <li>沒有受到保護的資料繞過。</li>
@@ -461,11 +464,11 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 <li>密集的持續掃描。</li>
 <li>沒有每個圖示計時器、每個示波器計時器或每個專案計時器硬體。</li>
 </ul>
-<h2 id="_4">簡單原則</h2>
+<h2 id="_5">簡單原則</h2>
 <p>EAM 對於一般使用者來說應該簡單保留：新增文字 ID、啟用警報，請參閱
 圖標，調整小組顯示選項，並匯出緊湊的除錯狀態
 僅提供。</p>
-<h2 id="_5">現有討論主播</h2>
+<h2 id="_6">現有討論主播</h2>
 <p>之前的ChatGPT討論上下文位於：</p>
 <ul>
 <li><code>DevDocument/ChatGPT/EventAlertMod_ChatGPT_Discussion_Context.md</code></li>
@@ -481,7 +484,7 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 <li>較早的工作已經超過“Main/EventAlert_EAFun.lua”作為相容性
 門面。未來的代理人一定不能把文件想像成最終的架構。</li>
 </ul>
-<h2 id="_6">首次通過審核結果</h2>
+<h2 id="_7">首次通過審核結果</h2>
 <p><code>Docs/01_ARCHITECTURE.md</code> 包含目前檔案對映和模組
 <code>Docs/03_STATE_SCHEMA.md</code> 包含 SavedVariables 和全域變量
 <code>Docs/05_PERFORMANCE_GUIDE.md</code> 包含候選熱路徑，
@@ -490,78 +493,17 @@ OnUpdate/C_Timer的使用和分配風險。 <code>文件/07_MIGRATION_NOTES.md</
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-ai">EventAlertMod 正式服裝重寫：AI 上下文</h1>
-<h2 id="_1">專案概要</h2>
-<p>EventAlertMod (EAM) 是一個用於輕量級光環的魔獸世界插件，
-冷卻的時間和物品冷卻。冷卻的身份很簡單：顯示很重要
-屬性和物品狀態為關鍵圖標，而不會成為 WeakAuras 克隆。</p>
-<p>此重寫僅針對魔獸世界正式服版，正式服版 12.x /
-午夜時代的 API 是預期的衍生性商品。現有經典、熊貓之謎經典服、
-Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
-僅歷史行為，不得加工新架構。</p>
-<h2 id="_2">重寫方向</h2>
-<p>目前的原始碼樹保留了許多行為，但混合了相容性
-分支、UI建置、光環掃描、冷卻專案、緩存產生、
-特殊資源、斜線指令、全域變數、本地化和框架佈局
-相同的運行時表面。重寫應保留有用的數據並提供給用戶
-影像，同時以顯式模組取代內部結構。</p>
-<p>所需的目標模組：</p>
-<ul>
-<li><code>Core/Env.lua</code></li>
-<li><code>Core/Util.lua</code></li>
-<li><code>Core/Constants.lua</code></li>
-<li><code>Core/EventRouter.lua</code></li>
-<li><code>Core/Scheduler.lua</code></li>
-<li><code>Core/SavedVariables.lua</code></li>
-<li><code>Core/Performance.lua</code></li>
-<li><code>Services/AuraService.lua</code></li>
-<li><code>Services/CooldownService.lua</code></li>
-<li><code>Services/ItemCooldownService.lua</code></li>
-<li><code>Services/SpellInfoService.lua</code></li>
-<li><code>UI/IconPool.lua</code></li>
-<li><code>UI/Renderer.lua</code></li>
-<li><code>UI/Options.lua</code></li>
-<li><code>UI/Slash.lua</code></li>
-<li><code>Debug/DebugState.lua</code></li>
-<li><code>Debug/PromptExport.lua</code></li>
-</ul>
-<h2 id="_3">不可協商的界限</h2>
-<ul>
-<li>沒有秘密值可以繞過。</li>
-<li>沒有受到保護的資料繞過。</li>
-<li>沒有戰鬥自動化。</li>
-<li>沒有外部依賴。</li>
-<li>沒有複雜的使用者腳本引擎。</li>
-<li>密集的持續掃描。</li>
-<li>沒有每個圖示計時器、每個示波器計時器或每個專案計時器硬體。</li>
-</ul>
-<h2 id="_4">簡單原則</h2>
-<p>EAM 對於一般使用者來說應該簡單保留：新增文字 ID、啟用警報，請參閱
-圖標，調整小組顯示選項，並匯出緊湊的除錯狀態
-僅提供。</p>
-<h2 id="_5">現有討論主播</h2>
-<p>之前的ChatGPT討論上下文位於：</p>
-<ul>
-<li><code>DevDocument/ChatGPT/EventAlertMod_ChatGPT_Discussion_Context.md</code></li>
-</ul>
-<p>該文件中的重要歷史要點：</p>
-<ul>
-<li>EAM 不基於 Ace3。
--目前目錄使用 <code>RequiredDeps: !Lib_ZYF</code>，但重寫目標並不是新的
-  外部依賴。</li>
-<li><code>/eam opt</code> 是記錄的設定指令。</li>
-<li>現有行為包括自身光環、目標光環、角色冷卻時間、物品
-  冷卻時間、工具提示符號/物品ID、在地化和選擇性的除錯助手。</li>
-<li>較早的工作已經超過“Main/EventAlert_EAFun.lua”作為相容性
-門面。未來的代理人一定不能把文件想像成最終的架構。</li>
-</ul>
-<h2 id="_6">首次通過審核結果</h2>
-<p><code>Docs/01_ARCHITECTURE.md</code> 包含目前檔案對映和模組
-<code>Docs/03_STATE_SCHEMA.md</code> 包含 SavedVariables 和全域變量
-<code>Docs/05_PERFORMANCE_GUIDE.md</code> 包含候選熱路徑，
-OnUpdate/C_Timer的使用和分配風險。 <code>文件/07_MIGRATION_NOTES.md</code>
-包含行為遷移註釋。</p>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

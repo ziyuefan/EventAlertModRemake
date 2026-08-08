@@ -7,7 +7,7 @@
 
 - WoW 根目錄：`D:\World of Warcraft`
 - EAM 實體專案：`D:\EventAlertMod`
-- 最後唯讀盤點：2026-06-22（Asia/Taipei）
+- 最後唯讀盤點：2026-08-08（Asia/Taipei）
 - 證據：執行檔 VersionInfo、目錄存在性、`LinkType`、`Target`、`ReparsePoint`
 - 尚未代表：角色登入、插件載入、流程面板、taint 或實機測試通過
 
@@ -17,9 +17,9 @@
 
 | 版本資料夾 | 執行檔 | ProductVersion | WTF／AddOns | EAM 用途 |
 | --- | --- | --- | --- | --- |
-| `_retail_` | `Wow.exe` | 12.0.7.68256 | 皆存在 | 正式服實機驗證 |
-| `_ptr_` | `WowT.exe` | 12.1.0.68209 | 皆存在 | 至暗之夜 12.1.0 PTR 驗證 |
-| `_xptr_` | `WowT.exe` | 12.0.7.68182 | 皆存在 | 至暗之夜 12.0.7 PTR 驗證 |
+| `_retail_` | `Wow.exe` | 12.0.7.68974 | 皆存在 | 正式服實機驗證 |
+| `_ptr_` | `WowT.exe` | 12.1.0.69189 | 皆存在 | 至暗之夜 12.1.0 PTR 驗證 |
+| `_xptr_` | `WowT.exe` | 12.0.7.68887 | 皆存在 | 至暗之夜 12.0.7 PTR 驗證 |
 
 Battle.net 更新後 build 可能改變。每次實機測試前必須重讀 VersionInfo，不可只依 `_ptr_`／`_xptr_` 名稱推斷版本。
 
@@ -93,12 +93,22 @@ D:\World of Warcraft\_xptr_\WTF\Account\<ACCOUNT>\SavedVariables\EventAlertMod.l
 
 `Docs/26_FLOW_VALIDATION_FRAMEWORK.md` 定義測試案例、遊戲內按鈕、SavedVariable 報告與回灌契約；本文件只負責本機版本、WTF 與 SymbolicLink 安全邊界。
 
-## 8. 2026-07-26 唯讀前檢快照
+## 8. 2026-08-08 唯讀前檢快照
 
 | 產品目錄 | ProductVersion | 用途 |
 | --- | --- | --- |
-| `_retail_` | 12.0.7.68453 | 正式服回歸 |
+| `_retail_` | 12.0.7.68974 | 正式服回歸 |
+| `_ptr_` | 12.1.0.69189 | PTR8 Native Aura／UnitPower RQA 目標 |
+| `_xptr_` | 12.0.7.68887 | Legacy 相容回歸 |
+
+本次證據為 `TestResults/EAM_LocalWoWEnvironment_20260808_194717447.json`，結果 3/3；三個 AddOns 路徑均為 SymbolicLink／Reparse Point 且目標為 `D:\EventAlertMod`。這不是遊戲內流程簽收。
+
+## 9. 2026-07-29 歷史唯讀前檢快照
+
+| 產品目錄 | ProductVersion | 用途 |
+| --- | --- | --- |
+| `_retail_` | 12.0.7.68887 | 正式服回歸 |
 | `_ptr_` | 12.1.0.68914 | Native Aura RQA 目標 |
 | `_xptr_` | 12.0.7.68887 | Legacy 相容回歸 |
 
-`_ptr_\Interface\AddOns\EventAlertMod` 已唯讀確認為 SymbolicLink，目標是 `D:\EventAlertMod`。本輪所有修改只作用於實體專案；未對 link 路徑執行部署、刪除、搬移、覆寫或重建。
+`_retail_`、`_ptr_`、`_xptr_` 的 `Interface\AddOns\EventAlertMod` 均已唯讀確認為 SymbolicLink，目標是 `D:\EventAlertMod`。證據為 `TestResults/EAM_LocalWoWEnvironment_20260729_135335687.json`，結果 3/3；這不是遊戲內簽收。本輪所有修改只作用於實體專案，未對 link 路徑執行部署、刪除、搬移、覆寫或重建。

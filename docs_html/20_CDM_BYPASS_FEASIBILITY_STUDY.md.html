@@ -552,140 +552,17 @@ end
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="docs20_cdm_bypass_feasibility_studymd">Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</h1>
-<h1 id="1210-shadow-hostcooldownviewertaint">12.1.0 影子載體技術（Shadow Host）呼吸評估與實施方案：借用官方CooldownViewer繞過戰鬥秘密/Taint限制</h1>
-<p>本文件針對利用魔獸世界 12.0.7 / 12.1.0 正式服內建的 <strong>CooldownViewer (冷卻管理器/CDM)</strong>作為「影子載體（Shadow Host）」，以解決 EAM 戰鬥中秘密價值與 Taint Tunnels 之方案，進行深度設計技術架構。</p>
-<hr />
-<h2 id="shadow-host">一、技術原理：什麼是「影子載體（Shadow Host）」？</h2>
-<p>在正式服 12.x 環境中，戰鬥中取得冷卻/aura 時間（如 timeLeft, expirationTime）已被限制（秘密值），且在戰鬥中動態修改 UI 佈局極易引發 Action Blocked 崩潰。</p>
-<p>官方內建的 <code>EssentialCooldownViewer</code> 和 <code>UtilityCooldownViewer</code> 是暴雪的嫁接安全框架，在戰鬥中完全更新、定位與倒數的特權。</p>
-<p><strong>影子載體技術(Shadow Host)</strong>：
-1. <strong>鏡像初始化</strong>：在戰鬥外，將官方 CooldownViewer 的幀設置為透明（Alpha = 0）或降至最低幀級別（BACKGROUND, -100），使螢幕上完全不可見。
-2. <strong>寄生通知</strong>：將 EAM 的美化圖示作為子框架掛載（已新增）到官方對應的冷卻圖示上。
-3. <strong>無程式碼同步</strong>：利用WoW引擎內建的父子級聯渲染：
-    * 當官方圖示顯示/隱藏時，EAM的圖示會<strong>自動</strong>顯示/Hide。
-* 官方圖示移動或重排（佈局）時，EAM 的圖示拓樸。
-    * 由於依賴基礎C++引擎的渲染級聯動，<strong>戰鬥中不需要執行任何Lua程式碼來控制顯示與位置，實現0-Taint與0-GC戰鬥同步</strong>。</p>
-<pre class="codehilite"><code class="language-text"> Blizzard CooldownViewer (Shadow Host) [Alpha = 0, Secure Frame]
-   └── (Parent-Child Bind)
-        └── EAM Custom Icon (Parasitic Frame) [Alpha = 1, Display Only]
-</code></pre>
 
-<hr />
-<h2 id="api">二、地域分析與API 邊界審計</h2>
-<h3 id="1-api-spellid">1. 官方 API 與 SpellID 限制</h3>
-<ul>
-<li><strong>特性</strong>：<code>C_CooldownViewer</code>僅允許追蹤「暴雪官方資料庫內建並支援的SpellID」。</li>
-<li><strong>評估</strong>：對於職業大招（如聖騎翅膀31884、戰士魯莽1719）及核心Buff/DoT，官方內建內建支援。但對於玩家自訂的稀有/臨時SpellID，官方CDM無法載入。</li>
-<li><strong><em>*</em>*策略：EAM採用</strong>雙軌驅動**：</li>
-<li><strong>影子載體軌道（軌道A）</strong>：為了官方支援的核心SpellID，啟用影子載體掛載，獲得100%戰鬥穩定性。<ul>
-<li><strong>常規資料軌（Track B）</strong>：對於自訂或非官方支援的法術，降級使用EAM自身的計時器與安全回退渲染。</li>
-</ul>
-</li>
-</ul>
-<h3 id="2-taintcombat-lockdown">2. Taint與戰鬥鎖定（Combat Lockdown）避讓</h3>
-<ul>
-<li><strong>修改問題</strong>：若在戰鬥中呼叫<code>SetParent</code>、<code>SetPoint</code>或官方框架，會直接引發<code>嘗試修改安全框架</code>崩潰。</li>
-<li><strong>解決方案</strong>：<ol>
-<li><strong>戰鬥外綁定</strong>：所有<code>SetParent</code>、<code>SetPoint</code>、<code>SetAlpha</code>操作限制均在<code>PLAYER_REGEN_ENABLED</code>（脫戰）或<code>ADDON_LOADED</code>（載入時）進行。</li>
-</ol>
-</li>
-<li><strong>戰鬥中對話</strong>：戰鬥中（<code>InCombatLockdown()</code>為true時），EAM絕對不是官方框架進行任何寫入操作，只能讓寄生的子框架受C++引擎驅動。</li>
-</ul>
-<hr />
-<h2 id="proof-of-concept">三、實作概念碼（Proof of Concept）</h2>
-<h3 id="1cooldownviewer">1.影子化官方CooldownViewer</h3>
-<p>在非戰鬥狀態下，對官方主要框架進行透明化，並降低框架等級。</p>
-<pre class="codehilite"><code class="language-lua">local function MakeHostInvisible(hostFrame)
-    if not hostFrame or InCombatLockdown() then return end
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-    -- 設為完全透明，但保留其 Child Widgets 的 Show/Hide 生命週期與 Layout 重排
-    hostFrame:SetAlpha(0)
-
-    -- 將層級降至背景最底層，以防萬一
-    hostFrame:SetFrameStrata(&quot;BACKGROUND&quot;)
-    hostFrame:SetFrameLevel(0)
-end
-
-local function InitShadowHosts()
-    if EssentialCooldownViewer then
-        MakeHostInvisible(EssentialCooldownViewer)
-    end
-    if UtilityCooldownViewer then
-        MakeHostInvisible(UtilityCooldownViewer)
-    end
-end
-</code></pre>
-
-<h3 id="2">2. 寄生掛載與佈局等級聯</h3>
-<p>取得官方圖示池（通常為 FramePool 或靜態佇列），將 EAM 圖示設定在其上。</p>
-<pre class="codehilite"><code class="language-lua">local function AnchorParasiticIcon(eamIcon, hostIcon)
-    if InCombatLockdown() then return end
-
-    -- 將 EAM 圖示的 Parent 設為官方圖示
-    eamIcon:SetParent(hostIcon)
-    eamIcon:ClearAllPoints()
-    eamIcon:SetPoint(&quot;CENTER&quot;, hostIcon, &quot;CENTER&quot;, 0, 0)
-
-    -- 確保 EAM 圖示的 Strata 比官方高，且 Alpha 為 1
-    eamIcon:SetFrameStrata(&quot;MEDIUM&quot;)
-    eamIcon:SetFrameLevel(hostIcon:GetFrameLevel() + 10)
-    eamIcon:SetAlpha(1)
-
-    -- 影子載體會同步控制 eamIcon.Show / Hide
-end
-</code></pre>
-
-<hr />
-<h2 id="_1">四風險與防禦策略（分散計畫）</h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">風險項目</th>
-<th style="text-align: left;">影響</th>
-<th style="text-align: left;">防禦與優化策略</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>官方布局变更</strong></td>
-<td style="text-align: left;">暴雪在12.1.0改变了<code>EssentialCooldownViewer</code>的子节点获取方式</td>
-<td style="text-align: left;">采用动态引用与特征检查，若无法获取子图标，自动降级关闭“月球载体”，返回至轨道B。</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>戰鬥中特殊載具覆蓋</strong></td>
-<td style="text-align: left;">進入載具時，官方主機隱藏，導致EAM寄生圖示也消失</td>
-<td style="text-align: left;">這是預期行為（符合 <code>hideWhenActionBarIsOverriden</code>）。如果玩家想要保留，可對 EAM 圖示手動呼叫提權或複製。</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>戰鬥污染擴散</strong></td>
-<td style="text-align: left;">如果 EAM 的圖示包含「點擊投射」或「安全操作」按鈕</td>
-<td style="text-align: left;"><strong>硬性規定</strong>：EAM的圖示僅作為「純視覺渲染器（僅顯示）」，不註冊任何點擊/Mouse-點擊事件，不承擔安全事件，並點擊發酵安全事件。</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1210">五、 下一階段執行步驟 (12.1.0 重構清單)</h2>
-<ol>
-<li><strong>第一階段（調查與線索抓取）</strong>：</li>
-<li>在脫戰狀態下，使用錯誤偵訊工具傾倒官方 <code>EssentialCooldownViewer</code> 的子物體結構，確定其 Icon Pool 的實體變數。</li>
-<li><strong>第二階段（單向場景）</strong>：<ul>
-<li>在程式測試程式碼中，嘗試將 <code>EssentialCooldownViewer</code> 設定 Alpha = 0，並開始是否會引發 EditMode 的污染警告。</li>
-</ul>
-</li>
-<li><strong>第三階段（雙軌配送正式服）</strong>：<ul>
-<li>在 <code>Renderer.lua</code> 中加入角色綁定邏輯。</li>
-</ul>
-</li>
-</ol>
-<h2 id="2026-07-26">2026-07-26 結論：停止採用</h2>
-<ul>
-<li>ShadowHost/CDM 不再列入 <code>EventAlertMod.toc</code>，Renderer 亦移除 host lookup。</li>
-<li>設定頁原 <code>enableCDM</code> 控制項改為 Native Aura backend/pending 狀態與手動重建。</li>
-<li>本文件僅保留歷史可行性研究，不是現行架構，也不得恢復為 12.1 Secret Aura 繞過方案。</li>
-<li>現行方案為 Blizzard 公開 AuraContainer/AuraButton 契約，見 <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>。</li>
-</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

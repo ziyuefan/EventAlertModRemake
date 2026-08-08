@@ -1,6 +1,12 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 # EventAlertMod 正式服裝重寫：AI 上下文
 
+## 優先續接路由
+
+重新進入專案、發生上下文壓縮或需要確認目前進度時，先讀 `Docs/28_PROJECT_CONTINUITY.md`，再讀 `Data/ProjectContinuity.json`。前者提供人類可讀決策與實機待辦；後者以嚴格 Schema 分離 facts、inferences、work items、trials 與 unverified。詳細試錯只追到 `Docs/15_DEVELOPMENT_ISSUE_LOG.md` 的穩定 issue ID，不以本文件或舊對話摘要猜測目前狀態。
+
+目前續接快照為 `2026-08-08.1`；離線通過不得取代 PTR、XPTR 或 Retail 真人簽收。
+
 ## 專案概要
 
 EventAlertMod (EAM) 是一個用於輕量級光環的魔獸世界插件，

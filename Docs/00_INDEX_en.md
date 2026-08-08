@@ -31,7 +31,7 @@ If you are an AI coding agent or a human developer contributing to this project,
 *   🛡️ **[Retail 12.x API Boundaries](02_RETAIL_API_BOUNDARIES.md.html)**
     *   The 4 core Secret/Protected value checking functions, secure table indexing guards, and C++ DurationObject rendering pipelines.
 *   🧩 **[Retail 12.1 AuraContainer Native Backend](23_AURA_CONTAINER_IMPLEMENTATION.md.html)**
-    *   Build 68914 contracts, Native/Legacy routing, Slot/Group, Aura Sound, schema v2, and pending PTR RQA acceptance.
+    *   Build 68914 contracts, Native/Legacy routing, Slot/Group, Aura Sound, schema v4, and pending PTR RQA acceptance.
 *   💾 **[Data State Schema](03_STATE_SCHEMA.md.html)**
     *   Data structures of the zero-allocation cache pool (AuraStatePool), countdown states, and memory recycling strategies.
 *   📜 **[Module Contracts](04_MODULE_CONTRACTS.md.html)**

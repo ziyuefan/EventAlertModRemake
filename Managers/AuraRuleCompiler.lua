@@ -45,6 +45,38 @@ end
 local function sanitizeKey(value)
     return (string.gsub(value, "[^%w_]", "_"))
 end
+local function normalizeDispelMode(value)
+    if value == "ALWAYS"
+        or value == "HARMFUL"
+        or value == "HELPFUL"
+        or value == "ANY_DISPEL"
+        or value == "NO_DISPEL"
+        or value == "STEALABLE"
+        or value == "NOT_STEALABLE"
+    then
+        return value
+    end
+    return nil
+end
+
+local function normalizeStealableFilter(value)
+    if value == "STEALABLE" or value == "NOT_STEALABLE" then
+        return value
+    end
+    return nil
+end
+
+local function normalizeDispelStyle(value)
+    if value == "BORDER"
+        or value == "BORDER_WITH_ICON"
+        or value == "ICON"
+        or value == "PRESERVE_ASSET"
+        or value == "CUSTOM_ASSET"
+    then
+        return value
+    end
+    return nil
+end
 
 local function collectAlerts(db)
     local records = {}
@@ -70,6 +102,11 @@ local function collectAlerts(db)
                         showStacks = alert.showStacks ~= false,
                         showName = alert.showName ~= false,
                         showCountdown = alert.showCountdown ~= false,
+                        showPandemic = alert.showPandemic == true,
+                        dispelMode = normalizeDispelMode(alert.dispelMode),
+                        dispelShowAlways = alert.dispelShowAlways == true,
+                        dispelStealableFilter = normalizeStealableFilter(alert.dispelStealableFilter),
+                        dispelStyle = normalizeDispelStyle(alert.dispelStyle),
                         sound = type(alert.sound) == "table" and alert.sound or nil,
                     })
                 end
@@ -122,6 +159,11 @@ local function buildBaseRule(record, capability, defaultSound)
             showStacks = record.showStacks,
             showName = record.showName,
             showCountdown = record.showCountdown,
+            showPandemic = record.showPandemic,
+            dispelMode = record.dispelMode,
+            dispelShowAlways = record.dispelShowAlways,
+            dispelStealableFilter = record.dispelStealableFilter,
+            dispelStyle = record.dispelStyle,
         },
         layout = capability.layout,
         sound = record.sound or defaultSound,
@@ -209,8 +251,14 @@ end
 local function buildFingerprint(plan)
     local parts = {
         tostring(plan.schemaVersion),
-        tostring(plan.revision),
         tostring(plan.backend),
+        tostring(plan.visualFingerprint or "-"),
+        tostring(plan.layout.elementWidth),
+        tostring(plan.layout.elementHeight),
+        tostring(plan.layout.elementSpacing),
+        tostring(plan.layout.lineSpacing),
+        tostring(plan.layout.groupSpacing),
+        tostring(plan.layout.groupLineSpacing),
     }
     for index = 1, #plan.rules do
         local rule = plan.rules[index]
@@ -218,6 +266,14 @@ local function buildFingerprint(plan)
         append(parts, rule.unit)
         append(parts, rule.slotKey or rule.groupKey or "-")
         append(parts, rule.filterString or "-")
+        append(parts, tostring(rule.style and rule.style.showStacks == true))
+        append(parts, tostring(rule.style and rule.style.showName == true))
+        append(parts, tostring(rule.style and rule.style.showCountdown == true))
+        append(parts, tostring(rule.style and rule.style.showPandemic == true))
+        append(parts, tostring(rule.style and rule.style.dispelMode or "-"))
+        append(parts, tostring(rule.style and rule.style.dispelShowAlways == true))
+        append(parts, tostring(rule.style and rule.style.dispelStealableFilter or "-"))
+        append(parts, tostring(rule.style and rule.style.dispelStyle or "-"))
         if rule.spellID then
             append(parts, tostring(rule.spellID))
         elseif rule.alertIDs then
@@ -240,6 +296,22 @@ local function buildFingerprint(plan)
         end
     end
     return table.concat(parts, "|")
+end
+
+local function buildVisualFingerprint(db)
+    local config = db and db.config or nil
+    local textLayout = config and config.textLayout or nil
+    local timer = textLayout and textLayout.timer or nil
+    local applications = textLayout and textLayout.applications or nil
+    return table.concat({
+        tostring(config and config.fontSizeSpellName or 12),
+        tostring(timer and timer.placement or Constants.TEXT_PLACEMENT_TIMER_DEFAULT),
+        tostring(timer and timer.fontSize or 14),
+        tostring(applications and applications.placement or Constants.TEXT_PLACEMENT_APPLICATIONS_DEFAULT),
+        tostring(applications and applications.fontSize or 12),
+        tostring(config and config.cooldownSwipeAlpha or 1),
+        tostring(config and config.nativeAuraDualCountdownProbe == true),
+    }, ":")
 end
 
 local function buildDefaultSound(db)
@@ -269,9 +341,11 @@ function AuraRuleCompiler.compile(db, capability)
         schemaVersion = Constants.SCHEMA_VERSION,
         revision = db and db.revision or 0,
         backend = selectedBackend,
+        layout = layout,
         rules = {},
         soundRules = {},
         limitations = {},
+        visualFingerprint = buildVisualFingerprint(db),
         nativeSlotCount = 0,
         nativeGroupCount = 0,
         legacyCount = 0,
@@ -308,7 +382,17 @@ function AuraRuleCompiler.compile(db, capability)
                 append(plan.rules, rule)
                 plan.nativeSlotCount = plan.nativeSlotCount + 1
             else
-                local groupID = rule.unit .. "_" .. rule.filterString .. "_" .. tostring(rule.candidateFilters.isFromPlayerOrPlayerPet == true)
+                local groupID = rule.unit
+                    .. "_" .. rule.filterString
+                    .. "_" .. tostring(rule.candidateFilters.isFromPlayerOrPlayerPet == true)
+                    .. "_" .. tostring(rule.style.showStacks)
+                    .. "_" .. tostring(rule.style.showName)
+                    .. "_" .. tostring(rule.style.showCountdown)
+                    .. "_" .. tostring(rule.style.showPandemic)
+                    .. "_" .. tostring(rule.style.dispelMode or "-")
+                    .. "_" .. tostring(rule.style.dispelShowAlways)
+                    .. "_" .. tostring(rule.style.dispelStealableFilter or "-")
+                    .. "_" .. tostring(rule.style.dispelStyle or "-")
                 local group = groups[groupID]
                 if not group then
                     group = {}

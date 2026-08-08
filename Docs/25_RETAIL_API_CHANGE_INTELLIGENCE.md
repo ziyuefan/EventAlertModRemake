@@ -7,9 +7,9 @@
 
 - 專案範圍：僅 WoW Retail。
 - 起始基線：12.0.0。
-- 活動專案 TOC：`120007`。
+- 活動專案 TOC：`120007, 120100`，同一套程式以 capability gate 區分 12.0.7 與 12.1。
 - 12.1 狀態：PTR／持續修訂；不得宣稱正式相容。
-- 最後查證：2026-06-21。
+- 最後查證：2026-08-08。
 - Wiki revision time 均為頁面修訂時間，不是遊戲 patch 發布時間。
 
 ## 2. APICHG 專家章程
@@ -96,10 +96,13 @@
 
 ## 9. 目前 EAM 判讀
 
-- 目前活動 TOC `120007` 對應 12.0.7 基線。
-- 12.1 AuraContainer／AuraButton 尚未落地，既有 AuraService 仍依賴逐筆 AuraData 與 UnitAura 路徑，列為 P0 相容性阻斷。
-- Secret 時間資料、戰鬥中框架建立、Scheduler 去重與 deferred state 生命週期另有 P0／P1 技術債；詳見 `Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md`。
-- 本文件與 SKILL 的建立沒有修改 Lua，也不能視為 12.1 相容完成。
+- 12.0.7 保留 readable Legacy Aura 路徑；12.1 已具 AuraContainer／AuraButton Native backend，並在離線 strict mock 驗證初始化期設定與零 Legacy Aura pipeline。
+- Native backend 已落地不等於 PTR 簽收。圖示、單一倒數、applications、target transition、Forbidden Aspect、戰鬥限制與 taint 仍需 `_ptr_` 真人證據。
+- 冷卻顯示集中經 `Core/DurationAdapter.lua`：`CreateDuration()` 與 `CreateDurationTextBinding()` 都先無參數建立，再以公開 setter 設定；不再假設建構參數或 `Unbind()`。
+- 12.1 `SPELL_UPDATE_COOLDOWN` payload 可提供 `spellID`、`baseSpellID` 與 `itemID`。EAM 以安全 ID 做目標刷新，缺值時才回到合併刷新。
+- UnitPower 採雙通道：predicate 判定可讀的次要資源可輸出安全 numeric state；可能為 Secret 的主要資源只把 `UnitPowerPercent()` 直接送入 Blizzard 支援的 StatusBar／radial sink，不讀回、不比較、不匯出原始值。
+- `AuraContainerUtil.AddDispelTypeTexture` 只視為驅散類型外觀能力，不取代任意 proc／Pandemic Glow。
+- 本輪離線流程與能力分類測試不能視為 12.1 PTR 或 12.0.7 實機相容完成。
 
 ## 10. 來源
 
@@ -118,3 +121,51 @@
 - AuraContainer sorting 使用 FrameXML 全域 `AuraContainerSortMethod`／`AuraContainerSortDirection`；68914 Generated Documentation 沒有登錄這兩表。
 - `UnitAuraSortRule` 是 Aura getter 的另一組型別，不可傳入 AuraContainer options。
 - EAM 實作與 API 限制矩陣見 `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`。
+
+## 2026-08-01：Duration、冷卻、Aura 外觀與 UnitPower 佈局
+
+### API 事實
+
+- Duration factory 與 DurationTextBinding factory 均為無參數建立，再透過 ScriptObject setter 配置；EAM 以單一 adapter 管生命週期。
+- `SPELL_UPDATE_COOLDOWN` 在 12.1 可攜帶 `itemID`，物品冷卻不應只等待 `BAG_UPDATE_COOLDOWN`。
+- `UnitPowerPercent(unitToken, powerType, unmodified, curve)` 可產生適合原生顯示 sink 的百分比；`C_Secrets.ShouldUnitPowerBeSecret`、`ShouldUnitPowerMaxBeSecret` 與 `GetPowerTypeSecrecy` 用於先分類能力。
+- StatusBar／radial sink 能接受 Secret 輸入，不代表 AddOn 可從 widget 讀回普通數字；該路徑只能顯示，不得成為 EAM 自訂判斷、序列化或觸發條件。
+- 68914 CustomAuraButton 的 dispel texture 是特定 Aura 外觀能力，不能推論成任意 border／Glow API。
+
+### 實作與驗證狀態
+
+- `ClassPowerService` 已修正事件參數與資源選擇，優先處理 Holy Power、Combo Points、Soul Shards、Chi、Arcane Charges 等次要資源；安全值 `1` 不再被 Renderer 當成「無層數」隱藏。
+- `UnitPowerCapabilityProbe` 只能由玩家按鈕啟動，輸出能力分類與人工 pass／fail／blocked；`rawValuesCollected` 固定為 `false`。
+- 離線 mock 已證明安全 numeric 次要資源與 Secret 原生 sink 資料流可達；實際職業、專精、戰鬥限制與視覺更新仍需 `_ptr_` 12.1 與 `_xptr_` 12.0.7 玩家實測。
+
+固定來源：
+
+- [68914 Unit API documentation source](https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua)
+- [68914 Secret predicate documentation source](https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua)
+- [68914 AuraContainer frame provider](https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_AuraContainer/Blizzard_AuraContainerFrameProviders.lua)
+- [68914 CustomAuraButton implementation](https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOns/Blizzard_AuraContainer/Blizzard_CustomAuraButton.lua)
+
+
+## 2026-08-08：PTR8 與 UnitPower 公開 API 固定證據
+
+### PTR8 API 事實
+
+- 固定來源為 Gethe/wow-ui-source PTR commit `a520b6c27bb897e6be2333b6cc2be36d52c7c11b`，版本 `12.1.0.69189`。
+- `AuraButton:AddPandemicRegion(region)`、`RemovePandemicRegion(index)`、`ClearPandemicRegions()` 是 Pandemic Region 合約；EAM 只在規則明確要求時建立 texture 並於 `initializeFrame` 綁定，不讀 `Enum.SecretAspect.Shown`，不建立自己的 OnUpdate。
+- `AuraButton:AddDispelTypeTexture(texture, options)` 使用 `showAlways`、Harmful/Helpful 與 `Enum.CustomAuraButtonDispelTypeStealableFilter`；`showAlways=true` 時不輸出無作用的 `stealableFilter`。新程式不依賴 AuraBorder deprecated alias。
+- 停用 `AuraContainer` 時由 Blizzard 清除 AuraButton 與 ItemEnchantment 顯示資料；框架仍可存在。此行為已加入 strict mock，PTR 實機仍待簽收。
+- PTR8 的 tooltip 200ms throttle、duration 0 bug fix 與 OnSizeChanged exploit fix 是 Blizzard 行為，不由 EAM 自製輪詢或 exploit。
+
+### UnitPower API 事實與否定結論
+
+- 同一 PTR commit 的 `SimpleStatusBarAPIDocumentation.lua`、`UnitDocumentation.lua` 與 `SecretPredicateAPIDocumentation.lua` 未證實 `StatusBar:SetUnit`、`SetPowerTextFontString`、`SetOnUpdateMode`；不得將使用者提供的三個方法當成公開 API 或硬依賴。
+- 可確認的 Secret 顯示路徑是 `UnitPowerPercent()` 取得分類結果後單向送入 `StatusBar:SetValue()` 或 `Texture:SetRadialProgressBarPercent()`；禁止讀回 widget、比較、字串化或序列化 Secret 值。
+- `ClassPowerService` 只有在 `C_Secrets.ShouldUnitPowerBeSecret`／`ShouldUnitPowerMaxBeSecret` 明確可用且回傳 `false` 時才讀取普通數字；戰鬥中所有 UnitPower/Max 讀取延後至 `PLAYER_REGEN_ENABLED`。
+- `UnitPowerCapabilityProbe` 的 `statusBarSecretSink` 僅保留初始化相容欄位，實際通過仍須 case `accepted` 加玩家視覺 pass；文件或離線 mock 不升格為 PTR 實機證據。
+
+固定來源：
+
+- [SimpleStatusBar API 12.1.0.69189](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua)
+- [SimpleTextureBase API 12.1.0.69189](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua)
+- [Unit API 12.1.0.69189](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua)
+- [Secret predicate API 12.1.0.69189](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua)

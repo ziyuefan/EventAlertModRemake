@@ -100,7 +100,10 @@ function Test-TocConsistency {
             continue
         }
         
-        Get-ChildItem -LiteralPath $physicalDir -Recurse -File -Include "*.lua", "*.xml" | ForEach-Object {
+        Get-ChildItem -LiteralPath $physicalDir -Recurse -File | Where-Object {
+            $extension = $_.Extension.ToLowerInvariant()
+            $extension -eq ".lua" -or $extension -eq ".xml"
+        } | ForEach-Object {
             $relative = $_.FullName.Substring($workspace.Length).TrimStart("\", "/").Replace("\", "/")
             $relativeKey = $relative.ToLower()
             if (-not $tocFiles.ContainsKey($relativeKey)) {
@@ -255,6 +258,23 @@ if (-not $SkipFlowValidation) {
     & powershell -NoProfile -ExecutionPolicy Bypass -File $flowScript -Suite all -OutputDirectory "TestResults"
     if ($LASTEXITCODE -ne 0) {
         throw "Offline flow validation failed."
+    }
+}
+
+# 3c. Validate JSON schemas and Lua/TOC contract synchronization
+if (-not $SkipFlowValidation) {
+    $contractScript = Join-Path $workspace "Tools\Test-ValidationContracts.ps1"
+    if (-not (Test-Path -LiteralPath $contractScript)) {
+        throw "Missing validation contract script: $contractScript"
+    }
+    $pwshCommand = Get-Command pwsh -ErrorAction SilentlyContinue
+    if (-not $pwshCommand) {
+        throw "PowerShell 7 (pwsh) is required for JSON Schema validation."
+    }
+
+    & $pwshCommand.Source -NoProfile -File $contractScript
+    if ($LASTEXITCODE -ne 0) {
+        throw "JSON/Lua validation contracts failed."
     }
 }
 # 4. Verify version format match

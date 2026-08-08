@@ -247,6 +247,8 @@ function RuntimeProbe.snapshot(options)
     }
     local tooltipMonitor = EAM.Services.TooltipMonitorService
     snapshot.tooltipMonitor = tooltipMonitor and tooltipMonitor.getStatus and tooltipMonitor.getStatus() or nil
+    local groundEffect = EAM.Services.GroundEffectService
+    snapshot.groundEffect = groundEffect and groundEffect.getStatus and groundEffect.getStatus() or nil
     snapshot.summary = countStatuses(snapshot.capabilities)
 
     return snapshot

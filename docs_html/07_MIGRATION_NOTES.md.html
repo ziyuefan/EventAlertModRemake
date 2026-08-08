@@ -545,133 +545,17 @@ EA_Pos
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="_1">遷移注意事項</h1>
-<h2 id="_2">舊行為映射</h2>
-<p>費用保留：</p>
-<ul>
-<li>取得自我/debuff警報圖示；</li>
-<li>目標增益/減益警報圖示；</li>
-<li>動動冷卻時間警報圖示；</li>
-<li>itemID 的工件冷卻圖示；</li>
-<li>簡單的spellID加入/刪除工作流程；</li>
-<li><code>/eam opt</code> 設定入口點；</li>
-<li><code>/eam show</code>、<code>/eam showt</code>、<code>/eam showc</code>、<code>/eam showa</code>探測流程工作；</li>
-<li>冷卻行為切換：</li>
-<li>冷卻完成後移除；</li>
-<li>讓冷卻圖示遠離戰鬥；</li>
-<li>使用時發光；</li>
-<li>圖示顯示切換：</li>
-<li>顯示框架；</li>
-<li>顯示姓名；</li>
-<li>顯示計時器；</li>
-<li>顯示 flash/glow;</li>
-<li>工具提示附加輔助/item ID；</li>
-<li>名稱、計時器和所在的字體大小控制；</li>
-<li>小地圖選項按鈕語意；</li>
-<li>本地化字串，特別是存在的 zhTW、enUS、koKR、zhCN；</li>
-<li>正式服驗證後可使用預設/物品表。</li>
-</ul>
-<h2 id="savedvariables">舊 SavedVariables 遷移</h2>
-<p>舊版輸入：</p>
-<pre class="codehilite"><code class="language-lua">EA_Config
-EA_Position
-EA_Items
-EA_AltItems
-EA_TarItems
-EA_ScdItems
-EA_GrpItems
-EA_Pos
-</code></pre>
 
-<p>目標遷移：</p>
-<pre class="codehilite"><code class="language-js">EventAlertModDB = {
-  schemaVersion: 1,
-  profile: {
-    display: {},
-    behavior: {},
-    alerts: {
-      playerAuras: [],
-      targetAuras: [],
-      spellCooldowns: [],
-      itemCooldowns: [],
-      groupAlerts: []
-    },
-    layout: {}
-  },
-  migration: {
-    fromLegacy: true,
-    sourceKeys: [],
-    warnings: []
-  }
-}
-</code></pre>
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-<p>確信的目標變數名稱被重寫決定。如果舊變數名稱
-為了相容性，它們仍然需要架構標記和遷移狀態。</p>
-<p>遷移規則：</p>
-<ul>
-<li>永遠不會凍結遷移的 SavedVariables；</li>
-<li>模組將運行時狀態儲存在 SavedVariables 中；</li>
-<li>在遷移安全性互補表下保留未知的遺傳欄位或
-  警告名單；</li>
-<li>驗證spellID/itemID數字欄位；</li>
-<li>將刪除的唯一經典的欄位記錄為遷移預警；</li>
-<li>在備份或遷移設定信件策略生效之前不要刪除舊字段
-  定義的。</li>
-</ul>
-<h2 id="_3">刪除舊行為</h2>
-<p>從Active的正式伺服器架構中刪除：</p>
-<ul>
-<li>Classic、TBC、Wrath、Cata、Mists TOC 和負載根；</li>
-<li><code>G.WOW_VERSION</code> 分支的經典行為；</li>
-<li>經典API的舊解壓縮傳回相內容層；</li>
-<li>老獵人寵物幸福/焦點只存在於經典時代的分支
-  行為；</li>
-<li>大量正常運行時物品ID掃描；</li>
-<li>每個圖示計時器和每個繪圖計時器刷新鏈；</li>
-<li>工具提示掃描作為正常事實來源；</li>
-<li>核心操作的外部依賴要求。</li>
-</ul>
-<h2 id="_4">相容性中斷</h2>
-<p>預計休息時間：</p>
-<ul>
-<li>舊的經典目錄不再載入；</li>
-<li>依賴傳統特定資源的使用者會忽略這些警告；</li>
-<li>事件腳本/配置可能需要簡化；</li>
-<li>import/export 原型必須重新設計或刪除，除非是簡單的安全
-  需要路徑；</li>
-<li><code>Lib_ZYF</code> 助手應該被替換或隔離；不要假設它存在於
-  新的核心。</li>
-</ul>
-<h2 id="_5">本地化遷移</h2>
-<p>現有的語言環境文件：</p>
-<ul>
-<li><code>locale/localization.comm.lua</code></li>
-<li><code>locale/localization.en.lua</code></li>
-<li><code>locale/localization.tw.lua</code></li>
-<li><code>locale/localization.cn.lua</code></li>
-<li><code>locale/localization.kr.lua</code></li>
-<li><code>locale/localization.ru.lua</code>
-保持本地化隔離。不要將字串混合到邏輯模組中。請勿添加
-簡體中文字串為zhTW。</li>
-</ul>
-<h2 id="_6">繼承來源處理</h2>
-<p>目前的舊原始碼保留用於審計/reference：</p>
-<ul>
-<li><code>Classic/</code></li>
-<li><code>TBC/</code></li>
-<li><code>Wrath/</code></li>
-</ul>
-<p>它們不應該由 Retail 重寫載入。如果保留在儲存庫中，
-將它們標記為已文檔/unsupported。</p>
-<h2 id="2026-07-26aura-schema-v1-v2">2026-07-26：Aura schema v1 -&gt; v2</h2>
-<ul>
-<li>遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的 player/target Aura 純資料。</li>
-<li>既有 alert 增補 <code>nativeBackend=AUTO</code> 與顯示偏好，不移除未知欄位或舊 <code>EA_*</code> globals。</li>
-<li>遷移失敗會還原遷移前可序列化 DB，並記錄靜態 warning code。</li>
-<li>12.0.7 使用 Legacy backend；12.1 使用 Native 或 Unsupported，不能以 Legacy Secret 掃描補洞。</li>
-</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

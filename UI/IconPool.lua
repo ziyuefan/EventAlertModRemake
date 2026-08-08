@@ -42,6 +42,28 @@ local IconPool = {
 
 EAM.UI.IconPool = IconPool
 
+local function normalizeSwipeAlpha(config)
+    local alpha = config and config.cooldownSwipeAlpha
+    if not EAM.Util.isSafeNumber(alpha) then
+        return 1
+    end
+    if alpha < 0 then
+        return 0
+    elseif alpha > 1 then
+        return 1
+    end
+    return alpha
+end
+
+function IconPool.applyCooldownStyle(icon, config)
+    local cooldown = icon and icon.cooldown
+    if not cooldown or type(cooldown.SetSwipeColor) ~= "function" then
+        return false
+    end
+    cooldown:SetSwipeColor(1, 1, 1, normalizeSwipeAlpha(config))
+    return true
+end
+
 local function createIcon()
     local name = "EAM_RetailAlertIcon" .. (IconPool.created + 1)
     local button = api.CreateFrame("Frame", name, UIParent)
@@ -58,6 +80,7 @@ local function createIcon()
         cooldown:SetHideCountdownNumbers(true)
     end
     button.cooldown = cooldown
+    IconPool.applyCooldownStyle(button, EAM.db and EAM.db.config or nil)
 
     -- 建立高層級的文字與裝飾容器，徹底解決層級遮擋與 CDM 寄生裁切問題
     local overlay = api.CreateFrame("Frame", nil, button)
@@ -98,6 +121,7 @@ function IconPool.acquire()
         local icon = IconPool.inactive[IconPool.inactiveCount]
         IconPool.inactive[IconPool.inactiveCount] = nil
         IconPool.inactiveCount = IconPool.inactiveCount - 1
+        IconPool.applyCooldownStyle(icon, EAM.db and EAM.db.config or nil)
         return icon
     end
 
@@ -120,8 +144,9 @@ function IconPool.release(icon)
     end
 
     if icon.timerBinding then
-        if type(icon.timerBinding.Unbind) == "function" then
-            icon.timerBinding:Unbind()
+        local adapter = EAM.Modules.DurationAdapter
+        if adapter then
+            adapter.releaseTextBinding(icon.timerBinding)
         end
         icon.timerBinding = nil
     end
@@ -145,9 +170,14 @@ function IconPool.release(icon)
 end
 
 function IconPool.prewarm(count)
+    if api.InCombatLockdown and api.InCombatLockdown() then
+        return false, "combatDeferred"
+    end
+
     count = count or IconPool.prewarmCount
     while IconPool.created < count do
         local icon = createIcon()
         IconPool.release(icon)
     end
+    return true, IconPool.created
 end

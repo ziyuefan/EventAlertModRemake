@@ -130,7 +130,7 @@ local function createFrame()
     local quickButton = createButton(
         frame,
         text("EAM_FLOW_BUTTON_QUICK", "快速流程"),
-        110,
+        92,
         "TOPLEFT",
         frame,
         "TOPLEFT",
@@ -144,7 +144,7 @@ local function createFrame()
     local coreButton = createButton(
         frame,
         text("EAM_FLOW_BUTTON_CORE", "核心流程"),
-        110,
+        92,
         "LEFT",
         quickButton,
         "RIGHT",
@@ -158,7 +158,7 @@ local function createFrame()
     local boundaryButton = createButton(
         frame,
         text("EAM_FLOW_BUTTON_BOUNDARY", "邊界流程"),
-        110,
+        92,
         "LEFT",
         coreButton,
         "RIGHT",
@@ -172,7 +172,7 @@ local function createFrame()
     local aura121Button = createButton(
         frame,
         text("EAM_FLOW_BUTTON_AURA121", "12.1 Aura"),
-        110,
+        92,
         "LEFT",
         boundaryButton,
         "RIGHT",
@@ -183,10 +183,10 @@ local function createFrame()
         end
     )
 
-    createButton(
+    local allButton = createButton(
         frame,
         text("EAM_FLOW_BUTTON_ALL", "執行全部"),
-        110,
+        92,
         "LEFT",
         aura121Button,
         "RIGHT",
@@ -255,7 +255,7 @@ local function createFrame()
         end
     )
 
-    createButton(
+    local closeButton = createButton(
         frame,
         text("EAM_FLOW_BUTTON_CLOSE", "關閉"),
         100,
@@ -266,6 +266,141 @@ local function createFrame()
         0,
         function()
             frame:Hide()
+        end
+    )
+
+    local dualCountdownButton
+    local dualCountdownEnabled = EAM.db and EAM.db.config
+        and EAM.db.config.nativeAuraDualCountdownProbe == true or false
+    dualCountdownButton = createButton(
+        frame,
+        dualCountdownEnabled
+            and text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN_OFF", "關閉雙倒數")
+            or text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN", "雙倒數診斷"),
+        92,
+        "LEFT",
+        allButton,
+        "RIGHT",
+        8,
+        0,
+        function()
+            if api.InCombatLockdown and api.InCombatLockdown() then
+                setStatus(text("EAM_FLOW_STATUS_COMBAT", "戰鬥中不執行流程測試。"), true)
+                return
+            end
+            local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+            local containerService = EAM.Services and EAM.Services.AuraContainerService
+            local config = EAM.db and EAM.db.config
+            if not savedVariables or not savedVariables.updateConfigBoolean or not config then
+                setStatus(text("EAM_FLOW_DUAL_COUNTDOWN_UNAVAILABLE", "雙倒數診斷設定目前不可用。"), true)
+                return
+            end
+            local enabled = config.nativeAuraDualCountdownProbe ~= true
+            local updated, updateState = savedVariables.updateConfigBoolean(
+                "nativeAuraDualCountdownProbe",
+                enabled
+            )
+            if not updated or updateState ~= "updated" then
+                setStatus(text("EAM_FLOW_DUAL_COUNTDOWN_UNAVAILABLE", "雙倒數診斷設定目前不可用。"), true)
+                return
+            end
+            local rebuilt, rebuildReason = true, "unavailable"
+            if containerService and containerService.requestRebuild then
+                rebuilt, rebuildReason = containerService.requestRebuild("FLOW_TEST_DUAL_COUNTDOWN_TOGGLE")
+            end
+            dualCountdownButton:SetText(
+                enabled
+                    and text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN_OFF", "關閉雙倒數")
+                    or text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN", "雙倒數診斷")
+            )
+            if rebuilt == false and rebuildReason == "nativeReloadRequired" then
+                setStatus(text("EAM_FLOW_DUAL_COUNTDOWN_RELOAD", "診斷設定已保存；Native 容器已達本次載入上限，請由玩家自行 /reload。"), true)
+            elseif enabled then
+                setStatus(text("EAM_FLOW_DUAL_COUNTDOWN_ENABLED", "雙倒數診斷已啟用；只供人工觀察同步性，完成後請關閉。"), false)
+            else
+                setStatus(text("EAM_FLOW_DUAL_COUNTDOWN_DISABLED", "雙倒數診斷已關閉；正常模式只顯示一套倒數。"), false)
+            end
+        end
+    )
+
+    local liveButton = createButton(
+        frame,
+        text("EAM_FLOW_BUTTON_LIVE", "真人實機回報"),
+        140,
+        "LEFT",
+        closeButton,
+        "RIGHT",
+        10,
+        0,
+        function()
+            if EAM.Debug.LiveTestPanel then
+                EAM.Debug.LiveTestPanel.open(true)
+            end
+        end
+    )
+
+    local unitPowerButton
+    unitPowerButton = createButton(
+        frame,
+        text("EAM_FLOW_BUTTON_UNIT_POWER", "UnitPower 能力"),
+        150,
+        "LEFT",
+        liveButton,
+        "RIGHT",
+        10,
+        0,
+        function()
+            local probe = EAM.Debug.UnitPowerCapabilityProbe
+            if not probe then
+                setStatus(text("EAM_UNIT_POWER_PROBE_UNAVAILABLE", "UnitPower 能力探針尚未載入。"), true)
+                return
+            end
+            local ok, report, reportJSON
+            if probe.isActive() then
+                ok, report, reportJSON = probe.stop()
+                unitPowerButton:SetText(text("EAM_FLOW_BUTTON_UNIT_POWER", "UnitPower 能力"))
+            else
+                local validationEnvironment = EAM.Debug.ValidationEnvironment
+                if not validationEnvironment
+                    or not validationEnvironment.getDeclaredInstallation
+                    or not validationEnvironment.getDeclaredInstallation()
+                then
+                    if EAM.Debug.LiveTestPanel then
+                        EAM.Debug.LiveTestPanel.open(true)
+                    end
+                    setStatus(
+                        text(
+                            "EAM_UNIT_POWER_CLIENT_REQUIRED",
+                            "請先在真人實機回報面板選擇目前實際開啟的 PTR、XPTR 或正式服，再啟動 UnitPower 測試。"
+                        ),
+                        true
+                    )
+                    return
+                end
+                ok, report, reportJSON = probe.start()
+                if ok then
+                    unitPowerButton:SetText(text("EAM_FLOW_BUTTON_UNIT_POWER_STOP", "停止並產生報告"))
+                end
+            end
+            if not ok then
+                setStatus(
+                    text("EAM_UNIT_POWER_PROBE_START_FAILED", "UnitPower 測試無法啟動；請先離開戰鬥再開啟面板。"),
+                    true
+                )
+                return
+            end
+            showReport(reportJSON)
+            if probe.isActive() then
+                setStatus(
+                    text("EAM_UNIT_POWER_PROBE_RUNNING", "測試中：請由玩家產生／消耗資源，觀察兩條原生顯示後標記結果。"),
+                    false
+                )
+            else
+                setStatus(
+                    text("EAM_UNIT_POWER_PROBE_STOPPED", "UnitPower 能力報告已完成；請複製回灌。"),
+                    not report or report.status ~= "pass"
+                )
+            end
         end
     )
 

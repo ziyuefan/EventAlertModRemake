@@ -41,6 +41,8 @@ local function resetTrace()
         groupAdds = 0,
         groupLayouts = 0,
         initializedButtons = 0,
+        pandemicRegionAdds = 0,
+        dispelTextureAdds = 0,
         addAuraSoundCalls = 0,
         removeAuraSoundCalls = 0,
         tooltipPostCallRegistrations = 0,
@@ -56,23 +58,116 @@ local function resetTrace()
         cooldownRefreshes = 0,
         itemRefreshes = 0,
         layoutRefreshes = 0,
+        regionSetPoints = 0,
+        regionSetFonts = 0,
+        postInitializationMutations = 0,
+        auraAssignmentsCleared = 0,
+        durationCreates = 0,
+        durationSetTimeCalls = 0,
+        durationBindingCreates = 0,
+        durationBindingEnables = 0,
+        cooldownDurationObjectCalls = 0,
+        cooldownNumericCalls = 0,
+        unitPowerReads = 0,
+        unitPowerMaxReads = 0,
+        unitPowerPercentReads = 0,
+        nativePowerSinkWrites = 0,
+        gameplayAutomationCalls = 0,
     }
 end
 
 local function noOperation()
 end
 
-local regionMethods = {}
-local regionMethodNames = {
-    "SetAllPoints", "SetTexCoord", "SetPoint", "ClearAllPoints", "SetSize", "SetFont",
-    "SetText", "ClearText", "Show", "Hide", "SetEnabled", "SetMouseMotionEnabled",
-}
-for index = 1, #regionMethodNames do
-    regionMethods[regionMethodNames[index]] = noOperation
+local function assertInitializationOpen(widget)
+    local owner = widget and rawget(widget, "_eamOwner") or widget
+    if owner and rawget(owner, "_eamInitializationLocked") then
+        Mock.trace.postInitializationMutations = Mock.trace.postInitializationMutations + 1
+        error("AuraButton mutation after initializeFrame")
+    end
 end
 
-local function createRegion()
-    return setmetatable({}, {
+local function regionNoOperation(self)
+    assertInitializationOpen(self)
+end
+
+local regionMethods = {}
+local regionMethodNames = {
+    "SetAllPoints", "SetTexCoord",
+    "SetText", "ClearText", "Show", "Hide", "SetEnabled", "SetMouseMotionEnabled",
+    "SetColorTexture", "SetRadialProgressBarStartOffset", "SetRadialProgressBarEndOffset",
+    "SetRadialProgressBarFeather",
+}
+for index = 1, #regionMethodNames do
+    regionMethods[regionMethodNames[index]] = regionNoOperation
+end
+
+function regionMethods:SetPoint(point, relativeTo, relativePoint, x, y)
+    assertInitializationOpen(self)
+    self.lastPoint = {
+        point = point,
+        relativeTo = relativeTo,
+        relativePoint = relativePoint,
+        x = x,
+        y = y,
+    }
+    Mock.trace.regionSetPoints = Mock.trace.regionSetPoints + 1
+end
+
+function regionMethods:ClearAllPoints()
+    assertInitializationOpen(self)
+    self.lastPoint = nil
+end
+
+function regionMethods:SetSize(width, height)
+    assertInitializationOpen(self)
+    self.width = width
+    self.height = height
+end
+
+function regionMethods:SetFont(font, size, flags)
+    assertInitializationOpen(self)
+    self.font = font
+    self.fontSize = size
+    self.fontFlags = flags
+    Mock.trace.regionSetFonts = Mock.trace.regionSetFonts + 1
+end
+
+function regionMethods:SetHideCountdownNumbers(value)
+    assertInitializationOpen(self)
+    self.hideCountdownNumbers = value == true
+end
+
+function regionMethods:SetSwipeColor(red, green, blue, alpha)
+    assertInitializationOpen(self)
+    self.swipeColor = { red, green, blue, alpha }
+    self.swipeAlpha = alpha
+end
+
+function regionMethods:SetCooldownFromDurationObject(durationObject)
+    assertInitializationOpen(self)
+    self.durationObject = durationObject
+    Mock.trace.cooldownDurationObjectCalls = Mock.trace.cooldownDurationObjectCalls + 1
+end
+
+function regionMethods:SetCooldown(startTime, duration)
+    assertInitializationOpen(self)
+    self.startTime = startTime
+    self.duration = duration
+    Mock.trace.cooldownNumericCalls = Mock.trace.cooldownNumericCalls + 1
+end
+
+function regionMethods:SetRadialProgressBarPercent(value)
+    assertInitializationOpen(self)
+    self.radialPercentClass = Mock.secretValues[value] == true and "secret" or type(value)
+    Mock.trace.nativePowerSinkWrites = Mock.trace.nativePowerSinkWrites + 1
+end
+
+local function createRegion(owner, regionType)
+    return setmetatable({
+        _eamOwner = owner,
+        regionType = regionType,
+    }, {
         __index = function(_, key)
             local method = regionMethods[key]
             if method then
@@ -85,51 +180,126 @@ end
 
 local auraButtonMethods = {}
 
-function auraButtonMethods:SetSize()
+function auraButtonMethods:SetSize(width, height)
+    assertInitializationOpen(self)
+    self.width = width
+    self.height = height
 end
 
 function auraButtonMethods:CreateTexture()
-    return createRegion()
+    assertInitializationOpen(self)
+    local region = createRegion(self, "Texture")
+    self.createdTextures[#self.createdTextures + 1] = region
+    return region
 end
 
 function auraButtonMethods:CreateFontString()
-    return createRegion()
+    assertInitializationOpen(self)
+    local region = createRegion(self, "FontString")
+    self.createdFontStrings[#self.createdFontStrings + 1] = region
+    return region
 end
 
 function auraButtonMethods:SetIcon(value)
+    assertInitializationOpen(self)
     self.icon = value
 end
 
 function auraButtonMethods:SetDurationCooldown(value)
+    assertInitializationOpen(self)
     self.cooldown = value
 end
 
 function auraButtonMethods:SetDurationText(value)
+    assertInitializationOpen(self)
     self.durationText = value
 end
 
 function auraButtonMethods:SetApplicationCount(value)
+    assertInitializationOpen(self)
     self.applicationCount = value
 end
 
 function auraButtonMethods:SetSpellName(value)
+    assertInitializationOpen(self)
     self.spellName = value
 end
 
 function auraButtonMethods:SetHideTooltipInCombat(value)
+    assertInitializationOpen(self)
     self.hideTooltipInCombat = value
 end
 
 function auraButtonMethods:ClearAllPoints()
+    assertInitializationOpen(self)
+    self.lastPoint = nil
 end
 
-function auraButtonMethods:SetPoint()
+function auraButtonMethods:SetPoint(point, relativeTo, relativePoint, x, y)
+    assertInitializationOpen(self)
+    self.lastPoint = {
+        point = point,
+        relativeTo = relativeTo,
+        relativePoint = relativePoint,
+        x = x,
+        y = y,
+    }
+end
+
+function auraButtonMethods:AddPandemicRegion(region)
+    assertInitializationOpen(self)
+    self.pandemicRegions[#self.pandemicRegions + 1] = region
+    Mock.trace.pandemicRegionAdds = Mock.trace.pandemicRegionAdds + 1
+    return #self.pandemicRegions
+end
+
+function auraButtonMethods:RemovePandemicRegion(index)
+    assertInitializationOpen(self)
+    table.remove(self.pandemicRegions, index)
+end
+
+function auraButtonMethods:ClearPandemicRegions()
+    assertInitializationOpen(self)
+    self.pandemicRegions = {}
+end
+
+function auraButtonMethods:AddDispelTypeTexture(texture, options)
+    assertInitializationOpen(self)
+    self.dispelTypeTextures[#self.dispelTypeTextures + 1] = {
+        texture = texture,
+        options = options,
+    }
+    Mock.trace.dispelTextureAdds = Mock.trace.dispelTextureAdds + 1
+    return #self.dispelTypeTextures
+end
+
+function auraButtonMethods:RemoveDispelTypeTexture(index)
+    assertInitializationOpen(self)
+    table.remove(self.dispelTypeTextures, index)
+end
+
+function auraButtonMethods:ClearDispelTypeTextures()
+    assertInitializationOpen(self)
+    self.dispelTypeTextures = {}
+end
+
+function auraButtonMethods:GetDispelTypeTextureCount()
+    return #self.dispelTypeTextures
+end
+
+function auraButtonMethods:GetDispelTypeTexture(index)
+    return self.dispelTypeTextures[index]
 end
 
 local function createAuraButton()
-    return setmetatable({}, {
+    local button = setmetatable({
+        createdTextures = {},
+        createdFontStrings = {},
+        pandemicRegions = {},
+        dispelTypeTextures = {},
+    }, {
         __index = function(_, key)
-            if key == "eamNativeRegions" then
+            if key == "eamNativeRegions" or key == "eamNativeInitialized" then
                 return nil
             end
             local method = auraButtonMethods[key]
@@ -139,6 +309,13 @@ local function createAuraButton()
             error("Unknown strict AuraButton method: " .. tostring(key))
         end,
     })
+    Mock.lastAuraButton = button
+    return button
+end
+
+local function lockAuraButton(button)
+    rawset(button, "_eamInitializationLocked", true)
+    return button
 end
 
 local auraContainerMethods = {}
@@ -155,6 +332,17 @@ end
 function auraContainerMethods:SetEnabled(enabled)
     countMutation()
     self.enabled = enabled
+    if not enabled then
+        for index = 1, #self.buttons do
+            local button = self.buttons[index]
+            button.icon = nil
+            button.cooldown = nil
+            button.durationText = nil
+            button.applicationCount = nil
+            button.spellName = nil
+            Mock.trace.auraAssignmentsCleared = Mock.trace.auraAssignmentsCleared + 1
+        end
+    end
 end
 
 function auraContainerMethods:AddAuraSlot(key, filterString, options)
@@ -164,7 +352,9 @@ function auraContainerMethods:AddAuraSlot(key, filterString, options)
     assert(type(filterString) == "string", "slot filter must be string")
     assert(type(options) == "table" and type(options.initializeFrame) == "function", "slot options incomplete")
     local button = createAuraButton()
+    self.buttons[#self.buttons + 1] = button
     options.initializeFrame(button)
+    lockAuraButton(button)
     Mock.trace.initializedButtons = Mock.trace.initializedButtons + 1
     return button
 end
@@ -177,7 +367,10 @@ function auraContainerMethods:AddAuraGroup(key, filterString, options)
     assert(type(options) == "table" and type(options.initializeFrame) == "function", "group options incomplete")
     local count = math.min(options.maxFrameCount or 1, 10)
     for _ = 1, count do
-        options.initializeFrame(createAuraButton())
+        local button = createAuraButton()
+        self.buttons[#self.buttons + 1] = button
+        options.initializeFrame(button)
+        lockAuraButton(button)
         Mock.trace.initializedButtons = Mock.trace.initializedButtons + 1
     end
 end
@@ -212,7 +405,10 @@ end
 
 local function createAuraContainer()
     Mock.trace.containerCreates = Mock.trace.containerCreates + 1
-    return setmetatable({}, {
+    return setmetatable({
+        buttons = {},
+        enabled = true,
+    }, {
         __index = function(_, key)
             local method = auraContainerMethods[key]
             if method then
@@ -250,7 +446,7 @@ local function createGenericFrame(frameType, frameName)
     end
 
     function frame:CreateTexture()
-        return createRegion()
+        return createRegion(nil, "Texture")
     end
 
     function frame:CreateFontString()
@@ -293,6 +489,16 @@ local function createGenericFrame(frameType, frameName)
         self.text = ""
     end
 
+    function frame:SetValue(value)
+        self.valueClass = Mock.secretValues[value] == true and "secret" or type(value)
+        Mock.trace.nativePowerSinkWrites = Mock.trace.nativePowerSinkWrites + 1
+    end
+
+    function frame:SetMinMaxValues(minimum, maximum)
+        self.minimum = minimum
+        self.maximum = maximum
+    end
+
     function frame:SetFocus()
         Mock.keyboardFocus = self
     end
@@ -328,7 +534,8 @@ local function createGenericFrame(frameType, frameName)
         "SetAllPoints", "SetTexCoord", "SetPoint", "ClearAllPoints", "SetSize", "SetFont",
         "SetEnabled", "SetMouseMotionEnabled", "SetFrameStrata", "SetToplevel",
         "SetClampedToScreen", "EnableMouse", "SetBackdrop", "SetJustifyH", "SetJustifyV",
-        "SetHeight", "SetAutoFocus", "SetNumeric", "SetMaxLetters",
+        "SetHeight", "SetAutoFocus", "SetNumeric", "SetMaxLetters", "SetBackdropColor",
+        "SetStatusBarTexture", "SetStatusBarColor",
     }
     for index = 1, #noOperationMethods do
         frame[noOperationMethods[index]] = noOperation
@@ -410,14 +617,15 @@ function Mock.install(interfaceVersion)
         tooltipShowAuraSpellIDs = "0",
     }
     Mock.lastMenuCandidate = nil
+    Mock.lastAuraButton = nil
     resetTrace()
 
-    CreateFrame = function(frameType, frameName)
+    CreateFrame = function(frameType, frameName, parent)
         if frameType == "AuraContainer" then
             return createAuraContainer()
         end
         if frameType == "Cooldown" then
-            return createRegion()
+            return createRegion(parent, "Cooldown")
         end
         return createGenericFrame(frameType, frameName)
     end
@@ -448,13 +656,118 @@ function Mock.install(interfaceVersion)
         end
         return "12.0.7", "mock-68887", "2026-07-26", Mock.interface
     end
+    IsTestBuild = function()
+        return true
+    end
+    IsPublicTestClient = function()
+        return true
+    end
+    IsBetaBuild = function()
+        return false
+    end
+    WOW_PROJECT_ID = 1
+    local function rejectGameplayAutomation(apiName)
+        return function()
+            Mock.trace.gameplayAutomationCalls = Mock.trace.gameplayAutomationCalls + 1
+            error("forbidden gameplay automation API: " .. apiName)
+        end
+    end
+    CastSpellByID = rejectGameplayAutomation("CastSpellByID")
+    UseAction = rejectGameplayAutomation("UseAction")
+    RunMacro = rejectGameplayAutomation("RunMacro")
+    TargetUnit = rejectGameplayAutomation("TargetUnit")
+    ReloadUI = rejectGameplayAutomation("ReloadUI")
+    Mock.unitClassToken = "PALADIN"
+    Mock.unitPowerType = 0
+    Mock.unitPowerToken = "MANA"
+    Mock.unitPowerValues = {}
+    Mock.unitPowerMaxValues = {}
+    Mock.secretPowerTypes = {}
+    Mock.secretPowerMaxTypes = {}
+    UnitClass = function()
+        return "Paladin", Mock.unitClassToken, 2
+    end
     UnitPowerType = function()
-        return 0, "MANA"
+        return Mock.unitPowerType, Mock.unitPowerToken
+    end
+    UnitHasPowerType = function(_, powerType)
+        return Mock.unitPowerMaxValues[powerType] ~= nil
+    end
+    UnitPower = function(_, powerType)
+        Mock.trace.unitPowerReads = Mock.trace.unitPowerReads + 1
+        if Mock.secretPowerTypes[powerType] then
+            return Mock.createSecretScalar()
+        end
+        return Mock.unitPowerValues[powerType] or 0
+    end
+    UnitPowerMax = function(_, powerType)
+        Mock.trace.unitPowerMaxReads = Mock.trace.unitPowerMaxReads + 1
+        if Mock.secretPowerMaxTypes[powerType] then
+            return Mock.createSecretScalar()
+        end
+        return Mock.unitPowerMaxValues[powerType] or 0
+    end
+    UnitPowerPercent = function(_, powerType)
+        Mock.trace.unitPowerPercentReads = Mock.trace.unitPowerPercentReads + 1
+        if Mock.secretPowerTypes[powerType] then
+            return Mock.createSecretScalar()
+        end
+        local maximum = Mock.unitPowerMaxValues[powerType] or 0
+        if maximum <= 0 then
+            return 0
+        end
+        return (Mock.unitPowerValues[powerType] or 0) * 100 / maximum
+    end
+    Mock.totems = {}
+    GetTotemInfo = function(slot)
+        local totem = Mock.totems[slot]
+        if not totem then
+            return false, "", 0, 0, 0, 1, 0
+        end
+        return true, totem.name, totem.startTime, totem.duration, totem.icon, 1, totem.spellID
+    end
+    GetTotemDuration = function(slot)
+        local totem = Mock.totems[slot]
+        if not totem then
+            return nil
+        end
+        return C_DurationUtil.CreateDuration()
     end
     STANDARD_TEXT_FONT = "Fonts\\FRIZQT__.TTF"
     AuraContainerSortMethod = { Default = 0 }
     AuraContainerSortDirection = { Normal = 0 }
     Enum = Enum or {}
+    Enum.PowerType = {
+        Mana = 0,
+        Rage = 1,
+        Focus = 2,
+        Energy = 3,
+        ComboPoints = 4,
+        Runes = 5,
+        RunicPower = 6,
+        SoulShards = 7,
+        LunarPower = 8,
+        HolyPower = 9,
+        Maelstrom = 11,
+        Chi = 12,
+        Insanity = 13,
+        ArcaneCharges = 16,
+        Fury = 17,
+        Pain = 18,
+        Essence = 19,
+    }
+    Enum.SecretAspect = { Shown = 1, BarValue = 2, RadialProgress = 3 }
+    Enum.CustomAuraButtonDispelTypeStealableFilter = {
+        Stealable = 1,
+        NotStealable = 2,
+    }
+    Enum.CustomAuraButtonDispelTypeTextureStyle = {
+        Border = 1,
+        BorderWithIcon = 2,
+        Icon = 3,
+        PreserveAsset = 4,
+        CustomAsset = 5,
+    }
     Enum.UnitAuraSoundTrigger = {
         Added = 0,
         ApplicationsIncreased = 1,
@@ -465,6 +778,83 @@ function Mock.install(interfaceVersion)
         Spell = 1,
         UnitAura = 7,
         Macro = 25,
+    }
+    Enum.TooltipDataLineType = {
+        SpellDescription = 13,
+    }
+    Enum.SecondsFormatterAbbreviation = {
+        OneLetter = 1,
+    }
+    Enum.SecondsFormatterIntervalWhitespace = {
+        Strip = 1,
+    }
+    C_DurationUtil = {
+        CreateDuration = function()
+            Mock.trace.durationCreates = Mock.trace.durationCreates + 1
+            local durationObject = {}
+            function durationObject:SetTimeFromStart(startTime, duration)
+                self.startTime = startTime
+                self.duration = duration
+                Mock.trace.durationSetTimeCalls = Mock.trace.durationSetTimeCalls + 1
+            end
+            return durationObject
+        end,
+        CreateDurationTextBinding = function()
+            Mock.trace.durationBindingCreates = Mock.trace.durationBindingCreates + 1
+            local binding = {}
+            function binding:SetFontString(fontString)
+                self.fontString = fontString
+            end
+            function binding:SetDuration(durationObject)
+                self.durationObject = durationObject
+            end
+            function binding:SetFormatter(formatter)
+                self.formatter = formatter
+            end
+            function binding:SetZeroDurationText(value)
+                self.zeroDurationText = value
+            end
+            function binding:SetExpiredText(value)
+                self.expiredText = value
+            end
+            function binding:SetEnabled(value)
+                self.enabled = value == true
+                Mock.trace.durationBindingEnables = Mock.trace.durationBindingEnables + 1
+            end
+            function binding:Disable()
+                self.enabled = false
+            end
+            function binding:SetToDefaults()
+                self.reset = true
+            end
+            return binding
+        end,
+    }
+    C_StringUtil = {
+        CreateSecondsFormatter = function()
+            local formatter = {}
+            function formatter:SetDefaultAbbreviation(value)
+                self.abbreviation = value
+            end
+            function formatter:SetStripIntervalWhitespace(value)
+                self.stripWhitespace = value
+            end
+            function formatter:SetMillisecondsThreshold(value)
+                self.millisecondsThreshold = value
+            end
+            return formatter
+        end,
+    }
+    C_Secrets = {
+        ShouldUnitPowerBeSecret = function(_, powerType)
+            return Mock.secretPowerTypes[powerType] == true
+        end,
+        ShouldUnitPowerMaxBeSecret = function(_, powerType)
+            return Mock.secretPowerMaxTypes[powerType] == true
+        end,
+        GetPowerTypeSecrecy = function(powerType)
+            return Mock.secretPowerTypes[powerType] and "ContextuallySecret" or "NeverSecret"
+        end,
     }
     TooltipDataProcessor = {
         AddTooltipPostCall = function(tooltipType, callback)
@@ -746,7 +1136,10 @@ end
 
 function Mock.createSecretKeyGuardedTable()
     local values = {}
-    return setmetatable({}, {
+    return setmetatable({
+        buttons = {},
+        enabled = true,
+    }, {
         __index = function(_, key)
             if Mock.secretValues[key] == true then
                 Mock.trace.secretKeyTableOperations = Mock.trace.secretKeyTableOperations + 1
@@ -766,6 +1159,22 @@ end
 
 function Mock.resetTrace()
     resetTrace()
+end
+
+function Mock.createAuraButtonForTest()
+    return createAuraButton()
+end
+
+function Mock.lockAuraButtonForTest(button)
+    return lockAuraButton(button)
+end
+
+function Mock.setUnitPowerScenario(classToken, values, maximums, secretTypes, secretMaxTypes)
+    Mock.unitClassToken = classToken or "PALADIN"
+    Mock.unitPowerValues = values or {}
+    Mock.unitPowerMaxValues = maximums or {}
+    Mock.secretPowerTypes = secretTypes or {}
+    Mock.secretPowerMaxTypes = secretMaxTypes or {}
 end
 
 function Mock.createSecretUnitAuraPayload()
