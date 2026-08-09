@@ -13,6 +13,7 @@ Module: UI/NativeAuraRenderer
 local _, EAM = ...
 local api = EAM.API
 local TextPlacement = EAM.UI.TextPlacement
+local AlertBorderStyles = EAM.UI.AlertBorderStyles
 
 local NativeAuraRenderer = {
     initializedButtonCount = 0,
@@ -57,6 +58,7 @@ local function snapshotStyle(rule)
         timerPlacement = TextPlacement.getPlacement(config, "timer"),
         applicationsPlacement = TextPlacement.getPlacement(config, "applications"),
         swipeAlpha = safeAlpha(config and config.cooldownSwipeAlpha),
+        borderStyleKey = AlertBorderStyles.resolveAura(rule and rule.unit or nil, rule and rule.filterString or nil),
         dualCountdownProbe = config and config.nativeAuraDualCountdownProbe == true or false,
         showCountdown = not ruleStyle or ruleStyle.showCountdown ~= false,
         showStacks = not ruleStyle or ruleStyle.showStacks ~= false,
@@ -196,6 +198,12 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     icon:SetAllPoints(auraButton)
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
+    local typeBorder = auraButton:CreateTexture(nil, "BORDER")
+    typeBorder:SetTexture("Interface\\Buttons\\WHITE8X8")
+    typeBorder:SetBlendMode("BLEND")
+    AlertBorderStyles.anchorTexture(typeBorder, auraButton)
+    AlertBorderStyles.apply(typeBorder, style.borderStyleKey)
+    auraButton.eamTypeBorder = typeBorder
     local cooldown = api.CreateFrame("Cooldown", nil, auraButton, "CooldownFrameTemplate")
     cooldown:SetAllPoints(auraButton)
     if type(cooldown.SetHideCountdownNumbers) == "function" then

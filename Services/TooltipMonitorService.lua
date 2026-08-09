@@ -8,7 +8,8 @@ Module: Services/TooltipMonitorService
 - 不攔截 Blizzard 點擊、不查詢 AuraButton、不儲存 TooltipData/AuraData/Frame。
 
 責任:
-- 顯示 spell、item、macro 的安全 ID；12.1 Aura ID 交由官方 CVar 顯示。
+- 顯示 spell、item、macro 的安全 ID；巨集優先採用 action subtype 已解析的法術或物品 ID。
+- 12.1 Aura ID 交由官方 CVar 顯示；隱藏 AuraButtonTooltip 只建立匿名短效候選。
 - 管理短效、純 scalar 的候選項與 Ctrl+Alt 開啟流程。
 - 將 Popup Menu 的確認動作路由到既有 SavedVariables 契約。
 
@@ -17,8 +18,8 @@ Module: Services/TooltipMonitorService
 - 不擁有監控清單；正式資料仍由 Core/SavedVariables.lua 管理。
 
 邊界:
-- UnitAura callback 絕不讀取 tooltipData。
-- Macro callback 不信任 tooltipData.id；action slot 只把安全的 FrameXML private `GetAction` metadata 當 best-effort 來源，失敗即手動降級。
+- UnitAura callback 絕不讀取 tooltipData；非 GameTooltip 物件亦不讀、不寫、不呼叫方法。
+- Macro callback 不信任 tooltipData.id；action slot 只把安全的 FrameXML private `GetAction` metadata、action subtype 與巨集名稱當 best-effort 來源，失敗即手動降級。
 - 戰鬥中、鍵盤焦點存在或修飾鍵不精確時不開啟選單。
 
 效能注意:
@@ -27,6 +28,7 @@ Module: Services/TooltipMonitorService
 
 Retail API 注意:
 - 12.1 AuraButton 具 Forbidden Aspects；本模組不對其 HookScript 或 QueryFocus。
+- 目標框架 AuraButton 使用隱藏 AuraButtonTooltip；其 UnitAura post-call 只可作短效 heartbeat，不能當成可查詢的 GameTooltip。
 - tooltipShowAuraSpellIDs 不跨 session 保存，每次登入以能力檢測重新啟用。
 ]]
 local _, EAM = ...
@@ -38,6 +40,7 @@ local Service = {
     menuOpenCount = 0,
     commitCount = 0,
     rejectCount = 0,
+    auraHeartbeatCandidateCount = 0,
     auraIDDisplayEnabled = false,
     lastReason = "notInitialized",
 }
@@ -47,6 +50,9 @@ EAM.Services.TooltipMonitorService = Service
 local api = EAM.API or {}
 local Util = EAM.Util or {}
 local CANDIDATE_TTL_SECONDS = 5
+local AURA_HEARTBEAT_TTL_SECONDS = 0.75
+local VALIDATION_GAME_TOOLTIP = "gameTooltip"
+local VALIDATION_AURA_HEARTBEAT = "auraHeartbeat"
 local inCombat
 
 Service.ACTION_SPELL_COOLDOWN = "spellCooldown"
@@ -70,6 +76,7 @@ local candidate = {
     itemID = nil,
     macroID = nil,
     tooltipType = nil,
+    validationMode = nil,
     seenAt = 0,
 }
 
@@ -90,6 +97,7 @@ local function clearCandidate(reason)
     candidate.itemID = nil
     candidate.macroID = nil
     candidate.tooltipType = nil
+    candidate.validationMode = nil
     candidate.seenAt = 0
     if reason then
         Service.lastReason = reason
@@ -102,7 +110,7 @@ local function reject(reason)
 end
 
 local function isGameTooltip(tooltip)
-    return GameTooltip ~= nil and tooltip == GameTooltip
+    return GameTooltip ~= nil and rawequal(tooltip, GameTooltip)
 end
 
 local function addDoubleLine(tooltip, label, value)
@@ -119,7 +127,7 @@ local function addHintLine(tooltip, text)
     tooltip:AddLine(text, 0.55, 0.85, 1.00, true)
 end
 
-local function setCandidate(kind, spellID, itemID, macroID, tooltipType)
+local function setCandidate(kind, spellID, itemID, macroID, tooltipType, validationMode)
     if not inCombat or inCombat() then
         reject("combatCandidateBlocked")
         return false
@@ -138,6 +146,7 @@ local function setCandidate(kind, spellID, itemID, macroID, tooltipType)
     candidate.itemID = itemID
     candidate.macroID = macroID
     candidate.tooltipType = tooltipType
+    candidate.validationMode = validationMode or VALIDATION_GAME_TOOLTIP
     candidate.seenAt = seenAt
     Service.candidateCount = Service.candidateCount + 1
     Service.lastReason = "candidateReady"
@@ -191,7 +200,11 @@ local function isCandidateFresh()
     if not ok or not Util.isSafeNonNegativeNumber(now) then
         return false
     end
-    return now >= candidate.seenAt and now - candidate.seenAt <= CANDIDATE_TTL_SECONDS
+    local ttl = CANDIDATE_TTL_SECONDS
+    if candidate.validationMode == VALIDATION_AURA_HEARTBEAT then
+        ttl = AURA_HEARTBEAT_TTL_SECONDS
+    end
+    return now >= candidate.seenAt and now - candidate.seenAt <= ttl
 end
 
 local function isGameTooltipShown()
@@ -203,6 +216,12 @@ local function isGameTooltipShown()
 end
 
 local function isCandidateTooltipCurrent()
+    if candidate.validationMode == VALIDATION_AURA_HEARTBEAT then
+        return true
+    end
+    if candidate.validationMode ~= VALIDATION_GAME_TOOLTIP then
+        return false
+    end
     if candidate.tooltipType == nil or not GameTooltip or type(GameTooltip.IsTooltipType) ~= "function" then
         return false
     end
@@ -230,7 +249,7 @@ local function tryOpenMenu()
         reject("tooltipTypeChanged")
         return false
     end
-    if not isGameTooltipShown() then
+    if candidate.validationMode == VALIDATION_GAME_TOOLTIP and not isGameTooltipShown() then
         reject("tooltipHidden")
         return false
     end
@@ -295,48 +314,83 @@ local function onItemTooltip(tooltip, data)
     end
 end
 
-local function readActionMacroID(tooltip)
+local function readActionMacroContext(tooltip)
     if type(tooltip.GetProcessingTooltipInfo) ~= "function" then
-        return nil
+        return false
     end
     local ok, info = pcall(tooltip.GetProcessingTooltipInfo, tooltip)
     if not ok or not Util.isReadableTable or not Util.isReadableTable(info) then
-        return nil
+        return false
     end
     if not Util.isSafeString or not Util.isSafeString(info.getterName) or info.getterName ~= "GetAction" then
-        return nil
+        return false
     end
     local args = info.getterArgs
     if not Util.isReadableTable(args) then
-        return nil
+        return false
     end
     local actionSlot = safePositiveInteger(args[1])
     if not actionSlot or not api.GetActionInfo then
-        return nil
+        return false
     end
-    local actionOK, actionType, actionID = pcall(api.GetActionInfo, actionSlot)
+    local actionOK, actionType, actionID, actionSubType = pcall(api.GetActionInfo, actionSlot)
     if not actionOK or not Util.isSafeString(actionType) or actionType ~= "macro" then
-        return nil
+        return false
     end
-    return safePositiveInteger(actionID)
+
+    local macroName
+    local actionBar = api.C_ActionBar
+    if actionBar and type(actionBar.GetActionText) == "function" then
+        local nameOK, actionText = pcall(actionBar.GetActionText, actionSlot)
+        if nameOK and Util.isSafeString(actionText) and actionText ~= "" then
+            macroName = actionText
+        end
+    end
+
+    local macroID
+    if macroName and api.GetMacroIndexByName then
+        local indexOK, macroIndex = pcall(api.GetMacroIndexByName, macroName)
+        if indexOK then
+            macroID = safePositiveInteger(macroIndex)
+        end
+    end
+
+    local resolvedActionID = safePositiveInteger(actionID)
+    local actionSubTypeIsSafe = Util.isSafeValue and Util.isSafeValue(actionSubType)
+    local spellID
+    local itemID
+    if actionSubTypeIsSafe and Util.isSafeString(actionSubType) then
+        if actionSubType == "spell" then
+            spellID = resolvedActionID
+        elseif actionSubType == "item" then
+            itemID = resolvedActionID
+        end
+    end
+
+    local macroReference = macroID or macroName
+    if not macroReference and actionSubTypeIsSafe and actionSubType == nil then
+        macroID = resolvedActionID
+        macroReference = macroID
+    end
+    return true, macroID, macroReference, spellID, itemID
 end
 
-local function resolveMacroSpellID(macroID)
-    if not api.GetMacroSpell then
+local function resolveMacroSpellID(macroReference)
+    if not macroReference or not api.GetMacroSpell then
         return nil
     end
-    local ok, spellID = pcall(api.GetMacroSpell, macroID)
+    local ok, spellID = pcall(api.GetMacroSpell, macroReference)
     if not ok then
         return nil
     end
     return safePositiveInteger(spellID)
 end
 
-local function resolveMacroItemID(macroID)
-    if not api.GetMacroItem or not api.C_Item or not api.C_Item.GetItemInfoInstant then
+local function resolveMacroItemID(macroReference)
+    if not macroReference or not api.GetMacroItem or not api.C_Item or not api.C_Item.GetItemInfoInstant then
         return nil
     end
-    local ok, _, itemLink = pcall(api.GetMacroItem, macroID)
+    local ok, _, itemLink = pcall(api.GetMacroItem, macroReference)
     if not ok or not Util.isSafeString(itemLink) then
         return nil
     end
@@ -351,8 +405,12 @@ local function onMacroTooltip(tooltip)
     if not isGameTooltip(tooltip) then
         return
     end
-    local macroID = readActionMacroID(tooltip)
-    if not macroID then
+    if inCombat() then
+        reject("combatCandidateBlocked")
+        return
+    end
+    local isMacroAction, macroID, macroReference, spellID, itemID = readActionMacroContext(tooltip)
+    if not isMacroAction then
         if setCandidate("macro", nil, nil, nil, api.TooltipDataType and api.TooltipDataType.Macro) then
             addHintLine(tooltip, EAM.L.EAM_TOOLTIP_MACRO_MANUAL_HINT
                 or "Macro source cannot be read safely; Ctrl+Alt opens manual EAM entry")
@@ -360,9 +418,11 @@ local function onMacroTooltip(tooltip)
         return
     end
 
-    local spellID = resolveMacroSpellID(macroID)
-    local itemID = resolveMacroItemID(macroID)
-    addDoubleLine(tooltip, EAM.L.EAM_TOOLTIP_MACRO_ID or "EAM Macro ID", macroID)
+    spellID = spellID or resolveMacroSpellID(macroReference)
+    itemID = itemID or resolveMacroItemID(macroReference)
+    if macroID then
+        addDoubleLine(tooltip, EAM.L.EAM_TOOLTIP_MACRO_ID or "EAM Macro ID", macroID)
+    end
     if spellID then
         addDoubleLine(tooltip, EAM.L.EAM_TOOLTIP_SPELL_ID or "EAM Spell ID", spellID)
     end
@@ -375,15 +435,22 @@ local function onMacroTooltip(tooltip)
 end
 
 local function onAuraTooltip(tooltip)
-    if not isGameTooltip(tooltip) then
+    if tooltip == nil then
+        reject("auraTooltipUnavailable")
         return
     end
+    local usesGameTooltip = isGameTooltip(tooltip)
+    local validationMode = usesGameTooltip and VALIDATION_GAME_TOOLTIP or VALIDATION_AURA_HEARTBEAT
     local hint = Service.auraIDDisplayEnabled
         and (EAM.L.EAM_TOOLTIP_AURA_HINT or "Aura ID is shown by Blizzard; Ctrl+Alt opens EAM")
         or (EAM.L.EAM_TOOLTIP_AURA_MANUAL_HINT
             or "Aura ID display is unavailable; Ctrl+Alt opens manual EAM entry")
-    if setCandidate("aura", nil, nil, nil, api.TooltipDataType and api.TooltipDataType.UnitAura) then
-        addHintLine(tooltip, hint)
+    if setCandidate("aura", nil, nil, nil, api.TooltipDataType and api.TooltipDataType.UnitAura, validationMode) then
+        if usesGameTooltip then
+            addHintLine(tooltip, hint)
+        else
+            Service.auraHeartbeatCandidateCount = Service.auraHeartbeatCandidateCount + 1
+        end
     end
 end
 
@@ -594,6 +661,8 @@ function Service.getStatus()
         menuOpenCount = Service.menuOpenCount,
         commitCount = Service.commitCount,
         rejectCount = Service.rejectCount,
+        auraHeartbeatFallbackAvailable = true,
+        auraHeartbeatCandidateCount = Service.auraHeartbeatCandidateCount,
         lastReason = Service.lastReason,
     }
 end

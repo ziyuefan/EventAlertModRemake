@@ -193,6 +193,14 @@ $paths = @{
     LiveSchema = Join-Path $root "Schemas\EAM_LiveValidationReport.schema.json"
     FlowSchema = Join-Path $root "Schemas\EAM_FlowValidationReport.schema.json"
     PlacementLua = Join-Path $root "UI\TextPlacement.lua"
+    BorderStylesLua = Join-Path $root "UI\AlertBorderStyles.lua"
+    IconPoolLua = Join-Path $root "UI\IconPool.lua"
+    AboutPanelLua = Join-Path $root "UI\AboutPanel.lua"
+    AuraServiceLua = Join-Path $root "Services\AuraService.lua"
+    FlowPanelLua = Join-Path $root "Debug\FlowTestPanel.lua"
+    LivePanelLua = Join-Path $root "Debug\LiveTestPanel.lua"
+    PromptExportLua = Join-Path $root "Debug\PromptExport.lua"
+    HarnessLua = Join-Path $root "Tests\FlowValidationHarness.lua"
     SessionLua = Join-Path $root "Debug\LiveTestSession.lua"
     FlowLua = Join-Path $root "Debug\FlowTestRunner.lua"
     ConstantsLua = Join-Path $root "Core\Constants.lua"
@@ -200,13 +208,17 @@ $paths = @{
     RendererLua = Join-Path $root "UI\Renderer.lua"
     NativeRendererLua = Join-Path $root "UI\NativeAuraRenderer.lua"
     UnitPowerProbeLua = Join-Path $root "Debug\UnitPowerCapabilityProbe.lua"
+    SVGProbeLua = Join-Path $root "Debug\SVGCapabilityProbe.lua"
+    SVGSchema = Join-Path $root "Schemas\EAM_SVGCapabilityReport.schema.json"
+    SVGFixture = Join-Path $root "Tests\Fixtures\EAM_SVGCapabilityReport.incomplete.json"
+    SVGAsset = Join-Path $root "Media\SVG\eam-svg-probe.svg"
     AuraContainerLua = Join-Path $root "Services\AuraContainerService.lua"
     AuraCompilerLua = Join-Path $root "Managers\AuraRuleCompiler.lua"
     Importer = Join-Path $root "Tools\Import-EAMFlowReport.ps1"
     Toc = Join-Path $root "EventAlertMod.toc"
 }
 
-foreach ($jsonPath in @($paths.PlacementData, $paths.MatrixData, $paths.ContinuityData, $paths.LiveFixture, $paths.PlacementSchema, $paths.MatrixSchema, $paths.ContinuitySchema, $paths.LiveSchema, $paths.FlowSchema)) {
+foreach ($jsonPath in @($paths.PlacementData, $paths.MatrixData, $paths.ContinuityData, $paths.LiveFixture, $paths.PlacementSchema, $paths.MatrixSchema, $paths.ContinuitySchema, $paths.LiveSchema, $paths.FlowSchema, $paths.SVGSchema, $paths.SVGFixture)) {
     try {
         [void](Read-Json $jsonPath)
         Assert-Contract $true ("JSON parse: " + [System.IO.Path]::GetFileName($jsonPath))
@@ -220,6 +232,7 @@ Assert-JsonSchema $paths.PlacementData $paths.PlacementSchema "Text placement JS
 Assert-JsonSchema $paths.MatrixData $paths.MatrixSchema "Live matrix JSON schema"
 Assert-JsonSchema $paths.ContinuityData $paths.ContinuitySchema "Project continuity JSON schema"
 Assert-JsonSchema $paths.LiveFixture $paths.LiveSchema "Incomplete live fixture JSON schema"
+Assert-JsonSchema $paths.SVGFixture $paths.SVGSchema "Incomplete SVG capability fixture JSON schema"
 
 if (-not $FlowReport) {
     $latestFlow = Get-ChildItem -LiteralPath (Join-Path $root "TestResults") -Filter "EAM_FlowValidation_all_*.json" |
@@ -293,8 +306,18 @@ Assert-Contract (
 $rendererLua = [System.IO.File]::ReadAllText($paths.RendererLua)
 $nativeRendererLua = [System.IO.File]::ReadAllText($paths.NativeRendererLua)
 $unitPowerProbeLua = [System.IO.File]::ReadAllText($paths.UnitPowerProbeLua)
+$svgProbeLua = [System.IO.File]::ReadAllText($paths.SVGProbeLua)
+$svgAssetText = [System.IO.File]::ReadAllText($paths.SVGAsset)
 $auraContainerLua = [System.IO.File]::ReadAllText($paths.AuraContainerLua)
 $auraCompilerLua = [System.IO.File]::ReadAllText($paths.AuraCompilerLua)
+$borderStylesLua = [System.IO.File]::ReadAllText($paths.BorderStylesLua)
+$iconPoolLua = [System.IO.File]::ReadAllText($paths.IconPoolLua)
+$aboutPanelLua = [System.IO.File]::ReadAllText($paths.AboutPanelLua)
+$auraServiceLua = [System.IO.File]::ReadAllText($paths.AuraServiceLua)
+$flowPanelLua = [System.IO.File]::ReadAllText($paths.FlowPanelLua)
+$livePanelLua = [System.IO.File]::ReadAllText($paths.LivePanelLua)
+$promptExportLua = [System.IO.File]::ReadAllText($paths.PromptExportLua)
+$harnessLua = [System.IO.File]::ReadAllText($paths.HarnessLua)
 Assert-Contract (
     $rendererLua.Contains('return false, "combatDeferred"') -and
     $rendererLua.Contains('Renderer.textLayoutPending = true')
@@ -313,6 +336,25 @@ Assert-Contract (
     $unitPowerProbeLua.Contains('rawValuesCollected = false')
 ) "UnitPowerPercent bypasses Lua boolean tests and raw export"
 Assert-Contract (
+    $svgProbeLua.Contains('pcall(viewport.CreateVectorGraphics') -and
+    $svgProbeLua.Contains('pcall(target.SetSVG, target, SVG_ASSET)') -and
+    $svgProbeLua.Contains('pcall(target.ClearSVG, target)') -and
+    $svgProbeLua.Contains('rawFileIDsCollected = false') -and
+    $svgProbeLua.Contains('"svg.vector_graphics.set_svg"') -and
+    $svgProbeLua.Contains('"svg.texture.set_svg"')
+) "SVG probe A/B lifecycle and no raw fileID export"
+Assert-Contract (
+    $svgAssetText.Contains('<svg ') -and
+    $svgAssetText.Contains('<path ') -and
+    -not $svgAssetText.Contains('<script') -and
+    -not $svgAssetText.Contains('href=') -and
+    -not $svgAssetText.Contains('data:')
+) "SVG probe asset is static and self-contained"
+Assert-Contract (
+    $flowPanelLua.Contains('EAM_FLOW_BUTTON_SVG') -and
+    $flowPanelLua.Contains('EAM.Debug.SVGCapabilityProbe')
+) "Flow panel exposes player-operated SVG probe"
+Assert-Contract (
     $auraContainerLua.Contains('maxCreatedContainerCount = 18') -and
     $auraContainerLua.Contains('"nativeReloadRequired"')
 ) "Native container creation has a per-load hard bound"
@@ -320,6 +362,57 @@ Assert-Contract (
     -not $auraCompilerLua.Contains('tostring(plan.revision)') -and
     $auraCompilerLua.Contains('tostring(plan.layout.elementWidth)')
 ) "Aura fingerprint ignores unrelated revision and includes structure"
+
+Assert-Contract (
+    $constantsLua.Contains('API_BASELINE_LABEL = "12.1.0 PTR 8"') -and
+    $constantsLua.Contains('API_BASELINE_BUILD = "69189"') -and
+    $constantsLua.Contains('PROJECT_AUTHOR = "ziyuefan死鬥"') -and
+    $constantsLua.Contains('PROJECT_REPOSITORY_URL = "https://github.com/ziyuefan/EventAlertModRemake"') -and
+    $constantsLua.Contains('PROJECT_PAGES_URL = "https://ziyuefan.github.io/EventAlertModRemake/"')
+) "About metadata constants"
+$borderStyleKeys = @("selfHelpful", "selfHarmful", "targetHelpful", "targetHarmful", "spellCooldown", "itemCooldown", "groundEffect")
+$missingBorderKeys = @($borderStyleKeys | Where-Object {
+    -not $constantsLua.Contains("$_ = freeze({") -or -not $borderStylesLua.Contains("keys.$_")
+})
+Assert-Contract ($missingBorderKeys.Count -eq 0) "Seven fixed border styles" ($missingBorderKeys -join ", ")
+Assert-Contract (
+    $borderStylesLua.Contains('string.find(auraFilter, "HARMFUL", 1, true) == 1') -and
+    $borderStylesLua.Contains('return unit == "target" and "HARMFUL" or "HELPFUL"') -and
+    $iconPoolLua.Contains('function IconPool.applyTypeBorder(icon, alertState, frameName)') -and
+    $rendererLua.Contains('IconPool.applyTypeBorder(icon, alertState, frameName)') -and
+    $nativeRendererLua.Contains('borderStyleKey = AlertBorderStyles.resolveAura') -and
+    $nativeRendererLua.Contains('AlertBorderStyles.apply(typeBorder, style.borderStyleKey)')
+) "Legacy and Native fixed border routes"
+Assert-Contract (
+    $borderStylesLua.Contains('local BORDER_TEXTURE_PADDING = 3') -and
+    $borderStylesLua.Contains('function AlertBorderStyles.anchorTexture') -and
+    $iconPoolLua.Contains('CreateTexture(nil, "BORDER")') -and
+    $iconPoolLua.Contains('Interface\\Buttons\\WHITE8X8') -and
+    $iconPoolLua.Contains('AlertBorderStyles.anchorTexture(typeBorder, button)') -and
+    $nativeRendererLua.Contains('AlertBorderStyles.anchorTexture(typeBorder, auraButton)')
+) "Type border fully covers icon with deterministic 3px outer frame"
+Assert-Contract (
+    $auraServiceLua.Contains('state.auraFilter = nil') -and
+    $auraServiceLua.Contains('state.auraFilter = auraFilter')
+) "Legacy Aura state keeps static polarity"
+Assert-Contract (
+    $optionsLua.Contains('EAM_OPT_ABOUT_BTN') -and
+    $optionsLua.Contains('aboutPanel.open()') -and
+    $aboutPanelLua.Contains('function AboutPanel.getInformation()') -and
+    $aboutPanelLua.Contains('function AboutPanel.formatInformation(info)') -and
+    $aboutPanelLua.Contains('return false, "combatBlocked"')
+) "About button, metadata, and combat guard"
+$copyPanelViolations = @()
+foreach ($entry in @(
+    @{ Name = "FlowTestPanel"; Text = $flowPanelLua },
+    @{ Name = "LiveTestPanel"; Text = $livePanelLua },
+    @{ Name = "PromptExport"; Text = $promptExportLua }
+)) {
+    if ($entry.Text -match '(?m):\s*Copy\s*\(' -or -not $entry.Text.Contains('prepareEditBoxManualCopy')) {
+        $copyPanelViolations += $entry.Name
+    }
+}
+Assert-Contract ($copyPanelViolations.Count -eq 0) "Panels use manual Ctrl+C selection without EditBox:Copy" ($copyPanelViolations -join ", ")
 
 $importerText = [System.IO.File]::ReadAllText($paths.Importer)
 $buildFlagFunctionCount = [regex]::Matches(
@@ -341,6 +434,18 @@ Assert-Contract (
 ) "Importer validation stages are unique" (
     "buildFlagFunction=$buildFlagFunctionCount, flowSchema=$flowSchemaStageCount, rawBuildFlags=$rawBuildFlagStageCount"
 )
+Assert-Contract (
+    $importerText.Contains('[ValidateSet("Auto", "Flow", "Live", "UnitPower", "SVG")]') -and
+    $importerText.Contains('EAM_SVG_CAPABILITY_REPORT_JSON') -and
+    $importerText.Contains('Schemas\EAM_SVGCapabilityReport.schema.json') -and
+    $importerText.Contains('SVG status mismatch:') -and
+    $importerText.Contains('SVG report must not collect raw file IDs.')
+) "Importer accepts and revalidates SVG SavedVariables reports"
+Assert-Contract (
+    $importerText.Contains('@("svg.vector_graphics.set_svg", "svg.texture.set_svg")') -and
+    $importerText.Contains('$case.clearReload -ne "pass"') -and
+    $importerText.Contains('$report.capabilities.interfaceRequired -ne $interfaceRequired')
+) "Importer recomputes SVG A/B lifecycle and interface requirement"
 
 $matrix = Read-Json $paths.MatrixData
 $sessionLua = [System.IO.File]::ReadAllText($paths.SessionLua)
@@ -354,6 +459,14 @@ foreach ($case in $matrix.cases) {
     Assert-Contract ($luaCaseMap[[string]$case.id] -eq [string]$case.category) ("Live case mapping: " + $case.id)
 }
 Assert-Contract ($sessionLua.Contains("local MATRIX_VERSION = `"$($matrix.matrixVersion)`"")) "Live session matrix version"
+$procedureViolations = @()
+foreach ($case in $matrix.cases) {
+    $expectedProcedure = '["' + [string]$case.id + '"] = [=[' + [string]$case.procedure + ']=],'
+    if (-not $sessionLua.Contains($expectedProcedure)) {
+        $procedureViolations += [string]$case.id
+    }
+}
+Assert-Contract ($procedureViolations.Count -eq 0) "Live procedure text synchronized from JSON" ($procedureViolations -join ", ")
 $flowLua = [System.IO.File]::ReadAllText($paths.FlowLua)
 Assert-Contract ($flowLua.Contains("matrixVersion = `"$($matrix.matrixVersion)`"")) "Flow report matrix version"
 
@@ -750,7 +863,27 @@ Invoke-ImporterContract `
     -ExpectedText "IMPORTED_VALIDATION_SOURCE=legacy-unverified"
 
 $featureLocaleKeys = @(
-    "EAM_LIVE_CASE_AURA_SINGLE_COUNTDOWN",
+    "EAM_FLOW_BUTTON_COPY",
+    "EAM_FLOW_STATUS_COPIED",
+    "EAM_LIVE_COPY",
+    "EAM_LIVE_COPIED",
+    "EAM_COPY_SELECTION_FAILED",
+    "EAM_PROMPT_COPY_SELECT",
+    "EAM_PROMPT_COPY_SELECTED",
+    "EAM_LIVE_CASE_PROCEDURE",
+    "EAM_OPT_ABOUT_BTN",
+    "EAM_ABOUT_TITLE",
+    "EAM_ABOUT_ADDON_VERSION",
+    "EAM_ABOUT_AUTHOR",
+    "EAM_ABOUT_API_BASELINE",
+    "EAM_ABOUT_COMPATIBILITY",
+    "EAM_ABOUT_CLIENT_FORMAT",
+    "EAM_ABOUT_REPOSITORY",
+    "EAM_ABOUT_PAGES",
+    "EAM_ABOUT_CLOSE",
+    "EAM_ABOUT_COMBAT_BLOCKED",
+    "EAM_ABOUT_CHANNEL_UNCONFIRMED",
+    "EAM_ABOUT_UNKNOWN",    "EAM_LIVE_CASE_AURA_SINGLE_COUNTDOWN",
     "EAM_LIVE_CASE_AURA_DUAL_COUNTDOWN",
     "EAM_LIVE_CASE_SPELL_COOLDOWN",
     "EAM_LIVE_CASE_ITEM_COOLDOWN",
@@ -778,7 +911,22 @@ $featureLocaleKeys = @(
     "EAM_UNIT_POWER_PROBE_SELECTED",
     "EAM_UNIT_POWER_PROBE_PASS",
     "EAM_UNIT_POWER_PROBE_FAIL",
-    "EAM_UNIT_POWER_PROBE_BLOCKED"
+    "EAM_UNIT_POWER_PROBE_BLOCKED",
+    "EAM_FLOW_BUTTON_SVG",
+    "EAM_FLOW_BUTTON_SVG_STOP",
+    "EAM_SVG_CLIENT_REQUIRED",
+    "EAM_SVG_PROBE_UNAVAILABLE",
+    "EAM_SVG_PROBE_START_FAILED",
+    "EAM_SVG_PROBE_RUNNING",
+    "EAM_SVG_PROBE_STOPPED",
+    "EAM_SVG_PROBE_TITLE",
+    "EAM_SVG_PROBE_DESC",
+    "EAM_SVG_PROBE_VECTOR",
+    "EAM_SVG_PROBE_TEXTURE",
+    "EAM_SVG_PROBE_PASS",
+    "EAM_SVG_PROBE_FAIL",
+    "EAM_SVG_PROBE_BLOCKED",
+    "EAM_SVG_PROBE_FINISH"
 )
 
 foreach ($locale in "enUS", "zhTW", "zhCN", "koKR", "ruRU") {
@@ -799,19 +947,39 @@ foreach ($locale in "enUS", "zhTW", "zhCN", "koKR", "ruRU") {
 
 $toc = [System.IO.File]::ReadAllText($paths.Toc)
 $textPlacementIndex = $toc.IndexOf("UI\TextPlacement.lua")
+$borderStylesIndex = $toc.IndexOf("UI\AlertBorderStyles.lua")
+$iconPoolIndex = $toc.IndexOf("UI\IconPool.lua")
+$aboutPanelIndex = $toc.IndexOf("UI\AboutPanel.lua")
+$optionsIndex = $toc.IndexOf("UI\Options.lua")
 $nativeRendererIndex = $toc.IndexOf("UI\NativeAuraRenderer.lua")
 $rendererIndex = $toc.IndexOf("UI\Renderer.lua")
 $validationEnvironmentIndex = $toc.IndexOf("Debug\ValidationEnvironment.lua")
+$svgProbeIndex = $toc.IndexOf("Debug\SVGCapabilityProbe.lua")
 $liveSessionIndex = $toc.IndexOf("Debug\LiveTestSession.lua")
 $livePanelIndex = $toc.IndexOf("Debug\LiveTestPanel.lua")
 Assert-Contract ($textPlacementIndex -ge 0 -and $textPlacementIndex -lt $nativeRendererIndex -and $textPlacementIndex -lt $rendererIndex) "TOC text placement load order"
 Assert-Contract ($validationEnvironmentIndex -ge 0 -and $validationEnvironmentIndex -lt $liveSessionIndex -and $liveSessionIndex -lt $livePanelIndex) "TOC live validation load order"
+Assert-Contract ($borderStylesIndex -gt $textPlacementIndex -and $borderStylesIndex -lt $iconPoolIndex -and $borderStylesIndex -lt $nativeRendererIndex) "TOC border style load order"
+Assert-Contract ($aboutPanelIndex -ge 0 -and $aboutPanelIndex -lt $optionsIndex) "TOC About panel load order"
+Assert-Contract (
+    $harnessLua.IndexOf('loadModule("UI/AlertBorderStyles.lua")') -lt $harnessLua.IndexOf('loadModule("UI/IconPool.lua")') -and
+    $harnessLua.IndexOf('loadModule("UI/AboutPanel.lua")') -lt $harnessLua.IndexOf('loadModule("UI/Options.lua")')
+) "Flow harness UI module load order"
+Assert-Contract (
+    $svgProbeIndex -ge 0 -and
+    $toc.Contains("EAM_SVG_CAPABILITY_REPORT_JSON") -and
+    $harnessLua.Contains('loadModule("Debug/SVGCapabilityProbe.lua")')
+) "TOC and Flow harness load SVG capability probe"
 
 $packageScriptText = [System.IO.File]::ReadAllText((Join-Path $PSScriptRoot "Build-CurseForgePackage.ps1"))
 $packageExtensionFilterValid = $packageScriptText.Contains('$extension = $_.Extension.ToLowerInvariant()') -and
     $packageScriptText.Contains('$extension -eq ".lua" -or $extension -eq ".xml"') -and
     -not $packageScriptText.Contains('-Include "*.lua", "*.xml"')
 Assert-Contract $packageExtensionFilterValid "Package TOC consistency filters Lua/XML by extension"
+Assert-Contract (
+    $packageScriptText.Contains('".svg"') -and
+    (Test-Path -LiteralPath $paths.SVGAsset)
+) "Package whitelist includes SVG probe asset"
 
 foreach ($scriptName in "CheckLuaSyntax.ps1", "Run-FlowValidation.ps1", "Import-EAMFlowReport.ps1", "Test-ValidationContracts.ps1", "Build-CurseForgePackage.ps1") {
     $tokens = $null

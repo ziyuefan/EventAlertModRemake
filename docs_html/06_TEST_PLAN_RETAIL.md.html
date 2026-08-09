@@ -624,7 +624,7 @@
 <li><code>/reload</code> 案例必須先按「建立 /reload 檢查點」，再由玩家自行輸入 <code>/reload</code>；回來後 <code>resumedAfterReload=true</code> 且 <code>reloadSequence&gt;=1</code>。</li>
 <li>checkpoint 後若未實際 reload 就直接呼叫 resume，必須回傳 <code>sameLoadRejected</code>；玩家完成 <code>/reload</code> 後才可因 boot generation 改變而恢復。</li>
 <li>即使 34 案已全部標為 pass，尚未完成上述 <code>/reload</code> 時，<code>LiveTestSession.complete()</code> 必須回傳 <code>reloadRequired</code>，報告必須保留 <code>reloadCheckpointNotCompleted</code> 且不得直接複製為 pass。</li>
-<li><code>pass</code> 另要求 <code>phase=complete</code>、<code>isTestBuildKnown=true</code>、<code>channelValidation=pass</code>、三個原始 <code>buildFlags</code> 至少一個可觀察且由匯入器重算結果與 aggregate 一致、summary 與 29 筆 cases 一致且 <code>boundaryWarnings</code> 為空。</li>
+<li><code>pass</code> 另要求 <code>phase=complete</code>、<code>isTestBuildKnown=true</code>、<code>channelValidation=pass</code>、三個原始 <code>buildFlags</code> 至少一個可觀察且由匯入器重算結果與 aggregate 一致、summary 與 34 筆 cases 一致且 <code>boundaryWarnings</code> 為空。</li>
 <li>任何備註不得包含帳號、角色、伺服器、磁碟絕對路徑、WTF 或 Account 片段；遊戲內先遮蔽，開發端匯入器再拒絕遺漏案例。</li>
 <li>完成後可直接複製記憶體內最新的 <code>EAM_LIVE_VALIDATION_REPORT</code> JSON 回報。若改由 WTF SavedVariables 匯入，完成報告後必須再由玩家自行 <code>/reload</code> 或正常登出，讓最新 JSON 寫回磁碟；回報必須保留 <code>_ptr_</code>／<code>_xptr_</code> 身分，不得包含帳號、角色、伺服器或絕對路徑。</li>
 <li>2026-07-29 最新離線結果：Lua 語法 45/45、Flow <code>all</code> 42/42（<code>TestResults/EAM_FlowValidation_all_20260729_153728.json</code>）、JSON／Lua／TOC／PowerShell／匯入器契約 119/119。Flow 報告明示 <code>purpose=offline-contract</code>、<code>executionSource/source=offline-mock</code>、<code>clientChannel=OFFLINE</code>；這些只證明離線契約，不是 PTR／XPTR／Retail 實機簽收。</li>
@@ -651,6 +651,36 @@
 <li><code>live.aura.duration_zero_regression</code></li>
 </ul>
 <p>離線 strict mock 已覆蓋前三項與 UnitPower 戰鬥讀取防線；PTR、XPTR、Retail 仍需玩家在正確客戶端手動執行，並於報告標明 <code>PTR</code>／<code>XPTR</code>／<code>RETAIL</code>、build、<code>/reload</code> checkpoint 與視覺觀察。離線 pass 不得升格為實機 pass。</p>
+<h2 id="2026-08-09alpha-2-native-aura">2026-08-09：Alpha 2 Native Aura 顯示回歸</h2>
+<ul>
+<li>玩家確認 Alpha 1 可顯示 Aura，Alpha 2 完全不顯示；目標環境為 PTR <code>12.1.0.69189</code>。</li>
+<li>該 PTR 的 raw build flags 為 <code>isPublicTestClient=true</code>、<code>isTestBuild=false</code>、<code>isBetaBuild=false</code>。Alpha 2 曾要求 public-test 與 test-build 同時成立，因而把 <code>nativeRuntimeAllowed</code> 錯判為 <code>false</code>，在建立 AuraContainer 前即 fail-closed。</li>
+<li>修正後 12.1 Native gate 為 Interface <code>&gt;=120100</code> 且三個測試通道旗標任一為真；strict mock 同步採用 PTR 69189 的真實旗標組合，避免全真 mock 再次掩蓋回歸。</li>
+<li><code>live_test.offline_cannot_signoff</code>、冷卻 Duration、地面效果解析與 swipe alpha 都是 strict-mock 契約；遊戲客戶端沒有 <code>EAM.FlowTestMock</code> 時必須回傳 <code>skip</code>，不可污染 PTR 能力報告為假失敗。測試亦不得覆寫已凍結的 <code>EAM.API</code>。</li>
+<li>2026-08-09 離線驗證為 Lua <code>47/47</code>、Flow <code>54/54</code>、Validation Contracts <code>217/217</code>；artifact 為 <code>TestResults/EAM_FlowValidation_all_20260809_185047.json</code>。這只證明修正後離線契約，尚未證明 PTR Aura 已恢復。</li>
+<li>PTR 請先由玩家自行 <code>/reload</code>，再執行 <code>/eam doctor</code> 與 <code>/eam test aura121</code>。<code>aura121.capability.native_complete</code> 應為 pass，且 player／target Aura 應重新出現；若仍失敗，回傳含新增 capability 詳細欄位的 Flow JSON。</li>
+<li>目前 UnitPower 報告只證明 primary Secret 與 selected safe-number 均已送入 StatusBar／radial sink 且呼叫被接受；primary 視覺標記仍為 pending、selected 為 blocked，因此不能標示 UnitPower PTR 視覺簽收。</li>
+</ul>
+<h2 id="2026-08-09target-auratooltipabout">2026-08-09：Target Aura、巨集、Tooltip、About 與分類邊框</h2>
+<p>逐案條件、玩家操作、通過證據與回報欄位統一見 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>；流程面板會依目前 case 顯示同一份步驟。下列項目不得只憑離線 mock 簽收：</p>
+<ul>
+<li>TargetFrame 的 AuraButton：滑鼠停在目標框 Aura 上，只按 Ctrl+Alt，不按滑鼠鍵；EAM 小視窗應開啟，原 Blizzard 左／右鍵行為不得被攔截。</li>
+<li>Action Bar Macro：分別以 spell macro 與 item macro 驗證 resolved action subtype／ID；Popup 應顯示法術或物品 ID，只有無安全解析結果時才顯示手動輸入。</li>
+<li>EAM 一般監控圖示：非戰鬥中 Aura／技能／物品／地面效果應顯示對應 Tooltip；戰鬥中不得因 Tooltip 造成 taint、Forbidden 或 blocked action。12.1 Native Aura 仍使用 Blizzard AuraButton Tooltip。</li>
+<li>分類邊框：自身 BUFF 青、自己 DEBUFF 紅、目標 BUFF 藍、目標 DEBUFF 橘、技能黃、地面效果紫、物品綠；classPower／totem 保留原樣。顏色不代表 Blizzard dispel type。</li>
+<li>About：主視窗「關於」需顯示 TOC 版本、實際客戶端 patch／build／Interface、API baseline <code>12.1.0 PTR 8 (69189)</code>、作者 <code>ziyuefan死鬥</code>、GitHub 與 Pages URL；戰鬥中首次建立應延後或拒絕。</li>
+<li>報告複製：按鈕只聚焦並全選 EditBox；玩家自行按 Ctrl+C。不得呼叫不存在的 <code>EditBox:Copy()</code>。</li>
+<li>UnitPower 與 Aura 分流：法師法力屬主要 UnitPower，可能為 Secret 時只能送原生 sink；生命之花等效果屬 Aura，不以 UnitPower 模組監控。</li>
+</ul>
+<p>2026-08-09 收尾離線 gate：Lua <code>50/50</code>、Flow <code>all 54/54</code>、Validation Contracts <code>247/247</code>。這些結果只證明 Lua／mock／文件契約；PTR、XPTR 與 Retail 的 34 案真人狀態仍為待玩家簽收。</p>
+<h2 id="2026-08-09svg-ab">2026-08-09：SVG A/B 玩家能力測試</h2>
+<ul>
+<li>PTR 12.1：玩家先選 <em>ptr</em>，開啟 Flow 面板的 SVG 能力測試。左格為 VectorGraphics:SetSVG，右格為 Texture:SetSVG；兩格應顯示相同青框與黃紫三角。</li>
+<li>每格必須分別標記通過、失敗或受阻，最後按完成產生 EAM_SVG_CAPABILITY_REPORT。不得由 API accepted 自動推定肉眼顯示正確。</li>
+<li>報告必須包含正確 client／patch／build／Interface，rawFileIDsCollected=false，且兩案 clearReload=pass；若從磁碟讀取，玩家產生報告後需自行 /reload 或正常登出。</li>
+<li>XPTR／Retail 12.0.7 若回報 unsupported，代表 interfaceRequired=false 的預期降級，不等於 PTR 能力失敗。</li>
+<li>最終邊框目視：七類圖示四邊都應連續包覆，外緣比圖示各多 3px；不得再以透明 ActionButton border 的內部亮線作尺寸依據。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

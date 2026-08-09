@@ -98,6 +98,7 @@ function AuraStatePool.release(state)
     state.kind = nil
     state.spellID = nil
     state.unit = nil
+    state.auraFilter = nil
     state.name = nil
     state.icon = nil
     state.stacks = nil
@@ -182,6 +183,11 @@ local function resetState(state, alert)
     state.kind = alert.kind
     state.spellID = alert.spellID
     state.unit = alert.unit
+    local auraFilter = Util.isSafeString(alert.auraFilter) and alert.auraFilter or nil
+    if auraFilter ~= "HELPFUL" and auraFilter ~= "HARMFUL" then
+        auraFilter = alert.unit == "target" and "HARMFUL" or "HELPFUL"
+    end
+    state.auraFilter = auraFilter
     state.name = nil
     state.icon = nil
     state.stacks = nil

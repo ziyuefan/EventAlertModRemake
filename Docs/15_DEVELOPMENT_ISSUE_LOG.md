@@ -893,3 +893,75 @@
 - 有效解法：封裝器只對 Lua／XML 執行 TOC 完整性檢查；契約測試新增 PowerShell 5.1 回歸條件，禁止恢復舊 `-Include` 寫法。
 - 驗證結果：Lua 語法 47 檔通過、Flow 54/54、驗證契約 208/208、文件轉換單元測試 4/4、本機 WoW 版本與 Reparse Point 3/3；標準 ZIP 已成功產生。以上均屬離線／本機證據，不等同 PTR 實機簽收。
 - 後續注意事項：GitHub Release 只上傳 `Dist` 內最終 ZIP 資產；`Dist/`、`deploy/`、`backup/` 與 `TestResults/` 不納入 Git，Release 必須標記為 Alpha prerelease。
+### 2026-08-09 EAM-20260809-ALPHA2-NATIVE-GATE：Alpha 2 關閉 12.1 Native Aura
+
+- 狀態：P0 程式已修正並通過離線驗證；PTR `/reload` 後顯示仍待玩家簽收。
+- 症狀：玩家確認 Alpha 1 可顯示 Aura，Alpha 2 完全無 Aura；PTR Flow 的 `aura121.capability.native_complete` 回報 Native capability incomplete。
+- 原因判斷：Alpha 2 新增 `nativeRuntimeAllowed`，要求 `IsPublicTestClient` 與 `IsTestBuild` 同時為 true。PTR `12.1.0.69189` 實際 raw flags 為 public-test=true、test-build=false、beta=false，所以服務在建立 AuraContainer 前就選成 unsupported。離線 mock 原先把 public-test 與 test-build 都設為 true，未覆蓋真實旗標組合。
+- 已嘗試方法：比對 Alpha 1／Alpha 2 commit、追蹤 AuraCapabilityService 到 AuraContainerService 的 early return、核對 PTR 69189 固定 FrameXML 方法；同時拆解使用者 Flow 的其餘四個 failed case。確認 API 方法仍存在，其餘四項是 strict-mock 案例在遊戲客戶端誤判，不是四個新 runtime regression。
+- 有效解法：12.1 Native gate 改為 Interface 及 public-test／test-build／beta 任一成立；三個 flag 經 `pcall` 正規化。mock 改成 PTR 69189 真實組合；四個 mock-only 案例在 client 缺 mock 時回傳 skip；地面效果測試不再覆寫已凍結的 `EAM.API.GetLocale`；Native capability 失敗訊息輸出完整安全布林診斷。
+- 工具試錯：Codex `apply_patch` 因 Windows sandbox helper `helper_unknown_error` 無法讀取專案檔；數次保護性替換在非唯一錨點或外層模板解析階段中止，寫檔均放在最後所以沒有半套變更。最後採案例 ID 區間、唯一行與相鄰行斷言完成單檔修改。
+- 驗證結果：`git diff --check` 通過；Lua 語法 `47/47`；Flow `all 54/54`；Validation Contracts `217/217`，artifact 為 `TestResults/EAM_FlowValidation_all_20260809_185047.json`。這些均為離線證據。
+- 後續注意事項：玩家先 `/reload` 載入修正版，再執行 `/eam doctor`、`/eam test aura121` 並觀察 player／target Aura。若 capability 仍失敗，回傳新訊息中的 backend、runtime、raw flags 與五項 Native method 狀態；未完成前 P0 不得標為 PTR pass。
+
+### 2026-08-09 EAM-20260809-PTR69189-UNITPOWER-PARTIAL：UnitPower sink 已接受但視覺未簽收
+
+- 狀態：PTR capability 部分成立；視覺與流程仍未完成。
+- 症狀：使用者回傳的 `EAM_UNIT_POWER_CAPABILITY_REPORT` 顯示 primary 為 Secret、selected 為 safe-number；兩案的 StatusBar 與 radial sink 呼叫都為 accepted，但 primary `visualObservation=pending`、selected `visualObservation=blocked`，整份報告為 blocked。
+- 原因判斷：sink accepted 只證明 C API 接受值，不證明畫面隨資源增減正確。Secret widget 又不可由 Lua 讀回做自動比較，必須由玩家目視標記。
+- 已嘗試方法：核對 build `69189`、clientChannel PTR、Interface `120100`、`rawValuesCollected=false` 與兩個 case 分類；沒有把 blocked 報告升格為 pass。
+- 有效策略：保留現有單向 `UnitPowerPercent -> SetValue/SetRadialProgressBarPercent` 管線；報告只記分類與 accepted/rejected，真人視覺另行簽收。
+- 後續注意事項：玩家在非戰鬥啟動探針，實際產生、消耗與歸零主要／次要資源，分別按 pass 或 fail；再進戰、離戰與 `/reload`。任何 raw power 值都不得回傳。
+
+### 2026-08-09 EAM-20260809-TOOLTIP-COPY-INPUT：Target Aura、巨集解析與報告複製
+
+- 狀態：程式與離線契約已修正；PTR／XPTR／Retail 互動與 taint 實機待簽收。
+- 症狀：TargetFrame AuraButton 滑鼠停留後按 Ctrl+Alt 無法開啟 EAM Popup；Action Bar Macro 顯示巨集 ID 但法術／物品 ID 尚未解析；流程面板按「複製」時 `FlowTestPanel.lua:253` 呼叫 nil。
+- 原因判斷：12.1 單位框架 Aura 可能使用非 `GameTooltip` 的 Aura tooltip object；macro TooltipData ID 可能只是 macro index，真正 resolved ID 應優先取 action subtype／ID；WoW SimpleEditBox 沒有通用 `Copy()` 方法。
+- 已嘗試方法：標準 `apply_patch` 再次遭 Windows sandbox `setup refresh had errors` 阻擋，改以已備份檔案、唯一錨點與 UTF-8 精確替換。五語系新增鍵初版一度落在 locale registration `end)` 之外，會使 `L` 為 nil；契約測試新增 key scope／唯一性後攔截並移回註冊範圍。
+- 有效解法：非 GameTooltip 的 `SetUnitAura` post-call 只建立 0.75 秒匿名 hover 心跳，不讀 tooltip／Aura payload；Ctrl+Alt 不需滑鼠按鍵即可開手動 Aura Popup。Macro 先解析 `GetActionInfo` resolved subtype／ID，再降級 `GetMacroSpell`／`GetMacroItem`。報告按鈕改為聚焦、全選並提示玩家 Ctrl+C。
+- 驗證結果：Lua `50/50`、Flow `54/54`、Validation Contracts `247/247`；Target Aura heartbeat、macro spell/item route、manual copy 與五語系 scope 均有離線回歸。
+- 後續注意事項：玩家需在 TargetFrame／BuffFrame 實測 hover+Ctrl+Alt、原 Blizzard 點擊行為、Macro spell/item、戰鬥拒絕及 taint／blocked action／Forbidden；離線 pass 不升格實機。
+
+### 2026-08-09 EAM-20260809-ABOUT-TOOLTIP-BORDERS：About、監控 Tooltip 與七色分類邊框
+
+- 狀態：程式與離線契約已完成；PTR 12.1 Native Widget 與 12.0.7 Legacy 實機待簽收。
+- 症狀：主視窗缺少可追溯版本資訊；EAM 自有監控圖示無 Tooltip；不同監控來源缺少一致、固定的視覺辨識。
+- 原因判斷：About 必須區分實際客戶端 build 與固定 API baseline；一般 Renderer 與 Native AuraButton 的 Tooltip／Region 生命週期不同；分類顏色只能使用 EAM 自有靜態資料，不能讀 Secret AuraData 或冒充 PTR8 dispel border。
+- 已嘗試方法：建立純靜態 `AlertBorderStyles`；一般 IconPool 使用 EAM 自有 Texture 與脫戰 Spell／Item Tooltip，Native 只在 AuraButton initializer 建立 Region；AboutPanel 由 TOC metadata、GetBuildInfo 與 ValidationEnvironment 組合安全顯示。
+- 有效解法：自身 BUFF 青、自身 DEBUFF 紅、目標 BUFF 藍、目標 DEBUFF 橘、技能黃、地面效果紫、物品綠；classPower／totem 保留既有外觀。About 顯示作者 `ziyuefan死鬥`、repo／Pages、TOC 版本、客戶端版本與 API baseline `12.1.0 PTR 8 (69189)`。
+- 驗證結果：七色映射、Legacy／Native 套用路由、About metadata／戰鬥 guard、spell/item Tooltip 與 classPower 無誤判已納入 Flow／契約 gate。
+- 後續注意事項：實機需觀察邊框與 Glow／Pandemic／dispel 同時存在時是否可辨識、Tooltip 戰鬥隱藏、About URL／版本正確；未來 PTR build 更新時同步 baseline。
+### 2026-08-09 EAM-20260809-ALPHA3-SVG-BORDER：Alpha 3 全覆蓋邊框與 SVG A/B 探針
+
+- 日期：2026-08-09
+- 狀態：已實作並完成離線驗證；PTR／XPTR／Retail 目視仍待玩家簽收
+- 嚴重度：P1
+- 症狀：
+  - 實機截圖顯示分類邊框雖已放大，仍未完整覆蓋圖示四邊。
+  - 專案尚無可由玩家操作的 SVG／VectorGraphics 能力測試，Release 封裝白名單也會靜默略過 .svg。
+- 原因判斷：
+  - Interface\Buttons\UI-ActionButton-Border 素材本身含透明留白，持續增加 Texture 尺寸只會放大透明區，無法形成可預期的貼邊厚度。
+  - 先前只有 PTR8「SVG tech 修復」變更摘要，沒有把 CreateVectorGraphics、SetSVG、ClearSVG、HasSVG、GetSVGFileID 做 A/B 生命週期驗證。
+- 已嘗試但否決：
+  - 將 ActionButton border padding 放大到 14px；實機仍可見邊框小於圖示，不再重複此方法。
+  - 新檔初次寫入曾因未設定的 PowerShell 環境變數形成空檔；尺寸 guard 立即攔下，未進入 TOC 或測試，之後以明確路徑重建。
+- 有效解法：
+  - Legacy IconPool 與 Native AuraButton 改用 WHITE8X8 實色 Texture，置於 BORDER 層，四邊固定外擴 3px；Flow 直接斷言兩個 anchor tuple。
+  - 新增 player-operated SVG A/B 探針，同時測 Frame:CreateVectorGraphics() 與 Texture:SetSVG()，每案執行 set、HasSVG、file-ID 分類、clear、reload；只輸出 positive-number 等分類，rawFileIDsCollected=false。
+  - 新增 strict mock、JSON schema、離線 fixture、五語系、Flow 面板按鈕、SavedVariables、WTF／JSON 匯入器與 .svg Release 白名單。
+  - strict mock 的 ClearSVG() 後讀取曾因嚴格 __index 誤判為 API error；HasSVG／GetSVGFileID 改用 rawget 後，生命週期與實際 API 契約一致。
+- 工具限制：
+  - apply_patch 多次在寫入前遭 Windows sandbox setup refresh had errors 攔截；均先備份，再採 UTF-8 唯一錨點替換，錨點不是恰好一次即中止。
+- API 證據：
+  - 固定快照：Gethe/wow-ui-source a520b6c27bb897e6be2333b6cc2be36d52c7c11b，版本 12.1.0.69189。
+  - SimpleFrameAPIDocumentation.lua：CreateVectorGraphics。
+  - SimpleVectorGraphicsAPIDocumentation.lua：SetSVG、ClearSVG、HasSVG、GetSVGFileID。
+  - SimpleTextureBaseAPIDocumentation.lua：Texture SetSVG。
+- 驗證：
+  - Lua 語法：50 檔通過。
+  - Flow boundary：37/37；Flow all：54/54。
+  - Validation Contracts：247/247 通過。
+- 後續：
+  - 玩家在 PTR 12.1 選擇 _ptr_ 後執行 SVG 能力測試，兩格應顯示相同青框、黃紫三角；分別標記通過／失敗／受阻並回傳 JSON。
+  - /reload 後再確認七色邊框四邊完整包覆圖示；離線通過不得標為 PTR 通過。

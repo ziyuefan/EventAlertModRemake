@@ -7,7 +7,7 @@ Module: Debug/LiveTestPanel
 - 以玩家逐案操作與確認取代任何遊戲自動化，讓 PTR／XPTR／正式服結果可安全回灌。
 
 責任:
-- 選擇 client directory、瀏覽案例、記錄 pass/fail/blocked/note、建立 reload checkpoint、複製 JSON。
+- 選擇 client directory、瀏覽案例與步驟、記錄 pass/fail/blocked/note、建立 reload checkpoint、全選 JSON 供玩家手動複製。
 
 邊界:
 - 戰鬥中不建立、開啟或寫入 session；不合成輸入、不呼叫 ReloadUI、不操作 Blizzard protected frame。
@@ -21,6 +21,7 @@ local LiveTestPanel = {
     noteEditBox = nil,
     caseTitle = nil,
     caseID = nil,
+    caseProcedure = nil,
     caseStatus = nil,
     environmentText = nil,
     summaryText = nil,
@@ -88,6 +89,11 @@ local function refreshPanel()
             text(definition.labelKey, definition.id)
         ))
         LiveTestPanel.caseID:SetText(definition.id)
+        local procedure = session.procedures and session.procedures[definition.id] or definition.id
+        LiveTestPanel.caseProcedure:SetText(string.format(
+            text("EAM_LIVE_CASE_PROCEDURE", "測試條件／步驟：%s"),
+            procedure
+        ))
         LiveTestPanel.caseStatus:SetText(string.format(
             text("EAM_LIVE_CASE_STATUS", "狀態：%s"),
             savedCase and savedCase.status or "pending"
@@ -166,7 +172,7 @@ local function createFrame()
     end
 
     local frame = api.CreateFrame("Frame", "EAM_LiveTestFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(780, 660)
+    frame:SetSize(780, 720)
     frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -259,13 +265,24 @@ local function createFrame()
     caseID:SetJustifyH("LEFT")
     LiveTestPanel.caseID = caseID
 
+    local caseProcedure = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    caseProcedure:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -176)
+    caseProcedure:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -176)
+    caseProcedure:SetHeight(62)
+    caseProcedure:SetJustifyH("LEFT")
+    caseProcedure:SetJustifyV("TOP")
+    if caseProcedure.SetWordWrap then
+        caseProcedure:SetWordWrap(true)
+    end
+    LiveTestPanel.caseProcedure = caseProcedure
+
     local caseStatus = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    caseStatus:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -176)
+    caseStatus:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -244)
     LiveTestPanel.caseStatus = caseStatus
 
     local noteBackground = api.CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    noteBackground:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -200)
-    noteBackground:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -200)
+    noteBackground:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -266)
+    noteBackground:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -266)
     noteBackground:SetHeight(62)
     noteBackground:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -288,7 +305,7 @@ local function createFrame()
 
     local previousButton = createButton(
         frame, text("EAM_LIVE_PREVIOUS", "上一案"), 82,
-        "TOPLEFT", frame, "TOPLEFT", 20, -272,
+        "TOPLEFT", frame, "TOPLEFT", 20, -338,
         function() changeCase(-1) end
     )
     local nextButton = createButton(
@@ -319,7 +336,7 @@ local function createFrame()
 
     local reloadButton = createButton(
         frame, text("EAM_LIVE_RELOAD_CHECKPOINT", "建立 /reload 檢查點"), 160,
-        "TOPLEFT", frame, "TOPLEFT", 20, -306,
+        "TOPLEFT", frame, "TOPLEFT", 20, -372,
         function()
             saveCurrentNote()
             local ok, reason = EAM.Debug.LiveTestSession.prepareReload()
@@ -350,7 +367,7 @@ local function createFrame()
     )
 
     local outputBackground = api.CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    outputBackground:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -346)
+    outputBackground:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -412)
     outputBackground:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -20, 78)
     outputBackground:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -386,15 +403,17 @@ local function createFrame()
     LiveTestPanel.summaryText = summaryText
 
     local copyButton = createButton(
-        frame, text("EAM_LIVE_COPY", "複製實機 JSON"), 150,
+        frame, text("EAM_LIVE_COPY", "全選實機 JSON"), 150,
         "BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18,
         function()
             saveCurrentNote()
             refreshPanel()
-            reportEditBox:SetFocus()
-            reportEditBox:HighlightText()
-            reportEditBox:Copy()
-            setMessage(text("EAM_LIVE_COPIED", "JSON 已複製；回報時請連同 PTR／XPTR／正式服標籤提供。"), false)
+            local prepared = EAM.Util.prepareEditBoxManualCopy(reportEditBox)
+            if prepared then
+                setMessage(text("EAM_LIVE_COPIED", "JSON 已全選；請按 Ctrl+C 複製，並附上 PTR／XPTR／正式服標籤。"), false)
+            else
+                setMessage(text("EAM_COPY_SELECTION_FAILED", "無法全選報告文字，請手動點入文字框後按 Ctrl+A、Ctrl+C。"), true)
+            end
         end
     )
     createButton(

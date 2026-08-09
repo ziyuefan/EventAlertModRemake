@@ -539,6 +539,16 @@ local function createFrame()
     title:SetPoint("TOP", frame, "TOP", 0, -14)
     title:SetTextColor(0.95, 0.85, 0.4, 1.0)
     title:SetText("EventAlertMod")
+    local aboutButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    aboutButton:SetSize(62, 22)
+    aboutButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -13)
+    aboutButton:SetText(EAM.L.EAM_OPT_ABOUT_BTN or "關於")
+    aboutButton:SetScript("OnClick", function()
+        local aboutPanel = EAM.UI and EAM.UI.AboutPanel or nil
+        if aboutPanel and type(aboutPanel.open) == "function" then
+            aboutPanel.open()
+        end
+    end)
 
     -- 內邊框
     local inner = api.CreateFrame("Frame", nil, frame, "BackdropTemplate")

@@ -8,7 +8,8 @@ Module: UI/IconPool
 - Renderer 只借用 frame，不自行大量 CreateFrame。
 
 責任:
-- 日後負責 acquire/release icon records 與 controlled frame growth。
+- 負責 acquire/release icon records 與 controlled frame growth。
+- 為 EAM 自有 legacy 圖示提供非戰鬥 spell/item Tooltip，不讀取 runtime Aura 或 power 原值。
 
 資料所有權:
 - 擁有 active/inactive icon pools 與 frame objects。
@@ -17,7 +18,8 @@ Module: UI/IconPool
 - 可 mutate frame object 與 pool arrays。
 
 邊界:
-- 不查 aura/cooldown/item API。
+- 不查 aura/cooldown/item 狀態 API；Tooltip 只接收 Renderer 已驗證的靜態 ID。
+- 不替 classPower power type 或 totem slot 偽造 spell Tooltip。
 - 不寫 SavedVariables。
 
 效能注意:
@@ -31,6 +33,8 @@ Retail API 注意:
 local _, EAM = ...
 
 local api = EAM.API
+local Util = EAM.Util
+local AlertBorderStyles = EAM.UI.AlertBorderStyles
 
 local IconPool = {
     active = {},
@@ -62,6 +66,101 @@ function IconPool.applyCooldownStyle(icon, config)
     end
     cooldown:SetSwipeColor(1, 1, 1, normalizeSwipeAlpha(config))
     return true
+end
+
+local TOOLTIP_KIND_SPELL = "spell"
+local TOOLTIP_KIND_ITEM = "item"
+
+local function hideIconTooltip()
+    local tooltip = api.GameTooltip
+    if tooltip and type(tooltip.Hide) == "function" then
+        pcall(tooltip.Hide, tooltip)
+    end
+end
+
+local function showIconTooltip(icon)
+    if api.InCombatLockdown and api.InCombatLockdown() then
+        return false, "combatBlocked"
+    end
+    local rendered = icon and icon.rendered
+    local tooltipKind = rendered and rendered.tooltipKind or nil
+    local tooltipID = rendered and rendered.tooltipID or nil
+    if not Util.isSafeString(tooltipKind) or not Util.isSafePositiveNumber(tooltipID) then
+        return false, "sourceUnavailable"
+    end
+    local tooltip = api.GameTooltip
+    if not tooltip or type(tooltip.SetOwner) ~= "function" then
+        return false, "tooltipUnavailable"
+    end
+    local ownerOK = pcall(tooltip.SetOwner, tooltip, icon, "ANCHOR_RIGHT")
+    if not ownerOK then
+        return false, "ownerRejected"
+    end
+
+    local method
+    if tooltipKind == TOOLTIP_KIND_SPELL then
+        method = tooltip.SetSpellByID
+    elseif tooltipKind == TOOLTIP_KIND_ITEM then
+        method = tooltip.SetItemByID
+    end
+    if type(method) ~= "function" then
+        hideIconTooltip()
+        return false, "methodUnavailable"
+    end
+    local setOK = pcall(method, tooltip, tooltipID)
+    if not setOK then
+        hideIconTooltip()
+        return false, "contentRejected"
+    end
+    if type(tooltip.Show) == "function" then
+        pcall(tooltip.Show, tooltip)
+    end
+    return true, tooltipKind
+end
+
+function IconPool.applyTooltipSource(icon, alertState)
+    local rendered = icon and icon.rendered
+    if not rendered then
+        return false
+    end
+    local tooltipKind
+    local tooltipID
+    local alertKind = alertState and alertState.kind or nil
+    if Util.isSafeString(alertKind) then
+        if alertKind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
+            local itemID = alertState.itemID
+            if Util.isSafePositiveNumber(itemID) then
+                tooltipKind = TOOLTIP_KIND_ITEM
+                tooltipID = itemID
+            end
+        elseif alertKind == EAM.Constants.ALERT_KIND_AURA
+            or alertKind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN
+            or alertKind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
+        then
+            local spellID = alertState.spellID
+            if Util.isSafePositiveNumber(spellID) then
+                tooltipKind = TOOLTIP_KIND_SPELL
+                tooltipID = spellID
+            end
+        end
+    end
+    rendered.tooltipKind = tooltipKind
+    rendered.tooltipID = tooltipID
+    return tooltipKind ~= nil
+end
+
+function IconPool.applyTypeBorder(icon, alertState, frameName)
+    local rendered = icon and icon.rendered
+    local border = icon and icon.typeBorder
+    if not rendered or not border or not AlertBorderStyles then
+        return false, "borderUnavailable"
+    end
+    local styleKey = AlertBorderStyles.resolve(frameName, alertState)
+    if rendered.borderStyleKey == styleKey then
+        return styleKey ~= nil, styleKey or "styleUnavailable"
+    end
+    rendered.borderStyleKey = styleKey
+    return AlertBorderStyles.apply(border, styleKey)
 end
 
 local function createIcon()
@@ -99,6 +198,12 @@ local function createIcon()
     timerText:SetPoint("CENTER", overlay, "CENTER", 0, 0)
     button.timerText = timerText
 
+    local typeBorder = button:CreateTexture(nil, "BORDER")
+    typeBorder:SetTexture("Interface\\Buttons\\WHITE8X8")
+    typeBorder:SetBlendMode("BLEND")
+    AlertBorderStyles.anchorTexture(typeBorder, button)
+    typeBorder:Hide()
+    button.typeBorder = typeBorder
     -- 🌡️ 內置安全、不帶 Taint 風險的 Pandemic 亮框 Gold Glow Overlay
     local glowBorder = button:CreateTexture(nil, "OVERLAY")
     glowBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
@@ -109,6 +214,9 @@ local function createIcon()
     button.glowBorder = glowBorder
 
     button.rendered = {}
+    button:EnableMouse(true)
+    button:SetScript("OnEnter", showIconTooltip)
+    button:SetScript("OnLeave", hideIconTooltip)
     IconPool.created = IconPool.created + 1
     return button
 end
@@ -159,6 +267,9 @@ function IconPool.release(icon)
         else
             icon.timerText:SetText("")
         end
+    end
+    if icon.typeBorder then
+        icon.typeBorder:Hide()
     end
     if icon.glowBorder then
         icon.glowBorder:Hide()

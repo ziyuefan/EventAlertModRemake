@@ -490,6 +490,19 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 <code>Docs/05_PERFORMANCE_GUIDE.md</code> 包含候選熱路徑，
 OnUpdate/C_Timer的使用和分配風險。 <code>文件/07_MIGRATION_NOTES.md</code>
 包含行為遷移註釋。</p>
+<h2 id="2026-08-09-alpha-3">2026-08-09 實機步驟與 Alpha 3 候選入口</h2>
+<ul>
+<li>目前機器可讀快照為 <code>Data/ProjectContinuity.json</code> 的 <code>2026-08-09.2</code>；人類交接見 <code>Docs/28_PROJECT_CONTINUITY.md</code>。</li>
+<li>34 案 PTR／XPTR／Retail 的前置條件、逐步操作與通過證據見 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>。</li>
+<li>Alpha 3 候選包含 Target Aura hover+Ctrl+Alt、Macro spell/item ID、手動 Ctrl+C 報告交接、About、監控 Tooltip 與七色分類邊框；目前只有離線 gate，不代表三個客戶端已實機簽收。</li>
+</ul>
+<h2 id="2026-08-09-svg-ab-3px">2026-08-09 SVG A/B 與 3px 邊框續接</h2>
+<ul>
+<li>分類邊框已捨棄含透明留白的 ActionButton border，Legacy 與 Native 都改用 WHITE8X8 實色 Texture，位於 BORDER 層並四邊固定外擴 3px。</li>
+<li>Flow 面板新增玩家操作的 SVG 能力測試；VectorGraphics 與 Texture 各自驗證 SetSVG、HasSVG、GetSVGFileID 分類、ClearSVG 與 reload。</li>
+<li>SVG 報告型別為 EAM_SVG_CAPABILITY_REPORT，rawFileIDsCollected 固定 false；可由 JSON 或遊戲內持久化檔案以 ReportType SVG 匯入。</li>
+<li>最新離線 gate 為 Lua 50/50、Flow 54/54、Validation Contracts 247/247。3px 邊框與 SVG 圖樣仍待 PTR 玩家目視，不得標記實機通過。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

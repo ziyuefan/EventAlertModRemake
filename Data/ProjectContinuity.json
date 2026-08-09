@@ -1,23 +1,28 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-08-08.1",
-  "updatedAt": "2026-08-08",
+  "snapshotVersion": "2026-08-09.2",
+  "updatedAt": "2026-08-09",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
     "releaseTrack": "alpha",
-    "supportedClients": ["PTR_12_1", "XPTR_12_0_7", "RETAIL_12_0_7"]
+    "supportedClients": [
+      "PTR_12_1",
+      "XPTR_12_0_7",
+      "RETAIL_12_0_7"
+    ]
   },
   "routes": {
     "humanSummary": "Docs/28_PROJECT_CONTINUITY.md",
     "issueLog": "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
     "liveMatrix": "Data/LiveValidationMatrix.json",
     "testPlan": "Docs/06_TEST_PLAN_RETAIL.md",
-    "flowFramework": "Docs/26_FLOW_VALIDATION_FRAMEWORK.md"
+    "flowFramework": "Docs/26_FLOW_VALIDATION_FRAMEWORK.md",
+    "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "修正並簽收 12.1 PTR Aura、Cooldown、Item、GroundEffect 與 UnitPower 行為，保留 12.0.7 安全降級。",
+    "objective": "完成 Alpha 3 候選：以 3px 全覆蓋七色邊框取代透明留白材質，加入 player-operated SVG A/B 能力探針與遊戲內持久化報告匯入，並等待 PTR／XPTR／Retail 真人簽收。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 54,
@@ -41,7 +46,9 @@
       "state": "confirmed",
       "provenance": "project-rule",
       "environment": "cross-client",
-      "evidenceRefs": ["Docs/27_LOCAL_WOW_ENVIRONMENT.md"]
+      "evidenceRefs": [
+        "Docs/27_LOCAL_WOW_ENVIRONMENT.md"
+      ]
     },
     {
       "id": "FACT-20260801-002",
@@ -49,7 +56,9 @@
       "state": "confirmed",
       "provenance": "user-observed",
       "environment": "PTR_12_1",
-      "evidenceRefs": ["issue:EAM-20260801-PTR121-AURA-DUAL-COUNTDOWN"]
+      "evidenceRefs": [
+        "issue:EAM-20260801-PTR121-AURA-DUAL-COUNTDOWN"
+      ]
     },
     {
       "id": "FACT-20260801-003",
@@ -57,7 +66,10 @@
       "state": "confirmed",
       "provenance": "code-contract",
       "environment": "PTR_12_1",
-      "evidenceRefs": ["issue:EAM-20260801-PTR121-AURA-DUAL-COUNTDOWN", "Docs/23_AURA_CONTAINER_IMPLEMENTATION.md"]
+      "evidenceRefs": [
+        "issue:EAM-20260801-PTR121-AURA-DUAL-COUNTDOWN",
+        "Docs/23_AURA_CONTAINER_IMPLEMENTATION.md"
+      ]
     },
     {
       "id": "FACT-20260801-004",
@@ -65,7 +77,10 @@
       "state": "confirmed",
       "provenance": "offline-test",
       "environment": "offline-mock",
-      "evidenceRefs": ["Tests/FlowValidationHarness.lua", "Debug/FlowTestRunner.lua"]
+      "evidenceRefs": [
+        "Tests/FlowValidationHarness.lua",
+        "Debug/FlowTestRunner.lua"
+      ]
     },
     {
       "id": "FACT-20260801-005",
@@ -73,7 +88,10 @@
       "state": "confirmed",
       "provenance": "project-state",
       "environment": "cross-client",
-      "evidenceRefs": ["Data/LiveValidationMatrix.json", "Docs/06_TEST_PLAN_RETAIL.md"]
+      "evidenceRefs": [
+        "Data/LiveValidationMatrix.json",
+        "Docs/06_TEST_PLAN_RETAIL.md"
+      ]
     },
     {
       "id": "FACT-20260801-006",
@@ -81,7 +99,9 @@
       "state": "confirmed",
       "provenance": "user-observed",
       "environment": "cross-client",
-      "evidenceRefs": ["Docs/26_FLOW_VALIDATION_FRAMEWORK.md"]
+      "evidenceRefs": [
+        "Docs/26_FLOW_VALIDATION_FRAMEWORK.md"
+      ]
     },
     {
       "id": "FACT-20260801-007",
@@ -89,7 +109,10 @@
       "state": "confirmed",
       "provenance": "api-contract",
       "environment": "PTR_12_1",
-      "evidenceRefs": ["issue:EAM-20260801-PTR121-TARGET-AURA-LIFECYCLE", "Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md"]
+      "evidenceRefs": [
+        "issue:EAM-20260801-PTR121-TARGET-AURA-LIFECYCLE",
+        "Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md"
+      ]
     },
     {
       "id": "FACT-20260801-008",
@@ -97,15 +120,22 @@
       "state": "confirmed",
       "provenance": "api-contract",
       "environment": "cross-client",
-      "evidenceRefs": ["issue:EAM-20260801-UNITPOWER-CAPABILITY", "Debug/UnitPowerCapabilityProbe.lua"]
+      "evidenceRefs": [
+        "issue:EAM-20260801-UNITPOWER-CAPABILITY",
+        "Debug/UnitPowerCapabilityProbe.lua"
+      ]
     },
     {
       "id": "FACT-20260801-009",
-      "statement": "本輪靜態與離線 gate 為 Lua 47 檔語法通過、Flow 54/54、Validation Contracts 208/208。",
+      "statement": "本輪靜態與離線 gate 為 Lua 47 檔語法通過、Flow 54/54、Validation Contracts 217/217。",
       "state": "confirmed",
       "provenance": "offline-test",
       "environment": "offline-mock",
-      "evidenceRefs": ["Tools/CheckLuaSyntax.ps1", "Tools/Test-ValidationContracts.ps1", "issue:EAM-20260801-CONTINUITY-CONTRACT"]
+      "evidenceRefs": [
+        "Tools/CheckLuaSyntax.ps1",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260801-CONTINUITY-CONTRACT"
+      ]
     },
     {
       "id": "FACT-20260808-001",
@@ -113,7 +143,11 @@
       "state": "confirmed",
       "provenance": "offline-test",
       "environment": "PTR_12_1",
-      "evidenceRefs": ["Debug/FlowTestRunner.lua", "Tests/Mocks/WoW121AuraMock.lua", "Data/LiveValidationMatrix.json"]
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "Data/LiveValidationMatrix.json"
+      ]
     },
     {
       "id": "FACT-20260808-002",
@@ -121,7 +155,10 @@
       "state": "confirmed",
       "provenance": "api-contract",
       "environment": "PTR_12_1",
-      "evidenceRefs": ["Debug/UnitPowerCapabilityProbe.lua", "Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md"]
+      "evidenceRefs": [
+        "Debug/UnitPowerCapabilityProbe.lua",
+        "Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md"
+      ]
     },
     {
       "id": "FACT-20260808-003",
@@ -129,21 +166,97 @@
       "state": "confirmed",
       "provenance": "offline-test",
       "environment": "cross-client",
-      "evidenceRefs": ["TestResults/EAM_LocalWoWEnvironment_20260808_194717447.json", "Docs/27_LOCAL_WOW_ENVIRONMENT.md"]
+      "evidenceRefs": [
+        "TestResults/EAM_LocalWoWEnvironment_20260808_194717447.json",
+        "Docs/27_LOCAL_WOW_ENVIRONMENT.md"
+      ]
+    },
+    {
+      "id": "FACT-20260809-001",
+      "statement": "玩家在 PTR 12.1.0.69189 確認 Alpha 1 可顯示 Aura，Alpha 2 完全不顯示。",
+      "state": "confirmed",
+      "provenance": "user-observed",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "issue:EAM-20260809-ALPHA2-NATIVE-GATE"
+      ]
+    },
+    {
+      "id": "FACT-20260809-002",
+      "statement": "Alpha 2 曾以 public-test AND test-build 判定 Native runtime；PTR 69189 的 raw flags 為 public-test=true、test-build=false、beta=false，因此 gate 必然關閉。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "Services/AuraCapabilityService.lua",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "issue:EAM-20260809-ALPHA2-NATIVE-GATE"
+      ]
+    },
+    {
+      "id": "FACT-20260809-003",
+      "statement": "PTR 69189 UnitPower 報告顯示 primary Secret 與 selected safe-number 均被 StatusBar 和 radial sink 接受，但人工視覺分別為 pending 與 blocked，且未收集 raw values。",
+      "state": "confirmed",
+      "provenance": "live-report",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "issue:EAM-20260809-PTR69189-UNITPOWER-PARTIAL"
+      ]
+    },
+    {
+      "id": "FACT-20260809-004",
+      "statement": "Alpha 3 候選已離線完成 Target Aura hover+Ctrl+Alt、Macro spell/item ID、手動複製、About、監控 Tooltip 與七色分類邊框。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+        "issue:EAM-20260809-ALPHA3-SVG-BORDER"
+      ]
+    },
+    {
+      "id": "FACT-20260809-005",
+      "statement": "PTR 12.1.0.69189 生成文件提供 Frame:CreateVectorGraphics、VectorGraphics:SetSVG/ClearSVG/HasSVG/GetSVGFileID 與 Texture:SetSVG；EAM 已建立 VectorGraphics／Texture A/B 探針且不輸出 raw file ID。",
+      "state": "confirmed",
+      "provenance": "api-contract",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "Debug/SVGCapabilityProbe.lua",
+        "Schemas/EAM_SVGCapabilityReport.schema.json",
+        "Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md"
+      ]
+    },
+    {
+      "id": "FACT-20260809-006",
+      "statement": "3px 邊框幾何與 SVG set、clear、reload 生命週期已納入 Lua strict mock、Flow 與 Validation Contracts；離線通過不得升格為 PTR 實機通過。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "offline-mock",
+      "evidenceRefs": [
+        "UI/AlertBorderStyles.lua",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "Tools/Test-ValidationContracts.ps1"
+      ]
     }
   ],
   "inferences": [
     {
       "id": "INFERENCE-20260801-001",
       "statement": "雙倒數高度同步是共用 DurationObject 的預期結果，可用於人工顯示同步觀察，但不能證明兩個獨立資料源都正確。",
-      "basedOnFactIds": ["FACT-20260801-002", "FACT-20260801-003"],
+      "basedOnFactIds": [
+        "FACT-20260801-002",
+        "FACT-20260801-003"
+      ],
       "confidence": "high",
       "validationNeeded": "PTR 12.1 觀察開始、中段與最後三秒，禁止讀回文字自動比較。"
     },
     {
       "id": "INFERENCE-20260801-002",
       "statement": "目標 Aura 有圖示但無時間與層數時，可能是單層且永久，也可能是同 Spell ID 的其他施法者；不能直接判定監控中斷。",
-      "basedOnFactIds": ["FACT-20260801-003"],
+      "basedOnFactIds": [
+        "FACT-20260801-003"
+      ],
       "confidence": "medium",
       "validationNeeded": "PTR 12.1 依 34 案矩陣記錄目標切換、施法者、有限或永久及層數轉換。"
     }
@@ -155,10 +268,25 @@
       "title": "Native Aura 正常單倒數與雙倒數診斷",
       "severity": "P1",
       "status": "pending_live_validation",
-      "modules": ["UI/NativeAuraRenderer.lua", "Debug/FlowTestPanel.lua"],
-      "acceptanceCriteria": ["正常模式只顯示一套倒數", "診斷模式只由玩家明確啟用", "初始化後零結構 mutation"],
-      "validation": { "offline": "pass", "ptr": "pending", "xptr": "pending", "retail": "pending" },
-      "evidenceRefs": ["Debug/FlowTestRunner.lua", "Data/LiveValidationMatrix.json"]
+      "modules": [
+        "UI/NativeAuraRenderer.lua",
+        "Debug/FlowTestPanel.lua"
+      ],
+      "acceptanceCriteria": [
+        "正常模式只顯示一套倒數",
+        "診斷模式只由玩家明確啟用",
+        "初始化後零結構 mutation"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua",
+        "Data/LiveValidationMatrix.json"
+      ]
     },
     {
       "id": "WORK-20260801-002",
@@ -166,10 +294,24 @@
       "title": "法術冷卻 DurationObject 與倒數文字",
       "severity": "P1",
       "status": "pending_live_validation",
-      "modules": ["Core/DurationAdapter.lua", "Services/CooldownService.lua", "UI/Renderer.lua"],
-      "acceptanceCriteria": ["正確 factory 與 binding 生命週期", "非 GCD 與充能冷卻有倒數"],
-      "validation": { "offline": "pass", "ptr": "pending", "xptr": "pending", "retail": "pending" },
-      "evidenceRefs": ["Debug/FlowTestRunner.lua"]
+      "modules": [
+        "Core/DurationAdapter.lua",
+        "Services/CooldownService.lua",
+        "UI/Renderer.lua"
+      ],
+      "acceptanceCriteria": [
+        "正確 factory 與 binding 生命週期",
+        "非 GCD 與充能冷卻有倒數"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua"
+      ]
     },
     {
       "id": "WORK-20260801-003",
@@ -177,10 +319,23 @@
       "title": "12.1 itemID 冷卻事件觸發",
       "severity": "P1",
       "status": "pending_live_validation",
-      "modules": ["Services/ItemCooldownService.lua"],
-      "acceptanceCriteria": ["監控物品使用後觸發", "其他 itemID 不誤觸", "倒數使用正式 DurationAdapter"],
-      "validation": { "offline": "pass", "ptr": "pending", "xptr": "pending", "retail": "pending" },
-      "evidenceRefs": ["Debug/FlowTestRunner.lua"]
+      "modules": [
+        "Services/ItemCooldownService.lua"
+      ],
+      "acceptanceCriteria": [
+        "監控物品使用後觸發",
+        "其他 itemID 不誤觸",
+        "倒數使用正式 DurationAdapter"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua"
+      ]
     },
     {
       "id": "WORK-20260801-004",
@@ -188,10 +343,24 @@
       "title": "地面效果說明解析與手動 fallback",
       "severity": "P1",
       "status": "pending_live_validation",
-      "modules": ["Services/GroundEffectService.lua", "UI/Options.lua"],
-      "acceptanceCriteria": ["非戰鬥依序解析兩種靜態說明來源", "解析失敗採手動秒數並標記 warning", "施法熱路徑不抓 Tooltip"],
-      "validation": { "offline": "pass", "ptr": "pending", "xptr": "pending", "retail": "pending" },
-      "evidenceRefs": ["Debug/FlowTestRunner.lua"]
+      "modules": [
+        "Services/GroundEffectService.lua",
+        "UI/Options.lua"
+      ],
+      "acceptanceCriteria": [
+        "非戰鬥依序解析兩種靜態說明來源",
+        "解析失敗採手動秒數並標記 warning",
+        "施法熱路徑不抓 Tooltip"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua"
+      ]
     },
     {
       "id": "WORK-20260801-005",
@@ -199,10 +368,25 @@
       "title": "Target Aura 圖示存在但文字空白的生命週期分類",
       "severity": "P1",
       "status": "investigating",
-      "modules": ["Managers/AuraRuleCompiler.lua", "Services/AuraContainerService.lua", "UI/NativeAuraRenderer.lua"],
-      "acceptanceCriteria": ["區分單層、永久與不同施法者", "設定變更只靠重建", "報告不讀回 Secret 文字"],
-      "validation": { "offline": "pass", "ptr": "pending", "xptr": "pending", "retail": "pending" },
-      "evidenceRefs": ["Data/LiveValidationMatrix.json"]
+      "modules": [
+        "Managers/AuraRuleCompiler.lua",
+        "Services/AuraContainerService.lua",
+        "UI/NativeAuraRenderer.lua"
+      ],
+      "acceptanceCriteria": [
+        "區分單層、永久與不同施法者",
+        "設定變更只靠重建",
+        "報告不讀回 Secret 文字"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Data/LiveValidationMatrix.json"
+      ]
     },
     {
       "id": "WORK-20260801-006",
@@ -210,10 +394,27 @@
       "title": "UnitPower 安全數字與原生 Secret sink",
       "severity": "P1",
       "status": "pending_live_validation",
-      "modules": ["Services/ClassPowerService.lua", "Debug/UnitPowerCapabilityProbe.lua", "UI/Renderer.lua"],
-      "acceptanceCriteria": ["次要資源優先", "數值 1 顯示", "Secret percent 只直送 widget", "JSON 不含原值"],
-      "validation": { "offline": "pass", "ptr": "pending", "xptr": "pending", "retail": "pending" },
-      "evidenceRefs": ["Debug/FlowTestRunner.lua", "Data/LiveValidationMatrix.json"]
+      "modules": [
+        "Services/ClassPowerService.lua",
+        "Debug/UnitPowerCapabilityProbe.lua",
+        "UI/Renderer.lua"
+      ],
+      "acceptanceCriteria": [
+        "次要資源優先",
+        "數值 1 顯示",
+        "Secret percent 只直送 widget",
+        "JSON 不含原值"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua",
+        "Data/LiveValidationMatrix.json"
+      ]
     },
     {
       "id": "WORK-20260801-007",
@@ -221,10 +422,83 @@
       "title": "專案續接與試錯漂移 gate",
       "severity": "P2",
       "status": "complete",
-      "modules": ["Docs/28_PROJECT_CONTINUITY.md", "Data/ProjectContinuity.json", "Tools/Test-ValidationContracts.ps1"],
-      "acceptanceCriteria": ["事實與推論分離", "work item 可追到唯一 issue", "實機 pass 不可由離線升格"],
-      "validation": { "offline": "pass", "ptr": "not-applicable", "xptr": "not-applicable", "retail": "not-applicable" },
-      "evidenceRefs": ["Schemas/EAM_ProjectContinuity.schema.json"]
+      "modules": [
+        "Docs/28_PROJECT_CONTINUITY.md",
+        "Data/ProjectContinuity.json",
+        "Tools/Test-ValidationContracts.ps1"
+      ],
+      "acceptanceCriteria": [
+        "事實與推論分離",
+        "work item 可追到唯一 issue",
+        "實機 pass 不可由離線升格"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "not-applicable",
+        "xptr": "not-applicable",
+        "retail": "not-applicable"
+      },
+      "evidenceRefs": [
+        "Schemas/EAM_ProjectContinuity.schema.json"
+      ]
+    },
+    {
+      "id": "WORK-20260809-001",
+      "issueId": "EAM-20260809-ALPHA2-NATIVE-GATE",
+      "title": "修復 Alpha 2 PTR Native Aura 通道 gate",
+      "severity": "P0",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Services/AuraCapabilityService.lua",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "Debug/FlowTestRunner.lua"
+      ],
+      "acceptanceCriteria": [
+        "PTR 69189 public-test=true 且 test-build=false 時選用 Native backend",
+        "strict mock 固定覆蓋真實 raw flags 組合",
+        "玩家 reload 後 player 與 target Aura 重新顯示"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "not-applicable",
+        "retail": "not-applicable"
+      },
+      "evidenceRefs": [
+        "TestResults/EAM_FlowValidation_all_20260809_185047.json",
+        "issue:EAM-20260809-ALPHA2-NATIVE-GATE"
+      ]
+    },
+    {
+      "id": "WORK-20260809-002",
+      "issueId": "EAM-20260809-ALPHA3-SVG-BORDER",
+      "title": "Alpha 3 全覆蓋邊框與 SVG A/B 能力探針",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "UI/AlertBorderStyles.lua",
+        "UI/IconPool.lua",
+        "UI/NativeAuraRenderer.lua",
+        "Debug/SVGCapabilityProbe.lua",
+        "Tools/Import-EAMFlowReport.ps1"
+      ],
+      "acceptanceCriteria": [
+        "邊框完整包覆圖示並固定外擴 3px",
+        "VectorGraphics 與 Texture 分別完成 SetSVG、ClearSVG、reload",
+        "報告保存客戶端身分且不輸出 raw file ID",
+        "Release ZIP 包含 SVG 素材"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua",
+        "Schemas/EAM_SVGCapabilityReport.schema.json",
+        "issue:EAM-20260809-ALPHA3-SVG-BORDER"
+      ]
     }
   ],
   "trials": [
@@ -267,14 +541,80 @@
       "result": "rejected",
       "decision": "多檔補丁失敗後逐檔核對；高風險文件改採單檔小補丁。",
       "doNotRepeat": true
+    },
+    {
+      "id": "TRIAL-20260809-001",
+      "issueId": "EAM-20260809-ALPHA2-NATIVE-GATE",
+      "hypothesis": "IsPublicTestClient 與 IsTestBuild 必須同時為 true 才能識別 12.1 PTR。",
+      "result": "rejected",
+      "decision": "保留三個 raw flags，測試通道 aggregate 採 OR；Native 方法仍逐項 capability gate。",
+      "doNotRepeat": true
+    },
+    {
+      "id": "TRIAL-20260809-002",
+      "issueId": "EAM-20260809-ALPHA3-SVG-BORDER",
+      "hypothesis": "持續放大 ActionButton 邊框素材即可讓分類邊框完整貼合圖示。",
+      "result": "rejected",
+      "decision": "該素材本身有透明留白；改用 WHITE8X8 實色 Texture，置於 BORDER 層並四邊固定外擴 3px。",
+      "doNotRepeat": true
     }
   ],
   "unverified": [
-    { "id": "UNVERIFIED-20260801-001", "statement": "PTR 12.1 的 34 案真人簽收", "requiredClient": "PTR_12_1", "procedureRef": "Data/LiveValidationMatrix.json", "blocksRelease": true },
-    { "id": "UNVERIFIED-20260801-002", "statement": "XPTR 12.0.7 的 34 案真人簽收", "requiredClient": "XPTR_12_0_7", "procedureRef": "Data/LiveValidationMatrix.json", "blocksRelease": true },
-    { "id": "UNVERIFIED-20260801-003", "statement": "Retail 12.0.7 的 34 案真人簽收", "requiredClient": "RETAIL_12_0_7", "procedureRef": "Data/LiveValidationMatrix.json", "blocksRelease": true },
-    { "id": "UNVERIFIED-20260801-004", "statement": "Target Aura 特定條件下時間與層數空白的分類", "requiredClient": "PTR_12_1", "procedureRef": "live.aura.target_transition", "blocksRelease": true },
-    { "id": "UNVERIFIED-20260801-005", "statement": "UnitPower StatusBar 與 radial sink 實際接受 Secret percent", "requiredClient": "PTR_12_1", "procedureRef": "live.unitpower.primary_native_sink", "blocksRelease": true },
-    { "id": "UNVERIFIED-20260801-006", "statement": "12.1 原生 Aura border capability 與 EAM Glow 的界線", "requiredClient": "PTR_12_1", "procedureRef": "live.aura.native_border_capability", "blocksRelease": false }
+    {
+      "id": "UNVERIFIED-20260801-001",
+      "statement": "PTR 12.1 的 34 案真人簽收",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "Data/LiveValidationMatrix.json",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260801-002",
+      "statement": "XPTR 12.0.7 的 34 案真人簽收",
+      "requiredClient": "XPTR_12_0_7",
+      "procedureRef": "Data/LiveValidationMatrix.json",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260801-003",
+      "statement": "Retail 12.0.7 的 34 案真人簽收",
+      "requiredClient": "RETAIL_12_0_7",
+      "procedureRef": "Data/LiveValidationMatrix.json",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260801-004",
+      "statement": "Target Aura 特定條件下時間與層數空白的分類",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.aura.target_transition",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260801-005",
+      "statement": "UnitPower StatusBar 與 radial sink 接受值後的玩家視覺資源變化確認",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.unitpower.primary_native_sink",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260801-006",
+      "statement": "12.1 原生 Aura border capability 與 EAM Glow 的界線",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.aura.native_border_capability",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260809-001",
+      "statement": "Alpha 2 gate 修正後 PTR 12.1 Native Aura capability 與 player／target 顯示",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "aura121.capability.native_complete",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260809-002",
+      "statement": "PTR 12.1 VectorGraphics 與 Texture 的 SVG A/B 圖樣、清除重載及最終 3px 邊框目視簽收",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    }
   ]
 }

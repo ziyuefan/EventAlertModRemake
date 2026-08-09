@@ -462,7 +462,20 @@ FlowTestRunner.registerCase({
             and snapshot.hasAuraSlot
             and snapshot.hasAuraGroup
             and snapshot.hasAuraGroupLayout
-        return valid, valid and "12.1 native capability selected" or "12.1 native capability incomplete"
+        if valid then
+            return true, "12.1 native capability selected"
+        end
+        return false, "12.1 native capability incomplete: backend="
+            .. tostring(snapshot.selectedBackend)
+            .. ",runtime=" .. tostring(snapshot.nativeRuntimeAllowed)
+            .. ",publicTest=" .. tostring(snapshot.clientIsPublicTest)
+            .. ",testBuild=" .. tostring(snapshot.clientIsTestBuild)
+            .. ",beta=" .. tostring(snapshot.clientIsBetaBuild)
+            .. ",container=" .. tostring(snapshot.hasAuraContainer)
+            .. ",slot=" .. tostring(snapshot.hasAuraSlot)
+            .. ",group=" .. tostring(snapshot.hasAuraGroup)
+            .. ",layout=" .. tostring(snapshot.hasAuraGroupLayout)
+            .. ",reason=" .. tostring(snapshot.limitationReason)
     end,
 })
 
@@ -1547,8 +1560,9 @@ FlowTestRunner.registerCase({
     run = function()
         local mock = EAM.FlowTestMock
         local iconPool = EAM.UI and EAM.UI.IconPool
-        if not mock or not iconPool then
-            return STATUS_SKIP, "icon-pool prewarm guard mock is offline only"
+        local borderStyles = EAM.UI and EAM.UI.AlertBorderStyles
+        if not mock or not iconPool or not borderStyles then
+            return STATUS_SKIP, "icon-pool guard, border, and tooltip mock are offline only"
         end
 
         local originalCreateFrame = api.CreateFrame
@@ -1556,6 +1570,7 @@ FlowTestRunner.registerCase({
         local originalCreated = iconPool.created
         local originalInactiveCount = iconPool.inactiveCount
         local createFrameCalls = 0
+        local acquiredIcon
         local ok, result, message = pcall(function()
             api.CreateFrame = function(...)
                 createFrameCalls = createFrameCalls + 1
@@ -1563,15 +1578,166 @@ FlowTestRunner.registerCase({
             end
             mock.setCombat(true)
             local prewarmed, reason = iconPool.prewarm(originalCreated + 1)
-            local valid = prewarmed == false
+            local guardValid = prewarmed == false
                 and reason == "combatDeferred"
                 and createFrameCalls == 0
                 and iconPool.created == originalCreated
                 and iconPool.inactiveCount == originalInactiveCount
-            return valid, valid and "direct prewarm rejects combat without creating frames"
-                or "direct prewarm combat guard mismatch"
+            if not guardValid then
+                return false, "direct prewarm combat guard mismatch"
+            end
+
+            mock.setCombat(false)
+            mock.resetTooltipScenario()
+            mock.resetTrace()
+            acquiredIcon = iconPool.acquire()
+            if not acquiredIcon then
+                return false, "icon acquisition failed"
+            end
+
+            local anchorPoints = {}
+            local anchorTexture = {
+                ClearAllPoints = function()
+                    for index = #anchorPoints, 1, -1 do
+                        anchorPoints[index] = nil
+                    end
+                end,
+                SetPoint = function(_, point, relativeTo, relativePoint, x, y)
+                    anchorPoints[#anchorPoints + 1] = {
+                        point = point,
+                        relativeTo = relativeTo,
+                        relativePoint = relativePoint,
+                        x = x,
+                        y = y,
+                    }
+                end,
+            }
+            local anchorOwner = {}
+            local anchored, padding = borderStyles.anchorTexture(anchorTexture, anchorOwner)
+            local anchorValid = anchored == true
+                and padding == 3
+                and borderStyles.borderTexturePadding == 3
+                and #anchorPoints == 2
+                and anchorPoints[1].point == "TOPLEFT"
+                and anchorPoints[1].relativeTo == anchorOwner
+                and anchorPoints[1].relativePoint == "TOPLEFT"
+                and anchorPoints[1].x == -3
+                and anchorPoints[1].y == 3
+                and anchorPoints[2].point == "BOTTOMRIGHT"
+                and anchorPoints[2].relativeTo == anchorOwner
+                and anchorPoints[2].relativePoint == "BOTTOMRIGHT"
+                and anchorPoints[2].x == 3
+                and anchorPoints[2].y == -3
+            if not anchorValid then
+                return false, "full 3px border anchor mismatch"
+            end
+
+            local frameTypes = EAM.Constants.ALERT_FRAME_TYPES
+            local keys = EAM.Constants.ALERT_BORDER_STYLE_KEYS
+            local cases = {
+                { frameTypes.selfAura, { auraFilter = "HELPFUL" }, keys.selfHelpful },
+                { frameTypes.selfAura, { auraFilter = "HARMFUL" }, keys.selfHarmful },
+                { frameTypes.targetAura, { auraFilter = "HELPFUL" }, keys.targetHelpful },
+                { frameTypes.targetAura, { auraFilter = "HARMFUL" }, keys.targetHarmful },
+                { frameTypes.spellCooldown, {}, keys.spellCooldown },
+                { frameTypes.itemCooldown, {}, keys.itemCooldown },
+                { frameTypes.groundEffect, {}, keys.groundEffect },
+            }
+            for index = 1, #cases do
+                local borderCase = cases[index]
+                local applied, styleKey = iconPool.applyTypeBorder(
+                    acquiredIcon,
+                    borderCase[2],
+                    borderCase[1]
+                )
+                local expected = borderStyles.getColor(borderCase[3])
+                local actual = acquiredIcon.typeBorder.vertexColor
+                if not applied
+                    or styleKey ~= borderCase[3]
+                    or acquiredIcon.typeBorder.shown ~= true
+                    or not actual
+                    or actual[1] ~= expected[1]
+                    or actual[2] ~= expected[2]
+                    or actual[3] ~= expected[3]
+                    or actual[4] ~= expected[4]
+                then
+                    return false, "fixed border style mismatch: " .. tostring(borderCase[3])
+                end
+            end
+
+            local unstyled = iconPool.applyTypeBorder(acquiredIcon, {}, frameTypes.classPower)
+            if unstyled ~= false or acquiredIcon.typeBorder.shown ~= false then
+                return false, "unspecified class-power border was not cleared"
+            end
+
+            local onEnter = acquiredIcon:GetScript("OnEnter")
+            local onLeave = acquiredIcon:GetScript("OnLeave")
+            iconPool.applyTooltipSource(acquiredIcon, {
+                kind = EAM.Constants.ALERT_KIND_SPELL_COOLDOWN,
+                spellID = 981001,
+            })
+            local spellShown = onEnter(acquiredIcon)
+            local spellState = mock.getGameTooltipState()
+            local spellValid = spellShown == true
+                and spellState.shown == true
+                and spellState.owner == acquiredIcon
+                and spellState.anchor == "ANCHOR_RIGHT"
+                and spellState.lastSpellID == 981001
+            onLeave(acquiredIcon)
+
+            iconPool.applyTooltipSource(acquiredIcon, {
+                kind = EAM.Constants.ALERT_KIND_ITEM_COOLDOWN,
+                itemID = 981002,
+            })
+            local itemShown = onEnter(acquiredIcon)
+            local itemState = mock.getGameTooltipState()
+            local itemValid = itemShown == true
+                and itemState.shown == true
+                and itemState.lastItemID == 981002
+            onLeave(acquiredIcon)
+
+            local unsupported = iconPool.applyTooltipSource(acquiredIcon, {
+                kind = "classPower",
+                spellID = 16,
+            })
+            local unsupportedShown = onEnter(acquiredIcon)
+            local unsupportedValid = unsupported == false and unsupportedShown == false
+
+            iconPool.applyTooltipSource(acquiredIcon, {
+                kind = EAM.Constants.ALERT_KIND_SPELL_COOLDOWN,
+                spellID = 981003,
+            })
+            local ownerCalls = mock.trace.rendererTooltipOwnerCalls
+            local spellCalls = mock.trace.rendererTooltipSpellCalls
+            mock.setCombat(true)
+            local combatShown, combatReason = onEnter(acquiredIcon)
+            local combatState = mock.getGameTooltipState()
+            local combatValid = combatShown == false
+                and combatReason == "combatBlocked"
+                and combatState.shown == false
+                and mock.trace.rendererTooltipOwnerCalls == ownerCalls
+                and mock.trace.rendererTooltipSpellCalls == spellCalls
+            mock.setCombat(false)
+
+            iconPool.release(acquiredIcon)
+            acquiredIcon = nil
+            local valid = anchorValid
+                and spellValid
+                and itemValid
+                and unsupportedValid
+                and combatValid
+                and mock.trace.rendererTooltipOwnerCalls == 2
+                and mock.trace.rendererTooltipSpellCalls == 1
+                and mock.trace.rendererTooltipItemCalls == 1
+            return valid, valid
+                and "prewarm guard, full 3px borders, seven colors, and safe icon tooltips completed"
+                or "icon border or tooltip contract mismatch"
         end)
         api.CreateFrame = originalCreateFrame
+        mock.setCombat(false)
+        if acquiredIcon then
+            iconPool.release(acquiredIcon)
+        end
         for index = iconPool.inactiveCount, originalInactiveCount + 1, -1 do
             iconPool.inactive[index] = nil
         end
@@ -1584,7 +1750,6 @@ FlowTestRunner.registerCase({
         return result, message
     end,
 })
-
 FlowTestRunner.registerCase({
     id = "ui.renderer.anchor_toggle_combat_replay",
     primarySuite = "boundary",
@@ -1848,14 +2013,120 @@ FlowTestRunner.registerCase({
     primarySuite = "boundary",
     suites = { boundary = true },
     run = function()
-        if not util.readSafeScalar or not util.isSecretValue or not util.canAccessValue then
-            return false, "Secret boundary helpers unavailable"
+        local aboutPanel = EAM.UI and EAM.UI.AboutPanel
+        local svgProbe = EAM.Debug and EAM.Debug.SVGCapabilityProbe
+        local mock = EAM.FlowTestMock
+        if not util.readSafeScalar
+            or not util.isSecretValue
+            or not util.canAccessValue
+            or not util.prepareEditBoxManualCopy
+            or not aboutPanel
+            or not svgProbe
+            or not mock
+        then
+            return false, "Secret, manual-copy, About, or SVG boundary helpers unavailable"
         end
 
         local warnings = {}
         local value, accessible = util.readSafeScalar(42, warnings, "flowTest", "value")
-        local valid = value == 42 and accessible == true and #warnings == 0
-        return valid, valid and "safe scalar boundary completed" or "safe scalar boundary failed"
+        local focusCalls = 0
+        local highlightCalls = 0
+        local editBox = {
+            SetFocus = function()
+                focusCalls = focusCalls + 1
+            end,
+            HighlightText = function()
+                highlightCalls = highlightCalls + 1
+            end,
+        }
+        local selected, selectionReason = util.prepareEditBoxManualCopy(editBox)
+        local missingSelected, missingReason = util.prepareEditBoxManualCopy({})
+        local info = aboutPanel.getInformation()
+        local formatted = aboutPanel.formatInformation(info)
+        if svgProbe.isActive() then
+            svgProbe.stop()
+        end
+        mock.resetTrace()
+        local svgStarted, activeReport, activeJSON = svgProbe.start()
+        local vectorMarked = svgProbe.markVisual("svg.vector_graphics.set_svg", "pass")
+        local textureMarked = svgProbe.markVisual("svg.texture.set_svg", "pass")
+        local svgStopped, stoppedReport, stoppedJSON = svgProbe.stop()
+        local svgValid = svgStarted == true
+            and activeReport.type == "EAM_SVG_CAPABILITY_REPORT"
+            and activeReport.status == "active"
+            and activeReport.rawFileIDsCollected == false
+            and type(activeJSON) == "string"
+            and vectorMarked == true
+            and textureMarked == true
+            and svgStopped == true
+            and stoppedReport.type == "EAM_SVG_CAPABILITY_REPORT"
+            and stoppedReport.status == "incomplete"
+            and stoppedReport.rawFileIDsCollected == false
+            and stoppedReport.session.active == false
+            and stoppedReport.session.visualObservation == "pass"
+            and stoppedReport.cases[1].setResult == "accepted"
+            and stoppedReport.cases[1].hasSVG == "true"
+            and stoppedReport.cases[1].clearReload == "pass"
+            and stoppedReport.cases[2].setResult == "accepted"
+            and stoppedReport.cases[2].hasSVG == "true"
+            and stoppedReport.cases[2].clearReload == "pass"
+            and type(stoppedJSON) == "string"
+            and string.find(stoppedJSON, "EAM_SVG_CAPABILITY_REPORT", 1, true) ~= nil
+            and mock.trace.svgVectorCreates == 1
+            and mock.trace.svgSetCalls == 4
+            and mock.trace.svgClearCalls == 2
+        if not svgValid then
+            local activeStatus = type(activeReport) == "table" and activeReport.status
+                or tostring(activeReport)
+            local stoppedStatus = type(stoppedReport) == "table" and stoppedReport.status
+                or tostring(stoppedReport)
+            return false, string.format(
+                "SVG lifecycle mismatch: started=%s active=%s vector=%s texture=%s stopped=%s final=%s json=%s/%s raw=%s session=%s/%s c1=%s/%s/%s c2=%s/%s/%s contains=%s creates=%s sets=%s clears=%s",
+                tostring(svgStarted),
+                tostring(activeStatus),
+                tostring(vectorMarked),
+                tostring(textureMarked),
+                tostring(svgStopped),
+                tostring(stoppedStatus),
+                type(activeJSON),
+                type(stoppedJSON),
+                tostring(stoppedReport.rawFileIDsCollected),
+                tostring(stoppedReport.session.active),
+                tostring(stoppedReport.session.visualObservation),
+                tostring(stoppedReport.cases[1].setResult),
+                tostring(stoppedReport.cases[1].hasSVG),
+                tostring(stoppedReport.cases[1].clearReload),
+                tostring(stoppedReport.cases[2].setResult),
+                tostring(stoppedReport.cases[2].hasSVG),
+                tostring(stoppedReport.cases[2].clearReload),
+                tostring(
+                    type(stoppedJSON) == "string"
+                    and string.find(stoppedJSON, "EAM_SVG_CAPABILITY_REPORT", 1, true) ~= nil
+                ),
+                tostring(mock.trace.svgVectorCreates),
+                tostring(mock.trace.svgSetCalls),
+                tostring(mock.trace.svgClearCalls)
+            )
+        end
+        local valid = value == 42
+            and accessible == true
+            and #warnings == 0
+            and selected == true
+            and selectionReason == "manualCopyRequired"
+            and focusCalls == 1
+            and highlightCalls == 1
+            and missingSelected == false
+            and missingReason == "selectionAPIUnavailable"
+            and info.addonVersion == "EventAlertMod_MN_test"
+            and info.author == EAM.Constants.PROJECT_AUTHOR
+            and info.apiBaseline == "12.1.0 PTR 8 (Build 69189)"
+            and info.clientPatch == "12.1.0"
+            and info.repositoryURL == EAM.Constants.PROJECT_REPOSITORY_URL
+            and string.find(formatted, info.repositoryURL, 1, true) ~= nil
+            and svgValid
+        return valid, valid
+            and "safe scalar, manual copy, About metadata, and SVG lifecycle completed"
+            or "safe scalar, manual copy, About metadata, or SVG lifecycle failed"
     end,
 })
 
@@ -2037,6 +2308,7 @@ FlowTestRunner.registerCase({
             and status.postCallCount == 4
             and statusAfterSecondInitialize.postCallCount == 4
             and callbacksValid == true
+            and status.auraHeartbeatFallbackAvailable == true
             and menuReady == true
             and (not requiresAuraCVar or status.auraIDDisplayEnabled == true)
             and status.spellID == nil
@@ -2257,6 +2529,8 @@ FlowTestRunner.registerCase({
             resetTooltipTestState(mock, true)
             local secretData = mock.createSecretTooltipData()
             local readsBefore = mock.trace.secretTooltipReads
+            local restrictedReadsBefore = mock.trace.restrictedTooltipAccesses
+            local heartbeatBefore = service.getStatus().auraHeartbeatCandidateCount
 
             mock.emitTooltip("UnitAura", secretData)
             local auraLines = mock.getTooltipLines()
@@ -2270,8 +2544,9 @@ FlowTestRunner.registerCase({
                 and #auraLines == 1
             local playerCommitted, playerAlertID, playerChange = menu._clickActionForTest(1, 930001)
 
-            mock.emitTooltip("UnitAura", secretData)
+            mock.emitRestrictedTooltip("UnitAura", secretData)
             local targetSource = openTooltipCandidateFromMock(mock)
+            local heartbeatAfter = service.getStatus().auraHeartbeatCandidateCount
             local targetCommitted, targetAlertID, targetChange = menu._clickActionForTest(2, 930002)
 
             local originalAuraIDDisplayEnabled = service.auraIDDisplayEnabled
@@ -2296,6 +2571,11 @@ FlowTestRunner.registerCase({
             local expectedTargetID = saved.buildAlertID(EAM.Constants.ALERT_KIND_AURA, "target", 930002, nil)
             local valid = playerRouteValid == true
                 and targetSource ~= nil
+                and targetSource.kind == "aura"
+                and targetSource.inputShown == true
+                and targetSource.actionTwo == service.ACTION_AURA_TARGET
+                and heartbeatAfter == heartbeatBefore + 1
+                and mock.trace.restrictedTooltipAccesses == restrictedReadsBefore
                 and playerCommitted == true
                 and playerAlertID == expectedPlayerID
                 and playerChange == "added"
@@ -2308,7 +2588,7 @@ FlowTestRunner.registerCase({
                 and hasConfigRefreshCount(mock, 2)
                 and db.alerts.playerAuras[expectedPlayerID].unit == "player"
                 and db.alerts.targetAuras[expectedTargetID].unit == "target"
-            return valid, valid and "aura popup committed player/target manual IDs without payload reads" or string.format(
+            return valid, valid and "GameTooltip player aura and restricted AuraButtonTooltip target aura committed without object/payload reads" or string.format(
                 "aura popup mismatch player=%s target=%s secretReads=%d revision=%s",
                 tostring(playerCommitted),
                 tostring(targetCommitted),
@@ -2376,6 +2656,16 @@ FlowTestRunner.registerCase({
         EAM.FlowTestAdvanceTime(6)
         local expiredCandidate = openTooltipCandidateFromMock(mock)
 
+        resetTooltipTestState(mock, false)
+        local restrictedReadsBefore = mock.trace.restrictedTooltipAccesses
+        mock.emitRestrictedTooltip("UnitAura", mock.createSecretTooltipData())
+        EAM.FlowTestAdvanceTime(0.8)
+        local expiredHeartbeatCandidate = openTooltipCandidateFromMock(mock)
+
+        resetTooltipTestState(mock, false)
+        mock.emitRestrictedTooltip("Spell", { id = 940014 })
+        local restrictedSpellCandidate = openTooltipCandidateFromMock(mock)
+
         local shiftedOpened = opensWithModifiers(940007, true, true, true, false, "LSHIFT")
         local metaOpened = opensWithModifiers(940011, true, true, false, true, "LMETA")
         local missingControlOpened = opensWithModifiers(940012, false, true, false, false, "LALT")
@@ -2393,6 +2683,9 @@ FlowTestRunner.registerCase({
             and typeChangedCandidate == nil
             and hiddenCandidate == nil
             and expiredCandidate == nil
+            and expiredHeartbeatCandidate == nil
+            and restrictedSpellCandidate == nil
+            and mock.trace.restrictedTooltipAccesses == restrictedReadsBefore
             and shiftedOpened == false
             and metaOpened == false
             and missingControlOpened == false
@@ -2400,8 +2693,8 @@ FlowTestRunner.registerCase({
             and latestCandidate ~= nil
             and latestCandidate.spellID == 940009
         resetTooltipTestState(mock, false)
-        return valid, valid and "callback, focus, combat replay, type, visibility, TTL, exact chord, and latest gates passed" or string.format(
-            "tooltip fail-closed mismatch callback=%s focus=%s combat=%s replay=%s type=%s hidden=%s expired=%s chord=%s/%s/%s/%s latest=%s",
+        return valid, valid and "callback, focus, combat replay, type, visibility, GameTooltip/heartbeat TTL, restricted type, exact chord, and latest gates passed" or string.format(
+            "tooltip fail-closed mismatch callback=%s focus=%s combat=%s replay=%s type=%s hidden=%s expired=%s heartbeat=%s restrictedSpell=%s chord=%s/%s/%s/%s latest=%s",
             tostring(callbackOpened),
             tostring(keyboardCandidate ~= nil),
             tostring(combatCandidate ~= nil),
@@ -2409,6 +2702,8 @@ FlowTestRunner.registerCase({
             tostring(typeChangedCandidate ~= nil),
             tostring(hiddenCandidate ~= nil),
             tostring(expiredCandidate ~= nil),
+            tostring(expiredHeartbeatCandidate ~= nil),
+            tostring(restrictedSpellCandidate ~= nil),
             tostring(shiftedOpened),
             tostring(metaOpened),
             tostring(missingControlOpened),
@@ -2596,6 +2891,10 @@ FlowTestRunner.registerCase({
     primarySuite = "boundary",
     suites = { boundary = true },
     run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "LiveTestSession strict mock is offline only"
+        end
         local live = EAM.Debug and EAM.Debug.LiveTestSession
         if not live then
             return false, "LiveTestSession unavailable"
@@ -2608,7 +2907,6 @@ FlowTestRunner.registerCase({
         _G.EAM_VALIDATION_PROFILE = nil
 
         local ok, result = pcall(function()
-            local mock = EAM.FlowTestMock
             mock.setCombat(true)
             local combatStart, combatStartReason = live.start("_ptr_")
             mock.setCombat(false)
@@ -2921,7 +3219,10 @@ FlowTestRunner.registerCase({
         local mock = EAM.FlowTestMock
         local service = EAM.Services and EAM.Services.CooldownService
         local cSpell = api.C_Spell
-        if not mock or not service or not cSpell then
+        if not mock then
+            return STATUS_SKIP, "CooldownService strict mock is offline only"
+        end
+        if not service or not cSpell then
             return false, "CooldownService dependencies unavailable"
         end
         local originalDB = EAM.db
@@ -3142,6 +3443,10 @@ FlowTestRunner.registerCase({
     primarySuite = "boundary",
     suites = { boundary = true, core = true, aura121 = true },
     run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "GroundEffectService strict mock is offline only"
+        end
         local service = EAM.Services and EAM.Services.GroundEffectService
         local cSpell = api.C_Spell
         local cTooltipInfo = api.C_TooltipInfo
@@ -3152,7 +3457,6 @@ FlowTestRunner.registerCase({
         local originalDescription = cSpell.GetSpellDescription
         local originalSpellInfo = cSpell.GetSpellInfo
         local originalTooltip = cTooltipInfo.GetSpellByID
-        local originalLocale = api.GetLocale
         local scheduler = EAM.Modules.Scheduler
         local originalAfter = scheduler and scheduler.after
         local ok, result = pcall(function()
@@ -3167,9 +3471,6 @@ FlowTestRunner.registerCase({
                     },
                 },
             }
-            api.GetLocale = function()
-                return "enUS"
-            end
             cSpell.GetSpellDescription = function(spellID)
                 if spellID == 61001 then
                     return "Lasts 12 sec."
@@ -3216,7 +3517,6 @@ FlowTestRunner.registerCase({
                 and state.boundaryWarnings[1] == "groundDurationManualFallback"
         end)
         EAM.db = originalDB
-        api.GetLocale = originalLocale
         cSpell.GetSpellDescription = originalDescription
         cSpell.GetSpellInfo = originalSpellInfo
         cTooltipInfo.GetSpellByID = originalTooltip
@@ -3236,6 +3536,10 @@ FlowTestRunner.registerCase({
     primarySuite = "boundary",
     suites = { boundary = true, core = true, aura121 = true },
     run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "Cooldown swipe strict mock is offline only"
+        end
         local iconPool = EAM.UI and EAM.UI.IconPool
         if not iconPool then
             return false, "IconPool unavailable"
@@ -3274,6 +3578,8 @@ FlowTestRunner.registerCase({
             mock.resetTrace()
             local button = mock.createAuraButtonForTest()
             local initializer = nativeRenderer.createInitializer({
+                unit = "target",
+                filterString = "HELPFUL",
                 style = {
                     showPandemic = true,
                     dispelMode = "STEALABLE",
@@ -3285,7 +3591,16 @@ FlowTestRunner.registerCase({
             local options = dispel and dispel.options or nil
             local filterEnum = Enum.CustomAuraButtonDispelTypeStealableFilter
             local styleEnum = Enum.CustomAuraButtonDispelTypeTextureStyle
+            local expectedTypeBorder = EAM.Constants.ALERT_BORDER_COLORS.targetHelpful
+            local actualTypeBorder = button.eamTypeBorder and button.eamTypeBorder.vertexColor or nil
             return mock.trace.pandemicRegionAdds == 1
+                and button.eamTypeBorder ~= nil
+                and button.eamTypeBorder.shown == true
+                and actualTypeBorder ~= nil
+                and actualTypeBorder[1] == expectedTypeBorder[1]
+                and actualTypeBorder[2] == expectedTypeBorder[2]
+                and actualTypeBorder[3] == expectedTypeBorder[3]
+                and actualTypeBorder[4] == expectedTypeBorder[4]
                 and mock.trace.dispelTextureAdds == 1
                 and #button.pandemicRegions == 1
                 and options ~= nil

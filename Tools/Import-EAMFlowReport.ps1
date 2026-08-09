@@ -3,7 +3,7 @@ EventAlertMod Retail Rewrite
 檔案: Tools\Import-EAMFlowReport.ps1
 
 理念:
-- 將 Flow、真人實機或 UnitPower 能力 JSON 從檔案／WTF SavedVariables 回灌至開發環境。
+- 將 Flow、真人實機、UnitPower 或 SVG 能力 JSON 從檔案／WTF SavedVariables 回灌至開發環境。
 - 不信任報告自稱的 source/status；重新核對環境、矩陣與 summary。
 
 邊界:
@@ -15,7 +15,7 @@ EventAlertMod Retail Rewrite
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
-    [ValidateSet("Auto", "Flow", "Live", "UnitPower")]
+    [ValidateSet("Auto", "Flow", "Live", "UnitPower", "SVG")]
     [string]$ReportType = "Auto",
     [string]$OutputDirectory = "TestResults\Imported"
 )
@@ -225,10 +225,17 @@ if ([System.IO.Path]::GetExtension($resolvedInput) -ieq ".json") {
     $flowPattern = 'EAM_FLOW_TEST_REPORT_JSON\s*=\s*"((?:\\.|[^"\\])*)"'
     $livePattern = 'EAM_LIVE_TEST_REPORT_JSON\s*=\s*"((?:\\.|[^"\\])*)"'
     $unitPowerPattern = 'EAM_UNIT_POWER_CAPABILITY_REPORT_JSON\s*=\s*"((?:\\.|[^"\\])*)"'
+    $svgPattern = 'EAM_SVG_CAPABILITY_REPORT_JSON\s*=\s*"((?:\\.|[^"\\])*)"'
     $flowMatch = [regex]::Match($inputText, $flowPattern)
     $liveMatch = [regex]::Match($inputText, $livePattern)
     $unitPowerMatch = [regex]::Match($inputText, $unitPowerPattern)
-    if ($ReportType -eq "UnitPower") {
+    $svgMatch = [regex]::Match($inputText, $svgPattern)
+    if ($ReportType -eq "SVG") {
+        if (-not $svgMatch.Success) {
+            throw "EAM_SVG_CAPABILITY_REPORT_JSON not found in SavedVariables file."
+        }
+        $reportText = ConvertFrom-LuaEscapedString $svgMatch.Groups[1].Value
+    } elseif ($ReportType -eq "UnitPower") {
         if (-not $unitPowerMatch.Success) {
             throw "EAM_UNIT_POWER_CAPABILITY_REPORT_JSON not found in SavedVariables file."
         }
@@ -240,6 +247,8 @@ if ([System.IO.Path]::GetExtension($resolvedInput) -ieq ".json") {
         $reportText = ConvertFrom-LuaEscapedString $liveMatch.Groups[1].Value
     } elseif ($ReportType -eq "Auto" -and $unitPowerMatch.Success) {
         $reportText = ConvertFrom-LuaEscapedString $unitPowerMatch.Groups[1].Value
+    } elseif ($ReportType -eq "Auto" -and $svgMatch.Success) {
+        $reportText = ConvertFrom-LuaEscapedString $svgMatch.Groups[1].Value
     } else {
         if (-not $flowMatch.Success) {
             throw "EAM_FLOW_TEST_REPORT_JSON not found in SavedVariables file."
@@ -263,12 +272,14 @@ $isLegacy = $false
 $isLive = $report.type -eq "EAM_LIVE_VALIDATION_REPORT"
 $isFlow = $report.type -eq "EAM_FLOW_VALIDATION_REPORT"
 $isUnitPower = $report.type -eq "EAM_UNIT_POWER_CAPABILITY_REPORT"
-if (-not $isLive -and -not $isFlow -and -not $isUnitPower) {
+$isSVG = $report.type -eq "EAM_SVG_CAPABILITY_REPORT"
+if (-not $isLive -and -not $isFlow -and -not $isUnitPower -and -not $isSVG) {
     throw "Unsupported validation report type '$($report.type)'."
 }
 if (($ReportType -eq "Flow" -and -not $isFlow) -or
     ($ReportType -eq "Live" -and -not $isLive) -or
-    ($ReportType -eq "UnitPower" -and -not $isUnitPower)) {
+    ($ReportType -eq "UnitPower" -and -not $isUnitPower) -or
+    ($ReportType -eq "SVG" -and -not $isSVG)) {
     throw "Requested report type '$ReportType' does not match payload type '$($report.type)'."
 }
 if ($isLive) {
@@ -304,10 +315,21 @@ if ($isLive) {
     if ($schemaValid -ne $true) {
         throw "UnitPower report JSON schema validation failed."
     }
+} elseif ($isSVG) {
+    $svgSchemaPath = Join-Path $workspace "Schemas\EAM_SVGCapabilityReport.schema.json"
+    try {
+        $schemaValid = Test-Json -Json $reportText -SchemaFile $svgSchemaPath -ErrorAction Stop
+    }
+    catch {
+        throw "SVG report JSON schema validation failed: $($_.Exception.Message)"
+    }
+    if ($schemaValid -ne $true) {
+        throw "SVG report JSON schema validation failed."
+    }
 }
 
 $cases = @($report.cases)
-if (-not $isUnitPower) {
+if ($isFlow -or $isLive) {
     $computed = Get-RecomputedSummary -Cases $cases -Live:$isLive
     Assert-SummaryMatches -Reported $report.summary -Computed $computed -Live:$isLive
 }
@@ -526,6 +548,108 @@ if ($isFlow) {
     if ($report.status -ne $expectedStatus) {
         throw "UnitPower status mismatch: report=$($report.status), computed=$expectedStatus."
     }
+} elseif ($isSVG) {
+    if ([int]$report.schema -ne 1 -or $report.purpose -ne "capability-probe") {
+        throw "Unsupported SVG report schema or purpose."
+    }
+    if ($report.rawFileIDsCollected -ne $false) {
+        throw "SVG report must not collect raw file IDs."
+    }
+    $automationMismatch = $report.automation.gameInputAutomated -ne $false -or
+        $report.automation.playerOperated -ne $true
+    if ($automationMismatch) {
+        throw "SVG report automation policy mismatch."
+    }
+
+    $profileMap = @{
+        "_ptr_" = @{ Channel = "PTR"; Source = "ptr-live-manual"; Patch = "12.1.0"; Interface = 120100 }
+        "_xptr_" = @{ Channel = "XPTR"; Source = "xptr-live-manual"; Patch = "12.0.7"; Interface = 120007 }
+        "_retail_" = @{ Channel = "RETAIL"; Source = "retail-live-manual"; Patch = "12.0.7"; Interface = 120007 }
+    }
+    $declaredInstallation = [string]$report.environment.declaredInstallation
+    $expectedProfile = $profileMap[$declaredInstallation]
+    if (-not $expectedProfile) {
+        throw "SVG report has unsupported declared installation '$declaredInstallation'."
+    }
+    $environmentMismatch = $report.environment.executionSource -ne "client" -or
+        $report.environment.declaredInstallationEvidence -ne "user-asserted" -or
+        $report.environment.clientChannel -ne $expectedProfile.Channel -or
+        $report.environment.source -ne $expectedProfile.Source -or
+        $report.environment.patch -ne $expectedProfile.Patch -or
+        [int]$report.environment.interface -ne $expectedProfile.Interface
+    if ($environmentMismatch) {
+        throw "SVG environment/source/profile cross-check failed."
+    }
+    if ($detectedClientDirectory -and $detectedClientDirectory -ne $declaredInstallation) {
+        throw "WTF client directory does not match the SVG report declaration."
+    }
+    $pathEvidence = if ($detectedClientDirectory) { "match" } else { "user-asserted-json" }
+    $validationNotes.Add("SVG client directory evidence: $pathEvidence")
+
+    $expectedIDs = @("svg.vector_graphics.set_svg", "svg.texture.set_svg")
+    if ($cases.Count -ne $expectedIDs.Count) {
+        throw "SVG case count mismatch: report=$($cases.Count), expected=$($expectedIDs.Count)."
+    }
+    $seen = @{}
+    $hasFailedObservation = $false
+    $hasBlockedObservation = $false
+    $hasPendingObservation = $false
+    $hasCapabilityGap = $false
+    $interfaceRequired = [int]$report.environment.interface -ge 120100
+    if ($report.capabilities.interfaceRequired -ne $interfaceRequired) {
+        throw "SVG interface-required flag mismatch."
+    }
+    foreach ($case in $cases) {
+        $id = [string]$case.id
+        if ($seen.ContainsKey($id) -or $expectedIDs -notcontains $id) {
+            throw "Duplicate or unknown SVG case '$id'."
+        }
+        $seen[$id] = $true
+        if ($case.visualObservation -eq "fail") {
+            $hasFailedObservation = $true
+        } elseif ($case.visualObservation -eq "blocked") {
+            $hasBlockedObservation = $true
+        } elseif ($case.visualObservation -ne "pass") {
+            $hasPendingObservation = $true
+        }
+        if ($interfaceRequired -and (
+            $case.apiAvailable -ne $true -or
+            $case.setResult -ne "accepted" -or
+            $case.hasSVG -ne "true" -or
+            $case.fileIDClass -ne "positive-number" -or
+            $case.clearReload -ne "pass"
+        )) {
+            $hasCapabilityGap = $true
+        }
+    }
+    foreach ($expectedID in $expectedIDs) {
+        if (-not $seen.ContainsKey($expectedID)) {
+            throw "Missing SVG case '$expectedID'."
+        }
+    }
+
+    $hasStoppedAt = $null -ne $report.session.PSObject.Properties["stoppedAtSessionMs"]
+    $warningCount = @($report.boundaryWarnings).Count
+    $expectedStatus = if (-not $interfaceRequired) {
+        "unsupported"
+    } elseif ($hasFailedObservation) {
+        "fail"
+    } elseif ($hasBlockedObservation) {
+        "blocked"
+    } elseif ($report.session.active -eq $true) {
+        "active"
+    } elseif ($hasPendingObservation -or
+        $hasCapabilityGap -or
+        -not $hasStoppedAt -or
+        $report.environment.channelValidation -ne "pass" -or
+        $warningCount -gt 0) {
+        "incomplete"
+    } else {
+        "pass"
+    }
+    if ($report.status -ne $expectedStatus) {
+        throw "SVG status mismatch: report=$($report.status), computed=$expectedStatus."
+    }
 }
 
 if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
@@ -539,7 +663,7 @@ $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $claimedSource = if ($report.environment.source) { [string]$report.environment.source } else { "unknown" }
 $source = if ($isLegacy) {
     "legacy-unverified"
-} elseif (($isLive -or $isUnitPower) -and -not $detectedClientDirectory) {
+} elseif (($isLive -or $isUnitPower -or $isSVG) -and -not $detectedClientDirectory) {
     "user-asserted-json"
 } else {
     $claimedSource
@@ -549,6 +673,8 @@ $prefix = if ($isLive) {
     "EAM_LiveValidation"
 } elseif ($isUnitPower) {
     "EAM_UnitPowerCapability"
+} elseif ($isSVG) {
+    "EAM_SVGCapability"
 } else {
     "EAM_FlowValidation"
 }
@@ -563,6 +689,8 @@ if ($isLive) {
     $lines.Add("# EAM 真人實機驗證回灌報告")
 } elseif ($isUnitPower) {
     $lines.Add("# EAM UnitPower 能力回灌報告")
+} elseif ($isSVG) {
+    $lines.Add("# EAM SVG 能力回灌報告")
 } else {
     $lines.Add("# EAM 流程驗證回灌報告")
 }
@@ -592,6 +720,12 @@ if ($isLegacy) {
     } else {
         $lines.Add("> 此為玩家自行提供的 UnitPower JSON；client directory 僅屬 user-asserted，仍需保留實機畫面或錯誤紀錄。")
     }
+} elseif ($isSVG) {
+    if ($detectedClientDirectory) {
+        $lines.Add("> 此為從對應 WTF SavedVariables 匯入的玩家 SVG A/B 能力觀測；只保存 API 分類與人工結果，不保存 raw file ID。")
+    } else {
+        $lines.Add("> 此為玩家自行提供的 SVG JSON；client directory 僅屬 user-asserted，仍需保留實機畫面或錯誤紀錄。")
+    }
 } else {
     $lines.Add("> 此為遊戲內能力流程報告，不等同於 34 案人工 RQA 簽收。")
 }
@@ -606,6 +740,10 @@ foreach ($case in $cases) {
         $category = $case.role
         $caseStatus = $case.visualObservation
         $message = "result=$($case.resultClass); statusBar=$($case.statusBarSink); radial=$($case.radialSink)"
+    } elseif ($isSVG) {
+        $category = $case.kind
+        $caseStatus = $case.visualObservation
+        $message = "set=$($case.setResult); hasSVG=$($case.hasSVG); fileID=$($case.fileIDClass); clearReload=$($case.clearReload)"
     } else {
         $category = if ($isLive) { $case.category } else { $case.suite }
         $caseStatus = $case.status
@@ -620,11 +758,14 @@ Write-Host "IMPORTED_VALIDATION_MARKDOWN=$markdownPath"
 Write-Host "IMPORTED_VALIDATION_SOURCE=$source"
 Write-Host "IMPORTED_VALIDATION_STATUS=$($report.status)"
 
-$mustReject = $isLegacy -or
-    $report.status -ne "pass" -or
+$hasComputedFailure = ($isFlow -or $isLive) -and (
     [int]$computed.failed -gt 0 -or
     [int]$computed.pending -gt 0 -or
     ($isLive -and [int]$computed.blocked -gt 0)
+)
+$mustReject = $isLegacy -or
+    $report.status -ne "pass" -or
+    $hasComputedFailure
 if ($mustReject) {
     exit 1
 }

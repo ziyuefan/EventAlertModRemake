@@ -5,7 +5,7 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：`2026-08-08.1`。
+目前快照版本：`2026-08-09.2`。
 
 ## 2. 重新進入專案的閱讀順序
 
@@ -16,13 +16,14 @@
 5. `Docs/23_AURA_CONTAINER_IMPLEMENTATION.md`
 6. `Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`
 7. `Docs/26_FLOW_VALIDATION_FRAMEWORK.md`
-8. 與目前 work item 對應的 `Docs/15_DEVELOPMENT_ISSUE_LOG.md` 穩定 issue ID
+8. `Docs/29_LIVE_TEST_STEP_GUIDE.md`
+9. 與目前 work item 對應的 `Docs/15_DEVELOPMENT_ISSUE_LOG.md` 穩定 issue ID
 
 不得以 `docs_html` 取代 Markdown 原檔，也不得以舊對話摘要覆寫本快照。
 
 ## 3. 當前目標
 
-修正並簽收 Retail 12.1 PTR 回報的 Aura 雙倒數、法術／物品冷卻、地面效果時間、swipe 透明度與 target Aura 生命週期；同時確認 UnitPower 在 12.1 與 12.0.7 的安全可用範圍。發布定位仍為 alpha。
+完成 Alpha 3 候選：修正 Target Aura hover+Ctrl+Alt、Macro spell/item ID、報告手動複製，加入 About、監控 Tooltip 與七色分類邊框；PTR／XPTR／Retail 依 34 案指南由玩家簽收。發布定位仍為 alpha。
 
 ## 4. 已確認事實
 
@@ -32,7 +33,7 @@
 - Native AuraButton 與其子元件只能在 `initializeFrame` 內完成尺寸、錨點、字型、倒數與邊框設定；初始化後不得直接重排。
 - `AddDispelTypeTexture` 是官方驅散／靜態 Aura 邊框能力，不能取代 Pandemic、Proc 或任意條件 Glow。
 - 次要職業資源可走安全普通數字；可能為 Secret 的主要資源百分比只能直接送入 StatusBar 或 12.1 radial widget，不得讀回、比較或序列化。
-- 本輪靜態與離線 gate 為 Lua 47 檔、Flow 54/54、Validation Contracts 208/208；真人矩陣為 34 案，PTR、XPTR 與 Retail 均仍待玩家簽收。
+- 本輪靜態與離線 gate 為 Lua 50 檔、Flow 54/54、Validation Contracts 247/247；真人矩陣為 34 案，PTR、XPTR 與 Retail 均仍待玩家簽收。
 - 若從磁碟匯入遊戲內報告，玩家必須先完成 `/reload` 或正常登出，否則可能仍是舊快照。
 - 2026-08-08 唯讀環境斷言：Retail `12.0.7.68974`、PTR `12.1.0.69189`、XPTR `12.0.7.68887`；三個 AddOns SymbolicLink 均指向 `D:\EventAlertMod`。
 
@@ -49,12 +50,12 @@
 
 ## 6. 驗證狀態
 
-- 離線：Lua 47 檔語法、Flow `all` 54/54、Validation Contracts 208/208 通過。
-- PTR 12.1：本輪修正後尚未簽收；不得沿用修正前的觀察當完成證據。
+- 離線：Lua 50 檔語法、Flow `all` 54/54、Validation Contracts 247/247 通過。
+- PTR 12.1：Alpha 2 Native gate 已離線修正，但玩家尚未 `/reload` 簽收 Aura 顯示；不得沿用 Alpha 1 或修正前觀察。
 - XPTR 12.0.7：尚未簽收。
 - Retail 12.0.7：尚未簽收。
 - 真人報告：使用 `matrixVersion=2026-08-08.1` 的 34 案工作台。
-- UnitPower 報告：另回傳 `EAM_UNIT_POWER_CAPABILITY_REPORT`；只允許分類與人工 pass／fail／blocked。
+- UnitPower 報告：另回傳 `EAM_UNIT_POWER_CAPABILITY_REPORT`；目前兩個 sink 呼叫均 accepted，但 primary 視覺 pending、selected blocked，仍非 PTR pass。
 
 ## 7. 下一輪玩家實測
 
@@ -76,6 +77,7 @@
 - 不以離線 mock、合成 Live pass 或舊版磁碟報告冒充 PTR／XPTR 實機通過。
 - 不用 Windows PowerShell 5.1 執行含 `#requires -Version 7.0` 的契約腳本；使用 `pwsh`。
 - 不假設跨檔補丁失敗時一定全數回滾；失敗後逐檔核對，重要文件採單檔小補丁。
+- 不再以 `IsPublicTestClient AND IsTestBuild` 判定 PTR；raw flags 必須個別保留，通道 aggregate 採 OR，Native 方法仍逐項 capability gate。
 
 ## 9. 漂移檢查
 
@@ -95,3 +97,28 @@
 - PTR8 Pandemic Region、Dispel options、停用容器清除與 UnitPower combatDeferred 已加入程式、strict mock、JSON schema 與人工矩陣。
 - 官方 PTR 12.1.0.69189 文件未證實 `StatusBar:SetUnit`、`SetPowerTextFontString`、`SetOnUpdateMode`；目前只把 `UnitPowerPercent` 單向送入 `SetValue`／`SetRadialProgressBarPercent` 視為已知可行方向。
 - 本輪不執行 WoW、不卡玩家輸入、不觸碰 `_ptr_`／`_xptr_`／`_retail_` AddOns symbolic link；實機需玩家自行 `/reload` 後回傳報告。
+## 2026-08-09 Alpha 2 Native Aura／UnitPower 交接快照
+
+- 玩家觀察：Alpha 1 可顯示 Aura，Alpha 2 完全不顯示。
+- P0 根因：`AuraCapabilityService` 將 public-test 與 test-build 寫成 AND；PTR 69189 的 test-build 實為 false，導致 `nativeRuntimeAllowed=false` 並在容器建立前停止。
+- 程式修正：三個測試通道 raw flags 安全讀取後採 OR；mock 固定重現 public-test=true、test-build=false、beta=false；mock-only Flow 在 client 改為 skip；Native capability 失敗訊息補足完整欄位。
+- 當時離線證據：Lua `47/47`、Flow `54/54`，artifact `TestResults/EAM_FlowValidation_all_20260809_185047.json`；Validation Contracts `217/217`。其後本輪最新 gate 已更新為 50／54／247。
+- PTR 下一步：玩家先 `/reload`，執行 `/eam doctor` 與 `/eam test aura121`，確認 capability pass、player／target Aura 顯示，再續跑 34 案真人矩陣。
+- UnitPower：primary Secret 與 selected safe-number 均已被兩種 sink 接受，但人工視覺分別為 pending／blocked；需玩家產生、消耗、歸零資源並明確按 pass／fail。
+
+## 2026-08-09 Alpha 3 候選功能交接快照
+
+- TargetFrame／BuffFrame AuraButton 的 hover+Ctrl+Alt 不再依賴右鍵；非 GameTooltip 路徑只保存匿名 0.75 秒心跳，Aura ID 與 player／target 路由仍由玩家在 EAM Popup 確認。
+- Action Bar Macro 優先解析安全 resolved action subtype／ID，再降級 `GetMacroSpell`／`GetMacroItem`；無安全結果才手動輸入。
+- Flow／Live／Prompt 面板不再呼叫不存在的 `EditBox:Copy()`，改為全選並請玩家按 Ctrl+C。
+- EAM 主視窗新增 About；顯示 TOC 版本、實際 client、固定 API baseline `12.1.0 PTR 8 (69189)`、作者 `ziyuefan死鬥` 與 repo／Pages。
+- 一般監控圖示新增脫戰 Tooltip；七色分類邊框為自身 BUFF 青、自己 DEBUFF 紅、目標 BUFF 藍、目標 DEBUFF 橘、技能黃、地面紫、物品綠，classPower／totem 保留原樣。
+- `Docs/29_LIVE_TEST_STEP_GUIDE.md` 提供 34 案逐步條件與通過證據；WTF 報告只在玩家完成 `/reload` 或正常登出後視為最新。
+- 最新離線證據：Lua `50/50`、Flow `54/54`、Validation Contracts `247/247`。PTR、XPTR、Retail 仍沒有完整真人簽收。
+
+## 2026-08-09 SVG／3px 邊框交接快照
+
+- ActionButton border 放大方案已由實機截圖否決；最終改為 WHITE8X8、BORDER layer、四邊外擴 3px，Legacy／Native 共用 AlertBorderStyles.anchorTexture。
+- 新增 SVG VectorGraphics／Texture A/B 探針、schema、fixture、strict mock、五語系、SavedVariables、匯入器與 Release 白名單。
+- 專案層級 JSON 已升到 snapshot 2026-08-09.2，WORK-20260809-002 與 issue EAM-20260809-ALPHA3-SVG-BORDER 可互相追溯。
+- 最新離線 gate 為 Lua 50/50、Flow 54/54、Validation Contracts 247/247。PTR 12.1 的圖樣與邊框目視仍 pending；XPTR／Retail 12.0.7 可回報 unsupported。

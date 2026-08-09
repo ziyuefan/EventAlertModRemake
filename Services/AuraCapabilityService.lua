@@ -52,6 +52,14 @@ local function hasMethod(owner, methodName)
     return owner ~= nil and type(owner[methodName]) == "function"
 end
 
+local function callBoolean(callback)
+    if type(callback) ~= "function" then
+        return false
+    end
+    local ok, value = pcall(callback)
+    return ok and value == true
+end
+
 function AuraCapabilityService.initialize()
     if AuraCapabilityService.initialized then
         return
@@ -64,15 +72,16 @@ function AuraCapabilityService.initialize()
     AuraCapabilityService.clientVersion = version
     AuraCapabilityService.clientBuild = build
     AuraCapabilityService.clientInterface = tonumber(interfaceVersion) or 0
-    AuraCapabilityService.clientIsPublicTest = api.IsPublicTestClient and api.IsPublicTestClient() == true or false
-    AuraCapabilityService.clientIsTestBuild = api.IsTestBuild and api.IsTestBuild() == true or false
-    AuraCapabilityService.clientIsBetaBuild = api.IsBetaBuild and api.IsBetaBuild() == true or false
+    AuraCapabilityService.clientIsPublicTest = callBoolean(api.IsPublicTestClient)
+    AuraCapabilityService.clientIsTestBuild = callBoolean(api.IsTestBuild)
+    AuraCapabilityService.clientIsBetaBuild = callBoolean(api.IsBetaBuild)
     AuraCapabilityService.testBuildKnown = type(api.IsPublicTestClient) == "function"
         and type(api.IsTestBuild) == "function"
         and type(api.IsBetaBuild) == "function"
     AuraCapabilityService.nativeRuntimeAllowed = AuraCapabilityService.clientInterface >= Constants.INTERFACE
-        and AuraCapabilityService.clientIsPublicTest
-        and AuraCapabilityService.clientIsTestBuild
+        and (AuraCapabilityService.clientIsPublicTest
+            or AuraCapabilityService.clientIsTestBuild
+            or AuraCapabilityService.clientIsBetaBuild)
 
     local unitAuras = api.C_UnitAuras
     AuraCapabilityService.hasAuraSound = type(unitAuras) == "table"

@@ -227,6 +227,7 @@ loadModule("UI/TooltipMonitorMenu.lua")
 loadModule("Services/AuraCapabilityService.lua")
 loadModule("Managers/AuraRuleCompiler.lua")
 loadModule("UI/TextPlacement.lua")
+loadModule("UI/AlertBorderStyles.lua")
 loadModule("UI/IconPool.lua")
 loadModule("UI/NativeAuraRenderer.lua")
 loadModule("UI/Renderer.lua")
@@ -239,6 +240,7 @@ loadModule("Services/GroundEffectService.lua")
 loadModule("Services/TotemService.lua")
 loadModule("Services/ClassPowerService.lua")
 loadModule("Services/TooltipMonitorService.lua")
+loadModule("UI/AboutPanel.lua")
 loadModule("UI/Options.lua")
 if flowMock then
     local notifyConfigChanged = EAM.UI.Options.notifyConfigChanged
@@ -255,6 +257,7 @@ EAM.Services.TooltipMonitorService.initialize()
 loadModule("Debug/RuntimeProbe.lua")
 loadModule("Debug/FlowTestRunner.lua")
 loadModule("Debug/UnitPowerCapabilityProbe.lua")
+loadModule("Debug/SVGCapabilityProbe.lua")
 loadModule("Debug/LiveTestSession.lua")
 
 local completedReport = nil

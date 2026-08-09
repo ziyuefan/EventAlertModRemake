@@ -619,9 +619,50 @@
 <ul>
 <li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua">SimpleStatusBar API 12.1.0.69189</a></li>
 <li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua">SimpleTextureBase API 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">Unit API 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">Secret predicate API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">Unit API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">Secret predicate API 12.1.0.69189</a></li>
 </ul>
+<h2 id="2026-08-09ptr-alpha-2-native-aura-gate">2026-08-09：PTR 通道旗標與 Alpha 2 Native Aura gate</h2>
+<h3 id="_2">已確認的回歸鏈</h3>
+<ul>
+<li>玩家實機觀察為 Alpha 1 可顯示 Aura、Alpha 2 完全不顯示。Alpha 2 新增的 Native runtime gate 要求 <code>IsPublicTestClient()==true</code> 且 <code>IsTestBuild()==true</code>。</li>
+<li>PTR <code>12.1.0.69189</code> 的實機報告卻是 <code>isPublicTestClient=true</code>、<code>isTestBuild=false</code>、<code>isBetaBuild=false</code>，所以舊 AND 條件必然關閉 Native backend；這不是 AuraContainer API 被 PTR8 移除。</li>
+<li>修正後只把三個 raw flags 視為測試通道的替代證據：Interface <code>&gt;=120100</code> 且 public-test、test-build、beta 任一為真。每個 flag 都以 <code>pcall</code> 取得安全布林值；AuraContainer、Slot、Group、Layout 方法仍各自做 capability gate。</li>
+<li>PTR 69189 固定 FrameXML 仍有 <code>AuraContainerMixin:SetEnabled</code>、<code>SetUnit</code> 與 Custom container 的 <code>AddAuraSlot</code>、<code>AddAuraGroup</code>、<code>SetAuraGroupLayout</code>。因此目前修正聚焦通道判定，不放寬缺方法時的 fail-closed。</li>
+<li>離線 mock 已改為 public-test=true、test-build=false、beta=false，專門覆蓋本次真實旗標組合。遊戲客戶端上的 strict-mock-only Flow 案例改為 <code>skip</code>，不再把 mock 缺席冒充功能失敗。</li>
+</ul>
+<p>固定來源：</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_AuraContainer/Blizzard_AuraContainer.lua">AuraContainer 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_AuraContainer/Blizzard_CustomAuraContainer.lua">CustomAuraContainer 12.1.0.69189</a></li>
+</ul>
+<h3 id="unitpower">UnitPower 實機報告界線</h3>
+<ul>
+<li>同一 PTR build 的回報顯示：primary 為 <code>secret</code>，StatusBar 與 radial 呼叫均為 <code>accepted</code>，但 <code>visualObservation=pending</code>；selected 為 <code>safe-number</code>，兩個 sink 亦為 <code>accepted</code>，但視覺狀態為 <code>blocked</code>。</li>
+<li><code>rawValuesCollected=false</code> 符合安全契約。這份報告可確認 API 呼叫沒有被拒絕，不能確認畫面會隨資源正確增減，也不能升格為 UnitPower PTR pass。</li>
+</ul>
+<h2 id="2026-08-09ptr8-aurabutton-border-eam">2026-08-09：PTR8 AuraButton border 與 EAM 分類邊框分流</h2>
+<ul>
+<li>PTR8 的 <code>AuraButton:AddDispelTypeTexture(texture, options)</code> 用於 Blizzard Aura 驅散／stealable／showAlways 契約；EAM 的七色分類邊框只表示監控來源類型，兩者不得互相冒充。</li>
+<li>12.1 Native 路徑只可在 <code>initializeFrame</code> 建立 EAM 自有 Texture 並套用靜態 <code>unit + filterString</code> 顏色；不得在初始化後新增 Region、追蹤 <code>OnSizeChanged</code> 或藉尺寸變化推算 Aura 數量。</li>
+<li>TargetFrame 與 BuffFrame 的 Aura Tooltip 可能由非 <code>GameTooltip</code> 的 Blizzard tooltip object 顯示。EAM 只接收 <code>SetUnitAura</code> post-call 作匿名短期 hover 心跳，不讀 callback payload、不保存 frame、不推導 spellID；玩家按 Ctrl+Alt 後仍在 EAM Popup 手動確認 ID 與 player／target 路由。</li>
+<li>Macro action ID 以 <code>GetActionInfo</code> 的安全 resolved subtype／ID 為第一來源，再降級 <code>GetMacroSpell</code>／<code>GetMacroItem</code>；不依賴 TooltipData 中可能只代表 macro index 的 <code>id</code>。</li>
+</ul>
+<h2 id="2026-08-09ptr8-svg-api">2026-08-09：PTR8 SVG API 固定證據</h2>
+<p>固定查證快照為 Gethe/wow-ui-source commit a520b6c27bb897e6be2333b6cc2be36d52c7c11b，version 12.1.0.69189：</p>
+<ul>
+<li>Frame:CreateVectorGraphics() 回傳 SimpleVectorGraphics；生成文件將其 SecretArguments 標為 NotAllowed。</li>
+<li>SimpleVectorGraphics 提供 SetSVG、ClearSVG、HasSVG、GetSVGFileID；VectorGraphics:SetSVG 的 SecretArguments 為 AllowedWhenUntainted。</li>
+<li>SimpleTextureBase 亦提供 Texture:SetSVG；其 SecretArguments 為 AllowedWhenTainted。這只描述 Secret argument policy，不等於允許戰鬥中建立或重排 region。</li>
+<li>VectorGraphics 只有 Region 能力，沒有 Texture 的 rotation、mask、texcoord 與 blend 契約；EAM 以 A/B 探針分開驗證，不做能力等同推論。</li>
+</ul>
+<p>固定來源：</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleFrameAPIDocumentation.lua">SimpleFrame API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleVectorGraphicsAPIDocumentation.lua">SimpleVectorGraphics API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua">SimpleTextureBase API 12.1.0.69189</a></li>
+</ul>
+<p>適用評估：Pandemic 靜態提示 Region 是最高價值候選；Dispel CustomAsset／PreserveAsset 需先完成 asset map／預載；Legacy Glow 可評估 12.1 SVG 與 12.0.7 原材質雙軌。動態 spell/item/aura 主圖示、UnitPower radial、Tooltip Popup 目前不改。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

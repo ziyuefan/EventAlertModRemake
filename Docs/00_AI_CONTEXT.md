@@ -83,3 +83,16 @@ EAM 對於一般使用者來說應該簡單保留：新增文字 ID、啟用警�
 `Docs/05_PERFORMANCE_GUIDE.md` 包含候選熱路徑，
 OnUpdate/C_Timer的使用和分配風險。 `文件/07_MIGRATION_NOTES.md`
 包含行為遷移註釋。
+
+## 2026-08-09 實機步驟與 Alpha 3 候選入口
+
+- 目前機器可讀快照為 `Data/ProjectContinuity.json` 的 `2026-08-09.2`；人類交接見 `Docs/28_PROJECT_CONTINUITY.md`。
+- 34 案 PTR／XPTR／Retail 的前置條件、逐步操作與通過證據見 `Docs/29_LIVE_TEST_STEP_GUIDE.md`。
+- Alpha 3 候選包含 Target Aura hover+Ctrl+Alt、Macro spell/item ID、手動 Ctrl+C 報告交接、About、監控 Tooltip 與七色分類邊框；目前只有離線 gate，不代表三個客戶端已實機簽收。
+
+## 2026-08-09 SVG A/B 與 3px 邊框續接
+
+- 分類邊框已捨棄含透明留白的 ActionButton border，Legacy 與 Native 都改用 WHITE8X8 實色 Texture，位於 BORDER 層並四邊固定外擴 3px。
+- Flow 面板新增玩家操作的 SVG 能力測試；VectorGraphics 與 Texture 各自驗證 SetSVG、HasSVG、GetSVGFileID 分類、ClearSVG 與 reload。
+- SVG 報告型別為 EAM_SVG_CAPABILITY_REPORT，rawFileIDsCollected 固定 false；可由 JSON 或遊戲內持久化檔案以 ReportType SVG 匯入。
+- 最新離線 gate 為 Lua 50/50、Flow 54/54、Validation Contracts 247/247。3px 邊框與 SVG 圖樣仍待 PTR 玩家目視，不得標記實機通過。

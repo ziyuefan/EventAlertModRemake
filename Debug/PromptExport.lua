@@ -5,12 +5,12 @@ Module: Debug/PromptExport
 
 理念:
 - 將 DebugSnapshot、RuntimeProbe 與 EAM.DebugLog 轉成 AI 可讀、compact JSON-like output。
-- 提供可複製的 UI 彈出視窗（Debug Export Window），方便玩家一鍵複製診斷資訊以回報給 AI。
+- 提供可手動複製的 UI 彈出視窗（Debug Export Window），方便玩家全選診斷資訊後回報給 AI。
 - 專注於診斷匯出，與 Runtime Taint 保護隔離。
 
 責任:
 - 收集環境資訊、EAM 實體框架座標狀態、EventRouter 註冊事件、設定統計、提醒數量、Runtime 狀態、最近 40 條事件運行日誌與邊界警告。
-- 建立並管理診斷 UI 視窗、多行 EditBox、捲軸與「複製到剪貼簿」按鈕。
+- 建立並管理診斷 UI 視窗、多行 EditBox、捲軸與「全選診斷資訊」按鈕。
 
 資料所有權:
 - 擁有除錯視窗與文字框 widgets 的生命週期。
@@ -434,20 +434,22 @@ local function createDebugFrame()
     statusText:SetText("")
     PromptExport.statusText = statusText
 
-    -- 底部按鈕 1: 複製到剪貼簿
+    -- 底部按鈕 1: 聚焦並全選，玩家再按 Ctrl+C
     local copyBtn = api.CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     copyBtn:SetSize(180, 26)
     copyBtn:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 18)
-    copyBtn:SetText("全選並複製到剪貼簿")
+    copyBtn:SetText(EAM.L.EAM_PROMPT_COPY_SELECT or "全選診斷資訊")
     local cnTex = copyBtn:GetNormalTexture()
     if cnTex then cnTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
     local cpTex = copyBtn:GetPushedTexture()
     if cpTex then cpTex:SetVertexColor(0.6, 0.1, 0.1, 1) end
     copyBtn:SetScript("OnClick", function()
-        eb:SetFocus()
-        eb:HighlightText()
-        eb:Copy()
-        statusText:SetText("|cff20ff20✓ 診斷資訊已複製到剪貼簿！請直接 Ctrl+V 回報給 AI 助理。|r")
+        local prepared = EAM.Util.prepareEditBoxManualCopy(eb)
+        if prepared then
+            statusText:SetText(EAM.L.EAM_PROMPT_COPY_SELECTED or "|cff20ff20診斷資訊已全選；請按 Ctrl+C 複製後回報。|r")
+        else
+            statusText:SetText(EAM.L.EAM_COPY_SELECTION_FAILED or "無法全選文字，請手動按 Ctrl+A、Ctrl+C。")
+        end
     end)
 
     -- 底部按鈕 2: 重新整理

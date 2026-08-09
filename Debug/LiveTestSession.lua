@@ -7,7 +7,7 @@ Module: Debug/LiveTestSession
 - 玩家操作遊戲、EAM 只記錄人工觀察，形成 PTR／XPTR／正式服可回灌 JSON。
 
 責任:
-- 管理 29 個實機案例、匿名能力快照、/reload checkpoint、摘要與 JSON 匯出。
+- 管理 34 個實機案例、規範步驟、匿名能力快照、/reload checkpoint、摘要與 JSON 匯出。
 
 邊界:
 - 不施法、不使用物品、不執行巨集、不切換目標、不合成輸入、不呼叫 ReloadUI。
@@ -62,6 +62,43 @@ local CASES = freeze({
     freeze({ id = "live.aura.duration_zero_regression", category = "aura", labelKey = "EAM_LIVE_CASE_DURATION_ZERO" }),
 })
 
+local CASE_PROCEDURES = freeze({
+    ["live.environment.identity"] = [=[確認玩家宣告的安裝目錄與 GetBuildInfo 觀測的 patch、build、Interface 及 test-build 屬性一致。]=],
+    ["live.tooltip.spellbook"] = [=[玩家手動停留技能書法術，確認 ID 列、Ctrl+Alt 選單與技能冷卻加入流程。]=],
+    ["live.tooltip.actionbar_macro"] = [=[玩家手動停留動作列巨集，確認可安全解析法術／物品，或明確降級為手動輸入。]=],
+    ["live.tooltip.bag_item"] = [=[玩家手動停留背包物品，確認物品 ID、Ctrl+Alt 選單與物品冷卻加入流程。]=],
+    ["live.tooltip.player_aura"] = [=[玩家手動停留自身光環；12.1 使用官方 Aura ID 顯示，12.0.7 無能力時採已知 ID 手動輸入。]=],
+    ["live.tooltip.target_aura"] = [=[玩家手動停留目標光環；12.1 使用官方 Aura ID 顯示，12.0.7 無能力時採已知 ID 手動輸入。]=],
+    ["live.tooltip.out_of_combat"] = [=[在非戰鬥狀態確認 Tooltip 與加入監控流程可用。]=],
+    ["live.tooltip.in_combat_rejected"] = [=[玩家自行進入戰鬥後確認 Ctrl+Alt 不開啟／不重播選單；脫戰後再記錄結果。]=],
+    ["live.popup.escape_cancel"] = [=[確認 ESC、取消與關閉不會寫入監控清單。]=],
+    ["live.popup.commit_added_unchanged"] = [=[確認第一次加入回報 added，重複加入回報 unchanged，且儲存位置符合來源類型。]=],
+    ["live.tooltip.reload_resume"] = [=[先建立 checkpoint，由玩家自行輸入 /reload，回來後確認 session、CVar 與 SavedVariables 行為。]=],
+    ["live.blizzard_input_unchanged"] = [=[確認一般左鍵、右鍵與無修飾鍵操作仍維持 Blizzard 原始行為。]=],
+    ["live.popup.combat_transition"] = [=[先開啟 EAM 選單再由玩家進入戰鬥，確認選單安全關閉且不執行延後寫入。]=],
+    ["live.tooltip.generation_switch"] = [=[快速切換不同 Tooltip，確認只對最新來源開啟，沒有 stale candidate。]=],
+    ["live.api.load_order"] = [=[確認 API 初始不可用或 Blizzard LoD 載入後不會重複註冊、重複加入或產生 Lua error。]=],
+    ["live.errors.none_observed"] = [=[整輪確認 Lua error、taint、blocked action、Forbidden access 均未觀察到。]=],
+    ["live.layout.timer_anchor_size"] = [=[確認倒數至少測試框內、框外、最小 8、預設 14、最大 32 字級，12.0.7 與 12.1 行為一致。]=],
+    ["live.layout.applications_anchor_size"] = [=[確認 applications 至少測試框內八方向、框外八角位與四面，以及最小 8、預設 12、最大 32 字級。]=],
+    ["live.aura.single_countdown"] = [=[關閉雙倒數診斷後重建 Native Aura 容器；PTR 12.1 確認每個光環只顯示一套 EAM 可定位倒數，XPTR／正式服確認 Legacy 路徑也只有一套。]=],
+    ["live.aura.dual_countdown_diagnostic"] = [=[僅在測試面板啟用雙倒數診斷；PTR 12.1 由玩家觀察開始、中段、最後 3 秒兩套數字是否同步，完成後關閉。兩者共用同一 DurationObject，不視為獨立資料源；12.0.7 確認此 Native 模式不可用且無 Native 呼叫。]=],
+    ["live.cooldown.spell_countdown"] = [=[玩家施放已監控且非 GCD 的技能，確認圖示、swipe 與倒數文字同時出現，充能技能消耗一層後也有回充倒數。]=],
+    ["live.cooldown.item_trigger"] = [=[玩家使用已監控背包物品，確認 BAG_UPDATE_COOLDOWN 或 12.1 SPELL_UPDATE_COOLDOWN 的 itemID 能觸發正確物品，且其他物品事件不誤觸。]=],
+    ["live.ground.duration_auto"] = [=[非戰鬥解析含明確秒數的技能說明，玩家施放後確認報告來源為 spellDescription 或 tooltipDescription，顯示時間符合靜態說明。]=],
+    ["live.ground.duration_manual_fallback"] = [=[選用無法解析秒數的地面技能並設定手動秒數，玩家施放後確認來源為 manualFallback、時間採手動值且報告含 groundDurationManualFallback。]=],
+    ["live.visual.swipe_alpha"] = [=[分別設定倒數轉圈透明度 0、0.5、1，確認一般冷卻、物品、地面效果與 PTR 12.1 Native Aura 在重建後皆符合設定。]=],
+    ["live.aura.target_transition"] = [=[PTR 12.1 對 target Aura 測試目標切換、戰鬥內外、單層到多層、有限時間到永久、同 Spell ID 不同施法者；記錄圖示存在但文字空白時屬哪一類，不讀回 FontString。]=],
+    ["live.aura.native_border_capability"] = [=[PTR 12.1 確認 capability 報告是否偵測 AddDispelTypeTexture；只判定官方驅散／靜態 border 能力，不將它宣稱為 Pandemic、Proc 或任意條件 Glow 的替代品。12.0.7 應回報不可用。]=],
+    ["live.aura.native_pandemic_region"] = [=[PTR 12.1 啟用單一 Pandemic Region，觀察官方 Pandemic Window 顯示與消失，確認 EAM 不讀 SecretAspect.Shown、不建立自己的 OnUpdate；12.0.7 應降級且不呼叫 native API。]=],
+    ["live.aura.native_dispel_options"] = [=[PTR 12.1 觀察 showAlways、Harmful／Helpful 與 Stealable／NotStealable option；確認 showAlways 不再同時輸出無作用的 stealableFilter，且不使用舊 AuraBorder alias。]=],
+    ["live.aura.container_disable_clear"] = [=[PTR 12.1 停用 AuraContainer 後確認 AuraButton 與 ItemEnchantment 顯示資料清除但框架仍存在，重新啟用後不重複建立或產生 Lua error。]=],
+    ["live.unitpower.secondary_numeric"] = [=[由玩家切換可產生次要資源的專精並手動產生、消耗、歸零；確認 EAM 選中 HolyPower／ComboPoints／SoulShards／Chi／ArcaneCharges 等次要資源，數值 1 仍顯示。]=],
+    ["live.unitpower.primary_native_sink"] = [=[從測試面板啟動 UnitPower 能力探針，由玩家產生／消耗主要資源；PTR 12.1 觀察 StatusBar 與 radial sink，12.0.7 觀察 StatusBar fallback，標記結果並回傳 EAM_UNIT_POWER_CAPABILITY_REPORT。]=],
+    ["live.unitpower.combat_deferred"] = [=[PTR／XPTR 進入戰鬥後觀察資源變化，確認 EAM 不呼叫 UnitPower／UnitPowerMax／UnitPowerPercent 讀值；脫戰後由事件恢復更新，報告保留 combatDeferred 邊界。]=],
+    ["live.aura.duration_zero_regression"] = [=[PTR 12.1 測試永久、零或瞬間結束 Aura，確認 PTR8 修正不再把有效 duration text 錯顯示為 0，無安全 duration 時仍只顯示官方允許的狀態。]=],
+})
+
 local CASE_BY_ID = {}
 for index = 1, #CASES do
     CASE_BY_ID[CASES[index].id] = CASES[index]
@@ -73,6 +110,7 @@ local LiveTestSession = {
     matrixVersion = MATRIX_VERSION,
     cases = CASES,
     caseByID = CASE_BY_ID,
+    procedures = CASE_PROCEDURES,
 }
 
 EAM.Debug.LiveTestSession = LiveTestSession

@@ -948,6 +948,76 @@
 </tbody>
 </table>
 <p>Tooltip callback 的責任只到「追加文字與更新 candidate」，不可直接開啟 UI；戰鬥中只可追加安全文字，不可更新 candidate。儲存路由固定如下：Spell → spell cooldown；Item → item cooldown；Aura → 使用者選 player／target；Macro → 只提供已安全解析的 spell/item，未解析時由使用者輸入 ID 並選類型。EAM 自有按鈕透過其 <code>OnClick</code> script 提交；只有 <code>added</code>／<code>updated</code> 由正式 <code>Options.notifyConfigChanged()</code> 統一刷新五個下游，<code>unchanged</code> 不刷新。</p>
+<h2 id="2026-08-09about-tooltip">2026-08-09：About、監控 Tooltip 與分類邊框契約</h2>
+<table>
+<thead>
+<tr>
+<th>模組</th>
+<th>輸入</th>
+<th>輸出</th>
+<th>禁止</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UI/AlertBorderStyles</code></td>
+<td>EAM 自有 alert type、靜態 <code>unit</code>、靜態 <code>auraFilter</code></td>
+<td>七種固定 style key／RGBA；<code>classPower</code>、<code>totem</code> 回傳 nil</td>
+<td>讀取 UnitAura／AuraData、以 Secret 值作 table key、冒充 Blizzard dispel border</td>
+</tr>
+<tr>
+<td><code>UI/IconPool</code></td>
+<td>Renderer 提供的 alert state</td>
+<td>一般圖示分類邊框；脫戰 Spell／Item Tooltip</td>
+<td>把 <code>powerType</code>／totem slot 當 spellID、戰鬥中打開 Tooltip、鉤 Blizzard frame</td>
+</tr>
+<tr>
+<td><code>UI/NativeAuraRenderer</code></td>
+<td>compiler snapshot 的 <code>unit</code> 與 <code>filterString</code></td>
+<td>AuraButton 初始化期建立分類邊框；Tooltip 仍由 Blizzard AuraButton 管理</td>
+<td><code>initializeFrame</code> 後新增或重排 Region</td>
+</tr>
+<tr>
+<td><code>UI/AboutPanel</code></td>
+<td>TOC metadata、GetBuildInfo、ValidationEnvironment 安全快照、Constants</td>
+<td>EAM 版本、實際客戶端、API baseline、作者與專案 URL</td>
+<td>把靜態 API baseline 冒充目前客戶端 build、戰鬥中首次建立 frame</td>
+</tr>
+</tbody>
+</table>
+<p>固定分類為：自身 BUFF 青色、自身 DEBUFF 紅色、目標 BUFF 藍色、目標 DEBUFF 橘色、技能黃色、物品綠色、地面效果紫色。Aura 顏色只使用 SavedVariables／compiler 已知的 <code>unit</code> 與 <code>auraFilter</code>，不讀實際 Aura payload；<code>classPower</code> 與 <code>totem</code> 保留原有外觀。一般 Renderer 的監控 Tooltip 只在非戰鬥中顯示，Native AuraButton 則沿用 Blizzard Tooltip 與戰鬥隱藏契約。</p>
+<h2 id="2026-08-09svg-3px">2026-08-09：SVG 探針與 3px 邊框契約</h2>
+<table>
+<thead>
+<tr>
+<th>模組</th>
+<th>輸入</th>
+<th>輸出</th>
+<th>禁止</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI/AlertBorderStyles</td>
+<td>EAM 自有圖示 owner 與固定 3px padding</td>
+<td>TOPLEFT -3/+3、BOTTOMRIGHT +3/-3 的完整外框</td>
+<td>再使用含透明留白素材推估可見厚度</td>
+</tr>
+<tr>
+<td>Debug/SVGCapabilityProbe</td>
+<td>玩家宣告 client、固定內建 SVG、兩案目視結果</td>
+<td>VectorGraphics／Texture A/B 生命週期與分類 JSON</td>
+<td>自動操作遊戲、輸出 raw file ID、把離線 mock 當 PTR pass</td>
+</tr>
+<tr>
+<td>Tools/Import-EAMFlowReport.ps1</td>
+<td>明確提供的 JSON 或遊戲持久化報告</td>
+<td>schema、client identity、兩案 ID、interfaceRequired 與 status 重算</td>
+<td>列舉私人目錄、信任報告自稱的 pass</td>
+</tr>
+</tbody>
+</table>
+<p>VectorGraphics 是 Region 能力，不等同 Texture；Texture 的 texcoord、rotation、mask 或 blend 能力不可直接假定在 VectorGraphics 存在。主法術／物品／Aura 圖示仍是動態 FileDataID，不改為 SVG。第一優先候選是 Pandemic 靜態提示區；Dispel CustomAsset／PreserveAsset 必須先補完整 asset map 或預載契約，不能把空 Texture 當已完成。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

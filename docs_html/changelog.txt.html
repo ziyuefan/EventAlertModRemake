@@ -273,7 +273,22 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
         <h1>changelog.txt</h1>
-        <pre><code>-- [Retail  12.1.0 PTR8 Alpha 2]2026.08.08
+        <pre><code>-- [Retail  12.1.0 PTR8 Alpha 3]2026.08.09
+    -- Tooltip 與加入監控：
+       -- TargetFrame／BuffFrame Aura 支援滑鼠停留後只按 Ctrl+Alt 開啟 EAM 視窗，不再要求右鍵，也不攔截 Blizzard 點擊。
+       -- Action Bar Macro 優先解析安全的 spell／item subtype 與 ID；無法安全解析時才要求手動輸入。
+       -- EAM 一般監控圖示在非戰鬥中可顯示 Spell／Item Tooltip；報告複製改為全選後由玩家按 Ctrl+C。
+    -- UI 與版本資訊：
+       -- 主視窗新增 About，顯示 EAM／客戶端／API baseline、作者與 GitHub／Pages URL。
+       -- 自身 BUFF、自己 DEBUFF、目標 BUFF、目標 DEBUFF、技能、物品、地面效果使用七種固定色。
+       -- 分類邊框改用 WHITE8X8 實色 Texture，位於 BORDER 層並四邊固定外擴 3px，避免 ActionButton 素材透明留白。
+    -- SVG 能力與回灌：
+       -- 新增玩家操作的 VectorGraphics／Texture SVG A/B 探針，驗證 set、HasSVG、file-ID 分類、clear 與 reload。
+       -- 報告不保存 raw file ID，可由 JSON 或遊戲內持久化報告以 ReportType SVG 匯入；Release ZIP 正式包含 .svg 素材。
+    -- 驗證與發布：
+       -- Lua 50/50、Flow 54/54、Validation Contracts 247/247；本機三個 Retail client patch train 與 SymbolicLink 3/3 通過。
+       -- 本版仍為 Alpha prerelease；3px 邊框與 SVG 圖樣需玩家在 PTR 12.1 自行 /reload 後目視簽收。
+-- [Retail  12.1.0 PTR8 Alpha 2]2026.08.08
     -- PTR8 Native Aura：
        -- 接入 AuraButton Pandemic region 與 Dispel texture options；showAlways、stealable 與樣式以白名單編譯。
        -- 停用 AuraContainer 時清除按鈕與武器附魔 assignment；設定變更標記 dirty，非戰鬥中手動重建。

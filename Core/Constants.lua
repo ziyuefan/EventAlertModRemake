@@ -46,6 +46,12 @@ EAM.Constants = freeze({
     ALERT_KIND_SPELL_COOLDOWN = "spellCooldown",
     ALERT_KIND_ITEM_COOLDOWN = "itemCooldown",
     ALERT_KIND_GROUND_EFFECT = "groundEffect",
+    API_BASELINE_LABEL = "12.1.0 PTR 8",
+    API_BASELINE_BUILD = "69189",
+    RETAIL_COMPATIBILITY_LABEL = "12.0.7",
+    PROJECT_AUTHOR = "ziyuefan死鬥",
+    PROJECT_REPOSITORY_URL = "https://github.com/ziyuefan/EventAlertModRemake",
+    PROJECT_PAGES_URL = "https://ziyuefan.github.io/EventAlertModRemake/",
     GROUND_DURATION_AUTO = "AUTO",
     GROUND_DURATION_MANUAL = "MANUAL",
     TIMER_NONE = "none",
@@ -78,6 +84,25 @@ EAM.Constants = freeze({
         totem = "totem",
     }),
 
+    ALERT_BORDER_STYLE_KEYS = freeze({
+        selfHelpful = "selfHelpful",
+        selfHarmful = "selfHarmful",
+        targetHelpful = "targetHelpful",
+        targetHarmful = "targetHarmful",
+        spellCooldown = "spellCooldown",
+        itemCooldown = "itemCooldown",
+        groundEffect = "groundEffect",
+    }),
+
+    ALERT_BORDER_COLORS = freeze({
+        selfHelpful = freeze({ 0.10, 0.82, 1.00, 1.00 }),
+        selfHarmful = freeze({ 1.00, 0.18, 0.18, 1.00 }),
+        targetHelpful = freeze({ 0.25, 0.42, 1.00, 1.00 }),
+        targetHarmful = freeze({ 1.00, 0.36, 0.08, 1.00 }),
+        spellCooldown = freeze({ 1.00, 0.85, 0.05, 1.00 }),
+        itemCooldown = freeze({ 0.15, 0.95, 0.25, 1.00 }),
+        groundEffect = freeze({ 0.72, 0.25, 1.00, 1.00 }),
+    }),
     -- 1 = RIGHT, 2 = LEFT, 3 = UP, 4 = DOWN
     -- 凍結為連續數字索引陣列 (Array Part)，以空間換時間，消除雜湊衝突與查詢消耗
     LAYOUT_OFFSETS = freeze({
