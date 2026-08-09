@@ -48,6 +48,7 @@
 - `Docs/26_FLOW_VALIDATION_FRAMEWORK.md`
 - `Docs/27_LOCAL_WOW_ENVIRONMENT.md`
 - `Docs/28_PROJECT_CONTINUITY.md`
+- `Docs/29_LIVE_TEST_STEP_GUIDE.md`
 - `Data/ProjectContinuity.json`
 舊討論脈絡可參考：
 

@@ -497,6 +497,24 @@
 <li>戰鬥 pending、脫戰重建、Reload UI migration、taint/blocked action 與 CPU/GC。</li>
 <li><code>UNSUPPORTED</code> 只代表安全停用 Native Aura，不代表功能等同 Legacy。</li>
 </ul>
+<h2 id="2026-08-09tooltip">2026-08-09：互動、Tooltip、邊框與版本資訊限制</h2>
+<ul>
+<li>TargetFrame／BuffFrame 的 12.1 AuraButton hover 探測只保存匿名「目前有 Aura Tooltip」心跳，不讀 TooltipData、AuraData、frame 名稱或 Aura ID；Ctrl+Alt 只開啟手動 Aura ID Popup。因此能安全支援目標框架，但不會自動解析受限 Aura ID。</li>
+<li>Action Bar Macro 只接受安全的 resolved action subtype／ID、<code>GetMacroSpell</code> 或 <code>GetMacroItem</code>；條件式、序列或客戶端無法安全解析的巨集仍須手動輸入。</li>
+<li>一般 EAM spell／item Tooltip 僅在非戰鬥中顯示；<code>classPower</code> 與 <code>totem</code> 沒有可靠的 Spell／Item tooltip source，不做猜測。Native Aura 使用 Blizzard AuraButton Tooltip。</li>
+<li>七色分類邊框是 EAM 自有靜態 Texture，與 PTR8 的 <code>AddDispelTypeTexture</code>、Pandemic Region、Proc Glow 不同；不能用顏色推論可驅散狀態。classPower／totem 保留既有視覺。</li>
+<li>About 的 API baseline 是本次開發固定證據 <code>12.1.0 PTR 8 (69189)</code>；實際客戶端版本另由 <code>GetBuildInfo</code> 顯示。未來 PTR build 更新時必須同步 Constants／API intelligence，不得把 baseline 當即時查詢。</li>
+<li>WoW EditBox 沒有通用 <code>Copy()</code> 契約；面板只能全選文字並請玩家按 Ctrl+C。這是手動資料交接，不是剪貼簿自動化。</li>
+<li>法力等主要資源可能受 UnitPower Secret 規則限制；生命之花、Hot、DoT 等是 Aura，必須走 AuraButton／Aura 監控，不屬 UnitPower。</li>
+</ul>
+<h2 id="2026-08-09svg">2026-08-09：SVG 與全覆蓋邊框限制</h2>
+<ul>
+<li>目前只建立能力探針與封裝管線，尚未把正式 Pandemic、Dispel 或 Glow 視覺換成 SVG。</li>
+<li>VectorGraphics 與 Texture 的 SetSVG secret-argument policy 不相同；兩者不得共用未審查的操作假設。所有 frame／region 建立仍限制在非戰鬥初始化。</li>
+<li>12.0.7 可安全回報 unsupported；不得為了相容而呼叫不存在的方法。</li>
+<li>3px 實色邊框已具幾何離線斷言，但不同 UI scale、圖示尺寸與 PTR Native AuraButton 的最終目視仍待玩家截圖簽收。</li>
+<li>SVG ZIP 存在只證明素材被封裝；不證明客戶端解析、顯示、clear/reload 或戰鬥邊界已通過。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

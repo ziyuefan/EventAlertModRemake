@@ -210,7 +210,7 @@
 - `/reload` 案例必須先按「建立 /reload 檢查點」，再由玩家自行輸入 `/reload`；回來後 `resumedAfterReload=true` 且 `reloadSequence>=1`。
 - checkpoint 後若未實際 reload 就直接呼叫 resume，必須回傳 `sameLoadRejected`；玩家完成 `/reload` 後才可因 boot generation 改變而恢復。
 - 即使 34 案已全部標為 pass，尚未完成上述 `/reload` 時，`LiveTestSession.complete()` 必須回傳 `reloadRequired`，報告必須保留 `reloadCheckpointNotCompleted` 且不得直接複製為 pass。
-- `pass` 另要求 `phase=complete`、`isTestBuildKnown=true`、`channelValidation=pass`、三個原始 `buildFlags` 至少一個可觀察且由匯入器重算結果與 aggregate 一致、summary 與 29 筆 cases 一致且 `boundaryWarnings` 為空。
+- `pass` 另要求 `phase=complete`、`isTestBuildKnown=true`、`channelValidation=pass`、三個原始 `buildFlags` 至少一個可觀察且由匯入器重算結果與 aggregate 一致、summary 與 34 筆 cases 一致且 `boundaryWarnings` 為空。
 - 任何備註不得包含帳號、角色、伺服器、磁碟絕對路徑、WTF 或 Account 片段；遊戲內先遮蔽，開發端匯入器再拒絕遺漏案例。
 - 完成後可直接複製記憶體內最新的 `EAM_LIVE_VALIDATION_REPORT` JSON 回報。若改由 WTF SavedVariables 匯入，完成報告後必須再由玩家自行 `/reload` 或正常登出，讓最新 JSON 寫回磁碟；回報必須保留 `_ptr_`／`_xptr_` 身分，不得包含帳號、角色、伺服器或絕對路徑。
 - 2026-07-29 最新離線結果：Lua 語法 45/45、Flow `all` 42/42（`TestResults/EAM_FlowValidation_all_20260729_153728.json`）、JSON／Lua／TOC／PowerShell／匯入器契約 119/119。Flow 報告明示 `purpose=offline-contract`、`executionSource/source=offline-mock`、`clientChannel=OFFLINE`；這些只證明離線契約，不是 PTR／XPTR／Retail 實機簽收。
@@ -239,3 +239,34 @@
 - `live.aura.duration_zero_regression`
 
 離線 strict mock 已覆蓋前三項與 UnitPower 戰鬥讀取防線；PTR、XPTR、Retail 仍需玩家在正確客戶端手動執行，並於報告標明 `PTR`／`XPTR`／`RETAIL`、build、`/reload` checkpoint 與視覺觀察。離線 pass 不得升格為實機 pass。
+## 2026-08-09：Alpha 2 Native Aura 顯示回歸
+
+- 玩家確認 Alpha 1 可顯示 Aura，Alpha 2 完全不顯示；目標環境為 PTR `12.1.0.69189`。
+- 該 PTR 的 raw build flags 為 `isPublicTestClient=true`、`isTestBuild=false`、`isBetaBuild=false`。Alpha 2 曾要求 public-test 與 test-build 同時成立，因而把 `nativeRuntimeAllowed` 錯判為 `false`，在建立 AuraContainer 前即 fail-closed。
+- 修正後 12.1 Native gate 為 Interface `>=120100` 且三個測試通道旗標任一為真；strict mock 同步採用 PTR 69189 的真實旗標組合，避免全真 mock 再次掩蓋回歸。
+- `live_test.offline_cannot_signoff`、冷卻 Duration、地面效果解析與 swipe alpha 都是 strict-mock 契約；遊戲客戶端沒有 `EAM.FlowTestMock` 時必須回傳 `skip`，不可污染 PTR 能力報告為假失敗。測試亦不得覆寫已凍結的 `EAM.API`。
+- 2026-08-09 離線驗證為 Lua `47/47`、Flow `54/54`、Validation Contracts `217/217`；artifact 為 `TestResults/EAM_FlowValidation_all_20260809_185047.json`。這只證明修正後離線契約，尚未證明 PTR Aura 已恢復。
+- PTR 請先由玩家自行 `/reload`，再執行 `/eam doctor` 與 `/eam test aura121`。`aura121.capability.native_complete` 應為 pass，且 player／target Aura 應重新出現；若仍失敗，回傳含新增 capability 詳細欄位的 Flow JSON。
+- 目前 UnitPower 報告只證明 primary Secret 與 selected safe-number 均已送入 StatusBar／radial sink 且呼叫被接受；primary 視覺標記仍為 pending、selected 為 blocked，因此不能標示 UnitPower PTR 視覺簽收。
+
+## 2026-08-09：Target Aura、巨集、Tooltip、About 與分類邊框
+
+逐案條件、玩家操作、通過證據與回報欄位統一見 `Docs/29_LIVE_TEST_STEP_GUIDE.md`；流程面板會依目前 case 顯示同一份步驟。下列項目不得只憑離線 mock 簽收：
+
+- TargetFrame 的 AuraButton：滑鼠停在目標框 Aura 上，只按 Ctrl+Alt，不按滑鼠鍵；EAM 小視窗應開啟，原 Blizzard 左／右鍵行為不得被攔截。
+- Action Bar Macro：分別以 spell macro 與 item macro 驗證 resolved action subtype／ID；Popup 應顯示法術或物品 ID，只有無安全解析結果時才顯示手動輸入。
+- EAM 一般監控圖示：非戰鬥中 Aura／技能／物品／地面效果應顯示對應 Tooltip；戰鬥中不得因 Tooltip 造成 taint、Forbidden 或 blocked action。12.1 Native Aura 仍使用 Blizzard AuraButton Tooltip。
+- 分類邊框：自身 BUFF 青、自己 DEBUFF 紅、目標 BUFF 藍、目標 DEBUFF 橘、技能黃、地面效果紫、物品綠；classPower／totem 保留原樣。顏色不代表 Blizzard dispel type。
+- About：主視窗「關於」需顯示 TOC 版本、實際客戶端 patch／build／Interface、API baseline `12.1.0 PTR 8 (69189)`、作者 `ziyuefan死鬥`、GitHub 與 Pages URL；戰鬥中首次建立應延後或拒絕。
+- 報告複製：按鈕只聚焦並全選 EditBox；玩家自行按 Ctrl+C。不得呼叫不存在的 `EditBox:Copy()`。
+- UnitPower 與 Aura 分流：法師法力屬主要 UnitPower，可能為 Secret 時只能送原生 sink；生命之花等效果屬 Aura，不以 UnitPower 模組監控。
+
+2026-08-09 收尾離線 gate：Lua `50/50`、Flow `all 54/54`、Validation Contracts `247/247`。這些結果只證明 Lua／mock／文件契約；PTR、XPTR 與 Retail 的 34 案真人狀態仍為待玩家簽收。
+
+## 2026-08-09：SVG A/B 玩家能力測試
+
+- PTR 12.1：玩家先選 _ptr_，開啟 Flow 面板的 SVG 能力測試。左格為 VectorGraphics:SetSVG，右格為 Texture:SetSVG；兩格應顯示相同青框與黃紫三角。
+- 每格必須分別標記通過、失敗或受阻，最後按完成產生 EAM_SVG_CAPABILITY_REPORT。不得由 API accepted 自動推定肉眼顯示正確。
+- 報告必須包含正確 client／patch／build／Interface，rawFileIDsCollected=false，且兩案 clearReload=pass；若從磁碟讀取，玩家產生報告後需自行 /reload 或正常登出。
+- XPTR／Retail 12.0.7 若回報 unsupported，代表 interfaceRequired=false 的預期降級，不等於 PTR 能力失敗。
+- 最終邊框目視：七類圖示四邊都應連續包覆，外緣比圖示各多 3px；不得再以透明 ActionButton border 的內部亮線作尺寸依據。

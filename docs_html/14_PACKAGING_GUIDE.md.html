@@ -523,6 +523,13 @@
 <li>發布前仍需依<code>Docs/06_TEST_PLAN_RETAIL.md</code>做正式服實機測試。</li>
 <li>封裝 gate 通過仍只代表離線契約，不能取代 <code>_ptr_</code>／<code>_xptr_</code> 真人矩陣。</li>
 </ul>
+<h2 id="svg">SVG 素材封裝契約</h2>
+<ul>
+<li>正式副檔名白名單必須包含 .svg；否則本機符號連結可顯示、GitHub Release ZIP 卻會靜默缺素材。</li>
+<li>Alpha 3 封裝至少必須含 Media/SVG/eam-svg-probe.svg，並繼續排除 Tests、TestResults、Tools、backup 與本機 deploy。</li>
+<li>Validation Contracts 會同時斷言 SVG 檔是自包含靜態素材、無 script／href／data URI，且 Build-CurseForgePackage.ps1 白名單包含 .svg。</li>
+<li>Release ZIP 建立後仍須列出壓縮內容確認 SVG 條目存在；本機 deploy 資料夾不得提交或重複打包。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

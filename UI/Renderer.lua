@@ -625,6 +625,9 @@ function Renderer.render(alertState, frameName)
         rendered.icon = alertState.icon
     end
 
+    IconPool.applyTooltipSource(icon, alertState)
+    IconPool.applyTypeBorder(icon, alertState, frameName)
+
     local config = EAM.db and EAM.db.config or nil
     if inCombat() then
         Renderer.textLayoutPending = true

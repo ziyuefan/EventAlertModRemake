@@ -4,7 +4,7 @@ Module: Debug/FlowTestPanel
 檔案: Debug\FlowTestPanel.lua
 
 理念:
-- 提供明確、按需的 Retail/PTR 流程驗證按鈕與可複製報告。
+- 提供明確、按需的 Retail/PTR 流程驗證按鈕與可手動複製報告。
 - 讓玩家在遊戲內產生結構化證據，再回灌到開發環境。
 
 責任:
@@ -23,7 +23,7 @@ Module: Debug/FlowTestPanel
 - UI lazy-initialize；測試與報告只在使用者觸發時產生。
 
 Retail API 注意:
-- 面板只做非 protected 顯示與複製；實機結果仍需記錄 build 與場景。
+- 面板只做非 protected 顯示、聚焦與全選；EditBox 沒有自動寫入系統剪貼簿的 API。
 ]]
 local _, EAM = ...
 
@@ -33,6 +33,7 @@ local FlowTestPanel = {
     frame = nil,
     editBox = nil,
     statusText = nil,
+    svgButton = nil,
     pendingOpen = false,
 }
 
@@ -57,6 +58,14 @@ local function showReport(reportJSON)
     if FlowTestPanel.editBox then
         FlowTestPanel.editBox:SetText(reportJSON or "{}")
         FlowTestPanel.editBox:SetCursorPosition(0)
+    end
+end
+
+function FlowTestPanel.showExternalReport(reportJSON, message, isError)
+    showReport(reportJSON)
+    setStatus(message, isError)
+    if FlowTestPanel.frame then
+        FlowTestPanel.frame:Show()
     end
 end
 
@@ -95,7 +104,7 @@ local function createFrame()
     end
 
     local frame = api.CreateFrame("Frame", "EAM_FlowTestFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(680, 520)
+    frame:SetSize(830, 520)
     frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -215,12 +224,12 @@ local function createFrame()
     scrollFrame:SetPoint("BOTTOMRIGHT", outputBackground, "BOTTOMRIGHT", -28, 8)
 
     local scrollChild = api.CreateFrame("Frame", nil, scrollFrame)
-    scrollChild:SetSize(600, 320)
+    scrollChild:SetSize(750, 320)
     scrollFrame:SetScrollChild(scrollChild)
 
     local editBox = api.CreateFrame("EditBox", nil, scrollChild)
     editBox:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 4, -4)
-    editBox:SetSize(590, 310)
+    editBox:SetSize(740, 310)
     editBox:SetMultiLine(true)
     editBox:SetMaxLetters(999999)
     editBox:SetFontObject("ChatFontNormal")
@@ -240,7 +249,7 @@ local function createFrame()
 
     local copyButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_COPY", "複製開發報告"),
+        text("EAM_FLOW_BUTTON_COPY", "全選開發報告"),
         160,
         "BOTTOMLEFT",
         frame,
@@ -248,10 +257,12 @@ local function createFrame()
         20,
         18,
         function()
-            editBox:SetFocus()
-            editBox:HighlightText()
-            editBox:Copy()
-            setStatus(text("EAM_FLOW_STATUS_COPIED", "報告已複製，可回灌至開發環境。"), false)
+            local prepared = EAM.Util.prepareEditBoxManualCopy(editBox)
+            if prepared then
+                setStatus(text("EAM_FLOW_STATUS_COPIED", "報告已全選；請按 Ctrl+C 複製後回灌。"), false)
+            else
+                setStatus(text("EAM_COPY_SELECTION_FAILED", "無法全選報告文字，請手動點入文字框後按 Ctrl+A、Ctrl+C。"), true)
+            end
         end
     )
 
@@ -403,6 +414,73 @@ local function createFrame()
             end
         end
     )
+
+    local svgButton
+    svgButton = createButton(
+        frame,
+        text("EAM_FLOW_BUTTON_SVG", "SVG 能力"),
+        140,
+        "LEFT",
+        unitPowerButton,
+        "RIGHT",
+        10,
+        0,
+        function()
+            local probe = EAM.Debug.SVGCapabilityProbe
+            if not probe then
+                setStatus(text("EAM_SVG_PROBE_UNAVAILABLE", "SVG 能力探針尚未載入。"), true)
+                return
+            end
+            local ok, report, reportJSON
+            if probe.isActive() then
+                ok, report, reportJSON = probe.stop()
+                svgButton:SetText(text("EAM_FLOW_BUTTON_SVG", "SVG 能力"))
+            else
+                local validationEnvironment = EAM.Debug.ValidationEnvironment
+                if not validationEnvironment
+                    or not validationEnvironment.getDeclaredInstallation
+                    or not validationEnvironment.getDeclaredInstallation()
+                then
+                    if EAM.Debug.LiveTestPanel then
+                        EAM.Debug.LiveTestPanel.open(true)
+                    end
+                    setStatus(
+                        text(
+                            "EAM_SVG_CLIENT_REQUIRED",
+                            "請先在真人實機回報面板選擇目前客戶端，再啟動 SVG 測試。"
+                        ),
+                        true
+                    )
+                    return
+                end
+                ok, report, reportJSON = probe.start()
+                if ok then
+                    svgButton:SetText(text("EAM_FLOW_BUTTON_SVG_STOP", "停止 SVG 測試"))
+                end
+            end
+            if not ok then
+                setStatus(
+                    text("EAM_SVG_PROBE_START_FAILED", "SVG 測試無法啟動；請先離開戰鬥。"),
+                    true
+                )
+                return
+            end
+            showReport(reportJSON)
+            if probe.isActive() then
+                setStatus(
+                    text("EAM_SVG_PROBE_RUNNING", "請確認兩格 SVG 圖案並分別標記目視結果。"),
+                    false
+                )
+                frame:Hide()
+            else
+                setStatus(
+                    text("EAM_SVG_PROBE_STOPPED", "SVG 能力報告已完成；請全選後按 Ctrl+C 回灌。"),
+                    not report or report.status ~= "pass"
+                )
+            end
+        end
+    )
+    FlowTestPanel.svgButton = svgButton
 
     _G.EAM_FlowTestFrame = frame
     if UISpecialFrames then

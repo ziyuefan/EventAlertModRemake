@@ -229,13 +229,13 @@ powershell -NoProfile -ExecutionPolicy Bypass `
     "reloadUIAutomated": false,
     "playerOperated": true
   },
-  "summary": { "total": 29, "required": 29 },
+  "summary": { "total": 34, "required": 34 },
   "cases": [],
   "boundaryWarnings": []
 }
 ```
 
-對應 schema 位於 `Schemas/EAM_FlowValidationReport.schema.json` 與 `Schemas/EAM_LiveValidationReport.schema.json`。Live `pass` 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、29/29、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 `legacy-unverified` 並以 exit code 1 拒絕簽收。
+對應 schema 位於 `Schemas/EAM_FlowValidationReport.schema.json` 與 `Schemas/EAM_LiveValidationReport.schema.json`。Live `pass` 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、34/34、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 `legacy-unverified` 並以 exit code 1 拒絕簽收。
 
 報告只能包含測試控制值與確認安全的環境欄位；不得包含 Secret、Protected、完整 SavedVariables、無界限事件日誌、原始 Aura／Cooldown facts、帳號／角色／伺服器或檔案系統路徑。遊戲內先遮蔽，匯入器仍會遞迴檢查屬性名稱與字串值。
 
@@ -312,3 +312,28 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - ClassPower 次要資源優先，使用 `displayValue` 讓數值 1 仍可見；主要資源 Secret percent 只直送 UnitPower capability probe 的 StatusBar／radial widget，報告不含原值。
 - Flow `all` 離線結果為 54/54。Live matrix 升為 `2026-08-08.1`、34 案；三個客戶端仍 pending，離線結果不升格。
 - 新增 `Docs/28_PROJECT_CONTINUITY.md`、`Data/ProjectContinuity.json` 與嚴格 Schema；`Tools/Test-ValidationContracts.ps1` 負責 snapshot、ID、issue、矩陣與隱私漂移檢查。
+## 2026-08-09：實機與 strict mock 案例分流
+
+- Flow 案例若需要 `EAM.FlowTestMock`、覆寫 mock API 或檢查 mock-only 欄位，必須在案例入口先檢查 mock；遊戲客戶端缺少 mock 時回傳 `STATUS_SKIP` 與明確訊息，不得回傳 fail。
+- 真實客戶端失敗只保留給真正的 capability／runtime 契約，例如 Native backend 未選中、AuraContainer 方法缺少、環境身分矛盾或玩家操作結果失敗。
+- `EAM.API` 是凍結的穩定 API alias；測試不得覆寫其頂層欄位。需要 locale 或 API 變體時，應由離線 harness 在凍結前注入，或使用可回復的 nested mock。
+- Client build raw flags 必須逐項保留；測試通道 aggregate 由 public-test、test-build、beta 的 OR 計算。strict mock 應重現已觀察的 false 值，不能把三個 flag 全設為 true 而掩蓋條件錯誤。
+- `aura121.capability.native_complete` 的失敗訊息現在包含 backend、runtime、三個 raw flags 與 Container／Slot／Group／Layout capability，供 PTR 直接回灌根因。
+- 2026-08-09 修正後離線結果：Lua `47/47`、Flow `54/54`、Validation Contracts `217/217`，artifact 為 `TestResults/EAM_FlowValidation_all_20260809_185047.json`。遊戲客戶端仍需玩家 `/reload` 後重跑；離線結果不得取代 PTR Aura 顯示。
+
+## 2026-08-09：逐案指引、手動複製與 WTF 回灌
+
+- `Debug/LiveTestSession.lua` 的 34 案 procedure 與 `Docs/29_LIVE_TEST_STEP_GUIDE.md` 使用同一 case ID；面板必須顯示目前案例的前置條件、玩家步驟與通過證據，不只顯示難以理解的短標題。
+- Flow／Live／Prompt 匯出 EditBox 不呼叫 `Copy()`。按鈕只執行 `SetFocus()` 與 `HighlightText()`，再提示玩家按 Ctrl+C；自動剪貼簿不屬 WoW 公開 EditBox 契約。
+- 直接複製面板內容可取得記憶體內最新報告。若讀取 WTF 內 `EventAlertMod.lua`，玩家必須先在完成測試後自行 `/reload` 或正常登出，否則磁碟內容可能落後。
+- 開發端只讀匯入統一使用 `Tools/Import-EAMFlowReport.ps1 -Path '<使用者明確提供的檔案>' -ReportType Flow|Live|UnitPower`；不得列舉 Account／角色目錄，也不得把本機絕對路徑寫入專案文件或報告。
+- `UnitPower` capability report 只保存 resultClass、sink accepted／rejected 與人工 visualObservation；`rawValuesCollected` 必須為 false。生命之花等非 UnitPower 狀態應在 Aura 案例驗證。
+- 2026-08-09 離線契約為 Flow `54/54` 與 Validation Contracts `247/247`；真人矩陣未因這些結果自動變成 pass。
+
+## 2026-08-09：SVG 能力探針與回灌
+
+- SVG 探針固定兩案：svg.vector_graphics.set_svg 與 svg.texture.set_svg。每案依序執行 set、HasSVG、file-ID 分類、clear、reload，再由玩家標記 visualObservation。
+- strict mock 的 HasSVG／GetSVGFileID 使用 rawget，避免 ClearSVG 後 nil 欄位誤觸嚴格 __index；Flow all 保持 54 案並把 SVG 生命週期併入 boundary.safe_scalar。
+- EAM_SVG_CAPABILITY_REPORT_JSON 列入 SavedVariables；Tools/Import-EAMFlowReport.ps1 的 ReportType SVG 重新驗證 schema、client profile、兩案 ID、interfaceRequired、clearReload 與 status。
+- 12.1 required 路徑必須兩案 accepted、HasSVG=true、fileIDClass=positive-number、clearReload=pass 且玩家目視 pass 才能成為 pass；12.0.7 為 unsupported。
+- 最新離線證據：Lua 50/50、Flow 54/54、Validation Contracts 247/247。報告仍需 PTR 玩家操作與目視，不自動操作 WoW。

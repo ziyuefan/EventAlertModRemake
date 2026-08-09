@@ -4,161 +4,501 @@
   "title": "EventAlertMod Project Continuity Contract",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "type", "snapshotVersion", "updatedAt", "project", "routes", "current", "facts", "inferences", "workItems", "trials", "unverified"],
+  "required": [
+    "schema",
+    "type",
+    "snapshotVersion",
+    "updatedAt",
+    "project",
+    "routes",
+    "current",
+    "facts",
+    "inferences",
+    "workItems",
+    "trials",
+    "unverified"
+  ],
   "properties": {
-    "schema": { "const": 1 },
-    "type": { "const": "EAM_PROJECT_CONTINUITY" },
-    "snapshotVersion": { "type": "string", "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}\\.[0-9]+$" },
-    "updatedAt": { "type": "string", "format": "date" },
+    "schema": {
+      "const": 1
+    },
+    "type": {
+      "const": "EAM_PROJECT_CONTINUITY"
+    },
+    "snapshotVersion": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}\\.[0-9]+$"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date"
+    },
     "project": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "product", "releaseTrack", "supportedClients"],
+      "required": [
+        "name",
+        "product",
+        "releaseTrack",
+        "supportedClients"
+      ],
       "properties": {
-        "name": { "const": "EventAlertModRemake" },
-        "product": { "const": "wow_retail" },
-        "releaseTrack": { "const": "alpha" },
+        "name": {
+          "const": "EventAlertModRemake"
+        },
+        "product": {
+          "const": "wow_retail"
+        },
+        "releaseTrack": {
+          "const": "alpha"
+        },
         "supportedClients": {
           "type": "array",
           "minItems": 3,
           "maxItems": 3,
           "uniqueItems": true,
-          "items": { "$ref": "#/$defs/client" }
+          "items": {
+            "$ref": "#/$defs/client"
+          }
         }
       }
     },
     "routes": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["humanSummary", "issueLog", "liveMatrix", "testPlan", "flowFramework"],
+      "required": [
+        "humanSummary",
+        "issueLog",
+        "liveMatrix",
+        "testPlan",
+        "flowFramework",
+        "liveGuide"
+      ],
       "properties": {
-        "humanSummary": { "$ref": "#/$defs/projectPath" },
-        "issueLog": { "$ref": "#/$defs/projectPath" },
-        "liveMatrix": { "$ref": "#/$defs/projectPath" },
-        "testPlan": { "$ref": "#/$defs/projectPath" },
-        "flowFramework": { "$ref": "#/$defs/projectPath" }
+        "humanSummary": {
+          "$ref": "#/$defs/projectPath"
+        },
+        "issueLog": {
+          "$ref": "#/$defs/projectPath"
+        },
+        "liveMatrix": {
+          "$ref": "#/$defs/projectPath"
+        },
+        "testPlan": {
+          "$ref": "#/$defs/projectPath"
+        },
+        "flowFramework": {
+          "$ref": "#/$defs/projectPath"
+        },
+        "liveGuide": {
+          "$ref": "#/$defs/projectPath"
+        }
       }
     },
     "current": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["objective", "offlineValidation", "liveValidation"],
+      "required": [
+        "objective",
+        "offlineValidation",
+        "liveValidation"
+      ],
       "properties": {
-        "objective": { "type": "string", "minLength": 1 },
+        "objective": {
+          "type": "string",
+          "minLength": 1
+        },
         "offlineValidation": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["source", "total", "passed", "failed", "skipped", "pending"],
+          "required": [
+            "source",
+            "total",
+            "passed",
+            "failed",
+            "skipped",
+            "pending"
+          ],
           "properties": {
-            "source": { "const": "offline-mock" },
-            "total": { "type": "integer", "minimum": 1 },
-            "passed": { "type": "integer", "minimum": 0 },
-            "failed": { "type": "integer", "minimum": 0 },
-            "skipped": { "type": "integer", "minimum": 0 },
-            "pending": { "type": "integer", "minimum": 0 }
+            "source": {
+              "const": "offline-mock"
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "passed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pending": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "liveValidation": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["matrixVersion", "required", "ptr", "xptr", "retail"],
+          "required": [
+            "matrixVersion",
+            "required",
+            "ptr",
+            "xptr",
+            "retail"
+          ],
           "properties": {
-            "matrixVersion": { "type": "string" },
-            "required": { "type": "integer", "minimum": 1 },
-            "ptr": { "$ref": "#/$defs/validationStatus" },
-            "xptr": { "$ref": "#/$defs/validationStatus" },
-            "retail": { "$ref": "#/$defs/validationStatus" }
+            "matrixVersion": {
+              "type": "string"
+            },
+            "required": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "ptr": {
+              "$ref": "#/$defs/validationStatus"
+            },
+            "xptr": {
+              "$ref": "#/$defs/validationStatus"
+            },
+            "retail": {
+              "$ref": "#/$defs/validationStatus"
+            }
           }
         }
       }
     },
-    "facts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/fact" } },
-    "inferences": { "type": "array", "items": { "$ref": "#/$defs/inference" } },
-    "workItems": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/workItem" } },
-    "trials": { "type": "array", "items": { "$ref": "#/$defs/trial" } },
-    "unverified": { "type": "array", "items": { "$ref": "#/$defs/unverified" } }
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/fact"
+      }
+    },
+    "inferences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/inference"
+      }
+    },
+    "workItems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/workItem"
+      }
+    },
+    "trials": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trial"
+      }
+    },
+    "unverified": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unverified"
+      }
+    }
   },
   "$defs": {
-    "client": { "enum": ["PTR_12_1", "XPTR_12_0_7", "RETAIL_12_0_7"] },
-    "environment": { "enum": ["offline-mock", "PTR_12_1", "XPTR_12_0_7", "RETAIL_12_0_7", "cross-client", "project"] },
-    "validationStatus": { "enum": ["pass", "pending", "fail", "blocked", "not-applicable"] },
-    "projectPath": { "type": "string", "pattern": "^(?![A-Za-z]:)(?![/\\\\]).+" },
-    "evidenceRef": { "type": "string", "pattern": "^(?:issue:EAM-[A-Z0-9-]+|https://[^ ]+|(?![A-Za-z]:)(?![/\\\\]).+)" },
+    "client": {
+      "enum": [
+        "PTR_12_1",
+        "XPTR_12_0_7",
+        "RETAIL_12_0_7"
+      ]
+    },
+    "environment": {
+      "enum": [
+        "offline-mock",
+        "PTR_12_1",
+        "XPTR_12_0_7",
+        "RETAIL_12_0_7",
+        "cross-client",
+        "project"
+      ]
+    },
+    "validationStatus": {
+      "enum": [
+        "pass",
+        "pending",
+        "fail",
+        "blocked",
+        "not-applicable"
+      ]
+    },
+    "projectPath": {
+      "type": "string",
+      "pattern": "^(?![A-Za-z]:)(?![/\\\\]).+"
+    },
+    "evidenceRef": {
+      "type": "string",
+      "pattern": "^(?:issue:EAM-[A-Z0-9-]+|https://[^ ]+|(?![A-Za-z]:)(?![/\\\\]).+)"
+    },
     "validationSet": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["offline", "ptr", "xptr", "retail"],
+      "required": [
+        "offline",
+        "ptr",
+        "xptr",
+        "retail"
+      ],
       "properties": {
-        "offline": { "$ref": "#/$defs/validationStatus" },
-        "ptr": { "$ref": "#/$defs/validationStatus" },
-        "xptr": { "$ref": "#/$defs/validationStatus" },
-        "retail": { "$ref": "#/$defs/validationStatus" }
+        "offline": {
+          "$ref": "#/$defs/validationStatus"
+        },
+        "ptr": {
+          "$ref": "#/$defs/validationStatus"
+        },
+        "xptr": {
+          "$ref": "#/$defs/validationStatus"
+        },
+        "retail": {
+          "$ref": "#/$defs/validationStatus"
+        }
       }
     },
     "fact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "statement", "state", "provenance", "environment", "evidenceRefs"],
+      "required": [
+        "id",
+        "statement",
+        "state",
+        "provenance",
+        "environment",
+        "evidenceRefs"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^FACT-[0-9]{8}-[0-9]{3}$" },
-        "statement": { "type": "string", "minLength": 1 },
-        "state": { "enum": ["confirmed", "superseded"] },
-        "provenance": { "enum": ["project-rule", "user-observed", "offline-test", "project-state", "code-contract", "api-contract", "live-report"] },
-        "environment": { "$ref": "#/$defs/environment" },
-        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidenceRef" } }
+        "id": {
+          "type": "string",
+          "pattern": "^FACT-[0-9]{8}-[0-9]{3}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "enum": [
+            "confirmed",
+            "superseded"
+          ]
+        },
+        "provenance": {
+          "enum": [
+            "project-rule",
+            "user-observed",
+            "offline-test",
+            "project-state",
+            "code-contract",
+            "api-contract",
+            "live-report"
+          ]
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidenceRef"
+          }
+        }
       }
     },
     "inference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "statement", "basedOnFactIds", "confidence", "validationNeeded"],
+      "required": [
+        "id",
+        "statement",
+        "basedOnFactIds",
+        "confidence",
+        "validationNeeded"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^INFERENCE-[0-9]{8}-[0-9]{3}$" },
-        "statement": { "type": "string", "minLength": 1 },
-        "basedOnFactIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^FACT-[0-9]{8}-[0-9]{3}$" } },
-        "confidence": { "enum": ["low", "medium", "high"] },
-        "validationNeeded": { "type": "string", "minLength": 1 }
+        "id": {
+          "type": "string",
+          "pattern": "^INFERENCE-[0-9]{8}-[0-9]{3}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "basedOnFactIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^FACT-[0-9]{8}-[0-9]{3}$"
+          }
+        },
+        "confidence": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "validationNeeded": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "workItem": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "issueId", "title", "severity", "status", "modules", "acceptanceCriteria", "validation", "evidenceRefs"],
+      "required": [
+        "id",
+        "issueId",
+        "title",
+        "severity",
+        "status",
+        "modules",
+        "acceptanceCriteria",
+        "validation",
+        "evidenceRefs"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^WORK-[0-9]{8}-[0-9]{3}$" },
-        "issueId": { "type": "string", "pattern": "^EAM-[0-9]{8}-[A-Z0-9-]+$" },
-        "title": { "type": "string", "minLength": 1 },
-        "severity": { "enum": ["P0", "P1", "P2", "P3"] },
-        "status": { "enum": ["implemented_offline_verified", "pending_live_validation", "investigating", "complete", "blocked"] },
-        "modules": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/projectPath" } },
-        "acceptanceCriteria": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
-        "validation": { "$ref": "#/$defs/validationSet" },
-        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidenceRef" } }
+        "id": {
+          "type": "string",
+          "pattern": "^WORK-[0-9]{8}-[0-9]{3}$"
+        },
+        "issueId": {
+          "type": "string",
+          "pattern": "^EAM-[0-9]{8}-[A-Z0-9-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "status": {
+          "enum": [
+            "implemented_offline_verified",
+            "pending_live_validation",
+            "investigating",
+            "complete",
+            "blocked"
+          ]
+        },
+        "modules": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/projectPath"
+          }
+        },
+        "acceptanceCriteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "validation": {
+          "$ref": "#/$defs/validationSet"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidenceRef"
+          }
+        }
       }
     },
     "trial": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "issueId", "hypothesis", "result", "decision", "doNotRepeat"],
+      "required": [
+        "id",
+        "issueId",
+        "hypothesis",
+        "result",
+        "decision",
+        "doNotRepeat"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^TRIAL-[0-9]{8}-[0-9]{3}$" },
-        "issueId": { "type": "string", "pattern": "^EAM-[0-9]{8}-[A-Z0-9-]+$" },
-        "hypothesis": { "type": "string", "minLength": 1 },
-        "result": { "enum": ["confirmed", "rejected", "inconclusive"] },
-        "decision": { "type": "string", "minLength": 1 },
-        "doNotRepeat": { "type": "boolean" }
+        "id": {
+          "type": "string",
+          "pattern": "^TRIAL-[0-9]{8}-[0-9]{3}$"
+        },
+        "issueId": {
+          "type": "string",
+          "pattern": "^EAM-[0-9]{8}-[A-Z0-9-]+$"
+        },
+        "hypothesis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "result": {
+          "enum": [
+            "confirmed",
+            "rejected",
+            "inconclusive"
+          ]
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "doNotRepeat": {
+          "type": "boolean"
+        }
       }
     },
     "unverified": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "statement", "requiredClient", "procedureRef", "blocksRelease"],
+      "required": [
+        "id",
+        "statement",
+        "requiredClient",
+        "procedureRef",
+        "blocksRelease"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^UNVERIFIED-[0-9]{8}-[0-9]{3}$" },
-        "statement": { "type": "string", "minLength": 1 },
-        "requiredClient": { "$ref": "#/$defs/client" },
-        "procedureRef": { "type": "string", "minLength": 1 },
-        "blocksRelease": { "type": "boolean" }
+        "id": {
+          "type": "string",
+          "pattern": "^UNVERIFIED-[0-9]{8}-[0-9]{3}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredClient": {
+          "$ref": "#/$defs/client"
+        },
+        "procedureRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocksRelease": {
+          "type": "boolean"
+        }
       }
     }
   }

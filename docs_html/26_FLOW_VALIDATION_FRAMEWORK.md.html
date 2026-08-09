@@ -735,13 +735,13 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
     &quot;reloadUIAutomated&quot;: false,
     &quot;playerOperated&quot;: true
   },
-  &quot;summary&quot;: { &quot;total&quot;: 29, &quot;required&quot;: 29 },
+  &quot;summary&quot;: { &quot;total&quot;: 34, &quot;required&quot;: 34 },
   &quot;cases&quot;: [],
   &quot;boundaryWarnings&quot;: []
 }
 </code></pre>
 
-<p>對應 schema 位於 <code>Schemas/EAM_FlowValidationReport.schema.json</code> 與 <code>Schemas/EAM_LiveValidationReport.schema.json</code>。Live <code>pass</code> 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、29/29、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 <code>legacy-unverified</code> 並以 exit code 1 拒絕簽收。</p>
+<p>對應 schema 位於 <code>Schemas/EAM_FlowValidationReport.schema.json</code> 與 <code>Schemas/EAM_LiveValidationReport.schema.json</code>。Live <code>pass</code> 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、34/34、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 <code>legacy-unverified</code> 並以 exit code 1 拒絕簽收。</p>
 <p>報告只能包含測試控制值與確認安全的環境欄位；不得包含 Secret、Protected、完整 SavedVariables、無界限事件日誌、原始 Aura／Cooldown facts、帳號／角色／伺服器或檔案系統路徑。遊戲內先遮蔽，匯入器仍會遞迴檢查屬性名稱與字串值。</p>
 <h2 id="8">8. 新增案例規則</h2>
 <ol>
@@ -814,6 +814,32 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
 <li>ClassPower 次要資源優先，使用 <code>displayValue</code> 讓數值 1 仍可見；主要資源 Secret percent 只直送 UnitPower capability probe 的 StatusBar／radial widget，報告不含原值。</li>
 <li>Flow <code>all</code> 離線結果為 54/54。Live matrix 升為 <code>2026-08-08.1</code>、34 案；三個客戶端仍 pending，離線結果不升格。</li>
 <li>新增 <code>Docs/28_PROJECT_CONTINUITY.md</code>、<code>Data/ProjectContinuity.json</code> 與嚴格 Schema；<code>Tools/Test-ValidationContracts.ps1</code> 負責 snapshot、ID、issue、矩陣與隱私漂移檢查。</li>
+</ul>
+<h2 id="2026-08-09-strict-mock">2026-08-09：實機與 strict mock 案例分流</h2>
+<ul>
+<li>Flow 案例若需要 <code>EAM.FlowTestMock</code>、覆寫 mock API 或檢查 mock-only 欄位，必須在案例入口先檢查 mock；遊戲客戶端缺少 mock 時回傳 <code>STATUS_SKIP</code> 與明確訊息，不得回傳 fail。</li>
+<li>真實客戶端失敗只保留給真正的 capability／runtime 契約，例如 Native backend 未選中、AuraContainer 方法缺少、環境身分矛盾或玩家操作結果失敗。</li>
+<li><code>EAM.API</code> 是凍結的穩定 API alias；測試不得覆寫其頂層欄位。需要 locale 或 API 變體時，應由離線 harness 在凍結前注入，或使用可回復的 nested mock。</li>
+<li>Client build raw flags 必須逐項保留；測試通道 aggregate 由 public-test、test-build、beta 的 OR 計算。strict mock 應重現已觀察的 false 值，不能把三個 flag 全設為 true 而掩蓋條件錯誤。</li>
+<li><code>aura121.capability.native_complete</code> 的失敗訊息現在包含 backend、runtime、三個 raw flags 與 Container／Slot／Group／Layout capability，供 PTR 直接回灌根因。</li>
+<li>2026-08-09 修正後離線結果：Lua <code>47/47</code>、Flow <code>54/54</code>、Validation Contracts <code>217/217</code>，artifact 為 <code>TestResults/EAM_FlowValidation_all_20260809_185047.json</code>。遊戲客戶端仍需玩家 <code>/reload</code> 後重跑；離線結果不得取代 PTR Aura 顯示。</li>
+</ul>
+<h2 id="2026-08-09-wtf">2026-08-09：逐案指引、手動複製與 WTF 回灌</h2>
+<ul>
+<li><code>Debug/LiveTestSession.lua</code> 的 34 案 procedure 與 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code> 使用同一 case ID；面板必須顯示目前案例的前置條件、玩家步驟與通過證據，不只顯示難以理解的短標題。</li>
+<li>Flow／Live／Prompt 匯出 EditBox 不呼叫 <code>Copy()</code>。按鈕只執行 <code>SetFocus()</code> 與 <code>HighlightText()</code>，再提示玩家按 Ctrl+C；自動剪貼簿不屬 WoW 公開 EditBox 契約。</li>
+<li>直接複製面板內容可取得記憶體內最新報告。若讀取 WTF 內 <code>EventAlertMod.lua</code>，玩家必須先在完成測試後自行 <code>/reload</code> 或正常登出，否則磁碟內容可能落後。</li>
+<li>開發端只讀匯入統一使用 <code>Tools/Import-EAMFlowReport.ps1 -Path '&lt;使用者明確提供的檔案&gt;' -ReportType Flow|Live|UnitPower</code>；不得列舉 Account／角色目錄，也不得把本機絕對路徑寫入專案文件或報告。</li>
+<li><code>UnitPower</code> capability report 只保存 resultClass、sink accepted／rejected 與人工 visualObservation；<code>rawValuesCollected</code> 必須為 false。生命之花等非 UnitPower 狀態應在 Aura 案例驗證。</li>
+<li>2026-08-09 離線契約為 Flow <code>54/54</code> 與 Validation Contracts <code>247/247</code>；真人矩陣未因這些結果自動變成 pass。</li>
+</ul>
+<h2 id="2026-08-09svg">2026-08-09：SVG 能力探針與回灌</h2>
+<ul>
+<li>SVG 探針固定兩案：svg.vector_graphics.set_svg 與 svg.texture.set_svg。每案依序執行 set、HasSVG、file-ID 分類、clear、reload，再由玩家標記 visualObservation。</li>
+<li>strict mock 的 HasSVG／GetSVGFileID 使用 rawget，避免 ClearSVG 後 nil 欄位誤觸嚴格 __index；Flow all 保持 54 案並把 SVG 生命週期併入 boundary.safe_scalar。</li>
+<li>EAM_SVG_CAPABILITY_REPORT_JSON 列入 SavedVariables；Tools/Import-EAMFlowReport.ps1 的 ReportType SVG 重新驗證 schema、client profile、兩案 ID、interfaceRequired、clearReload 與 status。</li>
+<li>12.1 required 路徑必須兩案 accepted、HasSVG=true、fileIDClass=positive-number、clearReload=pass 且玩家目視 pass 才能成為 pass；12.0.7 為 unsupported。</li>
+<li>最新離線證據：Lua 50/50、Flow 54/54、Validation Contracts 247/247。報告仍需 PTR 玩家操作與目視，不自動操作 WoW。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

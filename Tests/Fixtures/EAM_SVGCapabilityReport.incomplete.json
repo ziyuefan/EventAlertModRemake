@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "type": "EAM_SVG_CAPABILITY_REPORT",
+  "purpose": "capability-probe",
+  "status": "active",
+  "rawFileIDsCollected": false,
+  "asset": {
+    "relativePath": "Media/SVG/eam-svg-probe.svg",
+    "externalReferences": false,
+    "packagedAssetRequired": true
+  },
+  "session": {
+    "active": true,
+    "startedAtSessionMs": 0,
+    "visualObservation": "pending"
+  },
+  "environment": {
+    "product": "wow_retail",
+    "executionSource": "offline-mock",
+    "clientChannel": "OFFLINE",
+    "declaredInstallation": "offline",
+    "declaredInstallationEvidence": "harness",
+    "patch": "12.1.0",
+    "build": "offline-mock",
+    "interface": 120100,
+    "source": "offline-mock",
+    "channelValidation": "pass"
+  },
+  "automation": {
+    "playerOperated": true,
+    "gameInputAutomated": false
+  },
+  "capabilities": {
+    "createVectorGraphics": true,
+    "vectorSetSVG": true,
+    "vectorClearSVG": true,
+    "vectorHasSVG": true,
+    "vectorGetSVGFileID": true,
+    "textureSetSVG": true,
+    "textureClearSVG": true,
+    "textureHasSVG": true,
+    "textureGetSVGFileID": true,
+    "interfaceRequired": true
+  },
+  "cases": [
+    {
+      "id": "svg.vector_graphics.set_svg",
+      "kind": "vector",
+      "apiAvailable": true,
+      "setResult": "accepted",
+      "hasSVG": "true",
+      "fileIDClass": "positive-number",
+      "clearReload": "pass",
+      "visualObservation": "pending"
+    },
+    {
+      "id": "svg.texture.set_svg",
+      "kind": "texture",
+      "apiAvailable": true,
+      "setResult": "accepted",
+      "hasSVG": "true",
+      "fileIDClass": "positive-number",
+      "clearReload": "pass",
+      "visualObservation": "pending"
+    }
+  ],
+  "boundaryWarnings": [
+    "synthetic contract only",
+    "humanVisualConfirmationRequired:svg.vector_graphics.set_svg",
+    "humanVisualConfirmationRequired:svg.texture.set_svg"
+  ]
+}

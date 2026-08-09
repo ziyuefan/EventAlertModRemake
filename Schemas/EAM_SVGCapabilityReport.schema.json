@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ziyuefan.github.io/EventAlertModRemake/schemas/eam-svg-capability-report-v1.json",
+  "title": "EventAlertMod SVG Capability Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "type",
+    "purpose",
+    "status",
+    "rawFileIDsCollected",
+    "asset",
+    "session",
+    "environment",
+    "automation",
+    "capabilities",
+    "cases",
+    "boundaryWarnings"
+  ],
+  "$defs": {
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "apiAvailable",
+        "setResult",
+        "hasSVG",
+        "fileIDClass",
+        "clearReload",
+        "visualObservation"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "enum": ["vector", "texture"] },
+        "apiAvailable": { "type": "boolean" },
+        "setResult": { "enum": ["pending", "unsupported", "accepted", "rejected", "error"] },
+        "hasSVG": { "enum": ["pending", "unavailable", "true", "false", "error"] },
+        "fileIDClass": { "enum": ["pending", "unavailable", "positive-number", "zero", "inaccessible", "error"] },
+        "clearReload": { "enum": ["pending", "unavailable", "pass", "fail"] },
+        "visualObservation": { "enum": ["pending", "pass", "fail", "blocked"] }
+      }
+    }
+  },
+  "properties": {
+    "schema": { "const": 1 },
+    "type": { "const": "EAM_SVG_CAPABILITY_REPORT" },
+    "purpose": { "const": "capability-probe" },
+    "status": { "enum": ["active", "incomplete", "pass", "fail", "blocked", "unsupported"] },
+    "rawFileIDsCollected": { "const": false },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePath", "externalReferences", "packagedAssetRequired"],
+      "properties": {
+        "relativePath": { "const": "Media/SVG/eam-svg-probe.svg" },
+        "externalReferences": { "const": false },
+        "packagedAssetRequired": { "const": true }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active", "startedAtSessionMs", "visualObservation"],
+      "properties": {
+        "active": { "type": "boolean" },
+        "startedAtSessionMs": { "type": "number", "minimum": 0 },
+        "stoppedAtSessionMs": { "type": "number", "minimum": 0 },
+        "visualObservation": { "enum": ["pending", "pass", "fail", "blocked"] }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "product",
+        "executionSource",
+        "clientChannel",
+        "declaredInstallation",
+        "declaredInstallationEvidence",
+        "patch",
+        "build",
+        "interface",
+        "source",
+        "channelValidation"
+      ],
+      "properties": {
+        "product": { "const": "wow_retail" },
+        "executionSource": { "enum": ["client", "offline-mock"] },
+        "clientChannel": { "enum": ["PTR", "XPTR", "RETAIL", "OFFLINE", "UNCONFIRMED"] },
+        "declaredInstallation": { "enum": ["_ptr_", "_xptr_", "_retail_", "offline", "unconfirmed"] },
+        "declaredInstallationEvidence": { "enum": ["user-asserted", "harness", "none"] },
+        "patch": { "type": "string" },
+        "build": { "type": ["string", "number"] },
+        "interface": { "type": "integer" },
+        "source": { "type": "string" },
+        "channelValidation": { "enum": ["pass", "mismatch", "unconfirmed"] }
+      }
+    },
+    "automation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["playerOperated", "gameInputAutomated"],
+      "properties": {
+        "playerOperated": { "const": true },
+        "gameInputAutomated": { "const": false }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "createVectorGraphics",
+        "vectorSetSVG",
+        "vectorClearSVG",
+        "vectorHasSVG",
+        "vectorGetSVGFileID",
+        "textureSetSVG",
+        "textureClearSVG",
+        "textureHasSVG",
+        "textureGetSVGFileID",
+        "interfaceRequired"
+      ],
+      "properties": {
+        "createVectorGraphics": { "type": "boolean" },
+        "vectorSetSVG": { "type": "boolean" },
+        "vectorClearSVG": { "type": "boolean" },
+        "vectorHasSVG": { "type": "boolean" },
+        "vectorGetSVGFileID": { "type": "boolean" },
+        "textureSetSVG": { "type": "boolean" },
+        "textureClearSVG": { "type": "boolean" },
+        "textureHasSVG": { "type": "boolean" },
+        "textureGetSVGFileID": { "type": "boolean" },
+        "interfaceRequired": { "type": "boolean" }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/case" },
+            {
+              "properties": {
+                "id": { "const": "svg.vector_graphics.set_svg" },
+                "kind": { "const": "vector" }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/case" },
+            {
+              "properties": {
+                "id": { "const": "svg.texture.set_svg" },
+                "kind": { "const": "texture" }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    },
+    "boundaryWarnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "pass" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "session": {
+            "required": ["stoppedAtSessionMs"],
+            "properties": {
+              "active": { "const": false },
+              "visualObservation": { "const": "pass" }
+            }
+          },
+          "environment": {
+            "properties": {
+              "executionSource": { "const": "client" },
+              "declaredInstallationEvidence": { "const": "user-asserted" },
+              "channelValidation": { "const": "pass" }
+            }
+          },
+          "capabilities": {
+            "properties": {
+              "interfaceRequired": { "const": true },
+              "createVectorGraphics": { "const": true },
+              "vectorSetSVG": { "const": true },
+              "textureSetSVG": { "const": true }
+            }
+          },
+          "cases": {
+            "items": {
+              "properties": {
+                "apiAvailable": { "const": true },
+                "setResult": { "const": "accepted" },
+                "hasSVG": { "const": "true" },
+                "fileIDClass": { "const": "positive-number" },
+                "clearReload": { "const": "pass" },
+                "visualObservation": { "const": "pass" }
+              }
+            }
+          },
+          "boundaryWarnings": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "unsupported" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "capabilities": {
+            "properties": { "interfaceRequired": { "const": false } }
+          }
+        }
+      }
+    }
+  ]
+}

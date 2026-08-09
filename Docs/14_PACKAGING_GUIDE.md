@@ -113,3 +113,10 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -De
 - 若 TOC `## Version` 與當日日期不一致，壓縮工具會停止。
 - 發布前仍需依`Docs/06_TEST_PLAN_RETAIL.md`做正式服實機測試。
 - 封裝 gate 通過仍只代表離線契約，不能取代 `_ptr_`／`_xptr_` 真人矩陣。
+
+## SVG 素材封裝契約
+
+- 正式副檔名白名單必須包含 .svg；否則本機符號連結可顯示、GitHub Release ZIP 卻會靜默缺素材。
+- Alpha 3 封裝至少必須含 Media/SVG/eam-svg-probe.svg，並繼續排除 Tests、TestResults、Tools、backup 與本機 deploy。
+- Validation Contracts 會同時斷言 SVG 檔是自包含靜態素材、無 script／href／data URI，且 Build-CurseForgePackage.ps1 白名單包含 .svg。
+- Release ZIP 建立後仍須列出壓縮內容確認 SVG 條目存在；本機 deploy 資料夾不得提交或重複打包。

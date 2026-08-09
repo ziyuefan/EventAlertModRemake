@@ -11,6 +11,7 @@ Module: Core/Util
 - 提供 table.create/table.freeze/table.isfrozen fallback。
 - 提供 acquireTable/releaseTable，並在 fallback 完成後 freeze EAM.API。
 - 提供 secret/protected value 的集中安全讀取 adapter。
+- 提供 EditBox 手動複製前的聚焦／全選能力檢測，不宣稱可寫入系統剪貼簿。
 
 資料所有權:
 - 擁有工具函式與 helper-local 行為。
@@ -145,6 +146,24 @@ end
 
 function Util.isSafeBoolean(value)
     return Util.isSafeValue(value) and type(value) == "boolean"
+end
+
+function Util.prepareEditBoxManualCopy(editBox)
+    if editBox == nil
+        or type(editBox.SetFocus) ~= "function"
+        or type(editBox.HighlightText) ~= "function"
+    then
+        return false, "selectionAPIUnavailable"
+    end
+    local focusOK = pcall(editBox.SetFocus, editBox)
+    if not focusOK then
+        return false, "focusFailed"
+    end
+    local highlightOK = pcall(editBox.HighlightText, editBox)
+    if not highlightOK then
+        return false, "highlightFailed"
+    end
+    return true, "manualCopyRequired"
 end
 
 function Util.isSafeTableKey(value)

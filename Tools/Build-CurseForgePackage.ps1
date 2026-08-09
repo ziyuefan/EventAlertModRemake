@@ -172,7 +172,7 @@ function Copy-DirectoryToPackage {
         return
     }
 
-    $allowedExtensions = @(".lua", ".xml", ".tga", ".blp", ".mp3", ".wav", ".ogg", ".png", ".txt", ".md")
+    $allowedExtensions = @(".lua", ".xml", ".tga", ".blp", ".mp3", ".wav", ".ogg", ".png", ".svg", ".txt", ".md")
 
     New-Item -ItemType Directory -Path $Destination -Force | Out-Null
     Get-ChildItem -LiteralPath $Source -Recurse -File | ForEach-Object {

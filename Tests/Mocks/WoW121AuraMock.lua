@@ -23,6 +23,7 @@ local Mock = {
     macroActions = {},
     macroSpells = {},
     macroItems = {},
+    macroIDsByName = {},
     itemIDsByLink = {},
     secretTables = {},
     secretValues = {},
@@ -30,6 +31,17 @@ local Mock = {
     lastMenuCandidate = nil,
     trace = {},
 }
+
+local restrictedTooltip = setmetatable({}, {
+    __index = function()
+        Mock.trace.restrictedTooltipAccesses = Mock.trace.restrictedTooltipAccesses + 1
+        error("restricted AuraButtonTooltip read")
+    end,
+    __newindex = function()
+        Mock.trace.restrictedTooltipAccesses = Mock.trace.restrictedTooltipAccesses + 1
+        error("restricted AuraButtonTooltip write")
+    end,
+})
 
 local function resetTrace()
     Mock.trace = {
@@ -48,7 +60,11 @@ local function resetTrace()
         tooltipPostCallRegistrations = 0,
         tooltipEmits = 0,
         tooltipLines = 0,
+        rendererTooltipOwnerCalls = 0,
+        rendererTooltipSpellCalls = 0,
+        rendererTooltipItemCalls = 0,
         secretTooltipReads = 0,
+        restrictedTooltipAccesses = 0,
         secretScalarOperations = 0,
         secretKeyTableOperations = 0,
         menuOpens = 0,
@@ -72,6 +88,9 @@ local function resetTrace()
         unitPowerMaxReads = 0,
         unitPowerPercentReads = 0,
         nativePowerSinkWrites = 0,
+        svgVectorCreates = 0,
+        svgSetCalls = 0,
+        svgClearCalls = 0,
         gameplayAutomationCalls = 0,
     }
 end
@@ -94,10 +113,35 @@ end
 local regionMethods = {}
 local regionMethodNames = {
     "SetAllPoints", "SetTexCoord",
-    "SetText", "ClearText", "Show", "Hide", "SetEnabled", "SetMouseMotionEnabled",
+    "SetText", "ClearText", "SetEnabled", "SetMouseMotionEnabled",
     "SetColorTexture", "SetRadialProgressBarStartOffset", "SetRadialProgressBarEndOffset",
     "SetRadialProgressBarFeather",
 }
+
+function regionMethods:SetTexture(value)
+    assertInitializationOpen(self)
+    self.texture = value
+end
+
+function regionMethods:SetBlendMode(value)
+    assertInitializationOpen(self)
+    self.blendMode = value
+end
+
+function regionMethods:SetVertexColor(red, green, blue, alpha)
+    assertInitializationOpen(self)
+    self.vertexColor = { red, green, blue, alpha }
+end
+
+function regionMethods:Show()
+    assertInitializationOpen(self)
+    self.shown = true
+end
+
+function regionMethods:Hide()
+    assertInitializationOpen(self)
+    self.shown = false
+end
 for index = 1, #regionMethodNames do
     regionMethods[regionMethodNames[index]] = regionNoOperation
 end
@@ -163,10 +207,32 @@ function regionMethods:SetRadialProgressBarPercent(value)
     Mock.trace.nativePowerSinkWrites = Mock.trace.nativePowerSinkWrites + 1
 end
 
+function regionMethods:SetSVG(asset)
+    assertInitializationOpen(self)
+    self.svgAsset = asset
+    Mock.trace.svgSetCalls = Mock.trace.svgSetCalls + 1
+    return true
+end
+
+function regionMethods:ClearSVG()
+    assertInitializationOpen(self)
+    self.svgAsset = nil
+    Mock.trace.svgClearCalls = Mock.trace.svgClearCalls + 1
+end
+
+function regionMethods:HasSVG()
+    return rawget(self, "svgAsset") ~= nil
+end
+
+function regionMethods:GetSVGFileID()
+    return rawget(self, "svgAsset") and 700001 or 0
+end
+
 local function createRegion(owner, regionType)
     return setmetatable({
         _eamOwner = owner,
         regionType = regionType,
+        shown = true,
     }, {
         __index = function(_, key)
             local method = regionMethods[key]
@@ -427,6 +493,7 @@ local function createGenericFrame(frameType, frameName)
         text = "",
         frameType = frameType or "Frame",
         frameName = frameName,
+        timerBinding = false,
     }
 
     function frame:SetScript(name, callback)
@@ -447,6 +514,11 @@ local function createGenericFrame(frameType, frameName)
 
     function frame:CreateTexture()
         return createRegion(nil, "Texture")
+    end
+
+    function frame:CreateVectorGraphics()
+        Mock.trace.svgVectorCreates = Mock.trace.svgVectorCreates + 1
+        return createRegion(nil, "VectorGraphics")
     end
 
     function frame:CreateFontString()
@@ -554,8 +626,30 @@ local function createGameTooltip()
         lines = {},
         processingInfo = nil,
         currentType = nil,
+        owner = nil,
+        anchor = nil,
+        lastSpellID = nil,
+        lastItemID = nil,
     }
 
+
+    function tooltip:SetOwner(owner, anchor)
+        self.owner = owner
+        self.anchor = anchor
+        Mock.trace.rendererTooltipOwnerCalls = Mock.trace.rendererTooltipOwnerCalls + 1
+    end
+
+    function tooltip:SetSpellByID(spellID)
+        self.lastSpellID = spellID
+        self.lastItemID = nil
+        Mock.trace.rendererTooltipSpellCalls = Mock.trace.rendererTooltipSpellCalls + 1
+    end
+
+    function tooltip:SetItemByID(itemID)
+        self.lastItemID = itemID
+        self.lastSpellID = nil
+        Mock.trace.rendererTooltipItemCalls = Mock.trace.rendererTooltipItemCalls + 1
+    end
     function tooltip:AddDoubleLine(leftText, rightText)
         self.lines[#self.lines + 1] = {
             kind = "double",
@@ -610,6 +704,7 @@ function Mock.install(interfaceVersion)
     Mock.macroActions = {}
     Mock.macroSpells = {}
     Mock.macroItems = {}
+    Mock.macroIDsByName = {}
     Mock.itemIDsByLink = {}
     Mock.secretTables = {}
     Mock.secretValues = {}
@@ -650,14 +745,21 @@ function Mock.install(interfaceVersion)
     IsMetaKeyDown = function()
         return Mock.metaDown
     end
-    GetBuildInfo = function()
+    C_AddOns = C_AddOns or {}
+    C_AddOns.GetAddOnMetadata = function(_, field)
+        if field == "Version" then
+            return "EventAlertMod_MN_test"
+        end
+        return nil
+    end    GetBuildInfo = function()
         if Mock.interface >= 120100 then
             return "12.1.0", "mock-68914", "2026-07-26", Mock.interface
         end
         return "12.0.7", "mock-68887", "2026-07-26", Mock.interface
     end
+    -- PTR 69189 的真實 raw flags 是 publicTest=true、testBuild=false、beta=false。
     IsTestBuild = function()
-        return true
+        return false
     end
     IsPublicTestClient = function()
         return true
@@ -885,18 +987,27 @@ function Mock.install(interfaceVersion)
         if not action then
             return nil
         end
-        return "macro", action.macroID, nil
+        return "macro", action.actionID, action.subType
     end
-    GetMacroSpell = function(macroID)
-        return Mock.macroSpells[macroID]
+    GetMacroIndexByName = function(macroName)
+        return Mock.macroIDsByName[macroName] or 0
     end
-    GetMacroItem = function(macroID)
-        local item = Mock.macroItems[macroID]
+    GetMacroSpell = function(macroReference)
+        return Mock.macroSpells[macroReference]
+    end
+    GetMacroItem = function(macroReference)
+        local item = Mock.macroItems[macroReference]
         if not item then
             return nil, nil
         end
         return item.name, item.link
     end
+    C_ActionBar = {
+        GetActionText = function(slot)
+            local action = Mock.macroActions[slot]
+            return action and action.macroName or nil
+        end,
+    }
     C_Item = C_Item or {}
     C_Item.GetItemInfoInstant = function(itemLink)
         return Mock.itemIDsByLink[itemLink]
@@ -970,25 +1081,37 @@ function Mock.setModifiers(controlDown, altDown, shiftDown, metaDown)
 end
 
 function Mock.setMacroAction(slot, macroID, spellID, itemID)
+    local macroName = "Mock Macro " .. tostring(macroID)
+    local actionID = spellID or itemID or macroID
+    local subType = spellID and "spell" or (itemID and "item" or nil)
     Mock.macroActions[slot] = {
         macroID = macroID,
+        macroName = macroName,
+        actionID = actionID,
+        subType = subType,
     }
+    Mock.macroIDsByName[macroName] = macroID
     Mock.macroSpells[macroID] = spellID
+    Mock.macroSpells[macroName] = spellID
     if itemID then
         local link = "item:" .. tostring(itemID)
-        Mock.macroItems[macroID] = {
+        local item = {
             name = "Mock Item " .. tostring(itemID),
             link = link,
         }
+        Mock.macroItems[macroID] = item
+        Mock.macroItems[macroName] = item
         Mock.itemIDsByLink[link] = itemID
     else
         Mock.macroItems[macroID] = nil
+        Mock.macroItems[macroName] = nil
     end
 end
 
-function Mock.setSecretMacroAction(slot, macroID)
+function Mock.setSecretMacroAction(slot, actionID)
     Mock.macroActions[slot] = {
-        macroID = macroID,
+        actionID = actionID,
+        subType = nil,
     }
 end
 
@@ -1005,6 +1128,21 @@ function Mock.emitTooltip(typeName, data, processingInfo)
         callbacks[index](GameTooltip, data)
     end
     return GameTooltip
+end
+
+function Mock.emitRestrictedTooltip(typeName, data)
+    local tooltipType = Enum.TooltipDataType[typeName]
+    assert(tooltipType ~= nil, "unknown tooltip type: " .. tostring(typeName))
+    GameTooltip.lines = {}
+    GameTooltip.processingInfo = nil
+    GameTooltip.currentType = nil
+    GameTooltip.shown = false
+    Mock.trace.tooltipEmits = Mock.trace.tooltipEmits + 1
+    local callbacks = Mock.tooltipPostCalls[tooltipType] or {}
+    for index = 1, #callbacks do
+        callbacks[index](restrictedTooltip, data)
+    end
+    return restrictedTooltip
 end
 
 function Mock.setTooltipType(typeName)
@@ -1055,6 +1193,7 @@ function Mock.resetTooltipScenario()
     Mock.macroActions = {}
     Mock.macroSpells = {}
     Mock.macroItems = {}
+    Mock.macroIDsByName = {}
     Mock.itemIDsByLink = {}
     Mock.lastMenuCandidate = nil
     if GameTooltip then
@@ -1062,6 +1201,10 @@ function Mock.resetTooltipScenario()
         GameTooltip.processingInfo = nil
         GameTooltip.currentType = nil
         GameTooltip.shown = false
+        GameTooltip.owner = nil
+        GameTooltip.anchor = nil
+        GameTooltip.lastSpellID = nil
+        GameTooltip.lastItemID = nil
     end
 end
 
@@ -1069,6 +1212,16 @@ function Mock.setTooltipShown(value)
     GameTooltip.shown = value == true
 end
 
+
+function Mock.getGameTooltipState()
+    return {
+        shown = GameTooltip.shown == true,
+        owner = GameTooltip.owner,
+        anchor = GameTooltip.anchor,
+        lastSpellID = GameTooltip.lastSpellID,
+        lastItemID = GameTooltip.lastItemID,
+    }
+end
 function Mock.getTooltipLines()
     return GameTooltip.lines
 end

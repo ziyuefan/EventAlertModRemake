@@ -507,3 +507,24 @@ Native 模式與 `AlertManager`／一般 `Renderer` 的契約是「零 Aura stat
 | `UI/TooltipMonitorMenu` | 服務提供的純 scalar candidate | 游標旁 EAM 自有視窗、監控類型按鈕、Aura／未解析 Macro 手動 ID | 直接寫 EAM_DB、secure action attribute、戰鬥中建立或顯示、保存 Blizzard frame |
 
 Tooltip callback 的責任只到「追加文字與更新 candidate」，不可直接開啟 UI；戰鬥中只可追加安全文字，不可更新 candidate。儲存路由固定如下：Spell → spell cooldown；Item → item cooldown；Aura → 使用者選 player／target；Macro → 只提供已安全解析的 spell/item，未解析時由使用者輸入 ID 並選類型。EAM 自有按鈕透過其 `OnClick` script 提交；只有 `added`／`updated` 由正式 `Options.notifyConfigChanged()` 統一刷新五個下游，`unchanged` 不刷新。
+
+## 2026-08-09：About、監控 Tooltip 與分類邊框契約
+
+| 模組 | 輸入 | 輸出 | 禁止 |
+| --- | --- | --- | --- |
+| `UI/AlertBorderStyles` | EAM 自有 alert type、靜態 `unit`、靜態 `auraFilter` | 七種固定 style key／RGBA；`classPower`、`totem` 回傳 nil | 讀取 UnitAura／AuraData、以 Secret 值作 table key、冒充 Blizzard dispel border |
+| `UI/IconPool` | Renderer 提供的 alert state | 一般圖示分類邊框；脫戰 Spell／Item Tooltip | 把 `powerType`／totem slot 當 spellID、戰鬥中打開 Tooltip、鉤 Blizzard frame |
+| `UI/NativeAuraRenderer` | compiler snapshot 的 `unit` 與 `filterString` | AuraButton 初始化期建立分類邊框；Tooltip 仍由 Blizzard AuraButton 管理 | `initializeFrame` 後新增或重排 Region |
+| `UI/AboutPanel` | TOC metadata、GetBuildInfo、ValidationEnvironment 安全快照、Constants | EAM 版本、實際客戶端、API baseline、作者與專案 URL | 把靜態 API baseline 冒充目前客戶端 build、戰鬥中首次建立 frame |
+
+固定分類為：自身 BUFF 青色、自身 DEBUFF 紅色、目標 BUFF 藍色、目標 DEBUFF 橘色、技能黃色、物品綠色、地面效果紫色。Aura 顏色只使用 SavedVariables／compiler 已知的 `unit` 與 `auraFilter`，不讀實際 Aura payload；`classPower` 與 `totem` 保留原有外觀。一般 Renderer 的監控 Tooltip 只在非戰鬥中顯示，Native AuraButton 則沿用 Blizzard Tooltip 與戰鬥隱藏契約。
+
+## 2026-08-09：SVG 探針與 3px 邊框契約
+
+| 模組 | 輸入 | 輸出 | 禁止 |
+| --- | --- | --- | --- |
+| UI/AlertBorderStyles | EAM 自有圖示 owner 與固定 3px padding | TOPLEFT -3/+3、BOTTOMRIGHT +3/-3 的完整外框 | 再使用含透明留白素材推估可見厚度 |
+| Debug/SVGCapabilityProbe | 玩家宣告 client、固定內建 SVG、兩案目視結果 | VectorGraphics／Texture A/B 生命週期與分類 JSON | 自動操作遊戲、輸出 raw file ID、把離線 mock 當 PTR pass |
+| Tools/Import-EAMFlowReport.ps1 | 明確提供的 JSON 或遊戲持久化報告 | schema、client identity、兩案 ID、interfaceRequired 與 status 重算 | 列舉私人目錄、信任報告自稱的 pass |
+
+VectorGraphics 是 Region 能力，不等同 Texture；Texture 的 texcoord、rotation、mask 或 blend 能力不可直接假定在 VectorGraphics 存在。主法術／物品／Aura 圖示仍是動態 FileDataID，不改為 SVG。第一優先候選是 Pandemic 靜態提示區；Dispel CustomAsset／PreserveAsset 必須先補完整 asset map 或預載契約，不能把空 Texture 當已完成。
