@@ -35,6 +35,7 @@ local api = EAM.API
 local Util = EAM.Util
 local AuraStatePool
 local SpellInfoService = EAM.Services and EAM.Services.SpellInfoService
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 
 local AuraService = {
     states = {},
@@ -136,6 +137,27 @@ local function clearUnitCache(unit)
     wipe(cache.spellCounts)
 end
 
+local function moduleEnabled(unit)
+    return not ModuleController or ModuleController.isAuraUnitEnabled(unit)
+end
+
+function AuraService.clearUnit(unit, eventName)
+    clearUnitCache(unit)
+    local router = EAM.Modules.EventRouter
+    for alertID, state in pairs(AuraService.states) do
+        if state.unit == unit then
+            state.shown = false
+            AuraService.states[alertID] = nil
+            if router then
+                local frameName = unit == "target"
+                    and EAM.Constants.ALERT_FRAME_TYPES.targetAura
+                    or EAM.Constants.ALERT_FRAME_TYPES.selfAura
+                router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
+            end
+        end
+    end
+end
+
 local function indexAlert(list, unit)
     if type(list) ~= "table" then
         return
@@ -162,9 +184,15 @@ local function ensureAlertIndex()
 
     wipe(AuraService.alertIndex.player)
     wipe(AuraService.alertIndex.target)
-    if EAM.db and EAM.db.alerts then
-        indexAlert(EAM.db.alerts.playerAuras, "player")
-        indexAlert(EAM.db.alerts.targetAuras, "target")
+    local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+    local alerts = savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts() or nil
+    if alerts then
+        if moduleEnabled("player") then
+            indexAlert(alerts.playerAuras, "player")
+        end
+        if moduleEnabled("target") then
+            indexAlert(alerts.targetAuras, "target")
+        end
     end
     AuraService.indexedRevision = revision
 end
@@ -533,17 +561,22 @@ function AuraService.onRegenEnabled()
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "onRegenEnabled", "Player out of combat, clearing native blocked lists and caches.")
     end
-    
-    -- 🧹 脫戰徹底清空阻擋名單，預防戰鬥結束後 auraInstanceID 重隨機導致的錯位！
-    if api.C_UnitAuras and api.C_UnitAuras.ClearBlockedAuras then
-        api.C_UnitAuras.ClearBlockedAuras("player")
-        api.C_UnitAuras.ClearBlockedAuras("target")
+
+    local clearBlocked = api.C_UnitAuras and api.C_UnitAuras.ClearBlockedAuras
+    if moduleEnabled("player") then
+        if clearBlocked then
+            clearBlocked("player")
+        end
+        clearUnitCache("player")
+        AuraService.refreshUnit("player", "PLAYER_REGEN_ENABLED")
     end
-    
-    clearUnitCache("player")
-    clearUnitCache("target")
-    AuraService.refreshUnit("player", "PLAYER_REGEN_ENABLED")
-    AuraService.refreshUnit("target", "PLAYER_REGEN_ENABLED")
+    if moduleEnabled("target") then
+        if clearBlocked then
+            clearBlocked("target")
+        end
+        clearUnitCache("target")
+        AuraService.refreshUnit("target", "PLAYER_REGEN_ENABLED")
+    end
 end
 
 function AuraService.initialize()
@@ -569,11 +602,15 @@ function AuraService.initialize()
 end
 
 function AuraService.refreshUnit(unit, eventName)
+    if not moduleEnabled(unit) then
+        return false, "moduleDisabled"
+    end
     local capability = EAM.Services.AuraCapabilityService
     if capability and not capability.isLegacy() then
         return false, "legacyBackendDisabled"
     end
-    if not EAM.db or not EAM.db.alerts then
+    local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+    if not EAM.db or not savedVariables or not savedVariables.getActiveAlerts() then
         return
     end
     fullScanUnit(unit, eventName or "manual")
@@ -589,6 +626,9 @@ function AuraService.onUnitAura(_, unit, updateInfo)
     end
     if unit ~= "player" and unit ~= "target" then
         return
+    end
+    if not moduleEnabled(unit) then
+        return false, "moduleDisabled"
     end
 
     local cUnitAuras = api.C_UnitAuras
@@ -632,6 +672,19 @@ function AuraService.onUnitAura(_, unit, updateInfo)
 end
 
 function AuraService.onTargetChanged()
+    if not moduleEnabled("target") then
+        AuraService.clearUnit("target", "MODULE_DISABLED")
+        return false, "moduleDisabled"
+    end
     clearUnitCache("target")
     AuraService.refreshUnit("target", "PLAYER_TARGET_CHANGED")
+end
+
+function AuraService.onModuleToggle(enabled, unit, reason)
+    AuraService.indexedRevision = nil
+    if enabled == false then
+        AuraService.clearUnit(unit, "MODULE_DISABLED")
+        return true, "disabled"
+    end
+    return AuraService.refreshUnit(unit, "MODULE_ENABLED_" .. tostring(reason or unit))
 end

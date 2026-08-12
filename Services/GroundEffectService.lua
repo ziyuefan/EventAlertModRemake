@@ -18,6 +18,7 @@ local _, EAM = ...
 local api = EAM.API
 local Util = EAM.Util
 local DurationAdapter = EAM.Modules.DurationAdapter
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 local Scheduler = nil
 
 local GroundEffectService = {
@@ -39,6 +40,11 @@ local GroundEffectService = {
 }
 
 EAM.Services.GroundEffectService = GroundEffectService
+
+local function moduleEnabled()
+    return not ModuleController
+        or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.groundEffect)
+end
 
 local GroundEffectStatePool = {
     recycleBin = {},
@@ -186,7 +192,10 @@ end
 local function compileAlerts()
     wipe(GroundEffectService.alertsBySpellID)
     GroundEffectService.compiledAlertCount = 0
-    local list = EAM.db and EAM.db.alerts and EAM.db.alerts.groundEffects
+    local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+    local alerts = savedVariables and savedVariables.getActiveAlerts
+        and savedVariables.getActiveAlerts() or nil
+    local list = alerts and alerts.groundEffects
     if type(list) == "table" and Util.canAccessTable(list) then
         for _, alert in pairs(list) do
             local spellID = type(alert) == "table" and alert.spellID or nil
@@ -224,6 +233,9 @@ local function resolveAlertDuration(spellID, alert)
 end
 
 function GroundEffectService.refreshDurationCache()
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if inCombat() then
         GroundEffectService.pendingResolve = true
         return false, "combatDeferred"
@@ -249,6 +261,9 @@ function GroundEffectService.refreshDurationCache()
 end
 
 function GroundEffectService.scrapeDuration(spellID)
+    if not moduleEnabled() then
+        return nil, nil, "moduleDisabled"
+    end
     if not safeSpellID(spellID) then
         return nil, nil, "invalidSpellID"
     end
@@ -309,6 +324,9 @@ local function readSpellPresentation(spellID, alert)
 end
 
 local function triggerGroundEffect(spellID)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if not safeSpellID(spellID) then
         return false, "invalidSpellID"
     end
@@ -372,6 +390,9 @@ end
 GroundEffectService.triggerGroundEffect = triggerGroundEffect
 
 function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spellID)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" or not safeSpellID(spellID) then
         return
     end
@@ -380,10 +401,16 @@ end
 
 function GroundEffectService.onConfigChanged()
     compileAlerts()
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     return GroundEffectService.refreshDurationCache()
 end
 
 function GroundEffectService.onCombatEnd()
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if GroundEffectService.pendingResolve then
         return GroundEffectService.refreshDurationCache()
     end
@@ -394,7 +421,9 @@ function GroundEffectService.initialize()
     Scheduler = EAM.Modules.Scheduler
     GroundEffectStatePool.initialize()
     local savedVariables = EAM.Modules.SavedVariables
-    local list = EAM.db and EAM.db.alerts and EAM.db.alerts.groundEffects
+    local alerts = savedVariables and savedVariables.getActiveAlerts
+        and savedVariables.getActiveAlerts() or nil
+    local list = alerts and alerts.groundEffects
     if savedVariables and list then
         for spellID, definition in pairs(GroundEffectService.defaults) do
             local id = savedVariables.buildAlertID(EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player", spellID)
@@ -404,7 +433,9 @@ function GroundEffectService.initialize()
         end
     end
     compileAlerts()
-    GroundEffectService.refreshDurationCache()
+    if moduleEnabled() then
+        GroundEffectService.refreshDurationCache()
+    end
 
     local router = EAM.Modules.EventRouter
     if router then
@@ -412,6 +443,30 @@ function GroundEffectService.initialize()
         router.register("PLAYER_REGEN_ENABLED", GroundEffectService.onCombatEnd)
         router.register("EAM_GROUND_EFFECT_CONFIG_CHANGED", GroundEffectService.onConfigChanged)
     end
+end
+
+function GroundEffectService.onModuleToggle(enabled, reason)
+    compileAlerts()
+    if enabled == false then
+        local router = EAM.Modules.EventRouter
+        for spellID, state in pairs(GroundEffectService.activeStates) do
+            state.shown = false
+            GroundEffectService.activeStates[spellID] = nil
+            GroundEffectService.activeAlerts[spellID] = nil
+            if router then
+                router.fire(
+                    "EAM_GROUND_EFFECT_STATE_CHANGED",
+                    state,
+                    EAM.Constants.ALERT_FRAME_TYPES.groundEffect
+                )
+            end
+        end
+        wipe(GroundEffectService.activeAlerts)
+        wipe(GroundEffectService.durationCache)
+        GroundEffectService.pendingResolve = false
+        return true, "disabled"
+    end
+    return GroundEffectService.refreshDurationCache()
 end
 
 function GroundEffectService.getStatus()

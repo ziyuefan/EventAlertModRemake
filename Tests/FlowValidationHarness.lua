@@ -216,14 +216,23 @@ loadModule("Core/DurationAdapter.lua")
 loadModule("Core/EventRouter.lua")
 loadModule("Core/Scheduler.lua")
 loadModule("Core/SavedVariables.lua")
+loadModule("Core/ModuleController.lua")
 loadModule("Locale/Common.lua")
 loadModule("Locale/enUS.lua")
+loadModule("Locale/zhTW.lua")
+loadModule("Locale/zhCN.lua")
+loadModule("Locale/koKR.lua")
+loadModule("Locale/ruRU.lua")
 loadModule("Debug/ValidationEnvironment.lua")
 EAM.Modules.SavedVariables.initialize()
+EAM.Modules.ModuleController.initialize()
 EAM.Modules.Main = {
     initialized = true,
 }
+loadModule("UI/Theme.lua")
 loadModule("UI/TooltipMonitorMenu.lua")
+loadModule("Services/SpellInfoService.lua")
+loadModule("Services/LegacyDiscoveryService.lua")
 loadModule("Services/AuraCapabilityService.lua")
 loadModule("Managers/AuraRuleCompiler.lua")
 loadModule("UI/TextPlacement.lua")
@@ -241,6 +250,7 @@ loadModule("Services/TotemService.lua")
 loadModule("Services/ClassPowerService.lua")
 loadModule("Services/TooltipMonitorService.lua")
 loadModule("UI/AboutPanel.lua")
+loadModule("UI/ModulePanel.lua")
 loadModule("UI/Options.lua")
 if flowMock then
     local notifyConfigChanged = EAM.UI.Options.notifyConfigChanged
@@ -250,6 +260,7 @@ if flowMock then
     end
 end
 EAM.UI.TooltipMonitorMenu.initialize()
+EAM.Services.LegacyDiscoveryService.initialize()
 EAM.Services.AuraCapabilityService.initialize()
 EAM.Services.AuraService.initialize()
 EAM.Services.AuraContainerService.initialize()

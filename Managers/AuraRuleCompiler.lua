@@ -78,9 +78,22 @@ local function normalizeDispelStyle(value)
     return nil
 end
 
+local function normalizePriority(value)
+    local numberValue = tonumber(value)
+    if not numberValue or numberValue < 1 then
+        return 10
+    end
+    if numberValue > 20 then
+        return 20
+    end
+    return math.floor(numberValue)
+end
+
 local function collectAlerts(db)
     local records = {}
-    local alerts = db and db.alerts
+    local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+    local alerts = savedVariables and savedVariables.getActiveAlerts
+        and savedVariables.getActiveAlerts(db) or (db and db.alerts)
     if type(alerts) ~= "table" then
         return records
     end
@@ -98,6 +111,7 @@ local function collectAlerts(db)
                         unit = unit,
                         spellID = spellID,
                         fromPlayer = alert.fromPlayer == true,
+                        priority = normalizePriority(alert.priority),
                         auraFilter = Util.isSafeString(alert.auraFilter) and alert.auraFilter or nil,
                         showStacks = alert.showStacks ~= false,
                         showName = alert.showName ~= false,
@@ -114,10 +128,18 @@ local function collectAlerts(db)
         end
     end
 
-    collectUnit(alerts.playerAuras, "player")
-    collectUnit(alerts.targetAuras, "target")
+    local moduleController = EAM.Modules and EAM.Modules.ModuleController
+    if not moduleController or moduleController.isAuraUnitEnabled("player") then
+        collectUnit(alerts.playerAuras, "player")
+    end
+    if not moduleController or moduleController.isAuraUnitEnabled("target") then
+        collectUnit(alerts.targetAuras, "target")
+    end
     table.sort(records, function(left, right)
         if left.unit == right.unit then
+            if left.priority ~= right.priority then
+                return left.priority > right.priority
+            end
             if left.spellID == right.spellID then
                 return left.alertID < right.alertID
             end
@@ -141,10 +163,11 @@ local function resolveFilter(record, rule)
     return filter, filter
 end
 
-local function buildBaseRule(record, capability, defaultSound)
+local function buildBaseRule(record, capability, defaultSound, soundEnabled)
     local stableID = sanitizeKey(record.alertID)
     local rule = {
         alertID = record.alertID,
+        priority = record.priority,
         unit = record.unit,
         spellID = record.spellID,
         backend = Constants.AURA_RULE_DISPLAY_UNSUPPORTED,
@@ -166,7 +189,7 @@ local function buildBaseRule(record, capability, defaultSound)
             dispelStyle = record.dispelStyle,
         },
         layout = capability.layout,
-        sound = record.sound or defaultSound,
+        sound = soundEnabled and (record.sound or defaultSound) or nil,
         limitations = {},
     }
 
@@ -179,6 +202,9 @@ local function buildBaseRule(record, capability, defaultSound)
     local backend = capability.backend or capability.selectedBackend
     if backend == Constants.AURA_BACKEND_NATIVE then
         rule.backend = Constants.AURA_RULE_NATIVE_SLOT
+        if rule.sound and (record.fromPlayer or record.auraFilter ~= nil) then
+            appendLimitation(rule, "nativeAuraSoundFilterUnsupported")
+        end
         if record.unit == "player" and polarity == "HARMFUL" then
             appendLimitation(rule, "secretIdentityFilterMayBeRejected")
         elseif record.unit == "target" and polarity == "HELPFUL" then
@@ -214,6 +240,7 @@ local function buildGroup(groupID, rules, layout)
         alertID = table.concat(alertIDs, ","),
         alertIDs = alertIDs,
         backend = Constants.AURA_RULE_NATIVE_GROUP,
+        priority = first.priority,
         unit = first.unit,
         groupKey = "EAM_GROUP_" .. sanitizeKey(groupID),
         filterString = first.filterString,
@@ -248,7 +275,7 @@ local function buildLayout(db)
     }
 end
 
-local function buildFingerprint(plan)
+local function buildContainerFingerprint(plan)
     local parts = {
         tostring(plan.schemaVersion),
         tostring(plan.backend),
@@ -265,6 +292,7 @@ local function buildFingerprint(plan)
         append(parts, rule.backend)
         append(parts, rule.unit)
         append(parts, rule.slotKey or rule.groupKey or "-")
+        append(parts, tostring(rule.priority or 10))
         append(parts, rule.filterString or "-")
         append(parts, tostring(rule.style and rule.style.showStacks == true))
         append(parts, tostring(rule.style and rule.style.showName == true))
@@ -282,10 +310,20 @@ local function buildFingerprint(plan)
             end
         end
     end
+    return table.concat(parts, "|")
+end
+
+local function buildSoundFingerprint(plan)
+    local parts = {
+        tostring(plan.schemaVersion),
+        tostring(plan.backend),
+    }
     local soundKeys = { "added", "applicationsIncreased", "removed" }
     for index = 1, #plan.soundRules do
         local rule = plan.soundRules[index]
         append(parts, "sound:" .. rule.alertID)
+        append(parts, tostring(rule.unit or "-"))
+        append(parts, tostring(rule.spellID or "-"))
         for keyIndex = 1, #soundKeys do
             local config = rule.sound and rule.sound[soundKeys[keyIndex]]
             if config then
@@ -354,9 +392,10 @@ function AuraRuleCompiler.compile(db, capability)
 
     local records = collectAlerts(db)
     local defaultSound = buildDefaultSound(db)
+    local soundEnabled = db and db.config and db.config.showSound == true
     local nativeRules = {}
     for index = 1, #records do
-        local rule = buildBaseRule(records[index], capability, defaultSound)
+        local rule = buildBaseRule(records[index], capability, defaultSound, soundEnabled)
         if rule.sound then
             append(plan.soundRules, rule)
         end
@@ -412,6 +451,8 @@ function AuraRuleCompiler.compile(db, capability)
         end
     end
 
-    plan.fingerprint = buildFingerprint(plan)
+    plan.containerFingerprint = buildContainerFingerprint(plan)
+    plan.soundFingerprint = buildSoundFingerprint(plan)
+    plan.fingerprint = plan.containerFingerprint
     return plan
 end

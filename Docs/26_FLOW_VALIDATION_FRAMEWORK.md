@@ -19,7 +19,7 @@ EAM 的驗證不能停在 API 限制掃描與 `luac -p`。本框架補上可重�
 flowchart LR
     A["正式 FlowTestRunner 案例"] --> B["Lua 5.1 Offline Harness"]
     A --> C["Retail/PTR FlowTestPanel"]
-    C --> I["LiveTestPanel 34 案人工觀察"]
+    C --> I["LiveTestPanel 37 案人工觀察"]
     B --> D["JSON + Markdown"]
     C --> E["EAM_FLOW_TEST_REPORT_JSON"]
     I --> J["EAM_LIVE_TEST_REPORT_JSON"]
@@ -35,12 +35,12 @@ flowchart LR
 | `Debug/FlowTestRunner.lua` | 離線與遊戲內 | 案例註冊、suite、非同步完成、JSON 報告 | 是 |
 | `Debug/FlowTestPanel.lua` | Retail／PTR | 測試按鈕、狀態、複製報告 | 是 |
 | `Debug/ValidationEnvironment.lua` | 離線與遊戲內 | client build／Interface／宣告版本身分與三個原始 test-build 旗標交叉驗證 | 是 |
-| `Debug/LiveTestSession.lua` | Retail／PTR | 34 案人工狀態、boot-token `/reload` checkpoint、戰鬥寫入守衛、備註遮蔽與真人 JSON | 是 |
+| `Debug/LiveTestSession.lua` | Retail／PTR | 37 案人工狀態、boot-token `/reload` checkpoint、戰鬥寫入守衛、備註遮蔽與真人 JSON | 是 |
 | `Debug/LiveTestPanel.lua` | Retail／PTR | 玩家人工記錄與複製報告，不自動操作遊戲 | 是 |
 | `Tests/FlowValidationHarness.lua` | Lua 5.1 | Mock WoW API 並直接載入正式模組 | 否 |
 | `Tools/Run-FlowValidation.ps1` | 開發端 | 執行 suite，輸出 JSON／Markdown | 否 |
 | `Tools/Import-EAMFlowReport.ps1` | 開發端 | 匯入 WTF 或 JSON，驗證 Flow／Live schema、重算 summary 與 raw build flags、核對 client 身分並拒絕隱私值 | 否 |
-| `Tools/Test-ValidationContracts.ps1` | 開發端 | 驗證 JSON Schema、21 點／34 案 Lua 同步、continuity drift、PowerShell AST 與匯入器正反例 | 否 |
+| `Tools/Test-ValidationContracts.ps1` | 開發端 | 驗證 JSON Schema、21 點／37 案 Lua 同步、continuity drift、PowerShell AST 與匯入器正反例 | 否 |
 | `EAM_FLOW_TEST_REPORT_JSON` | WoW SavedVariables | 保存最後一次使用者觸發報告字串 | 僅資料 |
 | `EAM_LIVE_TEST_REPORT_JSON` | WoW SavedVariables | 保存最後一次玩家人工簽收報告字串 | 僅資料 |
 
@@ -99,7 +99,7 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - `/eam test boundary`
 - `/eam test aura121`
 - `/eam test all`
-- `/eam test live` 或 `/eam test manual`：開啟 34 案真人簽收工作台。
+- `/eam test live` 或 `/eam test manual`：開啟 37 案真人簽收工作台。
 
 能力面板提供 Quick、Core、Boundary、Aura121、All、「雙倒數診斷」、「UnitPower 能力」與「複製開發報告」按鈕；真人工作台另要求玩家選擇 `_ptr_`／`_xptr_`／`_retail_`。第一次建立面板若在戰鬥中提出，會延後至 `PLAYER_REGEN_ENABLED`；既有面板在戰鬥中也不得開始 session、寫入案例／備註、建立 checkpoint 或完成簽收。
 
@@ -229,13 +229,13 @@ powershell -NoProfile -ExecutionPolicy Bypass `
     "reloadUIAutomated": false,
     "playerOperated": true
   },
-  "summary": { "total": 34, "required": 34 },
+  "summary": { "total": 37, "required": 37 },
   "cases": [],
   "boundaryWarnings": []
 }
 ```
 
-對應 schema 位於 `Schemas/EAM_FlowValidationReport.schema.json` 與 `Schemas/EAM_LiveValidationReport.schema.json`。Live `pass` 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、34/34、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 `legacy-unverified` 並以 exit code 1 拒絕簽收。
+對應 schema 位於 `Schemas/EAM_FlowValidationReport.schema.json` 與 `Schemas/EAM_LiveValidationReport.schema.json`。Live `pass` 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、37/37、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 `legacy-unverified` 並以 exit code 1 拒絕簽收。
 
 報告只能包含測試控制值與確認安全的環境欄位；不得包含 Secret、Protected、完整 SavedVariables、無界限事件日誌、原始 Aura／Cooldown facts、帳號／角色／伺服器或檔案系統路徑。遊戲內先遮蔽，匯入器仍會遞迴檢查屬性名稱與字串值。
 
@@ -257,7 +257,7 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 1. TOC 路徑與一致性。
 2. Lua 5.1 語法。
 3. 離線 `all` 流程。
-4. JSON Schema、21 點／34 案 Lua 同步、continuity drift、TOC 與 PowerShell AST 契約。
+4. JSON Schema、21 點／37 案 Lua 同步、continuity drift、TOC 與 PowerShell AST 契約。
 5. 敏感資訊掃描。
 6. zip 排除檢查。
 
@@ -269,7 +269,7 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - `boundary.safe_scalar` 只驗證普通安全值路徑；真實 Secret 必須在遊戲內由安全 UI 通道觀察。
 - 流程面板不執行施法、物品使用、改目標或 secure action。
 - 報告不自動上傳網路；回灌必須由使用者複製 JSON 或提供 WTF 檔。
-- 12.1 AuraContainer／AuraButton 案例已納入 34 案矩陣，但仍需 PTR 實機完成。
+- 12.1 AuraContainer／AuraButton 與 AuraSound 案例已納入 37 案矩陣，但仍需 PTR 實機完成。
 - WoW 只在 `/reload`、正常登出等保存時機把記憶體內 SavedVariables 寫回 WTF；直接讀檔前必須確認玩家已完成保存。
 
 ## 2026-07-26：aura121 suite
@@ -328,12 +328,30 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - 直接複製面板內容可取得記憶體內最新報告。若讀取 WTF 內 `EventAlertMod.lua`，玩家必須先在完成測試後自行 `/reload` 或正常登出，否則磁碟內容可能落後。
 - 開發端只讀匯入統一使用 `Tools/Import-EAMFlowReport.ps1 -Path '<使用者明確提供的檔案>' -ReportType Flow|Live|UnitPower`；不得列舉 Account／角色目錄，也不得把本機絕對路徑寫入專案文件或報告。
 - `UnitPower` capability report 只保存 resultClass、sink accepted／rejected 與人工 visualObservation；`rawValuesCollected` 必須為 false。生命之花等非 UnitPower 狀態應在 Aura 案例驗證。
-- 2026-08-09 離線契約為 Flow `54/54` 與 Validation Contracts `247/247`；真人矩陣未因這些結果自動變成 pass。
+- 2026-08-09 離線契約為 Flow `54/54` 與 Validation Contracts `264/264`；真人矩陣未因這些結果自動變成 pass。
 
 ## 2026-08-09：SVG 能力探針與回灌
 
-- SVG 探針固定兩案：svg.vector_graphics.set_svg 與 svg.texture.set_svg。每案依序執行 set、HasSVG、file-ID 分類、clear、reload，再由玩家標記 visualObservation。
-- strict mock 的 HasSVG／GetSVGFileID 使用 rawget，避免 ClearSVG 後 nil 欄位誤觸嚴格 __index；Flow all 保持 54 案並把 SVG 生命週期併入 boundary.safe_scalar。
-- EAM_SVG_CAPABILITY_REPORT_JSON 列入 SavedVariables；Tools/Import-EAMFlowReport.ps1 的 ReportType SVG 重新驗證 schema、client profile、兩案 ID、interfaceRequired、clearReload 與 status。
-- 12.1 required 路徑必須兩案 accepted、HasSVG=true、fileIDClass=positive-number、clearReload=pass 且玩家目視 pass 才能成為 pass；12.0.7 為 unsupported。
-- 最新離線證據：Lua 50/50、Flow 54/54、Validation Contracts 247/247。報告仍需 PTR 玩家操作與目視，不自動操作 WoW。
+- SVG 探針固定兩案：`svg.vector_graphics.set_svg` 與 `svg.texture.set_svg`，但依 69189 生成文件採非對稱契約。
+- VectorGraphics 依序驗證 SetSVG、HasSVG、GetSVGFileID 分類、ClearSVG、HasSVG=false、重新 SetSVG、HasSVG=true；固定 addon-local 資產允許 fileID 分類為 positive-number、zero 或 negative-number，仍不保存 raw file ID。
+- Texture 只要求 SetSVG 與 ClearSVG；HasSVG／GetSVGFileID unavailable 是預期結果。clearReload 由 ClearSVG 與重新 SetSVG 的 pcall／回傳值決定，最終渲染仍由玩家標記 visualObservation。
+- strict mock 只讓 VectorGraphics 暴露四方法、Texture 暴露 Set/Clear，並斷言 Texture introspection 呼叫為 0；Flow all 保持 54 案，SVG 生命週期併入 `boundary.safe_scalar`。
+- `EAM_SVG_CAPABILITY_REPORT_JSON` 列入 SavedVariables；`Tools/Import-EAMFlowReport.ps1` 的 `ReportType SVG` 依 kind 重算 capability、case、status，且 mutation 測試拒絕假 Vector HasSVG、缺 Texture lifecycle 與非法 Texture introspection。
+- Alpha 3 原始 PTR 報告保留為 `Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json`：兩格 SetSVG accepted 且人工圖樣 pass，但舊探針未執行 Texture clear/reload，故仍是 incomplete 證據；需用修正版重跑才能簽收完整 capability pass。
+- 最新離線證據：Lua 50/50、Flow boundary 37/37、Flow all 54/54、Validation Contracts 264/264。報告仍需 PTR 玩家操作與目視，不自動操作 WoW；12.0.7 維持 unsupported。
+
+## 2026-08-13：AuraSound 流程與 37 案矩陣
+
+- Flow 新增 `aura121.sound.saved_variables_roundtrip`、`compiler_fingerprints`、`container_unchanged`、`failure_rollback`；`aura121.sound.lifecycle` 同時核對三 trigger payload。
+- strict mock 可注入 Add return nil／throw 與 Remove throw，並保留呼叫 trace；不放寬未知 API。
+- Live matrix 版本為 `2026-08-13.1`，共 37 案；新增 Added、ApplicationsIncreased、Removed 三項人工聽覺案例。
+- 12.0.7 案例通過條件是控制項 capability 降級且零 12.1 API 呼叫，不是 AuraSound 實播。
+- 離線 Flow 只證明普通設定資料與註冊生命週期；音效播放、驅散、戰鬥與 caster/filter over-fire 仍由玩家簽收。
+- 本輪離線 gate：Lua `54/54`、Flow `all 61/61`、Validation Contracts `355/355`；artifact 為 `TestResults/EAM_FlowValidation_all_20260813_013945.json`。
+
+## 2026-08-13 Alpha 4：模組與 profile 流程
+
+- EAM_FLOW_TEST_REPORT 的離線覆蓋包含 v1-v5 class profile migration 與 modules.toggle.lifecycle；這些案例只驗證 SavedVariables、handler gate、狀態清理與事件註冊數，不代表遊戲客戶端的畫面簽收。
+- /eam list、lookup、lookupfull、showcast 的候選來源固定為 active class 的設定、SpellArray 與本次登入安全施法候選；不可把輸出當成完整職業資料庫。
+- Alpha 4 發布檔案只從正式 TOC 與白名單打包；本機 deploy、Tests、TestResults、Tools、backup 與 LegacyReference 不進 Release ZIP。
+- JSON／Base64 profile codec 尚未進入 Flow pass 範圍；若下一輪加入，需增加 parser rejection、checksum、preview/apply、replace/merge、combat deferral 與無副作用測試。

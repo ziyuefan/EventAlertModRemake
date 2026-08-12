@@ -659,7 +659,7 @@
 <li><code>live_test.offline_cannot_signoff</code>、冷卻 Duration、地面效果解析與 swipe alpha 都是 strict-mock 契約；遊戲客戶端沒有 <code>EAM.FlowTestMock</code> 時必須回傳 <code>skip</code>，不可污染 PTR 能力報告為假失敗。測試亦不得覆寫已凍結的 <code>EAM.API</code>。</li>
 <li>2026-08-09 離線驗證為 Lua <code>47/47</code>、Flow <code>54/54</code>、Validation Contracts <code>217/217</code>；artifact 為 <code>TestResults/EAM_FlowValidation_all_20260809_185047.json</code>。這只證明修正後離線契約，尚未證明 PTR Aura 已恢復。</li>
 <li>PTR 請先由玩家自行 <code>/reload</code>，再執行 <code>/eam doctor</code> 與 <code>/eam test aura121</code>。<code>aura121.capability.native_complete</code> 應為 pass，且 player／target Aura 應重新出現；若仍失敗，回傳含新增 capability 詳細欄位的 Flow JSON。</li>
-<li>目前 UnitPower 報告只證明 primary Secret 與 selected safe-number 均已送入 StatusBar／radial sink 且呼叫被接受；primary 視覺標記仍為 pending、selected 為 blocked，因此不能標示 UnitPower PTR 視覺簽收。</li>
+<li>PTR build 69273 最新 UnitPower 報告顯示 primary Secret 與 selected safe-number 均已送入 StatusBar／radial sink 且呼叫被接受；兩案 visualObservation 都是 pending，報告 status=incomplete，因此仍不能標示 UnitPower PTR 視覺簽收。</li>
 </ul>
 <h2 id="2026-08-09target-auratooltipabout">2026-08-09：Target Aura、巨集、Tooltip、About 與分類邊框</h2>
 <p>逐案條件、玩家操作、通過證據與回報欄位統一見 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>；流程面板會依目前 case 顯示同一份步驟。下列項目不得只憑離線 mock 簽收：</p>
@@ -672,7 +672,7 @@
 <li>報告複製：按鈕只聚焦並全選 EditBox；玩家自行按 Ctrl+C。不得呼叫不存在的 <code>EditBox:Copy()</code>。</li>
 <li>UnitPower 與 Aura 分流：法師法力屬主要 UnitPower，可能為 Secret 時只能送原生 sink；生命之花等效果屬 Aura，不以 UnitPower 模組監控。</li>
 </ul>
-<p>2026-08-09 收尾離線 gate：Lua <code>50/50</code>、Flow <code>all 54/54</code>、Validation Contracts <code>247/247</code>。這些結果只證明 Lua／mock／文件契約；PTR、XPTR 與 Retail 的 34 案真人狀態仍為待玩家簽收。</p>
+<p>2026-08-09 收尾離線 gate：Lua <code>50/50</code>、Flow <code>all 54/54</code>、Validation Contracts <code>264/264</code>。這些結果只證明 Lua／mock／文件契約；PTR、XPTR 與 Retail 的 34 案真人狀態仍為待玩家簽收。</p>
 <h2 id="2026-08-09svg-ab">2026-08-09：SVG A/B 玩家能力測試</h2>
 <ul>
 <li>PTR 12.1：玩家先選 <em>ptr</em>，開啟 Flow 面板的 SVG 能力測試。左格為 VectorGraphics:SetSVG，右格為 Texture:SetSVG；兩格應顯示相同青框與黃紫三角。</li>
@@ -681,6 +681,78 @@
 <li>XPTR／Retail 12.0.7 若回報 unsupported，代表 interfaceRequired=false 的預期降級，不等於 PTR 能力失敗。</li>
 <li>最終邊框目視：七類圖示四邊都應連續包覆，外緣比圖示各多 3px；不得再以透明 ActionButton border 的內部亮線作尺寸依據。</li>
 </ul>
+<h2 id="2026-08-12">2026-08-12：俄文與動態語系選擇驗證</h2>
+<ul>
+<li>離線契約必須確認五個語系檔的功能鍵各只定義一次，且 <code>ruRU</code> 的 <code>L.*</code> key 完整覆蓋 <code>enUS</code>。</li>
+<li>Flow／契約需確認 <code>Auto Detect</code> 只出現一次、名稱固定為英文、可選值包含 <code>auto</code>、<code>enUS</code>、<code>zhTW</code>、<code>zhCN</code>、<code>koKR</code>、<code>ruRU</code>，SavedVariables 預設為 <code>auto</code>，<code>EAM.L</code> identity 在切換前後不變，且重複選同值不增加 revision。</li>
+<li>玩家換入含本功能的新程式後先自行執行一次 <code>/reload</code> 載入 Lua；從這次載入開始，後續語系切換不得再要求 <code>/reload</code> 才生效。</li>
+<li>非戰鬥中同時開啟主視窗、About、功能模組、Flow／Live、UnitPower／SVG 與 Prompt 面板，選擇 <code>Русский</code>；標題、按鈕、下拉標籤與複合狀態文字應立即改變。已輸出的聊天紀錄不回寫，後續訊息才使用新語系。</li>
+<li>接著選 <code>Auto Detect</code>；zhTW 客戶端應立即回到繁體中文，但 <code>Auto Detect</code> 選項名稱仍固定英文。Blizzard UI、其他插件及客戶端回傳的法術／物品名稱不屬 EAM catalog，不列為失敗。</li>
+<li>最後可再選 <code>Русский</code> 後由玩家自行 <code>/reload</code>，只驗證 <code>EAM_DB.config.language</code> 保存與重新登入後仍是俄文；這不是套用語系的必要步驟。</li>
+<li>通過證據需回傳即時切換與保存結果、client／patch／build；不得把語系測試標成 34 案 PTR 功能 pass，也不得回傳帳號、角色或 WTF 絕對路徑。</li>
+</ul>
+<h2 id="2026-08-12-svg-fallback">2026-08-12：小地圖 SVG fallback 與主題選擇器實機測試</h2>
+<h3 id="_13">小地圖按鈕</h3>
+<ol>
+<li>在 <code>_ptr_</code> 12.1.0（建議先 <code>/reload</code>）開啟 EAM，確認小地圖按鈕顯示 EAM 自有 SVG 圖樣，不再呈現整片綠色或聲音圖示。</li>
+<li>左鍵開啟／關閉設定，右鍵開啟既有診斷入口，拖曳後重新登入或 <code>/reload</code>，確認位置與互動仍可用。</li>
+<li>在 <code>_xptr_</code> 12.0.7 與 <code>_retail_</code> 12.0.7 重複測試；若 Texture 沒有 <code>SetSVG</code>，預期顯示 <code>INV_Misc_QuestionMark</code> fallback，但按鈕行為必須維持。</li>
+<li>回報必須包含 <code>clientChannel</code>、patch、build、Interface、<code>/reload</code> 是否完成與肉眼結果；<code>SetSVG accepted</code> 不等於視覺通過。</li>
+</ol>
+<h3 id="_14">主題選擇</h3>
+<ol>
+<li>非戰鬥中開啟 EAM 主設定，確認主題下拉包含 <code>EAM</code>、<code>FF7</code>、<code>Windows XP</code>、<code>Borland C++ IDE</code>、<code>DOS CRT</code>、<code>macOS Aqua</code>，預設為 <code>EAM</code>。</li>
+<li>依序選取六種主題，確認主設定、位置／清單／條件、About 與 Tooltip popup 的 EAM 自有背景／文字色同步改變；Borland 應呈電光藍／青色 IDE、DOS CRT 應呈磷光綠 CRT、macOS Aqua 應呈藍灰／亮藍；Alert 圖示的七種語意邊框顏色不得被改寫。</li>
+<li>在戰鬥中選另一主題，確認只提示「戰鬥結束後套用」，不修改受保護框架；離開戰鬥後確認 <code>PLAYER_REGEN_ENABLED</code> 套用一次，按鈕 normal／highlight／pushed／disabled 與文字色同步更新。</li>
+<li><code>/reload</code> 後確認 <code>EAM_DB.config.theme</code> 保留；重複選同一主題不得增加 revision。非法或手動破壞的值應安全回退 <code>EAM</code>。</li>
+<li>PTR／XPTR／Retail 都需各自記錄 client／build 與畫面觀察；離線 Flow／Lua／Validation Contracts 只能證明程式與契約，不能代替真人目視簽收。</li>
+</ol>
+<h2 id="2026-08-12ptr-69273-unitpower">2026-08-12：PTR 69273 UnitPower、排序與職業資源回歸</h2>
+<ul>
+<li>PTR 12.1 build 69273 的 UnitPower 能力探針目前只完成 capability／sink 層：primary resultClass=secret、selected resultClass=safe-number，StatusBar 與 radial 都是 accepted；兩案均待玩家視覺標記，不能當成實機 pass。</li>
+<li>同一 build 的完整 Flow 報告唯一 failed 是 boundary.safe_scalar，17 passed、36 skipped；需 /reload 後重跑 helper 可用性，不得把這個 failure 誤當 UnitPower failure。</li>
+<li>AuraRuleCompiler 現在採用每筆 Aura 已保存的 priority（1..20，數字越大越前），相同 priority 才以 SpellID／alertID 穩定排序。PTR 存檔的 1079 priority=20，因此它仍會排第一；要移動位置需在條件設定調低 priority。</li>
+<li>Druid ClassPower 候選改為 Energy、Combo Points、Lunar Power；Feral 應先顯示 Energy，其他形態若 Energy unsupported 會安全 fallback。</li>
+<li>EAM 自有按鈕已納入 EAM／FF7／Windows XP palette；需在三客戶端檢查 normal、highlight、pushed、disabled 與文字色，暴雪 Action Bar 不在主題範圍。</li>
+<li>本輪只完成 Lua／離線契約與文件更新，尚無 Codex 自動操作 WoW 的實機證據。</li>
+</ul>
+<h2 id="2026-08-13aurasound-37">2026-08-13：AuraSound 細部設定與 37 案矩陣</h2>
+<p>現行 <code>Data/LiveValidationMatrix.json</code> 為 <code>2026-08-13.1</code>、共 37 案，新增：</p>
+<ul>
+<li><code>live.aura.sound_added</code></li>
+<li><code>live.aura.sound_applications_increased</code></li>
+<li><code>live.aura.sound_removed</code></li>
+</ul>
+<p>離線必測：</p>
+<ol>
+<li><code>aura121.sound.saved_variables_roundtrip</code>：三 trigger 正規化、no-op revision、變更事件與非法值拒絕。</li>
+<li><code>aura121.sound.compiler_fingerprints</code>：master off、inherit/custom，以及 sound 變更不改 container fingerprint。</li>
+<li><code>aura121.sound.container_unchanged</code>：純音效更新為零 AuraContainer create，且只同步一次 registry。</li>
+<li><code>aura121.sound.failure_rollback</code>：Add 失敗保留舊 registry；Remove 失敗保留 retired ID 供重試。</li>
+<li>strict mock 驗證 trigger、unit、正整數 SpellID、音源互斥與 channel 型別。</li>
+</ol>
+<p>PTR 12.1 真人簽收：</p>
+<ol>
+<li>玩家先自行 <code>/reload</code>，確認 build、Interface、clientChannel 與全域音效已啟用。</li>
+<li>在單一 player 或 target Aura 細部設定選素材，每次只勾一種 trigger。</li>
+<li>Added：首次取得只播放一次；一般更新不重播。</li>
+<li>ApplicationsIncreased：初次新增不播放，逐層增加每次只播放一次；相同層數或下降不播放。</li>
+<li>Removed：自然到期與實際驅散各測一次；停用容器、改設定與 <code>/reload</code> 不得冒充移除。</li>
+<li>戰鬥中改設定只保存 pending；脫戰同步一次。全域關閉後 custom 也不得播放。</li>
+<li><code>fromPlayer</code>／極性篩選需以同 SpellID 其他來源觀察 over-fire，並註記 API 限制。</li>
+<li>回報 37 案 JSON、build、Interface、<code>/reload</code>、Lua error／taint／blocked action 與人工聽覺結果。</li>
+</ol>
+<p>XPTR／Retail 12.0.7 預期降級：三個 trigger 控制不可用但設定不被刪除；不得呼叫 <code>C_UnitAuras.AddAuraSound</code>。這不是 12.1 實播 pass。</p>
+<p>本輪離線結果：Lua <code>54/54</code>、Flow <code>all 61/61</code>、Validation Contracts <code>355/355</code>；Flow artifact 為 <code>TestResults/EAM_FlowValidation_all_20260813_013945.json</code>。此結果只證明靜態與 mock 流程，不取代 PTR／XPTR／Retail 真人簽收。</p>
+<h2 id="2026-08-13-alpha-4-profile">2026-08-13 Alpha 4：模組開關與職業 profile 驗證</h2>
+<p>離線流程新增或維持下列回歸：</p>
+<ul>
+<li>aura121.saved_variables.migration_v1_v5：v1 至 v5 遷移、v4 全域 backup、active class 與隔離 profile。</li>
+<li>modules.toggle.lifecycle：重複停用／啟用不增加事件註冊，停用清理既有提醒且不讀取被關閉模組的 API。</li>
+<li>/eam list、lookup、lookupfull、showcast：只列目前職業候選，未知或不安全 SpellID 直接丟棄。</li>
+<li>Alpha 4 不把 JSON／Base64 profile 分享列為已完成能力；只驗證現有 debug export 不會形成可執行 Lua 匯入路徑。</li>
+</ul>
+<p>真人補測不增加 37 案矩陣總數。玩家需在 PTR、XPTR、Retail 各自開啟「功能模組」面板，逐一停用／啟用自身 Aura、目標 Aura、技能冷卻、物品冷卻、地面效果、職業資源、圖騰與 Tooltip 監控；確認舊圖示消失、另一模組不受影響、戰鬥中切換於脫戰只重建一次，並以不同職業登入確認清單不互相污染。每個客戶端都要記錄 build、Interface、/reload 與 Lua error／taint／blocked action。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

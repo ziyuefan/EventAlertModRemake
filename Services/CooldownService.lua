@@ -36,12 +36,18 @@ local api = EAM.API
 local Util = EAM.Util
 local CooldownStatePool
 local SpellInfoService = EAM.Services and EAM.Services.SpellInfoService
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 
 local CooldownService = {
     states = {},
 }
 
 EAM.Services.CooldownService = CooldownService
+
+local function moduleEnabled()
+    return not ModuleController
+        or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.spellCooldown)
+end
 
 local function getDurationObject(callback, spellID, ignoreGCD)
     if type(callback) ~= "function" then
@@ -127,8 +133,10 @@ local lastDbRevision = -1
 
 function CooldownService.updateAlertList()
     alertCount = 0
-    if EAM.db and EAM.db.alerts and EAM.db.alerts.spellCooldowns then
-        for _, alert in pairs(EAM.db.alerts.spellCooldowns) do
+    local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+    local alerts = savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts() or nil
+    if alerts and alerts.spellCooldowns then
+        for _, alert in pairs(alerts.spellCooldowns) do
             alertCount = alertCount + 1
             alertList[alertCount] = alert
         end
@@ -345,6 +353,9 @@ local function refreshAlert(alert, eventName)
 end
 
 local function refreshAll(eventName)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     verifyAlertList()
     if alertCount == 0 then
         return
@@ -380,6 +391,9 @@ function CooldownService.initialize()
 end
 
 function CooldownService.refreshSpell(spellID, eventName)
+    if not moduleEnabled() then
+        return nil, "moduleDisabled"
+    end
     verifyAlertList()
     if alertCount == 0 then
         return nil
@@ -406,6 +420,9 @@ function CooldownService.refreshAll(eventName)
 end
 
 function CooldownService.onCooldownEvent(eventName, spellID, baseSpellID)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if eventName == "SPELL_UPDATE_COOLDOWN" then
         local hasTarget = false
         if Util.isSafePositiveNumber(spellID) then
@@ -423,4 +440,25 @@ function CooldownService.onCooldownEvent(eventName, spellID, baseSpellID)
         end
     end
     refreshAll(eventName)
+end
+
+function CooldownService.onModuleToggle(enabled, reason)
+    lastDbRevision = -1
+    if enabled == false then
+        local router = EAM.Modules.EventRouter
+        for alertID, state in pairs(CooldownService.states) do
+            state.shown = false
+            CooldownService.states[alertID] = nil
+            if router then
+                router.fire(
+                    "EAM_COOLDOWN_STATE_CHANGED",
+                    state,
+                    EAM.Constants.ALERT_FRAME_TYPES.spellCooldown
+                )
+            end
+        end
+        return true, "disabled"
+    end
+    refreshAll("MODULE_ENABLED_" .. tostring(reason or "manual"))
+    return true, "enabled"
 end

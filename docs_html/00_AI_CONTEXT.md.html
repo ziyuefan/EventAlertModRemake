@@ -419,7 +419,7 @@
 <h1 id="eventalertmod-ai">EventAlertMod 正式服裝重寫：AI 上下文</h1>
 <h2 id="_1">優先續接路由</h2>
 <p>重新進入專案、發生上下文壓縮或需要確認目前進度時，先讀 <code>Docs/28_PROJECT_CONTINUITY.md</code>，再讀 <code>Data/ProjectContinuity.json</code>。前者提供人類可讀決策與實機待辦；後者以嚴格 Schema 分離 facts、inferences、work items、trials 與 unverified。詳細試錯只追到 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> 的穩定 issue ID，不以本文件或舊對話摘要猜測目前狀態。</p>
-<p>目前續接快照為 <code>2026-08-08.1</code>；離線通過不得取代 PTR、XPTR 或 Retail 真人簽收。</p>
+<p>目前續接快照為 <code>2026-08-13.1</code>；離線通過不得取代 PTR、XPTR 或 Retail 真人簽收。</p>
 <h2 id="_2">專案概要</h2>
 <p>EventAlertMod (EAM) 是一個用於輕量級光環的魔獸世界插件，
 冷卻的時間和物品冷卻。冷卻的身份很簡單：顯示很重要
@@ -428,7 +428,14 @@
 午夜時代的 API 是預期的衍生性商品。現有經典、熊貓之謎經典服、
 Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 僅歷史行為，不得加工新架構。</p>
-<h2 id="_3">重寫方向</h2>
+<h2 id="_3">語系與語言選擇契約</h2>
+<ul>
+<li><code>Locale/Common.lua</code> 建立固定 catalog：<code>enUS</code>、<code>zhTW</code>、<code>zhCN</code>、<code>koKR</code>、<code>ruRU</code>。</li>
+<li><code>ruRU.lua</code> 必須與 <code>enUS.lua</code> 的 <code>L.*</code> key 完整對齊；其他語系缺少的 key 由 enUS fallback 補底。</li>
+<li><code>Auto Detect</code> 是唯一固定英文名稱，且 <code>EAM_DB.config.language</code> 的預設值為 <code>auto</code>；其餘選項以原生語系名稱顯示。</li>
+<li>選擇器只寫入設定並提示玩家自行輸入 <code>/reload</code>，不由 EAM 自動呼叫 <code>ReloadUI</code>，以避免載入期 UI 半套用。</li>
+</ul>
+<h2 id="_4">重寫方向</h2>
 <p>目前的原始碼樹保留了許多行為，但混合了相容性
 分支、UI建置、光環掃描、冷卻專案、緩存產生、
 特殊資源、斜線指令、全域變數、本地化和框架佈局
@@ -454,7 +461,7 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 <li><code>Debug/DebugState.lua</code></li>
 <li><code>Debug/PromptExport.lua</code></li>
 </ul>
-<h2 id="_4">不可協商的界限</h2>
+<h2 id="_5">不可協商的界限</h2>
 <ul>
 <li>沒有秘密值可以繞過。</li>
 <li>沒有受到保護的資料繞過。</li>
@@ -464,11 +471,11 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 <li>密集的持續掃描。</li>
 <li>沒有每個圖示計時器、每個示波器計時器或每個專案計時器硬體。</li>
 </ul>
-<h2 id="_5">簡單原則</h2>
+<h2 id="_6">簡單原則</h2>
 <p>EAM 對於一般使用者來說應該簡單保留：新增文字 ID、啟用警報，請參閱
 圖標，調整小組顯示選項，並匯出緊湊的除錯狀態
 僅提供。</p>
-<h2 id="_6">現有討論主播</h2>
+<h2 id="_7">現有討論主播</h2>
 <p>之前的ChatGPT討論上下文位於：</p>
 <ul>
 <li><code>DevDocument/ChatGPT/EventAlertMod_ChatGPT_Discussion_Context.md</code></li>
@@ -484,7 +491,7 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 <li>較早的工作已經超過“Main/EventAlert_EAFun.lua”作為相容性
 門面。未來的代理人一定不能把文件想像成最終的架構。</li>
 </ul>
-<h2 id="_7">首次通過審核結果</h2>
+<h2 id="_8">首次通過審核結果</h2>
 <p><code>Docs/01_ARCHITECTURE.md</code> 包含目前檔案對映和模組
 <code>Docs/03_STATE_SCHEMA.md</code> 包含 SavedVariables 和全域變量
 <code>Docs/05_PERFORMANCE_GUIDE.md</code> 包含候選熱路徑，
@@ -492,8 +499,8 @@ OnUpdate/C_Timer的使用和分配風險。 <code>文件/07_MIGRATION_NOTES.md</
 包含行為遷移註釋。</p>
 <h2 id="2026-08-09-alpha-3">2026-08-09 實機步驟與 Alpha 3 候選入口</h2>
 <ul>
-<li>目前機器可讀快照為 <code>Data/ProjectContinuity.json</code> 的 <code>2026-08-09.2</code>；人類交接見 <code>Docs/28_PROJECT_CONTINUITY.md</code>。</li>
-<li>34 案 PTR／XPTR／Retail 的前置條件、逐步操作與通過證據見 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>。</li>
+<li>目前機器可讀快照為 <code>Data/ProjectContinuity.json</code> 的 <code>2026-08-09.3</code>；人類交接見 <code>Docs/28_PROJECT_CONTINUITY.md</code>。</li>
+<li>37 案 PTR／XPTR／Retail 的前置條件、逐步操作與通過證據見 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>。</li>
 <li>Alpha 3 候選包含 Target Aura hover+Ctrl+Alt、Macro spell/item ID、手動 Ctrl+C 報告交接、About、監控 Tooltip 與七色分類邊框；目前只有離線 gate，不代表三個客戶端已實機簽收。</li>
 </ul>
 <h2 id="2026-08-09-svg-ab-3px">2026-08-09 SVG A/B 與 3px 邊框續接</h2>
@@ -501,7 +508,34 @@ OnUpdate/C_Timer的使用和分配風險。 <code>文件/07_MIGRATION_NOTES.md</
 <li>分類邊框已捨棄含透明留白的 ActionButton border，Legacy 與 Native 都改用 WHITE8X8 實色 Texture，位於 BORDER 層並四邊固定外擴 3px。</li>
 <li>Flow 面板新增玩家操作的 SVG 能力測試；VectorGraphics 與 Texture 各自驗證 SetSVG、HasSVG、GetSVGFileID 分類、ClearSVG 與 reload。</li>
 <li>SVG 報告型別為 EAM_SVG_CAPABILITY_REPORT，rawFileIDsCollected 固定 false；可由 JSON 或遊戲內持久化檔案以 ReportType SVG 匯入。</li>
-<li>最新離線 gate 為 Lua 50/50、Flow 54/54、Validation Contracts 247/247。3px 邊框與 SVG 圖樣仍待 PTR 玩家目視，不得標記實機通過。</li>
+<li>最新離線 gate 為 Lua 50/50、Flow 54/54、Validation Contracts 264/264。PTR 69189 已確認兩條 SVG 圖樣可顯示，但修正版 Texture clear/reload 與 3px 邊框仍待玩家重測，不得標記完整實機通過。</li>
+</ul>
+<h2 id="2026-08-12-svg-eam">2026-08-12 小地圖 SVG 與 EAM 主題選擇</h2>
+<ul>
+<li>小地圖按鈕不再把聲音 FileDataID 當作貼圖；<code>UI/Options.lua</code> 先嘗試載入專案自有 <code>Media/SVG/eam-minimap.svg</code>，<code>Texture:SetSVG</code> 不可用或失敗時回退 <code>INV_Misc_QuestionMark</code>。按鈕的左鍵、右鍵與拖曳行為不變。</li>
+<li><code>UI/Theme.lua</code> 集中管理 EAM 自有視窗與按鈕的 palette，提供 <code>EAM</code>、<code>FF7</code>、<code>Windows XP</code>、<code>Borland C++ IDE</code>、<code>DOS CRT</code> 與 <code>macOS Aqua</code> 六個選項；SavedVariables 只保存 <code>config.theme</code> 的 <code>eam|ff7|winxp|borland|doscrt|aqua</code>，非法值回退 <code>eam</code> 並留下 migration warning。</li>
+<li>主題切換只影響 EAM 自有 Options／About／Tooltip popup、位置／清單／條件視窗與 Flow／Live／Prompt／SVG／UnitPower 除錯面板，不改 AlertBorderStyles 的七種內容語意顏色，也不鉤 Blizzard secure/protected frame。</li>
+<li>戰鬥中選擇主題只保存 pending selection，於 <code>PLAYER_REGEN_ENABLED</code> 後套用；小地圖 SVG 載入與主題 palette 均不讀取或寫入 Secret Value。</li>
+<li><code>wowtools.work</code> 僅作為唯讀資料瀏覽參考，專案不依賴外部 FileDataID 或遠端素材。</li>
+<li>本輪離線 gate：Lua 51/51、Flow 54/54、Validation Contracts 328/328；仍不代表 PTR／XPTR／Retail 真人簽收。</li>
+</ul>
+<h2 id="2026-08-13-aurasound">2026-08-13 AuraSound 細部設定續接</h2>
+<ul>
+<li>PTR 12.1 build 69273 的固定生成文件確認 <code>C_UnitAuras.AddAuraSound</code> 支援 Added、ApplicationsIncreased、Removed；結構只包含 unit、SpellID、音檔名稱／FileDataID 與 output channel，沒有 soundKitID、caster 或 auraFilter。</li>
+<li>Aura 細部設定可選共用音效素材，並獨立勾選新增、層數增加、移除；三項皆未勾選時沿用全域音效。12.0.7 控制項為 capability 降級且不得呼叫 12.1 API。</li>
+<li>全域 <code>showSound</code> 是 master gate；純音效變更只同步 C-side registration，不建立新 AuraContainer。註冊失敗保留舊 registry，移除失敗的 ID 留待後續重試。</li>
+<li>Flow 已增加 SavedVariables round-trip、container／sound fingerprint 分離、純音效零容器重建、三 trigger payload 與失敗回滾；真人矩陣升為 <code>2026-08-13.1</code> 共 37 案。</li>
+<li>Native AuraSound 只能依 unit+SpellID 觸發，不能精確表達 <code>fromPlayer</code> 或 Aura 極性；這是公開 API 限制，必須由 PTR 真人觀察 over-fire，不得以離線結果宣稱實播通過。</li>
+<li>本輪離線 gate：Lua <code>54/54</code>、Flow <code>all 61/61</code>、Validation Contracts <code>355/355</code>；Flow artifact 為 <code>TestResults/EAM_FlowValidation_all_20260813_013945.json</code>。</li>
+</ul>
+<h2 id="2026-08-13-alpha-4">2026-08-13 Alpha 4 發布交接</h2>
+<ul>
+<li>Alpha 4 將現有八個功能模組開關與職業 profile 隔離列入發布範圍；模組面板從主設定視窗的「功能模組」按鈕開啟。</li>
+<li>moduleToggles 的預設值全部為啟用；停用只讓事件入口短路、清理既有提醒，避免反覆註冊事件或在戰鬥中重建受保護結構。</li>
+<li>active class profile 由 UnitClass 白名單決定；v4 全域清單不能可靠拆分時保留 migration backup 或 unassignedLegacy，不以 SpellArray 猜測其他職業資料。</li>
+<li>/eam list、lookup、lookupfull 與 showcast 只操作目前職業的安全候選；不掃描整個 SpellID 空間，也不自動寫入監控清單。</li>
+<li>JSON／Base64 profile 分享尚未成為正式 runtime API；正式程式不使用 LegacyReference 的 loadstring 匯入路徑。下一輪若實作，必須先完成嚴格 parser、checksum、preview/apply 與戰鬥延後契約。</li>
+<li>本輪離線 gate 維持 Lua 54/54、Flow all 61/61、Validation Contracts 355/355；Alpha 4 Release 仍不代表 PTR、XPTR 或 Retail 真人簽收。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

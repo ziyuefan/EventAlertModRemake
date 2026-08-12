@@ -283,7 +283,7 @@ local function finalizeSession(session)
         schema = FlowTestRunner.schemaVersion,
         type = "EAM_FLOW_VALIDATION_REPORT",
         purpose = environment.executionSource == "offline-mock" and "offline-contract" or "capability-probe",
-        matrixVersion = "2026-08-08.1",
+        matrixVersion = "2026-08-13.1",
         suite = session.suite,
         status = reportStatus,
         generatedAtSessionMs = nowMilliseconds(),
@@ -543,16 +543,18 @@ FlowTestRunner.registerCase({
             and mock.trace.slotAdds == 2
             and mock.trace.groupAdds == 1
             and mock.trace.groupLayouts == 1
+            and mock.trace.flowPaddingCalls == 2
             and mock.trace.auraGetterCalls == 0
         EAM.db = originalDB
         service.lastPlan = nil
         service.requestRebuild("flowTestRestore")
         local message = valid and "player/target containers rebuilt without legacy getters" or string.format(
-            "container rebuild mismatch creates=%d slots=%d groups=%d layouts=%d getters=%d",
+            "container rebuild mismatch creates=%d slots=%d groups=%d layouts=%d padding=%d getters=%d",
             mock.trace.containerCreates,
             mock.trace.slotAdds,
             mock.trace.groupAdds,
             mock.trace.groupLayouts,
+            mock.trace.flowPaddingCalls,
             mock.trace.auraGetterCalls
         )
         return valid, message
@@ -716,9 +718,10 @@ FlowTestRunner.registerCase({
         end
         local service = EAM.Services.AuraSoundService
         service.removeAll()
-        mock.resetTrace()
+        mock.resetAuraSoundScenario()
         local plan = {
-            fingerprint = "flow-sound-121",
+            fingerprint = "flow-container-121",
+            soundFingerprint = "flow-sound-121",
             soundRules = {
                 {
                     alertID = "aura:player:3001",
@@ -733,12 +736,346 @@ FlowTestRunner.registerCase({
             },
         }
         local capability = EAM.Services.AuraCapabilityService.getSnapshot()
-        local ok = service.sync(plan, capability)
-        service.sync(plan, capability)
+        local ok, registeredReason = service.sync(plan, capability)
+        local unchangedOK, unchangedReason = service.sync(plan, capability)
+        local calls = mock.trace.auraSoundCalls
+        local payloadValid = #calls == 3
+            and calls[1].trigger == capability.soundTriggerAdded
+            and calls[2].trigger == capability.soundTriggerApplicationsIncreased
+            and calls[3].trigger == capability.soundTriggerRemoved
+            and calls[1].info.unitToken == "player"
+            and calls[1].info.spellID == 3001
+            and calls[1].info.soundFileID == 1
+            and calls[2].info.soundFileID == 2
+            and calls[3].info.soundFileID == 3
         local registeredOnce = mock.trace.addAuraSoundCalls == 3 and service.activeCount == 3
+        local removed = service.removeAll()
+        local unsupportedOK, unsupportedReason = service.sync(plan, {
+            hasAuraSound = false,
+            hasAuraSoundEnum = false,
+        })
+        local status = service.getStatus()
+        local valid = ok == true
+            and registeredReason == "registered"
+            and unchangedOK == true
+            and unchangedReason == "unchanged"
+            and payloadValid
+            and registeredOnce
+            and removed == true
+            and unsupportedOK == true
+            and unsupportedReason == "auraSoundUnavailable"
+            and mock.trace.removeAuraSoundCalls == 3
+            and status.activeCount == 0
+            and status.retiredCount == 0
+        return valid, valid and "three AuraSound triggers preserve exact payload and idempotent lifecycle"
+            or "AuraSound lifecycle or payload mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.sound.saved_variables_roundtrip",
+    primarySuite = "aura121",
+    suites = { aura121 = true },
+    run = function()
+        local saved = EAM.Modules.SavedVariables
+        local router = EAM.Modules.EventRouter
+        local originalDB = EAM.db
+        local originalFire = router and router.fire
+        local soundEvents = 0
+        EAM.db = buildAura121TestDB(130)
+        if router then
+            router.fire = function(eventName)
+                if eventName == "EAM_AURA_SOUND_CHANGED" then
+                    soundEvents = soundEvents + 1
+                end
+            end
+        end
+
+        local ok, result = pcall(function()
+            local initialRevision = EAM.db.revision
+            local updated, updatedState = saved.updateAuraSound("player", 1001, {
+                added = {
+                    soundFileID = 568154,
+                    soundFileName = "ignored-when-file-id-exists.ogg",
+                    outputChannel = "Master",
+                    ignored = true,
+                },
+                applicationsIncreased = {
+                    soundFileName = "Interface\\AddOns\\EventAlertMod\\Media\\Sounds\\probe.ogg",
+                },
+                removed = {
+                    soundFileID = -1,
+                },
+                unknownTrigger = {
+                    soundFileID = 999,
+                },
+            })
+            local alert = EAM.db.alerts.playerAuras["aura:player:1001"]
+            local normalized = alert.sound
+            local normalizedValid = updated
+                and updatedState == "updated"
+                and EAM.db.revision == initialRevision + 1
+                and normalized.added.soundFileID == 568154
+                and normalized.added.soundFileName == nil
+                and normalized.added.outputChannel == "Master"
+                and normalized.applicationsIncreased.soundFileName
+                    == "Interface\\AddOns\\EventAlertMod\\Media\\Sounds\\probe.ogg"
+                and normalized.removed == nil
+                and normalized.unknownTrigger == nil
+
+            local revisionAfterUpdate = EAM.db.revision
+            local unchanged, unchangedState = saved.updateAuraSound("player", 1001, {
+                added = {
+                    soundFileID = 568154,
+                    outputChannel = "Master",
+                },
+                applicationsIncreased = {
+                    soundFileName = "Interface\\AddOns\\EventAlertMod\\Media\\Sounds\\probe.ogg",
+                },
+            })
+            local invalid, invalidState = saved.updateAuraSound("focus", 1001, normalized)
+            local cleared, clearedState = saved.updateAuraSound("player", 1001, nil)
+            return normalizedValid
+                and unchanged
+                and unchangedState == "unchanged"
+                and EAM.db.revision == revisionAfterUpdate + 1
+                and invalid == false
+                and invalidState == "invalidUnit"
+                and cleared
+                and clearedState == "updated"
+                and alert.sound == nil
+                and soundEvents == 2
+        end)
+
+        if router then
+            router.fire = originalFire
+        end
+        EAM.db = originalDB
+        local valid = ok and result == true
+        return valid, valid and "AuraSound SavedVariables normalize, no-op and inherit round-trip are stable"
+            or "AuraSound SavedVariables round-trip mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.sound.compiler_fingerprints",
+    primarySuite = "aura121",
+    suites = { aura121 = true },
+    run = function()
+        local originalDB = EAM.db
+        local db = buildAura121TestDB(131)
+        db.alerts.playerAuras = {
+            ["aura:player:1001"] = db.alerts.playerAuras["aura:player:1001"],
+        }
+        db.alerts.targetAuras = {}
+        db.config.showSound = true
+        db.config.soundName = "ShayBell"
+        EAM.db = db
+
+        local ok, result = pcall(function()
+            local compiler = EAM.Managers.AuraRuleCompiler
+            local capability = EAM.Services.AuraCapabilityService.getSnapshot()
+            local defaultPlan = compiler.compile(db, capability)
+            local alert = db.alerts.playerAuras["aura:player:1001"]
+            alert.sound = EAM.UI.Options.buildAuraSoundConfig("Netherwind", true, true, true)
+            db.revision = db.revision + 1
+            local customPlan = compiler.compile(db, capability)
+            db.config.showSound = false
+            db.revision = db.revision + 1
+            local disabledPlan = compiler.compile(db, capability)
+
+            local customSound = customPlan.soundRules[1] and customPlan.soundRules[1].sound
+            return #defaultPlan.soundRules == 1
+                and defaultPlan.soundRules[1].sound.added ~= nil
+                and defaultPlan.soundRules[1].sound.applicationsIncreased == nil
+                and defaultPlan.containerFingerprint == customPlan.containerFingerprint
+                and defaultPlan.soundFingerprint ~= customPlan.soundFingerprint
+                and customSound.added ~= nil
+                and customSound.applicationsIncreased ~= nil
+                and customSound.removed ~= nil
+                and customPlan.containerFingerprint == disabledPlan.containerFingerprint
+                and customPlan.soundFingerprint ~= disabledPlan.soundFingerprint
+                and #disabledPlan.soundRules == 0
+        end)
+
+        EAM.db = originalDB
+        local valid = ok and result == true
+        return valid, valid and "sound-only changes preserve container fingerprint and master off emits zero rules"
+            or "AuraSound compiler fingerprint contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.sound.container_unchanged",
+    primarySuite = "aura121",
+    suites = { aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "AuraContainer strict mock is offline only"
+        end
+        local containerService = EAM.Services.AuraContainerService
+        local soundService = EAM.Services.AuraSoundService
+        local originalDB = EAM.db
+        local fieldNames = {
+            "current",
+            "pending",
+            "pendingRevision",
+            "createdContainerCount",
+            "maxCreatedContainerCount",
+            "retiredContainerCount",
+            "reloadRequired",
+            "rebuildCount",
+            "failedRebuildCount",
+            "settingsDirty",
+            "lastPlan",
+            "lastReason",
+        }
+        local snapshot = {}
+        for index = 1, #fieldNames do
+            local field = fieldNames[index]
+            snapshot[field] = containerService[field]
+        end
+
+        soundService.removeAll()
+        mock.resetAuraSoundScenario()
+        local ok, result = pcall(function()
+            local db = buildAura121TestDB(132)
+            db.alerts.playerAuras = {
+                ["aura:player:1001"] = db.alerts.playerAuras["aura:player:1001"],
+            }
+            db.alerts.targetAuras = {}
+            db.config.showSound = true
+            db.config.soundName = "ShayBell"
+            EAM.db = db
+
+            containerService.current = nil
+            containerService.pending = false
+            containerService.pendingRevision = nil
+            containerService.createdContainerCount = 0
+            containerService.maxCreatedContainerCount = 18
+            containerService.retiredContainerCount = 0
+            containerService.reloadRequired = false
+            containerService.rebuildCount = 0
+            containerService.failedRebuildCount = 0
+            containerService.settingsDirty = false
+            containerService.lastPlan = nil
+            containerService.lastReason = nil
+
+            local firstOK, firstReason = containerService.requestRebuild("soundContainerBaseline")
+            local createdAfterFirst = mock.trace.containerCreates
+            local rebuildsAfterFirst = containerService.rebuildCount
+            db.alerts.playerAuras["aura:player:1001"].sound = {
+                added = { soundFileID = 777001 },
+            }
+            db.revision = db.revision + 1
+            local secondOK, secondReason = containerService.requestRebuild("soundOnlyChange")
+            local status = containerService.getStatus()
+            return firstOK
+                and firstReason == "rebuilt"
+                and secondOK
+                and secondReason == "registered"
+                and createdAfterFirst == 2
+                and mock.trace.containerCreates == 2
+                and rebuildsAfterFirst == 1
+                and status.rebuildCount == 1
+                and status.createdContainerCount == 2
+                and mock.trace.addAuraSoundCalls == 2
+                and mock.trace.removeAuraSoundCalls == 1
+                and soundService.activeCount == 1
+        end)
+
+        mock.setAuraSoundModes("success", "success")
+        soundService.removeAll()
+        EAM.db = originalDB
+        for index = 1, #fieldNames do
+            local field = fieldNames[index]
+            containerService[field] = snapshot[field]
+        end
+        local valid = ok and result == true
+        return valid, valid and "sound-only update swaps C registrations with zero AuraContainer rebuild"
+            or "sound-only update consumed AuraContainer creation quota"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.sound.failure_rollback",
+    primarySuite = "aura121",
+    suites = { aura121 = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "AuraSound failure injection is offline only"
+        end
+        local service = EAM.Services.AuraSoundService
+        local capability = EAM.Services.AuraCapabilityService.getSnapshot()
         service.removeAll()
-        local valid = ok == true and registeredOnce and mock.trace.removeAuraSoundCalls == 3
-        return valid, valid and "three Aura Sound triggers registered and removed exactly once" or "Aura Sound lifecycle mismatch"
+        mock.resetAuraSoundScenario()
+
+        local function buildPlan(soundFingerprint, soundFileID)
+            return {
+                fingerprint = "stable-container",
+                soundFingerprint = soundFingerprint,
+                soundRules = {
+                    {
+                        alertID = "aura:target:4001",
+                        unit = "target",
+                        spellID = 4001,
+                        sound = {
+                            added = { soundFileID = soundFileID },
+                        },
+                    },
+                },
+            }
+        end
+
+        local ok, result = pcall(function()
+            local firstOK = service.sync(buildPlan("sound-a", 10), capability)
+            mock.resetTrace()
+            mock.setAuraSoundModes("returnNil", "success")
+            local failed, failedReason = service.sync(buildPlan("sound-b", 11), capability)
+            local afterFailure = service.getStatus()
+            local oldPreserved = failed == false
+                and failedReason == "soundRegistrationFailed"
+                and afterFailure.activeCount == 1
+                and afterFailure.lastFingerprint == "sound-a"
+
+            mock.setAuraSoundModes("success", "success")
+            local retryOK, retryReason = service.sync(buildPlan("sound-b", 11), capability)
+            local afterRetry = service.getStatus()
+            local retryValid = retryOK
+                and retryReason == "registered"
+                and afterRetry.activeCount == 1
+                and afterRetry.retiredCount == 0
+                and afterRetry.lastFingerprint == "sound-b"
+
+            mock.setAuraSoundModes("success", "throw")
+            local pending, pendingReason = service.sync(buildPlan("sound-c", 12), capability)
+            local afterRemoveFailure = service.getStatus()
+            local pendingValid = pending == false
+                and pendingReason == "soundRemovalPending"
+                and afterRemoveFailure.activeCount == 1
+                and afterRemoveFailure.retiredCount == 1
+                and afterRemoveFailure.lastFingerprint == "sound-c"
+
+            mock.setAuraSoundModes("success", "success")
+            local recovered, recoveredReason = service.sync(buildPlan("sound-c", 12), capability)
+            local afterRecovery = service.getStatus()
+            return firstOK == true
+                and oldPreserved
+                and retryValid
+                and pendingValid
+                and recovered
+                and recoveredReason == "unchanged"
+                and afterRecovery.activeCount == 1
+                and afterRecovery.retiredCount == 0
+        end)
+
+        mock.setAuraSoundModes("success", "success")
+        service.removeAll()
+        local valid = ok and result == true
+        return valid, valid and "AuraSound add failure rolls back and remove failure remains retryable"
+            or "AuraSound failure rollback contract mismatch"
     end,
 })
 
@@ -752,8 +1089,13 @@ FlowTestRunner.registerCase({
         EAM.db = buildAura121TestDB(125)
         local ok, _, state = saved.addAuraAlert("player", 1001, { auraFilter = "HELPFUL" })
         local revision = EAM.db.revision
+        local priorityOK, priorityState = saved.updateAlertPriority("aura", "player", 1001, nil, 3)
+        local priorityRevision = EAM.db.revision
         local okAgain, _, stateAgain = saved.addAuraAlert("player", 1001, { auraFilter = "HELPFUL" })
-        local valid = ok and okAgain and state == "unchanged" and stateAgain == "unchanged" and EAM.db.revision == revision
+        local valid = ok and priorityOK and priorityState == "updated"
+            and priorityRevision == revision + 1
+            and EAM.db.alerts.playerAuras["aura:player:1001"].priority == 3
+            and okAgain and state == "unchanged" and stateAgain == "unchanged" and EAM.db.revision == priorityRevision
         EAM.db = originalDB
         return valid, valid and "unchanged Aura setting preserves revision" or "unchanged Aura setting changed revision"
     end,
@@ -779,6 +1121,8 @@ FlowTestRunner.registerCase({
             and rebuilt == false
             and reason == "legacyBackend"
             and mock.trace.containerCreates == 0
+            and mock.trace.addAuraSoundCalls == 0
+            and mock.trace.removeAuraSoundCalls == 0
 
         mock.interface = EAM.Constants.INTERFACE
         capability.initialized = false
@@ -791,7 +1135,7 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
-    id = "aura121.saved_variables.migration_v1_v4",
+    id = "aura121.saved_variables.migration_v1_v5",
     primarySuite = "aura121",
     suites = { aura121 = true },
     run = function()
@@ -801,6 +1145,7 @@ FlowTestRunner.registerCase({
         local saved = EAM.Modules.SavedVariables
         local originalGlobalDB = EAM_DB
         local originalDB = EAM.db
+        local originalClassToken = saved.activeClassToken
         EAM_DB = {
             schemaVersion = 1,
             revision = 9,
@@ -831,18 +1176,46 @@ FlowTestRunner.registerCase({
             },
         }
         saved.initialize()
-        local alert = EAM_DB.alerts.playerAuras["aura:player:4001"]
+        local activeClassToken = saved.getActiveClassToken()
+        local activeAlerts = saved.getActiveAlerts()
+        local alert = activeAlerts and activeAlerts.playerAuras["aura:player:4001"]
+        local isolatedClassToken = activeClassToken == "DRUID" and "MAGE" or "DRUID"
+        local isolatedAlerts = saved.getAlertList(
+            EAM.Constants.ALERT_KIND_AURA,
+            "player",
+            isolatedClassToken
+        )
+        isolatedAlerts["aura:player:4999"] = {
+            id = "aura:player:4999",
+            kind = "aura",
+            unit = "player",
+            spellID = 4999,
+            enabled = true,
+        }
         local backup = EAM_DB.migrationBackups and EAM_DB.migrationBackups.auraSchemaV1
+        local globalBackup = EAM_DB.migrationBackups and EAM_DB.migrationBackups.globalAlertsV4
         local textLayout = EAM_DB.config and EAM_DB.config.textLayout
         local textLayoutBackup = EAM_DB.migrationBackups and EAM_DB.migrationBackups.textLayoutV2
-        local valid = EAM_DB.schemaVersion == 4
+        local valid = EAM_DB.schemaVersion == EAM.Constants.SCHEMA_VERSION
+            and EAM_DB.schemaVersion == 5
             and EAM_DB.revision == 9
             and EAM_DB.customField == "preserve-me"
+            and EAM_DB.alerts == nil
+            and activeClassToken ~= nil
+            and type(EAM_DB.profiles) == "table"
+            and type(EAM_DB.profiles.classes) == "table"
+            and type(EAM_DB.profiles.classes[activeClassToken]) == "table"
+            and type(EAM_DB.profiles.classes[isolatedClassToken]) == "table"
             and alert and alert.unknownField == "keep"
             and alert.nativeBackend == "AUTO"
+            and activeAlerts.playerAuras["aura:player:4999"] == nil
+            and isolatedAlerts["aura:player:4001"] == nil
+            and isolatedAlerts["aura:player:4999"] ~= nil
             and backup ~= nil
             and backup.playerAuras ~= nil
             and backup.playerAuras["aura:player:4001"] ~= nil
+            and globalBackup ~= nil
+            and globalBackup.playerAuras["aura:player:4001"] ~= nil
             and textLayout ~= nil
             and textLayout.timer.placement == "OUTSIDE_TOP_AT_LEFT"
             and textLayout.timer.fontSize == 21
@@ -857,7 +1230,9 @@ FlowTestRunner.registerCase({
             and textLayoutBackup.fontSizeStack == 22
         EAM_DB = originalGlobalDB
         EAM.db = originalDB
-        return valid, valid and "schema v1 migrated through v4 with backups and unknown fields preserved" or "schema v1-v4 migration contract mismatch"
+        saved.activeClassToken = originalClassToken
+        return valid, valid and "schema v1 migrated through v5 with class isolation and backups preserved"
+            or "schema v1-v5 class profile migration contract mismatch"
     end,
 })
 
@@ -1996,18 +2371,304 @@ FlowTestRunner.registerCase({
     run = function()
         local saved = EAM.Modules and EAM.Modules.SavedVariables
         local db = EAM.db
+        local theme = EAM.Theme
+        local themeValues = { "eam", "ff7", "winxp", "borland", "doscrt", "aqua" }
+        local themeValid = theme and type(theme.normalizeSelection) == "function"
+            and type(theme.ThemeOptions) == "table"
+        if themeValid then
+            for index = 1, #themeValues do
+                if theme.normalizeSelection(themeValues[index]) ~= themeValues[index] then
+                    themeValid = false
+                    break
+                end
+            end
+        end
         local valid = saved
             and type(saved.getAlertList) == "function"
             and type(saved.addAlert) == "function"
             and type(saved.removeAlert) == "function"
+            and type(saved.updateAlertPriority) == "function"
             and type(db) == "table"
             and db.schemaVersion == EAM.Constants.SCHEMA_VERSION
-            and type(db.alerts) == "table"
+            and type(db.profiles) == "table"
+            and type(db.profiles.classes) == "table"
+            and type(saved.getActiveClassToken()) == "string"
+            and type(saved.getActiveAlerts()) == "table"
+            and themeValid == true
 
-        return valid == true, valid and "SavedVariables contract available" or "SavedVariables contract invalid"
+        return valid == true, valid and "SavedVariables and six-theme contract available" or "SavedVariables or theme contract invalid"
     end,
 })
 
+FlowTestRunner.registerCase({
+    id = "modules.toggle.lifecycle",
+    primarySuite = "core",
+    suites = { quick = true, core = true, boundary = true },
+    run = function()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local controller = EAM.Modules and EAM.Modules.ModuleController
+        local router = EAM.Modules and EAM.Modules.EventRouter
+        local powerService = EAM.Services and EAM.Services.ClassPowerService
+        local tooltipService = EAM.Services and EAM.Services.TooltipMonitorService
+        local mock = EAM.FlowTestMock
+        if not saved or not controller or not router or not powerService or not tooltipService or not mock then
+            return false, "module lifecycle dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        local handlers = router.handlers.EAM_MODULE_TOGGLE_CHANGED
+        local handlerCount = handlers and handlers.count or 0
+        controller.initialize()
+        local handlerCountAfter = handlers and handlers.count or 0
+        local fakeDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION,
+            revision = 70,
+            config = {
+                moduleToggles = {
+                    playerAura = true,
+                    targetAura = true,
+                    spellCooldown = true,
+                    itemCooldown = true,
+                    groundEffect = true,
+                    classPower = true,
+                    totem = true,
+                    tooltipMonitor = true,
+                },
+                enableItemCooldown = true,
+                powerMana = true,
+                powerEnergy = true,
+            },
+        }
+
+        local ok, valid, detail = pcall(function()
+            EAM.db = fakeDB
+            mock.resetTrace()
+            local disabled, disabledState = saved.updateModuleToggle(
+                EAM.Constants.MODULE_KEYS.classPower,
+                false
+            )
+            local disabledRevision = fakeDB.revision
+            powerService.detectClassPower()
+            powerService.updatePower()
+            powerService.onEvent("PLAYER_ENTERING_WORLD")
+            local zeroPowerReads = mock.trace.unitPowerReads == 0
+                and mock.trace.unitPowerMaxReads == 0
+                and mock.trace.unitPowerPercentReads == 0
+
+            local noop, noopState = saved.updateModuleToggle(
+                EAM.Constants.MODULE_KEYS.classPower,
+                false
+            )
+            local invalidKey = saved.updateModuleToggle("notAModule", false)
+            local invalidValue = saved.updateModuleToggle(
+                EAM.Constants.MODULE_KEYS.classPower,
+                "false"
+            )
+            local revisionAfterRejected = fakeDB.revision
+
+            local postCallsBefore = tooltipService.postCallCount
+            saved.updateModuleToggle(EAM.Constants.MODULE_KEYS.tooltipMonitor, false)
+            saved.updateModuleToggle(EAM.Constants.MODULE_KEYS.tooltipMonitor, true)
+            local postCallsAfter = tooltipService.postCallCount
+
+            local enabled, enabledState = saved.updateModuleToggle(
+                EAM.Constants.MODULE_KEYS.classPower,
+                true
+            )
+            local catalogValid = #controller.ModuleOptions == 8
+                and controller.isValidKey(EAM.Constants.MODULE_KEYS.playerAura)
+                and controller.isValidKey(EAM.Constants.MODULE_KEYS.tooltipMonitor)
+                and not controller.isValidKey("notAModule")
+
+            local result = catalogValid
+                and handlerCount == 1
+                and handlerCountAfter == handlerCount
+                and disabled == true
+                and disabledState == "updated"
+                and disabledRevision == 71
+                and controller.isEnabled(EAM.Constants.MODULE_KEYS.classPower) == true
+                and zeroPowerReads
+                and noop == true
+                and noopState == "unchanged"
+                and invalidKey == false
+                and invalidValue == false
+                and revisionAfterRejected == disabledRevision
+                and postCallsAfter == postCallsBefore
+                and enabled == true
+                and enabledState == "updated"
+            return result, result and "module toggles are idempotent and disabled ClassPower performs zero API reads"
+                or string.format(
+                    "module lifecycle mismatch handlers=%d/%d revision=%d/%d powerReads=%d/%d postCalls=%d/%d",
+                    handlerCount,
+                    handlerCountAfter,
+                    disabledRevision,
+                    revisionAfterRejected,
+                    mock.trace.unitPowerReads,
+                    mock.trace.unitPowerMaxReads,
+                    postCallsBefore,
+                    postCallsAfter
+                )
+        end)
+        EAM.db = originalDB
+        if not ok then
+            return false, tostring(valid)
+        end
+        return valid, detail
+    end,
+})
+FlowTestRunner.registerCase({
+    id = "locale.dynamic_switch",
+    primarySuite = "core",
+    suites = { quick = true, core = true, boundary = true },
+    run = function()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local locale = EAM.Locale
+        if not saved or not locale or type(locale.bindText) ~= "function" then
+            return false, "dynamic locale dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        local originalSelection = locale.requested
+        local stableLanguageTable = EAM.L
+        local widget = { text = nil }
+        function widget:SetText(value)
+            self.text = value
+        end
+        local powerWidget = { text = nil }
+        function powerWidget:SetText(value)
+            self.text = value
+        end
+
+        local ok, valid, detail = pcall(function()
+            EAM.db = {
+                revision = 910001,
+                config = { language = "enUS" },
+            }
+            locale.setSelection("enUS")
+            local bound = locale.bindText(widget, "EAM_OPT_MODULES_BTN", "Modules")
+            local powerBound = locale.bindText(
+                powerWidget,
+                "EA_SPELL_POWER_NAME.Energy",
+                "Energy"
+            )
+            local englishText = locale.catalog.enUS.EAM_OPT_MODULES_BTN
+            local updated, updateState = saved.updateLanguage("ruRU")
+            local revisionAfterUpdate = EAM.db.revision
+            local russianText = locale.catalog.ruRU.EAM_OPT_MODULES_BTN
+            local russianEnergy = locale.catalog.ruRU.EA_SPELL_POWER_NAME.Energy
+            local noop, noopState = saved.updateLanguage("ruRU")
+
+            local result = bound == true
+                and powerBound == true
+                and englishText ~= nil
+                and updated == true
+                and updateState == "updated"
+                and EAM.db.config.language == "ruRU"
+                and revisionAfterUpdate == 910002
+                and noop == true
+                and noopState == "unchanged"
+                and EAM.db.revision == revisionAfterUpdate
+                and EAM.L == stableLanguageTable
+                and locale.effective == "ruRU"
+                and widget.text == russianText
+                and powerWidget.text == russianEnergy
+            return result, result and "stable EAM.L bindings switch immediately and no-op preserves revision"
+                or "dynamic locale binding or revision contract mismatch"
+        end)
+
+        locale.unbindText(widget)
+        locale.unbindText(powerWidget)
+        EAM.db = originalDB
+        locale.setSelection(originalSelection)
+        if not ok then
+            return false, tostring(valid)
+        end
+        return valid, detail
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "legacy.discovery.session_capture",
+    primarySuite = "core",
+    suites = { quick = true, core = true, boundary = true },
+    run = function()
+        local service = EAM.Services and EAM.Services.LegacyDiscoveryService
+        local spellInfo = EAM.Services and EAM.Services.SpellInfoService
+        local router = EAM.Modules and EAM.Modules.EventRouter
+        if not service or not spellInfo or not router then
+            return false, "legacy discovery dependencies unavailable"
+        end
+
+        local handlers = router.handlers.UNIT_SPELLCAST_SUCCEEDED
+        local handlerCount = handlers and handlers.count or 0
+        service.initialize()
+        local handlerCountAfter = handlers and handlers.count or 0
+
+        local beforeCount = 0
+        local hadFireball = false
+        service.forEachCastSpell(function(spellID)
+            beforeCount = beforeCount + 1
+            if spellID == 133 then
+                hadFireball = true
+            end
+        end)
+
+        local originalGetSpellInfo = spellInfo.getSpellInfo
+        local ok, valid, detail = pcall(function()
+            service.setCastCaptureEnabled(true)
+            router.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-Mock-1", 133)
+            router.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-Mock-2", 133)
+            router.fire("UNIT_SPELLCAST_SUCCEEDED", "target", "Cast-Mock-3", 116)
+            router.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-Mock-4", "116")
+
+            local enabledCount = 0
+            service.forEachCastSpell(function()
+                enabledCount = enabledCount + 1
+            end)
+
+            service.setCastCaptureEnabled(false)
+            router.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-Mock-5", 116)
+            local disabledCount = 0
+            service.forEachCastSpell(function()
+                disabledCount = disabledCount + 1
+            end)
+
+            spellInfo.getSpellInfo = function(spellID)
+                return {
+                    factsSafe = true,
+                    name = spellID == 133 and "Fireball" or "Other",
+                }
+            end
+            local partialCount = service.lookup("fire", false, function() end)
+            local exactCount = service.lookup("Fireball", true, function() end)
+            local expectedCount = beforeCount + (hadFireball and 0 or 1)
+            local result = handlerCount == 1
+                and handlerCountAfter == handlerCount
+                and enabledCount == expectedCount
+                and disabledCount == enabledCount
+                and partialCount == 1
+                and exactCount == 1
+                and service.isCastCaptureEnabled() == false
+            return result, result and "legacy discovery is bounded, session-only, idempotent, and player-only"
+                or string.format(
+                    "legacy discovery mismatch handlers=%d/%d counts=%d/%d/%d lookup=%d/%d",
+                    handlerCount,
+                    handlerCountAfter,
+                    beforeCount,
+                    enabledCount,
+                    disabledCount,
+                    partialCount,
+                    exactCount
+                )
+        end)
+        spellInfo.getSpellInfo = originalGetSpellInfo
+        service.setCastCaptureEnabled(false)
+        if not ok then
+            return false, tostring(valid)
+        end
+        return valid, detail
+    end,
+})
 FlowTestRunner.registerCase({
     id = "boundary.safe_scalar",
     primarySuite = "boundary",
@@ -2066,22 +2727,29 @@ FlowTestRunner.registerCase({
             and stoppedReport.session.visualObservation == "pass"
             and stoppedReport.cases[1].setResult == "accepted"
             and stoppedReport.cases[1].hasSVG == "true"
+            and stoppedReport.cases[1].fileIDClass == "zero"
             and stoppedReport.cases[1].clearReload == "pass"
             and stoppedReport.cases[2].setResult == "accepted"
-            and stoppedReport.cases[2].hasSVG == "true"
+            and stoppedReport.cases[2].hasSVG == "unavailable"
+            and stoppedReport.cases[2].fileIDClass == "unavailable"
             and stoppedReport.cases[2].clearReload == "pass"
+            and stoppedReport.capabilities.vectorHasSVG == true
+            and stoppedReport.capabilities.vectorGetSVGFileID == true
+            and stoppedReport.capabilities.textureHasSVG == false
+            and stoppedReport.capabilities.textureGetSVGFileID == false
             and type(stoppedJSON) == "string"
             and string.find(stoppedJSON, "EAM_SVG_CAPABILITY_REPORT", 1, true) ~= nil
             and mock.trace.svgVectorCreates == 1
             and mock.trace.svgSetCalls == 4
             and mock.trace.svgClearCalls == 2
+            and mock.trace.svgTextureIntrospectionCalls == 0
         if not svgValid then
             local activeStatus = type(activeReport) == "table" and activeReport.status
                 or tostring(activeReport)
             local stoppedStatus = type(stoppedReport) == "table" and stoppedReport.status
                 or tostring(stoppedReport)
             return false, string.format(
-                "SVG lifecycle mismatch: started=%s active=%s vector=%s texture=%s stopped=%s final=%s json=%s/%s raw=%s session=%s/%s c1=%s/%s/%s c2=%s/%s/%s contains=%s creates=%s sets=%s clears=%s",
+                "SVG lifecycle mismatch: started=%s active=%s vector=%s texture=%s stopped=%s final=%s json=%s/%s raw=%s session=%s/%s c1=%s/%s/%s/%s c2=%s/%s/%s/%s contains=%s creates=%s sets=%s clears=%s textureIntrospection=%s",
                 tostring(svgStarted),
                 tostring(activeStatus),
                 tostring(vectorMarked),
@@ -2095,9 +2763,11 @@ FlowTestRunner.registerCase({
                 tostring(stoppedReport.session.visualObservation),
                 tostring(stoppedReport.cases[1].setResult),
                 tostring(stoppedReport.cases[1].hasSVG),
+                tostring(stoppedReport.cases[1].fileIDClass),
                 tostring(stoppedReport.cases[1].clearReload),
                 tostring(stoppedReport.cases[2].setResult),
                 tostring(stoppedReport.cases[2].hasSVG),
+                tostring(stoppedReport.cases[2].fileIDClass),
                 tostring(stoppedReport.cases[2].clearReload),
                 tostring(
                     type(stoppedJSON) == "string"
@@ -2105,7 +2775,8 @@ FlowTestRunner.registerCase({
                 ),
                 tostring(mock.trace.svgVectorCreates),
                 tostring(mock.trace.svgSetCalls),
-                tostring(mock.trace.svgClearCalls)
+                tostring(mock.trace.svgClearCalls),
+                tostring(mock.trace.svgTextureIntrospectionCalls)
             )
         end
         local valid = value == 42

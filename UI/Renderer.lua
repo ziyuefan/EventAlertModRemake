@@ -808,6 +808,29 @@ function Renderer.render(alertState, frameName)
     end
 end
 
+function Renderer.clearFrame(frameName)
+    local frameState = Renderer.frames[frameName]
+    for id, item in pairs(Renderer.deferred) do
+        if item.frameName == frameName then
+            Renderer.deferred[id] = nil
+            Renderer.deferredCount = math.max(0, Renderer.deferredCount - 1)
+        end
+    end
+    if not frameState then
+        return true, "empty"
+    end
+
+    while frameState.orderCount > 0 do
+        local alertID = frameState.order[frameState.orderCount]
+        local before = frameState.orderCount
+        Renderer.render({ id = alertID, shown = false }, frameName)
+        if frameState.orderCount == before then
+            return false, "combatDeferred"
+        end
+    end
+    return true, "cleared"
+end
+
 -- 離開戰鬥時，將戰鬥中被阻攔的渲染與 Layout 變更安全地釋放執行
 function Renderer.onCombatEnd()
     -- 戰鬥結束後，重新嘗試確保所有框架 parent 已成功建立

@@ -57,12 +57,18 @@ function Main.initialize()
         end
     end
 
+    if EAM.Locale and EAM.Locale.setSelection and EAM.db and EAM.db.config then
+        pcall(EAM.Locale.setSelection, EAM.db.config.language)
+    end
+
+    initializeModule(EAM.Modules.ModuleController, "ModuleController")
     initializeModule(EAM.Services.AuraCapabilityService, "AuraCapabilityService")
     initializeModule(EAM.UI.Renderer, "Renderer")
     initializeModule(EAM.UI.TooltipMonitorMenu, "TooltipMonitorMenu")
     initializeModule(EAM.Services.TooltipMonitorService, "TooltipMonitorService")
     initializeModule(EAM.Managers.AlertManager, "AlertManager")
     initializeModule(EAM.Services.SpellInfoService, "SpellInfoService")
+    initializeModule(EAM.Services.LegacyDiscoveryService, "LegacyDiscoveryService")
     initializeModule(EAM.Services.AuraService, "AuraService")
     initializeModule(EAM.Services.CooldownService, "CooldownService")
     initializeModule(EAM.Services.ItemCooldownService, "ItemCooldownService")

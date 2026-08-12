@@ -432,7 +432,7 @@
 flowchart LR
     A["正式 FlowTestRunner 案例"] --> B["Lua 5.1 Offline Harness"]
     A --> C["Retail/PTR FlowTestPanel"]
-    C --> I["LiveTestPanel 34 案人工觀察"]
+    C --> I["LiveTestPanel 37 案人工觀察"]
     B --> D["JSON + Markdown"]
     C --> E["EAM_FLOW_TEST_REPORT_JSON"]
     I --> J["EAM_LIVE_TEST_REPORT_JSON"]
@@ -474,7 +474,7 @@ flowchart LR
 <tr>
 <td><code>Debug/LiveTestSession.lua</code></td>
 <td>Retail／PTR</td>
-<td>34 案人工狀態、boot-token <code>/reload</code> checkpoint、戰鬥寫入守衛、備註遮蔽與真人 JSON</td>
+<td>37 案人工狀態、boot-token <code>/reload</code> checkpoint、戰鬥寫入守衛、備註遮蔽與真人 JSON</td>
 <td>是</td>
 </tr>
 <tr>
@@ -504,7 +504,7 @@ flowchart LR
 <tr>
 <td><code>Tools/Test-ValidationContracts.ps1</code></td>
 <td>開發端</td>
-<td>驗證 JSON Schema、21 點／34 案 Lua 同步、continuity drift、PowerShell AST 與匯入器正反例</td>
+<td>驗證 JSON Schema、21 點／37 案 Lua 同步、continuity drift、PowerShell AST 與匯入器正反例</td>
 <td>否</td>
 </tr>
 <tr>
@@ -600,7 +600,7 @@ pwsh -NoProfile -File .\Tools\Test-ValidationContracts.ps1
 <li><code>/eam test boundary</code></li>
 <li><code>/eam test aura121</code></li>
 <li><code>/eam test all</code></li>
-<li><code>/eam test live</code> 或 <code>/eam test manual</code>：開啟 34 案真人簽收工作台。</li>
+<li><code>/eam test live</code> 或 <code>/eam test manual</code>：開啟 37 案真人簽收工作台。</li>
 </ul>
 <p>能力面板提供 Quick、Core、Boundary、Aura121、All、「雙倒數診斷」、「UnitPower 能力」與「複製開發報告」按鈕；真人工作台另要求玩家選擇 <code>_ptr_</code>／<code>_xptr_</code>／<code>_retail_</code>。第一次建立面板若在戰鬥中提出，會延後至 <code>PLAYER_REGEN_ENABLED</code>；既有面板在戰鬥中也不得開始 session、寫入案例／備註、建立 checkpoint 或完成簽收。</p>
 <p>真人工作台只記錄玩家觀察，不停留 Tooltip、不點按遊戲按鈕、不施法、不使用物品、不執行巨集、不改目標，也不呼叫 <code>ReloadUI</code>。<code>/reload</code> checkpoint 與最終寫回都必須由玩家操作。備註只允許匿名觀察，不得輸入帳號、角色、伺服器、WTF 或磁碟絕對路徑。</p>
@@ -735,13 +735,13 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
     &quot;reloadUIAutomated&quot;: false,
     &quot;playerOperated&quot;: true
   },
-  &quot;summary&quot;: { &quot;total&quot;: 34, &quot;required&quot;: 34 },
+  &quot;summary&quot;: { &quot;total&quot;: 37, &quot;required&quot;: 37 },
   &quot;cases&quot;: [],
   &quot;boundaryWarnings&quot;: []
 }
 </code></pre>
 
-<p>對應 schema 位於 <code>Schemas/EAM_FlowValidationReport.schema.json</code> 與 <code>Schemas/EAM_LiveValidationReport.schema.json</code>。Live <code>pass</code> 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、34/34、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 <code>legacy-unverified</code> 並以 exit code 1 拒絕簽收。</p>
+<p>對應 schema 位於 <code>Schemas/EAM_FlowValidationReport.schema.json</code> 與 <code>Schemas/EAM_LiveValidationReport.schema.json</code>。Live <code>pass</code> 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、37/37、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 <code>legacy-unverified</code> 並以 exit code 1 拒絕簽收。</p>
 <p>報告只能包含測試控制值與確認安全的環境欄位；不得包含 Secret、Protected、完整 SavedVariables、無界限事件日誌、原始 Aura／Cooldown facts、帳號／角色／伺服器或檔案系統路徑。遊戲內先遮蔽，匯入器仍會遞迴檢查屬性名稱與字串值。</p>
 <h2 id="8">8. 新增案例規則</h2>
 <ol>
@@ -760,7 +760,7 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
 <li>TOC 路徑與一致性。</li>
 <li>Lua 5.1 語法。</li>
 <li>離線 <code>all</code> 流程。</li>
-<li>JSON Schema、21 點／34 案 Lua 同步、continuity drift、TOC 與 PowerShell AST 契約。</li>
+<li>JSON Schema、21 點／37 案 Lua 同步、continuity drift、TOC 與 PowerShell AST 契約。</li>
 <li>敏感資訊掃描。</li>
 <li>zip 排除檢查。</li>
 </ol>
@@ -771,7 +771,7 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
 <li><code>boundary.safe_scalar</code> 只驗證普通安全值路徑；真實 Secret 必須在遊戲內由安全 UI 通道觀察。</li>
 <li>流程面板不執行施法、物品使用、改目標或 secure action。</li>
 <li>報告不自動上傳網路；回灌必須由使用者複製 JSON 或提供 WTF 檔。</li>
-<li>12.1 AuraContainer／AuraButton 案例已納入 34 案矩陣，但仍需 PTR 實機完成。</li>
+<li>12.1 AuraContainer／AuraButton 與 AuraSound 案例已納入 37 案矩陣，但仍需 PTR 實機完成。</li>
 <li>WoW 只在 <code>/reload</code>、正常登出等保存時機把記憶體內 SavedVariables 寫回 WTF；直接讀檔前必須確認玩家已完成保存。</li>
 </ul>
 <h2 id="2026-07-26aura121-suite">2026-07-26：aura121 suite</h2>
@@ -831,15 +831,33 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
 <li>直接複製面板內容可取得記憶體內最新報告。若讀取 WTF 內 <code>EventAlertMod.lua</code>，玩家必須先在完成測試後自行 <code>/reload</code> 或正常登出，否則磁碟內容可能落後。</li>
 <li>開發端只讀匯入統一使用 <code>Tools/Import-EAMFlowReport.ps1 -Path '&lt;使用者明確提供的檔案&gt;' -ReportType Flow|Live|UnitPower</code>；不得列舉 Account／角色目錄，也不得把本機絕對路徑寫入專案文件或報告。</li>
 <li><code>UnitPower</code> capability report 只保存 resultClass、sink accepted／rejected 與人工 visualObservation；<code>rawValuesCollected</code> 必須為 false。生命之花等非 UnitPower 狀態應在 Aura 案例驗證。</li>
-<li>2026-08-09 離線契約為 Flow <code>54/54</code> 與 Validation Contracts <code>247/247</code>；真人矩陣未因這些結果自動變成 pass。</li>
+<li>2026-08-09 離線契約為 Flow <code>54/54</code> 與 Validation Contracts <code>264/264</code>；真人矩陣未因這些結果自動變成 pass。</li>
 </ul>
 <h2 id="2026-08-09svg">2026-08-09：SVG 能力探針與回灌</h2>
 <ul>
-<li>SVG 探針固定兩案：svg.vector_graphics.set_svg 與 svg.texture.set_svg。每案依序執行 set、HasSVG、file-ID 分類、clear、reload，再由玩家標記 visualObservation。</li>
-<li>strict mock 的 HasSVG／GetSVGFileID 使用 rawget，避免 ClearSVG 後 nil 欄位誤觸嚴格 __index；Flow all 保持 54 案並把 SVG 生命週期併入 boundary.safe_scalar。</li>
-<li>EAM_SVG_CAPABILITY_REPORT_JSON 列入 SavedVariables；Tools/Import-EAMFlowReport.ps1 的 ReportType SVG 重新驗證 schema、client profile、兩案 ID、interfaceRequired、clearReload 與 status。</li>
-<li>12.1 required 路徑必須兩案 accepted、HasSVG=true、fileIDClass=positive-number、clearReload=pass 且玩家目視 pass 才能成為 pass；12.0.7 為 unsupported。</li>
-<li>最新離線證據：Lua 50/50、Flow 54/54、Validation Contracts 247/247。報告仍需 PTR 玩家操作與目視，不自動操作 WoW。</li>
+<li>SVG 探針固定兩案：<code>svg.vector_graphics.set_svg</code> 與 <code>svg.texture.set_svg</code>，但依 69189 生成文件採非對稱契約。</li>
+<li>VectorGraphics 依序驗證 SetSVG、HasSVG、GetSVGFileID 分類、ClearSVG、HasSVG=false、重新 SetSVG、HasSVG=true；固定 addon-local 資產允許 fileID 分類為 positive-number、zero 或 negative-number，仍不保存 raw file ID。</li>
+<li>Texture 只要求 SetSVG 與 ClearSVG；HasSVG／GetSVGFileID unavailable 是預期結果。clearReload 由 ClearSVG 與重新 SetSVG 的 pcall／回傳值決定，最終渲染仍由玩家標記 visualObservation。</li>
+<li>strict mock 只讓 VectorGraphics 暴露四方法、Texture 暴露 Set/Clear，並斷言 Texture introspection 呼叫為 0；Flow all 保持 54 案，SVG 生命週期併入 <code>boundary.safe_scalar</code>。</li>
+<li><code>EAM_SVG_CAPABILITY_REPORT_JSON</code> 列入 SavedVariables；<code>Tools/Import-EAMFlowReport.ps1</code> 的 <code>ReportType SVG</code> 依 kind 重算 capability、case、status，且 mutation 測試拒絕假 Vector HasSVG、缺 Texture lifecycle 與非法 Texture introspection。</li>
+<li>Alpha 3 原始 PTR 報告保留為 <code>Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json</code>：兩格 SetSVG accepted 且人工圖樣 pass，但舊探針未執行 Texture clear/reload，故仍是 incomplete 證據；需用修正版重跑才能簽收完整 capability pass。</li>
+<li>最新離線證據：Lua 50/50、Flow boundary 37/37、Flow all 54/54、Validation Contracts 264/264。報告仍需 PTR 玩家操作與目視，不自動操作 WoW；12.0.7 維持 unsupported。</li>
+</ul>
+<h2 id="2026-08-13aurasound-37">2026-08-13：AuraSound 流程與 37 案矩陣</h2>
+<ul>
+<li>Flow 新增 <code>aura121.sound.saved_variables_roundtrip</code>、<code>compiler_fingerprints</code>、<code>container_unchanged</code>、<code>failure_rollback</code>；<code>aura121.sound.lifecycle</code> 同時核對三 trigger payload。</li>
+<li>strict mock 可注入 Add return nil／throw 與 Remove throw，並保留呼叫 trace；不放寬未知 API。</li>
+<li>Live matrix 版本為 <code>2026-08-13.1</code>，共 37 案；新增 Added、ApplicationsIncreased、Removed 三項人工聽覺案例。</li>
+<li>12.0.7 案例通過條件是控制項 capability 降級且零 12.1 API 呼叫，不是 AuraSound 實播。</li>
+<li>離線 Flow 只證明普通設定資料與註冊生命週期；音效播放、驅散、戰鬥與 caster/filter over-fire 仍由玩家簽收。</li>
+<li>本輪離線 gate：Lua <code>54/54</code>、Flow <code>all 61/61</code>、Validation Contracts <code>355/355</code>；artifact 為 <code>TestResults/EAM_FlowValidation_all_20260813_013945.json</code>。</li>
+</ul>
+<h2 id="2026-08-13-alpha-4-profile">2026-08-13 Alpha 4：模組與 profile 流程</h2>
+<ul>
+<li>EAM_FLOW_TEST_REPORT 的離線覆蓋包含 v1-v5 class profile migration 與 modules.toggle.lifecycle；這些案例只驗證 SavedVariables、handler gate、狀態清理與事件註冊數，不代表遊戲客戶端的畫面簽收。</li>
+<li>/eam list、lookup、lookupfull、showcast 的候選來源固定為 active class 的設定、SpellArray 與本次登入安全施法候選；不可把輸出當成完整職業資料庫。</li>
+<li>Alpha 4 發布檔案只從正式 TOC 與白名單打包；本機 deploy、Tests、TestResults、Tools、backup 與 LegacyReference 不進 Release ZIP。</li>
+<li>JSON／Base64 profile codec 尚未進入 Flow pass 範圍；若下一輪加入，需增加 parser rejection、checksum、preview/apply、replace/merge、combat deferral 與無副作用測試。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

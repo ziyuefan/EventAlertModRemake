@@ -30,12 +30,18 @@ local api = EAM.API
 local Util = EAM.Util
 local DurationAdapter = EAM.Modules.DurationAdapter
 local ItemCooldownStatePool
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 
 local ItemCooldownService = {
     states = {},
 }
 
 EAM.Services.ItemCooldownService = ItemCooldownService
+
+local function moduleEnabled()
+    return not ModuleController
+        or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.itemCooldown)
+end
 
 -- 低 GC 的 ItemCooldownState 物件快取池
 ItemCooldownStatePool = {
@@ -101,8 +107,10 @@ local lastDbRevision = -1
 
 function ItemCooldownService.updateAlertList()
     alertCount = 0
-    if EAM.db and EAM.db.alerts and EAM.db.alerts.itemCooldowns then
-        for _, alert in pairs(EAM.db.alerts.itemCooldowns) do
+    local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+    local alerts = savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts() or nil
+    if alerts and alerts.itemCooldowns then
+        for _, alert in pairs(alerts.itemCooldowns) do
             alertCount = alertCount + 1
             alertList[alertCount] = alert
         end
@@ -201,6 +209,9 @@ local function refreshAlert(alert, eventName)
 end
 
 local function refreshAll(eventName)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     verifyAlertList()
     if alertCount == 0 then
         return
@@ -231,6 +242,9 @@ function ItemCooldownService.initialize()
 end
 
 function ItemCooldownService.refreshItem(itemID, eventName)
+    if not moduleEnabled() then
+        return nil, "moduleDisabled"
+    end
     verifyAlertList()
     if alertCount == 0 then
         return nil
@@ -257,6 +271,9 @@ function ItemCooldownService.refreshAll(eventName)
 end
 
 function ItemCooldownService.onCooldownEvent(eventName, spellID, baseSpellID, category, startRecoveryCategory, itemID)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if EAM.addDebugLog then
         EAM.addDebugLog("ItemCooldownService", "onCooldownEvent", "Event: " .. tostring(eventName))
     end
@@ -269,4 +286,25 @@ function ItemCooldownService.onCooldownEvent(eventName, spellID, baseSpellID, ca
         return
     end
     refreshAll(eventName)
+end
+
+function ItemCooldownService.onModuleToggle(enabled, reason)
+    lastDbRevision = -1
+    if enabled == false then
+        local router = EAM.Modules.EventRouter
+        for alertID, state in pairs(ItemCooldownService.states) do
+            state.shown = false
+            ItemCooldownService.states[alertID] = nil
+            if router then
+                router.fire(
+                    "EAM_ITEM_COOLDOWN_STATE_CHANGED",
+                    state,
+                    EAM.Constants.ALERT_FRAME_TYPES.itemCooldown
+                )
+            end
+        end
+        return true, "disabled"
+    end
+    refreshAll("MODULE_ENABLED_" .. tostring(reason or "manual"))
+    return true, "enabled"
 end

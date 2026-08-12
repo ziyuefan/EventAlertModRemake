@@ -28,6 +28,7 @@ local _, EAM = ...
 local api = EAM.API
 local Util = EAM.Util
 local DurationAdapter = EAM.Modules.DurationAdapter
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 local TotemStatePool = nil
 
 local TotemService = {
@@ -35,6 +36,11 @@ local TotemService = {
 }
 
 EAM.Services.TotemService = TotemService
+
+local function moduleEnabled()
+    return not ModuleController
+        or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.totem)
+end
 
 -- 低 GC 的 TotemState 物件快取池
 TotemStatePool = {
@@ -127,6 +133,9 @@ end
 
 -- 刷新單個圖騰插槽狀態
 function TotemService.refreshSlot(slot)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if type(api.GetTotemInfo) ~= "function" then
         return
     end
@@ -203,6 +212,9 @@ end
 
 -- 掃描所有圖騰插槽
 function TotemService.scanAll()
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     for slot = 1, 4 do
         TotemService.refreshSlot(slot)
     end
@@ -210,11 +222,34 @@ end
 
 -- 事件接收器
 function TotemService.onEvent(event, slot)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if event == "PLAYER_TOTEM_UPDATE" and slot then
         TotemService.refreshSlot(slot)
     else
         TotemService.scanAll()
     end
+end
+
+function TotemService.onModuleToggle(enabled, reason)
+    if enabled == false then
+        local router = EAM.Modules.EventRouter
+        for slot, state in pairs(TotemService.activeStates) do
+            state.shown = false
+            TotemService.activeStates[slot] = nil
+            if router then
+                router.fire(
+                    "EAM_TOTEM_STATE_CHANGED",
+                    state,
+                    EAM.Constants.ALERT_FRAME_TYPES.totem
+                )
+            end
+        end
+        return true, "disabled"
+    end
+    TotemService.scanAll()
+    return true, "enabled"
 end
 
 function TotemService.initialize()

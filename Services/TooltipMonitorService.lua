@@ -49,11 +49,17 @@ EAM.Services.TooltipMonitorService = Service
 
 local api = EAM.API or {}
 local Util = EAM.Util or {}
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 local CANDIDATE_TTL_SECONDS = 5
 local AURA_HEARTBEAT_TTL_SECONDS = 0.75
 local VALIDATION_GAME_TOOLTIP = "gameTooltip"
 local VALIDATION_AURA_HEARTBEAT = "auraHeartbeat"
 local inCombat
+
+local function moduleEnabled()
+    return not ModuleController
+        or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.tooltipMonitor)
+end
 
 Service.ACTION_SPELL_COOLDOWN = "spellCooldown"
 Service.ACTION_ITEM_COOLDOWN = "itemCooldown"
@@ -230,6 +236,10 @@ local function isCandidateTooltipCurrent()
 end
 
 local function tryOpenMenu()
+    if not moduleEnabled() then
+        clearCandidate("moduleDisabled")
+        return false, "moduleDisabled"
+    end
     if inCombat() then
         reject("combat")
         return false
@@ -285,6 +295,9 @@ local function readTooltipDataID(data)
 end
 
 local function onSpellTooltip(tooltip, data)
+    if not moduleEnabled() then
+        return
+    end
     if not isGameTooltip(tooltip) then
         return
     end
@@ -300,6 +313,9 @@ local function onSpellTooltip(tooltip, data)
 end
 
 local function onItemTooltip(tooltip, data)
+    if not moduleEnabled() then
+        return
+    end
     if not isGameTooltip(tooltip) then
         return
     end
@@ -402,6 +418,9 @@ local function resolveMacroItemID(macroReference)
 end
 
 local function onMacroTooltip(tooltip)
+    if not moduleEnabled() then
+        return
+    end
     if not isGameTooltip(tooltip) then
         return
     end
@@ -435,6 +454,9 @@ local function onMacroTooltip(tooltip)
 end
 
 local function onAuraTooltip(tooltip)
+    if not moduleEnabled() then
+        return
+    end
     if tooltip == nil then
         reject("auraTooltipUnavailable")
         return
@@ -527,6 +549,10 @@ local function printResult(success, change, identifier)
 end
 
 function Service.commitCandidate(source, action, manualID)
+    if not moduleEnabled() then
+        Service.lastReason = "moduleDisabled"
+        return false, "moduleDisabled"
+    end
     if inCombat() then
         Service.lastReason = "combatCommitBlocked"
         printResult(false, "combat", 0)
@@ -607,6 +633,9 @@ function Service.commitCandidate(source, action, manualID)
 end
 
 local function onModifierStateChanged(_, _, down)
+    if not moduleEnabled() then
+        return
+    end
     if down == 1 then
         tryOpenMenu()
     end
@@ -626,7 +655,9 @@ function Service.initialize()
     end
     Service.initialized = true
 
-    enableAuraIDDisplay()
+    if moduleEnabled() then
+        enableAuraIDDisplay()
+    end
     local types = api.TooltipDataType
     if types then
         registerPostCall(types.Spell, onSpellTooltip)
@@ -650,6 +681,21 @@ function Service.initialize()
             Service.lastReason = "tooltipProcessorUnavailable"
         end
     end
+end
+
+function Service.onModuleToggle(enabled, reason)
+    if enabled == false then
+        clearCandidate("moduleDisabled")
+        local menu = EAM.UI and EAM.UI.TooltipMonitorMenu
+        if menu and type(menu.hide) == "function" then
+            pcall(menu.hide)
+        end
+        Service.lastReason = "moduleDisabled"
+        return true, "disabled"
+    end
+    enableAuraIDDisplay()
+    Service.lastReason = Service.postCallCount > 0 and "ready" or "tooltipProcessorUnavailable"
+    return true, "enabled"
 end
 
 function Service.getStatus()

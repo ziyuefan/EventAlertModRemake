@@ -6,11 +6,13 @@ Module: UI/Options
 理念:
 - 保留 EAM 經典簡潔設定體驗，不使用 any XML 模板，100% Pure Lua 實作。
 - 提供主設定面版、開闊且不重疊的圖示位置與滑桿面板、滾動法術清單、法術條件彈出視窗。
+- 提供固定英文名稱的 Auto Detect 與可保存的多語系下拉選單；選擇後原地刷新 EAM 自有 UI。
 - 專注於 profile 資料的讀寫，不直接承擔戰鬥中 alert 狀態的管理與渲染。
 
 責任:
 - 建立主設定 frame、滑桿與能量設定 panel、ScrollBox 滾動法術清單、法術條件 sub-frame。
 - 讀取與寫入 EAM.db.config 與 EAM.db.alerts，並在變更時呼叫對應 Service 的刷新 API。
+- 將語系選擇寫入 SavedVariables，透過穩定 EAM.L identity 與文字綁定立即刷新既有 UI。
 - 戰鬥中防 taint 安全保護：戰鬥中限制開啟與 UI 的重構，於 PLAYER_REGEN_ENABLED 時安全延遲載入。
 - 將物品冷卻監控獨立為單獨的第 5 個 UI 設定分類，行與列進行了無縫重塑與防重疊調整。
 
@@ -36,6 +38,12 @@ local Options = {
     listFrame = nil,
     condFrame = nil,
     soundDropdown = nil,
+    languageDropdown = nil,
+    languageMenu = nil,
+    themeDropdown = nil,
+    themeMenu = nil,
+    specDropdown = nil,
+    currentSpecFilterName = nil,
     addEditBox = nil,
     currentCategory = 1,
     pendingOpen = false,
@@ -44,7 +52,41 @@ local Options = {
 EAM.UI.Options = Options
 
 local api = EAM.API
+local Theme = EAM.Theme
+local Locale = EAM.Locale
 local mathFloor = math.floor
+
+local function bindText(target, key, fallback)
+    if Locale and type(Locale.bindText) == "function" then
+        return Locale.bindText(target, key, fallback)
+    end
+    if target and type(target.SetText) == "function" then
+        target:SetText((EAM.L and EAM.L[key]) or fallback or key)
+        return true
+    end
+    return false
+end
+
+local function localized(key, fallback)
+    return {
+        eamLocaleKey = key,
+        fallback = fallback,
+    }
+end
+
+local function setWidgetText(target, value)
+    if type(value) == "table" and type(value.eamLocaleKey) == "string" then
+        return bindText(target, value.eamLocaleKey, value.fallback)
+    end
+    if target and type(target.SetText) == "function" then
+        target:SetText(value)
+        return true
+    end
+    return false
+end
+
+local MINIMAP_SVG_ASSET = "Interface\\AddOns\\EventAlertMod\\Media\\SVG\\eam-minimap.svg"
+local MINIMAP_FALLBACK_TEXTURE = "Interface\\Icons\\INV_Misc_QuestionMark"
 
 -- 12 種經典音效的 FileDataID 與自訂 PATH
 local soundAssets = {
@@ -61,6 +103,94 @@ local soundAssets = {
     MortarTeamPissed = 555839,
     ShaolinFootball = "Interface\\AddOns\\EventAlertMod\\Media\\Music\\ShaolinFootball.mp3",
 }
+
+local soundNames = {
+    "ShayBell",
+    "FluteRun",
+    "Netherwind",
+    "PolyMorphCow",
+    "RockBiter",
+    "YarrrrImpact",
+    "BrokenHeart",
+    "MillhouseReady",
+    "MillhousePyro",
+    "SatyrePissed",
+    "MortarTeamPissed",
+    "ShaolinFootball",
+}
+
+local function isAuraSoundAvailable()
+    local service = EAM.Services and EAM.Services.AuraCapabilityService
+    local snapshot = service and service.getSnapshot and service.getSnapshot() or nil
+    return snapshot ~= nil and snapshot.hasAuraSound == true and snapshot.hasAuraSoundEnum == true
+end
+
+local function createAuraSoundEntry(asset)
+    if type(asset) == "number" then
+        return { soundFileID = asset }
+    end
+    if type(asset) == "string" then
+        return { soundFileName = asset }
+    end
+    return nil
+end
+
+function Options.buildAuraSoundConfig(soundName, added, applicationsIncreased, removed)
+    if not added and not applicationsIncreased and not removed then
+        return nil
+    end
+    local asset = soundAssets[soundName] or soundAssets.ShayBell
+    local sound = {}
+    if added then
+        sound.added = createAuraSoundEntry(asset)
+    end
+    if applicationsIncreased then
+        sound.applicationsIncreased = createAuraSoundEntry(asset)
+    end
+    if removed then
+        sound.removed = createAuraSoundEntry(asset)
+    end
+    return sound
+end
+
+function Options.resolveAuraSoundName(sound)
+    if type(sound) ~= "table" then
+        return nil
+    end
+    local entry = sound.added or sound.applicationsIncreased or sound.removed
+    if type(entry) ~= "table" then
+        return nil
+    end
+    local asset = entry.soundFileID or entry.soundFileName
+    for index = 1, #soundNames do
+        local soundName = soundNames[index]
+        if soundAssets[soundName] == asset then
+            return soundName
+        end
+    end
+    return nil
+end
+-- 12.1 可由 Texture:SetSVG 載入插件自有 SVG；12.0.7 或載入失敗時使用穩定內建圖示。
+function Options.applyMinimapTexture(texture)
+    if not texture or type(texture.SetTexture) ~= "function" then
+        return "unavailable"
+    end
+
+    texture:SetTexture(MINIMAP_FALLBACK_TEXTURE)
+    if type(texture.SetSVG) ~= "function" then
+        return "fallback"
+    end
+
+    local ok, accepted = pcall(texture.SetSVG, texture, MINIMAP_SVG_ASSET)
+    if ok and accepted ~= false then
+        return "svg"
+    end
+
+    -- SetSVG 可能在錯誤前留下部分狀態，失敗路徑再次明確恢復 fallback。
+    texture:SetTexture(MINIMAP_FALLBACK_TEXTURE)
+    return "fallback"
+end
+
 
 -- Native Aura 結構只能在重建窗口套用；一般設定先標記待套用。
 local function markAuraSettingsDirty(reason)
@@ -118,6 +248,37 @@ local function notifyGroundEffectConfigChanged()
     end
 end
 
+local function notifyAuraSoundChanged()
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router and router.fire then
+        local revision = EAM.db and EAM.db.revision or 0
+        router.fire("EAM_AURA_SOUND_CHANGED", revision)
+        return true
+    end
+    return false
+end
+
+function Options.refreshLanguageDropdown()
+    if not Options.languageDropdown then
+        return
+    end
+
+    local locale = EAM.Locale
+    local selection = locale and locale.getSelection and locale.getSelection() or "auto"
+    local label = locale and locale.getOptionLabel and locale.getOptionLabel(selection) or "Auto Detect"
+    Options.languageDropdown:SetText((EAM.L.EAM_OPT_LANGUAGE_PREFIX or "Language: ") .. label)
+end
+
+function Options.refreshThemeDropdown()
+    if not Options.themeDropdown then
+        return
+    end
+    local theme = EAM.Theme
+    local selection = theme and theme.getSelection and theme.getSelection() or "eam"
+    local label = theme and theme.getOptionLabel and theme.getOptionLabel(selection) or "EAM"
+    Options.themeDropdown:SetText((EAM.L.EAM_OPT_THEME_PREFIX or "Theme: ") .. label)
+end
+
 function Options.refreshAuraBackendStatus()
     if not Options.nativeAuraStatusLabel then
         return
@@ -136,6 +297,41 @@ function Options.refreshAuraBackendStatus()
     Options.nativeAuraStatusLabel:SetText(
         (EAM.L.EAM_OPT_AURA_BACKEND or "Aura 後端: ") .. tostring(backend) .. suffix
     )
+end
+
+function Options.refreshSoundDropdown()
+    if not Options.soundDropdown then
+        return
+    end
+    local soundName = EAM.db and EAM.db.config and EAM.db.config.soundName or "ShayBell"
+    Options.soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. soundName)
+end
+
+function Options.refreshSpecDropdown()
+    if not Options.specDropdown then
+        return
+    end
+    local filterName
+    if Options.currentSpecFilter == nil then
+        filterName = EAM.L.EAM_OPT_FILTER_ALL_VAL or "全部法術"
+    elseif Options.currentSpecFilter == 0 then
+        filterName = EAM.L.EAM_OPT_FILTER_GENERAL or "通用技能/自訂"
+    else
+        filterName = Options.currentSpecFilterName or tostring(Options.currentSpecFilter)
+    end
+    Options.specDropdown:SetText((EAM.L.EAM_OPT_FILTER_PREFIX or "篩選: ") .. filterName)
+end
+
+function Options.refreshLocalizedText()
+    Options.refreshSoundDropdown()
+    Options.refreshLanguageDropdown()
+    Options.refreshThemeDropdown()
+    Options.refreshAuraBackendStatus()
+    Options.refreshSpecDropdown()
+end
+
+if Locale and type(Locale.registerRefresh) == "function" then
+    Locale.registerRefresh(Options.refreshLocalizedText)
 end
 
 -- 取得當前類別對應的 alert list
@@ -359,7 +555,7 @@ local function createCheckbox(parent, text, key, x, y, onChange)
     cb:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     cb.text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     cb.text:SetPoint("LEFT", cb, "RIGHT", 4, 1)
-    cb.text:SetText(text)
+    setWidgetText(cb.text, text)
     
     cb:SetScript("OnShow", function(self)
         if EAM.db and EAM.db.config then
@@ -373,10 +569,11 @@ local function createCheckbox(parent, text, key, x, y, onChange)
             if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
                 EAM.Modules.SavedVariables.markRevisionChanged()
             end
-            if onChange then
-                onChange(self:GetChecked())
+            local rebuildNative = true
+            if onChange and onChange(self:GetChecked()) == false then
+                rebuildNative = false
             end
-            Options.notifyConfigChanged()
+            Options.notifyConfigChanged(rebuildNative)
         end
     end)
     return cb
@@ -385,14 +582,16 @@ end
 -- 建立通用紅色按鈕
 local function createRedButton(parent, text, x, y, width, height, onClick)
     local btn = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(btn) end
     btn:SetSize(width or 120, height or 24)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-    btn:SetText(text)
+    setWidgetText(btn, text)
     
     local nTex = btn:GetNormalTexture()
     if nTex then nTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
     local pTex = btn:GetPushedTexture()
     if pTex then pTex:SetVertexColor(0.6, 0.1, 0.1, 1) end
+    if Theme and Theme.registerButton then Theme.registerButton(btn) end
     
     btn:SetScript("OnClick", onClick)
     return btn
@@ -409,7 +608,7 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
 
     local sliderText = slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sliderText:SetPoint("BOTTOMLEFT", slider, "TOPLEFT", 0, 5)
-    sliderText:SetText(text)
+    setWidgetText(sliderText, text)
 
     local valText = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     valText:SetPoint("BOTTOMRIGHT", slider, "TOPRIGHT", 0, 5)
@@ -514,6 +713,10 @@ local function createFrame()
         return nil
     end
 
+    if Theme and EAM.db and EAM.db.config then
+        Theme.setSelection(EAM.db.config.theme)
+    end
+
     -- ==========================================
     -- 1. Main Options Frame (Left Panel, 380x600)
     -- ==========================================
@@ -533,16 +736,31 @@ local function createFrame()
     })
     frame:SetBackdropColor(0.12, 0.08, 0.06, 0.96)
     frame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(frame, "window") end
     frame:Hide()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
     title:SetPoint("TOP", frame, "TOP", 0, -14)
     title:SetTextColor(0.95, 0.85, 0.4, 1.0)
     title:SetText("EventAlertMod")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
+    local moduleButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(moduleButton) end
+    moduleButton:SetSize(72, 22)
+    moduleButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -13)
+    bindText(moduleButton, "EAM_OPT_MODULES_BTN", "功能模組")
+    moduleButton:SetScript("OnClick", function()
+        local modulePanel = EAM.UI and EAM.UI.ModulePanel or nil
+        if modulePanel and type(modulePanel.open) == "function" then
+            modulePanel.open()
+        end
+    end)
+
     local aboutButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(aboutButton) end
     aboutButton:SetSize(62, 22)
     aboutButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -13)
-    aboutButton:SetText(EAM.L.EAM_OPT_ABOUT_BTN or "關於")
+    bindText(aboutButton, "EAM_OPT_ABOUT_BTN", "關於")
     aboutButton:SetScript("OnClick", function()
         local aboutPanel = EAM.UI and EAM.UI.AboutPanel or nil
         if aboutPanel and type(aboutPanel.open) == "function" then
@@ -562,14 +780,17 @@ local function createFrame()
     })
     inner:SetBackdropColor(0.08, 0.05, 0.03, 0.8)
     inner:SetBackdropBorderColor(0.5, 0.35, 0.2, 0.8)
+    if Theme and Theme.registerFrame then Theme.registerFrame(inner, "panel") end
 
     -- 頂部黃色按鈕
     local togglePosBtn = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(togglePosBtn) end
     togglePosBtn:SetSize(160, 26)
     togglePosBtn:SetPoint("TOPLEFT", inner, "TOPLEFT", 12, -10)
-    togglePosBtn:SetText(EAM.L.EAM_OPT_POS_AND_POWER_BTN or "圖示位置與能量設定")
+    bindText(togglePosBtn, "EAM_OPT_POS_AND_POWER_BTN", "圖示位置與能量設定")
     local tFont = togglePosBtn:GetFontString()
     if tFont then tFont:SetTextColor(0.95, 0.85, 0.2, 1) end
+    if Theme and Theme.registerButton then Theme.registerButton(togglePosBtn) end
     local function togglePositionFrame()
         if Options.posFrame:IsShown() then
             Options.posFrame:Hide()
@@ -580,29 +801,102 @@ local function createFrame()
     end
     togglePosBtn:SetScript("OnClick", togglePositionFrame)
 
+    local themeDropdown = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(themeDropdown) end
+    themeDropdown:SetSize(150, 22)
+    themeDropdown:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -12, -10)
+    Options.themeDropdown = themeDropdown
+
+    local themeMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
+    themeMenu:SetSize(180, (#(Theme and Theme.ThemeOptions or {}) * 22) + 8)
+    themeMenu:SetPoint("TOPRIGHT", themeDropdown, "BOTTOMRIGHT", 0, -2)
+    themeMenu:SetFrameStrata("DIALOG")
+    themeMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    themeMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    themeMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(themeMenu, "menu") end
+    themeMenu:Hide()
+    Options.themeMenu = themeMenu
+
+    local themeOptions = Theme and Theme.ThemeOptions or {}
+    for index = 1, #themeOptions do
+        local option = themeOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, themeMenu)
+        menuButton:SetSize(144, 20)
+        menuButton:SetPoint("TOPLEFT", themeMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+        if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
+        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        menuButtonText:SetText(option.label)
+        if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
+        menuButton:SetScript("OnClick", function()
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            if saved and saved.updateTheme then
+                local ok, status = saved.updateTheme(option.value)
+                if ok and Theme and Theme.setSelection then
+                    local applied, applyStatus = Theme.setSelection(option.value)
+                    Options.refreshThemeDropdown()
+                    if status == "updated" and applied then
+                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_THEME_CHANGED or "Theme applied."))
+                    elseif applyStatus == "combatDeferred" then
+                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_THEME_COMBAT or "Theme will apply after combat."))
+                    end
+                end
+            end
+            themeMenu:Hide()
+        end)
+    end
+    themeDropdown:SetScript("OnClick", function()
+        if themeMenu:IsShown() then
+            themeMenu:Hide()
+        else
+            themeMenu:Show()
+        end
+    end)
+    Options.refreshThemeDropdown()
+
     -- 6 個核心複選框
-    createCheckbox(inner, EAM.L.EAM_OPT_ENABLE_FRAME or "啟用提醒框架", "showFrame", 12, -46)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_SPELL_NAME or "顯示法術名稱", "showSpellName", 180, -46)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_TIME_VAL or "顯示倒數秒數", "showTimeVal", 12, -74)
+    createCheckbox(inner, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 12, -46)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_SPELL_NAME", "顯示法術名稱"), "showSpellName", 180, -46)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_TIME_VAL", "顯示倒數秒數"), "showTimeVal", 12, -74)
     local textLayoutButton = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(textLayoutButton) end
     textLayoutButton:SetSize(160, 24)
     textLayoutButton:SetPoint("TOPLEFT", inner, "TOPLEFT", 180, -70)
-    textLayoutButton:SetText(EAM.L.EAM_OPT_TEXT_LAYOUT_BTN or "倒數／堆疊位置設定")
+    bindText(textLayoutButton, "EAM_OPT_TEXT_LAYOUT_BTN", "倒數／堆疊位置設定")
     textLayoutButton:SetScript("OnClick", togglePositionFrame)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_FLASH or "啟用全螢幕閃爍", "showFlash", 12, -102)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_SOUND or "啟用音效警告", "showSound", 180, -102)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 12, -102)
+    createCheckbox(
+        inner,
+        localized("EAM_OPT_SHOW_SOUND", "啟用音效警告"),
+        "showSound",
+        180,
+        -102,
+        function()
+            notifyAuraSoundChanged()
+            return false
+        end
+    )
 
     -- 自製 Sound Dropdown
     local soundDropdown = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(soundDropdown) end
     soundDropdown:SetSize(140, 22)
     soundDropdown:SetPoint("TOPLEFT", inner, "TOPLEFT", 12, -136)
     soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. "ShayBell")
     Options.soundDropdown = soundDropdown
 
     local playSoundBtn = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(playSoundBtn) end
     playSoundBtn:SetSize(60, 22)
     playSoundBtn:SetPoint("LEFT", soundDropdown, "RIGHT", 6, 0)
-    playSoundBtn:SetText(EAM.L.EAM_OPT_TEST_BTN or "測試")
+    bindText(playSoundBtn, "EAM_OPT_TEST_BTN", "測試")
 
     local soundMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
     soundMenu:SetSize(140, 268)
@@ -619,30 +913,18 @@ local function createFrame()
     soundMenu:Hide()
 
     -- 12 種經典音效選單
-    local soundNames = {
-        "ShayBell",
-        "FluteRun",
-        "Netherwind",
-        "PolyMorphCow",
-        "RockBiter",
-        "YarrrrImpact",
-        "BrokenHeart",
-        "MillhouseReady",
-        "MillhousePyro",
-        "SatyrePissed",
-        "MortarTeamPissed",
-        "ShaolinFootball"
-    }
 
     for idx, sName in ipairs(soundNames) do
         local menuBtn = api.CreateFrame("Button", nil, soundMenu)
         menuBtn:SetSize(134, 20)
         menuBtn:SetPoint("TOPLEFT", soundMenu, "TOPLEFT", 3, -3 - (idx - 1) * 22)
         menuBtn:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+        if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
         
         local menuBtnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuBtnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
         menuBtnText:SetText(sName)
+        if Theme and Theme.registerText then Theme.registerText(menuBtnText, "button") end
         
         menuBtn:SetScript("OnClick", function()
             if EAM.db and EAM.db.config then
@@ -650,8 +932,9 @@ local function createFrame()
                 if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
                     EAM.Modules.SavedVariables.markRevisionChanged()
                 end
-                soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. sName)
-                Options.notifyConfigChanged()
+                Options.refreshSoundDropdown()
+                notifyAuraSoundChanged()
+                Options.notifyConfigChanged(false)
             end
             soundMenu:Hide()
         end)
@@ -665,6 +948,66 @@ local function createFrame()
         end
     end)
 
+    -- 語系選擇會保存並同步原地刷新 EAM.L 與已綁定的 EAM 自有 UI。
+    local languageDropdown = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(languageDropdown) end
+    languageDropdown:SetSize(124, 22)
+    languageDropdown:SetPoint("TOPLEFT", inner, "TOPLEFT", 220, -136)
+    Options.languageDropdown = languageDropdown
+
+    local languageMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
+    languageMenu:SetSize(124, 138)
+    languageMenu:SetPoint("TOPLEFT", languageDropdown, "BOTTOMLEFT", 0, -2)
+    languageMenu:SetFrameStrata("DIALOG")
+    languageMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    languageMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    languageMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    languageMenu:Hide()
+    Options.languageMenu = languageMenu
+
+    local languageOptions = EAM.Locale and EAM.Locale.LanguageOptions or {}
+    for index = 1, #languageOptions do
+        local option = languageOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, languageMenu)
+        menuButton:SetSize(118, 20)
+        menuButton:SetPoint("TOPLEFT", languageMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+        if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
+
+        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        menuButtonText:SetText(option.label)
+        if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
+
+        menuButton:SetScript("OnClick", function()
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            if saved and saved.updateLanguage then
+                local ok, status = saved.updateLanguage(option.value)
+                if ok then
+                    Options.refreshLanguageDropdown()
+                    if status == "updated" then
+                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_LANGUAGE_RELOAD or "Language applied immediately and saved."))
+                    end
+                end
+            end
+            languageMenu:Hide()
+        end)
+    end
+
+    languageDropdown:SetScript("OnClick", function()
+        if languageMenu:IsShown() then
+            languageMenu:Hide()
+        else
+            languageMenu:Show()
+        end
+    end)
+    Options.refreshLanguageDropdown()
+
     playSoundBtn:SetScript("OnClick", function()
         local sName = (EAM.db and EAM.db.config and EAM.db.config.soundName) or "ShayBell"
         local asset = soundAssets[sName] or 568154
@@ -672,16 +1015,16 @@ local function createFrame()
     end)
 
     -- 7 個額外選項 Checkboxes
-    createCheckbox(inner, EAM.L.EAM_OPT_ALLOW_ESC or "啟用 ESC 鍵關閉", "allowEscCancel", 12, -170)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_EXTRA_ALERT or "顯示額外輔助提醒", "showExtraAlert", 180, -170)
+    createCheckbox(inner, localized("EAM_OPT_ALLOW_ESC", "啟用 ESC 鍵關閉"), "allowEscCancel", 12, -170)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 180, -170)
     
-    createCheckbox(inner, EAM.L.EAM_OPT_COOLDOWN_REMOVE or "冷卻完成移除光環", "cooldownRemoveAura", 12, -198)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_SCD_OUTSIDE or "非戰鬥顯示技能冷卻", "showSCDOutsideCombat", 180, -198)
+    createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -198)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_SCD_OUTSIDE", "非戰鬥顯示技能冷卻"), "showSCDOutsideCombat", 180, -198)
     
-    createCheckbox(inner, EAM.L.EAM_OPT_GLOW_SCD or "可用時高亮技能冷卻", "glowSCDWhenUsable", 12, -226)
-    createCheckbox(inner, EAM.L.EAM_OPT_SHOW_DK_RUNE or "顯示 DK 符文提醒", "showDKRune", 180, -226)
+    createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 12, -226)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_DK_RUNE", "顯示 DK 符文提醒"), "showDKRune", 180, -226)
     
-    createCheckbox(inner, EAM.L.EAM_OPT_ENABLE_ITEM_CD or "啟用物品冷卻監控", "enableItemCooldown", 12, -254)
+    -- 物品冷卻總開關已移至 ModulePanel，避免 legacy mirror 與 canonical toggle 雙寫。
     local nativeAuraStatusLabel = inner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     nativeAuraStatusLabel:SetPoint("TOPLEFT", inner, "TOPLEFT", 180, -250)
     nativeAuraStatusLabel:SetWidth(112)
@@ -689,9 +1032,10 @@ local function createFrame()
     Options.nativeAuraStatusLabel = nativeAuraStatusLabel
 
     local nativeAuraRebuildButton = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(nativeAuraRebuildButton) end
     nativeAuraRebuildButton:SetSize(54, 20)
     nativeAuraRebuildButton:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -8, -246)
-    nativeAuraRebuildButton:SetText(EAM.L.EAM_OPT_AURA_APPLY or "套用")
+    bindText(nativeAuraRebuildButton, "EAM_OPT_AURA_APPLY", "套用")
     nativeAuraRebuildButton:SetScript("OnClick", function()
         local service = EAM.Services.AuraContainerService
         if service and service.requestRebuild then
@@ -704,24 +1048,25 @@ local function createFrame()
     -- 6 個類別按鈕 (物品冷卻獨立分類，排版壓縮至 32px 以容納第 6 個按鈕而不重疊)
     -- 7 個類別按鈕 (地面效果獨立為第 6 分類，滑桿與能量設定改為第 7 分類)
     local categories = {
-        "自端增益/減益提醒 (Self)",
-        "跨職業增益/減益提醒 (Class)",
-        "目標增益/減益提醒 (Target)",
-        "技能冷卻監控設定 (Spell CD)",
-        "物品冷卻監控設定 (Item CD)",
-        "地面技能與效果設定 (Ground Effect)",
-        "圖示位置與能量設定 (Layout & Power)",
+        { key = "EAM_OPT_CAT_SELF", fallback = "自端增益/減益提醒 (Self)" },
+        { key = "EAM_OPT_CAT_CLASS", fallback = "跨職業增益/減益提醒 (Class)" },
+        { key = "EAM_OPT_CAT_TARGET", fallback = "目標增益/減益提醒 (Target)" },
+        { key = "EAM_OPT_CAT_SPELL_CD", fallback = "技能冷卻監控設定 (Spell CD)" },
+        { key = "EAM_OPT_CAT_ITEM_CD", fallback = "物品冷卻監控設定 (Item CD)" },
+        { key = "EAM_OPT_CAT_GROUND", fallback = "地面技能與效果設定 (Ground Effect)" },
+        { key = "EAM_OPT_CAT_LAYOUT", fallback = "圖示位置與能量設定 (Layout & Power)" },
     }
+    Options.categoryDefinitions = categories
 
-    for idx, cName in ipairs(categories) do
-        createRedButton(inner, cName, 12, -264 - (idx - 1) * 32, 332, 28, function()
+    for idx, category in ipairs(categories) do
+        createRedButton(inner, localized(category.key, category.fallback), 12, -264 - (idx - 1) * 32, 332, 28, function()
             if idx <= 6 then
                 Options.currentCategory = idx
                 Options.listFrame:Show()
                 if Options.posFrame then Options.posFrame:Hide() end
-                
+
                 if Options.listTitleText then
-                    Options.listTitleText:SetText(cName)
+                    bindText(Options.listTitleText, category.key, category.fallback)
                 end
                 Options.refreshList()
             else
@@ -736,11 +1081,11 @@ local function createFrame()
     end
 
     -- 底部操作按鈕：關閉、診斷、流程驗證
-    createRedButton(inner, EAM.L.EAM_OPT_CLOSE_BTN or "關閉設定 (Close)", 12, -490, 104, 36, function()
+    createRedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -490, 104, 36, function()
         frame:Hide()
     end)
 
-    createRedButton(inner, EAM.L.EAM_OPT_DEBUG_BTN or "除錯診斷 (Debug)", 122, -490, 104, 36, function()
+    createRedButton(inner, localized("EAM_OPT_DEBUG_BTN", "除錯診斷 (Debug)"), 122, -490, 104, 36, function()
         if EAM.Debug.PromptExport and EAM.Debug.PromptExport.openWindow then
             EAM.Debug.PromptExport.openWindow()
         else
@@ -748,7 +1093,7 @@ local function createFrame()
         end
     end)
 
-    createRedButton(inner, EAM.L.EAM_OPT_FLOW_TEST_BTN or "流程測試", 232, -490, 112, 36, function()
+    createRedButton(inner, localized("EAM_OPT_FLOW_TEST_BTN", "流程測試"), 232, -490, 112, 36, function()
         if EAM.Debug.FlowTestPanel and EAM.Debug.FlowTestPanel.open then
             EAM.Debug.FlowTestPanel.open()
         else
@@ -776,12 +1121,13 @@ local function createFrame()
     })
     posFrame:SetBackdropColor(0.12, 0.08, 0.06, 0.96)
     posFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(posFrame, "window") end
     posFrame:Hide()
 
     local posTitle = posFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     posTitle:SetPoint("TOP", posFrame, "TOP", 0, -14)
     posTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
-    posTitle:SetText(EAM.L.EAM_OPT_POS_AND_POWER_BTN or "圖示位置與能量設定")
+    bindText(posTitle, "EAM_OPT_POS_AND_POWER_BTN", "圖示位置與能量設定")
 
     local posInner = api.CreateFrame("Frame", nil, posFrame, "BackdropTemplate")
     posInner:SetPoint("TOPLEFT", posFrame, "TOPLEFT", 12, -40)
@@ -798,45 +1144,51 @@ local function createFrame()
     -- ---------------------------------------------------
     -- 【左側欄位】：10 個 Sliders 與 7 大告警框架成長方向下拉選單
     -- ---------------------------------------------------
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_ICON_SIZE or "圖示大小 (Icon Size)", "iconSize", 20, 100, 1, 16, -25, 110)
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_ICON_SPACING or "水平間距 (Horizontal Spacing)", "iconSpacing", -200, 200, 1, 140, -25, 110)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SIZE", "圖示大小 (Icon Size)"), "iconSize", 20, 100, 1, 16, -25, 110)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SPACING", "水平間距 (Horizontal Spacing)"), "iconSpacing", -200, 200, 1, 140, -25, 110)
     
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_VERT_SPACING or "垂直間距 (Vertical Spacing)", "verticalSpacing", -200, 200, 1, 16, -75, 110)
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_DEBUFF_RED or "自端減益色度 (Self Debuff Red)", "selfDebuffRed", 0.0, 1.0, 0.05, 140, -75, 110, true)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_VERT_SPACING", "垂直間距 (Vertical Spacing)"), "verticalSpacing", -200, 200, 1, 16, -75, 110)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自端減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 140, -75, 110, true)
     
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_DEBUFF_GREEN or "目標減益色度 (Target Debuff Green)", "targetDebuffGreen", 0.0, 1.0, 0.05, 16, -125, 110, true)
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_EXECUTE_LIMIT or "斬殺血量閾值 (Execute Limit)", "bossExecuteThreshold", 0.0, 1.0, 0.05, 140, -125, 110, true)
-    createCheckbox(posInner, EAM.L.EAM_OPT_ENABLE_EXECUTE or "啟用斬殺線", "enableBossExecute", 140, -150)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 16, -125, 110, true)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 140, -125, 110, true)
+    createCheckbox(posInner, localized("EAM_OPT_ENABLE_EXECUTE", "啟用斬殺線"), "enableBossExecute", 140, -150)
 
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_FONT_SPELL or "法術名稱字型 (Spell Font)", "fontSizeSpellName", 8, 32, 1, 16, -175, 110)
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_FONT_CD or "秒數倒數字型 (CD Font)", "fontSizeTimeVal", 8, 32, 1, 140, -175, 110)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_SPELL", "法術名稱字型 (Spell Font)"), "fontSizeSpellName", 8, 32, 1, 16, -175, 110)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_CD", "秒數倒數字型 (CD Font)"), "fontSizeTimeVal", 8, 32, 1, 140, -175, 110)
     
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_FONT_STACK or "堆疊層數字型 (Stack Font)", "fontSizeStack", 8, 32, 1, 16, -225, 110)
-    createSlider(posInner, EAM.L.EAM_OPT_SLIDER_SHADOW_ALPHA or "倒數轉圈透明度 (Swipe Alpha)", "cooldownSwipeAlpha", 0, 1, 0.05, 140, -225, 110, true)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_STACK", "堆疊層數字型 (Stack Font)"), "fontSizeStack", 8, 32, 1, 16, -225, 110)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_SHADOW_ALPHA", "倒數轉圈透明度 (Swipe Alpha)"), "cooldownSwipeAlpha", 0, 1, 0.05, 140, -225, 110, true)
 
     -- 告警框架成長方向設定標題
     local dirTitle = posInner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     dirTitle:SetPoint("TOPLEFT", posInner, "TOPLEFT", 16, -270)
     dirTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
-    dirTitle:SetText(EAM.L.EAM_OPT_DIR_TITLE or "告警框架圖示成長方向設定")
+    bindText(dirTitle, "EAM_OPT_DIR_TITLE", "告警框架圖示成長方向設定")
 
     -- 輔助下拉選單建立器 (無 Taint Backdrop 單純 Lua 下拉選單)
     local function createDirectionDropdown(parent, labelText, frameName, x, y)
         local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
         label:SetTextColor(0.85, 0.75, 0.65, 1)
-        label:SetText(labelText)
+        setWidgetText(label, labelText)
 
         local btn = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+        if Theme and Theme.registerButton then Theme.registerButton(btn) end
         btn:SetSize(110, 20)
         btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
         
-        local directions = { EAM.L.EAM_OPT_DIR_RIGHT or "往右 (→)", EAM.L.EAM_OPT_DIR_LEFT or "往左 (←)", EAM.L.EAM_OPT_DIR_UP or "往上 (↑)", EAM.L.EAM_OPT_DIR_DOWN or "往下 (↓)" }
+        local directions = {
+            localized("EAM_OPT_DIR_RIGHT", "往右 (→)"),
+            localized("EAM_OPT_DIR_LEFT", "往左 (←)"),
+            localized("EAM_OPT_DIR_UP", "往上 (↑)"),
+            localized("EAM_OPT_DIR_DOWN", "往下 (↓)"),
+        }
 
         local function updateBtnText()
             if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[frameName] then
                 local dirIdx = EAM.db.layout.frames[frameName].growDirection or 1
-                btn:SetText(directions[dirIdx] or (EAM.L.EAM_OPT_DIR_RIGHT or "往右 (→)"))
+                setWidgetText(btn, directions[dirIdx] or directions[1])
             end
         end
 
@@ -856,15 +1208,17 @@ local function createFrame()
         menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
         menu:Hide()
 
-        for idx, dName in ipairs(directions) do
+        for idx, direction in ipairs(directions) do
             local menuBtn = api.CreateFrame("Button", nil, menu)
             menuBtn:SetSize(104, 18)
             menuBtn:SetPoint("TOPLEFT", menu, "TOPLEFT", 3, -3 - (idx - 1) * 20)
             menuBtn:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+            if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
             
             local menuBtnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             menuBtnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
-            menuBtnText:SetText(dName)
+            setWidgetText(menuBtnText, direction)
+            if Theme and Theme.registerText then Theme.registerText(menuBtnText, "button") end
             
             menuBtn:SetScript("OnClick", function()
                 if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[frameName] then
@@ -890,25 +1244,26 @@ local function createFrame()
     end
 
     -- 建立 7 大框架成長方向選單
-    createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_SELF_AURA or "自身光環成長", "selfAura", 16, -295)
-    createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_TARGET_AURA or "目標光環成長", "targetAura", 140, -295)
+    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_SELF_AURA", "自身光環成長"), "selfAura", 16, -295)
+    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_TARGET_AURA", "目標光環成長"), "targetAura", 140, -295)
     
-    createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_SPELL_COOLDOWN or "技能冷卻成長", "spellCooldown", 16, -335)
-    createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_ITEM_COOLDOWN or "物品冷卻成長", "itemCooldown", 140, -335)
+    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_SPELL_COOLDOWN", "技能冷卻成長"), "spellCooldown", 16, -335)
+    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_ITEM_COOLDOWN", "物品冷卻成長"), "itemCooldown", 140, -335)
     
-    createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_GROUND_EFFECT or "地面效果成長", "groundEffect", 16, -375)
-    createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_TOTEM or "圖騰監控成長", "totem", 140, -375)
+    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_GROUND_EFFECT", "地面效果成長"), "groundEffect", 16, -375)
+    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_TOTEM", "圖騰監控成長"), "totem", 140, -375)
     
-    createDirectionDropdown(posInner, EAM.L.EAM_OPT_GROW_CLASS_POWER or "職業能量成長", "classPower", 16, -415)
+    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_CLASS_POWER", "職業能量成長"), "classPower", 16, -415)
 
     -- 倒數與 applications 共用 21 點白名單位置，避免任意字串進入 SetPoint。
     local function createTextPlacementDropdown(parent, labelText, kind, x, y)
         local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
         label:SetTextColor(0.85, 0.75, 0.65, 1)
-        label:SetText(labelText)
+        setWidgetText(label, labelText)
 
         local btn = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+        if Theme and Theme.registerButton then Theme.registerButton(btn) end
         btn:SetSize(110, 20)
         btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
 
@@ -920,7 +1275,7 @@ local function createFrame()
         local function updateBtnText()
             if EAM.db and EAM.db.config then
                 local placement = EAM.UI.TextPlacement.getPlacement(EAM.db.config, kind)
-                btn:SetText(placementText(placement))
+                bindText(btn, "EAM_PLACEMENT_" .. placement, placement)
             end
         end
 
@@ -949,10 +1304,12 @@ local function createFrame()
             menuButton:SetSize(112, 18)
             menuButton:SetPoint("TOPLEFT", menu, "TOPLEFT", 3 + column * 116, -3 - row * 20)
             menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+            if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
 
             local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 5, 0)
-            menuButtonText:SetText(placementText(placement))
+            bindText(menuButtonText, "EAM_PLACEMENT_" .. placement, placement)
+            if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
 
             menuButton:SetScript("OnClick", function()
                 local savedVariables = EAM.Modules.SavedVariables
@@ -976,8 +1333,8 @@ local function createFrame()
         end)
     end
 
-    createTextPlacementDropdown(posInner, EAM.L.EAM_OPT_TIMER_ALIGN or "秒數倒數位置", "timer", 16, -455)
-    createTextPlacementDropdown(posInner, EAM.L.EAM_OPT_APPLICATIONS_ALIGN or "堆疊層數位置", "applications", 140, -455)
+    createTextPlacementDropdown(posInner, localized("EAM_OPT_TIMER_ALIGN", "秒數倒數位置"), "timer", 16, -455)
+    createTextPlacementDropdown(posInner, localized("EAM_OPT_APPLICATIONS_ALIGN", "堆疊層數位置"), "applications", 140, -455)
 
     -- ---------------------------------------------------
     -- 【右側欄位】：職業特殊能量條件監控
@@ -985,30 +1342,30 @@ local function createFrame()
     local powerTitle = posInner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     powerTitle:SetPoint("TOPLEFT", posInner, "TOPLEFT", 280, -15)
     powerTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
-    powerTitle:SetText(EAM.L.EAM_OPT_POWER_MONITOR_TITLE or "職業特殊能量條件監控")
+    bindText(powerTitle, "EAM_OPT_POWER_MONITOR_TITLE", "職業特殊能量條件監控")
 
     -- 20 個 Checkboxes 兩列排版 (x=280 與 x=410，y 從 -40 開始縱向 10 排)
     local powersList = {
-        { name = "聖能 (Holy Power)", key = "powerHoly" },
-        { name = "靈魂碎片 (Soul Shards)", key = "powerShard" },
-        { name = "連擊點 (Combo Points)", key = "powerCombo" },
-        { name = "真氣 (Chi)", key = "powerChi" },
-        { name = "符文能量 (Runic)", key = "powerRunic" },
-        { name = "狂怒值 (Rage)", key = "powerRage" },
-        { name = "瘋狂值 (Insanity)", key = "powerInsanity" },
-        { name = "星界能量 (Astral)", key = "powerAstral" },
-        { name = "漩渦值 (Maelstrom)", key = "powerMaelstrom" },
-        { name = "生命之花 (Lifebloom)", key = "powerLifebloom" },
-        { name = "能量值 (Energy)", key = "powerEnergy" },
-        { name = "集中值 (Focus)", key = "powerFocus" },
-        { name = "秘法充能 (Arcane)", key = "powerArcane" },
-        { name = "符文 (Runes)", key = "powerRunes" },
-        { name = "惡魔怒氣 (Fury)", key = "powerFury" },
-        { name = "狂暴值 (Frenzy)", key = "powerFrenzy" },
-        { name = "法力值 (Mana)", key = "powerMana" },
-        { name = "寵物集中 (Pet Focus)", key = "powerPetFocus" },
-        { name = "寵物能量 (Pet Energy)", key = "powerPetEnergy" },
-        { name = "活力值 (Vigor)", key = "powerVigor" },
+        { localeKey = "EA_SPELL_POWER_NAME.HolyPower", fallback = "聖能", key = "powerHoly" },
+        { localeKey = "EA_SPELL_POWER_NAME.SoulShards", fallback = "靈魂碎片", key = "powerShard" },
+        { localeKey = "EA_SPELL_POWER_NAME.ComboPoints", fallback = "連擊點", key = "powerCombo" },
+        { localeKey = "EA_SPELL_POWER_NAME.Chi", fallback = "真氣", key = "powerChi" },
+        { localeKey = "EA_SPELL_POWER_NAME.RunicPower", fallback = "符文能量", key = "powerRunic" },
+        { localeKey = "EA_SPELL_POWER_NAME.Rage", fallback = "狂怒值", key = "powerRage" },
+        { localeKey = "EA_SPELL_POWER_NAME.Insanity", fallback = "瘋狂值", key = "powerInsanity" },
+        { localeKey = "EA_SPELL_POWER_NAME.LunarPower", fallback = "星界能量", key = "powerAstral" },
+        { localeKey = "EA_SPELL_POWER_NAME.Maelstrom", fallback = "漩渦值", key = "powerMaelstrom" },
+        { localeKey = "EA_SPELL_POWER_NAME.LifeBloom", fallback = "生命之花", key = "powerLifebloom" },
+        { localeKey = "EA_SPELL_POWER_NAME.Energy", fallback = "能量值", key = "powerEnergy" },
+        { localeKey = "EA_SPELL_POWER_NAME.Focus", fallback = "集中值", key = "powerFocus" },
+        { localeKey = "EA_SPELL_POWER_NAME.ArcaneCharges", fallback = "秘法充能", key = "powerArcane" },
+        { localeKey = "EA_SPELL_POWER_NAME.Runes", fallback = "符文", key = "powerRunes" },
+        { localeKey = "EA_SPELL_POWER_NAME.Fury", fallback = "惡魔怒氣", key = "powerFury" },
+        { localeKey = "EAM_OPT_POWER_FRENZY", fallback = "狂暴值", key = "powerFrenzy" },
+        { localeKey = "EA_SPELL_POWER_NAME.Mana", fallback = "法力值", key = "powerMana" },
+        { localeKey = "EA_SPELL_POWER_NAME.FocusPet", fallback = "寵物集中", key = "powerPetFocus" },
+        { localeKey = "EAM_OPT_POWER_PET_ENERGY", fallback = "寵物能量", key = "powerPetEnergy" },
+        { localeKey = "EA_SPELL_POWER_NAME.Vigor", fallback = "活力值", key = "powerVigor" },
     }
 
     for idx, pInfo in ipairs(powersList) do
@@ -1016,7 +1373,7 @@ local function createFrame()
         local rowIdx = (idx - 1) % 10
         local cx = isRightCol and 410 or 280
         local cy = -40 - (rowIdx * 22)
-        createCheckbox(posInner, pInfo.name, pInfo.key, cx, cy, function()
+        createCheckbox(posInner, localized(pInfo.localeKey, pInfo.fallback), pInfo.key, cx, cy, function()
             -- 勾選變動時，即時刷新職業能量 Service 的顯示狀態
             if EAM.Services.ClassPowerService and EAM.Services.ClassPowerService.updatePower then
                 EAM.Services.ClassPowerService.updatePower()
@@ -1027,7 +1384,7 @@ local function createFrame()
     -- ---------------------------------------------------
     -- 【底部按鈕】：對稱分欄，重置 7 個框架的所有狀態
     -- ---------------------------------------------------
-    createRedButton(posInner, EAM.L.EAM_OPT_MOVE_FRAME_BTN or "移動提醒框架", 16, -516, 240, 28, function()
+    createRedButton(posInner, localized("EAM_OPT_MOVE_FRAME_BTN", "移動提醒框架"), 16, -516, 240, 28, function()
         if EAM.UI.Renderer and EAM.UI.Renderer.toggleAnchors then
             EAM.UI.Renderer.toggleAnchors()
         else
@@ -1035,7 +1392,7 @@ local function createFrame()
         end
     end)
 
-    createRedButton(posInner, EAM.L.EAM_OPT_RESET_FRAME_BTN or "重設所有圖示與位置", 280, -516, 240, 28, function()
+    createRedButton(posInner, localized("EAM_OPT_RESET_FRAME_BTN", "重設所有圖示與位置"), 280, -516, 240, 28, function()
         if EAM.db and EAM.db.layout then
             EAM.db.layout.iconSize = 40
             EAM.db.layout.spacing = 6
@@ -1082,12 +1439,13 @@ local function createFrame()
     })
     listFrame:SetBackdropColor(0.12, 0.08, 0.06, 0.96)
     listFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(listFrame, "window") end
     listFrame:Hide()
 
     local listTitle = listFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     listTitle:SetPoint("TOP", listFrame, "TOP", 0, -14)
     listTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
-    listTitle:SetText(EAM.L.EAM_OPT_LIST_TITLE or "法術提醒清單設定")
+    bindText(listTitle, "EAM_OPT_LIST_TITLE", "法術提醒清單設定")
     Options.listTitleText = listTitle
 
     local listInner = api.CreateFrame("Frame", nil, listFrame, "BackdropTemplate")
@@ -1104,21 +1462,24 @@ local function createFrame()
 
     -- 頂部批次 Action 按鈕
     local selectAllBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(selectAllBtn) end
     selectAllBtn:SetSize(86, 22)
     selectAllBtn:SetPoint("TOPLEFT", listInner, "TOPLEFT", 8, -8)
-    selectAllBtn:SetText(EAM.L.EAM_OPT_SELECT_ALL or "全部選擇")
+    bindText(selectAllBtn, "EAM_OPT_SELECT_ALL", "全部選擇")
     selectAllBtn:SetScript("OnClick", function() batchOperation("select") end)
 
     local deselectAllBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(deselectAllBtn) end
     deselectAllBtn:SetSize(86, 22)
     deselectAllBtn:SetPoint("LEFT", selectAllBtn, "RIGHT", 4, 0)
-    deselectAllBtn:SetText(EAM.L.EAM_OPT_DESELECT_ALL or "全部取消")
+    bindText(deselectAllBtn, "EAM_OPT_DESELECT_ALL", "全部取消")
     deselectAllBtn:SetScript("OnClick", function() batchOperation("deselect") end)
 
     local defaultsBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(defaultsBtn) end
     defaultsBtn:SetSize(86, 22)
     defaultsBtn:SetPoint("LEFT", deselectAllBtn, "RIGHT", 4, 0)
-    defaultsBtn:SetText(EAM.L.EAM_OPT_DEFAULTS_BTN or "預設值")
+    bindText(defaultsBtn, "EAM_OPT_DEFAULTS_BTN", "預設值")
     defaultsBtn:SetScript("OnClick", function()
         local classToken = select(2, UnitClass("player"))
         local classData = EAM.Data.SpellArray and EAM.Data.SpellArray[classToken]
@@ -1160,16 +1521,19 @@ local function createFrame()
     end)
 
     local deleteAllBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(deleteAllBtn) end
     deleteAllBtn:SetSize(86, 22)
     deleteAllBtn:SetPoint("LEFT", defaultsBtn, "RIGHT", 4, 0)
-    deleteAllBtn:SetText(EAM.L.EAM_OPT_DELETE_ALL or "全部刪除")
+    bindText(deleteAllBtn, "EAM_OPT_DELETE_ALL", "全部刪除")
     deleteAllBtn:SetScript("OnClick", function() batchOperation("delete") end)
 
     -- 專精篩選下拉選單按鈕
     local specDropdown = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(specDropdown) end
     specDropdown:SetSize(160, 22)
     specDropdown:SetPoint("TOPLEFT", listInner, "TOPLEFT", 8, -36)
-    specDropdown:SetText((EAM.L.EAM_OPT_FILTER_PREFIX or "篩選: ") .. (EAM.L.EAM_OPT_FILTER_ALL_VAL or "全部法術"))
+    Options.specDropdown = specDropdown
+    Options.refreshSpecDropdown()
 
     local specMenu = api.CreateFrame("Frame", nil, listInner, "BackdropTemplate")
     specMenu:SetFrameStrata("DIALOG")
@@ -1234,14 +1598,17 @@ local function createFrame()
             menuBtn:SetSize(154, 20)
             menuBtn:SetPoint("TOPLEFT", specMenu, "TOPLEFT", 3, -3 - (idx - 1) * 22)
             menuBtn:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+            if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
             
             local btnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             btnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
             btnText:SetText(item.name)
+            if Theme and Theme.registerText then Theme.registerText(btnText, "button") end
             
             menuBtn:SetScript("OnClick", function()
                 Options.currentSpecFilter = item.val
-                specDropdown:SetText((EAM.L.EAM_OPT_FILTER_PREFIX or "篩選: ") .. item.name)
+                Options.currentSpecFilterName = item.name
+                Options.refreshSpecDropdown()
                 specMenu:Hide()
                 Options.refreshList()
             end)
@@ -1414,7 +1781,7 @@ local function createFrame()
     addEditBox:SetNumeric(true)
     Options.addEditBox = addEditBox
 
-    local addBtn = createRedButton(listInner, EAM.L.EAM_OPT_ADD_BTN or "新增", 158, 0, 60, 24, function()
+    local addBtn = createRedButton(listInner, localized("EAM_OPT_ADD_BTN", "新增"), 158, 0, 60, 24, function()
         local idVal = tonumber(addEditBox:GetText())
         if not idVal or idVal <= 0 then
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_ERR_INVALID_ID or "請輸入正確的 ID！"))
@@ -1426,7 +1793,7 @@ local function createFrame()
     addBtn:ClearAllPoints()
     addBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 158, 38)
 
-    local delBtn = createRedButton(listInner, EAM.L.EAM_OPT_DEL_BTN or "刪除", 224, 0, 60, 24, function()
+    local delBtn = createRedButton(listInner, localized("EAM_OPT_DEL_BTN", "刪除"), 224, 0, 60, 24, function()
         local idVal = tonumber(addEditBox:GetText())
         if not idVal or idVal <= 0 then
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_ERR_INVALID_ID or "請輸入正確的 ID！"))
@@ -1452,7 +1819,7 @@ local function createFrame()
     local descText = listInner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     descText:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 12, 12)
     descText:SetTextColor(0.8, 0.8, 0.8, 1)
-    descText:SetText(EAM.L.EAM_OPT_ADD_DEL_DESC or "請輸入 SpellID 或 ItemID 並點擊新增 / 刪除。")
+    bindText(descText, "EAM_OPT_ADD_DEL_DESC", "請輸入 SpellID 或 ItemID 並點擊新增 / 刪除。")
 
     Options.listFrame = listFrame
 
@@ -1461,7 +1828,7 @@ local function createFrame()
     -- 4. Spell Conditions Frame (Popup Sub-Window)
     -- ===================================================
     local condFrame = api.CreateFrame("Frame", "EAM_SpellConditionsFrame", UIParent, "BackdropTemplate")
-    condFrame:SetSize(340, 420)
+    condFrame:SetSize(340, 520)
     condFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     condFrame:SetFrameStrata("DIALOG")
     condFrame:SetBackdrop({
@@ -1472,6 +1839,7 @@ local function createFrame()
     })
     condFrame:SetBackdropColor(0.15, 0.1, 0.08, 0.98)
     condFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(condFrame, "window") end
     condFrame:Hide()
     condFrame:SetMovable(true)
     condFrame:EnableMouse(true)
@@ -1517,7 +1885,7 @@ local function createFrame()
     stackSlider:SetSize(130, 16)
     local stackLabel = stackSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     stackLabel:SetPoint("BOTTOMLEFT", stackSlider, "TOPLEFT", 0, 5)
-    stackLabel:SetText(EAM.L.EAM_OPT_COND_STACK or "堆疊層數閾值")
+    bindText(stackLabel, "EAM_OPT_COND_STACK", "堆疊層數閾值")
     local stackVal = stackSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     stackVal:SetPoint("BOTTOMRIGHT", stackSlider, "TOPRIGHT", 0, 5)
     stackSlider:SetScript("OnValueChanged", function(self, val)
@@ -1533,7 +1901,7 @@ local function createFrame()
     glowSlider:SetSize(130, 16)
     local glowLabel = glowSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     glowLabel:SetPoint("BOTTOMLEFT", glowSlider, "TOPLEFT", 0, 5)
-    glowLabel:SetText(EAM.L.EAM_OPT_COND_GLOW or "堆疊高亮閾值")
+    bindText(glowLabel, "EAM_OPT_COND_GLOW", "堆疊高亮閾值")
     local glowVal = glowSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     glowVal:SetPoint("BOTTOMRIGHT", glowSlider, "TOPRIGHT", 0, 5)
     glowSlider:SetScript("OnValueChanged", function(self, val)
@@ -1549,7 +1917,7 @@ local function createFrame()
     redLimitSlider:SetSize(130, 16)
     local redLimitLabel = redLimitSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     redLimitLabel:SetPoint("BOTTOMLEFT", redLimitSlider, "TOPLEFT", 0, 5)
-    redLimitLabel:SetText(EAM.L.EAM_OPT_COND_RED_LIMIT or "倒數紅字限制 (秒)")
+    bindText(redLimitLabel, "EAM_OPT_COND_RED_LIMIT", "倒數紅字限制 (秒)")
     local redLimitVal = redLimitSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     redLimitVal:SetPoint("BOTTOMRIGHT", redLimitSlider, "TOPRIGHT", 0, 5)
     redLimitSlider:SetScript("OnValueChanged", function(self, val)
@@ -1565,7 +1933,7 @@ local function createFrame()
     prioritySlider:SetSize(130, 16)
     local priorityLabel = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     priorityLabel:SetPoint("BOTTOMLEFT", prioritySlider, "TOPLEFT", 0, 5)
-    priorityLabel:SetText(EAM.L.EAM_OPT_COND_PRIORITY or "排序優先級 (Priority)")
+    bindText(priorityLabel, "EAM_OPT_COND_PRIORITY", "排序優先級 (Priority)")
     local priorityVal = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     priorityVal:SetPoint("BOTTOMRIGHT", prioritySlider, "TOPRIGHT", 0, 5)
     prioritySlider:SetScript("OnValueChanged", function(self, val)
@@ -1578,41 +1946,41 @@ local function createFrame()
     fromPlayerCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -96)
     fromPlayerCb.text = fromPlayerCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fromPlayerCb.text:SetPoint("LEFT", fromPlayerCb, "RIGHT", 4, 1)
-    fromPlayerCb.text:SetText(EAM.L.EAM_OPT_COND_PLAYER_ONLY or "僅監控自己施放")
+    bindText(fromPlayerCb.text, "EAM_OPT_COND_PLAYER_ONLY", "僅監控自己施放")
     condFrame.fromPlayerCb = fromPlayerCb
 
     local valTitle = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     valTitle:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -135)
     valTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
-    valTitle:SetText(EAM.L.EAM_OPT_COND_VAL_TITLE or "顯示光環細部數值:")
+    bindText(valTitle, "EAM_OPT_COND_VAL_TITLE", "顯示光環細部數值:")
     condFrame.valTitle = valTitle
 
     local val1Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
     val1Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -160)
     val1Cb.text = val1Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val1Cb.text:SetPoint("LEFT", val1Cb, "RIGHT", 4, 1)
-    val1Cb.text:SetText(EAM.L.EAM_OPT_COND_VAL1 or "顯示數值 1 (Value 1)")
+    bindText(val1Cb.text, "EAM_OPT_COND_VAL1", "顯示數值 1 (Value 1)")
     condFrame.val1Cb = val1Cb
 
     local val2Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
     val2Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -190)
     val2Cb.text = val2Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val2Cb.text:SetPoint("LEFT", val2Cb, "RIGHT", 4, 1)
-    val2Cb.text:SetText(EAM.L.EAM_OPT_COND_VAL2 or "顯示數值 2 (Value 2)")
+    bindText(val2Cb.text, "EAM_OPT_COND_VAL2", "顯示數值 2 (Value 2)")
     condFrame.val2Cb = val2Cb
 
     local val3Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
     val3Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -220)
     val3Cb.text = val3Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val3Cb.text:SetPoint("LEFT", val3Cb, "RIGHT", 4, 1)
-    val3Cb.text:SetText(EAM.L.EAM_OPT_COND_VAL3 or "顯示數值 3 (Value 3)")
+    bindText(val3Cb.text, "EAM_OPT_COND_VAL3", "顯示數值 3 (Value 3)")
     condFrame.val3Cb = val3Cb
 
     local val4Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
     val4Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -250)
     val4Cb.text = val4Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val4Cb.text:SetPoint("LEFT", val4Cb, "RIGHT", 4, 1)
-    val4Cb.text:SetText(EAM.L.EAM_OPT_COND_VAL4 or "顯示數值 4 (Value 4)")
+    bindText(val4Cb.text, "EAM_OPT_COND_VAL4", "顯示數值 4 (Value 4)")
     condFrame.val4Cb = val4Cb
 
     -- 地面技能專屬控制項
@@ -1620,12 +1988,12 @@ local function createFrame()
     durationModeCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -100)
     durationModeCb.text = durationModeCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     durationModeCb.text:SetPoint("LEFT", durationModeCb, "RIGHT", 4, 1)
-    durationModeCb.text:SetText(EAM.L.EAM_OPT_COND_TOOLTIP or "啟用動態 Tooltip 擷取")
+    bindText(durationModeCb.text, "EAM_OPT_COND_TOOLTIP", "啟用動態 Tooltip 擷取")
     condFrame.durationModeCb = durationModeCb
 
     local manualDurationLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     manualDurationLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -145)
-    manualDurationLabel:SetText(EAM.L.EAM_OPT_COND_MANUAL_DUR or "手動設定時間 (秒)")
+    bindText(manualDurationLabel, "EAM_OPT_COND_MANUAL_DUR", "手動設定時間 (秒)")
     condFrame.manualDurationLabel = manualDurationLabel
 
     local manualDurationEditBox = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
@@ -1636,9 +2004,10 @@ local function createFrame()
     condFrame.manualDurationEditBox = manualDurationEditBox
 
     local scrapeBtn = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(scrapeBtn) end
     scrapeBtn:SetSize(80, 20)
     scrapeBtn:SetPoint("LEFT", manualDurationEditBox, "RIGHT", 10, 0)
-    scrapeBtn:SetText(EAM.L.EAM_OPT_COND_SCRAPE_BTN or "一鍵擷取")
+    bindText(scrapeBtn, "EAM_OPT_COND_SCRAPE_BTN", "一鍵擷取")
     scrapeBtn:SetScript("OnClick", function()
         local d = Options.currentEditingAlert
         if d and d.spellID then
@@ -1655,8 +2024,104 @@ local function createFrame()
     end)
     condFrame.scrapeBtn = scrapeBtn
 
+    -- 12.1 AuraSound：使用 SavedVariables 的普通 Spell ID 與素材，不讀取 AuraData。
+    local auraSoundTitle = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    auraSoundTitle:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -310)
+    bindText(auraSoundTitle, "EAM_OPT_AURA_SOUND_TITLE", "12.1 光環事件音效")
+    condFrame.auraSoundTitle = auraSoundTitle
+
+    local auraSoundDropdown = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(auraSoundDropdown) end
+    auraSoundDropdown:SetSize(140, 22)
+    auraSoundDropdown:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -330)
+    condFrame.auraSoundDropdown = auraSoundDropdown
+
+    local auraSoundMenu = api.CreateFrame("Frame", nil, condFrame, "BackdropTemplate")
+    auraSoundMenu:SetSize(140, 268)
+    auraSoundMenu:SetPoint("TOPLEFT", auraSoundDropdown, "BOTTOMLEFT", 0, -2)
+    auraSoundMenu:SetFrameStrata("TOOLTIP")
+    auraSoundMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    auraSoundMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
+    auraSoundMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    auraSoundMenu:Hide()
+    condFrame.auraSoundMenu = auraSoundMenu
+
+    for index = 1, #soundNames do
+        local soundName = soundNames[index]
+        local menuButton = api.CreateFrame("Button", nil, auraSoundMenu)
+        menuButton:SetSize(134, 20)
+        menuButton:SetPoint("TOPLEFT", auraSoundMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+        if Theme and Theme.registerButton then Theme.registerButton(menuButton) end
+        local menuText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        menuText:SetText(soundName)
+        if Theme and Theme.registerText then Theme.registerText(menuText, "button") end
+        menuButton:SetScript("OnClick", function()
+            condFrame.auraSoundName = soundName
+            auraSoundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. soundName)
+            auraSoundMenu:Hide()
+        end)
+    end
+
+    auraSoundDropdown:SetScript("OnClick", function()
+        if not isAuraSoundAvailable() then
+            return
+        end
+        if auraSoundMenu:IsShown() then
+            auraSoundMenu:Hide()
+        else
+            auraSoundMenu:Show()
+        end
+    end)
+
+    local auraSoundTestButton = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(auraSoundTestButton) end
+    auraSoundTestButton:SetSize(80, 22)
+    auraSoundTestButton:SetPoint("LEFT", auraSoundDropdown, "RIGHT", 8, 0)
+    bindText(auraSoundTestButton, "EAM_OPT_AURA_SOUND_TEST_ASSET_ONLY", "試聽素材")
+    auraSoundTestButton:SetScript("OnClick", function()
+        if not isAuraSoundAvailable() then
+            return
+        end
+        local asset = soundAssets[condFrame.auraSoundName] or soundAssets.ShayBell
+        PlaySoundFile(asset, "Master")
+    end)
+    condFrame.auraSoundTestButton = auraSoundTestButton
+
+    local function createAuraSoundCheckbox(key, fallback, x, y)
+        local checkbox = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
+        checkbox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", x, y)
+        checkbox.text = checkbox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        checkbox.text:SetPoint("LEFT", checkbox, "RIGHT", 4, 1)
+        bindText(checkbox.text, key, fallback)
+        return checkbox
+    end
+
+    condFrame.auraSoundAddedCb = createAuraSoundCheckbox(
+        "EAM_OPT_AURA_SOUND_ADDED", "光環新增", 20, -365
+    )
+    condFrame.auraSoundApplicationsCb = createAuraSoundCheckbox(
+        "EAM_OPT_AURA_SOUND_APPLICATIONS_INCREASED", "層數增加", 175, -365
+    )
+    condFrame.auraSoundRemovedCb = createAuraSoundCheckbox(
+        "EAM_OPT_AURA_SOUND_REMOVED", "光環移除", 20, -395
+    )
+
+    local auraSoundHint = condFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    auraSoundHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -425)
+    auraSoundHint:SetWidth(300)
+    auraSoundHint:SetJustifyH("LEFT")
+    bindText(auraSoundHint, "EAM_OPT_AURA_SOUND_INHERIT", "三項皆未勾選時沿用全域音效；實際觸發需 PTR 真人驗證。")
+    condFrame.auraSoundHint = auraSoundHint
+
     -- 底部按鈕
-    createRedButton(condFrame, EAM.L.EAM_OPT_COND_SAVE_BTN or "儲存設定 (Save)", 20, -350, 130, 26, function()
+    createRedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -470, 130, 26, function()
         local d = Options.currentEditingAlert
         if d then
             if d.kind == "groundEffect" then
@@ -1669,22 +2134,78 @@ local function createFrame()
                     )
                 end
             else
-                d.stackThreshold = condFrame.stackSlider:GetValue()
-                d.stackGlowThreshold = condFrame.glowSlider:GetValue()
-                d.countdownRedLimit = condFrame.redLimitSlider:GetValue()
-                d.priority = condFrame.prioritySlider:GetValue()
-                d.fromPlayer = condFrame.fromPlayerCb:GetChecked()
-                
-                d.showValue1 = condFrame.val1Cb:GetChecked()
-                d.showValue2 = condFrame.val2Cb:GetChecked()
-                d.showValue3 = condFrame.val3Cb:GetChecked()
-                d.showValue4 = condFrame.val4Cb:GetChecked()
+                local savedVariables = EAM.Modules.SavedVariables
+                local isAura = d.kind == EAM.Constants.ALERT_KIND_AURA
+                local detailsChanged = false
+                local function assignDetail(field, value)
+                    if d[field] ~= value then
+                        d[field] = value
+                        detailsChanged = true
+                    end
+                end
+
+                assignDetail("stackThreshold", condFrame.stackSlider:GetValue())
+                assignDetail("stackGlowThreshold", condFrame.glowSlider:GetValue())
+                assignDetail("countdownRedLimit", condFrame.redLimitSlider:GetValue())
+                local priority = condFrame.prioritySlider:GetValue()
+                local priorityUpdated = false
+                if isAura then
+                    assignDetail("priority", priority)
+                elseif savedVariables and savedVariables.updateAlertPriority then
+                    priorityUpdated = savedVariables.updateAlertPriority(
+                        d.kind,
+                        d.unit,
+                        d.spellID,
+                        d.itemID,
+                        priority
+                    ) == true
+                end
+                if not isAura and not priorityUpdated then
+                    d.priority = priority
+                end
+
+                assignDetail("fromPlayer", condFrame.fromPlayerCb:GetChecked())
+                assignDetail("showValue1", condFrame.val1Cb:GetChecked())
+                assignDetail("showValue2", condFrame.val2Cb:GetChecked())
+                assignDetail("showValue3", condFrame.val3Cb:GetChecked())
+                assignDetail("showValue4", condFrame.val4Cb:GetChecked())
+
+                local soundUpdated = false
+                if isAura
+                    and isAuraSoundAvailable()
+                    and savedVariables
+                    and savedVariables.updateAuraSound
+                then
+                    local soundOK, soundState = savedVariables.updateAuraSound(
+                        d.unit,
+                        d.spellID,
+                        Options.buildAuraSoundConfig(
+                            condFrame.auraSoundName,
+                            condFrame.auraSoundAddedCb:GetChecked(),
+                            condFrame.auraSoundApplicationsCb:GetChecked(),
+                            condFrame.auraSoundRemovedCb:GetChecked()
+                        )
+                    )
+                    soundUpdated = soundOK and soundState == "updated"
+                end
+
+                if isAura and detailsChanged and not soundUpdated then
+                    if savedVariables and savedVariables.markRevisionChanged then
+                        savedVariables.markRevisionChanged()
+                    end
+                    local router = EAM.Modules and EAM.Modules.EventRouter
+                    if router and router.fire then
+                        router.fire("EAM_AURA_CONFIG_CHANGED", EAM.db and EAM.db.revision or 0)
+                    end
+                end
             end
-            
-            Options.notifyConfigChanged()
+
+            local isAura = d.kind == EAM.Constants.ALERT_KIND_AURA
+            Options.notifyConfigChanged(not isAura)
             if d.kind == "groundEffect" then
                 notifyGroundEffectConfigChanged()
             end
+            condFrame.auraSoundMenu:Hide()
             condFrame:Hide()
             Options.refreshList()
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_COND_SAVE_SUCCESS or "條件已儲存。"))
@@ -1692,10 +2213,12 @@ local function createFrame()
     end)
 
     local cancelBtn = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(cancelBtn) end
     cancelBtn:SetSize(130, 26)
-    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -350)
-    cancelBtn:SetText(EAM.L.EAM_OPT_COND_CANCEL_BTN or "取消關閉 (Cancel)")
+    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -470)
+    bindText(cancelBtn, "EAM_OPT_COND_CANCEL_BTN", "取消關閉 (Cancel)")
     cancelBtn:SetScript("OnClick", function()
+        condFrame.auraSoundMenu:Hide()
         condFrame:Hide()
     end)
 
@@ -1735,6 +2258,57 @@ function Options.openConditionsFrame(data)
 
     -- 判斷是否為地面技能效果
     local isGround = (data.kind == "groundEffect")
+    local isAura = data.kind == EAM.Constants.ALERT_KIND_AURA
+    local auraSoundAvailable = isAura and isAuraSoundAvailable()
+    local auraSound = type(data.sound) == "table" and data.sound or nil
+    local auraSoundName = Options.resolveAuraSoundName(auraSound)
+        or (EAM.db and EAM.db.config and EAM.db.config.soundName)
+        or "ShayBell"
+    cf.auraSoundName = auraSoundName
+    cf.auraSoundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. auraSoundName)
+    cf.auraSoundAddedCb:SetChecked(auraSound and auraSound.added ~= nil)
+    cf.auraSoundApplicationsCb:SetChecked(auraSound and auraSound.applicationsIncreased ~= nil)
+    cf.auraSoundRemovedCb:SetChecked(auraSound and auraSound.removed ~= nil)
+    cf.auraSoundMenu:Hide()
+
+    local auraSoundWidgets = {
+        cf.auraSoundTitle,
+        cf.auraSoundDropdown,
+        cf.auraSoundTestButton,
+        cf.auraSoundAddedCb,
+        cf.auraSoundApplicationsCb,
+        cf.auraSoundRemovedCb,
+        cf.auraSoundHint,
+    }
+    for index = 1, #auraSoundWidgets do
+        if isAura then
+            auraSoundWidgets[index]:Show()
+        else
+            auraSoundWidgets[index]:Hide()
+        end
+    end
+    cf.auraSoundDropdown:SetEnabled(auraSoundAvailable)
+    cf.auraSoundTestButton:SetEnabled(auraSoundAvailable)
+    cf.auraSoundAddedCb:SetEnabled(auraSoundAvailable)
+    cf.auraSoundApplicationsCb:SetEnabled(auraSoundAvailable)
+    cf.auraSoundRemovedCb:SetEnabled(auraSoundAvailable)
+    local auraSoundAlpha = auraSoundAvailable and 1 or 0.45
+    cf.auraSoundDropdown:SetAlpha(auraSoundAlpha)
+    cf.auraSoundTestButton:SetAlpha(auraSoundAlpha)
+    cf.auraSoundAddedCb:SetAlpha(auraSoundAlpha)
+    cf.auraSoundApplicationsCb:SetAlpha(auraSoundAlpha)
+    cf.auraSoundRemovedCb:SetAlpha(auraSoundAlpha)
+    if auraSoundAvailable then
+        cf.auraSoundHint:SetText(localized(
+            "EAM_OPT_AURA_SOUND_INHERIT",
+            "三項皆未勾選時沿用全域音效；實際觸發需 PTR 真人驗證。"
+        ))
+    else
+        cf.auraSoundHint:SetText(localized(
+            "EAM_OPT_AURA_SOUND_DISABLED",
+            "此客戶端不支援 12.1 AuraSound；現有設定不會被改寫。"
+        ))
+    end
 
     if isGround then
         -- 顯示地面效果專屬控制項
@@ -1822,12 +2396,8 @@ function Options.open()
         if Options.posFrame then Options.posFrame:Hide() end
         if Options.listFrame then Options.listFrame:Hide() end
         
-        -- 更新音效 dropdown 的目前數值顯示
-        if EAM.db and EAM.db.config and Options.soundDropdown then
-            local soundName = EAM.db.config.soundName or "ShayBell"
-            Options.soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. soundName)
-        end
-        Options.refreshAuraBackendStatus()
+        -- 低頻刷新所有由多段語系字串組合而成的控制項。
+        Options.refreshLocalizedText()
     end
 end
 
@@ -1850,11 +2420,11 @@ local function createMinimapButton()
     btn:SetMovable(true)
     btn:RegisterForClicks("AnyUp")
 
-    -- 背景
+    -- 背景：12.1 優先使用 EAM 自有 SVG；12.0.7 與失敗路徑保留內建 fallback。
     local back = btn:CreateTexture(nil, "BACKGROUND")
     back:SetSize(21, 21)
     back:SetPoint("CENTER", btn, "CENTER", 0, 0)
-    back:SetTexture(568154) -- 預設使用 ShayBell 的鈴鐺圖案
+    Options.applyMinimapTexture(back)
 
     -- 邊框
     local border = btn:CreateTexture(nil, "OVERLAY")
@@ -1935,6 +2505,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         createMinimapButton()
     elseif event == "PLAYER_REGEN_ENABLED" then
+        if EAM.Theme and EAM.Theme.flushPending then
+            EAM.Theme.flushPending()
+        end
         if Options.pendingOpen then
             Options.pendingOpen = false
             Options.open()

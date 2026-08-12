@@ -5,34 +5,35 @@ Module: UI/Slash
 
 理念:
 - /eam 是使用者低成本入口，負責協調模組而非承擔業務邏輯。
-- 指令語意保留舊 EAM 簡潔風格。
+- 在 Retail 12.1 安全邊界內恢復經典 EAM 的 list、lookup 與 showcast 使用習慣。
 
 責任:
 - 註冊 slash command、解析文字、呼叫 Options/Debug/SavedVariables/service API。
 
 資料所有權:
-- 擁有 slash command handler。
+- 擁有 slash command handler；不保存監控或探索資料。
 
 可變狀態:
 - 可觸發其他模組公開 API；不可直接改 service/private tables。
 
 邊界:
-- 不做 combat automation。
-- 不讀 secret/protected data。
+- 不做 combat automation，不呼叫 UnitAura，不掃描整個 SpellID 空間。
+- 不讀、比較、字串化或索引 secret/protected data。
 
 效能注意:
 - Slash 非 hot path；輸出字串只在使用者呼叫時建立。
 
 Retail API 注意:
-- SlashCmdList 是 WoW 標準入口；需實機確認 /eam 指令註冊。
-
+- SlashCmdList 是 WoW 標準入口；需實機確認 /eam 與 /eventalertmod 註冊。
 ]]
 local _, EAM = ...
 
 local Slash = {}
 EAM.UI.Slash = Slash
 
+local Util = EAM.Util
 local mathFloor = math.floor
+local stringFormat = string.format
 
 local function printLine(text)
     print("|cff00ff96EAM|r " .. text)
@@ -40,6 +41,10 @@ end
 
 local function nextToken(input)
     return string.gmatch(input or "", "%S+")
+end
+
+local function commandArguments(input)
+    return string.match(input or "", "^%s*%S+%s+(.+)%s*$")
 end
 
 local function refreshAfterChange(kind, unit, numericID)
@@ -54,6 +59,11 @@ end
 
 local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_OPT or "/eam opt - 開啟設定")
+    printLine(EAM.L.EAM_SLASH_HELP_LIST or "/eam list - 顯示目前職業監控清單")
+    printLine(EAM.L.EAM_SLASH_HELP_LOOKUP or "/eam lookup <名稱> - 查詢目前職業候選")
+    printLine(EAM.L.EAM_SLASH_HELP_LOOKUPFULL or "/eam lookupfull <完整名稱> - 精確查詢目前職業候選")
+    printLine(EAM.L.EAM_SLASH_HELP_SHOWCAST or "/eam showcast - 開始或停止本次登入施法記錄")
+    printLine(EAM.L.EAM_SLASH_HELP_SHOW or "/eam show/showtarget - 顯示 12.1 安全替代說明")
     printLine(EAM.L.EAM_SLASH_HELP_DOCTOR or "/eam doctor - 顯示 Retail/PTR API 邊界診斷")
     printLine(EAM.L.EAM_SLASH_HELP_VALIDATE or "/eam validate - 同 /eam doctor")
     printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示除錯摘要")
@@ -143,6 +153,145 @@ local function mutateAlert(action, input)
     end
 end
 
+local function getSafeSpellName(spellID)
+    local service = EAM.Services and EAM.Services.SpellInfoService
+    local info = service and service.getSpellInfo and service.getSpellInfo(spellID)
+    if info and info.factsSafe and Util.isSafeString(info.name) then
+        return info.name
+    end
+    return EAM.L.EAM_SLASH_UNKNOWN_NAME or "名稱尚不可用"
+end
+
+local function printAlertList(label, list, idField)
+    if not Util.isReadableTable(list) then
+        return 0
+    end
+    local count = 0
+    for index = 1, #list do
+        local alert = list[index]
+        if Util.isReadableTable(alert) then
+            local numericID = Util.readSafeScalar(alert[idField])
+            if Util.isSafePositiveNumber(numericID) then
+                numericID = mathFloor(numericID)
+                local name = idField == "spellID" and getSafeSpellName(numericID)
+                    or (EAM.L.EAM_SLASH_ITEM_LABEL or "Item")
+                printLine(stringFormat(
+                    EAM.L.EAM_SLASH_LIST_LINE or "%s | %s | ID: %d",
+                    label,
+                    name,
+                    numericID
+                ))
+                count = count + 1
+            end
+        end
+    end
+    return count
+end
+
+local function printConfiguredList()
+    local saved = EAM.Modules and EAM.Modules.SavedVariables
+    if not saved or not saved.getAlertList then
+        printLine(EAM.L.EAM_SLASH_NOT_INIT or "SavedVariables 尚未初始化。")
+        return
+    end
+
+    local classToken = saved.getActiveClassToken and saved.getActiveClassToken() or "UNKNOWN"
+    printLine(stringFormat(EAM.L.EAM_SLASH_LIST_HEADER or "%s 目前職業監控清單", classToken))
+    local count = 0
+    count = count + printAlertList(
+        EAM.L.EAM_MODULE_PLAYER_AURA or "玩家光環",
+        saved.getAlertList("aura", "player"),
+        "spellID"
+    )
+    count = count + printAlertList(
+        EAM.L.EAM_MODULE_TARGET_AURA or "目標光環",
+        saved.getAlertList("aura", "target"),
+        "spellID"
+    )
+    count = count + printAlertList(
+        EAM.L.EAM_MODULE_SPELL_COOLDOWN or "技能冷卻",
+        saved.getAlertList("cooldown"),
+        "spellID"
+    )
+    count = count + printAlertList(
+        EAM.L.EAM_MODULE_ITEM_COOLDOWN or "物品冷卻",
+        saved.getAlertList("item"),
+        "itemID"
+    )
+    count = count + printAlertList(
+        EAM.L.EAM_MODULE_GROUND_EFFECT or "地面效果",
+        saved.getAlertList("groundEffect"),
+        "spellID"
+    )
+    if count == 0 then
+        printLine(EAM.L.EAM_SLASH_LIST_EMPTY or "目前職業沒有監控項目。")
+    end
+end
+
+local function printCastList(service)
+    local count = service.forEachCastSpell(function(spellID)
+        printLine(stringFormat(
+            EAM.L.EAM_SLASH_CAST_LINE or "%s | Spell ID: %d",
+            getSafeSpellName(spellID),
+            spellID
+        ))
+    end)
+    if count == 0 then
+        printLine(EAM.L.EAM_SLASH_SHOWCAST_EMPTY or "本次登入尚未記錄到玩家施法。")
+    end
+end
+
+local function toggleShowCast()
+    local service = EAM.Services and EAM.Services.LegacyDiscoveryService
+    if not service then
+        printLine(EAM.L.EAM_SLASH_DISCOVERY_UNAVAILABLE or "經典探索服務尚未載入。")
+        return
+    end
+    local enabled = not service.isCastCaptureEnabled()
+    local ok = service.setCastCaptureEnabled(enabled)
+    if not ok then
+        printLine(EAM.L.EAM_SLASH_OP_FAIL or "操作失敗。")
+        return
+    end
+    printLine(enabled and (EAM.L.EAM_SLASH_SHOWCAST_ENABLED or "已開始記錄玩家成功施放的法術。")
+        or (EAM.L.EAM_SLASH_SHOWCAST_DISABLED or "已停止記錄玩家施法。"))
+    printCastList(service)
+end
+
+local function runLookup(input, exact)
+    local query = commandArguments(input)
+    if not query or query == "" then
+        printLine(EAM.L.EAM_SLASH_LOOKUP_USAGE or "用法：/eam lookup <法術名稱>")
+        return
+    end
+    local service = EAM.Services and EAM.Services.LegacyDiscoveryService
+    if not service then
+        printLine(EAM.L.EAM_SLASH_DISCOVERY_UNAVAILABLE or "經典探索服務尚未載入。")
+        return
+    end
+
+    local count = service.lookup(query, exact, function(spellID, name)
+        printLine(stringFormat(
+            EAM.L.EAM_SLASH_LOOKUP_LINE or "%s | Spell ID: %d",
+            name,
+            spellID
+        ))
+    end)
+    if count == 0 then
+        printLine(EAM.L.EAM_SLASH_LOOKUP_NONE or "目前職業的有限候選中沒有符合項目。")
+    end
+end
+
+local function printAuraSafetyGuidance()
+    printLine(EAM.L.EAM_SLASH_SHOW_UNSUPPORTED
+        or "Retail 12.1 不以舊式 UnitAura 掃描完整光環；請將滑鼠移到光環圖示後按 Ctrl+Alt 加入監控。")
+end
+
+local function printAutoAddGuidance()
+    printLine(EAM.L.EAM_SLASH_AUTOADD_UNSUPPORTED
+        or "Retail 12.1 不自動寫入掃描結果；請以 Tooltip 的 Ctrl+Alt 視窗確認後加入。")
+end
+
 local function handleSlash(input)
     input = input or ""
     local commandIterator = nextToken(input)
@@ -156,16 +305,16 @@ local function handleSlash(input)
             local spellID = tonumber(spellIDToken)
             if spellID then
                 local locale = EAM.API.GetLocale and EAM.API.GetLocale() or "enUS"
-                printLine(string.format(EAM.L.EAM_SLASH_DEBUG_GROUND_START or "正在除錯無光環地面技能 Tooltip 解析 (當前客戶端語系: %s)...", locale))
+                printLine(stringFormat(EAM.L.EAM_SLASH_DEBUG_GROUND_START or "正在除錯無光環地面技能 Tooltip 解析 (當前客戶端語系: %s)...", locale))
                 if EAM.Services.GroundEffectService then
-                    local dur = EAM.Services.GroundEffectService.scrapeDuration(spellID)
-                    if dur then
-                        printLine(string.format(EAM.L.EAM_SLASH_DEBUG_GROUND_SUCCESS or "法術 [%d] 成功解析持續時間: |cff00ff00%s 秒|r", spellID, tostring(dur)))
+                    local duration = EAM.Services.GroundEffectService.scrapeDuration(spellID)
+                    if duration then
+                        printLine(stringFormat(EAM.L.EAM_SLASH_DEBUG_GROUND_SUCCESS or "法術 [%d] 成功解析持續時間: |cff00ff00%s 秒|r", spellID, tostring(duration)))
                     else
-                        printLine(string.format(EAM.L.EAM_SLASH_DEBUG_GROUND_FAIL or "法術 [%d] Tooltip 解析失敗，將使用預設時間", spellID))
+                        printLine(stringFormat(EAM.L.EAM_SLASH_DEBUG_GROUND_FAIL or "法術 [%d] Tooltip 解析失敗，將使用預設時間", spellID))
                     end
                 else
-                    printLine(EAM.L.EAM_SLASH_GROUND_NOT_LOADED or "GroundEffectService 未加載！")
+                    printLine(EAM.L.EAM_SLASH_GROUND_NOT_LOADED or "GroundEffectService 未載入！")
                 end
             else
                 printLine(EAM.L.EAM_SLASH_SPECIFY_SPELLID or "請指定正確的法術 ID: /eam debug ground <spellID>")
@@ -192,14 +341,33 @@ local function handleSlash(input)
         EAM.Debug.PromptExport.openWindow()
     elseif command == "add" or command == "remove" then
         mutateAlert(command, input)
+    elseif command == "list" then
+        printConfiguredList()
+    elseif command == "lookup" or command == "l" then
+        runLookup(input, false)
+    elseif command == "lookupfull" or command == "lf" then
+        runLookup(input, true)
+    elseif command == "showcast" or command == "showc" then
+        toggleShowCast()
+    elseif command == "show" or command == "shows" or command == "showtarget" or command == "showt" then
+        printAuraSafetyGuidance()
+    elseif command == "showautoadd" or command == "showa"
+        or command == "showenvadd" or command == "showe"
+    then
+        printAutoAddGuidance()
     elseif command == "help" then
         printHelp()
-    elseif command == "opt" and EAM.UI.Options then
+    elseif (command == "opt" or command == "option" or command == "options") and EAM.UI.Options then
         EAM.UI.Options.open()
-    elseif EAM.UI.Options then
+    elseif command == "" and EAM.UI.Options then
         EAM.UI.Options.open()
+    else
+        printHelp()
     end
 end
 
+Slash.handleSlash = handleSlash
+
 SLASH_EAM1 = "/eam"
+SLASH_EAM2 = "/eventalertmod"
 SlashCmdList.EAM = handleSlash

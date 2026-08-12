@@ -6,6 +6,19 @@
 
 ---
 
+#### [正式服 12.1.0 PTR8 Alpha 4] 2026.08.13
+- Alpha 4 整合功能模組開關、職業專用監控清單、模組化匯入／匯出規劃與 12.1 AuraSound 細部設定。
+- 延續六套 EAM 主題、俄文語系、SVG 小地圖圖示、Native Aura／UnitPower 安全邊界與 37 案真人測試矩陣。
+- 發布套件只由 GitHub Release 提供；本機 deploy、測試資料、工具與備份目錄不納入正式 ZIP。
+- 本版定位為 Alpha 4；離線驗證通過不代表 PTR／XPTR／Retail 實機簽收。
+
+#### [正式服 12.1.0 PTR8 Alpha 3 follow-up] 2026.08.13
+- Aura 細部設定新增 12.1 AuraSound：可選共用素材，分別啟用光環新增、層數增加與移除；三項皆未選時沿用全域音效。
+- 全域音效為 master gate；純音效變更不重建 AuraContainer。註冊採交易式交換，失敗保留舊 registry，移除失敗留待重試。
+- 12.0.7 顯示 capability 降級且保留設定，不呼叫 12.1 `AddAuraSound`。Native sound 無 caster／極性欄位，仍需 PTR 觀察 over-fire。
+- 真人矩陣升為 `2026-08-13.1` 共 37 案；離線流程通過不代表 PTR／XPTR／Retail 實播簽收。
+- 本輪離線 gate：Lua `54/54`、Flow `all 61/61`、Validation Contracts `355/355`；Flow artifact 為 `TestResults/EAM_FlowValidation_all_20260813_013945.json`。
+
 #### [正式服 12.1.0 PTR8 Alpha 2] 2026.08.08
 - 12.1 改採 Blizzard Native AuraContainer／AuraButton；12.0.7 保留 Legacy backend，不在 12.1 讀取 `UNIT_AURA` Secret payload。
 - GameTooltip 顯示可安全取得的法術、物品與巨集 ID；光環 ID 優先交由 Blizzard CVar 顯示。
@@ -26,7 +39,7 @@ pwsh -NoProfile -File .\Tools\Run-FlowValidation.ps1 -Suite all
 pwsh -NoProfile -File .\Tools\Test-ValidationContracts.ps1
 ```
 
-遊戲內能力檢查請用 `/eam test`；PTR／XPTR 真人簽收請用 `/eam test live`，選擇實際客戶端後由玩家手動完成 34 案。EAM 不會自動操作角色、Tooltip、按鈕或 `/reload`。未跨過玩家自行執行的 `/reload`、測試版本身分未知、案例未全數通過或仍有警告時，報告不得完成。備註不可包含帳號、角色、伺服器、WTF 或絕對路徑。面板直接複製的是記憶體內最新 JSON；若要從 WTF 匯入，完成報告後必須由玩家再輸入 `/reload` 或正常登出，SavedVariables 才會寫入最新內容：
+遊戲內能力檢查請用 `/eam test`；PTR／XPTR 真人簽收請用 `/eam test live`，選擇實際客戶端後由玩家手動完成 37 案。EAM 不會自動操作角色、Tooltip、按鈕或 `/reload`。未跨過玩家自行執行的 `/reload`、測試版本身分未知、案例未全數通過或仍有警告時，報告不得完成。備註不可包含帳號、角色、伺服器、WTF 或絕對路徑。面板直接複製的是記憶體內最新 JSON；若要從 WTF 匯入，完成報告後必須由玩家再輸入 `/reload` 或正常登出，SavedVariables 才會寫入最新內容：
 
 UnitPower 能力測試在 `/eam test` 點「UnitPower 能力」，由玩家自行產生／消耗資源、切換專精及進出戰鬥，再對兩個原生顯示標記 pass／fail／blocked。輸出的 `EAM_UNIT_POWER_CAPABILITY_REPORT` 只含能力分類與人工結果，不含 current／max／percent 原值。
 

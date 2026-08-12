@@ -15,6 +15,9 @@ local Util = EAM.Util
 local AuraSoundService = {
     active = {},
     activeCount = 0,
+    retired = {},
+    retiredCount = 0,
+    retiredSequence = 0,
     lastFingerprint = nil,
     limitations = {},
 }
@@ -40,13 +43,51 @@ local function unregisterEntry(entry)
     return ok
 end
 
+local function retainRetiredEntry(key, entry)
+    AuraSoundService.retiredSequence = AuraSoundService.retiredSequence + 1
+    local retiredKey = key .. "#" .. AuraSoundService.retiredSequence
+    AuraSoundService.retired[retiredKey] = entry
+    AuraSoundService.retiredCount = AuraSoundService.retiredCount + 1
+end
+
+local function clearRegistry(registry, retainFailures)
+    local remaining = 0
+    for key, entry in pairs(registry) do
+        if unregisterEntry(entry) then
+            registry[key] = nil
+        elseif retainFailures then
+            registry[key] = nil
+            retainRetiredEntry(key, entry)
+            appendLimitation("soundRemovalFailed:" .. key)
+        else
+            remaining = remaining + 1
+            appendLimitation("soundRemovalFailed:" .. key)
+        end
+    end
+    return remaining
+end
+
+local function retryRetired()
+    AuraSoundService.retiredCount = clearRegistry(AuraSoundService.retired, false)
+    return AuraSoundService.retiredCount == 0
+end
+
 local function buildSoundInfo(rule, soundConfig)
     if type(soundConfig) ~= "table" then
         return nil
     end
     local soundFileID = soundConfig.soundFileID
     local soundFileName = soundConfig.soundFileName
-    if not Util.isSafePositiveNumber(soundFileID) and not Util.isSafeString(soundFileName) then
+    local hasFileID = Util.isSafePositiveNumber(soundFileID)
+    local hasFileName = Util.isSafeString(soundFileName) and soundFileName:find("%S") ~= nil
+    if not hasFileID and not hasFileName then
+        return nil
+    end
+
+    if (rule.unit ~= "player" and rule.unit ~= "target")
+        or not Util.isSafePositiveNumber(rule.spellID)
+        or rule.spellID % 1 ~= 0
+    then
         return nil
     end
 
@@ -54,12 +95,14 @@ local function buildSoundInfo(rule, soundConfig)
         unitToken = rule.unit,
         spellID = rule.spellID,
     }
-    if Util.isSafePositiveNumber(soundFileID) then
+    if hasFileID then
         info.soundFileID = soundFileID
     else
         info.soundFileName = soundFileName
     end
-    if Util.isSafeString(soundConfig.outputChannel) then
+    if Util.isSafeString(soundConfig.outputChannel)
+        and soundConfig.outputChannel:find("%S")
+    then
         info.outputChannel = soundConfig.outputChannel
     end
     return info
@@ -70,38 +113,53 @@ local function registerEntry(key, rule, trigger, soundConfig)
     local info = buildSoundInfo(rule, soundConfig)
     if not info then
         appendLimitation("soundConfigIncomplete:" .. key)
-        return
+        return nil
     end
     local ok, registrationID = pcall(cUnitAuras.AddAuraSound, trigger, info)
     if not ok or not Util.isSafePositiveNumber(registrationID) then
         appendLimitation("soundRegistrationFailed:" .. key)
-        return
+        return nil
     end
-    AuraSoundService.active[key] = {
+    return {
         registrationID = registrationID,
         alertID = rule.alertID,
     }
-    AuraSoundService.activeCount = AuraSoundService.activeCount + 1
 end
 
 function AuraSoundService.sync(plan, capability)
-    if not plan or not capability or not capability.hasAuraSound then
-        AuraSoundService.removeAll()
-        appendLimitation("auraSoundUnavailable")
-        return false, "auraSoundUnavailable"
+    AuraSoundService.limitations = {}
+    if not plan then
+        appendLimitation("auraSoundPlanUnavailable")
+        return false, "auraSoundPlanUnavailable"
     end
-    if AuraSoundService.lastFingerprint == plan.fingerprint then
-        return true, "unchanged"
+    if not capability or not capability.hasAuraSound or not capability.hasAuraSoundEnum then
+        local removed = AuraSoundService.removeAll()
+        appendLimitation("auraSoundUnavailable")
+        if not removed then
+            appendLimitation("auraSoundRemovalPending")
+        end
+        -- AuraSound 是選配能力；缺少它不可阻斷已通過 capability 的 Native Aura 視覺。
+        return true, removed and "auraSoundUnavailable" or "auraSoundRemovalPending"
     end
 
-    AuraSoundService.removeAll()
-    AuraSoundService.limitations = {}
+    local fingerprint = plan.soundFingerprint or plan.fingerprint
+    local retiredCleared = retryRetired()
+    if AuraSoundService.lastFingerprint == fingerprint then
+        if retiredCleared then
+            return true, "unchanged"
+        end
+        return false, "soundRemovalPending"
+    end
+
     local cUnitAuras = EAM.API.C_UnitAuras
     if not cUnitAuras or type(cUnitAuras.AddAuraSound) ~= "function" then
         appendLimitation("auraSoundUnavailable")
         return false, "auraSoundUnavailable"
     end
 
+    local candidate = {}
+    local candidateCount = 0
+    local registrationFailed = false
     for ruleIndex = 1, #plan.soundRules do
         local rule = plan.soundRules[ruleIndex]
         local sound = rule.sound
@@ -111,27 +169,48 @@ function AuraSoundService.sync(plan, capability)
             local trigger = capability[descriptor.capabilityKey]
             if config and trigger ~= nil then
                 local key = rule.alertID .. ":" .. descriptor.key
-                registerEntry(key, rule, trigger, config)
+                local entry = registerEntry(key, rule, trigger, config)
+                if entry then
+                    candidate[key] = entry
+                    candidateCount = candidateCount + 1
+                else
+                    registrationFailed = true
+                end
+            elseif config then
+                appendLimitation("soundTriggerUnavailable:" .. rule.alertID .. ":" .. descriptor.key)
+                registrationFailed = true
             end
         end
     end
 
-    AuraSoundService.lastFingerprint = plan.fingerprint
+    if registrationFailed then
+        clearRegistry(candidate, true)
+        return false, "soundRegistrationFailed"
+    end
+
+    clearRegistry(AuraSoundService.active, true)
+    AuraSoundService.active = candidate
+    AuraSoundService.activeCount = candidateCount
+    AuraSoundService.lastFingerprint = fingerprint
+    if AuraSoundService.retiredCount > 0 then
+        return false, "soundRemovalPending"
+    end
     return true, "registered"
 end
 
 function AuraSoundService.removeAll()
-    for key, entry in pairs(AuraSoundService.active) do
-        unregisterEntry(entry)
-        AuraSoundService.active[key] = nil
-    end
+    retryRetired()
+    clearRegistry(AuraSoundService.active, true)
+    AuraSoundService.active = {}
     AuraSoundService.activeCount = 0
     AuraSoundService.lastFingerprint = nil
+    return AuraSoundService.retiredCount == 0
 end
 
 function AuraSoundService.getStatus()
     return {
         activeCount = AuraSoundService.activeCount,
+        retiredCount = AuraSoundService.retiredCount,
         limitations = AuraSoundService.limitations,
         lastFingerprint = AuraSoundService.lastFingerprint,
     }

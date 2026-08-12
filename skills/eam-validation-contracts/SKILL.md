@@ -35,7 +35,7 @@ pwsh -NoProfile -File .\Tools\CheckLuaSyntax.ps1
 pwsh -NoProfile -File .\Tools\Run-FlowValidation.ps1 -Suite all
 ```
 
-3. 驗證 JSON Schema、21 點／34 案 Lua 同步、continuity drift、TOC 與 PowerShell AST：
+3. 驗證 JSON Schema、21 點／37 案 Lua 同步、continuity drift、TOC 與 PowerShell AST：
 
 ```powershell
 pwsh -NoProfile -File .\Tools\Test-ValidationContracts.ps1
@@ -54,7 +54,7 @@ pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 `
 ## 真人 PTR／XPTR 回灌
 
 1. 由玩家在非戰鬥中輸入 `/eam test live`，選擇實際 `_ptr_`、`_xptr_` 或 `_retail_`。
-2. 玩家手動完成 `Data/LiveValidationMatrix.json` 的 34 案；EAM 只記錄結果與最多 500 字元備註。
+2. 玩家手動完成 `Data/LiveValidationMatrix.json` 的 37 案；EAM 只記錄結果與最多 500 字元備註。
 3. `/reload` 案先建立 checkpoint，再由玩家自行輸入 `/reload`。
 4. 完成後直接複製面板 JSON時，該內容已是記憶體內最新報告。
 5. 若從 WTF 匯入，玩家完成報告後必須再 `/reload` 或正常登出，讓最新 SavedVariables 寫回磁碟。
@@ -66,7 +66,7 @@ pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 `
     -ReportType Live
 ```
 
-7. 只有 `executionSource=client`、來源與宣告 client 相符、34 案全 pass、跨 `/reload`、無 boundary warning，才可送 RQA 終審。
+7. 只有 `executionSource=client`、來源與宣告 client 相符、37 案全 pass、跨 `/reload`、無 boundary warning，才可送 RQA 終審。
 
 ## 文件與回傳
 
@@ -77,7 +77,7 @@ pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 `
 
 ## 2026-08-09 補充 gate
 
-- 真人執行前先開啟 `Docs/29_LIVE_TEST_STEP_GUIDE.md`；case ID 必須與 `LiveTestSession` procedure 及 34 案矩陣一致。
+- 真人執行前先開啟 `Docs/29_LIVE_TEST_STEP_GUIDE.md`；case ID 必須與 `LiveTestSession` procedure 及 37 案矩陣一致。
 - 面板「複製」只可全選文字並提示玩家 Ctrl+C，不得新增或恢復 `EditBox:Copy()`。
 - 檢查 Target Aura 匿名 hover heartbeat、Macro resolved spell/item、About metadata、七色分類邊框、Legacy spell/item Tooltip 與 Native initializer-only 路由。
 - 驗證數量以腳本實際輸出為準，不把文件中的歷史數字當成功條件；任何失敗均停止封裝與發布。

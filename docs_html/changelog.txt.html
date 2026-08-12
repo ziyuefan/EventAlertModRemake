@@ -273,7 +273,14 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
         <h1>changelog.txt</h1>
-        <pre><code>-- [Retail  12.1.0 PTR8 Alpha 3]2026.08.09
+        <pre><code>-- [Retail 12.1.0 PTR8 Alpha 4]2026.08.13
+    -- 發布與文件：
+       -- 整合功能模組開關，讓自身／目標光環、技能冷卻、物品冷卻、地面效果、職業資源、圖騰與 Tooltip 監控可獨立停用或啟用；除錯工具與小地圖入口維持既有獨立行為。
+       -- 監控清單改以職業 profile 隔離；保留 v4 舊資料備份與安全遷移，不以職業猜測拆分歷史全域清單。
+       -- JSON／Base64 profile 分享仍列為下一輪規劃；本版不宣稱正式 codec 已完成，亦不使用 LegacyReference 的 loadstring 匯入路徑。
+       -- 更新 GitHub Pages、README、AI context、Project Continuity、測試計畫與 CHANGELOG；Alpha 4 Release ZIP 不包含本機 deploy、Tests、TestResults、Tools 或 backup。
+    -- 本版定位為 Alpha 4；離線契約與打包通過不代表 PTR／XPTR／Retail 真人簽收。
+-- [Retail  12.1.0 PTR8 Alpha 3]2026.08.09
     -- Tooltip 與加入監控：
        -- TargetFrame／BuffFrame Aura 支援滑鼠停留後只按 Ctrl+Alt 開啟 EAM 視窗，不再要求右鍵，也不攔截 Blizzard 點擊。
        -- Action Bar Macro 優先解析安全的 spell／item subtype 與 ID；無法安全解析時才要求手動輸入。
@@ -283,10 +290,11 @@
        -- 自身 BUFF、自己 DEBUFF、目標 BUFF、目標 DEBUFF、技能、物品、地面效果使用七種固定色。
        -- 分類邊框改用 WHITE8X8 實色 Texture，位於 BORDER 層並四邊固定外擴 3px，避免 ActionButton 素材透明留白。
     -- SVG 能力與回灌：
-       -- 新增玩家操作的 VectorGraphics／Texture SVG A/B 探針，驗證 set、HasSVG、file-ID 分類、clear 與 reload。
-       -- 報告不保存 raw file ID，可由 JSON 或遊戲內持久化報告以 ReportType SVG 匯入；Release ZIP 正式包含 .svg 素材。
+       -- 新增玩家操作的 VectorGraphics／Texture SVG A/B 探針；PTR 69189 實測兩條 SetSVG 路徑與圖樣均通過。
+       -- 發布後依實機報告修正非對稱契約：VectorGraphics 驗證 Set/Clear/Has/Get，Texture 只驗證 Set/Clear；addon-local fileID=0 與 Texture introspection unavailable 不再誤判。
+       -- 報告不保存 raw file ID，可由 JSON 或遊戲內持久化報告以 ReportType SVG 匯入；Release ZIP 正式包含 .svg 素材。這項探針修正將進入下一個 alpha package。
     -- 驗證與發布：
-       -- Lua 50/50、Flow 54/54、Validation Contracts 247/247；本機三個 Retail client patch train 與 SymbolicLink 3/3 通過。
+       -- Lua 50/50、Flow 54/54、Validation Contracts 264/264；本機三個 Retail client patch train 與 SymbolicLink 3/3 通過。
        -- 本版仍為 Alpha prerelease；3px 邊框與 SVG 圖樣需玩家在 PTR 12.1 自行 /reload 後目視簽收。
 -- [Retail  12.1.0 PTR8 Alpha 2]2026.08.08
     -- PTR8 Native Aura：
@@ -979,6 +987,25 @@
    若0 則表示完全不會顯示
 
 -- 鳥D 日月能移除，只剩下星能。
+
+-- [Retail 12.1.0 Alpha 3 follow-up] 2026.08.12
+    -- 本地化：
+       -- 新增完整 ruRU 字串 catalog，並以 enUS key parity 契約防止新功能字串遺漏。
+       -- 主設定面板新增語系下拉清單；Auto Detect 固定英文且為預設，選擇後提示玩家手動 /reload。
+       -- 語系值保存於 EAM_DB.config.language；不在 click handler 自動呼叫 ReloadUI，避免混合語言 UI。
+
+-- [Retail 12.1.0 Alpha 3 follow-up] 2026.08.12 小地圖 SVG 與主題
+    -- 小地圖按鈕改用專案自有 SVG；SetSVG 不可用時回退內建問號圖示，保留左鍵、右鍵與拖曳操作。
+    -- 主設定新增 EAM、FF7、Windows XP 主題選擇，保存於 EAM_DB.config.theme。
+    -- 戰鬥中主題切換延後至 PLAYER_REGEN_ENABLED，不修改 Blizzard secure/protected frame。
+    -- 主題只改 EAM 自有視窗 chrome，七種監控邊框語意色維持獨立。
+
+-- [Retail 12.1.0 Alpha 3 follow-up] 2026.08.13 AuraSound
+    -- Aura 細部設定新增共用素材與 Added、ApplicationsIncreased、Removed 三個 12.1 AuraSound 開關。
+    -- 全域 showSound 作為 master gate；container 與 sound fingerprint 分離，純音效更新不消耗 Native 容器配額。
+    -- AuraSound registry 採 candidate 成功後交換；Add 失敗回滾，Remove 失敗保留 ID 供後續重試。
+    -- 12.0.7 保留設定並顯示 unsupported，不呼叫 12.1 API；真人實測矩陣升為 37 案。
+    -- 離線驗證：Lua 54/54、Flow all 61/61、Validation Contracts 355/355；PTR／XPTR／Retail 實播仍待真人簽收。
 </code></pre>
     </div>
     <div id="doc-content-en" class="lang-content">

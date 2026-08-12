@@ -1095,6 +1095,22 @@ ADDON_RESTRICTION_STATE_CHANGED
 <li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">UnitDocumentation.lua</a></li>
 <li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua">SimpleStatusBarAPIDocumentation.lua</a></li>
 </ul>
+<h2 id="2026-08-13-ptr-69273-aurasound">2026-08-13 PTR 69273 AuraSound 固定契約</h2>
+<p>固定證據為 Gethe <code>ptr</code> commit <code>6e348870ed8f93d95f0cd16d299b51dbce500296</code>（12.1.0.69273）：</p>
+<ul>
+<li><code>C_UnitAuras.AddAuraSound(trigger, sound)</code> 回傳可為 nil 的 registration ID；<code>RemoveAuraSound(id)</code> 取消註冊。</li>
+<li><code>Enum.UnitAuraSoundTrigger</code>：Added=0、ApplicationsIncreased=1、Removed=2。</li>
+<li><code>UnitAuraSoundInfo</code> 必填 <code>unitToken</code>、<code>spellID</code>；可選 <code>soundFileName</code>、<code>soundFileID</code>、<code>outputChannel</code>。沒有 <code>soundKitID</code>、caster 或 auraFilter。</li>
+<li>Add／Remove 標示 restricted 且 SecretArguments 為 AllowedWhenUntainted；EAM 只從已正規化的普通 SavedVariables 建立參數，不把 AuraData 或 Secret value 傳入。</li>
+<li>registration ID 是 session runtime state，不是播放 handle；不得保存，也不能傳給 <code>StopSound</code>。</li>
+<li>12.0.7 只有 private aura applied 舊 API，不足以實作一般 Aura 三 trigger，故採 capability 降級。</li>
+</ul>
+<p>固定來源：</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua">UnitAuraDocumentation.lua</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua">UnitAuraConstantsDocumentation.lua</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua">UnitConstantsDocumentation.lua</a></li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

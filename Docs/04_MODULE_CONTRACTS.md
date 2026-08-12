@@ -16,6 +16,28 @@
   保養注意事項。當模組合約發生變化時，請保持此評論最新。
   請參閱“Docs/12_CODE_COMMENTARY_GUIDE.md”。
 
+## Locale/Common
+
+輸入：
+
+- `GetLocale()`、已載入的 `EAM_DB.config.language`、各 locale loader。
+
+輸出：
+
+- `EAM.Locale` catalog、固定英文 `Auto Detect` 選項、fallback/current 或手動語系合併後的 `EAM.L`。
+
+狀態變更：
+
+- 載入期、明確呼叫 `Locale.setSelection()` 或收到 `EAM_LANGUAGE_CHANGED` 時，原地清除／合併穩定 identity 的 `EAM.L`，再刷新已註冊文字；Locale 本身不寫 SavedVariables。
+- `Locale.LanguageOptions` 是靜態選項表，可 freeze；catalog、`EAM.L`、widget binding registry 與 refresh callback registry 不得 freeze。
+- `Locale.bindText()` 只註冊長生命週期 EAM 自有 widget；池化／釋放型 widget 必須在回收時呼叫 `Locale.unbindText()`，避免保留過期引用。
+
+## UI/Options 語系選擇
+
+- 下拉清單透過 `SavedVariables.updateLanguage()` 保存 `EAM_DB.config.language`，由自訂事件同步套用至目前載入中的 Locale。
+- 主視窗、About、Module、Tooltip popup、Prompt export、Flow／Live、UnitPower 與 SVG 面板的固定文字使用 binding；下拉標籤、環境摘要與案例狀態等複合文字使用低頻 refresh callback 重算。
+- 選擇後立即刷新 EAM 自有 UI，不呼叫 `ReloadUI()`。`Auto Detect` 在 zhTW 客戶端仍會選回繁體中文，這是預期行為；第一次換入含此功能的新程式仍需玩家自行 `/reload` 載入檔案。
+
 ## Core/Env
 
 輸入：
@@ -464,11 +486,11 @@
 
 ## Debug/LiveTestSession 與 Debug/LiveTestPanel
 
-- 依 `Data/LiveValidationMatrix.json` 管理 34 案玩家人工觀察、500 字元備註、`/reload` checkpoint 與 schema 1 JSON。
+- 依 `Data/LiveValidationMatrix.json` 管理 37 案玩家人工觀察、500 字元備註、`/reload` checkpoint 與 schema 1 JSON。
 - 不施法、不使用物品、不執行巨集、不切換目標、不合成輸入、不呼叫 `ReloadUI`。
 - start、案例狀態／備註、checkpoint、reload 恢復與 complete 的 session 寫入在戰鬥中一律回傳 `combatDeferred`。
 - checkpoint 保存本次載入專屬 boot token；同次載入呼叫 resume 必須回傳 `sameLoadRejected`，只有玩家自行 `/reload` 後重建的 table identity 才能恢復。
-- session 必須跨一次玩家自行執行的 `/reload`，34 案全 pass、test-build 身分已知且環境無警告，才可從 `active` 進入 `complete`；`active` phase 即使其餘條件齊全也只能輸出 `incomplete`。
+- session 必須跨一次玩家自行執行的 `/reload`，37 案全 pass、test-build 身分已知且環境無警告，才可從 `active` 進入 `complete`；`active` phase 即使其餘條件齊全也只能輸出 `incomplete`。
 - 備註中的絕對路徑、UNC、SavedVariables、WTF 與 Account 片段必須在 producer 先遮蔽；`Data/LiveValidationMatrix.json` 固定 `personalDataAllowed=false`。
 - 離線 fixture 永遠維持 `incomplete`；匯入器另行重算摘要、矩陣與客戶端身分。
 
@@ -528,3 +550,39 @@ Tooltip callback 的責任只到「追加文字與更新 candidate」，不可�
 | Tools/Import-EAMFlowReport.ps1 | 明確提供的 JSON 或遊戲持久化報告 | schema、client identity、兩案 ID、interfaceRequired 與 status 重算 | 列舉私人目錄、信任報告自稱的 pass |
 
 VectorGraphics 是 Region 能力，不等同 Texture；Texture 的 texcoord、rotation、mask 或 blend 能力不可直接假定在 VectorGraphics 存在。主法術／物品／Aura 圖示仍是動態 FileDataID，不改為 SVG。第一優先候選是 Pandemic 靜態提示區；Dispel CustomAsset／PreserveAsset 必須先補完整 asset map 或預載契約，不能把空 Texture 當已完成。
+
+## 2026-08-12：小地圖 SVG 與 Theme 模組契約
+
+| 模組 | 輸入 | 輸出 | 禁止 |
+| --- | --- | --- | --- |
+| `UI/Theme` | 靜態 palette、EAM 自有 frame／FontString／button registry、SavedVariables 的 `theme` | EAM／FF7／Windows XP／Borland／DOS CRT／macOS Aqua palette、combat-deferred 套用結果 | 讀取 Secret Value、修改 Blizzard secure frame、覆蓋 AlertBorderStyles 語意色 |
+| `UI/Options` minimap helper | EAM 自有小地圖 Texture、專案 SVG | `svg` 或 `fallback` 結果；保留原按鈕互動 | 使用聲音 FileDataID 當貼圖、依賴外部 wowtools 素材、戰鬥中改安全互動 |
+
+Theme registry 只保存 EAM 自有 UI 物件的 weak-key reference；戰鬥中 `setSelection` 不立即改 frame，而是保存 pending 值，於 `PLAYER_REGEN_ENABLED` 後一次套用。小地圖 SVG 只作視覺素材降級，不參與 Aura、Cooldown、UnitPower 或 Secret 邏輯。
+
+## 2026-08-13：AuraSound 細部設定與註冊契約
+
+| 模組 | 輸入 | 輸出 | 禁止 |
+| --- | --- | --- | --- |
+| `Core/SavedVariables` | player／target Aura alert、三 trigger 純資料 | 正規化 sound、no-op revision、`EAM_AURA_SOUND_CHANGED` | 保存 registration ID、任意 trigger／非純資料 |
+| `UI/Options` | Aura 細部設定、共用素材、三個 trigger checkbox | per-alert sound draft、素材試聽 | 在 12.0.7 呼叫 12.1 API、把試聽冒充 Aura 事件 |
+| `Managers/AuraRuleCompiler` | 普通 unit／SpellID、全域 master、alert sound | `containerFingerprint`、`soundFingerprint`、sound rules | 讀 AuraData、讓 custom sound 繞過 master off |
+| `Services/AuraContainerService` | container／sound fingerprint | 結構重建或純 sound sync | 純音效變更建立新容器、戰鬥中改結構 |
+| `Services/AuraSoundService` | capability、靜態 sound rules | 交易式 active registry、retired removal retry | 讀 AuraData、序列化 ID、以 Remove 冒充停止已播放聲音 |
+
+- Container fingerprint 只描述 AuraContainer 結構；Sound fingerprint 只描述 unit、SpellID、trigger、asset 與 channel。兩者分離是 18 容器配額的必要條件。
+- 註冊先建立 candidate registry；任一 Add 失敗就清理 candidate 並保留舊 active registry。Remove 舊 ID 失敗時保留於 retired registry，之後重試或要求 `/reload`。
+- PTR 12.1 的 `UnitAuraSoundInfo` 沒有 caster／auraFilter；`fromPlayer` 或 HELPFUL／HARMFUL 不能被 Native sound 精確表達，compiler 必須留下 limitation。
+- C API 參數只取自 EAM 已正規化的普通 SavedVariables；禁止混入 AuraData、Secret value、frame、DurationObject 或 registration ID。
+- 12.0.7 沒有一般 Aura 的三 trigger native backend；細部控制顯示 unsupported，保留設定且零 12.1 呼叫。
+
+## 2026-08-13 Alpha 4：模組與 profile 邊界
+
+| 模組 | 正式入口 | 保存資料 | 禁止 |
+| --- | --- | --- | --- |
+| Core/ModuleController | UI/ModulePanel、SavedVariables.updateModuleToggle | 八個 moduleToggles | 反覆註冊事件、讀取 Secret、戰鬥中重建 Native 結構 |
+| Core/SavedVariables profile resolver | getActiveClassToken、getClassProfile、getAlertList | profiles.classes 與 v4 migration backup | 以 SpellArray 猜測歷史全域資料的職業歸屬 |
+| Services/LegacyDiscoveryService | /eam list、lookup、lookupfull、showcast | 僅本次登入 cast candidates | 全域 SpellID 掃描、自動加入監控、序列化 Secret |
+| UI/ModulePanel | 主設定的「功能模組」按鈕 | 不直接擁有設定 | 戰鬥中建立或重排 UIParent 結構 |
+
+模組停用採 handler gate 加上既有狀態清理；事件仍只註冊一次。Native Aura、Ground duration scrape、ClassPower re-detect 與尚未建立的面板在戰鬥中延後至脫戰。JSON／Base64 profile codec 目前尚未納入正式服務契約，不能把 LegacyReference 匯入器當作新版 API。

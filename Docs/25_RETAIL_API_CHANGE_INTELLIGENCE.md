@@ -9,7 +9,7 @@
 - 起始基線：12.0.0。
 - 活動專案 TOC：`120007, 120100`，同一套程式以 capability gate 區分 12.0.7 與 12.1。
 - 12.1 狀態：PTR／持續修訂；不得宣稱正式相容。
-- 最後查證：2026-08-08。
+- 最後查證：2026-08-13。
 - Wiki revision time 均為頁面修訂時間，不是遊戲 patch 發布時間。
 
 ## 2. APICHG 專家章程
@@ -202,13 +202,38 @@
 
 - Frame:CreateVectorGraphics() 回傳 SimpleVectorGraphics；生成文件將其 SecretArguments 標為 NotAllowed。
 - SimpleVectorGraphics 提供 SetSVG、ClearSVG、HasSVG、GetSVGFileID；VectorGraphics:SetSVG 的 SecretArguments 為 AllowedWhenUntainted。
-- SimpleTextureBase 亦提供 Texture:SetSVG；其 SecretArguments 為 AllowedWhenTainted。這只描述 Secret argument policy，不等於允許戰鬥中建立或重排 region。
+- SimpleTextureBase 提供 Texture:SetSVG 與 ClearSVG，但固定生成文件沒有 Texture:HasSVG 或 Texture:GetSVGFileID；Texture:SetSVG 的 SecretArguments 為 AllowedWhenTainted。這只描述 Secret argument policy，不等於允許戰鬥中建立或重排 region。
 - VectorGraphics 只有 Region 能力，沒有 Texture 的 rotation、mask、texcoord 與 blend 契約；EAM 以 A/B 探針分開驗證，不做能力等同推論。
+- PTR 69189 Alpha 3 實機報告確認兩條 SetSVG 路徑 accepted 且人工圖樣觀察均 pass。VectorGraphics 為 HasSVG=true、GetSVGFileID 分類 zero、clear/reload pass；Texture introspection unavailable 是預期契約，舊探針因錯誤要求 HasSVG 才沒有執行 Texture clear/reload。
+- `GetSVGFileID() == 0` 只在固定的 addon-local 封裝素材、HasSVG=true、生命週期與人工目視均通過時視為非阻擋診斷；不能泛化成任意 SVG 路徑都有效。
 
-固定來源：
+固定版本來源：
 
 - [SimpleFrame API 12.1.0.69189](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleFrameAPIDocumentation.lua)
 - [SimpleVectorGraphics API 12.1.0.69189](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleVectorGraphicsAPIDocumentation.lua)
 - [SimpleTextureBase API 12.1.0.69189](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua)
 
+持續更新知識庫：
+
+- [Warcraft Wiki：UIOBJECT_VectorGraphics](https://warcraft.wiki.gg/wiki/UIOBJECT_VectorGraphics) 用於追蹤方法、繼承與後續 Patch 變更；頁面可能隨 Wiki 更新，不能取代上述固定 commit 的 build 證據。
+- [Warcraft Wiki：Patch 12.1.0/API changes](https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes) 用於追蹤 PTR 批次變更與官方說明脈絡。
+
 適用評估：Pandemic 靜態提示 Region 是最高價值候選；Dispel CustomAsset／PreserveAsset 需先完成 asset map／預載；Legacy Glow 可評估 12.1 SVG 與 12.0.7 原材質雙軌。動態 spell/item/aura 主圖示、UnitPower radial、Tooltip Popup 目前不改。
+
+## 2026-08-13：PTR 69273 AuraSound 情報
+
+| 項目 | 69273 事實 | EAM 策略 |
+| --- | --- | --- |
+| Trigger | Added／ApplicationsIncreased／Removed | per-alert 三開關與三筆 registration |
+| Sound info | unitToken、spellID、file name／FileDataID、channel | 只由普通 SavedVariables 建構 |
+| 篩選能力 | 無 caster／auraFilter | 標記 limitation，PTR 觀察 over-fire |
+| 生命週期 | Add 回 registration ID、Remove 依 ID | session registry、交易式交換、移除失敗重試 |
+| 12.0.7 | 僅 private aura applied 舊 API | 一般 Aura 三 trigger 顯示 unsupported |
+
+P0 邊界：不得從 AuraData 讀取／推導 sound trigger，不得保存 registration ID，不得把 Secret 值做比較、字串化、table key 或 JSON。`RemoveAuraSound` 只證明取消後續註冊，不能推論已播放音效會停止。
+
+固定證據：
+
+- [12.1.0.69273 UnitAura API](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua)
+- [12.1.0.69273 Trigger enum](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua)
+- [12.1.0.69273 UnitAuraSoundInfo](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua)

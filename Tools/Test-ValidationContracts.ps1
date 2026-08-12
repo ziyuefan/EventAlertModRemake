@@ -137,7 +137,7 @@ function Invoke-ImporterContract {
     param(
         [string]$ImporterPath,
         [string]$DataPath,
-        [ValidateSet("Flow", "Live")]
+        [ValidateSet("Flow", "Live", "SVG")]
         [string]$ReportType,
         [string]$OutputDirectory,
         [int]$ExpectedExitCode,
@@ -205,20 +205,24 @@ $paths = @{
     FlowLua = Join-Path $root "Debug\FlowTestRunner.lua"
     ConstantsLua = Join-Path $root "Core\Constants.lua"
     OptionsLua = Join-Path $root "UI\Options.lua"
+    ThemeLua = Join-Path $root "UI\Theme.lua"
+    SavedVariablesLua = Join-Path $root "Core\SavedVariables.lua"
     RendererLua = Join-Path $root "UI\Renderer.lua"
     NativeRendererLua = Join-Path $root "UI\NativeAuraRenderer.lua"
     UnitPowerProbeLua = Join-Path $root "Debug\UnitPowerCapabilityProbe.lua"
     SVGProbeLua = Join-Path $root "Debug\SVGCapabilityProbe.lua"
     SVGSchema = Join-Path $root "Schemas\EAM_SVGCapabilityReport.schema.json"
     SVGFixture = Join-Path $root "Tests\Fixtures\EAM_SVGCapabilityReport.incomplete.json"
+    SVGObservedFixture = Join-Path $root "Tests\Fixtures\EAM_SVGCapabilityReport.ptr69189-observed.json"
     SVGAsset = Join-Path $root "Media\SVG\eam-svg-probe.svg"
+    MinimapSVGAsset = Join-Path $root "Media\SVG\eam-minimap.svg"
     AuraContainerLua = Join-Path $root "Services\AuraContainerService.lua"
     AuraCompilerLua = Join-Path $root "Managers\AuraRuleCompiler.lua"
     Importer = Join-Path $root "Tools\Import-EAMFlowReport.ps1"
     Toc = Join-Path $root "EventAlertMod.toc"
 }
 
-foreach ($jsonPath in @($paths.PlacementData, $paths.MatrixData, $paths.ContinuityData, $paths.LiveFixture, $paths.PlacementSchema, $paths.MatrixSchema, $paths.ContinuitySchema, $paths.LiveSchema, $paths.FlowSchema, $paths.SVGSchema, $paths.SVGFixture)) {
+foreach ($jsonPath in @($paths.PlacementData, $paths.MatrixData, $paths.ContinuityData, $paths.LiveFixture, $paths.PlacementSchema, $paths.MatrixSchema, $paths.ContinuitySchema, $paths.LiveSchema, $paths.FlowSchema, $paths.SVGSchema, $paths.SVGFixture, $paths.SVGObservedFixture)) {
     try {
         [void](Read-Json $jsonPath)
         Assert-Contract $true ("JSON parse: " + [System.IO.Path]::GetFileName($jsonPath))
@@ -233,6 +237,7 @@ Assert-JsonSchema $paths.MatrixData $paths.MatrixSchema "Live matrix JSON schema
 Assert-JsonSchema $paths.ContinuityData $paths.ContinuitySchema "Project continuity JSON schema"
 Assert-JsonSchema $paths.LiveFixture $paths.LiveSchema "Incomplete live fixture JSON schema"
 Assert-JsonSchema $paths.SVGFixture $paths.SVGSchema "Incomplete SVG capability fixture JSON schema"
+Assert-JsonSchema $paths.SVGObservedFixture $paths.SVGSchema "PTR 69189 observed SVG capability fixture JSON schema"
 
 if (-not $FlowReport) {
     $latestFlow = Get-ChildItem -LiteralPath (Join-Path $root "TestResults") -Filter "EAM_FlowValidation_all_*.json" |
@@ -307,7 +312,10 @@ $rendererLua = [System.IO.File]::ReadAllText($paths.RendererLua)
 $nativeRendererLua = [System.IO.File]::ReadAllText($paths.NativeRendererLua)
 $unitPowerProbeLua = [System.IO.File]::ReadAllText($paths.UnitPowerProbeLua)
 $svgProbeLua = [System.IO.File]::ReadAllText($paths.SVGProbeLua)
+$themeLua = [System.IO.File]::ReadAllText($paths.ThemeLua)
+$savedVariablesLua = [System.IO.File]::ReadAllText($paths.SavedVariablesLua)
 $svgAssetText = [System.IO.File]::ReadAllText($paths.SVGAsset)
+$minimapSvgAssetText = [System.IO.File]::ReadAllText($paths.MinimapSVGAsset)
 $auraContainerLua = [System.IO.File]::ReadAllText($paths.AuraContainerLua)
 $auraCompilerLua = [System.IO.File]::ReadAllText($paths.AuraCompilerLua)
 $borderStylesLua = [System.IO.File]::ReadAllText($paths.BorderStylesLua)
@@ -350,6 +358,20 @@ Assert-Contract (
     -not $svgAssetText.Contains('href=') -and
     -not $svgAssetText.Contains('data:')
 ) "SVG probe asset is static and self-contained"
+Assert-Contract (
+    $optionsLua.Contains('function Options.applyMinimapTexture(texture)') -and
+    $optionsLua.Contains('pcall(texture.SetSVG, texture, MINIMAP_SVG_ASSET)') -and
+    $optionsLua.Contains('MINIMAP_FALLBACK_TEXTURE = "Interface\\Icons\\INV_Misc_QuestionMark"') -and
+    -not $optionsLua.Contains('back:SetTexture(568154)')
+) "Minimap SVG has explicit fallback and no sound FileDataID reuse"
+Assert-Contract (
+    $minimapSvgAssetText.Contains('<svg ') -and
+    $minimapSvgAssetText.Contains('<circle ') -and
+    $minimapSvgAssetText.Contains('<path ') -and
+    -not $minimapSvgAssetText.Contains('<script') -and
+    -not $minimapSvgAssetText.Contains('href=') -and
+    -not $minimapSvgAssetText.Contains('data:')
+) "Minimap SVG asset is static and self-contained"
 Assert-Contract (
     $flowPanelLua.Contains('EAM_FLOW_BUTTON_SVG') -and
     $flowPanelLua.Contains('EAM.Debug.SVGCapabilityProbe')
@@ -443,9 +465,11 @@ Assert-Contract (
 ) "Importer accepts and revalidates SVG SavedVariables reports"
 Assert-Contract (
     $importerText.Contains('@("svg.vector_graphics.set_svg", "svg.texture.set_svg")') -and
-    $importerText.Contains('$case.clearReload -ne "pass"') -and
+    $importerText.Contains('$vectorFileIDClasses = @("positive-number", "zero", "negative-number")') -and
+    $importerText.Contains('$textureHasStates = @("unavailable", "true")') -and
+    $importerText.Contains('$report.capabilities.textureClearSVG -ne $true') -and
     $importerText.Contains('$report.capabilities.interfaceRequired -ne $interfaceRequired')
-) "Importer recomputes SVG A/B lifecycle and interface requirement"
+) "Importer recomputes asymmetric SVG lifecycle and interface requirement"
 
 $matrix = Read-Json $paths.MatrixData
 $sessionLua = [System.IO.File]::ReadAllText($paths.SessionLua)
@@ -542,6 +566,40 @@ $temporaryRoot = Join-Path (
 ) ("EAM_ValidationContracts_" + [guid]::NewGuid().ToString("N"))
 [void][System.IO.Directory]::CreateDirectory($temporaryRoot)
 $temporaryImportOutput = Join-Path $temporaryRoot "Imported"
+
+Invoke-ImporterContract -ImporterPath $paths.Importer -DataPath $paths.SVGObservedFixture -ReportType SVG -OutputDirectory $temporaryImportOutput -ExpectedExitCode 1 -Label "Importer preserves PTR 69189 Alpha 3 SVG observation as incomplete evidence"
+
+$syntheticSVGPass = Copy-JsonValue (Read-Json $paths.SVGObservedFixture)
+$syntheticSVGPass.status = "pass"
+$syntheticSVGPass.boundaryWarnings = @()
+$syntheticSVGPass.cases[1].clearReload = "pass"
+$syntheticSVGPassPath = Join-Path $temporaryRoot "svg-pass-asymmetric.json"
+Write-JsonFixture $syntheticSVGPassPath $syntheticSVGPass
+Assert-JsonSchema $syntheticSVGPassPath $paths.SVGSchema "Synthetic asymmetric SVG pass JSON schema"
+Invoke-ImporterContract -ImporterPath $paths.Importer -DataPath $syntheticSVGPassPath -ReportType SVG -OutputDirectory $temporaryImportOutput -ExpectedExitCode 0 -Label "Importer accepts Vector zero and Texture unavailable introspection"
+
+$svgVectorMissingHas = Copy-JsonValue $syntheticSVGPass
+$svgVectorMissingHas.capabilities.vectorHasSVG = $false
+$svgVectorMissingHas.cases[0].hasSVG = "unavailable"
+$svgVectorMissingHasPath = Join-Path $temporaryRoot "svg-pass-vector-missing-has.json"
+Write-JsonFixture $svgVectorMissingHasPath $svgVectorMissingHas
+Assert-JsonSchemaRejected $svgVectorMissingHasPath $paths.SVGSchema "Schema rejects SVG pass without Vector HasSVG"
+Invoke-ImporterContract -ImporterPath $paths.Importer -DataPath $svgVectorMissingHasPath -ReportType SVG -OutputDirectory $temporaryImportOutput -ExpectedExitCode 1 -Label "Importer rejects SVG pass without Vector HasSVG"
+
+$svgTextureLifecycleMissing = Copy-JsonValue $syntheticSVGPass
+$svgTextureLifecycleMissing.cases[1].clearReload = "unavailable"
+$svgTextureLifecycleMissingPath = Join-Path $temporaryRoot "svg-pass-texture-lifecycle-missing.json"
+Write-JsonFixture $svgTextureLifecycleMissingPath $svgTextureLifecycleMissing
+Assert-JsonSchemaRejected $svgTextureLifecycleMissingPath $paths.SVGSchema "Schema rejects SVG pass without Texture lifecycle"
+Invoke-ImporterContract -ImporterPath $paths.Importer -DataPath $svgTextureLifecycleMissingPath -ReportType SVG -OutputDirectory $temporaryImportOutput -ExpectedExitCode 1 -Label "Importer rejects SVG pass without Texture lifecycle"
+
+$svgTextureInvalidState = Copy-JsonValue $syntheticSVGPass
+$svgTextureInvalidState.cases[1].hasSVG = "false"
+$svgTextureInvalidStatePath = Join-Path $temporaryRoot "svg-pass-texture-invalid-state.json"
+Write-JsonFixture $svgTextureInvalidStatePath $svgTextureInvalidState
+Assert-JsonSchemaRejected $svgTextureInvalidStatePath $paths.SVGSchema "Schema rejects SVG pass with invalid Texture introspection state"
+Invoke-ImporterContract -ImporterPath $paths.Importer -DataPath $svgTextureInvalidStatePath -ReportType SVG -OutputDirectory $temporaryImportOutput -ExpectedExitCode 1 -Label "Importer rejects SVG pass with invalid Texture introspection state"
+
 $missingDataPath = Join-Path $temporaryRoot "schema-probe-missing.json"
 $missingDataResult = Get-JsonSchemaRejectionResult `
     -DataPath $missingDataPath `
@@ -863,6 +921,8 @@ Invoke-ImporterContract `
     -ExpectedText "IMPORTED_VALIDATION_SOURCE=legacy-unverified"
 
 $featureLocaleKeys = @(
+    "EAM_OPT_LANGUAGE_PREFIX",
+    "EAM_OPT_LANGUAGE_RELOAD",
     "EAM_FLOW_BUTTON_COPY",
     "EAM_FLOW_STATUS_COPIED",
     "EAM_LIVE_COPY",
@@ -900,6 +960,16 @@ $featureLocaleKeys = @(
     "EAM_FLOW_DUAL_COUNTDOWN_RELOAD",
     "EAM_FLOW_DUAL_COUNTDOWN_ENABLED",
     "EAM_FLOW_DUAL_COUNTDOWN_DISABLED",
+    "EAM_OPT_AURA_SOUND_TITLE",
+    "EAM_OPT_AURA_SOUND_ADDED",
+    "EAM_OPT_AURA_SOUND_APPLICATIONS_INCREASED",
+    "EAM_OPT_AURA_SOUND_REMOVED",
+    "EAM_OPT_AURA_SOUND_INHERIT",
+    "EAM_OPT_AURA_SOUND_DISABLED",
+    "EAM_OPT_AURA_SOUND_TEST_ASSET_ONLY",
+    "EAM_LIVE_CASE_AURA_SOUND_ADDED",
+    "EAM_LIVE_CASE_AURA_SOUND_APPLICATIONS",
+    "EAM_LIVE_CASE_AURA_SOUND_REMOVED",
     "EAM_FLOW_BUTTON_UNIT_POWER",
     "EAM_FLOW_BUTTON_UNIT_POWER_STOP",
     "EAM_UNIT_POWER_PROBE_UNAVAILABLE",
@@ -926,7 +996,12 @@ $featureLocaleKeys = @(
     "EAM_SVG_PROBE_PASS",
     "EAM_SVG_PROBE_FAIL",
     "EAM_SVG_PROBE_BLOCKED",
-    "EAM_SVG_PROBE_FINISH"
+    "EAM_SVG_PROBE_FINISH",
+    "EAM_OPT_THEME_PREFIX",
+    "EAM_OPT_THEME_CHANGED",
+    "EAM_OPT_THEME_COMBAT",
+    "EAM_OPT_POWER_FRENZY",
+    "EAM_OPT_POWER_PET_ENERGY"
 )
 
 foreach ($locale in "enUS", "zhTW", "zhCN", "koKR", "ruRU") {
@@ -945,7 +1020,171 @@ foreach ($locale in "enUS", "zhTW", "zhCN", "koKR", "ruRU") {
     Assert-Contract ($featureViolations.Count -eq 0) ("Locale feature keys exactly once: $locale") ($featureViolations -join ", ")
 }
 
+$localeNames = @("enUS", "zhTW", "zhCN", "koKR", "ruRU")
+$localeKeySets = @{}
+foreach ($localeName in $localeNames) {
+    $localePath = Join-Path $root ("Locale\" + $localeName + ".lua")
+    $localeContent = [System.IO.File]::ReadAllText($localePath)
+    $localeKeySets[$localeName] = @(
+        [regex]::Matches($localeContent, "(?m)^\s*L\.([A-Za-z_][A-Za-z0-9_]*)\s*=") |
+            ForEach-Object { $_.Groups[1].Value } |
+            Sort-Object -Unique
+    )
+}
+$missingRussianKeys = @($localeKeySets["enUS"] | Where-Object { $_ -notin $localeKeySets["ruRU"] })
+Assert-Contract ($missingRussianKeys.Count -eq 0) "Russian locale mirrors enUS L keys" ($missingRussianKeys -join ", ")
+
+$commonLocale = [System.IO.File]::ReadAllText((Join-Path $root "Locale\Common.lua"))
+$autoDetectLabelCount = [regex]::Matches($commonLocale, 'label\s*=\s*"Auto Detect"').Count
+Assert-Contract ($autoDetectLabelCount -eq 1) "Auto Detect label is a single fixed English option" ("count=$autoDetectLabelCount")
+$languageValues = @("auto", "enUS", "zhTW", "zhCN", "koKR", "ruRU")
+$missingLanguageValues = @($languageValues | Where-Object { -not $commonLocale.Contains(('value = "' + $_ + '"')) })
+Assert-Contract ($missingLanguageValues.Count -eq 0) "Locale catalog contains all language selections" ($missingLanguageValues -join ", ")
+Assert-Contract ($commonLocale.Contains('requested = "auto"')) "Auto Detect is the default locale selection"
+Assert-Contract (
+    $themeLua.Contains('value = "eam"') -and
+    $themeLua.Contains('value = "ff7"') -and
+    $themeLua.Contains('value = "winxp"') -and
+    $themeLua.Contains('value = "borland"') -and
+    $themeLua.Contains('value = "doscrt"') -and
+    $themeLua.Contains('value = "aqua"') -and
+    $themeLua.Contains('label = "FF7"') -and
+    $themeLua.Contains('label = "Windows XP"') -and
+    $themeLua.Contains('label = "Borland C++ IDE"') -and
+    $themeLua.Contains('label = "DOS CRT"') -and
+    $themeLua.Contains('label = "macOS Aqua"')
+) "Theme catalog contains EAM, FF7, Windows XP, Borland, DOS CRT, and macOS Aqua"
+Assert-Contract (
+    $savedVariablesLua.Contains('theme = "eam"') -and
+    $savedVariablesLua.Contains('function SavedVariables.updateTheme') -and
+    $savedVariablesLua.Contains('function SavedVariables.updateAlertPriority') -and
+    $savedVariablesLua.Contains('invalidThemeDefaulted')
+) "SavedVariables owns theme default, normalization, theme updates, and Aura priority updates"
+
+
+$savedVariablesSource = [System.IO.File]::ReadAllText((Join-Path $root "Core\SavedVariables.lua"))
+Assert-Contract ($savedVariablesSource.Contains('language = "auto"')) "SavedVariables language default is auto"
+Assert-Contract ($savedVariablesSource.Contains("function SavedVariables.updateLanguage")) "SavedVariables owns language updates"
+
+$optionsSource = [System.IO.File]::ReadAllText((Join-Path $root "UI\Options.lua"))
+Assert-Contract ($optionsSource.Contains("EAM.Locale.LanguageOptions")) "Options exposes language dropdown choices"
+Assert-Contract ($optionsSource.Contains("saved.updateLanguage(option.value)")) "Language dropdown writes through SavedVariables"
+
+$mainSource = [System.IO.File]::ReadAllText((Join-Path $root "Core\Main.lua"))
+$flowRunnerSource = [System.IO.File]::ReadAllText((Join-Path $root "Debug\FlowTestRunner.lua"))
+Assert-Contract (
+    $commonLocale.Contains("EAM.L = EAM.L or {}") -and
+    $commonLocale.Contains("function Locale.bindText") -and
+    $commonLocale.Contains("function Locale.refreshBindings") -and
+    $commonLocale.Contains("clearValues(EAM.L)") -and
+    $commonLocale.Contains('register("EAM_LANGUAGE_CHANGED"')
+) "Locale preserves EAM.L identity and refreshes registered text bindings"
+Assert-Contract (
+    $savedVariablesSource.Contains('router.fire("EAM_LANGUAGE_CHANGED"') -and
+    $mainSource.Contains("EAM.Locale.setSelection, EAM.db.config.language") -and
+    $optionsSource.Contains("Locale.registerRefresh(Options.refreshLocalizedText)")
+) "SavedVariables event, post-database selection, and Options refresh are wired"
+
+$dynamicLocaleSurfaceFiles = @(
+    "UI\Options.lua",
+    "UI\AboutPanel.lua",
+    "UI\ModulePanel.lua",
+    "UI\TooltipMonitorMenu.lua",
+    "Debug\PromptExport.lua",
+    "Debug\FlowTestPanel.lua",
+    "Debug\LiveTestPanel.lua",
+    "Debug\UnitPowerCapabilityProbe.lua",
+    "Debug\SVGCapabilityProbe.lua"
+)
+$missingDynamicLocaleBindings = @()
+foreach ($surfaceFile in $dynamicLocaleSurfaceFiles) {
+    $surfaceSource = [System.IO.File]::ReadAllText((Join-Path $root $surfaceFile))
+    if (-not ($surfaceSource.Contains("Locale.bindText") -or $surfaceSource.Contains("Locale.registerRefresh"))) {
+        $missingDynamicLocaleBindings += $surfaceFile
+    }
+}
+Assert-Contract ($missingDynamicLocaleBindings.Count -eq 0) "EAM UI surfaces register dynamic locale bindings" ($missingDynamicLocaleBindings -join ", ")
+Assert-Contract ($flowRunnerSource.Contains('id = "locale.dynamic_switch"')) "Flow covers immediate locale switch and stable EAM.L identity"
+Assert-Contract (
+    $optionsSource.Contains('themeDropdown') -and
+    $optionsSource.Contains('saved.updateTheme(option.value)') -and
+    $optionsSource.Contains('Theme.setSelection(option.value)') -and
+    $optionsSource.Contains('Theme.flushPending()')
+) "Options exposes theme selector and combat-deferred apply"
+
+$compilerSource = [System.IO.File]::ReadAllText((Join-Path $root "Managers\AuraRuleCompiler.lua"))
+Assert-Contract (
+    $compilerSource.Contains('priority = normalizePriority(alert.priority)') -and
+    $compilerSource.Contains('return left.priority > right.priority') -and
+    $compilerSource.Contains('tostring(rule.priority or 10)')
+) "Aura compiler honors saved priority and fingerprints it"
+
+$containerSource = [System.IO.File]::ReadAllText((Join-Path $root "Services\AuraContainerService.lua"))
+Assert-Contract ($containerSource.Contains("SetFlowLayoutPadding") -and $containerSource.Contains("slotPadding")) "Aura container separates fixed slots from flow groups"
+
+$auraSoundSource = [System.IO.File]::ReadAllText((Join-Path $root "Services\AuraSoundService.lua"))
+Assert-Contract (
+    $savedVariablesSource.Contains("function SavedVariables.updateAuraSound") -and
+    $savedVariablesSource.Contains("normalizeAuraSoundEntry") -and
+    $savedVariablesSource.Contains('EAM.Modules.EventRouter.fire("EAM_AURA_SOUND_CHANGED"')
+) "SavedVariables owns AuraSound normalization, no-op mutation, and change event"
+Assert-Contract (
+    $optionsSource.Contains("function Options.buildAuraSoundConfig") -and
+    $optionsSource.Contains("EAM_OPT_AURA_SOUND_APPLICATIONS_INCREASED") -and
+    $optionsSource.Contains("detailsChanged and not soundUpdated") -and
+    $optionsSource.Contains("isAuraSoundAvailable()")
+) "Aura detail UI exposes three triggers with capability gate and single commit"
+Assert-Contract (
+    $compilerSource.Contains("local function buildContainerFingerprint") -and
+    $compilerSource.Contains("local function buildSoundFingerprint") -and
+    $compilerSource.Contains("config.showSound ~= true") -and
+    $compilerSource.Contains("nativeAuraSoundFilterUnsupported")
+) "Aura compiler separates visual and sound fingerprints under master gate"
+Assert-Contract (
+    $auraSoundSource.Contains("local candidate = {}") -and
+    $auraSoundSource.Contains("retainRetiredEntry") -and
+    $auraSoundSource.Contains("not capability.hasAuraSoundEnum") -and
+    $auraSoundSource.Contains('return true, removed and "auraSoundUnavailable"')
+) "AuraSound registry is transactional and optional to Native Aura visuals"
+Assert-Contract (
+    $flowRunnerSource.Contains('id = "aura121.sound.saved_variables_roundtrip"') -and
+    $flowRunnerSource.Contains('id = "aura121.sound.compiler_fingerprints"') -and
+    $flowRunnerSource.Contains('id = "aura121.sound.container_unchanged"') -and
+    $flowRunnerSource.Contains('id = "aura121.sound.failure_rollback"') -and
+    $flowRunnerSource.Contains("mock.trace.addAuraSoundCalls == 0") -and
+    $flowRunnerSource.Contains("mock.trace.removeAuraSoundCalls == 0")
+) "Flow covers AuraSound lifecycle, rollback, zero rebuild, and 12.0.7 zero calls"
+
+$classPowerSource = [System.IO.File]::ReadAllText((Join-Path $root "Services\ClassPowerService.lua"))
+Assert-Contract (
+    $classPowerSource.Contains('DRUID = { POWER_ENERGY, POWER_COMBO, POWER_LUNAR }')
+) "Druid priority includes Energy fallback"
+
+$buttonThemeFiles = @(
+    "UI\Options.lua",
+    "UI\AboutPanel.lua",
+    "UI\TooltipMonitorMenu.lua",
+    "Debug\FlowTestPanel.lua",
+    "Debug\LiveTestPanel.lua",
+    "Debug\SVGCapabilityProbe.lua",
+    "Debug\UnitPowerCapabilityProbe.lua",
+    "Debug\PromptExport.lua"
+)
+$buttonThemeViolations = @()
+foreach ($buttonThemeFile in $buttonThemeFiles) {
+    $buttonThemeSource = [System.IO.File]::ReadAllText((Join-Path $root $buttonThemeFile))
+    if (-not $buttonThemeSource.Contains("Theme.registerButton")) {
+        $buttonThemeViolations += $buttonThemeFile
+    }
+}
+Assert-Contract (
+    $themeLua.Contains("function Theme.applyButton") -and
+    $themeLua.Contains("buttonHighlight") -and
+    $themeLua.Contains("buttonHighlightBlend") -and
+    $buttonThemeViolations.Count -eq 0
+) "EAM buttons use theme palette"
 $toc = [System.IO.File]::ReadAllText($paths.Toc)
+$themeIndex = $toc.IndexOf("UI\Theme.lua")
 $textPlacementIndex = $toc.IndexOf("UI\TextPlacement.lua")
 $borderStylesIndex = $toc.IndexOf("UI\AlertBorderStyles.lua")
 $iconPoolIndex = $toc.IndexOf("UI\IconPool.lua")
@@ -957,6 +1196,7 @@ $validationEnvironmentIndex = $toc.IndexOf("Debug\ValidationEnvironment.lua")
 $svgProbeIndex = $toc.IndexOf("Debug\SVGCapabilityProbe.lua")
 $liveSessionIndex = $toc.IndexOf("Debug\LiveTestSession.lua")
 $livePanelIndex = $toc.IndexOf("Debug\LiveTestPanel.lua")
+Assert-Contract ($themeIndex -ge 0 -and $themeIndex -lt $textPlacementIndex) "TOC theme load order"
 Assert-Contract ($textPlacementIndex -ge 0 -and $textPlacementIndex -lt $nativeRendererIndex -and $textPlacementIndex -lt $rendererIndex) "TOC text placement load order"
 Assert-Contract ($validationEnvironmentIndex -ge 0 -and $validationEnvironmentIndex -lt $liveSessionIndex -and $liveSessionIndex -lt $livePanelIndex) "TOC live validation load order"
 Assert-Contract ($borderStylesIndex -gt $textPlacementIndex -and $borderStylesIndex -lt $iconPoolIndex -and $borderStylesIndex -lt $nativeRendererIndex) "TOC border style load order"
@@ -965,6 +1205,10 @@ Assert-Contract (
     $harnessLua.IndexOf('loadModule("UI/AlertBorderStyles.lua")') -lt $harnessLua.IndexOf('loadModule("UI/IconPool.lua")') -and
     $harnessLua.IndexOf('loadModule("UI/AboutPanel.lua")') -lt $harnessLua.IndexOf('loadModule("UI/Options.lua")')
 ) "Flow harness UI module load order"
+Assert-Contract (
+    $harnessLua.IndexOf('loadModule("UI/Theme.lua")') -lt $harnessLua.IndexOf('loadModule("UI/TooltipMonitorMenu.lua")') -and
+    $harnessLua.IndexOf('loadModule("UI/Theme.lua")') -lt $harnessLua.IndexOf('loadModule("UI/Options.lua")')
+) "Flow harness theme module load order"
 Assert-Contract (
     $svgProbeIndex -ge 0 -and
     $toc.Contains("EAM_SVG_CAPABILITY_REPORT_JSON") -and
