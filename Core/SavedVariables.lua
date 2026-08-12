@@ -8,13 +8,13 @@ Module: Core/SavedVariables
 - SavedVariables 只保存設定，不保存 runtime facts。
 
 責任:
-- 初始化 EAM_DB、保存 defaults、執行舊 EA_* migration、提供 alert add/remove mutation API。
+- 初始化 EAM_DB、保存 defaults、執行舊 EA_* migration、提供語系與 alert add/remove mutation API。
 
 資料所有權:
 - 擁有 EAM_DB schema 與 persistent config 的唯一寫入入口。
 
 可變狀態:
-- 只在載入、migration、使用者設定變更時寫入。
+- 只在載入、migration、語系或其他使用者設定變更時寫入；語系變更不在此模組觸發 ReloadUI。
 - 不得 freeze EAM_DB 或舊 EA_* tables。
 
 邊界:
@@ -34,6 +34,7 @@ local _, EAM = ...
 local mathFloor = math.floor
 
 local SavedVariables = {
+    activeClassToken = nil,
     migrationReport = {
         imported = 0,
         skipped = 0,
@@ -45,12 +46,8 @@ local defaults = {
     schemaVersion = EAM.Constants.SCHEMA_VERSION,
     revision = 0,
     debug = false,
-    alerts = {
-        playerAuras = {},
-        targetAuras = {},
-        spellCooldowns = {},
-        itemCooldowns = {},
-        groundEffects = {}, -- 新增地面效果配置
+    profiles = {
+        classes = {},
     },
     layout = {
         iconSize = 40,
@@ -66,7 +63,19 @@ local defaults = {
         }
     },
     config = {
+        language = "auto",
+        theme = "eam",
         auraBackend = "AUTO",
+        moduleToggles = {
+            playerAura = true,
+            targetAura = true,
+            spellCooldown = true,
+            itemCooldown = true,
+            groundEffect = true,
+            classPower = true,
+            totem = true,
+            tooltipMonitor = true,
+        },
         showFrame = true,
         showSpellName = true,
         showTimeVal = true,
@@ -158,6 +167,97 @@ local function copySerializable(value, seen)
     end
     seen[value] = nil
     return copy
+end
+
+local VALID_CLASS_TOKENS = {
+    WARRIOR = true,
+    PALADIN = true,
+    HUNTER = true,
+    ROGUE = true,
+    PRIEST = true,
+    DEATHKNIGHT = true,
+    SHAMAN = true,
+    MAGE = true,
+    WARLOCK = true,
+    MONK = true,
+    DRUID = true,
+    DEMONHUNTER = true,
+    EVOKER = true,
+}
+
+local function createAlertLists()
+    return {
+        playerAuras = {},
+        targetAuras = {},
+        spellCooldowns = {},
+        itemCooldowns = {},
+        groundEffects = {},
+    }
+end
+
+local function isValidClassToken(value)
+    return type(value) == "string" and VALID_CLASS_TOKENS[value] == true
+end
+
+local function getPlayerClassToken()
+    local unitClass = EAM.API and EAM.API.UnitClass or UnitClass
+    if type(unitClass) ~= "function" then
+        return nil
+    end
+    local ok, _, classToken = pcall(unitClass, "player")
+    if ok and isValidClassToken(classToken) then
+        return classToken
+    end
+    return nil
+end
+
+local function appendProfileWarning(db, warning)
+    db.migrationWarnings = type(db.migrationWarnings) == "table" and db.migrationWarnings or {}
+    db.migrationWarnings[#db.migrationWarnings + 1] = warning
+end
+
+local function ensureClassProfile(db, classToken)
+    if type(db) ~= "table" or not isValidClassToken(classToken) then
+        return nil
+    end
+    db.profiles = type(db.profiles) == "table" and db.profiles or {}
+    db.profiles.classes = type(db.profiles.classes) == "table" and db.profiles.classes or {}
+    local profile = db.profiles.classes[classToken]
+    if type(profile) ~= "table" then
+        profile = {
+            profileSchema = 1,
+            defaultsSeeded = false,
+            legacyImportVersion = 0,
+            alerts = createAlertLists(),
+        }
+        db.profiles.classes[classToken] = profile
+    end
+    profile.profileSchema = 1
+    profile.alerts = type(profile.alerts) == "table" and profile.alerts or createAlertLists()
+    local alerts = profile.alerts
+    alerts.playerAuras = type(alerts.playerAuras) == "table" and alerts.playerAuras or {}
+    alerts.targetAuras = type(alerts.targetAuras) == "table" and alerts.targetAuras or {}
+    alerts.spellCooldowns = type(alerts.spellCooldowns) == "table" and alerts.spellCooldowns or {}
+    alerts.itemCooldowns = type(alerts.itemCooldowns) == "table" and alerts.itemCooldowns or {}
+    alerts.groundEffects = type(alerts.groundEffects) == "table" and alerts.groundEffects or {}
+    return profile
+end
+
+local function getProfileAlerts(db, classToken, create)
+    if type(db) ~= "table" then
+        return nil
+    end
+    classToken = classToken or SavedVariables.activeClassToken
+    if not isValidClassToken(classToken) then
+        return nil
+    end
+    local profiles = db.profiles
+    local classes = type(profiles) == "table" and profiles.classes or nil
+    local profile = type(classes) == "table" and classes[classToken] or nil
+    if type(profile) ~= "table" and create then
+        profile = ensureClassProfile(db, classToken)
+    end
+    return type(profile) == "table" and profile.alerts or nil, profile
 end
 
 local function serializableValuesEqual(left, right, seen)
@@ -311,6 +411,64 @@ local function migrateLegacyPlacement(isInside, position, fallback)
     return fallback
 end
 
+local function normalizeLanguageSelection(value)
+    local locale = EAM.Locale
+    if locale and type(locale.normalizeSelection) == "function" then
+        return locale.normalizeSelection(value)
+    end
+    if value == "auto" or value == "enUS" or value == "zhTW" or value == "zhCN" or value == "koKR" or value == "ruRU" then
+        return value
+    end
+    return "auto"
+end
+
+local function normalizeLanguageConfig(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+    local normalized = normalizeLanguageSelection(config.language)
+    if config.language ~= nil and config.language ~= normalized then
+        appendMigrationWarning(db, "invalidLanguageDefaulted")
+    end
+    config.language = normalized
+end
+
+local function normalizeThemeSelection(value)
+    if value == "eam" or value == "ff7" or value == "winxp" or value == "borland" or value == "doscrt" or value == "aqua" then
+        return value
+    end
+    return "eam"
+end
+
+local function normalizeThemeConfig(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+    local normalized = normalizeThemeSelection(config.theme)
+    if config.theme ~= nil and config.theme ~= normalized then
+        appendMigrationWarning(db, "invalidThemeDefaulted")
+    end
+    config.theme = normalized
+end
+
+local function normalizeModuleToggles(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+    local toggles = type(config.moduleToggles) == "table" and config.moduleToggles or {}
+    config.moduleToggles = toggles
+    local invalidFound = false
+    for key, defaultValue in pairs(defaults.config.moduleToggles) do
+        if type(toggles[key]) ~= "boolean" then
+            if toggles[key] ~= nil then
+                invalidFound = true
+            end
+            toggles[key] = defaultValue
+        end
+    end
+    if invalidFound then
+        appendMigrationWarning(db, "invalidModuleToggleDefaulted")
+    end
+    config.enableItemCooldown = toggles.itemCooldown
+end
+
 local function normalizeTextLayout(db, preserveLegacy)
     local config = type(db.config) == "table" and db.config or {}
     db.config = config
@@ -405,9 +563,7 @@ local function extractGroundSpellID(key, alert)
     return mathFloor(value)
 end
 
-local function normalizeGroundEffects(db, appendWarnings)
-    local alerts = type(db.alerts) == "table" and db.alerts or {}
-    db.alerts = alerts
+local function normalizeGroundEffectsForAlerts(db, alerts, appendWarnings)
     local source = type(alerts.groundEffects) == "table" and alerts.groundEffects or {}
     local normalized = {}
     local priorities = {}
@@ -438,6 +594,28 @@ local function normalizeGroundEffects(db, appendWarnings)
     end
 
     alerts.groundEffects = normalized
+end
+
+local function normalizeGroundEffects(db, appendWarnings)
+    local alerts = type(db.alerts) == "table" and db.alerts or createAlertLists()
+    db.alerts = alerts
+    normalizeGroundEffectsForAlerts(db, alerts, appendWarnings)
+end
+
+local function normalizeProfileGroundEffects(db)
+    local profiles = db and db.profiles
+    local classes = type(profiles) == "table" and profiles.classes or nil
+    if type(classes) ~= "table" then
+        return
+    end
+    for classToken, profile in pairs(classes) do
+        if isValidClassToken(classToken) and type(profile) == "table" then
+            local alerts = profile.alerts
+            if type(alerts) == "table" then
+                normalizeGroundEffectsForAlerts(db, alerts, false)
+            end
+        end
+    end
 end
 
 local function migrateV3ToV4(db)
@@ -471,10 +649,73 @@ local function migrateV3ToV4(db)
     db.schemaVersion = 4
 end
 
+local ALERT_LIST_NAMES = {
+    "playerAuras",
+    "targetAuras",
+    "spellCooldowns",
+    "itemCooldowns",
+    "groundEffects",
+}
+
+local function alertListsHaveEntries(alerts)
+    if type(alerts) ~= "table" then
+        return false
+    end
+    for index = 1, #ALERT_LIST_NAMES do
+        local list = alerts[ALERT_LIST_NAMES[index]]
+        if type(list) == "table" and next(list) ~= nil then
+            return true
+        end
+    end
+    return false
+end
+
+local function migrateV4ToV5(db)
+    db.migrationBackups = type(db.migrationBackups) == "table" and db.migrationBackups or {}
+    local sourceAlerts = type(db.alerts) == "table" and db.alerts or createAlertLists()
+    if db.migrationBackups.globalAlertsV4 == nil then
+        db.migrationBackups.globalAlertsV4 = copySerializable(sourceAlerts) or createAlertLists()
+    end
+
+    db.profiles = type(db.profiles) == "table" and db.profiles or {}
+    db.profiles.classes = type(db.profiles.classes) == "table" and db.profiles.classes or {}
+    local classToken = getPlayerClassToken()
+    if classToken then
+        local profile = ensureClassProfile(db, classToken)
+        if profile and not alertListsHaveEntries(profile.alerts) then
+            profile.alerts = copySerializable(sourceAlerts) or createAlertLists()
+            ensureClassProfile(db, classToken)
+            profile.defaultsSeeded = alertListsHaveEntries(sourceAlerts)
+            profile.legacyImportVersion = 0
+            appendProfileWarning(db, "globalAlertsV4AssignedToActiveClass:" .. classToken)
+        end
+    else
+        db.profiles.unassignedLegacy = copySerializable(sourceAlerts) or createAlertLists()
+        appendProfileWarning(db, "globalAlertsV4AwaitingClassAssignment")
+    end
+
+    db.config = type(db.config) == "table" and db.config or {}
+    local moduleToggles = type(db.config.moduleToggles) == "table" and db.config.moduleToggles or {}
+    db.config.moduleToggles = moduleToggles
+    for key, defaultValue in pairs(defaults.config.moduleToggles) do
+        if type(moduleToggles[key]) ~= "boolean" then
+            moduleToggles[key] = defaultValue
+        end
+    end
+    if type(db.config.enableItemCooldown) == "boolean" then
+        moduleToggles.itemCooldown = db.config.enableItemCooldown
+    end
+    db.config.enableItemCooldown = moduleToggles.itemCooldown
+
+    db.alerts = nil
+    db.schemaVersion = 5
+end
+
 local MIGRATIONS = {
     [1] = migrateV1ToV2,
     [2] = migrateV2ToV3,
     [3] = migrateV3ToV4,
+    [4] = migrateV4ToV5,
 }
 
 local function runMigrations(db)
@@ -503,6 +744,26 @@ local function runMigrations(db)
     return true
 end
 
+local function activateClassProfile(db)
+    local classToken = getPlayerClassToken()
+    SavedVariables.activeClassToken = classToken
+    if not classToken then
+        return nil, nil, "classUnavailable"
+    end
+
+    local profile = ensureClassProfile(db, classToken)
+    local profiles = db.profiles
+    local unassigned = type(profiles) == "table" and profiles.unassignedLegacy or nil
+    if type(unassigned) == "table" and profile and not alertListsHaveEntries(profile.alerts) then
+        profile.alerts = copySerializable(unassigned) or createAlertLists()
+        ensureClassProfile(db, classToken)
+        profile.defaultsSeeded = alertListsHaveEntries(unassigned)
+        profiles.unassignedLegacy = nil
+        appendProfileWarning(db, "unassignedLegacyAssignedToActiveClass:" .. classToken)
+    end
+    return profile, classToken, "active"
+end
+
 SavedVariables.defaults = defaults
 
 local function ensureTable(parent, key)
@@ -517,7 +778,164 @@ local function normalizePositiveInteger(value)
     if not numberValue or numberValue <= 0 then
         return nil
     end
-    return mathFloor(numberValue)
+    numberValue = mathFloor(numberValue)
+    return numberValue > 0 and numberValue or nil
+end
+
+local AURA_SOUND_TRIGGER_KEYS = {
+    "added",
+    "applicationsIncreased",
+    "removed",
+}
+
+local function normalizeAuraSoundEntry(value)
+    if type(value) ~= "table" then
+        return nil
+    end
+
+    local soundFileID = normalizePositiveInteger(value.soundFileID)
+    local soundFileName = type(value.soundFileName) == "string" and value.soundFileName or nil
+    if soundFileName and not soundFileName:find("%S") then
+        soundFileName = nil
+    end
+    if not soundFileID and not soundFileName then
+        return nil
+    end
+
+    local normalized = {}
+    if soundFileID then
+        normalized.soundFileID = soundFileID
+    else
+        normalized.soundFileName = soundFileName
+    end
+    if type(value.outputChannel) == "string" and value.outputChannel:find("%S") then
+        normalized.outputChannel = value.outputChannel
+    end
+    return normalized
+end
+
+local function normalizeAuraSound(value)
+    if type(value) ~= "table" then
+        return nil
+    end
+
+    local normalized = {}
+    local count = 0
+    for index = 1, #AURA_SOUND_TRIGGER_KEYS do
+        local key = AURA_SOUND_TRIGGER_KEYS[index]
+        local entry = normalizeAuraSoundEntry(value[key])
+        if entry then
+            normalized[key] = entry
+            count = count + 1
+        end
+    end
+    return count > 0 and normalized or nil
+end
+
+local function normalizeAlertPriority(value)
+    local numberValue = tonumber(value)
+    if not numberValue then
+        return 10
+    end
+    numberValue = mathFloor(numberValue)
+    if numberValue < 1 then
+        return 1
+    end
+    if numberValue > 20 then
+        return 20
+    end
+    return numberValue
+end
+
+local function normalizeAuraPriorityList(list)
+    if type(list) ~= "table" then
+        return false
+    end
+    local changed = false
+    for _, alert in pairs(list) do
+        if type(alert) == "table" then
+            local normalized = normalizeAlertPriority(alert.priority)
+            if alert.priority ~= normalized then
+                alert.priority = normalized
+                changed = true
+            end
+        end
+    end
+    return changed
+end
+
+local function normalizeAuraPriorities(db)
+    local changed = false
+    local profiles = db and db.profiles
+    local classes = type(profiles) == "table" and profiles.classes or nil
+    if type(classes) == "table" then
+        for classToken, profile in pairs(classes) do
+            if isValidClassToken(classToken) and type(profile) == "table" then
+                local alerts = profile.alerts
+                if type(alerts) == "table" then
+                    if normalizeAuraPriorityList(alerts.playerAuras) then
+                        changed = true
+                    end
+                    if normalizeAuraPriorityList(alerts.targetAuras) then
+                        changed = true
+                    end
+                end
+            end
+        end
+    elseif type(db and db.alerts) == "table" then
+        changed = normalizeAuraPriorityList(db.alerts.playerAuras)
+        if normalizeAuraPriorityList(db.alerts.targetAuras) then
+            changed = true
+        end
+    end
+    return changed
+end
+
+local function normalizeAuraSoundList(list)
+    if type(list) ~= "table" then
+        return false
+    end
+    local changed = false
+    for _, alert in pairs(list) do
+        if type(alert) == "table" and alert.sound ~= nil then
+            local normalized = normalizeAuraSound(alert.sound)
+            if not serializableValuesEqual(alert.sound, normalized) then
+                alert.sound = normalized
+                changed = true
+            end
+        end
+    end
+    return changed
+end
+
+local function normalizeProfileAuraSounds(db)
+    local changed = false
+    local profiles = db and db.profiles
+    local classes = type(profiles) == "table" and profiles.classes or nil
+    if type(classes) == "table" then
+        for classToken, profile in pairs(classes) do
+            if isValidClassToken(classToken) and type(profile) == "table" then
+                local alerts = profile.alerts
+                if type(alerts) == "table" then
+                    if normalizeAuraSoundList(alerts.playerAuras) then
+                        changed = true
+                    end
+                    if normalizeAuraSoundList(alerts.targetAuras) then
+                        changed = true
+                    end
+                end
+            end
+        end
+    elseif type(db and db.alerts) == "table" then
+        changed = normalizeAuraSoundList(db.alerts.playerAuras)
+        if normalizeAuraSoundList(db.alerts.targetAuras) then
+            changed = true
+        end
+    end
+    if changed then
+        appendMigrationWarning(db, "invalidAuraSoundNormalized")
+    end
+    return changed
 end
 
 local function buildAlertID(kind, unit, spellID, itemID)
@@ -535,12 +953,22 @@ local function buildAlertID(kind, unit, spellID, itemID)
     return kind .. ":" .. (unit or "player") .. ":" .. spellID
 end
 
-local function getAlertList(db, kind, unit)
+local function getAlertList(db, kind, unit, classToken)
     if not db then
         return nil
     end
 
-    local alerts = ensureTable(db, "alerts")
+    local alerts = nil
+    if type(db.profiles) == "table" then
+        alerts = getProfileAlerts(db, classToken, true)
+    elseif type(db.alerts) == "table" then
+        alerts = db.alerts
+    else
+        alerts = getProfileAlerts(db, classToken, true)
+    end
+    if type(alerts) ~= "table" then
+        return nil
+    end
     if kind == EAM.Constants.ALERT_KIND_AURA then
         if unit == "target" then
             return ensureTable(alerts, "targetAuras")
@@ -628,41 +1056,89 @@ end
 
 local function importLegacyTables(db)
     local report = SavedVariables.migrationReport
-    local _, playerClass = UnitClass and UnitClass("player")
-    playerClass = playerClass or "OTHER"
+    local classToken = SavedVariables.activeClassToken
+    local alerts, profile = getProfileAlerts(db, classToken, true)
+    if not alerts or not profile or (tonumber(profile.legacyImportVersion) or 0) >= 1 then
+        return 0, 0
+    end
 
-    local alerts = ensureTable(db, "alerts")
-    local playerAuras = ensureTable(alerts, "playerAuras")
-    local targetAuras = ensureTable(alerts, "targetAuras")
-    local spellCooldowns = ensureTable(alerts, "spellCooldowns")
-
+    local playerAuras = alerts.playerAuras
+    local targetAuras = alerts.targetAuras
+    local spellCooldowns = alerts.spellCooldowns
+    local totalImported = 0
+    local totalSkipped = 0
     local imported, skipped
     if type(EA_Items) == "table" then
-        imported, skipped = importSpellTable(playerAuras, EA_Items[playerClass], "aura", "player", "EA_Items")
-        report.imported = report.imported + imported
-        report.skipped = report.skipped + skipped
+        imported, skipped = importSpellTable(playerAuras, EA_Items[classToken], "aura", "player", "EA_Items")
+        totalImported = totalImported + imported
+        totalSkipped = totalSkipped + skipped
         imported, skipped = importSpellTable(playerAuras, EA_Items.OTHER, "aura", "player", "EA_Items")
-        report.imported = report.imported + imported
-        report.skipped = report.skipped + skipped
+        totalImported = totalImported + imported
+        totalSkipped = totalSkipped + skipped
     end
 
     if type(EA_AltItems) == "table" then
-        imported, skipped = importSpellTable(playerAuras, EA_AltItems[playerClass], "aura", "player", "EA_AltItems")
-        report.imported = report.imported + imported
-        report.skipped = report.skipped + skipped
+        imported, skipped = importSpellTable(playerAuras, EA_AltItems[classToken], "aura", "player", "EA_AltItems")
+        totalImported = totalImported + imported
+        totalSkipped = totalSkipped + skipped
     end
 
     if type(EA_TarItems) == "table" then
-        imported, skipped = importSpellTable(targetAuras, EA_TarItems[playerClass], "aura", "target", "EA_TarItems")
-        report.imported = report.imported + imported
-        report.skipped = report.skipped + skipped
+        imported, skipped = importSpellTable(targetAuras, EA_TarItems[classToken], "aura", "target", "EA_TarItems")
+        totalImported = totalImported + imported
+        totalSkipped = totalSkipped + skipped
     end
 
     if type(EA_ScdItems) == "table" then
-        imported, skipped = importSpellTable(spellCooldowns, EA_ScdItems[playerClass], "spellCooldown", "player", "EA_ScdItems")
-        report.imported = report.imported + imported
-        report.skipped = report.skipped + skipped
+        imported, skipped = importSpellTable(spellCooldowns, EA_ScdItems[classToken], "spellCooldown", "player", "EA_ScdItems")
+        totalImported = totalImported + imported
+        totalSkipped = totalSkipped + skipped
     end
+
+    profile.legacyImportVersion = 1
+    report.imported = report.imported + totalImported
+    report.skipped = report.skipped + totalSkipped
+    if totalImported > 0 then
+        touchRevision(db)
+    end
+    return totalImported, totalSkipped
+end
+
+local function seedActiveProfileDefaults(profile, classToken)
+    if not profile or profile.defaultsSeeded == true then
+        return false, "alreadySeeded"
+    end
+    local spellArray = EAM.Data and EAM.Data.SpellArray
+    local classData = spellArray and spellArray[classToken]
+    if type(classData) ~= "table" then
+        return false, "classDefaultsUnavailable"
+    end
+
+    profile.defaultsSeeded = true
+    local function loadDefaultList(sourceList)
+        if type(sourceList) ~= "table" then
+            return
+        end
+        for index = 1, #sourceList do
+            local spell = sourceList[index]
+            if type(spell) == "table" then
+                if spell.type == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
+                    SavedVariables.addAlert(spell.type, spell.unit, nil, spell.id, spell)
+                elseif spell.type == EAM.Constants.ALERT_KIND_AURA
+                    or spell.type == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN
+                    or spell.type == EAM.Constants.ALERT_KIND_GROUND_EFFECT
+                then
+                    SavedVariables.addAlert(spell.type, spell.unit, spell.id, nil, spell)
+                end
+            end
+        end
+    end
+
+    loadDefaultList(classData.general)
+    for specializationIndex = 1, 4 do
+        loadDefaultList(classData[specializationIndex])
+    end
+    return true, "seeded"
 end
 
 function SavedVariables.initialize()
@@ -675,12 +1151,23 @@ function SavedVariables.initialize()
         runtimeDB.migrationWarnings = { "futureSchemaPreserved" }
         runtimeDB.futureSchemaSourceVersion = sourceVersion
         EAM.db = runtimeDB
+        SavedVariables.activeClassToken = getPlayerClassToken()
+        if SavedVariables.activeClassToken then
+            ensureClassProfile(runtimeDB, SavedVariables.activeClassToken)
+        end
         return runtimeDB
     end
 
     copyMissingDefaults(EAM_DB, defaults)
+    EAM.db = EAM_DB
+    local activeProfile, activeClassToken = activateClassProfile(EAM_DB)
+    normalizeLanguageConfig(EAM_DB)
+    normalizeThemeConfig(EAM_DB)
+    normalizeModuleToggles(EAM_DB)
     normalizeTextLayout(EAM_DB, false)
-    normalizeGroundEffects(EAM_DB, false)
+    normalizeProfileGroundEffects(EAM_DB)
+    normalizeAuraPriorities(EAM_DB)
+    normalizeProfileAuraSounds(EAM_DB)
 
     -- 多框架升級相容與舊坐標遷移
     if EAM_DB.layout and type(EAM_DB.layout.frames) ~= "table" then
@@ -705,44 +1192,7 @@ function SavedVariables.initialize()
     end
 
     importLegacyTables(EAM_DB)
-
-    EAM.db = EAM_DB
-
-    -- 🛡️ 載入預設監控法術 (全新安裝或無 WTF 檔案時之防空機制)
-    if EAM_DB.alerts then
-        local count = 0
-        for _ in pairs(EAM_DB.alerts.playerAuras) do count = count + 1 break end
-        for _ in pairs(EAM_DB.alerts.targetAuras) do count = count + 1 break end
-        for _ in pairs(EAM_DB.alerts.spellCooldowns) do count = count + 1 break end
-        for _ in pairs(EAM_DB.alerts.itemCooldowns) do count = count + 1 break end
-        
-        if count == 0 then
-            local _, classToken = UnitClass("player")
-            local spellArray = EAM.Data and EAM.Data.SpellArray
-            local classData = classToken and spellArray and spellArray[classToken]
-            if classData then
-                -- 導入 general 預設法術
-                if classData.general then
-                    for _, sp in ipairs(classData.general) do
-                        if sp.type == "aura" or sp.type == "spellCooldown" or sp.type == "itemCooldown" or sp.type == "groundEffect" then
-                            SavedVariables.addAlert(sp.type, sp.unit, sp.id, nil)
-                        end
-                    end
-                end
-                -- 導入各專精預設法術
-                for specIdx = 1, 4 do
-                    local specList = classData[specIdx]
-                    if specList then
-                        for _, sp in ipairs(specList) do
-                            if sp.type == "aura" or sp.type == "spellCooldown" or sp.type == "itemCooldown" or sp.type == "groundEffect" then
-                                SavedVariables.addAlert(sp.type, sp.unit, sp.id, nil)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
+    seedActiveProfileDefaults(activeProfile, activeClassToken)
 
     return EAM_DB
 end
@@ -751,8 +1201,29 @@ function SavedVariables.buildAlertID(kind, unit, spellID, itemID)
     return buildAlertID(kind, unit, spellID, itemID)
 end
 
-function SavedVariables.getAlertList(kind, unit)
-    return getAlertList(EAM.db, kind, unit)
+function SavedVariables.getActiveClassToken()
+    return SavedVariables.activeClassToken
+end
+
+function SavedVariables.getClassProfile(classToken, db)
+    if not isValidClassToken(classToken) then
+        return nil
+    end
+    local _, profile = getProfileAlerts(db or EAM.db, classToken, false)
+    return profile
+end
+
+function SavedVariables.getActiveAlerts(db)
+    local targetDB = db or EAM.db
+    local alerts = getProfileAlerts(targetDB, SavedVariables.activeClassToken, false)
+    if type(alerts) == "table" then
+        return alerts
+    end
+    return type(targetDB) == "table" and targetDB.alerts or nil
+end
+
+function SavedVariables.getAlertList(kind, unit, classToken)
+    return getAlertList(EAM.db, kind, unit, classToken)
 end
 
 function SavedVariables.markRevisionChanged()
@@ -761,6 +1232,76 @@ function SavedVariables.markRevisionChanged()
     end
     touchRevision(EAM.db)
     return true, EAM.db.revision
+end
+
+function SavedVariables.updateLanguage(selection)
+    local db = EAM.db
+    if type(db) ~= "table" or type(db.config) ~= "table" then
+        return false, "dbUnavailable"
+    end
+
+    local normalized = normalizeLanguageSelection(selection)
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if db.config.language == normalized then
+        if router then
+            router.fire("EAM_LANGUAGE_CHANGED", normalized, db.revision, "unchanged")
+        end
+        return true, "unchanged"
+    end
+
+    db.config.language = normalized
+    touchRevision(db)
+    if router then
+        router.fire("EAM_LANGUAGE_CHANGED", normalized, db.revision, "updated")
+    end
+    return true, "updated", db.revision
+end
+
+function SavedVariables.updateTheme(selection)
+    local db = EAM.db
+    if type(db) ~= "table" or type(db.config) ~= "table" then
+        return false, "dbUnavailable"
+    end
+
+    local normalized = normalizeThemeSelection(selection)
+    if db.config.theme == normalized then
+        return true, "unchanged"
+    end
+
+    db.config.theme = normalized
+    touchRevision(db)
+    return true, "updated", db.revision
+end
+
+function SavedVariables.updateModuleToggle(key, enabled)
+    local db = EAM.db
+    local moduleDefaults = defaults.config.moduleToggles
+    if type(db) ~= "table" or type(db.config) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    if moduleDefaults[key] == nil then
+        return false, "invalidModuleKey"
+    end
+    if type(enabled) ~= "boolean" then
+        return false, "invalidModuleValue"
+    end
+
+    local toggles = type(db.config.moduleToggles) == "table" and db.config.moduleToggles or {}
+    db.config.moduleToggles = toggles
+    if toggles[key] == enabled then
+        return true, "unchanged", db.revision
+    end
+
+    toggles[key] = enabled
+    if key == EAM.Constants.MODULE_KEYS.itemCooldown then
+        db.config.enableItemCooldown = enabled
+    end
+    touchRevision(db)
+    local router = EAM.Modules.EventRouter
+    if router then
+        router.fire("EAM_MODULE_TOGGLE_CHANGED", key, enabled, db.revision)
+    end
+    return true, "updated", db.revision
 end
 
 function SavedVariables.updateTextLayout(kind, placement, fontSize)
@@ -852,8 +1393,15 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
                     changed = true
                 end
             end
+            if options.priority ~= nil then
+                local priority = normalizeAlertPriority(options.priority)
+                if existing.priority ~= priority then
+                    existing.priority = priority
+                    changed = true
+                end
+            end
             if options.sound ~= nil then
-                local sound = copySerializable(options.sound)
+                local sound = normalizeAuraSound(options.sound)
                 if not serializableValuesEqual(existing.sound, sound) then
                     existing.sound = sound
                     changed = true
@@ -897,7 +1445,8 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         showStacks = kind == EAM.Constants.ALERT_KIND_AURA and (not options or options.showStacks ~= false) or nil,
         showName = kind == EAM.Constants.ALERT_KIND_AURA and (not options or options.showName ~= false) or nil,
         showCountdown = kind == EAM.Constants.ALERT_KIND_AURA and (not options or options.showCountdown ~= false) or nil,
-        sound = kind == EAM.Constants.ALERT_KIND_AURA and options and copySerializable(options.sound) or nil,
+        priority = kind == EAM.Constants.ALERT_KIND_AURA and normalizeAlertPriority(options and options.priority) or nil,
+        sound = kind == EAM.Constants.ALERT_KIND_AURA and options and normalizeAuraSound(options.sound) or nil,
         durationMode = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
             and normalizeGroundDurationMode(options and options.durationMode) or nil,
         manualDuration = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
@@ -908,6 +1457,60 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
     end
     return true, id, "added"
+end
+
+function SavedVariables.updateAlertPriority(kind, unit, spellID, itemID, value)
+    local db = EAM.db
+    if type(db) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    local numericSpellID = spellID and normalizePositiveInteger(spellID) or nil
+    local numericItemID = itemID and normalizePositiveInteger(itemID) or nil
+    local list = getAlertList(db, kind, unit)
+    local id = buildAlertID(kind, unit, numericSpellID, numericItemID)
+    if not list or not id then
+        return false, "invalidID"
+    end
+    local alert = list[id]
+    if type(alert) ~= "table" then
+        return false, "notFound"
+    end
+    local priority = normalizeAlertPriority(value)
+    if alert.priority == priority then
+        return true, "unchanged", priority
+    end
+    alert.priority = priority
+    touchRevision(db)
+    if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    end
+    return true, "updated", db.revision
+end
+function SavedVariables.updateAuraSound(unit, spellID, sound)
+    local db = EAM.db
+    if type(db) ~= "table" or (unit ~= "player" and unit ~= "target") then
+        return false, "invalidUnit"
+    end
+
+    local numericSpellID = normalizePositiveInteger(spellID)
+    local list = getAlertList(db, EAM.Constants.ALERT_KIND_AURA, unit)
+    local id = numericSpellID and buildAlertID(EAM.Constants.ALERT_KIND_AURA, unit, numericSpellID) or nil
+    local alert = id and list and list[id] or nil
+    if type(alert) ~= "table" then
+        return false, "notFound"
+    end
+
+    local normalized = normalizeAuraSound(sound)
+    if serializableValuesEqual(alert.sound, normalized) then
+        return true, "unchanged", db.revision
+    end
+
+    alert.sound = normalized
+    touchRevision(db)
+    if EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_AURA_SOUND_CHANGED", db.revision)
+    end
+    return true, "updated", db.revision
 end
 
 function SavedVariables.removeAlert(kind, unit, spellID, itemID)

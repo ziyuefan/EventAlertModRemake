@@ -1,9 +1,93 @@
+### 2026-08-13 EAM-20260813-ALPHA4-MODULE-PROFILES：Alpha 4 模組開關與職業 profile 發布
+
+- 狀態：Alpha 4 已完成離線契約，實機仍待 PTR／XPTR／Retail 玩家簽收。
+- 症狀：原有帳號層級清單與服務入口無法讓不同職業獨立保存，也缺少可安全停用單一功能模組的 UI。
+- 原因判斷：SavedVariables 以帳號層級根 alerts 為主；服務事件若反覆註冊／解除，容易造成重複 handler、舊 queue 復活或戰鬥結構變更。
+- 有效解法：schema v5 建立 profiles.classes 與 migration backup；ModuleController／ModulePanel 以八個 canonical module key 做 gate，服務只註冊一次並在入口短路；LegacyDiscoveryService 將 list、lookup、lookupfull、showcast 限制在 active class 安全候選。
+- 驗證結果：Lua 54/54、Flow all 61/61、Validation Contracts 355/355；這些是離線／mock 證據，不代表 WoW 實機。
+- 後續注意事項：不要把 LegacyReference 的 loadstring 匯入器重新接回正式路徑；JSON／Base64 profile 分享需另立 parser、checksum、preview/apply 與戰鬥延後契約。
+
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 # 開發瓶頸、限制、錯誤與解決方法紀錄
 
 本文件記錄EventAlertMod正式服重寫開發過程中遇到的瓶頸、限制、錯誤、工具失敗、API不確定性與有效解法。目的在於減少日後重複試錯，並讓未來的人工智慧代理人能夠用最少的上下文/token繼續理解問題。
 
-## 記錄規則
+## 記錄
+### 2026-08-13 EAM-20260813-AURASOUND-DETAILS：12.1 AuraSound 光環細部設定與註冊生命週期
+
+- 狀態：程式與離線流程已完成；PTR 12.1、XPTR 12.0.7 與 Retail 12.0.7 的真人實機簽收仍待玩家執行。
+- 情境：依 PTR 12.1.0 build 69273 固定生成文件，將 `C_UnitAuras.AddAuraSound` 的 Added、ApplicationsIncreased、Removed 三種 trigger 納入 Aura 細部設定。
+- 症狀：既有 `AuraSoundService` 沒有 per-alert UI 與正式 SavedVariables mutation；`EAM_AURA_SOUND_CHANGED` 只有 listener、沒有 producer；音效設定混入 AuraContainer fingerprint，純音效變更也會建立新容器並消耗單次載入配額；註冊中途失敗可能留下半套 registry。
+- 原因判斷：AuraSound 是獨立的 C-side 註冊生命週期，不是 AuraButton／AuraContainer 視覺 option。公開結構只有 `unitToken`、`spellID`、`soundFileName`／`soundFileID` 與 `outputChannel`，沒有 caster 或 `auraFilter`，因此不能把 Native 音效宣稱為與視覺篩選完全等價。
+- 已嘗試方法：先以固定 commit `6e348870ed8f93d95f0cd16d299b51dbce500296` 核對生成文件與 enum；標準 `apply_patch` 在 Windows sandbox 回傳 `helper_unknown_error`，故在逐檔時間戳備份後，改用具有唯一 marker、預期命中數與 UTF-8 no-BOM 的受控 PowerShell 轉換。
+- 有效解法：Aura 細部設定新增共用素材選擇與三個 trigger 開關；三項皆未勾選時沿用全域設定。`SavedVariables.updateAuraSound()` 負責白名單正規化、no-op revision 與事件；全域 `showSound` 是 master gate。編譯器拆分 container／sound fingerprint；Sound service 先建立 candidate registry，完整成功後才交換，移除失敗的 ID 保留於 retired registry 供後續重試。
+- Secret／污染邊界：只把 EAM SavedVariables 中已正規化的普通 unit、SpellID 與靜態音檔資料送入 C API；不讀 AuraData、不序列化 runtime registration ID、不做 Secret 比較／字串化／table key，也不使用 OnUpdate 推導觸發。
+- 驗證結果：Lua 5.1 語法 `54/54`；Flow `all 61/61`，artifact 為 `TestResults/EAM_FlowValidation_all_20260813_013945.json`；Validation Contracts `355/355`，其中 5 個具名 AuraSound gate 覆蓋設定 mutation、三 trigger UI、雙 fingerprint、交易式 registry 與 12.0.7 零呼叫。均屬離線／靜態證據，不得冒充 PTR 實播。
+- 後續注意事項：PTR 12.1 需分別實測新增、層數增加、自然到期／驅散移除、戰鬥內改設定後脫戰合併、`/reload` 重建，以及 caster／極性限制的 over-fire 風險。12.0.7 應顯示 capability 降級、保留設定且零 `AddAuraSound` 呼叫。
+
+### 2026-08-12 EAM-20260812-THEME-MOCK-GETTER：按鈕主題 capability guard 觸發 strict mock 錯誤
+
+- 狀態：已解決；離線 Flow 與 Lua 語法已重新通過，正式服／PTR／XPTR 仍待玩家目視驗證。
+- 情境：新增 EAM 按鈕主題後執行 `Tools/Run-FlowValidation.ps1 -Suite all`。
+- 症狀：strict mock 在 `UI/Theme.lua` 讀取不存在的 `GetNormalTexture` 時，於 `__index` 直接拋出 `Unknown strict generic frame method`，流程未產生報告。
+- 原因判斷：`button.GetNormalTexture and ...` 先執行方法索引；對嚴格 mock 而言，索引本身就不是安全的 capability check。
+- 已嘗試方法：確認正式按鈕仍需套用 normal、highlight、pushed、disabled 與文字色；未放寬 mock 的未知方法規則。
+- 有效解法：新增 `callButtonMethod`，把 getter 索引與呼叫包在低頻 `pcall` 中；正式 WoW 有方法時套用 palette，缺方法的 widget 只略過該 texture，不中斷其他流程。
+- 驗證結果：Lua `51/51`、Flow `all 54/54`（artifact `TestResults/EAM_FlowValidation_all_20260812_192557.json`）、Validation Contracts `328/328`。
+- 後續注意事項：仍需在 PTR／XPTR／Retail 選擇 EAM、FF7、Windows XP、Borland、DOS CRT、macOS Aqua 六主題，確認按鈕 normal/highlight/pushed/disabled、戰鬥延後與 `/reload`；不得以離線通過代替真人簽收。
+
+
+
+### 2026-08-12 EAM-20260812-PTR69273-UNITPOWER-PENDING：PTR 69273 UnitPower 視覺簽收尚未完成
+
+- 狀態：待實機視覺驗證；不可標示 UnitPower PTR pass。
+- 情境：玩家回報 PTR 12.1 build 69273 的 EAM_UNIT_POWER_CAPABILITY_REPORT。
+- 症狀：primary native percent 與 selected safe/native 兩案均顯示 powerTypeAvailable、StatusBar sink accepted、radial sink accepted；前者 resultClass=secret，後者 resultClass=safe-number，但兩案 visualObservation 都是 pending，整份報告 status=incomplete，boundaryWarnings 要求人工作業。
+- 原因判斷：sink accepted 只證明值可送入允許的 C-level widget，不證明玩家已看到正確的資源變化；Secret 值不能讀回、比較、字串化或寫入報告。
+- 已嘗試方法：保留 UnitPowerPercent／StatusBar:SetValue／Texture:SetRadialProgressBarPercent 的單向管線；沒有取得 raw power、max 或 percent。
+- 有效解法：維持報告的 resultClass、sink 狀態與人工 visualObservation 分離；由玩家在 PTR 面板操作資源後，逐案按顯示正常、顯示異常或無法測試。
+- 後續注意事項：法師只有法力仍可測 primary native sink，但不會得到可讀 Lua 數字；需在非戰鬥啟動探針，戰鬥中只觀察原生 sink，完成後停止探針並在 /reload 或正常登出後保存最新報告。
+
+### 2026-08-12 EAM-20260812-PTR69273-FLOW-BOUNDARY-HELPERS：完整流程報告的 boundary.safe_scalar 失敗
+
+- 狀態：未解決；PTR 流程報告不可視為完整 pass。
+- 情境：同一 PTR 12.1 build 69273 的 EAM_FLOW_VALIDATION_REPORT。
+- 症狀：summary 為 total=54、passed=17、failed=1、skipped=36；唯一失敗 case 是 boundary.safe_scalar，訊息為 Secret、manual-copy、About 或 SVG boundary helpers unavailable。
+- 原因判斷：這是流程邊界 helper 可用性失敗，不等同於 UnitPower sink 失敗；目前不足以斷言是遊戲 API、載入順序或舊 package，需在同一 build /reload 後重跑確認。
+- 已嘗試方法：僅解析玩家提供的 JSON，沒有自動操作 WoW，也沒有把 skipped case 升格為 pass。
+- 有效解法：暫不更改 Secret 邊界邏輯；要求玩家重載後重新執行完整流程，回傳 boundary.safe_scalar 的最新 case 與環境欄位。
+- 後續注意事項：若重跑仍失敗，需檢查 EAM TOC 是否載入 Debug/RuntimeProbe、PromptExport、About、SVGCapabilityProbe 與 FlowTestRunner 的 helper；修正前 Alpha 報告只能標示 incomplete。
+
+### 2026-08-12 EAM-20260812-AURA-PRIORITY-1079：原生 Aura 首格採用優先級
+
+- 狀態：程式已修正，待 PTR 目視驗證。
+- 情境：PTR 存檔的 target Aura 監控。
+- 症狀：野性德魯伊撕扯 1079 仍固定出現在第一格。
+- 原因判斷：現行編譯器只按 unit／SpellID 排序，完全忽略已存在的 priority 欄位；使用者提供的 PTR SavedVariables 中 1079 的 priority=20，1822 為預設或較低值，因此 1079 會成為第一個 native slot。這不是 1079 的硬編碼。
+- 已嘗試方法：唯讀檢查 PTR SavedVariables 與 AuraRuleCompiler；未修改使用者存檔。
+- 有效解法：AuraRuleCompiler 將 priority 正規化到 1..20，採數字越大越先，再以 SpellID／alertID 作穩定 tie-break。要把 1079 移離第一格，請在 EAM 條件設定將其 priority 調低；程式不會覆寫明確使用者設定。
+- 後續注意事項：/reload 後必須重新建立 Native Aura 結構才會看到新順序；若 priority 相同，SpellID 仍是穩定次排序，不保證沿用 Lua table 寫入順序。
+
+### 2026-08-12 EAM-20260812-THEME-BUTTONS：主題只套框架未套按鈕
+
+- 狀態：程式已修正，待三客戶端目視驗證。
+- 情境：切換 EAM／FF7／Windows XP 主題後，視窗邊框改變但按鈕仍是 Blizzard 預設色。
+- 症狀：UI/Theme 只有 frame 與 FontString registry，UIPanelButtonTemplate 和自製下拉按鈕沒有統一色彩管線。
+- 原因判斷：按鈕 normal、highlight、pushed、disabled texture 與按鈕文字未進入 Theme.applyAll。
+- 已嘗試方法：未全域 hook Blizzard 按鈕；盤點 EAM Options、About、Tooltip popup、Flow／Live／SVG／UnitPower／Prompt 面板的自有按鈕建立點。
+- 有效解法：新增 Theme.applyButton／registerButton 與三套 palette 的按鈕狀態色，並在 EAM 自有 UIPanelButtonTemplate 與下拉按鈕建立後註冊；AlertBorderStyles 語意邊框不受主題覆蓋。
+- 後續注意事項：玩家需在 PTR、XPTR、Retail 各選三種主題，確認 normal、highlight、pressed、disabled 狀態與 /reload／戰鬥延後；這是 EAM 自有 UI 視覺，不會改動暴雪動作列。
+
+### 2026-08-12 EAM-20260812-DRUID-ENERGY：野性德魯伊 Energy 未出現
+
+- 狀態：程式已修正，待 PTR／XPTR／Retail 實機驗證。
+- 情境：ClassPowerService 的職業資源選擇。
+- 症狀：貓 D 的 Energy 沒有出現，服務先選 Combo Points，Energy 沒有機會成為 active power。
+- 原因判斷：Druid class priority 原為 Combo Points、Lunar Power；Feral 的 Energy 是主要資源但未列入優先候選。
+- 已嘗試方法：確認 powerEnergy 預設為啟用，並檢查 UnitPower predicate／safe-number 防線；沒有在戰鬥中讀取或序列化秘密值。
+- 有效解法：Druid 候選順序改為 Energy、Combo Points、Lunar Power；Energy 不可用或設定停用時仍會安全 fallback 到其他候選，Balance／Guardian／Restoration 不會因 unsupported max 盲選 Energy；selectPower 另以 ShouldUnitPowerBeSecret fail-closed，Secret Energy 不會成為新 active，既有 active 轉 Secret 則由 updatePower 回報 secret。
+- 後續注意事項：請切到 Feral、脫戰 /reload，先確認 Energy 圖示與數值 1，另測 Combo Points 不被意外取代；再進戰鬥確認不出現 Lua／taint 錯誤，戰鬥中資源更新仍遵守 combatDeferred。
+規則
 - 新問題一律追加在「紀錄」區塊最上方，讓最新問題最容易被看到。
 - 每筆記錄至少包含日期、狀態、抵押、症狀、原因判斷、已嘗試方法、有效解法、後續注意事項。
 - 若問題尚未解決，標記狀態為「未解決」，並寫明下一步驗證方式。
@@ -26,6 +110,32 @@
 - 後續注意事項：
 ```
 ## 記錄
+### 2026-08-12 EAM-20260812-THEME-DOS-AQUA-BORLAND：新增 DOS CRT、macOS Aqua 與 Borland C++ IDE 主題
+
+- 狀態：已完成離線接線，PTR／XPTR／Retail 視覺仍待玩家簽收。
+- 情境：使用者提供 DOS CRT、macOS Aqua 與 Borland C++ IDE 參考圖，要求 EAM 主題下拉可選且按鈕同步變色。
+- 原因判斷：既有 Theme registry 已涵蓋 EAM 自有 frame、FontString 與 button；缺口只在 palette catalog、SavedVariables 正規化與選單高度，無需建立新 UI framework 或改動 Blizzard secure frame。
+- 有效解法：新增 `borland`、`doscrt`、`aqua` 三個固定 ASCII key，補齊電光藍／青、磷光綠 CRT、藍灰／亮藍 palette；主題選單高度改由 `#Theme.ThemeOptions` 計算；按鈕 highlight 的 blend／alpha 以 capability guard 降級。
+- 驗證結果：已完成靜態接線，待 Lua、Flow、Validation Contracts 全套重跑；離線通過不代表三客戶端真人目視通過。
+- 後續注意事項：實機須逐一檢查主視窗、About、Tooltip、Flow、Live、SVG、UnitPower、Prompt 的四種按鈕狀態與 `/reload` 保留；AlertBorderStyles 七種語意色不得被主題覆蓋。
+
+### 2026-08-12 EAM-20260812-AURA-SLOT-GROUP-PADDING：Native Aura slot 與 group 起點重疊
+
+- 狀態：已完成程式修正，待 PTR／XPTR／Retail 目視確認。
+- 症狀：同一 unit 的第一個固定 Aura slot 與 AuraGroup 都從容器左上角開始，1079／155722 等圖示可能重疊；優先權變更也未必觸發 Native rebuild。
+- 有效解法：以官方 flow padding API 將 group 起點向右移過固定 slot 寬度；SavedVariables 優先權更新現在增加 revision、觸發 `EAM_AURA_CONFIG_CHANGED`，compiler fingerprint 也納入 priority。
+- 後續注意事項：priority 是排序，不是互斥；若要只顯示最高優先 Aura，必須另訂 exclusive display contract，不能默默改變多光環監控語意。
+
+### 2026-08-12 EAM-20260812-MINIMAP-SVG-THEME：小地圖 SVG fallback 與主題選擇器
+
+- 狀態：程式與離線契約已完成；PTR、XPTR、Retail 的按鈕目視、互動、`/reload` 與主題切換仍待玩家簽收。
+- 情境：使用者回報 EAM 小地圖快速開啟圖示整體呈綠色，並要求增加 FF7 與 Windows XP 主題。
+- 症狀：原小地圖按鈕把聲音資產的 FileDataID 當成 Texture；主設定沒有可保存的主題選擇，視窗樣式散落在多個 UI 模組。
+- 原因判斷：音效 FileDataID 不是穩定的視覺素材；主題若直接全域改色，會污染 AlertBorderStyles 的技能／物品／Aura／地面效果語意，且戰鬥中即時改 UI 結構有 taint 風險。
+- 已嘗試方法：唯讀查閱 `wowtools.work` 作為資料瀏覽器；不把外部 FileDataID 或遠端素材放入插件依賴。盤查 Options、About、Tooltip popup 與除錯 UI 的既有 frame 建立位置，採集中 palette、weak registry 與 combat pending 設計。
+- 有效解法：新增專案自有 `Media/SVG/eam-minimap.svg`；`Options.applyMinimapTexture()` 先 `SetSVG`，失敗回退 `INV_Misc_QuestionMark`；新增 `UI/Theme.lua` 與 `EAM_DB.config.theme`，提供 EAM／FF7／Windows XP，戰鬥中延後至 `PLAYER_REGEN_ENABLED` 套用。AlertBorderStyles 語意色保持獨立。
+- 驗證結果：Lua `51/51`、Flow `all 54/54`、Validation Contracts `328/328`，另有 Theme runtime smoke pass；目前沒有由 Codex 直接操作 WoW 的實機證據。
+- 後續注意事項：PTR 12.1 應確認 SVG 肉眼顯示；XPTR／Retail 應確認 fallback；三個客戶端均需確認左鍵、右鍵、拖曳與 `/reload`，並回報 client／patch／build。
 
 ### 2026-07-29 Alpha 2 文件基線與 Pages 轉換器錯誤（已解決）
 
@@ -935,33 +1045,60 @@
 ### 2026-08-09 EAM-20260809-ALPHA3-SVG-BORDER：Alpha 3 全覆蓋邊框與 SVG A/B 探針
 
 - 日期：2026-08-09
-- 狀態：已實作並完成離線驗證；PTR／XPTR／Retail 目視仍待玩家簽收
+- 狀態：Alpha 3 prerelease 已發布；3px 邊框程式與 SVG 非對稱探針修正已離線驗證，下一個 alpha package 與 PTR 重測待辦
 - 嚴重度：P1
 - 症狀：
-  - 實機截圖顯示分類邊框雖已放大，仍未完整覆蓋圖示四邊。
-  - 專案尚無可由玩家操作的 SVG／VectorGraphics 能力測試，Release 封裝白名單也會靜默略過 .svg。
+  - 實機截圖顯示舊 ActionButton 邊框即使放大，仍未完整覆蓋圖示四邊。
+  - Alpha 3 初版沒有依 69189 區分 VectorGraphics 與 Texture 的不同方法集合，會把有效的 Texture introspection unavailable 誤判為錯誤。
 - 原因判斷：
-  - Interface\Buttons\UI-ActionButton-Border 素材本身含透明留白，持續增加 Texture 尺寸只會放大透明區，無法形成可預期的貼邊厚度。
-  - 先前只有 PTR8「SVG tech 修復」變更摘要，沒有把 CreateVectorGraphics、SetSVG、ClearSVG、HasSVG、GetSVGFileID 做 A/B 生命週期驗證。
+  - `Interface\Buttons\UI-ActionButton-Border` 素材本身含透明留白，增加 Texture 尺寸只會放大透明區。
+  - VectorGraphics 提供 SetSVG／ClearSVG／HasSVG／GetSVGFileID；Texture 固定生成文件只提供 SetSVG／ClearSVG。初版誤把四方法視為兩者共通契約。
 - 已嘗試但否決：
-  - 將 ActionButton border padding 放大到 14px；實機仍可見邊框小於圖示，不再重複此方法。
-  - 新檔初次寫入曾因未設定的 PowerShell 環境變數形成空檔；尺寸 guard 立即攔下，未進入 TOC 或測試，之後以明確路徑重建。
+  - 將 ActionButton border padding 放大到 14px；實機仍可見邊框小於圖示。
+  - 要求每案都必須 HasSVG=true、fileIDClass=positive-number；PTR 實證顯示 Vector addon-local fileID=0 且正常渲染，Texture 則沒有這兩個 introspection 方法。
 - 有效解法：
-  - Legacy IconPool 與 Native AuraButton 改用 WHITE8X8 實色 Texture，置於 BORDER 層，四邊固定外擴 3px；Flow 直接斷言兩個 anchor tuple。
-  - 新增 player-operated SVG A/B 探針，同時測 Frame:CreateVectorGraphics() 與 Texture:SetSVG()，每案執行 set、HasSVG、file-ID 分類、clear、reload；只輸出 positive-number 等分類，rawFileIDsCollected=false。
-  - 新增 strict mock、JSON schema、離線 fixture、五語系、Flow 面板按鈕、SavedVariables、WTF／JSON 匯入器與 .svg Release 白名單。
-  - strict mock 的 ClearSVG() 後讀取曾因嚴格 __index 誤判為 API error；HasSVG／GetSVGFileID 改用 rawget 後，生命週期與實際 API 契約一致。
+  - Legacy IconPool 與 Native AuraButton 使用 WHITE8X8 實色 Texture、BORDER layer、四邊固定外擴 3px。
+  - VectorGraphics 驗證 Set／Clear／Has／Get；fileID 只輸出 positive／zero／negative 分類，固定 addon-local 素材的 0 不單獨阻擋。
+  - Texture 只驗證 Set／Clear；clearReload 以 ClearSVG 與重新 SetSVG 呼叫結果判定，最終顯示由玩家目視；strict mock 隱藏 Texture Has/Get 並斷言 introspection 呼叫為 0。
+  - Schema 與匯入器依 case kind 重算；保留 Alpha 3 PTR 原報告 fixture，另加入非對稱 pass 與三種 mutation rejection。
 - 工具限制：
-  - apply_patch 多次在寫入前遭 Windows sandbox setup refresh had errors 攔截；均先備份，再採 UTF-8 唯一錨點替換，錨點不是恰好一次即中止。
+  - `apply_patch` 再次在寫入前因 Windows sandbox `setup refresh had errors` 失敗；改用已備份的 UTF-8 唯一錨點／regex 範圍替換。
+  - 多檔替換數次因 LF／CRLF 混合或錨點不符而在守衛處中止；每次均先用 `git diff` 確認已套用範圍，再從中止點續作，沒有回退使用者檔案。
 - API 證據：
-  - 固定快照：Gethe/wow-ui-source a520b6c27bb897e6be2333b6cc2be36d52c7c11b，版本 12.1.0.69189。
-  - SimpleFrameAPIDocumentation.lua：CreateVectorGraphics。
-  - SimpleVectorGraphicsAPIDocumentation.lua：SetSVG、ClearSVG、HasSVG、GetSVGFileID。
-  - SimpleTextureBaseAPIDocumentation.lua：Texture SetSVG。
+  - 固定快照：Gethe/wow-ui-source `a520b6c27bb897e6be2333b6cc2be36d52c7c11b`，版本 12.1.0.69189。
+  - SimpleFrame：CreateVectorGraphics；SimpleVectorGraphics：Set／Clear／Has／Get；SimpleTextureBase：Texture Set／Clear。
+  - 持續更新知識庫：[UIOBJECT_VectorGraphics](https://warcraft.wiki.gg/wiki/UIOBJECT_VectorGraphics)；固定 commit 才是本次 build 可重現基線。
 - 驗證：
-  - Lua 語法：50 檔通過。
-  - Flow boundary：37/37；Flow all：54/54。
-  - Validation Contracts：247/247 通過。
+  - Lua 語法 50/50；Flow boundary 37/37；Flow all 54/54；Validation Contracts 264/264。
+  - 離線測試不升格為 PTR、XPTR 或 Retail 實機通過。
 - 後續：
-  - 玩家在 PTR 12.1 選擇 _ptr_ 後執行 SVG 能力測試，兩格應顯示相同青框、黃紫三角；分別標記通過／失敗／受阻並回傳 JSON。
-  - /reload 後再確認七色邊框四邊完整包覆圖示；離線通過不得標為 PTR 通過。
+  - 下一個 alpha package 必須包含本次探針修正；Alpha 3 Release ZIP 仍是舊探針。
+  - 玩家更新並 `/reload` 後重跑 SVG 能力測試；同輪確認 Texture clearReload=pass 與 3px 邊框四面完整。
+
+### 2026-08-09 EAM-20260809-PTR69189-SVG-ASYMMETRY：PTR 實證推翻對稱 SVG 驗收假設
+
+- 日期：2026-08-09
+- 狀態：根因已修正並完成離線驗證；PTR 修正版重跑待辦
+- 嚴重度：P1
+- 症狀：使用者回傳的 `EAM_SVG_CAPABILITY_REPORT` 為 incomplete，四個 warning 分別指向 Vector fileID=0、Texture Has/Get unavailable 與 Texture lifecycle unavailable；但兩格圖樣均目視 pass。
+- 原因判斷：前三個 warning 是 Alpha 3 對稱驗收契約造成的假陽性；Texture lifecycle unavailable 則是舊程式在沒有 HasSVG 時提前返回，確實沒有執行 ClearSVG／重新 SetSVG。
+- PTR 已確認事實：
+  - client 為 `_ptr_`、12.1.0.69189、Interface 120100、channelValidation=pass。
+  - VectorGraphics：SetSVG accepted、HasSVG=true、fileIDClass=zero、clearReload=pass、visualObservation=pass。
+  - Texture：SetSVG accepted、HasSVG／fileID unavailable、visualObservation=pass；缺少 introspection 符合生成文件。
+  - `rawFileIDsCollected=false`，沒有保存實際 FileDataID。
+- 修正與回歸：
+  - `Debug/SVGCapabilityProbe.lua`、Schema、Importer、strict mock、Flow 與 fixture 改為非對稱契約。
+  - `Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json` 保存這份去識別化實證，預期可匯入但維持 incomplete。
+  - 合成 pass 接受 Vector zero 與 Texture unavailable；mutation 測試拒絕 Vector 缺 HasSVG、Texture lifecycle unavailable 與 Texture hasSVG=false。
+- 剩餘風險：Texture 沒有 HasSVG，ClearSVG 成功只證明呼叫未拋錯；清除瞬間像素不能由 Lua 讀回。需玩家以修正版完成最終 reload 圖樣目視，且不得把這輪兩格顯示通過擴大成 Pandemic／Dispel／戰鬥整合通過。
+
+### 2026-08-12 EAM-20260812-LOCALE-SELECTOR：俄文、Auto Detect 與動態語系切換
+
+- 狀態：程式與離線流程已完成；PTR、XPTR、Retail 的即時切換與保存畫面仍待玩家簽收。
+- 症狀：選擇其他語系後畫面仍維持繁體中文；即使 `/reload`，舊路徑也可能在 locale 檔先依 client zhTW 建立 `EAM.L` 後，沒有在 SavedVariables 初始化完成時重新套用手動選擇。已建立 frame 另會保留 CreateFrame 當下複製進 FontString／按鈕的舊文字。
+- 原因判斷：原 selector 只保存 `EAM_DB.config.language`，沒有執行期事件；`EAM.L` 缺乏穩定 identity 的重填契約，UI 也沒有 binding／refresh registry。`Auto Detect` 在 zhTW 客戶端解析成 zhTW 則是預期行為，不是錯誤。
+- 已嘗試方法：先以手動 `/reload` 作切換邊界，但它只重新載入程式，無法彌補 Main 未重新套用 DB 選擇與現有 widget 快取；標準 `apply_patch` 又受 Windows sandbox `helper_unknown_error` 阻擋，改以既有備份、唯一匹配數量斷言及 UTF-8 無 BOM 精確寫入。
+- 有效解法：`SavedVariables.updateLanguage()` 在 updated／unchanged 都發出 `EAM_LANGUAGE_CHANGED`；`Core/Main.lua` 在 DB 初始化後套用保存選擇；`Locale.apply()` 原地清除／合併 `EAM.L` 並保留 table identity；長生命週期 EAM widget 以 `Locale.bindText()` 更新，複合狀態以低頻 refresh callback 重算。主視窗、About、功能模組、Tooltip popup、Prompt、Flow／Live、UnitPower 與 SVG 面板均已接線，不呼叫 `ReloadUI()`。
+- 驗證結果：Lua `54/54`；Flow `all 57/57`，artifact 為 `TestResults/EAM_FlowValidation_all_20260812_234217.json`；`locale.dynamic_switch` 驗證 ruRU 即時文字、dotted power key、穩定 `EAM.L` identity 與 no-op revision。Validation Contracts 初跑 `331 pass / 1 fail`，唯一失敗是延續性 JSON 新增了隱私契約禁止的模組詞；移除後最終 `332/332`。均屬離線／靜態證據，不宣稱 PTR／XPTR／Retail 實機通過。
+- 後續注意事項：玩家載入本次新程式需先自行 `/reload` 一次；其後在三個支援客戶端選 `Русский` 與 `Auto Detect` 時應立即切換，再以一次 `/reload` 驗證保存。已輸出的聊天紀錄、Blizzard UI、其他插件及客戶端法術／物品名稱不會被 EAM 改寫。

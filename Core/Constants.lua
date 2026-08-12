@@ -33,7 +33,7 @@ local freeze = EAM.Util and EAM.Util.tableFreeze or function(value)
 end
 
 EAM.Constants = freeze({
-    SCHEMA_VERSION = 4,
+    SCHEMA_VERSION = 5,
     TEXT_LAYOUT_SCHEMA_VERSION = 1,
     TEXT_PLACEMENT_TIMER_DEFAULT = "OUTSIDE_TOP",
     TEXT_PLACEMENT_APPLICATIONS_DEFAULT = "INSIDE_BOTTOM_RIGHT",
@@ -72,6 +72,17 @@ EAM.Constants = freeze({
     AURA_RULE_NATIVE_GROUP = "NATIVE_GROUP",
     AURA_RULE_READABLE_LEGACY = "READABLE_LEGACY",
     AURA_RULE_DISPLAY_UNSUPPORTED = "DISPLAY_UNSUPPORTED",
+
+    MODULE_KEYS = freeze({
+        playerAura = "playerAura",
+        targetAura = "targetAura",
+        spellCooldown = "spellCooldown",
+        itemCooldown = "itemCooldown",
+        groundEffect = "groundEffect",
+        classPower = "classPower",
+        totem = "totem",
+        tooltipMonitor = "tooltipMonitor",
+    }),
 
     -- 7 大獨立告警框架名稱
     ALERT_FRAME_TYPES = freeze({

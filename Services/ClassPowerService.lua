@@ -17,6 +17,7 @@ local _, EAM = ...
 local api = EAM.API
 local Util = EAM.Util
 local Renderer = nil
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 local PowerType = Enum and Enum.PowerType or {}
 
 local ClassPowerService = {
@@ -86,7 +87,7 @@ local CLASS_PRIORITIES = {
     MAGE = { POWER_ARCANE },
     EVOKER = { POWER_ESSENCE },
     DEATHKNIGHT = { POWER_RUNES, POWER_RUNIC },
-    DRUID = { POWER_COMBO, POWER_LUNAR },
+    DRUID = { POWER_ENERGY, POWER_COMBO, POWER_LUNAR },
     SHAMAN = { POWER_MAELSTROM },
     PRIEST = { POWER_INSANITY },
     WARRIOR = { POWER_RAGE },
@@ -107,6 +108,11 @@ local function configEnabled(config)
     return not EAM.db
         or not EAM.db.config
         or EAM.db.config[config.configKey] ~= false
+end
+
+local function moduleEnabled()
+    return not ModuleController
+        or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.classPower)
 end
 
 local function inCombat()
@@ -160,6 +166,14 @@ local function selectPower(powerType, source)
         return false
     end
 
+    local shouldBeSecret, predicateStatus = callSecretPredicate("ShouldUnitPowerBeSecret", powerType)
+    if predicateStatus ~= "available" then
+        return false
+    end
+    if shouldBeSecret ~= false and ClassPowerService.activePowerType ~= powerType then
+        return false
+    end
+
     local oldType = ClassPowerService.activePowerType
     if oldType and oldType ~= powerType then
         hideRenderedState()
@@ -175,6 +189,10 @@ local function selectPower(powerType, source)
 end
 
 function ClassPowerService.detectClassPower()
+    if not moduleEnabled() then
+        ClassPowerService.lastResultClass = "moduleDisabled"
+        return false, "moduleDisabled"
+    end
     if inCombat() then
         ClassPowerService.combatDeferredCount = ClassPowerService.combatDeferredCount + 1
         ClassPowerService.lastResultClass = "combatDeferred"
@@ -243,6 +261,11 @@ local function classifyPowerValue(powerType)
 end
 
 function ClassPowerService.updatePower()
+    if not moduleEnabled() then
+        ClassPowerService.lastResultClass = "moduleDisabled"
+        hideRenderedState()
+        return false, "moduleDisabled"
+    end
     if inCombat() then
         ClassPowerService.combatDeferredCount = ClassPowerService.combatDeferredCount + 1
         ClassPowerService.lastResultClass = "combatDeferred"
@@ -299,6 +322,9 @@ function ClassPowerService.updatePower()
 end
 
 function ClassPowerService.onEvent(eventName, unit, powerTypeToken)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
     if inCombat() then
         ClassPowerService.combatDeferredCount = ClassPowerService.combatDeferredCount + 1
         ClassPowerService.lastResultClass = "combatDeferred"
@@ -348,6 +374,25 @@ function ClassPowerService.getStatus()
         combatDeferredCount = ClassPowerService.combatDeferredCount,
         rawValuesExposed = false,
     }
+end
+
+function ClassPowerService.onModuleToggle(enabled, reason)
+    if enabled == false then
+        hideRenderedState()
+        ClassPowerService.activePowerType = nil
+        ClassPowerService.activePowerToken = nil
+        ClassPowerService.activeConfigKey = nil
+        ClassPowerService.overflowThreshold = nil
+        ClassPowerService.selectedFrom = "moduleDisabled"
+        ClassPowerService.lastResultClass = "moduleDisabled"
+        return true, "disabled"
+    end
+    if inCombat() then
+        ClassPowerService.lastResultClass = "combatDeferred"
+        return false, "combatDeferred"
+    end
+    ClassPowerService.detectClassPower()
+    return ClassPowerService.updatePower()
 end
 
 function ClassPowerService.initialize()

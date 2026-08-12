@@ -38,8 +38,8 @@
     "vectorGetSVGFileID": true,
     "textureSetSVG": true,
     "textureClearSVG": true,
-    "textureHasSVG": true,
-    "textureGetSVGFileID": true,
+    "textureHasSVG": false,
+    "textureGetSVGFileID": false,
     "interfaceRequired": true
   },
   "cases": [
@@ -49,7 +49,7 @@
       "apiAvailable": true,
       "setResult": "accepted",
       "hasSVG": "true",
-      "fileIDClass": "positive-number",
+      "fileIDClass": "zero",
       "clearReload": "pass",
       "visualObservation": "pending"
     },
@@ -58,8 +58,8 @@
       "kind": "texture",
       "apiAvailable": true,
       "setResult": "accepted",
-      "hasSVG": "true",
-      "fileIDClass": "positive-number",
+      "hasSVG": "unavailable",
+      "fileIDClass": "unavailable",
       "clearReload": "pass",
       "visualObservation": "pending"
     }

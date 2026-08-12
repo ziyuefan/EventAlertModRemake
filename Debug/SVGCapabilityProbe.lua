@@ -16,6 +16,8 @@ Module: Debug/SVGCapabilityProbe
 local _, EAM = ...
 
 local api = EAM.API
+local Theme = EAM.Theme
+local Locale = EAM.Locale
 local Util = EAM.Util
 local SVG_ASSET = "Interface\\AddOns\\EventAlertMod\\Media\\SVG\\eam-svg-probe.svg"
 local CASE_IDS = {
@@ -43,15 +45,28 @@ local function text(key, fallback)
     return EAM.L and EAM.L[key] or fallback
 end
 
+local function localized(key, fallback)
+    return { key = key, fallback = fallback }
+end
+
+local function setWidgetText(target, value)
+    if type(value) == "table" and type(value.key) == "string" then
+        Locale.bindText(target, value.key, value.fallback)
+    else
+        target:SetText(value)
+    end
+end
+
 local function sessionTime()
     return api.GetTime and api.GetTime() or 0
 end
 
 local function createButton(parent, label, width, point, relativeTo, relativePoint, x, y, callback)
     local button = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(button) end
     button:SetSize(width, 24)
     button:SetPoint(point, relativeTo, relativePoint, x, y)
-    button:SetText(label)
+    setWidgetText(button, label)
     button:SetScript("OnClick", callback)
     return button
 end
@@ -76,7 +91,10 @@ local function classifyFileID(target)
         return "error"
     end
     if Util.isSafeNumber(fileID) then
-        return fileID > 0 and "positive-number" or "zero"
+        if fileID > 0 then
+            return "positive-number"
+        end
+        return fileID < 0 and "negative-number" or "zero"
     end
     return "inaccessible"
 end
@@ -105,23 +123,22 @@ local function runObjectCase(caseID, kind, target)
     result.hasSVG = classifyHasSVG(target)
     result.fileIDClass = classifyFileID(target)
 
-    if result.setResult ~= "accepted"
-        or type(target.ClearSVG) ~= "function"
-        or type(target.HasSVG) ~= "function"
-    then
+    if result.setResult ~= "accepted" or type(target.ClearSVG) ~= "function" then
         return result
     end
 
+    local stateInspectable = type(target.HasSVG) == "function"
     local clearOK = pcall(target.ClearSVG, target)
-    local clearedState = classifyHasSVG(target)
+    local clearedState = stateInspectable and classifyHasSVG(target) or "unavailable"
     local reloadOK, reloadResult = pcall(target.SetSVG, target, SVG_ASSET)
-    local reloadedState = classifyHasSVG(target)
-    if clearOK
-        and clearedState == "false"
-        and reloadOK
-        and reloadResult == true
-        and reloadedState == "true"
-    then
+    local reloadedState = stateInspectable and classifyHasSVG(target) or "unavailable"
+    local lifecycleAccepted = clearOK and reloadOK and reloadResult == true
+    if stateInspectable then
+        lifecycleAccepted = lifecycleAccepted
+            and clearedState == "false"
+            and reloadedState == "true"
+    end
+    if lifecycleAccepted then
         result.clearReload = "pass"
     else
         result.clearReload = "fail"
@@ -156,7 +173,7 @@ local function createCard(parent, titleText, x, kind, caseID)
 
     local title = card:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     title:SetPoint("TOP", card, "TOP", 0, -8)
-    title:SetText(titleText)
+    setWidgetText(title, titleText)
 
     local viewport = api.CreateFrame("Frame", nil, card, "BackdropTemplate")
     viewport:SetSize(104, 104)
@@ -189,7 +206,7 @@ local function createCard(parent, titleText, x, kind, caseID)
 
     local passButton = createButton(
         card,
-        text("EAM_SVG_PROBE_PASS", "顯示正常"),
+        localized("EAM_SVG_PROBE_PASS", "顯示正常"),
         70,
         "BOTTOMLEFT",
         card,
@@ -202,7 +219,7 @@ local function createCard(parent, titleText, x, kind, caseID)
     )
     createButton(
         card,
-        text("EAM_SVG_PROBE_FAIL", "顯示異常"),
+        localized("EAM_SVG_PROBE_FAIL", "顯示異常"),
         70,
         "LEFT",
         passButton,
@@ -215,7 +232,7 @@ local function createCard(parent, titleText, x, kind, caseID)
     )
     createButton(
         card,
-        text("EAM_SVG_PROBE_BLOCKED", "無法測試"),
+        localized("EAM_SVG_PROBE_BLOCKED", "無法測試"),
         82,
         "BOTTOMRIGHT",
         card,
@@ -260,29 +277,32 @@ local function createFrame()
         insets = { left = 6, right = 6, top = 6, bottom = 6 },
     })
     frame:SetBackdropColor(0.03, 0.03, 0.05, 0.97)
+    if Theme and Theme.registerFrame then Theme.registerFrame(frame, "window") end
     frame:Hide()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", frame, "TOP", 0, -12)
-    title:SetText(text("EAM_SVG_PROBE_TITLE", "SVG／VectorGraphics 能力測試"))
+    Locale.bindText(title, "EAM_SVG_PROBE_TITLE", "SVG／VectorGraphics 能力測試")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     local description = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOP", frame, "TOP", 0, -34)
-    description:SetText(text(
+    Locale.bindText(
+        description,
         "EAM_SVG_PROBE_DESC",
         "兩格應顯示相同的青框、黃紫三角圖案；請分別標記目視結果。"
-    ))
+    )
 
     SVGCapabilityProbe.cards.vector = createCard(
         frame,
-        text("EAM_SVG_PROBE_VECTOR", "VectorGraphics:SetSVG"),
+        localized("EAM_SVG_PROBE_VECTOR", "VectorGraphics:SetSVG"),
         15,
         "vector",
         CASE_IDS[1]
     )
     SVGCapabilityProbe.cards.texture = createCard(
         frame,
-        text("EAM_SVG_PROBE_TEXTURE", "Texture:SetSVG"),
+        localized("EAM_SVG_PROBE_TEXTURE", "Texture:SetSVG"),
         275,
         "texture",
         CASE_IDS[2]
@@ -290,7 +310,7 @@ local function createFrame()
 
     createButton(
         frame,
-        text("EAM_SVG_PROBE_FINISH", "完成並產生報告"),
+        localized("EAM_SVG_PROBE_FINISH", "完成並產生報告"),
         180,
         "BOTTOM",
         frame,
@@ -367,13 +387,31 @@ function SVGCapabilityProbe.buildReport()
                 warnings[#warnings + 1] = "svgSetRejected:" .. case.id
                 capabilityPass = false
             end
-            if case.hasSVG ~= "true" then
-                warnings[#warnings + 1] = "svgHasStateInvalid:" .. case.id
-                capabilityPass = false
-            end
-            if case.fileIDClass ~= "positive-number" then
-                warnings[#warnings + 1] = "svgFileIDInvalid:" .. case.id
-                capabilityPass = false
+            if case.kind == "vector" then
+                if case.hasSVG ~= "true" then
+                    warnings[#warnings + 1] = "svgHasStateInvalid:" .. case.id
+                    capabilityPass = false
+                end
+                if case.fileIDClass ~= "positive-number"
+                    and case.fileIDClass ~= "zero"
+                    and case.fileIDClass ~= "negative-number"
+                then
+                    warnings[#warnings + 1] = "svgFileIDInvalid:" .. case.id
+                    capabilityPass = false
+                end
+            else
+                if case.hasSVG ~= "unavailable" and case.hasSVG ~= "true" then
+                    warnings[#warnings + 1] = "svgHasStateInvalid:" .. case.id
+                    capabilityPass = false
+                end
+                if case.fileIDClass ~= "unavailable"
+                    and case.fileIDClass ~= "positive-number"
+                    and case.fileIDClass ~= "zero"
+                    and case.fileIDClass ~= "negative-number"
+                then
+                    warnings[#warnings + 1] = "svgFileIDInvalid:" .. case.id
+                    capabilityPass = false
+                end
             end
             if case.clearReload ~= "pass" then
                 warnings[#warnings + 1] = "svgLifecycleFailed:" .. case.id

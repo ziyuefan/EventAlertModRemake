@@ -21,6 +21,7 @@ Module: Debug/PromptExport
 
 ]]
 local _, EAM = ...
+local Theme = EAM.Theme
 
 local PromptExport = {
     frame = nil,
@@ -162,7 +163,7 @@ function PromptExport.buildDetailed()
     local spellCdCount = 0
     local itemCdCount = 0
 
-    if EAM.db and EAM.db.alerts then
+    if EAM.db then
         local saved = EAM.Modules.SavedVariables
         if saved then
             local selfAlerts = saved.getAlertList(EAM.Constants.ALERT_KIND_AURA, "player") or {}
@@ -373,6 +374,7 @@ local function createDebugFrame()
     })
     f:SetBackdropColor(0.12, 0.08, 0.06, 0.98)
     f:SetBackdropBorderColor(0.8, 0.6, 0.4, 1.0)
+    if Theme and Theme.registerFrame then Theme.registerFrame(f, "window") end
 
     _G["EAM_DebugExportFrame"] = f
     tinsert(UISpecialFrames, "EAM_DebugExportFrame")
@@ -382,6 +384,7 @@ local function createDebugFrame()
     title:SetPoint("TOP", f, "TOP", 0, -16)
     title:SetTextColor(0.95, 0.85, 0.4, 1.0)
     title:SetText("EAM 系統診斷與除錯資訊匯出 (Debug)")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     -- 內邊框
     local scrollBG = api.CreateFrame("Frame", nil, f, "BackdropTemplate")
@@ -436,9 +439,10 @@ local function createDebugFrame()
 
     -- 底部按鈕 1: 聚焦並全選，玩家再按 Ctrl+C
     local copyBtn = api.CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(copyBtn) end
     copyBtn:SetSize(180, 26)
     copyBtn:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 18)
-    copyBtn:SetText(EAM.L.EAM_PROMPT_COPY_SELECT or "全選診斷資訊")
+    EAM.Locale.bindText(copyBtn, "EAM_PROMPT_COPY_SELECT", "全選診斷資訊")
     local cnTex = copyBtn:GetNormalTexture()
     if cnTex then cnTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
     local cpTex = copyBtn:GetPushedTexture()
@@ -454,6 +458,7 @@ local function createDebugFrame()
 
     -- 底部按鈕 2: 重新整理
     local refreshBtn = api.CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(refreshBtn) end
     refreshBtn:SetSize(100, 26)
     refreshBtn:SetPoint("LEFT", copyBtn, "RIGHT", 10, 0)
     refreshBtn:SetText("重新整理")
@@ -467,6 +472,7 @@ local function createDebugFrame()
 
     -- 底部按鈕 3: 關閉視窗
     local closeBtn = api.CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(closeBtn) end
     closeBtn:SetSize(100, 26)
     closeBtn:SetPoint("LEFT", refreshBtn, "RIGHT", 10, 0)
     closeBtn:SetText("關閉視窗")

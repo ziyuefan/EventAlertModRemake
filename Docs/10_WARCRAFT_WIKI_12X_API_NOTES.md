@@ -740,3 +740,20 @@ EAM 12.x 架構應用採用：
 
 - [UnitDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua)
 - [SimpleStatusBarAPIDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOns/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua)
+
+## 2026-08-13 PTR 69273 AuraSound 固定契約
+
+固定證據為 Gethe `ptr` commit `6e348870ed8f93d95f0cd16d299b51dbce500296`（12.1.0.69273）：
+
+- `C_UnitAuras.AddAuraSound(trigger, sound)` 回傳可為 nil 的 registration ID；`RemoveAuraSound(id)` 取消註冊。
+- `Enum.UnitAuraSoundTrigger`：Added=0、ApplicationsIncreased=1、Removed=2。
+- `UnitAuraSoundInfo` 必填 `unitToken`、`spellID`；可選 `soundFileName`、`soundFileID`、`outputChannel`。沒有 `soundKitID`、caster 或 auraFilter。
+- Add／Remove 標示 restricted 且 SecretArguments 為 AllowedWhenUntainted；EAM 只從已正規化的普通 SavedVariables 建立參數，不把 AuraData 或 Secret value 傳入。
+- registration ID 是 session runtime state，不是播放 handle；不得保存，也不能傳給 `StopSound`。
+- 12.0.7 只有 private aura applied 舊 API，不足以實作一般 Aura 三 trigger，故採 capability 降級。
+
+固定來源：
+
+- [UnitAuraDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua)
+- [UnitAuraConstantsDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua)
+- [UnitConstantsDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua)

@@ -38,7 +38,7 @@
         "apiAvailable": { "type": "boolean" },
         "setResult": { "enum": ["pending", "unsupported", "accepted", "rejected", "error"] },
         "hasSVG": { "enum": ["pending", "unavailable", "true", "false", "error"] },
-        "fileIDClass": { "enum": ["pending", "unavailable", "positive-number", "zero", "inaccessible", "error"] },
+        "fileIDClass": { "enum": ["pending", "unavailable", "positive-number", "zero", "negative-number", "inaccessible", "error"] },
         "clearReload": { "enum": ["pending", "unavailable", "pass", "fail"] },
         "visualObservation": { "enum": ["pending", "pass", "fail", "blocked"] }
       }
@@ -197,20 +197,36 @@
               "interfaceRequired": { "const": true },
               "createVectorGraphics": { "const": true },
               "vectorSetSVG": { "const": true },
-              "textureSetSVG": { "const": true }
+              "vectorClearSVG": { "const": true },
+              "vectorHasSVG": { "const": true },
+              "vectorGetSVGFileID": { "const": true },
+              "textureSetSVG": { "const": true },
+              "textureClearSVG": { "const": true }
             }
           },
           "cases": {
-            "items": {
-              "properties": {
-                "apiAvailable": { "const": true },
-                "setResult": { "const": "accepted" },
-                "hasSVG": { "const": "true" },
-                "fileIDClass": { "const": "positive-number" },
-                "clearReload": { "const": "pass" },
-                "visualObservation": { "const": "pass" }
+            "prefixItems": [
+              {
+                "properties": {
+                  "apiAvailable": { "const": true },
+                  "setResult": { "const": "accepted" },
+                  "hasSVG": { "const": "true" },
+                  "fileIDClass": { "enum": ["positive-number", "zero", "negative-number"] },
+                  "clearReload": { "const": "pass" },
+                  "visualObservation": { "const": "pass" }
+                }
+              },
+              {
+                "properties": {
+                  "apiAvailable": { "const": true },
+                  "setResult": { "const": "accepted" },
+                  "hasSVG": { "enum": ["unavailable", "true"] },
+                  "fileIDClass": { "enum": ["unavailable", "positive-number", "zero", "negative-number"] },
+                  "clearReload": { "const": "pass" },
+                  "visualObservation": { "const": "pass" }
+                }
               }
-            }
+            ]
           },
           "boundaryWarnings": { "maxItems": 0 }
         }

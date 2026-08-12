@@ -22,7 +22,7 @@ local freeze = util.tableFreeze or function(value)
     return value
 end
 
-local MATRIX_VERSION = "2026-08-08.1"
+local MATRIX_VERSION = "2026-08-13.1"
 local PRIVACY_REDACTED_NOTE = "[privacy-redacted]"
 local BOOT_TOKEN = {}
 local CASES = freeze({
@@ -56,6 +56,9 @@ local CASES = freeze({
     freeze({ id = "live.aura.native_pandemic_region", category = "aura", labelKey = "EAM_LIVE_CASE_NATIVE_PANDEMIC" }),
     freeze({ id = "live.aura.native_dispel_options", category = "aura", labelKey = "EAM_LIVE_CASE_NATIVE_DISPEL_OPTIONS" }),
     freeze({ id = "live.aura.container_disable_clear", category = "aura", labelKey = "EAM_LIVE_CASE_CONTAINER_DISABLE_CLEAR" }),
+    freeze({ id = "live.aura.sound_added", category = "aura", labelKey = "EAM_LIVE_CASE_AURA_SOUND_ADDED" }),
+    freeze({ id = "live.aura.sound_applications_increased", category = "aura", labelKey = "EAM_LIVE_CASE_AURA_SOUND_APPLICATIONS" }),
+    freeze({ id = "live.aura.sound_removed", category = "aura", labelKey = "EAM_LIVE_CASE_AURA_SOUND_REMOVED" }),
     freeze({ id = "live.unitpower.secondary_numeric", category = "unitpower", labelKey = "EAM_LIVE_CASE_UNITPOWER_SECONDARY" }),
     freeze({ id = "live.unitpower.primary_native_sink", category = "unitpower", labelKey = "EAM_LIVE_CASE_UNITPOWER_PRIMARY" }),
     freeze({ id = "live.unitpower.combat_deferred", category = "unitpower", labelKey = "EAM_LIVE_CASE_UNITPOWER_COMBAT" }),
@@ -93,6 +96,9 @@ local CASE_PROCEDURES = freeze({
     ["live.aura.native_pandemic_region"] = [=[PTR 12.1 啟用單一 Pandemic Region，觀察官方 Pandemic Window 顯示與消失，確認 EAM 不讀 SecretAspect.Shown、不建立自己的 OnUpdate；12.0.7 應降級且不呼叫 native API。]=],
     ["live.aura.native_dispel_options"] = [=[PTR 12.1 觀察 showAlways、Harmful／Helpful 與 Stealable／NotStealable option；確認 showAlways 不再同時輸出無作用的 stealableFilter，且不使用舊 AuraBorder alias。]=],
     ["live.aura.container_disable_clear"] = [=[PTR 12.1 停用 AuraContainer 後確認 AuraButton 與 ItemEnchantment 顯示資料清除但框架仍存在，重新啟用後不重複建立或產生 Lua error。]=],
+    ["live.aura.sound_added"] = [=[PTR 12.1：在光環細部設定選擇可辨識素材，只勾「光環新增」，並確認全域音效已啟用；玩家手動取得該 player／target Aura，應只播放一次。12.0.7 應停用控制項、保留設定且不得呼叫 AddAuraSound。]=],
+    ["live.aura.sound_applications_increased"] = [=[PTR 12.1：只勾「層數增加」，先取得可堆疊 Aura，再由玩家逐層增加；每次增加應各播放一次，初次新增與移除不得誤播。12.0.7 應維持 capability 降級。]=],
+    ["live.aura.sound_removed"] = [=[PTR 12.1：只勾「光環移除」，由玩家讓 Aura 自然到期、驅散或實際移除；每次真實移除應播放一次，停用容器、改設定與 /reload 不得冒充 Aura 移除。12.0.7 應維持 capability 降級。]=],
     ["live.unitpower.secondary_numeric"] = [=[由玩家切換可產生次要資源的專精並手動產生、消耗、歸零；確認 EAM 選中 HolyPower／ComboPoints／SoulShards／Chi／ArcaneCharges 等次要資源，數值 1 仍顯示。]=],
     ["live.unitpower.primary_native_sink"] = [=[從測試面板啟動 UnitPower 能力探針，由玩家產生／消耗主要資源；PTR 12.1 觀察 StatusBar 與 radial sink，12.0.7 觀察 StatusBar fallback，標記結果並回傳 EAM_UNIT_POWER_CAPABILITY_REPORT。]=],
     ["live.unitpower.combat_deferred"] = [=[PTR／XPTR 進入戰鬥後觀察資源變化，確認 EAM 不呼叫 UnitPower／UnitPowerMax／UnitPowerPercent 讀值；脫戰後由事件恢復更新，報告保留 combatDeferred 邊界。]=],

@@ -3,7 +3,7 @@
 
 ## 目的與邊界
 
-本文件把 `Data/LiveValidationMatrix.json` 的 34 案轉成玩家可直接操作的條件、步驟與通過標準。它只適用 WoW Retail 系列：
+本文件把 `Data/LiveValidationMatrix.json` 的 37 案轉成玩家可直接操作的條件、步驟與通過標準。它只適用 WoW Retail 系列：
 
 - `_ptr_`：12.1 PTR。
 - `_xptr_`：12.0.7 XPTR。
@@ -26,7 +26,7 @@
 - `上一案／下一案`：切換案例，不改結果。
 - `通過／失敗／受阻／待測`：只記錄目前案例。
 - `備註`：最多 500 個字元；戰鬥中不寫入。
-- `完成並產生 JSON`：只有 34 案全通過、環境身分一致、已有真正 `/reload`、零 boundary warning 才能完成。
+- `完成並產生 JSON`：只有 37 案全通過、環境身分一致、已有真正 `/reload`、零 boundary warning 才能完成。
 - `全選實機 JSON`：只會聚焦並全選文字。WoW 沒有可用的 `EditBox:Copy()` API，仍須由玩家按 `Ctrl+C`。
 
 ## 逐案條件與步驟
@@ -237,9 +237,70 @@
 - 步驟：觀察官方 duration text 與 EAM 圖示。
 - 通過：有效 duration 不再錯顯示 0；無安全 duration 時只保留官方允許的圖示／顯示狀態，不自行補數字。
 
+### 35. `live.aura.sound_added`
+
+- 條件：PTR 12.1，選一個可反覆取得的 player 或 target Aura；全域音效啟用，細部設定只勾「光環新增」，素材可清楚辨識。
+- 步驟：玩家自行取得 Aura，保持期間做一般更新，再讓它移除後重新取得。不要用測試按鈕代替真實 Aura 事件。
+- 通過：每次從不存在變為存在只播放一次；一般更新、層數變化與移除不誤播。報告包含 build、unit 與人工聽覺結果。
+- 12.0.7：控制不可用但設定保留，且不得呼叫 `AddAuraSound`。
+
+### 36. `live.aura.sound_applications_increased`
+
+- 條件：PTR 12.1，使用能安全重複疊層的 Aura；細部設定只勾「層數增加」。
+- 步驟：玩家先取得一層，再逐次增加、維持相同層數、降低層數與完全移除。
+- 通過：初次新增不播放；每次實際增加 applications 各播放一次；相同、降低與移除不播放。不得由 EAM Lua 讀回或比較 Secret applications。
+- 12.0.7：維持 capability 降級，不合成層數事件。
+
+### 37. `live.aura.sound_removed`
+
+- 條件：PTR 12.1，細部設定只勾「光環移除」。
+- 步驟：分別測自然到期與玩家實際驅散／解除；另測停用模組、改設定、重建容器與 `/reload`。
+- 通過：每次真實 Aura 移除只播放一次；停用、設定同步、容器清除與 `/reload` 不得冒充移除。若 API 對驅散與到期行為不同，記錄為實機事實。
+- 另測 `fromPlayer`／極性較窄的規則：同 unit+SpellID 其他來源若 over-fire，記錄 `UnitAuraSoundInfo` 無 caster／auraFilter 的限制，不以 Lua 繞過。
+- 12.0.7：控制不可用且零 12.1 API 呼叫。
+
+## PTR 69273 追加回報步驟
+
+### A. UnitPower 能力報告
+
+1. 在 PTR 12.1 build 69273、非戰鬥狀態開啟流程面板，確認環境列為 PTR、patch 12.1.0、Interface 120100，再啟動 UnitPower 能力。
+2. 在 primary native percent 案，玩家自行改變主要資源；法師可用法力，施放或消耗任一會改變法力的技能即可。只看 StatusBar／radial 是否跟著變化，不讀數值、不複製 Secret 值。
+3. 在 selected safe or native 案，依面板提示選定資源並自行產生、消耗、歸零；同樣只觀察原生 widget。
+4. 每一案都要按顯示正常、顯示異常或無法測試。報告若仍是 visualObservation=pending 或 status=incomplete，代表尚未完成簽收，不是 pass。
+5. 停止探針後再複製 JSON；若要由開發端讀取磁碟 SavedVariables，先 /reload 或正常登出，否則可能仍是舊報告。
+
+### B. 1079 首格排序
+
+1. 在目標 Aura 清單開啟 1079 撕扯的條件設定，確認 priority；數字越大代表越優先、會進入較前的 native slot。
+2. 若不希望 1079 第一格，把 1079 priority 調低並把另一個目標 Aura 調高，儲存後 /reload。
+3. 回到目標框架確認順序；priority 相同時以 SpellID 作穩定次排序。回報時附 priority 值與 client/build，不要只回報圖示位置。
+
+### C. 主題按鈕
+
+1. 脫戰開啟主視窗，依序選 EAM、FF7、Windows XP、Borland C++ IDE、DOS CRT、macOS Aqua。
+2. 每一主題檢查主視窗、About、Tooltip popup、Flow、Live、SVG、UnitPower、Prompt 的按鈕 normal、滑入 highlight、按下 pushed、disabled 及文字色；DOS CRT 應為磷光綠、Aqua 應為藍灰／亮藍、Borland 應為電光藍／青。
+3. 進戰鬥時嘗試切換，確認只保存 pending；脫戰後才套用。完成 /reload 後再確認設定仍保留。
+4. 不需要檢查暴雪 Action Bar 或其他插件按鈕；主題範圍只包含 EAM 自有 UI。
+
+### D. 語系即時切換
+
+1. 玩家更新到含本功能的程式後先自行 `/reload` 一次，確保本次載入已包含新的 Locale binding；Codex 與 EAM 都不自動輸入指令。
+2. 非戰鬥中同時開啟主視窗、About、功能模組、Flow／Live、UnitPower／SVG 與 Prompt 面板；可在 Tooltip 有安全 candidate 時一併開啟 EAM popup。
+3. 選擇 `Русский`，不要 `/reload`。目前已開啟面板的固定標題、按鈕、下拉標籤、環境摘要與案例狀態應立即改成俄文；已輸出的聊天紀錄不會倒回改寫，後續 EAM 訊息才應使用俄文。
+4. 選擇固定英文的 `Auto Detect`，不要 `/reload`。在 zhTW 客戶端應立即回到繁體中文；Blizzard UI、其他插件及客戶端回傳的法術／物品名稱不受 EAM catalog 控制。
+5. 再選 `Русский`，由玩家自行 `/reload`，重新開啟主視窗確認仍為俄文；這一步只驗證 `EAM_DB.config.language` 保存，不是動態套用的前提。
+6. 回報 clientChannel、patch、build、Interface、兩次即時切換結果與 reload 保存結果；截圖不得包含帳號、角色或 WTF 絕對路徑。
+
+### E. 貓 D Energy
+
+1. 切換 Feral 專精，脫戰 /reload 後確認 powerEnergy 啟用。
+2. 先不產生 Combo Point，觀察 EAM classPower 是否顯示 Energy；再產生、消耗、歸零 Energy，至少觀察一次數值 1。
+3. 另測 Combo Points，確認 Energy 不會永久遮蔽既有次要資源；切換 Balance、Guardian、Restoration，確認不會錯選 Energy。
+4. 進戰鬥重複一次資源變化，確認沒有 Lua error、taint 或 blocked action；戰鬥中只接受原生／延後更新，離戰後再看報告。
+
 ## 本輪附加 Smoke Test
 
-這些項目不增加 34 案數，但本輪發布前至少各看一次：
+這些項目不增加 37 案數，但本輪發布前至少各看一次：
 
 1. 主視窗右上「關於」按鈕可開啟小視窗。
 2. 關於視窗顯示插件版本、作者 `ziyuefan死鬥`、API 基準 `12.1.0 PTR 8 (Build 69189)`、12.0.7 相容軌、目前客戶端 Build、GitHub 與 Pages URL。
@@ -276,12 +337,28 @@ pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 `
 
 ## SVG 能力測試（PTR 12.1 優先）
 
-1. 玩家自行 /reload，非戰鬥中輸入 /eam test。
-2. 在測試面板選擇正確 client；PTR 12.1 選 _ptr_。
-3. 點 SVG 能力。左格是 VectorGraphics，右格是 Texture。
-4. 確認兩格是否都出現相同青色外框與黃紫三角。每格分別按通過、失敗或受阻，不可只看 accepted。
-5. 點完成並產生報告，回傳完整 EAM_SVG_CAPABILITY_REPORT JSON。報告應有 patch、build、Interface、兩案 clearReload 與 visualObservation，且 rawFileIDsCollected=false。
-6. 若要從磁碟回灌，完成報告後再由玩家自行 /reload；匯入時使用 ReportType SVG。
-7. 12.0.7 回報 unsupported 是預期能力降級；PTR 12.1 若 unsupported、set rejected、clearReload fail 或圖樣缺失，才需列為 PTR 問題。
+1. 玩家自行 `/reload`，確認已載入修正版後，在非戰鬥中輸入 `/eam test`。
+2. 在測試面板選擇正確 client；PTR 12.1 選 `_ptr_`。
+3. 點「SVG 能力」。左格是 VectorGraphics，右格是 Texture；兩格都應出現青色外框與黃紫三角。
+4. 逐格按「顯示正常／顯示異常／無法測試」。`SetSVG=accepted` 只證明呼叫被接受，不能取代目視。
+5. 點「完成並產生報告」，回傳完整 `EAM_SVG_CAPABILITY_REPORT` JSON；報告必須含 patch、build、Interface、兩案 clearReload、visualObservation，且 `rawFileIDsCollected=false`。
+6. PTR 12.1 正常欄位：
+   - VectorGraphics：`setResult=accepted`、`hasSVG=true`、`fileIDClass=positive-number|zero|negative-number`、`clearReload=pass`、`visualObservation=pass`。
+   - Texture：`setResult=accepted`、`hasSVG=unavailable`、`fileIDClass=unavailable`、`clearReload=pass`、`visualObservation=pass`。
+7. VectorGraphics 的 `fileIDClass=zero` 不需單獨判失敗；Texture 沒有 HasSVG／GetSVGFileID 也不需判失敗。若 Texture `clearReload=unavailable`，表示仍是 Alpha 3 舊探針，必須更新並 `/reload` 後重跑。
+8. Texture 沒有 introspection，因此 `clearReload=pass` 表示 ClearSVG 與重新 SetSVG 呼叫成功，最終 reload 圖樣由人工目視確認；報告不能宣稱 Lua 已讀回清除瞬間的像素。
+9. 若要從磁碟回灌，產生報告後再由玩家自行 `/reload`；匯入時使用 `ReportType SVG`。12.0.7 回報 unsupported 是預期能力降級。
 
 同一輪另確認分類邊框：自身 BUFF／DEBUFF、目標 BUFF／DEBUFF、技能、物品、地面效果的四邊應完整連續，外緣各比圖示多 3px。請附 client、UI scale、圖示大小與截圖。
+
+## 2026-08-13 Alpha 4：模組與職業 profile 實機追加步驟
+
+這是 37 案以外的 Alpha 4 發布後追加檢查，不改變真人矩陣的案例編號：
+
+1. 開啟 EAM 主設定，按「功能模組」，確認八個模組預設為啟用。
+2. 逐一停用一個模組；確認該模組既有提醒消失、其他模組仍正常，重新啟用後只在允許的脫戰時機恢復。
+3. 在戰鬥中嘗試切換模組，確認設定保存但結構性 Native 變更延後至 PLAYER_REGEN_ENABLED，沒有 taint 或 blocked action。
+4. 以至少兩個不同職業登入，執行 /eam list、/eam lookup <名稱>、/eam lookupfull <完整名稱> 與 /eam showcast；確認列出的清單只屬目前職業。
+5. 清空一個職業的清單後 /reload，確認不會重新灌入內建預設；切換回另一職業，確認其設定未被污染。
+6. 不要把 /eam export 或 Debug JSON 貼回作為設定匯入；正式 JSON／Base64 profile codec 尚未完成。
+7. 每個客戶端均記錄 client channel、build、Interface、/reload、Lua error、taint 與 blocked action；離線通過不得改寫成實機 pass。

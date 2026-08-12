@@ -28,6 +28,8 @@ Retail API 注意:
 local _, EAM = ...
 
 local api = EAM.API or {}
+local Theme = EAM.Theme
+local Locale = EAM.Locale
 
 local FlowTestPanel = {
     frame = nil,
@@ -83,11 +85,51 @@ local function buildSummary(report)
     )
 end
 
+function FlowTestPanel.refreshLocalizedText()
+    if not FlowTestPanel.statusText then
+        return
+    end
+    local unitPowerProbe = EAM.Debug and EAM.Debug.UnitPowerCapabilityProbe
+    if unitPowerProbe and type(unitPowerProbe.isActive) == "function" and unitPowerProbe.isActive() then
+        setStatus(text("EAM_UNIT_POWER_PROBE_RUNNING", "測試中：請由玩家產生／消耗資源，觀察兩條原生顯示後標記結果。"), false)
+        return
+    end
+    local svgProbe = EAM.Debug and EAM.Debug.SVGCapabilityProbe
+    if svgProbe and type(svgProbe.isActive) == "function" and svgProbe.isActive() then
+        setStatus(text("EAM_SVG_PROBE_RUNNING", "請確認兩格 SVG 圖案並分別標記目視結果。"), false)
+        return
+    end
+    local runner = EAM.Debug and EAM.Debug.FlowTestRunner
+    if runner and runner.running then
+        setStatus(text("EAM_FLOW_STATUS_RUNNING", "流程測試執行中……"), false)
+        return
+    end
+    local report = runner and runner.getLastReport and runner.getLastReport() or nil
+    setStatus(buildSummary(report), report and report.summary and report.summary.failed > 0)
+end
+
+if Locale and type(Locale.registerRefresh) == "function" then
+    Locale.registerRefresh(FlowTestPanel.refreshLocalizedText)
+end
+
+local function localized(key, fallback)
+    return { key = key, fallback = fallback }
+end
+
+local function setWidgetText(target, value)
+    if type(value) == "table" and type(value.key) == "string" then
+        Locale.bindText(target, value.key, value.fallback)
+    else
+        target:SetText(value)
+    end
+end
+
 local function createButton(parent, label, width, point, relativeTo, relativePoint, x, y, onClick)
     local button = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(button) end
     button:SetSize(width, 26)
     button:SetPoint(point, relativeTo, relativePoint, x, y)
-    button:SetText(label)
+    setWidgetText(button, label)
     button:SetScript("OnClick", onClick)
     return button
 end
@@ -121,24 +163,27 @@ local function createFrame()
     })
     frame:SetBackdropColor(0.08, 0.06, 0.04, 0.98)
     frame:SetBackdropBorderColor(0.8, 0.6, 0.3, 1.0)
+    if Theme and Theme.registerFrame then Theme.registerFrame(frame, "window") end
     frame:Hide()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", frame, "TOP", 0, -16)
-    title:SetText(text("EAM_FLOW_PANEL_TITLE", "EAM 流程驗證與開發回灌"))
+    Locale.bindText(title, "EAM_FLOW_PANEL_TITLE", "EAM 流程驗證與開發回灌")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     local description = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -44)
     description:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -44)
     description:SetJustifyH("LEFT")
-    description:SetText(text(
+    Locale.bindText(
+        description,
         "EAM_FLOW_PANEL_DESC",
         "離線 Mock 與實機共用案例。Mock 通過不代表 Retail/PTR 實機通過。"
-    ))
+    )
 
     local quickButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_QUICK", "快速流程"),
+        localized("EAM_FLOW_BUTTON_QUICK", "快速流程"),
         92,
         "TOPLEFT",
         frame,
@@ -152,7 +197,7 @@ local function createFrame()
 
     local coreButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_CORE", "核心流程"),
+        localized("EAM_FLOW_BUTTON_CORE", "核心流程"),
         92,
         "LEFT",
         quickButton,
@@ -166,7 +211,7 @@ local function createFrame()
 
     local boundaryButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_BOUNDARY", "邊界流程"),
+        localized("EAM_FLOW_BUTTON_BOUNDARY", "邊界流程"),
         92,
         "LEFT",
         coreButton,
@@ -180,7 +225,7 @@ local function createFrame()
 
     local aura121Button = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_AURA121", "12.1 Aura"),
+        localized("EAM_FLOW_BUTTON_AURA121", "12.1 Aura"),
         92,
         "LEFT",
         boundaryButton,
@@ -194,7 +239,7 @@ local function createFrame()
 
     local allButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_ALL", "執行全部"),
+        localized("EAM_FLOW_BUTTON_ALL", "執行全部"),
         92,
         "LEFT",
         aura121Button,
@@ -249,7 +294,7 @@ local function createFrame()
 
     local copyButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_COPY", "全選開發報告"),
+        localized("EAM_FLOW_BUTTON_COPY", "全選開發報告"),
         160,
         "BOTTOMLEFT",
         frame,
@@ -268,7 +313,7 @@ local function createFrame()
 
     local closeButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_CLOSE", "關閉"),
+        localized("EAM_FLOW_BUTTON_CLOSE", "關閉"),
         100,
         "LEFT",
         copyButton,
@@ -286,8 +331,8 @@ local function createFrame()
     dualCountdownButton = createButton(
         frame,
         dualCountdownEnabled
-            and text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN_OFF", "關閉雙倒數")
-            or text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN", "雙倒數診斷"),
+            and localized("EAM_FLOW_BUTTON_DUAL_COUNTDOWN_OFF", "關閉雙倒數")
+            or localized("EAM_FLOW_BUTTON_DUAL_COUNTDOWN", "雙倒數診斷"),
         92,
         "LEFT",
         allButton,
@@ -319,10 +364,11 @@ local function createFrame()
             if containerService and containerService.requestRebuild then
                 rebuilt, rebuildReason = containerService.requestRebuild("FLOW_TEST_DUAL_COUNTDOWN_TOGGLE")
             end
-            dualCountdownButton:SetText(
+            setWidgetText(
+                dualCountdownButton,
                 enabled
-                    and text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN_OFF", "關閉雙倒數")
-                    or text("EAM_FLOW_BUTTON_DUAL_COUNTDOWN", "雙倒數診斷")
+                    and localized("EAM_FLOW_BUTTON_DUAL_COUNTDOWN_OFF", "關閉雙倒數")
+                    or localized("EAM_FLOW_BUTTON_DUAL_COUNTDOWN", "雙倒數診斷")
             )
             if rebuilt == false and rebuildReason == "nativeReloadRequired" then
                 setStatus(text("EAM_FLOW_DUAL_COUNTDOWN_RELOAD", "診斷設定已保存；Native 容器已達本次載入上限，請由玩家自行 /reload。"), true)
@@ -336,7 +382,7 @@ local function createFrame()
 
     local liveButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_LIVE", "真人實機回報"),
+        localized("EAM_FLOW_BUTTON_LIVE", "真人實機回報"),
         140,
         "LEFT",
         closeButton,
@@ -353,7 +399,7 @@ local function createFrame()
     local unitPowerButton
     unitPowerButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_UNIT_POWER", "UnitPower 能力"),
+        localized("EAM_FLOW_BUTTON_UNIT_POWER", "UnitPower 能力"),
         150,
         "LEFT",
         liveButton,
@@ -369,7 +415,7 @@ local function createFrame()
             local ok, report, reportJSON
             if probe.isActive() then
                 ok, report, reportJSON = probe.stop()
-                unitPowerButton:SetText(text("EAM_FLOW_BUTTON_UNIT_POWER", "UnitPower 能力"))
+                setWidgetText(unitPowerButton, localized("EAM_FLOW_BUTTON_UNIT_POWER", "UnitPower 能力"))
             else
                 local validationEnvironment = EAM.Debug.ValidationEnvironment
                 if not validationEnvironment
@@ -390,7 +436,7 @@ local function createFrame()
                 end
                 ok, report, reportJSON = probe.start()
                 if ok then
-                    unitPowerButton:SetText(text("EAM_FLOW_BUTTON_UNIT_POWER_STOP", "停止並產生報告"))
+                    setWidgetText(unitPowerButton, localized("EAM_FLOW_BUTTON_UNIT_POWER_STOP", "停止並產生報告"))
                 end
             end
             if not ok then
@@ -418,7 +464,7 @@ local function createFrame()
     local svgButton
     svgButton = createButton(
         frame,
-        text("EAM_FLOW_BUTTON_SVG", "SVG 能力"),
+        localized("EAM_FLOW_BUTTON_SVG", "SVG 能力"),
         140,
         "LEFT",
         unitPowerButton,
@@ -434,7 +480,7 @@ local function createFrame()
             local ok, report, reportJSON
             if probe.isActive() then
                 ok, report, reportJSON = probe.stop()
-                svgButton:SetText(text("EAM_FLOW_BUTTON_SVG", "SVG 能力"))
+                setWidgetText(svgButton, localized("EAM_FLOW_BUTTON_SVG", "SVG 能力"))
             else
                 local validationEnvironment = EAM.Debug.ValidationEnvironment
                 if not validationEnvironment
@@ -455,7 +501,7 @@ local function createFrame()
                 end
                 ok, report, reportJSON = probe.start()
                 if ok then
-                    svgButton:SetText(text("EAM_FLOW_BUTTON_SVG_STOP", "停止 SVG 測試"))
+                    setWidgetText(svgButton, localized("EAM_FLOW_BUTTON_SVG_STOP", "停止 SVG 測試"))
                 end
             end
             if not ok then

@@ -19,6 +19,8 @@ local Mock = {
     metaDown = false,
     nextSoundID = 1,
     activeSounds = {},
+    auraSoundAddMode = "success",
+    auraSoundRemoveMode = "success",
     tooltipPostCalls = {},
     macroActions = {},
     macroSpells = {},
@@ -52,11 +54,13 @@ local function resetTrace()
         slotAdds = 0,
         groupAdds = 0,
         groupLayouts = 0,
+        flowPaddingCalls = 0,
         initializedButtons = 0,
         pandemicRegionAdds = 0,
         dispelTextureAdds = 0,
         addAuraSoundCalls = 0,
         removeAuraSoundCalls = 0,
+        auraSoundCalls = {},
         tooltipPostCallRegistrations = 0,
         tooltipEmits = 0,
         tooltipLines = 0,
@@ -91,6 +95,7 @@ local function resetTrace()
         svgVectorCreates = 0,
         svgSetCalls = 0,
         svgClearCalls = 0,
+        svgTextureIntrospectionCalls = 0,
         gameplayAutomationCalls = 0,
     }
 end
@@ -221,11 +226,18 @@ function regionMethods:ClearSVG()
 end
 
 function regionMethods:HasSVG()
+    if self.regionType == "Texture" then
+        Mock.trace.svgTextureIntrospectionCalls = Mock.trace.svgTextureIntrospectionCalls + 1
+    end
     return rawget(self, "svgAsset") ~= nil
 end
 
 function regionMethods:GetSVGFileID()
-    return rawget(self, "svgAsset") and 700001 or 0
+    if self.regionType == "Texture" then
+        Mock.trace.svgTextureIntrospectionCalls = Mock.trace.svgTextureIntrospectionCalls + 1
+    end
+    -- PTR 69189 可顯示 addon-local SVG，但 GetSVGFileID() 回傳 0。
+    return 0
 end
 
 local function createRegion(owner, regionType)
@@ -235,6 +247,14 @@ local function createRegion(owner, regionType)
         shown = true,
     }, {
         __index = function(_, key)
+            if key == "SetSVG" or key == "ClearSVG" or key == "HasSVG" or key == "GetSVGFileID" then
+                if regionType == "VectorGraphics"
+                    or (regionType == "Texture" and (key == "SetSVG" or key == "ClearSVG"))
+                then
+                    return regionMethods[key]
+                end
+                return nil
+            end
             local method = regionMethods[key]
             if method then
                 return method
@@ -447,6 +467,12 @@ function auraContainerMethods:SetAuraGroupLayout(key, layout)
     assert(type(key) == "string" and type(layout) == "table", "group layout incomplete")
 end
 
+function auraContainerMethods:SetFlowLayoutPadding(left, right, top, bottom)
+    countMutation()
+    Mock.trace.flowPaddingCalls = Mock.trace.flowPaddingCalls + 1
+    self.flowPadding = { left, right, top, bottom }
+end
+
 function auraContainerMethods:SetSize()
     countMutation()
 end
@@ -606,7 +632,7 @@ local function createGenericFrame(frameType, frameName)
         "SetAllPoints", "SetTexCoord", "SetPoint", "ClearAllPoints", "SetSize", "SetFont",
         "SetEnabled", "SetMouseMotionEnabled", "SetFrameStrata", "SetToplevel",
         "SetClampedToScreen", "EnableMouse", "SetBackdrop", "SetJustifyH", "SetJustifyV",
-        "SetHeight", "SetAutoFocus", "SetNumeric", "SetMaxLetters", "SetBackdropColor",
+        "SetHeight", "SetAutoFocus", "SetNumeric", "SetMaxLetters", "SetBackdropColor", "SetBackdropBorderColor", "SetTextColor",
         "SetStatusBarTexture", "SetStatusBarColor",
     }
     for index = 1, #noOperationMethods do
@@ -700,6 +726,8 @@ function Mock.install(interfaceVersion)
     Mock.metaDown = false
     Mock.nextSoundID = 1
     Mock.activeSounds = {}
+    Mock.auraSoundAddMode = "success"
+    Mock.auraSoundRemoveMode = "success"
     Mock.tooltipPostCalls = {}
     Mock.macroActions = {}
     Mock.macroSpells = {}
@@ -1047,18 +1075,60 @@ function Mock.install(interfaceVersion)
             Mock.trace.auraGetterCalls = Mock.trace.auraGetterCalls + 1
             error("12.1 native path called legacy aura getter")
         end,
-        AddAuraSound = function(_, info)
+        AddAuraSound = function(trigger, info)
+            assert(
+                trigger == Enum.UnitAuraSoundTrigger.Added
+                    or trigger == Enum.UnitAuraSoundTrigger.ApplicationsIncreased
+                    or trigger == Enum.UnitAuraSoundTrigger.Removed,
+                "known AuraSound trigger required"
+            )
             assert(type(info) == "table", "sound info required")
+            assert(info.unitToken == "player" or info.unitToken == "target", "known unit token required")
+            assert(
+                type(info.spellID) == "number" and info.spellID > 0 and info.spellID % 1 == 0,
+                "positive integer spellID required"
+            )
+            local hasFileID = type(info.soundFileID) == "number"
+                and info.soundFileID > 0
+                and info.soundFileID % 1 == 0
+            local hasFileName = type(info.soundFileName) == "string" and info.soundFileName ~= ""
+            assert(hasFileID ~= hasFileName, "exactly one AuraSound asset required")
+            assert(
+                info.outputChannel == nil
+                    or (type(info.outputChannel) == "string" and info.outputChannel ~= ""),
+                "outputChannel must be a non-empty string"
+            )
+
+            local call = {
+                trigger = trigger,
+                info = {
+                    unitToken = info.unitToken,
+                    spellID = info.spellID,
+                    soundFileID = info.soundFileID,
+                    soundFileName = info.soundFileName,
+                    outputChannel = info.outputChannel,
+                },
+            }
+            Mock.trace.addAuraSoundCalls = Mock.trace.addAuraSoundCalls + 1
+            Mock.trace.auraSoundCalls[#Mock.trace.auraSoundCalls + 1] = call
+            if Mock.auraSoundAddMode == "throw" then
+                error("mock AddAuraSound failure")
+            elseif Mock.auraSoundAddMode == "returnNil" then
+                return nil
+            end
+
             local registrationID = Mock.nextSoundID
             Mock.nextSoundID = registrationID + 1
-            Mock.activeSounds[registrationID] = true
-            Mock.trace.addAuraSoundCalls = Mock.trace.addAuraSoundCalls + 1
+            Mock.activeSounds[registrationID] = call
             return registrationID
         end,
         RemoveAuraSound = function(registrationID)
+            Mock.trace.removeAuraSoundCalls = Mock.trace.removeAuraSoundCalls + 1
+            if Mock.auraSoundRemoveMode == "throw" then
+                error("mock RemoveAuraSound failure")
+            end
             assert(Mock.activeSounds[registrationID], "unknown sound registration")
             Mock.activeSounds[registrationID] = nil
-            Mock.trace.removeAuraSoundCalls = Mock.trace.removeAuraSoundCalls + 1
         end,
     }
     UIParent = createGenericFrame("Frame", "UIParent")
@@ -1311,6 +1381,28 @@ function Mock.createSecretKeyGuardedTable()
 end
 
 function Mock.resetTrace()
+    resetTrace()
+end
+
+function Mock.setAuraSoundModes(addMode, removeMode)
+    local validModes = {
+        success = true,
+        returnNil = true,
+        throw = true,
+    }
+    addMode = addMode or "success"
+    removeMode = removeMode or "success"
+    assert(validModes[addMode], "invalid AuraSound add mode")
+    assert(validModes[removeMode], "invalid AuraSound remove mode")
+    Mock.auraSoundAddMode = addMode
+    Mock.auraSoundRemoveMode = removeMode
+end
+
+function Mock.resetAuraSoundScenario()
+    Mock.nextSoundID = 1
+    Mock.activeSounds = {}
+    Mock.auraSoundAddMode = "success"
+    Mock.auraSoundRemoveMode = "success"
     resetTrace()
 end
 

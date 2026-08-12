@@ -3,7 +3,7 @@
 
 ## 文件狀態
 
-- 實作基準：Retail 12.1.0 build 68914。
+- 初始實作基準：Retail 12.1.0 build 68914；AuraSound 現行固定查證更新至 build 69273。
 - 程式狀態：Native backend、Legacy 隔離、流程 mock 與報告入口已完成。
 - 驗證狀態：Lua 5.1 離線流程與初始化期 mutation mock 已通過；尚未在 `_ptr_` 進行 Aura 顯示、聲音、Forbidden Aspect、taint 與戰鬥行為簽收。
 - 支援範圍：Retail only；Classic 不在本專案範圍。
@@ -79,7 +79,7 @@ Readable AuraData -> AuraService -> AlertManager -> Renderer -> IconPool
 - 每個 unit 的第一條規則編譯為 Slot；其餘相同 unit/filter/caster 規則合併為 Group。
 - 未指定 filter 時，player 推導為 `HELPFUL`、target 推導為 `HARMFUL`，並記錄 `auraFilterInferred` limitation。
 - Secret identity filter 只保證友方 helpful 或敵方 harmful；反向極性標記 `secretIdentityFilterMayBeRejected`，須 PTR 驗證。
-- fingerprint 只包含 schema、backend、layout、實際規則 key/filter 與必要 sound 設定，不包含無關的全域 revision；實際容器輸入未變更時不重建。
+- `containerFingerprint` 只包含 schema、backend、layout 與實際規則 key/filter；`soundFingerprint` 另含 unit、SpellID、trigger、asset、channel 與 master 狀態。純音效變更不得重建容器。
 
 ## 戰鬥生命週期
 
@@ -99,12 +99,12 @@ stateDiagram-v2
 
 - 全域 `showSound` 在 Native backend 預設只註冊 `Added`，沿用既有音效選單資產。
 - 每條 Aura alert 可明確提供 `added`、`applicationsIncreased`、`removed` 設定。
-- 相同 fingerprint 不重複註冊；刪除或重建前精確呼叫 `RemoveAuraSound`。
+- 相同 sound fingerprint 不重複註冊；先完整建立 candidate registry 才交換 active registry，Add 失敗保留舊註冊，Remove 失敗保留 retired ID 供重試。
 - 離線測試只證明註冊 ID 生命週期，不證明遊戲實際播放次數或音量通道。
 
-## SavedVariables v4
+## SavedVariables v5
 
-- `schemaVersion = 4`；Aura v2 設定仍由既有 migration 保留，v4 另加入地面效果 duration mode 與顯示設定。
+- `schemaVersion = 5`；alert lists 依 active class profile 隔離，AuraSound 為 v5 上的 additive 純資料，不保存 runtime registration ID。
 - v1 遷移前保存 `migrationBackups.auraSchemaV1` 的可序列化 Aura 設定。
 - 遷移中途失敗會還原遷移前可序列化 DB，並寫入靜態 warning code。
 - Alert 可保存 filter、顯示偏好與 sound 純資料；不得保存 Frame、ScriptObject、DurationObject 或 AuraContainer。
@@ -151,3 +151,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.p
 - `showAlways` 與 stealable filter 由 compiler 白名單化，避免 SavedVariables 任意字串穿透。Pandemic／Dispel capability、實際綁定數與 Blizzard 管理的 Pandemic 更新責任會出現在 renderer snapshot。
 - 設定滑桿與文字位置不再自動重建 Native Container；先標記 `settingsDirty`，由使用者按「套用」在合法窗口重建，避免反覆建立 Container。
 - 停用容器的清除行為已在 strict mock 驗證，仍需 PTR 12.1 觀察 AuraButton／ItemEnchantment 框架保留與重啟生命週期。
+
+## 2026-08-13 AuraSound 69273 補充
+
+- Aura 細部設定提供共用素材及 Added、ApplicationsIncreased、Removed 三開關；全域 `showSound` 是 master gate。
+- Native registry 與 AuraContainer 視覺生命週期分離；純聲音變更只同步 sound registry，不消耗 18 容器配額。
+- 公開 sound 結構只能比對 unit+SpellID，無法表達 `fromPlayer`／HELPFUL／HARMFUL；compiler 留下 limitation，PTR 必須觀察 over-fire。
+- 停用 AuraContainer 會清 AuraButton 顯示，不代表清除 AuraSound registration；EAM 必須顯式 Remove。
+- 12.0.7 控制項顯示 unsupported 且不得呼叫 12.1 API；不以 private-aura 舊 API冒充完整三 trigger。

@@ -510,10 +510,38 @@
 <h2 id="2026-08-09svg">2026-08-09：SVG 與全覆蓋邊框限制</h2>
 <ul>
 <li>目前只建立能力探針與封裝管線，尚未把正式 Pandemic、Dispel 或 Glow 視覺換成 SVG。</li>
-<li>VectorGraphics 與 Texture 的 SetSVG secret-argument policy 不相同；兩者不得共用未審查的操作假設。所有 frame／region 建立仍限制在非戰鬥初始化。</li>
+<li>PTR 69189 固定契約是非對稱的：VectorGraphics 提供 SetSVG／ClearSVG／HasSVG／GetSVGFileID；Texture 只提供 SetSVG／ClearSVG。兩者的 Secret argument policy 也不同，不得共用 introspection 或安全假設。</li>
+<li>Alpha 3 實機報告已確認兩格 SetSVG accepted 且圖樣目視通過；VectorGraphics 的 addon-local <code>GetSVGFileID()</code> 回傳 0 不表示渲染失敗。Texture 缺少 HasSVG／GetSVGFileID 是預期能力，不是缺陷。</li>
+<li>Texture 的 <code>clearReload=pass</code> 只能證明 ClearSVG 與重新 SetSVG 呼叫成功，再由最終圖樣目視確認 reload；因沒有 HasSVG，清除瞬間的像素狀態仍不能由 Lua 自動讀回。</li>
 <li>12.0.7 可安全回報 unsupported；不得為了相容而呼叫不存在的方法。</li>
 <li>3px 實色邊框已具幾何離線斷言，但不同 UI scale、圖示尺寸與 PTR Native AuraButton 的最終目視仍待玩家截圖簽收。</li>
-<li>SVG ZIP 存在只證明素材被封裝；不證明客戶端解析、顯示、clear/reload 或戰鬥邊界已通過。</li>
+<li>SVG ZIP 存在只證明素材被封裝；不證明戰鬥邊界、縮放品質或正式 Pandemic／Dispel 整合已通過。</li>
+</ul>
+<h2 id="2026-08-12">2026-08-12：動態語系切換邊界</h2>
+<ul>
+<li>新程式載入後，已註冊的 EAM 自有固定文字與複合狀態會在選擇語系時立即刷新；不需為套用語系呼叫 <code>/reload</code>。剛更新磁碟上的 Lua 檔時仍需一次 <code>/reload</code> 載入新程式，之後的 <code>/reload</code> 只驗證保存或落盤。</li>
+<li><code>Auto Detect</code> 強制以英文顯示，無法由翻譯檔改名；它代表客戶端 <code>GetLocale()</code>，因此 zhTW 客戶端選它後維持繁體中文是正確結果，不是切換失敗。</li>
+<li>Blizzard UI、其他插件、客戶端回傳的法術／物品／專精名稱，以及已經輸出的聊天／錯誤歷史不會被 EAM 改寫；後續 EAM 訊息才使用目前 <code>EAM.L</code>。</li>
+<li>真人簽收的 37 案 <code>CASE_PROCEDURES</code> 是版本化繁中證據文本，不屬 UI locale；案例名稱、狀態與面板 chrome 會切換，但程序全文維持繁中，避免翻譯差異改變簽收條件。</li>
+<li><code>ruRU</code> 已與 enUS key 對齊；zhCN／koKR 尚有歷史 Live case 字串以 enUS fallback 補底，這不表示俄文以外的翻譯完整度已達 100%。</li>
+<li>語系 catalog 只處理 <code>L.*</code>。任何新建 EAM 長生命週期 widget 若仍直接快取靜態字串而未 bind／refresh，視為實作缺陷；池化 widget 則必須在回收時 unbind。</li>
+</ul>
+<h2 id="2026-08-13aurasound">2026-08-13：AuraSound 限制</h2>
+<ul>
+<li>PTR 12.1 <code>UnitAuraSoundInfo</code> 只有 unit+SpellID 與音檔資料，沒有 caster、<code>fromPlayer</code> 或 <code>auraFilter</code>；同 SpellID 的其他來源可能 over-fire，必須 PTR 人工觀察。</li>
+<li><code>RemoveAuraSound</code> 可取消後續觸發，但生成文件沒有保證會停止已開始播放的聲音；EAM 不把 registration ID 傳給 <code>StopSound</code>。</li>
+<li>UI 目前以一個共用素材套用到勾選的三種 trigger，沒有逐 trigger channel 編輯；重新儲存會統一為目前素材。</li>
+<li>正規化採 <code>soundFileID</code> 優先；兩音源同時提供時的遊戲原生優先權、無效音源回傳與所有合法 channel 仍需 PTR 驗證。</li>
+<li>12.0.7 的 private-aura applied API 不能等價替代一般 Aura 三 trigger；本輪採 capability 降級。</li>
+<li>離線 mock 只證明 payload、生命週期、回滾與零容器重建，不證明實際播放、音訊裝置、驅散或戰鬥行為。</li>
+</ul>
+<h2 id="2026-08-13-alpha-4">2026-08-13 Alpha 4 限制與未完成項目</h2>
+<ul>
+<li>八個模組開關是 runtime gate，不是卸載機制；為避免重複註冊，服務事件仍可能存在，但停用後不得讀取其熱路徑 API，且要清理既有狀態。</li>
+<li>v4 舊根層清單可能混有多個職業，缺乏可靠 provenance；遷移只歸屬當時合法 active class，其他資料保留 backup／unassignedLegacy，不會自動拆分。</li>
+<li>正式程式尚未提供 JSON／Base64 profile 分享與套用 codec；目前不可把 debug JSON 貼回遊戲，也不可使用 LegacyReference 的 loadstring。</li>
+<li>模組面板目前管理八個功能模組；debug 面板、小地圖顯示與全域 showFrame 不是本輪新增的獨立 module toggle。</li>
+<li>Alpha 4 的模組與 profile 回歸仍是離線證據；PTR、XPTR、Retail 需由玩家實機確認戰鬥延後、/reload 持久化與跨職業隔離。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

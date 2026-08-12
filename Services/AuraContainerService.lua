@@ -88,8 +88,26 @@ local function buildCommonOptions(rule, container, slotIndex)
     return options
 end
 
+local function setFlowLayoutPadding(container, left, right, top, bottom)
+    local ok, method = pcall(function()
+        return container.SetFlowLayoutPadding
+    end)
+    if not ok or type(method) ~= "function" then
+        return false
+    end
+    local applied = pcall(method, container, left, right, top, bottom)
+    return applied == true
+end
+
 local function configureContainer(container, unit, plan)
     container:SetEnabled(false)
+    local moduleController = EAM.Modules and EAM.Modules.ModuleController
+    if moduleController and not moduleController.isAuraUnitEnabled(unit) then
+        if container.Hide then
+            container:Hide()
+        end
+        return
+    end
     container:SetUnit(unit)
 
     local layout = nil
@@ -109,6 +127,9 @@ local function configureContainer(container, unit, plan)
             layout = rule.layout
         end
     end
+
+    local slotPadding = slotIndex * ((plan.layout and plan.layout.elementWidth or 40) + (plan.layout and plan.layout.elementSpacing or 6))
+    setFlowLayoutPadding(container, slotPadding, 0, 0, 0)
 
     layout = layout or {
         elementWidth = EAM.db and EAM.db.config and EAM.db.config.iconSize or 40,
@@ -200,7 +221,8 @@ function AuraContainerService.requestRebuild(reason)
         return false, capability.limitationReason
     end
 
-    local plan = EAM.Managers.AuraRuleCompiler.compile(EAM.db, capability.getSnapshot())
+    local capabilitySnapshot = capability.getSnapshot()
+    local plan = EAM.Managers.AuraRuleCompiler.compile(EAM.db, capabilitySnapshot)
     if AuraContainerService.lastPlan
         and AuraContainerService.lastPlan.fingerprint == plan.fingerprint
         and AuraContainerService.current then
@@ -209,6 +231,19 @@ function AuraContainerService.requestRebuild(reason)
         AuraContainerService.pendingRevision = nil
         AuraContainerService.reloadRequired = false
         AuraContainerService.settingsDirty = false
+        AuraContainerService.lastPlan = plan
+        local soundService = EAM.Services.AuraSoundService
+        if soundService then
+            local soundOK, soundReason = soundService.sync(plan, capabilitySnapshot)
+            if not soundOK then
+                AuraContainerService.lastReason = soundReason or "auraSoundSyncFailed"
+                return false, AuraContainerService.lastReason
+            end
+            if soundReason ~= "unchanged" then
+                AuraContainerService.lastReason = soundReason
+                return true, soundReason
+            end
+        end
         AuraContainerService.lastReason = "unchanged"
         return true, "unchanged"
     end
@@ -245,9 +280,22 @@ function AuraContainerService.requestRebuild(reason)
     AuraContainerService.lastReason = reason or "rebuilt"
 
     if EAM.Services.AuraSoundService then
-        EAM.Services.AuraSoundService.sync(plan, capability.getSnapshot())
+        local soundOK, soundReason = EAM.Services.AuraSoundService.sync(plan, capabilitySnapshot)
+        if not soundOK then
+            AuraContainerService.lastReason = soundReason or "auraSoundSyncFailed"
+            return false, AuraContainerService.lastReason
+        end
     end
     return true, "rebuilt"
+end
+
+function AuraContainerService.onModuleToggle(enabled, unit, reason)
+    if not AuraContainerService.initialized then
+        return true, "notInitialized"
+    end
+    return AuraContainerService.requestRebuild(
+        "MODULE_TOGGLE_" .. tostring(unit) .. "_" .. tostring(reason or enabled)
+    )
 end
 
 function AuraContainerService.markSettingsDirty(reason)

@@ -25,6 +25,7 @@ Module: Managers/AlertManager
 local _, EAM = ...
 local api = EAM.API
 local Util = EAM.Util
+local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 
 local AlertManager = {
     pendingUpdates = {},
@@ -52,7 +53,11 @@ local function flushUpdates()
         local state = update.state
         local frameName = update.frameName
         
-        Renderer.render(state, frameName)
+        local frameEnabled = not ModuleController
+            or ModuleController.isFrameEnabled(frameName)
+        if not state.shown or frameEnabled then
+            Renderer.render(state, frameName)
+        end
         
         -- 若此告警已隱藏（shown == false），且已完成渲染，多型調用其 releaseFunc 安全回收 state Table
         if not state.shown and state.releaseFunc then
@@ -139,6 +144,11 @@ end
 function AlertManager.onAlertStateChanged(_, state, frameName)
     if not state or not Util.isSafeTableKey(state.id) then
         return
+    end
+    if state.shown and ModuleController
+        and not ModuleController.isFrameEnabled(frameName)
+    then
+        return false, "moduleDisabled"
     end
 
     -- 被動裝飾：若此 spellID 當前正處於發光狀態，自動套用發光屬性

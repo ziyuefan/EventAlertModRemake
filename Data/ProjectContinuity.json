@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-08-09.2",
-  "updatedAt": "2026-08-09",
+  "snapshotVersion": "2026-08-13.1",
+  "updatedAt": "2026-08-13",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,18 +22,18 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "完成 Alpha 3 候選：以 3px 全覆蓋七色邊框取代透明留白材質，加入 player-operated SVG A/B 能力探針與遊戲內持久化報告匯入，並等待 PTR／XPTR／Retail 真人簽收。",
+    "objective": "發布 Alpha 4：整合八個功能模組開關、職業 profile 隔離與有限職業查詢，保留 AuraSound、主題、語系、SVG、UnitPower 與 37 案真人矩陣，並等待 PTR／XPTR／Retail 真人簽收。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 54,
-      "passed": 54,
+      "total": 61,
+      "passed": 61,
       "failed": 0,
       "skipped": 0,
       "pending": 0
     },
     "liveValidation": {
-      "matrixVersion": "2026-08-08.1",
-      "required": 34,
+      "matrixVersion": "2026-08-13.1",
+      "required": 37,
       "ptr": "pending",
       "xptr": "pending",
       "retail": "pending"
@@ -84,7 +84,7 @@
     },
     {
       "id": "FACT-20260801-005",
-      "statement": "真人實機矩陣已擴充為 34 案，但三個客戶端目前均未完成簽收。",
+      "statement": "真人實機矩陣已擴充為 37 案，但三個客戶端目前均未完成簽收。",
       "state": "confirmed",
       "provenance": "project-state",
       "environment": "cross-client",
@@ -217,7 +217,7 @@
     },
     {
       "id": "FACT-20260809-005",
-      "statement": "PTR 12.1.0.69189 生成文件提供 Frame:CreateVectorGraphics、VectorGraphics:SetSVG/ClearSVG/HasSVG/GetSVGFileID 與 Texture:SetSVG；EAM 已建立 VectorGraphics／Texture A/B 探針且不輸出 raw file ID。",
+      "statement": "PTR 12.1.0.69189 固定生成文件與 Warcraft Wiki VectorGraphics 知識頁確認：VectorGraphics 提供 SetSVG/ClearSVG/HasSVG/GetSVGFileID；Texture 固定契約只提供 SetSVG/ClearSVG。",
       "state": "confirmed",
       "provenance": "api-contract",
       "environment": "PTR_12_1",
@@ -229,14 +229,169 @@
     },
     {
       "id": "FACT-20260809-006",
-      "statement": "3px 邊框幾何與 SVG set、clear、reload 生命週期已納入 Lua strict mock、Flow 與 Validation Contracts；離線通過不得升格為 PTR 實機通過。",
+      "statement": "3px 邊框幾何與非對稱 SVG lifecycle 已納入 strict mock、Flow 與 Validation Contracts；Texture introspection 呼叫固定為零，離線通過不得升格為 PTR 實機通過。",
       "state": "confirmed",
       "provenance": "offline-test",
       "environment": "offline-mock",
       "evidenceRefs": [
         "UI/AlertBorderStyles.lua",
         "Tests/Mocks/WoW121AuraMock.lua",
-        "Tools/Test-ValidationContracts.ps1"
+        "Tools/Test-ValidationContracts.ps1",
+        "Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json"
+      ]
+    },
+    {
+      "id": "FACT-20260809-007",
+      "statement": "PTR 69189 Alpha 3 SVG 報告確認 VectorGraphics 與 Texture 的 SetSVG 均 accepted 且圖樣目視 pass；Vector fileIDClass=zero 可正常渲染，Texture Has/Get unavailable 符合固定 API，但舊探針未執行 Texture clear/reload，整份仍不能升格為完整 pass。",
+      "state": "confirmed",
+      "provenance": "live-report",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json",
+        "issue:EAM-20260809-PTR69189-SVG-ASYMMETRY"
+      ]
+    },
+    {
+      "id": "FACT-20260812-001",
+      "statement": "語系 catalog 現已包含 enUS、zhTW、zhCN、koKR、ruRU；ruRU 與 enUS 的 L.* key 完整對齊，Auto Detect 為固定英文且預設選項；穩定 EAM.L identity 與 UI binding／refresh registry 可在不重新載入時即時切換。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "project",
+      "evidenceRefs": [
+        "Locale/Common.lua",
+        "Core/Main.lua",
+        "Debug/FlowTestRunner.lua",
+        "TestResults/EAM_FlowValidation_all_20260812_234217.json",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-LOCALE-SELECTOR"
+      ]
+    },
+    {
+      "id": "FACT-20260812-002",
+      "statement": "小地圖按鈕已改為專案自有 SVG 加明確 fallback；EAM 自有視窗已提供 EAM、FF7、Windows XP、Borland、DOS CRT、macOS Aqua 六種可保存主題，戰鬥中切換延後套用。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "project",
+      "evidenceRefs": [
+        "Media/SVG/eam-minimap.svg",
+        "UI/Options.lua",
+        "UI/Theme.lua",
+        "Docs/03_STATE_SCHEMA.md",
+        "issue:EAM-20260812-MINIMAP-SVG-THEME"
+      ]
+    },
+    {
+      "id": "FACT-20260812-003",
+      "statement": "PTR 12.1 build 69273 的 UnitPower capability report 中，primary 是 Secret、selected 是 safe-number，StatusBar 與 radial sink 均 accepted；兩案 visualObservation 都是 pending，報告 status=incomplete。",
+      "state": "confirmed",
+      "provenance": "user-observed",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "issue:EAM-20260812-PTR69273-UNITPOWER-PENDING",
+        "Debug/UnitPowerCapabilityProbe.lua",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "FACT-20260812-004",
+      "statement": "同一 PTR build 69273 的完整 Flow report 只有 boundary.safe_scalar 失敗，summary 為 17 passed、1 failed、36 skipped；這是 helper 可用性問題，不能升格為 UnitPower 或完整流程 pass。",
+      "state": "confirmed",
+      "provenance": "user-observed",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "issue:EAM-20260812-PTR69273-FLOW-BOUNDARY-HELPERS",
+        "Debug/FlowTestRunner.lua",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "FACT-20260812-005",
+      "statement": "PTR 設定快照中 target Aura 1079 的 priority=20；AuraRuleCompiler 已改為 priority 1..20 數字越大越前，同 priority 才以 SpellID／alertID 穩定排序。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "Managers/AuraRuleCompiler.lua",
+        "issue:EAM-20260812-AURA-PRIORITY-1079",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "FACT-20260812-006",
+      "statement": "EAM 自有 UIPanelButtonTemplate 與下拉按鈕已接入 Theme.applyButton／registerButton，六套主題提供 normal、highlight、pushed、disabled 與文字色；不改動 Blizzard Action Bar。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "project",
+      "evidenceRefs": [
+        "UI/Theme.lua",
+        "UI/Options.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-THEME-BUTTONS"
+      ]
+    },
+    {
+      "id": "FACT-20260812-007",
+      "statement": "ClassPowerService 的 Druid 候選順序已改為 Energy、Combo Points、Lunar Power；Energy value 若為 Secret 會 fail-closed fallback，安全數字時才成為 active。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "project",
+      "evidenceRefs": [
+        "Services/ClassPowerService.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-DRUID-ENERGY"
+      ]
+    },
+    {
+      "id": "FACT-20260812-008",
+      "statement": "新增 EAM 按鈕主題的 getter capability guard 已修正 strict Flow mock 的未知方法錯誤；缺少 texture getter 的 widget 會安全略過，正式 WoW 有方法時仍套用 palette。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "project",
+      "evidenceRefs": [
+        "UI/Theme.lua",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "TestResults/EAM_FlowValidation_all_20260812_192557.json",
+        "issue:EAM-20260812-THEME-MOCK-GETTER"
+      ]
+    },
+    {
+      "id": "FACT-20260813-001",
+      "statement": "PTR 12.1 build 69273 的 C_UnitAuras AuraSound 契約支援 Added、ApplicationsIncreased、Removed 三種觸發；UnitAuraSoundInfo 只接受 unitToken、spellID、soundFileName／soundFileID 與 outputChannel，沒有 soundKitID、caster 或 auraFilter 欄位。",
+      "state": "confirmed",
+      "provenance": "api-contract",
+      "environment": "PTR_12_1",
+      "evidenceRefs": [
+        "Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md",
+        "Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md"
+      ]
+    },
+    {
+      "id": "FACT-20260813-002",
+      "statement": "AuraSound 細部設定、全域 master gate、音效／容器指紋分離、交易式註冊失敗回滾與 37 案矩陣已完成離線驗證；Lua 54/54、Flow 61/61、契約 355/355，不能升格為 PTR／XPTR／Retail 實機通過。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "offline-mock",
+      "evidenceRefs": [
+        "TestResults/EAM_FlowValidation_all_20260813_013945.json",
+        "Tools/Test-ValidationContracts.ps1",
+        "Debug/FlowTestRunner.lua",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "Data/LiveValidationMatrix.json"
+      ]
+    },
+    {
+      "id": "FACT-20260813-003",
+      "statement": "Alpha 4 已整合八個功能模組開關、schema v5 職業 profile 隔離與目前職業有限查詢；JSON／Base64 profile 分享 codec 尚未進入正式 runtime。",
+      "state": "confirmed",
+      "provenance": "project-state",
+      "environment": "project",
+      "evidenceRefs": [
+        "EventAlertMod.toc",
+        "Core/ModuleController.lua",
+        "UI/ModulePanel.lua",
+        "Services/LegacyDiscoveryService.lua",
+        "Core/persistent-config.lua",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
       ]
     }
   ],
@@ -258,7 +413,7 @@
         "FACT-20260801-003"
       ],
       "confidence": "medium",
-      "validationNeeded": "PTR 12.1 依 34 案矩陣記錄目標切換、施法者、有限或永久及層數轉換。"
+      "validationNeeded": "PTR 12.1 依 37 案矩陣記錄目標切換、施法者、有限或永久及層數轉換。"
     }
   ],
   "workItems": [
@@ -484,9 +639,10 @@
       ],
       "acceptanceCriteria": [
         "邊框完整包覆圖示並固定外擴 3px",
-        "VectorGraphics 與 Texture 分別完成 SetSVG、ClearSVG、reload",
+        "VectorGraphics 驗證 Set/Clear/Has/Get，addon-local fileID=0 不單獨阻擋",
+        "Texture 只驗證 Set/Clear，Has/Get unavailable 不產生假 warning",
         "報告保存客戶端身分且不輸出 raw file ID",
-        "Release ZIP 包含 SVG 素材"
+        "下一個 Alpha Release ZIP 包含 SVG 素材與修正版探針"
       ],
       "validation": {
         "offline": "pass",
@@ -497,7 +653,356 @@
       "evidenceRefs": [
         "Debug/FlowTestRunner.lua",
         "Schemas/EAM_SVGCapabilityReport.schema.json",
-        "issue:EAM-20260809-ALPHA3-SVG-BORDER"
+        "Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json",
+        "issue:EAM-20260809-ALPHA3-SVG-BORDER",
+        "issue:EAM-20260809-PTR69189-SVG-ASYMMETRY"
+      ]
+    },
+    {
+      "id": "WORK-20260809-003",
+      "issueId": "EAM-20260809-PTR69189-SVG-ASYMMETRY",
+      "title": "PTR 69189 SVG 非對稱契約修正",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Debug/SVGCapabilityProbe.lua",
+        "Schemas/EAM_SVGCapabilityReport.schema.json",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "Tools/Import-EAMFlowReport.ps1",
+        "Tools/Test-ValidationContracts.ps1"
+      ],
+      "acceptanceCriteria": [
+        "Vector addon-local fileID zero 不產生假失敗",
+        "Texture Has/Get unavailable 不產生 warning",
+        "Texture ClearSVG 與重新 SetSVG 實際執行",
+        "原始 PTR incomplete 報告保留且不冒充 pass",
+        "合成 pass 與三種 mutation rejection 通過"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "not-applicable",
+        "retail": "not-applicable"
+      },
+      "evidenceRefs": [
+        "Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json",
+        "Debug/FlowTestRunner.lua",
+        "issue:EAM-20260809-PTR69189-SVG-ASYMMETRY"
+      ]
+    },
+    {
+      "id": "WORK-20260812-001",
+      "issueId": "EAM-20260812-LOCALE-SELECTOR",
+      "title": "俄文、Auto Detect 與動態語系切換",
+      "severity": "P2",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Locale/Common.lua",
+        "Locale/enUS.lua",
+        "Locale/zhTW.lua",
+        "Locale/zhCN.lua",
+        "Locale/koKR.lua",
+        "Locale/ruRU.lua",
+        "Core/Main.lua",
+        "UI/Options.lua",
+        "UI/AboutPanel.lua",
+        "UI/ModulePanel.lua",
+        "UI/TooltipMonitorMenu.lua",
+        "Debug/PromptExport.lua",
+        "Debug/FlowTestPanel.lua",
+        "Debug/LiveTestPanel.lua",
+        "Debug/UnitPowerCapabilityProbe.lua",
+        "Debug/SVGCapabilityProbe.lua",
+        "Debug/FlowTestRunner.lua",
+        "Tools/Test-ValidationContracts.ps1"
+      ],
+      "acceptanceCriteria": [
+        "ruRU 的 L.* key 與 enUS 完整對齊，不完整語系由 enUS fallback 補底",
+        "Auto Detect 只有一個固定英文選項且預設為 auto",
+        "語系選擇寫入 EAM_DB.config.language，重複選擇不增加 revision",
+        "EAM.L identity 在語系切換前後保持不變，已註冊 EAM 自有 UI 立即刷新",
+        "不自動 ReloadUI；/reload 只用於載入新程式、驗證保存或將設定資料寫回磁碟"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Locale/Common.lua",
+        "Core/Main.lua",
+        "UI/Options.lua",
+        "Debug/FlowTestRunner.lua",
+        "TestResults/EAM_FlowValidation_all_20260812_234217.json",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-LOCALE-SELECTOR"
+      ]
+    },
+    {
+      "id": "WORK-20260812-002",
+      "issueId": "EAM-20260812-MINIMAP-SVG-THEME",
+      "title": "小地圖 SVG fallback 與 EAM 六主題選擇器",
+      "severity": "P2",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Media/SVG/eam-minimap.svg",
+        "UI/Options.lua",
+        "UI/Theme.lua",
+        "Docs/03_STATE_SCHEMA.md",
+        "Tools/Test-ValidationContracts.ps1"
+      ],
+      "acceptanceCriteria": [
+        "小地圖 SVG 在 12.1 可由 Texture:SetSVG 載入，舊客戶端回退內建問號圖示",
+        "小地圖左鍵、右鍵、拖曳與位置保存行為不變",
+        "EAM、FF7、Windows XP、Borland C++ IDE、DOS CRT、macOS Aqua 可保存並套用於 EAM 自有視窗與按鈕",
+        "戰鬥中只保存 pending theme，戰鬥結束後才套用",
+        "AlertBorderStyles 七種語意色不受主題 palette 覆蓋"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Media/SVG/eam-minimap.svg",
+        "UI/Theme.lua",
+        "Docs/06_TEST_PLAN_RETAIL.md",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-MINIMAP-SVG-THEME"
+      ]
+    },
+    {
+      "id": "WORK-20260812-003",
+      "issueId": "EAM-20260812-PTR69273-UNITPOWER-PENDING",
+      "title": "PTR 69273 UnitPower native sink 視覺簽收",
+      "severity": "P1",
+      "status": "pending_live_validation",
+      "modules": [
+        "Debug/UnitPowerCapabilityProbe.lua",
+        "Services/ClassPowerService.lua",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ],
+      "acceptanceCriteria": [
+        "primary 與 selected 均由玩家完成 visualObservation",
+        "報告維持 rawValuesCollected=false",
+        "戰鬥中不讀取或比較 UnitPower 原值"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "issue:EAM-20260812-PTR69273-UNITPOWER-PENDING",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "WORK-20260812-004",
+      "issueId": "EAM-20260812-PTR69273-FLOW-BOUNDARY-HELPERS",
+      "title": "PTR 69273 boundary.safe_scalar helper 重跑",
+      "severity": "P1",
+      "status": "pending_live_validation",
+      "modules": [
+        "Debug/FlowTestRunner.lua",
+        "Debug/RuntimeProbe.lua",
+        "Debug/PromptExport.lua",
+        "Debug/SVGCapabilityProbe.lua"
+      ],
+      "acceptanceCriteria": [
+        "boundary.safe_scalar 不再回報 helper unavailable，或明確記錄缺少的 helper",
+        "完整 Flow 報告重算 summary 且不把 skipped 升格為 pass"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "issue:EAM-20260812-PTR69273-FLOW-BOUNDARY-HELPERS",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "WORK-20260812-005",
+      "issueId": "EAM-20260812-AURA-PRIORITY-1079",
+      "title": "Aura priority 與 native 首格排序",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Managers/AuraRuleCompiler.lua",
+        "UI/Options.lua"
+      ],
+      "acceptanceCriteria": [
+        "priority 1..20 會影響同 unit 的 native slot 順序",
+        "相同 priority 仍有穩定 SpellID／alertID tie-break",
+        "不覆寫使用者設定 priority"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Managers/AuraRuleCompiler.lua",
+        "issue:EAM-20260812-AURA-PRIORITY-1079"
+      ]
+    },
+    {
+      "id": "WORK-20260812-006",
+      "issueId": "EAM-20260812-THEME-BUTTONS",
+      "title": "六主題按鈕狀態色",
+      "severity": "P2",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "UI/Theme.lua",
+        "UI/Options.lua",
+        "UI/AboutPanel.lua",
+        "UI/TooltipMonitorMenu.lua"
+      ],
+      "acceptanceCriteria": [
+        "EAM 自有按鈕 normal、highlight、pushed、disabled 與文字色會隨主題更新",
+        "戰鬥中套用仍延後，不修改 Blizzard secure/protected frame"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "UI/Theme.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-THEME-BUTTONS"
+      ]
+    },
+    {
+      "id": "WORK-20260812-007",
+      "issueId": "EAM-20260812-DRUID-ENERGY",
+      "title": "Feral Energy 優先與安全 fallback",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Services/ClassPowerService.lua",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ],
+      "acceptanceCriteria": [
+        "Feral 優先選 Energy",
+        "Energy unsupported 時 fallback 到 Combo Points／Lunar Power",
+        "不在戰鬥中讀取或比較 Secret power"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Services/ClassPowerService.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-DRUID-ENERGY"
+      ]
+    },
+    {
+      "id": "WORK-20260812-008",
+      "issueId": "EAM-20260812-THEME-MOCK-GETTER",
+      "title": "按鈕主題 strict mock getter 邊界修復",
+      "severity": "P2",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "UI/Theme.lua",
+        "Tests/Mocks/WoW121AuraMock.lua",
+        "Docs/15_DEVELOPMENT_ISSUE_LOG.md"
+      ],
+      "acceptanceCriteria": [
+        "缺少 GetNormalTexture 等 getter 的 strict widget 不會中斷流程",
+        "正式 WoW 具備 getter 時仍套用按鈕四態與文字 palette",
+        "不透過全域 hook 或修改 Blizzard secure/protected frame"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "UI/Theme.lua",
+        "TestResults/EAM_FlowValidation_all_20260812_192557.json",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260812-THEME-MOCK-GETTER"
+      ]
+    },
+    {
+      "id": "WORK-20260813-001",
+      "issueId": "EAM-20260813-AURASOUND-DETAILS",
+      "title": "12.1 AuraSound 光環細部設定與三觸發生命週期",
+      "severity": "P1",
+      "status": "pending_live_validation",
+      "modules": [
+        "Core/persistent-config",
+        "UI/Options.lua",
+        "Managers/AuraRuleCompiler.lua",
+        "Services/AuraContainerService.lua",
+        "Services/AuraSoundService.lua",
+        "Debug/FlowTestRunner.lua",
+        "Tests/Mocks/WoW121AuraMock.lua"
+      ],
+      "acceptanceCriteria": [
+        "光環細部設定可選素材並分別啟用新增、層數增加、移除；三項皆未選時沿用全域音效",
+        "全域音效關閉時 custom 設定也不得產生 AuraSound 規則",
+        "純音效修改不得建立新的 AuraContainer 或消耗 18 個容器上限",
+        "Add 失敗保留舊註冊；Remove 失敗保留可重試 registration ID",
+        "12.0.7 控制項停用且零 12.1 AddAuraSound 呼叫",
+        "PTR 真人確認三種事件各只播放一次，並記錄 caster／auraFilter 無法由原生 API 表達的限制"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "issue:EAM-20260813-AURASOUND-DETAILS",
+        "TestResults/EAM_FlowValidation_all_20260813_013945.json",
+        "Data/LiveValidationMatrix.json"
+      ]
+    },
+    {
+      "id": "WORK-20260813-002",
+      "issueId": "EAM-20260813-ALPHA4-MODULE-PROFILES",
+      "title": "Alpha 4 模組開關、職業 profile 與有限職業查詢",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Core/ModuleController.lua",
+        "Core/persistent-config.lua",
+        "UI/ModulePanel.lua",
+        "Services/LegacyDiscoveryService.lua",
+        "Debug/FlowTestRunner.lua"
+      ],
+      "acceptanceCriteria": [
+        "八個 module key 預設啟用且停用後不讀取被關閉模組 API",
+        "v1-v5 migration 保留 v4 backup，職業 profile 互不污染",
+        "list、lookup、lookupfull、showcast 只使用 active class 安全候選",
+        "正式 Release ZIP 不包含本機 deploy、Tools、Tests、TestResults 或 backup",
+        "JSON／Base64 profile codec 明確標示為未完成，不接入舊版匯入路徑"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        "Debug/FlowTestRunner.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "EventAlertMod.toc"
       ]
     }
   ],
@@ -557,26 +1062,42 @@
       "result": "rejected",
       "decision": "該素材本身有透明留白；改用 WHITE8X8 實色 Texture，置於 BORDER 層並四邊固定外擴 3px。",
       "doNotRepeat": true
+    },
+    {
+      "id": "TRIAL-20260809-003",
+      "issueId": "EAM-20260809-PTR69189-SVG-ASYMMETRY",
+      "hypothesis": "VectorGraphics 與 Texture 可共用 HasSVG=true、正 fileID 與 introspection 型 clear/reload 驗收條件。",
+      "result": "rejected",
+      "decision": "依 69189 固定文件與 PTR 報告分流：Vector 使用四方法且接受 addon-local zero；Texture 只使用 Set/Clear，缺少 Has/Get 為預期。",
+      "doNotRepeat": true
+    },
+    {
+      "id": "TRIAL-20260813-001",
+      "issueId": "EAM-20260813-AURASOUND-DETAILS",
+      "hypothesis": "把 AuraSound 設定納入 AuraContainer 結構 fingerprint 可直接沿用既有 rebuild 流程。",
+      "result": "confirmed",
+      "decision": "此作法雖可更新聲音，但每次素材或 trigger 改變都會耗用原生容器建立額度；已拆成 containerFingerprint 與 soundFingerprint，純音效只交換 C 註冊。",
+      "doNotRepeat": true
     }
   ],
   "unverified": [
     {
       "id": "UNVERIFIED-20260801-001",
-      "statement": "PTR 12.1 的 34 案真人簽收",
+      "statement": "PTR 12.1 的 37 案真人簽收",
       "requiredClient": "PTR_12_1",
       "procedureRef": "Data/LiveValidationMatrix.json",
       "blocksRelease": true
     },
     {
       "id": "UNVERIFIED-20260801-002",
-      "statement": "XPTR 12.0.7 的 34 案真人簽收",
+      "statement": "XPTR 12.0.7 的 37 案真人簽收",
       "requiredClient": "XPTR_12_0_7",
       "procedureRef": "Data/LiveValidationMatrix.json",
       "blocksRelease": true
     },
     {
       "id": "UNVERIFIED-20260801-003",
-      "statement": "Retail 12.0.7 的 34 案真人簽收",
+      "statement": "Retail 12.0.7 的 37 案真人簽收",
       "requiredClient": "RETAIL_12_0_7",
       "procedureRef": "Data/LiveValidationMatrix.json",
       "blocksRelease": true
@@ -611,8 +1132,127 @@
     },
     {
       "id": "UNVERIFIED-20260809-002",
-      "statement": "PTR 12.1 VectorGraphics 與 Texture 的 SVG A/B 圖樣、清除重載及最終 3px 邊框目視簽收",
+      "statement": "PTR 12.1 修正版 Texture SVG clear/reload、戰鬥邊界及最終 3px 邊框目視簽收",
       "requiredClient": "PTR_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-001",
+      "statement": "PTR、XPTR、Retail 語系下拉選擇 ruRU 與 Auto Detect 的即時畫面切換，以及 /reload 後設定保存簽收",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.localization.language_selector",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-002",
+      "statement": "PTR 12.1 小地圖 SVG 目視顯示、左鍵／右鍵／拖曳與 /reload 後位置保存",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.minimap.svg_fallback",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-003",
+      "statement": "XPTR 12.0.7 fallback 小地圖圖示與按鈕互動、/reload 後位置保存",
+      "requiredClient": "XPTR_12_0_7",
+      "procedureRef": "live.minimap.svg_fallback",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-004",
+      "statement": "Retail 12.0.7 fallback 小地圖圖示與按鈕互動、/reload 後位置保存",
+      "requiredClient": "RETAIL_12_0_7",
+      "procedureRef": "live.minimap.svg_fallback",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-005",
+      "statement": "PTR 12.1 EAM／FF7／Windows XP 主題切換、戰鬥延後與設定持久化",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.theme.selection_and_combat_deferred",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-006",
+      "statement": "XPTR 12.0.7 EAM／FF7／Windows XP 主題切換、戰鬥延後與設定持久化",
+      "requiredClient": "XPTR_12_0_7",
+      "procedureRef": "live.theme.selection_and_combat_deferred",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-007",
+      "statement": "Retail 12.0.7 EAM／FF7／Windows XP 主題切換、戰鬥延後與設定持久化",
+      "requiredClient": "RETAIL_12_0_7",
+      "procedureRef": "live.theme.selection_and_combat_deferred",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260812-008",
+      "statement": "PTR 12.1 build 69273 primary native percent 的 StatusBar／radial 視覺跟隨資源變化",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.unitpower.primary_native_sink",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260812-009",
+      "statement": "PTR 12.1 build 69273 selected safe or native 的 StatusBar／radial 視覺跟隨資源變化",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.unitpower.secondary_numeric",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260812-010",
+      "statement": "PTR 12.1 build 69273 boundary.safe_scalar helper 可用性重跑",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260812-011",
+      "statement": "PTR 12.1 1079 priority 調整後的 Native Aura 首格順序",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260812-012",
+      "statement": "PTR 12.1 Feral Energy 顯示、數值 1、Combo Points fallback 與戰鬥安全",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260812-013",
+      "statement": "PTR 12.1 EAM 自有按鈕六主題 normal／highlight／pushed／disabled 目視簽收",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260813-001",
+      "statement": "PTR 12.1 AuraSound 新增、層數增加與移除三觸發的實際播放次數、戰鬥內設定延後與 /reload 生命週期",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "live.aura.sound_added|live.aura.sound_applications_increased|live.aura.sound_removed",
+      "blocksRelease": true
+    },
+    {
+      "id": "UNVERIFIED-20260813-002",
+      "statement": "PTR 12.1 Alpha 4 八個功能模組停用、戰鬥延後與清理行為",
+      "requiredClient": "PTR_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260813-003",
+      "statement": "XPTR 12.0.7 Alpha 4 八個功能模組停用、戰鬥延後與清理行為",
+      "requiredClient": "XPTR_12_0_7",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260813-004",
+      "statement": "Retail 12.0.7 Alpha 4 八個功能模組停用、戰鬥延後與清理行為",
+      "requiredClient": "RETAIL_12_0_7",
       "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
       "blocksRelease": false
     }

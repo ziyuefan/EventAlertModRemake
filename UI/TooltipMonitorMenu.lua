@@ -37,6 +37,8 @@ local Menu = {
 EAM.UI.TooltipMonitorMenu = Menu
 
 local api = EAM.API or {}
+local Theme = EAM.Theme
+local Locale = EAM.Locale
 local Util = EAM.Util or {}
 local current = {
     kind = nil,
@@ -255,8 +257,26 @@ local function configureForCandidate(source)
     return false
 end
 
+local function refreshLocalizedText()
+    if not Menu.frame or not current.kind then
+        return
+    end
+    local manualText
+    if Menu.idEditBox and Menu.idEditBox:IsShown() then
+        manualText = Menu.idEditBox:GetText()
+    end
+    if configureForCandidate(current) and manualText and Menu.idEditBox:IsShown() then
+        Menu.idEditBox:SetText(manualText)
+    end
+end
+
+if Locale and type(Locale.registerRefresh) == "function" then
+    Locale.registerRefresh(refreshLocalizedText)
+end
+
 local function createActionButton(parent, index, anchor, relativeTo, relativePoint, x, y)
     local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(button) end
     button:SetSize(158, 24)
     button:SetPoint(anchor, relativeTo, relativePoint, x, y)
     button:SetScript("OnClick", onActionButton)
@@ -278,12 +298,14 @@ local function createFrame()
         edgeSize = 32,
         insets = { left = 11, right = 12, top = 12, bottom = 11 },
     })
+    if Theme and Theme.registerFrame then Theme.registerFrame(frame, "window") end
     frame:Hide()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", frame, "TOPLEFT", 22, -20)
     title:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -22, -20)
-    title:SetText(EAM.L.EAM_POPUP_TITLE or "EAM 加入監控")
+    Locale.bindText(title, "EAM_POPUP_TITLE", "EAM 加入監控")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     local description = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
@@ -291,11 +313,12 @@ local function createFrame()
     description:SetJustifyH("LEFT")
     description:SetJustifyV("TOP")
     description:SetHeight(70)
+    if Theme and Theme.registerText then Theme.registerText(description, "body") end
     Menu.description = description
 
     local idLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     idLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -119)
-    idLabel:SetText(EAM.L.EAM_POPUP_ID_INPUT or "監控 ID")
+    Locale.bindText(idLabel, "EAM_POPUP_ID_INPUT", "監控 ID")
     Menu.idLabel = idLabel
 
     local idEditBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
@@ -318,9 +341,10 @@ local function createFrame()
     createActionButton(frame, 2, "TOPRIGHT", frame, "TOPRIGHT", -24, -158)
 
     local cancelButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(cancelButton) end
     cancelButton:SetSize(158, 24)
     cancelButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -24, 22)
-    cancelButton:SetText(EAM.L.EAM_POPUP_CANCEL or "取消")
+    Locale.bindText(cancelButton, "EAM_POPUP_CANCEL", "取消")
     cancelButton:SetScript("OnClick", function()
         Menu.hide()
     end)

@@ -15,6 +15,8 @@ Module: Debug/LiveTestPanel
 local _, EAM = ...
 
 local api = EAM.API or {}
+local Theme = EAM.Theme
+local Locale = EAM.Locale
 local LiveTestPanel = {
     frame = nil,
     reportEditBox = nil,
@@ -34,6 +36,18 @@ EAM.Debug.LiveTestPanel = LiveTestPanel
 
 local function text(key, fallback)
     return EAM.L and EAM.L[key] or fallback
+end
+
+local function localized(key, fallback)
+    return { key = key, fallback = fallback }
+end
+
+local function setWidgetText(target, value)
+    if type(value) == "table" and type(value.key) == "string" then
+        Locale.bindText(target, value.key, value.fallback)
+    else
+        target:SetText(value)
+    end
 end
 
 local function setMessage(message, isError)
@@ -114,11 +128,27 @@ local function refreshPanel()
     end
 end
 
+function LiveTestPanel.refreshLocalizedText()
+    if not LiveTestPanel.frame then
+        return
+    end
+    local note = LiveTestPanel.noteEditBox and LiveTestPanel.noteEditBox:GetText() or nil
+    refreshPanel()
+    if LiveTestPanel.noteEditBox and note ~= nil then
+        LiveTestPanel.noteEditBox:SetText(note)
+    end
+end
+
+if Locale and type(Locale.registerRefresh) == "function" then
+    Locale.registerRefresh(LiveTestPanel.refreshLocalizedText)
+end
+
 local function createButton(parent, label, width, point, relativeTo, relativePoint, x, y, callback)
     local button = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(button) end
     button:SetSize(width, 25)
     button:SetPoint(point, relativeTo, relativePoint, x, y)
-    button:SetText(label)
+    setWidgetText(button, label)
     button:SetScript("OnClick", callback)
     return button
 end
@@ -189,38 +219,41 @@ local function createFrame()
     })
     frame:SetBackdropColor(0.06, 0.06, 0.08, 0.98)
     frame:SetBackdropBorderColor(0.35, 0.65, 0.95, 1.0)
+    if Theme and Theme.registerFrame then Theme.registerFrame(frame, "window") end
     frame:Hide()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", frame, "TOP", 0, -16)
-    title:SetText(text("EAM_LIVE_PANEL_TITLE", "EAM 真人實機簽收與 JSON 回報"))
+    Locale.bindText(title, "EAM_LIVE_PANEL_TITLE", "EAM 真人實機簽收與 JSON 回報")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     local policy = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     policy:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -44)
     policy:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -44)
     policy:SetJustifyH("LEFT")
-    policy:SetText(text(
+    Locale.bindText(
+        policy,
         "EAM_LIVE_PANEL_POLICY",
         "只記錄玩家手動操作；EAM 不施法、不點擊、不執行巨集、不切換目標，也不自動 /reload。"
-    ))
+    )
 
     local retailButton = createButton(
-        frame, text("EAM_LIVE_START_RETAIL", "開始正式服"), 120,
+        frame, localized("EAM_LIVE_START_RETAIL", "開始正式服"), 120,
         "TOPLEFT", frame, "TOPLEFT", 20, -72,
         function() startSession("_retail_") end
     )
     local ptrButton = createButton(
-        frame, text("EAM_LIVE_START_PTR", "開始 PTR 12.1"), 130,
+        frame, localized("EAM_LIVE_START_PTR", "開始 PTR 12.1"), 130,
         "LEFT", retailButton, "RIGHT", 8, 0,
         function() startSession("_ptr_") end
     )
     local xptrButton = createButton(
-        frame, text("EAM_LIVE_START_XPTR", "開始 XPTR 12.0.7"), 145,
+        frame, localized("EAM_LIVE_START_XPTR", "開始 XPTR 12.0.7"), 145,
         "LEFT", ptrButton, "RIGHT", 8, 0,
         function() startSession("_xptr_") end
     )
     createButton(
-        frame, text("EAM_LIVE_CANCEL_SESSION", "取消目前 session"), 130,
+        frame, localized("EAM_LIVE_CANCEL_SESSION", "取消目前 session"), 130,
         "LEFT", xptrButton, "RIGHT", 8, 0,
         function()
             local session = EAM.Debug.LiveTestSession
@@ -304,38 +337,38 @@ local function createFrame()
     LiveTestPanel.noteEditBox = noteEditBox
 
     local previousButton = createButton(
-        frame, text("EAM_LIVE_PREVIOUS", "上一案"), 82,
+        frame, localized("EAM_LIVE_PREVIOUS", "上一案"), 82,
         "TOPLEFT", frame, "TOPLEFT", 20, -338,
         function() changeCase(-1) end
     )
     local nextButton = createButton(
-        frame, text("EAM_LIVE_NEXT", "下一案"), 82,
+        frame, localized("EAM_LIVE_NEXT", "下一案"), 82,
         "LEFT", previousButton, "RIGHT", 6, 0,
         function() changeCase(1) end
     )
     local passButton = createButton(
-        frame, text("EAM_LIVE_PASS", "符合"), 82,
+        frame, localized("EAM_LIVE_PASS", "符合"), 82,
         "LEFT", nextButton, "RIGHT", 14, 0,
         function() setCurrentStatus("pass") end
     )
     local failButton = createButton(
-        frame, text("EAM_LIVE_FAIL", "不符合"), 82,
+        frame, localized("EAM_LIVE_FAIL", "不符合"), 82,
         "LEFT", passButton, "RIGHT", 6, 0,
         function() setCurrentStatus("fail") end
     )
     local blockedButton = createButton(
-        frame, text("EAM_LIVE_BLOCKED", "無法測試"), 92,
+        frame, localized("EAM_LIVE_BLOCKED", "無法測試"), 92,
         "LEFT", failButton, "RIGHT", 6, 0,
         function() setCurrentStatus("blocked") end
     )
     createButton(
-        frame, text("EAM_LIVE_RESET_CASE", "重設待測"), 92,
+        frame, localized("EAM_LIVE_RESET_CASE", "重設待測"), 92,
         "LEFT", blockedButton, "RIGHT", 6, 0,
         function() setCurrentStatus("pending") end
     )
 
     local reloadButton = createButton(
-        frame, text("EAM_LIVE_RELOAD_CHECKPOINT", "建立 /reload 檢查點"), 160,
+        frame, localized("EAM_LIVE_RELOAD_CHECKPOINT", "建立 /reload 檢查點"), 160,
         "TOPLEFT", frame, "TOPLEFT", 20, -372,
         function()
             saveCurrentNote()
@@ -349,7 +382,7 @@ local function createFrame()
         end
     )
     createButton(
-        frame, text("EAM_LIVE_COMPLETE", "完成並產生 JSON"), 160,
+        frame, localized("EAM_LIVE_COMPLETE", "完成並產生 JSON"), 160,
         "LEFT", reloadButton, "RIGHT", 8, 0,
         function()
             saveCurrentNote()
@@ -403,7 +436,7 @@ local function createFrame()
     LiveTestPanel.summaryText = summaryText
 
     local copyButton = createButton(
-        frame, text("EAM_LIVE_COPY", "全選實機 JSON"), 150,
+        frame, localized("EAM_LIVE_COPY", "全選實機 JSON"), 150,
         "BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18,
         function()
             saveCurrentNote()
@@ -417,7 +450,7 @@ local function createFrame()
         end
     )
     createButton(
-        frame, text("EAM_FLOW_BUTTON_CLOSE", "關閉"), 100,
+        frame, localized("EAM_FLOW_BUTTON_CLOSE", "關閉"), 100,
         "LEFT", copyButton, "RIGHT", 8, 0,
         function()
             saveCurrentNote()

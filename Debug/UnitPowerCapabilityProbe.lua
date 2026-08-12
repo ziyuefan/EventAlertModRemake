@@ -15,6 +15,8 @@ Module: Debug/UnitPowerCapabilityProbe
 local _, EAM = ...
 
 local api = EAM.API
+local Theme = EAM.Theme
+local Locale = EAM.Locale
 local Util = EAM.Util
 
 local UnitPowerCapabilityProbe = {
@@ -41,11 +43,24 @@ local function text(key, fallback)
     return EAM.L and EAM.L[key] or fallback
 end
 
+local function localized(key, fallback)
+    return { key = key, fallback = fallback }
+end
+
+local function setWidgetText(target, value)
+    if type(value) == "table" and type(value.key) == "string" then
+        Locale.bindText(target, value.key, value.fallback)
+    else
+        target:SetText(value)
+    end
+end
+
 local function createButton(parent, label, width, x, y, callback)
     local button = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(button) end
     button:SetSize(width, 24)
     button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-    button:SetText(label)
+    setWidgetText(button, label)
     button:SetScript("OnClick", callback)
     return button
 end
@@ -54,7 +69,7 @@ local function createSink(parent, labelText, y)
     local sink = {}
     sink.label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     sink.label:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
-    sink.label:SetText(labelText)
+    setWidgetText(sink.label, labelText)
 
     sink.statusBar = api.CreateFrame("StatusBar", nil, parent)
     sink.statusBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y - 20)
@@ -113,25 +128,27 @@ local function createFrame()
         insets = { left = 6, right = 6, top = 6, bottom = 6 },
     })
     frame:SetBackdropColor(0.04, 0.04, 0.06, 0.96)
+    if Theme and Theme.registerFrame then Theme.registerFrame(frame, "window") end
     frame:Hide()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", frame, "TOP", 0, -12)
-    title:SetText(text("EAM_UNIT_POWER_PROBE_TITLE", "UnitPower 原生顯示能力測試"))
+    Locale.bindText(title, "EAM_UNIT_POWER_PROBE_TITLE", "UnitPower 原生顯示能力測試")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     UnitPowerCapabilityProbe.sinks.primary =
-        createSink(frame, text("EAM_UNIT_POWER_PROBE_PRIMARY", "目前主要資源"), -38)
+        createSink(frame, localized("EAM_UNIT_POWER_PROBE_PRIMARY", "目前主要資源"), -38)
     UnitPowerCapabilityProbe.sinks.selected =
-        createSink(frame, text("EAM_UNIT_POWER_PROBE_SELECTED", "EAM 選定資源"), -92)
+        createSink(frame, localized("EAM_UNIT_POWER_PROBE_SELECTED", "EAM 選定資源"), -92)
 
     local function createObservationButtons(caseID, y)
-        createButton(frame, text("EAM_UNIT_POWER_PROBE_PASS", "顯示正常"), 74, 350, y, function()
+        createButton(frame, localized("EAM_UNIT_POWER_PROBE_PASS", "顯示正常"), 74, 350, y, function()
             UnitPowerCapabilityProbe.markVisual(caseID, "pass")
         end)
-        createButton(frame, text("EAM_UNIT_POWER_PROBE_FAIL", "顯示異常"), 74, 432, y, function()
+        createButton(frame, localized("EAM_UNIT_POWER_PROBE_FAIL", "顯示異常"), 74, 432, y, function()
             UnitPowerCapabilityProbe.markVisual(caseID, "fail")
         end)
-        createButton(frame, text("EAM_UNIT_POWER_PROBE_BLOCKED", "無法測試"), 100, 514, y, function()
+        createButton(frame, localized("EAM_UNIT_POWER_PROBE_BLOCKED", "無法測試"), 100, 514, y, function()
             UnitPowerCapabilityProbe.markVisual(caseID, "blocked")
         end)
     end

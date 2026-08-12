@@ -1,0 +1,84 @@
+{
+  "asset": {
+    "externalReferences": false,
+    "packagedAssetRequired": true,
+    "relativePath": "Media/SVG/eam-svg-probe.svg"
+  },
+  "automation": {
+    "gameInputAutomated": false,
+    "playerOperated": true
+  },
+  "boundaryWarnings": [
+    "svgFileIDInvalid:svg.vector_graphics.set_svg",
+    "svgHasStateInvalid:svg.texture.set_svg",
+    "svgFileIDInvalid:svg.texture.set_svg",
+    "svgLifecycleFailed:svg.texture.set_svg"
+  ],
+  "capabilities": {
+    "createVectorGraphics": true,
+    "interfaceRequired": true,
+    "textureClearSVG": true,
+    "textureGetSVGFileID": false,
+    "textureHasSVG": false,
+    "textureSetSVG": true,
+    "vectorClearSVG": true,
+    "vectorGetSVGFileID": true,
+    "vectorHasSVG": true,
+    "vectorSetSVG": true
+  },
+  "cases": [
+    {
+      "apiAvailable": true,
+      "clearReload": "pass",
+      "fileIDClass": "zero",
+      "hasSVG": "true",
+      "id": "svg.vector_graphics.set_svg",
+      "kind": "vector",
+      "setResult": "accepted",
+      "visualObservation": "pass"
+    },
+    {
+      "apiAvailable": true,
+      "clearReload": "unavailable",
+      "fileIDClass": "unavailable",
+      "hasSVG": "unavailable",
+      "id": "svg.texture.set_svg",
+      "kind": "texture",
+      "setResult": "accepted",
+      "visualObservation": "pass"
+    }
+  ],
+  "environment": {
+    "build": "69189",
+    "buildDate": "Aug  6 2026",
+    "buildFlags": {
+      "isBetaBuild": false,
+      "isPublicTestClient": true,
+      "isTestBuild": false
+    },
+    "channelValidation": "pass",
+    "clientChannel": "PTR",
+    "declaredInstallation": "_ptr_",
+    "declaredInstallationEvidence": "user-asserted",
+    "executionSource": "client",
+    "interface": 120100,
+    "isTestBuild": true,
+    "isTestBuildKnown": true,
+    "locale": "zhTW",
+    "patch": "12.1.0",
+    "product": "wow_retail",
+    "source": "ptr-live-manual",
+    "targetInterface": 120100
+  },
+  "purpose": "capability-probe",
+  "rawFileIDsCollected": false,
+  "schema": 1,
+  "session": {
+    "active": false,
+    "startedAtSessionMs": 283966.864,
+    "stoppedAtSessionMs": 283974.411,
+    "visualObservation": "pass"
+  },
+  "status": "incomplete",
+  "type": "EAM_SVG_CAPABILITY_REPORT"
+}

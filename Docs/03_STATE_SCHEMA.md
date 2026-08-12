@@ -32,6 +32,10 @@ EA_Pos
 - Runtime plan、fingerprint、pending revision 與 sound registration ID 只存在記憶體。
 - 相同設定再次送入回傳 `unchanged`，revision 不變。
 
+### 語系設定
+
+`EAM_DB.config.language` 是可遷移的純字串設定，接受 `auto`、`enUS`、`zhTW`、`zhCN`、`koKR`、`ruRU`；預設為 `auto`。`auto` 依客戶端 `GetLocale()` 選擇 catalog，缺少的 key 由 enUS fallback 補底。`SavedVariables.updateLanguage()` 只有在值改變時增加 revision，但 updated／unchanged 都會同步發出 `EAM_LANGUAGE_CHANGED`，讓記憶體狀態與已載入 UI 對齊。`Locale.apply()` 保持 `EAM.L` table identity，原地清除並合併 enUS fallback 與選定 catalog，再刷新已註冊的 EAM 自有 FontString、按鈕與複合文字。新版程式載入後，選擇語系立即生效，不需為套用語系執行 `/reload`；`/reload` 只用於驗證設定保存、載入磁碟上的新程式，或將最新 SavedVariables 寫回磁碟。
+
 文字顯示設定使用單一正規化結構：
 
 ```lua
@@ -58,8 +62,8 @@ EAM_DB.config.textLayout = {
 驗證狀態與報告不混入 `EAM_DB`：
 
 - `EAM_VALIDATION_PROFILE`：玩家宣告 `_ptr_`、`_xptr_` 或 `_retail_`，並由客戶端 build／Interface 與 `IsPublicTestClient`／`IsTestBuild`／`IsBetaBuild` 原始旗標交叉驗證；匯入器必須由三個 raw flags 重算 known／aggregate，不信任報告自填彙總。
-- `EAM_LIVE_TEST_SESSION`：34 案真人觀察狀態與 `/reload` checkpoint。checkpoint 內的 boot token 只用來比較 Lua table identity，不輸出至 JSON；同一次載入直接 resume 必須回傳 `sameLoadRejected`。
-- `EAM_LIVE_TEST_REPORT_JSON`：schema 1 真人簽收報告；phase 尚為 `active`、沒有跨過玩家自行執行的 `/reload`、沒有已知 test-build 身分、34 案未全數通過或仍有 warning 時均不得為 `pass`。
+- `EAM_LIVE_TEST_SESSION`：37 案真人觀察狀態與 `/reload` checkpoint。checkpoint 內的 boot token 只用來比較 Lua table identity，不輸出至 JSON；同一次載入直接 resume 必須回傳 `sameLoadRejected`。
+- `EAM_LIVE_TEST_REPORT_JSON`：schema 1 真人簽收報告；phase 尚為 `active`、沒有跨過玩家自行執行的 `/reload`、沒有已知 test-build 身分、37 案未全數通過或仍有 warning 時均不得為 `pass`。
 - 備註若含磁碟絕對路徑、WTF 或 Account 片段，執行期以 `[privacy-redacted]` 取代並加入 `privacyNoteRedacted`；匯入器再做第二層拒絕，不得包含帳號、角色、伺服器或 WTF 絕對路徑。
 - `EAM_FLOW_TEST_REPORT_JSON`：schema 2 能力／離線契約報告；`offline-mock` 不得升格為實機證據。
 觀察到 default/runtime 同伴：
@@ -247,3 +251,48 @@ DebugSnapshot = {
   humanNotes: "array<string>"
 }
 ```
+
+## 2026-08-12 Theme 設定
+
+`EAM_DB.config.theme` 是可持久化的 EAM 自有 UI 主題選擇，允許值與預設如下：
+
+```js
+config.theme = "eam" // "eam|ff7|winxp|borland|doscrt|aqua"
+```
+
+- `eam` 為既有棕金視覺，亦是缺值或非法值的安全回退。
+- `ff7` 為深靛、皇家藍、亮青與金色 palette；`winxp` 為 Luna 藍、淺灰、亮藍／綠 palette；`borland` 為電光藍／青色 IDE；`doscrt` 為黑綠磷光 CRT；`aqua` 為 macOS Aqua 藍灰／亮藍。
+- `SavedVariables.updateTheme()` 只在實際值改變時寫入並增加 revision；重複選擇不得製造 revision。
+- 啟動時非法值會正規化為 `eam`，並在 migration warnings 留下 `invalidThemeDefaulted`；不覆蓋其他 SavedVariables。
+- 戰鬥中只保存 pending theme，待 `PLAYER_REGEN_ENABLED` 後由 `EAM.Theme.flushPending()` 套用。
+- 主題色只屬於 EAM 自有視窗 chrome；AlertBorderStyles 的自身／目標 Aura、技能、物品、地面效果語意色不由主題覆蓋。
+
+## 2026-08-13 AuraSound 純資料契約
+
+Aura alert 可保存以下 additive 純資料，不增加目前 SavedVariables schema 版本：
+
+```lua
+alert.sound = {
+    added = { soundFileID = 566564, outputChannel = "Master" },
+    applicationsIncreased = nil,
+    removed = { soundFileName = "Interface\\AddOns\\EventAlertMod\\Media\\example.ogg" },
+}
+```
+
+- trigger 白名單固定為 `added`、`applicationsIncreased`、`removed`。
+- 每個 trigger 必須提供正整數 `soundFileID` 或非空白 `soundFileName`；若兩者同時存在，正規化只保留 `soundFileID`。`outputChannel` 若存在必須是非空白字串。
+- `nil` 或正規化後的空表代表未覆寫，編譯器沿用全域音效；全域 `config.showSound=false` 是 master off，custom 設定不得繞過。
+- `SavedVariables.updateAuraSound(unit, spellID, sound)` 是唯一公開 mutation：非法輸入拒絕；相同設定不增加 revision；真變更只增加一次並發送 `EAM_AURA_SOUND_CHANGED`。
+- `auraSoundID` 只屬本次 Lua session 的 runtime registry，絕不可寫入 SavedVariables、JSON、報告或 table key。
+- 初始化只對現有 class profile 的 Aura sound 做白名單正規化；無法保留的值加入 `invalidAuraSoundNormalized` warning，不凍結使用者資料。
+- 真人 session 與報告的現行矩陣為 `2026-08-13.1` 共 37 案；必須 37/37、跨玩家自行執行的 `/reload`、已知 build identity 且零 warning 才可能完成。
+
+## 2026-08-13 Alpha 4：功能模組與職業 profile 純資料契約
+
+schemaVersion 5 的 EAM_DB 目前包含兩個互相獨立的設定面：
+
+- config.moduleToggles：playerAura、targetAura、spellCooldown、itemCooldown、groundEffect、classPower、totem、tooltipMonitor；缺值預設 true，寫入必須經 SavedVariables.updateModuleToggle。
+- profiles.classes[CLASS_TOKEN]：目前職業的 playerAuras、targetAuras、spellCooldowns、itemCooldowns、groundEffects。正式服務透過 getActiveClassToken／getAlertList 讀取，不保留根層 alerts mirror。
+- v4 根層全域清單遷移時先保存 migrationBackups.globalAlertsV4；無法取得合法職業 token 時保存 profiles.unassignedLegacy，禁止猜測歸屬。
+- /eam list、lookup、lookupfull 與 showcast 使用 active class profile；清空後不因 reload 重新灌入預設，defaultsSeeded 與 legacyImportVersion 共同維持冪等性。
+- 目前正式程式沒有 JSON／Base64 profile 分享 codec；Debug export 也不是可套用的設定匯入格式。任何未來分享格式都必須拒絕外部 Lua、Secret 值、未知 schema、重複 ID 與過大輸入。

@@ -18,6 +18,8 @@ local _, EAM = ...
 EAM.UI = EAM.UI or {}
 
 local api = EAM.API
+local Theme = EAM.Theme
+local Locale = EAM.Locale
 local Util = EAM.Util
 local Constants = EAM.Constants
 local tinsert = table.insert
@@ -106,6 +108,16 @@ function AboutPanel.formatInformation(info)
     }, "\n")
 end
 
+local function refreshLocalizedText()
+    if AboutPanel.infoText then
+        AboutPanel.infoText:SetText(AboutPanel.formatInformation())
+    end
+end
+
+if Locale and type(Locale.registerRefresh) == "function" then
+    Locale.registerRefresh(refreshLocalizedText)
+end
+
 local function createFrame()
     if AboutPanel.frame then
         return AboutPanel.frame
@@ -135,12 +147,14 @@ local function createFrame()
     })
     frame:SetBackdropColor(0.08, 0.06, 0.05, 0.97)
     frame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(frame, "window") end
     frame:Hide()
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
     title:SetPoint("TOP", frame, "TOP", 0, -18)
     title:SetTextColor(0.95, 0.85, 0.4, 1)
-    title:SetText(EAM.L.EAM_ABOUT_TITLE or "關於 EventAlertMod")
+    Locale.bindText(title, "EAM_ABOUT_TITLE", "關於 EventAlertMod")
+    if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     local infoText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     infoText:SetPoint("TOPLEFT", frame, "TOPLEFT", 28, -62)
@@ -148,12 +162,14 @@ local function createFrame()
     infoText:SetJustifyH("LEFT")
     infoText:SetJustifyV("TOP")
     infoText:SetTextColor(0.94, 0.90, 0.82, 1)
+    if Theme and Theme.registerText then Theme.registerText(infoText, "body") end
     frame.infoText = infoText
 
     local closeButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(closeButton) end
     closeButton:SetSize(128, 28)
     closeButton:SetPoint("BOTTOM", frame, "BOTTOM", 0, 22)
-    closeButton:SetText(EAM.L.EAM_ABOUT_CLOSE or "關閉")
+    Locale.bindText(closeButton, "EAM_ABOUT_CLOSE", "關閉")
     closeButton:SetScript("OnClick", function()
         frame:Hide()
     end)

@@ -594,11 +594,22 @@ if ($isFlow) {
     $hasFailedObservation = $false
     $hasBlockedObservation = $false
     $hasPendingObservation = $false
-    $hasCapabilityGap = $false
     $interfaceRequired = [int]$report.environment.interface -ge 120100
     if ($report.capabilities.interfaceRequired -ne $interfaceRequired) {
         throw "SVG interface-required flag mismatch."
     }
+    $hasCapabilityGap = $interfaceRequired -and (
+        $report.capabilities.createVectorGraphics -ne $true -or
+        $report.capabilities.vectorSetSVG -ne $true -or
+        $report.capabilities.vectorClearSVG -ne $true -or
+        $report.capabilities.vectorHasSVG -ne $true -or
+        $report.capabilities.vectorGetSVGFileID -ne $true -or
+        $report.capabilities.textureSetSVG -ne $true -or
+        $report.capabilities.textureClearSVG -ne $true
+    )
+    $vectorFileIDClasses = @("positive-number", "zero", "negative-number")
+    $textureHasStates = @("unavailable", "true")
+    $textureFileIDClasses = @("unavailable", "positive-number", "zero", "negative-number")
     foreach ($case in $cases) {
         $id = [string]$case.id
         if ($seen.ContainsKey($id) -or $expectedIDs -notcontains $id) {
@@ -612,13 +623,26 @@ if ($isFlow) {
         } elseif ($case.visualObservation -ne "pass") {
             $hasPendingObservation = $true
         }
-        if ($interfaceRequired -and (
-            $case.apiAvailable -ne $true -or
+
+        $caseCapabilityGap = $case.apiAvailable -ne $true -or
             $case.setResult -ne "accepted" -or
-            $case.hasSVG -ne "true" -or
-            $case.fileIDClass -ne "positive-number" -or
             $case.clearReload -ne "pass"
-        )) {
+        if ($id -eq "svg.vector_graphics.set_svg") {
+            if ($case.kind -ne "vector") {
+                throw "SVG vector case kind mismatch."
+            }
+            $caseCapabilityGap = $caseCapabilityGap -or
+                $case.hasSVG -ne "true" -or
+                $vectorFileIDClasses -notcontains $case.fileIDClass
+        } else {
+            if ($case.kind -ne "texture") {
+                throw "SVG texture case kind mismatch."
+            }
+            $caseCapabilityGap = $caseCapabilityGap -or
+                $textureHasStates -notcontains $case.hasSVG -or
+                $textureFileIDClasses -notcontains $case.fileIDClass
+        }
+        if ($interfaceRequired -and $caseCapabilityGap) {
             $hasCapabilityGap = $true
         }
     }
@@ -727,7 +751,7 @@ if ($isLegacy) {
         $lines.Add("> 此為玩家自行提供的 SVG JSON；client directory 僅屬 user-asserted，仍需保留實機畫面或錯誤紀錄。")
     }
 } else {
-    $lines.Add("> 此為遊戲內能力流程報告，不等同於 34 案人工 RQA 簽收。")
+    $lines.Add("> 此為遊戲內能力流程報告，不等同於 37 案人工 RQA 簽收。")
 }
 foreach ($note in $validationNotes) {
     $lines.Add("- $note")
