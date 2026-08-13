@@ -753,6 +753,15 @@
 <li>Alpha 4 不把 JSON／Base64 profile 分享列為已完成能力；只驗證現有 debug export 不會形成可執行 Lua 匯入路徑。</li>
 </ul>
 <p>真人補測不增加 37 案矩陣總數。玩家需在 PTR、XPTR、Retail 各自開啟「功能模組」面板，逐一停用／啟用自身 Aura、目標 Aura、技能冷卻、物品冷卻、地面效果、職業資源、圖騰與 Tooltip 監控；確認舊圖示消失、另一模組不受影響、戰鬥中切換於脫戰只重建一次，並以不同職業登入確認清單不互相污染。每個客戶端都要記錄 build、Interface、/reload 與 Lua error／taint／blocked action。</p>
+<h2 id="2026-08-14-alpha-5profile">2026-08-14 Alpha 5：Profile、字型與語系回歸</h2>
+<p>離線新增／維持下列 gate：</p>
+<ul>
+<li>profile.codec.roundtrip、profile.codec.reject、profile.codec.preview_no_side_effect、profile.codec.merge_replace：驗證 EAMAP1 canonical JSON／Base64、checksum、拒絕 malformed／future schema／duplicate／過大輸入、preview 零副作用與戰鬥 guard。</li>
+<li>ui.text_layout.font_family：驗證四種字型白名單、路徑映射、no-op revision 與非法值回退。</li>
+<li>locale.dynamic.buttons 與 spec menu refresh：驗證切換語系後 EAM 自有按鈕、下拉、條件與專精選單重新取 EAM.L，且 Auto Detect 固定英文。</li>
+</ul>
+<p>本輪離線結果：Lua 56/56、Flow all 66/66、Validation Contracts 360/360；不代表任何客戶端實機視覺或互動通過。</p>
+<p>Alpha 5 真人追加步驟：在 PTR、XPTR、Retail 各自輸出一份 EAMAP1，另以另一職業預覽後 merge／replace；切換四種字型並 /reload 驗證保存；切換 zhTW／zhCN／enUS／koKR／ruRU 與 Auto Detect，確認 EAM 按鈕、spec menu、條件文字更新且沒有 Lua error。每次回報必須附 client channel、build、Interface、/reload 與 boundaryWarnings。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

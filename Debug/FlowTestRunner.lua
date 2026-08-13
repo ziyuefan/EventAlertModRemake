@@ -445,6 +445,95 @@ local function buildAura121TestDB(revision)
 end
 
 FlowTestRunner.registerCase({
+    id = "profile.codec.export_roundtrip",
+    primarySuite = "core",
+    suites = { quick = true, core = true, boundary = true },
+    run = function()
+        local codec = EAM.Modules and EAM.Modules.ProfileCodec
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if not codec or not saved or not saved.getActiveClassToken() then
+            return STATUS_SKIP, "ProfileCodec or active class profile unavailable"
+        end
+        local payload, report = codec.exportProfile({ "playerAura", "spellCooldown" })
+        if not payload then
+            return false, "export failed: " .. tostring(report)
+        end
+        local envelope, decodeReason = codec.decodeForTest(payload)
+        if not envelope then
+            return false, "decode failed: " .. tostring(decodeReason)
+        end
+        local repeated, repeatReport = codec.exportProfile({ "playerAura", "spellCooldown" })
+        local valid = envelope.type == "EAM_ALERT_PROFILE"
+            and envelope.schema == codec.schema
+            and type(report.alertCount) == "number"
+            and payload == repeated
+            and type(repeatReport) == "table"
+        return valid, valid and "deterministic EAMAP1 round-trip completed" or "round-trip was not deterministic"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "profile.codec.preview_no_side_effect",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local codec = EAM.Modules and EAM.Modules.ProfileCodec
+        if not codec then
+            return STATUS_SKIP, "ProfileCodec unavailable"
+        end
+        local payload, reason = codec.exportProfile({ "playerAura" })
+        if not payload then
+            return false, "export failed: " .. tostring(reason)
+        end
+        local before = EAM.db and EAM.db.revision or 0
+        local plan, previewReason = codec.previewImport(payload, { mode = "merge" })
+        local after = EAM.db and EAM.db.revision or 0
+        local valid = plan ~= nil and plan.consumed == false and before == after
+        return valid, valid and "preview preserved revision" or ("preview failed: " .. tostring(previewReason))
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "profile.codec.apply_merge_noop",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local codec = EAM.Modules and EAM.Modules.ProfileCodec
+        if not codec then
+            return STATUS_SKIP, "ProfileCodec unavailable"
+        end
+        local payload, reason = codec.exportProfile({ "playerAura" })
+        if not payload then
+            return false, "export failed: " .. tostring(reason)
+        end
+        local plan, previewReason = codec.previewImport(payload, { mode = "merge" })
+        if not plan then
+            return false, "preview failed: " .. tostring(previewReason)
+        end
+        local before = EAM.db and EAM.db.revision or 0
+        local report, applyReason = codec.applyImport(plan, "merge")
+        local after = EAM.db and EAM.db.revision or 0
+        local valid = report ~= nil and (report.added or 0) == 0 and (report.updated or 0) == 0 and before == after
+        return valid, valid and "unchanged merge did not touch revision" or ("apply failed: " .. tostring(applyReason))
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "profile.codec.rejects_invalid_base64",
+    primarySuite = "boundary",
+    suites = { boundary = true },
+    run = function()
+        local codec = EAM.Modules and EAM.Modules.ProfileCodec
+        if not codec then
+            return STATUS_SKIP, "ProfileCodec unavailable"
+        end
+        local plan, reason = codec.previewImport("EAMAP1:!!!!")
+        local valid = plan == nil and reason == "base64Alphabet"
+        return valid, valid and "strict Base64 alphabet rejection completed" or ("unexpected reason: " .. tostring(reason))
+    end,
+})
+
+FlowTestRunner.registerCase({
     id = "aura121.capability.native_complete",
     primarySuite = "aura121",
     suites = { aura121 = true },
@@ -2206,6 +2295,47 @@ FlowTestRunner.registerCase({
         local valid = below == EAM.Constants.TEXT_FONT_SIZE_MIN
             and above == EAM.Constants.TEXT_FONT_SIZE_MAX
         return valid, valid and "text font sizes clamp to 8-32" or "text font size bounds mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.text_layout.font_family",
+    primarySuite = "boundary",
+    suites = { quick = true, boundary = true, aura121 = true },
+    run = function()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local textPlacement = EAM.UI and EAM.UI.TextPlacement
+        if not saved or not saved.updateFontFamily or not textPlacement then
+            return false, "font family dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        EAM.db = {
+            revision = 640001,
+            config = { fontFamily = "STANDARD" },
+        }
+
+        local standardPath = textPlacement.getFontPath(EAM.db.config)
+        local updated, updatedState, updatedRevision = saved.updateFontFamily("MORPHEUS")
+        local morpheusPath = textPlacement.getFontPath(EAM.db.config)
+        local unchanged, unchangedState = saved.updateFontFamily("MORPHEUS")
+        local normalized, normalizedState = saved.updateFontFamily("invalid-font")
+
+        local valid = standardPath ~= morpheusPath
+            and updated == true
+            and updatedState == "updated"
+            and updatedRevision == 640002
+            and morpheusPath == "Fonts\\MORPHEUS.TTF"
+            and unchanged == true
+            and unchangedState == "unchanged"
+            and normalized == true
+            and normalizedState == "updated"
+            and EAM.db.config.fontFamily == "STANDARD"
+            and EAM.db.revision == 640003
+
+        EAM.db = originalDB
+        return valid, valid and "font family selection persists, maps to path, and rejects invalid values"
+            or "font family selection contract mismatch"
     end,
 })
 

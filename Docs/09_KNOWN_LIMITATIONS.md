@@ -135,3 +135,12 @@
 - 正式程式尚未提供 JSON／Base64 profile 分享與套用 codec；目前不可把 debug JSON 貼回遊戲，也不可使用 LegacyReference 的 loadstring。
 - 模組面板目前管理八個功能模組；debug 面板、小地圖顯示與全域 showFrame 不是本輪新增的獨立 module toggle。
 - Alpha 4 的模組與 profile 回歸仍是離線證據；PTR、XPTR、Retail 需由玩家實機確認戰鬥延後、/reload 持久化與跨職業隔離。
+
+## 2026-08-14 Alpha 5 限制與待簽收項目
+
+- EAMAP1 codec 已進入正式 runtime，但只支援目前定義的五種 alert module；ClassPower／Totem 沒有可匯出的 alert list，不得偽裝成 profile payload。
+- Adler-32 只偵測剪貼內容損壞，不是防竄改或信任來源機制；匯入內容仍視為不可信資料。
+- Profile apply 在戰鬥中拒絕，以避免 Native AuraContainer、Ground duration 或 ClassPower 結構變更；玩家需脫戰後重新預覽／套用。
+- 字型只套用 EAM 自有 FontString；Blizzard AuraButton、Tooltip、Action Bar 與其他插件文字不會被改變，部分字型在不同客戶端的實際字形仍需玩家目視確認。
+- 動態語系刷新已涵蓋 EAM 自有長生命週期按鈕、下拉、條件與 spec menu；客戶端／Blizzard／歷史聊天文字不會被回寫，Live case 程序本身固定繁中。
+- 本輪離線 gate 為 Lua 56/56、Flow 66/66、Contracts 360/360；PTR／XPTR／Retail 尚未由 Codex 操作或簽收 EAMAP1、字型與語系視覺結果。

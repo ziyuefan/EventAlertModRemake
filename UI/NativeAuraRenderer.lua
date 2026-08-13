@@ -53,6 +53,7 @@ local function snapshotStyle(rule)
     return {
         iconSize = safePositive(config and config.iconSize, 40),
         nameFontSize = safePositive(config and config.fontSizeSpellName, 12),
+        fontFamily = TextPlacement.getFontFamily(config),
         timerFontSize = TextPlacement.getFontSize(config, "timer"),
         applicationsFontSize = TextPlacement.getFontSize(config, "applications"),
         timerPlacement = TextPlacement.getPlacement(config, "timer"),
@@ -219,10 +220,10 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     nameText:SetPoint("TOP", auraButton, "BOTTOM", 0, -2)
 
     TextPlacement.apply(timerText, auraButton, style.timerPlacement)
-    TextPlacement.applyFont(timerText, style.timerFontSize)
+    TextPlacement.applyFont(timerText, style.timerFontSize, style.fontFamily)
     TextPlacement.apply(stackText, auraButton, style.applicationsPlacement)
-    TextPlacement.applyFont(stackText, style.applicationsFontSize)
-    nameText:SetFont(STANDARD_TEXT_FONT, style.nameFontSize, "OUTLINE")
+    TextPlacement.applyFont(stackText, style.applicationsFontSize, style.fontFamily)
+    TextPlacement.applyFont(nameText, style.nameFontSize, style.fontFamily)
 
     auraButton:SetIcon(icon)
     auraButton:SetDurationCooldown(cooldown)

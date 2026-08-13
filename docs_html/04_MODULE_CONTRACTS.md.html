@@ -1153,6 +1153,44 @@
 </tbody>
 </table>
 <p>模組停用採 handler gate 加上既有狀態清理；事件仍只註冊一次。Native Aura、Ground duration scrape、ClassPower re-detect 與尚未建立的面板在戰鬥中延後至脫戰。JSON／Base64 profile codec 目前尚未納入正式服務契約，不能把 LegacyReference 匯入器當作新版 API。</p>
+<h2 id="2026-08-14-alpha-5profile-codec">2026-08-14 Alpha 5：Profile codec、字型與動態語系契約</h2>
+<table>
+<thead>
+<tr>
+<th>模組</th>
+<th>正式入口</th>
+<th>輸出／保存</th>
+<th>禁止</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core/ProfileCodec</td>
+<td>ProfileCodec.export、previewImport、applyImport</td>
+<td>EAMAP1 canonical JSON／Base64、preview plan、bounded import backup</td>
+<td>loadstring、任意 Lua、Secret 序列化、未知 schema／module、戰鬥中 apply</td>
+</tr>
+<tr>
+<td>UI/ProfileCodecPanel</td>
+<td>Options 的 Profile 匯入／匯出按鈕</td>
+<td>手動 Ctrl+C 的 export／preview／merge／replace UI</td>
+<td>直接把 EditBox 內容當 Lua、未 preview 直接 replace</td>
+</tr>
+<tr>
+<td>Core/SavedVariables font</td>
+<td>字型下拉與 updateFontFamily</td>
+<td>config.fontFamily 四值白名單、no-op revision</td>
+<td>直接 mutate config、修改 Blizzard FontString</td>
+</tr>
+<tr>
+<td>Locale／UI/Options</td>
+<td>EAM_LANGUAGE_CHANGED registry</td>
+<td>EAM 自有按鈕、下拉、條件、spec menu 即時刷新</td>
+<td>快取未綁定的長生命週期文字、改寫 Blizzard 或案例固定繁中程序</td>
+</tr>
+</tbody>
+</table>
+<p>Profile codec 的 checksum 只用於剪貼損壞偵測，不是安全簽章；apply 前必須重新檢查 plan fingerprint。字型與語系刷新只作用於 EAM 自有 UI，Native AuraButton 結構與戰鬥限制不因此放寬。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

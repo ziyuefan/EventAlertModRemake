@@ -859,6 +859,13 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
 <li>Alpha 4 發布檔案只從正式 TOC 與白名單打包；本機 deploy、Tests、TestResults、Tools、backup 與 LegacyReference 不進 Release ZIP。</li>
 <li>JSON／Base64 profile codec 尚未進入 Flow pass 範圍；若下一輪加入，需增加 parser rejection、checksum、preview/apply、replace/merge、combat deferral 與無副作用測試。</li>
 </ul>
+<h2 id="2026-08-14-alpha-5profile">2026-08-14 Alpha 5：Profile、字型與語系流程</h2>
+<ul>
+<li>Flow 新增 EAMAP1 codec 的 round-trip、malformed／checksum／future schema rejection、preview 零副作用、merge／replace 與 combat guard；所有 parser 結果都以純資料 mock 驗證，不執行外部 Lua。</li>
+<li>ui.text_layout.font_family 驗證字型白名單、path mapping、SavedVariables revision no-op 與 invalid fallback。</li>
+<li>Locale contract 驗證 EAM.L identity 保持不變，EAM 自有按鈕／下拉／條件／spec menu 在 EAM_LANGUAGE_CHANGED 後重新取值；Auto Detect label 必須是固定英文。</li>
+<li>本輪離線 gate：Lua 56/56、Flow all 66/66、Validation Contracts 360/360。最新 Flow 報告為本輪 TestResults/EAM_FlowValidation_all_20260814_074036.json；離線結果不取代 PTR／XPTR／Retail 真人簽收。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

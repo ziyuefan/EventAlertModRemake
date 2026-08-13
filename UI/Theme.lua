@@ -254,12 +254,12 @@ local palettes = freeze({
 })
 
 local themeOptions = freeze({
-    { value = "eam", label = "EAM" },
-    { value = "ff7", label = "FF7" },
-    { value = "winxp", label = "Windows XP" },
-    { value = "borland", label = "Borland C++ IDE" },
-    { value = "doscrt", label = "DOS CRT" },
-    { value = "aqua", label = "macOS Aqua" },
+    { value = "eam", label = "EAM", labelKey = "EAM_THEME_EAM" },
+    { value = "ff7", label = "FF7", labelKey = "EAM_THEME_FF7" },
+    { value = "winxp", label = "Windows XP", labelKey = "EAM_THEME_WINXP" },
+    { value = "borland", label = "Borland C++ IDE", labelKey = "EAM_THEME_BORLAND" },
+    { value = "doscrt", label = "DOS CRT", labelKey = "EAM_THEME_DOSCRT" },
+    { value = "aqua", label = "macOS Aqua", labelKey = "EAM_THEME_AQUA" },
 })
 
 local api = EAM.API or {}
@@ -317,8 +317,13 @@ end
 
 function Theme.getOptionLabel(value)
     local normalized = Theme.normalizeSelection(value)
-    local palette = palettes[normalized]
-    return palette and palette.label or "EAM"
+    for index = 1, #themeOptions do
+        local option = themeOptions[index]
+        if option.value == normalized then
+            return (EAM.L and option.labelKey and EAM.L[option.labelKey]) or option.label
+        end
+    end
+    return "EAM"
 end
 
 function Theme.applyFrame(frame, role)

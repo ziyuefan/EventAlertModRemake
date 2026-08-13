@@ -130,7 +130,47 @@ function TextPlacement.apply(fontString, relativeFrame, placement)
     return true, definition[1], definition[2], definition[3], definition[4]
 end
 
-function TextPlacement.applyFont(fontString, size)
+function TextPlacement.normalizeFontFamily(value)
+    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    for index = 1, #options do
+        if options[index].value == value then
+            return value
+        end
+    end
+    return EAM.Constants and EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
+end
+
+function TextPlacement.getFontFamily(config)
+    local value = type(config) == "table" and config.fontFamily or nil
+    if value == nil and EAM.db and EAM.db.config then
+        value = EAM.db.config.fontFamily
+    end
+    return TextPlacement.normalizeFontFamily(value)
+end
+
+function TextPlacement.getFontPath(configOrFamily)
+    local family
+    if type(configOrFamily) == "table" then
+        family = TextPlacement.getFontFamily(configOrFamily)
+    elseif type(configOrFamily) == "string" then
+        family = TextPlacement.normalizeFontFamily(configOrFamily)
+    else
+        family = TextPlacement.getFontFamily()
+    end
+    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    for index = 1, #options do
+        local option = options[index]
+        if option.value == family then
+            if option.path == "STANDARD" then
+                return STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
+            end
+            return option.path
+        end
+    end
+    return STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
+end
+
+function TextPlacement.applyFont(fontString, size, configOrFamily)
     if not fontString then
         return false
     end
@@ -143,6 +183,7 @@ function TextPlacement.applyFont(fontString, size)
     elseif normalized > EAM.Constants.TEXT_FONT_SIZE_MAX then
         normalized = EAM.Constants.TEXT_FONT_SIZE_MAX
     end
-    fontString:SetFont(STANDARD_TEXT_FONT, normalized, "OUTLINE")
-    return true, normalized
+    local path = TextPlacement.getFontPath(configOrFamily)
+    fontString:SetFont(path, normalized, "OUTLINE")
+    return true, normalized, TextPlacement.getFontFamily(configOrFamily)
 end

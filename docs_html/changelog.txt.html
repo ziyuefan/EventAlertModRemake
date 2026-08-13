@@ -273,7 +273,20 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
         <h1>changelog.txt</h1>
-        <pre><code>-- [Retail 12.1.0 PTR8 Alpha 4]2026.08.13
+        <pre><code>-- [Retail 12.1.0 PTR8 Alpha 5]2026.08.14
+    -- Profile 分享與資料安全：
+       -- 新增 EAMAP1 JSON／Base64 profile codec，含白名單欄位、大小／深度／節點限制、Adler-32 checksum、preview、merge／replace 與 combat guard。
+       -- 匯入不執行外部 Lua，不信任外部 ID／module scope；replace 會保留 bounded backup，checksum 或 schema 不符即拒絕。
+       -- 新增遊戲內 Profile 匯入／匯出面板，複製由玩家手動 Ctrl+C，正式 release 不依賴 LegacyReference。
+    -- UI／語系：
+       -- 新增 STANDARD、ARIALN、MORPHEUS、SKURRI 字型選擇，保存後套用 EAM 自有計時／堆疊／名稱文字。
+       -- 語系變更即時刷新 EAM 自有按鈕、下拉選單、條件與專精選單；Auto Detect 維持固定英文，無需以 /reload 觸發動態刷新。
+       -- 修正 TOC 核心檔案路徑與 Alpha5 日期版本，release workflow 接受 alpha-* tag。
+    -- 驗證與發布：
+       -- 離線 gate：Lua 56/56、Flow all 66/66、Validation Contracts 360/360；不把離線結果冒充 PTR／XPTR／Retail 真人通過。
+       -- Alpha 5 Release ZIP 排除 deploy、Tests、TestResults、Tools、backup、LegacyReference 與工作區雜項。
+    -- 本版定位為 Alpha 5；實機仍須由玩家在 PTR 12.1、XPTR／Retail 12.0.7 依步驟簽收。
+-- [Retail 12.1.0 PTR8 Alpha 4]2026.08.13
     -- 發布與文件：
        -- 整合功能模組開關，讓自身／目標光環、技能冷卻、物品冷卻、地面效果、職業資源、圖騰與 Tooltip 監控可獨立停用或啟用；除錯工具與小地圖入口維持既有獨立行為。
        -- 監控清單改以職業 profile 隔離；保留 v4 舊資料備份與安全遷移，不以職業猜測拆分歷史全域清單。

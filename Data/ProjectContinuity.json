@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-08-13.1",
-  "updatedAt": "2026-08-13",
+  "snapshotVersion": "2026-08-14.1",
+  "updatedAt": "2026-08-14",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "發布 Alpha 4：整合八個功能模組開關、職業 profile 隔離與有限職業查詢，保留 AuraSound、主題、語系、SVG、UnitPower 與 37 案真人矩陣，並等待 PTR／XPTR／Retail 真人簽收。",
+    "objective": "發布 Alpha 5：整合 EAMAP1 profile codec、四種 EAM 字型選擇與動態語系按鈕／spec menu 刷新，保留 AuraSound、模組開關、職業 profile、主題、SVG、UnitPower 與 37 案真人矩陣，並等待 PTR／XPTR／Retail 真人簽收。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 61,
-      "passed": 61,
+      "total": 66,
+      "passed": 66,
       "failed": 0,
       "skipped": 0,
       "pending": 0
@@ -381,7 +381,7 @@
     },
     {
       "id": "FACT-20260813-003",
-      "statement": "Alpha 4 已整合八個功能模組開關、schema v5 職業 profile 隔離與目前職業有限查詢；JSON／Base64 profile 分享 codec 尚未進入正式 runtime。",
+      "statement": "Alpha 4 已整合八個功能模組開關、schema v5 職業 profile 隔離與目前職業有限查詢；Alpha4 發布時未納入 JSON／Base64 codec，Alpha5 改由 EAMAP1 正式 runtime 契約承接。",
       "state": "confirmed",
       "provenance": "project-state",
       "environment": "project",
@@ -391,6 +391,23 @@
         "UI/ModulePanel.lua",
         "Services/LegacyDiscoveryService.lua",
         "Core/persistent-config.lua",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "FACT-20260814-001",
+      "statement": "Alpha 5 已納入 EAMAP1 JSON／Base64 profile codec、四種 EAM 字型選擇與動態語系按鈕／spec menu 刷新；Lua 56/56、Flow 66/66、Validation Contracts 360/360 離線通過，不能升格為 PTR／XPTR／Retail 實機通過。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "project",
+      "evidenceRefs": [
+        "Core/ProfileCodec.lua",
+        "UI/ProfileCodecPanel.lua",
+        "Core/persistent-config.lua",
+        "UI/TextPlacement.lua",
+        "UI/Options.lua",
+        "TestResults/EAM_FlowValidation_all_20260814_074036.json",
+        "Tools/Test-ValidationContracts.ps1",
         "Docs/29_LIVE_TEST_STEP_GUIDE.md"
       ]
     }
@@ -990,7 +1007,7 @@
         "v1-v5 migration 保留 v4 backup，職業 profile 互不污染",
         "list、lookup、lookupfull、showcast 只使用 active class 安全候選",
         "正式 Release ZIP 不包含本機 deploy、Tools、Tests、TestResults 或 backup",
-        "JSON／Base64 profile codec 明確標示為未完成，不接入舊版匯入路徑"
+        "Alpha4 版本明確未納入 codec；Alpha5 另以 EAMAP1 strict parser、checksum、preview 與 apply 契約承接，不接入舊版匯入路徑"
       ],
       "validation": {
         "offline": "pass",
@@ -1002,6 +1019,42 @@
         "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
         "Debug/FlowTestRunner.lua",
         "Tools/Test-ValidationContracts.ps1",
+        "EventAlertMod.toc"
+      ]
+    },
+    {
+      "id": "WORK-20260814-001",
+      "issueId": "EAM-20260814-ALPHA5-PROFILE-FONT-LOCALE",
+      "title": "Alpha 5 profile codec、字型選擇與動態語系 UI",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Core/ProfileCodec.lua",
+        "UI/ProfileCodecPanel.lua",
+        "Core/persistent-config.lua",
+        "UI/TextPlacement.lua",
+        "UI/Options.lua",
+        "Locale/Common.lua",
+        "Debug/FlowTestRunner.lua"
+      ],
+      "acceptanceCriteria": [
+        "EAMAP1 僅接受 strict JSON／Base64、checksum、白名單 module scope 與安全 ID 重算",
+        "preview 不增加 revision；merge／replace 只在 fingerprint 未變且非戰鬥時套用",
+        "STANDARD、ARIALN、MORPHEUS、SKURRI 字型可正規化、no-op 不增加 revision 並套用 EAM 自有 FontString",
+        "語系事件後 EAM 自有按鈕、下拉、條件與 spec menu 重新取 EAM.L，Auto Detect 固定英文",
+        "Release ZIP 不包含本機 deploy、Tests、TestResults、Tools 或 backup"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        "Debug/FlowTestRunner.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "TestResults/EAM_FlowValidation_all_20260814_074036.json",
         "EventAlertMod.toc"
       ]
     }

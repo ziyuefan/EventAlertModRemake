@@ -68,6 +68,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_VALIDATE or "/eam validate - 同 /eam doctor")
     printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示除錯摘要")
     printLine(EAM.L.EAM_SLASH_HELP_EXPORT or "/eam export - 輸出精簡 AI debug 狀態")
+    printLine(EAM.L.EAM_SLASH_HELP_PROFILE or "/eam profile [export|import] - 開啟職業 profile JSON/Base64 分享")
     printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick|core|boundary|aura121|all|live] - 流程驗證或真人實機回報")
     printLine(EAM.L.EAM_SLASH_HELP_ADD or "/eam add <spellID> - 新增 player aura")
     printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam add target <spellID> - 新增 target aura")
@@ -336,6 +337,16 @@ local function handleSlash(input)
             end
         else
             EAM.Debug.FlowTestPanel.open()
+        end
+    elseif command == "profile" then
+        local action = commandIterator()
+        local panel = EAM.UI and EAM.UI.ProfileCodecPanel
+        if not panel then
+            printLine(EAM.L.EAM_PROFILE_CODEC_STATUS_UNAVAILABLE or "Profile codec 尚未載入。")
+        elseif action and string.lower(action) == "export" then
+            panel.openExport()
+        else
+            panel.open()
         end
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()

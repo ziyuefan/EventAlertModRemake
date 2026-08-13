@@ -65,6 +65,7 @@ local defaults = {
     config = {
         language = "auto",
         theme = "eam",
+        fontFamily = "STANDARD",
         auraBackend = "AUTO",
         moduleToggles = {
             playerAura = true,
@@ -439,6 +440,25 @@ local function normalizeThemeSelection(value)
     return "eam"
 end
 
+local function normalizeFontFamilySelection(value)
+    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    for index = 1, #options do
+        if options[index].value == value then
+            return value
+        end
+    end
+    return EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
+end
+
+local function normalizeFontFamilyConfig(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+    local normalized = normalizeFontFamilySelection(config.fontFamily)
+    if config.fontFamily ~= nil and config.fontFamily ~= normalized then
+        appendMigrationWarning(db, "invalidFontFamilyDefaulted")
+    end
+    config.fontFamily = normalized
+end
 local function normalizeThemeConfig(db)
     local config = type(db.config) == "table" and db.config or {}
     db.config = config
@@ -1163,6 +1183,7 @@ function SavedVariables.initialize()
     local activeProfile, activeClassToken = activateClassProfile(EAM_DB)
     normalizeLanguageConfig(EAM_DB)
     normalizeThemeConfig(EAM_DB)
+    normalizeFontFamilyConfig(EAM_DB)
     normalizeModuleToggles(EAM_DB)
     normalizeTextLayout(EAM_DB, false)
     normalizeProfileGroundEffects(EAM_DB)
@@ -1273,6 +1294,23 @@ function SavedVariables.updateTheme(selection)
     return true, "updated", db.revision
 end
 
+function SavedVariables.updateFontFamily(selection)
+    local db = EAM.db
+    if type(db) ~= "table" or type(db.config) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    local normalized = normalizeFontFamilySelection(selection)
+    if db.config.fontFamily == normalized then
+        return true, "unchanged", db.revision
+    end
+    db.config.fontFamily = normalized
+    touchRevision(db)
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router then
+        router.fire("EAM_FONT_FAMILY_CHANGED", normalized, db.revision)
+    end
+    return true, "updated", db.revision
+end
 function SavedVariables.updateModuleToggle(key, enabled)
     local db = EAM.db
     local moduleDefaults = defaults.config.moduleToggles
@@ -1513,6 +1551,212 @@ function SavedVariables.updateAuraSound(unit, spellID, sound)
     return true, "updated", db.revision
 end
 
+local PROFILE_IMPORT_DEFINITIONS = {
+    playerAura = { listName = "playerAuras", kind = EAM.Constants.ALERT_KIND_AURA, unit = "player", idField = "spellID" },
+    targetAura = { listName = "targetAuras", kind = EAM.Constants.ALERT_KIND_AURA, unit = "target", idField = "spellID" },
+    spellCooldown = { listName = "spellCooldowns", kind = EAM.Constants.ALERT_KIND_SPELL_COOLDOWN, unit = "player", idField = "spellID" },
+    itemCooldown = { listName = "itemCooldowns", kind = EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, unit = nil, idField = "itemID" },
+    groundEffect = { listName = "groundEffects", kind = EAM.Constants.ALERT_KIND_GROUND_EFFECT, unit = "player", idField = "spellID" },
+}
+
+local function buildImportedAlert(moduleName, record)
+    local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+    if not definition or type(record) ~= "table" then
+        return nil, "recordInvalid"
+    end
+    local numericID = record[definition.idField]
+    if type(numericID) ~= "number" or numericID % 1 ~= 0 or numericID <= 0 then
+        return nil, "recordIDInvalid"
+    end
+    local alertID = buildAlertID(definition.kind, definition.unit, definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and nil or numericID, definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and numericID or nil)
+    if not alertID then
+        return nil, "recordIDInvalid"
+    end
+
+    local alert = {
+        id = alertID,
+        kind = definition.kind,
+        spellID = definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and nil or numericID,
+        itemID = definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and numericID or nil,
+        unit = definition.unit,
+        enabled = record.enabled ~= false,
+    }
+
+    if definition.kind == EAM.Constants.ALERT_KIND_AURA then
+        alert.fromPlayer = record.fromPlayer == true or nil
+        alert.nativeBackend = "AUTO"
+        alert.auraFilter = (record.auraFilter == "HELPFUL" or record.auraFilter == "HARMFUL") and record.auraFilter or nil
+        alert.showStacks = record.showStacks ~= false
+        alert.showName = record.showName ~= false
+        alert.showCountdown = record.showCountdown ~= false
+        alert.priority = normalizeAlertPriority(record.priority)
+        if record.sound ~= nil then
+            alert.sound = normalizeAuraSound(record.sound)
+            if not alert.sound then
+                return nil, "soundInvalid"
+            end
+        end
+    elseif definition.kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT then
+        alert.durationMode = normalizeGroundDurationMode(record.durationMode)
+        alert.manualDuration = normalizeGroundDuration(record.manualDuration, 8)
+    end
+    return alert
+end
+
+local function exportComparableImportedAlert(moduleName, alert)
+    local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+    if not definition or type(alert) ~= "table" then
+        return nil
+    end
+    local record = {
+        [definition.idField] = alert[definition.idField],
+        enabled = alert.enabled ~= false,
+    }
+    if definition.kind == EAM.Constants.ALERT_KIND_AURA then
+        record.fromPlayer = alert.fromPlayer == true
+        record.auraFilter = alert.auraFilter
+        record.showStacks = alert.showStacks ~= false
+        record.showName = alert.showName ~= false
+        record.showCountdown = alert.showCountdown ~= false
+        record.priority = normalizeAlertPriority(alert.priority)
+        record.sound = normalizeAuraSound(alert.sound)
+    elseif definition.kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT then
+        record.durationMode = normalizeGroundDurationMode(alert.durationMode)
+        record.manualDuration = normalizeGroundDuration(alert.manualDuration, 8)
+    end
+    return record
+end
+
+function SavedVariables.applyProfileImport(classToken, moduleRecords, mode)
+    local db = EAM.db
+    if type(db) ~= "table" or type(moduleRecords) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    if not isValidClassToken(classToken) then
+        return false, "invalidClass"
+    end
+    if mode ~= "merge" and mode ~= "replace" then
+        return false, "invalidMode"
+    end
+    if EAM.API and type(EAM.API.InCombatLockdown) == "function" and EAM.API.InCombatLockdown() then
+        return false, "combatDeferred"
+    end
+
+    local alerts, profile = getProfileAlerts(db, classToken, true)
+    if type(alerts) ~= "table" or type(profile) ~= "table" then
+        return false, "profileUnavailable"
+    end
+
+    local prepared = {}
+    local changed = false
+    local auraChanged = false
+    local soundChanged = false
+    local report = { added = 0, updated = 0, unchanged = 0, removed = 0 }
+    for moduleName, records in pairs(moduleRecords) do
+        local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+        if not definition or type(records) ~= "table" then
+            return false, "moduleInvalid"
+        end
+        local preparedModule = {}
+        local count = 0
+        for index, record in pairs(records) do
+            if type(index) ~= "number" or index % 1 ~= 0 or index < 1 then
+                return false, "recordsNotArray"
+            end
+            count = count + 1
+            if count > 1024 then
+                return false, "moduleLimit"
+            end
+            local alert, reason = buildImportedAlert(moduleName, record)
+            if not alert then
+                return false, reason
+            end
+            if preparedModule[alert.id] then
+                return false, "duplicateAlertID"
+            end
+            preparedModule[alert.id] = alert
+        end
+        prepared[moduleName] = preparedModule
+    end
+
+    local snapshots = {}
+    local nextLists = {}
+    for moduleName, imported in pairs(prepared) do
+        local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+        local current = alerts[definition.listName]
+        if type(current) ~= "table" then
+            current = {}
+        end
+        if mode == "replace" then
+            snapshots[moduleName] = copySerializable(current) or {}
+            nextLists[moduleName] = {}
+        else
+            nextLists[moduleName] = copySerializable(current) or {}
+        end
+        local nextList = nextLists[moduleName]
+        for alertID, alert in pairs(imported) do
+            local existing = current[alertID]
+            local comparable = existing and exportComparableImportedAlert(moduleName, existing) or nil
+            local incoming = exportComparableImportedAlert(moduleName, alert)
+            if existing and comparable and serializableValuesEqual(comparable, incoming) then
+                report.unchanged = report.unchanged + 1
+            else
+                if existing then
+                    report.updated = report.updated + 1
+                else
+                    report.added = report.added + 1
+                end
+                changed = true
+                if definition.kind == EAM.Constants.ALERT_KIND_AURA then
+                    auraChanged = true
+                    soundChanged = true
+                end
+            end
+            nextList[alertID] = copySerializable(alert) or alert
+        end
+        if mode == "replace" then
+            for alertID in pairs(current) do
+                if not imported[alertID] then
+                    report.removed = report.removed + 1
+                    changed = true
+                    if definition.kind == EAM.Constants.ALERT_KIND_AURA then
+                        auraChanged = true
+                        soundChanged = true
+                    end
+                end
+            end
+        end
+    end
+
+    if not changed then
+        return true, "unchanged", report
+    end
+
+    if mode == "replace" then
+        profile.importBackups = type(profile.importBackups) == "table" and profile.importBackups or {}
+        local backupEntry = {
+            revision = db.revision or 0,
+            modules = snapshots,
+        }
+        profile.importBackups[#profile.importBackups + 1] = backupEntry
+        while #profile.importBackups > 3 do
+            table.remove(profile.importBackups, 1)
+        end
+    end
+    for moduleName, nextList in pairs(nextLists) do
+        local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+        alerts[definition.listName] = nextList
+    end
+    touchRevision(db)
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router and auraChanged then
+        router.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    end
+    if router and soundChanged then
+        router.fire("EAM_AURA_SOUND_CHANGED", db.revision)
+    end
+    return true, "updated", report
+end
 function SavedVariables.removeAlert(kind, unit, spellID, itemID)
     local db = EAM.db
     if type(db) ~= "table" then

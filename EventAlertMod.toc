@@ -5,7 +5,7 @@
 ## 邊界: 不載入 Classic/MOP/TBC/Wrath 分支，不載入 ReferenceLibs 或 LegacyReference。
 ## 維護: 新增正式模組時同步確認 Docs/04_MODULE_CONTRACTS.md 與 Docs/12_CODE_COMMENTARY_GUIDE.md。
 ## Interface: 120007, 120100
-## Version: EventAlertMod_MN_20260813
+## Version: EventAlertMod_MN_20260814
 ## X-WoWI-ID: 26550
 ## X-Curse-Project-ID: 826042
 
@@ -35,6 +35,7 @@ Core\EventRouter.lua
 Core\Scheduler.lua
 Core\SavedVariables.lua
 Core\ModuleController.lua
+Core\ProfileCodec.lua
 Core\Performance.lua
 
 Locale\Common.lua
@@ -73,6 +74,7 @@ Services\AuraSoundService.lua
 Services\AuraContainerService.lua
 UI\AboutPanel.lua
 UI\ModulePanel.lua
+UI\ProfileCodecPanel.lua
 UI\Options.lua
 UI\Slash.lua
 

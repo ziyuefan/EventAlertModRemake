@@ -578,6 +578,11 @@ EAM 狀態，消耗轉儲大量日誌。</p>
 <li><code>source</code> 必須保留，不能把 Offline Mock 改寫成 Retail／PTR。</li>
 <li>遊戲內最後報告以字串保存於 <code>EAM_FLOW_TEST_REPORT_JSON</code>，僅供使用者回灌。</li>
 </ul>
+<h2 id="eamap1-profile">EAMAP1 Profile 分享格式</h2>
+<p>Profile 分享不是除錯報告，也不是可執行程式。正式字串為：</p>
+<p>EAMAP1:<base64(canonical UTF-8 JSON envelope)></p>
+<p>Envelope 最少包含 type=EAM_ALERT_PROFILE、schema=1、addonSchema=5、scope、payload、payloadBytes 與 Adler-32 checksum。payload.modules 是陣列，不接受外部 map key；每筆 alert 的 derived ID 由 module 與安全的 SpellID／ItemID 重算。</p>
+<p>解析器拒絕寬鬆 Base64、duplicate JSON key、trailing data、NaN／Infinity、未知 schema／class／module、過深／過大節點、重複 derived ID 與任何 Lua 程式碼。previewImport 必須零 revision／零事件；applyImport 只接受 fingerprint 未變的 plan，戰鬥中拒絕或延後。Base64 不提供加密或作者驗證。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
