@@ -131,3 +131,11 @@ OnUpdate/C_Timer的使用和分配風險。 `文件/07_MIGRATION_NOTES.md`
 - /eam list、lookup、lookupfull 與 showcast 只操作目前職業的安全候選；不掃描整個 SpellID 空間，也不自動寫入監控清單。
 - JSON／Base64 profile 分享尚未成為正式 runtime API；正式程式不使用 LegacyReference 的 loadstring 匯入路徑。下一輪若實作，必須先完成嚴格 parser、checksum、preview/apply 與戰鬥延後契約。
 - 本輪離線 gate 維持 Lua 54/54、Flow all 61/61、Validation Contracts 355/355；Alpha 4 Release 仍不代表 PTR、XPTR 或 Retail 真人簽收。
+
+## 2026-08-14 Alpha 5 發布交接
+
+- Alpha 5 將 Core/ProfileCodec.lua 與 UI/ProfileCodecPanel.lua 納入正式 runtime；分享字串格式為 EAMAP1:<base64(canonical JSON)>，只處理目前 active class 的允許 module scope。
+- codec 使用嚴格 JSON／Base64 parser、Adler-32 checksum、大小／深度／節點上限與 preview fingerprint；merge／replace 只在非戰鬥套用，拒絕外部 Lua、Secret 值、未知 schema、重複 ID 與不合法 class/module。
+- 新增四種 EAM 自有字型選擇；SavedVariables.updateFontFamily 做白名單正規化與 no-op revision，TextPlacement 只改 EAM 自建 FontString。
+- Locale registry 會在 EAM_LANGUAGE_CHANGED 後重新套用 EAM 自有按鈕、下拉、條件與 spec menu；Auto Detect 固定英文，無需 /reload 才能看到動態切換。
+- 本輪離線 gate 為 Lua 56/56、Flow all 66/66、Validation Contracts 360/360；Flow artifact 以本輪 TestResults 產物為準。PTR／XPTR／Retail 仍需玩家自行實測，不可升格為真人 pass。

@@ -6,6 +6,13 @@
 
 ---
 
+#### [正式服 12.1.0 PTR8 Alpha 5] 2026.08.14
+- Alpha 5 完成 EAMAP1 JSON／Base64 profile 分享：嚴格 schema、checksum、preview、merge／replace、戰鬥拒絕與手動 Ctrl+C，不使用 loadstring。
+- 主設定新增字型選擇（STANDARD、ARIALN、MORPHEUS、SKURRI）；字型設定只套用 EAM 自有文字，不修改 Blizzard secure/protected UI。
+- 語系切換改為動態刷新 EAM 自有按鈕、下拉選單、條件與專精名稱；Auto Detect 固定英文，切換後不需 /reload，只有更新插件程式才需先 /reload 載入新 Lua。
+- Alpha 5 Release ZIP 只由 GitHub Release 提供；本機 deploy、測試資料、工具與備份目錄不納入套件。
+- 本版定位為 Alpha 5；離線驗證 Lua 56/56、Flow 66/66、Contracts 360/360，不代表 PTR／XPTR／Retail 實機簽收。
+
 #### [正式服 12.1.0 PTR8 Alpha 4] 2026.08.13
 - Alpha 4 整合功能模組開關、職業專用監控清單、模組化匯入／匯出規劃與 12.1 AuraSound 細部設定。
 - 延續六套 EAM 主題、俄文語系、SVG 小地圖圖示、Native Aura／UnitPower 安全邊界與 37 案真人測試矩陣。

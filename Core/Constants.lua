@@ -105,6 +105,13 @@ EAM.Constants = freeze({
         groundEffect = "groundEffect",
     }),
 
+    FONT_FAMILY_DEFAULT = "STANDARD",
+    FONT_FAMILY_OPTIONS = freeze({
+        freeze({ value = "STANDARD", labelKey = "EAM_OPT_FONT_STANDARD", path = "STANDARD" }),
+        freeze({ value = "ARIALN", labelKey = "EAM_OPT_FONT_ARIALN", path = "Fonts\\ARIALN.TTF" }),
+        freeze({ value = "MORPHEUS", labelKey = "EAM_OPT_FONT_MORPHEUS", path = "Fonts\\MORPHEUS.TTF" }),
+        freeze({ value = "SKURRI", labelKey = "EAM_OPT_FONT_SKURRI", path = "Fonts\\SKURRI.TTF" }),
+    }),
     ALERT_BORDER_COLORS = freeze({
         selfHelpful = freeze({ 0.10, 0.82, 1.00, 1.00 }),
         selfHarmful = freeze({ 1.00, 0.18, 0.18, 1.00 }),

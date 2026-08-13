@@ -383,7 +383,7 @@ local function createDebugFrame()
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", f, "TOP", 0, -16)
     title:SetTextColor(0.95, 0.85, 0.4, 1.0)
-    title:SetText("EAM 系統診斷與除錯資訊匯出 (Debug)")
+    EAM.Locale.bindText(title, "EAM_PROMPT_TITLE", "EAM 系統診斷與除錯資訊匯出 (Debug)")
     if Theme and Theme.registerText then Theme.registerText(title, "title") end
 
     -- 內邊框
@@ -461,7 +461,7 @@ local function createDebugFrame()
     if Theme and Theme.registerButton then Theme.registerButton(refreshBtn) end
     refreshBtn:SetSize(100, 26)
     refreshBtn:SetPoint("LEFT", copyBtn, "RIGHT", 10, 0)
-    refreshBtn:SetText("重新整理")
+    EAM.Locale.bindText(refreshBtn, "EAM_PROMPT_REFRESH", "重新整理")
     local rnTex = refreshBtn:GetNormalTexture()
     if rnTex then rnTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
     refreshBtn:SetScript("OnClick", function()
@@ -475,7 +475,7 @@ local function createDebugFrame()
     if Theme and Theme.registerButton then Theme.registerButton(closeBtn) end
     closeBtn:SetSize(100, 26)
     closeBtn:SetPoint("LEFT", refreshBtn, "RIGHT", 10, 0)
-    closeBtn:SetText("關閉視窗")
+    EAM.Locale.bindText(closeBtn, "EAM_PROMPT_CLOSE", "關閉視窗")
     local clnTex = closeBtn:GetNormalTexture()
     if clnTex then clnTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
     closeBtn:SetScript("OnClick", function()

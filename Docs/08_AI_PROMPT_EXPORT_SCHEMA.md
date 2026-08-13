@@ -168,3 +168,13 @@ EAM 狀態，消耗轉儲大量日誌。
 - 不輸出 Secret／Protected 值、完整 SavedVariables 或原始 Aura／Cooldown facts。
 - `source` 必須保留，不能把 Offline Mock 改寫成 Retail／PTR。
 - 遊戲內最後報告以字串保存於 `EAM_FLOW_TEST_REPORT_JSON`，僅供使用者回灌。
+
+## EAMAP1 Profile 分享格式
+
+Profile 分享不是除錯報告，也不是可執行程式。正式字串為：
+
+EAMAP1:<base64(canonical UTF-8 JSON envelope)>
+
+Envelope 最少包含 type=EAM_ALERT_PROFILE、schema=1、addonSchema=5、scope、payload、payloadBytes 與 Adler-32 checksum。payload.modules 是陣列，不接受外部 map key；每筆 alert 的 derived ID 由 module 與安全的 SpellID／ItemID 重算。
+
+解析器拒絕寬鬆 Base64、duplicate JSON key、trailing data、NaN／Infinity、未知 schema／class／module、過深／過大節點、重複 derived ID 與任何 Lua 程式碼。previewImport 必須零 revision／零事件；applyImport 只接受 fingerprint 未變的 plan，戰鬥中拒絕或延後。Base64 不提供加密或作者驗證。

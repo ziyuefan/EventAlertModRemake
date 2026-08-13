@@ -296,3 +296,13 @@ schemaVersion 5 的 EAM_DB 目前包含兩個互相獨立的設定面：
 - v4 根層全域清單遷移時先保存 migrationBackups.globalAlertsV4；無法取得合法職業 token 時保存 profiles.unassignedLegacy，禁止猜測歸屬。
 - /eam list、lookup、lookupfull 與 showcast 使用 active class profile；清空後不因 reload 重新灌入預設，defaultsSeeded 與 legacyImportVersion 共同維持冪等性。
 - 目前正式程式沒有 JSON／Base64 profile 分享 codec；Debug export 也不是可套用的設定匯入格式。任何未來分享格式都必須拒絕外部 Lua、Secret 值、未知 schema、重複 ID 與過大輸入。
+
+## 2026-08-14 Alpha 5：Profile 分享與字型設定
+
+Core/ProfileCodec.lua 定義正式分享格式 EAMAP1:<base64(JSON envelope)>。JSON 是 canonical UTF-8 純資料，不能包含 function、userdata、metatable、Secret 值或執行字串。
+
+- envelope 必須是 type=EAM_ALERT_PROFILE、schema=1、addonSchema=5，並帶 scope.classToken、允許的 scope.modules、payload.modules、payloadBytes 與 checksum={algorithm="adler32",value="8hex"}。
+- Base64 僅接受嚴格 alphabet／padding；encoded 上限 262144 bytes、decoded 上限 196608 bytes、JSON depth 8、nodes 16384、總 alerts 4096、每 module 1024。
+- import 先做 parse、schema、checksum、scope、欄位白名單與 ID 重算，再產生 preview；preview 不增加 revision、不發事件。merge 只 upsert scope 內項目，replace 只替換指定 class／module 並保留 bounded backup。
+- 戰鬥中拒絕結構性 apply；EAMAP1 不是加密，也不宣稱來源可信。任何 malformed／future schema／duplicate key／duplicate derived ID 都 fail-closed。
+- config.fontFamily 允許 STANDARD、ARIALN、MORPHEUS、SKURRI，預設 STANDARD；變更由 SavedVariables.updateFontFamily 正規化、no-op 保持 revision，並由 TextPlacement 套用於 EAM 自有 FontString。

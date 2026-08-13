@@ -586,3 +586,14 @@ Theme registry 只保存 EAM 自有 UI 物件的 weak-key reference；戰鬥中 
 | UI/ModulePanel | 主設定的「功能模組」按鈕 | 不直接擁有設定 | 戰鬥中建立或重排 UIParent 結構 |
 
 模組停用採 handler gate 加上既有狀態清理；事件仍只註冊一次。Native Aura、Ground duration scrape、ClassPower re-detect 與尚未建立的面板在戰鬥中延後至脫戰。JSON／Base64 profile codec 目前尚未納入正式服務契約，不能把 LegacyReference 匯入器當作新版 API。
+
+## 2026-08-14 Alpha 5：Profile codec、字型與動態語系契約
+
+| 模組 | 正式入口 | 輸出／保存 | 禁止 |
+| --- | --- | --- | --- |
+| Core/ProfileCodec | ProfileCodec.export、previewImport、applyImport | EAMAP1 canonical JSON／Base64、preview plan、bounded import backup | loadstring、任意 Lua、Secret 序列化、未知 schema／module、戰鬥中 apply |
+| UI/ProfileCodecPanel | Options 的 Profile 匯入／匯出按鈕 | 手動 Ctrl+C 的 export／preview／merge／replace UI | 直接把 EditBox 內容當 Lua、未 preview 直接 replace |
+| Core/SavedVariables font | 字型下拉與 updateFontFamily | config.fontFamily 四值白名單、no-op revision | 直接 mutate config、修改 Blizzard FontString |
+| Locale／UI/Options | EAM_LANGUAGE_CHANGED registry | EAM 自有按鈕、下拉、條件、spec menu 即時刷新 | 快取未綁定的長生命週期文字、改寫 Blizzard 或案例固定繁中程序 |
+
+Profile codec 的 checksum 只用於剪貼損壞偵測，不是安全簽章；apply 前必須重新檢查 plan fingerprint。字型與語系刷新只作用於 EAM 自有 UI，Native AuraButton 結構與戰鬥限制不因此放寬。

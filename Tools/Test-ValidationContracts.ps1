@@ -1105,6 +1105,7 @@ foreach ($surfaceFile in $dynamicLocaleSurfaceFiles) {
 }
 Assert-Contract ($missingDynamicLocaleBindings.Count -eq 0) "EAM UI surfaces register dynamic locale bindings" ($missingDynamicLocaleBindings -join ", ")
 Assert-Contract ($flowRunnerSource.Contains('id = "locale.dynamic_switch"')) "Flow covers immediate locale switch and stable EAM.L identity"
+Assert-Contract ($flowRunnerSource.Contains('id = "ui.text_layout.font_family"')) "Flow covers font family selection and path mapping"
 Assert-Contract (
     $optionsSource.Contains('themeDropdown') -and
     $optionsSource.Contains('saved.updateTheme(option.value)') -and

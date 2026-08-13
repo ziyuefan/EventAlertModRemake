@@ -283,9 +283,11 @@ local function applyNameLayoutToIcon(icon, nameInside)
     if nameInside then
         icon.nameText:SetPoint("BOTTOM", refFrame, "BOTTOM", 0, 2)
         icon.nameText:SetFontObject("GameFontHighlightSmall")
+        TextPlacement.applyFont(icon.nameText, icon.rendered.nameFontSize or 12, EAM.db and EAM.db.config or nil)
     else
         icon.nameText:SetPoint("TOP", refFrame, "BOTTOM", 0, -2)
         icon.nameText:SetFontObject("GameFontNormalSmall")
+        TextPlacement.applyFont(icon.nameText, icon.rendered.nameFontSize or 12, EAM.db and EAM.db.config or nil)
     end
     rendered.nameInside = nameInside
     rendered.nameLayoutPending = nil
@@ -322,15 +324,15 @@ local function applyTextLayoutToIcon(icon, config)
         rendered.applicationsPlacement = applicationsPlacement
     end
     if rendered.timerFontSize ~= timerFontSize then
-        TextPlacement.applyFont(icon.timerText, timerFontSize)
+        TextPlacement.applyFont(icon.timerText, timerFontSize, config)
         rendered.timerFontSize = timerFontSize
     end
     if rendered.applicationsFontSize ~= applicationsFontSize then
-        TextPlacement.applyFont(icon.stackText, applicationsFontSize)
+        TextPlacement.applyFont(icon.stackText, applicationsFontSize, config)
         rendered.applicationsFontSize = applicationsFontSize
     end
     if icon.nameText and rendered.nameFontSize ~= nameFontSize then
-        TextPlacement.applyFont(icon.nameText, nameFontSize)
+        TextPlacement.applyFont(icon.nameText, nameFontSize, config)
         rendered.nameFontSize = nameFontSize
     end
     return true

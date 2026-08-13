@@ -1537,6 +1537,15 @@
 <li>驗證結果：Lua <code>54/54</code>；Flow <code>all 57/57</code>，artifact 為 <code>TestResults/EAM_FlowValidation_all_20260812_234217.json</code>；<code>locale.dynamic_switch</code> 驗證 ruRU 即時文字、dotted power key、穩定 <code>EAM.L</code> identity 與 no-op revision。Validation Contracts 初跑 <code>331 pass / 1 fail</code>，唯一失敗是延續性 JSON 新增了隱私契約禁止的模組詞；移除後最終 <code>332/332</code>。均屬離線／靜態證據，不宣稱 PTR／XPTR／Retail 實機通過。</li>
 <li>後續注意事項：玩家載入本次新程式需先自行 <code>/reload</code> 一次；其後在三個支援客戶端選 <code>Русский</code> 與 <code>Auto Detect</code> 時應立即切換，再以一次 <code>/reload</code> 驗證保存。已輸出的聊天紀錄、Blizzard UI、其他插件及客戶端法術／物品名稱不會被 EAM 改寫。</li>
 </ul>
+<h3 id="2026-08-14-eam-20260814-alpha5-profile-font-localealpha-5-codec">2026-08-14 EAM-20260814-ALPHA5-PROFILE-FONT-LOCALE：Alpha 5 codec、字型與動態語系</h3>
+<ul>
+<li>狀態：已完成離線實作與契約驗證；PTR／XPTR／Retail 真人簽收待玩家執行。</li>
+<li>症狀：Profile 分享原先只有規劃；初版 codec 的合法 Base64 padding、JSON object／array 判斷、payload.modules 陣列形狀、locale 新 key scope、TOC 路徑與 spec dropdown 語系刷新都曾出現實作風險。</li>
+<li>原因判斷：Lua pattern 對 {0,2} 的處理不等同完整 Base64 grammar；JSON parser 需要在 parse root 時保留 object marker；外部 module payload 不能被當成 map；Locale callback 內新增 key 才會進入 catalog；專精選單是動態建立，僅 refresh 已存在 widget 不足；TOC 反斜線屬檔案路徑語法，不能重複跳脫。</li>
+<li>有效解法：以嚴格長度／alphabet／padding 檢查包住 Base64 decode；parser 使用 object marker 與 metatable 保留 JSON 類型；payload modules 強制陣列驗證；將新語系 key 放回 Locale.register callback；語系事件後重建 spec menu 再刷新 dropdown；TOC 使用單一反斜線並由封裝 gate 驗證。</li>
+<li>驗證結果：Lua 56/56、Flow all 66/66、Validation Contracts 360/360；git diff --check 亦通過。上述是離線／mock 證據，沒有把任何視覺或音效結果升格為實機 pass。</li>
+<li>後續注意事項：不要重新接回 LegacyReference 的 loadstring；字型只改 EAM 自有 FontString；動態語系不改寫 Blizzard UI、歷史聊天或固定繁中 Live case 程序；Profile apply 在戰鬥中必須拒絕或延後。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

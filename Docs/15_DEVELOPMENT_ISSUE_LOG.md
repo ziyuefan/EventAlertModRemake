@@ -1102,3 +1102,12 @@
 - 有效解法：`SavedVariables.updateLanguage()` 在 updated／unchanged 都發出 `EAM_LANGUAGE_CHANGED`；`Core/Main.lua` 在 DB 初始化後套用保存選擇；`Locale.apply()` 原地清除／合併 `EAM.L` 並保留 table identity；長生命週期 EAM widget 以 `Locale.bindText()` 更新，複合狀態以低頻 refresh callback 重算。主視窗、About、功能模組、Tooltip popup、Prompt、Flow／Live、UnitPower 與 SVG 面板均已接線，不呼叫 `ReloadUI()`。
 - 驗證結果：Lua `54/54`；Flow `all 57/57`，artifact 為 `TestResults/EAM_FlowValidation_all_20260812_234217.json`；`locale.dynamic_switch` 驗證 ruRU 即時文字、dotted power key、穩定 `EAM.L` identity 與 no-op revision。Validation Contracts 初跑 `331 pass / 1 fail`，唯一失敗是延續性 JSON 新增了隱私契約禁止的模組詞；移除後最終 `332/332`。均屬離線／靜態證據，不宣稱 PTR／XPTR／Retail 實機通過。
 - 後續注意事項：玩家載入本次新程式需先自行 `/reload` 一次；其後在三個支援客戶端選 `Русский` 與 `Auto Detect` 時應立即切換，再以一次 `/reload` 驗證保存。已輸出的聊天紀錄、Blizzard UI、其他插件及客戶端法術／物品名稱不會被 EAM 改寫。
+
+### 2026-08-14 EAM-20260814-ALPHA5-PROFILE-FONT-LOCALE：Alpha 5 codec、字型與動態語系
+
+- 狀態：已完成離線實作與契約驗證；PTR／XPTR／Retail 真人簽收待玩家執行。
+- 症狀：Profile 分享原先只有規劃；初版 codec 的合法 Base64 padding、JSON object／array 判斷、payload.modules 陣列形狀、locale 新 key scope、TOC 路徑與 spec dropdown 語系刷新都曾出現實作風險。
+- 原因判斷：Lua pattern 對 {0,2} 的處理不等同完整 Base64 grammar；JSON parser 需要在 parse root 時保留 object marker；外部 module payload 不能被當成 map；Locale callback 內新增 key 才會進入 catalog；專精選單是動態建立，僅 refresh 已存在 widget 不足；TOC 反斜線屬檔案路徑語法，不能重複跳脫。
+- 有效解法：以嚴格長度／alphabet／padding 檢查包住 Base64 decode；parser 使用 object marker 與 metatable 保留 JSON 類型；payload modules 強制陣列驗證；將新語系 key 放回 Locale.register callback；語系事件後重建 spec menu 再刷新 dropdown；TOC 使用單一反斜線並由封裝 gate 驗證。
+- 驗證結果：Lua 56/56、Flow all 66/66、Validation Contracts 360/360；git diff --check 亦通過。上述是離線／mock 證據，沒有把任何視覺或音效結果升格為實機 pass。
+- 後續注意事項：不要重新接回 LegacyReference 的 loadstring；字型只改 EAM 自有 FontString；動態語系不改寫 Blizzard UI、歷史聊天或固定繁中 Live case 程序；Profile apply 在戰鬥中必須拒絕或延後。

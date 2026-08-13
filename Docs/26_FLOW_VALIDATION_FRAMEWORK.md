@@ -355,3 +355,10 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - /eam list、lookup、lookupfull、showcast 的候選來源固定為 active class 的設定、SpellArray 與本次登入安全施法候選；不可把輸出當成完整職業資料庫。
 - Alpha 4 發布檔案只從正式 TOC 與白名單打包；本機 deploy、Tests、TestResults、Tools、backup 與 LegacyReference 不進 Release ZIP。
 - JSON／Base64 profile codec 尚未進入 Flow pass 範圍；若下一輪加入，需增加 parser rejection、checksum、preview/apply、replace/merge、combat deferral 與無副作用測試。
+
+## 2026-08-14 Alpha 5：Profile、字型與語系流程
+
+- Flow 新增 EAMAP1 codec 的 round-trip、malformed／checksum／future schema rejection、preview 零副作用、merge／replace 與 combat guard；所有 parser 結果都以純資料 mock 驗證，不執行外部 Lua。
+- ui.text_layout.font_family 驗證字型白名單、path mapping、SavedVariables revision no-op 與 invalid fallback。
+- Locale contract 驗證 EAM.L identity 保持不變，EAM 自有按鈕／下拉／條件／spec menu 在 EAM_LANGUAGE_CHANGED 後重新取值；Auto Detect label 必須是固定英文。
+- 本輪離線 gate：Lua 56/56、Flow all 66/66、Validation Contracts 360/360。最新 Flow 報告為本輪 TestResults/EAM_FlowValidation_all_20260814_074036.json；離線結果不取代 PTR／XPTR／Retail 真人簽收。

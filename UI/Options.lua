@@ -42,6 +42,8 @@ local Options = {
     languageMenu = nil,
     themeDropdown = nil,
     themeMenu = nil,
+    fontDropdown = nil,
+    fontMenu = nil,
     specDropdown = nil,
     currentSpecFilterName = nil,
     addEditBox = nil,
@@ -279,6 +281,27 @@ function Options.refreshThemeDropdown()
     Options.themeDropdown:SetText((EAM.L.EAM_OPT_THEME_PREFIX or "Theme: ") .. label)
 end
 
+function Options.refreshFontDropdown()
+    if not Options.fontDropdown then
+        return
+    end
+    local config = EAM.db and EAM.db.config or nil
+    local textPlacement = EAM.UI and EAM.UI.TextPlacement
+    local family = textPlacement and textPlacement.getFontFamily and textPlacement.getFontFamily(config)
+        or (config and config.fontFamily)
+        or "STANDARD"
+    local label = family
+    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    for index = 1, #options do
+        local option = options[index]
+        if option.value == family then
+            label = (EAM.L and EAM.L[option.labelKey]) or option.labelKey or option.value
+            break
+        end
+    end
+    Options.fontDropdown:SetText((EAM.L.EAM_OPT_FONT_PREFIX or "Font: ") .. label)
+end
+
 function Options.refreshAuraBackendStatus()
     if not Options.nativeAuraStatusLabel then
         return
@@ -322,12 +345,43 @@ function Options.refreshSpecDropdown()
     Options.specDropdown:SetText((EAM.L.EAM_OPT_FILTER_PREFIX or "篩選: ") .. filterName)
 end
 
+function Options.refreshConditionsLocalizedText()
+    local cf = Options.condFrame
+    local data = Options.currentEditingAlert
+    if not cf or not data then
+        return
+    end
+
+    local id = data.itemID or data.spellID
+    if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
+        cf.idText:SetText(id and string.format(EAM.L.EAM_OPT_COND_ITEM_ID_FORMAT or "Item ID: %d", id) or "")
+    elseif data.spellID then
+        cf.idText:SetText(string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", data.spellID))
+    else
+        cf.idText:SetText("")
+    end
+
+    local auraSoundName = Options.resolveAuraSoundName(type(data.sound) == "table" and data.sound or nil)
+        or (EAM.db and EAM.db.config and EAM.db.config.soundName)
+        or "ShayBell"
+    if cf.auraSoundDropdown then
+        cf.auraSoundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "Sound: ") .. auraSoundName)
+    end
+end
+
+
 function Options.refreshLocalizedText()
     Options.refreshSoundDropdown()
     Options.refreshLanguageDropdown()
     Options.refreshThemeDropdown()
+    Options.refreshFontDropdown()
     Options.refreshAuraBackendStatus()
+    if Options.rebuildSpecMenu then
+        Options.rebuildSpecMenu()
+    end
     Options.refreshSpecDropdown()
+    Options.refreshConditionsLocalizedText()
+    Options.refreshList()
 end
 
 if Locale and type(Locale.registerRefresh) == "function" then
@@ -833,7 +887,7 @@ local function createFrame()
         if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
         local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        menuButtonText:SetText(option.label)
+        bindText(menuButtonText, option.labelKey, option.label)
         if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
         menuButton:SetScript("OnClick", function()
             local saved = EAM.Modules and EAM.Modules.SavedVariables
@@ -981,7 +1035,7 @@ local function createFrame()
 
         local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        menuButtonText:SetText(option.label)
+        bindText(menuButtonText, option.labelKey, option.label)
         if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
 
         menuButton:SetScript("OnClick", function()
@@ -1165,6 +1219,68 @@ local function createFrame()
     dirTitle:SetPoint("TOPLEFT", posInner, "TOPLEFT", 16, -270)
     dirTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
     bindText(dirTitle, "EAM_OPT_DIR_TITLE", "告警框架圖示成長方向設定")
+
+    local fontLabel = posInner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    fontLabel:SetPoint("TOPLEFT", posInner, "TOPLEFT", 350, -270)
+    fontLabel:SetTextColor(0.85, 0.75, 0.65, 1)
+    bindText(fontLabel, "EAM_OPT_FONT_PREFIX", "字型：")
+
+    local fontDropdown = api.CreateFrame("Button", nil, posInner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(fontDropdown) end
+    fontDropdown:SetSize(160, 20)
+    fontDropdown:SetPoint("TOPLEFT", posInner, "TOPLEFT", 350, -284)
+    Options.fontDropdown = fontDropdown
+
+    local fontOptions = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    local fontMenu = api.CreateFrame("Frame", nil, posInner, "BackdropTemplate")
+    fontMenu:SetSize(176, (#fontOptions * 22) + 8)
+    fontMenu:SetPoint("TOPLEFT", fontDropdown, "BOTTOMLEFT", 0, -2)
+    fontMenu:SetFrameStrata("DIALOG")
+    fontMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    fontMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    fontMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(fontMenu, "menu") end
+    fontMenu:Hide()
+    Options.fontMenu = fontMenu
+
+    for index = 1, #fontOptions do
+        local option = fontOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, fontMenu)
+        menuButton:SetSize(170, 20)
+        menuButton:SetPoint("TOPLEFT", fontMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+        if Theme and Theme.registerButton then Theme.registerButton(menuButton) end
+        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        bindText(menuButtonText, option.labelKey, option.value)
+        if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
+        menuButton:SetScript("OnClick", function()
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            if saved and saved.updateFontFamily then
+                local ok, status = saved.updateFontFamily(option.value)
+                if ok and status == "updated" then
+                    Options.refreshFontDropdown()
+                    Options.notifyTextLayoutChanged(true)
+                elseif ok then
+                    Options.refreshFontDropdown()
+                end
+            end
+            fontMenu:Hide()
+        end)
+    end
+    fontDropdown:SetScript("OnClick", function()
+        if fontMenu:IsShown() then
+            fontMenu:Hide()
+        else
+            fontMenu:Show()
+        end
+    end)
+    Options.refreshFontDropdown()
 
     -- 輔助下拉選單建立器 (無 Taint Backdrop 單純 Lua 下拉選單)
     local function createDirectionDropdown(parent, labelText, frameName, x, y)
@@ -1590,6 +1706,15 @@ local function createFrame()
             end
         end
 
+        local selectedName = menuItems[1] and menuItems[1].name or ""
+        for index = 1, #menuItems do
+            if menuItems[index].val == Options.currentSpecFilter then
+                selectedName = menuItems[index].name
+                break
+            end
+        end
+        Options.currentSpecFilterName = selectedName
+
         local menuHeight = #menuItems * 22 + 6
         specMenu:SetSize(160, menuHeight)
 
@@ -1615,6 +1740,8 @@ local function createFrame()
             table.insert(specMenu.buttons, menuBtn)
         end
     end
+
+    Options.rebuildSpecMenu = rebuildSpecMenu
 
     specDropdown:SetScript("OnClick", function()
         if specMenu:IsShown() then
@@ -1719,7 +1846,7 @@ local function createFrame()
         end)
         
         -- Name
-        local name = "未知"
+        local name = EAM.L.EAM_OPT_UNKNOWN or "Unknown"
         if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
             name = C_Item.GetItemNameByID(data.itemID) or ((EAM.L.EAM_ITEM_PREFIX or "物品 ") .. data.itemID)
         elseif data.spellID then
@@ -1873,7 +2000,7 @@ local function createFrame()
 
     local condIDText = condFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     condIDText:SetPoint("TOPLEFT", condNameFrame, "BOTTOMLEFT", 2, -4)
-    condIDText:SetText("Spell ID: 0")
+    condIDText:SetText(string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", 0))
     condFrame.idText = condIDText
 
     -- Sliders (左側排版，Label 偏上 5px 防重疊)
@@ -2239,17 +2366,17 @@ function Options.openConditionsFrame(data)
 
     -- 獲取法術/物品名稱與圖標
     local texture
-    local name = "未知"
+    local name = EAM.L.EAM_OPT_UNKNOWN or "Unknown"
     local idStr = ""
     if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
         texture = C_Item.GetItemIconByID(data.itemID)
         name = C_Item.GetItemNameByID(data.itemID) or ((EAM.L.EAM_ITEM_PREFIX or "物品 ") .. data.itemID)
-        idStr = "Item ID: " .. data.itemID
+        idStr = string.format(EAM.L.EAM_OPT_COND_ITEM_ID_FORMAT or "Item ID: %d", data.itemID)
     elseif data.spellID then
         texture = C_Spell.GetSpellTexture(data.spellID)
         local spellInfo = C_Spell.GetSpellInfo(data.spellID)
         name = spellInfo and spellInfo.name or ((EAM.L.EAM_OPT_COND_SPELL_NAME or "法術 ") .. data.spellID)
-        idStr = "Spell ID: " .. data.spellID
+        idStr = string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", data.spellID)
     end
 
     cf.icon:SetTexture(texture or "Interface\\Icons\\INV_Misc_QuestionMark")
@@ -2299,15 +2426,9 @@ function Options.openConditionsFrame(data)
     cf.auraSoundApplicationsCb:SetAlpha(auraSoundAlpha)
     cf.auraSoundRemovedCb:SetAlpha(auraSoundAlpha)
     if auraSoundAvailable then
-        cf.auraSoundHint:SetText(localized(
-            "EAM_OPT_AURA_SOUND_INHERIT",
-            "三項皆未勾選時沿用全域音效；實際觸發需 PTR 真人驗證。"
-        ))
+        bindText(cf.auraSoundHint, "EAM_OPT_AURA_SOUND_INHERIT", "三項皆未勾選時沿用全域音效；實際觸發需 PTR 真人驗證。")
     else
-        cf.auraSoundHint:SetText(localized(
-            "EAM_OPT_AURA_SOUND_DISABLED",
-            "此客戶端不支援 12.1 AuraSound；現有設定不會被改寫。"
-        ))
+        bindText(cf.auraSoundHint, "EAM_OPT_AURA_SOUND_DISABLED", "此客戶端不支援 12.1 AuraSound；現有設定不會被改寫。")
     end
 
     if isGround then

@@ -5,7 +5,7 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-08-13.1。
+目前快照版本：2026-08-14.1。
 
 ## 2. 重新進入專案的閱讀順序
 
@@ -23,7 +23,7 @@
 
 ## 3. 當前目標
 
-完成 Alpha 3 後續維護：新增 PTR 12.1 AuraSound 三 trigger 細部設定與交易式註冊生命週期，保留 12.0.7 capability 降級；PTR／XPTR／Retail 依 37 案、SVG、主題、語系與 UnitPower 步驟由玩家簽收。發布定位仍為 alpha。
+完成 Alpha 5 發布：保留 AuraSound、模組開關與職業 profile 隔離，加入 EAMAP1 profile codec、四種字型選擇與動態語系按鈕刷新；PTR／XPTR／Retail 依 37 案及 Alpha5 追加步驟由玩家簽收。發布定位仍為 alpha。
 
 ## 4. 已確認事實
 
@@ -175,3 +175,19 @@
 - /eam list、lookup、lookupfull、showcast 已恢復為目前職業的有限安全候選查詢；不會自動將結果加入監控。
 - JSON／Base64 profile 分享仍是下一輪規劃，正式程式沒有可套用的 codec；Release 不包含 LegacyReference、Tools、Tests、TestResults、backup 或本機 deploy。
 - 發布前離線 gate：Lua 54/54、Flow all 61/61、Validation Contracts 355/355；PTR／XPTR／Retail 仍需玩家依追加步驟簽收。
+
+## 2026-08-14 Alpha 5 發布快照
+
+- Alpha 5 發布範圍：Core/ProfileCodec.lua、UI/ProfileCodecPanel.lua、四種 EAM 字型選擇、Locale 動態按鈕／spec menu 刷新，以及前一輪 AuraSound、模組開關、職業 profile、主題、SVG、UnitPower 能力。
+- EAMAP1 僅接受 canonical JSON／Base64 與白名單 module scope；preview 零副作用，merge／replace 需 fingerprint 未變且非戰鬥，任何外部 Lua、Secret、未知 schema／duplicate／過大 payload 均拒絕。
+- config.fontFamily 預設 STANDARD；語系切換後 EAM 自有按鈕與下拉立即刷新，Auto Detect 固定英文；Blizzard UI、歷史聊天與 Live case 固定繁中程序不改寫。
+- Alpha 5 release package 由 GitHub Release 提供，排除本機 deploy、Tests、TestResults、Tools、backup、LegacyReference 與工作區雜項；AddOns symlink 不曾被修改。
+- 發布前離線 gate：Lua 56/56、Flow all 66/66、Validation Contracts 360/360；PTR／XPTR／Retail 尚待玩家真人簽收。
+
+### EAM-20260814-ALPHA5-PROFILE-FONT-LOCALE
+
+- 狀態：已完成離線實作，待三客戶端真人簽收。
+- 症狀：Alpha4 文件仍將 profile 分享標為未完成；新增字型後需確認所有 EAM 長生命週期按鈕與專精選單吃到 EAM.L。
+- 解法：建立嚴格 EAMAP1 codec／Profile panel，新增 fontFamily mutation 與 TextPlacement 套用，讓 Locale registry 在語系事件後重建 spec menu 並刷新已綁定文字。
+- 驗證：Lua 56/56、Flow 66/66、Contracts 360/360；無 Codex 自動操作 WoW。
+- 後續：玩家在 PTR、XPTR、Retail 各做 profile export／preview／merge／replace、四字型與五語系／Auto Detect 目視測試，回報 build、Interface、reload 與 boundaryWarnings。

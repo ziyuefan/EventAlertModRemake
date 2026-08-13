@@ -360,5 +360,16 @@ pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 `
 3. 在戰鬥中嘗試切換模組，確認設定保存但結構性 Native 變更延後至 PLAYER_REGEN_ENABLED，沒有 taint 或 blocked action。
 4. 以至少兩個不同職業登入，執行 /eam list、/eam lookup <名稱>、/eam lookupfull <完整名稱> 與 /eam showcast；確認列出的清單只屬目前職業。
 5. 清空一個職業的清單後 /reload，確認不會重新灌入內建預設；切換回另一職業，確認其設定未被污染。
-6. 不要把 /eam export 或 Debug JSON 貼回作為設定匯入；正式 JSON／Base64 profile codec 尚未完成。
+6. Alpha 5 可使用主設定的 Profile 匯出；只接受以 EAMAP1: 開頭的正式字串，不要貼入 Debug JSON，也不要執行任何外部 Lua。
 7. 每個客戶端均記錄 client channel、build、Interface、/reload、Lua error、taint 與 blocked action；離線通過不得改寫成實機 pass。
+
+## 2026-08-14 Alpha 5：Profile、字型與動態語系追加步驟
+
+這些步驟不改變 37 案矩陣總數，須在 PTR 12.1、XPTR 12.0.7、Retail 12.0.7 各自執行：
+
+1. 非戰鬥中開啟 Profile 面板，匯出目前職業一個 module，確認字串以 EAMAP1: 開頭；玩家自行 Ctrl+C，不把帳號、角色或絕對路徑貼入報告。
+2. 先按 Preview，確認 add／update／unchanged／conflict 計數；以 Merge 套用後檢查 revision 只增加一次，再以另一份 scope 做 Replace，確認只改指定 class／module。
+3. 在戰鬥中嘗試 Apply，應拒絕或顯示待脫戰，不得重建 Native 結構或產生 taint；脫戰後重新 Preview／Apply。
+4. 逐一選 STANDARD、ARIALN、MORPHEUS、SKURRI，確認計時、堆疊與名稱文字的字形／大小仍在圖示預期位置；/reload 後確認設定保存。
+5. 切換 zhTW、zhCN、enUS、koKR、ruRU 與固定英文 Auto Detect，確認 EAM 主視窗、按鈕、下拉、條件與專精選單即時刷新；不要以 Blizzard UI 或歷史聊天文字判定 EAM 失敗。
+6. 回報必須附 client channel、build、Interface、是否 /reload、Lua error／taint／blocked action、codec preview／apply 結果與語系／字型目視觀察。Codex 不自動操作 WoW。
