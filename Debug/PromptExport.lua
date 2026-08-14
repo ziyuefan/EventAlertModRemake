@@ -167,11 +167,11 @@ function PromptExport.buildDetailed()
         local saved = EAM.Modules.SavedVariables
         if saved then
             local selfAlerts = saved.getAlertList(EAM.Constants.ALERT_KIND_AURA, "player") or {}
-            for _, a in pairs(selfAlerts) do
-                if a.fromPlayer == true or a.fromPlayer == nil then
-                    selfCount = selfCount + 1
-                else
+            for _, alert in pairs(selfAlerts) do
+                if alert.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS then
                     classCount = classCount + 1
+                else
+                    selfCount = selfCount + 1
                 end
             end
             local targetAlerts = saved.getAlertList(EAM.Constants.ALERT_KIND_AURA, "target") or {}
@@ -263,12 +263,13 @@ function PromptExport.buildDetailed()
 
     local powerActiveList = {}
     local powerService = EAM.Services and EAM.Services.ClassPowerService
-    if powerService and powerService.states then
-        for id, state in pairs(powerService.states) do
-            if state.active then
-                table.insert(powerActiveList, tostring(id))
-            end
-        end
+    local powerStatus = powerService and powerService.getStatus and powerService.getStatus() or nil
+    local activePowerType = powerStatus and powerStatus.activePowerType or nil
+    if powerStatus
+        and powerStatus.active == true
+        and EAM.Util
+        and EAM.Util.isSafeNumber(activePowerType) then
+        powerActiveList[1] = tostring(activePowerType)
     end
 
     local managerGlowList = {}
@@ -292,7 +293,21 @@ function PromptExport.buildDetailed()
     add('    "activeGroundEffects": [' .. table.concat(groundActiveList, ",") .. '],\n')
     add('    "activeTotems": [' .. table.concat(totemActiveList, ",") .. '],\n')
     add('    "activeClassPowers": [' .. table.concat(powerActiveList, ",") .. '],\n')
-    add('    "managerGlowSpells": [' .. table.concat(managerGlowList, ",") .. '],\n')
+    add('    "classPower": {\n')
+    add('      "active": ' .. tostring(powerStatus and powerStatus.active == true) .. ',\n')
+    add('      "activePowerType": ' .. (
+        EAM.Util and EAM.Util.isSafeNumber(activePowerType) and tostring(activePowerType) or "null"
+    ) .. ',\n')
+    add('      "activePowerToken": ' .. string.format("%q", powerStatus and powerStatus.activePowerToken or "") .. ',\n')
+    add('      "selectedFrom": ' .. string.format("%q", powerStatus and powerStatus.selectedFrom or "unavailable") .. ',\n')
+    add('      "predicateAvailable": ' .. tostring(powerStatus and powerStatus.predicateAvailable == true) .. ',\n')
+    add('      "lastResultClass": ' .. string.format("%q", powerStatus and powerStatus.lastResultClass or "unavailable") .. ',\n')
+    add('      "safeUpdateCount": ' .. tostring(powerStatus and powerStatus.safeUpdateCount or 0) .. ',\n')
+    add('      "secretUpdateCount": ' .. tostring(powerStatus and powerStatus.secretUpdateCount or 0) .. ',\n')
+    add('      "unavailableUpdateCount": ' .. tostring(powerStatus and powerStatus.unavailableUpdateCount or 0) .. ',\n')
+    add('      "combatDeferredCount": ' .. tostring(powerStatus and powerStatus.combatDeferredCount or 0) .. ',\n')
+    add('      "rawValuesExposed": false\n')
+    add('    },\n')    add('    "managerGlowSpells": [' .. table.concat(managerGlowList, ",") .. '],\n')
     add('    "renderer": {\n')
     local visibleIconsCount = 0
     local anyLayoutDirty = false
@@ -443,10 +458,6 @@ local function createDebugFrame()
     copyBtn:SetSize(180, 26)
     copyBtn:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 18)
     EAM.Locale.bindText(copyBtn, "EAM_PROMPT_COPY_SELECT", "全選診斷資訊")
-    local cnTex = copyBtn:GetNormalTexture()
-    if cnTex then cnTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
-    local cpTex = copyBtn:GetPushedTexture()
-    if cpTex then cpTex:SetVertexColor(0.6, 0.1, 0.1, 1) end
     copyBtn:SetScript("OnClick", function()
         local prepared = EAM.Util.prepareEditBoxManualCopy(eb)
         if prepared then
@@ -462,8 +473,6 @@ local function createDebugFrame()
     refreshBtn:SetSize(100, 26)
     refreshBtn:SetPoint("LEFT", copyBtn, "RIGHT", 10, 0)
     EAM.Locale.bindText(refreshBtn, "EAM_PROMPT_REFRESH", "重新整理")
-    local rnTex = refreshBtn:GetNormalTexture()
-    if rnTex then rnTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
     refreshBtn:SetScript("OnClick", function()
         eb:SetText(PromptExport.buildDetailed())
         eb:HighlightText()
@@ -476,8 +485,6 @@ local function createDebugFrame()
     closeBtn:SetSize(100, 26)
     closeBtn:SetPoint("LEFT", refreshBtn, "RIGHT", 10, 0)
     EAM.Locale.bindText(closeBtn, "EAM_PROMPT_CLOSE", "關閉視窗")
-    local clnTex = closeBtn:GetNormalTexture()
-    if clnTex then clnTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
     closeBtn:SetScript("OnClick", function()
         f:Hide()
     end)

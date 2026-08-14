@@ -7,7 +7,7 @@
 
 - `_ptr_`：12.1 PTR。
 - `_xptr_`：12.0.7 XPTR。
-- `_retail_`：12.0.7 正式服。
+- `_retail_`：12.1 正式服。
 
 所有遊戲輸入都由玩家親自完成。EAM 與 Codex 不施法、不使用物品、不執行巨集、不切換目標、不自動輸入 `/reload`，也不修改限制型 CVar。離線 mock、Lua 語法與契約測試不能取代本文件的實機觀察。
 
@@ -277,8 +277,8 @@
 
 ### C. 主題按鈕
 
-1. 脫戰開啟主視窗，依序選 EAM、FF7、Windows XP、Borland C++ IDE、DOS CRT、macOS Aqua。
-2. 每一主題檢查主視窗、About、Tooltip popup、Flow、Live、SVG、UnitPower、Prompt 的按鈕 normal、滑入 highlight、按下 pushed、disabled 及文字色；DOS CRT 應為磷光綠、Aqua 應為藍灰／亮藍、Borland 應為電光藍／青。
+1. 脫戰開啟主視窗，依序選 EAM、FF7、Windows XP、Windows 7、Windows 10、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua。
+2. 每一主題檢查主視窗、About、Tooltip popup、Flow、Live、SVG、UnitPower、Prompt 的按鈕 normal、滑入 highlight、按下 pushed、disabled、文字、底色及四邊 2px 邊框；Borland 應為亮藍底亮黃字，DOS CRT 應為黑底綠字，其餘新增主題也須可辨識。
 3. 進戰鬥時嘗試切換，確認只保存 pending；脫戰後才套用。完成 /reload 後再確認設定仍保留。
 4. 不需要檢查暴雪 Action Bar 或其他插件按鈕；主題範圍只包含 EAM 自有 UI。
 
@@ -365,7 +365,7 @@ pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 `
 
 ## 2026-08-14 Alpha 5：Profile、字型與動態語系追加步驟
 
-這些步驟不改變 37 案矩陣總數，須在 PTR 12.1、XPTR 12.0.7、Retail 12.0.7 各自執行：
+這些步驟不改變 37 案矩陣總數，須在 PTR 12.1、XPTR 12.0.7、Retail 12.1 各自執行：
 
 1. 非戰鬥中開啟 Profile 面板，匯出目前職業一個 module，確認字串以 EAMAP1: 開頭；玩家自行 Ctrl+C，不把帳號、角色或絕對路徑貼入報告。
 2. 先按 Preview，確認 add／update／unchanged／conflict 計數；以 Merge 套用後檢查 revision 只增加一次，再以另一份 scope 做 Replace，確認只改指定 class／module。
@@ -373,3 +373,27 @@ pwsh -NoProfile -File .\Tools\Import-EAMFlowReport.ps1 `
 4. 逐一選 STANDARD、ARIALN、MORPHEUS、SKURRI，確認計時、堆疊與名稱文字的字形／大小仍在圖示預期位置；/reload 後確認設定保存。
 5. 切換 zhTW、zhCN、enUS、koKR、ruRU 與固定英文 Auto Detect，確認 EAM 主視窗、按鈕、下拉、條件與專精選單即時刷新；不要以 Blizzard UI 或歷史聊天文字判定 EAM 失敗。
 6. 回報必須附 client channel、build、Interface、是否 /reload、Lua error／taint／blocked action、codec preview／apply 結果與語系／字型目視觀察。Codex 不自動操作 WoW。
+
+## 2026-08-14 Retail 12.1／Aura catalog／Profile UI 追加步驟
+
+這些項目不增加 37 案數；Retail／PTR 12.1 與 XPTR 12.0.7 都要由玩家操作並附 build／Interface。
+
+1. 開啟語系、字型、主題、音效、方向、文字位置、專精與 AuraSound 下拉選單；每列在未 hover 時須可見，hover／按下／disabled 狀態與目前主題一致。
+2. 從主設定按「Profile 匯入／匯出」。匯出長字串後以滾輪、捲軸 thumb、上下箭頭、Home／End／PageUp／PageDown移動；文字不可越過 viewport，狀態與六顆 footer 按鈕固定。
+3. 確認小地圖的 `Trade_Engineering` 齒輪完整位於金色追蹤圈內，不得是左上空圈加右下齒輪；再測左鍵開關、右鍵診斷、拖曳與 `/reload` 保存。若仍錯位、綠塊、問號或聲音圖示，回傳截圖、client、build 與 UI scale。
+4. 在自身 Aura 清單新增一個目前職業可用 Aura，打開齒輪確認「僅玩家施放」已勾選；在目標 Aura 重複一次，也應預設勾選。
+5. 將可安全解析但非目前職業的 Aura 加入自身清單，確認它出現在跨職業增減益且「僅玩家施放」預設未勾選；不可因此刪除原有使用者資料。
+6. 在批次視窗貼入 `有效ID1;有效ID2；有效ID3` 並混入換行、重複 ID、文字與不存在正整數；按一鍵加入後只出現有效唯一 ID，沒有空白項或 Lua error。
+7. 按「載入目前 ID」與「全選複製」，由玩家按 Ctrl+C；編輯文字後 pending preview 應失效，不可套用舊 plan。
+8. Retail／PTR 12.1 觀察 player／target Native Aura；XPTR 12.0.7 觀察 Legacy。三者都測戰鬥內外與 `/reload`，記錄 taint、blocked action、Forbidden access 與 boundaryWarnings。
+9. Wowhead candidate JSON 不在遊戲中載入，也不會自動新增預設；任何新增預設仍須另有客戶端法術／Aura ID 實機證據。
+
+## 2026-08-14 Alpha 6：小地圖圈內對齊與發布後冒煙測試
+
+這些步驟不增加 37 案數，Release 安裝後由玩家在 Retail／PTR 12.1 與 XPTR 12.0.7 執行：
+
+1. 確認安裝的是 GitHub `alpha-6` 資產，完成 `/reload` 後再開 EAM；不得用仍載入記憶體的 Alpha 5 畫面簽收。
+2. 對照同一小地圖上的標準圓形按鈕，確認 EAM 齒輪位於金色圈中心且未超出；金圈不得偏到左上、齒輪不得落在右下圈外。
+3. 以 64%、100% 與玩家常用 UI Scale 截圖；同時確認左鍵、右鍵、拖曳、滑入高亮與 `/reload` 位置保存。
+4. 打開語系與十一主題下拉，確認未 hover 文字與按鈕四態／2px 邊框仍正常，避免小地圖插入修正造成 UI 回歸。
+5. 回報 client channel、patch、build、Interface、UI Scale、Lua error／taint／blocked action與畫面結果；離線 394/394 不能取代此目視簽收。

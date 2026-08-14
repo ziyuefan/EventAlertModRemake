@@ -78,10 +78,8 @@ function AuraCapabilityService.initialize()
     AuraCapabilityService.testBuildKnown = type(api.IsPublicTestClient) == "function"
         and type(api.IsTestBuild) == "function"
         and type(api.IsBetaBuild) == "function"
+    -- 12.1 正式服與 PTR 共用 Native Aura；test flags 只辨識通道，不是能力授權。
     AuraCapabilityService.nativeRuntimeAllowed = AuraCapabilityService.clientInterface >= Constants.INTERFACE
-        and (AuraCapabilityService.clientIsPublicTest
-            or AuraCapabilityService.clientIsTestBuild
-            or AuraCapabilityService.clientIsBetaBuild)
 
     local unitAuras = api.C_UnitAuras
     AuraCapabilityService.hasAuraSound = type(unitAuras) == "table"
@@ -99,12 +97,9 @@ function AuraCapabilityService.initialize()
     AuraCapabilityService.hasDurationObject = type(api.C_DurationUtil) == "table"
         and type(api.C_DurationUtil.CreateDuration) == "function"
 
-    if AuraCapabilityService.clientInterface >= Constants.INTERFACE and AuraCapabilityService.nativeRuntimeAllowed then
+    if AuraCapabilityService.clientInterface >= Constants.INTERFACE then
         AuraCapabilityService.selectedBackend = Constants.AURA_BACKEND_UNSUPPORTED
         AuraCapabilityService.limitationReason = "containerProbePending"
-    elseif AuraCapabilityService.clientInterface >= Constants.INTERFACE then
-        AuraCapabilityService.selectedBackend = Constants.AURA_BACKEND_UNSUPPORTED
-        AuraCapabilityService.limitationReason = "nativePtrOnlyGate"
     else
         AuraCapabilityService.selectedBackend = Constants.AURA_BACKEND_LEGACY
         AuraCapabilityService.limitationReason = nil
@@ -135,9 +130,8 @@ function AuraCapabilityService.acceptContainer(container)
     AuraCapabilityService.selectedBackend = AuraCapabilityService.clientInterface < Constants.INTERFACE
         and Constants.AURA_BACKEND_LEGACY
         or Constants.AURA_BACKEND_UNSUPPORTED
-    AuraCapabilityService.limitationReason = AuraCapabilityService.clientInterface >= Constants.INTERFACE
-        and (AuraCapabilityService.nativeRuntimeAllowed and "nativeContainerContractMissing" or "nativePtrOnlyGate")
-        or "nativeContainerContractMissing"
+    AuraCapabilityService.limitationReason = "nativeContainerContractMissing"
+
     AuraCapabilityService.canUseSpellIDCandidateFilter = false
     return false
 end

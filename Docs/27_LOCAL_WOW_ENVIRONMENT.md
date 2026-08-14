@@ -7,7 +7,7 @@
 
 - WoW 根目錄：`D:\World of Warcraft`
 - EAM 實體專案：`D:\EventAlertMod`
-- 最後唯讀盤點：2026-08-08（Asia/Taipei）
+- 最後唯讀盤點：2026-08-14（Asia/Taipei）
 - 證據：執行檔 VersionInfo、目錄存在性、`LinkType`、`Target`、`ReparsePoint`
 - 尚未代表：角色登入、插件載入、流程面板、taint 或實機測試通過
 
@@ -17,8 +17,8 @@
 
 | 版本資料夾 | 執行檔 | ProductVersion | WTF／AddOns | EAM 用途 |
 | --- | --- | --- | --- | --- |
-| `_retail_` | `Wow.exe` | 12.0.7.68974 | 皆存在 | 正式服實機驗證 |
-| `_ptr_` | `WowT.exe` | 12.1.0.69189 | 皆存在 | 至暗之夜 12.1.0 PTR 驗證 |
+| `_retail_` | `Wow.exe` | 12.1.0.69299 | 皆存在 | 正式服 12.1 Native 實機驗證 |
+| `_ptr_` | `WowT.exe` | 12.1.0.69299 | 皆存在 | 12.1 PTR Native 實機驗證 |
 | `_xptr_` | `WowT.exe` | 12.0.7.68887 | 皆存在 | 至暗之夜 12.0.7 PTR 驗證 |
 
 Battle.net 更新後 build 可能改變。每次實機測試前必須重讀 VersionInfo，不可只依 `_ptr_`／`_xptr_` 名稱推斷版本。
@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass `
     -File .\Tools\Test-LocalWoWEnvironment.ps1
 ```
 
-預設斷言 Retail `12.0.7`、PTR `12.1.0`、XPTR `12.0.7` 的 patch train，不鎖定 build 尾碼；完整 `ProductVersion`、`FileVersion`、Reparse Point 與 Target 會寫入 `TestResults/EAM_LocalWoWEnvironment_*.json` 及 `.md`。任一版本或連結不符即回傳 exit code 1，且不執行修復。
+預設斷言 Retail `12.1.0`、PTR `12.1.0`、XPTR `12.0.7` 的 patch train，不鎖定 build 尾碼；完整 `ProductVersion`、`FileVersion`、Reparse Point 與 Target 會寫入 `TestResults/EAM_LocalWoWEnvironment_*.json` 及 `.md`。任一版本或連結不符即回傳 exit code 1，且不執行修復。
 
 Battle.net 切換版本線後可暫時用 `-RetailExpectedPatch`、`-PtrExpectedPatch`、`-XPtrExpectedPatch` 覆寫預期值；確認新基準後仍須同步更新本文件與 `AGENTS.md`。
 
@@ -112,3 +112,13 @@ D:\World of Warcraft\_xptr_\WTF\Account\<ACCOUNT>\SavedVariables\EventAlertMod.l
 | `_xptr_` | 12.0.7.68887 | Legacy 相容回歸 |
 
 `_retail_`、`_ptr_`、`_xptr_` 的 `Interface\AddOns\EventAlertMod` 均已唯讀確認為 SymbolicLink，目標是 `D:\EventAlertMod`。證據為 `TestResults/EAM_LocalWoWEnvironment_20260729_135335687.json`，結果 3/3；這不是遊戲內簽收。本輪所有修改只作用於實體專案，未對 link 路徑執行部署、刪除、搬移、覆寫或重建。
+
+## 9. 2026-08-14 唯讀前檢快照
+
+| 產品目錄 | ProductVersion | 用途 |
+| --- | --- | --- |
+| `_retail_` | 12.1.0.69299 | 正式服 12.1 Native 回歸 |
+| `_ptr_` | 12.1.0.69299 | PTR 12.1 Native／API 能力回歸 |
+| `_xptr_` | 12.0.7.68887 | Legacy 相容回歸 |
+
+`TestResults/EAM_LocalWoWEnvironment_20260814_104354344.json` 結果 3/3；三個支援客戶端的 AddOns 路徑仍是指向 EAM 實體專案的 SymbolicLink／Reparse Point。此證據只確認版本 train、執行檔與連結，未啟動 WoW，也不是 Aura、Tooltip、Profile 或戰鬥流程簽收。

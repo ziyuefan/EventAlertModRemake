@@ -144,3 +144,12 @@
 - 字型只套用 EAM 自有 FontString；Blizzard AuraButton、Tooltip、Action Bar 與其他插件文字不會被改變，部分字型在不同客戶端的實際字形仍需玩家目視確認。
 - 動態語系刷新已涵蓋 EAM 自有長生命週期按鈕、下拉、條件與 spec menu；客戶端／Blizzard／歷史聊天文字不會被回寫，Live case 程序本身固定繁中。
 - 本輪離線 gate 為 Lua 56/56、Flow 66/66、Contracts 360/360；PTR／XPTR／Retail 尚未由 Codex 操作或簽收 EAMAP1、字型與語系視覺結果。
+
+## 2026-08-14 Aura catalog 與 Wowhead 候選限制
+
+- `C_SpellBook`／Spellbook membership 只證明玩家可學或已知能力，不涵蓋所有 Aura effect ID；未命中目前職業資料時採保守 `CROSS_CLASS`，不能據此自動刪除。
+- Wowhead JSON 缺乏 PTR／Retail build、Aura effect ID 實機來源與完整錯誤清單，且包含 PvP、共用、被動或錯置候選；只可協助人工 discovery。
+- `has_aura` 來自網頁 tooltip hint，不等於 `UnitAura` 實際 spellID；抓取失敗與真正無 Aura 不可混為一談。
+- 不存在 SpellID 的 UI 過濾是低頻設定路徑；不得把 Secret Aura 值送入 spell existence 檢查、字串化、table key 或報告。
+- Texture SVG 在已觀察 build 會出現 accepted／rejected 非對稱，故小地圖正式路徑暫用內建齒輪；SVG 仍只保留玩家操作 capability probe。
+- 最新離線 gate為 Lua 56/56、Flow 67/67、Contracts 380/380；批次分類、dropdown、Profile 捲動與齒輪圖示仍需 Retail／PTR／XPTR 真人目視。

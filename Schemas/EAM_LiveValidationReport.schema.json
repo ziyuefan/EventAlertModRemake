@@ -42,7 +42,7 @@
     },
     "matrixVersion": {
       "type": "string",
-      "const": "2026-08-13.1"
+      "const": "2026-08-14.1"
     },
     "status": {
       "enum": [

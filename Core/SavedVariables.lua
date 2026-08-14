@@ -434,7 +434,7 @@ local function normalizeLanguageConfig(db)
 end
 
 local function normalizeThemeSelection(value)
-    if value == "eam" or value == "ff7" or value == "winxp" or value == "borland" or value == "doscrt" or value == "aqua" then
+    if value == "eam" or value == "ff7" or value == "winxp" or value == "win7" or value == "win10" or value == "win31" or value == "borland" or value == "doscrt" or value == "eten" or value == "redalert" or value == "aqua" then
         return value
     end
     return "eam"
@@ -1415,6 +1415,14 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
             changed = true
         end
         if kind == EAM.Constants.ALERT_KIND_AURA and options then
+            local catalogScope = options.catalogScope
+            if catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+                or catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS then
+                if existing.catalogScope ~= catalogScope then
+                    existing.catalogScope = catalogScope
+                    changed = true
+                end
+            end
             local auraFilter = nil
             if options.auraFilter == "HELPFUL" or options.auraFilter == "HARMFUL" then
                 auraFilter = options.auraFilter
@@ -1459,9 +1467,11 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
             end
         end
         if changed then
-            touchRevision(db)
-            if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
-                EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+            if not (options and options.deferCommit == true) then
+                touchRevision(db)
+                if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
+                    EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+                end
             end
             return true, id, "updated"
         end
@@ -1476,6 +1486,10 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         unit = unit,
         enabled = true,
         fromPlayer = options and options.fromPlayer == true or nil,
+        catalogScope = kind == EAM.Constants.ALERT_KIND_AURA and options
+            and (options.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+                or options.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS)
+            and options.catalogScope or nil,
         nativeBackend = kind == EAM.Constants.ALERT_KIND_AURA and "AUTO" or nil,
         auraFilter = kind == EAM.Constants.ALERT_KIND_AURA and options
             and (options.auraFilter == "HELPFUL" or options.auraFilter == "HARMFUL")
@@ -1490,11 +1504,29 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         manualDuration = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
             and normalizeGroundDuration(options and options.manualDuration, 8) or nil,
     }
+    if not (options and options.deferCommit == true) then
+        touchRevision(db)
+        if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
+            EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+        end
+    end
+    return true, id, "added"
+end
+
+-- 批次 UI 在逐筆驗證後只提交一次 revision 與 Aura 設定事件。
+function SavedVariables.commitAlertBatch(kind, changed)
+    local db = EAM.db
+    if type(db) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    if changed ~= true then
+        return true, "unchanged", db.revision
+    end
     touchRevision(db)
     if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
         EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
     end
-    return true, id, "added"
+    return true, "updated", db.revision
 end
 
 function SavedVariables.updateAlertPriority(kind, unit, spellID, itemID, value)
@@ -1585,6 +1617,9 @@ local function buildImportedAlert(moduleName, record)
     if definition.kind == EAM.Constants.ALERT_KIND_AURA then
         alert.fromPlayer = record.fromPlayer == true or nil
         alert.nativeBackend = "AUTO"
+        alert.catalogScope = (record.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+            or record.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS)
+            and record.catalogScope or nil
         alert.auraFilter = (record.auraFilter == "HELPFUL" or record.auraFilter == "HARMFUL") and record.auraFilter or nil
         alert.showStacks = record.showStacks ~= false
         alert.showName = record.showName ~= false
@@ -1615,6 +1650,7 @@ local function exportComparableImportedAlert(moduleName, alert)
     if definition.kind == EAM.Constants.ALERT_KIND_AURA then
         record.fromPlayer = alert.fromPlayer == true
         record.auraFilter = alert.auraFilter
+        record.catalogScope = alert.catalogScope
         record.showStacks = alert.showStacks ~= false
         record.showName = alert.showName ~= false
         record.showCountdown = alert.showCountdown ~= false

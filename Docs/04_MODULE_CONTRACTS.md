@@ -555,7 +555,7 @@ VectorGraphics 是 Region 能力，不等同 Texture；Texture 的 texcoord、ro
 
 | 模組 | 輸入 | 輸出 | 禁止 |
 | --- | --- | --- | --- |
-| `UI/Theme` | 靜態 palette、EAM 自有 frame／FontString／button registry、SavedVariables 的 `theme` | EAM／FF7／Windows XP／Borland／DOS CRT／macOS Aqua palette、combat-deferred 套用結果 | 讀取 Secret Value、修改 Blizzard secure frame、覆蓋 AlertBorderStyles 語意色 |
+| UI/Theme | 靜態 palette、EAM 自有 frame／FontString／button registry、SavedVariables 的 theme | 十一套主題 palette、combat-deferred 套用結果、EAM 按鈕四態中性底圖與 2px 主題邊框 | 讀取 Secret Value、修改 Blizzard secure frame、覆蓋 AlertBorderStyles 語意色 |
 | `UI/Options` minimap helper | EAM 自有小地圖 Texture、專案 SVG | `svg` 或 `fallback` 結果；保留原按鈕互動 | 使用聲音 FileDataID 當貼圖、依賴外部 wowtools 素材、戰鬥中改安全互動 |
 
 Theme registry 只保存 EAM 自有 UI 物件的 weak-key reference；戰鬥中 `setSelection` 不立即改 frame，而是保存 pending 值，於 `PLAYER_REGEN_ENABLED` 後一次套用。小地圖 SVG 只作視覺素材降級，不參與 Aura、Cooldown、UnitPower 或 Secret 邏輯。
@@ -597,3 +597,15 @@ Theme registry 只保存 EAM 自有 UI 物件的 weak-key reference；戰鬥中 
 | Locale／UI/Options | EAM_LANGUAGE_CHANGED registry | EAM 自有按鈕、下拉、條件、spec menu 即時刷新 | 快取未綁定的長生命週期文字、改寫 Blizzard 或案例固定繁中程序 |
 
 Profile codec 的 checksum 只用於剪貼損壞偵測，不是安全簽章；apply 前必須重新檢查 plan fingerprint。字型與語系刷新只作用於 EAM 自有 UI，Native AuraButton 結構與戰鬥限制不因此放寬。
+
+## 2026-08-14：Aura catalog、批次輸入與候選資料邊界
+
+| 模組 | 輸入 | 輸出 | 禁止 |
+| --- | --- | --- | --- |
+| `UI/Options` Aura catalog | 玩家單筆或換行／分號批次 SpellID、目前職業 | `SELF`／`CROSS_CLASS` 路由、預設 `fromPlayer`、可複製目前清單 | 顯示不存在法術、把非本職候選偽裝成本職、逐筆增加 revision |
+| `Core/SavedVariables` | 已驗證的 alert draft 與 deferred batch | active class profile、單次 revision/event | 寫根層 mirror、凍結使用者資料、接受未知 scope |
+| `UI/ProfileCodecPanel` | EAMAP1 文字 | ScrollFrame viewport、固定 footer、preview/apply | 讓長文字覆蓋按鈕、自動剪貼簿、戰鬥中套用 |
+| `Tools/fetch_wowhead_spells.py` | Wowhead 離線網頁候選 | `Data/wow_spells_and_auras.json` | 寫入 Docs、成為 TOC/runtime 依賴、把網頁資料冒充 live verified |
+| `Tools/Test-WowheadCandidateData.ps1` | 唯一 Data JSON 與抓取腳本 | schema／totals／class14／路徑／runtime isolation gate | 自動批准錯置、PvP、被動或 Aura effect ID |
+
+`catalogScope` 是資料治理標記，不改 Blizzard Secret／protected 邊界。Spellbook 不含所有 Aura effect ID，因此「不屬本職」只能作保守分類，不能由網頁候選自動刪除或升格為正式預設。

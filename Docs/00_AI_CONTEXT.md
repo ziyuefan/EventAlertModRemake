@@ -5,7 +5,7 @@
 
 重新進入專案、發生上下文壓縮或需要確認目前進度時，先讀 `Docs/28_PROJECT_CONTINUITY.md`，再讀 `Data/ProjectContinuity.json`。前者提供人類可讀決策與實機待辦；後者以嚴格 Schema 分離 facts、inferences、work items、trials 與 unverified。詳細試錯只追到 `Docs/15_DEVELOPMENT_ISSUE_LOG.md` 的穩定 issue ID，不以本文件或舊對話摘要猜測目前狀態。
 
-目前續接快照為 `2026-08-13.1`；離線通過不得取代 PTR、XPTR 或 Retail 真人簽收。
+目前續接快照為 2026-08-14.4；正式服與 PTR 為 12.1，XPTR 為 12.0.7；離線通過不得取代 Retail、PTR 或 XPTR 真人簽收。
 
 ## 專案概要
 
@@ -24,7 +24,7 @@ Cata Classic、Wrath Classic、TBC、Era 和特定地區的經典分店是
 - `Locale/Common.lua` 建立固定 catalog：`enUS`、`zhTW`、`zhCN`、`koKR`、`ruRU`。
 - `ruRU.lua` 必須與 `enUS.lua` 的 `L.*` key 完整對齊；其他語系缺少的 key 由 enUS fallback 補底。
 - `Auto Detect` 是唯一固定英文名稱，且 `EAM_DB.config.language` 的預設值為 `auto`；其餘選項以原生語系名稱顯示。
-- 選擇器只寫入設定並提示玩家自行輸入 `/reload`，不由 EAM 自動呼叫 `ReloadUI`，以避免載入期 UI 半套用。
+- 選擇器會原地刷新 `EAM.L` 與已註冊的 EAM 自有 UI，不自動呼叫 `ReloadUI`；`/reload` 只用於載入磁碟上的新 Lua、驗證設定保存或讓 SavedVariables 落盤。
 
 ## 重寫方向
 
@@ -107,8 +107,8 @@ OnUpdate/C_Timer的使用和分配風險。 `文件/07_MIGRATION_NOTES.md`
 
 ## 2026-08-12 小地圖 SVG 與 EAM 主題選擇
 
-- 小地圖按鈕不再把聲音 FileDataID 當作貼圖；`UI/Options.lua` 先嘗試載入專案自有 `Media/SVG/eam-minimap.svg`，`Texture:SetSVG` 不可用或失敗時回退 `INV_Misc_QuestionMark`。按鈕的左鍵、右鍵與拖曳行為不變。
-- `UI/Theme.lua` 集中管理 EAM 自有視窗與按鈕的 palette，提供 `EAM`、`FF7`、`Windows XP`、`Borland C++ IDE`、`DOS CRT` 與 `macOS Aqua` 六個選項；SavedVariables 只保存 `config.theme` 的 `eam|ff7|winxp|borland|doscrt|aqua`，非法值回退 `eam` 並留下 migration warning。
+- 小地圖按鈕不再把聲音 FileDataID 或 Texture SVG 當作正式圖示；`UI/Options.lua` 固定使用 Blizzard 內建 `Interface\\Icons\\Trade_Engineering` 齒輪，保留左鍵、右鍵與拖曳行為。
+- UI/Theme.lua 集中管理 EAM 自有視窗與按鈕 palette，提供 EAM、FF7、Windows XP、Windows 7、Windows 10、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua 十一個選項；SavedVariables 只保存 config.theme 的十一個白名單值，非法值回退 eam 並留下 migration warning。
 - 主題切換只影響 EAM 自有 Options／About／Tooltip popup、位置／清單／條件視窗與 Flow／Live／Prompt／SVG／UnitPower 除錯面板，不改 AlertBorderStyles 的七種內容語意顏色，也不鉤 Blizzard secure/protected frame。
 - 戰鬥中選擇主題只保存 pending selection，於 `PLAYER_REGEN_ENABLED` 後套用；小地圖 SVG 載入與主題 palette 均不讀取或寫入 Secret Value。
 - `wowtools.work` 僅作為唯讀資料瀏覽參考，專案不依賴外部 FileDataID 或遠端素材。
@@ -139,3 +139,19 @@ OnUpdate/C_Timer的使用和分配風險。 `文件/07_MIGRATION_NOTES.md`
 - 新增四種 EAM 自有字型選擇；SavedVariables.updateFontFamily 做白名單正規化與 no-op revision，TextPlacement 只改 EAM 自建 FontString。
 - Locale registry 會在 EAM_LANGUAGE_CHANGED 後重新套用 EAM 自有按鈕、下拉、條件與 spec menu；Auto Detect 固定英文，無需 /reload 才能看到動態切換。
 - 本輪離線 gate 為 Lua 56/56、Flow all 66/66、Validation Contracts 360/360；Flow artifact 以本輪 TestResults 產物為準。PTR／XPTR／Retail 仍需玩家自行實測，不可升格為真人 pass。
+
+## 2026-08-14 Retail 12.1 與 Aura 清單 follow-up
+
+- Retail／PTR 12.1 以 Interface `120100` 與 AuraContainer widget capability 選擇 Native backend；test-build flags 只驗證 client 身分，不再阻擋正式服 12.1。
+- Aura 清單新增 `catalogScope=SELF|CROSS_CLASS`。自身與目標新增預設 `fromPlayer=true`；跨職業增減益預設 `fromPlayer=false`，非目前職業的自身候選會保守轉入跨職業清單。
+- 批次輸入接受換行、半形分號、全形分號，先去重／排序／驗證 SpellID；不存在的法術不顯示、不寫入。
+- Profile 面板使用可捲動 multiline EditBox 且由 Options 直接開啟；自製 dropdown 補齊 normal／pushed／highlight 材質與明確 FrameLevel。
+- Wowhead 匯出檔只保留 `Data/wow_spells_and_auras.json`，狀態固定為 candidate-only，禁止作 runtime 依賴或自動預設。
+- 最新離線證據：Lua 56/56、Flow 68/68、Contracts 387/387、本機環境 3/3；37 案真人矩陣版本為 `2026-08-14.1`，三客戶端仍為 pending。
+
+## 2026-08-14 Alpha 6 發布交接
+
+- Alpha 6 整合 Retail 12.1 Native gate、Aura 職業 scope／批次輸入、EAMAP1 Profile、動態語系、十一主題按鈕與小地圖圈內對齊。
+- 小地圖金色圈是 `MiniMap-TrackingBorder` 53x53 複合材質；按鈕本體維持 31x31，背景與齒輪分別依標準 `TOPLEFT +7,-5`、`TOPLEFT +7,-6` 錨定，齒輪裁邊 5%，不得再把複合邊框置中。
+- GitHub `release.yml` 維持 `workflow_dispatch` 加 `if: false`；Alpha 6 只由本機正式包與 `gh release create --prerelease` 發布，不觸發 CurseForge／WoWInterface。
+- 發布前離線 gate 為 Lua 56/56、Flow 68/68、Validation Contracts 394/394；小地圖像素位置、十一主題與語系仍需玩家在 Retail／PTR／XPTR `/reload` 後目視。

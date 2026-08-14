@@ -30,7 +30,7 @@
 ## 靜態檢查
 
 - 確認僅正式服 TOC 處於活動狀態以進行重寫。
-- 當針對 Retail 12.0.7 時，確認 TOC 介面為 `120007`。
+- 當針對 Retail 或 PTR 12.1 時，確認 Interface 為 `120100` 且 Native widget capability 完整；XPTR 12.0.7 確認 `120007` 並走 Legacy backend。
 - 確認未載入 Classic/MOP/Cata/Wrath/TBC 來源根。
 - 搜尋意外的全域變數。
 - 搜尋 `C_Timer.After(function`.
@@ -268,7 +268,7 @@
 - PTR 12.1：玩家先選 _ptr_，開啟 Flow 面板的 SVG 能力測試。左格為 VectorGraphics:SetSVG，右格為 Texture:SetSVG；兩格應顯示相同青框與黃紫三角。
 - 每格必須分別標記通過、失敗或受阻，最後按完成產生 EAM_SVG_CAPABILITY_REPORT。不得由 API accepted 自動推定肉眼顯示正確。
 - 報告必須包含正確 client／patch／build／Interface，rawFileIDsCollected=false，且兩案 clearReload=pass；若從磁碟讀取，玩家產生報告後需自行 /reload 或正常登出。
-- XPTR／Retail 12.0.7 若回報 unsupported，代表 interfaceRequired=false 的預期降級，不等於 PTR 能力失敗。
+- XPTR 12.0.7 若回報 unsupported，代表 interfaceRequired=false 的預期降級；Retail／PTR 12.1 必須依實際 Vector／Texture capability 與人工圖樣判定。
 - 最終邊框目視：七類圖示四邊都應連續包覆，外緣比圖示各多 3px；不得再以透明 ActionButton border 的內部亮線作尺寸依據。
 
 ## 2026-08-12：俄文與動態語系選擇驗證
@@ -285,15 +285,16 @@
 
 ### 小地圖按鈕
 
-1. 在 `_ptr_` 12.1.0（建議先 `/reload`）開啟 EAM，確認小地圖按鈕顯示 EAM 自有 SVG 圖樣，不再呈現整片綠色或聲音圖示。
-2. 左鍵開啟／關閉設定，右鍵開啟既有診斷入口，拖曳後重新登入或 `/reload`，確認位置與互動仍可用。
-3. 在 `_xptr_` 12.0.7 與 `_retail_` 12.0.7 重複測試；若 Texture 沒有 `SetSVG`，預期顯示 `INV_Misc_QuestionMark` fallback，但按鈕行為必須維持。
-4. 回報必須包含 `clientChannel`、patch、build、Interface、`/reload` 是否完成與肉眼結果；`SetSVG accepted` 不等於視覺通過。
+1. 在 Retail／PTR 12.1 與 XPTR 12.0.7 更新插件後先由玩家執行 `/reload`，確認 `Trade_Engineering` 齒輪完整位於金色追蹤圈內，不得只看到空圈或齒輪偏到右下角。
+2. 對照同一小地圖上的 Blizzard／其他標準圓形按鈕：EAM 內層齒輪不得超出金圈，金圈也不得因 53×53 複合材質置中而偏到左上。
+3. 左鍵開啟／關閉設定、右鍵開啟診斷、拖曳後 `/reload`，確認互動與位置保存仍可用。
+4. 至少以 64%、100% 與玩家常用 UI Scale 各觀察一次；回報是否有裁切、模糊、黑心、綠塊、問號或聲音圖示。
+5. 回報包含 `clientChannel`、patch、build、Interface、UI Scale、`/reload` 是否完成與截圖。離線幾何契約不能取代肉眼像素簽收。
 
 ### 主題選擇
 
-1. 非戰鬥中開啟 EAM 主設定，確認主題下拉包含 `EAM`、`FF7`、`Windows XP`、`Borland C++ IDE`、`DOS CRT`、`macOS Aqua`，預設為 `EAM`。
-2. 依序選取六種主題，確認主設定、位置／清單／條件、About 與 Tooltip popup 的 EAM 自有背景／文字色同步改變；Borland 應呈電光藍／青色 IDE、DOS CRT 應呈磷光綠 CRT、macOS Aqua 應呈藍灰／亮藍；Alert 圖示的七種語意邊框顏色不得被改寫。
+1. 非戰鬥中開啟 EAM 主設定，確認主題下拉包含 EAM、FF7、Windows XP、Windows 7、Windows 10、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua，預設為 EAM。
+2. 依序選取十一種主題，確認主設定、位置／清單／條件、About、Tooltip popup 的背景、文字、按鈕底色與 2px 邊框同步改變；Borland 必須是亮藍底亮黃字，DOS CRT 必須是黑底綠字，Win7／Win10／Win3.1／倚天中文／Red Alert 需各自可辨識；Alert 圖示七種語意邊框不得被改寫。
 3. 在戰鬥中選另一主題，確認只提示「戰鬥結束後套用」，不修改受保護框架；離開戰鬥後確認 `PLAYER_REGEN_ENABLED` 套用一次，按鈕 normal／highlight／pushed／disabled 與文字色同步更新。
 4. `/reload` 後確認 `EAM_DB.config.theme` 保留；重複選同一主題不得增加 revision。非法或手動破壞的值應安全回退 `EAM`。
 5. PTR／XPTR／Retail 都需各自記錄 client／build 與畫面觀察；離線 Flow／Lua／Validation Contracts 只能證明程式與契約，不能代替真人目視簽收。
@@ -304,12 +305,12 @@
 - 同一 build 的完整 Flow 報告唯一 failed 是 boundary.safe_scalar，17 passed、36 skipped；需 /reload 後重跑 helper 可用性，不得把這個 failure 誤當 UnitPower failure。
 - AuraRuleCompiler 現在採用每筆 Aura 已保存的 priority（1..20，數字越大越前），相同 priority 才以 SpellID／alertID 穩定排序。PTR 存檔的 1079 priority=20，因此它仍會排第一；要移動位置需在條件設定調低 priority。
 - Druid ClassPower 候選改為 Energy、Combo Points、Lunar Power；Feral 應先顯示 Energy，其他形態若 Energy unsupported 會安全 fallback。
-- EAM 自有按鈕已納入 EAM／FF7／Windows XP palette；需在三客戶端檢查 normal、highlight、pushed、disabled 與文字色，暴雪 Action Bar 不在主題範圍。
+- EAM 自有按鈕已全部改由 Theme palette 控制中性底圖、normal／highlight／pushed／disabled、文字與四邊 2px 邊框；需在三客戶端檢查，暴雪 Action Bar 不在主題範圍。
 - 本輪只完成 Lua／離線契約與文件更新，尚無 Codex 自動操作 WoW 的實機證據。
 
 ## 2026-08-13：AuraSound 細部設定與 37 案矩陣
 
-現行 `Data/LiveValidationMatrix.json` 為 `2026-08-13.1`、共 37 案，新增：
+現行 `Data/LiveValidationMatrix.json` 為 `2026-08-14.1`、共 37 案；AuraSound 三案維持，客戶端身分更新為 Retail／PTR 12.1 與 XPTR 12.0.7：
 
 - `live.aura.sound_added`
 - `live.aura.sound_applications_increased`
@@ -360,3 +361,22 @@ XPTR／Retail 12.0.7 預期降級：三個 trigger 控制不可用但設定不�
 本輪離線結果：Lua 56/56、Flow all 66/66、Validation Contracts 360/360；不代表任何客戶端實機視覺或互動通過。
 
 Alpha 5 真人追加步驟：在 PTR、XPTR、Retail 各自輸出一份 EAMAP1，另以另一職業預覽後 merge／replace；切換四種字型並 /reload 驗證保存；切換 zhTW／zhCN／enUS／koKR／ruRU 與 Auto Detect，確認 EAM 按鈕、spec menu、條件文字更新且沒有 Lua error。每次回報必須附 client channel、build、Interface、/reload 與 boundaryWarnings。
+
+## 2026-08-14 Retail 12.1／Aura catalog／Profile UI 追加驗證
+
+### 離線流程
+
+- `profile.catalog.batch_defaults`：換行、半形／全形分號、去重、排序、非法 token；SELF／CROSS_CLASS／target 的 `fromPlayer` 預設；不存在 SpellID 不寫入；單批只增加一次 revision。
+- `Tools/Test-WowheadCandidateData.ps1`：唯一 Data 路徑、抓取輸出、JSON totals、正整數唯一 ID、class 14 traversal-only、TOC/runtime 隔離。warning 只代表需人工複核，不得升格預設。
+- dropdown／Profile／minimap 契約：menu 與 row FrameLevel、三態材質、ScrollFrame、固定 footer、Options 入口與 `Trade_Engineering` fallback。
+
+### 玩家實機
+
+1. Retail 12.1 與 PTR 12.1 各確認 Aura 正常顯示且沒有 `nativePtrOnlyGate`；XPTR 12.0.7 確認不呼叫 12.1 Native API。
+2. 自身 Aura 單筆與批次新增後，齒輪細部設定的「僅玩家施放」預設為勾選；跨職業清單預設不勾選；目標 Aura 預設勾選。
+3. 輸入不存在的正整數 SpellID、文字、重複 ID，確認無空白列、無錯誤寫入、revision 不因無效資料增加。
+4. 以 Enter、`;`、`；` 混合貼入一批，確認清單可捲動、載入目前 ID、全選複製與一鍵加入均可操作。
+5. 開啟語系／字型／主題／AuraSound 等下拉選單，確認非 hover 狀態也看得到文字；語系列必須顯示 Auto Detect 與五個原生語言名稱，再切換十一套主題重查。
+6. 從主設定開 Profile 面板，長 EAMAP1 文字可用滾輪、拖曳捲軸、Home／End 瀏覽，footer 按鈕固定且可點。
+7. 小地圖顯示齒輪，左／右鍵、拖曳與 `/reload` 位置保存不變。
+8. 報告附 client、build、Interface、戰鬥狀態、`/reload`、Lua error／taint／blocked action；離線結果不得代填真人案例。

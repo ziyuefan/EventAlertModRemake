@@ -421,6 +421,22 @@
 <h1 id="commandline"><a href="https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#命令列" title="CommandLine">CommandLine</a></h1>
 <h1 id="screenshot"><a href="https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#截圖" title="ScreenShot">ScreenShot</a></h1>
 <hr />
+<h4 id="retail-121-alpha-6-20260814">[Retail 12.1 Alpha 6] 2026.08.14</h4>
+<ul>
+<li>正式服與 PTR 12.1 使用 Native Aura capability；XPTR 12.0.7 保留 Legacy backend。自身／目標 Aura 預設僅玩家施放，跨職業增減益預設取消，批次輸入只加入可解析且存在的 ID。</li>
+<li>修正語系列空白與按鈕固定紅色：Auto Detect 與五個原生語言名稱在未 hover 時可見，十一套主題控制按鈕 normal／highlight／pushed／disabled、文字與四邊 2px 邊框。</li>
+<li>小地圖固定使用內建 <code>Trade_Engineering</code> 齒輪；內層圖示依標準小地圖按鈕幾何縮入金色追蹤圈，不再與 53×53 複合邊框錯位。</li>
+<li>Alpha 6 ZIP 由本機 <code>Build-CurseForgePackage.ps1</code> 產生後手動上傳 GitHub prerelease；停用中的 BigWigs／CurseForge／WoWInterface workflow 不啟用，本機 deploy、Tools、Tests、TestResults、backup 與 LegacyReference 不進套件。</li>
+<li>發布前離線 gate：Lua <code>56/56</code>、Flow <code>68/68</code>、Validation Contracts <code>394/394</code>；Retail／PTR／XPTR 真人視覺、音效與戰鬥簽收仍為 pending。</li>
+</ul>
+<h4 id="retail-121-alpha-5-follow-up-20260814">[Retail 12.1 Alpha 5 follow-up] 2026.08.14</h4>
+<ul>
+<li>現行正式服與 PTR 已更新為 12.1，Native Aura capability 以 Interface <code>120100</code> 與實際 widget 能力判定；XPTR 12.0.7 保留 Legacy backend。</li>
+<li>Aura 清單新增批次輸入，可用 Enter、半形分號或全形分號分隔；自身與目標新增預設「僅玩家施放」，跨職業增減益預設取消該條件，不存在的 SpellID 不顯示也不寫入。</li>
+<li>修正下拉選單黑底看不到文字、Profile 長字串捲動與主設定入口；小地圖改用內建 <code>Trade_Engineering</code> 齒輪，暫停不可靠的 Texture SVG 圖示路徑。</li>
+<li><code>Data/wow_spells_and_auras.json</code> 僅作 Wowhead 離線候選索引，不接入 TOC、runtime 或預設 seeder；唯一治理工具為 <code>Tools/Test-WowheadCandidateData.ps1</code>。</li>
+<li>本輪離線 gate：Lua <code>56/56</code>、Flow <code>67/67</code>、Validation Contracts <code>380/380</code>、本機環境 <code>3/3</code>；Retail／PTR／XPTR 真人簽收仍為 pending。</li>
+</ul>
 <h4 id="1210-ptr8-alpha-5-20260814">[正式服 12.1.0 PTR8 Alpha 5] 2026.08.14</h4>
 <ul>
 <li>Alpha 5 完成 EAMAP1 JSON／Base64 profile 分享：嚴格 schema、checksum、preview、merge／replace、戰鬥拒絕與手動 Ctrl+C，不使用 loadstring。</li>

@@ -422,7 +422,7 @@
 <ul>
 <li>WoW 根目錄：<code>D:\World of Warcraft</code></li>
 <li>EAM 實體專案：<code>D:\EventAlertMod</code></li>
-<li>最後唯讀盤點：2026-08-08（Asia/Taipei）</li>
+<li>最後唯讀盤點：2026-08-14（Asia/Taipei）</li>
 <li>證據：執行檔 VersionInfo、目錄存在性、<code>LinkType</code>、<code>Target</code>、<code>ReparsePoint</code></li>
 <li>尚未代表：角色登入、插件載入、流程面板、taint 或實機測試通過</li>
 </ul>
@@ -442,16 +442,16 @@
 <tr>
 <td><code>_retail_</code></td>
 <td><code>Wow.exe</code></td>
-<td>12.0.7.68974</td>
+<td>12.1.0.69299</td>
 <td>皆存在</td>
-<td>正式服實機驗證</td>
+<td>正式服 12.1 Native 實機驗證</td>
 </tr>
 <tr>
 <td><code>_ptr_</code></td>
 <td><code>WowT.exe</code></td>
-<td>12.1.0.69189</td>
+<td>12.1.0.69299</td>
 <td>皆存在</td>
-<td>至暗之夜 12.1.0 PTR 驗證</td>
+<td>12.1 PTR Native 實機驗證</td>
 </tr>
 <tr>
 <td><code>_xptr_</code></td>
@@ -533,7 +533,7 @@
     -File .\Tools\Test-LocalWoWEnvironment.ps1
 </code></pre>
 
-<p>預設斷言 Retail <code>12.0.7</code>、PTR <code>12.1.0</code>、XPTR <code>12.0.7</code> 的 patch train，不鎖定 build 尾碼；完整 <code>ProductVersion</code>、<code>FileVersion</code>、Reparse Point 與 Target 會寫入 <code>TestResults/EAM_LocalWoWEnvironment_*.json</code> 及 <code>.md</code>。任一版本或連結不符即回傳 exit code 1，且不執行修復。</p>
+<p>預設斷言 Retail <code>12.1.0</code>、PTR <code>12.1.0</code>、XPTR <code>12.0.7</code> 的 patch train，不鎖定 build 尾碼；完整 <code>ProductVersion</code>、<code>FileVersion</code>、Reparse Point 與 Target 會寫入 <code>TestResults/EAM_LocalWoWEnvironment_*.json</code> 及 <code>.md</code>。任一版本或連結不符即回傳 exit code 1，且不執行修復。</p>
 <p>Battle.net 切換版本線後可暫時用 <code>-RetailExpectedPatch</code>、<code>-PtrExpectedPatch</code>、<code>-XPtrExpectedPatch</code> 覆寫預期值；確認新基準後仍須同步更新本文件與 <code>AGENTS.md</code>。</p>
 <p>唯讀驗證範例：</p>
 <pre class="codehilite"><code class="language-powershell">$link = Get-Item -LiteralPath 'D:\World of Warcraft\_ptr_\Interface\AddOns\EventAlertMod' -Force
@@ -618,6 +618,34 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
 </tbody>
 </table>
 <p><code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 的 <code>Interface\AddOns\EventAlertMod</code> 均已唯讀確認為 SymbolicLink，目標是 <code>D:\EventAlertMod</code>。證據為 <code>TestResults/EAM_LocalWoWEnvironment_20260729_135335687.json</code>，結果 3/3；這不是遊戲內簽收。本輪所有修改只作用於實體專案，未對 link 路徑執行部署、刪除、搬移、覆寫或重建。</p>
+<h2 id="9-2026-08-14">9. 2026-08-14 唯讀前檢快照</h2>
+<table>
+<thead>
+<tr>
+<th>產品目錄</th>
+<th>ProductVersion</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td>12.1.0.69299</td>
+<td>正式服 12.1 Native 回歸</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td>12.1.0.69299</td>
+<td>PTR 12.1 Native／API 能力回歸</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td>12.0.7.68887</td>
+<td>Legacy 相容回歸</td>
+</tr>
+</tbody>
+</table>
+<p><code>TestResults/EAM_LocalWoWEnvironment_20260814_104354344.json</code> 結果 3/3；三個支援客戶端的 AddOns 路徑仍是指向 EAM 實體專案的 SymbolicLink／Reparse Point。此證據只確認版本 train、執行檔與連結，未啟動 WoW，也不是 Aura、Tooltip、Profile 或戰鬥流程簽收。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

@@ -5,7 +5,7 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-08-14.1。
+目前快照版本：2026-08-14.4。
 
 ## 2. 重新進入專案的閱讀順序
 
@@ -23,7 +23,7 @@
 
 ## 3. 當前目標
 
-完成 Alpha 5 發布：保留 AuraSound、模組開關與職業 profile 隔離，加入 EAMAP1 profile codec、四種字型選擇與動態語系按鈕刷新；PTR／XPTR／Retail 依 37 案及 Alpha5 追加步驟由玩家簽收。發布定位仍為 alpha。
+完成 Alpha 6 發布：整合 Retail 12.1 Native gate、Aura 職業 scope／批次輸入、EAMAP1 Profile、動態語系、十一主題按鈕與小地圖圈內對齊；PTR／XPTR／Retail 依 37 案及 Alpha 6 追加步驟由玩家簽收。發布定位仍為 alpha。
 
 ## 4. 已確認事實
 
@@ -33,7 +33,7 @@
 - Native AuraButton 與其子元件只能在 `initializeFrame` 內完成尺寸、錨點、字型、倒數與邊框設定；初始化後不得直接重排。
 - `AddDispelTypeTexture` 是官方驅散／靜態 Aura 邊框能力，不能取代 Pandemic、Proc 或任意條件 Glow。
 - 次要職業資源可走安全普通數字；可能為 Secret 的主要資源百分比只能直接送入 StatusBar 或 12.1 radial widget，不得讀回、比較或序列化。
-- 本輪最終離線 gate 為 Lua `54/54`、Flow `all 61/61`、Validation Contracts `355/355`；真人矩陣為 37 案，PTR、XPTR 與 Retail 均仍待玩家簽收。
+- 本輪最終離線 gate 為 Lua `56/56`、Flow `all 68/68`、Validation Contracts `394/394`；真人矩陣為 37 案，PTR、XPTR 與 Retail 均仍待玩家簽收。
 - 若從磁碟匯入遊戲內報告，玩家必須先完成 `/reload` 或正常登出，否則可能仍是舊快照。
 - 2026-08-08 唯讀環境斷言：Retail `12.0.7.68974`、PTR `12.1.0.69189`、XPTR `12.0.7.68887`；三個 AddOns SymbolicLink 均指向 `D:\EventAlertMod`。
 - 語系 catalog 已包含 `enUS`、`zhTW`、`zhCN`、`koKR`、`ruRU`；ruRU 與 enUS 的 `L.*` key 完整對齊，`Auto Detect` 固定英文且預設為 `auto`。新版以穩定 `EAM.L` identity 與 widget binding／refresh registry 即時套用。
@@ -52,11 +52,11 @@
 
 ## 6. 驗證狀態
 
-- 離線：Lua `54/54`、Flow `all 61/61`、Validation Contracts `355/355`；五語系 parity、37 案同步、AuraSound 設定／雙 fingerprint／交易式 registry／12.0.7 零呼叫，以及既有語系、主題與 SVG 契約均通過。Flow artifact 為 `TestResults/EAM_FlowValidation_all_20260813_013945.json`。離線結果不取代 PTR、XPTR 或 Retail 真人簽收。
+- 離線：Lua `56/56`、Flow `all 68/68`、Validation Contracts `394/394`；五語系、十一主題、Profile、AuraSound、Aura catalog、Retail 12.1 Native gate與小地圖圈內幾何契約均通過。Flow artifact 以本輪最後產物為準；離線結果不取代 PTR、XPTR 或 Retail 真人簽收。
 - PTR 12.1：Alpha 2 Native gate 已離線修正，但玩家尚未 `/reload` 簽收 Aura 顯示；不得沿用 Alpha 1 或修正前觀察。
 - XPTR 12.0.7：尚未簽收。
-- Retail 12.0.7：尚未簽收。
-- 真人報告：使用 `matrixVersion=2026-08-13.1` 的 37 案工作台。
+- Retail 12.1：現行 client gate 與離線契約已更新，真人簽收尚未完成。
+- 真人報告：使用 `matrixVersion=2026-08-14.1` 的 37 案工作台。
 - UnitPower 報告：另回傳 `EAM_UNIT_POWER_CAPABILITY_REPORT`；PTR 69273 最新報告兩個 sink 呼叫均 accepted，但 primary 與 selected 視覺均 pending，仍非 PTR pass。
 
 ## 7. 下一輪玩家實測
@@ -70,6 +70,7 @@
 7. 建立 reload checkpoint，由玩家自行 `/reload`，回來後完成報告。
 8. 若從磁碟匯入，完成報告後再由玩家保存一次；直接複製面板 JSON 則不需要額外保存。
 9. 開啟語系下拉清單，依序選 `Русский`、`Auto Detect`，不重新載入即確認目前已開啟的主視窗、About、功能模組與測試面板同步切換；最後再以一次玩家手動 `/reload` 驗證設定保存。
+10. 對照其他標準小地圖按鈕，確認 EAM 齒輪完整位於金色圈內；以玩家常用 UI Scale 截圖，不能只回報按鈕可點。
 
 ## 8. 禁止重複的試法
 
@@ -140,8 +141,8 @@
 
 ## 2026-08-12 小地圖 SVG／EAM 主題交接快照
 
-- `UI/Options.lua` 的小地圖 Texture 先使用專案自有 `Media/SVG/eam-minimap.svg`，`SetSVG` 不可用或失敗時回退內建問號圖示；未改動左鍵、右鍵、拖曳語意。
-- `UI/Theme.lua` 提供 EAM、FF7、Windows XP、Borland C++ IDE、DOS CRT、macOS Aqua palette；`Core/SavedVariables.lua` 以 `config.theme` 保存六個允許值，非法值回退 EAM 並記錄 warning。
+- `UI/Options.lua` 的小地圖 Texture 固定使用 Blizzard 內建 `Trade_Engineering` 齒輪；暫停不可靠的 Texture SVG 路徑，未改動左鍵、右鍵、拖曳語意。
+- UI/Theme.lua 現提供十一套 palette：EAM、FF7、Windows XP、Windows 7、Windows 10、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua；config.theme 只接受對應白名單值，非法值回退 EAM。
 - Theme 只註冊 EAM 自有視窗；戰鬥中切換只保存 pending，`PLAYER_REGEN_ENABLED` 後再套用。AlertBorderStyles 七色內容語意維持獨立。
 - `wowtools.work` 僅作唯讀資料參考，不是執行期依賴；不收集或保存外部 raw FileDataID。
 - 本輪沒有 Codex 自動操作 WoW；PTR／XPTR／Retail 仍需玩家自行 `/reload` 後目視與互動簽收。
@@ -155,7 +156,7 @@
 - ClassPowerService 的 Druid 候選改為 Energy、Combo Points、Lunar Power；Feral 在 UnitPower value predicate 明確安全時應先顯示 Energy，若 PTR current 是 Secret 則先安全 fallback，不能冒充已完成 native sink。
 - 本輪驗證：受影響 Lua 檔案語法通過，本輪 Validation Contracts 已完整執行為 `328/328`，包含 Aura priority、Druid Energy 與 EAM 按鈕主題契約。未有 Codex 自動操作 WoW，PTR／XPTR／Retail 實機仍由玩家自行簽收。
 - Theme 按鈕 getter 首次在 strict mock 觸發未知方法錯誤，已改為 pcall capability guard；修正後離線 Flow artifact 為 `54/54`，尚不代表三客戶端真人簽收。
-- 續接路由：先讀 Data/ProjectContinuity.json 的 FACT／WORK／UNVERIFIED，再依 Docs/29_LIVE_TEST_STEP_GUIDE.md 的 PTR 69273 與六套主題追加步驟執行；磁碟 SavedVariables 仍須 /reload 或正常登出後才是最新。
+- 續接路由：先讀 Data/ProjectContinuity.json 的 FACT／WORK／UNVERIFIED，再依 Docs/29_LIVE_TEST_STEP_GUIDE.md 的十一套主題追加步驟執行；磁碟 SavedVariables 仍須 /reload 或正常登出後才是最新。
 
 ## 2026-08-13 AuraSound 交接快照
 
@@ -191,3 +192,28 @@
 - 解法：建立嚴格 EAMAP1 codec／Profile panel，新增 fontFamily mutation 與 TextPlacement 套用，讓 Locale registry 在語系事件後重建 spec menu 並刷新已綁定文字。
 - 驗證：Lua 56/56、Flow 66/66、Contracts 360/360；無 Codex 自動操作 WoW。
 - 後續：玩家在 PTR、XPTR、Retail 各做 profile export／preview／merge／replace、四字型與五語系／Auto Detect 目視測試，回報 build、Interface、reload 與 boundaryWarnings。
+
+## 2026-08-14 Retail 12.1／Aura catalog follow-up 交接
+
+- 現行通道：Retail／PTR 12.1.0.69299、XPTR 12.0.7.68887；本機環境與 SymbolicLink 3/3 通過，但未啟動 WoW。
+- Aura 清單以 `catalogScope=SELF|CROSS_CLASS` 管理；SELF player 與 target 預設 `fromPlayer=true`，跨職業預設 false。批次輸入接受 Enter、`;`、`；`，不存在 SpellID 不顯示、不寫入。
+- dropdown row 補齊 normal／pushed／highlight 與 FrameLevel；語系列直接使用 LanguageOptions.label，避免 nil labelKey 造成空白；Profile 面板有 ScrollFrame、固定 footer 與 Options 入口；小地圖正式 fallback 為內建齒輪。
+- Wowhead 匯出只保留 Data 唯一檔，抓取腳本固定輸出專案 Data；候選 validator 23 pass／0 fail／4 warning，warning 不可當成實機錯誤或預設核准。
+- 最新離線結果：Lua 56/56、Flow 68/68、Validation Contracts 387/387；真人矩陣 `2026-08-14.1` 的 37 案仍為 Retail／PTR／XPTR pending。
+- 續接順序：先看 `Data/ProjectContinuity.json` 的 `WORK-20260814-002` 與 `UNVERIFIED-20260814-001`，再依 `Docs/29_LIVE_TEST_STEP_GUIDE.md` 的本輪追加步驟由玩家實測。
+
+## 2026-08-14 主題 chrome／語系列 follow-up 交接
+
+- 語系列空白不是字型或 reload 問題；LanguageOptions 沒有 labelKey，現改為直接顯示各 option.label，Auto Detect 仍固定英文。
+- EAM 文字按鈕不再強制紅色；Theme.registerButton 會建立 WHITE8X8 normal／highlight／pushed／disabled 底圖及四條 2px 主題邊框。Debug/PromptExport 的紅色覆寫亦已移除。
+- 主題 catalog 擴為十一套：EAM、FF7、Windows XP、Windows 7、Windows 10、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua。Borland 為亮藍底亮黃字；DOS CRT 為黑底綠字。
+- AlertBorderStyles 的自身／目標 Aura、技能、物品與地面效果七種語意邊框保持獨立，不隨設定視窗主題改色。
+- 離線結果為 Lua 56/56、Flow 68/68、Validation Contracts 387/387；Retail／PTR／XPTR 實機仍需玩家 /reload 後目視簽收。
+
+## 2026-08-14 Alpha 6 發布快照
+
+- Alpha 6 發布範圍包含 Retail 12.1 Native capability 修正、Aura SELF／CROSS_CLASS 與批次輸入、EAMAP1 Profile、五語系動態刷新、十一主題按鈕 chrome、AuraSound 及小地圖圈內對齊。
+- 小地圖 `Trade_Engineering` 齒輪使用 17px ARTWORK、5% TexCoord 裁邊與 `TOPLEFT +7,-6`；20px 背景使用 `TOPLEFT +7,-5`；53px `MiniMap-TrackingBorder` 固定按鈕 TOPLEFT。此幾何只改 EAM 自有按鈕。
+- `.github/workflows/release.yml` 維持完全停用；GitHub Alpha 6 使用本機正式 ZIP 與 `gh release create --prerelease`，不發布到 CurseForge／WoWInterface。
+- 離線 gate：Lua 56/56、Flow 68/68、Validation Contracts 394/394。Retail／PTR／XPTR 的小地圖像素、十一主題、語系、AuraSound 與完整 37 案仍由玩家簽收。
+- 續接索引：`WORK-20260814-004`、`UNVERIFIED-20260814-003`、issue `EAM-20260814-ALPHA6-MINIMAP-RING`。

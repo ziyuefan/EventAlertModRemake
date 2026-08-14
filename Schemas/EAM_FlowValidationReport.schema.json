@@ -44,7 +44,7 @@
       ]
     },
     "matrixVersion": {
-      "const": "2026-08-13.1"
+      "const": "2026-08-14.1"
     },
     "suite": {
       "enum": [

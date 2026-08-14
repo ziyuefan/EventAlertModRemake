@@ -362,3 +362,11 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - ui.text_layout.font_family 驗證字型白名單、path mapping、SavedVariables revision no-op 與 invalid fallback。
 - Locale contract 驗證 EAM.L identity 保持不變，EAM 自有按鈕／下拉／條件／spec menu 在 EAM_LANGUAGE_CHANGED 後重新取值；Auto Detect label 必須是固定英文。
 - 本輪離線 gate：Lua 56/56、Flow all 66/66、Validation Contracts 360/360。最新 Flow 報告為本輪 TestResults/EAM_FlowValidation_all_20260814_074036.json；離線結果不取代 PTR／XPTR／Retail 真人簽收。
+
+## 2026-08-14 Retail 12.1 與 Aura catalog 流程
+
+- `ValidationEnvironment` 現行 profile：Retail／PTR 12.1、Interface 120100；XPTR 12.0.7、Interface 120007。Native backend 依 API/widget capability，test-build flags 只做 client identity。
+- Flow 新增 `profile.catalog.batch_defaults`，以隔離 DB 驗證分隔符、去重、scope、`fromPlayer`、不存在 SpellID 與單次 revision，結束時完整還原測試狀態。
+- 真人矩陣版本升為 `2026-08-14.1`，仍是 37 案；程序文字同步將 Native 寫成 Retail／PTR 12.1，Legacy 限定 XPTR 12.0.7。
+- Profile ScrollFrame、dropdown 三態材質、小地圖齒輪與 Wowhead candidate isolation 由 Validation Contracts 驗證；視覺、滾輪手感與 Blizzard 圖示解析仍由玩家判定。
+- 最新離線 gate：Lua 56/56、Flow 67/67、Validation Contracts 380/380。最新 Flow artifact：`TestResults/EAM_FlowValidation_all_20260814_110816.json`。

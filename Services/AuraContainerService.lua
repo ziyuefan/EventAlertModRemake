@@ -205,7 +205,7 @@ function AuraContainerService.requestRebuild(reason)
         return false, "legacyBackend"
     end
     if capability.nativeRuntimeAllowed ~= true then
-        AuraContainerService.lastReason = capability.limitationReason or "nativePtrOnlyGate"
+        AuraContainerService.lastReason = capability.limitationReason or "nativeRuntimeUnavailable"
         return false, AuraContainerService.lastReason
     end
     if inCombat() then

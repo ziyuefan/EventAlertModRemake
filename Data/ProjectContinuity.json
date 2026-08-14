@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-08-14.1",
+  "snapshotVersion": "2026-08-14.4",
   "updatedAt": "2026-08-14",
   "project": {
     "name": "EventAlertModRemake",
@@ -10,7 +10,7 @@
     "supportedClients": [
       "PTR_12_1",
       "XPTR_12_0_7",
-      "RETAIL_12_0_7"
+      "RETAIL_12_1"
     ]
   },
   "routes": {
@@ -22,17 +22,17 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "發布 Alpha 5：整合 EAMAP1 profile codec、四種 EAM 字型選擇與動態語系按鈕／spec menu 刷新，保留 AuraSound、模組開關、職業 profile、主題、SVG、UnitPower 與 37 案真人矩陣，並等待 PTR／XPTR／Retail 真人簽收。",
+    "objective": "完成 Retail 12.1 Alpha 6：整合 Native Aura gate、職業清單與批次輸入、Profile、動態語系、十一主題按鈕及小地圖齒輪圈內對齊；以本機正式包手動發布 GitHub prerelease，離線通過不得冒充 Retail／PTR／XPTR 實機簽收。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 66,
-      "passed": 66,
+      "total": 68,
+      "passed": 68,
       "failed": 0,
       "skipped": 0,
       "pending": 0
     },
     "liveValidation": {
-      "matrixVersion": "2026-08-13.1",
+      "matrixVersion": "2026-08-14.1",
       "required": 37,
       "ptr": "pending",
       "xptr": "pending",
@@ -268,7 +268,7 @@
     },
     {
       "id": "FACT-20260812-002",
-      "statement": "小地圖按鈕已改為專案自有 SVG 加明確 fallback；EAM 自有視窗已提供 EAM、FF7、Windows XP、Borland、DOS CRT、macOS Aqua 六種可保存主題，戰鬥中切換延後套用。",
+      "statement": "小地圖按鈕固定使用內建 Trade_Engineering 齒輪 fallback；EAM 自有視窗已提供 EAM、FF7、Windows XP、Windows 7、Windows 10、Windows 3.1、Borland、DOS CRT、倚天中文、Red Alert、macOS Aqua 十一種可保存主題，戰鬥中切換延後套用。",
       "state": "confirmed",
       "provenance": "code-contract",
       "environment": "project",
@@ -318,7 +318,7 @@
     },
     {
       "id": "FACT-20260812-006",
-      "statement": "EAM 自有 UIPanelButtonTemplate 與下拉按鈕已接入 Theme.applyButton／registerButton，六套主題提供 normal、highlight、pushed、disabled 與文字色；不改動 Blizzard Action Bar。",
+      "statement": "EAM 自有 UIPanelButtonTemplate 與下拉按鈕已接入 Theme.applyButton／registerButton，十一套主題提供 normal、highlight、pushed、disabled、文字色、底色與四邊 2px 主題邊框；不改動 Blizzard Action Bar。",
       "state": "confirmed",
       "provenance": "code-contract",
       "environment": "project",
@@ -409,6 +409,47 @@
         "TestResults/EAM_FlowValidation_all_20260814_074036.json",
         "Tools/Test-ValidationContracts.ps1",
         "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "FACT-20260814-002",
+      "statement": "2026-08-14 本機環境唯讀檢查 3/3 通過：Retail 與 PTR 為 12.1.0.69299、XPTR 為 12.0.7.68887，三個 EventAlertMod AddOns 路徑皆維持 SymbolicLink 指向專案實體根目錄；此證據只確認環境與連結，不是遊戲內功能簽收。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "TestResults/EAM_LocalWoWEnvironment_20260814_104354344.json",
+        "Tools/Test-LocalWoWEnvironment.ps1",
+        "Docs/27_LOCAL_WOW_ENVIRONMENT.md"
+      ]
+    },
+    {
+      "id": "FACT-20260814-003",
+      "statement": "語系列空白根因是 LanguageOptions 無 labelKey；現已直接顯示 option.label。EAM 文字按鈕移除紅色硬編碼，十一套主題以 WHITE8X8 四態底圖與四邊 2px 邊框套用；Lua 56/56、Flow 68/68、Validation Contracts 387/387 離線通過。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "project",
+      "evidenceRefs": [
+        "UI/Options.lua",
+        "UI/Theme.lua",
+        "Debug/PromptExport.lua",
+        "Debug/FlowTestRunner.lua",
+        "TestResults/EAM_FlowValidation_all_20260814_115739.json",
+        "Tools/Test-ValidationContracts.ps1",
+        "issue:EAM-20260814-THEME-CHROME-LANGUAGE-DROPDOWN"
+      ]
+    },
+    {
+      "id": "FACT-20260814-004",
+      "statement": "小地圖錯位根因是 53x53 MiniMap-TrackingBorder 被置中於 31x31 按鈕；現依標準幾何將 20px 背景與 17px Trade_Engineering 齒輪錨定到 TOPLEFT 偏移，邊框固定 TOPLEFT。Lua 56/56、Flow 68/68、Validation Contracts 394/394 離線通過。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "project",
+      "evidenceRefs": [
+        "UI/Options.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        "issue:EAM-20260814-ALPHA6-MINIMAP-RING"
       ]
     }
   ],
@@ -759,7 +800,7 @@
     {
       "id": "WORK-20260812-002",
       "issueId": "EAM-20260812-MINIMAP-SVG-THEME",
-      "title": "小地圖 SVG fallback 與 EAM 六主題選擇器",
+      "title": "小地圖齒輪 fallback 與 EAM 十一主題選擇器",
       "severity": "P2",
       "status": "implemented_offline_verified",
       "modules": [
@@ -772,7 +813,7 @@
       "acceptanceCriteria": [
         "小地圖 SVG 在 12.1 可由 Texture:SetSVG 載入，舊客戶端回退內建問號圖示",
         "小地圖左鍵、右鍵、拖曳與位置保存行為不變",
-        "EAM、FF7、Windows XP、Borland C++ IDE、DOS CRT、macOS Aqua 可保存並套用於 EAM 自有視窗與按鈕",
+        "EAM、FF7、Windows XP、Windows 7、Windows 10、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua 可保存並套用於 EAM 自有視窗與按鈕",
         "戰鬥中只保存 pending theme，戰鬥結束後才套用",
         "AlertBorderStyles 七種語意色不受主題 palette 覆蓋"
       ],
@@ -873,7 +914,7 @@
     {
       "id": "WORK-20260812-006",
       "issueId": "EAM-20260812-THEME-BUTTONS",
-      "title": "六主題按鈕狀態色",
+      "title": "十一主題按鈕底色、狀態色與邊框",
       "severity": "P2",
       "status": "implemented_offline_verified",
       "modules": [
@@ -1057,6 +1098,107 @@
         "TestResults/EAM_FlowValidation_all_20260814_074036.json",
         "EventAlertMod.toc"
       ]
+    },
+    {
+      "id": "WORK-20260814-002",
+      "issueId": "EAM-20260814-CATALOG-BATCH-RETAIL121",
+      "title": "Retail 12.1 Aura 清單分類、批次輸入與 UI 可用性修正",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "UI/Options.lua",
+        "UI/ProfileCodecPanel.lua",
+        "Core/ProfileCodec.lua",
+        "Debug/FlowTestRunner.lua",
+        "Tools/Test-WowheadCandidateData.ps1",
+        "Data/LiveValidationMatrix.json"
+      ],
+      "acceptanceCriteria": [
+        "自身與目標 Aura 新增時預設 fromPlayer=true；跨職業增減益預設 fromPlayer=false",
+        "非目前職業的自身 Aura 轉入跨職業清單，不存在的 SpellID 不顯示且不寫入",
+        "Aura 清單支援換行、半形分號與全形分號批次輸入，單批真變更只增加一次 revision",
+        "Profile 視窗具固定 footer 與可捲動 multiline EditBox，Options 有可發現入口",
+        "Wowhead JSON 僅為 offline webCandidate，不接入 TOC、runtime 或預設 seeder",
+        "Retail／PTR 12.1 走 Native capability，XPTR 12.0.7 保留 Legacy；真人簽收仍為 pending"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Debug/FlowTestRunner.lua",
+        "Tools/Test-ValidationContracts.ps1",
+        "Tools/Test-WowheadCandidateData.ps1",
+        "TestResults/EAM_FlowValidation_all_20260814_110816.json",
+        "Data/LiveValidationMatrix.json",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "WORK-20260814-003",
+      "issueId": "EAM-20260814-THEME-CHROME-LANGUAGE-DROPDOWN",
+      "title": "語系列可視文字與十一主題按鈕 chrome",
+      "severity": "P2",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "UI/Theme.lua",
+        "UI/Options.lua",
+        "Debug/PromptExport.lua",
+        "Debug/FlowTestRunner.lua",
+        "Tests/Mocks/WoW121AuraMock.lua"
+      ],
+      "acceptanceCriteria": [
+        "語系下拉未 hover 時顯示 Auto Detect 與五個原生語言名稱",
+        "十一個 theme key 可保存、正規化並在五語系顯示",
+        "EAM 文字按鈕底色、四態、文字與四邊 2px 邊框隨主題切換",
+        "Borland 為亮藍底亮黃字，DOS CRT 為黑底綠字",
+        "AlertBorderStyles 七種監控語意色不被設定視窗主題覆蓋"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        "Debug/FlowTestRunner.lua",
+        "TestResults/EAM_FlowValidation_all_20260814_115739.json",
+        "Tools/Test-ValidationContracts.ps1",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md"
+      ]
+    },
+    {
+      "id": "WORK-20260814-004",
+      "issueId": "EAM-20260814-ALPHA6-MINIMAP-RING",
+      "title": "Alpha 6 小地圖齒輪圈內對齊與手動 GitHub prerelease",
+      "severity": "P2",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "UI/Options.lua",
+        "Tools/Test-ValidationContracts.ps1"
+      ],
+      "acceptanceCriteria": [
+        "Trade_Engineering 齒輪完整位於 MiniMap-TrackingBorder 金色圈內",
+        "小地圖左鍵、右鍵、拖曳與位置保存維持",
+        "Alpha 6 ZIP 排除開發工具、測試、備份、deploy 與 LegacyReference",
+        "BigWigs、CurseForge 與 WoWInterface release workflow 維持停用",
+        "離線 gate 通過但 Retail、PTR、XPTR 目視仍標 pending"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        "Tools/Test-ValidationContracts.ps1",
+        "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+        "Docs/14_PACKAGING_GUIDE.md"
+      ]
     }
   ],
   "trials": [
@@ -1150,8 +1292,8 @@
     },
     {
       "id": "UNVERIFIED-20260801-003",
-      "statement": "Retail 12.0.7 的 37 案真人簽收",
-      "requiredClient": "RETAIL_12_0_7",
+      "statement": "Retail 12.1 的 37 案真人簽收",
+      "requiredClient": "RETAIL_12_1",
       "procedureRef": "Data/LiveValidationMatrix.json",
       "blocksRelease": true
     },
@@ -1213,8 +1355,8 @@
     },
     {
       "id": "UNVERIFIED-20260812-004",
-      "statement": "Retail 12.0.7 fallback 小地圖圖示與按鈕互動、/reload 後位置保存",
-      "requiredClient": "RETAIL_12_0_7",
+      "statement": "Retail 12.1 fallback 小地圖圖示與按鈕互動、/reload 後位置保存",
+      "requiredClient": "RETAIL_12_1",
       "procedureRef": "live.minimap.svg_fallback",
       "blocksRelease": false
     },
@@ -1234,8 +1376,8 @@
     },
     {
       "id": "UNVERIFIED-20260812-007",
-      "statement": "Retail 12.0.7 EAM／FF7／Windows XP 主題切換、戰鬥延後與設定持久化",
-      "requiredClient": "RETAIL_12_0_7",
+      "statement": "Retail 12.1 EAM／FF7／Windows XP 主題切換、戰鬥延後與設定持久化",
+      "requiredClient": "RETAIL_12_1",
       "procedureRef": "live.theme.selection_and_combat_deferred",
       "blocksRelease": false
     },
@@ -1276,7 +1418,7 @@
     },
     {
       "id": "UNVERIFIED-20260812-013",
-      "statement": "PTR 12.1 EAM 自有按鈕六主題 normal／highlight／pushed／disabled 目視簽收",
+      "statement": "PTR 12.1 EAM 自有按鈕十一主題 normal／highlight／pushed／disabled、底色與 2px 邊框目視簽收",
       "requiredClient": "PTR_12_1",
       "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
       "blocksRelease": false
@@ -1304,8 +1446,29 @@
     },
     {
       "id": "UNVERIFIED-20260813-004",
-      "statement": "Retail 12.0.7 Alpha 4 八個功能模組停用、戰鬥延後與清理行為",
-      "requiredClient": "RETAIL_12_0_7",
+      "statement": "Retail 12.1 Alpha 4 八個功能模組停用、戰鬥延後與清理行為",
+      "requiredClient": "RETAIL_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260814-001",
+      "statement": "Retail 12.1 的 Aura 批次輸入、自身／跨職業分類、Profile 捲動、下拉選單文字與小地圖齒輪 fallback 真人簽收",
+      "requiredClient": "RETAIL_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260814-002",
+      "statement": "Retail 12.1 語系列非 hover 文字與十一主題按鈕底色、四態、2px 邊框、戰鬥延後及 /reload 保存真人簽收",
+      "requiredClient": "RETAIL_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260814-003",
+      "statement": "Retail 12.1 Alpha 6 小地圖齒輪在金色圈內的多 UI Scale 像素、互動與 /reload 保存真人簽收",
+      "requiredClient": "RETAIL_12_1",
       "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
       "blocksRelease": false
     }

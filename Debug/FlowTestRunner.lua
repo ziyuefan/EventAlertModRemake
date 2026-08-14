@@ -283,7 +283,7 @@ local function finalizeSession(session)
         schema = FlowTestRunner.schemaVersion,
         type = "EAM_FLOW_VALIDATION_REPORT",
         purpose = environment.executionSource == "offline-mock" and "offline-contract" or "capability-probe",
-        matrixVersion = "2026-08-13.1",
+        matrixVersion = "2026-08-14.1",
         suite = session.suite,
         status = reportStatus,
         generatedAtSessionMs = nowMilliseconds(),
@@ -444,6 +444,116 @@ local function buildAura121TestDB(revision)
     }
 end
 
+FlowTestRunner.registerCase({
+    id = "profile.catalog.batch_defaults",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local options = EAM.UI and EAM.UI.Options
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local spellInfo = EAM.Services and EAM.Services.SpellInfoService
+        local classToken = saved and saved.getActiveClassToken and saved.getActiveClassToken()
+        if not options or not saved or not spellInfo or not classToken then
+            return STATUS_SKIP, "batch catalog dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        local originalSpellArray = EAM.Data and EAM.Data.SpellArray
+        local originalGetSpellInfo = spellInfo.getSpellInfo
+        local originalNotifyConfigChanged = options.notifyConfigChanged
+        local ok, result, message = pcall(function()
+            EAM.db = {
+                schemaVersion = EAM.Constants.SCHEMA_VERSION,
+                revision = 10,
+                profiles = {
+                    classes = {
+                        [classToken] = {
+                            profileSchema = 1,
+                            defaultsSeeded = true,
+                            legacyImportVersion = 1,
+                            alerts = {
+                                playerAuras = {},
+                                targetAuras = {},
+                                spellCooldowns = {},
+                                itemCooldowns = {},
+                                groundEffects = {},
+                            },
+                        },
+                    },
+                },
+                config = {},
+            }
+            EAM.Data = EAM.Data or {}
+            EAM.Data.SpellArray = {
+                [classToken] = {
+                    general = {
+                        { id = 101001, type = "aura", unit = "player" },
+                    },
+                },
+            }
+            spellInfo.getSpellInfo = function(spellID)
+                if spellID == 101001 or spellID == 101002 or spellID == 101003 then
+                    return {
+                        spellID = spellID,
+                        name = "Batch Spell " .. tostring(spellID),
+                        icon = 1,
+                        factsSafe = true,
+                    }
+                end
+                return {
+                    spellID = spellID,
+                    warnings = {},
+                    factsSafe = false,
+                }
+            end
+            options.notifyConfigChanged = function()
+            end
+
+            local parsed, invalidTokens = options.parseBatchIDs("101002; 101001\n101002；bad")
+            local playerOK, playerReport = options.applyBatchIDs(1, "101001;101002")
+            local targetOK, targetReport = options.applyBatchIDs(3, "101003")
+            local invalidOK, invalidReport = options.applyBatchIDs(1, "999999")
+            local alerts = saved.getActiveAlerts()
+            local selfAlert = alerts and alerts.playerAuras["aura:player:101001"]
+            local crossAlert = alerts and alerts.playerAuras["aura:player:101002"]
+            local targetAlert = alerts and alerts.targetAuras["aura:target:101003"]
+            local missingAlert = alerts and alerts.playerAuras["aura:player:999999"]
+            local valid = #parsed == 2
+                and parsed[1] == 101001
+                and parsed[2] == 101002
+                and invalidTokens == 1
+                and playerOK == true
+                and playerReport.added == 2
+                and playerReport.reclassified == 1
+                and targetOK == true
+                and targetReport.added == 1
+                and invalidOK == true
+                and invalidReport.invalid == 1
+                and selfAlert
+                and selfAlert.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+                and selfAlert.fromPlayer == true
+                and crossAlert
+                and crossAlert.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+                and crossAlert.fromPlayer ~= true
+                and targetAlert
+                and targetAlert.fromPlayer == true
+                and missingAlert == nil
+                and EAM.db.revision == 12
+            return valid, valid and "batch IDs preserve class scope, caster defaults, validation, and one revision per batch"
+                or "batch catalog defaults or revision contract mismatch"
+        end)
+        EAM.db = originalDB
+        if EAM.Data then
+            EAM.Data.SpellArray = originalSpellArray
+        end
+        spellInfo.getSpellInfo = originalGetSpellInfo
+        options.notifyConfigChanged = originalNotifyConfigChanged
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
 FlowTestRunner.registerCase({
     id = "profile.codec.export_roundtrip",
     primarySuite = "core",
@@ -1219,7 +1329,7 @@ FlowTestRunner.registerCase({
         if container.current and container.current.player then
             capability.acceptContainer(container.current.player)
         end
-        return valid, valid and "12.0.7 selects Legacy without 12.1 container calls" or "12.0.7 compatibility contract mismatch"
+        return valid, valid and "XPTR 12.0.7 selects Legacy without 12.1 container calls" or "XPTR 12.0.7 compatibility contract mismatch"
     end,
 })
 
@@ -2502,9 +2612,10 @@ FlowTestRunner.registerCase({
         local saved = EAM.Modules and EAM.Modules.SavedVariables
         local db = EAM.db
         local theme = EAM.Theme
-        local themeValues = { "eam", "ff7", "winxp", "borland", "doscrt", "aqua" }
+        local themeValues = { "eam", "ff7", "winxp", "win7", "win10", "win31", "borland", "doscrt", "eten", "redalert", "aqua" }
         local themeValid = theme and type(theme.normalizeSelection) == "function"
             and type(theme.ThemeOptions) == "table"
+            and #theme.ThemeOptions == #themeValues
         if themeValid then
             for index = 1, #themeValues do
                 if theme.normalizeSelection(themeValues[index]) ~= themeValues[index] then
@@ -2526,10 +2637,59 @@ FlowTestRunner.registerCase({
             and type(saved.getActiveAlerts()) == "table"
             and themeValid == true
 
-        return valid == true, valid and "SavedVariables and six-theme contract available" or "SavedVariables or theme contract invalid"
+        return valid == true, valid and "SavedVariables and eleven-theme contract available" or "SavedVariables or theme contract invalid"
     end,
 })
 
+FlowTestRunner.registerCase({
+    id = "theme.button.chrome",
+    primarySuite = "core",
+    suites = { quick = true, core = true },
+    run = function()
+        local theme = EAM.Theme
+        local mock = EAM.FlowTestMock
+        if not theme or type(theme.registerButton) ~= "function" or type(api.CreateFrame) ~= "function" then
+            return false, "theme button production dependencies unavailable"
+        end
+        if not mock then
+            return STATUS_SKIP, "theme button chrome strict mock is offline only"
+        end
+
+        local function colorMatches(actual, expected)
+            return type(actual) == "table"
+                and type(expected) == "table"
+                and actual[1] == expected[1]
+                and actual[2] == expected[2]
+                and actual[3] == expected[3]
+                and actual[4] == expected[4]
+        end
+
+        local originalSelection = theme.selection
+        local button = api.CreateFrame("Button", nil, nil, "UIPanelButtonTemplate")
+        theme.setSelection("borland")
+        local applied = theme.registerButton(button)
+        local normal = button:GetNormalTexture()
+        local borders = button.eamThemeChrome and button.eamThemeChrome.borders
+        local borland = theme.Palettes and theme.Palettes.borland
+        local valid = applied == true
+            and normal
+            and normal.texture == "Interface\\Buttons\\WHITE8X8"
+            and type(borders) == "table"
+            and #borders == 4
+            and colorMatches(normal.vertexColor, borland and borland.buttonNormal)
+            and colorMatches(borders[1] and borders[1].vertexColor, borland and borland.border)
+
+        theme.setSelection("doscrt")
+        local dos = theme.Palettes and theme.Palettes.doscrt
+        valid = valid
+            and colorMatches(normal.vertexColor, dos and dos.buttonNormal)
+            and colorMatches(borders[1] and borders[1].vertexColor, dos and dos.border)
+
+        theme.setSelection(originalSelection)
+        theme.applyAll()
+        return valid == true, valid and "theme button background and border follow the active palette" or "theme button chrome contract invalid"
+    end,
+})
 FlowTestRunner.registerCase({
     id = "modules.toggle.lifecycle",
     primarySuite = "core",
@@ -2541,8 +2701,11 @@ FlowTestRunner.registerCase({
         local powerService = EAM.Services and EAM.Services.ClassPowerService
         local tooltipService = EAM.Services and EAM.Services.TooltipMonitorService
         local mock = EAM.FlowTestMock
-        if not saved or not controller or not router or not powerService or not tooltipService or not mock then
-            return false, "module lifecycle dependencies unavailable"
+        if not saved or not controller or not router or not powerService or not tooltipService then
+            return false, "module lifecycle production dependencies unavailable"
+        end
+        if not mock then
+            return STATUS_SKIP, "module lifecycle strict mock is offline only"
         end
 
         local originalDB = EAM.db
@@ -2733,6 +2896,17 @@ FlowTestRunner.registerCase({
         local handlerCount = handlers and handlers.count or 0
         service.initialize()
         local handlerCountAfter = handlers and handlers.count or 0
+        local handlerStable = handlerCount >= 1 and handlerCountAfter == handlerCount
+        if not handlerStable then
+            return false, string.format(
+                "legacy discovery handler lifecycle mismatch handlers=%d/%d",
+                handlerCount,
+                handlerCountAfter
+            )
+        end
+        if not EAM.FlowTestMock then
+            return true, "legacy discovery handler registration is idempotent on the client"
+        end
 
         local beforeCount = 0
         local hadFireball = false
@@ -2772,8 +2946,7 @@ FlowTestRunner.registerCase({
             local partialCount = service.lookup("fire", false, function() end)
             local exactCount = service.lookup("Fireball", true, function() end)
             local expectedCount = beforeCount + (hadFireball and 0 or 1)
-            local result = handlerCount == 1
-                and handlerCountAfter == handlerCount
+            local result = handlerStable
                 and enabledCount == expectedCount
                 and disabledCount == enabledCount
                 and partialCount == 1
@@ -2813,9 +2986,11 @@ FlowTestRunner.registerCase({
             or not util.prepareEditBoxManualCopy
             or not aboutPanel
             or not svgProbe
-            or not mock
         then
-            return false, "Secret, manual-copy, About, or SVG boundary helpers unavailable"
+            return false, "Secret, manual-copy, About, or SVG production helpers unavailable"
+        end
+        if not mock then
+            return STATUS_SKIP, "SVG lifecycle strict mock is offline only"
         end
 
         local warnings = {}

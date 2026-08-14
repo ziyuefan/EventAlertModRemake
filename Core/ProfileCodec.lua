@@ -764,7 +764,7 @@ end
 
 local function normalizeAuraRecord(record)
     local ok, reason = hasOnlyKeys(record, {
-        spellID = true, enabled = true, fromPlayer = true, auraFilter = true,
+        spellID = true, enabled = true, fromPlayer = true, catalogScope = true, auraFilter = true,
         showStacks = true, showName = true, showCountdown = true, priority = true,
         sound = true,
     })
@@ -785,6 +785,13 @@ local function normalizeAuraRecord(record)
     }
     if record.enabled ~= nil and type(record.enabled) ~= "boolean" then return nil, "enabledInvalid" end
     if record.fromPlayer ~= nil and type(record.fromPlayer) ~= "boolean" then return nil, "fromPlayerInvalid" end
+    if record.catalogScope ~= nil then
+        if record.catalogScope ~= EAM.Constants.AURA_CATALOG_SCOPE_SELF
+            and record.catalogScope ~= EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS then
+            return nil, "catalogScopeInvalid"
+        end
+        normalized.catalogScope = record.catalogScope
+    end
     if record.showStacks ~= nil and type(record.showStacks) ~= "boolean" then return nil, "showStacksInvalid" end
     if record.showName ~= nil and type(record.showName) ~= "boolean" then return nil, "showNameInvalid" end
     if record.showCountdown ~= nil and type(record.showCountdown) ~= "boolean" then return nil, "showCountdownInvalid" end
@@ -880,6 +887,7 @@ local function exportRecord(moduleName, alert)
             spellID = id,
             enabled = alert.enabled ~= false,
             fromPlayer = alert.fromPlayer == true,
+            catalogScope = alert.catalogScope,
             auraFilter = alert.auraFilter,
             showStacks = alert.showStacks ~= false,
             showName = alert.showName ~= false,
