@@ -437,7 +437,7 @@ EA_GrpItems
 EA_Pos
 </code></pre>
 
-<h2 id="schema-v3native-aura">Schema v3：Native Aura 與文字版面設定</h2>
+<h2 id="schema-v3native-aura">歷史 Schema v3：Native Aura 與文字版面設定</h2>
 <ul>
 <li><code>EAM_DB.schemaVersion = 3</code>；v1 Aura alert 與 v2 文字版面來源都會保存可序列化遷移備份。</li>
 <li>Alert 可保存 <code>nativeBackend</code>、<code>auraFilter</code>、<code>showStacks</code>、<code>showName</code>、<code>showCountdown</code> 與純資料 <code>sound</code>。</li>
@@ -658,12 +658,12 @@ importFrame, exportFrame, MyAddonFrame, tempFunc
 
 <h2 id="2026-08-12-theme">2026-08-12 Theme 設定</h2>
 <p><code>EAM_DB.config.theme</code> 是可持久化的 EAM 自有 UI 主題選擇，允許值與預設如下：</p>
-<pre class="codehilite"><code class="language-js">config.theme = &quot;eam&quot; // &quot;eam|ff7|winxp|borland|doscrt|aqua&quot;
+<pre class="codehilite"><code class="language-js">config.theme = &quot;eam&quot; // &quot;eam|ff7|winxp|win7|win10|win31|borland|doscrt|eten|redalert|aqua&quot;
 </code></pre>
 
 <ul>
 <li><code>eam</code> 為既有棕金視覺，亦是缺值或非法值的安全回退。</li>
-<li><code>ff7</code> 為深靛、皇家藍、亮青與金色 palette；<code>winxp</code> 為 Luna 藍、淺灰、亮藍／綠 palette；<code>borland</code> 為電光藍／青色 IDE；<code>doscrt</code> 為黑綠磷光 CRT；<code>aqua</code> 為 macOS Aqua 藍灰／亮藍。</li>
+<li>ff7 為深靛／皇家藍／亮青；winxp 為 Luna 藍；win7 為 Aero 冰藍；win10 為深色平面／系統藍；win31 為灰底／海軍藍；borland 為亮藍底／亮黃字；doscrt 為純黑底／磷光綠字；eten 為深藍底／青黃字；redalert 為黑紅工業警示；aqua 為藍灰／亮藍。</li>
 <li><code>SavedVariables.updateTheme()</code> 只在實際值改變時寫入並增加 revision；重複選擇不得製造 revision。</li>
 <li>啟動時非法值會正規化為 <code>eam</code>，並在 migration warnings 留下 <code>invalidThemeDefaulted</code>；不覆蓋其他 SavedVariables。</li>
 <li>戰鬥中只保存 pending theme，待 <code>PLAYER_REGEN_ENABLED</code> 後由 <code>EAM.Theme.flushPending()</code> 套用。</li>
@@ -704,6 +704,15 @@ importFrame, exportFrame, MyAddonFrame, tempFunc
 <li>import 先做 parse、schema、checksum、scope、欄位白名單與 ID 重算，再產生 preview；preview 不增加 revision、不發事件。merge 只 upsert scope 內項目，replace 只替換指定 class／module 並保留 bounded backup。</li>
 <li>戰鬥中拒絕結構性 apply；EAMAP1 不是加密，也不宣稱來源可信。任何 malformed／future schema／duplicate key／duplicate derived ID 都 fail-closed。</li>
 <li>config.fontFamily 允許 STANDARD、ARIALN、MORPHEUS、SKURRI，預設 STANDARD；變更由 SavedVariables.updateFontFamily 正規化、no-op 保持 revision，並由 TextPlacement 套用於 EAM 自有 FontString。</li>
+</ul>
+<h2 id="2026-08-14-schema-v5aura-catalog-scope-mutation">2026-08-14 現行 schema v5：Aura catalog scope 與批次 mutation</h2>
+<ul>
+<li><code>profiles.classes[CLASS_TOKEN].alerts</code> 仍是目前職業唯一正式清單來源；<code>catalogScope</code> 只接受 <code>SELF</code> 或 <code>CROSS_CLASS</code>。</li>
+<li>player Aura 的 <code>SELF</code> 新增預設 <code>fromPlayer=true</code>；player Aura 的 <code>CROSS_CLASS</code> 預設 <code>fromPlayer=false</code>；target Aura 新增預設 <code>fromPlayer=true</code>。</li>
+<li>非目前職業但可解析的 player Aura 候選保守寫入 <code>CROSS_CLASS</code>，不得偽裝成該職業技能；不存在或無法解析的 SpellID 不建立記錄。</li>
+<li>批次輸入可含換行、半形分號或全形分號；解析後先去重與排序，再以單一 deferred commit 寫入，真變更只增加一次 revision。</li>
+<li>EAMAP1 profile 對 <code>catalogScope</code> 採白名單正規化；缺值依 module 舊語意安全回填，非法值拒絕，不信任外部 derived ID。</li>
+<li><code>Data/wow_spells_and_auras.json</code> 不屬 SavedVariables schema，也不被 runtime 載入；它只是離線候選索引。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

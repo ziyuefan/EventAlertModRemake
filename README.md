@@ -6,6 +6,20 @@
 
 ---
 
+#### [Retail 12.1 Alpha 6] 2026.08.14
+- 正式服與 PTR 12.1 使用 Native Aura capability；XPTR 12.0.7 保留 Legacy backend。自身／目標 Aura 預設僅玩家施放，跨職業增減益預設取消，批次輸入只加入可解析且存在的 ID。
+- 修正語系列空白與按鈕固定紅色：Auto Detect 與五個原生語言名稱在未 hover 時可見，十一套主題控制按鈕 normal／highlight／pushed／disabled、文字與四邊 2px 邊框。
+- 小地圖固定使用內建 `Trade_Engineering` 齒輪；內層圖示依標準小地圖按鈕幾何縮入金色追蹤圈，不再與 53×53 複合邊框錯位。
+- Alpha 6 ZIP 由本機 `Build-CurseForgePackage.ps1` 產生後手動上傳 GitHub prerelease；停用中的 BigWigs／CurseForge／WoWInterface workflow 不啟用，本機 deploy、Tools、Tests、TestResults、backup 與 LegacyReference 不進套件。
+- 發布前離線 gate：Lua `56/56`、Flow `68/68`、Validation Contracts `394/394`；Retail／PTR／XPTR 真人視覺、音效與戰鬥簽收仍為 pending。
+
+#### [Retail 12.1 Alpha 5 follow-up] 2026.08.14
+- 現行正式服與 PTR 已更新為 12.1，Native Aura capability 以 Interface `120100` 與實際 widget 能力判定；XPTR 12.0.7 保留 Legacy backend。
+- Aura 清單新增批次輸入，可用 Enter、半形分號或全形分號分隔；自身與目標新增預設「僅玩家施放」，跨職業增減益預設取消該條件，不存在的 SpellID 不顯示也不寫入。
+- 修正下拉選單黑底看不到文字、Profile 長字串捲動與主設定入口；小地圖改用內建 `Trade_Engineering` 齒輪，暫停不可靠的 Texture SVG 圖示路徑。
+- `Data/wow_spells_and_auras.json` 僅作 Wowhead 離線候選索引，不接入 TOC、runtime 或預設 seeder；唯一治理工具為 `Tools/Test-WowheadCandidateData.ps1`。
+- 本輪離線 gate：Lua `56/56`、Flow `67/67`、Validation Contracts `380/380`、本機環境 `3/3`；Retail／PTR／XPTR 真人簽收仍為 pending。
+
 #### [正式服 12.1.0 PTR8 Alpha 5] 2026.08.14
 - Alpha 5 完成 EAMAP1 JSON／Base64 profile 分享：嚴格 schema、checksum、preview、merge／replace、戰鬥拒絕與手動 Ctrl+C，不使用 loadstring。
 - 主設定新增字型選擇（STANDARD、ARIALN、MORPHEUS、SKURRI）；字型設定只套用 EAM 自有文字，不修改 Blizzard secure/protected UI。

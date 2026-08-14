@@ -47,6 +47,11 @@ local Options = {
     specDropdown = nil,
     currentSpecFilterName = nil,
     addEditBox = nil,
+    batchFrame = nil,
+    batchScrollFrame = nil,
+    batchEditBox = nil,
+    batchStatusText = nil,
+    batchCategory = nil,
     currentCategory = 1,
     pendingOpen = false,
     currentEditingAlert = nil,
@@ -87,8 +92,7 @@ local function setWidgetText(target, value)
     return false
 end
 
-local MINIMAP_SVG_ASSET = "Interface\\AddOns\\EventAlertMod\\Media\\SVG\\eam-minimap.svg"
-local MINIMAP_FALLBACK_TEXTURE = "Interface\\Icons\\INV_Misc_QuestionMark"
+local MINIMAP_FALLBACK_TEXTURE = "Interface\\Icons\\Trade_Engineering"
 
 -- 12 種經典音效的 FileDataID 與自訂 PATH
 local soundAssets = {
@@ -172,23 +176,12 @@ function Options.resolveAuraSoundName(sound)
     end
     return nil
 end
--- 12.1 可由 Texture:SetSVG 載入插件自有 SVG；12.0.7 或載入失敗時使用穩定內建圖示。
+-- Texture:SetSVG 在 12.1 實機可接受呼叫但不保證繪製；小地圖固定使用經典齒輪避免空白或問號。
 function Options.applyMinimapTexture(texture)
     if not texture or type(texture.SetTexture) ~= "function" then
         return "unavailable"
     end
 
-    texture:SetTexture(MINIMAP_FALLBACK_TEXTURE)
-    if type(texture.SetSVG) ~= "function" then
-        return "fallback"
-    end
-
-    local ok, accepted = pcall(texture.SetSVG, texture, MINIMAP_SVG_ASSET)
-    if ok and accepted ~= false then
-        return "svg"
-    end
-
-    -- SetSVG 可能在錯誤前留下部分狀態，失敗路徑再次明確恢復 fallback。
     texture:SetTexture(MINIMAP_FALLBACK_TEXTURE)
     return "fallback"
 end
@@ -388,25 +381,28 @@ if Locale and type(Locale.registerRefresh) == "function" then
     Locale.registerRefresh(Options.refreshLocalizedText)
 end
 
--- 取得當前類別對應的 alert list
-function Options.getCurrentCategoryList()
+-- 取得指定類別對應的 alert list；player 自身與跨職業共用同一 SavedVariables list，由 catalogScope 分流。
+function Options.getCategoryList(category)
     local saved = EAM.Modules.SavedVariables
     if not saved or not EAM.db then return {} end
-    
-    if Options.currentCategory == 1 or Options.currentCategory == 2 then
+
+    if category == 1 or category == 2 then
         return saved.getAlertList(EAM.Constants.ALERT_KIND_AURA, "player") or {}
-    elseif Options.currentCategory == 3 then
+    elseif category == 3 then
         return saved.getAlertList(EAM.Constants.ALERT_KIND_AURA, "target") or {}
-    elseif Options.currentCategory == 4 then
+    elseif category == 4 then
         return saved.getAlertList(EAM.Constants.ALERT_KIND_SPELL_COOLDOWN, "player") or {}
-    elseif Options.currentCategory == 5 then
+    elseif category == 5 then
         return saved.getAlertList(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) or {}
-    elseif Options.currentCategory == 6 then
+    elseif category == 6 then
         return saved.getAlertList("groundEffect") or {}
     end
     return {}
 end
 
+function Options.getCurrentCategoryList()
+    return Options.getCategoryList(Options.currentCategory)
+end
 Options.currentSpecFilter = nil
 
 local function getSpellSpec(spellID)
@@ -431,6 +427,160 @@ local function getSpellSpec(spellID)
     return nil
 end
 
+local function getSafeSpellInfo(spellID)
+    if type(spellID) ~= "number" or spellID % 1 ~= 0 or spellID <= 0 then
+        return nil
+    end
+    local service = EAM.Services and EAM.Services.SpellInfoService
+    if not service or type(service.getSpellInfo) ~= "function" then
+        return nil
+    end
+    local ok, info = pcall(service.getSpellInfo, spellID)
+    if not ok
+        or type(info) ~= "table"
+        or info.factsSafe ~= true
+        or type(info.name) ~= "string"
+        or info.name == "" then
+        return nil
+    end
+    return info
+end
+
+local function isExistingSpell(spellID)
+    return getSafeSpellInfo(spellID) ~= nil
+end
+
+local function isCurrentClassSpell(spellID)
+    if getSpellSpec(spellID) ~= nil then
+        return true
+    end
+    local spellBook = api and api.C_SpellBook
+    if not spellBook or type(spellBook.IsSpellInSpellBook) ~= "function" then
+        return false
+    end
+    if api.InCombatLockdown and api.InCombatLockdown() then
+        return false
+    end
+    local spellBank = api.SpellBookSpellBank and api.SpellBookSpellBank.Player
+    local ok, result
+    if spellBank ~= nil then
+        ok, result = pcall(spellBook.IsSpellInSpellBook, spellID, spellBank, true)
+    else
+        ok, result = pcall(spellBook.IsSpellInSpellBook, spellID)
+    end
+    return ok
+        and EAM.Util
+        and EAM.Util.isSafeBoolean(result)
+        and result == true
+end
+
+local function resolveAuraCatalogScope(alertOrSpellID)
+    if type(alertOrSpellID) == "table" then
+        local scope = alertOrSpellID.catalogScope
+        if scope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+            or scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS then
+            return scope
+        end
+        alertOrSpellID = alertOrSpellID.spellID
+    end
+    if isCurrentClassSpell(alertOrSpellID) then
+        return EAM.Constants.AURA_CATALOG_SCOPE_SELF
+    end
+    return EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+end
+
+local function alertMatchesCategory(alert, category)
+    if category == 1 then
+        return resolveAuraCatalogScope(alert) == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+    end
+    if category == 2 then
+        return resolveAuraCatalogScope(alert) == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+    end
+    return category >= 3 and category <= 6
+end
+
+local function isAlertDisplayable(alert)
+    if type(alert) ~= "table" then
+        return false
+    end
+    if alert.itemID ~= nil then
+        return type(alert.itemID) == "number" and alert.itemID % 1 == 0 and alert.itemID > 0
+    end
+    return isExistingSpell(alert.spellID)
+end
+
+local function migratePlayerAuraCatalogScopes(rawList)
+    if type(rawList) ~= "table" then
+        return false
+    end
+    local changed = false
+    for _, alert in pairs(rawList) do
+        if type(alert) == "table" and isExistingSpell(alert.spellID) then
+            local scope = resolveAuraCatalogScope(alert.spellID)
+            if alert.catalogScope ~= scope then
+                alert.catalogScope = scope
+                changed = true
+            end
+            if scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+                and alert.fromPlayer ~= nil then
+                alert.fromPlayer = nil
+                changed = true
+            end
+        end
+    end
+    if changed then
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if saved and saved.commitAlertBatch then
+            saved.commitAlertBatch(EAM.Constants.ALERT_KIND_AURA, true)
+        end
+        Options.notifyConfigChanged()
+    end
+    return changed
+end
+
+local function addAlertToCategory(category, id, deferCommit)
+    local saved = EAM.Modules and EAM.Modules.SavedVariables
+    if not saved then
+        return false, nil, "savedVariablesUnavailable"
+    end
+    id = tonumber(id)
+    if type(id) ~= "number" or id % 1 ~= 0 or id <= 0 then
+        return false, nil, "invalidID"
+    end
+    if category ~= 5 and not isExistingSpell(id) then
+        return false, nil, "spellNotFound"
+    end
+
+    local options = deferCommit and { deferCommit = true } or {}
+    local reclassified = false
+    local ok, alertID, status
+    if category == 1 then
+        local scope = resolveAuraCatalogScope(id)
+        options.catalogScope = scope
+        options.fromPlayer = scope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+        reclassified = scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+        ok, alertID, status = saved.addAuraAlert("player", id, options)
+    elseif category == 2 then
+        options.catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+        options.fromPlayer = false
+        ok, alertID, status = saved.addAuraAlert("player", id, options)
+    elseif category == 3 then
+        options.catalogScope = resolveAuraCatalogScope(id)
+        options.fromPlayer = true
+        ok, alertID, status = saved.addAuraAlert("target", id, options)
+    elseif category == 4 then
+        ok, alertID, status = saved.addSpellCooldownAlert(id, options)
+    elseif category == 5 then
+        ok, alertID, status = saved.addItemCooldownAlert(id, options)
+    elseif category == 6 then
+        ok, alertID, status = saved.addGroundEffectAlert(id, options)
+    else
+        return false, nil, "invalidCategory"
+    end
+    return ok, alertID, status, reclassified
+end
+
+Options.addAlertToCategory = addAlertToCategory
 -- 刷新滾動列表
 function Options.refreshList()
     if not Options.listFrame or not Options.listFrame:IsShown() then return end
@@ -441,43 +591,26 @@ function Options.refreshList()
     local listData = {}
     local rawList = Options.getCurrentCategoryList()
     
-    for id, alert in pairs(rawList) do
-        local matches = false
-        if Options.currentCategory == 1 then
-            if alert.fromPlayer == true or alert.fromPlayer == nil then
-                matches = true
-            end
-        elseif Options.currentCategory == 2 then
-            if alert.fromPlayer == false then
-                matches = true
-            end
-        elseif Options.currentCategory == 3 then
-            matches = true
-        elseif Options.currentCategory == 4 then
-            matches = true
-        elseif Options.currentCategory == 5 then
-            matches = true
-        elseif Options.currentCategory == 6 then
-            matches = true
-        end
-        
-        if matches then
+    if Options.currentCategory == 1 or Options.currentCategory == 2 then
+        migratePlayerAuraCatalogScopes(rawList)
+    end
+
+    for _, alert in pairs(rawList) do
+        if alertMatchesCategory(alert, Options.currentCategory) and isAlertDisplayable(alert) then
             local passSpec = true
             if Options.currentSpecFilter ~= nil then
                 local specOfSpell = getSpellSpec(alert.spellID)
                 if Options.currentSpecFilter == 0 then
-                    passSpec = (specOfSpell == 0 or specOfSpell == nil)
+                    passSpec = specOfSpell == 0 or specOfSpell == nil
                 else
-                    passSpec = (specOfSpell == Options.currentSpecFilter)
+                    passSpec = specOfSpell == Options.currentSpecFilter
                 end
             end
-
             if passSpec then
-                table.insert(listData, alert)
+                listData[#listData + 1] = alert
             end
         end
     end
-    
     table.sort(listData, function(a, b)
         local idA = a.spellID or a.itemID or 0
         local idB = b.spellID or b.itemID or 0
@@ -505,22 +638,7 @@ local function batchOperation(action)
     
     local rawList = Options.getCurrentCategoryList()
     for id, alert in pairs(rawList) do
-        local matches = false
-        if Options.currentCategory == 1 then
-            if alert.fromPlayer == true or alert.fromPlayer == nil then matches = true end
-        elseif Options.currentCategory == 2 then
-            if alert.fromPlayer == false then matches = true end
-        elseif Options.currentCategory == 3 then
-            matches = true
-        elseif Options.currentCategory == 4 then
-            matches = true
-        elseif Options.currentCategory == 5 then
-            matches = true
-        elseif Options.currentCategory == 6 then
-            matches = true
-        end
-        
-        if matches then
+        if alertMatchesCategory(alert, Options.currentCategory) then
             if action == "select" then
                 alert.enabled = true
             elseif action == "deselect" then
@@ -530,7 +648,6 @@ local function batchOperation(action)
             end
         end
     end
-    
     if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
         EAM.Modules.SavedVariables.markRevisionChanged()
     end
@@ -543,36 +660,141 @@ end
 
 -- 新增單個提醒
 function Options.addAlertToCurrentCategory(id)
-    local saved = EAM.Modules.SavedVariables
-    if not saved then return end
-    
-    local ok, alertID, status
-    if Options.currentCategory == 1 then
-        ok, alertID, status = saved.addAuraAlert("player", id, { fromPlayer = true })
-    elseif Options.currentCategory == 2 then
-        ok, alertID, status = saved.addAuraAlert("player", id, { fromPlayer = false })
-    elseif Options.currentCategory == 3 then
-        ok, alertID, status = saved.addAuraAlert("target", id)
-    elseif Options.currentCategory == 4 then
-        ok, alertID, status = saved.addSpellCooldownAlert(id)
-    elseif Options.currentCategory == 5 then
-        ok, alertID, status = saved.addItemCooldownAlert(id)
-    elseif Options.currentCategory == 6 then
-        ok, alertID, status = saved.addGroundEffectAlert(id)
-    end
-    
+    local ok, alertID, status, reclassified = addAlertToCategory(Options.currentCategory, id, false)
     if ok then
-        Options.notifyConfigChanged()
-        if Options.currentCategory == 6 then
-            notifyGroundEffectConfigChanged()
+        if status ~= "unchanged" then
+            Options.notifyConfigChanged()
+            if Options.currentCategory == 6 then
+                notifyGroundEffectConfigChanged()
+            end
         end
         Options.refreshList()
-        print(string.format(EAM.L.EAM_OPT_ADD_SUCCESS or "|cff00ff96EAM|r 成功新增監控提醒 [ID: %s]", id))
+        if reclassified then
+            print(string.format(
+                EAM.L.EAM_OPT_ADD_RECLASSIFIED
+                    or "|cff00ff96EAM|r [ID: %s] 不屬於目前職業，已加入跨職業增減益清單。",
+                id
+            ))
+        else
+            print(string.format(EAM.L.EAM_OPT_ADD_SUCCESS or "|cff00ff96EAM|r 成功新增監控提醒 [ID: %s]", id))
+        end
+        return true, status, reclassified
+    end
+
+    if status == "spellNotFound" then
+        print(string.format(
+            EAM.L.EAM_OPT_ERR_SPELL_NOT_FOUND
+                or "|cff00ff96EAM|r 找不到 SpellID %s；未加入且不會顯示。",
+            tostring(id)
+        ))
     else
         print(string.format(EAM.L.EAM_OPT_ADD_FAIL or "|cff00ff96EAM|r 新增監控提醒失敗: %s", tostring(status or alertID)))
     end
+    return false, status
+end
+local function getCategoryAlertKind(category)
+    if category == 1 or category == 2 or category == 3 then
+        return EAM.Constants.ALERT_KIND_AURA
+    elseif category == 4 then
+        return EAM.Constants.ALERT_KIND_SPELL_COOLDOWN
+    elseif category == 5 then
+        return EAM.Constants.ALERT_KIND_ITEM_COOLDOWN
+    elseif category == 6 then
+        return EAM.Constants.ALERT_KIND_GROUND_EFFECT
+    end
+    return nil
 end
 
+function Options.parseBatchIDs(value)
+    local ids = {}
+    local seen = {}
+    local invalid = 0
+    value = type(value) == "string" and value:gsub("；", ";") or ""
+    for token in value:gmatch("[^%s;,]+") do
+        local id = tonumber(token)
+        if type(id) == "number" and id % 1 == 0 and id > 0 then
+            if not seen[id] then
+                seen[id] = true
+                ids[#ids + 1] = id
+            end
+        else
+            invalid = invalid + 1
+        end
+    end
+    table.sort(ids)
+    return ids, invalid
+end
+
+function Options.buildCurrentCategoryIDText(category)
+    local rawList = Options.getCategoryList(category)
+    local ids = {}
+    for _, alert in pairs(rawList) do
+        if alertMatchesCategory(alert, category) and isAlertDisplayable(alert) then
+            local id = alert.spellID or alert.itemID
+            if type(id) == "number" and id % 1 == 0 and id > 0 then
+                ids[#ids + 1] = id
+            end
+        end
+    end
+    table.sort(ids)
+    local values = {}
+    for index = 1, #ids do
+        values[index] = tostring(ids[index])
+    end
+    return table.concat(values, "; ")
+end
+
+function Options.applyBatchIDs(category, value)
+    local ids, invalid = Options.parseBatchIDs(value)
+    local report = {
+        total = #ids,
+        added = 0,
+        updated = 0,
+        unchanged = 0,
+        invalid = invalid,
+        reclassified = 0,
+    }
+    local kind = getCategoryAlertKind(category)
+    if not kind or #ids == 0 then
+        return false, report, kind and "empty" or "invalidCategory"
+    end
+
+    local changed = false
+    for index = 1, #ids do
+        local ok, _, status, reclassified = addAlertToCategory(category, ids[index], true)
+        if ok then
+            if status == "added" then
+                report.added = report.added + 1
+                changed = true
+            elseif status == "updated" then
+                report.updated = report.updated + 1
+                changed = true
+            else
+                report.unchanged = report.unchanged + 1
+            end
+            if reclassified then
+                report.reclassified = report.reclassified + 1
+            end
+        else
+            report.invalid = report.invalid + 1
+        end
+    end
+
+    local saved = EAM.Modules and EAM.Modules.SavedVariables
+    if saved and saved.commitAlertBatch then
+        saved.commitAlertBatch(kind, changed)
+    end
+    if changed then
+        Options.notifyConfigChanged()
+        if category == 6 then
+            notifyGroundEffectConfigChanged()
+        end
+    end
+    if category == Options.currentCategory then
+        Options.refreshList()
+    end
+    return true, report, changed and "updated" or "unchanged"
+end
 -- 刪除單個提醒
 function Options.removeAlertFromCurrentCategory(id)
     local saved = EAM.Modules.SavedVariables
@@ -633,22 +855,63 @@ local function createCheckbox(parent, text, key, x, y, onChange)
     return cb
 end
 
--- 建立通用紅色按鈕
-local function createRedButton(parent, text, x, y, width, height, onClick)
+-- 建立由 Theme 統一控制底色、狀態色與邊框的 EAM 按鈕。
+local function createThemedButton(parent, text, x, y, width, height, onClick)
     local btn = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    if Theme and Theme.registerButton then Theme.registerButton(btn) end
     btn:SetSize(width or 120, height or 24)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     setWidgetText(btn, text)
-    
-    local nTex = btn:GetNormalTexture()
-    if nTex then nTex:SetVertexColor(0.8, 0.2, 0.2, 1) end
-    local pTex = btn:GetPushedTexture()
-    if pTex then pTex:SetVertexColor(0.6, 0.1, 0.1, 1) end
     if Theme and Theme.registerButton then Theme.registerButton(btn) end
-    
+
     btn:SetScript("OnClick", onClick)
     return btn
+end
+
+local DROPDOWN_TEXTURE = "Interface\\Buttons\\WHITE8X8"
+
+local function getFrameLevel(frame)
+    if not frame or type(frame.GetFrameLevel) ~= "function" then
+        return 0
+    end
+    local ok, level = pcall(frame.GetFrameLevel, frame)
+    if ok and type(level) == "number" then
+        return level
+    end
+    return 0
+end
+
+-- 自製下拉選單必須同時套用主題、提高層級，避免 backdrop 蓋住列文字。
+local function registerDropdownMenu(menu, anchor)
+    if not menu then
+        return
+    end
+    local parent = type(menu.GetParent) == "function" and menu:GetParent() or nil
+    if type(menu.SetFrameLevel) == "function" then
+        menu:SetFrameLevel(math.max(getFrameLevel(parent), getFrameLevel(anchor)) + 10)
+    end
+    if Theme and Theme.registerFrame then
+        Theme.registerFrame(menu, "menu")
+    end
+end
+
+-- 裸 Button 沒有 normal/pushed 材質；先建立材質再註冊 Theme，當前主題才能立即著色。
+local function finalizeDropdownMenuButton(button, label, menu)
+    if not button then
+        return
+    end
+    button:SetNormalTexture(DROPDOWN_TEXTURE)
+    button:SetPushedTexture(DROPDOWN_TEXTURE)
+    button:SetDisabledTexture(DROPDOWN_TEXTURE)
+    button:SetHighlightTexture(DROPDOWN_TEXTURE)
+    if type(button.SetFrameLevel) == "function" then
+        button:SetFrameLevel(getFrameLevel(menu) + 1)
+    end
+    if Theme and Theme.registerButton then
+        Theme.registerButton(button)
+    end
+    if label and Theme and Theme.registerText then
+        Theme.registerText(label, "button")
+    end
 end
 
 -- 建立通用 Slider
@@ -873,7 +1136,7 @@ local function createFrame()
     })
     themeMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
     themeMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
-    if Theme and Theme.registerFrame then Theme.registerFrame(themeMenu, "menu") end
+    registerDropdownMenu(themeMenu, themeDropdown)
     themeMenu:Hide()
     Options.themeMenu = themeMenu
 
@@ -881,14 +1144,12 @@ local function createFrame()
     for index = 1, #themeOptions do
         local option = themeOptions[index]
         local menuButton = api.CreateFrame("Button", nil, themeMenu)
-        menuButton:SetSize(144, 20)
+        menuButton:SetSize(174, 20)
         menuButton:SetPoint("TOPLEFT", themeMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-        if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
         local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
         bindText(menuButtonText, option.labelKey, option.label)
-        if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
+        finalizeDropdownMenuButton(menuButton, menuButtonText, themeMenu)
         menuButton:SetScript("OnClick", function()
             local saved = EAM.Modules and EAM.Modules.SavedVariables
             if saved and saved.updateTheme then
@@ -964,6 +1225,7 @@ local function createFrame()
     })
     soundMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
     soundMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(soundMenu, soundDropdown)
     soundMenu:Hide()
 
     -- 12 種經典音效選單
@@ -972,14 +1234,12 @@ local function createFrame()
         local menuBtn = api.CreateFrame("Button", nil, soundMenu)
         menuBtn:SetSize(134, 20)
         menuBtn:SetPoint("TOPLEFT", soundMenu, "TOPLEFT", 3, -3 - (idx - 1) * 22)
-        menuBtn:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-        if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
-        
+
         local menuBtnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuBtnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
         menuBtnText:SetText(sName)
-        if Theme and Theme.registerText then Theme.registerText(menuBtnText, "button") end
-        
+        finalizeDropdownMenuButton(menuBtn, menuBtnText, soundMenu)
+
         menuBtn:SetScript("OnClick", function()
             if EAM.db and EAM.db.config then
                 EAM.db.config.soundName = sName
@@ -1021,6 +1281,7 @@ local function createFrame()
     })
     languageMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
     languageMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(languageMenu, languageDropdown)
     languageMenu:Hide()
     Options.languageMenu = languageMenu
 
@@ -1030,13 +1291,12 @@ local function createFrame()
         local menuButton = api.CreateFrame("Button", nil, languageMenu)
         menuButton:SetSize(118, 20)
         menuButton:SetPoint("TOPLEFT", languageMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-        if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
 
         local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        bindText(menuButtonText, option.labelKey, option.label)
-        if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
+        -- LanguageOptions 的 label 已是穩定顯示文字；此表不提供 labelKey。
+        menuButtonText:SetText(option.label)
+        finalizeDropdownMenuButton(menuButton, menuButtonText, languageMenu)
 
         menuButton:SetScript("OnClick", function()
             local saved = EAM.Modules and EAM.Modules.SavedVariables
@@ -1102,7 +1362,7 @@ local function createFrame()
     -- 6 個類別按鈕 (物品冷卻獨立分類，排版壓縮至 32px 以容納第 6 個按鈕而不重疊)
     -- 7 個類別按鈕 (地面效果獨立為第 6 分類，滑桿與能量設定改為第 7 分類)
     local categories = {
-        { key = "EAM_OPT_CAT_SELF", fallback = "自端增益/減益提醒 (Self)" },
+        { key = "EAM_OPT_CAT_SELF", fallback = "自身增益/減益提醒 (Self)" },
         { key = "EAM_OPT_CAT_CLASS", fallback = "跨職業增益/減益提醒 (Class)" },
         { key = "EAM_OPT_CAT_TARGET", fallback = "目標增益/減益提醒 (Target)" },
         { key = "EAM_OPT_CAT_SPELL_CD", fallback = "技能冷卻監控設定 (Spell CD)" },
@@ -1113,7 +1373,7 @@ local function createFrame()
     Options.categoryDefinitions = categories
 
     for idx, category in ipairs(categories) do
-        createRedButton(inner, localized(category.key, category.fallback), 12, -264 - (idx - 1) * 32, 332, 28, function()
+        createThemedButton(inner, localized(category.key, category.fallback), 12, -264 - (idx - 1) * 32, 332, 28, function()
             if idx <= 6 then
                 Options.currentCategory = idx
                 Options.listFrame:Show()
@@ -1134,12 +1394,12 @@ local function createFrame()
         end)
     end
 
-    -- 底部操作按鈕：關閉、診斷、流程驗證
-    createRedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -490, 104, 36, function()
+    -- 底部操作按鈕：2x2 佈局保留多語系文字寬度，並提供可發現的 Profile 入口。
+    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 184, -518, 160, 26, function()
         frame:Hide()
     end)
 
-    createRedButton(inner, localized("EAM_OPT_DEBUG_BTN", "除錯診斷 (Debug)"), 122, -490, 104, 36, function()
+    createThemedButton(inner, localized("EAM_OPT_DEBUG_BTN", "除錯診斷 (Debug)"), 12, -488, 160, 26, function()
         if EAM.Debug.PromptExport and EAM.Debug.PromptExport.openWindow then
             EAM.Debug.PromptExport.openWindow()
         else
@@ -1147,13 +1407,23 @@ local function createFrame()
         end
     end)
 
-    createRedButton(inner, localized("EAM_OPT_FLOW_TEST_BTN", "流程測試"), 232, -490, 112, 36, function()
+    createThemedButton(inner, localized("EAM_OPT_FLOW_TEST_BTN", "流程測試"), 184, -488, 160, 26, function()
         if EAM.Debug.FlowTestPanel and EAM.Debug.FlowTestPanel.open then
             EAM.Debug.FlowTestPanel.open()
         else
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_FLOW_STATUS_UNAVAILABLE or "流程測試模組尚未載入。"))
         end
     end)
+
+    createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -518, 160, 26, function()
+        local profilePanel = EAM.UI and EAM.UI.ProfileCodecPanel
+        if profilePanel and type(profilePanel.open) == "function" then
+            profilePanel.open()
+        else
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_PROFILE_CODEC_STATUS_UNAVAILABLE or "Profile codec 尚未載入。"))
+        end
+    end)
+
 
     Options.frame = frame
 
@@ -1202,7 +1472,7 @@ local function createFrame()
     createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SPACING", "水平間距 (Horizontal Spacing)"), "iconSpacing", -200, 200, 1, 140, -25, 110)
     
     createSlider(posInner, localized("EAM_OPT_SLIDER_VERT_SPACING", "垂直間距 (Vertical Spacing)"), "verticalSpacing", -200, 200, 1, 16, -75, 110)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自端減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 140, -75, 110, true)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自身減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 140, -75, 110, true)
     
     createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 16, -125, 110, true)
     createSlider(posInner, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 140, -125, 110, true)
@@ -1244,7 +1514,7 @@ local function createFrame()
     })
     fontMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
     fontMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
-    if Theme and Theme.registerFrame then Theme.registerFrame(fontMenu, "menu") end
+    registerDropdownMenu(fontMenu, fontDropdown)
     fontMenu:Hide()
     Options.fontMenu = fontMenu
 
@@ -1253,12 +1523,10 @@ local function createFrame()
         local menuButton = api.CreateFrame("Button", nil, fontMenu)
         menuButton:SetSize(170, 20)
         menuButton:SetPoint("TOPLEFT", fontMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-        if Theme and Theme.registerButton then Theme.registerButton(menuButton) end
         local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
         bindText(menuButtonText, option.labelKey, option.value)
-        if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
+        finalizeDropdownMenuButton(menuButton, menuButtonText, fontMenu)
         menuButton:SetScript("OnClick", function()
             local saved = EAM.Modules and EAM.Modules.SavedVariables
             if saved and saved.updateFontFamily then
@@ -1322,20 +1590,19 @@ local function createFrame()
         })
         menu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
         menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+        registerDropdownMenu(menu, btn)
         menu:Hide()
 
         for idx, direction in ipairs(directions) do
             local menuBtn = api.CreateFrame("Button", nil, menu)
             menuBtn:SetSize(104, 18)
             menuBtn:SetPoint("TOPLEFT", menu, "TOPLEFT", 3, -3 - (idx - 1) * 20)
-            menuBtn:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-            if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
-            
+
             local menuBtnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             menuBtnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
             setWidgetText(menuBtnText, direction)
-            if Theme and Theme.registerText then Theme.registerText(menuBtnText, "button") end
-            
+            finalizeDropdownMenuButton(menuBtn, menuBtnText, menu)
+
             menuBtn:SetScript("OnClick", function()
                 if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[frameName] then
                     EAM.db.layout.frames[frameName].growDirection = idx
@@ -1409,6 +1676,7 @@ local function createFrame()
         })
         menu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
         menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+        registerDropdownMenu(menu, btn)
         menu:Hide()
 
         local options = EAM.UI.TextPlacement.orderedPlacements
@@ -1419,13 +1687,11 @@ local function createFrame()
             local menuButton = api.CreateFrame("Button", nil, menu)
             menuButton:SetSize(112, 18)
             menuButton:SetPoint("TOPLEFT", menu, "TOPLEFT", 3 + column * 116, -3 - row * 20)
-            menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-            if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
 
             local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 5, 0)
             bindText(menuButtonText, "EAM_PLACEMENT_" .. placement, placement)
-            if Theme and Theme.registerText then Theme.registerText(menuButtonText, "button") end
+            finalizeDropdownMenuButton(menuButton, menuButtonText, menu)
 
             menuButton:SetScript("OnClick", function()
                 local savedVariables = EAM.Modules.SavedVariables
@@ -1500,7 +1766,7 @@ local function createFrame()
     -- ---------------------------------------------------
     -- 【底部按鈕】：對稱分欄，重置 7 個框架的所有狀態
     -- ---------------------------------------------------
-    createRedButton(posInner, localized("EAM_OPT_MOVE_FRAME_BTN", "移動提醒框架"), 16, -516, 240, 28, function()
+    createThemedButton(posInner, localized("EAM_OPT_MOVE_FRAME_BTN", "移動提醒框架"), 16, -516, 240, 28, function()
         if EAM.UI.Renderer and EAM.UI.Renderer.toggleAnchors then
             EAM.UI.Renderer.toggleAnchors()
         else
@@ -1508,7 +1774,7 @@ local function createFrame()
         end
     end)
 
-    createRedButton(posInner, localized("EAM_OPT_RESET_FRAME_BTN", "重設所有圖示與位置"), 280, -516, 240, 28, function()
+    createThemedButton(posInner, localized("EAM_OPT_RESET_FRAME_BTN", "重設所有圖示與位置"), 280, -516, 240, 28, function()
         if EAM.db and EAM.db.layout then
             EAM.db.layout.iconSize = 40
             EAM.db.layout.spacing = 6
@@ -1597,45 +1863,65 @@ local function createFrame()
     defaultsBtn:SetPoint("LEFT", deselectAllBtn, "RIGHT", 4, 0)
     bindText(defaultsBtn, "EAM_OPT_DEFAULTS_BTN", "預設值")
     defaultsBtn:SetScript("OnClick", function()
+        if Options.currentCategory == 2 then
+            print("|cff00ff96EAM|r " .. (
+                EAM.L.EAM_OPT_DEFAULTS_CROSS_EMPTY
+                    or "跨職業增減益不自動灌入目前職業法術；請用批次輸入加入已確認的 SpellID。"
+            ))
+            return
+        end
+
         local classToken = select(2, UnitClass("player"))
         local classData = EAM.Data.SpellArray and EAM.Data.SpellArray[classToken]
-        if classData then
-            local saved = EAM.Modules.SavedVariables
-            if saved then
-                local function loadDefaultList(sourceList)
-                    if not sourceList then return end
-                    for _, sp in ipairs(sourceList) do
-                        if Options.currentCategory == 1 or Options.currentCategory == 2 then
-                            if sp.type == "aura" and sp.unit == "player" then
-                                local fromPl = (Options.currentCategory == 1)
-                                saved.addAuraAlert("player", sp.id, { fromPlayer = fromPl })
-                            end
-                        elseif Options.currentCategory == 3 then
-                            if sp.type == "aura" and sp.unit == "target" then
-                                saved.addAuraAlert("target", sp.id)
-                            end
-                        elseif Options.currentCategory == 4 then
-                            if sp.type == "spellCooldown" then
-                                saved.addSpellCooldownAlert(sp.id)
-                            end
+        if not classData then
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_DEFAULTS_FAIL or "未找到當前職業的預設法術配置。"))
+            return
+        end
+
+        local changed = false
+        local accepted = 0
+        local function loadDefaultList(sourceList)
+            if not sourceList then return end
+            for index = 1, #sourceList do
+                local spell = sourceList[index]
+                local matches = (Options.currentCategory == 1 and spell.type == "aura" and spell.unit == "player")
+                    or (Options.currentCategory == 3 and spell.type == "aura" and spell.unit == "target")
+                    or (Options.currentCategory == 4 and spell.type == "spellCooldown")
+                if matches then
+                    local ok, _, status = addAlertToCategory(Options.currentCategory, spell.id, true)
+                    if ok then
+                        accepted = accepted + 1
+                        if status == "added" or status == "updated" then
+                            changed = true
                         end
                     end
                 end
-
-                loadDefaultList(classData.general)
-                for i = 1, 4 do
-                    loadDefaultList(classData[i])
-                end
-                
-                print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_DEFAULTS_SUCCESS or "成功加載當前職業的熱門常用預設法術！"))
-                Options.notifyConfigChanged()
-                Options.refreshList()
             end
+        end
+
+        loadDefaultList(classData.general)
+        for index = 1, 4 do
+            loadDefaultList(classData[index])
+        end
+
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local kind = getCategoryAlertKind(Options.currentCategory)
+        if saved and saved.commitAlertBatch and kind then
+            saved.commitAlertBatch(kind, changed)
+        end
+        if changed then
+            Options.notifyConfigChanged()
+        end
+        Options.refreshList()
+        if accepted > 0 then
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_DEFAULTS_SUCCESS or "成功載入目前職業的常用預設法術。"))
         else
-            print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_DEFAULTS_FAIL or "未找到當前職業的預設法術配置。"))
+            print("|cff00ff96EAM|r " .. (
+                EAM.L.EAM_OPT_DEFAULTS_EMPTY_CATEGORY
+                    or "這個分類沒有可驗證的職業預設法術。"
+            ))
         end
     end)
-
     local deleteAllBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(deleteAllBtn) end
     deleteAllBtn:SetSize(86, 22)
@@ -1661,6 +1947,7 @@ local function createFrame()
     })
     specMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
     specMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(specMenu, specDropdown)
     specMenu:Hide()
 
     local CLASS_TOKEN_TO_ID = {
@@ -1722,14 +2009,12 @@ local function createFrame()
             local menuBtn = api.CreateFrame("Button", nil, specMenu)
             menuBtn:SetSize(154, 20)
             menuBtn:SetPoint("TOPLEFT", specMenu, "TOPLEFT", 3, -3 - (idx - 1) * 22)
-            menuBtn:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-            if Theme and Theme.registerButton then Theme.registerButton(menuButton or menuBtn) end
-            
+
             local btnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             btnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
             btnText:SetText(item.name)
-            if Theme and Theme.registerText then Theme.registerText(btnText, "button") end
-            
+            finalizeDropdownMenuButton(menuBtn, btnText, specMenu)
+
             menuBtn:SetScript("OnClick", function()
                 Options.currentSpecFilter = item.val
                 Options.currentSpecFilterName = item.name
@@ -1908,7 +2193,7 @@ local function createFrame()
     addEditBox:SetNumeric(true)
     Options.addEditBox = addEditBox
 
-    local addBtn = createRedButton(listInner, localized("EAM_OPT_ADD_BTN", "新增"), 158, 0, 60, 24, function()
+    local addBtn = createThemedButton(listInner, localized("EAM_OPT_ADD_BTN", "新增"), 158, 0, 60, 24, function()
         local idVal = tonumber(addEditBox:GetText())
         if not idVal or idVal <= 0 then
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_ERR_INVALID_ID or "請輸入正確的 ID！"))
@@ -1920,7 +2205,7 @@ local function createFrame()
     addBtn:ClearAllPoints()
     addBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 158, 38)
 
-    local delBtn = createRedButton(listInner, localized("EAM_OPT_DEL_BTN", "刪除"), 224, 0, 60, 24, function()
+    local delBtn = createThemedButton(listInner, localized("EAM_OPT_DEL_BTN", "刪除"), 224, 0, 60, 24, function()
         local idVal = tonumber(addEditBox:GetText())
         if not idVal or idVal <= 0 then
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_ERR_INVALID_ID or "請輸入正確的 ID！"))
@@ -1931,6 +2216,14 @@ local function createFrame()
     end)
     delBtn:ClearAllPoints()
     delBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 224, 38)
+
+    local batchBtn = createThemedButton(listInner, localized("EAM_OPT_BATCH_OPEN", "批次輸入"), 290, 0, 72, 24, function()
+        if Options.openBatchFrame then
+            Options.openBatchFrame()
+        end
+    end)
+    batchBtn:ClearAllPoints()
+    batchBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 290, 38)
 
     addEditBox:SetScript("OnEnterPressed", function(self)
         local idVal = tonumber(self:GetText())
@@ -1948,6 +2241,217 @@ local function createFrame()
     descText:SetTextColor(0.8, 0.8, 0.8, 1)
     bindText(descText, "EAM_OPT_ADD_DEL_DESC", "請輸入 SpellID 或 ItemID 並點擊新增 / 刪除。")
 
+    local batchFrame = api.CreateFrame("Frame", "EAM_AlertBatchFrame", UIParent, "BackdropTemplate")
+    batchFrame:SetSize(620, 460)
+    batchFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
+    batchFrame:SetFrameStrata("DIALOG")
+    batchFrame:SetMovable(true)
+    batchFrame:EnableMouse(true)
+    batchFrame:RegisterForDrag("LeftButton")
+    batchFrame:SetScript("OnDragStart", batchFrame.StartMoving)
+    batchFrame:SetScript("OnDragStop", batchFrame.StopMovingOrSizing)
+    batchFrame:SetBackdrop({
+        bgFile = "Interface\ChatFrame\ChatFrameBackground",
+        edgeFile = "Interface\DialogFrame\UI-DialogBox-Border",
+        tile = true,
+        tileSize = 32,
+        edgeSize = 32,
+        insets = { left = 8, right = 8, top = 8, bottom = 8 },
+    })
+    batchFrame:SetBackdropColor(0.08, 0.06, 0.05, 0.98)
+    batchFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(batchFrame, "window") end
+
+    local batchTitle = batchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    batchTitle:SetPoint("TOP", batchFrame, "TOP", 0, -16)
+    bindText(batchTitle, "EAM_OPT_BATCH_TITLE", "EAM 批次法術／物品 ID")
+    if Theme and Theme.registerText then Theme.registerText(batchTitle, "title") end
+
+    local batchDescription = batchFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    batchDescription:SetPoint("TOPLEFT", batchFrame, "TOPLEFT", 18, -42)
+    batchDescription:SetPoint("TOPRIGHT", batchFrame, "TOPRIGHT", -18, -42)
+    batchDescription:SetJustifyH("LEFT")
+    bindText(
+        batchDescription,
+        "EAM_OPT_BATCH_DESC",
+        "每行或以分號分隔一個 ID；先載入目前清單以複製，或貼上後一鍵加入目前分類。"
+    )
+    if Theme and Theme.registerText then Theme.registerText(batchDescription, "body") end
+
+    local batchScrollFrame = api.CreateFrame(
+        "ScrollFrame",
+        "EAM_AlertBatchScrollFrame",
+        batchFrame,
+        "UIPanelScrollFrameTemplate"
+    )
+    batchScrollFrame:SetPoint("TOPLEFT", batchFrame, "TOPLEFT", 18, -70)
+    batchScrollFrame:SetPoint("BOTTOMRIGHT", batchFrame, "BOTTOMRIGHT", -40, 104)
+    batchScrollFrame:EnableMouseWheel(true)
+    local batchScrollBar = batchScrollFrame.ScrollBar or _G.EAM_AlertBatchScrollFrameScrollBar
+    if batchScrollBar then
+        batchScrollBar.scrollStep = 39
+    end
+
+    local batchEditBox = api.CreateFrame("EditBox", nil, batchScrollFrame)
+    batchEditBox:SetMultiLine(true)
+    batchEditBox:SetMaxLetters(65535)
+    batchEditBox:SetAutoFocus(false)
+    batchEditBox:SetFontObject("ChatFontNormal")
+    batchEditBox:SetPoint("TOPLEFT", batchScrollFrame, "TOPLEFT", 0, 0)
+    batchEditBox:SetWidth(554)
+    batchEditBox:SetHeight(1)
+    batchScrollFrame:SetScrollChild(batchEditBox)
+    batchEditBox:SetScript("OnTextChanged", function(self)
+        local fontString = type(self.GetFontString) == "function" and self:GetFontString() or nil
+        local textHeight = fontString and type(fontString.GetStringHeight) == "function"
+            and fontString:GetStringHeight()
+            or 1
+        local viewportHeight = type(batchScrollFrame.GetHeight) == "function"
+            and batchScrollFrame:GetHeight()
+            or 1
+        self:SetHeight(math.max(viewportHeight, textHeight + 12))
+        batchScrollFrame:UpdateScrollChildRect()
+    end)
+    batchEditBox:SetScript("OnCursorChanged", function(_, _, y, _, height)
+        if type(y) ~= "number" or type(height) ~= "number" then return end
+        local current = batchScrollFrame:GetVerticalScroll() or 0
+        local viewportHeight = batchScrollFrame:GetHeight() or 0
+        local cursorTop = -y
+        local cursorBottom = cursorTop + height
+        local target = current
+        if cursorTop < current then
+            target = cursorTop
+        elseif cursorBottom > current + viewportHeight then
+            target = cursorBottom - viewportHeight
+        end
+        local maximum = batchScrollFrame:GetVerticalScrollRange() or 0
+        target = math.max(0, math.min(maximum, target))
+        if target ~= current then
+            batchScrollFrame:SetVerticalScroll(target)
+        end
+    end)
+    batchEditBox:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+        batchFrame:Hide()
+    end)
+
+    local batchStatusText = batchFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    batchStatusText:SetPoint("BOTTOMLEFT", batchFrame, "BOTTOMLEFT", 18, 72)
+    batchStatusText:SetPoint("BOTTOMRIGHT", batchFrame, "BOTTOMRIGHT", -18, 72)
+    batchStatusText:SetJustifyH("LEFT")
+    if Theme and Theme.registerText then Theme.registerText(batchStatusText, "body") end
+
+    local function setBatchStatus(key, fallback, ...)
+        local formatValue = (EAM.L and EAM.L[key]) or fallback
+        batchStatusText:SetText(string.format(formatValue, ...))
+    end
+
+    local function loadBatchCurrent()
+        local category = Options.batchCategory or Options.currentCategory
+        batchEditBox:SetText(Options.buildCurrentCategoryIDText(category))
+        batchScrollFrame:SetVerticalScroll(0)
+        setBatchStatus("EAM_OPT_BATCH_LOADED", "已載入目前清單，可按全選複製。")
+    end
+
+    local function makeBatchButton(key, fallback, width, point, handler)
+        local button = api.CreateFrame("Button", nil, batchFrame, "UIPanelButtonTemplate")
+        button:SetSize(width, 26)
+        button:SetPoint(unpack(point))
+        bindText(button, key, fallback)
+        button:SetScript("OnClick", handler)
+        if Theme and Theme.registerButton then Theme.registerButton(button) end
+        return button
+    end
+
+    makeBatchButton(
+        "EAM_OPT_BATCH_LOAD",
+        "載入目前清單",
+        108,
+        { "BOTTOMLEFT", batchFrame, "BOTTOMLEFT", 18, 24 },
+        loadBatchCurrent
+    )
+    makeBatchButton(
+        "EAM_OPT_BATCH_SELECT",
+        "全選複製",
+        90,
+        { "LEFT", batchFrame, "BOTTOMLEFT", 132, 24 },
+        function()
+            local ok = EAM.Util and EAM.Util.prepareEditBoxManualCopy
+                and EAM.Util.prepareEditBoxManualCopy(batchEditBox)
+            if not ok then
+                setBatchStatus("EAM_OPT_BATCH_COPY_FAILED", "無法自動選取，請按 Ctrl+A、Ctrl+C。")
+            end
+        end
+    )
+    makeBatchButton(
+        "EAM_OPT_BATCH_ADD",
+        "一鍵加入",
+        90,
+        { "LEFT", batchFrame, "BOTTOMLEFT", 228, 24 },
+        function()
+            local ok, report = Options.applyBatchIDs(
+                Options.batchCategory or Options.currentCategory,
+                batchEditBox:GetText()
+            )
+            if not ok then
+                setBatchStatus("EAM_OPT_BATCH_EMPTY", "沒有可加入的有效 ID。")
+                return
+            end
+            setBatchStatus(
+                "EAM_OPT_BATCH_RESULT",
+                "完成：新增 %d、更新 %d、未變更 %d、無效 %d、移至跨職業 %d。",
+                report.added,
+                report.updated,
+                report.unchanged,
+                report.invalid,
+                report.reclassified
+            )
+        end
+    )
+    makeBatchButton(
+        "EAM_OPT_BATCH_CLEAR",
+        "清空",
+        70,
+        { "LEFT", batchFrame, "BOTTOMLEFT", 324, 24 },
+        function()
+            batchEditBox:SetText("")
+            batchStatusText:SetText("")
+        end
+    )
+    makeBatchButton(
+        "EAM_OPT_BATCH_CLOSE",
+        "關閉",
+        70,
+        { "BOTTOMRIGHT", batchFrame, "BOTTOMRIGHT", -18, 24 },
+        function()
+            batchEditBox:ClearFocus()
+            batchFrame:Hide()
+        end
+    )
+
+    function Options.openBatchFrame()
+        if api.InCombatLockdown and api.InCombatLockdown() then
+            print("|cff00ff96EAM|r " .. (
+                EAM.L.EAM_OPT_BATCH_COMBAT
+                    or "戰鬥中不開啟批次輸入視窗。"
+            ))
+            return false, "combatBlocked"
+        end
+        Options.batchCategory = Options.currentCategory
+        loadBatchCurrent()
+        batchFrame:Show()
+        batchFrame:Raise()
+        return true
+    end
+
+    if type(UISpecialFrames) == "table" then
+        UISpecialFrames[#UISpecialFrames + 1] = "EAM_AlertBatchFrame"
+    end
+    batchFrame:Hide()
+    Options.batchFrame = batchFrame
+    Options.batchScrollFrame = batchScrollFrame
+    Options.batchEditBox = batchEditBox
+    Options.batchStatusText = batchStatusText
     Options.listFrame = listFrame
 
 
@@ -2175,6 +2679,7 @@ local function createFrame()
     })
     auraSoundMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
     auraSoundMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(auraSoundMenu, auraSoundDropdown)
     auraSoundMenu:Hide()
     condFrame.auraSoundMenu = auraSoundMenu
 
@@ -2183,12 +2688,10 @@ local function createFrame()
         local menuButton = api.CreateFrame("Button", nil, auraSoundMenu)
         menuButton:SetSize(134, 20)
         menuButton:SetPoint("TOPLEFT", auraSoundMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        menuButton:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-        if Theme and Theme.registerButton then Theme.registerButton(menuButton) end
         local menuText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
         menuText:SetText(soundName)
-        if Theme and Theme.registerText then Theme.registerText(menuText, "button") end
+        finalizeDropdownMenuButton(menuButton, menuText, auraSoundMenu)
         menuButton:SetScript("OnClick", function()
             condFrame.auraSoundName = soundName
             auraSoundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. soundName)
@@ -2248,7 +2751,7 @@ local function createFrame()
     condFrame.auraSoundHint = auraSoundHint
 
     -- 底部按鈕
-    createRedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -470, 130, 26, function()
+    createThemedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -470, 130, 26, function()
         local d = Options.currentEditingAlert
         if d then
             if d.kind == "groundEffect" then
@@ -2541,17 +3044,25 @@ local function createMinimapButton()
     btn:SetMovable(true)
     btn:RegisterForClicks("AnyUp")
 
-    -- 背景：12.1 優先使用 EAM 自有 SVG；12.0.7 與失敗路徑保留內建 fallback。
-    local back = btn:CreateTexture(nil, "BACKGROUND")
-    back:SetSize(21, 21)
-    back:SetPoint("CENTER", btn, "CENTER", 0, 0)
-    Options.applyMinimapTexture(back)
+    -- MiniMap-TrackingBorder 是 53x53 複合材質；內層圖示需依 Blizzard/LibDBIcon 幾何偏移，不能與按鈕置中。
+    local background = btn:CreateTexture(nil, "BACKGROUND")
+    background:SetSize(20, 20)
+    background:SetPoint("TOPLEFT", btn, "TOPLEFT", 7, -5)
+    background:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
+
+    local icon = btn:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(17, 17)
+    icon:SetPoint("TOPLEFT", btn, "TOPLEFT", 7, -6)
+    icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+    Options.applyMinimapTexture(icon)
+    btn.icon = icon
 
     -- 邊框
     local border = btn:CreateTexture(nil, "OVERLAY")
     border:SetSize(53, 53)
-    border:SetPoint("CENTER", btn, "CENTER", 0, 0)
+    border:SetPoint("TOPLEFT", btn, "TOPLEFT", 0, 0)
     border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+    btn.border = border
 
     -- 點擊效果
     btn:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")

@@ -39,8 +39,8 @@ local PROFILES = freeze({
     ["_retail_"] = freeze({
         channel = "RETAIL",
         source = "retail-live-manual",
-        expectedPatch = "12.0.7",
-        expectedInterface = 120007,
+        expectedPatch = "12.1.0",
+        expectedInterface = 120100,
         expectedTestBuild = false,
     }),
 })

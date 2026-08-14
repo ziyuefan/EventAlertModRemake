@@ -23,6 +23,7 @@ local Codec = EAM.Modules and EAM.Modules.ProfileCodec
 
 local Panel = {
     frame = nil,
+    scrollFrame = nil,
     editBox = nil,
     statusText = nil,
     pendingPlan = nil,
@@ -81,6 +82,9 @@ local function exportCurrent()
     end
     Panel.pendingPlan = nil
     Panel.editBox:SetText(payload)
+    if Panel.scrollFrame then
+        Panel.scrollFrame:SetVerticalScroll(0)
+    end
     setStatus(
         "EAM_PROFILE_CODEC_STATUS_EXPORTED",
         "已匯出 %s；編碼後端：%s，請按全選後 Ctrl+C。",
@@ -183,16 +187,63 @@ local function createFrame()
     bindText(description, "EAM_PROFILE_CODEC_DESC", "貼上 EAMAP1: payload；預覽後再選擇合併或取代。Base64 不是加密。")
     if Theme and Theme.registerText then Theme.registerText(description, "body") end
 
-    local editBox = api.CreateFrame("EditBox", nil, frame)
+    local scrollFrame = api.CreateFrame(
+        "ScrollFrame",
+        "EAM_ProfileCodecScrollFrame",
+        frame,
+        "UIPanelScrollFrameTemplate"
+    )
+    scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 18, -70)
+    scrollFrame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -40, 88)
+    scrollFrame:EnableMouseWheel(true)
+    local scrollBar = scrollFrame.ScrollBar or _G.EAM_ProfileCodecScrollFrameScrollBar
+    if scrollBar then
+        scrollBar.scrollStep = 39
+    end
+    Panel.scrollFrame = scrollFrame
+
+    local editBox = api.CreateFrame("EditBox", nil, scrollFrame)
     editBox:SetMultiLine(true)
     editBox:SetMaxLetters(262144)
     editBox:SetAutoFocus(false)
     editBox:SetFontObject("ChatFontNormal")
-    editBox:SetPoint("TOPLEFT", frame, "TOPLEFT", 18, -70)
-    editBox:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -18, 88)
-    editBox:SetScript("OnEscapePressed", function() frame:Hide() end)
-    editBox:SetScript("OnTextChanged", function()
+    editBox:SetPoint("TOPLEFT", scrollFrame, "TOPLEFT", 0, 0)
+    editBox:SetWidth(654)
+    editBox:SetHeight(1)
+    scrollFrame:SetScrollChild(editBox)
+    editBox:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+        frame:Hide()
+    end)
+    editBox:SetScript("OnTextChanged", function(self)
         Panel.pendingPlan = nil
+        local fontString = type(self.GetFontString) == "function" and self:GetFontString() or nil
+        local textHeight = fontString and type(fontString.GetStringHeight) == "function"
+            and fontString:GetStringHeight()
+            or 1
+        local viewportHeight = type(scrollFrame.GetHeight) == "function" and scrollFrame:GetHeight() or 1
+        self:SetHeight(math.max(viewportHeight or 1, textHeight + 12))
+        scrollFrame:UpdateScrollChildRect()
+    end)
+    editBox:SetScript("OnCursorChanged", function(_, _, y, _, height)
+        if type(y) ~= "number" or type(height) ~= "number" then
+            return
+        end
+        local current = scrollFrame:GetVerticalScroll() or 0
+        local viewportHeight = scrollFrame:GetHeight() or 0
+        local cursorTop = -y
+        local cursorBottom = cursorTop + height
+        local target = current
+        if cursorTop < current then
+            target = cursorTop
+        elseif cursorBottom > current + viewportHeight then
+            target = cursorBottom - viewportHeight
+        end
+        local maximum = scrollFrame:GetVerticalScrollRange() or 0
+        target = math.max(0, math.min(maximum, target))
+        if target ~= current then
+            scrollFrame:SetVerticalScroll(target)
+        end
     end)
     Panel.editBox = editBox
 

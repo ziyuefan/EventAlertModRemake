@@ -66,6 +66,7 @@
 
 - 本機 WoW 安裝根目錄：`D:\World of Warcraft`；EAM 實體專案根目錄：`D:\EventAlertMod`。
 - 2026-08-08 唯讀確認：`_retail_` 為 12.0.7.68974、`_ptr_` 為 12.1.0.69189、`_xptr_` 為 12.0.7.68887。版本與 build 會更新，每次實機驗證前仍須重讀執行檔版本。
+- 2026-08-14 最新唯讀確認：`_retail_` 與 `_ptr_` 均為 12.1.0.69299，`_xptr_` 為 12.0.7.68887；三個支援客戶端的 EAM AddOns 仍是指向實體專案的 SymbolicLink。此環境前檢 3/3 不等於遊戲內簽收。
 - 實機驗證前先執行 `Tools/Test-LocalWoWEnvironment.ps1`；該工具以主程式 `ProductVersion` 斷言 patch train，並檢查 AddOns Reparse Point 仍指向實體專案。斷言失敗時不得繼續部署或實機簽收。
 - `_retail_`、`_ptr_`、`_xptr_` 的 `Interface\AddOns\EventAlertMod` 均為 Windows `SymbolicLink`，目標是 `D:\EventAlertMod`。所有開發修改只可作用於實體專案根目錄。
 - 嚴禁對上述連結路徑執行刪除、搬移、覆蓋、解壓縮部署、`robocopy /MIR`、連結重建或任何可能追蹤 Reparse Point 的遞迴清理；不得把連結當成可替換的插件副本。

@@ -2,7 +2,7 @@
   "schema": 1,
   "type": "EAM_LIVE_VALIDATION_REPORT",
   "purpose": "rqa-signoff",
-  "matrixVersion": "2026-08-13.1",
+  "matrixVersion": "2026-08-14.1",
   "status": "incomplete",
   "session": {
     "id": "EAM-RQA-FIXTURE-NOT-LIVE",

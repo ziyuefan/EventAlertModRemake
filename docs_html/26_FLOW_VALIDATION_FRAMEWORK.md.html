@@ -866,6 +866,14 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
 <li>Locale contract 驗證 EAM.L identity 保持不變，EAM 自有按鈕／下拉／條件／spec menu 在 EAM_LANGUAGE_CHANGED 後重新取值；Auto Detect label 必須是固定英文。</li>
 <li>本輪離線 gate：Lua 56/56、Flow all 66/66、Validation Contracts 360/360。最新 Flow 報告為本輪 TestResults/EAM_FlowValidation_all_20260814_074036.json；離線結果不取代 PTR／XPTR／Retail 真人簽收。</li>
 </ul>
+<h2 id="2026-08-14-retail-121-aura-catalog">2026-08-14 Retail 12.1 與 Aura catalog 流程</h2>
+<ul>
+<li><code>ValidationEnvironment</code> 現行 profile：Retail／PTR 12.1、Interface 120100；XPTR 12.0.7、Interface 120007。Native backend 依 API/widget capability，test-build flags 只做 client identity。</li>
+<li>Flow 新增 <code>profile.catalog.batch_defaults</code>，以隔離 DB 驗證分隔符、去重、scope、<code>fromPlayer</code>、不存在 SpellID 與單次 revision，結束時完整還原測試狀態。</li>
+<li>真人矩陣版本升為 <code>2026-08-14.1</code>，仍是 37 案；程序文字同步將 Native 寫成 Retail／PTR 12.1，Legacy 限定 XPTR 12.0.7。</li>
+<li>Profile ScrollFrame、dropdown 三態材質、小地圖齒輪與 Wowhead candidate isolation 由 Validation Contracts 驗證；視覺、滾輪手感與 Blizzard 圖示解析仍由玩家判定。</li>
+<li>最新離線 gate：Lua 56/56、Flow 67/67、Validation Contracts 380/380。最新 Flow artifact：<code>TestResults/EAM_FlowValidation_all_20260814_110816.json</code>。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

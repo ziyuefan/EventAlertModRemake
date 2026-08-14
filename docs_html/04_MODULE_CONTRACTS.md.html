@@ -1051,9 +1051,9 @@
 </thead>
 <tbody>
 <tr>
-<td><code>UI/Theme</code></td>
-<td>靜態 palette、EAM 自有 frame／FontString／button registry、SavedVariables 的 <code>theme</code></td>
-<td>EAM／FF7／Windows XP／Borland／DOS CRT／macOS Aqua palette、combat-deferred 套用結果</td>
+<td>UI/Theme</td>
+<td>靜態 palette、EAM 自有 frame／FontString／button registry、SavedVariables 的 theme</td>
+<td>十一套主題 palette、combat-deferred 套用結果、EAM 按鈕四態中性底圖與 2px 主題邊框</td>
 <td>讀取 Secret Value、修改 Blizzard secure frame、覆蓋 AlertBorderStyles 語意色</td>
 </tr>
 <tr>
@@ -1191,6 +1191,50 @@
 </tbody>
 </table>
 <p>Profile codec 的 checksum 只用於剪貼損壞偵測，不是安全簽章；apply 前必須重新檢查 plan fingerprint。字型與語系刷新只作用於 EAM 自有 UI，Native AuraButton 結構與戰鬥限制不因此放寬。</p>
+<h2 id="2026-08-14aura-catalog">2026-08-14：Aura catalog、批次輸入與候選資料邊界</h2>
+<table>
+<thead>
+<tr>
+<th>模組</th>
+<th>輸入</th>
+<th>輸出</th>
+<th>禁止</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UI/Options</code> Aura catalog</td>
+<td>玩家單筆或換行／分號批次 SpellID、目前職業</td>
+<td><code>SELF</code>／<code>CROSS_CLASS</code> 路由、預設 <code>fromPlayer</code>、可複製目前清單</td>
+<td>顯示不存在法術、把非本職候選偽裝成本職、逐筆增加 revision</td>
+</tr>
+<tr>
+<td><code>Core/SavedVariables</code></td>
+<td>已驗證的 alert draft 與 deferred batch</td>
+<td>active class profile、單次 revision/event</td>
+<td>寫根層 mirror、凍結使用者資料、接受未知 scope</td>
+</tr>
+<tr>
+<td><code>UI/ProfileCodecPanel</code></td>
+<td>EAMAP1 文字</td>
+<td>ScrollFrame viewport、固定 footer、preview/apply</td>
+<td>讓長文字覆蓋按鈕、自動剪貼簿、戰鬥中套用</td>
+</tr>
+<tr>
+<td><code>Tools/fetch_wowhead_spells.py</code></td>
+<td>Wowhead 離線網頁候選</td>
+<td><code>Data/wow_spells_and_auras.json</code></td>
+<td>寫入 Docs、成為 TOC/runtime 依賴、把網頁資料冒充 live verified</td>
+</tr>
+<tr>
+<td><code>Tools/Test-WowheadCandidateData.ps1</code></td>
+<td>唯一 Data JSON 與抓取腳本</td>
+<td>schema／totals／class14／路徑／runtime isolation gate</td>
+<td>自動批准錯置、PvP、被動或 Aura effect ID</td>
+</tr>
+</tbody>
+</table>
+<p><code>catalogScope</code> 是資料治理標記，不改 Blizzard Secret／protected 邊界。Spellbook 不含所有 Aura effect ID，因此「不屬本職」只能作保守分類，不能由網頁候選自動刪除或升格為正式預設。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

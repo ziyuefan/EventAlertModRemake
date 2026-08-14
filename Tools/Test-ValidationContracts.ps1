@@ -178,6 +178,40 @@ function Invoke-ImporterContract {
     $process.Dispose()
 }
 
+function Invoke-ValidationScriptContract {
+    param(
+        [string]$ScriptPath,
+        [string]$Label,
+        [string[]]$RequiredOutput = @()
+    )
+
+    $hostExecutable = Join-Path $PSHOME "pwsh.exe"
+    if (-not (Test-Path -LiteralPath $hostExecutable)) {
+        $hostExecutable = Join-Path $PSHOME "pwsh"
+    }
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $hostExecutable
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    [void]$startInfo.ArgumentList.Add("-NoProfile")
+    [void]$startInfo.ArgumentList.Add("-File")
+    [void]$startInfo.ArgumentList.Add($ScriptPath)
+
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    $standardOutput = $process.StandardOutput.ReadToEndAsync()
+    $standardError = $process.StandardError.ReadToEndAsync()
+    $process.WaitForExit()
+    $output = $standardOutput.GetAwaiter().GetResult() + $standardError.GetAwaiter().GetResult()
+    Assert-Contract ($process.ExitCode -eq 0) ("$Label exit code") $output.Trim()
+    foreach ($requiredText in $RequiredOutput) {
+        Assert-Contract ($output.Contains($requiredText)) ("$Label output: $requiredText") $output.Trim()
+    }
+    $process.Dispose()
+}
+
 $paths = @{
     PlacementData = Join-Path $root "Data\TextPlacementContract.json"
     PlacementSchema = Join-Path $root "Schemas\EAM_TextPlacementContract.schema.json"
@@ -215,7 +249,7 @@ $paths = @{
     SVGFixture = Join-Path $root "Tests\Fixtures\EAM_SVGCapabilityReport.incomplete.json"
     SVGObservedFixture = Join-Path $root "Tests\Fixtures\EAM_SVGCapabilityReport.ptr69189-observed.json"
     SVGAsset = Join-Path $root "Media\SVG\eam-svg-probe.svg"
-    MinimapSVGAsset = Join-Path $root "Media\SVG\eam-minimap.svg"
+
     AuraContainerLua = Join-Path $root "Services\AuraContainerService.lua"
     AuraCompilerLua = Join-Path $root "Managers\AuraRuleCompiler.lua"
     Importer = Join-Path $root "Tools\Import-EAMFlowReport.ps1"
@@ -315,7 +349,7 @@ $svgProbeLua = [System.IO.File]::ReadAllText($paths.SVGProbeLua)
 $themeLua = [System.IO.File]::ReadAllText($paths.ThemeLua)
 $savedVariablesLua = [System.IO.File]::ReadAllText($paths.SavedVariablesLua)
 $svgAssetText = [System.IO.File]::ReadAllText($paths.SVGAsset)
-$minimapSvgAssetText = [System.IO.File]::ReadAllText($paths.MinimapSVGAsset)
+
 $auraContainerLua = [System.IO.File]::ReadAllText($paths.AuraContainerLua)
 $auraCompilerLua = [System.IO.File]::ReadAllText($paths.AuraCompilerLua)
 $borderStylesLua = [System.IO.File]::ReadAllText($paths.BorderStylesLua)
@@ -358,20 +392,35 @@ Assert-Contract (
     -not $svgAssetText.Contains('href=') -and
     -not $svgAssetText.Contains('data:')
 ) "SVG probe asset is static and self-contained"
+$minimapTextureBlock = [regex]::Match(
+    $optionsLua,
+    '(?s)function Options\.applyMinimapTexture\(texture\).*?\r?\nend'
+)
+Assert-Contract $minimapTextureBlock.Success "Minimap texture fallback implementation found"
 Assert-Contract (
-    $optionsLua.Contains('function Options.applyMinimapTexture(texture)') -and
-    $optionsLua.Contains('pcall(texture.SetSVG, texture, MINIMAP_SVG_ASSET)') -and
-    $optionsLua.Contains('MINIMAP_FALLBACK_TEXTURE = "Interface\\Icons\\INV_Misc_QuestionMark"') -and
-    -not $optionsLua.Contains('back:SetTexture(568154)')
-) "Minimap SVG has explicit fallback and no sound FileDataID reuse"
+    $optionsLua.Contains('MINIMAP_FALLBACK_TEXTURE = "Interface\\Icons\\Trade_Engineering"') -and
+    $minimapTextureBlock.Value.Contains('texture:SetTexture(MINIMAP_FALLBACK_TEXTURE)') -and
+    -not $optionsLua.Contains('MINIMAP_SVG_ASSET') -and
+    -not [regex]::IsMatch($optionsLua, '(?m)\btexture\s*:\s*SetSVG\s*\(') -and
+    -not [regex]::IsMatch($optionsLua, '(?m)\btexture\s*\.\s*SetSVG\b') -and
+    -not $minimapTextureBlock.Value.Contains('568154') -and
+    -not $minimapTextureBlock.Value.Contains('soundAssets')
+) "Minimap uses legacy gear fallback without SVG or sound FileDataID reuse"
+$minimapButtonBlock = [regex]::Match(
+    $optionsLua,
+    '(?s)local function createMinimapButton\(\).*?EAM\.UI\.MinimapButton = btn\r?\nend'
+)
+Assert-Contract $minimapButtonBlock.Success "Minimap button implementation found"
 Assert-Contract (
-    $minimapSvgAssetText.Contains('<svg ') -and
-    $minimapSvgAssetText.Contains('<circle ') -and
-    $minimapSvgAssetText.Contains('<path ') -and
-    -not $minimapSvgAssetText.Contains('<script') -and
-    -not $minimapSvgAssetText.Contains('href=') -and
-    -not $minimapSvgAssetText.Contains('data:')
-) "Minimap SVG asset is static and self-contained"
+    $minimapButtonBlock.Value.Contains('background:SetSize(20, 20)') -and
+    $minimapButtonBlock.Value.Contains('background:SetPoint("TOPLEFT", btn, "TOPLEFT", 7, -5)') -and
+    $minimapButtonBlock.Value.Contains('icon:SetSize(17, 17)') -and
+    $minimapButtonBlock.Value.Contains('icon:SetPoint("TOPLEFT", btn, "TOPLEFT", 7, -6)') -and
+    $minimapButtonBlock.Value.Contains('icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)') -and
+    $minimapButtonBlock.Value.Contains('border:SetSize(53, 53)') -and
+    $minimapButtonBlock.Value.Contains('border:SetPoint("TOPLEFT", btn, "TOPLEFT", 0, 0)') -and
+    -not $minimapButtonBlock.Value.Contains('border:SetPoint("CENTER"')
+) "Minimap gear is inset inside the Blizzard tracking ring"
 Assert-Contract (
     $flowPanelLua.Contains('EAM_FLOW_BUTTON_SVG') -and
     $flowPanelLua.Contains('EAM.Debug.SVGCapabilityProbe')
@@ -1033,6 +1082,17 @@ foreach ($localeName in $localeNames) {
 }
 $missingRussianKeys = @($localeKeySets["enUS"] | Where-Object { $_ -notin $localeKeySets["ruRU"] })
 Assert-Contract ($missingRussianKeys.Count -eq 0) "Russian locale mirrors enUS L keys" ($missingRussianKeys -join ", ")
+$forbiddenLocalePhraseViolations = @()
+foreach ($localeName in $localeNames) {
+    $localePath = Join-Path $root ("Locale\" + $localeName + ".lua")
+    $localeContent = [System.IO.File]::ReadAllText($localePath)
+    if ($localeContent.Contains("自端")) {
+        $forbiddenLocalePhraseViolations += $localeName
+    }
+}
+Assert-Contract (
+    $forbiddenLocalePhraseViolations.Count -eq 0
+) "Five supported locales exclude the invalid phrase 自端" ($forbiddenLocalePhraseViolations -join ", ")
 
 $commonLocale = [System.IO.File]::ReadAllText((Join-Path $root "Locale\Common.lua"))
 $autoDetectLabelCount = [regex]::Matches($commonLocale, 'label\s*=\s*"Auto Detect"').Count
@@ -1041,19 +1101,36 @@ $languageValues = @("auto", "enUS", "zhTW", "zhCN", "koKR", "ruRU")
 $missingLanguageValues = @($languageValues | Where-Object { -not $commonLocale.Contains(('value = "' + $_ + '"')) })
 Assert-Contract ($missingLanguageValues.Count -eq 0) "Locale catalog contains all language selections" ($missingLanguageValues -join ", ")
 Assert-Contract ($commonLocale.Contains('requested = "auto"')) "Auto Detect is the default locale selection"
+$expectedThemeValues = @("eam", "ff7", "winxp", "win7", "win10", "win31", "borland", "doscrt", "eten", "redalert", "aqua")
+$missingThemeValues = @($expectedThemeValues | Where-Object { -not $themeLua.Contains(('value = "' + $_ + '"')) })
+$missingSavedThemeValues = @($expectedThemeValues | Where-Object { -not $savedVariablesLua.Contains(('value == "' + $_ + '"')) })
+$themeOptionCount = [regex]::Matches($themeLua, '\{ value = "(?:eam|ff7|winxp|win7|win10|win31|borland|doscrt|eten|redalert|aqua)"').Count
 Assert-Contract (
-    $themeLua.Contains('value = "eam"') -and
-    $themeLua.Contains('value = "ff7"') -and
-    $themeLua.Contains('value = "winxp"') -and
-    $themeLua.Contains('value = "borland"') -and
-    $themeLua.Contains('value = "doscrt"') -and
-    $themeLua.Contains('value = "aqua"') -and
-    $themeLua.Contains('label = "FF7"') -and
-    $themeLua.Contains('label = "Windows XP"') -and
+    $missingThemeValues.Count -eq 0 -and
+    $missingSavedThemeValues.Count -eq 0 -and
+    $themeOptionCount -eq $expectedThemeValues.Count -and
     $themeLua.Contains('label = "Borland C++ IDE"') -and
-    $themeLua.Contains('label = "DOS CRT"') -and
-    $themeLua.Contains('label = "macOS Aqua"')
-) "Theme catalog contains EAM, FF7, Windows XP, Borland, DOS CRT, and macOS Aqua"
+    $themeLua.Contains('label = "倚天中文"') -and
+    $themeLua.Contains('label = "Red Alert"')
+) "Theme catalog and SavedVariables contain eleven allowed themes" (
+    "themeMissing=" + ($missingThemeValues -join ",") + "; savedMissing=" + ($missingSavedThemeValues -join ",") + "; options=$themeOptionCount"
+)
+$themeLocaleKeys = @(
+    "EAM_THEME_EAM", "EAM_THEME_FF7", "EAM_THEME_WINXP", "EAM_THEME_WIN7",
+    "EAM_THEME_WIN10", "EAM_THEME_WIN31", "EAM_THEME_BORLAND", "EAM_THEME_DOSCRT",
+    "EAM_THEME_ETEN", "EAM_THEME_REDALERT", "EAM_THEME_AQUA"
+)
+$missingThemeLocaleKeys = @()
+foreach ($localeName in $localeNames) {
+    $localePath = Join-Path $root ("Locale\" + $localeName + ".lua")
+    $localeContent = [System.IO.File]::ReadAllText($localePath)
+    foreach ($themeLocaleKey in $themeLocaleKeys) {
+        if (-not $localeContent.Contains("L.$themeLocaleKey")) {
+            $missingThemeLocaleKeys += ($localeName + ":" + $themeLocaleKey)
+        }
+    }
+}
+Assert-Contract ($missingThemeLocaleKeys.Count -eq 0) "Five locales cover all eleven theme labels" ($missingThemeLocaleKeys -join ", ")
 Assert-Contract (
     $savedVariablesLua.Contains('theme = "eam"') -and
     $savedVariablesLua.Contains('function SavedVariables.updateTheme') -and
@@ -1069,6 +1146,71 @@ Assert-Contract ($savedVariablesSource.Contains("function SavedVariables.updateL
 $optionsSource = [System.IO.File]::ReadAllText((Join-Path $root "UI\Options.lua"))
 Assert-Contract ($optionsSource.Contains("EAM.Locale.LanguageOptions")) "Options exposes language dropdown choices"
 Assert-Contract ($optionsSource.Contains("saved.updateLanguage(option.value)")) "Language dropdown writes through SavedVariables"
+$languageOptionsIndex = $optionsSource.IndexOf("local languageOptions = EAM.Locale and EAM.Locale.LanguageOptions or {}")
+$languageOptionsSlice = ""
+if ($languageOptionsIndex -ge 0) {
+    $languageOptionsLength = [Math]::Min(1800, $optionsSource.Length - $languageOptionsIndex)
+    $languageOptionsSlice = $optionsSource.Substring($languageOptionsIndex, $languageOptionsLength)
+}
+Assert-Contract (
+    $languageOptionsIndex -ge 0 -and
+    $languageOptionsSlice.Contains("menuButtonText:SetText(option.label)") -and
+    -not $languageOptionsSlice.Contains("bindText(menuButtonText, option.labelKey, option.label)")
+) "Language dropdown rows use visible native labels without a missing labelKey"
+Assert-Contract (
+    $optionsSource.Contains('function Options.parseBatchIDs(value)') -and
+    $optionsSource.Contains('value:gsub("；", ";")') -and
+    $optionsSource.Contains('value:gmatch("[^%s;,]+")')
+) "Batch ID parser accepts semicolon and whitespace/newline separators"
+Assert-Contract (
+    $optionsSource.Contains('"EAM_AlertBatchScrollFrame"') -and
+    $optionsSource.Contains('"UIPanelScrollFrameTemplate"') -and
+    $optionsSource.Contains('batchScrollFrame:SetScrollChild(batchEditBox)')
+) "Batch ID panel uses a multiline ScrollFrame"
+Assert-Contract (
+    $optionsSource.Contains('"EAM_OPT_BATCH_LOAD"') -and
+    $optionsSource.Contains('Options.buildCurrentCategoryIDText(category)') -and
+    $optionsSource.Contains('"EAM_OPT_BATCH_SELECT"') -and
+    $optionsSource.Contains('prepareEditBoxManualCopy(batchEditBox)') -and
+    $optionsSource.Contains('"EAM_OPT_BATCH_ADD"') -and
+    $optionsSource.Contains('Options.applyBatchIDs(')
+) "Batch ID panel exposes load-current, select-copy, and add-all actions"
+
+Assert-Contract (
+    $optionsSource.Contains('if isCurrentClassSpell(alertOrSpellID) then') -and
+    $optionsSource.Contains('return EAM.Constants.AURA_CATALOG_SCOPE_SELF') -and
+    [regex]::IsMatch(
+        $optionsSource,
+        '(?s)options\.catalogScope = scope\s*options\.fromPlayer = scope == EAM\.Constants\.AURA_CATALOG_SCOPE_SELF\s*.*?saved\.addAuraAlert\("player", id, options\)'
+    ) -and
+    [regex]::IsMatch(
+        $optionsSource,
+        '(?s)options\.catalogScope = EAM\.Constants\.AURA_CATALOG_SCOPE_CROSS_CLASS\s*options\.fromPlayer = false\s*.*?saved\.addAuraAlert\("player", id, options\)'
+    ) -and
+    [regex]::IsMatch(
+        $optionsSource,
+        '(?s)options\.catalogScope = resolveAuraCatalogScope\(id\)\s*options\.fromPlayer = true\s*.*?saved\.addAuraAlert\("target", id, options\)'
+    )
+) "Aura category defaults use fromPlayer=true for self/target and false for cross-class"
+Assert-Contract (
+    $optionsSource.Contains('local function isExistingSpell(spellID)') -and
+    [regex]::IsMatch(
+        $optionsSource,
+        '(?s)if category ~= 5 and not isExistingSpell\(id\) then\s*return false, nil, "spellNotFound"'
+    )
+) "Missing SpellIDs are rejected through isExistingSpell"
+
+$profilePanelSource = [System.IO.File]::ReadAllText((Join-Path $root "UI\ProfileCodecPanel.lua"))
+Assert-Contract (
+    $profilePanelSource.Contains('"EAM_ProfileCodecScrollFrame"') -and
+    $profilePanelSource.Contains('"UIPanelScrollFrameTemplate"') -and
+    $profilePanelSource.Contains('scrollFrame:SetScrollChild(editBox)')
+) "Profile panel uses a multiline ScrollFrame"
+Assert-Contract (
+    $optionsSource.Contains('"EAM_OPT_PROFILE_BTN"') -and
+    $optionsSource.Contains('EAM.UI and EAM.UI.ProfileCodecPanel') -and
+    $optionsSource.Contains('profilePanel.open()')
+) "Options exposes the Profile panel entry"
 
 $mainSource = [System.IO.File]::ReadAllText((Join-Path $root "Core\Main.lua"))
 $flowRunnerSource = [System.IO.File]::ReadAllText((Join-Path $root "Debug\FlowTestRunner.lua"))
@@ -1178,12 +1320,53 @@ foreach ($buttonThemeFile in $buttonThemeFiles) {
         $buttonThemeViolations += $buttonThemeFile
     }
 }
+$legacyButtonColorViolations = @()
+foreach ($buttonThemeFile in @("UI\Options.lua", "Debug\PromptExport.lua")) {
+    $buttonThemeSource = [System.IO.File]::ReadAllText((Join-Path $root $buttonThemeFile))
+    if ($buttonThemeSource -match 'SetVertexColor\(0\.8,\s*0\.2,\s*0\.2,\s*1\)' -or
+        $buttonThemeSource -match 'SetVertexColor\(0\.6,\s*0\.1,\s*0\.1,\s*1\)') {
+        $legacyButtonColorViolations += $buttonThemeFile
+    }
+}
 Assert-Contract (
     $themeLua.Contains("function Theme.applyButton") -and
-    $themeLua.Contains("buttonHighlight") -and
+    $themeLua.Contains('local BUTTON_TEXTURE = "Interface\\Buttons\\WHITE8X8"') -and
+    $themeLua.Contains("local function ensureButtonChrome(button)") -and
+    $themeLua.Contains("local function createButtonBorder") -and
+    $themeLua.Contains("local borderColor = palette.buttonBorder or palette.border") -and
     $themeLua.Contains("buttonHighlightBlend") -and
-    $buttonThemeViolations.Count -eq 0
-) "EAM buttons use theme palette"
+    $optionsSource.Contains("local function createThemedButton") -and
+    -not $optionsSource.Contains("createRedButton") -and
+    $legacyButtonColorViolations.Count -eq 0 -and
+    $buttonThemeViolations.Count -eq 0 -and
+    $flowRunnerSource.Contains('id = "theme.button.chrome"')
+) "EAM button backgrounds, states, and four-side borders use the active theme palette" (
+    "legacyColor=" + ($legacyButtonColorViolations -join ",") + "; missingRegistration=" + ($buttonThemeViolations -join ",")
+)
+$dropdownMenuRegistrationCount = [regex]::Matches(
+    $optionsSource,
+    '(?m)^\s*registerDropdownMenu\('
+).Count
+$dropdownRowFinalizationCount = [regex]::Matches(
+    $optionsSource,
+    '(?m)^\s*finalizeDropdownMenuButton\('
+).Count
+Assert-Contract (
+    $optionsSource.Contains('local function registerDropdownMenu(menu, anchor)') -and
+    $optionsSource.Contains('menu:SetFrameLevel(math.max(getFrameLevel(parent), getFrameLevel(anchor)) + 10)') -and
+    $optionsSource.Contains('Theme.registerFrame(menu, "menu")') -and
+    $dropdownMenuRegistrationCount -ge 8
+) "Custom dropdown menus use themed elevated containers"
+Assert-Contract (
+    $optionsSource.Contains('local function finalizeDropdownMenuButton(button, label, menu)') -and
+    $optionsSource.Contains('button:SetNormalTexture(DROPDOWN_TEXTURE)') -and
+    $optionsSource.Contains('button:SetPushedTexture(DROPDOWN_TEXTURE)') -and
+    $optionsSource.Contains('button:SetHighlightTexture(DROPDOWN_TEXTURE)') -and
+    $optionsSource.Contains('button:SetFrameLevel(getFrameLevel(menu) + 1)') -and
+    $optionsSource.Contains('Theme.registerButton(button)') -and
+    $optionsSource.Contains('Theme.registerText(label, "button")') -and
+    $dropdownRowFinalizationCount -ge 8
+) "Custom dropdown rows provide normal, pushed, highlight, level, and Theme contracts"
 $toc = [System.IO.File]::ReadAllText($paths.Toc)
 $themeIndex = $toc.IndexOf("UI\Theme.lua")
 $textPlacementIndex = $toc.IndexOf("UI\TextPlacement.lua")
@@ -1225,6 +1408,26 @@ Assert-Contract (
     $packageScriptText.Contains('".svg"') -and
     (Test-Path -LiteralPath $paths.SVGAsset)
 ) "Package whitelist includes SVG probe asset"
+
+$wowheadCandidateScript = Join-Path $PSScriptRoot "Test-WowheadCandidateData.ps1"
+$wowheadCandidateExists = Test-Path -LiteralPath $wowheadCandidateScript -PathType Leaf
+Assert-Contract $wowheadCandidateExists "Wowhead candidate data validator exists"
+$wowheadTokens = $null
+$wowheadErrors = $null
+if ($wowheadCandidateExists) {
+    [void][System.Management.Automation.Language.Parser]::ParseFile(
+        $wowheadCandidateScript,
+        [ref]$wowheadTokens,
+        [ref]$wowheadErrors
+    )
+}
+$wowheadAstValid = $wowheadCandidateExists -and $wowheadErrors.Count -eq 0
+Assert-Contract $wowheadAstValid "PowerShell AST: Test-WowheadCandidateData.ps1" (
+    ($wowheadErrors | ForEach-Object { $_.Message }) -join "; "
+)
+if ($wowheadAstValid) {
+    Invoke-ValidationScriptContract -ScriptPath $wowheadCandidateScript -Label "Wowhead candidate data validator" -RequiredOutput @("WOWHEAD_CANDIDATE_DATA", "failed=0")
+}
 
 foreach ($scriptName in "CheckLuaSyntax.ps1", "Run-FlowValidation.ps1", "Import-EAMFlowReport.ps1", "Test-ValidationContracts.ps1", "Build-CurseForgePackage.ps1") {
     $tokens = $null

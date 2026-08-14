@@ -174,6 +174,16 @@ function regionMethods:SetSize(width, height)
     self.height = height
 end
 
+function regionMethods:SetWidth(width)
+    assertInitializationOpen(self)
+    self.width = width
+end
+
+function regionMethods:SetHeight(height)
+    assertInitializationOpen(self)
+    self.height = height
+end
+
 function regionMethods:SetFont(font, size, flags)
     assertInitializationOpen(self)
     self.font = font
@@ -549,6 +559,52 @@ local function createGenericFrame(frameType, frameName)
 
     function frame:CreateFontString()
         return createGenericFrame("FontString")
+    end
+
+    local function setButtonTexture(field, value)
+        if type(value) == "string" then
+            local texture = createRegion(nil, "Texture")
+            texture:SetTexture(value)
+            rawset(frame, field, texture)
+        else
+            rawset(frame, field, value)
+        end
+    end
+
+    function frame:SetNormalTexture(value)
+        setButtonTexture("normalTexture", value)
+    end
+
+    function frame:GetNormalTexture()
+        return rawget(self, "normalTexture")
+    end
+
+    function frame:SetPushedTexture(value)
+        setButtonTexture("pushedTexture", value)
+    end
+
+    function frame:GetPushedTexture()
+        return rawget(self, "pushedTexture")
+    end
+
+    function frame:SetDisabledTexture(value)
+        setButtonTexture("disabledTexture", value)
+    end
+
+    function frame:GetDisabledTexture()
+        return rawget(self, "disabledTexture")
+    end
+
+    function frame:SetHighlightTexture(value)
+        setButtonTexture("highlightTexture", value)
+    end
+
+    function frame:GetHighlightTexture()
+        return rawget(self, "highlightTexture")
+    end
+
+    function frame:GetFontString()
+        return rawget(self, "fontString")
     end
 
     function frame:Show()

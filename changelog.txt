@@ -1,3 +1,25 @@
+-- [Retail 12.1 Alpha 6]2026.08.14
+    -- Aura、Profile 與正式服通道：
+       -- Retail／PTR 12.1 依 Interface 120100 與 Native widget capability 啟用 AuraContainer；XPTR 12.0.7 保留 Legacy backend。
+       -- 自身／目標 Aura 新增預設僅玩家施放，跨職業增減益預設取消；批次輸入支援換行與半形／全形分號，不存在的 SpellID 不寫入。
+       -- Profile EAMAP1 JSON／Base64、捲動面板、字型選擇、功能模組開關與 AuraSound 細部設定納入本版。
+    -- UI、語系與小地圖：
+       -- 修正語系列空白；十一套主題統一控制 EAM 按鈕四態底色、文字與四邊 2px 邊框，不再固定紅色。
+       -- Borland 為亮藍底亮黃字，DOS CRT 為黑底綠字；AlertBorderStyles 七種監控語意色維持獨立。
+       -- `Trade_Engineering` 齒輪縮入金色小地圖追蹤圈：20px 背景、17px 圖示、5% 裁邊，53px 邊框改採 TOPLEFT 標準錨點。
+    -- 驗證與發布：
+       -- Lua 56/56、Flow 68/68、Validation Contracts 394/394；這些是離線證據，不代表 Retail／PTR／XPTR 真人簽收。
+       -- Alpha 6 由本機正式封裝後手動建立 GitHub prerelease；BigWigs／CurseForge／WoWInterface Action 維持停用，deploy、Tools、Tests、TestResults、backup 與 LegacyReference 不上傳。
+-- [Retail 12.1 Alpha 5 Follow-up]2026.08.14
+    -- 通道與 Aura 清單：
+       -- 正式服與 PTR 12.1 使用 Native capability gate；XPTR 12.0.7 保留 Legacy backend。
+       -- Aura 批次輸入支援 Enter、半形／全形分號；自身與目標預設僅玩家施放，跨職業預設取消，不存在的 SpellID 不顯示也不寫入。
+    -- UI 與資料治理：
+       -- 修正語系 dropdown 因缺少 labelKey 而出現空白列；Profile 捲動與 Options 入口完成，小地圖以內建 Trade_Engineering 齒輪取代不可靠的 Texture SVG。
+       -- EAM 文字按鈕移除強制紅色，改由十一套主題控制底色、四態、文字與四邊 2px 邊框；Borland 為亮藍底亮黃字，DOS CRT 為黑底綠字。
+       -- Wowhead JSON 僅作 offline webCandidate；抓取輸出固定到 Data，Docs 不保留重複副本，正式 runtime 與預設 seeder 不引用。
+    -- 驗證：
+       -- Lua 56/56、Flow 68/68、Validation Contracts 387/387、本機 Retail／PTR／XPTR 環境 3/3；不代表遊戲內功能簽收。
 -- [Retail 12.1.0 PTR8 Alpha 5]2026.08.14
     -- Profile 分享與資料安全：
        -- 新增 EAMAP1 JSON／Base64 profile codec，含白名單欄位、大小／深度／節點限制、Adler-32 checksum、preview、merge／replace 與 combat guard。

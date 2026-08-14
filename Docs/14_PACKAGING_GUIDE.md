@@ -117,6 +117,13 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Build-CurseForgePackage.ps1 -De
 ## SVG 素材封裝契約
 
 - 正式副檔名白名單必須包含 .svg；否則本機符號連結可顯示、GitHub Release ZIP 卻會靜默缺素材。
-- Alpha 5 封裝至少必須含 Media/SVG/eam-minimap.svg、Media/SVG/eam-svg-probe.svg、Core/ProfileCodec.lua 與 UI/ProfileCodecPanel.lua，並繼續排除 Tests、TestResults、Tools、backup 與本機 deploy。
+- Alpha 6 封裝至少必須含 Media/SVG/eam-minimap.svg、Media/SVG/eam-svg-probe.svg、Core/ProfileCodec.lua 與 UI/ProfileCodecPanel.lua，並繼續排除 Tests、TestResults、Tools、backup 與本機 deploy。
 - Validation Contracts 會同時斷言 SVG 檔是自包含靜態素材、無 script／href／data URI，且 Build-CurseForgePackage.ps1 白名單包含 .svg。
 - Release ZIP 建立後仍須列出壓縮內容確認 SVG 條目存在；本機 deploy 資料夾不得提交或重複打包。
+
+## GitHub Alpha 手動發布邊界
+
+- `.github/workflows/release.yml` 目前只保留停用殼：`workflow_dispatch` 且 job `if: false`。不得為 Alpha 6 移除 gate，也不得觸發 BigWigs packager。
+- 正式流程是本機執行 `Tools/Build-CurseForgePackage.ps1`，檢查 ZIP 清單與 SHA-256，再以 `gh release create <tag> <zip> --prerelease` 上傳 GitHub Release。
+- GitHub Release 不等於 CurseForge／WoWInterface 發布；`-w`、`-p` 外部目標本輪不使用。
+- tag 必須指向已通過 gate 且已推送的 commit；ZIP 不提交 Git，也不把 `Dist/`、`deploy/`、`backup/`、`Tools/`、`Tests/` 或 `TestResults/` 放入資產。

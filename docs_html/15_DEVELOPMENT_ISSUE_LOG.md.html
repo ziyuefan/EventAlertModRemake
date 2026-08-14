@@ -1555,6 +1555,69 @@
 <li>驗證結果：本機 workflow 差異唯一包含 trigger／job gate；<code>git diff --check</code> 通過。既有 Alpha 5 Release 資產仍可下載。</li>
 <li>後續事項：若要恢復，必須先決定是否移除 <code>-w</code>／<code>-p</code> 外部發布目標、補足最小 GitHub <code>contents: write</code> 權限，並以獨立測試 tag 驗證；在此之前不得移除停用 gate。</li>
 </ul>
+<h3 id="eam-20260814-catalog-batch-retail121aura-catalog-retail-121">EAM-20260814-CATALOG-BATCH-RETAIL121：Aura catalog、批次輸入與 Retail 12.1</h3>
+<ul>
+<li>日期：2026-08-14。</li>
+<li>狀態：已完成離線實作與契約驗證；Retail／PTR／XPTR 真人簽收待玩家執行。</li>
+<li>症狀：正式服已進入 12.1，但 client gate、文件與矩陣仍把 Retail 當 12.0.7；Aura 清單缺少批次加入與明確職業 scope；SELF／TARGET 的 <code>fromPlayer</code> 預設不一致；dropdown 黑底、Profile 長字串溢出、小地圖 SVG fallback 顯示問號。</li>
+<li>原因：Native eligibility 混用了 test-build 身分；清單只有 active-class profile 而缺 <code>catalogScope</code>；多組自製 dropdown 未建立 normal／pushed 材質與明確 FrameLevel；Profile 使用裸 multiline EditBox；Texture SVG 在不同 build 行為不對稱。</li>
+<li>已嘗試：以 Wowhead class 資料自動升格預設，因 class ownership、PvP／被動、Aura effect ID 與抓取錯誤缺乏可靠 provenance 而否決；Texture SVG accepted 也不能證明像素顯示。</li>
+<li>有效解法：Retail／PTR 12.1 依 Interface+widget capability 選 Native；新增 SELF／CROSS_CLASS 與批次 deferred commit；無效 SpellID fail-closed；dropdown 統一三態材質與層級；Profile 加 ScrollFrame；小地圖固定使用內建齒輪；Wowhead JSON 保持 candidate-only 並加專用 validator。</li>
+<li>工具問題：Windows sandbox 的 <code>apply_patch</code>／一般 shell 在 setup refresh 階段反覆 <code>helper_unknown_error</code>，不是 Lua 或專案錯誤；確認無部分寫入後，使用既有備份、唯一錨點或結構化候選檔、解析／schema 驗證成功後才覆寫。</li>
+<li>驗證：Lua 56/56、Flow 67/67、Validation Contracts 380/380、Wowhead candidate 23 pass／0 fail／4 warning、本機環境 3/3。</li>
+<li>後續：依 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code> 在 Retail／PTR 12.1 與 XPTR 12.0.7 驗證批次分類、僅玩家施放預設、dropdown、Profile 捲動、小地圖齒輪、戰鬥延後與 <code>/reload</code>；不得讓離線結果取代真人報告。</li>
+</ul>
+<h3 id="2026-08-14-eam-20260814-theme-chrome-language-dropdown">2026-08-14 EAM-20260814-THEME-CHROME-LANGUAGE-DROPDOWN：語系列空白與按鈕紅色覆蓋主題</h3>
+<ul>
+<li>日期：2026-08-14。</li>
+<li>狀態：程式與離線契約已修正；Retail／PTR／XPTR 的十一主題與語系列目視仍待玩家簽收。</li>
+<li>症狀：語系下拉列有底色但沒有任何文字；切換 FF7 等主題後，EAM 視窗背景與外框改變，按鈕仍維持紅色底與舊式邊框。</li>
+<li>原因判斷：LanguageOptions 只有 value／label，Options 卻把不存在的 labelKey 傳入 Locale.bindText，binding 直接拒絕 nil key；createRedButton 與 PromptExport 又在 Theme.registerButton 後硬寫紅色 vertex color，覆蓋 palette。</li>
+<li>已嘗試方法：標準 apply_patch 在讀檔前被 Windows sandbox helper_unknown_error 擋下；以既有備份、唯一錨點、暫存候選、luac／PowerShell AST 與寫入前雜湊守衛替代。首次新 Flow 案為 67/68，定位到 strict mock 用不存在的 self 儲存按鈕材質；改為 rawset(frame)／rawget(self) 後通過。</li>
+<li>有效解法：語系列直接顯示 LanguageOptions.label；所有 EAM 文字按鈕移除紅色覆寫，統一使用 WHITE8X8 四態底圖與四條 2px 主題邊框。主題擴為十一套，Borland 固定亮藍底亮黃字，DOS CRT 固定黑底綠字。</li>
+<li>驗證結果：Lua 56/56；Flow all 68/68，theme.button.chrome 驗證 Borland／DOS 底色與四邊框切換；Validation Contracts 387/387。以上均為離線／mock 證據。</li>
+<li>後續注意事項：玩家需先 /reload，再於 Retail／PTR／XPTR 打開語系與主題下拉，逐一確認非 hover 文字、按鈕 normal／hover／pressed／disabled、2px 邊框與保存；AlertBorderStyles 七種監控語意邊框不得隨 UI 主題改色。</li>
+</ul>
+<h3 id="2026-08-14-eam-20260814-alpha6-minimap-ring">2026-08-14 EAM-20260814-ALPHA6-MINIMAP-RING：小地圖齒輪與金色追蹤圈錯位</h3>
+<ul>
+<li>日期：2026-08-14。</li>
+<li>狀態：程式與離線契約已修正；Retail／PTR／XPTR 像素目視待玩家 <code>/reload</code> 簽收。</li>
+<li>症狀：小地圖只看到偏左上的金色空圈，<code>Trade_Engineering</code> 齒輪落在圈外右下方；與其他標準小地圖按鈕不一致。</li>
+<li>原因判斷：按鈕為 31x31，但 <code>MiniMap-TrackingBorder</code> 是 53x53 複合材質。舊碼把邊框與 21px 圖示都置中，忽略該材質的有效圓環位於局部座標；不是齒輪檔案本身需要平移。</li>
+<li>有效解法：依 Blizzard 生態常用的 LibDBIcon 幾何，20px 小地圖背景錨定 <code>TOPLEFT +7,-5</code>，17px 齒輪錨定 <code>TOPLEFT +7,-6</code> 並裁掉 5% 外緣；53px 邊框固定在按鈕 <code>TOPLEFT</code>。保留左／右鍵、拖曳與 SavedVariables 位置語意。</li>
+<li>防回歸：Validation Contracts 精確斷言背景、圖示、TexCoord、邊框尺寸與 TOPLEFT 錨點，並拒絕邊框回到 CENTER。</li>
+<li>工具試錯：標準 <code>apply_patch</code> 仍在讀檔前遭 Windows sandbox <code>helper_unknown_error</code>；第一次 <code>git apply --check</code> 因手寫 hunk 行數錯誤拒絕，後續兩次 literal 候選因 JavaScript／PowerShell 反斜線層級被唯一命中閘門拒絕。最終先以唯讀 regex 證明單一區塊，再用備份雜湊、Temp 候選、luac 與 PowerShell AST 通過後覆蓋，沒有部分寫入或回退其他變更。</li>
+<li>驗證結果：Lua 56/56、Flow 68/68、Validation Contracts 394/394。離線只能證明結構，不能證明不同 UI Scale 的最終像素。</li>
+<li>發布邊界：Alpha 6 使用本機正式封裝與手動 GitHub prerelease；停用中的 BigWigs／CurseForge／WoWInterface workflow 不啟用。</li>
+</ul>
+<h3 id="2026-08-14-eam-20260814-lua-syntax-scope-lua-referencelibs">2026-08-14 EAM-20260814-LUA-SYNTAX-SCOPE：正式 Lua 掃描誤納 ReferenceLibs</h3>
+<ul>
+<li>日期：2026-08-14。</li>
+<li>狀態：已解決；正式發布 gate 已改用專案既有工具。</li>
+<li>症狀：臨時以遞迴 <code>Get-ChildItem *.lua</code> 執行 <code>luac -p</code>，誤把 <code>ReferenceLibs/!Lib_ZYF</code> 兩個外部參考檔納入，出現檔頭位元語法錯誤。</li>
+<li>原因判斷：臨時命令未沿用封裝與 <code>Tools/CheckLuaSyntax.ps1</code> 的正式載入範圍排除規則；錯誤不在 TOC 載入的 EAM 56 個 Lua 檔。</li>
+<li>已嘗試方法：停止使用過寬遞迴命令，唯讀定位專案既有語法驗證工具與最新 Flow／環境報告。</li>
+<li>有效解法：發布前固定執行 <code>pwsh -NoProfile -File .\Tools\CheckLuaSyntax.ps1</code>；本輪結果為 Lua 56/56，另由正式封裝再執行一次相同範圍檢查。</li>
+<li>後續注意事項：不得以 ad hoc 全樹 Lua 掃描取代專案工具；<code>ReferenceLibs</code> 只供研究，既不由 TOC 載入也不進發布包。</li>
+</ul>
+<h3 id="2026-08-14-eam-20260814-zip-path-normalizationwindows-zip-entry">2026-08-14 EAM-20260814-ZIP-PATH-NORMALIZATION：Windows ZIP entry 分隔符誤判</h3>
+<ul>
+<li>日期：2026-08-14。</li>
+<li>狀態：已解決；Alpha 6 ZIP 內容通過正規化後的唯讀稽核。</li>
+<li>症狀：首次以 <code>/</code> 檢查 ZIP entry 根目錄與 forbidden path 時，Windows <code>System.IO.Compression</code> 回傳反斜線路徑，導致 87 個合法檔案全被誤報。</li>
+<li>原因判斷：稽核命令未先把 ZIP 內部 entry 的 <code>\</code> 正規化為 <code>/</code>；不是封裝器夾帶禁用資料。</li>
+<li>有效解法：在任何 root／forbidden／required 比對前先做路徑分隔符正規化，再排除目錄 entry。結果為 87 files、forbidden 0、required 7/7，SHA-256 <code>966279C8678FD9EFDCD428D83879B3AD02D22C822EF3F8863D04F9380E5B7BDD</code>。</li>
+<li>後續注意事項：日後將此正規化規則收斂至發布稽核工具，不得因 ad hoc 路徑分隔符差異誤判套件污染。</li>
+</ul>
+<h3 id="2026-08-14-eam-20260814-git-cached-whitespace">2026-08-14 EAM-20260814-GIT-CACHED-WHITESPACE：候選抓取腳本行尾空白</h3>
+<ul>
+<li>日期：2026-08-14。</li>
+<li>狀態：已解決；commit 尚未建立前由 cached diff gate 攔截。</li>
+<li>症狀：<code>git diff --cached --check</code> 在 <code>Tools/fetch_wowhead_spells.py</code> 找到 18 行 trailing whitespace。</li>
+<li>原因判斷：外部匯入的候選資料抓取腳本保留空白行縮排；不影響 Python 語意，但不符合 Git diff 品質閘門。第一次清理 regex 未納入 Windows CRLF，命中 0 後由預期數量閘門拒絕，沒有寫入來源。</li>
+<li>有效解法：以 CRLF-aware 模式只移除行尾空格／Tab，不改任何抓取、來源或輸出路徑邏輯；以 Python AST、Wowhead candidate validator 與 cached diff 再驗證。</li>
+<li>後續注意事項：新加入 Python／PowerShell 工具在 stage 前先跑 whitespace 與 AST gate；Windows 文字處理 regex 必須明確涵蓋 CRLF。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

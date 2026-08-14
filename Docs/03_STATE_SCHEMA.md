@@ -24,7 +24,7 @@ EA_GrpItems
 EA_Pos
 ```
 
-## Schema v3：Native Aura 與文字版面設定
+## 歷史 Schema v3：Native Aura 與文字版面設定
 
 - `EAM_DB.schemaVersion = 3`；v1 Aura alert 與 v2 文字版面來源都會保存可序列化遷移備份。
 - Alert 可保存 `nativeBackend`、`auraFilter`、`showStacks`、`showName`、`showCountdown` 與純資料 `sound`。
@@ -257,11 +257,11 @@ DebugSnapshot = {
 `EAM_DB.config.theme` 是可持久化的 EAM 自有 UI 主題選擇，允許值與預設如下：
 
 ```js
-config.theme = "eam" // "eam|ff7|winxp|borland|doscrt|aqua"
+config.theme = "eam" // "eam|ff7|winxp|win7|win10|win31|borland|doscrt|eten|redalert|aqua"
 ```
 
 - `eam` 為既有棕金視覺，亦是缺值或非法值的安全回退。
-- `ff7` 為深靛、皇家藍、亮青與金色 palette；`winxp` 為 Luna 藍、淺灰、亮藍／綠 palette；`borland` 為電光藍／青色 IDE；`doscrt` 為黑綠磷光 CRT；`aqua` 為 macOS Aqua 藍灰／亮藍。
+- ff7 為深靛／皇家藍／亮青；winxp 為 Luna 藍；win7 為 Aero 冰藍；win10 為深色平面／系統藍；win31 為灰底／海軍藍；borland 為亮藍底／亮黃字；doscrt 為純黑底／磷光綠字；eten 為深藍底／青黃字；redalert 為黑紅工業警示；aqua 為藍灰／亮藍。
 - `SavedVariables.updateTheme()` 只在實際值改變時寫入並增加 revision；重複選擇不得製造 revision。
 - 啟動時非法值會正規化為 `eam`，並在 migration warnings 留下 `invalidThemeDefaulted`；不覆蓋其他 SavedVariables。
 - 戰鬥中只保存 pending theme，待 `PLAYER_REGEN_ENABLED` 後由 `EAM.Theme.flushPending()` 套用。
@@ -306,3 +306,12 @@ Core/ProfileCodec.lua 定義正式分享格式 EAMAP1:<base64(JSON envelope)>。
 - import 先做 parse、schema、checksum、scope、欄位白名單與 ID 重算，再產生 preview；preview 不增加 revision、不發事件。merge 只 upsert scope 內項目，replace 只替換指定 class／module 並保留 bounded backup。
 - 戰鬥中拒絕結構性 apply；EAMAP1 不是加密，也不宣稱來源可信。任何 malformed／future schema／duplicate key／duplicate derived ID 都 fail-closed。
 - config.fontFamily 允許 STANDARD、ARIALN、MORPHEUS、SKURRI，預設 STANDARD；變更由 SavedVariables.updateFontFamily 正規化、no-op 保持 revision，並由 TextPlacement 套用於 EAM 自有 FontString。
+
+## 2026-08-14 現行 schema v5：Aura catalog scope 與批次 mutation
+
+- `profiles.classes[CLASS_TOKEN].alerts` 仍是目前職業唯一正式清單來源；`catalogScope` 只接受 `SELF` 或 `CROSS_CLASS`。
+- player Aura 的 `SELF` 新增預設 `fromPlayer=true`；player Aura 的 `CROSS_CLASS` 預設 `fromPlayer=false`；target Aura 新增預設 `fromPlayer=true`。
+- 非目前職業但可解析的 player Aura 候選保守寫入 `CROSS_CLASS`，不得偽裝成該職業技能；不存在或無法解析的 SpellID 不建立記錄。
+- 批次輸入可含換行、半形分號或全形分號；解析後先去重與排序，再以單一 deferred commit 寫入，真變更只增加一次 revision。
+- EAMAP1 profile 對 `catalogScope` 採白名單正規化；缺值依 module 舊語意安全回填，非法值拒絕，不信任外部 derived ID。
+- `Data/wow_spells_and_auras.json` 不屬 SavedVariables schema，也不被 runtime 載入；它只是離線候選索引。

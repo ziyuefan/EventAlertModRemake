@@ -214,6 +214,7 @@
       "enum": [
         "PTR_12_1",
         "XPTR_12_0_7",
+        "RETAIL_12_1",
         "RETAIL_12_0_7"
       ]
     },
@@ -222,6 +223,7 @@
         "offline-mock",
         "PTR_12_1",
         "XPTR_12_0_7",
+        "RETAIL_12_1",
         "RETAIL_12_0_7",
         "cross-client",
         "project"

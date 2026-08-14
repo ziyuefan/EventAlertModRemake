@@ -416,7 +416,7 @@ if ($isFlow) {
     $profileMap = @{
         "_ptr_" = @{ Channel = "PTR"; Source = "ptr-live-manual"; Patch = "12.1.0"; Interface = 120100; TestBuild = $true }
         "_xptr_" = @{ Channel = "XPTR"; Source = "xptr-live-manual"; Patch = "12.0.7"; Interface = 120007; TestBuild = $true }
-        "_retail_" = @{ Channel = "RETAIL"; Source = "retail-live-manual"; Patch = "12.0.7"; Interface = 120007; TestBuild = $false }
+        "_retail_" = @{ Channel = "RETAIL"; Source = "retail-live-manual"; Patch = "12.1.0"; Interface = 120100; TestBuild = $false }
     }
     $declaredInstallation = [string]$report.environment.declaredInstallation
     $expectedProfile = $profileMap[$declaredInstallation]
@@ -480,7 +480,7 @@ if ($isFlow) {
     $profileMap = @{
         "_ptr_" = @{ Channel = "PTR"; Source = "ptr-live-manual"; Patch = "12.1.0"; Interface = 120100 }
         "_xptr_" = @{ Channel = "XPTR"; Source = "xptr-live-manual"; Patch = "12.0.7"; Interface = 120007 }
-        "_retail_" = @{ Channel = "RETAIL"; Source = "retail-live-manual"; Patch = "12.0.7"; Interface = 120007 }
+        "_retail_" = @{ Channel = "RETAIL"; Source = "retail-live-manual"; Patch = "12.1.0"; Interface = 120100 }
     }
     $declaredInstallation = [string]$report.environment.declaredInstallation
     $expectedProfile = $profileMap[$declaredInstallation]
@@ -564,7 +564,7 @@ if ($isFlow) {
     $profileMap = @{
         "_ptr_" = @{ Channel = "PTR"; Source = "ptr-live-manual"; Patch = "12.1.0"; Interface = 120100 }
         "_xptr_" = @{ Channel = "XPTR"; Source = "xptr-live-manual"; Patch = "12.0.7"; Interface = 120007 }
-        "_retail_" = @{ Channel = "RETAIL"; Source = "retail-live-manual"; Patch = "12.0.7"; Interface = 120007 }
+        "_retail_" = @{ Channel = "RETAIL"; Source = "retail-live-manual"; Patch = "12.1.0"; Interface = 120100 }
     }
     $declaredInstallation = [string]$report.environment.declaredInstallation
     $expectedProfile = $profileMap[$declaredInstallation]

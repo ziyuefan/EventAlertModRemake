@@ -14,7 +14,7 @@ EventAlertMod Retail Rewrite
 param(
     [string]$WowRoot = "D:\World of Warcraft",
     [string]$ProjectRoot = "",
-    [string]$RetailExpectedPatch = "12.0.7",
+    [string]$RetailExpectedPatch = "12.1.0",
     [string]$PtrExpectedPatch = "12.1.0",
     [string]$XPtrExpectedPatch = "12.0.7",
     [string]$OutputDirectory = "TestResults"
