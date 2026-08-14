@@ -1,14 +1,16 @@
 name: Package and release
 
+# 暫停自動發布：目前不呼叫 BigWigs packager、CurseForge 或 WoWInterface.
+# 保留 workflow 檔案供日後人工恢復；在移除 job gate 前不得啟用。
 on:
-  push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
-      - 'alpha-*'
+  workflow_dispatch:
 
 jobs:
 
   release:
+
+    # 暫停期間即使手動觸發，也不執行發布工作。
+    if: ${{ false }}
 
     runs-on: ubuntu-latest
 
