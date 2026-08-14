@@ -1111,3 +1111,12 @@
 - 有效解法：以嚴格長度／alphabet／padding 檢查包住 Base64 decode；parser 使用 object marker 與 metatable 保留 JSON 類型；payload modules 強制陣列驗證；將新語系 key 放回 Locale.register callback；語系事件後重建 spec menu 再刷新 dropdown；TOC 使用單一反斜線並由封裝 gate 驗證。
 - 驗證結果：Lua 56/56、Flow all 66/66、Validation Contracts 360/360；git diff --check 亦通過。上述是離線／mock 證據，沒有把任何視覺或音效結果升格為實機 pass。
 - 後續注意事項：不要重新接回 LegacyReference 的 loadstring；字型只改 EAM 自有 FontString；動態語系不改寫 Blizzard UI、歷史聊天或固定繁中 Live case 程序；Profile apply 在戰鬥中必須拒絕或延後。
+
+### 2026-08-14 EAM-20260814-RELEASE-ACTION-PAUSED：GitHub Release workflow 暫停
+
+- 狀態：已暫停自動發布 Action；Alpha 5 手動 Release 與 ZIP 不受影響。
+- 症狀：`release.yml` 在 BigWigs packager 完成封裝後，更新既有 `alpha-5` GitHub Release 時回傳 HTTP 403 `Resource not accessible by integration`，workflow 以 exit code 1 結束。
+- 原因判斷：workflow 原本以 tag 觸發，並傳入 `-w 26550 -p 826042`，具備 WoWInterface／CurseForge 發布目標；同時使用 `GITHUB_TOKEN` 更新 Release，但未宣告 `contents: write`。目前證據只確認 GitHub Release 更新被拒絕，不把外部平台是否已上傳推定為成功或失敗。
+- 已採取措施：保留 workflow 原檔與備份，將 trigger 改為僅 `workflow_dispatch`，並以 job-level `if: ${{ false }}` 完全停用；不再因 alpha／版本 tag 自動執行 packager 或外部發布。
+- 驗證結果：本機 workflow 差異唯一包含 trigger／job gate；`git diff --check` 通過。既有 Alpha 5 Release 資產仍可下載。
+- 後續事項：若要恢復，必須先決定是否移除 `-w`／`-p` 外部發布目標、補足最小 GitHub `contents: write` 權限，並以獨立測試 tag 驗證；在此之前不得移除停用 gate。
