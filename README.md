@@ -1,4 +1,5 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+# [Download Alpha-6](https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-6 "Download Alpha-6")
 # [GitHubPage](https://ziyuefan.github.io/EventAlertModRemake/ "GitHubPage")
 # [ChangLog](https://github.com/ziyuefan/EventAlertModRemake/blob/main/changelog.txt "ChangLog")
 # [CommandLine](https://github.com/ziyuefan/EventAlertModRemake/blob/main/README.md#命令列 "CommandLine")
