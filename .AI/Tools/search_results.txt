@@ -1,0 +1,93 @@
+--- Searching for '模板', '範本', '事件', '更新時', '更新ScdFrame', '位置框架' ---
+[en_to_zh-TW] Hash: fbf3e9c875f1b6eabdc786ba7bf230ca | Found: ['事件'] | Preview: - `EventAlert_SpellArray.lua`：類別/預設法術陣列和資料載入。\n- `EventAlert_Animation.lua`：視覺動畫/背景助手。\n- `EventAlert_Util.lua`：列印助手、工具提
+[en_to_zh-TW] Hash: c00cd54e172b0cdf4849cf0598e4d0dc | Found: ['範本', '事件'] | Preview: - `EventAlert_Aura_Self.lua`：玩家/寵物光環警報和自我圖示佈局。\n- `EventAlert_Aura_Target.lua`：目標光環警報和目標圖示佈局。\n- `EventAlert_Cooldown.lu
+[en_to_zh-TW] Hash: 6157d6ae0d345031441f375761b1b40c | Found: ['範本'] | Preview: - `UIPanelScrollFrameTemplate`\n- `InputBoxTemplate`\n- `BackdropTemplate`\n- `GameFontNormal`\n- `GameFontHighlight`\n-
+[en_to_zh-TW] Hash: a5a4f23d7545a624c158945fe7cd67fa | Found: ['範本', '事件'] | Preview: 在原型導入/導出程式碼中的用法。\n\n重寫規則：UI 範本屬於 `UI/IconPool`、`UI/Renderer` 和\n`使用者介面/選項`。服務不得直接創建框架或改變框架佈局。\n\n## 目前的職責\n\n目前的程式碼職責是混合
+[en_to_zh-TW] Hash: 12ef779a3bf83358069f994dd81135a9 | Found: ['事件'] | Preview: - SavedVariables直接在全域表中初始化，無需模式\n  版本控製或驗證邊界。\n- 本地化使用全域字串常數並混合到 UI 設定中。\n\n## 目標模組映射\n\n核心：\n\n- `Env`：外掛程式命名空間、本地 API 
+[en_to_zh-TW] Hash: c3a395d0f2bd9b1026f7e3c932b37538 | Found: ['事件'] | Preview: - `DebugState`：緊湊的運行時快照分為事實、派生狀態、\n  人類筆記、邊界警告和環境。\n- `PromptExport`：按需緊湊的類似 JSON 的輸出。\n\n## 資料流\n\n1. 暴雪事件進入`EventRoute
+[en_to_zh-TW] Hash: 8fcae70edac46048b01552d6e1681801 | Found: ['事件'] | Preview: - `SPELL_UPDATE_CHARGES`\n- `BAG_UPDATE_COOLDOWN`\n- `UNIT_SPELLCAST_SUCCEEDED`\n- 僅當啟用特殊資源 UI 時才發生電源/資源事件\n\n沒有「Registe
+[en_to_zh-TW] Hash: 4ab239f1434aa8736ea9b3f0ee3c6d31 | Found: ['事件'] | Preview: - 不得更改 SavedVariables\n\n## 核心/實用程式\n\n輸入：\n\n- 原始 Lua/WoW 表 API\n\n輸出：\n\n- `CreateTable`、`FreezeTable`、`IsFrozen`、池助手、
+[en_to_zh-TW] Hash: 991d0ff078d5910b0316569d4e24637a | Found: ['事件'] | Preview: - 透過參數化「pcall」錯誤隔離來分派對已註冊模組處理程序的調用，確保一個模組處理程序中的故障不會阻止其他訂閱者\n\n突變：\n\n- 擁有事件框架與事件訂閱表\n- 每個活動報名沒有關閉分配\n\n## 核心/調度程序\n\n輸入：
+[en_to_zh-TW] Hash: a87a234e00f293fe76e536b399572dbb | Found: ['事件'] | Preview: 輸出：\n\n- 版本化的活動設定文件\n- 遷移報告\n- 驗證警告\n- 用戶觸發的警報添加/刪除光環、法術冷卻和物品冷卻的 API\n\n突變：\n\n- 在載入/遷移/配置變更期間可能會改變 SavedVariables\n- 不得
+[en_to_zh-TW] Hash: c0c0ba96ac2ef67d6b0d2dba0ccb9831 | Found: ['事件'] | Preview: - 從“AuraStatePool”分配的標準化“AuraState”和“AlertState”\n- 邊界警告\n- 由單位和“auraInstanceID”鍵控的增量感知光環緩存\n- 配置修訂感知警報索引，由單位和配置的法術ID鍵入\
+[en_to_zh-TW] Hash: a6aa9f65512b4bd3530e0ce4a6ae2d26 | Found: ['事件'] | Preview: - 對包含在佈局批次控制中的「Renderer.render」進行批次/節流呼叫（「Renderer.BeginBatch」/「Renderer.EndBatch」）\n- 透過 `state.releaseFunc(state)` 進行多
+[en_to_zh-TW] Hash: d59dc50aff2f3d37ef898f3e9a10980d | Found: ['事件'] | Preview: - 世界進入與再生狀態事件\n\n輸出：\n\n- 每個spellID映射活動主機圖示幀\n- 非戰鬥中本機幀的零污染不可見設定（Alpha = 0）\n\n突變：\n\n- 僅擁有內部法術ID到框架映射註冊表\n- 不得在戰鬥中修改安全屬
+[en_to_zh-TW] Hash: 51efc2f3e7eddb6c7130762b95275b32 | Found: ['事件'] | Preview: ## 服務/ClassPowerService\n\n輸入：\n\n- 配置類別資源選項\n- 玩家能量事件（UNIT_POWER_UPDATE、UNIT_MAXPOWER、PLAYER_TALENT_UPDATE）\n\n輸出：\n\n-
+[en_to_zh-TW] Hash: 4da9622d3ceeab985962d69319be8ad3 | Found: ['事件'] | Preview: - 從“GroundEffectStatePool”分配的標準化“GroundEffectState”和“AlertState”\n- 透過 Scheduler.after 安排發布計時器\n\n突變：\n\n- 僅擁有地面效應活動計時器表
+[en_to_zh-TW] Hash: 7591b49097c4669fba7521638e542933 | Found: ['事件', '更新時', '更新ScdFrame', '位置框架'] | Preview: # 效能指南\n\n## 熱路徑候選者\n\n目前主線熱路徑候選人：\n\n- `Main/EventAlert_Core.lua`\n  - 事件調度和處理程序\n  - `COMBAT_LOG_EVENT_UNFILTERED`\n  
+[en_to_zh-TW] Hash: 7e5b0be402a7d2cfc0362eeb7c0f2fdb | Found: ['模板'] | Preview: - `C_Timer.NewTicker(0.01, function() ...)`\n  - `C_Timer.After(1, ProcessBatch)` 用於批次掃描繼續\n- `EventAlert_SpecialPower.l
+[en_to_zh-TW] Hash: b6af37df52fd768fd43b188f12fb6d3f | Found: ['更新時'] | Preview: - 透過法術ID加入玩家減益效果並出現確認圖示。\n- 確認堆疊計數更新。\n- 確認計時器文字僅在安全時出現。\n- 當持續時間/到期時間不可用時，確認圖示保持穩定。\n- 確認玩家/寵物匹配的行為符合配置。\n- 確認空閒時沒有高頻全掃
+[en_to_zh-TW] Hash: 58feb9d77245676fc301fd579f73ac66 | Found: ['事件'] | Preview: - 快速改變目標。\n- 明確的目標。\n- 確認目標清除將所有配置的目標光環警報標記為非活動狀態。\n- 進入/離開戰鬥時目標警報處於活動狀態。\n- 確認陳舊的目標圖示已被刪除或標記為非活動狀態。\n- 確認自身減益過濾有效。\n\n#
+[en_to_zh-TW] Hash: 54a215f6fde3eb7eefc177d468b1ff90 | Found: ['事件'] | Preview: - 大量正常運作時項目 ID 掃描；\n- 每個圖示計時器和每個法術計時器刷新鏈；\n- 工具提示掃描作為正常事實來源；\n- 核心操作的外部依賴要求。\n\n## 相容性中斷\n\n預計休息時間：\n\n- 舊的經典目錄不再載入；\n- 
+[en_to_zh-TW] Hash: 75b6237f3ffce487cf0b72eadc5ce72a | Found: ['事件'] | Preview: ### 🏗️ 系統架構與 API 邊界（Architecture & API）\n* 📐 **[整體重構系統架構(Architecture)](01_ARCHITECTURE.md.html)**\n    * 資料圖層與渲染圖層（Rend
+[en_to_zh-TW] Hash: 3ef6bc189a0c2ad1754a87c5ebc6d70d | Found: ['事件'] | Preview: - `EventAlert_GroupEvent.lua`：使用者定義的條件/群組警報檢查。\n- `EventAlert_Core.lua`：插件加載，事件註冊/調度，大多數\n  頂級事件處理程序、查找、版本檢查、更新循環。\n- `E
+[en_to_zh-TW] Hash: 1083b14c7a547db08e7ff970d51922f4 | Found: ['事件'] | Preview: - `EventAlert_Aura_Target.lua`：目標光環警報和目標圖示佈局。\n- `EventAlert_Cooldown.lua`：資產/物品冷卻和SCD佈局。\n- `EventAlert_SpecialPower.lu
+[en_to_zh-TW] Hash: f263418344e88e8caf327b634dd1671c | Found: ['範本'] | Preview: 設定。\n- `EventAlert_ImportExport.lua`：匯入/匯出原型，目前已註釋\n  以XML形式輸出。\n\n目前## XML/UI 範本使用情況\n\n靜態 XML 面板使用這些範本系列：\n\n- `UIPane
+[en_to_zh-TW] Hash: c2f8dd85c7afb9f7978eb5de184c927f | Found: ['範本'] | Preview: - `CreateFrame("Frame", ...)` 用於警報圖示、點、清單容器、群組\n  框架和小地圖按鈕。\n- `CreateFrame("Cooldown", ..., "CooldownFrameTemplate")` 用
+[en_to_zh-TW] Hash: 0996edff169c49128201c264aee5ee19 | Found: ['範本', '事件'] | Preview: - `CreateFontString(..., "GameFontNormal")` 和相關遊戲字體。\n- 穿透 `Lib_ZYF:SetBackdrop` 和直接 `BackdropTemplate` 呼叫背景\n在初始化導入/導出程
+[en_to_zh-TW] Hash: adb5f9ab1d78d169f0fb04722cd540c9 | Found: ['事件'] | Preview: - `預設`：列出枚舉、事件名稱、狀態代碼、模式版本。\n- `EventRouter`：一幀，一個`OnEvent`，事件模組到的調度表。\n-`Scheduler`：一個`OnUpdate`，對應隊列，低頻回退，無\n  每個圖示計時器
+[en_to_zh-TW] Hash: 2dd62957ad1288a2517f229df5eb2499 | Found: ['事件'] | Preview: - `Slash`：`/eam` 指令解析器並偵查錯匯出指令。\n\n錯偵：\n- `DebugState`：簡潔的執行階段快照分為事實、衍生狀態、\n  人類筆記、邊界警戒和環境。\n- `PromptExport`：接著連續的類似 JS
+[en_to_zh-TW] Hash: 474312f8ddb240400e532e37ee43c09b | Found: ['事件'] | Preview: - `SPELL_UPDATE_COOLDOWN`\n- `SPELL_UPDATE_CHARGES`\n- `BAG_UPDATE_COOLDOWN`\n- `UNIT_SPELLCAST_SUCCEEDED`\n- 只有在啟用特殊資源U
+[en_to_zh-TW] Hash: cb803db7dedd44a4c0ecbb7888683ae0 | Found: ['模板'] | Preview: - 不在戰鬥中修改受保護框架的屬性、父級、錨點、大小、可見性、模板或點擊行為。\n- 不把secret/protected值、運行時快取、偵錯物件或addon回呼確定可能污染安全鏈的暴雪框架。\n- EventRouter 使用孤兒框架；渲
+[en_to_zh-TW] Hash: 33bf5da90651eb18763e7250486a10bc | Found: ['事件'] | Preview: 輸入：\n\n- 模組載入後無\n\n輸出：\n\n- 列出枚舉表、模組名稱、事件名稱、狀態參數、模式\n  版本、哨兵常見，例如“UNKNOWN”和“EMPTY”\n\n突變：\n\n- 凍結後沒有\n\n## 核心/事件路由器\n\n輸
+[en_to_zh-TW] Hash: 72c279ae600f964599a605e3a90e0c86 | Found: ['事件'] | Preview: - 透過參數化「pcall」錯誤隔離來分黨已註冊模組處理程序的調用，確保模組處理程序中的故障不會阻止其他訂閱者\n\n突變：\n\n- 擁有事件框架與事件訂閱表\n- 每項活動報名均未結束分配\n\n## 核心/調度程序\n\n輸入：\n\
+[en_to_zh-TW] Hash: c7db033fdee69a5dada80edfee69b5e2 | Found: ['事件'] | Preview: - 在使用者觸發的配置後很可能會增加“EAM_DB.revision”\n\n## 核心/本質\n\n輸入：\n\n- `GetFramerate`，戰鬥鎖定狀態，可選的`debugprofilestop`\n\n輸出：\n\n- 節流決策
+[en_to_zh-TW] Hash: 8a32db7026d6f0ceb563f0e2d7225d88 | Found: ['事件'] | Preview: - “EAM_AURA_STATE_CHANGED”事件跨越參數化狀態和frameName觸發到EventRouter\n- 來自“AuraStatePool”的標準化“AuraState”和“AlertState”\n- 邊界警告\n- 
+[en_to_zh-TW] Hash: 32d3c2dc65cfdafa2c7f8befa94e6526 | Found: ['事件'] | Preview: 突變：\n\n- 僅擁有aura運行時緩存和`AuraStatePool`\n- 無法建立UI框架\n- 不得寫入 SavedVariables\n- 當 SavedVariables 版本變更時可能會重建警報索引\n\n## 管理器/警報
+[en_to_zh-TW] Hash: a3323a31bf7ed0bdf17fc779e7ec2f24 | Found: ['事件'] | Preview: - 配置動冷卻時間分析\n- 與冷卻相關的事件和調度程序後備\n\n輸出：\n\n- 標準化的“CooldownState”和“AlertState”\n- 完整的診斷 ID\n\n突變：\n\n- 僅擁有儲存冷卻伺服器\n\n## 服務/
+[en_to_zh-TW] Hash: 6910a4f352f19ded0a2f6d490a5b1a51 | Found: ['事件'] | Preview: - 戰鬥非中本機幀的零污染不可見設定（Alpha = 0）\n\n突變：\n\n- 僅擁有內部記憶體ID到框架映射映射\n- 不得在戰鬥中修改安全屬性\n\n## 服務/ItemCooldownService\n\n輸入：\n\n- 配置的
+[en_to_zh-TW] Hash: 6b20c8e1d059bffaba3fe848a69d4469 | Found: ['事件'] | Preview: - 能量玩家事件（UNIT_POWER_UPDATE、UNIT_MAXPOWER、PLAYER_TALENT_UPDATE）\n\n輸出：\n\n-目前類別電源類型的動態中央配置編號和警報狀態，在電源更新期間跨越“pcall”隔離和“iss
+[en_to_zh-TW] Hash: 470410551105933c8f45fba2cebeff1e | Found: ['事件'] | Preview: 輸入：\n\n- 配置地面影響項目（動態/手動模式）\n- 戰鬥日誌事件未過濾（SPELL_CAST_SUCCESS）\n- 施法成功期間低頻 C_TooltipInfo.GetSpellByID 查找\n\n輸出：\n\n- `EAM_G
+[en_to_zh-TW] Hash: 259538680aec5e7815c243bd5ffa2a54 | Found: ['事件'] | Preview: ## 服務/圖騰服務\n\n輸入：\n\n- 薩滿圖騰事件（PLAYER_TOTEM_UPDATE）\n- 本機C_Totems.GetTotemInfo API更新\n\n輸出：\n\n- “EAM_TOTEM_STATE_CHANGED
+[en_to_zh-TW] Hash: 3bfbb4757a054afdbe7bcffc72be61ed | Found: ['事件', '更新時', '位置框架'] | Preview: # 狀況指南\n\n## 熱路徑候選者\n\n目前主線熱路徑選舉：\n\n- `Main/EventAlert_Core.lua`\n  - 事件調度和處理程序\n  - `COMBAT_LOG_EVENT_UNFILTERED`\n  -
+[en_to_zh-TW] Hash: 5a3c1be1eaba888b8f8548495e560179 | Found: ['更新ScdFrame'] | Preview: - `更新ScdFrame`\n  - `ScdPositionFrames`\n- `Main/EventAlert_ItemSpellCache.lua`\n  - 物品範圍瀏覽器\n- `Main/EventAlert_Special
+[en_to_zh-TW] Hash: 19cea2311cd6e0bf5eec59c287f7f87a | Found: ['模板'] | Preview: - 設定報告\n- 活動狀態儲備\n- 骯髒的隊列\n- 圖示池記錄\n- 規劃計畫作業記錄\n- 發育圓形弧度\n- 設定預設模板\n\n避免在熱路徑中：\n\n- 每個光環的瞬態表\n- 當直接數字索引分配就足夠時`table.inse
+[en_to_zh-TW] Hash: fbb23e2fbcc54901a29b3953fc48bc93 | Found: ['更新時'] | Preview: - 確認玩家/寵物匹配的符合行為配置。\n- 確認空閒時沒有高清全掃描。\n- 確認`UNIT_AURA`增量更新過程`addedAuras`、`updatedAuraInstanceIDs`和`removedAuraInstanceIDs
+[en_to_zh-TW] Hash: 155d07e96073dd2cfd3d012f02c64097 | Found: ['事件'] | Preview: - 确认安全时可用的辉光遵循「C_Spell.IsSpellUsable」。\n- 確認沒有按下計時攪拌。\n\n## 專案冷卻測試\n\n- 直接加入itemID 冷卻時間。\n- 如果支持，請使用裝備的物品和庫存物品。\n- 確認物品冷
+[en_to_zh-TW] Hash: b2bc8285ef7f126f6d90289dc6afc2f8 | Found: ['事件'] | Preview: - ScrollBox secret：官方修改secret出現在滾動框區域時造成的問題。 EAM若未來做設定列表，仍需避免把secret/protected原始值放入可捲動UI。\n- 聊天增益事件：貨幣、榮譽、戰利品、金錢、聲望、XP增益
+[en_to_zh-TW] Hash: 5a16e003febeb739281275a2d654bec6 | Found: ['事件'] | Preview: - `C_EncounterEvents` 顏色 API 支援文字警告、時間軸事件、5秒剩餘事件與 alpha 值。 EAM 遇到事件時間線暫時無法整合。\n- SimulateMouse API 不再攜帶污染，但目前只能在滑鼠焦點都不是禁
+[en_to_zh-TW] Hash: 376b6b3e67e8b1fb9a9db62172cc0e9a | Found: ['事件'] | Preview: - Mythic Plus 運行歷史/最佳 API 回傳 `CalendarTime` 結構。 EAM 不使用。\n- `GROUP_FORMED` 修改follower dungeon / delve單人進入時的事件發送。 EAM目前不依
+[en_to_zh-TW] Hash: 306df38b99a8043f3a674624398a6fea | Found: ['更新時'] | Preview: - 確認玩家/寵物匹配的符合行為配置。\n- 確認空閒時沒有高清完整掃描。\n- 確認`UNIT_AURA`增量更新過程`addedAuras`、`updatedAuraInstanceIDs`和`removedAuraInstanceID
+[en_to_zh-TW] Hash: 64b351febdb859721a0a2350528532ec | Found: ['事件'] | Preview: - 確認沒有加大攪拌。\n\n## 專案冷卻測試\n\n- 直接加入itemID 冷卻時間。\n- 如果支持，請使用裝備的物品和庫存物品。\n- 確認物品冷卻事件刷新。\n- 確認初始未建造物品服務器。\n- 在戰鬥之外開始可選的快速建造。
+[en_to_zh-TW] Hash: 3328a1e4353f60626a3de151a80add62 | Found: ['事件'] | Preview: - 每個圖示計時器和每個繪圖計時器刷新鏈；\n- 工具提示掃描作為正常事實來源；\n- 核心操作的外部依賴要求。\n\n## 相容性中斷\n\n預計休息時間：\n\n- 舊的經典目錄不再載入；\n- 依賴傳統經典特定資源的使用者會忽略這些警
+[en_to_zh-TW] Hash: 913e7bf6ba54f9fbc03c13a7f51f1755 | Found: ['事件'] | Preview: - 此操作將引發致命錯誤：「嘗試索引無法使用密鑰索引的表」。\n  - 在查表前，必須以 `if not issecretvalue(key) and canaccesstable(tbl) then ... end` 的本地就地模式進行預
+[en_to_zh-TW] Hash: 146d0d84f9c4a847275e24fc9cecf8ee | Found: ['事件'] | Preview: - 冷卻時間不安全時，請勿自行猜測start/duration。\n- GCD判斷應使用安全欄位，例如`isOnGCD`，並使用即時正式服驗證。\n- `isOnGCD` 只在 `SPELL_UPDATE_COOLDOWN` 事件脈絡下作為
+[en_to_zh-TW] Hash: 566375abe223413356feff2506a46f82 | Found: ['事件'] | Preview: - Tooltip解析會產生字串與表格解析成本，不可放在`OnUpdate`。\n\nEAM實施規則：\n\n- 工具提示解析只能在事件觸發、快取未命中、設定變更、或低頻空閒回退時執行。\n- 不可在 `Renderer` 執行。\n- 不
+[en_to_zh-TW] Hash: 381c6641add9ebc760533af9724a9cf3 | Found: ['事件'] | Preview: - 快取建置必須僅空閒、非戰鬥、FPS-aware、可中斷。\n- 不可在戰鬥中掃除大規模物品。\n- 不可將快取建構器放置登錄熱路徑。\n\n## 事件與架構\n\n12.x 不適合讓 EAM 繼續依賴戰鬥日誌盲掃。\n\n建議活動：
+[en_to_zh-TW] Hash: a45d9b80619a5068672ef8ec6d7f3da5 | Found: ['事件'] | Preview: 實行規則：\n\n- 使用單一`EventRouter`框架。\n- 事件框架可用`CreateFrame("Frame", nil, nil)`形成孤兒框架，降低UI污染風險。\n- 不使用 `RegisterAllEvents`。\n-
+[en_to_zh-TW] Hash: cf11a659bf60ff80544e45b99e02f683 | Found: ['事件'] | Preview: - `SpellCooldownInfo.isOnGCD` 是否可靠。\n- `C_TooltipInfo.GetUnitAuraByAuraInstanceID`對秘密光環的限制。\n- 動態工具提示行是否可能是秘密使用者資料。\n- 秘
+[en_to_zh-TW] Hash: 8c29afd738674832be7751174652876b | Found: ['事件'] | Preview: 結論：\n\n- 新架構可保留簡單的 XML 載入器，但執行時間圖示應取代「IconPool」。\n- 避免XML內建立大量的全域框架名稱。\n- 避免 XML `OnUpdate`。\n\n### 活動\n\n`Events` / `Ca
+[en_to_zh-TW] Hash: 07b37d3cfcaec3e9745a9b447ca21c58 | Found: ['事件'] | Preview: 結論：\n\n- 可參考拖曳框實作。\n- 不要直接複製閉包重載的範例到運行時熱路徑。\n- 選項UI可以保留簡單，避免WeakAura之類的系統。\n\n## 對 EAM Docs 的後續建議\n\n- `Docs/01_ARCHITEC
+[en_to_zh-TW] Hash: c58e2faacb77556a855af87bce1ae92a | Found: ['範本'] | Preview: - 不要提供WoW正式服實機驗證，除非確實已載入測試。\n\n## 對未來開發的要求\n\n新增或需重構任何載入正式文件時，先補齊文件體系註解，再實踐作邏輯。若某些檔案只是 `LegacyReference`、`ReferenceLibs`
+[en_to_zh-TW] Hash: b8e2d90bb78fef1f579ca5a0c98bd514 | Found: ['事件'] | Preview: 其餘庫目前不建議納入 EAM 核心，原因多半是過重、用途不符、更新、依賴太鍊長，或與 EAM 自建的 EventRouter/Scheduler/SavedVariables 方向重疊。\n\n## 候選評估\n\n| 圖書館 | Curs
+[en_to_zh-TW] Hash: 79eb90318e5e0598b00a2233be575344 | Found: ['事件'] | Preview: Ace3 是完整的框架，包含 Cycle、SavedVariables、event、config、GUI、timer 等能力。這些能力與 EAM Retail 重寫的自建核心重疊，而且生命會增加負載成本。 LibInit 又是 Ace3 封
+[en_to_zh-TW] Hash: 0d55bc097179de6a12906d6abef8ee49 | Found: ['事件'] | Preview: 1. 魔獸世界 12.x 中的`C_UnitAuras.GetAuraDuration`所傳回的`DurationObject`雖然被保​​護（秘密），但原生UI本身可以進行綁定渲染。\n  2.由於 `DurationObject` 無法
+[en_to_zh-TW] Hash: a211271ddc0e95cabcfd74e1ab332ebe | Found: ['事件'] | Preview: ### 2026-06-07 診斷工具 PromptExport/DebugState 讀取舊版欄位導致 visibleIcons 恆為 0 暨 alertFrame.exists 恆為 false Bug (已)\n\n- 狀態：已解決\
+[en_to_zh-TW] Hash: bb26ebefdc2d2cbbf30ab902dded8c2c | Found: ['事件'] | Preview: - 後續注意事項：實機驗證時，請少年欸重新加載，再次匯出調試日誌JSON，驗證`visibleIcons`數值是否已與實體圖示渲染完全一致（顯示大於0的正確數量），並且聊天視窗噴出錯誤。\n\n### 2026-06-07 註冊內部自訂事件
+[en_to_zh-TW] Hash: 4f130aa3bda1832851bb9dab286ba5ac | Found: ['事件'] | Preview: 在`/reload`載入外掛程式時，魔獸世界直接推送大紅字錯誤：`EAM Init Error on [AlertManager]: Frame:RegisterEvent(): Attempt to registerknown event
+[en_to_zh-TW] Hash: 52b50acb661a76dd20a358e4d8fdf564 | Found: ['事件'] | Preview: 2. 譯`EventRouter.register`的實作是不管任何事件均調用`frame:RegisterEvent(event)`往急劇暴雪框架註冊。\n  3. 魔獸世界 12.x 中斷 `RegisterEvent` API 嚴格限
+[en_to_zh-TW] Hash: 4bf648347c74bde2be8e230cc97de396 | Found: ['事件'] | Preview: 在 [Core/EventRouter.lua](file:///d:/EventAlertMod/Core/EventRouter.lua) 的 `EventRouter.register(event, handler)` 中引入自編輯事
+[en_to_zh-TW] Hash: 05e82b95bbcfa29ce4eecdb4d9fc74f6 | Found: ['事件'] | Preview: - 後續注意事項：實機驗證時需注意，觀察在`/reload`載入後，聊天視窗是否不再噴出任何RegisterEvent錯誤紅字，且EAM警報在各服務自訂事件觸發下能正常渲染。\n\n### 2026-06-07 全新安裝或WTF檔案不存在時
+[en_to_zh-TW] Hash: d64c57bbcebace0bfa99bfb89d50176c | Found: ['事件'] | Preview: 2. 當全新載入時，舊版變數不存在，因此`alerts`清單完全為空。\n  3.各個監控服務（`AuraService`、`CooldownService`等）均使用`EAM_DB.alerts`進行篩選，若警報為空則直接返回，不推送任何
+[en_to_zh-TW] Hash: 7902e5165caf7842438e14d15909bef1 | Found: ['更新時'] | Preview: - 後續注意事項：實機驗證時需注意，觀察當 spellID 建立時，能否透過紋理 ID 穩定吸附到官方對應的冷卻圖示上。\n\n### 2026-06-07 CooldownService/AuraService 呼叫 secrecy AP
+[en_to_zh-TW] Hash: 51267e44f5d984866c14ef225accfd12 | Found: ['事件'] | Preview: 4. **安全性防禦**：EAM圖示保持僅顯示，不註冊任何點擊或滑鼠事件，引發Taint傳回安全鏈。\n- 後續注意事項：實機驗證時需注意官方 CooldownViewer 的 Alpha 是否為 0 且 EAM 圖示吸附正確，在戰鬥中冷卻
+[en_to_zh-TW] Hash: d1a0a66670f6fde3992ffc842a898579 | Found: ['事件'] | Preview: 2.戰鬥中能量監控模組(ClassPowerService.lua)對`UnitPower`的傳回值直接比較進行時可能會遇到受限秘密值/秘密表而崩潰。\n  3.`Core/EventRouter.lua`與`Core/Scheduler.
+[en_to_zh-TW] Hash: 47f70cc5753e2bc9f912a82abecdb29d | Found: ['模板'] | Preview: 。然而，我們的警報圖示是純顯示框架，不承擔任何安全動作（如點擊、施法、定位等），也沒有繼承任何安全模板。 WoW引擎完全在戰鬥中對不安全框架進行定位與顯隱。過度防範反而導致了戰鬥中警報完全隱形，失去了AddOn的價值。
+[en_to_zh-TW] Hash: 626498a52ff76a7050147aaca462ebd8 | Found: ['模板'] | Preview: - 症狀：原渲染器只維護單一警報框架，排版固定由左至右。在大拉怪模板CD爆發的威脅下，單一框架會佈局腫脹雜亂，無法區分優先級與資訊分流；同時缺乏對無光環地面技能（如暴雪、寶若珠）與薩滿多圖騰、職業資源積分的獨特監視。
+[en_to_zh-TW] Hash: 0834ffe2c361fe0433f70dee46c2e71c | Found: ['事件'] | Preview: ### 2026-05-30 致命.toc 載入順序陷阱：局部變數緩存致 Renderer for nil 爆炸渲染 (已解決)\n\n- 狀態：已解決、待實機驗證\n- 模擬：實機測試中，所有的WoW事件均完美觸發（包括`UNIT_AUR
+[en_to_zh-TW] Hash: 7f55378a07e5b3de08e23705b9302928 | Found: ['事件'] | Preview: - 當服務被載入時，在檔案頂部執行了`local Renderer = EAM.UI and EAM.UI.Renderer`。由於此時`Renderer.lua`尚未執行，`EAM.UI.Renderer`為`nil`，導致服務內部的局部
+[en_to_zh-TW] Hash: a080be2f143fda0134388768eee6f093 | Found: ['事件'] | Preview: 2. 渲染器 `UI/Renderer.lua` 在高度光環帶來數值變化時，`tostring(alertState.stacks)` 會在戰鬥中產生大量的微型字符串 GC 負擔。\n- 原因判斷：高頻事件下任何形式的`..`字符串拼接與`
+[en_to_zh-TW] Hash: a887d8181771cc0684dd0ab19aeb9dfb | Found: ['更新時'] | Preview: 2. **大量次數靜態緩存（STACK_STRINGS）**：於`UI/Renderer.lua`引入`STACK_STRINGS`組合，預先將`1`至`100`的大量次數轉換為靜態字串。大量更新時，直接從`O(1)`佇列中取得已快取字符串
+[en_to_zh-TW] Hash: 31b3ec17bfd01c640a138c9c42dee903 | Found: ['事件'] | Preview: - 威脅：為12.0.7 PTR/Retail CooldownService 與渲染器，避免戰鬥高頻事件（如`SPELL_UPDATE_COOLDOWN`、`SPELL_UPDATE_CHARGES`）帶來的GC負載、污點污染與視覺殘影。
+[en_to_zh-TW] Hash: 8a310e08c613a9098136c206bbfef46a | Found: ['事件'] | Preview: - 原因判斷：WoW 12.x引入了嚴格的Secret/Protected限制。如果不隔離Secret數據，直接將其作弊或字符串造成可能污染AddOn安全鏈。另外，在高度事件下分配臨時表會導致微小GC停頓，影響遊戲FPS。\n- 已嘗試方法
+[en_to_zh-TW] Hash: e10cbeee8d05114cc237216301c27a49 | Found: ['範本'] | Preview: - 嘗試方法：使用最小化測試範本建立`DurationObject`、`SecondsFormatter`、`DurationTextBinding`，並綁定到FontString。\n- 有效解法：使用者返回在12.0.7 PTR客戶端中
+[en_to_zh-TW] Hash: 63aa784bcfacf2dcd0e0f327fae4929c | Found: ['範本'] | Preview: - 已嘗試方法：搜尋並載入多代理工具；判斷本輪只是小型檔案規則更新，不適合立即產生子代理程式。新增`Docs/17_SUBAGENT_WORKFLOW.md`，並將規則加入`AGENTS.md`。\n- 有效解法：定義關鍵路徑/邊車任務判斷
+[en_to_zh-TW] Hash: a7bc9b37f431ea18b521b3e5ea20e0a9 | Found: ['事件'] | Preview: ### 2026-06-07 12.x / Midnight-era 16 大全新與高頻事件融入與Action Bar Glow同步實踐\n\n- 狀態：已解決\n- 模具：魔獸世界 12.x 正式移除了`COMBAT_LOG_EVENT_
+[en_to_zh-TW] Hash: 703b7b68781c86213b6ffa79f3dea471 | Found: ['事件'] | Preview: - 症狀：先前效果依賴 CLEU 的 `SPELL_CAST_SUCCESS`；光環/CD 圖示的高亮也缺乏對原生操作列金色亮框事件的即時訂閱，常因手動故障出現延遲技能或故障；且潛在切換造成覆蓋時停止圖示滯留。
+[en_to_zh-TW] Hash: 180ef6b53b965eeca76839df588d147e | Found: ['事件'] | Preview: 2. 在 `ClassPowerService.lua` 中，註冊 `UNIT_POWER_FREQUENT` 事件提供無延遲能量回饋。\n  3.在`CooldownService.lua`中，註冊`COOLDOWN_VIEWER_SPE
+[en_to_zh-TW] Hash: e228934ae0bc040bca5d014d7444c5e8 | Found: ['模板', '事件'] | Preview: 4.在`AlertManager.lua`中訂閱`SPELL_ACTIVATION_OVERLAY_GLOW_SHOW/HIDE`，維護`glowSpells`表並在`onAlertStateChanged`做模板裝飾（De corator
+[en_to_zh-TW] Hash: 3e405eacc403cb1cb7523c598abde6ec | Found: ['事件'] | Preview: - 一些光環正常運行時間類插件放棄戰鬥光環spellID比較，改用cast事件與安全窗口提示，但必須標記為派生，不可冒充光環事實。\n- Cooldown類外掛明顯往Blizzard Cooldown Manager整合、DurationO
+[en_to_zh-TW] Hash: 96ebe1cae6328f4f2fc7f986c124b153 | Found: ['模板'] | Preview: 2. 已完成 P1/P2 初版：SavedVariables add/remove API、Slash add/remove、AuraService `UNIT_AURA` 增量感知快取、調試快照增補。\n3.已完成P2後半：AuraSer
+[en_to_zh-TW] Hash: 457957f80f2bba64fbae2d95ecca5995 | Found: ['模板'] | Preview: 除非任務有明確理由，子代理程式使用預設繼承模型；不指定較昂貴或不同模型。\n\n## 派工模板
+[en_to_zh-TW] Hash: ac2ac2f072608b7294613dd4ad0f69c9 | Found: ['模板'] | Preview: * **EAM_UI_Renderer_Expert（UI 與渲染架構專家）**\n    * **職責**：專注UI與資料嚴格分離（渲染器只消費歸一化狀態）、`IconPool`與`CooldownFrame`渲染管理、選項選單佈局與12
+[en_to_zh-TW] Hash: 55c77eb49ef595d87da76ceb7c2d1ca8 | Found: ['事件'] | Preview: * **職責**：針對「陰道ScrollingMessageFrame原始解密法」、「一鍵硬體事件提權宏」、「官方UI資料爬蟲（UI Scraping）」等高漏洞漏洞進行生命防週期阻塞與優化平穩降級稽核。\n\n### 2.玩家體驗與實戰監

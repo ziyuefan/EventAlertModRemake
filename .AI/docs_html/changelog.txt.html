@@ -1,13 +1,284 @@
--- [Retail 12.1 Alpha 7]2026.08.23
-    -- Target Aura 提供匿名 diagnostics 與明確 /eam add target 手動 popup route；不保存 Secret、AuraData、Frame 或猜測 ID。
-    -- 技能冷卻監控改為只在玩家精確成功施放清單技能後首次 render；新增 cooldownRemoveAura、showSCDOutsideCombat、glowSCDWhenUsable 三項 per-spell nil／true／false 覆寫。
-    -- 新增戰鬥中非清單治療法術、PLAYER_REGEN_ENABLED、形態刷新不得批量開啟冷卻圖示的回歸防護。
--- [Retail 12.1 Alpha 6 Cooldown Activation]2026.08.23
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>changelog.txt - EventAlertMod 說明文件</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        color: var(--text-color);
+        font-size: 0.95em;
+        line-height: 1.5;
+    }
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+        <h1>changelog.txt</h1>
+        <pre><code>-- [Retail 12.1 Alpha 6 Cooldown Activation]2026.08.23
     -- 技能冷卻監控只在玩家精確成功施放對應清單技能後首次 render；非清單治療法術、脫戰、refresh 或形態事件不會批量開啟。
     -- 冷卻移除光環、脫戰顯示與可用高亮支援全域繼承及單技能 true／false 覆寫，false 可保存；到期顯示由冷卻服務依設定決定。
 -- [Retail 12.1 Alpha 6 Target Aura Diagnostics]2026.08.23
     -- TooltipMonitorService now exposes anonymous Target Aura callback/candidate timing, expiry count, Ctrl+Alt modifier state, CVar read/set result, and last open reason; no Secret, AuraData, Frame, or guessed ID is retained.
-    -- /eam add target opens the existing manual Target Aura popup; /eam add target <spellID> direct add remains unchanged.
+    -- /eam add target opens the existing manual Target Aura popup; /eam add target &lt;spellID&gt; direct add remains unchanged.
     -- Ctrl+Alt still requires a fresh safe tooltip/heartbeat candidate and remains fail-closed in combat, with keyboard focus, or without an exact modifier chord.
 -- [Retail 12.1 Alpha 6 Player Resource Runtime Follow-up]2026.08.21
     -- 每項玩家資源可獨立設定 anchor、position、大小、間距、前景／背景與顯示方式；非戰鬥設定立即套用，戰鬥中的結構變更延後至離戰合併一次。
@@ -130,11 +401,11 @@
 	-- 每個框架擁有完全獨立的 X/Y 座標，並在「移動提醒框架」模式下同步顯露對應半透明標籤定位背景，支援滑鼠個別獨立拖曳與位置儲存。
 	-- 實現極致效能的連續數字索引 Layout 優化政策（以 table.freeze 鎖定 LAYOUT_OFFSETS 方向偏移靜態陣列），利用單一算術乘法取代多重 If-Else 條件分支，消除字串雜湊查找與 CPU 碰撞開銷！
 	-- 新增「無光環地面技能監控」服務 (GroundEffectService.lua) [NEW]：
-	   -- 監聽 SPELL_CAST_SUCCESS，支援「Tooltip 動態解析」與「手動設定時間 & 一鍵擷取填入」雙軌計時模式。
+	   -- 監聽 SPELL_CAST_SUCCESS，支援「Tooltip 動態解析」與「手動設定時間 &amp; 一鍵擷取填入」雙軌計時模式。
 	   -- 施放瞬間讀取一次，完全不在 OnUpdate 輪詢 Tooltip，100% 避免 CPU 損耗，並以 Scheduler 進行集中延遲到期釋放。
 	-- 新增「圖騰監控」服務 (TotemService.lua) [NEW]：調用 12.x 原生 C_Totems.GetTotemInfo 直讀薩滿等圖騰，即時靠攏排列並遵循成長方向向量。
 	-- 新增「職業特殊能量監控」服務 (ClassPowerService.lua) [NEW]：依職業動態呈現核心能量 (聖能、連擊點、碎片、真氣、秘法充能等)，採用經典 Icon + 中央大號層數字體顯示，歸 0 自動隱藏。
-	-- 重塑 Position & Energy 設定面板為 560px 寬度的雙分欄 Premium 佈局：左 Sliders & 7大 Alert Frame 成長選單，右職業能量 Checkboxes，對稱開闊。
+	-- 重塑 Position &amp; Energy 設定面板為 560px 寬度的雙分欄 Premium 佈局：左 Sliders &amp; 7大 Alert Frame 成長選單，右職業能量 Checkboxes，對稱開闊。
 	-- 在 Popup 法術條件視窗中實作地面效果多態切換面板，整合「啟用動態 Tooltip 擷取 Checkbox」、「手動設定時間 EditBox」與「一鍵擷取 Button」，操作得心應手。
 	-- 升級 /eam doctor (RuntimeProbe) 診斷模組，為少年欸目標性提供實時多框架座標、成長方向、新 Service 載入狀態的詳細測試與除錯資訊。
 
@@ -150,7 +421,7 @@
 -- [Classic MOP    ]2025.11.26
 -- [Retail  TWW    ]2025.11.26
 	-- 新增俄語，感謝 ZamestoTV 大大協助翻譯。(https://legacy.curseforge.com/members/zamestotv/projects)
-	
+
 -- [Classic MOP    ]2025.11.11
 -- [Retail  TWW    ]2025.11.11
 	--微調顯示秒數小數點進位顯示方式:經典服改用ceil(timeLeft,0);正式服改用floor(timeLeft,0)
@@ -159,10 +430,10 @@
 		傳方式差異導致MOP無法正確讀取數值，導致光環不消失(被視同常駐光環)
 	--修正:cooldown模組內的GCD因MOP光環API仍使用舊式返回方式導致技能冷卻不消失
 	--修正:MOP內目標框架上的光環提示已能顯示法術ID
-	--光環數值依照語系不同，中文10000以上會以"万"或"萬"顯示
+	--光環數值依照語系不同，中文10000以上會以&quot;万&quot;或&quot;萬&quot;顯示
 		;其他語系則1000以上以 K 顯示，百萬以上以 M 顯示.
-	
-	
+
+
 -- [Classic MOP    ]2025.11.05
 -- [Retail  TWW    ]2025.11.05
 	--增減益光環細項設定增加光環數值顯示，可以自選需求索引及設定標籤(如吸收、報擊)
@@ -170,7 +441,7 @@
 	--更新頻率參考FPS由60FPS改成30FPS,避免過早降低頻率造成秒數更新不準確
 	--新增圖示名稱、倒數、層數字體滑條調整選項，並將調整數字以綠色顯示｝
 	--若倒數選擇框內顯示、此時又有層數時，會將倒數的右下角對齊層數左上角，避免遮擋
-	
+
 -- [Classic MOP    ]2025.10.26
 -- [Retail  TWW    ]2025.10.26
 	--降低偵測物品冷卻時性能開銷。
@@ -191,7 +462,7 @@
 
 -- [Retail  TWW    ]2025.10.03
 -- [Classic MOP    ]2025.10.03
-   -- 增加函數耗時紀錄，並於遊戲內以/tinspect _G.EventAlertMod.TEST 進行觀察    
+   -- 增加函數耗時紀錄，並於遊戲內以/tinspect _G.EventAlertMod.TEST 進行觀察
    -- 增加DK符文列開關
    -- 持續優化改善
 
@@ -201,7 +472,7 @@
 	2.PostionFrame 更新頻率改為1秒
 	3.秒數監測由PositionFrame移動到OnUpdate,並依照每個法術剩餘秒數狀台決定是否繼續,避免大量重複呼叫
 	4.增加防止重入機制
-	
+
 -- [Retail  TWW    ]2025.3.16
 -- 將冷卻相關選項移動到設定視窗直接做勾選
 -- 增加 /eam ExportClassToDef (可簡短為/eam ECTD)
@@ -217,13 +488,13 @@
 -- [Retail  TWW    ]2025.1.10
 -- [Classic CATA   ]2025.1.10
 -- 持續優化
--- 
+--
 
 -- [Retail  TWW    ]2025.1.9
 -- [Classic CATA   ]2025.1.9
 -- 更新API以支援TWW及CATA
 -- 調整更新頻率為0.75秒,剩餘時間低於1秒才改為更新頻率0.09秒, 減少觸發ONUPDATE事件佔用過多CPU時間
--- 
+--
 
 -- [Retail  DF    ]2023.03.23
 -- [Classic WOTLKC]2023.03.23
@@ -313,7 +584,7 @@
 ----------------------------
 -- [SL] 2021.04.14
 ----------------------------
--- 改善物品冷卻顯示正確性(比對優先級:已裝備物品(Inventory) > 背包物品(Bag) > 第一次建立的資料庫(EA_SPELL_ITEM))
+-- 改善物品冷卻顯示正確性(比對優先級:已裝備物品(Inventory) &gt; 背包物品(Bag) &gt; 第一次建立的資料庫(EA_SPELL_ITEM))
 -- 針對工程附魔硝基推進器的ID做特別處理(GetItemSpell取得皆為55004,但使用觸發皆為54861)
 -- 於物品滑鼠提示內的法術ID增加顯示法術名稱
 
@@ -361,16 +632,16 @@
 -- 修復連擊點高亮, 並一律以最大值高亮(依專精天賦可能不同)
 -- 修復獵人寵物集中值高亮,並預設50高亮,
    可配合手動施放寵物傷害技能時,最大化傷害.
--- FontObject(EA_FONT_OBJECT) 儘可能以"TextStatusBarText"為主,
-   否則以"ChatFontNoramal"為主
--- Font (EA_Fonts) 拉取系統預設值 STANDARD_TEXT_FONT, 
+-- FontObject(EA_FONT_OBJECT) 儘可能以&quot;TextStatusBarText&quot;為主,
+   否則以&quot;ChatFontNoramal&quot;為主
+-- Font (EA_Fonts) 拉取系統預設值 STANDARD_TEXT_FONT,
    以/dump STANDARD_TEXT_FONT 可能因語系出現不同標準字型檔
--- 以上兩項可於 EventAlertMod_InitVar.lua進行修改  
--- 將大部分框架層級由HIGH降至MEDIUM ,嘗試減少與其他框架遮擋現象 
+-- 以上兩項可於 EventAlertMod_InitVar.lua進行修改
+-- 將大部分框架層級由HIGH降至MEDIUM ,嘗試減少與其他框架遮擋現象
 -- 圖示大小每次滑動調整值由5改為1
 -- 當偵測OmniCC被載入且EAM也啟用倒數陰影功能時, 強制關閉EAM的倒數陰影
-   避免被OmniCC攔截顯示造成干擾   
-   
+   避免被OmniCC攔截顯示造成干擾
+
 ----------------------------
 -- [SL] 2020.10.18
 ----------------------------
@@ -407,15 +678,15 @@
 -- 修改非光環式地面效果的比對PATTERN使之可以在PTR比對到
     例如:116011(主動力之符文)、342130(被動力之符文)
     (註:這類效果需要在自身增減益輸入施法ID,而非BUFF ID,須特別注意)
-	
+
 ----------------------------
 -- [SL] 2020.08.16
 ----------------------------
 --更新TOC版本號到9.0(90001)
 --因應暴雪對backdrop的操作異動做相關修改使顯示正常
 --LibButtonGLow的高亮函式壞掉,改用LibCustomGLow的
-   LibStub("LibCustomGlow-1.0").ButtonGlow_Start(eaf)及
-   LibStub("LibCustomGlow-1.0").ButtonGlow_Stop(eaf)
+   LibStub(&quot;LibCustomGlow-1.0&quot;).ButtonGlow_Start(eaf)及
+   LibStub(&quot;LibCustomGlow-1.0&quot;).ButtonGlow_Stop(eaf)
 --其他忘記改了啥東西
 
 ----------------------------
@@ -424,7 +695,7 @@
 -- 更新版本號到8.2
 -- 修復:由於播放音效API不再支援PATH形式,所以產生錯誤
         目前全都到https://wow.tools/files/ 找到對應ID代入
-		
+
 ----------------------------
 -- [BFA] 2019.06.07
 ----------------------------
@@ -460,7 +731,7 @@
 -- 修復非光環式技能會顯示到自身以外玩家的問題
 -- 修復堆疊數字閃爍問題
    (可在EventAlert_IconOption.lua內找到EventAlert_Icon_Options_Frame_AdjustTimerFontSize來修改比例)
-   
+
 ----------------------------
 -- [BFA] 2018.09.29
 ----------------------------
@@ -476,20 +747,20 @@
 ----------------------------
 -- [BFA] 2018.08.29
 ----------------------------
--- 支援無光環之技能持續秒數,請在本職業提示模組輸入"技能法術ID"
+-- 支援無光環之技能持續秒數,請在本職業提示模組輸入&quot;技能法術ID&quot;
    程式會自動抓取技能提示內的持續時間,若抓取不到,請查閱修改localization.tw.lua內
    的EA_XCMD_SPELL_DURATION_PATTERN1, EA_XCMD_SPELL_DURATION_PATTERN2的正則表達式
-   
+
    例如暴風雪(190356),鏡像(55342),冰霜之球(84714),力之符文(116011)等等
    P.S. 116011是符文持續時間,116014是在符文有效範圍內才會出現的BUFF
-   
+
 ----------------------------
 -- [BFA] 2018.08.25
 ----------------------------
 -- 新增指令 /eam NewLineByIconCount (2~n)
 	在冷卻模組部份,每隔多少圖示自動跳到下一列
--- 新增指令 /eam UpdateInterval 
-   控制OnUpdate頻率 , 超過0.1秒則小數點顯示會不正常, 但是較不會延遲   
+-- 新增指令 /eam UpdateInterval
+   控制OnUpdate頻率 , 超過0.1秒則小數點顯示會不正常, 但是較不會延遲
 -- 一些特殊指令會在設定圖示的滑鼠提示顯示
 
 ----------------------------
@@ -519,7 +790,7 @@
 -- [LEG] 2017.06.29
 ----------------------------
 -- 修復因加入物品CD功能而導致技能CD失常的現象
--- 
+--
 ----------------------------
 -- [LEG] 2017.06.26
 ----------------------------
@@ -532,7 +803,7 @@
 ----------------------------
 -- 針對力之符文(116014)做特別處理
    (SPELL_SUMMON事件紀錄開始時間,EventAlert_Buffs_Update函式強迫寫入持續時間10秒)
--- 修正UIDropDownMenu調用不完全的問題(toc加入另外兩個lua的路徑)   
+-- 修正UIDropDownMenu調用不完全的問題(toc加入另外兩個lua的路徑)
 
 ----------------------------
 -- [LEG] 2017.06.21
@@ -540,7 +811,7 @@
 -- 針對taint 問題調用 UIDropDownMenu修正用函式庫及新版的 LibButtonGlow1.0 函式庫來降低taint的產生
 
 -- 技能冷卻增加了物品冷卻，但是不可以輸入物品ID(Item ID),只能輸入施放的法術ID萊建立，可使用/eam showc 來查詢，
-   然而物品的CD若是"使用型"則可以透過GetSpellBaseCooldown(法術ID)來查詢,程式會自動判別
+   然而物品的CD若是&quot;使用型&quot;則可以透過GetSpellBaseCooldown(法術ID)來查詢,程式會自動判別
    但若是特定條件觸發且有內置CD的則需要玩家手動輸入固定值，目前用比較不方便的作法就是在法術ID的輸入格式
    後面以分號(;)隔開輸入冷卻秒數。例如
    賽弗斯的祕密就輸入208052;30
@@ -548,11 +819,11 @@
    輸入後若無法馬上作用請/rl或/reload 重載UI
    若曾經建立過該法術ID但沒有輸入過秒數或秒數錯誤，則請先刪除，再重新建立。
    之後再找時間改善
-   
+
 -- 計數文字改為黃色並且加上陰影
 
 -- 堆疊文字加大並加上陰影
-   
+
 ----------------------------
 --[LEG] 2017.06.19
 ----------------------------
@@ -563,7 +834,7 @@
 ----------------------------
 -- 技能冷卻模塊現在可以設定比重排序了(其他4項暫時無效果，建議不要設定)
 
--- 條件式群組技能將連擊點由"連擊點異動類"移到"對象能量異動類"
+-- 條件式群組技能將連擊點由&quot;連擊點異動類&quot;移到&quot;對象能量異動類&quot;
 
 -- 修復條件式群組技能連擊點失效問題
 
@@ -574,7 +845,7 @@
 -- 修復在星界能量轉換到UpdateSinglePower函數處理後
    仍有程式碼片段引用舊函數UpdateLunarPower 所導致的錯誤。
 
--- 星能變更了一個圖案，使其較有"星"的感覺。
+-- 星能變更了一個圖案，使其較有&quot;星&quot;的感覺。
 
 -- 調整職業資源高亮邏輯:狂怒戰士怒氣配合暴怒技能，85以上高亮，若天賦有點大屠殺，則70以上高亮
 
@@ -590,7 +861,7 @@
    簡單說，每次更版時，將保留屬於玩家自己的設定。
    遊戲內可以輸入 EA_Config.變數名稱=指定內容 的格式來變更並儲存。
 -- 設置圖標增加了控制變數 OPTION_ICON, 並在/eam minimap 切換顯示的同時也變更該變數
-   以作為下次載入依據。   
+   以作為下次載入依據。
 -- 增加參數 /eam showeaconfig, /eam showeaposition 來顯示玩家設置內容
 -- 修正簡體版、英文版本地化文件內容錯誤造成星界能量無法顯示
 -- 獵人寵物集中值改到圖形介面內做勾選式開關，並移除HUNTER_ShowPetFocus變數
@@ -609,24 +880,24 @@
 
 -- 設置圖標可用右鍵移動
    (拖曳後之新位置將被暴雪自動存到各角色下的layout-local.txt，上線時將自動還原到最後位置)
-   
+
 -- 新增: 輸入 /eam scdremovewhencooldown 直接切換EA_Config2.SCD_RemoveWhenCooldown變數來控制
    冷卻框架行為(true表示單一技能冷卻完成即消失,false表示即使完成也不消失)
    (不會存檔，下次登入時仍會按照Addons\EventAlertMod\EventAlertMod.lua內的設置)
-   
+
 -- 新增: 輸入 /eam scdnocombatstillkeep 直接切換EA_Config2.SCD_NocombatStillKeep變數來控制
    冷卻框架行為(true表示脫離戰鬥仍然保持框架，false表示脫離戰鬥冷卻框架消失)
    (不會存檔，下次登入時仍會按照Addons\EventAlertMod\EventAlertMod.lua內的設置)
-   
+
 -- 計時器若在框體外(0.65倍框體大小)，則堆疊數字調大(0.45倍框體大小)
    ;計時器若在框體內(0.5倍框體大小)，堆疊數字大小調小(0.3倍框體大小)
-   
+
 -- 在增減益下方顯示value1,value2,value3(若有的話),期能顯示吸收值
 
 -- 修正:當技能額外提示輸入了非職業所屬之技能ID時
    ，會讓自身增減益模塊的若干BUFF產生錯誤，包含了不顯示時間或不正確的時間。
-   
--- 修正:條件式群組技能的存檔未納入新的副資源代碼，導致無法正確反應使用者的設置。 
+
+-- 修正:條件式群組技能的存檔未納入新的副資源代碼，導致無法正確反應使用者的設置。
    (加入薩滿元能MAELSTROM、祕法充能ARCANE_CHARGES、惡魔獵人的魔怒FURY、魔痛PAIN)
 ----------------------------
 -- [LEG] 2016.08.16
@@ -663,7 +934,7 @@
 
 -- BUFF 與 DEBUFF的滑鼠提示不再只是技能說明，而是當前的狀態數值，
    ，法術冷卻的框架則維持技能說明
-   
+
 -- 堆疊次數小於2皆不顯示計數值，避免出現1的狀況。
 
 -- 連擊點數最大值若為6 則以6作為高亮值, 連擊點數若為8或5 則以5做為高亮值
@@ -693,25 +964,25 @@
 
 -- 初始預設值為關閉斬殺提示(星芒閃爍)
 
--- "圖示位置選項"按鈕更名為:"圖示位置&職業特殊能量"(簡體:"图示位置&副资源")
+-- &quot;圖示位置選項&quot;按鈕更名為:&quot;圖示位置&amp;職業特殊能量&quot;(簡體:&quot;图示位置&amp;副资源&quot;)
    以便於讓大家知道要去哪邊啟用關閉這些特殊POWER。
-   
--- EA_Config2變數更名:   
+
+-- EA_Config2變數更名:
 	--脫離戰鬥後是否保持技能冷卻框架
-		SCD_NocombatStillKeep	= true,			
+		SCD_NocombatStillKeep	= true,
 	--當冷卻框架之技能達到可施放條件時高亮
-		SCD_GlowWhenUsable		= true ,		
-	--單一技能冷卻完成即移除(true:要移除/false:不移除)	
+		SCD_GlowWhenUsable		= true ,
+	--單一技能冷卻完成即移除(true:要移除/false:不移除)
 		SCD_RemoveWhenCooldown	= true,
 	--剩餘多少秒開始使用小數點一位顯示(使用0則完全不會有小數點)
-		UseFloatSec	= 1,		
+		UseFloatSec	= 1,
 	--是否顯示死騎符文(true:顯示/false:不顯示)
 		DK_ShowRunes = false,
 	--是否顯示獵人寵物集中值
-		HUNTER_ShowPetFocus	= true,		
+		HUNTER_ShowPetFocus	= true,
 	--獵人寵物集中值高亮條件值(0表示不高亮)
 		HUNTER_GlowPetFocus 	= 50,
-		
+
 
 --------------
 -- [LEG] 2016.07.26--
@@ -773,3 +1044,131 @@
        -- 非戰鬥修改設定後立即套用，不再要求每次變更都執行 /reload。
        -- 戰鬥中設定先保存，離開戰鬥後合併套用一次；避免戰鬥中重建結構造成保護或污染風險。
        -- 新增數值資源的門檻高亮與前景 metadata；Secret 資源仍只作原生狀態列顯示，不輸出原始數值。
+</code></pre>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+        <h1>changelog.txt</h1>
+        <pre><code>[English Translation Offline / Unavailable]
+The English translation for this document could not be dynamically generated.
+This usually happens when:
+- You are executing the build script in an offline environment.
+- The dynamically accessed Google Translate API is temporarily blocked or timed out.
+
+Recommended Solution: Directly use your browser's built-in "Translate to English" function by right-clicking on the page.</code></pre>
+    </div>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

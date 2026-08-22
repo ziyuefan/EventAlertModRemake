@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "type": "EAM_DEPLOYMENT_TARGETS",
+  "wowRoot": "D:\\World of Warcraft",
+  "addonFolderName": "EventAlertMod",
+  "targets": [
+    {
+      "key": "retail",
+      "directory": "_retail_",
+      "displayName": "Retail",
+      "roleLabel": "正式服",
+      "executable": "Wow.exe",
+      "showVersionInMenu": false
+    },
+    {
+      "key": "ptr",
+      "directory": "_ptr_",
+      "displayName": "PTR",
+      "roleLabel": "公開測試服",
+      "executable": "WowT.exe",
+      "showVersionInMenu": true
+    },
+    {
+      "key": "xptr",
+      "directory": "_xptr_",
+      "displayName": "XPTR",
+      "roleLabel": "舊版公開測試服",
+      "executable": "WowT.exe",
+      "showVersionInMenu": true
+    }
+  ]
+}

@@ -1,0 +1,366 @@
+{
+  "schema_version": "1.0.0",
+  "language": "zh-TW",
+  "task_id": "eam-retail-12.1-native-aura-migration",
+  "title": "EventAlertMod Remake Retail 12.1 Native Aura 增量改造",
+  "repository": {
+    "url": "https://github.com/ziyuefan/EventAlertMod_Remake",
+    "default_branch": "main",
+    "baseline_interface": 120007,
+    "target": "World of Warcraft Retail 12.1.0",
+    "suggested_work_branch": "codex/eam-12.1-native-aura",
+    "allow_push": false,
+    "allow_release": false,
+    "allow_pr_creation": false
+  },
+  "role": [
+    "World of Warcraft Retail AddOn 架構工程師",
+    "Lua 5.1 效能與低 GC 工程師",
+    "Secret Value、Forbidden Aspect、Taint 與 FrameXML 邊界審查員"
+  ],
+  "primary_goal": "保留現有 EventRouter、Services、AlertManager、Renderer、IconPool、Scheduler 與非 Aura 功能，新增 12.1 AuraContainer Native Backend，讓 Native Aura 由 Blizzard 內部追蹤、過濾、建立按鈕、排序與更新。",
+  "non_goals": [
+    "推倒重寫整個插件",
+    "恢復所有受 Secret Value 限制的 Lua 條件判斷",
+    "依賴 ShadowHost 或 Blizzard CooldownViewer 私有結構",
+    "以 Tooltip 基礎持續時間偽造戰鬥 Aura 到期時間",
+    "繞過 Forbidden Aspect、Secret Value 或 Taint 限制"
+  ],
+  "source_priority": [
+    "12.1 PTR／正式客戶端 Generated API Documentation",
+    "當前 Blizzard FrameXML",
+    "Warcraft Wiki Patch 12.1.0 API changes 與個別 API 頁面",
+    "專案 Docs",
+    "歷史註解與 PoC"
+  ],
+  "references": [
+    "https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes",
+    "https://warcraft.wiki.gg/wiki/API_C_UnitAuras.AddAuraSound",
+    "https://github.com/ziyuefan/EventAlertMod_Remake"
+  ],
+  "must_read": [
+    "AGENTS.md",
+    "Docs/00_AI_CONTEXT.md",
+    "Docs/01_ARCHITECTURE.md",
+    "Docs/02_RETAIL_API_BOUNDARIES.md",
+    "Docs/03_STATE_SCHEMA.md",
+    "Docs/04_MODULE_CONTRACTS.md",
+    "Docs/05_PERFORMANCE_GUIDE.md",
+    "Docs/06_TEST_PLAN_RETAIL.md",
+    "Docs/07_MIGRATION_NOTES.md",
+    "Docs/09_KNOWN_LIMITATIONS.md",
+    "Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md",
+    "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+    "Docs/16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md",
+    "Docs/19_AURA_1210_REDUX_BLUEPRINT.md",
+    "Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md",
+    "Services/AuraService.lua",
+    "Services/CooldownService.lua",
+    "Services/ShadowHostService.lua",
+    "Managers/AlertManager.lua",
+    "UI/IconPool.lua",
+    "UI/Renderer.lua",
+    "Core/Env.lua",
+    "Core/Util.lua",
+    "EventAlertMod.toc"
+  ],
+  "architecture": {
+    "preserve": [
+      "Core/EventRouter.lua",
+      "Core/Scheduler.lua",
+      "Managers/AlertManager.lua",
+      "UI/IconPool.lua",
+      "UI/Renderer.lua",
+      "Services/CooldownService.lua",
+      "Services/ItemCooldownService.lua",
+      "Services/ClassPowerService.lua",
+      "Services/GroundEffectService.lua",
+      "Services/TotemService.lua",
+      "SavedVariables 與既有使用者設定語意"
+    ],
+    "new_modules": [
+      {
+        "path": "Services/AuraCapabilityService.lua",
+        "responsibility": "API feature detection、能力快取、Native／Legacy Backend 選擇"
+      },
+      {
+        "path": "Managers/AuraRuleCompiler.lua",
+        "responsibility": "EAM Aura 設定編譯為 NATIVE_SLOT、NATIVE_GROUP、READABLE_LEGACY、DISPLAY_UNSUPPORTED"
+      },
+      {
+        "path": "Services/AuraContainerService.lua",
+        "responsibility": "脫戰建立與維護 AuraContainer、AuraSlot、AuraGroup"
+      },
+      {
+        "path": "UI/NativeAuraRenderer.lua",
+        "responsibility": "AuraButton 一次性初始化、EAM 外觀與容器錨點"
+      },
+      {
+        "path": "Services/AuraSoundService.lua",
+        "responsibility": "AddAuraSound／RemoveAuraSound 註冊生命週期"
+      }
+    ],
+    "backend_flow": {
+      "native": "EAM 設定 → AuraRuleCompiler → AuraContainer → AuraSlot/AuraGroup → Blizzard Native AuraButton",
+      "legacy": "Readable AuraData → AuraService → AlertManager → Renderer → IconPool"
+    }
+  },
+  "rule_backends": [
+    {
+      "name": "NATIVE_SLOT",
+      "purpose": "單一指定 Aura、固定位置、最多顯示一個 Aura"
+    },
+    {
+      "name": "NATIVE_GROUP",
+      "purpose": "動態 Aura 集合、排序、過濾與自動排列"
+    },
+    {
+      "name": "READABLE_LEGACY",
+      "purpose": "非 Secret Aura、非戰鬥診斷或 API fallback"
+    },
+    {
+      "name": "DISPLAY_UNSUPPORTED",
+      "purpose": "受 12.1 限制且不能安全執行的規則，保留設定並顯示限制原因"
+    }
+  ],
+  "hard_constraints": [
+    "Native Aura 不解析 UNIT_AURA payload",
+    "Native Aura 不呼叫 GetAuraDataByIndex 或 GetAuraDataByAuraInstanceID",
+    "Native Aura 不建立 Lua AuraState",
+    "Native Aura 不進入 AlertManager 與一般 Renderer 熱路徑",
+    "Native Aura 不建立每圖示 OnUpdate",
+    "AuraContainer 結構建立與修改只在非戰鬥",
+    "AuraButton 不以 OnShow、OnHide、IsShown、Hook 或事件推導 Aura 狀態",
+    "可能為 Secret 的值在比較、算術、字串化、索引、序列化與 Scheduler 前必須安全檢查",
+    "不以 Tooltip duration 偽造戰鬥 Aura expirationTime",
+    "ShadowHost 保持停用",
+    "不修改 Blizzard CooldownViewer 私有 Pool 或框架結構",
+    "所有 UI 寫入先比對再寫入",
+    "沒有 WoW 實機測試時不得宣稱完全相容"
+  ],
+  "api_targets": {
+    "verify_before_use": [
+      "CreateFrame('AuraContainer', ...)",
+      "AuraContainer:AddAuraSlot",
+      "AuraContainer:AddAuraGroup",
+      "AuraContainer:SetAuraGroupLayout",
+      "AuraContainer:SetUnit",
+      "C_UnitAuras.AddAuraSound",
+      "C_UnitAuras.RemoveAuraSound",
+      "Enum.UnitAuraSoundTrigger.Added",
+      "Enum.UnitAuraSoundTrigger.ApplicationsIncreased",
+      "Enum.UnitAuraSoundTrigger.Removed",
+      "CooldownFrame:SetCooldownFromDurationObject",
+      "C_DurationUtil.CreateDurationTextBinding"
+    ],
+    "do_not_assume": [
+      "XML Template 名稱",
+      "candidateFilters 的完整欄位與限制",
+      "Secret Aura 對 includeSpellIDs／excludeSpellIDs 的實際限制",
+      "AuraButton 可呼叫方法與 Forbidden Aspect 邊界"
+    ]
+  },
+  "saved_variables": {
+    "preserve": [
+      "EAM_DB",
+      "EA_Config",
+      "EA_Position",
+      "EA_Items",
+      "EA_AltItems",
+      "EA_TarItems",
+      "EA_ScdItems",
+      "EA_GrpItems",
+      "EA_Pos"
+    ],
+    "requirements": [
+      "增加 schemaVersion",
+      "建立可回退 migration",
+      "不得把 Frame、ScriptObject、DurationObject 或 AuraContainer 寫入 SavedVariables",
+      "轉換失敗時保留原 alert 並記錄 warning"
+    ]
+  },
+  "performance_requirements": {
+    "native_hot_path": [
+      "0 UNIT_AURA Lua parsing",
+      "0 AuraData diff",
+      "0 Lua AuraState allocation",
+      "0 temporary table allocation",
+      "0 AlertManager queue",
+      "0 Renderer.render",
+      "0 per-icon OnUpdate",
+      "0 Tooltip query"
+    ],
+    "cold_path": [
+      "revision-based rule compile",
+      "out-of-combat batch rebuild",
+      "cached capability detection",
+      "stable keys and reusable tables",
+      "merge compatible rules into AuraGroup"
+    ],
+    "ui_write_gating": [
+      "SetText only when changed",
+      "SetPoint only when changed",
+      "SetSize only when changed",
+      "SetTexture only when changed",
+      "layout only when dirty"
+    ]
+  },
+  "phases": [
+    {
+      "id": 0,
+      "name": "基線審計",
+      "tasks": [
+        "讀取必讀文件",
+        "檢查 Git 狀態、SHA、TOC",
+        "核對最新 12.1 API 與 FrameXML",
+        "掃描 Aura、UNIT_AURA、Tooltip、DurationObject、ShadowHost 使用點",
+        "建立保留／修改／淘汰矩陣",
+        "提出檔案級 implementation plan"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "安全止血",
+      "tasks": [
+        "新增 AuraCapabilityService",
+        "修正 Renderer Secret duration 比較",
+        "Native backend 可用時停用舊 Aura 主戰鬥路徑",
+        "停用戰鬥 Tooltip Instance ID duration scraping",
+        "確保 12.1 不因 Secret Aura 查詢直接 Lua error"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Rule Compiler 與資料遷移",
+      "tasks": [
+        "建立 Runtime Rule schema",
+        "實作四種 backend 分類",
+        "建立 limitation reason",
+        "加入 schemaVersion 與 SavedVariables migration"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Native AuraContainer Backend",
+      "tasks": [
+        "建立 player AuraContainer",
+        "建立 target AuraContainer",
+        "實作 AuraSlot PoC",
+        "實作 AuraGroup PoC",
+        "實作 initializeFrame 外觀",
+        "實作脫戰批次 rebuild",
+        "禁止 Native Aura 進入 AlertState 管線"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Aura Sound",
+      "tasks": [
+        "實作 Added",
+        "實作 ApplicationsIncreased",
+        "實作 Removed",
+        "實作註冊 ID 生命週期與防重複",
+        "實作 API 缺失降級"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "設定 UI 與能力顯示",
+      "tasks": [
+        "顯示 backend 類型",
+        "顯示 limitation",
+        "顯示 pending combat rebuild",
+        "保留舊設定",
+        "ShadowHost 標示為停用 PoC"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "測試、文件與打包",
+      "tasks": [
+        "Lua 語法檢查",
+        "TOC 載入順序檢查",
+        "SavedVariables migration 測試",
+        "capability 缺失測試",
+        "戰鬥 pending rebuild 測試",
+        "Native／Legacy backend 切換測試",
+        "Sound lifecycle 測試",
+        "同步 Docs 與 docs_html",
+        "執行既有打包腳本但不發布"
+      ]
+    }
+  ],
+  "acceptance_criteria": [
+    "12.1 載入時不因 Aura Secret API 直接報錯",
+    "Native Aura 模式不解析 UNIT_AURA",
+    "Native Aura 模式不建立 AuraState",
+    "player 與 target 各至少一個 AuraSlot PoC",
+    "至少一個 AuraGroup PoC",
+    "Native AuraButton 可顯示圖示與原生倒數",
+    "Added／ApplicationsIncreased／Removed 聲音可註冊與解除",
+    "戰鬥中設定變更只標記 pending",
+    "脫戰只批次重建一次",
+    "非 Aura 既有功能不因改造失效",
+    "SavedVariables 不遺失",
+    "ShadowHost 保持停用",
+    "Tooltip duration 不作戰鬥真實倒數",
+    "Secret 值在危險操作前均完成防禦",
+    "程式碼與文件同步"
+  ],
+  "testing_matrix": [
+    "API 完整時選擇 Native Backend",
+    "AuraContainer API 缺失時安全降級",
+    "戰鬥中修改設定不改結構",
+    "PLAYER_REGEN_ENABLED 一次性重建",
+    "Player Buff Slot",
+    "Target Debuff Slot",
+    "AuraGroup 多 Aura",
+    "Secret Aura 不查 AuraData",
+    "Non-secret Aura Legacy fallback",
+    "Aura Sound Added",
+    "Aura Sound ApplicationsIncreased",
+    "Aura Sound Removed",
+    "刪除 Alert 時解除註冊",
+    "切換專精時重編譯",
+    "Reload UI migration",
+    "12.0.7 API 不執行 12.1-only API",
+    "ShadowHost 不初始化",
+    "Debug off 時熱路徑無 log 字串成本"
+  ],
+  "documentation_updates": [
+    "AGENTS.md",
+    "Docs/01_ARCHITECTURE.md",
+    "Docs/02_RETAIL_API_BOUNDARIES.md",
+    "Docs/03_STATE_SCHEMA.md",
+    "Docs/04_MODULE_CONTRACTS.md",
+    "Docs/05_PERFORMANCE_GUIDE.md",
+    "Docs/06_TEST_PLAN_RETAIL.md",
+    "Docs/07_MIGRATION_NOTES.md",
+    "Docs/09_KNOWN_LIMITATIONS.md",
+    "Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md",
+    "Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+    "Docs/16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md",
+    "Docs/19_AURA_1210_REDUX_BLUEPRINT.md",
+    "Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md",
+    "Docs/23_AURA_CONTAINER_IMPLEMENTATION.md"
+  ],
+  "report_requirements": [
+    "每個 Phase 回報已完成與變更檔案",
+    "列出 API 與安全邊界",
+    "列出 Lua allocation、Event frequency、UI writes、OnUpdate 與 GC 影響",
+    "列出靜態、模擬與實機驗證狀態",
+    "列出未完成、風險與下一步",
+    "無實機測試時明確標示尚未完成 WoW 12.1 客戶端驗證"
+  ],
+  "start_instruction": [
+    "讀取必讀文件",
+    "檢查 Git 與 TOC 基線",
+    "核對最新 12.1 API",
+    "掃描現有 Aura 熱路徑與 Secret 風險",
+    "提出檔案級改造計畫",
+    "直接完成 Phase 1 與 Phase 2",
+    "API 足夠時繼續完成 Native AuraContainer PoC",
+    "不要因局部不確定推倒既有架構",
+    "未經要求不得 push、開 PR 或發布"
+  ]
+}

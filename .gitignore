@@ -1,11 +1,21 @@
 # EventAlertMod Rewrite .gitignore
-backup/
+
+# 本機發布產物只存在 Dist；GitHub Release 另行上傳，不提交倉庫。
 Dist/
-deploy/
-scratch/
+
+# AI 治理的本機證據、備份與暫存。
+.AI/backup/
+.AI/.trash_*/
+.AI/TestResults/
+.AI/Tools/__pycache__/
+
+# Codex 與桌面附件屬於本機狀態。
 .codex/
+.codex-remote-attachments/
+
+# 其他衍生物。
+scratch/
 *.zip
 *.log
-TestResults/
 __pycache__/
 *.pyc

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30_PLAYER_RESOURCE_REFACTOR_REPORT.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="retail-121">Retail 12.1 玩家職業資源獨立模組重構報告</h1>
+<ul>
+<li>日期：2026-08-21</li>
+<li>目標通道：Retail／PTR 12.1；XPTR 12.0.7 使用隔離的 numeric legacy adapter</li>
+<li>證據層級：程式與測試結論為 offline-mock／static contract；尚未宣稱任何 WoW 客戶端視覺簽收。</li>
+</ul>
+<h2 id="a">A. 現況架構</h2>
+<p>玩家資源已從 Aura、Spell Cooldown 與 Item Cooldown 資料路徑拆出，責任邊界如下：</p>
+<ol>
+<li><code>Data/PlayerResourceCatalog.lua</code>：17 種資源定義、token、powerType、13 職業／40 組專精候選拓撲。</li>
+<li><code>Services/PlayerResourceCapability.lua</code>：依 client adapter 與每項資源分流 <code>NUMERIC</code>、<code>SECRET_DISPLAY</code>、<code>UNAVAILABLE</code>。</li>
+<li><code>Services/PlayerResourceService.lua</code>：唯一 runtime registry、事件路由、topology、effective config、背景 sampler。</li>
+<li><code>Debug/PlayerResourceProbe.lua</code>：玩家手動啟動的逐資源事件／sink 能力報告；不讀 raw power。</li>
+<li><code>UI/PowerRenderer.lua</code>：EAM 自有 StatusBar／圖示／文字與 Secret write-only sink。</li>
+<li><code>UI/PlayerResourcePanel.lua</code>：每資源設定、anchor／position、尺寸與外觀控制。</li>
+<li><code>Services/ClassPowerService.lua</code>：只保留舊入口 facade，不建立第二條資源 pipeline。</li>
+</ol>
+<h2 id="b-reload">B. /reload 症狀與根因</h2>
+<p>舊流程把 SavedVariables 寫入與初始化 frame 建立混在一起，設定變更只有重新載入才可見。現行契約分開兩種情況：</p>
+<ul>
+<li>非戰鬥：<code>SavedVariables.updatePlayerResourceConfig</code> 發出 <code>EAM_PLAYER_RESOURCE_CONFIG_CHANGED</code>，服務立即重建並套用，不應要求 <code>/reload</code>。</li>
+<li>戰鬥：設定先保存 desired state，結構性變更標記 <code>combatRebuildDeferred</code>；<code>PLAYER_REGEN_ENABLED</code> 合併重建一次。</li>
+<li>模組停用：停止背景 sampler、清理 frame、解除 PlayerResourceService 與 PlayerResourceProbe 的事件註冊；重新啟用才重新註冊。</li>
+</ul>
+<p>若實機仍需 <code>/reload</code>，需回報 resource key、client channel、patch/build/interface、戰鬥狀態、service status、Lua error、taint 或 blocked action。</p>
+<h2 id="c-n-resource-topology-druid-flow">C. N-resource topology 與 Druid flow</h2>
+<p>採用一個專精對 N 個候選資源。候選 topology 不因 <code>enabled=false</code> 被刪除；capability、foreground/background 與 renderer 狀態分開。德魯伊依變形流程保留 Mana、Rage、Energy、ComboPoints、LunarPower 候選，透過 <code>UNIT_DISPLAYPOWER</code>／<code>UPDATE_SHAPESHIFT_FORM</code> 重新判定前景與可用性，不把 Energy 或 ComboPoints 強制塞到第一格。</p>
+<h2 id="d-config-hierarchyanchor-position">D. Config hierarchy、anchor 與 position</h2>
+<p>有效設定依 <code>globalDefaults -&gt; classDefaults -&gt; spec overrides</code> 合併。每項資源可獨立保存 <code>enabled</code>、display mode、foreground/background、value／percent、font、size、orientation、threshold、alpha、寬高、圖示大小、間距、order、<code>anchor</code> 與 <code>position</code>。anchor 是父框架錨點，position 是資源框架自身定位點；兩者均由白名單循環選擇並帶 offset／scale。未覆寫欄位由 class／global 繼承，不能製造跨職業污染。</p>
+<h2 id="e-capability1207-adapter-secret-sourcesink">E. Capability、12.0.7 adapter 與 Secret source/sink</h2>
+<p><code>PlayerResourceCapability</code> 以 client adapter 分流：Retail／PTR 12.1 可採 NUMERIC 或 Secret display；XPTR 12.0.7 使用隔離的 numeric legacy adapter，不能呼叫 12.1 Native Aura／Secret sink。Secret 資源只將安全邊界允許的 percent 直接寫入 StatusBar／radial sink，不保存、比較、數學運算、tostring、序列化、當 table key 或讀回 getter。所有報告只輸出安全 metadata，不輸出 current、max、percent 原值。</p>
+<h2 id="f-resourceprobe-sampler">F. ResourceProbe、事件與背景 sampler</h2>
+<p><code>PlayerResourceProbe</code> 只在玩家手動啟動期間註冊事件，逐項記錄 tracked／available／foreground／background／capability／sinkAvailable／eventObserved；停止時解除註冊。<code>eventObserved</code> 僅表示事件由實機流程觸發，不代表視覺或數值正確。</p>
+<p>背景資源只有在 probe 明確確認相關事件缺失後，才啟用單一 probe-gated、0.5 秒 demand-driven sampler；它不是預設輪詢，也不在戰鬥中執行結構變更。若事件被觀測，該 resource 立即退出 sampler。Sampler fixture／contract 已通過離線驗證；仍不可把 sampler 啟用或 setter accepted 冒充實機通過。</p>
+<h2 id="g-renderer-ownership">G. Renderer ownership</h2>
+<p><code>PowerRenderer</code> 預熱固定資源 frame 與 StatusBar，使用直接 source-to-sink 更新；Secret frame 由 resource key 獨立擁有。Renderer 不讀回 widget 值、不以 OnUpdate 輪詢、不建立 ShadowHost 或第二條 Aura／Cooldown pipeline。</p>
+<h2 id="h-performance-boundary">H. Performance boundary</h2>
+<p>事件路由以 token／powerType registry O(1) 導向；所有資源 frame 預建，避免事件熱路徑反覆建立 frame。<code>NUMERIC</code>／<code>SECRET_DISPLAY</code> 的更新策略在 capability 分類後於冷路徑綁定；NUMERIC 每次事件只執行一次防護讀取 pair，文字改以 <code>FontString:SetFormattedText()</code> 更新，避免每事件 <code>string.format</code> 或字串串接；Secret 只執行 write-only sink。背景 sampler 為單一、probe-gated、demand-driven 排程，停止時清空節點與 generation。Sampler fixture／contract 已通過離線驗證；剩餘缺口是 WoW runtime 視覺、事件與 taint 簽收。</p>
+<h2 id="i-legacy-1207">I. Legacy 12.0.7</h2>
+<p><code>getClientAdapter()</code> 以 interface／client profile 判定 XPTR 12.0.7 numeric legacy adapter，並由 Flow <code>unitpower.legacy_120007_adapter</code> 驗證不進入 12.1 Secret sink。這是相容能力分類與降級契約，不是 XPTR 實機視覺證據；Classic／MoP 不在本專案範圍。</p>
+<h2 id="j">J. 離線驗證</h2>
+<p>本輪最新 artifact：</p>
+<ul>
+<li>Lua syntax（62 AddOn + 2 offline tests）：<code>64/64</code>。</li>
+<li>Flow all：<code>75/75</code>，<code>EAM_FlowValidation_all_20260821_094159.json</code>。</li>
+<li>Flow boundary：<code>54/54</code>，<code>EAM_FlowValidation_boundary_20260821_094201.json</code>。</li>
+<li>Validation Contracts：<code>436/436</code>，已以最新 Flow artifact 重跑通過。</li>
+<li>已涵蓋 ResourceProbe schema、12.0.7 adapter、Druid topology／form、module event unregister、anchor／position、冷路徑策略綁定、source／sink 邊界、config immediate／combat deferred 與 <code>unitpower.background_sampler_gate</code>。</li>
+<li>背景 sampler fixture／contract 已通過；上述離線結果不能代替 WoW 實機 visual、taint 或 blocked-action 簽收。</li>
+</ul>
+<h2 id="k">K. 實機簽收門檻</h2>
+<p>標記為 <code>REQUIRES_WOW_12_1_RUNTIME</code> 或 <code>REQUIRES_XPTR_12_0_7_RUNTIME</code> 的項目：</p>
+<ol>
+<li>法師 Mana、戰士 Rage、野性德魯伊 Energy＋ComboPoints、暗影牧師 Insanity、死亡騎士 Runes＋RunicPower 的脫戰／戰鬥產生、消耗、歸零。</li>
+<li>其餘職業／專精所有 <code>UnitHasPowerType</code> 可用資源，逐項記錄 ResourceProbe 的 <code>eventObserved</code> 與 visualObservation。</li>
+<li>德魯伊 Caster／Cat／Bear／Moonkin 變形與前景／背景資源切換，不得強制 1079 或其他法術首格。</li>
+<li>非戰鬥改設定不得 <code>/reload</code> 才更新；戰鬥修改需離戰後只重建一次；停用／重啟需確認事件註冊與 frame 清理。</li>
+<li>anchor／position、尺寸、文字、threshold、Secret StatusBar 視覺、Druid Flow 與 XPTR numeric fallback。</li>
+<li>Lua error、taint、blocked action、Forbidden access 與報告 privacy。</li>
+</ol>
+<p>真人報告必須標示 PTR、XPTR 或 Retail、patch、build、interface、戰鬥狀態、是否手動 <code>/reload</code> 與 visualObservation。API accepted、offline pass、ResourceProbe eventObserved 或 sampler output 都不能直接升格為 visual pass。</p>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

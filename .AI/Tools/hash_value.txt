@@ -1,0 +1,34 @@
+# 效能指南
+
+## 熱路徑候選者
+
+目前主線熱路徑候選人：
+
+- `Main/EventAlert_Core.lua`
+  - 事件調度和處理程序
+  - `COMBAT_LOG_EVENT_UNFILTERED`
+  - `UNIT_AURA`
+  - `BAG_UPDATE_COOLDOWN`
+  - `SPELL_UPDATE_COOLDOWN`
+  - `SPELL_UPDATE_CHARGES`
+  - `SPELL_UPDATE_USABLE`
+  - `ACTIONBAR_UPDATE_COOLDOWN`
+  - 使用計時器/協程進行查找掃描
+- `Main/EventAlert_Aura_Self.lua`
+  - `Buffs_Update`
+  - `更新時`
+  - `位置框架`
+- `Main/EventAlert_Aura_Target.lua`
+  - `TarBuffs_Update`
+  - `OnTarUpdate`
+  - `TarPositionFrames`
+- `Main/EventAlert_Cooldown.lua`
+  - `OnSCDUpdate`
+  - `ScdBuffs_Update`
+  - `更新ScdFrame`
+  - `ScdPositionFrames`
+- `Main/EventAlert_ItemSpellCache.lua`
+  - 物品範圍掃描建構器
+- `Main/EventAlert_SpecialPower.lua`
+  - 資源/力量更新
+  - 符文 OnUpdate 腳本

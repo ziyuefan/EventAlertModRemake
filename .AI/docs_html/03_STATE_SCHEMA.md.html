@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03_STATE_SCHEMA.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="_1">狀態模式</h1>
+<h2 id="savedvariables">SavedVariables 審核</h2>
+<p>當前 TOC 聲明的重寫版 SavedVariables：</p>
+<pre class="codehilite"><code class="language-lua">EAM_DB
+EAM_FLOW_TEST_REPORT_JSON
+EAM_VALIDATION_PROFILE
+EAM_LIVE_TEST_SESSION
+EAM_LIVE_TEST_REPORT_JSON
+</code></pre>
+
+<p>舊版相容與遷移來源仍包含：</p>
+<pre class="codehilite"><code class="language-lua">EA_Config
+EA_Position
+EA_Items
+EA_AltItems
+EA_TarItems
+EA_ScdItems
+EA_GrpItems
+EA_Pos
+</code></pre>
+
+<h2 id="schema-v3native-aura">歷史 Schema v3：Native Aura 與文字版面設定</h2>
+<ul>
+<li><code>EAM_DB.schemaVersion = 3</code>；v1 Aura alert 與 v2 文字版面來源都會保存可序列化遷移備份。</li>
+<li>Alert 可保存 <code>nativeBackend</code>、<code>auraFilter</code>、<code>showStacks</code>、<code>showName</code>、<code>showCountdown</code> 與純資料 <code>sound</code>。</li>
+<li><code>Frame</code>、<code>ScriptObject</code>、<code>DurationObject</code>、<code>AuraContainer</code> 與 AuraButton 不得寫入 SavedVariables。</li>
+<li>Runtime plan、fingerprint、pending revision 與 sound registration ID 只存在記憶體。</li>
+<li>相同設定再次送入回傳 <code>unchanged</code>，revision 不變。</li>
+</ul>
+<h3 id="_2">語系設定</h3>
+<p><code>EAM_DB.config.language</code> 是可遷移的純字串設定，接受 <code>auto</code>、<code>enUS</code>、<code>zhTW</code>、<code>zhCN</code>、<code>koKR</code>、<code>ruRU</code>；預設為 <code>auto</code>。<code>auto</code> 依客戶端 <code>GetLocale()</code> 選擇 catalog，缺少的 key 由 enUS fallback 補底。<code>SavedVariables.updateLanguage()</code> 只有在值改變時增加 revision，但 updated／unchanged 都會同步發出 <code>EAM_LANGUAGE_CHANGED</code>，讓記憶體狀態與已載入 UI 對齊。<code>Locale.apply()</code> 保持 <code>EAM.L</code> table identity，原地清除並合併 enUS fallback 與選定 catalog，再刷新已註冊的 EAM 自有 FontString、按鈕與複合文字。新版程式載入後，選擇語系立即生效，不需為套用語系執行 <code>/reload</code>；<code>/reload</code> 只用於驗證設定保存、載入磁碟上的新程式，或將最新 SavedVariables 寫回磁碟。</p>
+<p>文字顯示設定使用單一正規化結構：</p>
+<pre class="codehilite"><code class="language-lua">EAM_DB.config.textLayout = {
+    schema = 1,
+    timer = {
+        placement = &quot;OUTSIDE_TOP&quot;,
+        fontSize = 14,
+    },
+    applications = {
+        placement = &quot;INSIDE_BOTTOM_RIGHT&quot;,
+        fontSize = 12,
+    },
+}
+</code></pre>
+
+<ul>
+<li><code>placement</code> 只接受 <code>Data/TextPlacementContract.json</code> 定義的 21 個 ID：框內中央加八方向、框外八個角邊位置與四個正面位置。</li>
+<li><code>fontSize</code> 固定正規化為 8–32；timer 預設 14，applications 預設 12。</li>
+<li><code>fontSizeTimeVal</code>、<code>fontSizeStack</code> 只作舊欄位相容鏡像；新程式以 <code>textLayout</code> 為事實來源。</li>
+<li><code>SavedVariables.updateTextLayout()</code> 只有在值實際改變時增加一次 revision；重複設定不增加 revision。文字位置／字級改變由 Renderer 直接重套 EAM 自建 FontString，不作為 AuraContainer 結構重建條件。</li>
+<li>v2 升 v3 時在 <code>migrationBackups.textLayoutV2</code> 保存舊版位置／字級來源，不靜默丟棄使用者設定。</li>
+<li>若磁碟中的 <code>schemaVersion</code> 高於目前程式可理解版本，初始化不得補預設、正規化或改寫原始 <code>EAM_DB</code>。執行期改用目前 defaults 的獨立複本，標記 <code>futureSchemaPreserved</code> 與 <code>futureSchemaSourceVersion</code>；這是降版保護，不代表新版本資料已成功遷移。</li>
+</ul>
+<p>驗證狀態與報告不混入 <code>EAM_DB</code>：</p>
+<ul>
+<li><code>EAM_VALIDATION_PROFILE</code>：玩家宣告 <code>_ptr_</code>、<code>_xptr_</code> 或 <code>_retail_</code>，並由客戶端 build／Interface 與 <code>IsPublicTestClient</code>／<code>IsTestBuild</code>／<code>IsBetaBuild</code> 原始旗標交叉驗證；匯入器必須由三個 raw flags 重算 known／aggregate，不信任報告自填彙總。</li>
+<li><code>EAM_LIVE_TEST_SESSION</code>：37 案真人觀察狀態與 <code>/reload</code> checkpoint。checkpoint 內的 boot token 只用來比較 Lua table identity，不輸出至 JSON；同一次載入直接 resume 必須回傳 <code>sameLoadRejected</code>。</li>
+<li><code>EAM_LIVE_TEST_REPORT_JSON</code>：schema 1 真人簽收報告；phase 尚為 <code>active</code>、沒有跨過玩家自行執行的 <code>/reload</code>、沒有已知 test-build 身分、37 案未全數通過或仍有 warning 時均不得為 <code>pass</code>。</li>
+<li>備註若含磁碟絕對路徑、WTF 或 Account 片段，執行期以 <code>[privacy-redacted]</code> 取代並加入 <code>privacyNoteRedacted</code>；匯入器再做第二層拒絕，不得包含帳號、角色、伺服器或 WTF 絕對路徑。</li>
+<li><code>EAM_FLOW_TEST_REPORT_JSON</code>：schema 2 能力／離線契約報告；<code>offline-mock</code> 不得升格為實機證據。
+觀察到 default/runtime 同伴：</li>
+</ul>
+<pre class="codehilite"><code class="language-lua">EA_Config2
+EA_ShowScrollSpells
+EA_ShowScrollSpell_YPos
+</code></pre>
+
+<p><code>EA_Config</code> 目前儲存顯示和行為切換，例如框架
+可見性、名稱/timer/flash 顯示、聲音、字體大小、備用警報、
+目標自身減益過濾、冷卻行為、符文顯示和光環值
+閾值。</p>
+<p><code>EA_Position</code> 儲存錨點、偏移、debuff 顏色設定、目標
+佈局標誌、SCD 偏移量、執行圖示設定、boss 級邏輯，以及
+冷卻顯示設定。</p>
+<p><code>EA_Items</code>、<code>EA_AltItems</code>、<code>EA_TarItems</code>、<code>EA_ScdItems</code> 與 <code>EA_GrpItems</code>
+儲存配置的警報法術/item/group條目。他們目前的確切領域
+shape 是遺留的，應該由版本管理器遷移，而不是凍結。</p>
+<p><code>EA_Pos</code> 透過 <code>G.Pos</code> 儲存每個類別的共用位置資料。</p>
+<h2 id="_3">目前全球國家審計</h2>
+<p>命名空間：</p>
+<pre class="codehilite"><code class="language-lua">_G.EventAlertMod
+G -- addon namespace from ...
+</code></pre>
+
+<p>主要命名空間運行時表：</p>
+<pre class="codehilite"><code class="language-lua">G.Pos
+G.SPELLINFO_SELF
+G.SPELLINFO_TARGET
+G.SPELLINFO_SCD
+G.ClassAltSpellName
+G.GC_IndexOfGroupFrame
+G.EA_CurrentBuffs
+G.EA_TarCurrentBuffs
+G.EA_ScdCurrentBuffs
+G.EA_ShowScrollSpells
+G.SpecFrame_LifeBloom
+G.iconTextures
+G.runeTextures
+G.runeSetTexCoord
+G.runeEnergizeTextures
+G.runeColors
+G.runeTypeText
+G.RUNE_MAPPING
+G.Auras
+</code></pre>
+
+<p>全球家庭：</p>
+<pre class="codehilite"><code class="language-lua">EA_CLASS*
+EA_SPELL_POWER*
+EA_X*
+EA_TTIP*
+EX_XCLSALERT*
+SLASH_EVENTALERTMOD1
+SLASH_EVENTALERTMOD2
+</code></pre>
+
+<p>主要 XML/UI 全域變數：</p>
+<pre class="codehilite"><code class="language-lua">EA_Main_Frame
+EA_Version_Frame
+EA_Options_Frame
+EA_Icon_Options_Frame
+EA_Class_Events_Frame
+EA_Other_Events_Frame
+EA_Target_Events_Frame
+EA_SCD_Events_Frame
+EA_Group_Events_Frame
+EA_SpellCondition_Frame
+EA_GroupEventSetting_Frame
+EA_Anchor_Frame*
+EA_MinimapOption
+</code></pre>
+
+<p>透過作業掃描發現的值得注意的意外全域候選者：</p>
+<pre class="codehilite"><code class="language-lua">auraData, eaf, eaf2, EAEXF, EAItems, EASCDFrame, EA_icon, EA_rank,
+EA_timeLeft, currentBuffs, startTime, duration, expirationTime, timeLeft,
+usable, spellId, spellName, icon, frame, importButton, exportButton,
+importFrame, exportFrame, MyAddonFrame, tempFunc
+</code></pre>
+
+<p>重寫應將它們移至模組擁有的本地狀態或顯式
+命名空間欄位。</p>
+<h2 id="alertstate">AlertState</h2>
+<pre class="codehilite"><code class="language-js">AlertState = {
+  id: &quot;string&quot;,
+  kind: &quot;aura|spellCooldown|itemCooldown&quot;,
+  spellID: &quot;number?&quot;,
+  itemID: &quot;number?&quot;,
+  unit: &quot;player|pet|target?&quot;,
+  icon: &quot;number|string?&quot;,
+  name: &quot;string?&quot;,
+  stacks: &quot;number?&quot;,
+  timer: TimerState?,
+  flags: AlertFlags,
+  source: SourceState,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="timerstate">TimerState</h2>
+<pre class="codehilite"><code class="language-js">TimerState = {
+  mode: &quot;none|numeric|displayOnly|protected|unknown&quot;,
+  startTime: &quot;number?&quot;,
+  duration: &quot;number?&quot;,
+  expirationTime: &quot;number?&quot;,
+  timeLeft: &quot;number?&quot;,
+  displayText: &quot;string?&quot;
+}
+</code></pre>
+
+<h2 id="aurastate">AuraState</h2>
+<pre class="codehilite"><code class="language-js">AuraState = {
+  alertID: &quot;string&quot;,
+  unit: &quot;player|pet|target&quot;,
+  auraInstanceID: &quot;number?&quot;,
+  spellID: &quot;number?&quot;,
+  name: &quot;string?&quot;,
+  icon: &quot;number|string?&quot;,
+  applications: &quot;number?&quot;,
+  fromPlayer: &quot;boolean?&quot;,
+  timer: TimerState,
+  factsSafe: &quot;boolean&quot;,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="cooldownstate">CooldownState</h2>
+<pre class="codehilite"><code class="language-js">CooldownState = {
+  alertID: &quot;string&quot;,
+  spellID: &quot;number&quot;,
+  name: &quot;string?&quot;,
+  icon: &quot;number|string?&quot;,
+  usable: &quot;boolean?&quot;,
+  charges: &quot;number?&quot;,
+  maxCharges: &quot;number?&quot;,
+  timer: TimerState,
+  factsSafe: &quot;boolean&quot;,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="itemcooldownstate">ItemCooldownState</h2>
+<pre class="codehilite"><code class="language-js">ItemCooldownState = {
+  alertID: &quot;string&quot;,
+  itemID: &quot;number&quot;,
+  linkedSpellID: &quot;number?&quot;,
+  name: &quot;string?&quot;,
+  icon: &quot;number|string?&quot;,
+  timer: TimerState,
+  cacheStatus: &quot;none|direct|pending|ready|throttled|combatBlocked&quot;,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="iconrenderstate">IconRenderState</h2>
+<pre class="codehilite"><code class="language-js">IconRenderState = {
+  alertID: &quot;string&quot;,
+  visible: &quot;boolean&quot;,
+  texture: &quot;number|string?&quot;,
+  stackText: &quot;string?&quot;,
+  timerText: &quot;string?&quot;,
+  nameText: &quot;string?&quot;,
+  cooldown: { start: &quot;number?&quot;, duration: &quot;number?&quot;, enabled: &quot;boolean?&quot; },
+  glow: &quot;none|active|usable|warning&quot;,
+  alpha: &quot;number?&quot;,
+  layoutKey: &quot;string&quot;
+}
+</code></pre>
+
+<h2 id="debugsnapshot">DebugSnapshot</h2>
+<pre class="codehilite"><code class="language-js">DebugSnapshot = {
+  schema: 1,
+  addon: { name: &quot;EventAlertMod&quot;, version: &quot;string?&quot;, build: &quot;number?&quot; },
+  environment: { retailOnly: true, inCombat: &quot;boolean&quot;, fps: &quot;number?&quot; },
+  facts: { alerts: &quot;array&lt;AlertState&gt;&quot; },
+  derived: { icons: &quot;array&lt;IconRenderState&gt;&quot;, dirtyQueues: &quot;object&quot; },
+  boundaryWarnings: &quot;array&lt;object&gt;&quot;,
+  humanNotes: &quot;array&lt;string&gt;&quot;
+}
+</code></pre>
+
+<h2 id="2026-08-12-theme">2026-08-12 Theme 設定</h2>
+<p><code>EAM_DB.config.theme</code> 是可持久化的 EAM 自有 UI 主題選擇，允許值與預設如下：</p>
+<pre class="codehilite"><code class="language-js">config.theme = &quot;eam&quot; // &quot;eam|ff7|winxp|win7|win10|win31|borland|doscrt|eten|redalert|aqua&quot;
+</code></pre>
+
+<ul>
+<li><code>eam</code> 為既有棕金視覺，亦是缺值或非法值的安全回退。</li>
+<li>ff7 為深靛／皇家藍／亮青；winxp 為 Luna 藍；win7 為 Aero 冰藍；win10 為深色平面／系統藍；win31 為灰底／海軍藍；borland 為亮藍底／亮黃字；doscrt 為純黑底／磷光綠字；eten 為深藍底／青黃字；redalert 為黑紅工業警示；aqua 為藍灰／亮藍。</li>
+<li><code>SavedVariables.updateTheme()</code> 只在實際值改變時寫入並增加 revision；重複選擇不得製造 revision。</li>
+<li>啟動時非法值會正規化為 <code>eam</code>，並在 migration warnings 留下 <code>invalidThemeDefaulted</code>；不覆蓋其他 SavedVariables。</li>
+<li>戰鬥中只保存 pending theme，待 <code>PLAYER_REGEN_ENABLED</code> 後由 <code>EAM.Theme.flushPending()</code> 套用。</li>
+<li>主題色只屬於 EAM 自有視窗 chrome；AlertBorderStyles 的自身／目標 Aura、技能、物品、地面效果語意色不由主題覆蓋。</li>
+</ul>
+<h2 id="2026-08-13-aurasound">2026-08-13 AuraSound 純資料契約</h2>
+<p>Aura alert 可保存以下 additive 純資料，不增加目前 SavedVariables schema 版本：</p>
+<pre class="codehilite"><code class="language-lua">alert.sound = {
+    added = { soundFileID = 566564, outputChannel = &quot;Master&quot; },
+    applicationsIncreased = nil,
+    removed = { soundFileName = &quot;Interface\\AddOns\\EventAlertMod\\Media\\example.ogg&quot; },
+}
+</code></pre>
+
+<ul>
+<li>trigger 白名單固定為 <code>added</code>、<code>applicationsIncreased</code>、<code>removed</code>。</li>
+<li>每個 trigger 必須提供正整數 <code>soundFileID</code> 或非空白 <code>soundFileName</code>；若兩者同時存在，正規化只保留 <code>soundFileID</code>。<code>outputChannel</code> 若存在必須是非空白字串。</li>
+<li><code>nil</code> 或正規化後的空表代表未覆寫，編譯器沿用全域音效；全域 <code>config.showSound=false</code> 是 master off，custom 設定不得繞過。</li>
+<li><code>SavedVariables.updateAuraSound(unit, spellID, sound)</code> 是唯一公開 mutation：非法輸入拒絕；相同設定不增加 revision；真變更只增加一次並發送 <code>EAM_AURA_SOUND_CHANGED</code>。</li>
+<li><code>auraSoundID</code> 只屬本次 Lua session 的 runtime registry，絕不可寫入 SavedVariables、JSON、報告或 table key。</li>
+<li>初始化只對現有 class profile 的 Aura sound 做白名單正規化；無法保留的值加入 <code>invalidAuraSoundNormalized</code> warning，不凍結使用者資料。</li>
+<li>真人 session 與報告的現行矩陣為 <code>2026-08-13.1</code> 共 37 案；必須 37/37、跨玩家自行執行的 <code>/reload</code>、已知 build identity 且零 warning 才可能完成。</li>
+</ul>
+<h2 id="2026-08-13-alpha-4-profile">2026-08-13 Alpha 4：功能模組與職業 profile 純資料契約</h2>
+<p>schemaVersion 5 的 EAM_DB 目前包含兩個互相獨立的設定面：</p>
+<ul>
+<li>config.moduleToggles：playerAura、targetAura、spellCooldown、itemCooldown、groundEffect、classPower、totem、tooltipMonitor；缺值預設 true，寫入必須經 SavedVariables.updateModuleToggle。</li>
+<li>profiles.classes[CLASS_TOKEN]：目前職業的 playerAuras、targetAuras、spellCooldowns、itemCooldowns、groundEffects。正式服務透過 getActiveClassToken／getAlertList 讀取，不保留根層 alerts mirror。</li>
+<li>v4 根層全域清單遷移時先保存 migrationBackups.globalAlertsV4；無法取得合法職業 token 時保存 profiles.unassignedLegacy，禁止猜測歸屬。</li>
+<li>/eam list、lookup、lookupfull 與 showcast 使用 active class profile；清空後不因 reload 重新灌入預設，defaultsSeeded 與 legacyImportVersion 共同維持冪等性。</li>
+<li>目前正式程式沒有 JSON／Base64 profile 分享 codec；Debug export 也不是可套用的設定匯入格式。任何未來分享格式都必須拒絕外部 Lua、Secret 值、未知 schema、重複 ID 與過大輸入。</li>
+</ul>
+<h2 id="2026-08-14-alpha-5profile">2026-08-14 Alpha 5：Profile 分享與字型設定</h2>
+<p>Core/ProfileCodec.lua 定義正式分享格式 EAMAP1:<base64(JSON envelope)>。JSON 是 canonical UTF-8 純資料，不能包含 function、userdata、metatable、Secret 值或執行字串。</p>
+<ul>
+<li>envelope 必須是 type=EAM_ALERT_PROFILE、schema=1、addonSchema=5，並帶 scope.classToken、允許的 scope.modules、payload.modules、payloadBytes 與 checksum={algorithm="adler32",value="8hex"}。</li>
+<li>Base64 僅接受嚴格 alphabet／padding；encoded 上限 262144 bytes、decoded 上限 196608 bytes、JSON depth 8、nodes 16384、總 alerts 4096、每 module 1024。</li>
+<li>import 先做 parse、schema、checksum、scope、欄位白名單與 ID 重算，再產生 preview；preview 不增加 revision、不發事件。merge 只 upsert scope 內項目，replace 只替換指定 class／module 並保留 bounded backup。</li>
+<li>戰鬥中拒絕結構性 apply；EAMAP1 不是加密，也不宣稱來源可信。任何 malformed／future schema／duplicate key／duplicate derived ID 都 fail-closed。</li>
+<li>config.fontFamily 允許 STANDARD、ARIALN、MORPHEUS、SKURRI，預設 STANDARD；變更由 SavedVariables.updateFontFamily 正規化、no-op 保持 revision，並由 TextPlacement 套用於 EAM 自有 FontString。</li>
+</ul>
+<h2 id="2026-08-14-schema-v5aura-catalog-scope-mutation">2026-08-14 現行 schema v5：Aura catalog scope 與批次 mutation</h2>
+<ul>
+<li><code>profiles.classes[CLASS_TOKEN].alerts</code> 仍是目前職業唯一正式清單來源；<code>catalogScope</code> 只接受 <code>SELF</code> 或 <code>CROSS_CLASS</code>。</li>
+<li>player Aura 的 <code>SELF</code> 新增預設 <code>fromPlayer=true</code>；player Aura 的 <code>CROSS_CLASS</code> 預設 <code>fromPlayer=false</code>；target Aura 新增預設 <code>fromPlayer=true</code>。</li>
+<li>非目前職業但可解析的 player Aura 候選保守寫入 <code>CROSS_CLASS</code>，不得偽裝成該職業技能；不存在或無法解析的 SpellID 不建立記錄。</li>
+<li>批次輸入可含換行、半形分號或全形分號；解析後先去重與排序，再以單一 deferred commit 寫入，真變更只增加一次 revision。</li>
+<li>EAMAP1 profile 對 <code>catalogScope</code> 採白名單正規化；缺值依 module 舊語意安全回填，非法值拒絕，不信任外部 derived ID。</li>
+<li><code>Data/wow_spells_and_auras.json</code> 不屬 SavedVariables schema，也不被 runtime 載入；它只是離線候選索引。</li>
+</ul>
+<h2 id="2026-08-21-schema-v6">2026-08-21 現行 schema v6：玩家多資源設定</h2>
+<ul>
+<li><code>EAM_DB.schemaVersion=6</code>。v5 升級時先把舊 <code>config.power*</code> 旗標保存到 <code>migrationBackups.playerResourceFlagsV5</code>，再建立資源設定；不得丟棄舊值或把 runtime sink 寫入 SavedVariables。</li>
+<li>每個職業 profile 新增 <code>resources = { schema = 3, globalDefaults = {}, classDefaults = {}, specs = {} }</code>。<code>globalDefaults</code> 提供全域資源外觀基線；<code>classDefaults[resourceKey]</code> 保存職業預設；<code>specs[specID][resourceKey]</code> 只保存該專精覆寫，未覆寫欄位繼承 classDefaults。</li>
+<li>每項資源可保存 <code>enabled</code>、<code>displayMode</code>、<code>showForeground</code>、<code>showBackground</code>、<code>showValue</code>、<code>showPercent</code>、<code>fullGlow</code>、<code>fontFamily</code>、<code>fontSize</code>、<code>orientation</code>、<code>anchor</code>、<code>position</code>、<code>threshold</code>、<code>offsetX</code>、<code>offsetY</code>、<code>scale</code>、<code>alpha</code>、<code>foregroundAlpha</code>、<code>backgroundAlpha</code>、<code>order</code>、<code>barWidth</code>、<code>barHeight</code>、<code>iconSize</code>、<code>spacing</code>。所有欄位都經白名單、型別與範圍正規化。</li>
+<li><code>SavedVariables.updatePlayerResourceConfig()</code> 是唯一正式寫入口：無變更不增加 revision；真變更只增加一次 revision，並發出 <code>EAM_PLAYER_RESOURCE_CONFIG_CHANGED</code>。非戰鬥中由 PlayerResourceService 立即重建並回報 <code>configApplied</code>；戰鬥中只保存設定並標記 <code>combatRebuildDeferred</code>，於 <code>PLAYER_REGEN_ENABLED</code> 合併重建一次。<code>resetToClass</code> 只移除指定專精的覆寫，不改其他職業或專精。</li>
+<li>Catalog、capability、active sink、目前百分比、current／max 與事件快取都是 session/runtime 狀態，絕不可寫入 SavedVariables、報告或 profile codec。</li>
+</ul>
+<h3 id="2026-08-21">2026-08-21 玩家資源設定生命週期補充</h3>
+<ul>
+<li>非戰鬥中，SavedVariables.updatePlayerResourceConfig 的真變更會送出 EAM_PLAYER_RESOURCE_CONFIG_CHANGED，PlayerResourceService 立即重建 topology 並再次套用有效設定；/reload 只用於載入新程式或驗證保存。</li>
+<li>戰鬥中，desired config 先保存，service 回報 combatRebuildDeferred；PLAYER_REGEN_ENABLED 合併多次變更後只重建一次。</li>
+<li>runtime status 的 foregroundPowerType／foregroundToken 只描述目前前景 metadata；activePowerType／activePowerToken 保留為相容欄位，不代表只追蹤一項資源。</li>
+<li>threshold、showPercent、fullGlow、fontFamily、fontSize、orientation 會經有效設定傳到 PowerRenderer；threshold 與 fullGlow 只對 NUMERIC 顯示能力產生 Lua 視覺效果。</li>
+<li>最新離線證據：Lua syntax 64/64（62 AddOn + 2 offline tests）、Flow all 75/75、Flow boundary 54/54、Validation Contracts 436/436；Retail／PTR／XPTR 真人簽收仍需玩家操作。</li>
+</ul>
+<h2 id="2026-08-21-v6">2026-08-21 玩家資源 v6 完成審計補充</h2>
+<ul>
+<li>玩家資源設定 schema 3 的每項資料包含 <code>anchor</code> 與 <code>position</code>；前者為父框架錨點，後者為資源框架定位點，兩者均受白名單驗證並搭配 offset／scale。</li>
+<li><code>PlayerResourceProbe</code> 只保存 transient 的 tracked／available／foreground／background／capability／sinkAvailable／eventObserved metadata，不保存 UnitPower、UnitPowerMax、percent 或其他 Secret 原值。</li>
+<li>XPTR 12.0.7 由 <code>PlayerResourceCapability.getClientAdapter()</code> 進入 numeric legacy adapter；不得呼叫 12.1 Secret sink。這是相容契約，不代表實機通過。</li>
+<li>只有 probe 確認事件缺失時才允許單一背景 sampler；<code>unitpower.background_sampler_gate</code> 與靜態 contract 已通過離線驗證，仍待實機簽收，不能將其執行結果寫成實機證據。</li>
+<li>sampler 的 generation、事件缺失旗標、排程 handle、capability 綁定策略與 <code>eventObserved</code> 都是 session/runtime 狀態，不得寫入 SavedVariables、Profile 或可複製報告；報告僅保留安全布林與 metadata。</li>
+</ul>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

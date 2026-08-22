@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGENTS.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-ai">EventAlertMod AI 入口指導檔</h1>
+<p>本專案發布EventAlertMod（EAM）正式服重寫。現有方案代碼作為「行為參考」，只能直接沿用舊架構作為新的架構基礎。</p>
+<h2 id="_1">對話與文件原則</h2>
+<ul>
+<li>使用預設台灣慣用繁體中文。</li>
+<li>用戶名為「少年欸」。</li>
+<li>回覆直接切入任務，保持技術清晰、結構清晰。</li>
+<li>WoW AddOn 相關任務必須先確認正式服與經典服差異；本專案只處理正式服。</li>
+<li>涉及 12.x API、Secret Values、C_* 命名空間或 Widget 行為時，需優先參考 <code>Docs</code> 與最新魔獸爭霸 Wiki API 變更資訊。</li>
+<li>尚未完成WoW正式實用機驗證，除非確實在WoW Retail中加載並測試過。</li>
+<li>消耗開發時，文件/內相關文件必須主動一併同步更新，保持文件與程式碼的一致性，不得等待使用者指示（不要一動才一動）。</li>
+<li><strong>檔案與HTML轉換規則</strong>：</li>
+<li>後續開發與 AI 協作的絕對指導文件，一律以 <code>.AI/AGENTS.md</code> 以及其內文指名之 <code>.md</code> 文件為唯一事實與 Facts-of-Truth 參考。</li>
+<li>HTML版本成人人類（少年欸）在瀏覽器中觀看易讀使用，AI在讀寫器與參考時，必須一律以<code>.md</code>原檔為唯一基準，不得以HTML作為開發事實參考。</li>
+<li>當<code>.AI/Docs/*.md</code>或<code>.AI/AGENTS.md</code>修改時包含心智圖（Mermaid）、表格、流程圖、映像時，必須執行轉換工具（<code>batch_convert_docs.py</code>），在<code>.AI/docs_html</code>內多產生一個同名的__EAMCODE___檔（例如檔案）。</li>
+<li>文件轉換預設使用 <code>$env:EAM_DOCS_OFFLINE='1'; python .\.AI\Tools\batch_convert_docs.py</code>，禁止未經少年欸明確授權就把 Markdown 全文送往外部翻譯服務。</li>
+</ul>
+<h2 id="skillssh">Skills.sh 候選規則</h2>
+<ul>
+<li>開發中發現穩定且重複的能力缺口時，可至 <code>https://skills.sh/</code> 搜尋並主動推薦最多三個候選。</li>
+<li>搜尋前先建立專案需求卡，審查來源、內容、依賴、權限、維護狀態、授權與供應鏈風險；排行榜與安裝數只作參考。</li>
+<li>預設只讀搜尋與比較，必須保留「都不安裝／改建專案自訂 Skill」選項。</li>
+<li>未經使用者明確選定候選、安裝範圍並授權，不得執行安裝命令或修改全域／專案 Skill。</li>
+</ul>
+<h2 id="_2">必讀文件</h2>
+<p>在更改程式碼之前，請先閱讀以下文件：</p>
+<ul>
+<li><code>.AI/PROJECT_MEMORY.md</code></li>
+<li><code>.AI/Docs/00_AI_CONTEXT.md</code></li>
+<li><code>.AI/Docs/01_ARCHITECTURE.md</code></li>
+<li><code>.AI/Docs/02_RETAIL_API_BOUNDARIES.md</code></li>
+<li><code>.AI/Docs/03_STATE_SCHEMA.md</code></li>
+<li><code>.AI/Docs/04_MODULE_CONTRACTS.md</code></li>
+<li><code>.AI/Docs/05_PERFORMANCE_GUIDE.md</code></li>
+<li><code>.AI/Docs/06_TEST_PLAN_RETAIL.md</code></li>
+<li><code>.AI/Docs/07_MIGRATION_NOTES.md</code></li>
+<li><code>.AI/Docs/08_AI_PROMPT_EXPORT_SCHEMA.md</code></li>
+<li><code>.AI/Docs/09_KNOWN_LIMITATIONS.md</code></li>
+<li><code>.AI/Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md</code></li>
+<li><code>.AI/Docs/11_WARCRAFT_WIKI_MAIN_MENU_TREE.md</code></li>
+<li><code>.AI/Docs/12_CODE_COMMENTARY_GUIDE.md</code></li>
+<li><code>.AI/Docs/14_PACKAGING_GUIDE.md</code></li>
+<li><code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code></li>
+<li><code>.AI/Docs/16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md</code></li>
+<li><code>.AI/Docs/17_SUBAGENT_WORKFLOW.md</code></li>
+<li><code>.AI/Docs/18_RETAIL_12X_CLASS_SPECIALIZATION_HERO_TALENT_DATABASE.md</code></li>
+<li><code>.AI/Docs/19_AURA_1210_REDUX_BLUEPRINT.md</code></li>
+<li><code>.AI/Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</code></li>
+<li><code>.AI/Docs/21_RACI_EXPERTS_MATRIX.md</code></li>
+<li><code>.AI/Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md</code></li>
+<li><code>.AI/Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code></li>
+<li><code>.AI/Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md</code></li>
+<li><code>.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code></li>
+<li><code>.AI/Docs/26_FLOW_VALIDATION_FRAMEWORK.md</code></li>
+<li><code>.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md</code></li>
+<li><code>.AI/Docs/28_PROJECT_CONTINUITY.md</code></li>
+<li><code>.AI/Docs/29_LIVE_TEST_STEP_GUIDE.md</code></li>
+<li><code>.AI/Data/ProjectContinuity.json</code></li>
+</ul>
+<h2 id="_3">專案目標</h2>
+<ul>
+<li>目標遊戲：僅限魔獸世界正式服版。</li>
+<li>目標 API 世代：正式服 12.x / 午夜時代 AddOn API。</li>
+<li>架構方向：事件驅動、低GC、模組化、可維護。</li>
+<li>使用者體驗：保留EAM「比WeakAuras簡單、輕量、專注光環與冷卻提醒」的定位。</li>
+<li>現有資料表、地化字符串、斜線命令語意與使用者行為視覺化可保留；內部架構應重新設計。</li>
+</ul>
+<h2 id="wow">本機 WoW 開發環境基準</h2>
+<ul>
+<li>WoW 安裝根目錄由 <code>Deploy/Deploy-EventAlertMod.ps1</code> 優先從 Windows Registry 偵測，使用者必須在互動部署前確認或改填。</li>
+<li>Git 專案根：<code>D:\Project_EventAlertMod</code>；唯一插件來源：<code>D:\Project_EventAlertMod\EventAlertMod</code>；AI 治理：<code>D:\Project_EventAlertMod\.AI</code>。</li>
+<li>舊目錄 <code>D:\EventAlertMod</code> 已停用，任何 Agent 都不得讀取、寫入、比較或作 fallback。</li>
+<li>2026-08-21 唯讀 metadata：<code>_retail_</code> 與 <code>_ptr_</code> 為 <code>12.1.0.69382</code>，<code>_xptr_</code> 為 <code>12.0.7.68887</code>；版本會變動，部署與實測前須重新讀取執行檔 <code>ProductVersion</code>。</li>
+<li>2026-08-21 三個 <code>Interface\AddOns\EventAlertMod</code> 目前皆為實體資料夾；只有 PTR 含 <code>EventAlertMod.toc</code>，Retail／XPTR 尚未部署完整。先前指向舊目錄的 SymbolicLink 狀態只屬歷史證據。</li>
+<li><code>.AI/Tools/Test-LocalWoWEnvironment.ps1</code> 對 Reparse Point 必須 fail-closed；現況預期 PTR 通過、Retail／XPTR 因缺少 TOC 失敗。Deploy DryRun 通過只代表目標可安全部署，不代表插件已完整。</li>
+<li>部署目標固定為各版本目錄下的 <code>Interface\AddOns\EventAlertMod</code>。安全實體資料夾可先備份後更新；missing 目標可建立；Reparse Point 與檔案目標一律停止。</li>
+<li>Classic 不在支援範圍。PTR／XPTR 互動部署時須再詢問是否同時部署 Retail，並在確認畫面列出全部候選版本。</li>
+<li><code>WTF</code> 路徑只在明確測試任務中動態組合；未經需要不得讀取或列出 <code>WTF\Account</code> 的帳號與角色資料。</li>
+<li>完整規則見 <code>.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md</code>。</li>
+</ul>
+<h2 id="_4">硬性限制</h2>
+<ul>
+<li>
+<p>不支援Classi##秘密/受保護資料規則與安全檢查
+Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料標記為 Secret / Protected / Display-only。為戰鬥中防禦 Secret/Protected 限制引發 Lua 碰撞或頭部錯誤，實施四大核心檢定 API 規範因數表索引防禦機制：</p>
+</li>
+<li>
+<p><strong>四大核心檢查功能</strong>：</p>
+</li>
+<li><code>issecretvalue(value)</code>：判斷特定值是否受保護之秘密值（Secret Value）。</li>
+<li><code>canaccessvalue(value)</code>：判斷目前是否有權限存取與讀取該值。</li>
+<li><code>canaccesstable(table)</code>：判斷整個表格物件可是否被安全讀取（非架構）。</li>
+<li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>：檢查表格物件結構本身是否被限製或包含秘密值已。</li>
+<li><strong>表格索引防護（關鍵）</strong>：嚴禁使用為秘密值（如保證驗證的 <code>spellId</code> 或 <code>text</code> 等）的密鑰去對任何非安全的嚴重自訂表進行索引操作，否則會立即觸發<code>attempted to index a table that cannot beindexed with Key Secrets</code>錯誤。在自訂表索引進行之前，必須先<code>issecretvalue(key)</code>確認該金鑰匙不是受保護的秘密值，並以<code>canaccesstable(targetTable)</code>檢查表安全性。</li>
+<li>先確認來源表是否為秘密（<code>canaccesstable</code>），再讀取欄位，再確認欄位值是否為秘密（<code>issecretvalue</code>）。</li>
+<li>未確認安全前，不得對duration、expirationTime、spellID、timeLeft等值做算術、比較、字串化、表鍵、序列化或任何函數輸入。</li>
+<li>不得擠壓創造持續時間、過渡時間、冷卻時間或所需價值。</li>
+<li>不得把猜測值混入事實；推導值標記必須為推導值。</li>
+<li>資料無法安全取得時，保留可安全顯示的圖示、名稱、活動狀態，計時器顯示為受保護、displayOnly 或未知。</li>
+<li>錯偵狀態需記錄boundaryWarnings。</li>
+<li>
+<p>若裝備，排程離開戰鬥後刷新。能將光環、冷卻、法術、時間、單位或字串資料標記為秘密/受保護/僅顯示。為防禦戰鬥中因秘密/受保護限制引發Lua崩潰或潰決錯誤，必須四大核心檢驗API規範與表索引防禦機制：</p>
+</li>
+<li>
+<p><strong>三大核心檢查功能</strong>：</p>
+</li>
+<li><code>issecretvalue(value)</code>：判斷特定值是否受保護之秘密值（Secret Value）。</li>
+<li><code>canaccessvalue(value)</code>：判斷目前是否有權限存取與讀取該值。</li>
+<li><code>canaccesstable(table)</code>：判斷整個表格物件可是否被安全讀取（非架構）。</li>
+<li><strong>表格特殊檢查與索引防禦</strong>：</li>
+<li><code>issecrettable(table)</code>：檢查目標表本身是否已被標記為 Secret Table。</li>
+<li><code>hasanysecretvalues(table)</code>：檢查表中是否包含任何秘密值（Secret Values）。</li>
+<li><strong>表格索引防護（關鍵）</strong>：嚴禁使用為秘密值（如保證驗證的 <code>spellId</code> 或 <code>text</code> 等）的密鑰去對任何非安全的嚴重自訂表進行索引操作，否則會立即觸發<code>attempted to index a table that cannot beindexed with Key Secrets</code>錯誤。在自訂表索引進行之前，必須先<code>issecretvalue(key)</code>確認該金鑰匙不是受保護的秘密值，並以<code>canaccesstable(targetTable)</code>檢查表安全性。</li>
+<li>先確認來源表是否為秘密（<code>canaccesstable</code>），再讀取欄位，再確認欄位值是否為秘密（<code>issecretvalue</code>）。</li>
+<li>未確認安全前，不得對duration、expirationTime、spellID、timeLeft等值做算術、比較、字串化、表鍵、序列化或任何函數輸入。</li>
+<li>不得擠壓創造持續時間、過渡時間、冷卻時間或所需價值。</li>
+<li>不得把猜測值混入事實；推導值標記必須為推導值。</li>
+<li>資料無法安全取得時，保留可安全顯示的圖示、名稱、活動狀態，計時器顯示為受保護、displayOnly 或未知。</li>
+<li>錯偵狀態需記錄boundaryWarnings。</li>
+<li>如果可行，排程將在不久後離開戰鬥。</li>
+</ul>
+<h2 id="_5">污染控制規則</h2>
+<ul>
+<li>不鉤、覆寫、重新定義或猴子補丁 Blizzard secure/protected 函數、FrameXML 核心函數、動作按鈕、單位框架、銘牌、法術施法、定位、物品使用相關路徑。</li>
+<li>不在戰鬥中修改受保護框架的屬性、父級、規則點、大小、可見性、範本或點擊行為。</li>
+<li>不把EAM運行時狀態、秘密/保護值、偵錯物件或外掛程式回呼形成可能污染安全鏈的暴雪框架。</li>
+<li>使用EventRouter孤兒框架；渲染框架只負責顯示，不承擔安全操作或受保護的互動。</li>
+<li>如果需要限制操作 UIParent 下方的框架，則必須在非受保護的顯示用途，並在 <code>InCombatLockdown()</code> 時延遲可能會導致 taint 的結構性變化。</li>
+<li>不使用<code>forceinsecure</code>、不嘗試清除或繞過污染點、不以第三方變通方式壓制暴雪阻止行動。</li>
+<li>發現污染、被阻止的動作、戰鬥鎖定錯誤時，需記錄到<code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>，並綁定觸發路徑、戰鬥狀態與可重置步驟。</li>
+</ul>
+<h2 id="durationobject">DurationObject 與時間顯示</h2>
+<ul>
+<li>秘密或受保護時間資料不得使用<code>OnUpdate</code>手機倒數。</li>
+<li>若 Retail 提供 DurationObject，優先取代 UI 處理，例如 <code>CooldownFrame:SetCooldownFromDurationObject()</code> 或 <code>FontString:SetDurationText()</code>。</li>
+<li><code>Cooldown:SetCountdownFormatter()</code>、<code>Cooldown:SetCountdownMillisecondsThreshold()</code> 等 12.0.5 後相關能力需以文件與實機確認後使用。</li>
+<li>手動定時器鍵盤僅用於確認安全的普通數字。</li>
+</ul>
+<h2 id="c_tooltipinfo">工具提示 / C_TooltipInfo 降級策略</h2>
+<p>工具提示解析只能作為低頻、截圖、明確標記來源的後備：
+- 優先使用 <code>C_TooltipInfo</code> 或 Blizzard 支援的顯示項目。
+- 可解析靜態說明文字中的明確數值。
+- 不解析剩餘時間文字作為事實。
+- 不在熱路徑、戰鬥中或每幀執行工具提示抓取。
+- 解析結果無法覆寫安全性API事實，只能作為匯出或僅顯示輔助。
+- 解析失敗時安靜必須降級，無法產生昏暗計時器。</p>
+<h2 id="_6">事件與框架規則</h2>
+<ul>
+<li>事件規定使用單一EventRouter。</li>
+<li>純事件監聽架構使用孤兒框架：<code>CreateFrame("Frame", nil, nil)</code>。</li>
+<li>不在UIParent-parented框架上承擔邏輯調度員職責。</li>
+<li>不在戰鬥中對UI父框架動態註冊或解除註冊事件。</li>
+<li>事件註冊變更應集中管理，避免重複供水。</li>
+</ul>
+<h2 id="_7">調度程序與全部規則</h2>
+<ul>
+<li>優先事件驅動；排程回退必須濃縮、低頻、可節流。</li>
+<li>只使用單一調度<code>OnUpdate</code>。</li>
+<li>禁止依附圖示計時器、應用術計時器、熱路徑重複<code>C_Timer.After(function() ...)</code>。</li>
+<li><code>UNIT_AURA</code>、<code>SPELL_UPDATE_COOLDOWN</code>、<code>OnUpdate</code>、渲染器更新屬於熱路徑。</li>
+<li>熱路徑不得配置臨時表、閉包或不必要的字串。</li>
+<li>熱路徑避免 <code>pairs</code> / <code>ipairs</code>；可用穩定數字索引時使用數位循環。</li>
+<li>熱路徑避免<code>table.insert</code>；可用直接索引寫入時使用直接索引。</li>
+<li>迴圈中群組字串使用buffer與<code>table.concat</code>，避免連續<code>..</code>。</li>
+<li>低FPS或戰鬥中應延後、縮減或停止非必要工作。</li>
+<li>大範圍物品掃描無法正常戰鬥時執行；若需要魔法存儲，選擇加入、僅閒置、可中斷、FPS釣魚、戰鬥釣魚。</li>
+</ul>
+<h2 id="tablecreate-tablefreeze">table.create / table.freeze 政策</h2>
+<ul>
+<li><code>table.create</code>用於預期設定：圖表、圖表、流程圖、記錄清單、圖示池、預設範本。</li>
+<li>必須提供<code>table.create</code>、<code>table.freeze</code>、<code>table.isfrozen</code>後備。</li>
+<li><code>table.freeze</code> 只用於不可變靜態資料：、枚舉、模式、預設欄位設定檔、契約模組、原型、元表。</li>
+<li>穩定 API 別名表可凍結，例如 <code>EAM.API</code>，但僅在確認時不會造成載入順序或測試故障時使用。</li>
+<li>不得凍結SavedVariables、運行時快取、光環/冷卻狀態、圖示狀態、池項目、調度器佇列、debug/session記錄。</li>
+</ul>
+<h2 id="ui">UI / 渲染器規則</h2>
+<ul>
+<li>渲染器不直接檢查API；資料由服務層提供。</li>
+<li>圖示、按鈕、FontString使用池。</li>
+<li>渲染器不執行安全操作，不註冊點擊地圖，不修改暴雪保護框架，不操作污染列/單位框架/銘牌路徑。</li>
+<li>避免初始化後建立多餘的框架。</li>
+<li><code>SetText</code>、<code>SetPoint</code>、<code>SetSize</code>、<code>SetTexture</code>、layout 寫入前先比較後次值。</li>
+<li>批次佈局時可先隱藏父級，完成後再顯示。</li>
+<li>支援計時器、藥劑名稱、光環值標籤，但只顯示安全資料。</li>
+<li>UI預設保持簡單，不能把 EAM 引入 WeakAuras 複雜系統。</li>
+</ul>
+<h2 id="savedvariables">SavedVariables 規則</h2>
+<ul>
+<li>SavedVariables 必須有架構版本。</li>
+<li>提供舊資料遷移、預設、驗證。</li>
+<li>不凍結SavedVariables。</li>
+<li>不讀取每幀或高運行時狀態。</li>
+<li>無法安全遷移的欄位要保留備份或標記為遺傳，且不可靜默破壞使用者設定。</li>
+</ul>
+<h2 id="ai">除錯/AI交接規則</h2>
+<ul>
+<li>除錯預設關閉。</li>
+<li>除錯 偵錯必須達到。</li>
+<li>快照需分割：</li>
+<li>事實</li>
+<li>派生
+  ——人類筆記</li>
+<li>boundaryWarnings</li>
+<li>環境</li>
+<li>不輸出巨大的日誌。</li>
+<li>匯出字符串僅在使用者明確要求時建立。</li>
+</ul>
+<h2 id="_8">課程風格</h2>
+<ul>
+<li>標識符使用中文。</li>
+<li>註解可使用繁體中文，重點放在 WoW API 邊界、原因與架構決策。
+-所有正式載入的方案檔都必須有檔案系統註解，說明模組、責任邊界、資料號碼與日後注意事項；細節依<code>.AI/Docs/12_CODE_COMMENTARY_GUIDE.md</code>。</li>
+<li>縮排使用4個空格。</li>
+<li>不使用行內分號。</li>
+<li>命名空間/模組使用PascalCase。</li>
+<li>函數/局部變數使用camelCase。</li>
+<li>導管函數/導管表以 <code>_</code> 匯出。</li>
+<li>符號使用UPPER_SNAKE_CASE。</li>
+</ul>
+<h2 id="_9">檔案備份規則</h2>
+<ul>
+<li>任何檔案在刪除、移移、覆寫或修改前，都必須先備份到專案根目錄的<code>.AI/backup/</code>資料夾。</li>
+<li>備份檔案名稱格式為「原始檔案名稱後綴 <code>__yyyyMMddHHmmss</code>」，例如 <code>AGENTS.md__20260526122904</code>。</li>
+<li>使用計時器本機時間，格式為年月日時分秒，方便依排序時間與追溯。
+-處理多個文件，應在同一作業開始前逐一備份；備份完成後才可進行實際修改、移移或刪除。</li>
+<li>備份資料夾只作為日後開發、修改與回溯參考來源，不得壓縮進CurseForge發布檔案。</li>
+<li>若原始檔案不存在，需先回傳原因，無法建立空備份冒充原始內容。</li>
+</ul>
+<h2 id="_10">開發問題記錄規則</h2>
+<ul>
+<li>開發過程遇到的瓶頸、限制、錯誤、工具失敗、API必須性與解決方式，都記錄到<code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
+<li>極限目的為降低日後重複試誤、節省AI上下/token、保留決策脈絡。</li>
+<li>每筆記錄至少包含約會、症狀、原因判斷、已嘗試方法、有效解決方法、後續事項注意事項。</li>
+<li>若問題尚未解決，需標註為「未解決」並寫明下一步驗證方式。</li>
+<li>不記錄密碼、無法令牌、私人帳號資料或任何進入專案文件的敏感資訊。</li>
+</ul>
+<h2 id="_11">專案專屬技能規則</h2>
+<ul>
+<li>開發過程若發現類似流程重複出現，且已具備穩定步驟、輸入條件、輸出結果與風險控制管，應整理成EventAlertMod專專用案SKILL。</li>
+<li>適合轉成SKILL的流程包含：壓縮發布、Lua靜態驗證、WoW API查詢、SavedVariables遷移檢查、秘密邊界審查、檔案同步、語檔同步。
+-目前已建立<code>eam-retail-p0-review</code>，位置為<code>.AI/skills/eam-retail-p0-review/SKILL.md</code>，用於EAM正式服重寫的P0 Secret/Taint/API/靜態驗證。</li>
+<li>建立SKILL前需先確認流程確實可重複，江蘇湖泊與解法記錄到<code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
+<li>SKILL內容應包含觸發條件、必要前檢、禁止事項、備份規則、驗證方式和最終回傳格式。</li>
+<li>尚未驗證、尚需人工判斷或含敏感資訊的流程硬輔助技能。</li>
+</ul>
+<h2 id="_12">子代理程式計劃使用規則</h2>
+<ul>
+<li>使用者已授權：後續本專案若出現適合子代理人的角色，需主動規劃並使用。</li>
+<li>使用先判斷關鍵路徑；立即阻止主流程的工作，由主代理本地處理。</li>
+<li>子代理主要可任務、明確、可欣賞且不互相覆蓋邊車任務。</li>
+<li>適合模具包含：正式服API查證、Secret / taint審查、熱路徑掃描、文件一致性檢查、模組化替換的不重疊文件切片、發布檢查。</li>
+<li>不適合架構包含：小型單檔修改、需要即時授權的高風險操作、尚未遺失的卸載移動/刪除、寫入範圍高度重疊的高關聯性。</li>
+<li>派工時必須明確指定檔案責任範圍、禁止事項、備份規則、驗證輸出及最終返回格式。</li>
+<li>子代理程式結果需要由主代理程式整合；不得將子代理程式的API判定視為已實機驗證。</li>
+<li>詳細流程請參閱<code>.AI/Docs/17_SUBAGENT_WORKFLOW.md</code>。</li>
+<li>所有與PR審查的協作必須嚴格遵循 <a href=".AI/Docs/21_RACI_EXPERTS_MATRIX.md">.AI/Docs/21_RACI_EXPERTS_MATRIX.md</a> 的 RACI 權責分工與審查原則。</li>
+</ul>
+<h2 id="_13">實施流程</h2>
+<p>1.稽核：讀取完整原始碼樹、TOC、XML、SavedVariables、global、Classic/MOP分支、OnUpdate__EAMCODE_5_ _、光環/cooldownOnUpdate/C_Timer、auraEAMCODED__、ACODE_4<strong><em>_</em>、aCODE_3</strong>、auraEAMCODEA__、A__uraEA__3__A__a☺
+2. 方案設計：首先模組責任與遷移策略，再開始大規模模組。
+3.重寫：建立核心、服務、UI、偵錯模組，取得可用的資料與使用者語意。
+4.靜態驗證：執行可用的Lua語法檢查、全域變數搜尋、<code>C_Timer.After</code>閉包搜尋、<code>table.freeze</code>錯誤搜尋。
+5. 報告：明確變更變更、未驗證事項、風險與下一步。</p>
+<h2 id="_14">快速指令</h2>
+<ul>
+<li>當使用者只輸入「資源」兩個字時，直接執行<code>.AI/Deploy/Build-Package.ps1</code>。</li>
+<li>當使用者輸入「壓縮開發版」時，直接執行<code>.AI/Deploy/Build-Package.ps1 -PackageLabel DEV</code>。</li>
+<li>資料夾前需確認<code>EventAlertMod/EventAlertMod.toc</code>的<code>##版本</code>符合<code>EventAlertMod_MN_yyyyMMdd</code>。</li>
+<li>預算檔名必須符合<code>EventAlertMod_MN_yyyyMMdd_HHmmss.zip</code>。</li>
+<li>壓縮後返回 zip 路徑、Lua 語法檢查結果、排除資料夾檢查結果。</li>
+<li>相關規則請參閱<code>.AI/Docs/14_PACKAGING_GUIDE.md</code>。</li>
+</ul>
+<h2 id="_15">回最終傳必須包含</h2>
+<p>相關實踐的最終報告至少已上市：</p>
+<p>1.更改檔案。
+2.主要架構變更。
+3.保留舊的EAM行為。
+4. 移除舊的行為。
+5. Lua / WoW API 假設。
+6. <code>table.create</code> / <code>table.freeze</code> 使用摘要。
+7. 秘密/受保護資料處理策略。
+8. 已執行靜態驗證。
+9. 未執行的驗證。
+10.WoW正式服實機測試需要。
+11.已知風險。
+12.下一個建議任務。</p>
+<h2 id="20260606">專案最新重構細節 (2026.06.06 更新)</h2>
+<h3 id="1retail-1207">1.已完成核心重構(Retail 12.0.7)</h3>
+<ul>
+<li><strong>全程式碼局部化清掃 (12.0.7 - 2026.06.06)</strong>：</li>
+<li>整個文件（包括 <code>Services</code> 和 <code>UI</code> 目錄下的所有邏輯）中所有編碼硬/英文提示術語與 UI 字符串已完全提取為 <code>EAM.L</code> 中的密鑰。</li>
+<li>補齊並無縫支持<code>zhTW</code> (繁中)、<code>zhCN</code> (簡中)、<code>enUS</code> (簡中)、<code>koKR</code> (韓文) 與 <code>ruRU</code> (俄文) 五大語系，共144個詞條。</li>
+<li><strong>動態專精本地化API重構</strong>：在<code>EventAlertMod/UI/Options.lua</code>的篩選選項中引入<code>CLASS_TOKEN_TO_ID</code>映射，優先調用官方嫁接API <code>GetSpecializationInfoForClassID</code>取得最準確的本地化專精名稱，並提供雙軌本地化備份。</li>
+<li><strong>ClassPower核心資源安全偵查與錯案加強</strong>：</li>
+<li>為 <code>detectClassPower</code> 與 <code>updatePower</code> 部署密切注意 <code>pcall</code> 隔離與 <code>issecretvalue</code> 防衛機制，防止戰鬥中能量數值差異為秘密表時大小比較造成的 Lua 崩潰。</li>
+<li><strong>EventRouter/Scheduler 故障隔離</strong>：</li>
+<li>為<code>EventAlertMod/Core/EventRouter.lua</code>的OnEvent核心循環與<code>EventAlertMod/Core/Scheduler.lua</code>的定時任務回呼回呼參數化<code>pcall</code>容錯，確保單一模組報錯時，不會幹擾或中斷其他模組與定時的執行。</li>
+<li><strong>雙軌 Native Binding 倒數與 Pandemic Glow</strong>：<ul>
+<li>時間渲染優先權實作 <code>C_DurationUtil.CreateDurationTextBinding</code> 與 <code>SetCooldownFromDurationObject</code> 降級通道。</li>
+<li>在DoT光環滿足Pandemic刷新時間時，為 Icon 啟用發光亮框效果。</li>
+</ul>
+</li>
+<li><strong>13個職業與28個英雄天賦資料庫擴展</strong>：<ul>
+<li>更新<code>EventAlertMod/Data/SpellArray.lua</code>，為所有13個職業與28個英雄天賦（如暴風雨、神聖、武器惡魔儀式等）配置了最新的武器ID預設監控。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2">2.後續維護與開發建議</h3>
+<ul>
+<li><strong>安全防禦優先</strong>：在與任何光環、冷卻、能量、時間相關的數值進行大小比較或表索引時，必須先使用 <code>issecretvalue</code> 進行防禦性檢查。</li>
+<li><strong>修改語法靜態檢查</strong>：在對任何Lua檔案進行後必須，執行 <code>luac -p</code> 檢查。</li>
+<li><strong>12.0.7 &amp; 12.1.0 專家聯合會與月亮載體研究（2026.06.07更新）</strong>：</li>
+<li>召集全體專家分代理進行圓桌聯會審定。 Lua VM專家指出熱路中閉隱包<code>pcall</code>導致LuaJIT Trace編譯器中止的底層工資，並提供了模組級靜態本地回退機制；AddOn架構師建立了<code>.AI/Docs/19_AURA_1210_REDUX_BLUEPRINT.md</code>藍圖，全面規劃了__MEAM__CODE_4) 零點存儲</li>
+<li><strong>影子載體技術(Shadow Host)實務</strong>：針對利用橋樑<code>CooldownViewer</code> (冷卻管理器/CDM)作為影子載體以避戰秘密/污染限製完成實現。新建<code>EventAlertMod/Services/ShadowHostService.lua</code>實踐官方池Hook，並於<code>EventAlertMod/UI/Renderer.lua</code>中引入寄生渲染讓與級聯排版避讓，100%黑暗中配合架構CPU與Taint。評估研究可參考<code>.AI/Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</code>。</li>
+<li><strong>12.1.0 零分配 &amp; 事件驅動全模組重構 (2026.06.07 已完成)</strong>：</li>
+<li><strong>資料視圖解關聯</strong>：解關聯<code>AuraService</code>、<strong>完全EAMCODE_1</strong>、<code>ItemCooldownService</code>、<code>GroundEffectService</code>與__EAMCODE_全部__，五大資料服務改為驅動事件，不再與<code>Renderer</code>直接連接，而是向至EAM__CO8D__EAM1 86_DED__EAM__CODDE<strong><em>_EAM</em>_CO8DDEA</strong>EAM__CODDE_%<strong>EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAMCODE___EAMCODE6%</strong> <em>EAMCODE_5__%__EAM__CODDE</em>%<strong>EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%</strong>。</li>
+<li><strong>境內控制器引入</strong>：引入<code>EventAlertMod/Managers/AlertManager.lua</code>統一管理和調度這五類變更事件，使用<code>Scheduler</code>實行同步節流與批量更新（<code>BeginBatch/EndBatch</code>），消除佈局本身。</li>
+<li><strong>多型零分配物件池</strong>：在所有服務中配置強調的 <code>StatePool</code> （如 <code>GroundEffectStatePool</code> 和 <code>TotemStatePool</code> 等），在 <code>acquire</code>狀態對象時綁定<code>releaseFunc</code>，並由<code>AlertManager</code>在渲染後識別多__A__EA__A__3__4D__EAMCO`fstate__EAMCO"__EA安全恢復對象，完成期運行0-分配最大限度降低GC目標。</li>
+<li><strong>鏡像載體文字剪裁與遮蔽修改</strong>：針對吸附官方CooldownViewer（CDM）時，因牽引容器<code>ClipsChildren</code>裁切與FrameLevel顯示導致技能名稱不顯示的問題，實施動態佈局調整。寄生模式下自動將技能名稱（<code>nameText</code>）移至圖示底部並設定高亮顯示圖示底部並設定高亮顯色，同時提權<code>FrameLevel</code>（相對於）<code>hostIcon</code> + 10），解決了「看不見的技能名稱」的痛點。</li>
+<li><strong>靜態語法安全性偵測設定</strong>：32個Lua檔案100%滲透語法安全性偵測設定。</li>
+<li><strong>16完成全新與高階事件整合（2026.06.07已）</strong>：</li>
+<li>不使用<code>forceinsecure</code>、不嘗試清除或繞過污染點、不以第三方變通方式壓制暴雪阻止行動。</li>
+<li>發現污染、被阻止的動作、戰鬥鎖定錯誤時，需記錄到<code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>，並綁定觸發路徑、戰鬥狀態與可重置步驟。</li>
+</ul>
+<h2 id="durationobject_1">DurationObject 與時間顯示</h2>
+<ul>
+<li>秘密或受保護時間資料不得使用<code>OnUpdate</code>手機倒數。</li>
+<li>若 Retail 提供 DurationObject，優先取代 UI 處理，例如 <code>CooldownFrame:SetCooldownFromDurationObject()</code> 或 <code>FontString:SetDurationText()</code>。</li>
+<li><code>Cooldown:SetCountdownFormatter()</code>、<code>Cooldown:SetCountdownMillisecondsThreshold()</code> 等 12.0.5 後相關能力需以文件與實機確認後使用。</li>
+<li>手動定時器鍵盤僅用於確認安全的普通數字。</li>
+</ul>
+<h2 id="c_tooltipinfo_1">工具提示 / C_TooltipInfo 降級策略</h2>
+<p>工具提示解析只能作為低頻、截圖、明確標記來源的後備：</p>
+<ul>
+<li>優先使用 <code>C_TooltipInfo</code> 或 Blizzard 支援的顯示項目。</li>
+<li>可解析靜態說明文字中的明確數值。</li>
+<li>不解析剩餘時間文字作為事實。</li>
+<li>不在熱路徑、戰鬥中或每幀執行工具提示抓取。</li>
+<li>解析結果無法覆寫安全性API事實，只能作為匯出或僅顯示輔助。</li>
+<li>解析失敗時安靜必須降級，無法產生昏暗計時器。</li>
+</ul>
+<h2 id="_16">事件與框架規則</h2>
+<ul>
+<li>事件規定使用單一EventRouter。</li>
+<li>純事件監聽架構使用孤兒框架：<code>CreateFrame("Frame", nil, nil)</code>。</li>
+<li>不在UIParent-parented框架上承擔邏輯調度員職責。</li>
+<li>不在戰鬥中對UI父框架動態註冊或解除註冊事件。</li>
+<li>事件註冊變更應集中管理，避免重複供水。</li>
+</ul>
+<h2 id="_17">調度程序與全部規則</h2>
+<ul>
+<li>優先事件驅動；排程回退必須濃縮、低頻、可節流。</li>
+<li>只使用單一調度<code>OnUpdate</code>。</li>
+<li>禁止依附圖示計時器、應用術計時器、熱路徑重複<code>C_Timer.After(function() ...)</code>。</li>
+<li><code>UNIT_AURA</code>、<code>SPELL_UPDATE_COOLDOWN</code>、<code>OnUpdate</code>、渲染器更新屬於熱路徑。</li>
+<li>熱路徑不得配置臨時表、閉包或不必要的字串。</li>
+<li>熱路徑避免 <code>pairs</code> / <code>ipairs</code>；可用穩定數字索引時使用數位循環。</li>
+<li>熱路徑避免<code>table.insert</code>；可用直接索引寫入時使用直接索引。</li>
+<li>迴圈中群組字串使用buffer與<code>table.concat</code>，避免連續<code>..</code>。</li>
+<li>低FPS或戰鬥中應延後、縮減或停止非必要工作。</li>
+<li>大範圍物品掃描無法正常戰鬥時執行；若需要魔法存儲，選擇加入、僅閒置、可中斷、FPS釣魚、戰鬥釣魚。</li>
+</ul>
+<h2 id="tablecreate-tablefreeze_1">table.create / table.freeze 政策</h2>
+<ul>
+<li><code>table.create</code>用於預期設定：圖表、圖表、流程圖、記錄清單、圖示池、預設範本。</li>
+<li>必須提供<code>table.create</code>、<code>table.freeze</code>、<code>table.isfrozen</code>後備。</li>
+<li><code>table.freeze</code> 只用於不可變靜態資料：、枚舉、模式、預設欄位設定檔、模組合同、原型、元表。</li>
+<li>穩定 API 別名表可凍結，例如 <code>EAM.API</code>，但僅在確認時不會造成載入順序或測試故障時使用。</li>
+<li>不得凍結SavedVariables、運行時快取、光環/冷卻狀態、圖示狀態、池項目、調度器佇列、debug/session記錄。</li>
+</ul>
+<h2 id="ui_1">UI / 渲染器規則</h2>
+<ul>
+<li>渲染器不直接檢查API；資料由服務層提供。</li>
+<li>圖示、按鈕、FontString使用池。</li>
+<li>渲染器不執行安全操作，不註冊點擊地圖，不修改暴雪保護框架，不操作污染列/單位框架/銘牌路徑。</li>
+<li>避免初始化後建立多餘的框架。</li>
+<li><code>SetText</code>、<code>SetPoint</code>、<code>SetSize</code>、<code>SetTexture</code>、layout 寫入前先比較後次值。</li>
+<li>批次佈局時可先隱藏父級，完成後再顯示。</li>
+<li>支援計時器、藥劑名稱、光環值標籤，但只顯示安全資料。</li>
+<li>UI預設保持簡單，不能把 EAM 引入 WeakAuras 複雜系統。</li>
+</ul>
+<h2 id="savedvariables_1">SavedVariables 規則</h2>
+<ul>
+<li>SavedVariables 必須有 schema 版本。</li>
+<li>提供舊資料遷移、預設、驗證。</li>
+<li>不凍結SavedVariables。</li>
+<li>不讀取每幀或高運行時狀態。</li>
+<li>無法安全遷移的欄位要保留備份或標記為遺傳，且不可靜默破壞使用者設定。</li>
+</ul>
+<h2 id="ai_1">除錯/AI交接規則</h2>
+<ul>
+<li>除錯預設關閉。</li>
+<li>除錯 偵錯必須達到。</li>
+<li>快照需分割：</li>
+<li>事實</li>
+<li>派生
+  ——人類筆記</li>
+<li>boundaryWarnings</li>
+<li>環境</li>
+<li>不輸出巨大的日誌。</li>
+<li>匯出字符串僅在使用者明確要求時建立。</li>
+</ul>
+<h2 id="_18">課程風格</h2>
+<ul>
+<li>標識符使用中文。</li>
+<li>註解可使用繁體中文，重點放在 WoW API 邊界、原因與架構決策。
+-所有正式載入的方案檔都必須有檔案系統註解，說明模組、責任邊界、資料號碼與日後注意事項；細節依<code>.AI/Docs/12_CODE_COMMENTARY_GUIDE.md</code>。</li>
+<li>縮排使用4個空格。</li>
+<li>不使用行內分號。</li>
+<li>命名空間/模組使用PascalCase。</li>
+<li>函數/局部變數使用camelCase。</li>
+<li>導管函數/導管表以 <code>_</code> 匯出。</li>
+<li>符號使用UPPER_SNAKE_CASE。</li>
+</ul>
+<h2 id="_19">檔案備份規則</h2>
+<ul>
+<li>任何檔案在刪除、移移、覆寫或修改前，都必須先備份到專案根目錄的<code>.AI/backup/</code>資料夾。</li>
+<li>備份檔名格式為「原始檔名後綴 <code>__yyyyMMddHHmmss</code>」，例如 <code>AGENTS.md__20260526122904</code>。</li>
+<li>使用計時器本機時間，格式為年月日時分秒，方便依排序時間與追溯。
+-處理多個文件，應在同一作業開始前逐一備份；備份完成後才可進行實際修改、移移或刪除。</li>
+<li>備份資料夾只作為日後開發、修改與回溯參考來源，不得壓縮進CurseForge發布檔案。</li>
+<li>若原始檔案不存在，需先回傳原因，無法建立空備份冒充原始內容。</li>
+</ul>
+<h2 id="_20">開發問題記錄規則</h2>
+<ul>
+<li>開發過程遇到的瓶頸、限制、錯誤、工具失敗、API必須性與解決方式，都記錄到<code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
+<li>極限目的為降低日後重複試誤、節省AI上下/token、保留決策脈絡。</li>
+<li>每筆記錄至少包含約會、症狀、原因判斷、已嘗試方法、有效解決方法、後續事項注意事項。</li>
+<li>若問題尚未解決，需標註為「未解決」並寫明下一步驗證方式。</li>
+<li>不記錄密碼、無法令牌、私人帳號資料或任何進入專案文件的敏感資訊。</li>
+</ul>
+<h2 id="_21">專案專屬技能規則</h2>
+<ul>
+<li>開發過程若發現類似流程重複出現，且已具備穩定步驟、輸入條件、輸出結果與風險控制管，應整理成EventAlertMod專專用案SKILL。</li>
+<li>適合轉換成SKILL的流程包含：壓縮發布、Lua靜態驗證、WoW API查證、SavedVariables遷移檢查、秘密邊界審查、檔案同步、語檔同步。</li>
+<li>目前已建立<code>eam-retail-p0-review</code>，位置為<code>.AI/skills/eam-retail-p0-review/SKILL.md</code>，用於EAM正式服重寫的P0 Secret/Taint/API/靜態驗證。</li>
+<li>建立SKILL前需先確認流程確實可重複，江蘇湖泊與解法記錄到<code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
+<li>SKILL內容應包含觸發條件、必要前檢、禁止事項、備份規則、驗證方式和最終回傳格式。</li>
+<li>尚未驗證、尚需人工判斷或含敏感資訊的流程硬輔助技能。</li>
+</ul>
+<h2 id="_22">子代理程式計劃使用規則</h2>
+<ul>
+<li>使用者已授權：後續本專案若出現適合子代理人的角色，需主動規劃並使用。</li>
+<li>使用先判斷關鍵路徑；立即阻止主流程的工作，由主代理本地處理。</li>
+<li>子代理主要可任務、明確、可欣賞且不互相覆蓋邊車任務。</li>
+<li>適合模具包含：正式服API查證、Secret / taint審查、熱路徑掃描、文件一致性檢查、模組化替換的不重疊文件切片、發布檢查。</li>
+<li>不適合架構包含：小型單檔修改、需要即時授權的高風險操作、尚未遺失的卸載移動/刪除、寫入範圍高度重疊的高關聯性。</li>
+<li>派工時必須明確指定檔案責任範圍、禁止事項、備份規則、驗證輸出及最終返回格式。</li>
+<li>子代理程式結果需要由主代理程式整合；不得將子代理程式的API判定視為已實機驗證。</li>
+<li>詳細流程請參閱<code>.AI/Docs/17_SUBAGENT_WORKFLOW.md</code>。</li>
+</ul>
+<h2 id="_23">實施流程</h2>
+<ol>
+<li>審核：讀取完整原始碼樹、TOC、XML、SavedVariables、global、Classic/MOP分支、OnUpdate/C_Timer、aura/cooldownOnUpdateOnUpdate/C_Timer、aura/cooldownOnUpdate__EAMCODE_6_EAMCODE_6__8、/cooldownOnUpdate__EAMCODE__8、__EAM__86_6%。</li>
+<li>方案設計：首先​​模組責任與遷移策略，再開始大規模模組。
+3.重寫：建立核心、服務、UI、偵錯模組，取得可用的資料與使用者語意。
+4.靜態驗證：執行可用的Lua語法檢查、全域變數搜尋、<code>C_Timer.After</code>閉包搜尋、<code>table.freeze</code>錯誤搜尋。</li>
+<li>報告：明確變更變更、未驗證事項、風險與下一步。</li>
+</ol>
+<h2 id="_24">快速指令</h2>
+<ul>
+<li>當使用者只輸入「資源」兩個字時，直接執行<code>.AI/Deploy/Build-Package.ps1</code>。</li>
+<li>資源前需確認 <code>EventAlertMod/EventAlertMod.toc</code> 且 <code>## Version</code> 符合 <code>EventAlertMod_MN_yyyyMMdd</code>（開發版本時，其將覆蓋寫入命名為 DEV 跳過日期校驗）。</li>
+<li>壓縮輸出檔名必須符合<code>EventAlertMod_MN_yyyyMMdd_HHmmss.zip</code>，開發版本則為<code>EventAlertMod_DEV_yyyyMMdd_HHmmss.zip</code>。</li>
+<li>壓縮後返回 zip 路徑、Lua 語法檢查結果、排除資料夾檢查結果。</li>
+<li>相關規則請參閱<code>.AI/Docs/14_PACKAGING_GUIDE.md</code>。</li>
+</ul>
+<h2 id="_25">回最終傳必須包含</h2>
+<p>相關實踐的最終報告至少已上市：</p>
+<p>1.更改檔案。
+2.主要架構變更。
+3.保留舊的EAM行為。
+4. 移除舊的行為。
+5. Lua / WoW API 假設。
+6. <code>table.create</code> / <code>table.freeze</code> 使用摘要。
+7. 秘密/受保護資料處理策略。
+8. 已執行靜態驗證。
+9. 未執行的驗證。
+10.WoW正式服實機測試需要。
+11.已知風險。
+12.下一個建議任務。</p>
+<h2 id="20260606_1">專案最新重構細節 (2026.06.06 更新)</h2>
+<h3 id="1retail-1207_1">1.已完成核心重構(Retail 12.0.7)</h3>
+<ul>
+<li><strong>全程式碼局部化清掃 (12.0.7 - 2026.06.06)</strong>：<ul>
+<li>整個文件（包括 <code>Services</code> 和 <code>UI</code> 目錄下的所有邏輯）中所有編碼硬/英文提示術語與 UI 字符串已完全提取為 <code>EAM.L</code> 中的密鑰。</li>
+</ul>
+</li>
+<li>補齊並無縫支持<code>zhTW</code> (繁中)、<code>zhCN</code> (簡中)、<code>enUS</code> (簡中)、<code>koKR</code> (韓文) 與 <code>ruRU</code> (俄文) 五大語系，共144個詞條。</li>
+<li><strong>動態專精本地化API重構</strong>：在<code>EventAlertMod/UI/Options.lua</code>的篩選選項中引入<code>CLASS_TOKEN_TO_ID</code>映射，優先調用官方嫁接API <code>GetSpecializationInfoForClassID</code>取得最準確的本地化專精名稱，並提供雙軌本地化備份。</li>
+<li><strong>ClassPower核心資源安全偵查與錯案加強</strong>：</li>
+<li>為 <code>detectClassPower</code> 與 <code>updatePower</code> 部署密切注意 <code>pcall</code> 隔離與 <code>issecretvalue</code> 防衛機制，防止戰鬥中能量數值差異為秘密表時大小比較造成的 Lua 崩潰。</li>
+<li><strong>EventRouter/Scheduler 故障隔離</strong>：</li>
+<li>為<code>EventAlertMod/Core/EventRouter.lua</code>的OnEvent核心循環與<code>EventAlertMod/Core/Scheduler.lua</code>的定時任務回呼回呼參數化<code>pcall</code>容錯，確保單一模組報錯時，不會幹擾或中斷其他模組與定時的執行。</li>
+<li><strong>雙軌 Native Binding 倒數與 Pandemic Glow</strong>：<ul>
+<li>時間渲染優先權實作 <code>C_DurationUtil.CreateDurationTextBinding</code> 與 <code>SetCooldownFromDurationObject</code> 降級通道。</li>
+<li>在DoT光環滿足Pandemic刷新時間時，為 Icon 啟用發光亮框效果。</li>
+</ul>
+</li>
+<li><strong>13個職業與28個英雄天賦資料庫擴展</strong>：<ul>
+<li>更新<code>EventAlertMod/Data/SpellArray.lua</code>，為所有13個職業與28個英雄天賦（如暴風雨、神聖、武器惡魔儀式等）配置了最新的武器ID預設監控。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2_1">2.後續維護與開發建議</h3>
+<ul>
+<li><strong>安全防禦優先</strong>：在與任何光環、冷卻、能量、時間相關的數值進行大小比較或表索引時，必須先使用 <code>issecretvalue</code> 進行防禦性檢查。</li>
+<li><strong>修改語法靜態檢查</strong>：在對任何Lua檔案進行後必須，執行 <code>luac -p</code> 檢查。</li>
+<li><strong>12.0.7 &amp; 12.1.0 專家聯合會與月亮載體研究（2026.06.07更新）</strong>：</li>
+<li>召集全體專家分代理進行圓桌聯會審定。 Lua VM專家指出熱路中閉隱包<code>pcall</code>導致LuaJIT Trace編譯器中止的底層工資，並提供了模組級靜態本地回退機制；AddOn架構師建立了<code>.AI/Docs/19_AURA_1210_REDUX_BLUEPRINT.md</code>藍圖，全面規劃了__MEAM__CODE_4) 零點存儲</li>
+<li><strong>影子載體技術(Shadow Host)實務</strong>：針對利用橋樑<code>CooldownViewer</code> (冷卻管理器/CDM)作為影子載體以避戰秘密/污染限製完成實現。新建<code>EventAlertMod/Services/ShadowHostService.lua</code>實踐官方池Hook，並於<code>EventAlertMod/UI/Renderer.lua</code>中引入寄生渲染讓與級聯排版避讓，100%黑暗中配合架構CPU與Taint。評估研究可參考<code>.AI/Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</code>。</li>
+<li><strong>12.1.0 零分配 &amp; 事件驅動全模組重構 (2026.06.07 已完成)</strong>：</li>
+<li><strong>資料視圖解關聯</strong>：解關聯<code>AuraService</code>、<strong>完全EAMCODE_1</strong>、<code>ItemCooldownService</code>、<code>GroundEffectService</code>與__EAMCODE_全部__，五大資料服務改為驅動事件，不再與<code>Renderer</code>直接連接，而是向至EAM__CO8D__EAM1 86_DED__EAM__CODDE<strong><em>_EAM</em>_CO8DDEA</strong>EAM__CODDE_%<strong>EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAMCODE___EAMCODE6%</strong> <em>EAMCODE_5__%__EAM__CODDE</em>%<strong>EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%</strong>。</li>
+<li><strong>境內控制器引入</strong>：引入<code>EventAlertMod/Managers/AlertManager.lua</code>統一管理和調度這五類變更事件，使用<code>Scheduler</code>實行同步節流與批量更新（<code>BeginBatch/EndBatch</code>），消除佈局本身。</li>
+<li><strong>多型零分配物件池</strong>：在所有服務中配置強調的 <code>StatePool</code> （如 <code>GroundEffectStatePool</code> 和 <code>TotemStatePool</code> 等），在 <code>acquire</code>狀態對象時綁定<code>releaseFunc</code>，並由<code>AlertManager</code>在渲染後識別多__A__EA__A__3__4D__EAMCO`fstate__EAMCO"__EA安全恢復對象，完成期運行0-分配最大限度降低GC目標。</li>
+<li><strong>鏡像載體文字剪裁與遮蔽修改</strong>：針對吸附官方CooldownViewer（CDM）時，因牽引容器<code>ClipsChildren</code>裁切與FrameLevel顯示導致技能名稱不顯示的問題，實施動態佈局調整。寄生模式下自動將技能名稱（<code>nameText</code>）移至圖示底部並設定高亮顯示圖示底部並設定高亮顯色，同時提權<code>FrameLevel</code>（相對於）<code>hostIcon</code> + 10），解決了「看不見的技能名稱」的痛點。</li>
+<li><strong>靜態語法安全性偵測設定</strong>：32個Lua檔案100%滲透語法安全性偵測設定。</li>
+<li><strong>16完成全新與高階事件整合（2026.06.07已）</strong>：<ul>
+<li><strong>替代無效CLEU</strong>：在 <code>GroundEffectService</code> 中全面刪除 <code>COMBAT_LOG_EVENT_UNFILTERED</code> 註冊，改為訂閱 <code>UNIT_SPELLCAST_SUCCEEDED</code> 並篩選 <code>unitTarget == "player"</code>，100% <code>unitTarget == "player"</code>，100% <code>unitTarget == __EAMCODE10%，CO __</code>EAMCODE_3__10%，100%，100%。 <strong>EAMDE_0</strong> 在雪天等，</li>
+</ul>
+</li>
+<li><strong>高頻能量無延遲更新</strong>：在 <code>ClassPowerService</code> 中追加註冊 <code>UNIT_POWER_FREQUENT</code> 事件，使聖能、連擊點更新反應速度達到 0ms 延遲。<ul>
+<li><strong>技能覆蓋動態緊接在</strong>：在<code>CooldownService</code>註冊<code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code>，當法術因天賦/狀態覆蓋變更時，即時刷新被覆蓋或原始技能的冷卻，徹底消除覆蓋時消耗/殘留Bug。</li>
+</ul>
+</li>
+<li><strong>新年快速金色發光同步</strong>：在 <code>AlertManager</code> 中監聽 <code>SPELL_ACTIVATION_OVERLAY_GLOW_SHOW</code> 與 <code>SPELL_ACTIVATION_OVERLAY_GLOW_HIDE</code> 快捷列高亮事件，維護本地 <code>glowSpells</code> 表，以 Decorator（裝飾屬性）為形式 Aura / Cooldown 狀態新增 <code>state.overlayGlow</code>_EA_EA__MCO_EA 動態標記。 <code>overlayGlow</code>雙軌顯示金色發光，100%同步官方Proc發光。</li>
+<li><strong>修改靜態語法檢查</strong>：對所有5個核心檔案100%通過 <code>luac -p</code> 的靜態語法檢查。</li>
+<li><strong>除錯完成診斷與統計工具修復與擴展 (2026.06.07 已)</strong>：<ul>
+<li>12.1.0修改架構模組後，診斷日誌中 <code>visibleIcons</code> 恆為 <code>0</code> 和 <code>alertFrame.exists</code> 恆為 <code>false</code> 的統計 Bug。</li>
+</ul>
+</li>
+<li>補充<code>/eam除錯</code>資訊，新增各資料服務的<code>active</code>監控試劑ID清單、記憶體佔用<code>memoryKB</code>、<code>glowSpells</code>發光報表輸出清單、7大警報框底下所有活動圖示的座標與實體<code>:IsShown(5)，
+    -修改靜態語法檢驗：之 2 個診斷模組檔 100% 通過</code>luac -p` 靜態語法檢查。</li>
+<li><strong>技能無冷卻時強行顯示空白圖示Bug修復（2026.06.07已完成）</strong>：</li>
+<li>修改非衝鋒技能在完全沒有在冷卻中（<code>cooldownInfo</code>為<code>nil</code>）時，因<code>infoSafe</code>排除防衛過當而強行在畫面上顯示15個無倒數、無螺旋幾何的空圖示Bug。<ul>
+<li>修改<code>CooldownService.lua</code>的<code>shouldShow</code>邏輯，增加<code>cooldownInfo</code>存在性防護，無冷卻時直接保持不顯示，恢復精確監控。</li>
+</ul>
+</li>
+<li>修改靜態語法檢查：之 <code>CooldownService.lua</code> 100% 通過 <code>luac -p</code> 靜態語法檢查。</li>
+<li><strong>戰鬥設定（秘密）光環時間倒數降級與自動回復恢復機制（2026.06.07已完成）</strong>：</li>
+<li>當玩家在戰鬥中，光環時間與端點時間被標記為秘密時間，實施優先視角<code>C_TooltipInfo</code>抓取說明中的持續時間（<code>scrapedDur</code>）來建立非秘密的普通<code>DurationObject</code>與分數型計時器（<code>TIMER_NUMERIC</code>），讓器能夠正常渲染倒數。</li>
+<li>在<code>EventAlertMod/UI/Renderer.lua</code>中維護<code>activeDurationObjects</code>，在統一的<code>onLegacyTimerUpdate</code>系統中每一幀進行突破<code>:IsZero()</code>對抗。一旦爆發，主動觸發與恢復，徹底解決秘密光環殘留Bug。<ul>
+<li>靜態語法檢查：<code>AuraService.lua</code> 與 <code>EventAlertMod/UI/Renderer.lua</code> 100% 修改 <code>luac -p</code> 靜態語法檢查。</li>
+</ul>
+</li>
+<li><strong>12.1.0零分配StatePool恢復與基於Pool-Token延遲調度之JIT優化實踐（2026.06.09已完成）</strong>：</li>
+<li><strong>P0 記憶體洩漏修復</strong>：在 <code>AuraService.lua</code>、<code>GroundEffectService.lua</code>、<code>TotemService.lua</code> 的 <code>StatePool.acquire</code> 內，統一安全地綁定<code>state.releaseFunc = Pool.release</code>，並在__EAMCODE_5%」時設定為__EAMCODE_5%」圖示後能成功恢復狀態，解決了隱藏了前期分配資產池網格GC流失的嚴重P0 Bug。</li>
+<li><strong>刪除JIT Trace Abort</strong>：完全移除在 OnUpdate 中對 <code>durationObj:IsZero()</code> 的 <code>pairs</code> 輪詢與 <code>pcall</code> 檢查。改為在 <code>Renderer.render</code> 啟動時脈時，穿越 <code>timerTokenPool</code> 零分配令牌池取得令牌，並以 <code>Scheduler.after</code> 註冊單次後續任務。</li>
+<li><strong>極限0-分配發生</strong>：代替時由<code>onDurationTimerExpired(token)</code>判斷token激活狀態以準確與恢復隱藏。整個計時與恢復流程完全完成0-分配（零堆記憶體配置）與零輪詢CPU幾十，消除了戰鬥微卡頓，且熱路徑100%可被LuaJIT編譯，速度提升數百倍。<ul>
+<li><strong>修改靜態語法檢查</strong>：之4個核心檔案全部100%通過 <code>luac -p</code> 靜態語法檢查。</li>
+</ul>
+</li>
+<li><strong>12.1.0專家矩陣擴展與新專家定義（2026.06.09已完成）</strong>：<ul>
+<li><strong>專家定義</strong>：使用<code>define_subagent</code>定義了<code>EAM_Mock_Sandbox_Expert</code> (MOCK)、<code>EAM_Data_Guard_Expert</code> (DATA)、<code>EAM_DevOps_Release_Expert</code> (DEVOPS) 和 <code>EAM_Combat_Scraper_Expert</code> (<code>EAM_Combat_Scraper_Expert</code> (__EA)CODE7__完成一個全新的專家。</li>
+</ul>
+</li>
+<li><strong>修改RACI矩陣升級</strong>：<code>.AI/Docs/21_RACI_EXPERTS_MATRIX.md</code>擴展專案的RACI職責矩陣，引入「沙盒測試」與「WTF設定檔遷移」兩個全新的任務領域，認識了新增專家的R/A__EAMCODE_4分機定位測試</li>
+</ul>
+<h2 id="changelog">Changelog 分類規則</h2>
+<ul>
+<li>根層 <code>changelog.txt</code> 與 <code>EventAlertMod/changelog.txt</code> 是公開發布紀錄，只記錄 WoW 插件功能、遊戲內行為、版本相容性、玩家可感知修正，以及會實際改變發布插件包內容的素材或封裝修正。</li>
+<li>公開 changelog 不記錄 AI 治理、代理分工、文件同步、上下文接續、測試通過數、離線驗證數字、GitHub／CI／workflow 發布流程、備份位置或內部工作進度。</li>
+<li>AI 治理問題、失敗嘗試、根因分析與後續決策，記錄於 <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；跨工作階段的路由、狀態與未完成事項，記錄於 <code>.AI/Docs/28_PROJECT_CONTINUITY.md</code>。</li>
+<li>兩份公開 changelog 必須使用同一份內容來源，完成後以 SHA-256 確認 <code>changelog.txt</code> 與 <code>EventAlertMod/changelog.txt</code> 完全一致。</li>
+<li>修改公開 changelog 前，先依檔案安全規則備份；不要為了整理格式改寫歷史技術事實，只移除純流程段落或將同一功能的流程性措辭改成玩家可理解的行為描述。</li>
+</ul>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

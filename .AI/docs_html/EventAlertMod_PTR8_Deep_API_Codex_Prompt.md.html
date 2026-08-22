@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventAlertMod_PTR8_Deep_API_Codex_Prompt.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<h1 id="eventalertmod_remakewow-121-ptr-8-api-ptr">EventAlertMod_Remake：WoW 12.1 PTR 8 API 深入稽核與 PTR 專用修正提示</h1>
+<h2 id="0">0. 任務定位與目前環境</h2>
+<p>你目前仍在處理 <code>EventAlertMod_Remake</code> 的既有任務，並保有先前對 WoW 12.1 PTR 1～7、AuraContainer、AuraButton、Secret／Forbidden 安全模型與 EAM Native Aura Backend 的工作進度。</p>
+<p>本提示屬於：</p>
+<pre class="codehilite"><code class="language-text">PTR 8 增量校正
+＋
+相關 API 詳細文件與 FrameXML 深入稽核
+＋
+PTR 專用實作／驗證
+</code></pre>
+
+<p>不是重新開始專案，也不是要求目前正式服立即使用 12.1 Native Aura。</p>
+<h3 id="_1">目前版本前提</h3>
+<pre class="codehilite"><code class="language-text">目前正式服：WoW 12.0.7
+目前測試環境：WoW 12.1 PTR
+預定正式服切換窗口：2026-08-13（台灣時間）
+</code></pre>
+
+<p>在正式服實際更新到 12.1 前：</p>
+<pre class="codehilite"><code class="language-text">12.1 Native AuraContainer 路徑
+→ 只允許在 PTR 啟用與驗證
+
+正式服 12.0.7
+→ 維持既有 12.0.7／Legacy Backend
+</code></pre>
+
+<p><strong>不得只依日期自動解除版本閘門。</strong></p>
+<p>2026-08-13 或之後，仍必須先由實際客戶端資訊確認：</p>
+<pre class="codehilite"><code class="language-lua">local version, build, buildDate, interfaceVersion = GetBuildInfo()
+</code></pre>
+
+<p>只有在正式服實際符合下列條件後，才可評估啟用正式服 12.1 Native Backend：</p>
+<pre class="codehilite"><code class="language-text">interfaceVersion &gt;= 120100
+且
+必要的 AuraContainer／AuraButton API 實際存在
+且
+正式服實機 smoke test 通過
+</code></pre>
+
+<p>如果日期已到，但正式服仍回報 12.0.7／<code>120007</code>：</p>
+<pre class="codehilite"><code class="language-text">不得啟用 12.1 Native Backend
+不得以日期覆蓋 runtime version gate
+</code></pre>
+
+<hr />
+<h1 id="1">1. 工作原則</h1>
+<p>請遵守：</p>
+<ul>
+<li>保留目前工作樹、未提交修改、既有架構與測試成果。</li>
+<li>先辨識哪些問題已經處理，不要重複重構。</li>
+<li>不得撤銷與 PTR 8 無關的正確修改。</li>
+<li>只做有 PTR 公告、Generated API Documentation 或 FrameXML 證據支持的修改。</li>
+<li>無法由 Mock 證明的行為，必須標記為 PTR 實機待驗證。</li>
+<li>正式服 12.0.7 不得被 PTR-only API probe 污染。</li>
+<li>優先採取最小、可驗證、可回退的變更。</li>
+<li>Classic／Legacy Backend 必須與 Retail 12.1 Native Backend 解耦。</li>
+<li>不得把 PTR 通過描述成正式服通過。</li>
+</ul>
+<p>專案：</p>
+<pre class="codehilite"><code class="language-text">https://github.com/ziyuefan/EventAlertMod_Remake
+</code></pre>
+
+<p>權威來源：</p>
+<pre class="codehilite"><code class="language-text">https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes
+https://github.com/Gethe/wow-ui-source
+</code></pre>
+
+<p>曾檢查的 PTR UI Source 基準：</p>
+<pre class="codehilite"><code class="language-text">12.1.0.69111
+</code></pre>
+
+<p>執行時仍須重新檢查：</p>
+<pre class="codehilite"><code class="language-text">Gethe/wow-ui-source ptr/version.txt
+</code></pre>
+
+<p>並記錄：</p>
+<pre class="codehilite"><code class="language-text">WoW build
+Interface version
+wow-ui-source commit SHA
+稽核日期
+涉及的 FrameXML 路徑
+涉及的 Generated Documentation 路徑
+PTR 實機測試日期
+</code></pre>
+
+<hr />
+<h1 id="2-patch-notes">2. 不可只讀 Patch Notes 摘要</h1>
+<p>本次稽核必須建立三層證據鏈：</p>
+<pre class="codehilite"><code class="language-text">PTR 1～8 公告演進
+→ Generated API Documentation
+→ Blizzard FrameXML 實際實作
+</code></pre>
+
+<p>每個與 EAM 有關的條目都必須確認：</p>
+<ol>
+<li>PTR 公告使用的描述名稱。</li>
+<li>最新公開方法名稱。</li>
+<li>方法簽名與參數型別。</li>
+<li>options table 的實際欄位名稱。</li>
+<li>Enum 的正式名稱與值域。</li>
+<li>Nilable／Default 行為。</li>
+<li>SecretArguments、Predicate 或 Access Constraint。</li>
+<li>實際呼叫順序。</li>
+<li>Dirty flag 與更新階段。</li>
+<li>Region／Frame 的所有權與生命週期。</li>
+<li>是否會建立或啟用 OnUpdate。</li>
+<li>是否屬於引擎行為／Bug Fix，而不是可探測 API。</li>
+<li>EAM 應修改程式、文件、測試，或只列入 PTR 驗證。</li>
+</ol>
+<p>不得只根據 Wiki 條目的自然語言名稱直接生成 Lua 程式碼。</p>
+<p>例如 PTR 8 公告中的「stealable option」目前實際落成：</p>
+<pre class="codehilite"><code class="language-lua">stealableFilter =
+    Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable
+</code></pre>
+
+<p>不是：</p>
+<pre class="codehilite"><code class="language-lua">stealable = true
+</code></pre>
+
+<hr />
+<h1 id="3">3. 開始前先盤點既有進度</h1>
+<p>優先檢查：</p>
+<pre class="codehilite"><code class="language-text">Services/AuraCapabilityService.lua
+Services/AuraContainerService.lua
+Services/AuraSoundService.lua
+Managers/AuraRuleCompiler.lua
+UI/NativeAuraRenderer.lua
+Tests/Mocks/WoW121AuraMock.lua
+Tests/FlowValidationHarness.lua
+Docs/02_RETAIL_API_BOUNDARIES.md
+Docs/09_KNOWN_LIMITATIONS.md
+Docs/19_AURA_1210_REDUX_BLUEPRINT.md
+Docs/23_AURA_CONTAINER_IMPLEMENTATION.md
+CHANGELOG.md
+</code></pre>
+
+<p>開始修改前先輸出：</p>
+<pre class="codehilite"><code class="language-text">已由既有工作完整處理
+已部分處理
+PTR 8 新增需求
+既有判斷需要校正
+目前不影響 EAM
+只需 PTR 實機驗證
+正式服 12.0.7 必須保持不變
+</code></pre>
+
+<p>同時檢查：</p>
+<pre class="codehilite"><code class="language-text">git status
+最近與 AuraContainer 有關的 commits
+尚未提交的修改
+目前測試狀態
+文件是否落後於程式碼
+</code></pre>
+
+<hr />
+<h1 id="4">4. 建立硬性版本閘門</h1>
+<h2 id="41-backend-api">4.1 Backend 選擇不得只看 API 存在</h2>
+<p>Backend 選擇至少要同時考慮：</p>
+<pre class="codehilite"><code class="language-text">產品分支
+Interface version
+必要 API 契約
+PTR／正式服環境
+</code></pre>
+
+<p>建議概念：</p>
+<pre class="codehilite"><code class="language-lua">local _, _, _, interfaceVersion = GetBuildInfo()
+
+local isRetail121OrLater =
+    WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+    and type(interfaceVersion) == &quot;number&quot;
+    and interfaceVersion &gt;= 120100
+
+local hasRequiredNativeAuraContract =
+    -- 只檢查必要契約，不把可選視覺 API 當必要條件
+    false
+</code></pre>
+
+<h3 id="ptr">PTR 階段</h3>
+<pre class="codehilite"><code class="language-text">Retail PTR 12.1
+＋ interfaceVersion &gt;= 120100
+＋必要契約存在
+→ 允許 Native Aura Backend
+</code></pre>
+
+<h3 id="1207">正式服 12.0.7</h3>
+<pre class="codehilite"><code class="language-text">interfaceVersion == 120007
+→ 強制 Legacy／12.0.7 Backend
+→ 不建立 CustomAuraContainer
+→ 不執行 PTR-only destructive probe
+</code></pre>
+
+<h3 id="_2">正式服切換後</h3>
+<pre class="codehilite"><code class="language-text">正式服 interfaceVersion &gt;= 120100
+＋必要契約存在
+＋正式服 smoke test 通過
+→ 才正式啟用 Native Aura Backend
+</code></pre>
+
+<h2 id="42">4.2 日期只能作為發布作業提示</h2>
+<pre class="codehilite"><code class="language-text">2026-08-13
+</code></pre>
+
+<p>只能作為：</p>
+<pre class="codehilite"><code class="language-text">重新檢查正式服 build
+執行 release smoke test
+評估解除 PTR-only gate
+</code></pre>
+
+<p>不能作為：</p>
+<pre class="codehilite"><code class="language-text">直接啟用 12.1 Native Backend 的唯一條件
+</code></pre>
+
+<hr />
+<h1 id="5-ptr-8">5. PTR 8 累積變更</h1>
+<p>更新演進矩陣：</p>
+<pre class="codehilite"><code class="language-text">12.0.7
+→ PTR 1
+→ PTR 2
+→ PTR 3
+→ PTR 4
+→ PTR 5
+→ PTR 6
+→ PTR 7
+→ PTR 8
+</code></pre>
+
+<p>PTR 8 AddOn-facing 變更：</p>
+<ol>
+<li>AuraButton 新增 Pandemic 狀態 Region API。</li>
+<li>Dispel／Border 顯示 options 新增 <code>showAlways</code> 與 stealable 過濾能力。</li>
+<li>AuraButton Tooltip 改為每 200 ms 節流更新。</li>
+<li>AuraContainer 停用時會清除其 AuraButton 與 ItemEnchantment assignment。</li>
+<li><code>UnitIsPossessed</code>、<code>UnitIsCharmed</code> 對 <code>player</code>、<code>pet</code>、<code>vehicle</code> 不再回傳 Secret。</li>
+<li>修正 AddOn 無法使用 SVG／VectorGraphics。</li>
+<li>修正 AuraButton Duration Text 偶爾顯示 0。</li>
+<li>修正 <code>PingableUnitFrameTemplate</code> Ping 敵對單位時的 Lua Error。</li>
+<li>封堵透過 <code>OnSizeChanged</code> 追蹤 AuraContainer Aura 數量的漏洞。</li>
+</ol>
+<p>不得只寫 PTR 8 最終狀態，仍須保留 PTR 1～8 的變化脈絡。</p>
+<hr />
+<h1 id="6-pandemic-api">6. Pandemic API：使用實際名稱與生命週期</h1>
+<h2 id="61-api">6.1 已確認的 API</h2>
+<p>最新 <code>Blizzard_CustomAuraButton.lua</code> 使用：</p>
+<pre class="codehilite"><code class="language-lua">auraButton:AddPandemicRegion(region)
+auraButton:RemovePandemicRegion(index)
+auraButton:ClearPandemicRegions()
+</code></pre>
+
+<p>注意：</p>
+<ul>
+<li>參數型別是 <code>Region</code>，不限於 Texture。</li>
+<li><code>AddPandemicRegion</code> 回傳索引。</li>
+<li>Region 必須通過 inbound script object 驗證。</li>
+<li>Region 必須是 AuraButton descendant。</li>
+<li>綁定後 Region 取得：</li>
+</ul>
+<pre class="codehilite"><code class="language-lua">Enum.SecretAspect.Shown
+</code></pre>
+
+<ul>
+<li>AddOn 不得讀取其 Shown 狀態反推 Aura。</li>
+<li>綁定後不得 reparent。</li>
+</ul>
+<h2 id="62-blizzard">6.2 Blizzard 內部計算</h2>
+<p>FrameXML 會使用：</p>
+<pre class="codehilite"><code class="language-lua">C_UnitAuras.GetRefreshExtendedDuration(unitToken, auraInstanceID)
+C_UnitAuras.GetAuraBaseDuration(unitToken, auraInstanceID)
+</code></pre>
+
+<p>推算 Pandemic Window，再由 Blizzard 私有邏輯控制 Region。</p>
+<p>EAM 不得自行：</p>
+<pre class="codehilite"><code class="language-text">讀取 AuraData
+讀取 expirationTime
+讀取 duration
+假定固定 30%
+建立 Pandemic Ticker
+建立 Pandemic Scheduler 任務
+使用 UNIT_AURA Secret payload
+透過 Region Show／Hide 建立 AuraState
+</code></pre>
+
+<h2 id="63-onupdate">6.3 OnUpdate 成本</h2>
+<p><code>CustomAuraButtonPrivateMixin</code> 只有在以下條件同時成立時才啟用自身 OnUpdate：</p>
+<pre class="codehilite"><code class="language-text">至少配置一個 Pandemic Region
+且
+當前 Aura 存在有效 Pandemic Window
+</code></pre>
+
+<p>因此不要替所有 AuraButton 無條件加入 Pandemic Region。</p>
+<p>建議：</p>
+<pre class="codehilite"><code class="language-text">規則明確啟用 Pandemic
+→ 才在 initializeFrame 綁定
+
+規則未啟用
+→ 不建立、不綁定 Pandemic Region
+</code></pre>
+
+<p>優先限制於：</p>
+<pre class="codehilite"><code class="language-text">重要 Slot
+少量高優先 Group
+使用者明確啟用的規則
+</code></pre>
+
+<p>避免大量 AuraButton 同時進入 Blizzard 私有 OnUpdate。</p>
+<h2 id="64-capability">6.4 Capability 命名</h2>
+<p>不要使用：</p>
+<pre class="codehilite"><code class="language-lua">hasPandemicTexture
+</code></pre>
+
+<p>改為：</p>
+<pre class="codehilite"><code class="language-lua">hasPandemicRegionAPI
+</code></pre>
+
+<p>探測契約：</p>
+<pre class="codehilite"><code class="language-lua">type(auraButton.AddPandemicRegion) == &quot;function&quot;
+and type(auraButton.RemovePandemicRegion) == &quot;function&quot;
+and type(auraButton.ClearPandemicRegions) == &quot;function&quot;
+</code></pre>
+
+<p>探測應在允許的 <code>initializeFrame</code> 階段進行並快取，不得為探測反覆建立 Container。</p>
+<hr />
+<h1 id="7-dispel-textureborder-api">7. Dispel Texture／Border：使用最新 API</h1>
+<h2 id="71">7.1 最新方法</h2>
+<p>優先使用：</p>
+<pre class="codehilite"><code class="language-lua">auraButton:AddDispelTypeTexture(texture, options)
+auraButton:RemoveDispelTypeTexture(index)
+auraButton:ClearDispelTypeTextures()
+auraButton:GetDispelTypeTextureCount()
+auraButton:GetDispelTypeTexture(index)
+</code></pre>
+
+<p>舊 PTR 名稱：</p>
+<pre class="codehilite"><code class="language-lua">GetAuraBorder
+SetAuraBorder
+ClearAuraBorder
+</code></pre>
+
+<p>目前只是 Deprecated alias，預計於 12.1 之後移除。</p>
+<p>新程式碼不得依賴 AuraBorder alias。</p>
+<h2 id="72-options">7.2 Options 實際結構</h2>
+<p>目前 <code>CustomAuraButtonDispelTypeTextureOptions</code> 至少包含：</p>
+<pre class="codehilite"><code class="language-lua">{
+    showAlways = false,
+    showWhenHarmful = true,
+    showWhenHelpful = false,
+    showWithoutDispelType = false,
+
+    stealableFilter =
+        Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable,
+        -- 或 NotStealable
+
+    style =
+        Enum.CustomAuraButtonDispelTypeTextureStyle.BorderWithIcon,
+
+    customDispelAssetMap = nil,
+    customDispelColorMap = nil,
+    customDispelColorCurve = nil,
+}
+</code></pre>
+
+<p>Enum：</p>
+<pre class="codehilite"><code class="language-lua">Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable
+Enum.CustomAuraButtonDispelTypeStealableFilter.NotStealable
+</code></pre>
+
+<p>Style：</p>
+<pre class="codehilite"><code class="language-lua">Enum.CustomAuraButtonDispelTypeTextureStyle.Border
+Enum.CustomAuraButtonDispelTypeTextureStyle.BorderWithIcon
+Enum.CustomAuraButtonDispelTypeTextureStyle.Icon
+Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset
+Enum.CustomAuraButtonDispelTypeTextureStyle.CustomAsset
+</code></pre>
+
+<h2 id="73-showalways">7.3 <code>showAlways</code> 優先權</h2>
+<p>目前 FrameXML 判斷順序：</p>
+<pre class="codehilite"><code class="language-text">無 Aura
+→ 不顯示
+
+showAlways == true
+→ 立即顯示，略過其他條件
+
+否則
+→ harmful／helpful
+→ 有無 dispel type
+→ stealableFilter
+</code></pre>
+
+<p>因此 <code>showAlways = true</code> 會蓋過：</p>
+<pre class="codehilite"><code class="language-text">showWhenHarmful
+showWhenHelpful
+showWithoutDispelType
+stealableFilter
+</code></pre>
+
+<p>EAM 設定編譯器不得把這些欄位理解成可任意 AND 疊加的獨立條件。</p>
+<h2 id="74">7.4 建議設定模式</h2>
+<p>可將 EAM 視覺設定編譯為：</p>
+<pre class="codehilite"><code class="language-text">Always
+HarmfulDispel
+HelpfulDispel
+StealableOnly
+NotStealableOnly
+AnyDispel
+NoDispelType
+CustomAsset
+PreserveAssetColorized
+</code></pre>
+
+<p>若 <code>showAlways = true</code>，不要輸出沒有作用的 <code>stealableFilter</code>。</p>
+<hr />
+<h1 id="8-capability">8. Capability 分類必須修正</h1>
+<p>不要把 PTR 8 所有變更都寫成 <code>hasXXX</code>。</p>
+<h2 id="81-api-capability">8.1 可呼叫 API Capability</h2>
+<pre class="codehilite"><code class="language-lua">hasPandemicRegionAPI
+hasMultipleDispelTypeTextures
+hasDispelTypeTextAPI
+hasApplicationBarAPI
+hasDurationBarAPI
+hasTooltipAnchorAPI
+hasHideTooltipInCombatAPI
+hasAuraGroupFilterSetter
+hasAuraGroupCandidateFilterSetter
+hasAuraGroupSortSetter
+hasAuraGroupLayoutSetter
+hasColumnLayout
+</code></pre>
+
+<h2 id="82-optionsenum-schema-capability">8.2 Options／Enum Schema Capability</h2>
+<pre class="codehilite"><code class="language-lua">hasDispelShowAlways
+hasDispelStealableFilter
+hasDispelTextureStyle
+hasCustomDispelAssetMap
+hasCustomDispelColorMap
+hasCustomDispelColorCurve
+</code></pre>
+
+<p>優先依：</p>
+<pre class="codehilite"><code class="language-text">Interface version
+WoW build
+Enum 是否存在
+Generated Documentation
+受控 options probe
+</code></pre>
+
+<p>判斷。</p>
+<p>不要在戰鬥中或 AuraButton 已禁止重新配置時做破壞性 probe。</p>
+<h2 id="83-build-behaviorengine-fix">8.3 Build Behavior／Engine Fix</h2>
+<p>以下不是 callable capability：</p>
+<pre class="codehilite"><code class="language-text">Tooltip 每 200 ms 節流
+Duration Text 0 Bug 修正
+SetEnabled(false) 清除 Aura assignment
+SVG Bug 修正
+PingableUnitFrameTemplate Bug 修正
+OnSizeChanged exploit fix
+</code></pre>
+
+<p>不要建立：</p>
+<pre class="codehilite"><code class="language-lua">hasTooltipThrottle200ms
+hasContainerDisableClear
+hasDurationZeroFix
+</code></pre>
+
+<p>改放入：</p>
+<pre class="codehilite"><code class="language-text">buildBehavior
+engineFixMatrix
+knownPTRBehavior
+PTRVerificationChecklist
+</code></pre>
+
+<h2 id="84-security-contract">8.4 Security Contract</h2>
+<p>以下不是功能開關，而是必須遵守的契約：</p>
+<pre class="codehilite"><code class="language-text">SecretAspect
+ForbiddenAspect
+Inbound descendant requirement
+ChangeParent 禁止
+AuraButton reparent 禁止
+Child Region reparent 禁止
+UntrustedScriptExecution
+UntrustedLayoutScriptExecution
+EventRegistrations
+OnSizeChanged 防洩漏
+initializeFrame 配置時機
+PLAYER_LOGIN 前後限制
+</code></pre>
+
+<hr />
+<h1 id="9-tooltip-200-ms">9. Tooltip 200 ms 節流</h1>
+<p>AuraButton Tooltip 仍有 OnUpdate，但會先經過：</p>
+<pre class="codehilite"><code class="language-lua">GameTooltip_IsUpdateNeeded(self, elapsedTime)
+</code></pre>
+
+<p>PTR 8 更新門檻為每 200 ms，最高約 5 次／秒。</p>
+<p>此行為：</p>
+<pre class="codehilite"><code class="language-text">由 Blizzard Tooltip Mixin 管理
+不是 EAM Scheduler
+不是 runtime Aura capability
+不需要 EAM 模擬
+</code></pre>
+
+<p>搜尋 EAM 是否存在：</p>
+<pre class="codehilite"><code class="language-text">Aura Tooltip 自製 OnUpdate
+每幀刷新 Tooltip
+Hook AuraButton UpdateTooltip
+滑鼠停留時重掃 AuraData
+重複 PopulateTooltip
+額外 C_Timer Tooltip ticker
+</code></pre>
+
+<p>Native Aura 路徑應優先交給 Blizzard Tooltip。</p>
+<p>現有：</p>
+<pre class="codehilite"><code class="language-lua">auraButton:SetHideTooltipInCombat(true)
+</code></pre>
+
+<p>若 API 存在且 PTR 實機正常，可保留。</p>
+<hr />
+<h1 id="10-auracontainer">10. AuraContainer 停用的實際呼叫鏈</h1>
+<h2 id="101-shared-mixin">10.1 Shared Mixin</h2>
+<pre class="codehilite"><code class="language-lua">container:SetEnabled(false)
+</code></pre>
+
+<p>觸發：</p>
+<pre class="codehilite"><code class="language-text">UpdateEventRegistrations()
+UpdateAllAuras()
+</code></pre>
+
+<p>停用或隱藏後，動態事件會解除：</p>
+<pre class="codehilite"><code class="language-text">UNIT_AURA
+Private Aura callback
+WEAPON_ENCHANT_CHANGED
+WEAPON_SLOT_CHANGED
+</code></pre>
+
+<h2 id="102-managedauracontainer">10.2 ManagedAuraContainer</h2>
+<p><code>UpdateAllAuras()</code> 會：</p>
+<pre class="codehilite"><code class="language-text">MarkDirty(FullAuraRebuild)
+</code></pre>
+
+<p>停用時：</p>
+<pre class="codehilite"><code class="language-text">ClearActiveItemEnchantments()
+</code></pre>
+
+<p>Parse 階段先：</p>
+<pre class="codehilite"><code class="language-text">清 Aura cache
+清 AuraGroup candidates
+清 AuraSlot candidates
+</code></pre>
+
+<p>然後因 disabled 返回，不再解析新 Aura。</p>
+<p>後續 dirty pipeline 完成 AuraButton assignment 清除與顯示刷新。</p>
+<h2 id="103">10.3 正確結論</h2>
+<p>PTR 8 後不得再聲稱：</p>
+<pre class="codehilite"><code class="language-text">停用 Container 仍保留舊 Aura assignment
+</code></pre>
+
+<p>但必須保留：</p>
+<pre class="codehilite"><code class="language-text">Aura assignment 被清除
+≠
+Frame／Region／FrameProvider 被銷毀
+</code></pre>
+
+<p>以下物件仍可能存在：</p>
+<pre class="codehilite"><code class="language-text">AuraContainer
+AuraButton
+Texture
+FontString
+Cooldown
+StatusBar
+DurationTextBinding
+FrameProvider
+initializeFrame closure
+Group 預配置批次
+</code></pre>
+
+<hr />
+<h1 id="11-container-gcframe">11. Container 重建與 GC／Frame 累積</h1>
+<p>PTR 8 改善停用清理，但 WoW Frame 不會因此由 Lua GC 銷毀。</p>
+<p>優先使用原地更新：</p>
+<pre class="codehilite"><code class="language-text">Sound-only
+→ 只更新 AuraSoundService
+
+位置變更
+→ 移動既有 Container
+
+FilterString
+→ SetAuraGroupFilterString
+
+CandidateFilters
+→ SetAuraGroupCandidateFilters
+
+Sort
+→ SetAuraGroupSortMethod
+
+MaxFrameCount
+→ SetAuraGroupMaxFrameCount
+
+Layout
+→ SetAuraGroupLayout／FlowLayout setters
+
+只有無法由公開 API 修改的結構變更
+→ 才建立新 Container 世代
+</code></pre>
+
+<p>壓力測試：</p>
+<pre class="codehilite"><code class="language-text">連續變更設定 100 次
+Sound-only 100 次
+Layout-only 100 次
+Style-only 100 次
+Enable／Disable 100 次
+</code></pre>
+
+<p>統計：</p>
+<pre class="codehilite"><code class="language-text">containerCreateCount
+containerRetireCount
+auraButtonInitializeCount
+regionCreateCount
+activeOnUpdateCount
+soundRegistrationCount
+eventRegistrationCount
+</code></pre>
+
+<p>目標：</p>
+<pre class="codehilite"><code class="language-text">Sound-only：0 個新 Container
+Layout-only：0 個新 Container
+位置變更：0 個新 Container
+Enable／Disable：0 個新 Container
+</code></pre>
+
+<hr />
+<h1 id="12-duration-text-0-bug">12. Duration Text 0 Bug</h1>
+<p>PTR 8 修正 AuraButton Duration Text 偶爾顯示 0。</p>
+<p>最新 FrameXML 使用穩定的：</p>
+<pre class="codehilite"><code class="language-lua">C_DurationUtil.CreateDurationTextBinding()
+</code></pre>
+
+<p>並在更新時：</p>
+<pre class="codehilite"><code class="language-text">SetDuration(auraDuration)
+SetEnabled(not auraDuration:IsZero())
+</code></pre>
+
+<p>搜尋舊 workaround：</p>
+<pre class="codehilite"><code class="language-text">每幀倒數 OnUpdate
+0 秒時重建 Container
+反覆 SetDurationText
+自行讀 expirationTime
+延遲 timer 重綁
+C_Timer workaround
+額外 duration cache
+</code></pre>
+
+<p>若只為舊 Bug：</p>
+<pre class="codehilite"><code class="language-text">PTR 8 Native 路徑移除
+或
+依舊 Build 隔離
+</code></pre>
+
+<p>正式服 12.0.7 Legacy 路徑不得因 PTR 8 稽核被誤刪必要邏輯。</p>
+<hr />
+<h1 id="13-onsizechanged-exploit">13. OnSizeChanged exploit 封堵</h1>
+<p>全面搜尋：</p>
+<pre class="codehilite"><code class="language-text">OnSizeChanged
+ResizeToBoundsRect
+GetSize
+GetWidth
+GetHeight
+GetRect
+GetBoundsRect
+SetSize hook
+SetPoint hook
+anchored frame movement
+children bounds
+layout size polling
+</code></pre>
+
+<p>確認這些資訊未被用於：</p>
+<pre class="codehilite"><code class="language-text">判斷 Aura 出現
+判斷 Aura 消失
+計算 Aura 數量
+觸發提示
+觸發音效
+建立 AuraState
+更新 SavedVariables
+回流 AlertManager
+</code></pre>
+
+<p>禁止：</p>
+<pre class="codehilite"><code class="language-text">AuraContainer 尺寸
+→ OnSizeChanged
+→ 推導 Aura 數量
+
+AuraContainer 排版
+→ 錨定 Frame 位移
+→ EAM OnUpdate 比對位置
+→ 推導 Aura 狀態
+
+AuraButton children bounds
+→ ResizeToBoundsRect
+→ 推導顯示數
+</code></pre>
+
+<p>FlowLayout 輸出只能作為視覺結果，不得成為 EAM 邏輯輸入。</p>
+<hr />
+<h1 id="14-svgvectorgraphics">14. SVG／VectorGraphics</h1>
+<p>PTR 8 修正 AddOn 無法使用新的 SVG 技術。</p>
+<p>此功能不是 Native Aura Backend 必要條件。</p>
+<p>暫時不要全面遷移，先建立獨立 PTR 實驗，評估：</p>
+<pre class="codehilite"><code class="language-text">建立成本
+記憶體
+縮放品質
+UI Scale
+旋轉支援
+Mask 支援
+TexCoord 支援
+Forbidden／Secret 相容性
+AuraButton descendant 限制
+</code></pre>
+
+<p>SVG／VectorGraphics 失敗只能停用對應視覺，不得使 Native Aura Backend 降級。</p>
+<p>正式服 12.0.7 不得載入 PTR-only SVG 實驗模組。</p>
+<hr />
+<h1 id="15-unitispossessedunitischarmed">15. UnitIsPossessed／UnitIsCharmed</h1>
+<p>PTR 8 後：</p>
+<pre class="codehilite"><code class="language-lua">UnitIsPossessed(&quot;player&quot;)
+UnitIsPossessed(&quot;pet&quot;)
+UnitIsPossessed(&quot;vehicle&quot;)
+
+UnitIsCharmed(&quot;player&quot;)
+UnitIsCharmed(&quot;pet&quot;)
+UnitIsCharmed(&quot;vehicle&quot;)
+</code></pre>
+
+<p>不再因這些 token 回傳 Secret。</p>
+<p>僅限以上 token。</p>
+<p>其他 unit token：</p>
+<pre class="codehilite"><code class="language-text">不可假設解除 Secret
+不可用 compound token 擴張
+不可影響 Aura Backend 選擇
+</code></pre>
+
+<p>EAM 未使用時標記：</p>
+<pre class="codehilite"><code class="language-text">No Direct Impact
+</code></pre>
+
+<hr />
+<h1 id="16-pingableunitframetemplate">16. PingableUnitFrameTemplate</h1>
+<p>搜尋：</p>
+<pre class="codehilite"><code class="language-text">PingableUnitFrameTemplate
+</code></pre>
+
+<p>未使用：</p>
+<pre class="codehilite"><code class="language-text">No Impact
+</code></pre>
+
+<p>有使用：</p>
+<ul>
+<li>移除只針對舊 PTR 敵對 Ping Error 的 workaround。</li>
+<li>保留 Build 隔離。</li>
+<li>PTR 測試 friendly／hostile／player／target。</li>
+<li>不得混入 AuraContainer 核心。</li>
+</ul>
+<hr />
+<h1 id="17-nativeaurarenderer">17. NativeAuraRenderer 設計要求</h1>
+<p><code>UI/NativeAuraRenderer.lua</code> 必須維持：</p>
+<pre class="codehilite"><code class="language-text">只在 initializeFrame 建立 Region
+只設定靜態材質、字型、尺寸與錨點
+使用 AuraButton 原生 display binding
+不讀 AuraData
+不註冊 UNIT_AURA
+不建立 EAM Aura OnUpdate
+不使用 OnShow／OnHide 推導狀態
+不讀 Region Shown secret
+不 reparent 綁定後的 children
+不將 Native Aura 回流 Legacy AlertManager 熱路徑
+</code></pre>
+
+<p>可選 PTR 8 擴充：</p>
+<pre class="codehilite"><code class="language-text">Pandemic Region
+Multiple Dispel Type Textures
+Stealable Filter
+ShowAlways
+Custom Dispel Asset Map
+Custom Dispel Color Map
+Custom Dispel Color Curve
+</code></pre>
+
+<p>每個可選功能：</p>
+<pre class="codehilite"><code class="language-text">獨立安全降級
+不使整個 Native Backend 失效
+不因功能缺失建立新 Container
+</code></pre>
+
+<hr />
+<h1 id="18-style-frameprovider">18. Style 編譯與 FrameProvider 分組</h1>
+<p>EAM 可能將：</p>
+<pre class="codehilite"><code class="language-lua">showStacks
+showName
+showCountdown
+showPandemic
+showDispel
+</code></pre>
+
+<p>放在個別 rule style。</p>
+<p>但 <code>initializeFrame</code> 是 FrameProvider 建立 AuraButton 時呼叫，未必具有每次 Aura assignment 的 rule context。</p>
+<p>請確認：</p>
+<pre class="codehilite"><code class="language-text">不同 style signature 是否共用同一 AuraGroup
+initializeFrame closure 是否安全承載 style
+是否需要依 style signature 分組
+是否需要不同額外 XML Template
+</code></pre>
+
+<p>建議 style signature：</p>
+<pre class="codehilite"><code class="language-text">unit
+filterString
+candidateFilters
+sort
+showStacks
+showName
+showCountdown
+showPandemic
+dispelMode
+tooltipMode
+buttonSize
+</code></pre>
+
+<p>相同 signature 才共用 FrameProvider／AuraGroup。</p>
+<p>不要為每條 Spell ID 規則無條件建立獨立 Container。</p>
+<hr />
+<h1 id="19-p0">19. 保留先前 P0 問題</h1>
+<p>PTR 8 不會自動解決以下既有風險，請保留稽核：</p>
+<h2 id="191-identity-candidate-filter">19.1 Identity Candidate Filter 退化</h2>
+<p>檢查：</p>
+<pre class="codehilite"><code class="language-text">player + HARMFUL
+assistable unit + HARMFUL
+hostile target + HELPFUL
+</code></pre>
+
+<p>當 identity candidate filter 不允許時，Blizzard 可能略過 <code>includeSpellIDs</code>，而不是拒絕整條 candidate。</p>
+<p>不得只標記：</p>
+<pre class="codehilite"><code class="language-text">secretIdentityFilterMayBeRejected
+</code></pre>
+
+<p>應判斷是否可能：</p>
+<pre class="codehilite"><code class="language-text">identityFilterIgnored
+possibleUnrelatedAuraDisplay
+unsupportedSecretAuraIdentity
+</code></pre>
+
+<h2 id="192-template">19.2 重複 Template</h2>
+<p>確認 FrameProvider 是否已自動加入：</p>
+<pre class="codehilite"><code class="language-text">CustomAuraButtonTemplate
+</code></pre>
+
+<p>若已自動加入，EAM 不得在 <code>templateNames</code> 重複指定。</p>
+<h2 id="193-layout-dirty">19.3 重複 Layout Dirty</h2>
+<p>若 <code>AddAuraGroup(options.layout)</code> 已設定 layout，不要立刻再呼叫相同的 <code>SetAuraGroupLayout</code>。</p>
+<h2 id="194-setsize">19.4 固定 SetSize</h2>
+<p>避免固定十欄兩列與 Container auto FlowLayout 衝突。</p>
+<hr />
+<h1 id="20-ptr">20. PTR 專用測試矩陣</h1>
+<h2 id="201-1207">20.1 正式服 12.0.7 回歸</h2>
+<p>正式服目前只測：</p>
+<pre class="codehilite"><code class="language-text">Legacy Backend 正常載入
+12.1 模組不載入或安全短路
+不建立 CustomAuraContainer
+不呼叫 PTR-only API
+不產生 Lua Error
+Classic／Legacy 功能不退化
+SavedVariables 相容
+</code></pre>
+
+<p>不得在正式服 12.0.7 執行 12.1 Native Aura 功能驗證。</p>
+<h2 id="202-ptr-121">20.2 PTR 12.1 靜態檢查</h2>
+<p>搜尋：</p>
+<pre class="codehilite"><code class="language-text">OnSizeChanged
+SetScript(&quot;OnUpdate&quot;
+SetScript(&quot;OnShow&quot;
+SetScript(&quot;OnHide&quot;
+hooksecurefunc
+GetWidth
+GetHeight
+GetSize
+GetRect
+expirationTime
+UNIT_AURA
+GetAuraDataBy
+CustomAuraButtonTemplate
+SetParent
+SetAuraBorder
+GetAuraBorder
+ClearAuraBorder
+</code></pre>
+
+<h2 id="203-ptr-121-mock">20.3 PTR 12.1 Mock／流程測試</h2>
+<pre class="codehilite"><code class="language-text">Backend version gate
+12.0.7 強制 Legacy
+12.1 PTR 選擇 Native
+必要 API 缺失時安全降級
+可選 PTR 8 API 缺失不影響 Native 核心
+SetEnabled(false) 清除 AuraButton
+SetEnabled(false) 清除 ItemEnchantment
+SetEnabled(false) 不等於 Frame 銷毀
+Sound-only 不重建 Container
+Layout-only 不重建 Container
+Enable／Disable 不重建 Container
+Pandemic API 缺失安全降級
+Dispel options 缺失安全降級
+showAlways 優先權
+Stealable／NotStealable Enum
+Tooltip 無 EAM 每幀更新
+Duration Text 0 不觸發 workaround
+OnSizeChanged 不參與 Aura 狀態判斷
+</code></pre>
+
+<h2 id="204-ptr">20.4 PTR 實機驗證</h2>
+<pre class="codehilite"><code class="language-text">AddPandemicRegion 實際顯示
+Pandemic Window 切換
+Pandemic Region SecretAspect.Shown
+大量 Pandemic AuraButton 的 CPU 成本
+AddDispelTypeTexture
+多個 Dispel Texture
+showAlways
+Stealable
+NotStealable
+CustomAsset
+Tooltip 200 ms 節流
+SetEnabled(false) 清除 assignment
+Duration Text 不再錯誤顯示 0
+OnSizeChanged 無法洩漏 Aura 數量
+SVG／VectorGraphics
+戰鬥中建立與設定限制
+PLAYER_LOGIN 前後差異
+Forbidden／taint log
+</code></pre>
+
+<p>Mock 通過不得描述成 PTR 實機通過。</p>
+<hr />
+<h1 id="21-2026-08-13">21. 2026-08-13 正式服切換程序</h1>
+<p>到達預定改版窗口後，不要直接合併「日期開關」。</p>
+<p>依序執行：</p>
+<h2 id="phase-a">Phase A：確認正式服版本</h2>
+<pre class="codehilite"><code class="language-lua">GetBuildInfo()
+</code></pre>
+
+<p>記錄：</p>
+<pre class="codehilite"><code class="language-text">version
+build
+buildDate
+interfaceVersion
+WOW_PROJECT_ID
+</code></pre>
+
+<p>只有：</p>
+<pre class="codehilite"><code class="language-text">WOW_PROJECT_MAINLINE
+且 interfaceVersion &gt;= 120100
+</code></pre>
+
+<p>才進入下一階段。</p>
+<h2 id="phase-b-api">Phase B：確認正式服 API 契約</h2>
+<p>最少確認：</p>
+<pre class="codehilite"><code class="language-text">CustomAuraContainerTemplate
+SetUnit
+SetEnabled
+AddAuraGroup
+AddAuraSlot
+必要 Group setter
+AuraButton initializeFrame callback
+必要 display binding
+</code></pre>
+
+<p>可選 PTR 8 視覺能力缺失，不得阻止 Native 核心啟用。</p>
+<h2 id="phase-c-smoke-test">Phase C：正式服 smoke test</h2>
+<pre class="codehilite"><code class="language-text">登入
+重載 UI
+切換目標
+進出戰鬥
+玩家 Buff
+玩家 Debuff
+目標 Buff
+目標 Debuff
+Enable／Disable
+設定變更
+音效
+Tooltip
+taint log
+Lua Error
+</code></pre>
+
+<h2 id="phase-d-ptr-only">Phase D：解除 PTR-only 標記</h2>
+<p>只有正式服 smoke test 通過後，才：</p>
+<pre class="codehilite"><code class="language-text">更新文件為正式服已驗證
+解除 PTR-only feature flag
+發布正式服 12.1 相容版本
+</code></pre>
+
+<hr />
+<h1 id="22">22. 優先順序</h1>
+<h2 id="p0">P0：版本隔離與安全正確性</h2>
+<ol>
+<li>正式服 12.0.7 強制 Legacy。</li>
+<li>PTR 12.1 才啟用 Native。</li>
+<li>移除任何 OnSizeChanged Aura 推導。</li>
+<li>不讀 Secret AuraData。</li>
+<li>修正 identity candidate filter 退化風險。</li>
+<li>不把 PTR 測試冒充正式服驗證。</li>
+</ol>
+<h2 id="p1">P1：資源與效能</h2>
+<ol>
+<li>Sound-only 不重建。</li>
+<li>Layout-only 不重建。</li>
+<li>Enable／Disable 不重建。</li>
+<li>控制 retired Container。</li>
+<li>Pandemic Region 按需配置。</li>
+<li>避免大量 AuraButton 私有 OnUpdate。</li>
+</ol>
+<h2 id="p2ptr-8">P2：PTR 8 視覺功能</h2>
+<ol>
+<li>Pandemic Region。</li>
+<li>Multiple Dispel Type Texture。</li>
+<li><code>stealableFilter</code>。</li>
+<li><code>showAlways</code>。</li>
+<li>Custom Asset／Color。</li>
+<li>SVG 實驗。</li>
+</ol>
+<h2 id="p3">P3：低關聯項目</h2>
+<ol>
+<li><code>UnitIsPossessed</code>／<code>UnitIsCharmed</code>。</li>
+<li><code>PingableUnitFrameTemplate</code>。</li>
+<li>文件矩陣。</li>
+</ol>
+<hr />
+<h1 id="23">23. 交付內容</h1>
+<p>完成後回報：</p>
+<h2 id="231">23.1 現有進度整合</h2>
+<pre class="codehilite"><code class="language-text">原任務已完成內容
+原任務進行中內容
+PTR 8 新增內容
+既有判斷校正
+重複項目
+未修改項目
+</code></pre>
+
+<h2 id="232">23.2 版本矩陣</h2>
+<p>至少包含：</p>
+<pre class="codehilite"><code class="language-text">環境
+Interface version
+Backend
+允許的功能
+禁止的功能
+測試狀態
+</code></pre>
+
+<p>必要列：</p>
+<pre class="codehilite"><code class="language-text">正式服 12.0.7
+PTR 12.1
+正式服 12.1 尚未驗證
+正式服 12.1 已驗證
+</code></pre>
+
+<h2 id="233-ptr-8-api">23.3 PTR 8 API 稽核表</h2>
+<pre class="codehilite"><code class="language-text">公告描述
+Generated API 名稱
+FrameXML 方法
+Options／Enum
+Secret／Forbidden 行為
+EAM 使用位置
+是否修改
+是否需 PTR 驗證
+</code></pre>
+
+<h2 id="234">23.4 修改檔案</h2>
+<p>逐檔說明：</p>
+<pre class="codehilite"><code class="language-text">修改原因
+行為差異
+版本影響
+效能影響
+回退方式
+</code></pre>
+
+<h2 id="235">23.5 資源統計</h2>
+<pre class="codehilite"><code class="language-text">Container rebuild 次數
+AuraButton 初始化數
+Pandemic Region 數
+啟用 OnUpdate 的 AuraButton 數
+retired Container 數
+事件註冊數
+Sound-only Frame 建立數
+Layout-only Frame 建立數
+</code></pre>
+
+<h2 id="236">23.6 驗證狀態</h2>
+<p>嚴格區分：</p>
+<pre class="codehilite"><code class="language-text">程式碼稽核完成
+靜態測試通過
+Mock 通過
+PTR 實機通過
+正式服 12.0.7 回歸通過
+正式服 12.1 尚未驗證
+</code></pre>
+
+<hr />
+<h1 id="24">24. 禁止事項</h1>
+<ul>
+<li>不得因 PTR 8 重置原任務。</li>
+<li>不得只讀 PTR 公告摘要。</li>
+<li>不得猜測 API 名稱。</li>
+<li>不得使用 <code>stealable = true</code> 代替 <code>stealableFilter</code>。</li>
+<li>不得把 Pandemic 限定誤寫成 Texture-only API。</li>
+<li>不得為所有 AuraButton 無條件配置 Pandemic Region。</li>
+<li>不得自製 Pandemic OnUpdate。</li>
+<li>不得以 OnSizeChanged、尺寸、位置、顯示狀態推導 Aura。</li>
+<li>不得重新導入 UNIT_AURA Secret payload。</li>
+<li>不得為 Tooltip建立每幀更新。</li>
+<li>不得為 Duration Text 建立新的 Native Aura OnUpdate。</li>
+<li>不得把 <code>SetEnabled(false)</code> 誤認為 Frame 已釋放。</li>
+<li>不得讓可選 PTR 8 視覺能力缺失導致整個 Native Backend 降級。</li>
+<li>不得讓正式服 12.0.7 呼叫 PTR-only AuraContainer API。</li>
+<li>不得只依 2026-08-13 日期啟用 12.1。</li>
+<li>不得把 PTR 通過寫成正式服通過。</li>
+<li>不得破壞 Classic／Legacy Backend。</li>
+<li>不得改動與本稽核無關且已正常運作的模組。</li>
+</ul>
+<p>請以 <strong>PTR 專用驗證、正式服 12.0.7 嚴格隔離、API 文件與 FrameXML 雙重證據、最小可回退修正</strong> 為執行準則。</p>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>
