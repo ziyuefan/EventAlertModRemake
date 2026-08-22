@@ -19,3 +19,4 @@ scratch/
 *.log
 __pycache__/
 *.pyc
+.AI/.AI/

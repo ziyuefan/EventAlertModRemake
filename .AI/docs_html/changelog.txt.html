@@ -273,7 +273,11 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
         <h1>changelog.txt</h1>
-        <pre><code>-- [Retail 12.1 Alpha 6 Cooldown Activation]2026.08.23
+        <pre><code>-- [Retail 12.1 Alpha 7]2026.08.23
+    -- Target Aura 提供匿名 diagnostics 與明確 /eam add target 手動 popup route；不保存 Secret、AuraData、Frame 或猜測 ID。
+    -- 技能冷卻監控改為只在玩家精確成功施放清單技能後首次 render；新增 cooldownRemoveAura、showSCDOutsideCombat、glowSCDWhenUsable 三項 per-spell nil／true／false 覆寫。
+    -- 新增戰鬥中非清單治療法術、PLAYER_REGEN_ENABLED、形態刷新不得批量開啟冷卻圖示的回歸防護。
+-- [Retail 12.1 Alpha 6 Cooldown Activation]2026.08.23
     -- 技能冷卻監控只在玩家精確成功施放對應清單技能後首次 render；非清單治療法術、脫戰、refresh 或形態事件不會批量開啟。
     -- 冷卻移除光環、脫戰顯示與可用高亮支援全域繼承及單技能 true／false 覆寫，false 可保存；到期顯示由冷卻服務依設定決定。
 -- [Retail 12.1 Alpha 6 Target Aura Diagnostics]2026.08.23
