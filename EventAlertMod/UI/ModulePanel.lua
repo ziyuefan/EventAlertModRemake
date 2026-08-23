@@ -65,11 +65,31 @@ local function createPanel()
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetScript("OnDragStart", function()
+        local mainFrame = _G.EAM_MainOptionsFrame
+        if mainFrame and mainFrame:IsShown() then
+            mainFrame:StartMoving()
+        else
+            frame:StartMoving()
+        end
+    end)
+    frame:SetScript("OnDragStop", function()
+        local mainFrame = _G.EAM_MainOptionsFrame
+        if mainFrame and mainFrame:IsShown() then
+            mainFrame:StopMovingOrSizing()
+        else
+            frame:StopMovingOrSizing()
+        end
+    end)
+    local titleClose = api.CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+    titleClose:SetSize(28, 28)
+    titleClose:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -4, -4)
+    titleClose:SetScript("OnClick", function()
+        frame:Hide()
+    end)
     frame:SetBackdrop({
-        bgFile = "Interface\ChatFrame\ChatFrameBackground",
-        edgeFile = "Interface\DialogFrame\UI-DialogBox-Border",
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
         tile = true,
         tileSize = 24,
         edgeSize = 24,
@@ -192,6 +212,14 @@ function ModulePanel.open()
         return false, "frameUnavailable"
     end
     ModulePanel.refresh()
+    local mainFrame = _G.EAM_MainOptionsFrame
+    if mainFrame and mainFrame:IsShown() then
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", mainFrame, "TOPRIGHT", 2, 0)
+    else
+        frame:ClearAllPoints()
+        frame:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+    end
     frame:Show()
     return true
 end

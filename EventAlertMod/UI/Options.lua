@@ -896,6 +896,21 @@ function Options.applyBatchIDs(category, value)
     end
     return true, report, changed and "updated" or "unchanged"
 end
+
+local function makeTitleCloseButton(parent, onClick)
+    local btn = api.CreateFrame("Button", nil, parent, "UIPanelCloseButton")
+    btn:SetSize(28, 28)
+    btn:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -4, -4)
+    btn:SetScript("OnClick", function()
+        if type(onClick) == "function" then
+            onClick()
+        else
+            parent:Hide()
+        end
+    end)
+    return btn
+end
+
 -- 刪除單個提醒
 function Options.removeAlertFromCurrentCategory(id)
     local saved = EAM.Modules.SavedVariables
@@ -1183,14 +1198,23 @@ local function createFrame()
 
     local aboutButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(aboutButton) end
-    aboutButton:SetSize(62, 22)
-    aboutButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -13)
+    aboutButton:SetSize(56, 22)
+    aboutButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -34, -13)
     bindText(aboutButton, "EAM_OPT_ABOUT_BTN", "關於")
     aboutButton:SetScript("OnClick", function()
         local aboutPanel = EAM.UI and EAM.UI.AboutPanel or nil
         if aboutPanel and type(aboutPanel.open) == "function" then
             aboutPanel.open()
         end
+    end)
+    makeTitleCloseButton(frame, function()
+        frame:Hide()
+    end)
+    frame:SetScript("OnHide", function()
+        if Options.listFrame then Options.listFrame:Hide() end
+        if Options.posFrame then Options.posFrame:Hide() end
+        if Options.condFrame then Options.condFrame:Hide() end
+        if Options.batchFrame then Options.batchFrame:Hide() end
     end)
 
     -- 內邊框
@@ -1514,7 +1538,11 @@ local function createFrame()
     -- ===================================================
     local posFrame = api.CreateFrame("Frame", "EAM_PositionOptionsFrame", frame, "BackdropTemplate")
     posFrame:SetSize(620, 600)
-    posFrame:SetPoint("LEFT", frame, "RIGHT", 2, 0)
+    posFrame:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, 0)
+    posFrame:EnableMouse(true)
+    posFrame:RegisterForDrag("LeftButton")
+    posFrame:SetScript("OnDragStart", function() frame:StartMoving() end)
+    posFrame:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
     posFrame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -1525,6 +1553,7 @@ local function createFrame()
     posFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
     if Theme and Theme.registerFrame then Theme.registerFrame(posFrame, "window") end
     posFrame:Hide()
+    makeTitleCloseButton(posFrame, function() posFrame:Hide() end)
 
     local posTitle = posFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     posTitle:SetPoint("TOP", posFrame, "TOP", 0, -14)
@@ -1937,7 +1966,15 @@ local function createFrame()
     -- ===================================================
     local listFrame = api.CreateFrame("Frame", "EAM_SpellListOptionsFrame", frame, "BackdropTemplate")
     listFrame:SetSize(400, 600)
-    listFrame:SetPoint("LEFT", frame, "RIGHT", 2, 0)
+    listFrame:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, 0)
+    listFrame:EnableMouse(true)
+    listFrame:RegisterForDrag("LeftButton")
+    listFrame:SetScript("OnDragStart", function() frame:StartMoving() end)
+    listFrame:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
+    listFrame:SetScript("OnHide", function()
+        if Options.condFrame then Options.condFrame:Hide() end
+        if Options.batchFrame then Options.batchFrame:Hide() end
+    end)
     listFrame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -1948,6 +1985,7 @@ local function createFrame()
     listFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
     if Theme and Theme.registerFrame then Theme.registerFrame(listFrame, "window") end
     listFrame:Hide()
+    makeTitleCloseButton(listFrame, function() listFrame:Hide() end)
 
     local listTitle = listFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     listTitle:SetPoint("TOP", listFrame, "TOP", 0, -14)
@@ -2373,11 +2411,23 @@ local function createFrame()
     batchFrame:SetMovable(true)
     batchFrame:EnableMouse(true)
     batchFrame:RegisterForDrag("LeftButton")
-    batchFrame:SetScript("OnDragStart", batchFrame.StartMoving)
-    batchFrame:SetScript("OnDragStop", batchFrame.StopMovingOrSizing)
+    batchFrame:SetScript("OnDragStart", function()
+        if frame and frame:IsShown() then
+            frame:StartMoving()
+        else
+            batchFrame:StartMoving()
+        end
+    end)
+    batchFrame:SetScript("OnDragStop", function()
+        if frame and frame:IsShown() then
+            frame:StopMovingOrSizing()
+        else
+            batchFrame:StopMovingOrSizing()
+        end
+    end)
     batchFrame:SetBackdrop({
-        bgFile = "Interface\ChatFrame\ChatFrameBackground",
-        edgeFile = "Interface\DialogFrame\UI-DialogBox-Border",
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
         tile = true,
         tileSize = 32,
         edgeSize = 32,
@@ -2386,6 +2436,9 @@ local function createFrame()
     batchFrame:SetBackdropColor(0.08, 0.06, 0.05, 0.98)
     batchFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
     if Theme and Theme.registerFrame then Theme.registerFrame(batchFrame, "window") end
+    makeTitleCloseButton(batchFrame, function()
+        batchFrame:Hide()
+    end)
 
     local batchTitle = batchFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     batchTitle:SetPoint("TOP", batchFrame, "TOP", 0, -16)
@@ -2564,6 +2617,13 @@ local function createFrame()
         end
         Options.batchCategory = Options.currentCategory
         loadBatchCurrent()
+        if listFrame and listFrame:IsShown() then
+            batchFrame:ClearAllPoints()
+            batchFrame:SetPoint("TOPLEFT", listFrame, "TOPRIGHT", 2, 0)
+        else
+            batchFrame:ClearAllPoints()
+            batchFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
+        end
         batchFrame:Show()
         batchFrame:Raise()
         return true
@@ -2600,8 +2660,24 @@ local function createFrame()
     condFrame:SetMovable(true)
     condFrame:EnableMouse(true)
     condFrame:RegisterForDrag("LeftButton")
-    condFrame:SetScript("OnDragStart", condFrame.StartMoving)
-    condFrame:SetScript("OnDragStop", condFrame.StopMovingOrSizing)
+    condFrame:SetScript("OnDragStart", function()
+        if frame and frame:IsShown() then
+            frame:StartMoving()
+        else
+            condFrame:StartMoving()
+        end
+    end)
+    condFrame:SetScript("OnDragStop", function()
+        if frame and frame:IsShown() then
+            frame:StopMovingOrSizing()
+        else
+            condFrame:StopMovingOrSizing()
+        end
+    end)
+    makeTitleCloseButton(condFrame, function()
+        if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
+        condFrame:Hide()
+    end)
 
     -- Spell Icon 大圖標
     local condIcon = condFrame:CreateTexture(nil, "ARTWORK")
@@ -3193,7 +3269,15 @@ function Options.openConditionsFrame(data)
         end
     end
 
+    if Options.listFrame and Options.listFrame:IsShown() then
+        cf:ClearAllPoints()
+        cf:SetPoint("TOPLEFT", Options.listFrame, "TOPRIGHT", 2, 0)
+    else
+        cf:ClearAllPoints()
+        cf:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    end
     cf:Show()
+    cf:Raise()
 end
 
 -- Slash 命令外部唯一呼叫介面
