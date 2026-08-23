@@ -73,7 +73,7 @@ if ([string]::IsNullOrWhiteSpace($Tag)) {
     $Tag = "alpha-7.5" + $suffixTag + "." + $dateStamp
 }
 if ([string]::IsNullOrWhiteSpace($Title)) {
-    $Title = "[AGY] Retail 12.1 Alpha 7.5 (Antigravity Engine - $dateStamp)"
+    $Title = "Retail 12.1 Alpha 7.5"
 }
 
 Write-Host "發布目標 Tag   : $Tag" -ForegroundColor Yellow
@@ -119,68 +119,57 @@ $beforePackageZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -Fil
 & pwsh -NoProfile -File $buildPackageScript
 if ($LASTEXITCODE -ne 0) { throw "Build-Package 失敗！" }
 
+$afterPackageZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
+$newPackageZips = @($afterPackageZips | Where-Object { $beforePackageZips -notcontains $_ })
+if ($newPackageZips.Count -eq 0) {
+    throw "未找到新產出的 AddOn ZIP！"
+}
+$rawAddonZip = $newPackageZips[-1]
+
 # 5.2 呼叫原始碼打包腳本 (保留原本格式)
+$beforeSourceZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
 & pwsh -NoProfile -File $buildSourceScript
 if ($LASTEXITCODE -ne 0) { throw "Build-SourcePackage 失敗！" }
 
-$afterPackageZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
-$newZips = @($afterPackageZips | Where-Object { $beforePackageZips -notcontains $_ })
-
-if ($newZips.Count -eq 0) {
-    throw "未能找到新產生的 ZIP 檔案！"
+$afterSourceZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
+$newSourceZips = @($afterSourceZips | Where-Object { $beforeSourceZips -notcontains $_ })
+if ($newSourceZips.Count -eq 0) {
+    throw "未找到新產出的 Source ZIP！"
 }
+$rawSourceZip = $newSourceZips[-1]
 
-$rawAddonZip = @($newZips | Where-Object { $_ -notlike "*_SRC_*" })[0]
-$rawSourceZip = @($newZips | Where-Object { $_ -like "*_SRC_*" })[0]
+# 5.3 複製並加上指定 Suffix (以區隔產物，預設 _AGY)
+$addonZip = $rawAddonZip
+$sourceZip = $rawSourceZip
 
-# 5.3 若有指定後綴，基於原檔名追加後綴
-function Apply-SuffixToArtifact {
-    param(
-        [Parameter(Mandatory = $true)][string]$ZipPath,
-        [Parameter(Mandatory = $true)][string]$Suffix
-    )
-    if ([string]::IsNullOrWhiteSpace($Suffix)) {
-        return $ZipPath
-    }
-    $dir = [System.IO.Path]::GetDirectoryName($ZipPath)
-    $nameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($ZipPath)
-    $ext = [System.IO.Path]::GetExtension($ZipPath)
-    $targetZipPath = Join-Path $dir ($nameWithoutExt + "_" + $Suffix + $ext)
-
-    if ($targetZipPath -ne $ZipPath) {
-        Move-Item -LiteralPath $ZipPath -Destination $targetZipPath -Force
-        $oldHash = $ZipPath + ".sha256"
-        $newHash = $targetZipPath + ".sha256"
-        if (Test-Path -LiteralPath $oldHash) {
-            $hashContent = Get-Content -LiteralPath $oldHash -Raw -Encoding UTF8
-            $hashVal = $hashContent.Split(" ")[0].Trim()
-            [System.IO.File]::WriteAllText($newHash, "$hashVal  $([System.IO.Path]::GetFileName($targetZipPath))`r`n", $utf8)
-            Remove-Item -LiteralPath $oldHash -Force
-        }
-        $oldInv = $ZipPath + ".inventory.json"
-        $newInv = $targetZipPath + ".inventory.json"
-        if (Test-Path -LiteralPath $oldInv) {
-            Move-Item -LiteralPath $oldInv -Destination $newInv -Force
-        }
-    }
-    return $targetZipPath
+if (-not [string]::IsNullOrWhiteSpace($suffixFile)) {
+    $addonZipName = [System.IO.Path]::GetFileNameWithoutExtension($rawAddonZip) + $suffixFile + ".zip"
+    $addonZip = Join-Path $distRoot $addonZipName
+    Copy-Item -LiteralPath $rawAddonZip -Destination $addonZip -Force
+    
+    $addonHash = (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash
+    [System.IO.File]::WriteAllText($addonZip + ".sha256", "$addonHash  $addonZipName`n", $utf8)
+    
+    $sourceZipName = [System.IO.Path]::GetFileNameWithoutExtension($rawSourceZip) + $suffixFile + ".zip"
+    $sourceZip = Join-Path $distRoot $sourceZipName
+    Copy-Item -LiteralPath $rawSourceZip -Destination $sourceZip -Force
+    
+    $sourceHash = (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash
+    [System.IO.File]::WriteAllText($sourceZip + ".sha256", "$sourceHash  $sourceZipName`n", $utf8)
 }
-
-$addonZip = if ($rawAddonZip) { Apply-SuffixToArtifact -ZipPath $rawAddonZip -Suffix $PackageSuffix } else { $null }
-$sourceZip = if ($rawSourceZip) { Apply-SuffixToArtifact -ZipPath $rawSourceZip -Suffix $PackageSuffix } else { $null }
 
 $filesToUpload = [System.Collections.Generic.List[string]]::new()
 if ($addonZip -and (Test-Path -LiteralPath $addonZip)) {
     $filesToUpload.Add($addonZip)
     $hashFile = $addonZip + ".sha256"
     if (Test-Path -LiteralPath $hashFile) { $filesToUpload.Add($hashFile) }
+    $invFile = [System.IO.Path]::ChangeExtension($addonZip, ".inventory.json")
+    if (Test-Path -LiteralPath $invFile) { $filesToUpload.Add($invFile) }
 }
 if ($sourceZip -and (Test-Path -LiteralPath $sourceZip)) {
     $filesToUpload.Add($sourceZip)
     $hashFile = $sourceZip + ".sha256"
     if (Test-Path -LiteralPath $hashFile) { $filesToUpload.Add($hashFile) }
-    $invFile = [System.IO.Path]::ChangeExtension($sourceZip, ".inventory.json")
-    if (Test-Path -LiteralPath $invFile) { $filesToUpload.Add($invFile) }
 }
 
 Write-Host "✓ 待上傳產物清單:" -ForegroundColor Green
@@ -189,7 +178,7 @@ foreach ($file in $filesToUpload) {
     Write-Host "  - $($item.Name) ($([math]::Round($item.Length / 1KB, 1)) KB)" -ForegroundColor Gray
 }
 
-# 6. 組裝結構化 Release Notes
+# 6. 組裝結構化 Release Notes (僅限魔獸插件開發 CHANGELOG，不含任何 AI 治理描述)
 Write-Host "`n--> [3/4] 組裝結構化 Release Notes..." -ForegroundColor Cyan
 $recentChangelog = ""
 if (Test-Path -LiteralPath $changelogPath) {
@@ -197,7 +186,7 @@ if (Test-Path -LiteralPath $changelogPath) {
     $extracted = [System.Collections.Generic.List[string]]::new()
     $recording = $false
     foreach ($line in $lines) {
-        if ($line -match '^=+\s*(.+?)\s*=+') {
+        if ($line -match '^--\s*\[.+?\]') {
             if ($recording) { break }
             $recording = $true
         }
@@ -214,16 +203,11 @@ $sourceHash = if ($sourceZip) { (Get-FileHash -LiteralPath $sourceZip -Algorithm
 $releaseNotes = @"
 # $Title
 
-本發布由 **Antigravity (Lead Developer)** 依據專案治理規範獨立編譯、驗證與封裝。
+## 📝 更新日誌 (Changelog)
 
----
-
-## 🛡️ 治理與責任歸屬 (Attribution & Governance)
-- **維護代理**：Antigravity Lead Engineer
-- **發布軌道**：`AGY Independent Track` (Pre-release)
-- **支援目標**：World of Warcraft Retail 12.1.x / Midnight (支援 12.0.7 Legacy / XPTR)
-- **離線驗證狀態**：`OFFLINE VERIFIED` (Lua 65/65 | Flow 84/84 | Contracts 493/493)
-- **實機驗證狀態**：`REQUIRES_WOW_12_1_RUNTIME`
+```text
+$recentChangelog
+```
 
 ---
 
@@ -233,23 +217,6 @@ $releaseNotes = @"
 | :--- | :--- | :--- |
 | **`$([System.IO.Path]::GetFileName($addonZip))`** | 遊戲 AddOn 插件安裝包 | `$addonHash` |
 | **`$([System.IO.Path]::GetFileName($sourceZip))`** | 專案完整工程原始碼包 | `$sourceHash` |
-
----
-
-## 📝 最近變更 (Changelog)
-
-```text
-$recentChangelog
-```
-
----
-
-## 🔄 雙軌並行與回退指引 (Rollback Protocol)
-
-若在遊戲實機中遇到任何異常，可隨時無縫回退至 Codex 穩定版本：
-1. 前往 [Codex Releases 列表](https://github.com/ziyuefan/EventAlertModRemake/releases) 下載 Codex 官方版本 ZIP。
-2. 完整解壓並覆蓋至 `World of Warcraft\_retail_\Interface\AddOns\EventAlertMod`。
-3. 遊戲內輸入 `/reload` 即可立即切換。
 "@
 
 $notesTempPath = Join-Path $distRoot "RELEASE_NOTES_$Tag.md"
