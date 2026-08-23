@@ -162,6 +162,30 @@ local function copyDraft(config)
     return draft
 end
 
+local function autoApplyDraft()
+    if Panel.refreshing or not Panel.selectedKey or not Panel.draft then
+        return
+    end
+    local saved = EAM.Modules and EAM.Modules.SavedVariables
+    if not saved or type(saved.updatePlayerResourceConfig) ~= "function" then
+        return
+    end
+    local ok, status = saved.updatePlayerResourceConfig(
+        Panel.selectedKey,
+        Panel.draft,
+        getScopeSpecializationID()
+    )
+    if ok then
+        local service = EAM.Services and EAM.Services.PlayerResourceService
+        local serviceStatus = service and service.getStatus and service.getStatus() or nil
+        if serviceStatus and serviceStatus.lastConfigResult == "combatRebuildDeferred" then
+            Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_DEFERRED", "設定已保存，離開戰鬥後套用。"))
+        else
+            Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_APPLIED_NOW", "資源設定已即時生效。"))
+        end
+    end
+end
+
 local function updateSliderValueText(slider, value)
     if slider.eamPercent then
         slider.valueText:SetText(math.floor(value * 100 + 0.5) .. "%")
@@ -185,6 +209,7 @@ local function createCheckbox(parent, field, key, fallback, x, y)
     checkbox:SetScript("OnClick", function(self)
         if not Panel.refreshing and Panel.draft then
             Panel.draft[field] = self:GetChecked() == true
+            autoApplyDraft()
         end
     end)
     Panel.controls[field] = checkbox
@@ -219,6 +244,7 @@ local function createSlider(parent, spec, x, y)
         updateSliderValueText(self, value)
         if not Panel.refreshing and Panel.draft then
             Panel.draft[self.eamField] = self.eamInteger and math.floor(value + 0.5) or value
+            autoApplyDraft()
         end
     end)
     Panel.controls[spec.field] = slider
@@ -246,6 +272,7 @@ local function cyclePoint(field)
     local value = POINT_OPTIONS[nextIndex]
     Panel.draft[field] = value
     Panel.controls[field]:SetText(pointLabel(field, value))
+    autoApplyDraft()
 end
 
 local function cycleOrientation()
@@ -257,6 +284,7 @@ local function cycleOrientation()
         localized("EAM_RESOURCE_ORIENTATION", "方向") .. "："
             .. localized("EAM_RESOURCE_ORIENTATION_" .. Panel.draft.orientation, Panel.draft.orientation)
     )
+    autoApplyDraft()
 end
 
 local function fontFamilyLabel(value)
@@ -289,6 +317,7 @@ local function cycleFontFamily()
         localized("EAM_RESOURCE_FONT_FAMILY", "字型") .. "："
             .. fontFamilyLabel(Panel.draft.fontFamily)
     )
+    autoApplyDraft()
 end
 
 local function refreshScopeButton()
@@ -560,6 +589,7 @@ local function createPanel()
                 .. "："
                 .. localized("EAM_RESOURCE_MODE_" .. Panel.draft.displayMode, Panel.draft.displayMode)
         )
+        autoApplyDraft()
     end)
     Panel.modeButton = modeButton
 

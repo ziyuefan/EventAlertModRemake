@@ -1400,5 +1400,20 @@
   - Flow 狀態機測試：82/82 PASS。
   - Validation Contracts：493/493 PASS。
 
+### EAM-20260823-RESOURCE-PANEL-LIVE-AUTO-APPLY：玩家資源設定面板改動即時聯動生效
+
+- 日期：2026-08-23。
+- 狀態：已完成代碼實作、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。
+- 需求與設計：
+  - 玩家希望在職業資源設定面板中調整各項數值時能夠「即時生效」，邊調邊看，無須每次點擊「套用」按鈕。
+- 有效解法：
+  - 在 `UI/PlayerResourcePanel.lua` 實作 `autoApplyDraft()` 輕量聯動核心，在 `refreshing == false` 狀態下，當玩家拖曳任何滑桿 (`OnValueChanged`)、勾選任何核取方塊 (`OnClick`)、切換顯示模式／錨點／偏向／字型／方向按鈕時，即時調用 `SavedVariables.updatePlayerResourceConfig`，非戰鬥中直接觸發 `PowerRenderer.configureResource` 與 `reflowResourceFrames` 即時重繪更新，並於底部顯示「資源設定已即時生效。」。
+  - 戰鬥中變更則安全記錄為 `combatRebuildDeferred`，並於脫戰後自動套用。
+- 驗證：
+  - Lua 語法檢查：64/64 PASS。
+  - Flow 狀態機測試：82/82 PASS。
+  - Validation Contracts：493/493 PASS。
+
+
 
 
