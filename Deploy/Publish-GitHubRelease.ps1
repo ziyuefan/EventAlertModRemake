@@ -18,7 +18,7 @@ EventAlertMod Retail Rewrite
 param(
     [string]$Tag = "",
     [string]$Title = "",
-    [string]$PackageLabel = "AGY",
+    [string]$PackageSuffix = "AGY",
     [switch]$Prerelease,
     [switch]$Draft,
     [switch]$DryRun,
@@ -64,18 +64,21 @@ if ([string]::IsNullOrWhiteSpace($tocVersion)) {
     $tocVersion = "EventAlertMod_MN_" + (Get-Date -Format "yyyyMMdd")
 }
 
-# 3. 決定 Tag 與 Title
+# 3. 決定 Tag 與 Title (基於原始格式，以 Suffix 作為後綴)
 $dateStamp = Get-Date -Format "yyyyMMdd"
+$suffixTag = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "-" + $PackageSuffix }
+$suffixFile = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "_" + $PackageSuffix }
+
 if ([string]::IsNullOrWhiteSpace($Tag)) {
-    $Tag = "alpha-7.4-agy." + $dateStamp
+    $Tag = "alpha-7.4" + $suffixTag + "." + $dateStamp
 }
 if ([string]::IsNullOrWhiteSpace($Title)) {
     $Title = "[AGY] Retail 12.1 Alpha 7.4 (Antigravity Engine - $dateStamp)"
 }
 
-Write-Host "發布目標 Tag  : $Tag" -ForegroundColor Yellow
-Write-Host "發布目標 Title: $Title" -ForegroundColor Yellow
-Write-Host "套件標籤 Label: $PackageLabel" -ForegroundColor Yellow
+Write-Host "發布目標 Tag   : $Tag" -ForegroundColor Yellow
+Write-Host "發布目標 Title : $Title" -ForegroundColor Yellow
+Write-Host "檔名追加後綴   : $PackageSuffix" -ForegroundColor Yellow
 
 # 4. 離線門禁檢驗 (Validation Gate)
 if (-not $SkipGate) {
@@ -106,17 +109,17 @@ if (-not $SkipGate) {
     Write-Host "⚠ 跳過離線門禁檢驗 (-SkipGate)" -ForegroundColor Magenta
 }
 
-# 5. 打包 AddOn 與 Source
+# 5. 打包 AddOn 與 Source (基於原本格式)
 Write-Host "`n--> [2/4] 打包插件與原始碼套件..." -ForegroundColor Cyan
 [System.IO.Directory]::CreateDirectory($distRoot) | Out-Null
 
 $beforePackageZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
 
-# 5.1 AddOn ZIP
-& pwsh -NoProfile -File $buildPackageScript -PackageLabel $PackageLabel
+# 5.1 呼叫原有打包腳本 (保留原本格式)
+& pwsh -NoProfile -File $buildPackageScript
 if ($LASTEXITCODE -ne 0) { throw "Build-Package 失敗！" }
 
-# 5.2 Source ZIP
+# 5.2 呼叫原始碼打包腳本 (保留原本格式)
 & pwsh -NoProfile -File $buildSourceScript
 if ($LASTEXITCODE -ne 0) { throw "Build-SourcePackage 失敗！" }
 
@@ -127,8 +130,44 @@ if ($newZips.Count -eq 0) {
     throw "未能找到新產生的 ZIP 檔案！"
 }
 
-$addonZip = @($newZips | Where-Object { $_ -notlike "*_src_*" })[0]
-$sourceZip = @($newZips | Where-Object { $_ -like "*_src_*" })[0]
+$rawAddonZip = @($newZips | Where-Object { $_ -notlike "*_SRC_*" })[0]
+$rawSourceZip = @($newZips | Where-Object { $_ -like "*_SRC_*" })[0]
+
+# 5.3 若有指定後綴，基於原檔名追加後綴
+function Apply-SuffixToArtifact {
+    param(
+        [Parameter(Mandatory = $true)][string]$ZipPath,
+        [Parameter(Mandatory = $true)][string]$Suffix
+    )
+    if ([string]::IsNullOrWhiteSpace($Suffix)) {
+        return $ZipPath
+    }
+    $dir = [System.IO.Path]::GetDirectoryName($ZipPath)
+    $nameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($ZipPath)
+    $ext = [System.IO.Path]::GetExtension($ZipPath)
+    $targetZipPath = Join-Path $dir ($nameWithoutExt + "_" + $Suffix + $ext)
+
+    if ($targetZipPath -ne $ZipPath) {
+        Move-Item -LiteralPath $ZipPath -Destination $targetZipPath -Force
+        $oldHash = $ZipPath + ".sha256"
+        $newHash = $targetZipPath + ".sha256"
+        if (Test-Path -LiteralPath $oldHash) {
+            $hashContent = Get-Content -LiteralPath $oldHash -Raw -Encoding UTF8
+            $hashVal = $hashContent.Split(" ")[0].Trim()
+            [System.IO.File]::WriteAllText($newHash, "$hashVal  $([System.IO.Path]::GetFileName($targetZipPath))`r`n", $utf8)
+            Remove-Item -LiteralPath $oldHash -Force
+        }
+        $oldInv = $ZipPath + ".inventory.json"
+        $newInv = $targetZipPath + ".inventory.json"
+        if (Test-Path -LiteralPath $oldInv) {
+            Move-Item -LiteralPath $oldInv -Destination $newInv -Force
+        }
+    }
+    return $targetZipPath
+}
+
+$addonZip = if ($rawAddonZip) { Apply-SuffixToArtifact -ZipPath $rawAddonZip -Suffix $PackageSuffix } else { $null }
+$sourceZip = if ($rawSourceZip) { Apply-SuffixToArtifact -ZipPath $rawSourceZip -Suffix $PackageSuffix } else { $null }
 
 $filesToUpload = [System.Collections.Generic.List[string]]::new()
 if ($addonZip -and (Test-Path -LiteralPath $addonZip)) {
