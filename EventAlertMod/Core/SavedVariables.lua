@@ -2456,9 +2456,9 @@ local function exportComparableImportedAlert(moduleName, alert)
     return record
 end
 
-function SavedVariables.applyProfileImport(classToken, moduleRecords, mode)
+function SavedVariables.applyProfileImport(classToken, moduleRecordsOrPayload, mode, selectedSections)
     local db = EAM.db
-    if type(db) ~= "table" or type(moduleRecords) ~= "table" then
+    if type(db) ~= "table" or type(moduleRecordsOrPayload) ~= "table" then
         return false, "dbUnavailable"
     end
     if not isValidClassToken(classToken) then
@@ -2476,106 +2476,208 @@ function SavedVariables.applyProfileImport(classToken, moduleRecords, mode)
         return false, "profileUnavailable"
     end
 
-    local prepared = {}
+    local moduleRecords = moduleRecordsOrPayload.modules or (moduleRecordsOrPayload.playerAura or moduleRecordsOrPayload.spellCooldown or moduleRecordsOrPayload.targetAura or moduleRecordsOrPayload.itemCooldown or moduleRecordsOrPayload.groundEffect) and moduleRecordsOrPayload or nil
+    local layoutData = moduleRecordsOrPayload.layout
+    local playerResourcesData = moduleRecordsOrPayload.playerResources
+    local generalConfigData = moduleRecordsOrPayload.generalConfig
+
+    local applyModules = (selectedSections == nil or selectedSections.modules ~= false) and type(moduleRecords) == "table"
+    local applyLayout = (selectedSections == nil or selectedSections.layout == true) and type(layoutData) == "table"
+    local applyResources = (selectedSections == nil or selectedSections.playerResources == true or selectedSections.playerResource == true) and type(playerResourcesData) == "table"
+    local applyConfig = (selectedSections == nil or selectedSections.generalConfig == true or selectedSections.config == true) and type(generalConfigData) == "table"
+
     local changed = false
     local auraChanged = false
     local soundChanged = false
     local report = { added = 0, updated = 0, unchanged = 0, removed = 0 }
-    for moduleName, records in pairs(moduleRecords) do
-        local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
-        if not definition or type(records) ~= "table" then
-            return false, "moduleInvalid"
-        end
-        local preparedModule = {}
-        local count = 0
-        for index, record in pairs(records) do
-            if type(index) ~= "number" or index % 1 ~= 0 or index < 1 then
-                return false, "recordsNotArray"
-            end
-            count = count + 1
-            if count > 1024 then
-                return false, "moduleLimit"
-            end
-            local alert, reason = buildImportedAlert(moduleName, record)
-            if not alert then
-                return false, reason
-            end
-            if preparedModule[alert.id] then
-                return false, "duplicateAlertID"
-            end
-            preparedModule[alert.id] = alert
-        end
-        prepared[moduleName] = preparedModule
-    end
 
-    local snapshots = {}
-    local nextLists = {}
-    for moduleName, imported in pairs(prepared) do
-        local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
-        local current = alerts[definition.listName]
-        if type(current) ~= "table" then
-            current = {}
-        end
-        if mode == "replace" then
-            snapshots[moduleName] = copySerializable(current) or {}
-            nextLists[moduleName] = {}
-        else
-            nextLists[moduleName] = copySerializable(current) or {}
-        end
-        local nextList = nextLists[moduleName]
-        for alertID, alert in pairs(imported) do
-            local existing = current[alertID]
-            local comparable = existing and exportComparableImportedAlert(moduleName, existing) or nil
-            local incoming = exportComparableImportedAlert(moduleName, alert)
-            if existing and comparable and serializableValuesEqual(comparable, incoming) then
-                report.unchanged = report.unchanged + 1
-            else
-                if existing then
-                    report.updated = report.updated + 1
-                else
-                    report.added = report.added + 1
-                end
-                changed = true
-                if definition.kind == EAM.Constants.ALERT_KIND_AURA then
-                    auraChanged = true
-                    soundChanged = true
-                end
+    if applyModules then
+        local prepared = {}
+        for moduleName, records in pairs(moduleRecords) do
+            local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+            if not definition or type(records) ~= "table" then
+                return false, "moduleInvalid"
             end
-            nextList[alertID] = copySerializable(alert) or alert
+            local preparedModule = {}
+            local count = 0
+            for index, record in pairs(records) do
+                if type(index) ~= "number" or index % 1 ~= 0 or index < 1 then
+                    return false, "recordsNotArray"
+                end
+                count = count + 1
+                if count > 1024 then
+                    return false, "moduleLimit"
+                end
+                local alert, reason = buildImportedAlert(moduleName, record)
+                if not alert then
+                    return false, reason
+                end
+                if preparedModule[alert.id] then
+                    return false, "duplicateAlertID"
+                end
+                preparedModule[alert.id] = alert
+            end
+            prepared[moduleName] = preparedModule
         end
-        if mode == "replace" then
-            for alertID in pairs(current) do
-                if not imported[alertID] then
-                    report.removed = report.removed + 1
+
+        local snapshots = {}
+        local nextLists = {}
+        for moduleName, imported in pairs(prepared) do
+            local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+            local current = alerts[definition.listName]
+            if type(current) ~= "table" then
+                current = {}
+            end
+            if mode == "replace" then
+                snapshots[moduleName] = copySerializable(current) or {}
+                nextLists[moduleName] = {}
+            else
+                nextLists[moduleName] = copySerializable(current) or {}
+            end
+            local nextList = nextLists[moduleName]
+            for alertID, alert in pairs(imported) do
+                local existing = current[alertID]
+                local comparable = existing and exportComparableImportedAlert(moduleName, existing) or nil
+                local incoming = exportComparableImportedAlert(moduleName, alert)
+                if existing and comparable and serializableValuesEqual(comparable, incoming) then
+                    report.unchanged = report.unchanged + 1
+                else
+                    if existing then
+                        report.updated = report.updated + 1
+                    else
+                        report.added = report.added + 1
+                    end
                     changed = true
                     if definition.kind == EAM.Constants.ALERT_KIND_AURA then
                         auraChanged = true
                         soundChanged = true
                     end
                 end
+                nextList[alertID] = copySerializable(alert) or alert
+            end
+            if mode == "replace" then
+                for alertID in pairs(current) do
+                    if not imported[alertID] then
+                        report.removed = report.removed + 1
+                        changed = true
+                        if definition.kind == EAM.Constants.ALERT_KIND_AURA then
+                            auraChanged = true
+                            soundChanged = true
+                        end
+                    end
+                end
             end
         end
+
+        if mode == "replace" then
+            profile.importBackups = type(profile.importBackups) == "table" and profile.importBackups or {}
+            local backupEntry = {
+                revision = db.revision or 0,
+                modules = snapshots,
+            }
+            profile.importBackups[#profile.importBackups + 1] = backupEntry
+            while #profile.importBackups > 3 do
+                table.remove(profile.importBackups, 1)
+            end
+        end
+        for moduleName, nextList in pairs(nextLists) do
+            local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
+            alerts[definition.listName] = nextList
+        end
+    end
+
+    if applyLayout then
+        db.layout = db.layout or {}
+        db.config = db.config or {}
+        if layoutData.iconSize ~= nil then db.layout.iconSize = layoutData.iconSize; db.config.iconSize = layoutData.iconSize end
+        if layoutData.spacing ~= nil then db.layout.spacing = layoutData.spacing; db.config.iconSpacing = layoutData.spacing end
+        if layoutData.verticalSpacing ~= nil then db.config.verticalSpacing = layoutData.verticalSpacing end
+        if layoutData.fontSizeSpellName ~= nil then db.config.fontSizeSpellName = layoutData.fontSizeSpellName end
+        if layoutData.fontSizeTimeVal ~= nil then db.config.fontSizeTimeVal = layoutData.fontSizeTimeVal end
+        if layoutData.fontSizeStack ~= nil then db.config.fontSizeStack = layoutData.fontSizeStack end
+        if layoutData.cooldownSwipeAlpha ~= nil then db.config.cooldownSwipeAlpha = layoutData.cooldownSwipeAlpha end
+        if layoutData.selfDebuffRed ~= nil then db.config.selfDebuffRed = layoutData.selfDebuffRed end
+        if layoutData.targetDebuffGreen ~= nil then db.config.targetDebuffGreen = layoutData.targetDebuffGreen end
+        if layoutData.bossExecuteThreshold ~= nil then db.config.bossExecuteThreshold = layoutData.bossExecuteThreshold end
+        if layoutData.enableBossExecute ~= nil then db.config.enableBossExecute = layoutData.enableBossExecute end
+        if layoutData.chargeBarLayout ~= nil then db.config.chargeBarLayout = layoutData.chargeBarLayout end
+        if layoutData.chargeBarLengthPercent ~= nil then db.config.chargeBarLengthPercent = layoutData.chargeBarLengthPercent end
+        if layoutData.chargeBarThickness ~= nil then db.config.chargeBarThickness = layoutData.chargeBarThickness end
+        if layoutData.fontFamily ~= nil then db.config.fontFamily = layoutData.fontFamily end
+        if type(layoutData.frames) == "table" then
+            db.layout.frames = db.layout.frames or {}
+            for fName, fDef in pairs(layoutData.frames) do
+                if type(fDef) == "table" then
+                    db.layout.frames[fName] = copySerializable(fDef)
+                end
+            end
+        end
+        if type(layoutData.textLayout) == "table" then
+            db.config.textLayout = copySerializable(layoutData.textLayout)
+        end
+        changed = true
+        local renderer = EAM.Managers and EAM.Managers.Renderer
+        if renderer and type(renderer.requestLayout) == "function" then
+            local framesToRefresh = { "selfAura", "targetAura", "spellCooldown", "itemCooldown", "classPower", "groundEffect", "totem" }
+            for i = 1, #framesToRefresh do
+                renderer.requestLayout(framesToRefresh[i])
+            end
+        end
+    end
+
+    if applyResources then
+        profile.resources = profile.resources or { classDefaults = { enabled = {}, settings = {} }, specs = {} }
+        if mode == "replace" then
+            profile.resources = copySerializable(playerResourcesData)
+        else
+            if type(playerResourcesData.classDefaults) == "table" then
+                profile.resources.classDefaults = profile.resources.classDefaults or { enabled = {}, settings = {} }
+                if type(playerResourcesData.classDefaults.enabled) == "table" then
+                    profile.resources.classDefaults.enabled = profile.resources.classDefaults.enabled or {}
+                    for k, v in pairs(playerResourcesData.classDefaults.enabled) do
+                        profile.resources.classDefaults.enabled[k] = v
+                    end
+                end
+                if type(playerResourcesData.classDefaults.settings) == "table" then
+                    profile.resources.classDefaults.settings = profile.resources.classDefaults.settings or {}
+                    for k, s in pairs(playerResourcesData.classDefaults.settings) do
+                        profile.resources.classDefaults.settings[k] = copySerializable(s)
+                    end
+                end
+            end
+            if type(playerResourcesData.specs) == "table" then
+                profile.resources.specs = profile.resources.specs or {}
+                for specKey, specData in pairs(playerResourcesData.specs) do
+                    local specNum = tonumber(specKey) or specKey
+                    profile.resources.specs[specNum] = copySerializable(specData)
+                end
+            end
+        end
+        changed = true
+        if EAM.Services and EAM.Services.PlayerResourceService and type(EAM.Services.PlayerResourceService.reconfigureAll) == "function" then
+            EAM.Services.PlayerResourceService.reconfigureAll()
+        end
+    end
+
+    if applyConfig then
+        db.config = db.config or {}
+        local fields = { "showFrame", "showSpellName", "showTimeVal", "showFlash", "showSound", "soundName", "allowEscCancel", "showExtraAlert", "cooldownRemoveAura", "showSCDOutsideCombat", "glowSCDWhenUsable", "theme" }
+        for i = 1, #fields do
+            local field = fields[i]
+            if generalConfigData[field] ~= nil then
+                db.config[field] = generalConfigData[field]
+            end
+        end
+        if generalConfigData.theme and EAM.Theme and type(EAM.Theme.setSelection) == "function" then
+            EAM.Theme.setSelection(generalConfigData.theme)
+        end
+        changed = true
     end
 
     if not changed then
         return true, "unchanged", report
     end
 
-    if mode == "replace" then
-        profile.importBackups = type(profile.importBackups) == "table" and profile.importBackups or {}
-        local backupEntry = {
-            revision = db.revision or 0,
-            modules = snapshots,
-        }
-        profile.importBackups[#profile.importBackups + 1] = backupEntry
-        while #profile.importBackups > 3 do
-            table.remove(profile.importBackups, 1)
-        end
-    end
-    for moduleName, nextList in pairs(nextLists) do
-        local definition = PROFILE_IMPORT_DEFINITIONS[moduleName]
-        alerts[definition.listName] = nextList
-    end
     touchRevision(db)
     local router = EAM.Modules and EAM.Modules.EventRouter
     if router and auraChanged then
@@ -2583,6 +2685,9 @@ function SavedVariables.applyProfileImport(classToken, moduleRecords, mode)
     end
     if router and soundChanged then
         router.fire("EAM_AURA_SOUND_CHANGED", db.revision)
+    end
+    if router then
+        router.fire("EAM_CONFIG_CHANGED", db.revision)
     end
     return true, "updated", report
 end

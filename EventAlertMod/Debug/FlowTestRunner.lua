@@ -644,6 +644,64 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
+    id = "profile.codec.export_full_sections_roundtrip",
+    primarySuite = "core",
+    suites = { quick = true, core = true, boundary = true },
+    run = function()
+        local codec = EAM.Modules and EAM.Modules.ProfileCodec
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if not codec or not saved or not saved.getActiveClassToken() then
+            return STATUS_SKIP, "ProfileCodec or active class profile unavailable"
+        end
+        local payload, report = codec.exportProfile({
+            modules = { "playerAura" },
+            sections = { layout = true, playerResources = true, generalConfig = true },
+        })
+        if not payload then
+            return false, "export failed: " .. tostring(report)
+        end
+        local plan, reason = codec.previewImport(payload, { mode = "merge" })
+        if not plan then
+            return false, "preview failed: " .. tostring(reason)
+        end
+        local valid = plan.sections.layout == true
+            and plan.sections.playerResources == true
+            and plan.sections.generalConfig == true
+            and plan.sections.modules == true
+        return valid, valid and "full multi-section profile round-trip verified" or "preview sections mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "profile.codec.selective_apply_layout_and_resource",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local codec = EAM.Modules and EAM.Modules.ProfileCodec
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if not codec or not saved or not saved.getActiveClassToken() then
+            return STATUS_SKIP, "ProfileCodec unavailable"
+        end
+        local payload, reason = codec.exportProfile({
+            modules = {},
+            sections = { layout = true, playerResources = true, generalConfig = true },
+        })
+        if not payload then
+            return false, "export failed: " .. tostring(reason)
+        end
+        local plan, previewReason = codec.previewImport(payload, { mode = "merge" })
+        if not plan then
+            return false, "preview failed: " .. tostring(previewReason)
+        end
+        local report, applyReason = codec.applyImport(plan, "merge", nil, { layout = true, playerResources = true, generalConfig = false })
+        if not report then
+            return false, "apply failed: " .. tostring(applyReason)
+        end
+        return true, "selective layout and player resources apply succeeded"
+    end,
+})
+
+FlowTestRunner.registerCase({
     id = "aura121.capability.native_complete",
     primarySuite = "aura121",
     suites = { aura121 = true },

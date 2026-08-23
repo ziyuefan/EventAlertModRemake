@@ -280,16 +280,25 @@ local function encodeJSON(value, stack, forcedArrays)
 end
 
 local function markPayloadArrays(payload, forcedArrays)
-    for index = 1, #MODULES do
-        local list = payload.modules[MODULES[index]]
-        if list then
-            forcedArrays[list] = true
+    if type(payload) ~= "table" then return end
+    if type(payload.modules) == "table" then
+        for index = 1, #MODULES do
+            local list = payload.modules[MODULES[index]]
+            if list then
+                forcedArrays[list] = true
+            end
         end
     end
 end
 
 local function markEnvelopeArrays(envelope, forcedArrays)
-    forcedArrays[envelope.scope.modules] = true
+    if type(envelope) ~= "table" or type(envelope.scope) ~= "table" then return end
+    if type(envelope.scope.modules) == "table" then
+        forcedArrays[envelope.scope.modules] = true
+    end
+    if type(envelope.scope.sections) == "table" then
+        forcedArrays[envelope.scope.sections] = true
+    end
     markPayloadArrays(envelope.payload, forcedArrays)
 end
 
@@ -896,6 +905,198 @@ local function getList(definition, classToken)
     return saved.getAlertList(definition.kind, definition.unit, classToken)
 end
 
+local function copySerializable(value)
+    if type(value) ~= "table" then return value end
+    local copy = {}
+    for k, v in pairs(value) do
+        copy[k] = copySerializable(v)
+    end
+    return copy
+end
+
+local function normalizeLayoutRecord(layout)
+    if type(layout) ~= "table" or not isSafeValue(layout) then return nil, "layoutInvalid" end
+    local normalized = {
+        iconSize = isSafeInteger(layout.iconSize, 20, 100) and layout.iconSize or 40,
+        spacing = isSafeInteger(layout.spacing, -200, 200) and layout.spacing or 6,
+        verticalSpacing = isSafeInteger(layout.verticalSpacing, -200, 200) and layout.verticalSpacing or 0,
+        fontSizeSpellName = isSafeInteger(layout.fontSizeSpellName, 8, 32) and layout.fontSizeSpellName or 12,
+        fontSizeTimeVal = isSafeInteger(layout.fontSizeTimeVal, 8, 32) and layout.fontSizeTimeVal or 14,
+        fontSizeStack = isSafeInteger(layout.fontSizeStack, 8, 32) and layout.fontSizeStack or 12,
+        cooldownSwipeAlpha = isSafeFiniteNumber(layout.cooldownSwipeAlpha, 0, 1) and layout.cooldownSwipeAlpha or 1,
+        selfDebuffRed = isSafeFiniteNumber(layout.selfDebuffRed, 0, 1) and layout.selfDebuffRed or 0.5,
+        targetDebuffGreen = isSafeFiniteNumber(layout.targetDebuffGreen, 0, 1) and layout.targetDebuffGreen or 0.5,
+        bossExecuteThreshold = isSafeFiniteNumber(layout.bossExecuteThreshold, 0, 1) and layout.bossExecuteThreshold or 0.2,
+        enableBossExecute = layout.enableBossExecute == true,
+        chargeBarLayout = (layout.chargeBarLayout == "TOP" or layout.chargeBarLayout == "BOTTOM" or layout.chargeBarLayout == "LEFT" or layout.chargeBarLayout == "RIGHT" or layout.chargeBarLayout == "RING") and layout.chargeBarLayout or "BOTTOM",
+        chargeBarLengthPercent = isSafeInteger(layout.chargeBarLengthPercent, 50, 300) and layout.chargeBarLengthPercent or 150,
+        chargeBarThickness = isSafeInteger(layout.chargeBarThickness, 1, 50) and layout.chargeBarThickness or 8,
+        fontFamily = isSafeString(layout.fontFamily, 32) and layout.fontFamily or "STANDARD",
+    }
+    if type(layout.frames) == "table" then
+        normalized.frames = {}
+        for fName, fDef in pairs(layout.frames) do
+            if type(fDef) == "table" and type(fName) == "string" then
+                normalized.frames[fName] = {
+                    growDirection = isSafeInteger(fDef.growDirection, 1, 4) and fDef.growDirection or 1,
+                    x = isSafeFiniteNumber(fDef.x, -2000, 2000) and fDef.x or 0,
+                    y = isSafeFiniteNumber(fDef.y, -2000, 2000) and fDef.y or 0,
+                    point = isSafeString(fDef.point, 32) and fDef.point or "CENTER",
+                }
+            end
+        end
+    end
+    if type(layout.textLayout) == "table" then
+        normalized.textLayout = {}
+        if type(layout.textLayout.timer) == "table" then
+            normalized.textLayout.timer = {
+                placement = isSafeString(layout.textLayout.timer.placement, 32) and layout.textLayout.timer.placement or "OUTSIDE_TOP",
+                fontSize = isSafeInteger(layout.textLayout.timer.fontSize, 8, 32) and layout.textLayout.timer.fontSize or 14,
+            }
+        end
+        if type(layout.textLayout.applications) == "table" then
+            normalized.textLayout.applications = {
+                placement = isSafeString(layout.textLayout.applications.placement, 32) and layout.textLayout.applications.placement or "INSIDE_BOTTOM_RIGHT",
+                fontSize = isSafeInteger(layout.textLayout.applications.fontSize, 8, 32) and layout.textLayout.applications.fontSize or 12,
+            }
+        end
+    end
+    return normalized
+end
+
+local function normalizePlayerResourcesRecord(classToken, resources)
+    if type(resources) ~= "table" or not isSafeValue(resources) then return nil, "playerResourcesInvalid" end
+    local normalized = {
+        classDefaults = { enabled = {}, settings = {} },
+        specs = {},
+    }
+    if type(resources.classDefaults) == "table" then
+        if type(resources.classDefaults.enabled) == "table" then
+            for k, v in pairs(resources.classDefaults.enabled) do
+                if type(k) == "string" and type(v) == "boolean" then
+                    normalized.classDefaults.enabled[k] = v
+                end
+            end
+        end
+        if type(resources.classDefaults.settings) == "table" then
+            for k, s in pairs(resources.classDefaults.settings) do
+                if type(k) == "string" and type(s) == "table" then
+                    normalized.classDefaults.settings[k] = copySerializable(s)
+                end
+            end
+        end
+    end
+    if type(resources.specs) == "table" then
+        for specKey, specData in pairs(resources.specs) do
+            if type(specData) == "table" then
+                local specObj = { enabled = {}, settings = {} }
+                if type(specData.enabled) == "table" then
+                    for k, v in pairs(specData.enabled) do
+                        if type(k) == "string" and type(v) == "boolean" then
+                            specObj.enabled[k] = v
+                        end
+                    end
+                end
+                if type(specData.settings) == "table" then
+                    for k, s in pairs(specData.settings) do
+                        if type(k) == "string" and type(s) == "table" then
+                            specObj.settings[k] = copySerializable(s)
+                        end
+                    end
+                end
+                normalized.specs[tostring(specKey)] = specObj
+            end
+        end
+    end
+    return normalized
+end
+
+local function normalizeGeneralConfigRecord(config)
+    if type(config) ~= "table" or not isSafeValue(config) then return nil, "generalConfigInvalid" end
+    return {
+        showFrame = config.showFrame ~= false,
+        showSpellName = config.showSpellName ~= false,
+        showTimeVal = config.showTimeVal ~= false,
+        showFlash = config.showFlash == true,
+        showSound = config.showSound ~= false,
+        soundName = isSafeString(config.soundName, 64) and config.soundName or "ShayBell",
+        allowEscCancel = config.allowEscCancel == true,
+        showExtraAlert = config.showExtraAlert == true,
+        cooldownRemoveAura = config.cooldownRemoveAura == true,
+        showSCDOutsideCombat = config.showSCDOutsideCombat ~= false,
+        glowSCDWhenUsable = config.glowSCDWhenUsable ~= false,
+        theme = isSafeString(config.theme, 32) and config.theme or "eam",
+    }
+end
+
+local function exportLayout()
+    local db = EAM.db
+    if not db or type(db.layout) ~= "table" then return nil end
+    local layout = db.layout
+    local config = db.config or {}
+    local frames = {}
+    if type(layout.frames) == "table" then
+        for fName, fDef in pairs(layout.frames) do
+            if type(fDef) == "table" then
+                frames[fName] = {
+                    growDirection = fDef.growDirection or 1,
+                    x = isSafeFiniteNumber(fDef.x, -2000, 2000) and fDef.x or 0,
+                    y = isSafeFiniteNumber(fDef.y, -2000, 2000) and fDef.y or 0,
+                    point = type(fDef.point) == "string" and fDef.point or "CENTER",
+                }
+            end
+        end
+    end
+    local textLayout = {}
+    if type(config.textLayout) == "table" then
+        if type(config.textLayout.timer) == "table" then
+            textLayout.timer = {
+                placement = config.textLayout.timer.placement or "OUTSIDE_TOP",
+                fontSize = config.textLayout.timer.fontSize or 14,
+            }
+        end
+        if type(config.textLayout.applications) == "table" then
+            textLayout.applications = {
+                placement = config.textLayout.applications.placement or "INSIDE_BOTTOM_RIGHT",
+                fontSize = config.textLayout.applications.fontSize or 12,
+            }
+        end
+    end
+    return normalizeLayoutRecord({
+        iconSize = layout.iconSize or 40,
+        spacing = layout.spacing or 6,
+        verticalSpacing = config.verticalSpacing or 0,
+        fontSizeSpellName = config.fontSizeSpellName or 12,
+        fontSizeTimeVal = config.fontSizeTimeVal or 14,
+        fontSizeStack = config.fontSizeStack or 12,
+        cooldownSwipeAlpha = config.cooldownSwipeAlpha ~= nil and config.cooldownSwipeAlpha or 1,
+        selfDebuffRed = config.selfDebuffRed or 0.5,
+        targetDebuffGreen = config.targetDebuffGreen or 0.5,
+        bossExecuteThreshold = config.bossExecuteThreshold or 0.2,
+        enableBossExecute = config.enableBossExecute == true,
+        frames = frames,
+        chargeBarLayout = config.chargeBarLayout or "BOTTOM",
+        chargeBarLengthPercent = config.chargeBarLengthPercent or 150,
+        chargeBarThickness = config.chargeBarThickness or 8,
+        textLayout = textLayout,
+        fontFamily = config.fontFamily or "STANDARD",
+    })
+end
+
+local function exportPlayerResources(classToken)
+    local db = EAM.db
+    if not db or not classToken then return nil end
+    local profile = type(db.profiles) == "table" and type(db.profiles.classes) == "table" and db.profiles.classes[classToken]
+    if not profile or type(profile.resources) ~= "table" then return nil end
+    return normalizePlayerResourcesRecord(classToken, profile.resources)
+end
+
+local function exportGeneralConfig()
+    local db = EAM.db
+    if not db or type(db.config) ~= "table" then return nil end
+    return normalizeGeneralConfigRecord(db.config)
+end
+
 local function exportRecord(moduleName, alert)
     if type(alert) ~= "table" or not isSafeValue(alert) then return nil, "alertRestricted" end
     local definition = MODULE_DEFINITIONS[moduleName]
@@ -938,47 +1139,85 @@ local function exportRecord(moduleName, alert)
     return normalizeModuleRecord(moduleName, { [definition.idField] = id, enabled = alert.enabled ~= false })
 end
 
-local function buildPayload(classToken, modules)
-    local payload = { modules = {} }
+local function buildPayload(classToken, modules, sections)
+    local payload = {}
     local total = 0
-    for index = 1, #modules do
-        local moduleName = modules[index]
-        local definition = MODULE_DEFINITIONS[moduleName]
-        local list = getList(definition, classToken)
-        if not list or not isSafeValue(list) then return nil, "alertListRestricted" end
-        local records = {}
-        local count = 0
-        for _, alert in pairs(list) do
-            local record, reason = exportRecord(moduleName, alert)
-            if not record then return nil, reason end
-            count = count + 1
-            if count > LIMITS.maxPerModule then return nil, "moduleLimit" end
-            records[count] = record
+    sections = type(sections) == "table" and sections or {}
+
+    local includeModules = sections.modules ~= false and modules and #modules > 0
+    if includeModules then
+        payload.modules = {}
+        for index = 1, #modules do
+            local moduleName = modules[index]
+            local definition = MODULE_DEFINITIONS[moduleName]
+            local list = getList(definition, classToken)
+            if not list or not isSafeValue(list) then return nil, "alertListRestricted" end
+            local records = {}
+            local count = 0
+            for _, alert in pairs(list) do
+                local record, reason = exportRecord(moduleName, alert)
+                if not record then return nil, reason end
+                count = count + 1
+                if count > LIMITS.maxPerModule then return nil, "moduleLimit" end
+                records[count] = record
+            end
+            table.sort(records, function(left, right)
+                local leftID = left[definition.idField]
+                local rightID = right[definition.idField]
+                return leftID < rightID
+            end)
+            payload.modules[moduleName] = records
+            total = total + count
         end
-        table.sort(records, function(left, right)
-            local leftID = left[definition.idField]
-            local rightID = right[definition.idField]
-            return leftID < rightID
-        end)
-        payload.modules[moduleName] = records
-        total = total + count
     end
+
+    if sections.layout == true then
+        local layoutData = exportLayout()
+        if layoutData then
+            payload.layout = layoutData
+        end
+    end
+
+    if sections.playerResources == true or sections.playerResource == true then
+        local resData = exportPlayerResources(classToken)
+        if resData then
+            payload.playerResources = resData
+        end
+    end
+
+    if sections.generalConfig == true or sections.config == true then
+        local configData = exportGeneralConfig()
+        if configData then
+            payload.generalConfig = configData
+        end
+    end
+
     if total > LIMITS.maxAlerts then return nil, "alertLimit" end
     return payload, total
 end
 
-local function buildEnvelope(classToken, modules, payload)
+local function buildEnvelope(classToken, modules, payload, sections)
     local payloadJSON, payloadReason = canonicalJSON(payload, (function()
         local forced = {}
         markPayloadArrays(payload, forced)
         return forced
     end)())
     if not payloadJSON then return nil, payloadReason end
+    local sectionsList = {}
+    if payload.modules then sectionsList[#sectionsList + 1] = "modules" end
+    if payload.layout then sectionsList[#sectionsList + 1] = "layout" end
+    if payload.playerResources then sectionsList[#sectionsList + 1] = "playerResources" end
+    if payload.generalConfig then sectionsList[#sectionsList + 1] = "generalConfig" end
+
     local envelope = {
         type = "EAM_ALERT_PROFILE",
         schema = CURRENT_SCHEMA,
         addonSchema = EAM.Constants.SCHEMA_VERSION,
-        scope = { classToken = classToken, modules = modules },
+        scope = {
+            classToken = classToken,
+            modules = modules or {},
+            sections = sectionsList,
+        },
         payload = payload,
         payloadBytes = #payloadJSON,
         checksum = { algorithm = "adler32", value = adler32(payloadJSON) },
@@ -994,39 +1233,67 @@ local function validateEnvelope(envelope)
     if envelope.type ~= "EAM_ALERT_PROFILE" or envelope.schema ~= CURRENT_SCHEMA or envelope.addonSchema ~= EAM.Constants.SCHEMA_VERSION then
         return nil, "schemaUnsupported"
     end
-    ok, reason = hasOnlyKeys(envelope.scope, { classToken = true, modules = true })
+    ok, reason = hasOnlyKeys(envelope.scope, { classToken = true, modules = true, sections = true })
     if not ok or type(envelope.scope.classToken) ~= "string" or not VALID_CLASSES[envelope.scope.classToken] then return nil, "scopeInvalid" end
+    
     local modulesValid, moduleCount = isDenseArray(envelope.scope.modules, #MODULES)
-    if not modulesValid or moduleCount == 0 then return nil, "scopeModulesInvalid" end
+    if not modulesValid then return nil, "scopeModulesInvalid" end
+
     local selected = {}
     for index = 1, moduleCount do
         local moduleName = envelope.scope.modules[index]
         if type(moduleName) ~= "string" or not MODULE_DEFINITIONS[moduleName] or selected[moduleName] then return nil, "scopeModuleInvalid" end
         selected[moduleName] = true
     end
-    ok, reason = hasOnlyKeys(envelope.payload, { modules = true })
-    if not ok or type(envelope.payload.modules) ~= "table" then return nil, "payloadInvalid" end
-    for moduleName in pairs(envelope.payload.modules) do
-        if not selected[moduleName] then return nil, "payloadModuleOutOfScope" end
-    end
+
+    ok, reason = hasOnlyKeys(envelope.payload, { modules = true, layout = true, playerResources = true, generalConfig = true })
+    if not ok or type(envelope.payload) ~= "table" then return nil, "payloadInvalid" end
+
     local total = 0
-    for index = 1, moduleCount do
-        local moduleName = envelope.scope.modules[index]
-        local records = envelope.payload.modules[moduleName]
-        local recordsValid, count = isDenseArray(records, LIMITS.maxPerModule)
-        if not recordsValid then return nil, "recordsInvalid" end
-        local seen = {}
-        for recordIndex = 1, count do
-            local normalized, recordReason = normalizeModuleRecord(moduleName, records[recordIndex])
-            if not normalized then return nil, recordReason end
-            local definition = MODULE_DEFINITIONS[moduleName]
-            local id = normalized[definition.idField]
-            if seen[id] then return nil, "duplicateAlertID" end
-            seen[id] = true
-            records[recordIndex] = normalized
+    if envelope.payload.modules then
+        if type(envelope.payload.modules) ~= "table" then return nil, "payloadInvalid" end
+        for moduleName in pairs(envelope.payload.modules) do
+            if not selected[moduleName] then return nil, "payloadModuleOutOfScope" end
         end
-        total = total + count
+        for index = 1, moduleCount do
+            local moduleName = envelope.scope.modules[index]
+            local records = envelope.payload.modules[moduleName]
+            if records then
+                local recordsValid, count = isDenseArray(records, LIMITS.maxPerModule)
+                if not recordsValid then return nil, "recordsInvalid" end
+                local seen = {}
+                for recordIndex = 1, count do
+                    local normalized, recordReason = normalizeModuleRecord(moduleName, records[recordIndex])
+                    if not normalized then return nil, recordReason end
+                    local definition = MODULE_DEFINITIONS[moduleName]
+                    local id = normalized[definition.idField]
+                    if seen[id] then return nil, "duplicateAlertID" end
+                    seen[id] = true
+                    records[recordIndex] = normalized
+                end
+                total = total + count
+            end
+        end
     end
+
+    if envelope.payload.layout then
+        local layoutNorm, layoutErr = normalizeLayoutRecord(envelope.payload.layout)
+        if not layoutNorm then return nil, layoutErr end
+        envelope.payload.layout = layoutNorm
+    end
+
+    if envelope.payload.playerResources then
+        local resNorm, resErr = normalizePlayerResourcesRecord(envelope.scope.classToken, envelope.payload.playerResources)
+        if not resNorm then return nil, resErr end
+        envelope.payload.playerResources = resNorm
+    end
+
+    if envelope.payload.generalConfig then
+        local configNorm, configErr = normalizeGeneralConfigRecord(envelope.payload.generalConfig)
+        if not configNorm then return nil, configErr end
+        envelope.payload.generalConfig = configNorm
+    end
+
     if total > LIMITS.maxAlerts then return nil, "alertLimit" end
     local payloadJSON, payloadReason = canonicalJSON(envelope.payload, (function()
         local forced = {}
@@ -1072,14 +1339,21 @@ local function compareRecord(moduleName, record, classToken)
     return leftJSON == rightJSON and "unchanged" or "update"
 end
 
-function Codec.exportProfile(moduleSelection)
+function Codec.exportProfile(moduleSelection, sectionSelection)
     local classToken = currentClassToken()
     if not classToken then return nil, "classUnavailable" end
-    local modules, reason = normalizeModuleSelection(moduleSelection)
-    if not modules then return nil, reason end
-    local payload, alertCountOrReason = buildPayload(classToken, modules)
+    local modules, sections
+    if type(moduleSelection) == "table" and (moduleSelection.modules ~= nil or moduleSelection.sections ~= nil) then
+        sections = moduleSelection.sections
+        modules = moduleSelection.modules and normalizeModuleSelection(moduleSelection.modules) or {}
+    else
+        modules = normalizeModuleSelection(moduleSelection)
+        sections = sectionSelection
+    end
+    if not modules then modules = {} end
+    local payload, alertCountOrReason = buildPayload(classToken, modules, sections)
     if not payload then return nil, alertCountOrReason end
-    local envelope, json = buildEnvelope(classToken, modules, payload)
+    local envelope, json = buildEnvelope(classToken, modules, payload, sections)
     if not envelope or not json then return nil, json or "jsonEncodeFailed" end
     if #json > LIMITS.decodedBytes then return nil, "decodedSize" end
     local base64, backend = encodeBase64(json)
@@ -1088,6 +1362,7 @@ function Codec.exportProfile(moduleSelection)
     return result, {
         classToken = classToken,
         modules = modules,
+        sections = sections,
         alertCount = alertCountOrReason,
         encodingBackend = backend,
         payloadBytes = envelope.payloadBytes,
@@ -1104,26 +1379,46 @@ function Codec.previewImport(encoded, options)
     if targetClassToken ~= envelope.scope.classToken and options.targetClassToken == nil then return nil, "targetClassExplicitRequired" end
     local counts = { add = 0, update = 0, unchanged = 0, conflict = 0, remove = 0 }
     local total = 0
-    for index = 1, #envelope.scope.modules do
-        local moduleName = envelope.scope.modules[index]
-        local records = envelope.payload.modules[moduleName]
-        local definition = MODULE_DEFINITIONS[moduleName]
-        local list = getList(definition, targetClassToken)
-        local seen = {}
-        for recordIndex = 1, #records do
-            local record = records[recordIndex]
-            local status = compareRecord(moduleName, record, targetClassToken)
-            counts[status] = counts[status] + 1
-            seen[record[definition.idField]] = true
-            total = total + 1
-        end
-        if options.mode == "replace" and list then
-            for key, existing in pairs(list) do
-                local exported = exportRecord(moduleName, existing)
-                local existingID = exported and exported[definition.idField]
-                if existingID and not seen[existingID] then counts.remove = counts.remove + 1 end
+    local sections = {
+        modules = false,
+        layout = false,
+        playerResources = false,
+        generalConfig = false,
+    }
+    if envelope.payload.modules and envelope.scope.modules then
+        sections.modules = true
+        for index = 1, #envelope.scope.modules do
+            local moduleName = envelope.scope.modules[index]
+            local records = envelope.payload.modules[moduleName]
+            local definition = MODULE_DEFINITIONS[moduleName]
+            if definition and records then
+                local list = getList(definition, targetClassToken)
+                local seen = {}
+                for recordIndex = 1, #records do
+                    local record = records[recordIndex]
+                    local status = compareRecord(moduleName, record, targetClassToken)
+                    counts[status] = counts[status] + 1
+                    seen[record[definition.idField]] = true
+                    total = total + 1
+                end
+                if options.mode == "replace" and list then
+                    for key, existing in pairs(list) do
+                        local exported = exportRecord(moduleName, existing)
+                        local existingID = exported and exported[definition.idField]
+                        if existingID and not seen[existingID] then counts.remove = counts.remove + 1 end
+                    end
+                end
             end
         end
+    end
+    if envelope.payload.layout then
+        sections.layout = true
+    end
+    if envelope.payload.playerResources then
+        sections.playerResources = true
+    end
+    if envelope.payload.generalConfig then
+        sections.generalConfig = true
     end
     local payloadJSON = canonicalJSON(envelope.payload, (function()
         local forced = {}
@@ -1135,6 +1430,7 @@ function Codec.previewImport(encoded, options)
         payload = envelope.payload,
         targetClassToken = targetClassToken,
         counts = counts,
+        sections = sections,
         alertCount = total,
         revisionAtPreview = EAM.db and EAM.db.revision or 0,
         fingerprint = adler32(payloadJSON or ""),
@@ -1142,7 +1438,7 @@ function Codec.previewImport(encoded, options)
     }
 end
 
-function Codec.applyImport(plan, mode, targetClassToken)
+function Codec.applyImport(plan, mode, targetClassToken, selectedSections)
     if type(plan) ~= "table" or plan.consumed == true or type(plan.payload) ~= "table" then return nil, "planInvalid" end
     if mode ~= "merge" and mode ~= "replace" then return nil, "modeInvalid" end
     if EAM.API and EAM.API.InCombatLockdown and EAM.API.InCombatLockdown() then return nil, "combatDeferred" end
@@ -1157,7 +1453,7 @@ function Codec.applyImport(plan, mode, targetClassToken)
     if adler32(payloadJSON or "") ~= plan.fingerprint then return nil, "planChanged" end
     local saved = EAM.Modules and EAM.Modules.SavedVariables
     if not saved or type(saved.applyProfileImport) ~= "function" then return nil, "savedVariablesUnavailable" end
-    local ok, status, report = saved.applyProfileImport(targetClassToken, plan.payload.modules, mode)
+    local ok, status, report = saved.applyProfileImport(targetClassToken, plan.payload, mode, selectedSections)
     if not ok then return nil, status end
     plan.consumed = true
     return report or { status = status }
