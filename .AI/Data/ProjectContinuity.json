@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-08-23.3",
+  "snapshotVersion": "2026-08-23.11",
   "updatedAt": "2026-08-23",
   "project": {
     "name": "EventAlertModRemake",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "完成 Retail 12.1 Alpha 6 後續封裝與玩家多資源正式路徑，並確保技能冷卻只由玩家精確施放事件啟動；離線通過不得冒充 Retail／PTR／XPTR 實機簽收。",
+    "objective": "完成 Retail 12.1 Alpha 7.4 的充能分段環、DK 六槽符文事件更新、地面效果 Base/Override 法術族群觸發、文件、套件與 GitHub prerelease；離線通過不得冒充 Retail／PTR／XPTR 實機簽收，實際部署仍須先通知並由玩家操作。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 76,
-      "passed": 76,
+      "total": 82,
+      "passed": 82,
       "failed": 0,
       "skipped": 0,
       "pending": 0
@@ -575,6 +575,133 @@
         "UI/Options.lua",
         "Debug/FlowTestRunner.lua",
         "Tools/Test-ValidationContracts.ps1"
+      ]
+    },
+    {
+      "id": "FACT-20260823-004",
+      "statement": "2026-08-23 玩家職業資源最終重構補強已完成：ResourceCatalog 唯一來源與 PAIN 專用 legacy key、UNIT_DISPLAYPOWER foreground-only、Druid Bear／Cat／Caster／Moonkin／回 Bear Flow、Energy→ComboPoints renderer ownership、Probe stop lifecycle、font／orientation／numeric controls 與非戰鬥即時設定均有程式與 strict offline coverage；Lua 62/62、Flow all 77/77、boundary 56/56、Validation Contracts 461/461。所有 Retail／PTR／XPTR 視覺、事件頻率、Secret sink、taint 與 blocked-action 仍需玩家實機驗證。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "offline-mock",
+      "evidenceRefs": [
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_081553.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json",
+        ".AI/Tools/Test-ValidationContracts.ps1",
+        "EventAlertMod/Data/PlayerResourceCatalog.lua",
+        "EventAlertMod/Services/PlayerResourceService.lua",
+        "EventAlertMod/Debug/PlayerResourceProbe.lua",
+        "EventAlertMod/UI/PlayerResourcePanel.lua",
+        ".AI/Docs/30_PLAYER_RESOURCE_REFACTOR_REPORT.md"
+      ]
+    },
+    {
+      "id": "FACT-20260823-005",
+      "statement": "2026-08-23 部署工具已移除遊戲程序執行中閘門，新增按通道／版本的 EventAlertMod 遊戲存檔備份與還原；備份保留原始相對路徑、manifest 與 SHA-256，還原前建立自動 rollback 並對 Reparse Point fail-closed。合成 fixture backup／restore pass；Lua 62/62、Flow 77/77、boundary 56/56、Validation Contracts 461/461。未寫入本機遊戲目錄，Retail／PTR／XPTR 實機仍待玩家部署。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "offline-mock",
+      "evidenceRefs": [
+        "Deploy/Deploy-EventAlertMod.ps1",
+        "Deploy/README.md",
+        ".AI/Tools/Test-ValidationContracts.ps1",
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_081553.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json",
+        ".AI/Docs/14_PACKAGING_GUIDE.md",
+        ".AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md",
+        ".AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md"
+      ]
+    },
+    {
+      "id": "FACT-20260823-006",
+      "statement": "2026-08-23 最新離線玩家資源驗證已納入 Probe 缺事件一次性檢查、probe restart gate、Frozen Catalog 防呆與 Options persistence API fail-closed；Lua 62/62、Flow all 77/77、boundary 56/56、Validation Contracts 461/461。所有 Retail／PTR／XPTR runtime visual、Secret sink、taint 與 blocked-action 仍需玩家實機簽收。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "offline-mock",
+      "evidenceRefs": [
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_081553.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json",
+        ".AI/Tools/Test-ValidationContracts.ps1",
+        "EventAlertMod/Debug/PlayerResourceProbe.lua",
+        "EventAlertMod/UI/Options.lua"
+      ]
+    },
+    {
+      "id": "FACT-20260823-007",
+      "statement": "2026-08-23 根目錄 README 與 EventAlertMod 插件副本已同步，SHA-256 均為 7EB8752ACA994769356757AED7E1FB4483497930E4A0CB9C567403D14D161509；部署器的公開文件不同步阻擋已排除，但本輪未實際部署至 WoW 目錄。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "README.md",
+        "EventAlertMod/README.md",
+        "Deploy/Deploy-EventAlertMod.ps1",
+        "Deploy/README.md"
+      ]
+    },
+    {
+      "id": "FACT-20260823-008",
+      "statement": "2026-08-23 README 公開說明與玩家資源最終 gate 已同步；最新 Lua 62/62、Flow all 77/77、boundary 56/56、Validation Contracts 464/464。ProjectContinuity privacy contract 已排除私人遊戲資料詞彙；未部署 WoW，三通道 runtime 仍待玩家簽收。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_083630.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_083631.json",
+        ".AI/Tools/Test-ValidationContracts.ps1",
+        "README.md",
+        "EventAlertMod/README.md"
+      ]
+    },
+    {
+      "id": "FACT-20260823-009",
+      "statement": "2026-08-23 充能顯示、CooldownFrame 空白清理、LibButtonGlow fallback 與實機部署前通知協議已完成離線同步；最新 Lua 62/62、Flow all 78/78、boundary 57/57、Validation Contracts 472/472，未部署 WoW。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "EventAlertMod/Services/CooldownService.lua",
+        "EventAlertMod/UI/IconPool.lua",
+        "EventAlertMod/UI/Renderer.lua",
+        "EventAlertMod/Lib/LibStub.lua",
+        "EventAlertMod/Lib/LibButtonGlow-1.0.lua",
+        ".AI/skills/wow-addon-dev",
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_103316.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_103323.json",
+        ".AI/Tools/Test-ValidationContracts.ps1"
+      ]
+    },
+    {
+      "id": "FACT-20260823-010",
+      "statement": "2026-08-23 充能冷卻已補上 base／override spell family 的玩家施放啟動與 SpellChargeInfo 欄位級 Secret 判讀；充能 StatusBar 只顯示 currentCharges／maxCharges，支援 TOP／BOTTOM／LEFT／RIGHT／RING、150% 預設長度／直徑、8px 厚度及安全分隔線。Secret currentCharges 只直送 C-level SetValue；充能只有回滿才算完成。Lua 64/64、Flow all 79/79、boundary 58/58、Validation Contracts 483/483；未部署 WoW，runtime 視覺仍待玩家簽收。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "EventAlertMod/Services/CooldownService.lua",
+        "EventAlertMod/UI/IconPool.lua",
+        "EventAlertMod/UI/Renderer.lua",
+        "EventAlertMod/UI/Options.lua",
+        "EventAlertMod/Media/Images/eam-charge-ring.tga",
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_162316.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_162320.json",
+        ".AI/Tools/Test-ValidationContracts.ps1"
+      ]
+    },
+    {
+      "id": "FACT-20260823-011",
+      "statement": "2026-08-23 DK 符文改由 RUNE_POWER_UPDATE 的 runeIndex／added 與 GetRuneCount／GetRuneCooldown 六槽 API 驅動，false payload 明確保存；地面效果在非戰鬥冷路徑編譯 C_Spell.GetBaseSpell／GetOverrideSpell／GetSpellInfo spellID 族群，施放熱路徑 exact-ID 優先且 Secret spellID fail-closed。Lua 64/64、Flow all 82/82、boundary 61/61、Validation Contracts 493/493；未部署 WoW，runtime 視覺仍待玩家簽收。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "EventAlertMod/Core/Env.lua",
+        "EventAlertMod/Services/PlayerResourceService.lua",
+        "EventAlertMod/Services/GroundEffectService.lua",
+        "EventAlertMod/Debug/FlowTestRunner.lua",
+        ".AI/Tests/Mocks/WoW121AuraMock.lua",
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_174946.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_174739.json",
+        ".AI/Tools/Test-ValidationContracts.ps1"
       ]
     }
   ],
@@ -1397,8 +1524,155 @@
         "Docs/30_PLAYER_RESOURCE_REFACTOR_REPORT.md",
         "Docs/06_TEST_PLAN_RETAIL.md",
         "Docs/29_LIVE_TEST_STEP_GUIDE.md",
-        ".AI/TestResults/EAM_FlowValidation_all_20260821_094159.json",
-        ".AI/TestResults/EAM_FlowValidation_boundary_20260821_094201.json"
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_081553.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json"
+      ]
+    },
+    {
+      "id": "WORK-20260823-001",
+      "issueId": "EAM-20260823-DEPLOY-GAME-DATA-BACKUP-RESTORE",
+      "title": "部署工具程序閘門移除與遊戲存檔備份還原",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "Deploy/Deploy-EventAlertMod.ps1",
+        "Deploy/README.md",
+        "Docs/14_PACKAGING_GUIDE.md",
+        "Docs/27_LOCAL_WOW_ENVIRONMENT.md"
+      ],
+      "acceptanceCriteria": [
+        "部署不再因 Wow.exe 或 WowT.exe 執行而自動拒絕覆蓋",
+        "互動與 CLI 可依 Retail、PTR、XPTR 通道選擇遊戲存檔備份或還原",
+        "備份 manifest 保留版本根目錄相對路徑與 SHA-256，還原前建立 rollback",
+        "Reparse Point、路徑穿越、未知 manifest 或 hash 不符時 fail-closed",
+        "真實 WoW 目錄與玩家 runtime 仍由玩家明確執行與簽收"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "Deploy/Deploy-EventAlertMod.ps1",
+        "Deploy/README.md",
+        ".AI/Docs/14_PACKAGING_GUIDE.md",
+        ".AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md",
+        ".AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        ".AI/Tools/Test-ValidationContracts.ps1"
+      ]
+    },
+    {
+      "id": "WORK-20260823-002",
+      "issueId": "EAM-20260823-CHARGE-GLOW-LIBRARY",
+      "title": "充能顯示、冷卻空白清理、Glow Border library fallback 與部署通知",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "EventAlertMod/Services/CooldownService.lua",
+        "EventAlertMod/UI/Renderer.lua",
+        "EventAlertMod/UI/IconPool.lua",
+        "EventAlertMod/Lib/LibStub.lua",
+        "EventAlertMod/Lib/LibButtonGlow-1.0.lua",
+        ".AI/skills/wow-addon-dev"
+      ],
+      "acceptanceCriteria": [
+        "安全充能資料可顯示 current/max 且不讀回 Secret",
+        "無 timer 的 CooldownFrame 不留下 edge 或 bling 白框",
+        "Glow 可使用 LibButtonGlow，風險情境回退 EAM 自有動畫",
+        "TOC validator 與離線 Lua、Flow、boundary、Contracts 全部通過",
+        "實機部署前明確通知通道、目標、覆蓋與 reload／重啟要求"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "EventAlertMod/EventAlertMod.toc",
+        ".AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        ".AI/Docs/28_PROJECT_CONTINUITY.md",
+        ".AI/PROJECT_MEMORY.md",
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_103316.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_103323.json",
+        ".AI/Tools/Test-ValidationContracts.ps1"
+      ]
+    },
+    {
+      "id": "WORK-20260823-003",
+      "issueId": "EAM-20260823-CHARGE-SECRET-STATUSBAR",
+      "title": "充能法術 override 啟動、Secret 次數 StatusBar 與五種版面",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "EventAlertMod/Services/CooldownService.lua",
+        "EventAlertMod/UI/IconPool.lua",
+        "EventAlertMod/UI/Renderer.lua",
+        "EventAlertMod/UI/Options.lua",
+        "EventAlertMod/Debug/FlowTestRunner.lua",
+        "EventAlertMod/Media/Images/eam-charge-ring.tga"
+      ],
+      "acceptanceCriteria": [
+        "只有玩家 UNIT_SPELLCAST_SUCCEEDED 可首次啟動，base 與目前 override ID 均可安全命中同一監控項",
+        "SpellChargeInfo 可索引時逐欄檢查，安全 maxCharges／isActive 不被 Secret currentCharges 連帶丟棄",
+        "充能 StatusBar 只以 currentCharges／maxCharges 顯示；GetSpellChargeDuration 不得再驅動段數",
+        "Secret currentCharges 不做 Lua 比較、算術、字串化、序列化或保存，只最後直送 StatusBar:SetValue",
+        "支援 TOP／BOTTOM／LEFT／RIGHT／RING、150% 預設長度／直徑、8px 厚度與最多 20 段安全分隔線",
+        "充能回到最大次數才算完成；cooldownRemoveAura 不得在仍缺少充能時提早移除",
+        "冷卻細節隱藏 Aura 專用 fromPlayer 控制，三項冷卻行為按鈕不再重疊",
+        "Lua、Flow、boundary 與 Contracts 離線 gate 全部通過，runtime 維持 pending"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        ".AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        ".AI/Docs/28_PROJECT_CONTINUITY.md",
+        ".AI/Docs/29_LIVE_TEST_STEP_GUIDE.md",
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_162316.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_162320.json",
+        ".AI/Tools/Test-ValidationContracts.ps1"
+      ]
+    },
+    {
+      "id": "WORK-20260823-004",
+      "issueId": "EAM-20260823-RUNES-GROUND-FAMILY",
+      "title": "DK 六槽符文事件更新與地面效果 Base/Override 法術族群觸發",
+      "severity": "P1",
+      "status": "implemented_offline_verified",
+      "modules": [
+        "EventAlertMod/Core/Env.lua",
+        "EventAlertMod/Services/PlayerResourceService.lua",
+        "EventAlertMod/Services/GroundEffectService.lua",
+        "EventAlertMod/Debug/FlowTestRunner.lua",
+        ".AI/Tests/Mocks/WoW121AuraMock.lua"
+      ],
+      "acceptanceCriteria": [
+        "DK 符文以六槽 Rune API 初始化，RUNE_POWER_UPDATE(index, added) 即時更新 6/6、5/6、6/6 分段進度",
+        "added=false 必須保留，不得由 Lua and/or 語意轉成 nil 或觸發多餘 slot reread",
+        "Rune 事件期間不得呼叫泛用 UnitPower、UnitPowerMax 或 UnitPowerPercent",
+        "地面效果設定 ID 可在安全 Base／Override／GetSpellInfo spellID 族群中命中實際施放 ID",
+        "設定 ID 完全相符時優先；族群碰撞與 Secret activation spellID 必須 fail-closed",
+        "Lua、Flow、boundary 與 Contracts 離線 gate 全部通過，Retail／PTR／XPTR runtime 維持 pending"
+      ],
+      "validation": {
+        "offline": "pass",
+        "ptr": "pending",
+        "xptr": "pending",
+        "retail": "pending"
+      },
+      "evidenceRefs": [
+        "EventAlertMod/Services/PlayerResourceService.lua",
+        "EventAlertMod/Services/GroundEffectService.lua",
+        ".AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md",
+        ".AI/Docs/29_LIVE_TEST_STEP_GUIDE.md",
+        ".AI/TestResults/EAM_FlowValidation_all_20260823_174946.json",
+        ".AI/TestResults/EAM_FlowValidation_boundary_20260823_174739.json",
+        ".AI/Tools/Test-ValidationContracts.ps1"
       ]
     }
   ],
@@ -1692,6 +1966,27 @@
     {
       "id": "UNVERIFIED-20260821-001",
       "statement": "Retail 12.1 全職業全專精玩家多資源面板：法力、怒氣、能量、連擊點、瘋狂值、符文／符能及所有可用資源的脫戰、戰鬥、變形、專精切換、設定與報告真人簽收",
+      "requiredClient": "RETAIL_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260823-001",
+      "statement": "Retail 12.1 充能技能首次施放、base／override 對齊、Secret current/max C sink、TOP／BOTTOM／LEFT／RIGHT／RING、分隔線、滿充才完成與三項單技能冷卻行為的玩家視覺簽收",
+      "requiredClient": "RETAIL_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260823-002",
+      "statement": "Retail 12.1 死亡騎士血／冰／邪專精六顆符文：消耗與恢復時 6/6→5/6→6/6 分段、符能不回歸、戰鬥內外與設定畫面開關後即時更新的玩家視覺簽收",
+      "requiredClient": "RETAIL_12_1",
+      "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
+      "blocksRelease": false
+    },
+    {
+      "id": "UNVERIFIED-20260823-003",
+      "statement": "Retail 12.1 冰霜之球、死亡凋零／褻瀆 override 與反魔法立場的首次成功施放觸發、手動 fallback 秒數、天賦切換重編譯、戰鬥內外與提前消失限制的玩家簽收",
       "requiredClient": "RETAIL_12_1",
       "procedureRef": "Docs/29_LIVE_TEST_STEP_GUIDE.md",
       "blocksRelease": false

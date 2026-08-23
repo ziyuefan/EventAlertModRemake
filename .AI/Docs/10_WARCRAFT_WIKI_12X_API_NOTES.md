@@ -135,25 +135,35 @@ EAM 渲染器規則：
 - 少於少數幾個/小數顯示交換 `SetCountdownMillisecondsThreshold`。
 - 秒數文字格式化程式必須即時正式服實測，不可假設所有語言環境都一致。
 
-### 充能持續時間與零跨度持續時間
+### 充能次數、恢復時間與零跨度持續時間
 
-12.0.5 指出以下充能持續時間API在已達到最大充能時，會回傳零跨度持續時間：
+12.0.5 指出以下充能持續時間 API 在已達到最大充能時，會回傳零跨度 `DurationObject`：
+
 ```lua
 C_SpellBook.GetSpellBookItemChargeDuration
 C_Spell.GetSpellChargeDuration
 C_ActionBar.GetActionChargeDuration
 ```
-而零跨度持續時間的物件會被視為完全消失。
 
-EAM CooldownService 規則：
+`DurationObject` 描述的是「下一層恢復時間」，不等於「目前剩餘可用次數」。12.1 的 `C_Spell.GetSpellCharges` 中，`currentCharges` 可為 Secret，而 `maxCharges` 與 `isActive` 可保持安全；`StatusBar:SetValue` 可接收 Secret BarValue，`StatusBar:SetRenderMode(Enum.StatusBarRenderMode.Radial)` 則可把同一個狀態列改為環形進度。
 
-- 基於費用的法術不要只用舊式 `charges == maxCharges` 判斷計時器。
-- 需支援零跨距`DurationObject`。
-- `IconRenderState.timer.mode` 可保留 `displayOnly`，由渲染器變更冷卻小工具。
-- 若需要判斷「已完成」，必須確認持續時間物件是否可安全判斷或由小工具顯示結果。
+EAM CooldownService／IconPool 規則：
+
+- 充能段數只能代表 `currentCharges / maxCharges`，禁止以 `GetSpellChargeDuration` 或恢復秒數推算段數。
+- 先以安全 `maxCharges` 呼叫 `StatusBar:SetMinMaxValues(0, maxCharges)`，完成所有錨點、尺寸與樣式後，最後才把原始 `currentCharges` 直送 `StatusBar:SetValue`。
+- `currentCharges` 若為 Secret，不得比較、運算、字串化、序列化、存入自訂表或從 StatusBar 讀回；Lua 只保存安全的 `maxCharges`、`isActive` 與顯示設定。
+- `GetSpellChargeDuration` 僅可驅動技能本身的 cooldown swipe／倒數，不得再驅動充能段數列。
+- 充能技能的「冷卻完成」定義為回到最大充能。安全 current/max 可直接判斷；current 為 Secret 時，以安全 `isActive ~= true` 作為已回滿判定。
+- 12.1 支援的環形版面使用 `StatusBarRenderMode.Radial`；若客戶端或材質不支援，fail-closed 回退到底部線性 StatusBar，不猜測環形百分比。
+
+官方參考：
+
+- https://warcraft.wiki.gg/wiki/API_C_Spell.GetSpellCharges
+- https://warcraft.wiki.gg/wiki/API_StatusBar_SetValue
+- https://warcraft.wiki.gg/wiki/API:StatusBar_SetRenderMode
+- https://warcraft.wiki.gg/wiki/UIOBJECT_StatusBar
 
 ### ignoreGCD 參數
-
 12.0.5 新增冷卻持續時間建構 API 的 `ignoreGCD` 參數。
 
 EAM 規則：
@@ -757,3 +767,20 @@ EAM 12.x 架構應用採用：
 - [UnitAuraDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua)
 - [UnitAuraConstantsDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua)
 - [UnitConstantsDocumentation.lua](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua)
+
+## 2026-08-23 DK Rune 與 GroundEffect 法術族群固定筆記
+
+### DK Rune
+
+- `RUNE_POWER_UPDATE` 的參數是 `runeIndex, added`；事件同時涵蓋 Rune 變為可用與不可用。Lua 必須明確保存 `added=false`，不可用 `safe and added or nil`。
+- `GetRuneCount(index)` 對固定 slot `1..6` 回傳 ready count（0／1）；`GetRuneCooldown(index)` 可在 count API 不可用或回傳不安全值時提供 `isRuneReady` fallback。EAM 只保存六個 safe boolean 與 0..6 彙總，不保存 start／duration。
+- Rune ready count 以既有 POINTS renderer 顯示六段；Runic Power 仍由自己的 powerType 節點處理。Rune event 熱路徑不得退回 `UnitPower`、`UnitPowerMax` 或 `UnitPowerPercent`。
+- 來源：[RUNE_POWER_UPDATE](https://warcraft.wiki.gg/wiki/RUNE_POWER_UPDATE)、[GetRuneCount](https://warcraft.wiki.gg/wiki/API_GetRuneCount)、[GetRuneCooldown](https://warcraft.wiki.gg/wiki/API_GetRuneCooldown)。
+
+### GroundEffect spell family
+
+- 設定清單保存 canonical spellID；非戰鬥 cold path 用 `C_Spell.GetBaseSpell`、`C_Spell.GetOverrideSpell` 與安全的 `C_Spell.GetSpellInfo(...).spellID` 建立 event ID → canonical ID 索引。
+- `UNIT_SPELLCAST_SUCCEEDED` 的 spellID 在受限施法情境可能為 Secret；熱路徑必須先通過安全正整數／table-key gate，才可索引自訂表。受限值只增加匿名拒絕計數，不保存 raw value。
+- exact configured ID 永遠優先；若兩個設定項讓同一 alias 指向不同 canonical，該 alias 標記 ambiguous 並拒絕觸發，不以名稱、圖示或猜測 ID 選邊。
+- 天賦／專精／法術拓樸事件在非戰鬥重編譯；戰鬥中只設 pending，離戰合併一次。施法熱路徑不查 Tooltip、不做 family API 呼叫。
+- 來源：[SpellIdentifier／Base與Override](https://warcraft.wiki.gg/wiki/API_types/SpellIdentifier)、[C_Spell.GetSpellInfo](https://warcraft.wiki.gg/wiki/API_C_Spell.GetSpellInfo)、[UNIT_SPELLCAST_SUCCEEDED](https://warcraft.wiki.gg/wiki/UNIT_SPELLCAST_SUCCEEDED)。

@@ -1,7 +1,7 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 # Retail 12.1 玩家職業資源獨立模組重構報告
 
-- 日期：2026-08-21
+- 日期：2026-08-23
 - 目標通道：Retail／PTR 12.1；XPTR 12.0.7 使用隔離的 numeric legacy adapter
 - 證據層級：程式與測試結論為 offline-mock／static contract；尚未宣稱任何 WoW 客戶端視覺簽收。
 
@@ -43,7 +43,7 @@
 
 `PlayerResourceProbe` 只在玩家手動啟動期間註冊事件，逐項記錄 tracked／available／foreground／background／capability／sinkAvailable／eventObserved；停止時解除註冊。`eventObserved` 僅表示事件由實機流程觸發，不代表視覺或數值正確。
 
-背景資源只有在 probe 明確確認相關事件缺失後，才啟用單一 probe-gated、0.5 秒 demand-driven sampler；它不是預設輪詢，也不在戰鬥中執行結構變更。若事件被觀測，該 resource 立即退出 sampler。Sampler fixture／contract 已通過離線驗證；仍不可把 sampler 啟用或 setter accepted 冒充實機通過。
+背景資源只有在玩家／Probe 明確確認相關事件缺失後，才可請求單一 probe-gated、demand-driven sampler；目前離線 fixture 使用 0.5 秒間隔僅是測試時鐘，不是 Retail 12.1 的實機頻率結論。它不是預設輪詢，也不在戰鬥中執行結構變更。若事件被觀測，該 resource 立即退出 sampler。Sampler fixture／contract 已通過離線驗證；仍不可把 sampler 啟用或 setter accepted 冒充實機通過。
 
 ## G. Renderer ownership
 
@@ -61,11 +61,11 @@
 
 本輪最新 artifact：
 
-- Lua syntax（62 AddOn + 2 offline tests）：`64/64`。
-- Flow all：`75/75`，`EAM_FlowValidation_all_20260821_094159.json`。
-- Flow boundary：`54/54`，`EAM_FlowValidation_boundary_20260821_094201.json`。
-- Validation Contracts：`436/436`，已以最新 Flow artifact 重跑通過。
-- 已涵蓋 ResourceProbe schema、12.0.7 adapter、Druid topology／form、module event unregister、anchor／position、冷路徑策略綁定、source／sink 邊界、config immediate／combat deferred 與 `unitpower.background_sampler_gate`。
+- Lua syntax（62 AddOn + 2 offline tests）：62/62。
+- Flow all：77/77，.AI/TestResults/EAM_FlowValidation_all_20260823_063557.json。
+- Flow boundary：56/56，.AI/TestResults/EAM_FlowValidation_boundary_20260823_063609.json。
+- Validation Contracts：459/459，已以最新 Flow artifact 重跑通過；並同步通過部署契約與連續性追蹤。
+- 已涵蓋 ResourceProbe schema、12.0.7 adapter、Druid Bear／Cat／Caster／Moonkin／回 Bear topology、Energy→ComboPoints renderer ownership、module event unregister、anchor／position、font／orientation、冷路徑策略綁定、source／sink 邊界、config immediate／combat deferred 與 unitpower.background_sampler_gate。
 - 背景 sampler fixture／contract 已通過；上述離線結果不能代替 WoW 實機 visual、taint 或 blocked-action 簽收。
 
 ## K. 實機簽收門檻
@@ -80,3 +80,44 @@
 6. Lua error、taint、blocked action、Forbidden access 與報告 privacy。
 
 真人報告必須標示 PTR、XPTR 或 Retail、patch、build、interface、戰鬥狀態、是否手動 `/reload` 與 visualObservation。API accepted、offline pass、ResourceProbe eventObserved 或 sampler output 都不能直接升格為 visual pass。
+
+## L. Acceptance matrix
+
+| 項目 | 離線／靜態證據 | WoW 12.1 實機狀態 |
+| --- | --- | --- |
+| Catalog、17 資源、40 組 class/spec topology | PASS | REQUIRES_WOW_12_1_RUNTIME |
+| NUMERIC／SECRET_DISPLAY／UNAVAILABLE capability 分流 | PASS | REQUIRES_WOW_12_1_RUNTIME |
+| UNIT_DISPLAYPOWER 只刷新 foreground、背景節點保留 | PASS | REQUIRES_WOW_12_1_RUNTIME |
+| Druid 五資源與 Bear／Cat／Caster／Moonkin／回 Bear flow | PASS | REQUIRES_WOW_12_1_RUNTIME |
+| Energy 更新不隱藏 ComboPoints、每資源 frame ownership | PASS | REQUIRES_WOW_12_1_RUNTIME |
+| 非戰鬥設定即時套用、戰鬥中離戰一次重建 | PASS | REQUIRES_WOW_12_1_RUNTIME |
+| Probe metadata、手動背景 sampler gate、模組停用清理 | PASS | REQUIRES_WOW_12_1_RUNTIME |
+| Retail／PTR 12.1 與 XPTR 12.0.7 全職業／專精視覺、事件、taint | 未由離線測試證明 | REQUIRES_WOW_12_1_RUNTIME／REQUIRES_XPTR_12_0_7_RUNTIME |
+
+離線 PASS 僅表示程式、strict mock、Flow 與契約一致；任何 StatusBar setter accepted、eventObserved 或 sampler tick 都不能升格為玩家視覺通過。
+## M. Alpha 7 final offline correction
+
+本節取代前段舊 artifact 數字，作為目前玩家資源離線證據索引。
+
+- PlayerResourceProbe 新增一次性 missing-event check：Probe start 後由 Scheduler 延遲檢查背景資源，執行一次後產生安全 metadata；stop、generation invalidation 或 module disable 都會取消。
+- UNIT_DISPLAYPOWER、UPDATE_SHAPESHIFT_FORM 與 PLAYER_REGEN_ENABLED 僅刷新 foreground metadata，不批量重讀或刪除背景資源；SavedVariables Catalog map 保持唯讀，避免 frozen table 寫入。
+- Options 在 SavedVariables API 未完成時返回 savedVariablesMethodUnavailable，不再把初始化錯誤級聯成 nil method。
+- 最終離線 gate：Lua 62/62、Flow all 77/77、Flow boundary 56/56、Validation Contracts 461/461。最新 artifact：.AI/TestResults/EAM_FlowValidation_all_20260823_081553.json、.AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json。
+- 以上仍是 offline-mock／static contract；法力、怒氣、能量、連擊點、瘋狂值、符文、Secret sink、全職業／專精與 taint 必須在玩家部署後分 Retail／PTR／XPTR 簽收。
+
+## N. 464/464 final offline gate 與公開 README
+
+- 最新 Lua syntax：62/62。
+- 最新 Flow：all 77/77、boundary 56/56；artifact 分別為 EAM_FlowValidation_all_20260823_083630.json 與 EAM_FlowValidation_boundary_20260823_083631.json。
+- 最新 Validation Contracts：464/464；新增 gate 包含 Probe restart／一次性 missing-event check、Frozen Catalog read-only、Options fail-closed、README／changelog package synchronization 與 privacy contract。
+- 根 README 與插件副本已同步，包含 Alpha 7 狀態、實際 /eam command line 用法、執行時機、部署選單與 WTF backup／restore 說明；兩份 SHA-256 為 635C545E7B535B85730AA28D24176E291299A86F47D5036682C1FE5877935AB3。
+- 以上仍是 offline/static evidence；Secret sink、全職業／專精視覺、taint、blocked action、戰鬥／脫戰與三通道 runtime 必須由玩家部署後簽收。
+
+## 2026-08-23 DK Rune 六槽事件路徑
+
+- 問題：RUNES powerType 不能視為 Runic Power 類型的連續聚合條；泛用 UnitPower 路徑無法反映每顆 Rune 可用／冷卻狀態。
+- 實作：`GetRuneCount(1..6)` 初始化每槽 ready boolean；若 API 缺失或安全值不可得，再嘗試 `GetRuneCooldown(index)` 的 `isRuneReady`。任何不安全結果都 fail-closed，不讀 start／duration。
+- 熱路徑：`RUNE_POWER_UPDATE(runeIndex, added)` 只更新一槽與 0..6 ready count，明確保存 `added=false`。事件本身不呼叫 UnitPower／UnitPowerMax／UnitPowerPercent，也不配置新的 frame。
+- 渲染：沿用預先建立的 RUNES POINTS StatusBar 與五條 separator，safe count 轉為 count/6 百分比。這是六段 ready-count 彙總，不是六顆各自的 recharge sweep；個別 recharge 動畫若要加入，須另行驗證每槽 DurationObject／widget 能力與 Secret 邊界。
+- 診斷：`getStatus()` 只輸出 `runeSlotAPIAvailable`、`runeStateInitialized`、`runeReadyCount`、`runeEventCount`、`lastRuneResult` 等 safe metadata。
+- 離線驗證：`unitpower.runes_event_driven_segments` 驗證 6/6→5/6→6/6、Rune event 期間泛用 UnitPower 讀取 0、Secret operation 0；仍需玩家部署後確認 Retail 12.1 血／冰／邪專精視覺。

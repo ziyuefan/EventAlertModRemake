@@ -31,8 +31,10 @@ pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1
 - `XPTR（即時偵測的 ProductVersion）`
 - `All`
 - `Status`
-- `B`：建立插件 ZIP
-- `S`：建立整個專案原始碼 ZIP
+- W：備份各版本 WTF 中的 EventAlertMod 相關存檔，保留原始相對路徑
+- U：依通道選擇 WTF 備份並還原，還原前自動建立 rollback
+- B：建立插件 ZIP
+- S：建立整個專案原始碼 ZIP
 
 選取 PTR 或 XPTR 後，工具會詢問是否同時包含 Retail。只有明確輸入 `Y` 才會加入 Retail；非互動命令不會自動加入：
 
@@ -48,6 +50,18 @@ pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action PTR -WowRoot 'D:
 Interface\AddOns\EventAlertMod
 ```
 
+## WTF EventAlertMod 備份／還原
+
+互動選單的 W 會先列出三個版本通道與 ProductVersion，再讓使用者選擇 Retail、PTR、XPTR 或全部通道。只有檔名或相對路徑含 EventAlertMod 的 WTF 檔案會被納入；備份包位於 .AI/backup/wtf/<channel>__<timestamp>，內部保留原始 WTF/... 相對路徑，並以 manifest.json 記錄通道、版本、檔案數與 SHA-256。這些資料只作本機復原，不會進插件包、原始碼包或 Git。
+
+互動選單的 U 會逐通道列出可用備份，Enter 使用最新一份；還原前先自動建立目前狀態的 rollback 備份，還原後逐檔驗證 SHA-256。備份 manifest 的通道與目標版本不符、相對路徑越界、Reparse Point 或雜湊不符時會拒絕還原。
+
+非互動命令：
+
+    pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action Backup -Channel PTR -WowRoot D:\World of Warcraft -DryRun
+    pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action Restore -Channel PTR -WowRoot D:\World of Warcraft -WtfBackupPath .AI\backup\wtf\ptr__<timestamp> -DryRun
+
+Restore 必須指定單一 Channel 與 WtfBackupPath；若需互動挑選備份，使用主選單 U。WTF 內可能含帳號／角色資料，備份目錄已列入 .AI/backup 忽略規則，不可上傳或分享。
 ## Fail-closed 安全契約
 
 - 來源只允許 `D:\Project_EventAlertMod\EventAlertMod`，且必須是實體資料夾。
@@ -56,8 +70,8 @@ Interface\AddOns\EventAlertMod
 - 來源必須包含 `EventAlertMod.toc`、`Managers\AlertManager.lua`、`Managers\AuraRuleCompiler.lua`、`README.md`、`changelog.txt`。
 - 專案根目錄與插件內的 `README.md`、`changelog.txt` 必須存在且 SHA-256 完全一致。
 - 實體目標部署前會以 `Move-Item` 搬入 `.AI\backup\deploy\` 保存，再以 staging 交換。部署後清單驗證失敗時，新目標會保留於 `EventAlertMod_failed`，舊目標以 `Move-Item` 還原。
-- 執行中的 `Wow.exe` 或 `WowT.exe` 會阻擋實際部署；工具不會替使用者關閉遊戲。
-- `-DryRun` 只做來源與全部候選前檢，不建立、搬移或覆蓋遊戲檔案。
+- 部署不檢查 Wow.exe 或 WowT.exe 是否執行；由使用者自行承擔覆蓋執行中遊戲檔案的風險，工具不會替使用者關閉遊戲。
+- DryRun 只做來源、目標或 WTF 備份／還原前檢，不建立、搬移或覆蓋檔案。
 
 目前三個本機目標若仍是指向停用舊路徑的 SymbolicLink，部署會被正確阻擋；不應由此工具刪除或重建連結。
 
@@ -87,8 +101,12 @@ pwsh -NoProfile -File .\Deploy\Build-SourcePackage.ps1 -DryRun
 
 ## 不在本工具範圍
 
-- 不讀取 WTF。
+- 一般部署不讀取 WTF；只有明確執行 W／U 或 Backup／Restore 時才處理 EventAlertMod 相關存檔。
 - 不處理 Classic/MoP。
 - 不自動建立、刪除或修復 SymbolicLink。
-- 不啟動、關閉或操作 WoW。
+- 不啟動、關閉或操作 WoW，也不以程序狀態阻擋部署。
 - 不執行 Git commit、push、GitHub Release 或 CurseForge 上傳。
+
+## Alpha 7.4 source ZIP 暫存排除
+
+`Build-SourcePackage.ps1` 保留 `.AI/Docs`、`.AI/Data`、`.AI/Tools`、`.AI/skills` 與 `.AI/docs_html`，但排除 `.AI/backup`、`.AI/TestResults`、`.AI/.trash_*` 及 `.AI/patch-temp`。`patch-temp` 是本機補丁／下載暫存，不是專案來源，也不得提交 Git 或附加到 GitHub Release。

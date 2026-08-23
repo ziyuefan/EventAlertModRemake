@@ -717,7 +717,7 @@
 <li>複製開發報告，確認只含 key、powerType、token、capability、顯示設定與計數，不含 current、max、percent 或可反推 Secret 的原值。</li>
 <li>UnitPower capability probe 另行測試；<code>statusBarSink=accepted</code> 只代表 setter 未拒絕，不得替代正式玩家資源面板的 visual pass。</li>
 </ol>
-<h2 id="smoke-test-smoke-test">本輪附加 Smoke Test## 本輪附加 Smoke Test</h2>
+<h2 id="smoke-test">本輪附加 Smoke Test</h2>
 <p>這些項目不增加 37 案數，但本輪發布前至少各看一次：</p>
 <ol>
 <li>主視窗右上「關於」按鈕可開啟小視窗。</li>
@@ -799,11 +799,11 @@
 <h2 id="2026-08-14-alpha-6">2026-08-14 Alpha 6：小地圖圈內對齊與發布後冒煙測試</h2>
 <p>這些步驟不增加 37 案數，Release 安裝後由玩家在 Retail／PTR 12.1 與 XPTR 12.0.7 執行：</p>
 <ol>
-<li>確認安裝的是 GitHub <code>alpha-6</code> 資產，完成 <code>/reload</code> 後再開 EAM；不得用仍載入記憶體的 Alpha 5 畫面簽收。</li>
+<li>確認安裝的是 GitHub alpha-7 資產，完成 <code>/reload</code> 後再開 EAM；不得用仍載入記憶體的 Alpha 5 畫面簽收。</li>
 <li>對照同一小地圖上的標準圓形按鈕，確認 EAM 齒輪位於金色圈中心且未超出；金圈不得偏到左上、齒輪不得落在右下圈外。</li>
 <li>以 64%、100% 與玩家常用 UI Scale 截圖；同時確認左鍵、右鍵、拖曳、滑入高亮與 <code>/reload</code> 位置保存。</li>
 <li>打開語系與十一主題下拉，確認未 hover 文字與按鈕四態／2px 邊框仍正常，避免小地圖插入修正造成 UI 回歸。</li>
-<li>回報 client channel、patch、build、Interface、UI Scale、Lua error／taint／blocked action與畫面結果；離線 394/394 不能取代此目視簽收。</li>
+<li>回報 client channel、patch、build、Interface、UI Scale、Lua error／taint／blocked action與畫面結果；離線 Validation Contracts 459/459 不能取代此目視簽收。</li>
 </ol>
 <h2 id="2026-08-21">2026-08-21 玩家資源設定回報補充</h2>
 <ul>
@@ -817,11 +817,11 @@
 <ol>
 <li>玩家更新插件後先手動 <code>/reload</code>，確認測試面板顯示目前 PTR、XPTR 或 Retail 的 patch、build、Interface；這次 <code>/reload</code> 只代表載入新程式，不是設定變更的必要條件。</li>
 <li>啟動 PlayerResourceProbe，先測正常事件：法師 Mana、戰士 Rage、野性德魯伊 Caster／Cat／Bear／Moonkin、暗影牧師 Insanity、死亡騎士 Runes／RunicPower，再擴展到面板列出的所有職業／專精資源。每項記錄 <code>tracked</code>、<code>available</code>、<code>foreground</code>、<code>background</code>、<code>capability</code>、<code>sinkAvailable</code>、<code>eventObserved</code>，不讀或複製 raw power。</li>
-<li>正常事件被觀測後，確認該資源沒有啟動 background sampler。只有在測試流程明確標記背景事件缺失時，才啟用單一 demand-driven sampler；記錄 sampler 啟動／停止、0.5 秒節流、戰鬥中延後與事件恢復後退出。</li>
+<li>正常事件被觀測後，確認該資源沒有啟動 background sampler。若玩家確認背景事件缺失，先輸入 /eam unitpower background <RESOURCE_KEY>，再啟用單一 demand-driven sampler；記錄 sampler 啟動／停止、離線 fixture 的 0.5 秒測試間隔、戰鬥中延後與事件恢復後退出。</li>
 <li>測試德魯伊四種形態與專精切換，確認前景／背景資源切換、Energy／ComboPoints 不被強制放到第一格，且既有資源不被整批拆除。</li>
 <li>脫戰修改 enabled、font、size、orientation、anchor、position、threshold；不得 <code>/reload</code> 才生效。戰鬥中修改只於 <code>PLAYER_REGEN_ENABLED</code> 合併一次；停用模組後確認 frame 與所有 PlayerResourceService／Probe 事件均解除註冊。</li>
 <li>XPTR 12.0.7 另行確認 numeric legacy adapter 與 StatusBar fallback；不得把 12.1 Secret sink 能力或 offline adapter result 冒充 XPTR 視覺通過。</li>
-<li>回報必附 client channel、patch、build、Interface、combat、是否手動 <code>/reload</code>、ResourceProbe JSON、sampler 狀態、visualObservation、Lua error／taint／blocked action。<code>unitpower.background_sampler_gate</code> 與靜態 contract 已離線通過；真人報告仍需人工判讀，不能由 fixture 代填。</li>
+<li>回報必附 client channel、patch、build、Interface、combat、是否手動 /reload、ResourceProbe JSON、sampler 狀態、visualObservation、Lua error／taint／blocked action。/eam unitpower background 只是玩家明確標記缺失事件的測試入口；unitpower.background_sampler_gate 與靜態 contract 已離線通過，真人報告仍需人工判讀，不能由 fixture 代填。</li>
 </ol>
 <h2 id="2026-08-23-exact-cast">2026-08-23 技能冷卻 exact-cast／非批量顯示回歸測試</h2>
 <p>本節是新增的實機回歸步驟，不把離線 cooldown.combat_heal_regen_no_bulk_render 當成客戶端通過。Retail／PTR 12.1 與 XPTR 12.0.7 各做一次；測試前先確認目前載入的是本輪插件，開發版只需手動 /reload 一次。</p>
@@ -838,6 +838,63 @@
 <li>對 A 逐一選擇 nil（全域）、true（單技能開）、false（單技能關），確認畫面與齒輪摘要正確；特別確認 false 在 /reload 後仍保留，不被 Lua and/or 預設語意吃掉。</li>
 <li>停用冷卻模組，確認 A 的啟動狀態與圖示清除；再啟用模組但不施放 A，預期不會自動恢復 A。重新施放 A 後才可再次 render。</li>
 <li>回報需附 A／B／H 是否在清單、實際施放者、戰鬥轉換、變身事件、三項設定值、是否 /reload、Lua error／taint／blocked action、畫面截圖與 visualObservation。任何離線 pass 只能標為 offline evidence。</li>
+</ol>
+<h2 id="alpha-7">Alpha 7 部署後玩家資源快速簽收</h2>
+<p>本節只在玩家完成部署後使用；canonical source 變更不會直接改變遊戲內插件。</p>
+<ol>
+<li>在專案根執行 Deploy/Deploy-EventAlertMod.ps1，先用 Status 或 DryRun 確認選到正確通道與 ProductVersion；README.md 與 EventAlertMod/README.md 雜湊必須一致。</li>
+<li>進入實際 Retail、PTR 或 XPTR，輸入 /reload，再執行 /eam doctor，記錄 patch、build、interface、client channel、combat 與 initialized。</li>
+<li>開啟「圖示位置與能量設定」，逐項測目前職業／專精可用資源。NUMERIC 資源測數字、字型大小、相對位置與設定後不 /reload 的即時變更；SECRET_DISPLAY 只觀察原生 bar／圖形跟隨，不要求或回報 raw 數值。</li>
+<li>逐一測專精切換、德魯伊 Caster／Cat／Bear／Moonkin／回 Bear、進出戰鬥與模組停用／再啟用；確認背景資源不被清除，沒有 Lua error、taint 或 blocked action。</li>
+<li>若判斷背景事件缺失，才輸入 /eam unitpower background RESOURCE_KEY；等待探針報告後回報 observed event names／power tokens、sampler state 與 visualObservation，不要貼 current、max、percent。</li>
+<li>截圖或報告需標示實際通道（Retail／PTR／XPTR）、patch、build、interface、是否剛部署與是否手動 /reload。離線 77/77、setter accepted 或 eventObserved 不能直接填 visual pass。</li>
+</ol>
+<h2 id="alpha-73-statusbar">Alpha 7.3 充能次數、四向與環形 StatusBar 部署後快速簽收</h2>
+<p>本節只在玩家完成部署後執行；canonical source 的離線通過不會自動反映到遊戲客戶端。</p>
+<ol>
+<li>部署到實際測試通道後進入遊戲並手動 <code>/reload</code>；記錄 Retail／PTR／XPTR、patch、build、Interface。這次 <code>/reload</code> 是載入新程式，不是設定變更需求。</li>
+<li>在技能冷卻清單加入一個確定有至少 2 層充能的技能；若清單保存 base ID，但目前天賦／形態實際施放 override ID，也要保留該情境。</li>
+<li><code>/reload</code> 後先不要施放：圖示不得只因在清單、<code>SPELL_UPDATE_COOLDOWN</code>、<code>SPELL_UPDATE_CHARGES</code>、脫戰或變形而自行出現。</li>
+<li>由玩家本人首次成功施放一次：只有該技能進入監控；寵物、其他單位、施法開始但未成功、非清單法術均不得開門。</li>
+<li>依序觀察最大次數 → 少一層 → 0 層 → 回復一層 → 回滿。StatusBar 填滿量與分隔段只能對應「目前可用次數／最大次數」，不得隨單層恢復秒數連續當作段數前進。</li>
+<li>在「圖示位置與能量設定」依序切換：</li>
+<li>BOTTOM、TOP：預設長度為圖示寬度 150%，位於框外；確認不壓住技能名稱。</li>
+<li>LEFT、RIGHT：直條以圖示高度為基準，確認方向與 fill 正確。</li>
+<li>RING：環形包住圖示，確認直徑、厚度、分隔線與圖示／Glow 不重疊；12.1 應使用 radial，XPTR 12.0.7 若能力不足應安全回退 BOTTOM。</li>
+<li>將長度／環直徑在 100% 與 250% 間調整，厚度在 4px 與 16px 間調整；非戰鬥應即時反映，不需要再次 <code>/reload</code>。</li>
+<li>currentCharges 為 Secret 時，不得出現 Lua error 或猜測文字；StatusBar 仍應由 Blizzard C sink 跟隨可用次數。不要回報或嘗試讀取 Secret 原值，只做目視 <code>visualObservation</code>。</li>
+<li>等待回滿並切換 <code>cooldownRemoveAura</code>：對充能技能，「冷卻完成」必須是可用次數達到最大；少一層但技能仍可施放時不得被誤判為完成。另測 <code>showSCDOutsideCombat</code>、<code>glowSCDWhenUsable</code> 的全域與單技能 nil／true／false。</li>
+<li>開啟技能齒輪細節：不得再看到「僅監控自己施放」與第一個冷卻行為按鈕重疊；三項冷卻行為仍可各自切換並在保存後立即反映。</li>
+<li>戰鬥內外、切換天賦／形態後再重複第 3 至 9 步；回報技能 ID、是否 override、每一充能階段、版面／尺寸、通道／patch／build／Interface、是否 <code>/reload</code>、Lua error、taint、blocked action 與截圖。</li>
+</ol>
+<h2 id="alpha-74dk-groundeffect-family">Alpha 7.4：DK 符文、GroundEffect family 與充能環部署後簽收</h2>
+<p>本節只有玩家部署後才能執行。canonical source 已修改但尚未進入任何 WoW AddOns；先執行部署工具、確認通道／ProductVersion／目標，再由玩家進遊戲 <code>/reload</code>。離線 82/82 不能代填 visual pass。</p>
+<h3 id="a">A. 環境與載入</h3>
+<ol>
+<li>以 <code>Deploy/Deploy-EventAlertMod.ps1</code> 選 Retail、PTR 或 XPTR；先 Status／DryRun，確認來源是本專案 <code>EventAlertMod/</code>，再輸入 <code>DEPLOY</code>。Codex 不自動操作遊戲。</li>
+<li>進遊戲後 <code>/reload</code>，執行 <code>/eam doctor</code>；記錄 channel、patch、build、Interface、combat、initialized 與是否剛部署。若仍載入舊版，不進行以下簽收。</li>
+<li>打開設定再關閉，確認玩家資源不會全數消失；非戰鬥設定變更不應再要求第二次 <code>/reload</code>。</li>
+</ol>
+<h3 id="b-dk-runesrunic-power">B. DK Runes／Runic Power</h3>
+<ol>
+<li>以死亡騎士測血、冰、邪至少各一次；畫面應同時有「符文」六段與「符能」獨立條，兩者不可互相取代。</li>
+<li>未消耗時應為 6/6。使用消耗一顆、兩顆 Rune 的技能，逐步確認 5/6、4/6；等待恢復後回到 5/6、6/6。分隔線固定六槽，填量只隨可用顆數改變。</li>
+<li>同時累積／消耗 Runic Power，確認只有符能條依其值變化；Rune 段數不應跟著符能百分比走。</li>
+<li>戰鬥內外、開關資源設定面板、切換專精、停用／再啟用玩家資源模組後重測；若 Rune 不動，回報 <code>/eam doctor</code> 中 <code>runeSlotAPIAvailable</code>、<code>runeStateInitialized</code>、<code>runeReadyCount</code>、<code>runeEventCount</code>、<code>lastRuneResult</code>，不要貼任何 Secret raw power。</li>
+</ol>
+<h3 id="c-groundeffect">C. GroundEffect</h3>
+<ol>
+<li>在地面效果清單加入並啟用：冰霜之球、死亡凋零，以及反魔法立場。若目前天賦把死亡凋零替換為褻瀆，清單保留其中一個 canonical ID 即可；另記錄實際 Tooltip／<code>/eam showcast</code> 可安全顯示的施放 ID。</li>
+<li>每項都從「尚未施放、沒有圖示」開始，由玩家成功施放一次；預期只有該項出現。其他單位、施法開始但失敗、未知 ID 不得開門。</li>
+<li>死亡凋零／褻瀆：切換相關天賦後，在非戰鬥重測 Base 與 Override 兩種施放；預期都能命中該設定項，不必重複新增兩個監控。</li>
+<li>反魔法立場：AUTO 解析若無法取得明確秒數，改為 MANUAL 並設定已知秒數後重測。若立場因吸收上限提前結束而 EAM 圖示仍倒數，標記為 <code>earlyTerminationUnavailable</code> 限制，不要回報成 Secret API 成功。</li>
+<li>冰霜之球作為已知正常對照組；三者逐一測戰鬥內外、專精／天賦切換與 <code>/reload</code>。任何 Lua error、taint、blocked action、圖示未出現或錯誤 canonical 都附截圖與設定 ID／安全施放 ID。</li>
+</ol>
+<h3 id="d-charge-ring">D. Charge RING 回歸</h3>
+<ol>
+<li>以至少兩層充能的技能測 RING；應看到包圍圖示的 ring grid，不是實心綠色長條或單一扇形覆蓋。材質／Radial 能力失敗時應回退 BOTTOM 線性條。</li>
+<li>首次成功施放後即使 API 暫時回傳舊的全滿快照，也不得立即移除；先觀測少一層，再回滿才符合 <code>cooldownRemoveAura</code> 完成條件。</li>
+<li>回報 current/max 的目視階段、RING／fallback、圖示與 Glow 重疊、通道／build／Interface、Lua error／taint／blocked action。若 current 為 Secret，只回報 visualObservation，不嘗試讀 raw 值。</li>
 </ol>
     </div>
     <div id="doc-content-en" class="lang-content">

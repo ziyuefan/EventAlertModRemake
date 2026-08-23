@@ -29,6 +29,8 @@ local function define(key, powerType, token, legacyConfigKey, icon, nameKey, fal
         powerType = powerType,
         token = token,
         legacyConfigKey = legacyConfigKey,
+        legacyKey = legacyConfigKey,
+        defaultOrder = #definitions + 1,
         icon = icon,
         nameKey = nameKey,
         fallbackName = fallbackName,
@@ -58,7 +60,7 @@ local CHI = define("CHI", 12, "CHI", "powerChi", 627485, "EAM_POWER_CHI", "真�
 local INSANITY = define("INSANITY", 13, "INSANITY", "powerInsanity", 237569, "EAM_RESOURCE_INSANITY", "瘋狂值", "BAR", nil, { 0.55, 0.15, 0.85, 1.00 })
 local ARCANE = define("ARCANE_CHARGES", 16, "ARCANE_CHARGES", "powerArcane", 135732, "EAM_POWER_ARCANE_CHARGES", "秘法充能", "POINTS", 4, { 0.35, 0.55, 1.00, 1.00 })
 local FURY = define("FURY", 17, "FURY", "powerFury", 1275380, "EAM_RESOURCE_FURY", "魔怒", "BAR", nil, { 0.75, 0.10, 0.95, 1.00 })
-local PAIN = define("PAIN", 18, "PAIN", "powerFury", 1247264, "EAM_RESOURCE_PAIN", "痛苦", "BAR", nil, { 0.85, 0.20, 0.25, 1.00 })
+local PAIN = define("PAIN", 18, "PAIN", "powerPain", 1247264, "EAM_RESOURCE_PAIN", "痛苦", "BAR", nil, { 0.85, 0.20, 0.25, 1.00 })
 local ESSENCE = define("ESSENCE", 19, "ESSENCE", "powerVigor", 4630437, "EAM_RESOURCE_ESSENCE", "精華", "POINTS", 6, { 0.25, 0.85, 1.00, 1.00 })
 
 local function keys(...)

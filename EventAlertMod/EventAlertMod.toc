@@ -27,6 +27,9 @@
 ## LoadOnDemand: 0
 ## SavedVariables: EAM_DB, EAM_FLOW_TEST_REPORT_JSON, EAM_VALIDATION_PROFILE, EAM_LIVE_TEST_SESSION, EAM_LIVE_TEST_REPORT_JSON, EAM_UNIT_POWER_CAPABILITY_REPORT_JSON, EAM_SVG_CAPABILITY_REPORT_JSON, EA_Config, EA_Position, EA_Items, EA_AltItems, EA_TarItems, EA_ScdItems, EA_GrpItems, EA_Pos
 
+Lib\LibStub.lua
+Lib\LibButtonGlow-1.0.lua
+
 Core\Env.lua
 Core\Util.lua
 Core\Constants.lua

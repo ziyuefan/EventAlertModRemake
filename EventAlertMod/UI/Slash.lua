@@ -71,7 +71,8 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_PROFILE or "/eam profile [export|import] - 開啟職業 profile JSON/Base64 分享")
     printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick|core|boundary|aura121|all|live] - 流程驗證或真人實機回報")
     printLine(EAM.L.EAM_SLASH_HELP_ADD or "/eam add <spellID> - 新增 player aura")
-    printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam add target [spellID] - 新增 target aura；無 ID 開啟手動視窗")
+printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam add target [spellID] - 新增 target aura；無 ID 開啟手動視窗")
+    printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER or "/eam unitpower background <RESOURCE_KEY> - 標記背景資源缺少事件，啟用共用 sampler")
     printLine(EAM.L.EAM_SLASH_HELP_ADD_CD or "/eam add cd <spellID> - 新增 spell cooldown")
     printLine(EAM.L.EAM_SLASH_HELP_ADD_ITEM or "/eam add item <itemID> - 新增 item cooldown")
     printLine(EAM.L.EAM_SLASH_HELP_REMOVE or "/eam remove <spellID|target|cd|item> <id> - 移除 alert")
@@ -308,6 +309,33 @@ local function printAutoAddGuidance()
         or "Retail 12.1 不自動寫入掃描結果；請以 Tooltip 的 Ctrl+Alt 視窗確認後加入。")
 end
 
+local function handleUnitPower(input)
+    local iterator = nextToken(input)
+    iterator()
+    local action = iterator()
+    local resourceKey = iterator()
+    if string.lower(action or "") ~= "background" or not resourceKey then
+        printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER
+            or "/eam unitpower background <RESOURCE_KEY>")
+        return
+    end
+    resourceKey = string.upper(resourceKey)
+    local probe = EAM.Debug and EAM.Debug.PlayerResourceProbe
+    if not probe or type(probe.markBackgroundEventMissing) ~= "function" then
+        printLine(EAM.L.EAM_SLASH_RESOURCE_SAMPLER_FAILED or "EAM：資源 Probe 尚未啟動。")
+        return
+    end
+    local ok, reason = probe.markBackgroundEventMissing(resourceKey)
+    if ok then
+        printLine(stringFormat(
+            EAM.L.EAM_SLASH_RESOURCE_SAMPLER_MARKED or "EAM：已為背景資源 %s 啟用共用 sampler。",
+            resourceKey
+        ))
+    else
+        printLine((EAM.L.EAM_SLASH_RESOURCE_SAMPLER_FAILED or "EAM：無法啟用資源 sampler：") .. tostring(reason))
+    end
+end
+
 local function handleSlash(input)
     input = input or ""
     local commandIterator = nextToken(input)
@@ -363,6 +391,8 @@ local function handleSlash(input)
         else
             panel.open()
         end
+elseif command == "unitpower" then
+        handleUnitPower(input)
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()
     elseif command == "add" or command == "remove" then

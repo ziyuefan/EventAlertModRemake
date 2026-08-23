@@ -259,6 +259,8 @@ $paths = @{
     AuraCompilerLua = Join-Path $root "Managers\AuraRuleCompiler.lua"
     Importer = Join-Path $governanceRoot "Tools\Import-EAMFlowReport.ps1"
     Toc = Join-Path $root "EventAlertMod.toc"
+    LibStubLua = Join-Path $root "Lib\LibStub.lua"
+    LibButtonGlowLua = Join-Path $root "Lib\LibButtonGlow-1.0.lua"
 }
 
 foreach ($jsonPath in @($paths.PlacementData, $paths.MatrixData, $paths.ContinuityData, $paths.LiveFixture, $paths.PlacementSchema, $paths.MatrixSchema, $paths.ContinuitySchema, $paths.LiveSchema, $paths.FlowSchema, $paths.SVGSchema, $paths.SVGFixture, $paths.SVGObservedFixture)) {
@@ -1245,9 +1247,14 @@ Assert-Contract (
 $mainSource = [System.IO.File]::ReadAllText((Join-Path $root "Core\Main.lua"))
 $flowRunnerSource = [System.IO.File]::ReadAllText((Join-Path $root "Debug\FlowTestRunner.lua"))
 $cooldownServiceSource = [System.IO.File]::ReadAllText((Join-Path $root "Services\CooldownService.lua"))
+$wow121MockSource = [System.IO.File]::ReadAllText((Join-Path $governanceRoot "Tests\Mocks\WoW121AuraMock.lua"))
+$libStubSource = [System.IO.File]::ReadAllText($paths.LibStubLua)
+$libButtonGlowSource = [System.IO.File]::ReadAllText($paths.LibButtonGlowLua)
 $profileCodecSource = [System.IO.File]::ReadAllText((Join-Path $root "Core\ProfileCodec.lua"))
 Assert-Contract (
     $cooldownServiceSource.Contains('activatedAlerts = {}') -and
+    $cooldownServiceSource.Contains('activationSpellIDs = {}') -and
+    $cooldownServiceSource.Contains('chargeSpentObserved = {}') -and
     $cooldownServiceSource.Contains('router.register("UNIT_SPELLCAST_SUCCEEDED", CooldownService.onSpellcastSucceeded)') -and
     $cooldownServiceSource.Contains('eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player"') -and
     $cooldownServiceSource.Contains('function CooldownService.activateSpell') -and
@@ -1262,6 +1269,109 @@ Assert-Contract (
     $rendererLua.Contains('cooldownService.onVisualTimerExpired(token.alertID)') -and
     $rendererLua.Contains('alertState.usableGlow')
 ) "Cooldown visibility, completion removal, and usable glow route through service state"
+Assert-Contract (
+    $cooldownServiceSource.Contains('state.isChargeBased = isChargeBased') -and
+    $cooldownServiceSource.Contains('state.displayMaxValue = isChargeBased and maxCharges or nil') -and
+    $cooldownServiceSource.Contains('state.chargeFullSafe = chargeFullSafe') -and
+    $cooldownServiceSource.Contains('state.chargeSpentObserved = chargeSpentObserved') -and
+    $cooldownServiceSource.Contains('state.chargeCompletionDeferred = chargeCompletionDeferred') -and
+    $cooldownServiceSource.Contains('C_Spell.GetSpellCharges') -and
+    $rendererLua.Contains('formatChargeText(alertState)') -and
+    $iconPoolLua.Contains('function IconPool.setGlow') -and
+    $iconPoolLua.Contains('SetDrawEdge') -and
+    $iconPoolLua.Contains('CreateAnimationGroup') -and
+    $flowRunnerSource.Contains('id = "cooldown.charges_contract"')
+) "Charge state, cooldown edge suppression, and animated glow are covered"
+Assert-Contract (
+    $cooldownServiceSource.Contains('local function readChargeField(source, key, warnings, warningCode)') -and
+    $cooldownServiceSource.Contains('not Util.canAccessTable(source)') -and
+    $cooldownServiceSource.Contains('return Util.readSafeScalar(source[key]') -and
+    $cooldownServiceSource.Contains('local active, activeSafe = readChargeField(') -and
+    $cooldownServiceSource.Contains('state.chargeActiveSafe = chargeActiveSafe')
+) "SpellChargeInfo uses field-level Secret validation and preserves safe isActive/maxCharges"
+Assert-Contract (
+    $cooldownServiceSource.Contains('cSpell.GetBaseSpell') -and
+    $cooldownServiceSource.Contains('cSpell.GetOverrideSpell') -and
+    $cooldownServiceSource.Contains('alertMatchesSpellFamily(index, spellID, baseSpellID, overrideSpellID)') -and
+    $cooldownServiceSource.Contains('CooldownService.activationSpellIDs[alert.id] = spellID') -and
+    $cooldownServiceSource.Contains('getSpellChargesInfo(cSpell, spellID, preferredSpellID)') -and
+    $flowRunnerSource.Contains('service.onSpellcastSucceeded(') -and
+    $flowRunnerSource.Contains('"charge-cast"') -and
+    $flowRunnerSource.Contains('60211')
+) "Charge activation remains player-cast gated while matching base and override spell IDs"
+Assert-Contract (
+    $cooldownServiceSource.Contains('function CooldownService.applyChargeStatusBar(spellID, statusBar, preferredSpellID)') -and
+    $cooldownServiceSource.Contains('pcall(setMinMaxValues, statusBar, 0, maximumCharges)') -and
+    $cooldownServiceSource.Contains('pcall(setValue, statusBar, currentCharges)') -and
+    $iconPoolLua.Contains('function IconPool.applyChargeProgress(icon, alertState)') -and
+    $iconPoolLua.Contains('createChargeVisual(overlay, "HORIZONTAL")') -and
+    $iconPoolLua.Contains('createChargeVisual(overlay, "VERTICAL")') -and
+    $iconPoolLua.Contains('createChargeVisual(overlay, "RING")') -and
+    $iconPoolLua.Contains('Enum.StatusBarRenderMode.Radial') -and
+    $iconPoolLua.Contains('effectiveMode == renderMode') -and
+    $iconPoolLua.Contains('accepted == true') -and
+    $iconPoolLua.Contains('Media\\Images\\eam-charge-ring.tga') -and
+    -not $iconPoolLua.Contains('Media\\SVG\\eam-charge-ring.svg') -and
+    $iconPoolLua.Contains('MAX_CHARGE_DIVIDERS = 19') -and
+    $rendererLua.Contains('IconPool.applyChargeProgress(icon, alertState)') -and
+    $wow121MockSource.Contains('function frame:SetStatusBarTexture(asset)') -and
+    $wow121MockSource.Contains('function frame:SetRenderMode(renderMode)') -and
+    $wow121MockSource.Contains('function frame:GetRenderMode()') -and
+    $flowRunnerSource.Contains('id = "ui.cooldown_charge_statusbar"') -and
+    $flowRunnerSource.Contains('mock.trace.statusBarTimerDurationCalls == timerCallsBefore')
+) "Charge count uses segmented linear/vertical/radial StatusBar SetValue sinks, never recharge duration"
+$chargeRingAsset = Join-Path $root "Media\Images\eam-charge-ring.tga"
+$chargeRingBytes = if (Test-Path -LiteralPath $chargeRingAsset -PathType Leaf) {
+    [System.IO.File]::ReadAllBytes($chargeRingAsset)
+} else {
+    [byte[]]@()
+}
+Assert-Contract (
+    $chargeRingBytes.Length -eq 65554 -and
+    $chargeRingBytes[2] -eq 2 -and
+    $chargeRingBytes[12] -eq 128 -and
+    $chargeRingBytes[13] -eq 0 -and
+    $chargeRingBytes[14] -eq 128 -and
+    $chargeRingBytes[15] -eq 0 -and
+    $chargeRingBytes[16] -eq 32 -and
+    (($chargeRingBytes[17] -band 8) -eq 8)
+) "Charge ring asset is a packaged 128x128 32-bit TGA with alpha"
+Assert-Contract (
+    $savedVariablesSource.Contains('chargeBarLayout = "BOTTOM"') -and
+    $savedVariablesSource.Contains('chargeBarLengthPercent = 150') -and
+    $savedVariablesSource.Contains('chargeBarThickness = 8') -and
+    $savedVariablesSource.Contains('function SavedVariables.updateChargeBarLayout(layout)') -and
+    $optionsSource.Contains('{ value = "RING", labelKey = "EAM_CHARGE_BAR_RING"') -and
+    $optionsSource.Contains('"chargeBarLengthPercent"') -and
+    $optionsSource.Contains('"chargeBarThickness"')
+) "Charge bar defaults and immediate top/bottom/left/right/ring controls are persisted"
+Assert-Contract (
+    [regex]::IsMatch(
+        $optionsSource,
+        '(?s)if isAura then\s*cf\.fromPlayerCb:Show\(\)\s*else\s*cf\.fromPlayerCb:Hide\(\)\s*end\s*\n\s*for index = 1, #COOLDOWN_BEHAVIOR_OPTIONS'
+    )
+) "Cooldown detail hides aura-only fromPlayer control before behavior buttons"
+Assert-Contract (
+    $flowRunnerSource.Contains('local secretCurrent = mock.createSecretScalar()') -and
+    $flowRunnerSource.Contains('mock.trace.secretScalarOperations == secretOperationsBefore') -and
+    $flowRunnerSource.Contains('service.onCooldownEvent("SPELL_UPDATE_CHARGES")')
+) "Flow covers mixed Secret SpellChargeInfo without Lua Secret operations"
+Assert-Contract (
+    $cooldownServiceSource.Contains('local chargeSpentObserved = CooldownService.chargeSpentObserved[alertID] == true') -and
+    $cooldownServiceSource.Contains('local chargeSpentNow = chargesSafe and currentCharges < maxCharges') -and
+    $cooldownServiceSource.Contains('if chargeSpentObserved and chargeFullSafe then') -and
+    $cooldownServiceSource.Contains('chargeCompletionDeferred = chargeFullSafe and chargeFull') -and
+    $flowRunnerSource.Contains('id = "cooldown.charge_completion_lifecycle"') -and
+    $flowRunnerSource.Contains('phase = "staleFull"') -and
+    $flowRunnerSource.Contains('phase = "spent"') -and
+    $flowRunnerSource.Contains('phase = "full"')
+) "Charge completion requires a spent observation before remove-on-complete"
+Assert-Contract (
+    $libStubSource.Contains('LIBSTUB_MAJOR') -and
+    $libButtonGlowSource.Contains('LibButtonGlow-1.0') -and
+    $iconPoolLua.Contains('local function tryLibraryGlow(icon, enabled)') -and
+    $iconPoolLua.Contains('return true, "fallbackShown"')
+) "Embedded libraries and EAM Glow fallback are present"
 Assert-Contract (
     $savedVariablesSource.Contains('local COOLDOWN_BEHAVIOR_FIELDS') -and
     $savedVariablesSource.Contains('function SavedVariables.updateCooldownBehavior') -and
@@ -1284,7 +1394,8 @@ Assert-Contract (
     $flowRunnerSource.Contains('id = "cooldown.combat_heal_regen_no_bulk_render"') -and
     $flowRunnerSource.Contains('service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player"') -and
     $flowRunnerSource.Contains('service.onCombatEvent("PLAYER_REGEN_ENABLED")')
-) "Flow covers exact-cast activation and no bulk render after heal/regen"Assert-Contract (
+) "Flow covers exact-cast activation and no bulk render after heal/regen"
+Assert-Contract (
     $commonLocale.Contains("EAM.L = EAM.L or {}") -and
     $commonLocale.Contains("function Locale.bindText") -and
     $commonLocale.Contains("function Locale.refreshBindings") -and
@@ -1369,6 +1480,12 @@ Assert-Contract (
     $flowRunnerSource.Contains("mock.trace.removeAuraSoundCalls == 0")
 ) "Flow covers AuraSound lifecycle, rollback, zero rebuild, and 12.0.7 zero calls"
 
+Assert-Contract (
+    $optionsSource.Contains('savedVariablesMethodUnavailable') -and
+    $optionsSource.Contains('type(saved.addSpellCooldownAlert) ~= "function"')
+) "Options fails closed when SavedVariables alert methods are unavailable"
+$coreEnvSource = [System.IO.File]::ReadAllText((Join-Path $root "Core\Env.lua"))
+$groundEffectServiceSource = [System.IO.File]::ReadAllText((Join-Path $root "Services\GroundEffectService.lua"))
 $resourceCatalogSource = [System.IO.File]::ReadAllText((Join-Path $root "Data\PlayerResourceCatalog.lua"))
 $playerResourceServiceSource = [System.IO.File]::ReadAllText((Join-Path $root "Services\PlayerResourceService.lua"))
 $powerRendererSource = [System.IO.File]::ReadAllText((Join-Path $root "UI\PowerRenderer.lua"))
@@ -1380,6 +1497,7 @@ $tooltipMenuSource = [System.IO.File]::ReadAllText((Join-Path $root "UI\TooltipM
 $unitPowerProbeSource = [System.IO.File]::ReadAllText((Join-Path $root "Debug\UnitPowerCapabilityProbe.lua"))
 $flowHarnessSource = [System.IO.File]::ReadAllText($paths.HarnessLua)
 $playerResourceTocSource = [System.IO.File]::ReadAllText($paths.Toc)
+$foregroundRefreshBody = ([regex]::Match($playerResourceServiceSource, '(?s)local function refreshForegroundState.*?-- 設定面板開關只觸發視覺復原')).Value
 Assert-Contract (
     $tooltipMonitorSource.Contains("auraCallbackCount") -and
     $tooltipMonitorSource.Contains("lastAuraCandidateAt") -and
@@ -1405,8 +1523,34 @@ Assert-Contract (
     $flowRunnerSource.Contains("slashTargetRouteValid") -and
     $flowRunnerSource.Contains("expiredHeartbeatStatus.lastTryOpenReason")
 ) "Flow covers Target Aura diagnostics, manual route, slash route, and expiry metadata"
+Assert-Contract (
+    $groundEffectServiceSource.Contains("configuredSpellIDByEventID = {}") -and
+    $groundEffectServiceSource.Contains("ambiguousEventSpellIDs = {}") -and
+    $groundEffectServiceSource.Contains("local function resolveSpellIdentifier") -and
+    $groundEffectServiceSource.Contains("cSpell.GetBaseSpell") -and
+    $groundEffectServiceSource.Contains("cSpell.GetOverrideSpell") -and
+    $groundEffectServiceSource.Contains("if GroundEffectService.alertsBySpellID[spellID] then") -and
+    $groundEffectServiceSource.Contains('return false, "activationSpellRestricted"') -and
+    $groundEffectServiceSource.Contains('router.register("SPELLS_CHANGED"') -and
+    $groundEffectServiceSource.Contains('router.register("PLAYER_TALENT_UPDATE"') -and
+    $groundEffectServiceSource.Contains("pendingCompile = true") -and
+    $flowRunnerSource.Contains('id = "ground.spell_family_activation"') -and
+    $flowRunnerSource.Contains("canonicalStateAfterExact == nil") -and
+    $flowRunnerSource.Contains("mock.trace.secretKeyTableOperations == 0")
+) "Ground effects compile safe Base/Override families with exact-ID precedence and Secret fail-closed activation"
 $resourceDefinitionCount = [regex]::Matches($resourceCatalogSource, '(?m)^local [A-Z_]+ = define\("').Count
 $resourceSpecScenarioCount = [regex]::Matches($resourceCatalogSource, '\[\d+\]\s*=\s*keys\(').Count
+Assert-Contract (
+    $resourceCatalogSource.Contains('legacyKey = legacyConfigKey') -and
+    $resourceCatalogSource.Contains('defaultOrder = #definitions + 1') -and
+    $resourceCatalogSource.Contains('local PAIN = define("PAIN", 18, "PAIN", "powerPain"') -and
+    $savedVariablesSource.Contains('local PLAYER_RESOURCE_DEFINITIONS = Catalog and Catalog.Definitions or {}') -and
+    $savedVariablesSource.Contains('local PLAYER_RESOURCE_BY_KEY = Catalog and Catalog.ByKey or {}') -and
+    $savedVariablesSource.Contains('local PLAYER_RESOURCE_BY_POWER_TYPE = Catalog and Catalog.ByPowerType or {}') -and
+    -not $savedVariablesSource.Contains('PLAYER_RESOURCE_BY_KEY[definition.key] = definition') -and
+    -not $savedVariablesSource.Contains('local PLAYER_RESOURCE_DEFINITIONS = {') -and
+    $savedVariablesSource.Contains('"powerPain"')
+) "Player resource catalog and SavedVariables use unique resource keys without duplicate definitions"
 
 Assert-Contract (
     $resourceDefinitionCount -eq 17 -and
@@ -1420,13 +1564,47 @@ Assert-Contract (
 ) "Player resource catalog covers 17 resources, 40 class/spec scenarios, and all five Druid resources"
 
 Assert-Contract (
+    $playerResourceServiceSource.Contains('local function applyResourceConfigChange') -and
+    $playerResourceServiceSource.Contains('local percent = node.secretSource') -and
+    $playerResourceServiceSource.Contains('local currentValue, maximumValue = node.numericSource') -and
+    $playerResourceServiceSource.Contains('local applied, result = applyResourceConfigChange') -and
+    $playerResourceServiceSource.Contains('local function refreshForegroundState') -and
+    $playerResourceServiceSource.Contains('return refreshForegroundState("foregroundUpdated")') -and
+    $foregroundRefreshBody.Contains('applyNodeVisualState(node)') -and
+    -not $foregroundRefreshBody.Contains('updateNode(node)') -and
+    -not $playerResourceServiceSource.Contains('local rendered = refreshNodeCapability(node, true)')
+) "Player resource service preserves Secret fail-closed reads and single-resource immediate config updates"
+Assert-Contract (
+    $playerResourceServiceSource.Contains('function PlayerResourceService.refreshVisualState') -and
+    $playerResourcePanelSource.Contains('service.refreshVisualState("resourcePanelOpened")') -and
+    $playerResourcePanelSource.Contains('service.refreshVisualState("resourcePanelClosed")') -and
+    $flowRunnerSource.Contains('local nonCombatRestored = restoredUpdated == true')
+) "Player resource panel lifecycle restores visual state without topology reset"
+Assert-Contract (
     $playerResourceServiceSource.Contains('registryByToken[powerToken]') -and
     $playerResourceServiceSource.Contains('eventName == "UNIT_POWER_FREQUENT"') -and
     $playerResourceServiceSource.Contains('eventName == "RUNE_POWER_UPDATE"') -and
     $playerResourceServiceSource.Contains('eventName == "UPDATE_SHAPESHIFT_FORM"') -and
-    $playerResourceServiceSource.Contains('return refreshRuntimeState("formRuntimeRefreshed")') -and
+    $playerResourceServiceSource.Contains('return refreshForegroundState("formForegroundUpdated")') -and
+    $playerResourceServiceSource.Contains('return refreshForegroundState("combatEndedForegroundRefreshed")') -and
     -not $playerResourceServiceSource.Contains('SetScript("OnUpdate"')
 ) "Player resource dispatch is O(1), event-driven, rune-aware, and form-refreshable"
+Assert-Contract (
+    $coreEnvSource.Contains("GetRuneCount = GetRuneCount") -and
+    $coreEnvSource.Contains("GetRuneCooldown = GetRuneCooldown") -and
+    $playerResourceServiceSource.Contains("local function readRuneSlot") -and
+    $playerResourceServiceSource.Contains("local function syncRuneState") -and
+    $playerResourceServiceSource.Contains("local function applyRuneEvent") -and
+    $playerResourceServiceSource.Contains('node.capabilityReason = "runeSlotAPI"') -and
+    $playerResourceServiceSource.Contains("if Util.isSafeBoolean(added) then") -and
+    -not $playerResourceServiceSource.Contains("local ready = Util.isSafeBoolean(added) and added or nil") -and
+    $playerResourceServiceSource.Contains("runeReadyCount = PlayerResourceService.runeReadyCount") -and
+    $wow121MockSource.Contains("GetRuneCount = function(runeIndex)") -and
+    $wow121MockSource.Contains("GetRuneCooldown = function(runeIndex)") -and
+    $flowRunnerSource.Contains('id = "unitpower.runes_event_driven_segments"') -and
+    $flowRunnerSource.Contains("mock.trace.unitPowerReads == 0") -and
+    $flowRunnerSource.Contains("mock.trace.runeCountReads == 0")
+) "DK Runes use six safe slot APIs and false-preserving RUNE_POWER_UPDATE payloads without generic UnitPower reads"
 
 Assert-Contract (
     $playerResourceServiceSource.Contains("api.UnitPowerPercent") -and
@@ -1466,6 +1644,9 @@ Assert-Contract (
     $playerResourceProbeSource.Contains('observedEvents = buildCountEntries') -and
     $playerResourceProbeSource.Contains('observedPowerTokens = buildCountEntries') -and
     $playerResourceProbeSource.Contains('observedEventNames = buildCountEntries(PlayerResourceProbe.observedByEvent') -and
+    $playerResourceProbeSource.Contains('missingCheckDelay = 0.75') -and
+    $playerResourceProbeSource.Contains('scheduleMissingEventCheck()') -and
+    $playerResourceProbeSource.Contains('markForegroundTracked(status,eventName)') -and
     -not $playerResourceProbeSource.Contains('api.UnitPower(') -and
     -not $playerResourceProbeSource.Contains('api.UnitPowerMax(') -and
     -not $playerResourceProbeSource.Contains('api.UnitPowerPercent(') -and
@@ -1489,8 +1670,12 @@ Assert-Contract (
     $flowRunnerSource.Contains('observedPowerTokens[1].token == "RAGE"') -and
     $flowRunnerSource.Contains('rage.eventObserved == true') -and
     $flowRunnerSource.Contains('mock.trace.unitPowerReads == 0')
-) "Flow covers resource probe metadata, observed event, lifecycle, and zero raw reads"Assert-Contract (
+) "Flow covers resource probe metadata, observed event, lifecycle, and zero raw reads"
+Assert-Contract (
     $playerResourceProbeSource.Contains('function PlayerResourceProbe.markBackgroundEventMissing(resourceKey)') -and
+    $playerResourceProbeSource.Contains('function runMissingEventCheck(owner)') -and
+    $playerResourceProbeSource.Contains('missingCheckExecutedCount = 0') -and
+    $playerResourceProbeSource.Contains('scheduler.after(') -and
     $playerResourceProbeSource.Contains('service.setBackgroundSamplingRequired(resourceKey, true)') -and
     $playerResourceProbeSource.Contains('backgroundSamplingRequired = source.backgroundSamplingRequired == true') -and
     $playerResourceServiceSource.Contains('return true, "unchanged"') -and
@@ -1503,6 +1688,9 @@ Assert-Contract (
     -not $powerRendererSource.Contains('string.format') -and
     $flowRunnerSource.Contains('id = "unitpower.background_sampler_gate"') -and
     $flowRunnerSource.Contains('generationTaskCount') -and
+    $flowRunnerSource.Contains('local autoCheckValid = autoCheckReport.events.missingEventCheckExecutedCount == 1') -and
+    $flowRunnerSource.Contains('local restarted = probe.start()') -and
+    $flowRunnerSource.Contains('and autoCheckValid == true') -and
     $flowRunnerSource.Contains('deferredReason == "combatSamplerDeferred"') -and
     $flowRunnerSource.Contains('mock.trace.unitPowerReads == 0') -and
     $flowRunnerSource.Contains('mock.trace.secretScalarOperations == 0')
@@ -1525,6 +1713,13 @@ Assert-Contract (
     $playerResourceServiceSource.Contains('fail-closed')
 ) "SavedVariables owns schema 4 per-resource settings and the immediate/deferred change lifecycle"
 
+Assert-Contract (
+    $playerResourcePanelSource.Contains('field = "fontSize"') -and
+    $playerResourcePanelSource.Contains('cycleOrientation') -and
+    $playerResourcePanelSource.Contains('cycleFontFamily') -and
+    $playerResourcePanelSource.Contains('Panel.orientationButton') -and
+    $playerResourcePanelSource.Contains('Panel.fontFamilyButton')
+) "Player resource panel exposes font size, font family, and orientation controls"
 Assert-Contract (
     $playerResourcePanelSource.Contains('SETTING_FIELDS = freeze({') -and
     $playerResourcePanelSource.Contains('"showForeground"') -and
@@ -1573,6 +1768,13 @@ Assert-Contract (
     $flowRunnerSource.Contains('energySpec.anchor == "CENTER"') -and
     $flowRunnerSource.Contains('comboAfterClass.anchor == comboBefore.anchor')
 ) "Per-resource anchor and position use schema inheritance, independent UI controls, renderer application, and isolation Flow"
+Assert-Contract (
+    $flowRunnerSource.Contains('id = "unitpower.renderer_ownership_energy_combo"') -and
+    $flowRunnerSource.Contains('moonkinRefreshed') -and
+    $flowRunnerSource.Contains('probeStoppedByService') -and
+    $slashSource.Contains('handleUnitPower(input)') -and
+    $slashSource.Contains('markBackgroundEventMissing(resourceKey)')
+) "Flow and slash command cover resource ownership, Druid form matrix, probe stop, and background sampler entry"
 Assert-Contract (
     $flowRunnerSource.Contains('id = "unitpower.combat_native_sink_no_raw_reads"') -and
     $flowRunnerSource.Contains('id = "unitpower.secondary_and_secret_sink"') -and
@@ -1670,6 +1872,9 @@ Assert-Contract (
     $dropdownRowFinalizationCount -ge 8
 ) "Custom dropdown rows provide normal, pushed, highlight, level, and Theme contracts"
 $toc = [System.IO.File]::ReadAllText($paths.Toc)
+$libStubIndex = $toc.IndexOf("Lib\LibStub.lua")
+$libButtonGlowIndex = $toc.IndexOf("Lib\LibButtonGlow-1.0.lua")
+$coreEnvIndex = $toc.IndexOf("Core\Env.lua")
 $themeIndex = $toc.IndexOf("UI\Theme.lua")
 $textPlacementIndex = $toc.IndexOf("UI\TextPlacement.lua")
 $borderStylesIndex = $toc.IndexOf("UI\AlertBorderStyles.lua")
@@ -1682,6 +1887,7 @@ $validationEnvironmentIndex = $toc.IndexOf("Debug\ValidationEnvironment.lua")
 $svgProbeIndex = $toc.IndexOf("Debug\SVGCapabilityProbe.lua")
 $liveSessionIndex = $toc.IndexOf("Debug\LiveTestSession.lua")
 $livePanelIndex = $toc.IndexOf("Debug\LiveTestPanel.lua")
+Assert-Contract ($toc.Contains("Lib\LibStub.lua") -and $toc.Contains("Lib\LibButtonGlow-1.0.lua") -and $libStubIndex -ge 0 -and $libButtonGlowIndex -gt $libStubIndex -and $coreEnvIndex -gt $libButtonGlowIndex) "TOC library load order"
 Assert-Contract ($themeIndex -ge 0 -and $themeIndex -lt $textPlacementIndex) "TOC theme load order"
 Assert-Contract ($textPlacementIndex -ge 0 -and $textPlacementIndex -lt $nativeRendererIndex -and $textPlacementIndex -lt $rendererIndex) "TOC text placement load order"
 Assert-Contract ($validationEnvironmentIndex -ge 0 -and $validationEnvironmentIndex -lt $liveSessionIndex -and $liveSessionIndex -lt $livePanelIndex) "TOC live validation load order"
@@ -1726,6 +1932,9 @@ $sourcePackageScriptText = [System.IO.File]::ReadAllText($sourcePackageScriptPat
 Assert-Contract (
     $sourcePackageScriptText.Contains('$projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot ".."))') -and
     $sourcePackageScriptText.Contains('"Dist"') -and
+    $sourcePackageScriptText.Contains('"patch-temp"') -and
+    $sourcePackageScriptText.Contains('$leaf -in @(".git", "backup", "TestResults", "cache"') -and
+    $sourcePackageScriptText.Contains('$leaf -like ".trash_*"') -and
     $sourcePackageScriptText.Contains('".git"') -and
     $sourcePackageScriptText.Contains('".codex-remote-attachments"') -and
     -not $sourcePackageScriptText.Contains('".vscode"') -and
@@ -1753,6 +1962,22 @@ Assert-Contract (
     $deployScriptText.Contains('Assert-ExactChildPath -Parent $State.addonsRoot -Child $normalizedStage') -and
     $deployScriptText.Contains('拒絕清理非預期部署暫存路徑')
 ) "Deployment revalidates staging path before recursive cleanup"
+Assert-Contract (
+    $deployScriptText.Contains('function Get-WtfRelatedFiles') -and
+    $deployScriptText.Contains('function Invoke-WtfBackup') -and
+    $deployScriptText.Contains('function Read-WtfBackupManifest') -and
+    $deployScriptText.Contains('function Invoke-WtfRestore') -and
+    $deployScriptText.Contains('relativePath = $relative.Replace') -and
+    $deployScriptText.Contains('manifest.json') -and
+    $deployScriptText.Contains('Assert-ExactChildPath -Parent $packagePath')
+) "Deployment WTF backup preserves relative paths with manifest"
+Assert-Contract (
+    -not $deployScriptText.Contains('Test-WowIsRunning') -and
+    -not $deployScriptText.Contains('Get-Process -Name "Wow"') -and
+    $deployScriptText.Contains('"Backup", "Restore"') -and
+    $deployScriptText.Contains('[string]$WtfBackupPath') -and
+    $deployScriptText.Contains('還原前會先建立 rollback 備份')
+) "Deployment removes WoW process gate and exposes backup/restore actions"
 
 $wowheadCandidateScript = Join-Path $PSScriptRoot "Test-WowheadCandidateData.ps1"
 $wowheadCandidateExists = Test-Path -LiteralPath $wowheadCandidateScript -PathType Leaf

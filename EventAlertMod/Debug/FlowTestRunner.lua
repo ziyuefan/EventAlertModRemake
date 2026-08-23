@@ -4351,6 +4351,520 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
+    id = "cooldown.charges_contract",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.CooldownService
+        local cSpell = api.C_Spell
+        if not mock or not service or not cSpell then
+            return STATUS_SKIP, "Cooldown charges strict mock is offline only"
+        end
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalActivatedAlerts = service.activatedAlerts
+        local originalActivationSpellIDs = service.activationSpellIDs
+        local originalChargeSpentObserved = service.chargeSpentObserved
+        local originalCharges = cSpell.GetSpellCharges
+        local originalCooldown = cSpell.GetSpellCooldown
+        local originalChargeDuration = cSpell.GetSpellChargeDuration
+        local originalGetBaseSpell = cSpell.GetBaseSpell
+        local originalGetOverrideSpell = cSpell.GetOverrideSpell
+        local marker = { source = "official-charge-duration" }
+        local currentCharges = 1
+        local chargeActive = true
+        local useSecretChargeFacts = false
+        local secretCurrent = mock.createSecretScalar()
+        local secretStart = mock.createSecretScalar()
+        local secretDuration = mock.createSecretScalar()
+        local ok, result = pcall(function()
+            local alertID = "spellCooldown:player:60201"
+            EAM.db = {
+                revision = 820003,
+                config = {
+                    cooldownRemoveAura = false,
+                    showSCDOutsideCombat = true,
+                    glowSCDWhenUsable = true,
+                },
+                alerts = {
+                    spellCooldowns = {
+                        [alertID] = {
+                            id = alertID,
+                            enabled = true,
+                            spellID = 60201,
+                        },
+                    },
+                },
+            }
+            service.states = {}
+            service.activatedAlerts = {}
+            service.activationSpellIDs = {}
+            service.chargeSpentObserved = {}
+            mock.setCombat(false)
+            cSpell.GetBaseSpell = function(spellID)
+                if spellID == 60211 then
+                    return 60201
+                end
+                return spellID
+            end
+            cSpell.GetOverrideSpell = function(spellID)
+                if spellID == 60201 then
+                    return 60211
+                end
+                return spellID
+            end
+            cSpell.GetSpellCharges = function(spellID)
+                if spellID == 60201 then
+                    return {
+                        currentCharges = useSecretChargeFacts and secretCurrent or currentCharges,
+                        maxCharges = 2,
+                        cooldownStartTime = useSecretChargeFacts and secretStart or 12,
+                        cooldownDuration = useSecretChargeFacts and secretDuration or 8,
+                        chargeModRate = 1,
+                        isActive = chargeActive,
+                    }
+                end
+                return nil
+            end
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 60201 then
+                    return {
+                        startTime = 12,
+                        duration = 8,
+                        isEnabled = true,
+                        isOnGCD = false,
+                    }
+                end
+                return nil
+            end
+            cSpell.GetSpellChargeDuration = function(spellID)
+                return spellID == 60201 and marker or nil
+            end
+            service.updateAlertList()
+
+            -- Saved base ID 60201 must activate from the player-cast override ID 60211.
+            local partial = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "charge-cast",
+                60211
+            )
+            local partialValid = partial ~= nil
+                and partial.isChargeBased == true
+                and partial.chargesSafe == true
+                and partial.displayValue == 1
+                and partial.displayMaxValue == 2
+                and partial.charges == 1
+                and partial.maxCharges == 2
+                and partial.chargeSpellID == 60201
+                and partial.chargeSpentObserved == true
+                and partial.chargeCompletionDeferred == false
+                and partial.source.activationSpellID == 60211
+                and partial.source.chargeSpellID == 60201
+                and partial.chargeActive == true
+                and partial.chargeActiveSafe == true
+                and partial.chargeFull == false
+                and partial.chargeFullSafe == true
+                and partial.source.api == "C_Spell.GetSpellCharges"
+                and partial.completed == false
+                and partial.timer.durationObject == marker
+
+            -- A mixed SpellChargeInfo table remains indexable: safe max/isActive survive,
+            -- while Secret current/timing never enter Lua arithmetic, comparison, or text.
+            useSecretChargeFacts = true
+            local secretOperationsBefore = mock.trace.secretScalarOperations
+            service.onCooldownEvent("SPELL_UPDATE_CHARGES")
+            local protected = service.states[alertID]
+            local protectedValid = protected == partial
+                and protected.isChargeBased == true
+                and protected.chargesSafe == false
+                and protected.charges == nil
+                and protected.maxCharges == 2
+                and protected.displayValue == nil
+                and protected.displayMaxValue == 2
+                and protected.chargeActive == true
+                and protected.chargeActiveSafe == true
+                and protected.chargeFull == false
+                and protected.chargeFullSafe == true
+                and protected.completed == false
+                and protected.timer.mode == EAM.Constants.TIMER_PROTECTED
+                and protected.timer.durationObject == marker
+                and mock.trace.secretScalarOperations == secretOperationsBefore
+
+            chargeActive = false
+            service.onCooldownEvent("SPELL_UPDATE_CHARGES")
+            local full = service.states[alertID]
+            local fullValid = full == partial
+                and full.maxCharges == 2
+                and full.chargeActive == false
+                and full.chargeActiveSafe == true
+                and full.chargeFull == true
+                and full.chargeFullSafe == true
+                and full.chargeSpentObserved == true
+                and full.chargeCompletionDeferred == false
+                and full.completed == true
+                and full.timer.mode == EAM.Constants.TIMER_UNKNOWN
+                and mock.trace.secretScalarOperations == secretOperationsBefore
+            return partialValid and protectedValid and fullValid
+        end)
+        EAM.db = originalDB
+        service.states = originalStates
+        service.activatedAlerts = originalActivatedAlerts
+        service.activationSpellIDs = originalActivationSpellIDs
+        service.chargeSpentObserved = originalChargeSpentObserved
+        cSpell.GetSpellCharges = originalCharges
+        cSpell.GetSpellCooldown = originalCooldown
+        cSpell.GetSpellChargeDuration = originalChargeDuration
+        cSpell.GetBaseSpell = originalGetBaseSpell
+        cSpell.GetOverrideSpell = originalGetOverrideSpell
+        mock.setCombat(false)
+        local valid = ok and result == true
+        return valid, valid
+            and "charge spell base/override activation and mixed Secret SpellChargeInfo contract passed"
+            or "charge spell state contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.charge_completion_lifecycle",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.CooldownService
+        local cSpell = api.C_Spell
+        if not mock or not service or not cSpell then
+            return STATUS_SKIP, "Charge completion lifecycle strict mock is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalActivatedAlerts = service.activatedAlerts
+        local originalActivationSpellIDs = service.activationSpellIDs
+        local originalChargeSpentObserved = service.chargeSpentObserved
+        local originalCharges = cSpell.GetSpellCharges
+        local originalCooldown = cSpell.GetSpellCooldown
+        local originalChargeDuration = cSpell.GetSpellChargeDuration
+        local originalGetBaseSpell = cSpell.GetBaseSpell
+        local originalGetOverrideSpell = cSpell.GetOverrideSpell
+        local phase = "staleFull"
+        local actualQueries = 0
+        local baseQueries = 0
+        local secretCurrent = mock.createSecretScalar()
+        local marker = { source = "actual-override-charge-duration" }
+
+        local ok, result = pcall(function()
+            local alertID = "spellCooldown:player:60301"
+            EAM.db = {
+                revision = 820004,
+                config = {
+                    cooldownRemoveAura = true,
+                    showSCDOutsideCombat = true,
+                    glowSCDWhenUsable = true,
+                },
+                alerts = {
+                    spellCooldowns = {
+                        [alertID] = {
+                            id = alertID,
+                            enabled = true,
+                            spellID = 60301,
+                        },
+                    },
+                },
+            }
+            service.states = {}
+            service.activatedAlerts = {}
+            service.activationSpellIDs = {}
+            service.chargeSpentObserved = {}
+            mock.setCombat(false)
+            cSpell.GetBaseSpell = function(spellID)
+                if spellID == 60311 then
+                    return 60301
+                end
+                return spellID
+            end
+            cSpell.GetOverrideSpell = function(spellID)
+                if spellID == 60301 then
+                    return 60311
+                end
+                return spellID
+            end
+            cSpell.GetSpellCharges = function(spellID)
+                if spellID == 60311 then
+                    actualQueries = actualQueries + 1
+                    return {
+                        currentCharges = phase == "staleFull" and 2 or secretCurrent,
+                        maxCharges = 2,
+                        cooldownStartTime = phase == "spent" and 20 or 0,
+                        cooldownDuration = phase == "spent" and 10 or 0,
+                        chargeModRate = 1,
+                        isActive = phase == "spent",
+                    }
+                elseif spellID == 60301 then
+                    baseQueries = baseQueries + 1
+                    return {
+                        currentCharges = 2,
+                        maxCharges = 2,
+                        cooldownStartTime = 0,
+                        cooldownDuration = 0,
+                        chargeModRate = 1,
+                        isActive = false,
+                    }
+                end
+                return nil
+            end
+            cSpell.GetSpellCooldown = function()
+                return {
+                    startTime = 0,
+                    duration = 0,
+                    isEnabled = true,
+                    isOnGCD = false,
+                }
+            end
+            cSpell.GetSpellChargeDuration = function(spellID)
+                return spellID == 60311 and marker or nil
+            end
+            service.updateAlertList()
+
+            -- UNIT_SPELLCAST_SUCCEEDED 可能先讀到施放前全滿快照；不得提早完成或移除。
+            local provisional = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "stale-charge-cast",
+                60311
+            )
+            local provisionalValid = provisional ~= nil
+                and provisional.shown == true
+                and provisional.isChargeBased == true
+                and provisional.chargeSpellID == 60311
+                and provisional.chargeSpentObserved == false
+                and provisional.chargeCompletionDeferred == true
+                and provisional.completed == false
+                and provisional.cooldownRemoveAura == true
+                and service.activationSpellIDs[alertID] == 60311
+                and service.chargeSpentObserved[alertID] == nil
+                and actualQueries > 0
+                and baseQueries == 0
+
+            -- 後續 charge event 先證明未滿；Secret current 不做 Lua 比較。
+            phase = "spent"
+            local secretOperationsBefore = mock.trace.secretScalarOperations
+            service.onCooldownEvent("SPELL_UPDATE_CHARGES")
+            local spent = service.states[alertID]
+            local spentValid = spent == provisional
+                and spent.chargeSpellID == 60311
+                and spent.chargesSafe == false
+                and spent.chargeActive == true
+                and spent.chargeSpentObserved == true
+                and spent.chargeCompletionDeferred == false
+                and spent.completed == false
+                and spent.timer.durationObject == marker
+                and service.chargeSpentObserved[alertID] == true
+                and mock.trace.secretScalarOperations == secretOperationsBefore
+
+            -- 已確認消耗後，再看到 isActive=false 才可判定全滿並依設定移除。
+            phase = "full"
+            service.onCooldownEvent("SPELL_UPDATE_CHARGES")
+            local completedRemoved = service.states[alertID] == nil
+                and service.chargeSpentObserved[alertID] == true
+                and mock.trace.secretScalarOperations == secretOperationsBefore
+
+            -- 下一次精確施放會重設 cycle，仍可再次進入暫定監控。
+            phase = "staleFull"
+            local secondCycle = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "second-charge-cast",
+                60311
+            )
+            local secondCycleValid = secondCycle ~= nil
+                and secondCycle.shown == true
+                and secondCycle.completed == false
+                and secondCycle.chargeSpentObserved == false
+                and secondCycle.chargeCompletionDeferred == true
+                and service.chargeSpentObserved[alertID] == nil
+
+            return provisionalValid and spentValid and completedRemoved and secondCycleValid
+        end)
+
+        EAM.db = originalDB
+        service.states = originalStates
+        service.activatedAlerts = originalActivatedAlerts
+        service.activationSpellIDs = originalActivationSpellIDs
+        service.chargeSpentObserved = originalChargeSpentObserved
+        cSpell.GetSpellCharges = originalCharges
+        cSpell.GetSpellCooldown = originalCooldown
+        cSpell.GetSpellChargeDuration = originalChargeDuration
+        cSpell.GetBaseSpell = originalGetBaseSpell
+        cSpell.GetOverrideSpell = originalGetOverrideSpell
+        mock.setCombat(false)
+        local valid = ok and result == true
+        return valid, valid
+            and "charge completion waits for a spent observation, follows actual override ID, and reopens next cycle"
+            or "charge completion lifecycle regression mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.cooldown_charge_statusbar",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local iconPool = EAM.UI and EAM.UI.IconPool
+        local service = EAM.Services and EAM.Services.CooldownService
+        local cSpell = api.C_Spell
+        if not mock or not iconPool or not service or not cSpell
+            or type(iconPool.applyChargeProgress) ~= "function"
+            or type(service.applyChargeStatusBar) ~= "function"
+        then
+            return STATUS_SKIP, "Charge StatusBar strict mock is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalCharges = cSpell.GetSpellCharges
+        local originalGetBaseSpell = cSpell.GetBaseSpell
+        local originalGetOverrideSpell = cSpell.GetOverrideSpell
+        local secretCurrent = mock.createSecretScalar()
+        local useSecret = false
+        local safeCurrent = 1
+        local icon
+        local ok, result = pcall(function()
+            EAM.db = {
+                config = {
+                    iconSize = 40,
+                    chargeBarLayout = "BOTTOM",
+                    chargeBarLengthPercent = 150,
+                    chargeBarThickness = 8,
+                },
+            }
+            cSpell.GetBaseSpell = function(spellID)
+                return spellID
+            end
+            cSpell.GetOverrideSpell = function(spellID)
+                return spellID
+            end
+            cSpell.GetSpellCharges = function(spellID)
+                if spellID ~= 60201 then
+                    return nil
+                end
+                return {
+                    currentCharges = useSecret and secretCurrent or safeCurrent,
+                    maxCharges = 3,
+                    isActive = safeCurrent < 3,
+                }
+            end
+
+            mock.resetTrace()
+            icon = iconPool.acquire()
+            if not icon then
+                return false
+            end
+            local timerCallsBefore = mock.trace.statusBarTimerDurationCalls
+
+            local safeAccepted, safeReason = iconPool.applyChargeProgress(icon, {
+                spellID = 60201,
+                isChargeBased = true,
+                chargesSafe = true,
+                maxCharges = 3,
+                completed = false,
+                timer = { durationObject = { source = "must-not-drive-count" } },
+            })
+            local horizontal = icon.chargeVisuals.HORIZONTAL
+            local safeValid = safeAccepted == true
+                and safeReason == "safeCount"
+                and horizontal.host:IsShown()
+                and horizontal.bar.minimum == 0
+                and horizontal.bar.maximum == 3
+                and horizontal.bar.valueClass == "number"
+                and horizontal.bar.safeValue == 1
+                and icon.chargeDividers[1].shown == true
+                and icon.chargeDividers[2].shown == true
+                and mock.trace.statusBarTimerDurationCalls == timerCallsBefore
+
+            useSecret = true
+            EAM.db.config.chargeBarLayout = "RING"
+            local secretAccepted, secretReason = iconPool.applyChargeProgress(icon, {
+                spellID = 60201,
+                isChargeBased = true,
+                chargesSafe = false,
+                maxCharges = 3,
+                completed = false,
+            })
+            local radial = icon.chargeVisuals.RING
+            local secretValid = secretAccepted == true
+                and secretReason == "secretCount"
+                and radial.host:IsShown()
+                and not horizontal.host:IsShown()
+                and radial.bar.renderMode == Enum.StatusBarRenderMode.Radial
+                and radial.radialTexture == "Interface\\AddOns\\EventAlertMod\\Media\\Images\\eam-charge-ring.tga"
+                and radial.bar.statusBarTexture == radial.radialTexture
+                and radial.background.texture == radial.radialTexture
+                and radial.bar.valueClass == "secret"
+                and rawget(radial.bar, "safeValue") == nil
+                and icon.rendered.chargeEffectiveMode == "RING"
+                and mock.trace.statusBarTimerDurationCalls == timerCallsBefore
+
+            useSecret = false
+            safeCurrent = 3
+            local fullAccepted, fullReason = iconPool.applyChargeProgress(icon, {
+                spellID = 60201,
+                isChargeBased = true,
+                chargesSafe = true,
+                maxCharges = 3,
+                completed = true,
+            })
+            local fullValid = fullAccepted == true
+                and fullReason == "safeCount"
+                and radial.host:IsShown()
+                and rawget(radial.bar, "safeValue") == 3
+
+            local hidden, hiddenReason = iconPool.applyChargeProgress(icon, {
+                spellID = 60201,
+                isChargeBased = false,
+            })
+            local hiddenValid = hidden == true
+                and hiddenReason == "hidden"
+                and not horizontal.host:IsShown()
+                and not icon.chargeVisuals.VERTICAL.host:IsShown()
+                and not radial.host:IsShown()
+                and mock.trace.statusBarTimerDurationCalls == timerCallsBefore
+            if safeValid and secretValid and fullValid and hiddenValid then
+                return true
+            end
+            return "safe=" .. tostring(safeValid)
+                .. ",secret=" .. tostring(secretValid)
+                .. "[accepted=" .. tostring(secretAccepted)
+                .. ",reason=" .. tostring(secretReason)
+                .. ",radialShown=" .. tostring(radial.host:IsShown())
+                .. ",horizontalShown=" .. tostring(horizontal.host:IsShown())
+                .. ",renderMode=" .. tostring(radial.bar.renderMode)
+                .. ",valueClass=" .. tostring(radial.bar.valueClass)
+                .. ",safeValueNil=" .. tostring(rawget(radial.bar, "safeValue") == nil)
+                .. ",effectiveMode=" .. tostring(icon.rendered.chargeEffectiveMode)
+                .. ",timerUnchanged=" .. tostring(mock.trace.statusBarTimerDurationCalls == timerCallsBefore)
+                .. "]"
+                .. ",full=" .. tostring(fullValid)
+                .. ",hidden=" .. tostring(hiddenValid)
+        end)
+
+        if icon then
+            iconPool.release(icon)
+        end
+        EAM.db = originalDB
+        cSpell.GetSpellCharges = originalCharges
+        cSpell.GetBaseSpell = originalGetBaseSpell
+        cSpell.GetOverrideSpell = originalGetOverrideSpell
+        mock.setCombat(false)
+        local valid = ok and result == true
+        local failureDetail = ok and tostring(result) or ("error=" .. tostring(result))
+        return valid, valid
+            and "charge count uses a verified raster ring grid or linear StatusBar with safe max dividers and never uses recharge duration"
+            or ("charge StatusBar count contract mismatch: " .. failureDetail)
+    end,
+})
+FlowTestRunner.registerCase({
     id = "cooldown.combat_heal_regen_no_bulk_render",
     primarySuite = "core",
     suites = { core = true, boundary = true, aura121 = true },
@@ -5183,6 +5697,10 @@ FlowTestRunner.registerCase({
                 and foregroundReason == "foregroundUpdated"
                 and service.getActivePowerType() == 9
                 and service.getTrackedResourceCount() == 2
+                and mock.trace.unitPowerReads == 1
+                and mock.trace.unitPowerMaxReads == 1
+                and mock.trace.unitPowerPercentReads == 1
+                and mock.trace.nativePowerSinkWrites == 2
 
             local started, report, reportJSON = probe.start()
             local primary = report and report.cases and report.cases[1]
@@ -5559,6 +6077,19 @@ FlowTestRunner.registerCase({
             service.clearBackgroundSamplingRequirements()
             service.rebuildTopology("backgroundSamplerFixture")
             local started = probe.start()
+            EAM.FlowTestAdvanceTime(0.8)
+            local autoCheckUpdate = scheduler.frame and scheduler.frame:GetScript("OnUpdate")
+            if autoCheckUpdate then
+                autoCheckUpdate()
+            end
+            local autoCheckStatus = service.getStatus()
+            local autoCheckReport = probe.buildReport()
+            local autoCheckValid = autoCheckReport.events.missingEventCheckExecutedCount == 1
+                and autoCheckStatus.backgroundSamplerActive == true
+                and autoCheckStatus.backgroundSamplerRequestCount == 4
+            probe.stop()
+            service.clearBackgroundSamplingRequirements()
+            local restarted = probe.start()
             local baselineTaskCount = scheduler.count
             local initialStatus = service.getStatus()
             mock.resetTrace()
@@ -5568,13 +6099,11 @@ FlowTestRunner.registerCase({
             local firstGeneration = service.backgroundSamplerGeneration
             local repeatedGate, repeatedReason = probe.markBackgroundEventMissing("ENERGY")
             local repeatedStatus = service.getStatus()
-            local oneActiveTask = scheduler.count == baselineTaskCount + 1
-                and generationTaskCount(firstGeneration) == 1
+            local oneActiveTask = generationTaskCount(firstGeneration) == 1
 
             router.fire("UNIT_POWER_UPDATE", "player", "ENERGY")
             local observedStatus = service.getStatus()
-            local staleGenerationInvalidated = scheduler.count == baselineTaskCount + 1
-                and generationTaskCount(service.backgroundSamplerGeneration) == 0
+            local staleGenerationInvalidated = generationTaskCount(service.backgroundSamplerGeneration) == 0
                 and service.backgroundSamplerGeneration ~= firstGeneration
 
             probe.stop()
@@ -5582,14 +6111,13 @@ FlowTestRunner.registerCase({
             mock.setCombat(true)
             local deferredGate, deferredReason = probe.markBackgroundEventMissing("ENERGY")
             local deferredStatus = service.getStatus()
-            local noCombatTaskAdded = scheduler.count == baselineTaskCount + 1
+            local noCombatTaskAdded = generationTaskCount(service.backgroundSamplerGeneration) == 0
 
             mock.setCombat(false)
             service.onEvent("PLAYER_REGEN_ENABLED")
             local resumedStatus = service.getStatus()
             local resumedGeneration = service.backgroundSamplerGeneration
-            local oneResumedTask = scheduler.count == baselineTaskCount + 2
-                and generationTaskCount(resumedGeneration) == 1
+            local oneResumedTask = generationTaskCount(resumedGeneration) == 1
 
             local tickCountBefore = resumedStatus.backgroundSamplerTickCount
             EAM.FlowTestAdvanceTime(0.6)
@@ -5605,6 +6133,7 @@ FlowTestRunner.registerCase({
                 and afterTickStatus.backgroundSamplerTickCount == tickCountBefore + 1
 
             local disabled = service.onModuleToggle(false)
+            local probeStoppedByService = probe.isActive() == false
             local disabledStatus = service.getStatus()
             EAM.FlowTestAdvanceTime(0.6)
             onUpdate = scheduler.frame and scheduler.frame:GetScript("OnUpdate")
@@ -5614,9 +6143,11 @@ FlowTestRunner.registerCase({
             local disabledTaskDrained = generationTaskCount(service.backgroundSamplerGeneration) == 0
             mock.setCombat(false)
             local reenabled = service.onModuleToggle(true)
-            local stopped = probe.stop()
+            local stopped = probe.isActive() == false
 
             local passed = started == true
+                and restarted == true
+                and autoCheckValid == true
                 and initialStatus.backgroundSamplerActive == false
                 and initialStatus.backgroundSamplerRequestCount == 0
                 and firstGate == true
@@ -5644,6 +6175,7 @@ FlowTestRunner.registerCase({
                 and disabledStatus.backgroundSamplerActive == false
                 and disabledStatus.backgroundSamplerRequestCount == 0
                 and disabledStatus.eventsRegistered == false
+                and probeStoppedByService
                 and disabledTaskDrained
                 and reenabled == true
                 and stopped == true
@@ -5653,7 +6185,8 @@ FlowTestRunner.registerCase({
                 and mock.trace.secretScalarOperations == 0
             if not passed then
                 error(string.format(
-                    "baseline=%d scheduler=%d first=%s/%d/%d repeated=%s:%s observed=%s/%d stale=%s deferred=%s:%s/%s/%d resumed=%s/%d/%d one=%s tick=%s tickCounts=%d/%d tasksAfterTick=%d currentTasks=%d disabled=%s/%d/%s drained=%s raw=%d/%d percent=%d secretOps=%d",
+                    "auto=%s requests=%d baseline=%d scheduler=%d first=%s/%d/%d repeated=%s:%s observed=%s/%d stale=%s deferred=%s:%s/%s/%d resumed=%s/%d/%d one=%s tick=%s tickCounts=%d/%d tasksAfterTick=%d currentTasks=%d disabled=%s/%d/%s drained=%s raw=%d/%d percent=%d secretOps=%d",
+                    tostring(autoCheckValid), autoCheckStatus.backgroundSamplerRequestCount,
                     baselineTaskCount, scheduler.count,
                     tostring(firstStatus.backgroundSamplerActive), firstStatus.backgroundSamplerRequestCount,
                     firstStatus.backgroundSamplerNodeCount, tostring(repeatedGate), tostring(repeatedReason),
@@ -5737,17 +6270,43 @@ FlowTestRunner.registerCase({
             local bearStatus = service.getStatus()
             local rebuildCount = bearStatus.rebuildCount
             local runtimeRefreshCount = bearStatus.runtimeRefreshCount
+            local formUnitPowerReads = mock.trace.unitPowerReads
+            local formUnitPowerMaxReads = mock.trace.unitPowerMaxReads
+            local formUnitPowerPercentReads = mock.trace.unitPowerPercentReads
+            local formNativeSinkWrites = mock.trace.nativePowerSinkWrites
+
+            local function foregroundMap(status)
+                local result = {}
+                for index = 1, #status.resources do
+                    local resource = status.resources[index]
+                    result[resource.key] = resource.foreground == true
+                end
+                return result
+            end
 
             mock.setForegroundPower(3, "ENERGY")
             local refreshed, reason = service.onEvent("UPDATE_SHAPESHIFT_FORM")
             local catStatus = service.getStatus()
 
-            local bearForeground = {}
-            for index = 1, #bearStatus.resources do
-                local resource = bearStatus.resources[index]
-                bearForeground[resource.key] = resource.foreground == true
-            end
-            local catForeground = {}
+            mock.setForegroundPower(0, "MANA")
+            local casterRefreshed, casterReason = service.onEvent("UPDATE_SHAPESHIFT_FORM")
+            local casterStatus = service.getStatus()
+
+            mock.setForegroundPower(8, "LUNAR_POWER")
+            local moonkinRefreshed, moonkinReason = service.onEvent("UPDATE_SHAPESHIFT_FORM")
+            local moonkinStatus = service.getStatus()
+
+            mock.setForegroundPower(1, "RAGE")
+            local bearReturnRefreshed, bearReturnReason = service.onEvent("UPDATE_SHAPESHIFT_FORM")
+            local bearReturnStatus = service.getStatus()
+
+            local bearForeground = foregroundMap(bearStatus)
+            local catForeground = foregroundMap(catStatus)
+            local casterForeground = foregroundMap(casterStatus)
+            local moonkinForeground = foregroundMap(moonkinStatus)
+            local bearReturnForeground = foregroundMap(bearReturnStatus)
+            local rendererStatus = EAM.UI and EAM.UI.PowerRenderer
+                and EAM.UI.PowerRenderer.getStatus and EAM.UI.PowerRenderer.getStatus()
             for index = 1, #catStatus.resources do
                 local resource = catStatus.resources[index]
                 catForeground[resource.key] = resource.foreground == true
@@ -5755,11 +6314,26 @@ FlowTestRunner.registerCase({
 
             return rebuilt == true
                 and refreshed == true
-                and reason == "formRuntimeRefreshed"
+                and reason == "formForegroundUpdated"
+                and casterRefreshed == true
+                and casterReason == "formForegroundUpdated"
+                and moonkinRefreshed == true
+                and moonkinReason == "formForegroundUpdated"
+                and bearReturnRefreshed == true
+                and bearReturnReason == "formForegroundUpdated"
                 and bearStatus.trackedResourceCount == 5
                 and catStatus.trackedResourceCount == 5
+                and casterStatus.trackedResourceCount == 5
+                and moonkinStatus.trackedResourceCount == 5
+                and bearReturnStatus.trackedResourceCount == 5
                 and catStatus.rebuildCount == rebuildCount
+                and casterStatus.rebuildCount == rebuildCount
+                and moonkinStatus.rebuildCount == rebuildCount
+                and bearReturnStatus.rebuildCount == rebuildCount
                 and catStatus.runtimeRefreshCount == runtimeRefreshCount + 1
+                and casterStatus.runtimeRefreshCount == runtimeRefreshCount + 2
+                and moonkinStatus.runtimeRefreshCount == runtimeRefreshCount + 3
+                and bearReturnStatus.runtimeRefreshCount == runtimeRefreshCount + 4
                 and bearForeground.RAGE == true
                 and bearForeground.MANA == false
                 and bearForeground.ENERGY == false
@@ -5770,8 +6344,27 @@ FlowTestRunner.registerCase({
                 and catForeground.MANA == false
                 and catForeground.RAGE == false
                 and catForeground.LUNAR_POWER == false
-                and mock.trace.unitPowerReads == 0
-                and mock.trace.unitPowerMaxReads == 0
+                and casterForeground.MANA == true
+                and casterForeground.RAGE == false
+                and casterForeground.ENERGY == false
+                and casterForeground.COMBO_POINTS == false
+                and casterForeground.LUNAR_POWER == false
+                and moonkinForeground.LUNAR_POWER == true
+                and moonkinForeground.RAGE == false
+                and moonkinForeground.ENERGY == false
+                and moonkinForeground.COMBO_POINTS == false
+                and moonkinForeground.MANA == false
+                and bearReturnForeground.RAGE == true
+                and bearReturnForeground.MANA == false
+                and bearReturnForeground.ENERGY == false
+                and bearReturnForeground.COMBO_POINTS == false
+                and bearReturnForeground.LUNAR_POWER == false
+                and rendererStatus.resourceFrameCount == 17
+                and rendererStatus.configuredCount == 5
+                and mock.trace.unitPowerReads == formUnitPowerReads
+                and mock.trace.unitPowerMaxReads == formUnitPowerMaxReads
+                and mock.trace.unitPowerPercentReads == formUnitPowerPercentReads
+                and mock.trace.nativePowerSinkWrites == formNativeSinkWrites
                 and mock.trace.secretScalarOperations == 0
         end)
 
@@ -5788,10 +6381,82 @@ FlowTestRunner.registerCase({
 
         local valid = ok and result == true
         return valid, valid
-            and "Druid Bear and Cat forms switch foreground metadata without rebuilding five-resource topology"
+            and "Druid Bear, Cat, Caster, Moonkin, and return-Bear forms switch foreground metadata without rebuilding five-resource topology"
             or "Druid form foreground policy, topology stability, or Secret boundary mismatch"
     end,
 })
+FlowTestRunner.registerCase({
+    id = "unitpower.renderer_ownership_energy_combo",
+    primarySuite = "boundary",
+    suites = { boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.PlayerResourceService
+        local renderer = EAM.UI and EAM.UI.PowerRenderer
+        if not mock or not service or not renderer then
+            return STATUS_SKIP, "Energy/Combo renderer ownership mock is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalCombat = mock.inCombat
+        local originalClass = mock.unitClassToken
+        local originalSpec = mock.specializationID
+        local originalPowerType = mock.unitPowerType
+        local originalPowerToken = mock.unitPowerToken
+        local originalValues = mock.unitPowerValues
+        local originalMaximums = mock.unitPowerMaxValues
+        local originalSecretTypes = mock.secretPowerTypes
+        local originalSecretMaxTypes = mock.secretPowerMaxTypes
+        local ok, result = pcall(function()
+            EAM.db = { config = {} }
+            mock.setCombat(false)
+            mock.setForegroundPower(3, "ENERGY")
+            mock.setUnitPowerScenario(
+                "ROGUE",
+                { [3] = 50, [4] = 2 },
+                { [3] = 100, [4] = 7 },
+                { [3] = true, [4] = true },
+                { [3] = true, [4] = true },
+                259
+            )
+            service.rebuildTopology("rendererOwnership")
+            local before = renderer.frames.COMBO_POINTS
+            local beforeConfigured = before and before.configured == true
+            local beforeVisible = before and before.visible == true
+            service.onEvent("UNIT_POWER_FREQUENT", "player", "ENERGY")
+            local after = renderer.frames.COMBO_POINTS
+            local status = service.getStatus()
+            local drawStatus = renderer.getStatus()
+            return status.trackedResourceCount == 2
+                and beforeConfigured
+                and beforeVisible
+                and after.configured == before.configured
+                and after.visible == before.visible
+                and drawStatus.resourceFrameCount == 17
+                and drawStatus.configuredCount == 2
+        end)
+
+        EAM.db = originalDB
+        mock.setCombat(originalCombat)
+        mock.unitClassToken = originalClass
+        mock.specializationID = originalSpec
+        mock.unitPowerType = originalPowerType
+        mock.unitPowerToken = originalPowerToken
+        mock.unitPowerValues = originalValues
+        mock.unitPowerMaxValues = originalMaximums
+        mock.secretPowerTypes = originalSecretTypes
+        mock.secretPowerMaxTypes = originalSecretMaxTypes
+        if not mock.inCombat then
+            pcall(service.rebuildTopology, "testRestore")
+        end
+
+        local valid = ok and result == true
+        return valid, valid
+            and "Energy dispatch updates only Energy and preserves the independent Combo renderer"
+            or "Energy event changed or hid the independent Combo renderer"
+    end,
+})
+
 FlowTestRunner.registerCase({
     id = "unitpower.legacy_120007_adapter",
     primarySuite = "boundary",
@@ -6112,18 +6777,32 @@ FlowTestRunner.registerCase({
             local disabledFrame = renderer.frames.RAGE
             local nonCombatApplied = disabledUpdated == true
                 and disabledState == "updated"
-                and disabledStatus.lastConfigResult == "topologyReady"
+                and disabledStatus.lastConfigResult == "configApplied"
                 and disabledStatus.pendingRebuild == false
-                and disabledStatus.rebuildCount == baselineRebuildCount + 1
+                and disabledStatus.rebuildCount == baselineRebuildCount
                 and disabledDraw.visibleCount == 0
                 and disabledFrame.config.valueFontSize == 20
                 and disabledFrame.config.valueOffsetX == 11
                 and disabledFrame.config.valueOffsetY == -7
 
+            local restoredUpdated, restoredState = saved.updatePlayerResourceConfig(
+                "RAGE",
+                { enabled = true },
+                71
+            )
+            local restoredStatus = service.getStatus()
+            local restoredDraw = renderer.getStatus()
+            local nonCombatRestored = restoredUpdated == true
+                and restoredState == "updated"
+                and restoredStatus.lastConfigResult == "configApplied"
+                and restoredStatus.pendingRebuild == false
+                and restoredStatus.rebuildCount == baselineRebuildCount
+                and restoredDraw.visibleCount > 0
+
             mock.setCombat(true)
             local combatUpdated, combatState = saved.updatePlayerResourceConfig(
                 "RAGE",
-                { enabled = true },
+                { enabled = true, valueOffsetX = 12 },
                 71
             )
             local deferredStatus = service.getStatus()
@@ -6132,7 +6811,7 @@ FlowTestRunner.registerCase({
                 and combatState == "updated"
                 and deferredStatus.lastConfigResult == "combatRebuildDeferred"
                 and deferredStatus.pendingRebuild == true
-                and deferredRebuildCount == baselineRebuildCount + 1
+                and deferredRebuildCount == baselineRebuildCount
 
             mock.setCombat(false)
             router.fire("PLAYER_REGEN_ENABLED")
@@ -6150,6 +6829,7 @@ FlowTestRunner.registerCase({
                 tostring(disabledUpdated),
                 tostring(disabledStatus.lastConfigResult),
                 tostring(disabledDraw.visibleCount),
+                tostring(nonCombatRestored),
                 tostring(combatUpdated),
                 tostring(deferredStatus.lastConfigResult),
                 tostring(deferredStatus.pendingRebuild),
@@ -6157,7 +6837,11 @@ FlowTestRunner.registerCase({
                 tostring(resumedStatus.pendingRebuild),
                 tostring(resumedDraw.visibleCount)
             )
-            return baselineRebuilt == true and nonCombatApplied and combatDeferred and resumedApplied
+            return baselineRebuilt == true
+                and nonCombatApplied
+                and nonCombatRestored
+                and combatDeferred
+                and resumedApplied
         end)
 
         EAM.db = originalDB
@@ -6179,5 +6863,362 @@ FlowTestRunner.registerCase({
         return valid, valid
             and "resource settings apply immediately out of combat and defer one rebuild in combat"
             or ("resource config lifecycle mismatch: " .. details)
+    end,
+})
+FlowTestRunner.registerCase({
+    id = "unitpower.runes_event_driven_segments",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.PlayerResourceService
+        local renderer = EAM.UI and EAM.UI.PowerRenderer
+        if not mock or not service or not renderer or type(mock.setRuneCounts) ~= "function" then
+            return STATUS_SKIP, "Rune slot strict mock is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalCombat = mock.inCombat
+        local originalClass = mock.unitClassToken
+        local originalSpec = mock.specializationID
+        local originalPowerType = mock.unitPowerType
+        local originalPowerToken = mock.unitPowerToken
+        local originalValues = mock.unitPowerValues
+        local originalMaximums = mock.unitPowerMaxValues
+        local originalSecretTypes = mock.secretPowerTypes
+        local originalSecretMaxTypes = mock.secretPowerMaxTypes
+        local originalRuneCounts = {}
+        for index = 1, 6 do
+            originalRuneCounts[index] = mock.runeCounts[index]
+        end
+        local baselineRuneEventCount = service.getStatus().runeEventCount or 0
+        local details = "pcallFailed"
+
+        local ok, result = pcall(function()
+            EAM.db = { config = { powerRunes = true, powerRunic = true } }
+            mock.setCombat(false)
+            mock.setForegroundPower(6, "RUNIC_POWER")
+            mock.setUnitPowerScenario(
+                "DEATHKNIGHT",
+                { [5] = 0, [6] = 35 },
+                { [5] = 6, [6] = 100 },
+                { [5] = true },
+                { [5] = true },
+                250
+            )
+            mock.setRuneCounts({ 1, 1, 1, 1, 1, 1 })
+            mock.resetTrace()
+            local rebuilt, rebuildReason = service.rebuildTopology("runeSlotFlow")
+            local runeFrame = renderer.frames.RUNES
+            local initialValue = runeFrame and runeFrame.statusBar.safeValue
+            local initialRuneReads = mock.trace.runeCountReads
+
+            mock.resetTrace()
+            mock.runeCounts[2] = 0
+            local depleted, depletedReason = service.onEvent(
+                "RUNE_POWER_UPDATE",
+                2,
+                false
+            )
+            local depletedValue = runeFrame and runeFrame.statusBar.safeValue
+            local depletedStatus = service.getStatus()
+
+            mock.runeCounts[2] = 1
+            local restored, restoredReason = service.onEvent(
+                "RUNE_POWER_UPDATE",
+                2,
+                true
+            )
+            local restoredValue = runeFrame and runeFrame.statusBar.safeValue
+            local restoredStatus = service.getStatus()
+            local byFrame = mock.trace.nativePowerSinkWritesByFrame
+
+            details = string.format(
+                "rebuilt=%s/%s initial=%s reads=%s depleted=%s/%s/%s ready=%s restored=%s/%s/%s ready=%s events=%s->%s initialized=%s slotAPI=%s last=%s runeReads=%s/%s generic=%s/%s/%s sink=%s secretOps=%s/%s",
+                tostring(rebuilt),
+                tostring(rebuildReason),
+                tostring(initialValue),
+                tostring(initialRuneReads),
+                tostring(depleted),
+                tostring(depletedReason),
+                tostring(depletedValue),
+                tostring(depletedStatus.runeReadyCount),
+                tostring(restored),
+                tostring(restoredReason),
+                tostring(restoredValue),
+                tostring(restoredStatus.runeReadyCount),
+                tostring(baselineRuneEventCount),
+                tostring(restoredStatus.runeEventCount),
+                tostring(restoredStatus.runeStateInitialized),
+                tostring(restoredStatus.runeSlotAPIAvailable),
+                tostring(restoredStatus.lastRuneResult),
+                tostring(mock.trace.runeCountReads),
+                tostring(mock.trace.runeCooldownReads),
+                tostring(mock.trace.unitPowerReads),
+                tostring(mock.trace.unitPowerMaxReads),
+                tostring(mock.trace.unitPowerPercentReads),
+                tostring(byFrame.EAM_PlayerResourceBar_RUNES),
+                tostring(mock.trace.secretScalarOperations),
+                tostring(mock.trace.secretKeyTableOperations)
+            )
+
+            return rebuilt == true
+                and runeFrame ~= nil
+                and initialRuneReads == 6
+                and math.abs(initialValue - 1) < 0.0001
+                and depleted == true
+                and depletedReason == "nativeRendered"
+                and math.abs(depletedValue - (5 / 6)) < 0.0001
+                and depletedStatus.runeReadyCount == 5
+                and restored == true
+                and restoredReason == "nativeRendered"
+                and math.abs(restoredValue - 1) < 0.0001
+                and restoredStatus.runeReadyCount == 6
+                and restoredStatus.runeStateInitialized == true
+                and restoredStatus.runeSlotAPIAvailable == true
+                and restoredStatus.runeEventCount == baselineRuneEventCount + 2
+                and restoredStatus.lastRuneResult == "runePointsRendered"
+                and mock.trace.runeCountReads == 0
+                and mock.trace.runeCooldownReads == 0
+                and mock.trace.unitPowerReads == 0
+                and mock.trace.unitPowerMaxReads == 0
+                and mock.trace.unitPowerPercentReads == 0
+                and byFrame.EAM_PlayerResourceBar_RUNES == 2
+                and mock.trace.secretScalarOperations == 0
+                and mock.trace.secretKeyTableOperations == 0
+        end)
+
+        EAM.db = originalDB
+        mock.setCombat(originalCombat)
+        mock.unitClassToken = originalClass
+        mock.specializationID = originalSpec
+        mock.unitPowerType = originalPowerType
+        mock.unitPowerToken = originalPowerToken
+        mock.unitPowerValues = originalValues
+        mock.unitPowerMaxValues = originalMaximums
+        mock.secretPowerTypes = originalSecretTypes
+        mock.secretPowerMaxTypes = originalSecretMaxTypes
+        mock.setRuneCounts(originalRuneCounts)
+        if not mock.inCombat then
+            pcall(service.rebuildTopology, "runeSlotFlowRestore")
+        end
+
+        local valid = ok and result == true
+        return valid, valid
+            and "DK Rune slots update 6/6 to 5/6 to 6/6 from RUNE_POWER_UPDATE without generic UnitPower reads"
+            or ("DK Rune event-driven segment contract mismatch: " .. details)
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ground.spell_family_activation",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.GroundEffectService
+        local cSpell = api.C_Spell
+        local scheduler = EAM.Modules and EAM.Modules.Scheduler
+        if not mock or not service or not cSpell or not scheduler then
+            return STATUS_SKIP, "Ground spell family strict mock is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalBaseSpell = cSpell.GetBaseSpell
+        local originalOverrideSpell = cSpell.GetOverrideSpell
+        local originalSpellInfo = cSpell.GetSpellInfo
+        local originalAfter = scheduler.after
+        local baselineRestricted = service.getStatus().restrictedActivationCount or 0
+        local details = "pcallFailed"
+
+        local ok, result = pcall(function()
+            local overrideByID = {
+                [62001] = 62011,
+                [62002] = 62021,
+            }
+            local baseByID = {
+                [62011] = 62001,
+                [62021] = 62002,
+            }
+            cSpell.GetBaseSpell = function(spellID)
+                return baseByID[spellID] or spellID
+            end
+            cSpell.GetOverrideSpell = function(spellID)
+                return overrideByID[spellID] or spellID
+            end
+            cSpell.GetSpellInfo = function(spellID)
+                return {
+                    name = "Ground Family " .. spellID,
+                    iconID = 136243,
+                    spellID = overrideByID[spellID] or spellID,
+                }
+            end
+            scheduler.after = function()
+                return true
+            end
+
+            EAM.db = {
+                revision = 830001,
+                alerts = {
+                    groundEffects = {
+                        ["groundEffect:player:62001"] = {
+                            id = "groundEffect:player:62001",
+                            enabled = true,
+                            spellID = 62001,
+                            durationMode = "MANUAL",
+                            manualDuration = 10,
+                        },
+                        ["groundEffect:player:62002"] = {
+                            id = "groundEffect:player:62002",
+                            enabled = true,
+                            spellID = 62002,
+                            durationMode = "MANUAL",
+                            manualDuration = 6,
+                        },
+                    },
+                },
+            }
+            wipe(service.activeAlerts)
+            wipe(service.activeStates)
+            mock.resetTrace()
+            local refreshed, count = service.onConfigChanged()
+            local firstTriggered, firstSource = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "Ground-Family-1",
+                62011
+            )
+            local firstState = service.activeStates[62001]
+            local secondTriggered, secondSource = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "Ground-Family-2",
+                62021
+            )
+            local secondState = service.activeStates[62002]
+            local familyStatus = service.getStatus()
+            local unknownTriggered, unknownReason = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "Ground-Unknown",
+                62999
+            )
+
+            EAM.db = {
+                revision = 830002,
+                alerts = {
+                    groundEffects = {
+                        ["groundEffect:player:62001"] = {
+                            id = "groundEffect:player:62001",
+                            enabled = true,
+                            spellID = 62001,
+                            durationMode = "MANUAL",
+                            manualDuration = 10,
+                        },
+                        ["groundEffect:player:62011"] = {
+                            id = "groundEffect:player:62011",
+                            enabled = true,
+                            spellID = 62011,
+                            durationMode = "MANUAL",
+                            manualDuration = 12,
+                        },
+                    },
+                },
+            }
+            wipe(service.activeAlerts)
+            wipe(service.activeStates)
+            local exactRefreshed = service.onConfigChanged()
+            local exactTriggered, exactSource = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "Ground-Exact",
+                62011
+            )
+            local exactState = service.activeStates[62011]
+            local canonicalStateAfterExact = service.activeStates[62001]
+            local exactStatus = service.getStatus()
+
+            local restrictedTriggered, restrictedReason = service.onSpellcastSucceeded(
+                "UNIT_SPELLCAST_SUCCEEDED",
+                "player",
+                "Ground-Restricted",
+                mock.createSecretScalar()
+            )
+            local restrictedStatus = service.getStatus()
+
+            details = string.format(
+                "refresh=%s/%s family=%s/%s,%s/%s events=%s first=%s second=%s unknown=%s/%s exact=%s/%s/%s restricted=%s/%s count=%s secretOps=%s/%s",
+                tostring(refreshed),
+                tostring(count),
+                tostring(firstTriggered),
+                tostring(firstSource),
+                tostring(secondTriggered),
+                tostring(secondSource),
+                tostring(familyStatus.compiledEventSpellCount),
+                tostring(firstState and firstState.source.activationSpellID),
+                tostring(secondState and secondState.source.activationSpellID),
+                tostring(unknownTriggered),
+                tostring(unknownReason),
+                tostring(exactRefreshed),
+                tostring(exactTriggered),
+                tostring(exactSource),
+                tostring(restrictedTriggered),
+                tostring(restrictedReason),
+                tostring(restrictedStatus.restrictedActivationCount),
+                tostring(mock.trace.secretScalarOperations),
+                tostring(mock.trace.secretKeyTableOperations)
+            )
+
+            return refreshed == true
+                and count == 2
+                and firstTriggered == true
+                and firstSource == "manual"
+                and firstState ~= nil
+                and firstState.spellID == 62001
+                and firstState.source.activationSpellID == 62011
+                and secondTriggered == true
+                and secondSource == "manual"
+                and secondState ~= nil
+                and secondState.spellID == 62002
+                and secondState.source.activationSpellID == 62021
+                and familyStatus.compiledAlertCount == 2
+                and familyStatus.compiledEventSpellCount >= 4
+                and familyStatus.familyCollisionCount == 0
+                and unknownTriggered == false
+                and unknownReason == "notMonitored"
+                and exactRefreshed == true
+                and exactTriggered == true
+                and exactSource == "manual"
+                and exactState ~= nil
+                and exactState.spellID == 62011
+                and exactState.source.activationSpellID == 62011
+                and canonicalStateAfterExact == nil
+                and exactStatus.lastActivationSpellID == 62011
+                and exactStatus.lastCanonicalSpellID == 62011
+                and restrictedTriggered == false
+                and restrictedReason == "activationSpellRestricted"
+                and restrictedStatus.restrictedActivationCount == baselineRestricted + 1
+                and restrictedStatus.lastActivationSpellID == nil
+                and restrictedStatus.lastCanonicalSpellID == nil
+                and restrictedStatus.lastTriggerResult == "activationSpellRestricted"
+                and mock.trace.secretScalarOperations == 0
+                and mock.trace.secretKeyTableOperations == 0
+        end)
+
+        EAM.db = originalDB
+        cSpell.GetBaseSpell = originalBaseSpell
+        cSpell.GetOverrideSpell = originalOverrideSpell
+        cSpell.GetSpellInfo = originalSpellInfo
+        scheduler.after = originalAfter
+        wipe(service.activeAlerts)
+        wipe(service.activeStates)
+        if not mock.inCombat then
+            pcall(service.onConfigChanged)
+        end
+
+        local valid = ok and result == true
+        return valid, valid
+            and "ground effects resolve safe Base/Override families while exact configured IDs retain precedence"
+            or ("ground spell family activation contract mismatch: " .. details)
     end,
 })

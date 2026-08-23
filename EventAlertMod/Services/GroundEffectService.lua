@@ -4,7 +4,7 @@ Module: Services/GroundEffectService
 檔案: Services\GroundEffectService.lua
 
 責任:
-- 將 canonical SavedVariables 編譯成 spellID 索引，監聽玩家成功施法並建立地面效果計時。
+- 將 canonical SavedVariables 與安全 Base／Override 法術族群編譯成 event spellID 索引，監聽玩家成功施法並建立地面效果計時。
 - 非戰鬥、低頻解析法術說明；解析失敗時明確降級到使用者設定秒數。
 - 將安全普通數字轉為 DurationObject，並以單一 Scheduler 處理到期。
 
@@ -25,13 +25,22 @@ local GroundEffectService = {
     activeAlerts = {},
     activeStates = {},
     alertsBySpellID = {},
+    configuredSpellIDByEventID = {},
+    ambiguousEventSpellIDs = {},
     durationCache = {},
     compiledAlertCount = 0,
+    compiledEventSpellCount = 0,
+    familyCollisionCount = 0,
+    restrictedActivationCount = 0,
     resolvedCount = 0,
     fallbackCount = 0,
+    pendingCompile = false,
     pendingResolve = false,
     lastDbRevision = -1,
     lastResolutionSource = nil,
+    lastActivationSpellID = nil,
+    lastCanonicalSpellID = nil,
+    lastTriggerResult = "uninitialized",
     defaults = {
         [19306] = { enabled = true, durationMode = "AUTO", manualDuration = 8, name = "暴風雪" },
         [84714] = { enabled = true, durationMode = "AUTO", manualDuration = 15, name = "寒冰寶珠" },
@@ -189,9 +198,90 @@ local function parseTooltipDescription(spellID)
     return nil
 end
 
+local function resolveSpellIdentifier(callback, spellID)
+    if type(callback) ~= "function" or not safeSpellID(spellID) then
+        return nil
+    end
+    local ok, resolvedSpellID = pcall(callback, spellID)
+    if not ok or not safeSpellID(resolvedSpellID) then
+        return nil
+    end
+    return resolvedSpellID
+end
+
+local function indexEventSpellID(eventSpellID, canonicalSpellID)
+    if not safeSpellID(eventSpellID) or not safeSpellID(canonicalSpellID) then
+        return false
+    end
+    if eventSpellID ~= canonicalSpellID
+        and GroundEffectService.alertsBySpellID[eventSpellID]
+    then
+        return false
+    end
+    if GroundEffectService.ambiguousEventSpellIDs[eventSpellID] then
+        return false
+    end
+
+    local existing = GroundEffectService.configuredSpellIDByEventID[eventSpellID]
+    if existing == nil then
+        GroundEffectService.configuredSpellIDByEventID[eventSpellID] = canonicalSpellID
+        GroundEffectService.compiledEventSpellCount = GroundEffectService.compiledEventSpellCount + 1
+        return true
+    end
+    if existing ~= canonicalSpellID then
+        GroundEffectService.configuredSpellIDByEventID[eventSpellID] = nil
+        GroundEffectService.ambiguousEventSpellIDs[eventSpellID] = true
+        GroundEffectService.compiledEventSpellCount = math.max(
+            0,
+            GroundEffectService.compiledEventSpellCount - 1
+        )
+        GroundEffectService.familyCollisionCount = GroundEffectService.familyCollisionCount + 1
+    end
+    return false
+end
+
+local function indexSpellFamily(canonicalSpellID)
+    indexEventSpellID(canonicalSpellID, canonicalSpellID)
+    local cSpell = api.C_Spell
+    if not cSpell then
+        return
+    end
+
+    local baseSpellID = resolveSpellIdentifier(cSpell.GetBaseSpell, canonicalSpellID)
+    local overrideSpellID = resolveSpellIdentifier(cSpell.GetOverrideSpell, canonicalSpellID)
+    indexEventSpellID(baseSpellID, canonicalSpellID)
+    indexEventSpellID(overrideSpellID, canonicalSpellID)
+    if baseSpellID then
+        indexEventSpellID(
+            resolveSpellIdentifier(cSpell.GetOverrideSpell, baseSpellID),
+            canonicalSpellID
+        )
+    end
+    if overrideSpellID then
+        indexEventSpellID(
+            resolveSpellIdentifier(cSpell.GetBaseSpell, overrideSpellID),
+            canonicalSpellID
+        )
+    end
+
+    if type(cSpell.GetSpellInfo) == "function" then
+        local ok, spellInfo = pcall(cSpell.GetSpellInfo, canonicalSpellID)
+        if ok and Util.isReadableTable(spellInfo) then
+            local resolvedSpellID, fieldSafe = Util.readSafeField(spellInfo, "spellID")
+            if fieldSafe then
+                indexEventSpellID(resolvedSpellID, canonicalSpellID)
+            end
+        end
+    end
+end
+
 local function compileAlerts()
     wipe(GroundEffectService.alertsBySpellID)
+    wipe(GroundEffectService.configuredSpellIDByEventID)
+    wipe(GroundEffectService.ambiguousEventSpellIDs)
     GroundEffectService.compiledAlertCount = 0
+    GroundEffectService.compiledEventSpellCount = 0
+    GroundEffectService.familyCollisionCount = 0
     local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
     local alerts = savedVariables and savedVariables.getActiveAlerts
         and savedVariables.getActiveAlerts() or nil
@@ -205,14 +295,24 @@ local function compileAlerts()
             end
         end
     end
+    for canonicalSpellID in pairs(GroundEffectService.alertsBySpellID) do
+        indexSpellFamily(canonicalSpellID)
+    end
     GroundEffectService.lastDbRevision = EAM.db and EAM.db.revision or 0
+    GroundEffectService.pendingCompile = false
 end
 
 local function verifyCompiledAlerts()
     local revision = EAM.db and EAM.db.revision or 0
     if revision ~= GroundEffectService.lastDbRevision then
+        if inCombat() then
+            GroundEffectService.pendingCompile = true
+            GroundEffectService.pendingResolve = true
+            return false, "combatCompileDeferred"
+        end
         compileAlerts()
     end
+    return true, "compiled"
 end
 
 local function resolveAlertDuration(spellID, alert)
@@ -240,7 +340,10 @@ function GroundEffectService.refreshDurationCache()
         GroundEffectService.pendingResolve = true
         return false, "combatDeferred"
     end
-    verifyCompiledAlerts()
+    local compiled, compileReason = verifyCompiledAlerts()
+    if not compiled then
+        return false, compileReason
+    end
     wipe(GroundEffectService.durationCache)
     GroundEffectService.resolvedCount = 0
     GroundEffectService.fallbackCount = 0
@@ -270,6 +373,10 @@ function GroundEffectService.scrapeDuration(spellID)
     if inCombat() then
         GroundEffectService.pendingResolve = true
         return nil, nil, "combatDeferred"
+    end
+    local compiled, compileReason = verifyCompiledAlerts()
+    if not compiled then
+        return nil, nil, compileReason
     end
     local alert = GroundEffectService.alertsBySpellID[spellID]
     local duration, source = resolveAlertDuration(spellID, alert)
@@ -323,43 +430,54 @@ local function readSpellPresentation(spellID, alert)
     return name, icon
 end
 
-local function triggerGroundEffect(spellID)
+local function triggerGroundEffect(canonicalSpellID, activationSpellID)
     if not moduleEnabled() then
+        GroundEffectService.lastTriggerResult = "moduleDisabled"
         return false, "moduleDisabled"
     end
-    if not safeSpellID(spellID) then
+    if not safeSpellID(canonicalSpellID) then
+        GroundEffectService.lastTriggerResult = "invalidSpellID"
         return false, "invalidSpellID"
     end
-    verifyCompiledAlerts()
-    local alert = GroundEffectService.alertsBySpellID[spellID]
+    if not safeSpellID(activationSpellID) then
+        activationSpellID = canonicalSpellID
+    end
+    local compiled, compileReason = verifyCompiledAlerts()
+    if not compiled then
+        GroundEffectService.lastTriggerResult = compileReason
+        return false, compileReason
+    end
+    local alert = GroundEffectService.alertsBySpellID[canonicalSpellID]
     if not alert or alert.enabled == false then
+        GroundEffectService.lastTriggerResult = "notMonitored"
         return false, "notMonitored"
     end
     if not Scheduler then
         Scheduler = EAM.Modules.Scheduler
     end
 
-    local resolution = GroundEffectService.durationCache[spellID]
+    local resolution = GroundEffectService.durationCache[canonicalSpellID]
     local duration = resolution and resolution.duration or normalizeManualDuration(alert.manualDuration)
     local source = resolution and resolution.source or "manualFallback"
     if not Util.isSafePositiveNumber(duration) then
+        GroundEffectService.lastTriggerResult = "durationUnavailable"
         return false, "durationUnavailable"
     end
 
     local now = api.GetTime and api.GetTime() or 0
-    GroundEffectService.activeAlerts[spellID] = now + duration
-    local state = GroundEffectService.activeStates[spellID]
+    GroundEffectService.activeAlerts[canonicalSpellID] = now + duration
+    local state = GroundEffectService.activeStates[canonicalSpellID]
     if not state then
-        local name, icon = readSpellPresentation(spellID, alert)
+        local name, icon = readSpellPresentation(canonicalSpellID, alert)
         state = GroundEffectStatePool.acquire()
-        state.id = "groundEffect_" .. spellID
+        state.id = "groundEffect_" .. canonicalSpellID
         state.kind = EAM.Constants.ALERT_KIND_GROUND_EFFECT
-        state.spellID = spellID
+        state.spellID = canonicalSpellID
         state.name = name
         state.icon = icon
         state.stacks = 0
         state.active = true
-        GroundEffectService.activeStates[spellID] = state
+        GroundEffectService.activeStates[canonicalSpellID] = state
     end
 
     state.shown = true
@@ -371,18 +489,22 @@ local function triggerGroundEffect(spellID)
         and DurationAdapter.createFromStart(now, duration) or nil
     state.source.event = "UNIT_SPELLCAST_SUCCEEDED"
     state.source.api = source
+    state.source.activationSpellID = activationSpellID
     state.source.updatedAt = now
     wipe(state.boundaryWarnings)
     if source == "manualFallback" then
         state.boundaryWarnings[1] = "groundDurationManualFallback"
     end
 
+    GroundEffectService.lastActivationSpellID = activationSpellID
+    GroundEffectService.lastCanonicalSpellID = canonicalSpellID
+    GroundEffectService.lastTriggerResult = source
     local router = EAM.Modules.EventRouter
     if router then
         router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
     end
     if Scheduler and Scheduler.after then
-        Scheduler.after(duration, onAlertExpired, spellID)
+        Scheduler.after(duration, onAlertExpired, canonicalSpellID)
     end
     return true, source
 end
@@ -391,25 +513,83 @@ GroundEffectService.triggerGroundEffect = triggerGroundEffect
 
 function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spellID)
     if not moduleEnabled() then
+        GroundEffectService.lastTriggerResult = "moduleDisabled"
         return false, "moduleDisabled"
     end
-    if eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" or not safeSpellID(spellID) then
-        return
+    if eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" then
+        GroundEffectService.lastTriggerResult = "eventIgnored"
+        return false, "eventIgnored"
     end
-    triggerGroundEffect(spellID)
+    if not safeSpellID(spellID) then
+        GroundEffectService.restrictedActivationCount = GroundEffectService.restrictedActivationCount + 1
+        GroundEffectService.lastActivationSpellID = nil
+        GroundEffectService.lastCanonicalSpellID = nil
+        GroundEffectService.lastTriggerResult = "activationSpellRestricted"
+        return false, "activationSpellRestricted"
+    end
+
+    local compiled, compileReason = verifyCompiledAlerts()
+    if not compiled then
+        GroundEffectService.lastTriggerResult = compileReason
+        return false, compileReason
+    end
+    GroundEffectService.lastActivationSpellID = spellID
+    GroundEffectService.lastCanonicalSpellID = nil
+    if GroundEffectService.ambiguousEventSpellIDs[spellID] then
+        GroundEffectService.lastTriggerResult = "ambiguousSpellFamily"
+        return false, "ambiguousSpellFamily"
+    end
+
+    local canonicalSpellID
+    if GroundEffectService.alertsBySpellID[spellID] then
+        canonicalSpellID = spellID
+    else
+        canonicalSpellID = GroundEffectService.configuredSpellIDByEventID[spellID]
+    end
+    if not safeSpellID(canonicalSpellID) then
+        GroundEffectService.lastTriggerResult = "notMonitored"
+        return false, "notMonitored"
+    end
+    GroundEffectService.lastCanonicalSpellID = canonicalSpellID
+    return triggerGroundEffect(canonicalSpellID, spellID)
 end
 
 function GroundEffectService.onConfigChanged()
-    compileAlerts()
     if not moduleEnabled() then
         return false, "moduleDisabled"
     end
+    if inCombat() then
+        GroundEffectService.pendingCompile = true
+        GroundEffectService.pendingResolve = true
+        return false, "combatCompileDeferred"
+    end
+    compileAlerts()
+    return GroundEffectService.refreshDurationCache()
+end
+
+function GroundEffectService.onSpellTopologyChanged(eventName, unit)
+    if eventName == "PLAYER_SPECIALIZATION_CHANGED" and unit and unit ~= "player" then
+        return false, "unitIgnored"
+    end
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
+    if inCombat() then
+        GroundEffectService.pendingCompile = true
+        GroundEffectService.pendingResolve = true
+        return false, "combatCompileDeferred"
+    end
+    compileAlerts()
     return GroundEffectService.refreshDurationCache()
 end
 
 function GroundEffectService.onCombatEnd()
     if not moduleEnabled() then
         return false, "moduleDisabled"
+    end
+    if GroundEffectService.pendingCompile then
+        compileAlerts()
+        GroundEffectService.pendingResolve = true
     end
     if GroundEffectService.pendingResolve then
         return GroundEffectService.refreshDurationCache()
@@ -440,13 +620,17 @@ function GroundEffectService.initialize()
     local router = EAM.Modules.EventRouter
     if router then
         router.register("UNIT_SPELLCAST_SUCCEEDED", GroundEffectService.onSpellcastSucceeded)
+        router.register("SPELLS_CHANGED", GroundEffectService.onSpellTopologyChanged)
+        router.register("PLAYER_TALENT_UPDATE", GroundEffectService.onSpellTopologyChanged)
+        router.register("PLAYER_SPECIALIZATION_CHANGED", GroundEffectService.onSpellTopologyChanged)
+        router.register("ACTIVE_TALENT_GROUP_CHANGED", GroundEffectService.onSpellTopologyChanged)
+        router.register("TRAIT_CONFIG_UPDATED", GroundEffectService.onSpellTopologyChanged)
         router.register("PLAYER_REGEN_ENABLED", GroundEffectService.onCombatEnd)
         router.register("EAM_GROUND_EFFECT_CONFIG_CHANGED", GroundEffectService.onConfigChanged)
     end
 end
 
 function GroundEffectService.onModuleToggle(enabled, reason)
-    compileAlerts()
     if enabled == false then
         local router = EAM.Modules.EventRouter
         for spellID, state in pairs(GroundEffectService.activeStates) do
@@ -463,18 +647,26 @@ function GroundEffectService.onModuleToggle(enabled, reason)
         end
         wipe(GroundEffectService.activeAlerts)
         wipe(GroundEffectService.durationCache)
+        GroundEffectService.pendingCompile = false
         GroundEffectService.pendingResolve = false
         return true, "disabled"
     end
-    return GroundEffectService.refreshDurationCache()
+    return GroundEffectService.onSpellTopologyChanged("moduleEnabled")
 end
 
 function GroundEffectService.getStatus()
     return {
         compiledAlertCount = GroundEffectService.compiledAlertCount,
+        compiledEventSpellCount = GroundEffectService.compiledEventSpellCount,
+        familyCollisionCount = GroundEffectService.familyCollisionCount,
+        restrictedActivationCount = GroundEffectService.restrictedActivationCount,
         resolvedCount = GroundEffectService.resolvedCount,
         fallbackCount = GroundEffectService.fallbackCount,
+        pendingCompile = GroundEffectService.pendingCompile,
         pendingResolve = GroundEffectService.pendingResolve,
         lastResolutionSource = GroundEffectService.lastResolutionSource,
+        lastActivationSpellID = GroundEffectService.lastActivationSpellID,
+        lastCanonicalSpellID = GroundEffectService.lastCanonicalSpellID,
+        lastTriggerResult = GroundEffectService.lastTriggerResult,
     }
 end

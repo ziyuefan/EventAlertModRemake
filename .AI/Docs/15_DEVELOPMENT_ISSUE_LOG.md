@@ -1253,7 +1253,7 @@
 - 驗證：Lua 64/64；Flow all 75/75；Flow boundary 54/54；Validation Contracts 441/441。offline harness 未載入 Slash UI 時，service manual route 實測，slash source 由靜態 Contract 覆蓋。
 - 實機簽收：非戰鬥將滑鼠移入目標光環按 Ctrl+Alt；若無彈窗回報 /eam doctor 安全欄位，再以 /eam add target 手動輸入已知 ID 測試 target 按鈕。每份報告須附 client channel、patch、build、Interface、combat、/reload、Lua error／taint／blocked action 與 visualObservation。
 
- 
+
 ### EAM-20260823-COOLDOWN-ACTIVATION-TRISTATE：冷卻清單刷新造成批量顯示與 false 設定遺失
 
 - 日期：2026-08-23。
@@ -1263,3 +1263,93 @@
 - 有效解法：新增 activatedAlerts，只接受 player UNIT_SPELLCAST_SUCCEEDED 精確 spellID；refresh／regen／形態事件只刷新既有啟動狀態。到期回呼交由 CooldownService 判定，usable glow 與既有 glow 合併。SavedVariables、ProfileCodec、Options 採明確 boolean／nil 三態，並加入非清單治療法術與脫戰回歸 fixture。
 - 驗證：Lua 64/64；Flow all 76/76；Flow boundary 55/55；Validation Contracts 447/447。artifact：.AI/TestResults/EAM_FlowValidation_all_20260823_042614.json、.AI/TestResults/EAM_FlowValidation_boundary_20260823_042834.json。均為 offline/static evidence。
 - 實機待辦：Retail／PTR 12.1、XPTR 12.0.7 各測 exact cast、非清單治療、戰鬥／脫戰、變身、模組開關、三項 tri-state 與 /reload；依 Docs/29_LIVE_TEST_STEP_GUIDE.md 回報 client identity、visual、taint 與 blocked action。
+
+### EAM-20260823-PLAYER-RESOURCE-FINAL-PROMPT：多資源拓撲、事件路由與設定生命週期補強
+
+- 日期：2026-08-23。
+- 狀態：核心程式與離線驗證已完成；Retail 12.1、PTR 12.1、XPTR 12.0.7 的事件頻率、Secret sink、視覺、taint 與 blocked action 仍待玩家部署後簽收。
+- 症狀：前版資源模組仍有背景 sampler 無明確入口、UNIT_DISPLAYPOWER 可能重新判定全部能力、停用模組未停止 Probe、Druid 多形態與 Energy／ComboPoints 擁有權覆蓋不足，以及 numeric 文字設定缺少字型／方向控制。
+- 原因判斷：資源定義、SavedVariables 與 renderer 各自保留局部模型；事件路由把前景切換誤當拓撲變更；能力探針生命週期未由模組狀態管理；strict mock 未覆蓋所有形態與多資源併存案例。
+- 有效解法：以 PlayerResourceCatalog 作唯一定義來源，PAIN 使用專用 legacy key；UNIT_DISPLAYPOWER 僅更新前景；加入 Druid Bear／Cat／Caster／Moonkin／回 Bear、Energy→ComboPoints ownership、Probe stop lifecycle、顯式 /eam unitpower background <RESOURCE_KEY> 診斷入口、非戰鬥即時設定與戰鬥中離戰後單次合併；numeric Secret 仍只寫入安全 sink。
+- 工具試錯：連續性 JSON 候選曾因 PowerShell replacement 使用 $1 字面值與遺漏閉合欄位而短暫失效；已以原始備份重建候選，先 ConvertFrom-Json 再套用，並以快照／facts／artifact 交叉檢查避免再次寫入無效 JSON。
+- 驗證：Lua 62/62；Flow all 77/77；Flow boundary 56/56；Validation Contracts 452/452；JSON schema 1、snapshot 2026-08-23.4。以上均為 offline/static evidence。
+- 後續注意事項：/eam unitpower background 只記錄玩家明確判定事件不足，不代表 sampler 已在實機必要或有效；未部署前不得引用離線通過宣稱 WoW 實機完成。
+### EAM-20260823-DEPLOY-GAME-DATA-BACKUP-RESTORE：移除程序執行閘門並加入按通道遊戲存檔備份／還原
+
+- 日期：2026-08-23。
+- 狀態：部署工具程式、合成 fixture 與離線契約已完成；未對實際 WoW 目錄或真實遊戲存檔執行操作。
+- 症狀：部署前的 WoW 程序檢查會阻止使用者在已開啟客戶端時覆蓋；同時缺少依 Retail／PTR／XPTR 與版本選擇的 EventAlertMod 存檔備份／還原能力，無法保留原始資料夾相對位置。
+- 原因判斷：部署腳本把「程序是否執行」當成必要安全條件，但真正不可追蹤的風險是 Reparse Point、來源／目標不明與還原資料不完整；備份若只扁平化檔名，還原時無法判斷原始位置。
+- 有效解法：移除 Test-WowIsRunning 與 Wow/WowT 程序 gate；新增互動 [W]／[U] 與 CLI Backup／Restore，依通道／版本掃描名稱或相對路徑含 EventAlertMod 的檔案，寫入保留 WTF/... 相對路徑的 manifest、SHA-256 與備份 package。還原前建立自動 rollback，逐檔驗證 hash，遇到 Reparse Point、路徑穿越或 hash 不符即 fail-closed。
+- 試錯紀錄：初次清理合成 fixture 時在外層 PowerShell 呼叫腳本內部 helper，造成 helper 不存在；改用明確暫存 package／fixture 路徑清理後，未觸及真實遊戲目錄。
+- 驗證：Lua 62/62；Flow all 77/77；Flow boundary 56/56；Validation Contracts 459/459。合成 fixture 2 個相關檔案 backup／restore、相對路徑與 SHA-256 驗證均 pass；上述均為 offline/static evidence。
+- 實機待辦：玩家若需最新遊戲狀態，先在新根執行部署工具選擇通道／版本，再於遊戲內 /reload 後回報 client channel、patch、build、Interface、combat、Lua error／taint／blocked action 與 visualObservation。程序檢查已移除，不代表可以忽略遊戲自動寫檔的競態風險；還原前仍應先關閉遊戲或確定存檔不會被同時覆寫。
+### 2026-08-23 EAM-20260823-PLAYER-RESOURCE-FINAL-GATE：Frozen Catalog、Probe auto-check 與 README 同步
+
+- 狀態：離線修正完成；Retail／PTR／XPTR 尚未部署或真人簽收。
+- 症狀一：實機曾出現 SavedVariables.lua attempted to perform indexed assignment on a frozen table，隨後 Options.lua 以 nil SavedVariables method 報錯。
+- 原因判斷：SavedVariables 在初始化時重新寫入 Catalog.ByKey／ByPowerType；Catalog 是 immutable/frozen map。首個錯誤中斷初始化，Options 後續呼叫才出現 nil。
+- 有效解法：SavedVariables 只讀取 Catalog maps，另建可變 legacy alias map；Options 的各 add category 對缺失 API fail-closed 並回傳 savedVariablesMethodUnavailable。
+- 症狀二：新增 PlayerResourceProbe missing-event check 後，Flow 行為通過但 Contracts 仍期待舊 runMissingEventCheck(generation) 文字。
+- 有效解法：契約改為實際 owner token 形狀，並把 autoCheckValid、missingEventCheckExecutedCount 與 probe restart 納入 Flow 靜態 gate；不放寬 raw Secret／OnUpdate 禁止條件。
+- 部署文件症狀：Deploy 遇到公開 README 與插件副本雜湊不同而零寫入阻擋。
+- 有效解法：根 README 重整為 Alpha 7 目前命令與部署說明後，精確同步 EventAlertMod/README.md；兩份 SHA-256 均為 7EB8752ACA994769356757AED7E1FB4483497930E4A0CB9C567403D14D161509。
+- 驗證：Lua 62/62；Flow boundary 56/56；Flow all 77/77；Validation Contracts 461/461；ProjectContinuity JSON parse pass。未執行 WoW/WTF/GitHub。
+- 後續：玩家必須先部署，再在正確 Retail／PTR／XPTR 執行 /reload 與資源、專精、形態、戰鬥及模組生命週期簽收。
+
+### 2026-08-23 EAM-20260823-CONTINUITY-PRIVACY-GATE：最新 fact 證據路徑觸發私人資料詞彙檢查
+
+- 日期：2026-08-23。
+- 狀態：已解決，未涉及遊戲程式或真人測試。
+- 症狀：Validation Contracts 在加入最新玩家資源／README fact 後出現 Continuity excludes private game data terms 失敗；JSON 本身可解析，Flow 與 Lua 均正常。
+- 原因判斷：新 fact 的證據描述意外包含私人存檔相關檔名詞彙；既有 continuity privacy contract 會拒絕這些詞，避免把帳號／角色資料語意帶入可公開的治理快照。
+- 有效解法：先備份 ProjectContinuity.json，將描述改為中性的 persistence／公開程式與文件證據，移除私人遊戲資料檔名與路徑語意；不修改 importer privacy 規則、不讀寫真實遊戲資料。
+- 驗證：ProjectContinuity JSON parse pass；Validation Contracts 464/464；Lua 62/62、Flow all 77/77、boundary 56/56 仍通過。
+- 後續注意：公開 continuity 只放可追溯的程式／文件相對路徑；WTF、帳號、角色或 SavedVariables 內容只能留在本機備份，不得貼入 GitHub README、JSON snapshot 或實機報告。
+
+### 2026-08-23 EAM-20260823-CHARGE-GLOW-LIBRARY：充能顯示、冷卻白框與 Glow Border fallback
+
+- 狀態：程式與離線驗證完成；Retail／PTR／XPTR 尚未部署或真人簽收。
+- 症狀：充能型技能沒有 current/max 文字；冷卻沒有計時時仍留下小白框；需要依技能可用、充能或自訂條件顯示動畫外框。
+- 原因判斷：CooldownService 沒有把安全的 C_Spell.GetSpellCharges 結果傳到 Renderer；CooldownFrame 沒有在無 timer 分支清理 edge／bling；Glow 若直接建立第三方 overlay，可能在戰鬥中首次建框造成污染或 mock optional method nil error。
+- 有效解法：新增安全 charge state 與 current/max 顯示；無 timer 時 Hide 並關閉 CooldownFrame edge／bling；內嵌 LibStub／LibButtonGlow-1.0 並由 IconPool 做 capability-safe 取得、戰鬥首次建框阻擋、自訂顏色回退 EAM 動畫邊框。UI optional method／field 讀取均經安全 wrapper。
+- 保留／限制：LibButtonGlow 只作預設 glow 的備援路徑；自訂顏色仍由 EAM fallback 負責。未 hook Blizzard secure frame、未讀回 Secret duration／charge、未增加 EAM OnUpdate。
+- 驗證：Lua 62/62、Flow all 78/78、Flow boundary 57/57、Validation Contracts 472/472、TOC validator passed。全部為 offline/static evidence。
+- 實機待辦：玩家部署後，在 Retail／PTR／XPTR 測充能 0/max、部分充能、冷卻完成與可用高亮；確認沒有白框、Glow 外擴尺寸與 /reload 持久化，並回報 channel、patch、build、Interface、combat、Lua error／taint／blocked action 與 visualObservation。
+
+### 2026-08-23 EAM-20260823-DEPLOY-NOTIFICATION-PROTOCOL：實機部署前通知
+
+- 狀態：流程已確立，尚未執行實際部署。
+- 規則：每次需要玩家 runtime 測試時，先列出來源 D:\Project_EventAlertMod\EventAlertMod、目標通道與 Interface\AddOns\EventAlertMod、覆蓋方式、/reload 或完整重啟要求、預期測試步驟與回報 JSON 欄位；玩家完成部署後再開始判讀。
+- 目的：避免把新根離線檔案、舊通道 symlink 或未部署版本誤當成遊戲內最新狀態；不自動寫入 WoW/WTF，也不以離線 pass 冒充實機 pass。
+
+### 2026-08-23 EAM-20260823-CHARGE-SECRET-STATUSBAR：充能次數、Secret StatusBar 與五種版面
+
+- 日期：2026-08-23。
+- 狀態：程式、嚴格 mock、Flow 與靜態契約已完成；Retail／PTR／XPTR 尚未部署或真人視覺簽收。
+- 症狀：充能技能加入清單後仍可能不出現；初版 fallback 的段數跟著恢復時間前進，而不是跟著剩餘可用次數；底部 4px 同圖示寬度 StatusBar 不夠顯眼；細部設定第一個冷卻行為按鈕曾與 Aura 專用「僅監控自己施放」重疊。
+- 根因一：首次啟動只比較儲存 spellID 與 `UNIT_SPELLCAST_SUCCEEDED` spellID，沒有處理目前 override 與 base spell 對應；已改為安全 spell family 對齊，且其他 refresh／regen／形態事件仍不得替未施放技能開門。
+- 根因二：共用安全欄位 reader 會因 `SpellChargeInfo` 含 Secret 欄位而拒絕整張表；已改為服務專屬欄位級判讀，只保存安全 `maxCharges`／`isActive`。
+- 根因三：初版把 `GetSpellChargeDuration` 的 `DurationObject` 送入 StatusBar，語意實際是下一層恢復時間，不能代表 current/max 段數。
+- 有效解法：`currentCharges` 無論安全或 Secret，都只在所有結構設定完成後直送 `StatusBar:SetValue`；安全 `maxCharges` 設定 min/max 與最多 20 段分隔線。Secret 值不比較、運算、字串化、序列化、保存或讀回。
+- 版面：新增 TOP／BOTTOM／LEFT／RIGHT／RING；預設線性長度為圖示 150%、厚度 8px，可即時調整。環形採 12.1 `StatusBarRenderMode.Radial` 與插件內 128x128 TGA ring grid；能力不可用時回退 BOTTOM 線性條。
+- 完成語意：充能技能只有回到最大次數才算完成，`cooldownRemoveAura` 才可移除；安全 current/max 直接判斷，Secret current 以安全 `isActive ~= true` 判斷回滿。
+- UI 解法：只有 Aura 類型顯示 fromPlayer；技能／物品冷卻隱藏該控制，三項冷卻行為按鈕不再重疊。充能列版面／長度／厚度位於全域 Options，非戰鬥立即刷新，戰鬥中結構改動沿用既有版面並於安全時機更新。
+- Lua 試錯：正式狀態與 Mock 各發現一次 `condition and false-or-nil or fallback` 三元陷阱；已改用明確 if 指派，保留合法 `false` 並確保 Secret sink 不保存原值。
+- 工具試錯：標準 `apply_patch` 仍因新根 Windows sandbox setup refresh error 無法使用；PowerShell 精準替換曾因 CRLF／LF 不同及一次字串轉義 parser error 在寫入前中止。所有正式寫入均有備份、唯一匹配數量閘門與後續 Lua／Flow 驗證。
+- API 依據：Retail 12.1 `C_Spell.GetSpellCharges` mixed secrecy、`StatusBar:SetValue` Secret BarValue sink、`StatusBar:SetRenderMode(Enum.StatusBarRenderMode.Radial)`；API 存在與離線 sink accepted 仍不等於遊戲視覺通過。
+- 驗證：Lua 64/64；Flow all 79/79；Flow boundary 58/58；Validation Contracts 483/483。artifact：`.AI/TestResults/EAM_FlowValidation_all_20260823_162316.json`、`.AI/TestResults/EAM_FlowValidation_boundary_20260823_162320.json`。上述皆為 offline/static evidence。
+- 實機待辦：部署後以 2 層以上充能技能測首次施放、base／override、max→部分→0→回復→max、戰鬥內外、三項 per-spell 行為、五種版面、分隔線、環形 fallback、Lua error／taint／blocked action。
+
+### EAM-20260823-RUNES-GROUND-FAMILY：DK 符文與地面效果法術族群
+
+- 日期：2026-08-23。
+- 狀態：已完成離線實作與回歸；Retail／PTR／XPTR 真人視覺 pending。
+- 症狀：死亡騎士符能可變動，但符文維持不動；冰霜之球可觸發地面效果，死亡凋零與反魔法立場未建立監控。
+- 根因判斷：既有 RUNES 節點丟棄 `RUNE_POWER_UPDATE` 的 slot payload，改讀不適合表示六顆 Rune readiness 的泛用 UnitPower。GroundEffect 則以事件 spellID 直接查設定 spellID，遇到死亡凋零→褻瀆等 Base／Override ID 改寫便 miss；反魔法立場缺少安全命中診斷。
+- 已嘗試方法：先完成六槽 API 實作與 Flow。首次 boundary 顯示畫面比例 `1→5/6→1` 均正確，但仍多一次 `GetRuneCount`；不是 API 必要 reread，而是 Lua `and/or` 將 `added=false` 轉成 nil。改為明確 if 後零額外 slot read。
+- 有效解法：Env 封裝 `GetRuneCount`／`GetRuneCooldown`；Service 冷啟動同步六槽、事件直接更新 ready count，Renderer 沿用安全六段 POINTS。GroundEffect 冷路徑編譯 Base／Override／SpellInfo alias，exact-ID 優先、碰撞與 Secret fail-closed，天賦拓樸戰鬥中延後重編譯。
+- 測試陷阱：Contracts 首次執行正確拒絕了修正前 `all 81/82` 的舊 artifact；產生新的 `all 82/82` 後 Importer 契約恢復通過。不得為通過而放寬 Importer。
+- 驗證：Lua 64/64；Flow all 82/82；boundary 61/61；Validation Contracts 493/493。`unitpower.runes_event_driven_segments` 與 `ground.spell_family_activation` 均 pass，Secret scalar/key operation 為 0。
+- 後續注意：目前 Rune 只呈現六段 readiness count，不呈現每顆獨立 recharge sweep。反魔法立場若因吸收上限提前結束，固定施放秒數只代表上限；需玩家實機回報，不能猜測提前結束事件。
+- 發布打包陷阱：首份 Alpha 7.4 source ZIP 雖排除 `.AI/TestResults`，仍因匯入器留下 `.AI/.AI/TestResults` 而混入 4 個報告；根因是排除器只檢查首層。已改成任意深度 leaf 排除 `.git`、`backup`、`TestResults`、`.trash_*`，並由同一條 source-package Contract 鎖定。提交前另發現 `.AI/skills/wow-addon-dev/.git` 上游 metadata，已在路徑與 Reparse Point 驗證後備份並移至 `.AI/.trash_*`；Skill 本體保留為一般專案檔。錯誤 ZIP 僅保留於 ignored `Dist` 作稽核證據，不得上傳。

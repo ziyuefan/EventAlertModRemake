@@ -35,6 +35,7 @@ local mathFloor = math.floor
 local freeze = EAM.Util and EAM.Util.tableFreeze or function(value)
     return value
 end
+local Catalog = EAM.Data and EAM.Data.PlayerResourceCatalog
 
 local COOLDOWN_BEHAVIOR_FIELDS = {
     "cooldownRemoveAura",
@@ -168,6 +169,9 @@ local defaults = {
         },
         cooldownShadow = true,
         cooldownSwipeAlpha = 1,
+        chargeBarLayout = "BOTTOM",
+        chargeBarLengthPercent = 150,
+        chargeBarThickness = 8,
         nativeAuraDualCountdownProbe = false,
         
         -- 職業特殊能量 (20種)
@@ -186,6 +190,7 @@ local defaults = {
         powerArcane = true,
         powerRunes = true,
         powerFury = true,
+        powerPain = true,
         powerFrenzy = true,
         powerMana = true,
         powerPetFocus = true,
@@ -263,33 +268,14 @@ local function getPlayerClassToken()
     return nil
 end
 
-local PLAYER_RESOURCE_DEFINITIONS = {
-    { key = "MANA", powerType = 0, legacyKey = "powerMana" },
-    { key = "RAGE", powerType = 1, legacyKey = "powerRage" },
-    { key = "FOCUS", powerType = 2, legacyKey = "powerFocus" },
-    { key = "ENERGY", powerType = 3, legacyKey = "powerEnergy" },
-    { key = "COMBO_POINTS", powerType = 4, legacyKey = "powerCombo" },
-    { key = "RUNES", powerType = 5, legacyKey = "powerRunes" },
-    { key = "RUNIC_POWER", powerType = 6, legacyKey = "powerRunic" },
-    { key = "SOUL_SHARDS", powerType = 7, legacyKey = "powerShard" },
-    { key = "LUNAR_POWER", powerType = 8, legacyKey = "powerAstral" },
-    { key = "HOLY_POWER", powerType = 9, legacyKey = "powerHoly" },
-    { key = "MAELSTROM", powerType = 11, legacyKey = "powerMaelstrom" },
-    { key = "CHI", powerType = 12, legacyKey = "powerChi" },
-    { key = "INSANITY", powerType = 13, legacyKey = "powerInsanity" },
-    { key = "ARCANE_CHARGES", powerType = 16, legacyKey = "powerArcane" },
-    { key = "FURY", powerType = 17, legacyKey = "powerFury" },
-    { key = "PAIN", powerType = 18, legacyKey = "powerFury" },
-    { key = "ESSENCE", powerType = 19, legacyKey = "powerVigor" },
-}
+local PLAYER_RESOURCE_DEFINITIONS = Catalog and Catalog.Definitions or {}
 
-local PLAYER_RESOURCE_BY_KEY = {}
+local PLAYER_RESOURCE_BY_KEY = Catalog and Catalog.ByKey or {}
 local PLAYER_RESOURCE_BY_LEGACY_KEY = {}
 local PLAYER_RESOURCE_LEGACY_ALIAS_COLLISIONS = {}
-local PLAYER_RESOURCE_BY_POWER_TYPE = {}
+local PLAYER_RESOURCE_BY_POWER_TYPE = Catalog and Catalog.ByPowerType or {}
 for index = 1, #PLAYER_RESOURCE_DEFINITIONS do
     local definition = PLAYER_RESOURCE_DEFINITIONS[index]
-    PLAYER_RESOURCE_BY_KEY[definition.key] = definition
     local legacyKey = string.upper(definition.legacyKey)
     local legacyDefinition = PLAYER_RESOURCE_BY_LEGACY_KEY[legacyKey]
     if legacyDefinition == nil and not PLAYER_RESOURCE_LEGACY_ALIAS_COLLISIONS[legacyKey] then
@@ -298,8 +284,6 @@ for index = 1, #PLAYER_RESOURCE_DEFINITIONS do
         PLAYER_RESOURCE_BY_LEGACY_KEY[legacyKey] = nil
         PLAYER_RESOURCE_LEGACY_ALIAS_COLLISIONS[legacyKey] = true
     end
-    PLAYER_RESOURCE_BY_POWER_TYPE[definition.powerType] = definition
-    definition.defaultOrder = index
 end
 
 local PLAYER_RESOURCE_DISPLAY_MODES = freeze({
@@ -904,6 +888,48 @@ local function normalizeModuleToggles(db)
     config.enableItemCooldown = toggles.itemCooldown
 end
 
+local VALID_CHARGE_BAR_LAYOUTS = freeze({
+    TOP = true,
+    BOTTOM = true,
+    LEFT = true,
+    RIGHT = true,
+    RING = true,
+})
+
+local function normalizeChargeBarConfig(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+
+    local layout = config.chargeBarLayout
+    if not VALID_CHARGE_BAR_LAYOUTS[layout] then
+        if layout ~= nil then
+            appendMigrationWarning(db, "invalidChargeBarLayoutDefaulted")
+        end
+        layout = "BOTTOM"
+    end
+    config.chargeBarLayout = layout
+
+    local lengthPercent = config.chargeBarLengthPercent
+    if not EAM.Util.isSafeNumber(lengthPercent) then
+        lengthPercent = 150
+    elseif lengthPercent < 100 then
+        lengthPercent = 100
+    elseif lengthPercent > 250 then
+        lengthPercent = 250
+    end
+    config.chargeBarLengthPercent = mathFloor(lengthPercent + 0.5)
+
+    local thickness = config.chargeBarThickness
+    if not EAM.Util.isSafeNumber(thickness) then
+        thickness = 8
+    elseif thickness < 4 then
+        thickness = 4
+    elseif thickness > 16 then
+        thickness = 16
+    end
+    config.chargeBarThickness = mathFloor(thickness + 0.5)
+end
+
 local function normalizeTextLayout(db, preserveLegacy)
     local config = type(db.config) == "table" and db.config or {}
     db.config = config
@@ -1154,7 +1180,7 @@ local function migrateV5ToV6(db)
         local legacyKeys = {
             "powerHoly", "powerShard", "powerCombo", "powerChi", "powerRage",
             "powerInsanity", "powerMaelstrom", "powerRunic", "powerAstral",
-            "powerEnergy", "powerFocus", "powerArcane", "powerRunes", "powerFury",
+            "powerEnergy", "powerFocus", "powerArcane", "powerRunes", "powerFury", "powerPain",
             "powerMana", "powerVigor", "powerLifebloom", "powerPetFocus",
             "powerPetEnergy", "powerFrenzy",
         }
@@ -1718,6 +1744,7 @@ function SavedVariables.initialize()
     normalizeThemeConfig(EAM_DB)
     normalizeFontFamilyConfig(EAM_DB)
     normalizeModuleToggles(EAM_DB)
+    normalizeChargeBarConfig(EAM_DB)
     normalizeTextLayout(EAM_DB, false)
     normalizeProfileGroundEffects(EAM_DB)
     normalizeCooldownBehaviorLists(EAM_DB)
@@ -2679,22 +2706,48 @@ function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDur
 end
 
 function SavedVariables.updateConfigNumber(key, value)
-    if key ~= "cooldownSwipeAlpha" or type(EAM.db) ~= "table" then
+    if type(EAM.db) ~= "table" then
+        return false, "databaseUnavailable"
+    end
+    local minimum, maximum, integerValue
+    if key == "cooldownSwipeAlpha" then
+        minimum, maximum, integerValue = 0, 1, false
+    elseif key == "chargeBarLengthPercent" then
+        minimum, maximum, integerValue = 100, 250, true
+    elseif key == "chargeBarThickness" then
+        minimum, maximum, integerValue = 4, 16, true
+    else
         return false, "invalidConfigKey"
     end
+
     local numberValue = type(value) == "number" and value or tonumber(value)
     if not EAM.Util.isSafeNumber(numberValue) then
         return false, "invalidConfigValue"
     end
-    if numberValue < 0 then
-        numberValue = 0
-    elseif numberValue > 1 then
-        numberValue = 1
+    if numberValue < minimum then
+        numberValue = minimum
+    elseif numberValue > maximum then
+        numberValue = maximum
+    end
+    if integerValue then
+        numberValue = mathFloor(numberValue + 0.5)
     end
     if EAM.db.config[key] == numberValue then
         return true, "unchanged"
     end
     EAM.db.config[key] = numberValue
+    touchRevision(EAM.db)
+    return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.updateChargeBarLayout(layout)
+    if type(EAM.db) ~= "table" or not VALID_CHARGE_BAR_LAYOUTS[layout] then
+        return false, "invalidChargeBarLayout"
+    end
+    if EAM.db.config.chargeBarLayout == layout then
+        return true, "unchanged"
+    end
+    EAM.db.config.chargeBarLayout = layout
     touchRevision(EAM.db)
     return true, "updated", EAM.db.revision
 end

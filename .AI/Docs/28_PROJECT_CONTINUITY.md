@@ -5,7 +5,7 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-08-23.3。
+目前快照版本：2026-08-23.11。
 
 ## 2026-08-21 新根與部署治理交接快照（現行）
 
@@ -22,7 +22,7 @@
 - Catalog 為 17 種資源、13 職業／40 組專精拓撲；同一專精可同時追蹤多種目前可用資源。德魯伊拓撲包含 Mana、Rage、Energy、ComboPoints、LunarPower。
 - schema v6／resource schema 3 提供 global defaults、class defaults、spec overrides、獨立顯示欄位、reset 與 no-op revision；非戰鬥設定事件立即重建，戰鬥中只延後結構變更至 `PLAYER_REGEN_ENABLED`。
 - Secret 值只可由 `UnitPowerPercent(..., CurveConstants.ZeroToOne)` 單向送入專用 StatusBar，不保存、不比較、不字串化、不序列化、不讀回；開發報告只輸出安全 metadata。
-- 最新離線結果：Lua syntax 64/64（62 AddOn + 2 offline tests）、Flow all 75/75、Flow boundary 54/54、Validation Contracts 441/441；最新 artifact 為 `.AI/TestResults/EAM_FlowValidation_all_20260823_033310.json` 與 `.AI/TestResults/EAM_FlowValidation_boundary_20260823_033311.json`；Retail／PTR／XPTR 全職業全專精實機簽收仍為 pending。
+- 最新離線結果：Lua syntax 62/62（62 AddOn）；Flow all 77/77、boundary 56/56、Validation Contracts 459/459；最新 artifact 為 .AI/TestResults/EAM_FlowValidation_all_20260823_063557.json 與 .AI/TestResults/EAM_FlowValidation_boundary_20260823_063609.json；Retail／PTR／XPTR 全職業全專精實機簽收仍為 pending。
 
 ## 2026-08-23 Target Aura diagnostics 交接補充（現行）
 
@@ -32,12 +32,34 @@
 - 最新離線 artifact：.AI/TestResults/EAM_FlowValidation_all_20260823_033310.json、.AI/TestResults/EAM_FlowValidation_boundary_20260823_033311.json；Lua 64/64、Flow all 75/75、boundary 54/54、Validation Contracts 441/441。仍需 PTR／XPTR／Retail 玩家實機驗證。
 ## 2026-08-23 技能冷卻啟動與行為設定交接（現行）
 
-- CooldownService 只在 UNIT_SPELLCAST_SUCCEEDED 的 unit 精確為 player 且 spellID 精確命中技能冷卻清單後，才建立 activatedAlerts 與可渲染狀態；refreshAll、PLAYER_REGEN_ENABLED、形態事件、設定刷新與非清單治療法術不得批量開啟。
+- CooldownService 只在 UNIT_SPELLCAST_SUCCEEDED 的 unit 精確為 player 且安全 base／override spell family 命中技能冷卻清單後，才建立 activatedAlerts 與可渲染狀態；refreshAll、PLAYER_REGEN_ENABLED、形態事件、設定刷新與非清單治療法術不得批量開啟。
 - cooldownRemoveAura、showSCDOutsideCombat、glowSCDWhenUsable 採三態欄位：nil 繼承全域、true 或 false 代表單技能覆寫；SavedVariables、ProfileCodec 與 Options 均保留明確 false。
 - 冷卻視覺計時到期後由 CooldownService 決定是否隱藏；Renderer 不再無條件移除。可用高亮與既有 Pandemic／overlay glow 合併，不讀取或字串化 Secret 值。
 - cooldown.combat_heal_regen_no_bulk_render fixture 覆蓋：非清單治療法術、脫戰、錯誤 unit、形態刷新不得開門；精確玩家施放只開啟對應技能，模組停用才清除啟動狀態。
 - 最新離線證據：Lua 64/64、Flow all 76/76、Flow boundary 55/55、Validation Contracts 447/447；artifact 為 .AI/TestResults/EAM_FlowValidation_all_20260823_042614.json 與 .AI/TestResults/EAM_FlowValidation_boundary_20260823_042834.json。以上仍不是 PTR／XPTR／Retail 實機簽收。
 - 實機簽收須分別在 Retail／PTR 12.1 與 XPTR 12.0.7 測試 exact cast、非清單治療法術、戰鬥轉換、形態事件、三項行為設定、模組停用／再啟用與 /reload 持久化。
+## 2026-08-23 玩家職業資源最終提示語交接快照
+
+- 本輪完成 ResourceCatalog 唯一來源、PAIN 專用 legacy key、UNIT_DISPLAYPOWER foreground-only、Druid Bear／Cat／Caster／Moonkin／回 Bear Flow、Energy→ComboPoints renderer ownership regression、Probe 停止生命週期、font／orientation／numeric text controls 與非戰鬥即時設定。
+- /eam unitpower background <RESOURCE_KEY> 是玩家明確標記「背景事件缺失」的診斷入口；它不代表已證明事件真的缺失，也不會自動把所有背景資源加入 sampler。
+- 背景 sampler 仍是單一、demand-driven、probe-gated 排程；離線 0.5 秒只是 fixture 時鐘，Retail／PTR／XPTR 的事件頻率與視覺效果仍需玩家實機回報。
+- 最新離線證據：Lua 62/62、Flow all 77/77、boundary 56/56、Validation Contracts 459/459；所有 runtime visual、Secret sink、全職業／專精、taint 與 blocked-action 仍標記 REQUIRES_WOW_12_1_RUNTIME 或 REQUIRES_XPTR_12_0_7_RUNTIME。
+- 本輪未對實際 WoW 目錄執行部署，也未讀寫真實遊戲存檔；部署工具僅以暫存 fixture 完成備份／還原驗證，未執行 Git commit／push／release。修改前備份位於 .AI/backup/20260823052637_resource-module、.AI/backup/20260823061137_resource-docs 與 .AI/backup/20260823070959_final-continuity-sync。
+## 2026-08-23 部署工具遊戲存檔備份／還原交接補充
+
+- Deploy/Deploy-EventAlertMod.ps1 已移除 WoW 程序執行中檢查；部署仍維持來源／目標 Reparse Point fail-closed，只有明確的備份或還原動作才會讀寫遊戲存檔。
+- 互動選單新增 [W] 備份與 [U] 還原；可依 Retail、PTR、XPTR 通道選擇，備份保留版本根目錄下的相對 WTF/... 路徑、manifest 與 SHA-256，還原前自動建立 rollback。
+- CLI 可用 -Action Backup -Channel PTR -DryRun 先預覽，也可用 -Action Restore -Channel PTR -WtfBackupPath <package> 指定單一備份；還原驗證失敗時 fail-closed 並嘗試 rollback。
+- 暫存 fixture 的 2 個相關檔案備份、修改後還原、SHA-256 驗證均通過；最新 Validation Contracts 為 459/459；這不是實際 WoW/WTF 寫入證據。玩家要取得最新實機狀態時，請先用部署工具部署，再依 .AI/Docs/29_LIVE_TEST_STEP_GUIDE.md 回報通道、版本、build、combat、/reload 與畫面結果。
+
+## 2026-08-23.8 充能、Glow 與部署通知交接快照
+
+- 冷卻服務的充能技能現在在安全取得 C_Spell.GetSpellCharges 時保留 current/max；Renderer 優先顯示充能文字，並沿用原生 DurationObject 倒數，不把 Secret 值讀回或做 Lua 算術。
+- 無倒數時清除並隱藏 CooldownFrame，並以 SetDrawEdge(false)、SetDrawBling(false) 等可用方法關閉白色邊緣／bling，避免空白技能框殘留。
+- Glow Border 採兩層策略：預設條件優先使用內嵌 LibButtonGlow-1.0；自訂顏色、第三方 overlay 不可用或戰鬥中首次建框時回退 EAM 自有動畫邊框。內嵌檔案只保留 EventAlertMod/Lib/LibStub.lua 與 EventAlertMod/Lib/LibButtonGlow-1.0.lua，其餘測試／文件不進插件包。
+- 專案 Skill wow-addon-dev 已安裝於 .AI/skills/wow-addon-dev，本輪用於 TOC 順序、12.x Secret／taint 與 library packaging 靜態檢查；TOC validator 已通過。
+- 本輪離線 gate：Lua 62/62、Flow all 78/78、Flow boundary 57/57、Validation Contracts 472/472；這些結果仍不是 Retail／PTR／XPTR 實機視覺或 taint 簽收。
+- 實機部署協議：需要玩家驗證時，主代理必須先通知通道／patch／build／Interface、來源與目標、是否覆蓋、需要 /reload 或完整重啟，以及預期回報欄位；等待玩家明確完成部署後才開始解讀 runtime 報告。本輪未部署、未讀寫真實 WTF、未執行 GitHub release。
 ## 2. 重新進入專案的閱讀順序
 
 1. `AGENTS.md`
@@ -54,7 +76,8 @@
 
 ## 3. 當前目標
 
-完成 Alpha 6 後續封裝：整合 Retail 12.1 Native gate、Aura 職業 scope／批次輸入、EAMAP1 Profile、動態語系、十一主題、小地圖圈內對齊與 17 種玩家多資源正式路徑；PTR／XPTR／Retail 依 37 案及追加步驟由玩家簽收。發布定位仍為 alpha。
+完成 Retail 12.1 玩家職業資源獨立模組最終重構提示語的程式、測試與證據同步；部署工具已移除 Wow-running check，並完成按通道／版本的 EventAlertMod 遊戲存檔備份／還原與相對路徑 manifest。離線通過不得冒充 Retail／PTR／XPTR 實機簽收；實際部署與 WoW runtime 仍待玩家操作。
+
 
 ## 4. 已確認事實
 
@@ -64,7 +87,7 @@
 - Native AuraButton 與其子元件只能在 `initializeFrame` 內完成尺寸、錨點、字型、倒數與邊框設定；初始化後不得直接重排。
 - `AddDispelTypeTexture` 是官方驅散／靜態 Aura 邊框能力，不能取代 Pandemic、Proc 或任意條件 Glow。
 - 玩家資源依每項 capability 分流：普通安全數字可顯示文字；Secret 百分比只能直接送入專用 StatusBar，不得保存、讀回、比較、字串化或序列化。
-- 本輪最新離線 gate 為 Lua syntax 64/64（62 AddOn + 2 offline tests）、Flow all 75/75、Flow boundary 54/54、Validation Contracts 441/441；真人矩陣為 37 案，PTR、XPTR 與 Retail 均仍待玩家簽收。
+- 本輪最新離線 gate 為 Lua syntax 62/62（62 AddOn）、Flow all 77/77、Flow boundary 56/56、Validation Contracts 459/459；真人矩陣為 37 案，PTR、XPTR 與 Retail 均仍待玩家簽收。
 - 若從磁碟匯入遊戲內報告，玩家必須先完成 `/reload` 或正常登出，否則可能仍是舊快照。玩家資源設定在非戰鬥中不應要求 `/reload`；若仍需 `/reload`，應回報 `EAM_PLAYER_RESOURCE_CONFIG_CHANGED` 未接收、戰鬥延後未清除或 Lua error。
 - 2026-08-08 唯讀環境斷言：Retail `12.0.7.68974`、PTR `12.1.0.69189`、XPTR `12.0.7.68887`；三個 AddOns SymbolicLink 均指向 `D:\EventAlertMod`。
 - 語系 catalog 已包含 `enUS`、`zhTW`、`zhCN`、`koKR`、`ruRU`；ruRU 與 enUS 的 `L.*` key 完整對齊，`Auto Detect` 固定英文且預設為 `auto`。新版以穩定 `EAM.L` identity 與 widget binding／refresh registry 即時套用。
@@ -262,3 +285,40 @@
 - 背景 sampler 僅在 probe 明確確認事件缺失時啟用，為單一 demand-driven sampler；`unitpower.background_sampler_gate` 與靜態 contract 已離線通過，涵蓋單 task、事件恢復停止、模組停用、戰鬥延後與 stale generation。它仍是 runtime-only 待實機驗證能力。
 - 最新離線證據：Lua `64/64`、Flow all `75/75`、Flow boundary `54/54`、Validation Contracts `437/437`。Artifact：`.AI/TestResults/EAM_FlowValidation_all_20260823_033310.json` 與 `.AI/TestResults/EAM_FlowValidation_boundary_20260823_033311.json`。
 - 實機未完成：Retail／PTR 12.1 與 XPTR 12.0.7 的全職業／專精資源、Druid 變形、Secret／numeric 視覺、sampler gate、戰鬥延後、設定不 reload 即時套用與 taint／blocked action。
+## 2026-08-23.6 玩家資源與公開文件同步快照
+
+- continuity snapshot 已升至 2026-08-23.6；機器可讀 JSON 已通過解析。
+- 最新離線 gate：Lua 62/62、Flow all 77/77、boundary 56/56、Validation Contracts 461/461。Flow artifact 為 .AI/TestResults/EAM_FlowValidation_all_20260823_081553.json 與 .AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json。
+- PlayerResourceProbe 的自動缺事件檢查只執行一次並納入 restart gate；Frozen Catalog 不再被 SavedVariables 寫入，Options 對缺失 SavedVariables API fail-closed。
+- 根 README 已重整為 Alpha 7 現行使用說明，根目錄與 EventAlertMod/README.md SHA-256 均為 7EB8752ACA994769356757AED7E1FB4483497930E4A0CB9C567403D14D161509。
+- 本輪未部署 WoW、未讀寫真實 WTF、未執行 GitHub push／release；Retail／PTR／XPTR runtime 仍待玩家操作。
+
+## 2026-08-23.7 最終 gate 與 GitHub README 使用說明同步
+
+- continuity snapshot 已升至 2026-08-23.7；Data/ProjectContinuity.json 解析通過，並新增 FACT-20260823-008。
+- 最新離線 gate：Lua 62/62、Flow all 77/77、Flow boundary 56/56、Validation Contracts 464/464。最新 artifact 為 .AI/TestResults/EAM_FlowValidation_all_20260823_083630.json 與 .AI/TestResults/EAM_FlowValidation_boundary_20260823_083631.json。
+- README 已以 LF 正規化，根目錄與 EventAlertMod/README.md SHA-256 均為 635C545E7B535B85730AA28D24176E291299A86F47D5036682C1FE5877935AB3；GitHub 根頁面現在包含 Alpha 7 版本範圍、完整 /eam 命令、離線驗證、部署與備份／還原時機。
+- ProjectContinuity 的 privacy contract 重新通過；連續性證據只保留公開程式／文件路徑，不記錄私人遊戲資料詞彙或帳號路徑。
+- 本輪未部署至 Retail／PTR／XPTR，未讀寫真實遊戲存檔，未執行 GitHub push／release；玩家仍須部署後以 /reload 進行三通道實機簽收。
+
+## 2026-08-23.10 充能次數 StatusBar 與五種版面快照
+
+- continuity snapshot 已升至 `2026-08-23.10`；既有 `FACT-20260823-010`、`WORK-20260823-003` 與 `UNVERIFIED-20260823-001` 已同步為 current/max 次數語意。
+- 冷卻首次啟動仍只接受玩家 `UNIT_SPELLCAST_SUCCEEDED`，並安全對齊儲存 ID、base ID 與目前 override ID；`SPELL_UPDATE_COOLDOWN`／`SPELL_UPDATE_CHARGES`／regen／形態事件只刷新已啟動技能。
+- 充能列不再使用 `DurationObject` 或恢復秒數。安全 `maxCharges` 設定 StatusBar 範圍，原始 `currentCharges` 最後直送 `SetValue`；Secret current 不進入 Lua 比較、算術、文字、表索引或序列化。
+- 顯示支援 TOP／BOTTOM／LEFT／RIGHT／RING；預設長度／環直徑為圖示 150%、厚度 8px，可即時設定。maxCharges 在 2 至 20 時顯示安全分隔線；超過上限時不畫誤導性分隔線。
+- 環形使用 12.1 `StatusBarRenderMode.Radial` 與 `Media/Images/eam-charge-ring.tga` ring grid；能力不可用時回退 BOTTOM 線性條。這仍需玩家實機確認材質、方向、厚度與遮擋。
+- 充能技能只有回到最大次數才算冷卻完成；`cooldownRemoveAura` 的移除語意因此是「滿充才移除」。安全 current/max 直接判定，Secret current 使用安全 `isActive` 判定。
+- 冷卻細部設定維持隱藏 Aura 專用「僅監控自己施放」，三項 per-spell nil／true／false 行為不受影響。
+- 最新離線 gate：Lua 64/64、Flow all 79/79、boundary 58/58、Validation Contracts 483/483。artifact 為 `.AI/TestResults/EAM_FlowValidation_all_20260823_162316.json` 與 `.AI/TestResults/EAM_FlowValidation_boundary_20260823_162320.json`。
+- 本輪未部署 WoW、未讀寫真實遊戲資料、未執行 GitHub push／release；Retail／PTR／XPTR runtime 視覺、taint 與 blocked action 仍待玩家操作。
+
+## 2026-08-23.11 Alpha 7.4 Rune／Ground family 交接快照
+
+- continuity snapshot 已升至 `2026-08-23.11`；新增 `FACT-20260823-011`、`WORK-20260823-004`、`UNVERIFIED-20260823-002` 與 `UNVERIFIED-20260823-003`。current offline summary 為 Flow all `82/82`；真人矩陣仍為 Retail／PTR／XPTR pending。
+- DK Runes 不再讀泛用 UnitPower 聚合值；拓樸建立時以 `GetRuneCount`，必要時以 `GetRuneCooldown` readiness fallback，同步六槽。`RUNE_POWER_UPDATE(runeIndex, added)` 直接更新 0..6 ready count；`added=false` 必須用明確 if 保存，不可寫成 Lua `and/or`。
+- 目前 Rune 視覺是六段 ready-count 彙總，不是六顆各自的 recharge timer。Runic Power 仍維持另一個獨立資源節點；實機必須確認兩者同時存在且符文消耗／恢復會變動。
+- GroundEffect 在非戰鬥 cold path 編譯設定 spellID 的 Base／Override／GetSpellInfo spellID family；`UNIT_SPELLCAST_SUCCEEDED` hot path 只接受安全正整數並做 O(1) 查表，exact configured ID 優先。collision、unknown 或 Secret activation spellID 皆 fail-closed。
+- 死亡凋零／褻瀆可藉 spell family 對齊；反魔法立場自動說明解析失敗時走該監控項 manual fallback。若反魔法立場因吸收上限提前消失，EAM 的施放時間計時不會自行證明提前結束，屬待實機確認限制。
+- 最終核心離線證據：Lua `64/64`、Flow all `82/82`（`.AI/TestResults/EAM_FlowValidation_all_20260823_174946.json`）、boundary `61/61`（`.AI/TestResults/EAM_FlowValidation_boundary_20260823_174739.json`）、Validation Contracts `493/493`。
+- 本輪修改前備份位於 `.AI/backup/20260823173540` 與 `.AI/backup/20260823175220`。尚未部署、未讀寫 WoW/WTF、未做真人操作；玩家部署後依 Docs/29 的 Alpha 7.4 段落回報。

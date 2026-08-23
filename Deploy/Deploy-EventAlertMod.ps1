@@ -5,19 +5,22 @@ EventAlertMod Retail Rewrite
 責任:
 - 以互動選單顯示 Retail、PTR、XPTR 與即時 ProductVersion。
 - 將 EventAlertMod 實體來源部署到所選客戶端的 Interface\AddOns\EventAlertMod。
-- 在任何寫入前阻擋 Reparse Point、錯誤路徑、執行中的 WoW 與來源不完整。
+- 在任何寫入前阻擋 Reparse Point、錯誤路徑與來源不完整；部署不檢查 WoW 程序是否執行。
 
 邊界:
 - 絕不刪除、解除、覆蓋或跟隨 SymbolicLink／Junction。
-- 不讀 WTF、不啟動或關閉 WoW、不修改 PATH。
+- WTF 僅由明確的備份／還原動作讀寫；不啟動或關閉 WoW、不修改 PATH。
 - 只有使用者明確選擇部署且所有前檢通過時才寫入遊戲目錄。
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet("Menu", "Status", "Retail", "PTR", "XPTR", "All")]
+    [ValidateSet("Menu", "Status", "Retail", "PTR", "XPTR", "All", "Backup", "Restore")]
     [string]$Action = "Menu",
     [string]$WowRoot = "",
-    [switch]$DryRun
+    [switch]$DryRun,
+    [ValidateSet("Retail", "PTR", "XPTR", "All")]
+    [string]$Channel = "",
+    [string]$WtfBackupPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -280,6 +283,338 @@ function Get-ClientStates {
     return @($Definitions | ForEach-Object { Get-ClientState -Definition $_ -RootPath $RootPath })
 }
 
+function Get-WtfRootPath {
+    param([Parameter(Mandatory = $true)][pscustomobject]$State)
+
+    return Join-Path $State.versionRoot "WTF"
+}
+
+function Assert-WtfRoot {
+    param(
+        [Parameter(Mandatory = $true)][pscustomobject]$State,
+        [switch]$AllowMissing
+    )
+
+    $wtfPath = Get-WtfRootPath -State $State
+    $reparseItem = Get-ExistingReparseItem -CandidatePath $wtfPath -StopAtPath $State.versionRoot
+    if ($null -ne $reparseItem) {
+        throw "WTF 路徑含 Reparse Point；拒絕存取：$($reparseItem.FullName)"
+    }
+    if (-not (Test-Path -LiteralPath $wtfPath -PathType Container)) {
+        if ($AllowMissing) {
+            return $false
+        }
+        throw "WTF 資料夾不存在：$wtfPath"
+    }
+    $item = Get-Item -LiteralPath $wtfPath -Force
+    if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "WTF 根資料夾是 Reparse Point；拒絕存取：$wtfPath"
+    }
+    Assert-PhysicalDirectoryTree -Path $wtfPath
+    return $true
+}
+
+function Get-WtfRelatedFiles {
+    param([Parameter(Mandatory = $true)][pscustomobject]$State)
+
+    $exists = Assert-WtfRoot -State $State -AllowMissing
+    if (-not $exists) {
+        return @()
+    }
+    $wtfPath = Get-WtfRootPath -State $State
+    return @(Get-ChildItem -LiteralPath $wtfPath -Recurse -Force -File | Where-Object {
+        $relative = Get-RelativePath -BasePath $State.versionRoot -FullPath $_.FullName
+        $_.Name -match '(?i)EventAlertMod' -or $relative -match '(?i)EventAlertMod'
+    })
+}
+
+function Get-WtfBackupRoot {
+    return Join-Path $governanceRoot "backup\wtf"
+}
+
+function Invoke-WtfBackup {
+    param(
+        [Parameter(Mandatory = $true)][pscustomobject]$State,
+        [string]$Reason = "manual"
+    )
+
+    $files = @(Get-WtfRelatedFiles -State $State)
+    $stamp = Get-Date -Format "yyyyMMddHHmmssfff"
+    $backupRoot = Get-WtfBackupRoot
+    $packagePath = Join-Path $backupRoot ($State.key + "__" + $stamp)
+    if ($DryRun) {
+        Write-Host ("WTF_BACKUP_DRY_RUN={0}:files={1}:root={2}" -f $State.key, $files.Count, (Get-WtfRootPath -State $State))
+        return [pscustomobject][ordered]@{
+            packagePath = $packagePath
+            manifestPath = ""
+            fileCount = $files.Count
+            dryRun = $true
+        }
+    }
+
+    [System.IO.Directory]::CreateDirectory($packagePath) | Out-Null
+    $records = @()
+    foreach ($file in $files) {
+        $relative = Get-RelativePath -BasePath $State.versionRoot -FullPath $file.FullName
+        $destination = Join-Path $packagePath $relative
+        Assert-ExactChildPath -Parent $packagePath -Child $destination
+        [System.IO.Directory]::CreateDirectory((Split-Path -Parent $destination)) | Out-Null
+        Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
+        $hash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash
+        $records += [pscustomobject][ordered]@{
+            relativePath = $relative.Replace("\", "/")
+            length = [int64]$file.Length
+            sha256 = $hash
+        }
+    }
+    $manifest = [pscustomobject][ordered]@{
+        schema = 1
+        type = "EAM_WTF_BACKUP"
+        reason = $Reason
+        generatedAt = (Get-Date).ToString("o")
+        client = [pscustomobject][ordered]@{
+            key = $State.key
+            directory = $State.directory
+            displayName = $State.displayName
+            productVersion = $State.productVersion
+            patch = $State.patch
+        }
+        sourceRelativeRoot = "WTF"
+        files = @($records)
+    }
+    $manifestPath = Join-Path $packagePath "manifest.json"
+    [System.IO.File]::WriteAllText($manifestPath, ($manifest | ConvertTo-Json -Depth 8), $utf8)
+    Write-Host ("WTF_BACKUP_SUCCESS={0}:files={1}" -f $State.key, $records.Count)
+    Write-Host "WTF_BACKUP_PACKAGE=$packagePath"
+    Write-Host "WTF_BACKUP_MANIFEST=$manifestPath"
+    return [pscustomobject][ordered]@{
+        packagePath = $packagePath
+        manifestPath = $manifestPath
+        fileCount = $records.Count
+        dryRun = $false
+        manifest = $manifest
+    }
+}
+
+function Read-WtfBackupManifest {
+    param(
+        [Parameter(Mandatory = $true)][string]$PackagePath,
+        [Parameter(Mandatory = $true)][pscustomobject]$State
+    )
+
+    $resolvedPackage = if ([System.IO.Path]::IsPathRooted($PackagePath)) {
+        Get-NormalizedPath -Path $PackagePath
+    } else {
+        Get-NormalizedPath -Path (Join-Path $projectRoot $PackagePath)
+    }
+    if (-not (Test-Path -LiteralPath $resolvedPackage -PathType Container)) {
+        throw "WTF 備份資料夾不存在：$resolvedPackage"
+    }
+    $manifestPath = Join-Path $resolvedPackage "manifest.json"
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw "WTF 備份缺少 manifest.json：$resolvedPackage"
+    }
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ([int]$manifest.schema -ne 1 -or [string]$manifest.type -ne "EAM_WTF_BACKUP") {
+        throw "WTF 備份 manifest schema/type 不符：$manifestPath"
+    }
+    if ([string]$manifest.client.key -ne [string]$State.key -or [string]$manifest.client.directory -ne [string]$State.directory) {
+        throw "WTF 備份通道不符：manifest=$($manifest.client.key)/$($manifest.client.directory)，目標=$($State.key)/$($State.directory)"
+    }
+    $records = @($manifest.files)
+    foreach ($record in $records) {
+        $relative = ([string]$record.relativePath).Replace("\", "/")
+        if ([string]::IsNullOrWhiteSpace($relative) -or $relative -notmatch '(?i)^WTF/' -or $relative -match '(^|/)\.\.(?:/|$)') {
+            throw "WTF 備份相對路徑不安全：$relative"
+        }
+        $backupFile = Join-Path $resolvedPackage ($relative.Replace("/", [System.IO.Path]::DirectorySeparatorChar))
+        Assert-ExactChildPath -Parent $resolvedPackage -Child $backupFile
+        if (-not (Test-Path -LiteralPath $backupFile -PathType Leaf)) {
+            throw "WTF 備份檔案不存在：$backupFile"
+        }
+        $actualHash = (Get-FileHash -LiteralPath $backupFile -Algorithm SHA256).Hash
+        if (-not [string]::Equals($actualHash, [string]$record.sha256, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "WTF 備份 SHA-256 不符：$relative"
+        }
+    }
+    return [pscustomobject][ordered]@{
+        packagePath = $resolvedPackage
+        manifestPath = $manifestPath
+        manifest = $manifest
+        records = $records
+    }
+}
+
+function Get-WtfBackupCandidates {
+    param([Parameter(Mandatory = $true)][pscustomobject]$State)
+
+    $backupRoot = Get-WtfBackupRoot
+    if (-not (Test-Path -LiteralPath $backupRoot -PathType Container)) {
+        return @()
+    }
+    $candidates = @()
+    foreach ($directory in @(Get-ChildItem -LiteralPath $backupRoot -Directory -Filter ($State.key + "__*") | Sort-Object LastWriteTime -Descending)) {
+        try {
+            $candidate = Read-WtfBackupManifest -PackagePath $directory.FullName -State $State
+            $candidates += $candidate
+        } catch {
+            Write-Host ("略過無效 WTF 備份：{0}（{1}）" -f $directory.FullName, $_.Exception.Message) -ForegroundColor Yellow
+        }
+    }
+    return @($candidates)
+}
+
+function Read-WtfBackupSelection {
+    param([Parameter(Mandatory = $true)][pscustomobject]$State)
+
+    $candidates = @(Get-WtfBackupCandidates -State $State)
+    if ($candidates.Count -eq 0) {
+        throw "找不到 $($State.menuLabel) 的有效 WTF 備份。"
+    }
+    Write-Host ""
+    Write-Host "$($State.menuLabel) 可還原備份："
+    for ($index = 0; $index -lt $candidates.Count; $index++) {
+        $candidate = $candidates[$index]
+        $manifest = $candidate.manifest
+        Write-Host ("[{0}] {1} | files={2} | generatedAt={3} | reason={4}" -f ($index + 1), (Split-Path -Leaf $candidate.packagePath), @($candidate.records).Count, $manifest.generatedAt, $manifest.reason)
+    }
+    $answer = (Read-Host "輸入備份編號，Enter 使用最新一份").Trim()
+    $selectedIndex = 0
+    if (-not [string]::IsNullOrWhiteSpace($answer)) {
+        if (-not [int]::TryParse($answer, [ref]$selectedIndex) -or $selectedIndex -lt 1 -or $selectedIndex -gt $candidates.Count) {
+            throw "無效的備份編號：$answer"
+        }
+        $selectedIndex--
+    }
+    return $candidates[$selectedIndex]
+}
+
+function Get-ChannelStates {
+    param(
+        [Parameter(Mandatory = $true)][object[]]$States,
+        [Parameter(Mandatory = $true)][string]$RequestedChannel
+    )
+
+    if ($RequestedChannel -eq "All") {
+        return @($States)
+    }
+    $state = $States | Where-Object { $_.key -eq $RequestedChannel.ToLowerInvariant() } | Select-Object -First 1
+    if ($null -eq $state) {
+        throw "找不到指定版本通道：$RequestedChannel"
+    }
+    return @($state)
+}
+
+function Read-WtfStateSelection {
+    param([Parameter(Mandatory = $true)][object[]]$States)
+
+    Write-Host ""
+    Write-Host "[1] WTF 備份／還原：$($States[0].menuLabel)"
+    Write-Host "[2] WTF 備份／還原：$($States[1].menuLabel)"
+    Write-Host "[3] WTF 備份／還原：$($States[2].menuLabel)"
+    Write-Host "[4] WTF 備份／還原：全部通道"
+    $choice = (Read-Host "選擇版本通道").Trim()
+    $selected = switch ($choice) {
+        "1" { @($States[0]) }
+        "2" { @($States[1]) }
+        "3" { @($States[2]) }
+        "4" { @($States) }
+        default { throw "無效版本通道選項：$choice" }
+    }
+    if ($choice -eq "2" -or $choice -eq "3") {
+        $includeRetail = (Read-Host "是否同時包含 Retail？輸入 Y 加入，其他只處理目前通道").Trim().ToUpperInvariant()
+        if ($includeRetail -eq "Y") {
+            $selected = @($States[0]) + @($selected)
+        }
+    }
+    return @($selected)
+}
+
+function Invoke-WtfRestore {
+    param(
+        [Parameter(Mandatory = $true)][pscustomobject]$State,
+        [Parameter(Mandatory = $true)][pscustomobject]$Candidate,
+        [switch]$SkipRollback
+    )
+
+    [void](Assert-WtfRoot -State $State)
+    if ($DryRun) {
+        Write-Host ("WTF_RESTORE_DRY_RUN={0}:package={1}:files={2}" -f $State.key, $Candidate.packagePath, @($Candidate.records).Count)
+        return
+    }
+
+    $rollback = $null
+    try {
+        if (-not $SkipRollback) {
+            $rollback = Invoke-WtfBackup -State $State -Reason "restore-rollback"
+        }
+        foreach ($record in @($Candidate.records)) {
+            $relative = ([string]$record.relativePath).Replace("\", "/")
+            $target = Join-Path $State.versionRoot ($relative.Replace("/", [System.IO.Path]::DirectorySeparatorChar))
+            Assert-ExactChildPath -Parent $State.versionRoot -Child $target
+            $targetParent = Split-Path -Parent $target
+            $reparseParent = Get-ExistingReparseItem -CandidatePath $targetParent -StopAtPath (Get-WtfRootPath -State $State)
+            if ($null -ne $reparseParent) {
+                throw "還原目標父層含 Reparse Point：$($reparseParent.FullName)"
+            }
+            [System.IO.Directory]::CreateDirectory($targetParent) | Out-Null
+            $reparseTarget = Get-ExistingReparseItem -CandidatePath $target -StopAtPath (Get-WtfRootPath -State $State)
+            if ($null -ne $reparseTarget) {
+                throw "還原目標含 Reparse Point：$($reparseTarget.FullName)"
+            }
+            $backupFile = Join-Path $Candidate.packagePath ($relative.Replace("/", [System.IO.Path]::DirectorySeparatorChar))
+            Copy-Item -LiteralPath $backupFile -Destination $target -Force
+            $actualHash = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+            if (-not [string]::Equals($actualHash, [string]$record.sha256, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "還原後 SHA-256 不符：$relative"
+            }
+        }
+        Write-Host ("WTF_RESTORE_SUCCESS={0}:files={1}" -f $State.key, @($Candidate.records).Count)
+        Write-Host "WTF_RESTORE_PACKAGE=$($Candidate.packagePath)"
+        if ($null -ne $rollback) {
+            Write-Host "WTF_RESTORE_ROLLBACK=$($rollback.packagePath)"
+        }
+    } catch {
+        $failure = $_.Exception.Message
+        if ($null -ne $rollback -and -not [string]::IsNullOrWhiteSpace($rollback.manifestPath)) {
+            try {
+                $rollbackCandidate = Read-WtfBackupManifest -PackagePath (Split-Path -Parent $rollback.manifestPath) -State $State
+                Invoke-WtfRestore -State $State -Candidate $rollbackCandidate -SkipRollback
+                Write-Host "WTF_RESTORE_ROLLBACK_APPLIED=$($rollback.packagePath)" -ForegroundColor Yellow
+            } catch {
+                Write-Host ("WTF rollback 失敗，請手動使用備份：$($rollback.packagePath)；原因：$($_.Exception.Message)") -ForegroundColor Red
+            }
+        }
+        throw "WTF 還原 $($State.key) 失敗：$failure"
+    }
+}
+
+function Invoke-SelectedWtfBackup {
+    param([Parameter(Mandatory = $true)][object[]]$SelectedStates)
+
+    foreach ($state in $SelectedStates) {
+        [void](Assert-WtfRoot -State $state -AllowMissing)
+    }
+    foreach ($state in $SelectedStates) {
+        [void](Invoke-WtfBackup -State $state -Reason "manual")
+    }
+}
+
+function Invoke-SelectedWtfRestore {
+    param(
+        [Parameter(Mandatory = $true)][object[]]$SelectedStates,
+        [string]$BackupPath = ""
+    )
+
+    foreach ($state in $SelectedStates) {
+        $candidate = if (-not [string]::IsNullOrWhiteSpace($BackupPath)) {
+            Read-WtfBackupManifest -PackagePath $BackupPath -State $state
+        } else {
+            Read-WtfBackupSelection -State $state
+        }
+        Invoke-WtfRestore -State $state -Candidate $candidate
+    }
+}
 function Write-ClientStatus {
     param(
         [Parameter(Mandatory = $true)][object[]]$States,
@@ -331,10 +666,6 @@ function Assert-DeployableState {
     if ($State.targetKind -eq "physical") {
         Assert-PhysicalDirectoryTree -Path $State.targetPath
     }
-}
-
-function Test-WowIsRunning {
-    return $null -ne (Get-Process -Name "Wow", "WowT" -ErrorAction SilentlyContinue | Select-Object -First 1)
 }
 
 function Write-DeploymentReport {
@@ -460,10 +791,6 @@ function Invoke-SelectedDeployment {
         return
     }
 
-    # if (Test-WowIsRunning) {
-        # throw "偵測到 Wow.exe 或 WowT.exe 正在執行；請由玩家正常關閉遊戲後再部署。"
-    # }
-
     foreach ($state in $SelectedStates) {
         Invoke-OneDeployment -State $state
     }
@@ -518,6 +845,25 @@ function Find-State {
     return $States | Where-Object { $_.key -eq $Key.ToLowerInvariant() } | Select-Object -First 1
 }
 
+if ($Action -eq "Backup" -or $Action -eq "Restore") {
+    if ([string]::IsNullOrWhiteSpace($Channel)) {
+        throw "-Action $Action 必須同時指定 -Channel Retail、PTR、XPTR 或 All。"
+    }
+    if ($Action -eq "Restore" -and $Channel -eq "All") {
+        throw "-Action Restore 不接受 -Channel All；請逐通道指定 -WtfBackupPath。"
+    }
+    $states = @(Get-ClientStates -Definitions @($config.targets) -RootPath $wowRootPath)
+    $selected = @(Get-ChannelStates -States $states -RequestedChannel $Channel)
+    if ($Action -eq "Backup") {
+        Invoke-SelectedWtfBackup -SelectedStates $selected
+    } else {
+        if ([string]::IsNullOrWhiteSpace($WtfBackupPath)) {
+            throw "-Action Restore 必須指定 -WtfBackupPath，或使用互動選單 [U] 選擇備份。"
+        }
+        Invoke-SelectedWtfRestore -SelectedStates $selected -BackupPath $WtfBackupPath
+    }
+    return
+}
 if ($Action -eq "Status") {
     $states = @(Get-ClientStates -Definitions @($config.targets) -RootPath $wowRootPath)
     Write-ClientStatus -States $states -RootPath $wowRootPath -RootSource $wowRootSource
@@ -543,6 +889,8 @@ while ($true) {
     Write-Host "[2] $($states[1].menuLabel)"
     Write-Host "[3] $($states[2].menuLabel)"
     Write-Host "[4] 全部通道"
+    Write-Host "[W] 備份 WTF 中的 EventAlertMod 存檔"
+    Write-Host "[U] 還原 WTF 中的 EventAlertMod 存檔"
     Write-Host "[B] 從 EventAlertMod 建立插件 ZIP"
     Write-Host "[S] 建立 Project_EventAlertMod 原始碼 ZIP"
     Write-Host "[R] 重新讀取版本與目標狀態"
@@ -552,6 +900,47 @@ while ($true) {
         break
     }
     if ($choice -eq "R") {
+        continue
+    }
+    if ($choice -eq "W" -or $choice -eq "U") {
+        try {
+            $wtfSelected = Read-WtfStateSelection -States $states
+            if ($choice -eq "W") {
+                Write-Host ""
+                Write-Host "將備份下列通道的 WTF EventAlertMod 相關檔案，保留原始相對路徑："
+                foreach ($state in $wtfSelected) {
+                    Write-Host ("- {0} | {1}" -f $state.menuLabel, (Get-WtfRootPath -State $state))
+                }
+                $confirmation = (Read-Host "輸入 BACKUP 確認，其他輸入取消").Trim().ToUpperInvariant()
+                if ($confirmation -eq "BACKUP") {
+                    Invoke-SelectedWtfBackup -SelectedStates $wtfSelected
+                } else {
+                    Write-Host "已取消 WTF 備份。"
+                }
+            } else {
+                $restoreSelections = @()
+                foreach ($state in $wtfSelected) {
+                    $candidate = Read-WtfBackupSelection -State $state
+                    $restoreSelections += [pscustomobject]@{ State = $state; Candidate = $candidate }
+                }
+                Write-Host ""
+                Write-Host "將還原下列通道的 EventAlertMod 存檔；還原前會先建立 rollback 備份："
+                foreach ($selection in $restoreSelections) {
+                    Write-Host ("- {0} <= {1}" -f $selection.State.menuLabel, (Split-Path -Leaf $selection.Candidate.packagePath))
+                }
+                $confirmation = (Read-Host "輸入 RESTORE 確認，其他輸入取消").Trim().ToUpperInvariant()
+                if ($confirmation -eq "RESTORE") {
+                    foreach ($selection in $restoreSelections) {
+                        Invoke-WtfRestore -State $selection.State -Candidate $selection.Candidate
+                    }
+                } else {
+                    Write-Host "已取消 WTF 還原。"
+                }
+            }
+        }
+        catch {
+            Write-Host ("WTF 備份／還原未執行：" + $_.Exception.Message) -ForegroundColor Red
+        }
         continue
     }
     if ($choice -eq "B" -or $choice -eq "S") {

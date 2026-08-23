@@ -273,6 +273,22 @@ local function setTextIfChanged(fontString, rendered, key, value)
     end
 end
 
+local function formatChargeText(alertState)
+    if not alertState or alertState.isChargeBased ~= true
+        or alertState.chargesSafe ~= true
+    then
+        return nil
+    end
+    local currentCharges = alertState.displayValue
+    local maximumCharges = alertState.displayMaxValue
+    if not Util.isSafeNonNegativeNumber(currentCharges)
+        or not Util.isSafePositiveNumber(maximumCharges)
+    then
+        return ""
+    end
+    return tostring(currentCharges) .. "/" .. tostring(maximumCharges)
+end
+
 local function applyNameLayoutToIcon(icon, nameInside)
     if not icon or not icon.rendered or not icon.nameText then
         return false
@@ -651,17 +667,20 @@ function Renderer.render(alertState, frameName)
     end
     IconPool.applyCooldownStyle(icon, config)
 
-    local stacks = alertState.displayValue
-    if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
-        stacks = ""
-    elseif stacks ~= nil then
-        stacks = Util.isSafeNonNegativeNumber(stacks) and tostring(stacks) or ""
-    else
-        stacks = alertState.stacks
+    local stacks = formatChargeText(alertState)
+    if stacks == nil then
+        stacks = alertState.displayValue
         if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
             stacks = ""
+        elseif stacks ~= nil then
+            stacks = Util.isSafeNonNegativeNumber(stacks) and tostring(stacks) or ""
         else
-            stacks = (Util.isSafeNumber(stacks) and stacks > 1) and tostring(stacks) or ""
+            stacks = alertState.stacks
+            if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
+                stacks = ""
+            else
+                stacks = (Util.isSafeNumber(stacks) and stacks > 1) and tostring(stacks) or ""
+            end
         end
     end
     setTextIfChanged(icon.stackText, rendered, "stacks", stacks)
@@ -689,6 +708,9 @@ function Renderer.render(alertState, frameName)
     local useNativeBinding = timer and timer.durationObject and DurationAdapter ~= nil
 
     if useNativeBinding then
+        if icon.cooldown and type(icon.cooldown.Show) == "function" then
+            icon.cooldown:Show()
+        end
         if rendered.durationObject ~= timer.durationObject then
             releaseTimerBinding(icon)
             icon.timerBinding = DurationAdapter.createTextBinding(timer.durationObject, icon.timerText)
@@ -714,6 +736,9 @@ function Renderer.render(alertState, frameName)
             Renderer.unregisterLegacyTimer(icon)
         end
     elseif timer and Util.isSafeNumber(timer.startTime) and Util.isSafePositiveNumber(timer.duration) then
+        if icon.cooldown and type(icon.cooldown.Show) == "function" then
+            icon.cooldown:Show()
+        end
         if rendered.cooldownStart ~= timer.startTime or rendered.cooldownDuration ~= timer.duration then
             icon.cooldown:SetCooldown(timer.startTime, timer.duration)
             rendered.cooldownStart = timer.startTime
@@ -737,6 +762,9 @@ function Renderer.render(alertState, frameName)
         end
     else
         icon.cooldown:SetCooldown(0, 0)
+        if icon.cooldown and type(icon.cooldown.Hide) == "function" then
+            icon.cooldown:Hide()
+        end
         rendered.cooldownStart = nil
         rendered.cooldownDuration = nil
         rendered.durationObject = nil
@@ -752,16 +780,18 @@ function Renderer.render(alertState, frameName)
         end
     end
 
+    if IconPool and type(IconPool.applyChargeProgress) == "function" then
+        IconPool.applyChargeProgress(icon, alertState)
+    end
+
     -- 🌡️ Pandemic (傳染累加) 與 Action Bar Glow 亮框顯示控制
     local shouldGlow = alertState.pandemicReady or alertState.overlayGlow or alertState.usableGlow
-    if shouldGlow then
-        if icon.glowBorder then
-            icon.glowBorder:Show()
-        end
-    else
-        if icon.glowBorder then
-            icon.glowBorder:Hide()
-        end
+    if IconPool and type(IconPool.setGlow) == "function" then
+        IconPool.setGlow(icon, shouldGlow == true)
+    elseif shouldGlow then
+        if icon.glowBorder then icon.glowBorder:Show() end
+    elseif icon.glowBorder then
+        icon.glowBorder:Hide()
     end
 
     if icon.overlay and icon.cooldown and icon.cooldown.GetFrameLevel then
