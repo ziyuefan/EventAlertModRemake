@@ -70,10 +70,10 @@ $suffixTag = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "-"
 $suffixFile = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "_" + $PackageSuffix }
 
 if ([string]::IsNullOrWhiteSpace($Tag)) {
-    $Tag = "alpha-7.4" + $suffixTag + "." + $dateStamp
+    $Tag = "alpha-7.5" + $suffixTag + "." + $dateStamp
 }
 if ([string]::IsNullOrWhiteSpace($Title)) {
-    $Title = "[AGY] Retail 12.1 Alpha 7.4 (Antigravity Engine - $dateStamp)"
+    $Title = "[AGY] Retail 12.1 Alpha 7.5 (Antigravity Engine - $dateStamp)"
 }
 
 Write-Host "發布目標 Tag   : $Tag" -ForegroundColor Yellow
@@ -222,7 +222,7 @@ $releaseNotes = @"
 - **維護代理**：Antigravity Lead Engineer
 - **發布軌道**：`AGY Independent Track` (Pre-release)
 - **支援目標**：World of Warcraft Retail 12.1.x / Midnight (支援 12.0.7 Legacy / XPTR)
-- **離線驗證狀態**：`OFFLINE VERIFIED` (Lua 64/64 | Flow 82/82 | Contracts 493/493)
+- **離線驗證狀態**：`OFFLINE VERIFIED` (Lua 65/65 | Flow 84/84 | Contracts 493/493)
 - **實機驗證狀態**：`REQUIRES_WOW_12_1_RUNTIME`
 
 ---
