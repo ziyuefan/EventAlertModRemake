@@ -206,6 +206,9 @@ function AboutPanel.open()
         print("|cff00ff96EAM|r " .. (EAM.L.EAM_ABOUT_COMBAT_BLOCKED or "戰鬥中不開啟關於視窗。"))
         return false, "combatBlocked"
     end
+    if EAM.UI and type(EAM.UI.closeAllSidePanels) == "function" then
+        EAM.UI.closeAllSidePanels("about")
+    end
     local frame, reason = createFrame()
     if not frame then
         return false, reason or "frameUnavailable"

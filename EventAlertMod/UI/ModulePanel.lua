@@ -207,6 +207,9 @@ function ModulePanel.open()
         )
         return false, "combat"
     end
+    if EAM.UI and type(EAM.UI.closeAllSidePanels) == "function" then
+        EAM.UI.closeAllSidePanels("module")
+    end
     local frame = createPanel()
     if not frame then
         return false, "frameUnavailable"

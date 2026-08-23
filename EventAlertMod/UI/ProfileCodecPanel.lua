@@ -420,6 +420,9 @@ function Panel.open()
         print("|cff00ff96EAM|r " .. ((EAM.L and EAM.L.EAM_PROFILE_CODEC_COMBAT) or "戰鬥中不開啟 profile 分享面板。"))
         return false, "combatBlocked"
     end
+    if EAM.UI and type(EAM.UI.closeAllSidePanels) == "function" then
+        EAM.UI.closeAllSidePanels("profile")
+    end
     local frame, reason = createFrame()
     if not frame then return false, reason or "frameUnavailable" end
     local mainFrame = _G.EAM_MainOptionsFrame

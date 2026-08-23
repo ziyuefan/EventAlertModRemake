@@ -515,6 +515,12 @@ local function createFrame()
 end
 
 function Panel.open(tabIndex)
+    if inCombat() then
+        return false, "combatDeferred"
+    end
+    if EAM.UI and type(EAM.UI.closeAllSidePanels) == "function" then
+        EAM.UI.closeAllSidePanels("debug")
+    end
     local frame = createFrame()
     if not frame then
         return false, "combatDeferred"

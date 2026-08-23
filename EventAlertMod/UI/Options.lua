@@ -911,6 +911,49 @@ local function makeTitleCloseButton(parent, onClick)
     return btn
 end
 
+function Options.closeAllSidePanels(except)
+    if except ~= "list" and Options.listFrame then
+        Options.listFrame:Hide()
+        if Options.condFrame then Options.condFrame:Hide() end
+        if Options.batchFrame then Options.batchFrame:Hide() end
+    end
+    if except ~= "pos" and Options.posFrame then
+        Options.posFrame:Hide()
+    end
+    if except ~= "resource" then
+        local panel = EAM.UI and EAM.UI.PlayerResourcePanel
+        if panel and panel.frame and panel.frame:IsShown() then
+            panel.close()
+        end
+    end
+    if except ~= "debug" then
+        local panel = EAM.UI and EAM.UI.DebugCenterPanel
+        if panel and panel.frame and panel.frame:IsShown() then
+            panel.close()
+        end
+    end
+    if except ~= "profile" then
+        local panel = EAM.UI and EAM.UI.ProfileCodecPanel
+        if panel and panel.frame and panel.frame:IsShown() then
+            panel.close()
+        end
+    end
+    if except ~= "module" then
+        local panel = EAM.UI and EAM.UI.ModulePanel
+        if panel and panel.frame and panel.frame:IsShown() then
+            panel.close()
+        end
+    end
+    if except ~= "about" then
+        local panel = EAM.UI and EAM.UI.AboutPanel
+        if panel and panel.frame and panel.frame:IsShown() then
+            panel.close()
+        end
+    end
+end
+EAM.UI = EAM.UI or {}
+EAM.UI.closeAllSidePanels = Options.closeAllSidePanels
+
 -- 刪除單個提醒
 function Options.removeAlertFromCurrentCategory(id)
     local saved = EAM.Modules.SavedVariables
@@ -1190,6 +1233,7 @@ local function createFrame()
     moduleButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -13)
     bindText(moduleButton, "EAM_OPT_MODULES_BTN", "功能模組")
     moduleButton:SetScript("OnClick", function()
+        Options.closeAllSidePanels("module")
         local modulePanel = EAM.UI and EAM.UI.ModulePanel or nil
         if modulePanel and type(modulePanel.open) == "function" then
             modulePanel.open()
@@ -1202,6 +1246,7 @@ local function createFrame()
     aboutButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -34, -13)
     bindText(aboutButton, "EAM_OPT_ABOUT_BTN", "關於")
     aboutButton:SetScript("OnClick", function()
+        Options.closeAllSidePanels("about")
         local aboutPanel = EAM.UI and EAM.UI.AboutPanel or nil
         if aboutPanel and type(aboutPanel.open) == "function" then
             aboutPanel.open()
@@ -1211,10 +1256,7 @@ local function createFrame()
         frame:Hide()
     end)
     frame:SetScript("OnHide", function()
-        if Options.listFrame then Options.listFrame:Hide() end
-        if Options.posFrame then Options.posFrame:Hide() end
-        if Options.condFrame then Options.condFrame:Hide() end
-        if Options.batchFrame then Options.batchFrame:Hide() end
+        Options.closeAllSidePanels()
     end)
 
     -- 內邊框
@@ -1478,25 +1520,23 @@ local function createFrame()
     for idx, category in ipairs(categories) do
         createThemedButton(inner, localized(category.key, category.fallback), 12, -192 - (idx - 1) * 29, 332, 26, function()
             if idx <= 6 then
+                Options.closeAllSidePanels("list")
                 Options.currentCategory = idx
                 Options.listFrame:Show()
-                if Options.posFrame then Options.posFrame:Hide() end
-
                 if Options.listTitleText then
                     bindText(Options.listTitleText, category.key, category.fallback)
                 end
                 Options.refreshList()
             elseif idx == 7 then
+                Options.closeAllSidePanels("resource")
                 local panel = EAM.UI and EAM.UI.PlayerResourcePanel
                 if panel and type(panel.open) == "function" then
                     panel.open()
                 end
             else
+                Options.closeAllSidePanels("pos")
                 if Options.posFrame then
                     Options.posFrame:Show()
-                end
-                if Options.listFrame then
-                    Options.listFrame:Hide()
                 end
             end
         end)
@@ -1504,6 +1544,7 @@ local function createFrame()
 
     -- 底部操作按鈕：Profile 匯入/匯出、整合診斷中心與關閉按鈕
     createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -432, 162, 26, function()
+        Options.closeAllSidePanels("profile")
         local profilePanel = EAM.UI and EAM.UI.ProfileCodecPanel
         if profilePanel and type(profilePanel.open) == "function" then
             profilePanel.open()
@@ -1513,6 +1554,7 @@ local function createFrame()
     end)
 
     createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -432, 162, 26, function()
+        Options.closeAllSidePanels("debug")
         local debugCenter = EAM.UI and EAM.UI.DebugCenterPanel
         if debugCenter and type(debugCenter.open) == "function" then
             debugCenter.open()

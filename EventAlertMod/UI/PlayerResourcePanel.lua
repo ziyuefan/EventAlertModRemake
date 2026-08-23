@@ -769,6 +769,9 @@ function Panel.open()
         print("|cff00ff96EAM|r " .. localized("EAM_RESOURCE_COMBAT_BLOCKED", "戰鬥中不開啟玩家資源設定。"))
         return false, "combat"
     end
+    if EAM.UI and type(EAM.UI.closeAllSidePanels) == "function" then
+        EAM.UI.closeAllSidePanels("resource")
+    end
     local frame = createPanel()
     if not frame then
         return false, "frameUnavailable"
