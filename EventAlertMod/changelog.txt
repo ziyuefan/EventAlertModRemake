@@ -1,3 +1,7 @@
+-- [Retail 12.1.0 Alpha 7.5 DK Rune Enhancements & Diagnostic Tool] 2026.08.23
+    -- 死亡騎士符文圖示支援依血魄 (250)、冰霜 (251)、穢邪 (252) 專精動態切換專屬圖示。
+    -- 符文主狀態列下方增設 6 格獨立微型充能進度條 (0%..100%)，由排程計時器平滑驅動冷卻動畫，全滿時自動休眠。
+    -- 新增 /eam rune (或 /eam probe rune) 專屬符文槽位診斷指令，輸出 6 槽位即時秒數/進度並提供一鍵全選 JSON 複製視窗。
 -- [Retail 12.1.0 Alpha 7.4 Rune / Ground Family] 2026.08.23
     -- 充能環形版面改用封裝的透明 TGA ring grid；冷卻完成必須先觀測到已消耗充能，再於 currentCharges 回到 maxCharges 時成立，避免施放後的舊全滿快照提早移除。
     -- 死亡騎士符文改由 GetRuneCount／GetRuneCooldown 六槽初始化與 RUNE_POWER_UPDATE(index, added) 即時驅動；消耗／恢復更新 0..6 分段，符能仍為獨立資源。

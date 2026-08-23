@@ -234,6 +234,58 @@ function PlayerResourceProbe.buildReport()
     return report, reportJSON
 end
 
+function PlayerResourceProbe.buildRuneDiagnostic()
+    local service = EAM.Services and EAM.Services.PlayerResourceService
+    local status = service and type(service.getStatus) == "function" and service.getStatus() or {}
+    local now = api.GetTime and api.GetTime() or 0
+    local slots = {}
+    for index = 1, 6 do
+        local ok, start, duration, ready
+        if type(api.GetRuneCooldown) == "function" then
+            ok, start, duration, ready = pcall(api.GetRuneCooldown, index)
+        end
+        local isReady = (ok and ready == true) or (start == 0 and duration == 0)
+        local remaining = (not isReady and Util.isSafeNumber(start) and Util.isSafeNumber(duration) and duration > 0)
+            and math.max(0, (start + duration) - now)
+            or 0
+        local progress = (not isReady and Util.isSafeNumber(start) and Util.isSafeNumber(duration) and duration > 0)
+            and math.min(1, math.max(0, (now - start) / duration))
+            or (isReady and 1 or 0)
+
+        slots[index] = {
+            slot = index,
+            ready = isReady,
+            start = Util.isSafeNumber(start) and start or 0,
+            duration = Util.isSafeNumber(duration) and duration or 0,
+            remainingSeconds = math.floor(remaining * 100 + 0.5) / 100,
+            progressPercent = math.floor(progress * 100 + 0.5),
+        }
+    end
+
+    local specID = service and service.getSpecializationID and service.getSpecializationID()
+    local classToken = service and service.getClassToken and service.getClassToken()
+    local Catalog = EAM.Data.PlayerResourceCatalog
+    local runeIcon = Catalog and Catalog.getResourceIcon and Catalog.getResourceIcon("RUNES", specID) or 134417
+
+    local diagnostic = {
+        schema = 1,
+        type = "EAM_RUNE_DIAGNOSTIC_REPORT",
+        generatedAtSessionMs = math.floor(now * 1000 + 0.5),
+        classToken = classToken,
+        specializationID = specID,
+        runeIcon = runeIcon,
+        runeReadyCount = status.runeReadyCount or 0,
+        runeEventCount = status.runeEventCount or 0,
+        lastRuneResult = status.lastRuneResult or "unknown",
+        slots = slots,
+    }
+
+    local encoder = EAM.Debug.FlowTestRunner and EAM.Debug.FlowTestRunner.encodeJSON
+    local diagnosticJSON = encoder and encoder(diagnostic) or nil
+    _G.EAM_RUNE_DIAGNOSTIC_JSON = diagnosticJSON
+    return diagnostic, diagnosticJSON
+end
+
 local function invalidateMissingEventCheck()
     PlayerResourceProbe.missingCheckGeneration =
         PlayerResourceProbe.missingCheckGeneration + 1

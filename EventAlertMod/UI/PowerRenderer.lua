@@ -121,6 +121,30 @@ local function createResourceFrame(anchor, definition)
         markers[index] = marker
     end
 
+    local slotBars = {}
+    if definition.rendererKind == "POINTS" and maxPoints and maxPoints > 0 then
+        for index = 1, maxPoints do
+            local slotBar = api.CreateFrame("StatusBar", nil, container)
+            slotBar:SetSize(20, 3)
+            slotBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+            slotBar:SetStatusBarColor(
+                definition.color[1],
+                definition.color[2],
+                definition.color[3],
+                0.9
+            )
+            slotBar:SetMinMaxValues(0, 1)
+            slotBar:SetValue(1)
+
+            local slotBg = slotBar:CreateTexture(nil, "BACKGROUND")
+            slotBg:SetAllPoints(slotBar)
+            slotBg:SetColorTexture(0.02, 0.02, 0.02, 0.65)
+            slotBar.bg = slotBg
+            slotBar:Hide()
+            slotBars[index] = slotBar
+        end
+    end
+
     container:Hide()
     return {
         key = definition.key,
@@ -135,6 +159,7 @@ local function createResourceFrame(anchor, definition)
         numericTextSink = setNumericTextFormatted,
         glow = glow,
         markers = markers,
+        slotBars = slotBars,
         configured = false,
         visible = false,
         available = false,
@@ -170,7 +195,7 @@ function PowerRenderer.initialize()
     return true, "initialized"
 end
 
-function PowerRenderer.configureResource(definition, config, displayName, orderIndex)
+function PowerRenderer.configureResource(definition, config, displayName, orderIndex, specializationID)
     if not PowerRenderer.initialized then
         local initialized, reason = PowerRenderer.initialize()
         if not initialized then
@@ -185,6 +210,10 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     if not frame then
         return false, "resourceFrameUnavailable"
     end
+
+    local Catalog = EAM.Data.PlayerResourceCatalog
+    local iconTexture = Catalog and Catalog.getResourceIcon and Catalog.getResourceIcon(definition.key, specializationID)
+        or definition.icon
 
     local x = Util.isSafeNumber(config and config.offsetX) and config.offsetX or 0
     local y = Util.isSafeNumber(config and config.offsetY) and config.offsetY or 0
@@ -210,7 +239,7 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     frame.icon:ClearAllPoints()
     frame.icon:SetSize(iconSize, iconSize)
     frame.icon:SetPoint("LEFT", frame.container, "LEFT", 0, 0)
-    frame.icon:SetTexture(definition.icon)
+    frame.icon:SetTexture(iconTexture)
 
     frame.statusBar:ClearAllPoints()
     frame.statusBar:SetSize(barWidth, barHeight)
@@ -257,6 +286,27 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
         end
     end
 
+    if frame.slotBars then
+        local slotWidth = math.max(1, (barWidth / maxPoints) - 1)
+        for index = 1, #frame.slotBars do
+            local slotBar = frame.slotBars[index]
+            slotBar:ClearAllPoints()
+            slotBar:SetSize(slotWidth, 3)
+            slotBar:SetPoint(
+                "TOPLEFT",
+                frame.statusBar,
+                "BOTTOMLEFT",
+                (index - 1) * (barWidth / maxPoints),
+                -2
+            )
+            if effectiveKind == "POINTS" then
+                slotBar:Show()
+            else
+                slotBar:Hide()
+            end
+        end
+    end
+
     frame.label:SetText(displayName or definition.fallbackName)
     frame.valueText:ClearText()
     frame.valueText:Hide()
@@ -269,6 +319,20 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     frame.powerType = definition.powerType
     frame.config = config
     return true, "configured"
+end
+
+function PowerRenderer.applyRuneCooldowns(resourceKey, slotProgressTable)
+    local frame = PowerRenderer.frames[resourceKey]
+    if not frame or not frame.slotBars or type(slotProgressTable) ~= "table" then
+        return false, "sinkUnavailable"
+    end
+    for index = 1, #frame.slotBars do
+        local progress = slotProgressTable[index]
+        if Util.isSafeNumber(progress) then
+            pcall(frame.slotBars[index].SetValue, frame.slotBars[index], progress)
+        end
+    end
+    return true, "cooldownsRendered"
 end
 
 function PowerRenderer.reflowResourceFrames(nodes, count)

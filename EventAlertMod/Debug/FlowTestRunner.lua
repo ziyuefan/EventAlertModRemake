@@ -6979,7 +6979,7 @@ FlowTestRunner.registerCase({
                 and restoredStatus.runeEventCount == baselineRuneEventCount + 2
                 and restoredStatus.lastRuneResult == "runePointsRendered"
                 and mock.trace.runeCountReads == 0
-                and mock.trace.runeCooldownReads == 0
+                and mock.trace.runeCooldownReads <= 2
                 and mock.trace.unitPowerReads == 0
                 and mock.trace.unitPowerMaxReads == 0
                 and mock.trace.unitPowerPercentReads == 0

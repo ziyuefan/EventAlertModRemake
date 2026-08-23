@@ -554,16 +554,17 @@ local function createDebugFrame()
 end
 
 -- 開啟除錯診斷與匯出視窗
-function PromptExport.openWindow()
+function PromptExport.openWindow(customText)
     local f = createDebugFrame()
     if not f then return end
 
-    if f:IsShown() then
+    if not customText and f:IsShown() then
         f:Hide()
     else
         f:Show()
         if PromptExport.editBox then
-            PromptExport.editBox:SetText(PromptExport.buildDetailed())
+            local text = (type(customText) == "string" and customText ~= "") and customText or PromptExport.buildDetailed()
+            PromptExport.editBox:SetText(text)
             PromptExport.editBox:HighlightText()
         end
         if PromptExport.statusText then

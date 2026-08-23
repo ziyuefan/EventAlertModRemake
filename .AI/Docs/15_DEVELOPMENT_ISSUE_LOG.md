@@ -1366,3 +1366,21 @@
   2. 在 `applyRuneEvent()` 中，當槽位狀態變更時，直接以 6 槽位 boolean 進行零分配 O(1) 確定性重算，徹底消除任何計數漂移。
 - 驗證：Lua 語法檢查 64/64 PASS；Flow 測試 82/82 PASS；Validation Contracts 493/493 PASS。
 
+### EAM-20260823-DK-RUNE-SPEC-BARS-DIAGNOSTIC：DK 符文專精圖示、6 格獨立下方冷卻條與專屬除錯診斷工具
+
+- 日期：2026-08-23。
+- 狀態：已完成代碼實作、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。
+- 需求與症狀：
+  1. 玩家希望 DK 符文圖示能依照專精（血魄 250、冰霜 251、穢邪 252）自動動態切換專屬圖示。
+  2. 玩家希望在符文主狀態列每一格下方增設獨立的冷卻微型條 (StatusBar)，即時呈現每顆符文 0%..100% 充能進度。
+  3. 提供專屬除錯回報工具，供玩家一鍵輸出並複製 6 槽位即時秒數與狀態 JSON 向 AI 回報。
+- 實作方案：
+  1. **專精圖示**：在 `Data/PlayerResourceCatalog.lua` 建立 `SPEC_ICONS` 對照表，並提供 `Catalog.getResourceIcon(key, specID)`；`PowerRenderer.lua` 與 `PlayerResourceService.lua` 拓樸重建與專精切換事件時自動套用。
+  2. **6 格下方微型冷卻條**：在 `PowerRenderer.lua` 中建立 6 條 3px 微型 `slotBars` 並對齊於主條每一格下方；`PlayerResourceService.lua` 在有符文冷卻時每 0.05s 啟動輕量排程計時器平滑更新充能進度，全滿時立即休眠 (0 CPU)。
+  3. **專屬除錯工具**：在 `PlayerResourceProbe.lua` 提供 `buildRuneDiagnostic()`，彙整 6 槽位 readiness、start、duration、remainingSeconds 與 progressPercent，並在 `Slash.lua` 支援 `/eam rune` (或 `/eam probe rune`)，於聊天框印出摘要並彈出全選 EditBox 供玩家一鍵 `Ctrl+C` 複製。
+- 驗證：
+  - Lua 語法檢查：64/64 PASS。
+  - Flow 狀態機測試：82/82 PASS。
+  - Validation Contracts：493/493 PASS。
+
+

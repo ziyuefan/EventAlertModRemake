@@ -67,6 +67,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_DOCTOR or "/eam doctor - 顯示 Retail/PTR API 邊界診斷")
     printLine(EAM.L.EAM_SLASH_HELP_VALIDATE or "/eam validate - 同 /eam doctor")
     printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示除錯摘要")
+    printLine(EAM.L.EAM_SLASH_HELP_RUNE or "/eam rune - 顯示並複製 DK 符文即時槽位診斷 JSON")
     printLine(EAM.L.EAM_SLASH_HELP_EXPORT or "/eam export - 輸出精簡 AI debug 狀態")
     printLine(EAM.L.EAM_SLASH_HELP_PROFILE or "/eam profile [export|import] - 開啟職業 profile JSON/Base64 分享")
     printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick|core|boundary|aura121|all|live] - 流程驗證或真人實機回報")
@@ -391,7 +392,30 @@ local function handleSlash(input)
         else
             panel.open()
         end
-elseif command == "unitpower" then
+    elseif command == "rune" or command == "runes" or (command == "probe" and commandArguments(input) == "rune") then
+        local probe = EAM.Debug and EAM.Debug.PlayerResourceProbe
+        if probe and type(probe.buildRuneDiagnostic) == "function" then
+            local diagnostic, json = probe.buildRuneDiagnostic()
+            printLine(stringFormat(
+                "|cff00ffff[DK 符文診斷]|r 專精=%s, 圖示ID=%s, 備妥符文=%d/6",
+                tostring(diagnostic.specializationID),
+                tostring(diagnostic.runeIcon),
+                diagnostic.runeReadyCount or 0
+            ))
+            if diagnostic.slots then
+                for i = 1, #diagnostic.slots do
+                    local s = diagnostic.slots[i]
+                    local stateStr = s.ready and "|cff00ff00備妥|r" or "|cffffaa00充能中|r"
+                    printLine(stringFormat("  - 槽位 %d: %s (剩餘 %.2f 秒, 進度 %d%%)", s.slot, stateStr, s.remainingSeconds or 0, s.progressPercent or 0))
+                end
+            end
+            if EAM.Debug.PromptExport and type(EAM.Debug.PromptExport.openWindow) == "function" then
+                EAM.Debug.PromptExport.openWindow(json)
+            end
+        else
+            printLine("EAM：PlayerResourceProbe 模組未載入。")
+        end
+    elseif command == "unitpower" then
         handleUnitPower(input)
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()

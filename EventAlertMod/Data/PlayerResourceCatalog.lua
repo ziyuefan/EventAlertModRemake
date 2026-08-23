@@ -121,12 +121,29 @@ Catalog.ClassResourceKeys = freeze({
 })
 Catalog.ResourceCount = #definitions
 
+local SPEC_ICONS = freeze({
+    RUNES = freeze({
+        [250] = 134418,
+        [251] = 134419,
+        [252] = 134420,
+    }),
+})
+
 function Catalog.getSpecResourceKeys(classToken, specializationID)
     local classSpecs = specResources[classToken]
     if classSpecs and specializationID and classSpecs[specializationID] then
         return classSpecs[specializationID]
     end
     return classFallback[classToken]
+end
+
+function Catalog.getResourceIcon(key, specializationID)
+    local specMap = SPEC_ICONS[key]
+    if specMap and specializationID and specMap[specializationID] then
+        return specMap[specializationID]
+    end
+    local definition = byKey[key]
+    return definition and definition.icon or nil
 end
 
 function Catalog.getDefinition(key)

@@ -212,6 +212,9 @@ local function clearRegistry()
     PlayerResourceService.runeReadyCount = 0
     PlayerResourceService.lastRuneResult = "registryCleared"
     PlayerResourceService.trackedResourceCount = 0
+    if stopRuneCooldownTicker then
+        stopRuneCooldownTicker()
+    end
 end
 
 local function sortNodes(nodes)
@@ -324,6 +327,92 @@ local function syncRuneState()
     return true, "runeStateSynchronized"
 end
 
+local runeCooldownSlotProgress = { 1, 1, 1, 1, 1, 1 }
+local runeCooldownTickerActive = false
+local runeCooldownTickerGeneration = 0
+local runeCooldownTickerInterval = 0.05
+local runeCooldownTickerCallback
+
+local function updateRuneSlotCooldowns(node)
+    local draw = renderer()
+    if not draw or type(draw.applyRuneCooldowns) ~= "function" then
+        return false
+    end
+    local now = type(api.GetTime) == "function" and api.GetTime() or 0
+    local anyCharging = false
+    for slot = 1, RUNE_SLOT_COUNT do
+        if PlayerResourceService.runeReadyByIndex[slot] == true then
+            runeCooldownSlotProgress[slot] = 1
+        else
+            local progress = 0
+            if type(api.GetRuneCooldown) == "function" then
+                local ok, start, duration, ready = pcall(api.GetRuneCooldown, slot)
+                if ok and ready == true then
+                    progress = 1
+                elseif ok and Util.isSafeNumber(start) and Util.isSafeNumber(duration) and duration > 0 then
+                    progress = math.min(1, math.max(0, (now - start) / duration))
+                    if progress < 1 then
+                        anyCharging = true
+                    else
+                        progress = 1
+                    end
+                end
+            end
+            runeCooldownSlotProgress[slot] = progress
+        end
+    end
+    draw.applyRuneCooldowns("RUNES", runeCooldownSlotProgress)
+    return anyCharging
+end
+
+local function queueRuneCooldownTicker()
+    if not runeCooldownTickerActive then
+        return
+    end
+    if not Scheduler or type(Scheduler.after) ~= "function" then
+        runeCooldownTickerActive = false
+        return
+    end
+    Scheduler["after"](
+        runeCooldownTickerInterval,
+        runeCooldownTickerCallback,
+        runeCooldownTickerGeneration
+    )
+end
+
+runeCooldownTickerCallback = function(generation)
+    if generation ~= runeCooldownTickerGeneration or not runeCooldownTickerActive then
+        return
+    end
+    local node = PlayerResourceService.registryByKey.RUNES
+    if not node or node.visible == false then
+        runeCooldownTickerActive = false
+        return
+    end
+    local anyCharging = updateRuneSlotCooldowns(node)
+    if anyCharging and PlayerResourceService.runeReadyCount < RUNE_SLOT_COUNT then
+        queueRuneCooldownTicker()
+    else
+        runeCooldownTickerActive = false
+        syncRuneState()
+        updateRunePoints(node)
+    end
+end
+
+local function startRuneCooldownTicker()
+    if runeCooldownTickerActive then
+        return
+    end
+    runeCooldownTickerGeneration = runeCooldownTickerGeneration + 1
+    runeCooldownTickerActive = true
+    queueRuneCooldownTicker()
+end
+
+local function stopRuneCooldownTicker()
+    runeCooldownTickerGeneration = runeCooldownTickerGeneration + 1
+    runeCooldownTickerActive = false
+end
+
 local function updateRunePoints(node)
     if not node or not node.numericSink then
         PlayerResourceService.unavailableUpdateCount = PlayerResourceService.unavailableUpdateCount + 1
@@ -356,6 +445,12 @@ local function updateRunePoints(node)
         PlayerResourceService.nativeSinkWriteCount = PlayerResourceService.nativeSinkWriteCount + 1
         PlayerResourceService.numericUpdateCount = PlayerResourceService.numericUpdateCount + 1
         PlayerResourceService.lastRuneResult = "runePointsRendered"
+        updateRuneSlotCooldowns(node)
+        if currentValue < maximumValue then
+            startRuneCooldownTicker()
+        else
+            stopRuneCooldownTicker()
+        end
     else
         PlayerResourceService.nativeSinkRejectCount = PlayerResourceService.nativeSinkRejectCount + 1
         PlayerResourceService.lastRuneResult = reason or "runeSinkRejected"
@@ -393,17 +488,14 @@ local function applyRuneEvent(node, runeIndex, added)
         return false, "runeStateUnsafe"
     end
 
-    local previous = PlayerResourceService.runeReadyByIndex[runeIndex]
     PlayerResourceService.runeReadyByIndex[runeIndex] = ready
-    if previous ~= ready then
-        local count = 0
-        for slot = 1, RUNE_SLOT_COUNT do
-            if PlayerResourceService.runeReadyByIndex[slot] == true then
-                count = count + 1
-            end
+    local count = 0
+    for slot = 1, RUNE_SLOT_COUNT do
+        if PlayerResourceService.runeReadyByIndex[slot] == true then
+            count = count + 1
         end
-        PlayerResourceService.runeReadyCount = count
     end
+    PlayerResourceService.runeReadyCount = count
     PlayerResourceService.runeEventCount = PlayerResourceService.runeEventCount + 1
     return updateRunePoints(node)
 end
@@ -862,7 +954,8 @@ function PlayerResourceService.rebuildTopology(reason)
             node.definition,
             node.config,
             displayName,
-            index
+            index,
+            specializationID
         )
         if configured then
             registerNode(node)
