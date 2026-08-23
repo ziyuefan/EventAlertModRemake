@@ -470,8 +470,8 @@ local function createPanel()
     end
 
     local frame = api.CreateFrame("Frame", "EAM_PlayerResourceOptionsFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(820, 760)
-    frame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
+    frame:SetSize(840, 800)
+    frame:SetPoint("CENTER", UIParent, "CENTER", 0, 10)
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
@@ -559,22 +559,22 @@ local function createPanel()
     end
 
     local selectedName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    selectedName:SetPoint("TOPLEFT", frame, "TOPLEFT", 270, -92)
+    selectedName:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -92)
     if Theme and Theme.registerText then
         Theme.registerText(selectedName, "title")
     end
     Panel.selectedName = selectedName
 
     local capabilityLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    capabilityLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 270, -122)
+    capabilityLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -122)
     if Theme and Theme.registerText then
         Theme.registerText(capabilityLabel, "body")
     end
     Panel.capabilityText = capabilityLabel
 
     local modeButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    modeButton:SetSize(210, 24)
-    modeButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 270, -150)
+    modeButton:SetSize(170, 24)
+    modeButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -148)
     if Theme and Theme.registerButton then
         Theme.registerButton(modeButton)
     end
@@ -594,7 +594,7 @@ local function createPanel()
     Panel.modeButton = modeButton
 
     local anchorButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    anchorButton:SetSize(145, 24)
+    anchorButton:SetSize(185, 24)
     anchorButton:SetPoint("LEFT", modeButton, "RIGHT", 10, 0)
     if Theme and Theme.registerButton then
         Theme.registerButton(anchorButton)
@@ -605,7 +605,7 @@ local function createPanel()
     Panel.controls.anchor = anchorButton
 
     local positionButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    positionButton:SetSize(150, 24)
+    positionButton:SetSize(185, 24)
     positionButton:SetPoint("LEFT", anchorButton, "RIGHT", 10, 0)
     if Theme and Theme.registerButton then
         Theme.registerButton(positionButton)
@@ -615,9 +615,9 @@ local function createPanel()
     end)
     Panel.controls.position = positionButton
 
-local orientationButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    orientationButton:SetSize(210, 24)
-    orientationButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 270, -250)
+    local orientationButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    orientationButton:SetSize(270, 24)
+    orientationButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -244)
     if Theme and Theme.registerButton then
         Theme.registerButton(orientationButton)
     end
@@ -625,7 +625,7 @@ local orientationButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTe
     Panel.orientationButton = orientationButton
 
     local fontFamilyButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    fontFamilyButton:SetSize(250, 24)
+    fontFamilyButton:SetSize(280, 24)
     fontFamilyButton:SetPoint("LEFT", orientationButton, "RIGHT", 10, 0)
     if Theme and Theme.registerButton then
         Theme.registerButton(fontFamilyButton)
@@ -633,19 +633,18 @@ local orientationButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTe
     fontFamilyButton:SetScript("OnClick", cycleFontFamily)
     Panel.fontFamilyButton = fontFamilyButton
 
-    createCheckbox(frame, "enabled", "EAM_RESOURCE_ENABLED", "啟用此資源", 270, -190)
-    createCheckbox(frame, "showForeground", "EAM_RESOURCE_SHOW_FOREGROUND", "前景時顯示", 430, -190)
-    createCheckbox(frame, "showBackground", "EAM_RESOURCE_SHOW_BACKGROUND", "背景時顯示", 590, -190)
-    createCheckbox(frame, "showValue", "EAM_RESOURCE_SHOW_VALUE", "顯示安全數字", 270, -220)
-    createCheckbox(frame, "showPercent", "EAM_RESOURCE_SHOW_PERCENT", "顯示百分比", 430, -220)
-    createCheckbox(frame, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 590, -220)
-
+    createCheckbox(frame, "enabled", "EAM_RESOURCE_ENABLED", "啟用此資源", 260, -184)
+    createCheckbox(frame, "showForeground", "EAM_RESOURCE_SHOW_FOREGROUND", "前景時顯示", 440, -184)
+    createCheckbox(frame, "showBackground", "EAM_RESOURCE_SHOW_BACKGROUND", "背景時顯示", 620, -184)
+    createCheckbox(frame, "showValue", "EAM_RESOURCE_SHOW_VALUE", "顯示安全數字", 260, -212)
+    createCheckbox(frame, "showPercent", "EAM_RESOURCE_SHOW_PERCENT", "顯示百分比", 440, -212)
+    createCheckbox(frame, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 620, -212)
 
     for index = 1, #SLIDER_SPECS do
         local spec = SLIDER_SPECS[index]
         local column = (index - 1) % 2
         local row = math.floor((index - 1) / 2)
-        createSlider(frame, spec, 270 + column * 265, -300 - row * 58)
+        createSlider(frame, spec, 260 + column * 280, -288 - row * 52)
     end
 
     local statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")

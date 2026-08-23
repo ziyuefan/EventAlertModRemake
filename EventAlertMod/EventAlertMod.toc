@@ -83,6 +83,7 @@ UI\AboutPanel.lua
 UI\ModulePanel.lua
 UI\PlayerResourcePanel.lua
 UI\ProfileCodecPanel.lua
+UI\DebugCenterPanel.lua
 UI\Options.lua
 UI\Slash.lua
 
