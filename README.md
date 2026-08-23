@@ -1,10 +1,10 @@
 # EventAlertMod Retail 12.1
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Release](https://img.shields.io/badge/release-Alpha%207.4-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%207.5-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 
-EventAlertMod（EAM）是只支援《魔獸世界》正式服 Retail 的輕量提醒插件，專注於自身／目標光環、技能冷卻、物品冷卻、地面效果與玩家職業資源。現行來源版本標記為 EventAlertMod_MN_20260823，發布定位為 Alpha 7.4 prerelease。
+EventAlertMod（EAM）是只支援《魔獸世界》正式服 Retail 的輕量提醒插件，專注於自身／目標光環、技能冷卻、物品冷卻、地面效果與玩家職業資源。現行來源版本標記為 EventAlertMod_MN_20260823，發布定位為 Alpha 7.5 prerelease。
 
 > 本文件是 GitHub 專案首頁與目前使用說明。下方歷史內容若與本節衝突，以本節、EventAlertMod.toc 與 .AI/Docs 的最新文件為準。
 
@@ -96,6 +96,7 @@ Player Resource Module 將 Mana、Rage、Energy、Combo Points、Insanity、Rune
 | /eam test live 或 /eam test manual | 開啟玩家手動實機簽收面板；插件不會自動操作角色或按鈕。 |
 | /eam debug | 開啟精簡開發報告匯出視窗。 |
 | /eam debug ground SPELL_ID | 低頻解析指定地面技能 Tooltip 秒數；解析失敗時仍使用設定的 fallback。 |
+| /eam rune | 顯示死亡騎士 6 格符文槽位即時秒數與冷卻進度診斷視窗。 |
 | /eam export | 開啟精簡 AI debug 狀態匯出。 |
 | /eam showcast 或 /eam showc | 開／關本次登入玩家成功施法記錄，並列出安全可讀的 Spell ID。 |
 | /eam show、/eam showtarget | 顯示 12.1 光環 ID 的安全限制與建議路徑。 |
