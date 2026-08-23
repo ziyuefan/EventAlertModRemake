@@ -332,6 +332,7 @@ local runeCooldownTickerActive = false
 local runeCooldownTickerGeneration = 0
 local runeCooldownTickerInterval = 0.05
 local runeCooldownTickerCallback
+local updateRunePoints
 
 local function updateRuneSlotCooldowns(node)
     local draw = renderer()
@@ -395,7 +396,9 @@ runeCooldownTickerCallback = function(generation)
     else
         runeCooldownTickerActive = false
         syncRuneState()
-        updateRunePoints(node)
+        if updateRunePoints then
+            updateRunePoints(node)
+        end
     end
 end
 
@@ -413,7 +416,7 @@ local function stopRuneCooldownTicker()
     runeCooldownTickerActive = false
 end
 
-local function updateRunePoints(node)
+updateRunePoints = function(node)
     if not node or not node.numericSink then
         PlayerResourceService.unavailableUpdateCount = PlayerResourceService.unavailableUpdateCount + 1
         PlayerResourceService.lastRuneResult = "runeSinkUnavailable"

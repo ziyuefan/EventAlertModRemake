@@ -1383,4 +1383,22 @@
   - Flow 狀態機測試：82/82 PASS。
   - Validation Contracts：493/493 PASS。
 
+### EAM-20260823-RESOURCE-OPTIONS-VANISH-AND-NIL-TICKER-FIX：排程回呼 nil 函數修復與設定頁面資源消失問題
+
+- 日期：2026-08-23。
+- 狀態：已完成代碼修復、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。
+- 症狀與原因判斷：
+  1. **實機報錯 `PlayerResourceService.lua:398: attempt to call a nil value`**：`runeCooldownTickerCallback` 在回呼結束時呼叫了 `updateRunePoints(node)`，但在 Lua 語法中該函數在下方以 `local function` 宣告，導致回呼執行時該變數仍為 `nil`。
+  2. **設定視窗開啟時職業資源全部消失**：在 `UI/Options.lua` 開啟設定頁面或刷新版面時呼叫了 `Renderer.requestLayout()`，其對 `classPower` 執行 `layout()`；由於 modern EAM 職業資源已移至 `PowerRenderer`（子框架數為 0），`Renderer.lua:layout()` 執行了 `parent:Hide()`，將所有資源條的父錨點 `EAM_AlertFrame_classPower` 隱藏，導致所有職業資源永久消失直至 `/reload`。
+  3. **DK 三專精專屬圖示更新**：依據 wowtools 與 WoW 官方 DB，將血魄、冰霜、穢邪三專精的符文圖示設定為官方對應專精圖示（血魄 `135770`、冰霜 `135773`、穢邪 `135775`），並支援動態查詢 `GetSpecializationInfoByID`。
+- 有效解法：
+  1. 在 `Services/PlayerResourceService.lua` 頂部前置宣告 `local updateRunePoints`，並在呼叫處增加防禦性判定，徹底消除 nil 調用崩潰。
+  2. 在 `UI/Renderer.lua` 的 `layout()` 函數開頭增加 `if frameName == "classPower" then parent:Show() ... return true, "classPowerAnchor"`，確保作為 17 項獨立資源錨點的 `EAM_AlertFrame_classPower` 永遠保持顯示，不再因設定頁面或排版刷新被誤隱藏。
+  3. 在 `Data/PlayerResourceCatalog.lua` 更新 `SPEC_ICONS` 與 `Catalog.getResourceIcon`，精準映射 12.x DK 專精圖示。
+- 驗證：
+  - Lua 語法檢查：64/64 PASS。
+  - Flow 狀態機測試：82/82 PASS。
+  - Validation Contracts：493/493 PASS。
+
+
 

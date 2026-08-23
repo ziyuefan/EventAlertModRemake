@@ -423,6 +423,14 @@ local function layout(frameName)
     local dirIdx = frameConfig and frameConfig.growDirection or 1
     if dirIdx < 1 or dirIdx > 4 then dirIdx = 1 end
 
+    -- 職業能量框架作為獨立資源容器錨點，不套用單一列表隱藏邏輯
+    if frameName == "classPower" then
+        parent:Show()
+        fState.layoutDirty = false
+        fState.layoutBlocked = false
+        return true, "classPowerAnchor"
+    end
+
     -- 提取凍結好的連續數字索引方向偏量陣列 (Array Part)
     local offset = EAM.Constants.LAYOUT_OFFSETS[dirIdx]
     local dx, dy = offset[1], offset[2]

@@ -123,9 +123,9 @@ Catalog.ResourceCount = #definitions
 
 local SPEC_ICONS = freeze({
     RUNES = freeze({
-        [250] = 134418,
-        [251] = 134419,
-        [252] = 134420,
+        [250] = 135770, -- Blood Spec (Spell_Deathknight_BloodPresence)
+        [251] = 135773, -- Frost Spec (Spell_Deathknight_FrostPresence)
+        [252] = 135775, -- Unholy Spec (Spell_Deathknight_UnholyPresence)
     }),
 })
 
@@ -138,6 +138,12 @@ function Catalog.getSpecResourceKeys(classToken, specializationID)
 end
 
 function Catalog.getResourceIcon(key, specializationID)
+    if key == "RUNES" and specializationID and api and type(api.GetSpecializationInfoByID) == "function" then
+        local ok, _, _, _, specIcon = pcall(api.GetSpecializationInfoByID, specializationID)
+        if ok and specIcon and type(specIcon) == "number" and specIcon > 0 then
+            return specIcon
+        end
+    end
     local specMap = SPEC_ICONS[key]
     if specMap and specializationID and specMap[specializationID] then
         return specMap[specializationID]
