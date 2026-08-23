@@ -272,16 +272,25 @@ local function readNumericValues(powerType)
 end
 
 local function readRuneSlot(runeIndex)
+    if type(api.GetRuneCooldown) == "function" then
+        local ok, start, duration, ready = pcall(api.GetRuneCooldown, runeIndex)
+        if ok then
+            if Util.isSafeBoolean(ready) then
+                return ready, "GetRuneCooldown"
+            end
+            if Util.isSafeNumber(start) and Util.isSafeNumber(duration) then
+                if start == 0 or duration == 0 then
+                    return true, "GetRuneCooldownZero"
+                end
+                local now = type(api.GetTime) == "function" and api.GetTime() or 0
+                return (now >= start + duration), "GetRuneCooldownMath"
+            end
+        end
+    end
     if type(api.GetRuneCount) == "function" then
         local ok, count = pcall(api.GetRuneCount, runeIndex)
         if ok and Util.isSafeNonNegativeNumber(count) then
             return count > 0, "GetRuneCount"
-        end
-    end
-    if type(api.GetRuneCooldown) == "function" then
-        local ok, _, _, ready = pcall(api.GetRuneCooldown, runeIndex)
-        if ok and Util.isSafeBoolean(ready) then
-            return ready, "GetRuneCooldown"
         end
     end
     return nil, "runeSlotUnavailable"
@@ -355,21 +364,21 @@ local function updateRunePoints(node)
 end
 
 local function applyRuneEvent(node, runeIndex, added)
-    if not Util.isSafePositiveNumber(runeIndex)
-        or runeIndex % 1 ~= 0
-        or runeIndex > RUNE_SLOT_COUNT
-        or not Util.isSafeTableKey(runeIndex)
-    then
-        PlayerResourceService.ignoredEventCount = PlayerResourceService.ignoredEventCount + 1
-        PlayerResourceService.lastRuneResult = "runeIndexUnsafe"
-        return false, "runeIndexUnsafe"
-    end
-
     if not PlayerResourceService.runeStateInitialized then
         local synchronized, reason = syncRuneState()
         if not synchronized then
             return false, reason
         end
+    end
+
+    if not Util.isSafePositiveNumber(runeIndex)
+        or runeIndex % 1 ~= 0
+        or runeIndex > RUNE_SLOT_COUNT
+        or not Util.isSafeTableKey(runeIndex)
+    then
+        syncRuneState()
+        PlayerResourceService.runeEventCount = PlayerResourceService.runeEventCount + 1
+        return updateRunePoints(node)
     end
 
     local ready

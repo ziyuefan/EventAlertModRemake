@@ -6911,7 +6911,7 @@ FlowTestRunner.registerCase({
             local rebuilt, rebuildReason = service.rebuildTopology("runeSlotFlow")
             local runeFrame = renderer.frames.RUNES
             local initialValue = runeFrame and runeFrame.statusBar.safeValue
-            local initialRuneReads = mock.trace.runeCountReads
+            local initialRuneReads = (mock.trace.runeCountReads or 0) + (mock.trace.runeCooldownReads or 0)
 
             mock.resetTrace()
             mock.runeCounts[2] = 0
