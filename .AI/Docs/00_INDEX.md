@@ -29,6 +29,8 @@
     *   24 位 canonical 專家名冊、唯一問責者、證據分級與派工簽收規則。
 *   🔎 **[2026-06-21 專家會審報告](24_EXPERT_COUNCIL_REVIEW_20260621.md.html)**
     *   Retail 12.1 Aura readiness、Secret／Taint、效能與文件治理的分級檢討結果。
+*   🚀 **[Antigravity 接手理解基準檔 (Baseline Assessment)](31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md.html)**
+    *   2026-08-23 接手時之 AI 治理、WoW Retail 12.x API 邊界、零 GC 效能架構、多職業資源與發布體系之權威理解基準點。
 
 ### 🏗️ 系統架構與 API 邊界 (Architecture & API)
 *   📐 **[整體重構系統架構 (Architecture)](01_ARCHITECTURE.md.html)**

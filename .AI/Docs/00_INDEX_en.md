@@ -16,6 +16,24 @@ If you are a player using this AddOn, please visit the following documents to le
 ---
 
 ## 🤖 AI & Human Developers Portal
+# EventAlertMod Remake Documentation Hub
+
+Welcome to the EventAlertMod (EAM) Retail Rewrite Documentation Hub. This center provides tailored entry portals for both **AddOn users/players** and **AI/Human developers**.
+
+---
+
+## 🎮 Players & Users Portal
+
+If you are a player using this AddOn, please visit the following documents to learn about installation, usage, and recent update logs:
+
+*   📖 **[Quick Start Guide (README)](README.md.html)**
+    *   AddOn installation, slash commands, frame adjustments, and feature highlights (Pandemic glow, hero talent support).
+*   📜 **[Changelog (Updates)](changelog.txt.html)**
+    *   Full details of rewrite updates in 12.0.7 and 12.1.0, including zero-allocation JIT optimizations and shadow host CDM bypass rendering history.
+
+---
+
+## 🤖 AI & Human Developers Portal
 
 If you are an AI coding agent or a human developer contributing to this project, please read the system architecture and development guidelines carefully:
 
@@ -24,6 +42,8 @@ If you are an AI coding agent or a human developer contributing to this project,
     *   **The absolute Fact-of-Truth guide for developers**. Includes combat Secret check protocols, Taint control rules, OnUpdate scheduler limits, and package building scripts.
 *   🔄 **[Subagent Workflows (Collab)](17_SUBAGENT_WORKFLOW.md.html)**
     *   Multi-agent collaboration procedures, RACI expert matrix, and QA root cause analysis guidelines.
+*   🚀 **[Antigravity Takeover Baseline Assessment](31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md.html)**
+    *   Authoritative baseline assessment of AI governance, WoW Retail 12.x API boundaries, zero-GC performance architecture, player resources, and deployment workflow upon takeover.
 
 ### 🏗️ Architecture & APIs
 *   📐 **[System Architecture (Decoupled Design)](01_ARCHITECTURE.md.html)**
