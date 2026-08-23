@@ -215,6 +215,43 @@ end
 -- =========================================================================
 -- Tab 3: Flow Test Runner
 -- =========================================================================
+local function displayFlowReport(report)
+    if not report then
+        setContent("Flow test execution failed or returned no report.")
+        setStatus("測試執行失敗。")
+        return
+    end
+
+    local summary = report.summary or {}
+    local total = summary.total or (report.cases and #report.cases) or 0
+    local passed = summary.passed or 0
+    local failed = summary.failed or 0
+    local skipped = summary.skipped or 0
+    local durationMs = summary.durationMs or report.durationMs or 0
+
+    local lines = {}
+    lines[#lines + 1] = "=== EAM Flow & State Machine Test Report ==="
+    lines[#lines + 1] = "Suite: " .. tostring(report.suite or "all")
+    lines[#lines + 1] = string.format("Total: %d | Passed: %d | Failed: %d | Skipped: %d", total, passed, failed, skipped)
+    lines[#lines + 1] = "Duration: " .. string.format("%.2f ms", durationMs)
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = "=== Test Cases ==="
+
+    if report.cases and #report.cases > 0 then
+        for i = 1, #report.cases do
+            local c = report.cases[i]
+            local mark = (c.status == "pass" or c.status == "passed") and "[PASS]" or (c.status == "skip" and "[SKIP]" or "[FAIL]")
+            lines[#lines + 1] = string.format("%s %-45s (%.2f ms)", mark, c.id or "unknown", c.durationMs or 0)
+            if c.message and c.message ~= "" then
+                lines[#lines + 1] = "       " .. c.message
+            end
+        end
+    end
+
+    setContent(table.concat(lines, "\n"))
+    setStatus(string.format("流程測試完成：共 %d 項，通過 %d 項，失敗 %d 項，略過 %d 項。", total, passed, failed, skipped))
+end
+
 local function runFlowTests()
     setStatus(localized("EAM_DEBUG_STATUS_RUNNING_TESTS", "正在執行流程與單元測試..."))
     local runner = EAM.Debug and EAM.Debug.FlowTestRunner
@@ -224,34 +261,27 @@ local function runFlowTests()
         return
     end
 
-    local report = runner.runSuite("all")
-    if not report then
-        setContent("Flow test execution failed or returned no report.")
-        setStatus("測試執行失敗。")
+    local ok, reason = runner.runSuite("all", function(report, reportJSON)
+        displayFlowReport(report)
+    end)
+
+    if not ok then
+        if reason == "alreadyRunning" then
+            setStatus("流程測試已在執行中...")
+        elseif reason == "combatDeferred" then
+            setContent("戰鬥中無法執行流程測試，請離戰後再試。")
+            setStatus("戰鬥中已延後。")
+        else
+            setContent("Flow test start failed: " .. tostring(reason))
+            setStatus("測試啟動失敗。")
+        end
         return
     end
 
-    local lines = {}
-    lines[#lines + 1] = "=== EAM Flow & State Machine Test Report ==="
-    lines[#lines + 1] = "Suite: all"
-    lines[#lines + 1] = string.format("Total: %d | Passed: %d | Failed: %d | Skipped: %d", report.total or 0, report.passed or 0, report.failed or 0, report.skipped or 0)
-    lines[#lines + 1] = "Duration: " .. string.format("%.2f ms", (report.durationMs or 0))
-    lines[#lines + 1] = ""
-    lines[#lines + 1] = "=== Test Cases ==="
-
-    if report.cases and #report.cases > 0 then
-        for i = 1, #report.cases do
-            local c = report.cases[i]
-            local mark = (c.status == "pass" or c.status == "passed") and "[PASS]" or "[FAIL]"
-            lines[#lines + 1] = string.format("%s %-45s (%.2f ms)", mark, c.id or "unknown", c.durationMs or 0)
-            if c.message and c.message ~= "" then
-                lines[#lines + 1] = "       " .. c.message
-            end
-        end
+    local report = (runner.getLastReport and runner.getLastReport()) or runner.lastReport
+    if report then
+        displayFlowReport(report)
     end
-
-    setContent(table.concat(lines, "\n"))
-    setStatus(string.format("流程測試完成：共 %d 項，通過 %d 項，失敗 %d 項。", report.total or 0, report.passed or 0, report.failed or 0))
 end
 
 -- =========================================================================
@@ -260,11 +290,18 @@ end
 local function generateDiagnosticExport()
     setStatus(localized("EAM_DEBUG_STATUS_EXPORTING", "正在產生診斷報告..."))
     local exporter = EAM.Debug and EAM.Debug.PromptExport
-    if exporter and type(exporter.export) == "function" then
-        local text, report = exporter.export()
-        if text then
+    if exporter and type(exporter.buildDetailed) == "function" then
+        local text = exporter.buildDetailed()
+        if text and text ~= "" then
             setContent(text)
             setStatus(string.format("已產生完整系統診斷報告（共 %d 字元），請按全選複製。", #text))
+            return
+        end
+    elseif exporter and type(exporter.build) == "function" then
+        local text = exporter.build()
+        if text and text ~= "" then
+            setContent(text)
+            setStatus(string.format("已產生系統快照報告（共 %d 字元）。", #text))
             return
         end
     end
