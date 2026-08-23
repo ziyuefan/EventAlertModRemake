@@ -385,19 +385,15 @@ local function applyRuneEvent(node, runeIndex, added)
     end
 
     local previous = PlayerResourceService.runeReadyByIndex[runeIndex]
+    PlayerResourceService.runeReadyByIndex[runeIndex] = ready
     if previous ~= ready then
-        PlayerResourceService.runeReadyByIndex[runeIndex] = ready
-        if ready then
-            PlayerResourceService.runeReadyCount = math.min(
-                RUNE_SLOT_COUNT,
-                PlayerResourceService.runeReadyCount + 1
-            )
-        else
-            PlayerResourceService.runeReadyCount = math.max(
-                0,
-                PlayerResourceService.runeReadyCount - 1
-            )
+        local count = 0
+        for slot = 1, RUNE_SLOT_COUNT do
+            if PlayerResourceService.runeReadyByIndex[slot] == true then
+                count = count + 1
+            end
         end
+        PlayerResourceService.runeReadyCount = count
     end
     PlayerResourceService.runeEventCount = PlayerResourceService.runeEventCount + 1
     return updateRunePoints(node)

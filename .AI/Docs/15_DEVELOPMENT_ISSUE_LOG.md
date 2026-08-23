@@ -1353,3 +1353,16 @@
 - 驗證：Lua 64/64；Flow all 82/82；boundary 61/61；Validation Contracts 493/493。`unitpower.runes_event_driven_segments` 與 `ground.spell_family_activation` 均 pass，Secret scalar/key operation 為 0。
 - 後續注意：目前 Rune 只呈現六段 readiness count，不呈現每顆獨立 recharge sweep。反魔法立場若因吸收上限提前結束，固定施放秒數只代表上限；需玩家實機回報，不能猜測提前結束事件。
 - 發布打包陷阱：首份 Alpha 7.4 source ZIP 雖排除 `.AI/TestResults`，仍因匯入器留下 `.AI/.AI/TestResults` 而混入 4 個報告；根因是排除器只檢查首層。已改成任意深度 leaf 排除 `.git`、`backup`、`TestResults`、`.trash_*`，並由同一條 source-package Contract 鎖定。提交前另發現 `.AI/skills/wow-addon-dev/.git` 上游 metadata，已在路徑與 Reparse Point 驗證後備份並移至 `.AI/.trash_*`；Skill 本體保留為一般專案檔。錯誤 ZIP 僅保留於 ignored `Dist` 作稽核證據，不得上傳。
+
+### EAM-20260823-RUNES-CAPABILITY-RECOUNT-FIX：DK 符文 Capability 判定與狀態計數精準同步
+
+- 日期：2026-08-23。
+- 狀態：已完成代碼修復、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待 Retail 12.1 實機簽收。
+- 症狀：死亡騎士符文在玩家資源設定面板中可能被識別為 UNAVAILABLE 或 SECRET_DISPLAY，導致 `showValue`（數值文字）控制項與字級被禁用；單槽事件在極端狀態變更時可能產生計數漂移。
+- 根因一：`Services/PlayerResourceCapability.lua` 的 `classify()` 依賴 `UnitHasPowerType(5)`，但在 Retail 12.x 中 DK 主 PowerType 是 6 (符能)，`UnitHasPowerType(5)` 常回傳 false，導致 Capability 誤判。
+- 根因二：`applyRuneEvent()` 既有邏輯採用直接 `+1` / `-1` 算術，若遇事件重送或邊界槽位狀態變更，存在累計漂移風險。
+- 有效解法：
+  1. 在 `PlayerResourceCapability.lua` 中針對 `RUNES` 進行特化，只要 `GetRuneCount` 或 `GetRuneCooldown` 可用即判定為 `Capability.NUMERIC`，開放 UI 面板中符文的數值文字與格式設定。
+  2. 在 `applyRuneEvent()` 中，當槽位狀態變更時，直接以 6 槽位 boolean 進行零分配 O(1) 確定性重算，徹底消除任何計數漂移。
+- 驗證：Lua 語法檢查 64/64 PASS；Flow 測試 82/82 PASS；Validation Contracts 493/493 PASS。
+

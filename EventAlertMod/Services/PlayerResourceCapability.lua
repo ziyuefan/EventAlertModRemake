@@ -87,6 +87,12 @@ function Capability.classify(definition)
     if type(definition) ~= "table" or not Util.isSafeNonNegativeNumber(definition.powerType) then
         return Capability.UNAVAILABLE, "invalidDefinition"
     end
+    if definition.key == "RUNES" then
+        if type(api.GetRuneCount) == "function" or type(api.GetRuneCooldown) == "function" then
+            return Capability.NUMERIC, "runeSlotAPI"
+        end
+        return Capability.UNAVAILABLE, "runeSlotUnavailable"
+    end
     if type(api.UnitHasPowerType) ~= "function" then
         return Capability.UNAVAILABLE, "unitHasPowerTypeUnavailable"
     end
@@ -107,7 +113,8 @@ function Capability.classify(definition)
         return Capability.UNAVAILABLE, "legacyNumericSourceUnavailable"
     end
 
-    local curveConstants = api.CurveConstants    if type(api.UnitPowerPercent) ~= "function"
+    local curveConstants = api.CurveConstants
+    if type(api.UnitPowerPercent) ~= "function"
         or type(curveConstants) ~= "table"
         or curveConstants.ZeroToOne == nil
     then
