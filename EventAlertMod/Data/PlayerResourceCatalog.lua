@@ -138,15 +138,25 @@ function Catalog.getSpecResourceKeys(classToken, specializationID)
 end
 
 function Catalog.getResourceIcon(key, specializationID)
-    if key == "RUNES" and specializationID and api and type(api.GetSpecializationInfoByID) == "function" then
-        local ok, _, _, _, specIcon = pcall(api.GetSpecializationInfoByID, specializationID)
+    local specID = specializationID
+    if not specID and api and type(api.GetSpecialization) == "function" and type(api.GetSpecializationInfo) == "function" then
+        local ok, currentSpec = pcall(api.GetSpecialization)
+        if ok and currentSpec then
+            local infoOk, id = pcall(api.GetSpecializationInfo, currentSpec)
+            if infoOk and id then
+                specID = id
+            end
+        end
+    end
+    if key == "RUNES" and specID and api and type(api.GetSpecializationInfoByID) == "function" then
+        local ok, _, _, _, specIcon = pcall(api.GetSpecializationInfoByID, specID)
         if ok and specIcon and type(specIcon) == "number" and specIcon > 0 then
             return specIcon
         end
     end
     local specMap = SPEC_ICONS[key]
-    if specMap and specializationID and specMap[specializationID] then
-        return specMap[specializationID]
+    if specMap and specID and specMap[specID] then
+        return specMap[specID]
     end
     local definition = byKey[key]
     return definition and definition.icon or nil

@@ -240,11 +240,18 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     frame.icon:SetSize(iconSize, iconSize)
     frame.icon:SetPoint("LEFT", frame.container, "LEFT", 0, 0)
     frame.icon:SetTexture(iconTexture)
+    frame.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
     frame.statusBar:ClearAllPoints()
     frame.statusBar:SetSize(barWidth, barHeight)
-    frame.statusBar:SetPoint("LEFT", frame.icon, "RIGHT", spacing, -7)
+    frame.statusBar:SetPoint("LEFT", frame.icon, "RIGHT", spacing, 0)
     frame.background:SetAllPoints(frame.statusBar)
+
+    frame.label:ClearAllPoints()
+    frame.label:SetPoint("BOTTOMLEFT", frame.statusBar, "TOPLEFT", 0, 2)
+
+    frame.glow:ClearAllPoints()
+    frame.glow:SetAllPoints(frame.icon)
 
     local displayMode = config and config.displayMode or "AUTO"
     local orientation = config and config.orientation == "VERTICAL"

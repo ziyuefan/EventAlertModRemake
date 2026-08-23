@@ -1414,6 +1414,23 @@
   - Flow 狀態機測試：82/82 PASS。
   - Validation Contracts：493/493 PASS。
 
+### EAM-20260823-RESOURCE-ALIGNMENT-AND-SPEC-DRIFT-FIX：即時調整時圖示跑掉與對齊位移修復
+
+- 日期：2026-08-23。
+- 狀態：已完成代碼修復、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。
+- 症狀與原因判斷：
+  1. **調整過程專精圖示變回通用圖示**：在 `PlayerResourceService.lua` 的 `applyResourceConfigChange` 呼叫 `PowerRenderer.configureResource` 時，未傳入 `specializationID` 參數，導致 `Catalog.getResourceIcon` 在 `specializationID` 為 nil 時回退為通用圖示。
+  2. **圖示與狀態列/標籤垂直對齊跑掉**：在 `PowerRenderer.lua` 的 `configureResource` 中，狀態列垂直偏移曾寫死為 `-7`，當玩家調整 `barHeight` 或 `iconSize` 時，狀態列、標籤與圖示之間產生錯位；且標籤與高亮邊框在重設尺寸時未同步對齊。
+- 有效解法：
+  1. 在 `Data/PlayerResourceCatalog.lua` 的 `Catalog.getResourceIcon` 中增加動態專精查詢保底：即使傳入 nil 也會自動查詢當前玩家 `GetSpecialization()` 取得專精 ID，保證 100% 顯示專精圖示。
+  2. 在 `Services/PlayerResourceService.lua` 的 `applyResourceConfigChange` 中將 `PlayerResourceService.specializationID` 正式傳遞給 `configureResource`。
+  3. 在 `UI/PowerRenderer.lua` 中全面重構相對定位：狀態列嚴格以 `frame.icon` 為水平/垂直基準（Y 偏移 0），`label` 對齊狀態列上方，`glow` 對齊圖示，`icon` 補齊標準 `SetTexCoord(0.08, 0.92, 0.08, 0.92)` 避免邊界拉伸，各部件在拖動任何滑桿時均保持幾何穩固。
+- 驗證：
+  - Lua 語法檢查：64/64 PASS。
+  - Flow 狀態機測試：82/82 PASS。
+  - Validation Contracts：493/493 PASS。
+
+
 
 
 

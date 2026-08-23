@@ -845,7 +845,8 @@ local function applyResourceConfigChange(resourceKey, effectiveConfig, specializ
         node.definition,
         node.config,
         displayName,
-        orderIndex
+        orderIndex,
+        PlayerResourceService.specializationID
     )
     if not configured then
         return false, configureReason or "resourceConfigureFailed"
