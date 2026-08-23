@@ -30,6 +30,10 @@ local PlayerResourceProbe = {
     stoppedAt = nil,
     lastReport = nil,
     lastReportJSON = nil,
+    missingCheckDelay = 0.75,
+    missingCheckGeneration = 0,
+    missingCheckScheduled = false,
+    missingCheckExecutedCount = 0,
 }
 
 EAM.Debug.PlayerResourceProbe = PlayerResourceProbe
@@ -76,7 +80,7 @@ local function markResource(resourceKey,eventName,powerToken)
     return true
 end
 
-local function markAllTracked(status,eventName)
+local function markForegroundTracked(status,eventName)
     local resources = status and status.resources
     if type(resources) ~= "table" or not Util.canAccessTable(resources) then
         return false
@@ -84,7 +88,10 @@ local function markAllTracked(status,eventName)
     local marked = false
     for index = 1, #resources do
         local resource = resources[index]
-        if type(resource) == "table" and resource.tracked == true and markResource(resource.key,eventName) then
+        if type(resource) == "table" and resource.tracked == true
+            and resource.foreground == true
+            and markResource(resource.key,eventName)
+        then
             marked = true
         end
     end
@@ -109,7 +116,6 @@ local function markToken(status, powerToken,eventName)
     end
     return false
 end
-
 local function sinkAvailable(capability)
     local renderer = EAM.UI and EAM.UI.PowerRenderer
     if type(renderer) ~= "table" then
@@ -213,6 +219,8 @@ function PlayerResourceProbe.buildReport()
             observedCount = PlayerResourceProbe.observedEventCount,
             observedEventNames = buildCountEntries(PlayerResourceProbe.observedByEvent, "event"),
             observedPowerTokens = buildCountEntries(PlayerResourceProbe.observedByToken, "token"),
+            missingEventCheckScheduled = PlayerResourceProbe.missingCheckScheduled,
+            missingEventCheckExecutedCount = PlayerResourceProbe.missingCheckExecutedCount,
         },
         resources = buildResources(status),
         boundaryWarnings = warnings,
@@ -226,6 +234,59 @@ function PlayerResourceProbe.buildReport()
     return report, reportJSON
 end
 
+local function invalidateMissingEventCheck()
+    PlayerResourceProbe.missingCheckGeneration =
+        PlayerResourceProbe.missingCheckGeneration + 1
+    PlayerResourceProbe.missingCheckScheduled = false
+end
+
+local function runMissingEventCheck(owner)
+    local generation = type(owner) == "table" and owner.generation or nil
+    if generation ~= PlayerResourceProbe.missingCheckGeneration
+        or not PlayerResourceProbe.active
+    then
+        return
+    end
+    PlayerResourceProbe.missingCheckScheduled = false
+    PlayerResourceProbe.missingCheckExecutedCount =
+        PlayerResourceProbe.missingCheckExecutedCount + 1
+
+    local status = serviceStatus()
+    local resources = status and status.resources
+    if type(resources) == "table" and Util.canAccessTable(resources) then
+        for index = 1, #resources do
+            local resource = resources[index]
+            if type(resource) == "table"
+                and resource.tracked == true
+                and resource.available == true
+                and resource.background == true
+                and Util.isSafeString(resource.key)
+            then
+                PlayerResourceProbe.markBackgroundEventMissing(resource.key)
+            end
+        end
+    end
+    PlayerResourceProbe.buildReport()
+end
+
+local function scheduleMissingEventCheck()
+    local scheduler = EAM.Modules and EAM.Modules.Scheduler
+    if not scheduler or type(scheduler.after) ~= "function" then
+        return false, "schedulerUnavailable"
+    end
+    local generation = PlayerResourceProbe.missingCheckGeneration
+    local owner = { generation = generation }
+    local scheduled = scheduler.after(
+        PlayerResourceProbe.missingCheckDelay,
+        runMissingEventCheck,
+        owner
+    )
+    if scheduled then
+        PlayerResourceProbe.missingCheckScheduled = true
+        return true, "scheduled"
+    end
+    return false, "scheduleRejected"
+end
 function PlayerResourceProbe.markBackgroundEventMissing(resourceKey)
     if not PlayerResourceProbe.active then
         return false, "probeInactive"
@@ -272,10 +333,10 @@ function PlayerResourceProbe.onEvent(eventName, unit, powerToken)
         observed = markResource("RUNES",eventName)
     elseif eventName == "UNIT_DISPLAYPOWER" then
         if unit == nil or unit == "player" then
-            observed = markAllTracked(status,eventName)
+            observed = markForegroundTracked(status,eventName)
         end
     elseif eventName == "UPDATE_SHAPESHIFT_FORM" then
-        observed = markAllTracked(status,eventName)
+        observed = markForegroundTracked(status,eventName)
     end
 
     if observed then
@@ -330,14 +391,17 @@ function PlayerResourceProbe.start()
     if not registered then
         return false, reason
     end
+    invalidateMissingEventCheck()
     wipe(PlayerResourceProbe.observedByKey)
     wipe(PlayerResourceProbe.observedByEvent)
     wipe(PlayerResourceProbe.observedByToken)
     PlayerResourceProbe.observedEventCount = 0
+    PlayerResourceProbe.missingCheckExecutedCount = 0
     PlayerResourceProbe.active = true
     PlayerResourceProbe.startedAt = sessionTime()
     PlayerResourceProbe.stoppedAt = nil
     local report, reportJSON = PlayerResourceProbe.buildReport()
+    scheduleMissingEventCheck()
     return true, report, reportJSON
 end
 
@@ -346,6 +410,7 @@ function PlayerResourceProbe.stop()
         return false, "inactive"
     end
     PlayerResourceProbe.active = false
+    invalidateMissingEventCheck()
     PlayerResourceProbe.stoppedAt = sessionTime()
     local unregistered, reason = unregisterEvents()
     local report, reportJSON = PlayerResourceProbe.buildReport()

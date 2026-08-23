@@ -428,8 +428,8 @@
 <h3 id="zip_1">原始碼 ZIP</h3>
 <ul>
 <li>來源是整個 <code>D:\Project_EventAlertMod</code>，頂層固定為 <code>Project_EventAlertMod/</code>。</li>
-<li>排除 <code>Dist/</code>、<code>.git/</code>、<code>.codex-remote-attachments/</code>（及其他 attachments 暫存）、backup/trash、<code>TestResults/</code>、cache、pyc、log、zip 與本機衍生物。</li>
-<li>保留 <code>.vscode/</code>、<code>.codex/</code>、<code>.AI/</code>，以及 <code>.AI/docs_html/</code>；<code>.AI</code> 內的 <code>backup</code>、<code>TestResults</code>、trash 仍排除。原始碼包不是插件發布包。</li>
+<li>排除 <code>Dist/</code>、<code>.codex-remote-attachments/</code>（及其他 attachments 暫存）、<code>.AI/patch-temp/</code>，以及任意深度的 <code>.git/</code>、backup/trash、<code>TestResults/</code>、cache、pyc、log、zip 與本機衍生物。</li>
+<li>保留 <code>.vscode/</code>、<code>.codex/</code>、<code>.AI/</code>，以及 <code>.AI/docs_html/</code>；任何巢狀位置的 <code>backup</code>、<code>TestResults</code>、<code>.trash_*</code> 都排除，避免匯入器產生的 <code>.AI/.AI/TestResults</code> 漏入。原始碼包不是插件發布包。</li>
 </ul>
 <h3 id="_1">部署選擇與安全前檢</h3>
 <ul>
@@ -438,7 +438,7 @@
 <li>來源、目標與父層只要發現 SymbolicLink、Junction 或任何 Reparse Point，即 fail-closed，禁止追蹤、刪除、解除、覆蓋或自動重建。每次執行都要重新檢查，不得沿用舊快照。</li>
 <li>2026-08-21 現況：Retail/PTR <code>12.1.0.69382</code>、XPTR <code>12.0.7.68887</code>，三個 EventAlertMod 目標均為 physical，但目前只有 PTR 含 EventAlertMod.toc，Retail/XPTR 尚缺該檔；Test-LocalWoWEnvironment 為 1/3，不能宣稱三通道 ready。Deploy Status/DryRun 三通道通過只代表可安全部署前檢，尚未實際部署；先前 Retail/XPTR link blocked 的結果保留於歷史紀錄，不能取代本次 Status。</li>
 </ul>
-<p>本節覆蓋本文較早的舊根命令與內容描述；舊段落保留作歷史證據。此次文件更新不執行 Markdown→HTML 轉換，由主代理統一處理。</p>
+<p>本節覆蓋本文較早的舊根命令與內容描述；舊段落保留作歷史證據。本輪文件更新後已以 EAM_DOCS_OFFLINE=1 離線重建 docs_html，未使用外部翻譯服務。</p>
 <h2 id="_2">快速指令</h2>
 <p>使用者輸入「打包」時執行：</p>
 <pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Build-Package.ps1
@@ -484,6 +484,8 @@ pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1
 <li>根目錄與插件內的 README／changelog 必須各自 SHA-256 相同。</li>
 <li><code>.AI/</code>、<code>Deploy/</code>、<code>Dist/</code> 與 Git metadata 不會進插件包，因為它們不在插件來源樹內。</li>
 </ul>
+<h2 id="wtf">WTF 存檔備份／還原</h2>
+<p>Deploy-EventAlertMod.ps1 的 W／U 選單與 Backup／Restore 命令只處理選定版本通道的 WTF EventAlertMod 相關檔案。備份保留相對於版本根目錄的 WTF/... 路徑，manifest.json 記錄通道、版本與 SHA-256；還原前會建立 rollback 備份。一般插件部署不檢查 Wow.exe／WowT.exe 執行狀態，也不會因程序仍在執行而拒絕覆蓋；Reparse Point、路徑越界與雜湊不符仍維持 fail-closed。</p>
 <h2 id="_6">可選參數</h2>
 <p>只驗證、不建立 ZIP：</p>
 <pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -DryRun
@@ -505,7 +507,7 @@ pwsh -NoProfile -File .\Deploy\Build-SourcePackage.ps1 -DryRun
 <li>ZIP 解壓後 inventory、頂層目錄與 SVG 條目驗證。</li>
 <li>產生 ZIP、<code>.sha256</code> 與 <code>.inventory.json</code>。</li>
 </ul>
-<p>專案 source 包必須排除 <code>Dist/</code>、<code>.git/</code>、本機附件、<code>.AI/backup/</code>、<code>.AI/.trash_*</code>、<code>.AI/TestResults/</code>、快取、log 與既有 ZIP，同時保留 <code>.vscode/</code>、<code>.codex/</code>、<code>.AI/</code> 與 <code>.AI/docs_html/</code>。</p>
+<p>專案 source 包必須排除 <code>Dist/</code>、本機附件、<code>.AI/patch-temp/</code>，並以 leaf 規則排除任意深度的 <code>.git/</code>、<code>backup/</code>、<code>.trash_*/</code>、<code>TestResults/</code>、快取、log 與既有 ZIP；同時保留 <code>.vscode/</code>、<code>.codex/</code>、<code>.AI/skills/</code> 與 <code>.AI/docs_html/</code>。</p>
 <h2 id="html">HTML 說明檔案轉換</h2>
 <p><code>.AI/Docs/*.md</code> 或 <code>.AI/AGENTS.md</code> 修改後，在專案根執行：</p>
 <pre class="codehilite"><code class="language-powershell">$env:EAM_DOCS_OFFLINE='1'

@@ -11,7 +11,7 @@ Module: Services/PlayerResourceService
 邊界:
 - registry 只保存安全 metadata 與設定，不保存 current/max/percent。
 - UNIT_DISPLAYPOWER 只更新 foreground metadata，不得刪除背景追蹤資源。
-- 不使用 OnUpdate、ticker 或每資源輪詢。
+- 不使用每資源 OnUpdate／ticker；背景 sampler 僅在 Probe 明確標記事件不足且資源可見時共用排程。
 ]]
 local _, EAM = ...
 
@@ -59,9 +59,16 @@ local PlayerResourceService = {
     backgroundSamplerTickCount = 0,
     backgroundSamplerInterval = 0.5,
     backgroundSamplerLastReason = "notRequested",
+    runeReadyByIndex = {},
+    runeStateInitialized = false,
+    runeReadyCount = 0,
+    runeEventCount = 0,
+    lastRuneResult = "uninitialized",
 }
 
 EAM.Services.PlayerResourceService = PlayerResourceService
+
+local RUNE_SLOT_COUNT = 6
 
 local function renderer()
     return EAM.UI and EAM.UI.PowerRenderer
@@ -119,19 +126,21 @@ local function boundedNumber(value, fallback, minimum, maximum)
     return value
 end
 
-local function resolveConfig(definition, specializationID, defaultOrder)
+local function resolveConfig(definition, specializationID, defaultOrder, savedOverride)
     local legacyEnabled = true
     local dbConfig = EAM.db and EAM.db.config
     if type(dbConfig) == "table" and definition.legacyConfigKey then
         legacyEnabled = dbConfig[definition.legacyConfigKey] ~= false
     end
 
-    local saved = nil
-    local sv = savedVariables()
-    if sv and type(sv.getPlayerResourceConfig) == "function" then
-        local ok, result = pcall(sv.getPlayerResourceConfig, definition.key, specializationID)
-        if ok and type(result) == "table" then
-            saved = result
+    local saved = savedOverride
+    if saved == nil then
+        local sv = savedVariables()
+        if sv and type(sv.getPlayerResourceConfig) == "function" then
+            local ok, result = pcall(sv.getPlayerResourceConfig, definition.key, specializationID)
+            if ok and type(result) == "table" then
+                saved = result
+            end
         end
     end
 
@@ -196,6 +205,12 @@ local function clearRegistry()
     for index = 1, #PlayerResourceService.orderedNodes do
         PlayerResourceService.orderedNodes[index] = nil
     end
+    for index = 1, RUNE_SLOT_COUNT do
+        PlayerResourceService.runeReadyByIndex[index] = nil
+    end
+    PlayerResourceService.runeStateInitialized = false
+    PlayerResourceService.runeReadyCount = 0
+    PlayerResourceService.lastRuneResult = "registryCleared"
     PlayerResourceService.trackedResourceCount = 0
 end
 
@@ -256,24 +271,150 @@ local function readNumericValues(powerType)
     return api.UnitPower("player", powerType), api.UnitPowerMax("player", powerType)
 end
 
+local function readRuneSlot(runeIndex)
+    if type(api.GetRuneCount) == "function" then
+        local ok, count = pcall(api.GetRuneCount, runeIndex)
+        if ok and Util.isSafeNonNegativeNumber(count) then
+            return count > 0, "GetRuneCount"
+        end
+    end
+    if type(api.GetRuneCooldown) == "function" then
+        local ok, _, _, ready = pcall(api.GetRuneCooldown, runeIndex)
+        if ok and Util.isSafeBoolean(ready) then
+            return ready, "GetRuneCooldown"
+        end
+    end
+    return nil, "runeSlotUnavailable"
+end
+
+local function resetRuneState(reason)
+    for index = 1, RUNE_SLOT_COUNT do
+        PlayerResourceService.runeReadyByIndex[index] = nil
+    end
+    PlayerResourceService.runeStateInitialized = false
+    PlayerResourceService.runeReadyCount = 0
+    PlayerResourceService.lastRuneResult = reason or "runeStateReset"
+end
+
+local function syncRuneState()
+    local readyCount = 0
+    for index = 1, RUNE_SLOT_COUNT do
+        local ready, source = readRuneSlot(index)
+        if ready == nil then
+            resetRuneState(source)
+            return false, source
+        end
+        PlayerResourceService.runeReadyByIndex[index] = ready
+        if ready then
+            readyCount = readyCount + 1
+        end
+    end
+    PlayerResourceService.runeReadyCount = readyCount
+    PlayerResourceService.runeStateInitialized = true
+    PlayerResourceService.lastRuneResult = "runeStateSynchronized"
+    return true, "runeStateSynchronized"
+end
+
+local function updateRunePoints(node)
+    if not node or not node.numericSink then
+        PlayerResourceService.unavailableUpdateCount = PlayerResourceService.unavailableUpdateCount + 1
+        PlayerResourceService.lastRuneResult = "runeSinkUnavailable"
+        return false, "runeSinkUnavailable"
+    end
+    if not PlayerResourceService.runeStateInitialized then
+        local synchronized, reason = syncRuneState()
+        if not synchronized then
+            PlayerResourceService.unavailableUpdateCount = PlayerResourceService.unavailableUpdateCount + 1
+            return false, reason
+        end
+    end
+
+    local currentValue = PlayerResourceService.runeReadyCount
+    local maximumValue = RUNE_SLOT_COUNT
+    local percent = currentValue / maximumValue
+    local rendered, reason = node.numericSink(
+        node.key,
+        node.definition.powerType,
+        currentValue,
+        maximumValue,
+        percent,
+        node.config.showValue,
+        node.config.showPercent,
+        node.config.fullGlow,
+        node.config.threshold
+    )
+    if rendered then
+        PlayerResourceService.nativeSinkWriteCount = PlayerResourceService.nativeSinkWriteCount + 1
+        PlayerResourceService.numericUpdateCount = PlayerResourceService.numericUpdateCount + 1
+        PlayerResourceService.lastRuneResult = "runePointsRendered"
+    else
+        PlayerResourceService.nativeSinkRejectCount = PlayerResourceService.nativeSinkRejectCount + 1
+        PlayerResourceService.lastRuneResult = reason or "runeSinkRejected"
+    end
+    return rendered, reason
+end
+
+local function applyRuneEvent(node, runeIndex, added)
+    if not Util.isSafePositiveNumber(runeIndex)
+        or runeIndex % 1 ~= 0
+        or runeIndex > RUNE_SLOT_COUNT
+        or not Util.isSafeTableKey(runeIndex)
+    then
+        PlayerResourceService.ignoredEventCount = PlayerResourceService.ignoredEventCount + 1
+        PlayerResourceService.lastRuneResult = "runeIndexUnsafe"
+        return false, "runeIndexUnsafe"
+    end
+
+    if not PlayerResourceService.runeStateInitialized then
+        local synchronized, reason = syncRuneState()
+        if not synchronized then
+            return false, reason
+        end
+    end
+
+    local ready
+    if Util.isSafeBoolean(added) then
+        ready = added
+    end
+    if ready == nil then
+        ready = readRuneSlot(runeIndex)
+    end
+    if ready == nil then
+        PlayerResourceService.lastRuneResult = "runeStateUnsafe"
+        return false, "runeStateUnsafe"
+    end
+
+    local previous = PlayerResourceService.runeReadyByIndex[runeIndex]
+    if previous ~= ready then
+        PlayerResourceService.runeReadyByIndex[runeIndex] = ready
+        if ready then
+            PlayerResourceService.runeReadyCount = math.min(
+                RUNE_SLOT_COUNT,
+                PlayerResourceService.runeReadyCount + 1
+            )
+        else
+            PlayerResourceService.runeReadyCount = math.max(
+                0,
+                PlayerResourceService.runeReadyCount - 1
+            )
+        end
+    end
+    PlayerResourceService.runeEventCount = PlayerResourceService.runeEventCount + 1
+    return updateRunePoints(node)
+end
+
 local function updateSecretDisplay(node)
     if not node.secretSource or node.curve == nil or not node.secretSink then
         PlayerResourceService.unavailableUpdateCount = PlayerResourceService.unavailableUpdateCount + 1
         return false, "secretSinkUnavailable"
     end
 
-    local ok, percent = pcall(
-        node.secretSource,
+    local percent = node.secretSource(
         "player",
         node.definition.powerType,
         false,
         node.curve
     )
-    if not ok then
-        percent = nil
-        PlayerResourceService.unavailableUpdateCount = PlayerResourceService.unavailableUpdateCount + 1
-        return false, "percentUnavailable"
-    end
 
     local rendered, reason = node.secretSink(
         node.key,
@@ -291,28 +432,21 @@ local function updateSecretDisplay(node)
 end
 
 local function updateNumeric(node)
-    -- NUMERIC capability 已在 cold path 驗證；戰鬥中仍可安全讀取普通數字。
-    -- 規格例外：跨 12.0.7/12.1 client 保留單一 pcall 邊界，防止 capability drift 將 Secret 或錯誤值帶入 Lua。
-    -- 失敗立即 fail-closed 到 UnitPowerPercent sink，不保存或序列化 raw value。
+    -- NUMERIC capability 已在 cold path 驗證；戰鬥中直接讀取普通數字並送入自有 sink。
+    -- 若能力在版本漂移後回傳 Secret/非數字，立即轉交原生百分比 sink；不保存、不索引、不序列化 raw value。
+    -- 這是能力漂移時的 fail-closed 規格例外：不在熱事件重新 pcall，直接轉入 C 層安全 sink。
 
     if not node.numericSource or not node.numericSink then
         PlayerResourceService.unavailableUpdateCount = PlayerResourceService.unavailableUpdateCount + 1
         return false, "numericSourceUnavailable"
     end
 
-    local okValues, currentValue, maximumValue = pcall(
-        node.numericSource,
-        node.definition.powerType
-    )
-    if not okValues
-        or not Util.isSafeNonNegativeNumber(currentValue)
+    local currentValue, maximumValue = node.numericSource(node.definition.powerType)
+    if not Util.isSafeNonNegativeNumber(currentValue)
         or not Util.isSafePositiveNumber(maximumValue)
     then
         currentValue = nil
         maximumValue = nil
-        node.capability = Capability.SECRET_DISPLAY
-        node.capabilityReason = "unexpectedSecretFailClosed"
-        node.update = updateSecretDisplay
         PlayerResourceService.unexpectedSecretFallbackCount =
             PlayerResourceService.unexpectedSecretFallbackCount + 1
         return updateSecretDisplay(node)
@@ -360,7 +494,17 @@ local function assignNodeUpdate(node)
     node.numericSource = type(api.UnitPower) == "function" and type(api.UnitPowerMax) == "function"
         and readNumericValues or nil
     node.numericSink = draw and type(draw.applyNumeric) == "function" and draw.applyNumeric or nil
-    if node.capability == Capability.NUMERIC then
+    if node.key == "RUNES"
+        and (
+            type(api.GetRuneCount) == "function"
+            or type(api.GetRuneCooldown) == "function"
+        )
+        and node.numericSink
+    then
+        node.capability = Capability.NUMERIC
+        node.capabilityReason = "runeSlotAPI"
+        node.update = updateRunePoints
+    elseif node.capability == Capability.NUMERIC then
         node.update = updateNumeric
     elseif node.capability == Capability.SECRET_DISPLAY then
         node.update = updateSecretDisplay
@@ -510,22 +654,123 @@ local function refreshNodeCapability(node, updateAfterRefresh)
     return true, capabilityReason
 end
 
-local function refreshRuntimeState(reason)
+-- 形態／主要資源切換只更新安全的 foreground metadata 與顯示角色。
+-- 不在 UNIT_DISPLAYPOWER、UPDATE_SHAPESHIFT_FORM 或脫戰事件批量重讀所有資源；
+-- 各資源數值仍由自身事件或 C 層 sink 驅動，避免治療／脫戰造成全清單重繪。
+local function refreshForegroundState(reason)
     local foregroundPowerType = updateForeground()
-    local wroteAny = false
+    local foregroundChanged = false
+    for index = 1, PlayerResourceService.trackedResourceCount do
+        local node = PlayerResourceService.orderedNodes[index]
+        local previousForeground = node.foreground == true
+        local currentForeground = isNodeForeground(node, foregroundPowerType)
+        node.foreground = currentForeground
+        if previousForeground ~= currentForeground then
+            foregroundChanged = true
+        end
+        -- setResourceState 只處理角色可見性與 alpha，不讀取資源數值。
+        applyNodeVisualState(node)
+    end
+    PlayerResourceService.runtimeRefreshCount = PlayerResourceService.runtimeRefreshCount + 1
+    PlayerResourceService.lastResultClass = reason or "foregroundStateRefreshed"
+    -- foreground 變更可能改變背景取樣資格，但不重繪任何資源值。
+    rebuildBackgroundSampler("foregroundStateRefreshed")
+    return true, PlayerResourceService.lastResultClass, foregroundChanged
+end
+
+-- 設定面板開關只觸發視覺復原，不重建拓撲、不清除 registry，也不讀取原始資源值。
+function PlayerResourceService.refreshVisualState(reason)
+    if not moduleEnabled() then
+        PlayerResourceService.lastResultClass = "moduleDisabled"
+        return false, "moduleDisabled"
+    end
+    if inCombat() then
+        PlayerResourceService.lastResultClass = "combatVisualRefreshDeferred"
+        return false, "combatVisualRefreshDeferred"
+    end
+    local foregroundPowerType = updateForeground()
+    local visibleCount = 0
     for index = 1, PlayerResourceService.trackedResourceCount do
         local node = PlayerResourceService.orderedNodes[index]
         node.foreground = isNodeForeground(node, foregroundPowerType)
-        local rendered = refreshNodeCapability(node, true)
-        if rendered then
-            wroteAny = true
+        assignNodeUpdate(node)
+        applyNodeVisualState(node)
+        if node.visible == true then
+            visibleCount = visibleCount + 1
+            updateNode(node)
         end
     end
     PlayerResourceService.runtimeRefreshCount = PlayerResourceService.runtimeRefreshCount + 1
-    PlayerResourceService.lastResultClass = reason or "runtimeRefreshed"
-    rebuildBackgroundSampler("runtimeRefreshed")
-    return wroteAny, PlayerResourceService.lastResultClass
+    PlayerResourceService.lastResultClass = reason or "visualStateRefreshed"
+    rebuildBackgroundSampler("visualStateRefreshed")
+    return visibleCount > 0, PlayerResourceService.lastResultClass
 end
+
+local function applyResourceConfigChange(resourceKey, effectiveConfig, specializationID)
+    if not Util.isSafeString(resourceKey) or type(effectiveConfig) ~= "table" then
+        return false, "topologyRequired"
+    end
+    if inCombat() then
+        PlayerResourceService.pendingRebuild = true
+        PlayerResourceService.lastResultClass = "combatRebuildDeferred"
+        return false, "combatRebuildDeferred"
+    end
+
+    local node = PlayerResourceService.registryByKey[resourceKey]
+    if not node or (specializationID and specializationID ~= PlayerResourceService.specializationID) then
+        return false, "topologyRequired"
+    end
+    local draw = renderer()
+    if not draw or type(draw.configureResource) ~= "function" then
+        return false, "rendererUnavailable"
+    end
+
+    node.config = resolveConfig(
+        node.definition,
+        PlayerResourceService.specializationID,
+        node.config and node.config.order or node.definition.defaultOrder,
+        effectiveConfig
+    )
+    node.enabled = node.config.enabled == true
+    local displayName = EAM.L and EAM.L[node.definition.nameKey]
+        or node.definition.fallbackName
+    local orderIndex = 1
+    for index = 1, PlayerResourceService.trackedResourceCount do
+        if PlayerResourceService.orderedNodes[index] == node then
+            orderIndex = index
+            break
+        end
+    end
+    local configured, configureReason = draw.configureResource(
+        node.definition,
+        node.config,
+        displayName,
+        orderIndex
+    )
+    if not configured then
+        return false, configureReason or "resourceConfigureFailed"
+    end
+    sortNodes(PlayerResourceService.orderedNodes)
+    if type(draw.reflowResourceFrames) == "function" then
+        local reflowed, reflowReason = draw.reflowResourceFrames(
+            PlayerResourceService.orderedNodes,
+            PlayerResourceService.trackedResourceCount
+        )
+        if reflowed == false then
+            PlayerResourceService.lastResultClass = reflowReason or "resourceReflowFailed"
+            return false, PlayerResourceService.lastResultClass
+        end
+    end
+    local foregroundPowerType = PlayerResourceService.foregroundPowerType
+    node.foreground = isNodeForeground(node, foregroundPowerType)
+    assignNodeUpdate(node)
+    applyNodeVisualState(node)
+    updateNode(node)
+    rebuildBackgroundSampler("configApplied")
+    PlayerResourceService.lastResultClass = "configApplied"
+    return true, "configApplied"
+end
+
 function PlayerResourceService.updateAll()
     if not moduleEnabled() then
         PlayerResourceService.lastResultClass = "moduleDisabled"
@@ -666,14 +911,19 @@ function PlayerResourceService.onEvent(eventName, unit, powerToken, revision, sp
     end
 
     if eventName == "EAM_PLAYER_RESOURCE_CONFIG_CHANGED" then
-        local rebuilt, result = PlayerResourceService.rebuildTopology("configChanged")
+        local applied, result = applyResourceConfigChange(unit, powerToken, specializationID)
         PlayerResourceService.lastConfigRevision = revision
         PlayerResourceService.lastConfigResourceKey = unit
-        PlayerResourceService.lastConfigResult = result or (rebuilt and "configApplied" or "configDeferred")
-        if result == "combatRebuildDeferred" then
-            return false, result
+        if result ~= "topologyRequired" then
+            PlayerResourceService.lastConfigResult = result or (applied and "configApplied" or "configDeferred")
+            return applied, result
         end
-        return rebuilt, result
+        local rebuilt, rebuiltResult = PlayerResourceService.rebuildTopology("configChanged")
+        PlayerResourceService.lastConfigResult = rebuiltResult or (rebuilt and "configApplied" or "configDeferred")
+        if rebuiltResult == "combatRebuildDeferred" then
+            return false, rebuiltResult
+        end
+        return rebuilt, rebuiltResult
     end
 
     if eventName == "UNIT_POWER_UPDATE" or eventName == "UNIT_POWER_FREQUENT" then
@@ -701,18 +951,18 @@ function PlayerResourceService.onEvent(eventName, unit, powerToken, revision, sp
             return false, "runesNotTracked"
         end
         PlayerResourceService.dispatchCount = PlayerResourceService.dispatchCount + 1
-        return updateNode(runeNode)
+        return applyRuneEvent(runeNode, unit, powerToken)
     end
 
     if eventName == "UNIT_DISPLAYPOWER" then
         if unit and unit ~= "player" then
             return false, "unitIgnored"
         end
-        return refreshRuntimeState("foregroundUpdated")
+        return refreshForegroundState("foregroundUpdated")
     end
 
     if eventName == "UPDATE_SHAPESHIFT_FORM" then
-        return refreshRuntimeState("formRuntimeRefreshed")
+        return refreshForegroundState("formForegroundUpdated")
     end
 
     if eventName == "PLAYER_SPECIALIZATION_CHANGED" and unit and unit ~= "player" then
@@ -720,7 +970,7 @@ function PlayerResourceService.onEvent(eventName, unit, powerToken, revision, sp
     end
 
     if eventName == "PLAYER_REGEN_ENABLED" and not PlayerResourceService.pendingRebuild then
-        return refreshRuntimeState("combatEndedRuntimeRefreshed")
+        return refreshForegroundState("combatEndedForegroundRefreshed")
     end
 
     return PlayerResourceService.rebuildTopology(eventName)
@@ -781,6 +1031,12 @@ function PlayerResourceService.onModuleToggle(enabled)
     if enabled == false then
         PlayerResourceService.pendingRebuild = false
         stopBackgroundSampler("moduleDisabled", true)
+        local probe = EAM.Debug and EAM.Debug.PlayerResourceProbe
+        if probe and type(probe.isActive) == "function" and probe.isActive()
+            and type(probe.stop) == "function"
+        then
+            probe.stop()
+        end
         unregisterServiceEvents()
         clearRegistry()
         PlayerResourceService.lastResultClass = "moduleDisabled"
@@ -920,6 +1176,12 @@ function PlayerResourceService.getStatus()
         backgroundSamplerTickCount = PlayerResourceService.backgroundSamplerTickCount,
         backgroundSamplerInterval = PlayerResourceService.backgroundSamplerInterval,
         backgroundSamplerLastReason = PlayerResourceService.backgroundSamplerLastReason,
+        runeStateInitialized = PlayerResourceService.runeStateInitialized,
+        runeReadyCount = PlayerResourceService.runeReadyCount,
+        runeEventCount = PlayerResourceService.runeEventCount,
+        lastRuneResult = PlayerResourceService.lastRuneResult,
+        runeSlotAPIAvailable = type(api.GetRuneCount) == "function"
+            or type(api.GetRuneCooldown) == "function",
         rebuildCount = PlayerResourceService.rebuildCount,
         dispatchCount = PlayerResourceService.dispatchCount,
         ignoredEventCount = PlayerResourceService.ignoredEventCount,

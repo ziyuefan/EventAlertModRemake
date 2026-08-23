@@ -50,11 +50,11 @@ function Test-ExcludedDirectory {
     if ($parts[0] -in @(".git", "Dist", ".codex-remote-attachments", ".agents", "backup", "TestResults")) {
         return $true
     }
-    if ($leaf -in @("cache", ".cache", "__pycache__", ".pytest_cache", ".mypy_cache", "node_modules", "nppBackup")) {
+    if ($leaf -in @(".git", "backup", "TestResults", "cache", ".cache", "__pycache__", ".pytest_cache", ".mypy_cache", "node_modules", "nppBackup") -or $leaf -like ".trash_*") {
         return $true
     }
     if ($parts[0] -eq ".AI" -and $parts.Count -ge 2) {
-        if ($parts[1] -in @("backup", "TestResults") -or $parts[1] -like ".trash_*") {
+        if ($parts[1] -in @("backup", "TestResults", "patch-temp") -or $parts[1] -like ".trash_*") {
             return $true
         }
     }

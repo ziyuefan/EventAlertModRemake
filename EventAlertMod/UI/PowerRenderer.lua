@@ -271,6 +271,33 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     return true, "configured"
 end
 
+function PowerRenderer.reflowResourceFrames(nodes, count)
+    if not PowerRenderer.initialized or type(nodes) ~= "table" then
+        return false, "rendererUnavailable"
+    end
+    local total = count or #nodes
+    for index = 1, total do
+        local node = nodes[index]
+        local frame = node and PowerRenderer.frames[node.key] or nil
+        local config = frame and frame.config or nil
+        if frame and frame.configured and config then
+            local x = Util.isSafeNumber(config.offsetX) and config.offsetX or 0
+            local y = Util.isSafeNumber(config.offsetY) and config.offsetY or 0
+            local position = VALID_ANCHOR_POINTS[config.position] and config.position or "TOPLEFT"
+            local anchorPoint = VALID_ANCHOR_POINTS[config.anchor] and config.anchor or "TOPLEFT"
+            frame.container:ClearAllPoints()
+            frame.container:SetPoint(
+                position,
+                frame.anchor,
+                anchorPoint,
+                x,
+                y - (index - 1) * ROW_HEIGHT
+            )
+        end
+    end
+    return true, "reflowed"
+end
+
 function PowerRenderer.setResourceState(resourceKey, foreground, available)
     local frame = PowerRenderer.frames[resourceKey]
     if not frame or not frame.configured then

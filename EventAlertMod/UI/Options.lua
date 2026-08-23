@@ -44,6 +44,9 @@ local Options = {
     themeMenu = nil,
     fontDropdown = nil,
     fontMenu = nil,
+    chargeBarDropdown = nil,
+    chargeBarMenu = nil,
+    chargeBarOptions = nil,
     specDropdown = nil,
     currentSpecFilterName = nil,
     addEditBox = nil,
@@ -322,6 +325,22 @@ function Options.refreshFontDropdown()
     Options.fontDropdown:SetText((EAM.L.EAM_OPT_FONT_PREFIX or "Font: ") .. label)
 end
 
+function Options.refreshChargeBarDropdown()
+    if not Options.chargeBarDropdown or type(Options.chargeBarOptions) ~= "table" then
+        return
+    end
+    local selection = EAM.db and EAM.db.config and EAM.db.config.chargeBarLayout or "BOTTOM"
+    local label = selection
+    for index = 1, #Options.chargeBarOptions do
+        local option = Options.chargeBarOptions[index]
+        if option.value == selection then
+            label = (EAM.L and EAM.L[option.labelKey]) or option.fallback
+            break
+        end
+    end
+    setWidgetText(Options.chargeBarDropdown, label)
+end
+
 function Options.refreshAuraBackendStatus()
     if not Options.nativeAuraStatusLabel then
         return
@@ -430,6 +449,7 @@ function Options.refreshLocalizedText()
     Options.refreshLanguageDropdown()
     Options.refreshThemeDropdown()
     Options.refreshFontDropdown()
+    Options.refreshChargeBarDropdown()
     Options.refreshAuraBackendStatus()
     Options.refreshPlayerResourceSummary()
     if Options.rebuildSpecMenu then
@@ -618,24 +638,42 @@ local function addAlertToCategory(category, id, deferCommit)
     local reclassified = false
     local ok, alertID, status
     if category == 1 then
+        if type(saved.addAuraAlert) ~= "function" then
+            return false, nil, "savedVariablesMethodUnavailable"
+        end
         local scope = resolveAuraCatalogScope(id)
         options.catalogScope = scope
         options.fromPlayer = scope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
         reclassified = scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
         ok, alertID, status = saved.addAuraAlert("player", id, options)
     elseif category == 2 then
+        if type(saved.addAuraAlert) ~= "function" then
+            return false, nil, "savedVariablesMethodUnavailable"
+        end
         options.catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
         options.fromPlayer = false
         ok, alertID, status = saved.addAuraAlert("player", id, options)
     elseif category == 3 then
+        if type(saved.addAuraAlert) ~= "function" then
+            return false, nil, "savedVariablesMethodUnavailable"
+        end
         options.catalogScope = resolveAuraCatalogScope(id)
         options.fromPlayer = true
         ok, alertID, status = saved.addAuraAlert("target", id, options)
     elseif category == 4 then
+        if type(saved.addSpellCooldownAlert) ~= "function" then
+            return false, nil, "savedVariablesMethodUnavailable"
+        end
         ok, alertID, status = saved.addSpellCooldownAlert(id, options)
     elseif category == 5 then
+        if type(saved.addItemCooldownAlert) ~= "function" then
+            return false, nil, "savedVariablesMethodUnavailable"
+        end
         ok, alertID, status = saved.addItemCooldownAlert(id, options)
     elseif category == 6 then
+        if type(saved.addGroundEffectAlert) ~= "function" then
+            return false, nil, "savedVariablesMethodUnavailable"
+        end
         ok, alertID, status = saved.addGroundEffectAlert(id, options)
     else
         return false, nil, "invalidCategory"
@@ -1008,6 +1046,7 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
         or key == "fontSizeStack"
     local isNativeStructureSlider = key == "iconSize" or key == "iconSpacing"
     local isNativeVisualSlider = key == "cooldownSwipeAlpha"
+    local isChargeBarSlider = key == "chargeBarLengthPercent" or key == "chargeBarThickness"
     local function commitNativeChange()
         if not slider.eamNativeChangeDirty then
             return
@@ -1015,6 +1054,8 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
         slider.eamNativeChangeDirty = false
         if isTextLayoutSlider then
             Options.notifyTextLayoutChanged(true)
+        elseif isChargeBarSlider then
+            Options.notifyConfigChanged(false)
         elseif isNativeStructureSlider or isNativeVisualSlider then
             markAuraSettingsDirty("OPTIONS_NATIVE_STRUCTURE_CHANGED")
             Options.refreshAuraBackendStatus()
@@ -1052,7 +1093,11 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
         elseif key == "fontSizeStack" and savedVariables and savedVariables.updateTextLayout then
             local ok, state = savedVariables.updateTextLayout("applications", nil, val)
             changed = ok == true and state == "updated"
-        elseif key == "cooldownSwipeAlpha" and savedVariables and savedVariables.updateConfigNumber then
+        elseif (key == "cooldownSwipeAlpha"
+            or key == "chargeBarLengthPercent"
+            or key == "chargeBarThickness")
+            and savedVariables and savedVariables.updateConfigNumber
+        then
             local ok, state = savedVariables.updateConfigNumber(key, val)
             changed = ok == true and state == "updated"
         elseif EAM.db.config[key] ~= val then
@@ -1067,7 +1112,7 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
             if isTextLayoutSlider then
                 self.eamNativeChangeDirty = true
                 Options.notifyTextLayoutChanged(false)
-            elseif isNativeStructureSlider or isNativeVisualSlider then
+            elseif isNativeStructureSlider or isNativeVisualSlider or isChargeBarSlider then
                 self.eamNativeChangeDirty = true
                 Options.notifyConfigChanged(false)
             else
@@ -1075,7 +1120,7 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
             end
         end
     end)
-    if isTextLayoutSlider or isNativeStructureSlider or isNativeVisualSlider then
+    if isTextLayoutSlider or isNativeStructureSlider or isNativeVisualSlider or isChargeBarSlider then
         slider:HookScript("OnMouseUp", commitNativeChange)
         slider:HookScript("OnHide", commitNativeChange)
     end
@@ -1820,6 +1865,100 @@ local function createFrame()
     resourceStatus:SetJustifyH("LEFT")
     Options.playerResourceStatusLabel = resourceStatus
     Options.refreshPlayerResourceSummary()
+
+    local chargeBarTitle = posInner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    chargeBarTitle:SetPoint("TOPLEFT", posInner, "TOPLEFT", 280, -205)
+    bindText(chargeBarTitle, "EAM_CHARGE_BAR_TITLE", "充能技能剩餘次數列")
+
+    local chargeBarLabel = posInner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    chargeBarLabel:SetPoint("TOPLEFT", posInner, "TOPLEFT", 280, -232)
+    bindText(chargeBarLabel, "EAM_CHARGE_BAR_LAYOUT", "顯示位置／樣式")
+
+    local chargeBarOptions = {
+        { value = "BOTTOM", labelKey = "EAM_CHARGE_BAR_BOTTOM", fallback = "圖示下方" },
+        { value = "TOP", labelKey = "EAM_CHARGE_BAR_TOP", fallback = "圖示上方" },
+        { value = "LEFT", labelKey = "EAM_CHARGE_BAR_LEFT", fallback = "圖示左側（直向）" },
+        { value = "RIGHT", labelKey = "EAM_CHARGE_BAR_RIGHT", fallback = "圖示右側（直向）" },
+        { value = "RING", labelKey = "EAM_CHARGE_BAR_RING", fallback = "環形" },
+    }
+    Options.chargeBarOptions = chargeBarOptions
+
+    local chargeBarDropdown = api.CreateFrame("Button", nil, posInner, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(chargeBarDropdown) end
+    chargeBarDropdown:SetSize(240, 22)
+    chargeBarDropdown:SetPoint("TOPLEFT", posInner, "TOPLEFT", 280, -248)
+    Options.chargeBarDropdown = chargeBarDropdown
+
+    local chargeBarMenu = api.CreateFrame("Frame", nil, posInner, "BackdropTemplate")
+    chargeBarMenu:SetSize(240, 112)
+    chargeBarMenu:SetPoint("TOPLEFT", chargeBarDropdown, "BOTTOMLEFT", 0, -2)
+    chargeBarMenu:SetFrameStrata("DIALOG")
+    chargeBarMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    chargeBarMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    chargeBarMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(chargeBarMenu, chargeBarDropdown)
+    chargeBarMenu:Hide()
+    Options.chargeBarMenu = chargeBarMenu
+
+    for index = 1, #chargeBarOptions do
+        local option = chargeBarOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, chargeBarMenu)
+        menuButton:SetSize(234, 20)
+        menuButton:SetPoint("TOPLEFT", chargeBarMenu, "TOPLEFT", 3, -3 - (index - 1) * 21)
+        local menuText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        bindText(menuText, option.labelKey, option.fallback)
+        finalizeDropdownMenuButton(menuButton, menuText, chargeBarMenu)
+        menuButton:SetScript("OnClick", function()
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            if saved and saved.updateChargeBarLayout then
+                local ok, state = saved.updateChargeBarLayout(option.value)
+                if ok then
+                    Options.refreshChargeBarDropdown()
+                    if state == "updated" then
+                        Options.notifyConfigChanged(false)
+                    end
+                end
+            end
+            chargeBarMenu:Hide()
+        end)
+    end
+    chargeBarDropdown:SetScript("OnClick", function()
+        if chargeBarMenu:IsShown() then
+            chargeBarMenu:Hide()
+        else
+            chargeBarMenu:Show()
+        end
+    end)
+    Options.refreshChargeBarDropdown()
+
+    createSlider(
+        posInner,
+        localized("EAM_CHARGE_BAR_LENGTH", "長度／環徑（圖示 %）"),
+        "chargeBarLengthPercent",
+        100, 250, 5, 280, -330, 240
+    )
+    createSlider(
+        posInner,
+        localized("EAM_CHARGE_BAR_THICKNESS", "厚度（px）"),
+        "chargeBarThickness",
+        4, 16, 1, 280, -390, 240
+    )
+
+    local chargeBarHint = posInner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    chargeBarHint:SetPoint("TOPLEFT", posInner, "TOPLEFT", 280, -430)
+    chargeBarHint:SetWidth(240)
+    chargeBarHint:SetJustifyH("LEFT")
+    bindText(
+        chargeBarHint,
+        "EAM_CHARGE_BAR_HINT",
+        "分段代表剩餘可用次數；恢復時間只顯示於冷卻轉圈。"
+    )
     -- ---------------------------------------------------
     -- 【底部按鈕】：對稱分欄，重置 7 個框架的所有狀態
     -- ---------------------------------------------------
@@ -1835,6 +1974,12 @@ local function createFrame()
         if EAM.db and EAM.db.layout then
             EAM.db.layout.iconSize = 40
             EAM.db.layout.spacing = 6
+            if EAM.db.config then
+                EAM.db.config.chargeBarLayout = "BOTTOM"
+                EAM.db.config.chargeBarLengthPercent = 150
+                EAM.db.config.chargeBarThickness = 8
+                Options.refreshChargeBarDropdown()
+            end
             
             local defaults = EAM.Modules.SavedVariables.defaults
             if defaults and defaults.layout and defaults.layout.frames then
@@ -3078,7 +3223,11 @@ function Options.openConditionsFrame(data)
         cf.glowSlider:Show()
         cf.redLimitSlider:Show()
         cf.prioritySlider:Show()
-        cf.fromPlayerCb:Show()
+        if isAura then
+            cf.fromPlayerCb:Show()
+        else
+            cf.fromPlayerCb:Hide()
+        end
 
         for index = 1, #COOLDOWN_BEHAVIOR_OPTIONS do
             local definition = COOLDOWN_BEHAVIOR_OPTIONS[index]

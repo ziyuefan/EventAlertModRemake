@@ -418,7 +418,7 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 <h1 id="retail-121">Retail 12.1 玩家職業資源獨立模組重構報告</h1>
 <ul>
-<li>日期：2026-08-21</li>
+<li>日期：2026-08-23</li>
 <li>目標通道：Retail／PTR 12.1；XPTR 12.0.7 使用隔離的 numeric legacy adapter</li>
 <li>證據層級：程式與測試結論為 offline-mock／static contract；尚未宣稱任何 WoW 客戶端視覺簽收。</li>
 </ul>
@@ -449,7 +449,7 @@
 <p><code>PlayerResourceCapability</code> 以 client adapter 分流：Retail／PTR 12.1 可採 NUMERIC 或 Secret display；XPTR 12.0.7 使用隔離的 numeric legacy adapter，不能呼叫 12.1 Native Aura／Secret sink。Secret 資源只將安全邊界允許的 percent 直接寫入 StatusBar／radial sink，不保存、比較、數學運算、tostring、序列化、當 table key 或讀回 getter。所有報告只輸出安全 metadata，不輸出 current、max、percent 原值。</p>
 <h2 id="f-resourceprobe-sampler">F. ResourceProbe、事件與背景 sampler</h2>
 <p><code>PlayerResourceProbe</code> 只在玩家手動啟動期間註冊事件，逐項記錄 tracked／available／foreground／background／capability／sinkAvailable／eventObserved；停止時解除註冊。<code>eventObserved</code> 僅表示事件由實機流程觸發，不代表視覺或數值正確。</p>
-<p>背景資源只有在 probe 明確確認相關事件缺失後，才啟用單一 probe-gated、0.5 秒 demand-driven sampler；它不是預設輪詢，也不在戰鬥中執行結構變更。若事件被觀測，該 resource 立即退出 sampler。Sampler fixture／contract 已通過離線驗證；仍不可把 sampler 啟用或 setter accepted 冒充實機通過。</p>
+<p>背景資源只有在玩家／Probe 明確確認相關事件缺失後，才可請求單一 probe-gated、demand-driven sampler；目前離線 fixture 使用 0.5 秒間隔僅是測試時鐘，不是 Retail 12.1 的實機頻率結論。它不是預設輪詢，也不在戰鬥中執行結構變更。若事件被觀測，該 resource 立即退出 sampler。Sampler fixture／contract 已通過離線驗證；仍不可把 sampler 啟用或 setter accepted 冒充實機通過。</p>
 <h2 id="g-renderer-ownership">G. Renderer ownership</h2>
 <p><code>PowerRenderer</code> 預熱固定資源 frame 與 StatusBar，使用直接 source-to-sink 更新；Secret frame 由 resource key 獨立擁有。Renderer 不讀回 widget 值、不以 OnUpdate 輪詢、不建立 ShadowHost 或第二條 Aura／Cooldown pipeline。</p>
 <h2 id="h-performance-boundary">H. Performance boundary</h2>
@@ -459,11 +459,11 @@
 <h2 id="j">J. 離線驗證</h2>
 <p>本輪最新 artifact：</p>
 <ul>
-<li>Lua syntax（62 AddOn + 2 offline tests）：<code>64/64</code>。</li>
-<li>Flow all：<code>75/75</code>，<code>EAM_FlowValidation_all_20260821_094159.json</code>。</li>
-<li>Flow boundary：<code>54/54</code>，<code>EAM_FlowValidation_boundary_20260821_094201.json</code>。</li>
-<li>Validation Contracts：<code>436/436</code>，已以最新 Flow artifact 重跑通過。</li>
-<li>已涵蓋 ResourceProbe schema、12.0.7 adapter、Druid topology／form、module event unregister、anchor／position、冷路徑策略綁定、source／sink 邊界、config immediate／combat deferred 與 <code>unitpower.background_sampler_gate</code>。</li>
+<li>Lua syntax（62 AddOn + 2 offline tests）：62/62。</li>
+<li>Flow all：77/77，.AI/TestResults/EAM_FlowValidation_all_20260823_063557.json。</li>
+<li>Flow boundary：56/56，.AI/TestResults/EAM_FlowValidation_boundary_20260823_063609.json。</li>
+<li>Validation Contracts：459/459，已以最新 Flow artifact 重跑通過；並同步通過部署契約與連續性追蹤。</li>
+<li>已涵蓋 ResourceProbe schema、12.0.7 adapter、Druid Bear／Cat／Caster／Moonkin／回 Bear topology、Energy→ComboPoints renderer ownership、module event unregister、anchor／position、font／orientation、冷路徑策略綁定、source／sink 邊界、config immediate／combat deferred 與 unitpower.background_sampler_gate。</li>
 <li>背景 sampler fixture／contract 已通過；上述離線結果不能代替 WoW 實機 visual、taint 或 blocked-action 簽收。</li>
 </ul>
 <h2 id="k">K. 實機簽收門檻</h2>
@@ -477,6 +477,85 @@
 <li>Lua error、taint、blocked action、Forbidden access 與報告 privacy。</li>
 </ol>
 <p>真人報告必須標示 PTR、XPTR 或 Retail、patch、build、interface、戰鬥狀態、是否手動 <code>/reload</code> 與 visualObservation。API accepted、offline pass、ResourceProbe eventObserved 或 sampler output 都不能直接升格為 visual pass。</p>
+<h2 id="l-acceptance-matrix">L. Acceptance matrix</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>離線／靜態證據</th>
+<th>WoW 12.1 實機狀態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Catalog、17 資源、40 組 class/spec topology</td>
+<td>PASS</td>
+<td>REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+<tr>
+<td>NUMERIC／SECRET_DISPLAY／UNAVAILABLE capability 分流</td>
+<td>PASS</td>
+<td>REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+<tr>
+<td>UNIT_DISPLAYPOWER 只刷新 foreground、背景節點保留</td>
+<td>PASS</td>
+<td>REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+<tr>
+<td>Druid 五資源與 Bear／Cat／Caster／Moonkin／回 Bear flow</td>
+<td>PASS</td>
+<td>REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+<tr>
+<td>Energy 更新不隱藏 ComboPoints、每資源 frame ownership</td>
+<td>PASS</td>
+<td>REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+<tr>
+<td>非戰鬥設定即時套用、戰鬥中離戰一次重建</td>
+<td>PASS</td>
+<td>REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+<tr>
+<td>Probe metadata、手動背景 sampler gate、模組停用清理</td>
+<td>PASS</td>
+<td>REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+<tr>
+<td>Retail／PTR 12.1 與 XPTR 12.0.7 全職業／專精視覺、事件、taint</td>
+<td>未由離線測試證明</td>
+<td>REQUIRES_WOW_12_1_RUNTIME／REQUIRES_XPTR_12_0_7_RUNTIME</td>
+</tr>
+</tbody>
+</table>
+<p>離線 PASS 僅表示程式、strict mock、Flow 與契約一致；任何 StatusBar setter accepted、eventObserved 或 sampler tick 都不能升格為玩家視覺通過。</p>
+<h2 id="m-alpha-7-final-offline-correction">M. Alpha 7 final offline correction</h2>
+<p>本節取代前段舊 artifact 數字，作為目前玩家資源離線證據索引。</p>
+<ul>
+<li>PlayerResourceProbe 新增一次性 missing-event check：Probe start 後由 Scheduler 延遲檢查背景資源，執行一次後產生安全 metadata；stop、generation invalidation 或 module disable 都會取消。</li>
+<li>UNIT_DISPLAYPOWER、UPDATE_SHAPESHIFT_FORM 與 PLAYER_REGEN_ENABLED 僅刷新 foreground metadata，不批量重讀或刪除背景資源；SavedVariables Catalog map 保持唯讀，避免 frozen table 寫入。</li>
+<li>Options 在 SavedVariables API 未完成時返回 savedVariablesMethodUnavailable，不再把初始化錯誤級聯成 nil method。</li>
+<li>最終離線 gate：Lua 62/62、Flow all 77/77、Flow boundary 56/56、Validation Contracts 461/461。最新 artifact：.AI/TestResults/EAM_FlowValidation_all_20260823_081553.json、.AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json。</li>
+<li>以上仍是 offline-mock／static contract；法力、怒氣、能量、連擊點、瘋狂值、符文、Secret sink、全職業／專精與 taint 必須在玩家部署後分 Retail／PTR／XPTR 簽收。</li>
+</ul>
+<h2 id="n-464464-final-offline-gate-readme">N. 464/464 final offline gate 與公開 README</h2>
+<ul>
+<li>最新 Lua syntax：62/62。</li>
+<li>最新 Flow：all 77/77、boundary 56/56；artifact 分別為 EAM_FlowValidation_all_20260823_083630.json 與 EAM_FlowValidation_boundary_20260823_083631.json。</li>
+<li>最新 Validation Contracts：464/464；新增 gate 包含 Probe restart／一次性 missing-event check、Frozen Catalog read-only、Options fail-closed、README／changelog package synchronization 與 privacy contract。</li>
+<li>根 README 與插件副本已同步，包含 Alpha 7 狀態、實際 /eam command line 用法、執行時機、部署選單與 WTF backup／restore 說明；兩份 SHA-256 為 635C545E7B535B85730AA28D24176E291299A86F47D5036682C1FE5877935AB3。</li>
+<li>以上仍是 offline/static evidence；Secret sink、全職業／專精視覺、taint、blocked action、戰鬥／脫戰與三通道 runtime 必須由玩家部署後簽收。</li>
+</ul>
+<h2 id="2026-08-23-dk-rune">2026-08-23 DK Rune 六槽事件路徑</h2>
+<ul>
+<li>問題：RUNES powerType 不能視為 Runic Power 類型的連續聚合條；泛用 UnitPower 路徑無法反映每顆 Rune 可用／冷卻狀態。</li>
+<li>實作：<code>GetRuneCount(1..6)</code> 初始化每槽 ready boolean；若 API 缺失或安全值不可得，再嘗試 <code>GetRuneCooldown(index)</code> 的 <code>isRuneReady</code>。任何不安全結果都 fail-closed，不讀 start／duration。</li>
+<li>熱路徑：<code>RUNE_POWER_UPDATE(runeIndex, added)</code> 只更新一槽與 0..6 ready count，明確保存 <code>added=false</code>。事件本身不呼叫 UnitPower／UnitPowerMax／UnitPowerPercent，也不配置新的 frame。</li>
+<li>渲染：沿用預先建立的 RUNES POINTS StatusBar 與五條 separator，safe count 轉為 count/6 百分比。這是六段 ready-count 彙總，不是六顆各自的 recharge sweep；個別 recharge 動畫若要加入，須另行驗證每槽 DurationObject／widget 能力與 Secret 邊界。</li>
+<li>診斷：<code>getStatus()</code> 只輸出 <code>runeSlotAPIAvailable</code>、<code>runeStateInitialized</code>、<code>runeReadyCount</code>、<code>runeEventCount</code>、<code>lastRuneResult</code> 等 safe metadata。</li>
+<li>離線驗證：<code>unitpower.runes_event_driven_segments</code> 驗證 6/6→5/6→6/6、Rune event 期間泛用 UnitPower 讀取 0、Secret operation 0；仍需玩家部署後確認 Retail 12.1 血／冰／邪專精視覺。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>

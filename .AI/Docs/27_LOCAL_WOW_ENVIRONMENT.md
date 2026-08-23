@@ -7,7 +7,7 @@
 - Git／專案根：`D:\Project_EventAlertMod`；插件實體來源：`D:\Project_EventAlertMod\EventAlertMod`；AI 治理：`D:\Project_EventAlertMod\.AI`；部署工具：`D:\Project_EventAlertMod\Deploy`；本機產物：`D:\Project_EventAlertMod\Dist`（ignored）。
 - 版本與目標（本次 Status 唯讀結果）：Retail `_retail_` `12.1.0.69382`／physical、PTR `_ptr_` `12.1.0.69382`／physical、XPTR `_xptr_` `12.0.7.68887`／physical。這是環境狀態，不代表插件功能或真人流程簽收；目前只有 PTR 含 `EventAlertMod.toc`，Retail/XPTR 尚缺該檔，故 `Test-LocalWoWEnvironment` 為 1/3，不是工具 bug，也不能宣稱三通道 ready。Deploy Status/DryRun 三通道 pass 僅代表安全部署前檢。
 - 先前「Retail/XPTR link blocked、PTR physical」是歷史快照；本次三者已為 physical。日後每次部署前仍須重新查 ProductVersion、LinkType、Target、ReparsePoint 與 inventory，不能只依本段快照。
-- 部署工具以 Registry 優先、`DeploymentTargets.json` fallback；可由使用者確認或指定 `-WowRoot`。Status 列出三通道版本；PTR/XPTR 的 Retail inclusion 僅在互動確認後加入，noninteractive 不暗加；Reparse Point 一律 fail-closed。
+- 部署工具以 Registry 優先、DeploymentTargets.json fallback；可由使用者確認或指定 -WowRoot。Status 列出三通道版本；PTR/XPTR 的 Retail inclusion 僅在互動確認後加入，noninteractive 不暗加；Reparse Point 一律 fail-closed。部署不檢查 WoW 程序是否執行。W／U 或 Backup／Restore 才會讀寫各版本 WTF 中的 EventAlertMod 相關檔案，並以相對路徑 manifest 保存。
 
 > 本節優先於下方舊日期快照；舊路徑與舊版本均保留作歷史證據，不是現行操作目標。
 

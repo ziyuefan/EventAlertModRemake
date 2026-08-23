@@ -17,6 +17,8 @@ local Mock = {
     altDown = false,
     shiftDown = false,
     metaDown = false,
+    statusBarTextureMode = "accept",
+    statusBarRadialApplied = true,
     nextSoundID = 1,
     activeSounds = {},
     auraSoundAddMode = "success",
@@ -29,6 +31,7 @@ local Mock = {
     itemIDsByLink = {},
     secretTables = {},
     secretValues = {},
+    runeCounts = { 1, 1, 1, 1, 1, 1 },
     cvars = {},
     lastMenuCandidate = nil,
     trace = {},
@@ -88,9 +91,19 @@ local function resetTrace()
         durationBindingEnables = 0,
         cooldownDurationObjectCalls = 0,
         cooldownNumericCalls = 0,
+        statusBarTimerDurationCalls = 0,
+        chargeStatusBarValueCalls = 0,
+        chargeStatusBarRangeCalls = 0,
+        chargeStatusBarRenderModeCalls = 0,
+        chargeStatusBarRenderModeReads = 0,
+        chargeStatusBarTextureCalls = 0,
+        lastChargeStatusBarTexture = nil,
+        chargeStatusBarOrientationCalls = 0,
         unitPowerReads = 0,
         unitPowerMaxReads = 0,
         unitPowerPercentReads = 0,
+        runeCountReads = 0,
+        runeCooldownReads = 0,
         nativePowerSinkWrites = 0,
         nativePowerSinkWritesByFrame = {},
         svgVectorCreates = 0,
@@ -628,6 +641,14 @@ local function createGenericFrame(frameType, frameName)
         return self.shown == true
     end
 
+    function frame:SetShown(shown)
+        if shown == true then
+            self:Show()
+        else
+            self:Hide()
+        end
+    end
+
     function frame:SetText(value)
         self.text = value == nil and "" or value
     end
@@ -648,9 +669,28 @@ local function createGenericFrame(frameType, frameName)
         self.text = ""
     end
 
+    function frame:SetStatusBarTexture(asset)
+        Mock.trace.chargeStatusBarTextureCalls = Mock.trace.chargeStatusBarTextureCalls + 1
+        Mock.trace.lastChargeStatusBarTexture = asset
+        local rejected = Mock.statusBarTextureMode == "rejectAll"
+            or Mock.statusBarTextureMode == "rejectAddon"
+                and type(asset) == "string"
+                and string.find(asset, "Interface\\AddOns\\", 1, true) ~= nil
+        if rejected then
+            return false
+        end
+        self.statusBarTexture = asset
+        return true
+    end
+
     function frame:SetValue(value)
         self.valueClass = Mock.secretValues[value] == true and "secret" or type(value)
+        self.safeValue = nil
+        if self.valueClass ~= "secret" then
+            self.safeValue = value
+        end
         Mock.trace.nativePowerSinkWrites = Mock.trace.nativePowerSinkWrites + 1
+        Mock.trace.chargeStatusBarValueCalls = Mock.trace.chargeStatusBarValueCalls + 1
         local frameName = rawget(self, "frameName") or "anonymous"
         local byFrame = Mock.trace.nativePowerSinkWritesByFrame
         byFrame[frameName] = (byFrame[frameName] or 0) + 1
@@ -659,6 +699,31 @@ local function createGenericFrame(frameType, frameName)
     function frame:SetMinMaxValues(minimum, maximum)
         self.minimum = minimum
         self.maximum = maximum
+        Mock.trace.chargeStatusBarRangeCalls = Mock.trace.chargeStatusBarRangeCalls + 1
+    end
+
+    function frame:SetOrientation(orientation)
+        self.orientation = orientation
+        Mock.trace.chargeStatusBarOrientationCalls = Mock.trace.chargeStatusBarOrientationCalls + 1
+    end
+
+    function frame:SetRenderMode(renderMode)
+        Mock.trace.chargeStatusBarRenderModeCalls = Mock.trace.chargeStatusBarRenderModeCalls + 1
+        if Mock.statusBarRadialApplied == true then
+            self.renderMode = renderMode
+        end
+    end
+
+    function frame:GetRenderMode()
+        Mock.trace.chargeStatusBarRenderModeReads = Mock.trace.chargeStatusBarRenderModeReads + 1
+        return self.renderMode
+    end
+
+    function frame:SetTimerDuration(durationObject, interpolation, direction)
+        self.timerDurationObject = durationObject
+        self.timerInterpolation = interpolation
+        self.timerDirection = direction
+        Mock.trace.statusBarTimerDurationCalls = Mock.trace.statusBarTimerDurationCalls + 1
     end
 
     function frame:SetAlpha(value)
@@ -704,7 +769,7 @@ local function createGenericFrame(frameType, frameName)
         "SetEnabled", "SetMouseMotionEnabled", "SetFrameStrata", "SetToplevel",
         "SetClampedToScreen", "EnableMouse", "SetBackdrop", "SetJustifyH", "SetJustifyV",
         "SetHeight", "SetAutoFocus", "SetNumeric", "SetMaxLetters", "SetBackdropColor", "SetBackdropBorderColor", "SetTextColor",
-        "SetStatusBarTexture", "SetStatusBarColor",
+        "SetStatusBarColor",
     }
     for index = 1, #noOperationMethods do
         frame[noOperationMethods[index]] = noOperation
@@ -795,6 +860,8 @@ function Mock.install(interfaceVersion)
     Mock.altDown = false
     Mock.shiftDown = false
     Mock.metaDown = false
+    Mock.statusBarTextureMode = "accept"
+    Mock.statusBarRadialApplied = true
     Mock.nextSoundID = 1
     Mock.activeSounds = {}
     Mock.auraSoundAddMode = "success"
@@ -887,6 +954,19 @@ function Mock.install(interfaceVersion)
     Mock.unitPowerMaxValues = {}
     Mock.secretPowerTypes = {}
     Mock.secretPowerMaxTypes = {}
+    Mock.runeCounts = { 1, 1, 1, 1, 1, 1 }
+    GetRuneCount = function(runeIndex)
+        Mock.trace.runeCountReads = Mock.trace.runeCountReads + 1
+        return Mock.runeCounts[runeIndex] or 0
+    end
+    GetRuneCooldown = function(runeIndex)
+        Mock.trace.runeCooldownReads = Mock.trace.runeCooldownReads + 1
+        local ready = (Mock.runeCounts[runeIndex] or 0) > 0
+        if ready then
+            return 0, 0, true
+        end
+        return 10, 10, false
+    end
     UnitClass = function()
         return "Paladin", Mock.unitClassToken, 2
     end
@@ -969,6 +1049,7 @@ function Mock.install(interfaceVersion)
         Essence = 19,
     }
     Enum.SecretAspect = { Shown = 1, BarValue = 2, RadialProgress = 3 }
+    Enum.StatusBarRenderMode = { Linear = 0, Radial = 1 }
     Enum.SecrecyLevel = { NeverSecret = 0, ContextuallySecret = 1, AlwaysSecret = 2 }
     Enum.CustomAuraButtonDispelTypeStealableFilter = {
         Stealable = 1,
@@ -1470,6 +1551,18 @@ function Mock.resetTrace()
     resetTrace()
 end
 
+function Mock.setChargeStatusBarCapability(textureMode, radialApplied)
+    local validTextureModes = {
+        accept = true,
+        rejectAddon = true,
+        rejectAll = true,
+    }
+    textureMode = textureMode or "accept"
+    assert(validTextureModes[textureMode], "invalid StatusBar texture mode")
+    Mock.statusBarTextureMode = textureMode
+    Mock.statusBarRadialApplied = radialApplied ~= false
+end
+
 function Mock.setAuraSoundModes(addMode, removeMode)
     local validModes = {
         success = true,
@@ -1508,6 +1601,13 @@ function Mock.setUnitPowerScenario(classToken, values, maximums, secretTypes, se
     Mock.secretPowerMaxTypes = secretMaxTypes or {}
     if specializationID ~= nil then
         Mock.specializationID = specializationID
+    end
+end
+
+function Mock.setRuneCounts(values)
+    for index = 1, 6 do
+        local value = type(values) == "table" and values[index] or nil
+        Mock.runeCounts[index] = value and value > 0 and 1 or 0
     end
 end
 

@@ -42,6 +42,10 @@ local CooldownService = {
     states = {},
     -- 只有玩家 UNIT_SPELLCAST_SUCCEEDED 精確命中已啟用警示時才開啟。
     activatedAlerts = {},
+    -- 保存本輪實際施放 ID，避免 base/override 家族在後續充能事件查錯成員。
+    activationSpellIDs = {},
+    -- 完成移除前，必須先安全觀察到本輪至少消耗一層充能。
+    chargeSpentObserved = {},
 }
 
 EAM.Services.CooldownService = CooldownService
@@ -60,6 +64,184 @@ local function getDurationObject(callback, spellID, ignoreGCD)
         return durationObject
     end
     return nil
+end
+
+-- SpellChargeInfo 在 12.1 可同時包含安全與 Secret 欄位；此 reader 只放行可索引表，
+-- 再逐欄套用 scalar 檢查，不使用 hasanysecretvalues 否決整張 structured table。
+local function readChargeField(source, key, warnings, warningCode)
+    if type(source) ~= "table"
+        or Util.isSecretValue(source)
+        or Util.isSecretTable(source)
+        or not Util.canAccessTable(source)
+    then
+        Util.appendBoundaryWarning(warnings, warningCode or "chargeTableRestricted", "table")
+        return nil, false
+    end
+    if not Util.isSafeTableKey(key) then
+        Util.appendBoundaryWarning(warnings, warningCode or "chargeFieldRestricted", "key")
+        return nil, false
+    end
+    return Util.readSafeScalar(source[key], warnings, warningCode or "chargeFieldProtected", key)
+end
+
+local function resolveSpellIdentifier(callback, spellID)
+    if type(callback) ~= "function" or not Util.isSafePositiveNumber(spellID) then
+        return nil
+    end
+    local resolvedSpellID = callback(spellID)
+    if Util.isSafePositiveNumber(resolvedSpellID) then
+        return resolvedSpellID
+    end
+    return nil
+end
+
+local function resolveSpellFamily(spellID)
+    if not Util.isSafePositiveNumber(spellID) then
+        return nil, nil
+    end
+    local cSpell = api.C_Spell
+    local baseSpellID = cSpell
+        and resolveSpellIdentifier(cSpell.GetBaseSpell, spellID)
+        or nil
+    baseSpellID = baseSpellID or spellID
+
+    local overrideSpellID = cSpell
+        and resolveSpellIdentifier(cSpell.GetOverrideSpell, baseSpellID)
+        or nil
+    if not overrideSpellID and baseSpellID ~= spellID and cSpell then
+        overrideSpellID = resolveSpellIdentifier(cSpell.GetOverrideSpell, spellID)
+    end
+    return baseSpellID, overrideSpellID or baseSpellID
+end
+
+local function readChargeCandidate(cSpell, spellID)
+    if not Util.isSafePositiveNumber(spellID) then
+        return nil, nil
+    end
+    local ok, chargesInfo = pcall(cSpell.GetSpellCharges, spellID)
+    if not ok or type(chargesInfo) ~= "table" then
+        return nil, nil
+    end
+    local maximumCharges, maximumSafe = readChargeField(
+        chargesInfo,
+        "maxCharges",
+        nil,
+        "chargeCandidateMax"
+    )
+    if maximumSafe and Util.isSafePositiveNumber(maximumCharges) and maximumCharges > 1 then
+        return chargesInfo, spellID
+    end
+    return nil, nil
+end
+
+local function getSpellChargesInfo(cSpell, spellID, preferredSpellID)
+    if not cSpell or type(cSpell.GetSpellCharges) ~= "function"
+        or not Util.isSafePositiveNumber(spellID)
+    then
+        return nil, nil
+    end
+
+    local chargesInfo, selectedSpellID = readChargeCandidate(cSpell, preferredSpellID)
+    if chargesInfo then
+        return chargesInfo, selectedSpellID
+    end
+
+    local baseSpellID, overrideSpellID = resolveSpellFamily(spellID)
+    if overrideSpellID ~= preferredSpellID then
+        chargesInfo, selectedSpellID = readChargeCandidate(cSpell, overrideSpellID)
+        if chargesInfo then
+            return chargesInfo, selectedSpellID
+        end
+    end
+    if baseSpellID ~= preferredSpellID and baseSpellID ~= overrideSpellID then
+        chargesInfo, selectedSpellID = readChargeCandidate(cSpell, baseSpellID)
+        if chargesInfo then
+            return chargesInfo, selectedSpellID
+        end
+    end
+    if spellID ~= preferredSpellID and spellID ~= overrideSpellID and spellID ~= baseSpellID then
+        chargesInfo, selectedSpellID = readChargeCandidate(cSpell, spellID)
+        if chargesInfo then
+            return chargesInfo, selectedSpellID
+        end
+    end
+    return nil, nil
+end
+
+local function getObjectMethod(object, name)
+    if not object then
+        return nil
+    end
+    local ok, method = pcall(function()
+        return object[name]
+    end)
+    if ok and type(method) == "function" then
+        return method
+    end
+    return nil
+end
+
+-- currentCharges 在 12.1 可為 Secret；此函式只把原值送進 Blizzard C 層 StatusBar，
+-- 不回傳、不保存、不比較該值。IconPool 必須先完成所有錨點與樣式設定。
+function CooldownService.applyChargeStatusBar(spellID, statusBar, preferredSpellID)
+    if not Util.isSafePositiveNumber(spellID) or not statusBar then
+        return false, "invalidArguments"
+    end
+
+    local chargesInfo = getSpellChargesInfo(api.C_Spell, spellID, preferredSpellID)
+    if type(chargesInfo) ~= "table"
+        or Util.isSecretValue(chargesInfo)
+        or Util.isSecretTable(chargesInfo)
+        or not Util.canAccessTable(chargesInfo)
+    then
+        return false, "chargeTableRestricted"
+    end
+
+    local maximumCharges, maximumSafe = readChargeField(
+        chargesInfo,
+        "maxCharges",
+        nil,
+        "chargeSinkMax"
+    )
+    if not maximumSafe or not Util.isSafePositiveNumber(maximumCharges) then
+        return false, "maximumUnavailable"
+    end
+
+    local currentOK, currentCharges = pcall(function()
+        return chargesInfo.currentCharges
+    end)
+    if not currentOK then
+        return false, "currentUnavailable"
+    end
+    local currentSecret = Util.isSecretValue(currentCharges)
+    local currentSafe = not currentSecret
+        and Util.canAccessValue(currentCharges)
+        and Util.isSafeNonNegativeNumber(currentCharges)
+    if not currentSecret and not currentSafe then
+        return false, "currentUnavailable"
+    end
+
+    local setMinMaxValues = getObjectMethod(statusBar, "SetMinMaxValues")
+    local setValue = getObjectMethod(statusBar, "SetValue")
+    if not setMinMaxValues or not setValue then
+        return false, "statusBarSinkUnavailable"
+    end
+    if not pcall(setMinMaxValues, statusBar, 0, maximumCharges) then
+        return false, "rangeRejected"
+    end
+
+    -- 必須是最後一個 statusBar 呼叫：Secret BarValue 可能使後續讀取或錨點帶密。
+    local accepted = pcall(setValue, statusBar, currentCharges)
+    if not accepted then
+        return false, "valueRejected"
+    end
+    return true, currentSecret and "secretCount" or "safeCount", maximumCharges
+end
+
+local function sameSpellID(left, right)
+    return Util.isSafePositiveNumber(left)
+        and Util.isSafePositiveNumber(right)
+        and left == right
 end
 
 local COOLDOWN_BEHAVIOR_DEFAULTS = {
@@ -103,6 +285,8 @@ end
 local function setStateHidden(alertID, state, clearActivation)
     if clearActivation then
         CooldownService.activatedAlerts[alertID] = nil
+        CooldownService.activationSpellIDs[alertID] = nil
+        CooldownService.chargeSpentObserved[alertID] = nil
     end
     if not state then
         return nil
@@ -165,6 +349,17 @@ function CooldownStatePool.release(state)
     state.icon = nil
     state.charges = nil
     state.maxCharges = nil
+    state.chargeSpellID = nil
+    state.isChargeBased = nil
+    state.chargesSafe = false
+    state.chargeActive = nil
+    state.chargeActiveSafe = false
+    state.chargeFull = nil
+    state.chargeFullSafe = false
+    state.chargeSpentObserved = false
+    state.chargeCompletionDeferred = false
+    state.displayValue = nil
+    state.displayMaxValue = nil
     state.factsSafe = false
     state.active = false
     state.shown = false
@@ -185,10 +380,13 @@ end
 
 -- Performance Optimizations: Array pre-allocation and revision tracking
 local alertList = Util.tableCreate(32, 0)
+local alertBaseSpellIDs = Util.tableCreate(32, 0)
+local alertOverrideSpellIDs = Util.tableCreate(32, 0)
 local alertCount = 0
 local lastDbRevision = -1
 
 function CooldownService.updateAlertList()
+    local previousCount = alertCount
     alertCount = 0
     local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
     local alerts = savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts() or nil
@@ -196,12 +394,33 @@ function CooldownService.updateAlertList()
         for _, alert in pairs(alerts.spellCooldowns) do
             alertCount = alertCount + 1
             alertList[alertCount] = alert
+            local baseSpellID, overrideSpellID = resolveSpellFamily(alert and alert.spellID)
+            alertBaseSpellIDs[alertCount] = baseSpellID
+            alertOverrideSpellIDs[alertCount] = overrideSpellID
         end
     end
-    -- Clean up subsequent slots if the list shrank
-    for i = alertCount + 1, #alertList do
-        alertList[i] = nil
+    -- Clean up subsequent slots if the list shrank.
+    for index = alertCount + 1, previousCount do
+        alertList[index] = nil
+        alertBaseSpellIDs[index] = nil
+        alertOverrideSpellIDs[index] = nil
     end
+end
+
+local function alertMatchesSpellFamily(index, spellID, baseSpellID, overrideSpellID)
+    local alert = alertList[index]
+    local alertSpellID = alert and alert.spellID or nil
+    local alertBaseSpellID = alertBaseSpellIDs[index]
+    local alertOverrideSpellID = alertOverrideSpellIDs[index]
+    return sameSpellID(alertSpellID, spellID)
+        or sameSpellID(alertSpellID, baseSpellID)
+        or sameSpellID(alertSpellID, overrideSpellID)
+        or sameSpellID(alertBaseSpellID, spellID)
+        or sameSpellID(alertBaseSpellID, baseSpellID)
+        or sameSpellID(alertBaseSpellID, overrideSpellID)
+        or sameSpellID(alertOverrideSpellID, spellID)
+        or sameSpellID(alertOverrideSpellID, baseSpellID)
+        or sameSpellID(alertOverrideSpellID, overrideSpellID)
 end
 
 local function verifyAlertList()
@@ -243,26 +462,55 @@ local function refreshAlert(alert, eventName)
     local behaviorGlow = resolveBehavior(alert, "glowSCDWhenUsable")
     local visibleNow = behaviorOutside or isInCombat()
 
-    -- 1. Check Charges first
+    -- 1. Check Charges first. A non-nil SpellChargeInfo establishes charge capability;
+    -- safe NeverSecret fields remain usable even when currentCharges is Secret.
     local isChargeBased = false
     local currentCharges, maxCharges
+    local chargeActive
     local chargesInfo = nil
+    local chargeSpellID = nil
     local chargesSafe = false
+    local chargeActiveSafe = false
 
     if cSpell.GetSpellCharges then
-        chargesInfo = cSpell.GetSpellCharges(alert.spellID)
-        if type(chargesInfo) == "table" and Util.canAccessTable(chargesInfo) then
-            local cur, curSafe = Util.readSafeField(chargesInfo, "currentCharges", nil, "charges")
-            local mx, mxSafe = Util.readSafeField(chargesInfo, "maxCharges", nil, "charges")
+        chargesInfo, chargeSpellID = getSpellChargesInfo(
+            cSpell,
+            alert.spellID,
+            CooldownService.activationSpellIDs[alertID]
+        )
+        if type(chargesInfo) == "table" then
+            isChargeBased = true
+            if not Util.isSecretTable(chargesInfo) and Util.canAccessTable(chargesInfo) then
+                local cur, curSafe = readChargeField(
+                    chargesInfo,
+                    "currentCharges",
+                    nil,
+                    "charges"
+                )
+                local mx, mxSafe = readChargeField(
+                    chargesInfo,
+                    "maxCharges",
+                    nil,
+                    "charges"
+                )
+                local active, activeSafe = readChargeField(
+                    chargesInfo,
+                    "isActive",
+                    nil,
+                    "charges"
+                )
 
-            if curSafe and mxSafe then
-                currentCharges = cur
-                maxCharges = mx
-                isChargeBased = true
-                chargesSafe = true
-            else
-                isChargeBased = true
-                chargesSafe = false
+                if mxSafe and Util.isSafePositiveNumber(mx) then
+                    maxCharges = mx
+                end
+                if curSafe and Util.isSafeNonNegativeNumber(cur) then
+                    currentCharges = cur
+                end
+                chargesSafe = currentCharges ~= nil and maxCharges ~= nil
+                if activeSafe and type(active) == "boolean" then
+                    chargeActive = active
+                    chargeActiveSafe = true
+                end
             end
         end
     end
@@ -289,13 +537,43 @@ local function refreshAlert(alert, eventName)
 
     -- 3. 先判斷是否有未完成冷卻，再套用外部戰鬥顯示條件。
     local hasActiveCooldown = false
+    local chargeFull = false
+    local chargeFullSafe = false
+    local chargeSpentObserved = CooldownService.chargeSpentObserved[alertID] == true
+    local chargeCompletionDeferred = false
     if isChargeBased then
-        if chargesSafe then
-            hasActiveCooldown = currentCharges ~= maxCharges
+        -- currentCharges 只有在安全時才比較；isActive=true 是 NeverSecret 的未滿證據。
+        local chargeSpentNow = chargesSafe and currentCharges < maxCharges
+            or chargeActiveSafe and chargeActive == true
+        if chargeSpentNow then
+            chargeSpentObserved = true
+            CooldownService.chargeSpentObserved[alertID] = true
+        end
+
+        -- 過渡快照若欄位互相矛盾，任何未滿證據都優先於「已滿」。
+        if chargesSafe and currentCharges < maxCharges then
+            chargeFull = false
+            chargeFullSafe = true
+        elseif chargeActiveSafe and chargeActive == true then
+            chargeFull = false
+            chargeFullSafe = true
+        elseif chargesSafe then
+            chargeFull = currentCharges == maxCharges
+            chargeFullSafe = true
+        elseif chargeActiveSafe then
+            chargeFull = chargeActive ~= true
+            chargeFullSafe = true
+        end
+
+        if chargeSpentObserved and chargeFullSafe then
+            hasActiveCooldown = not chargeFull
         else
+            -- UNIT_SPELLCAST_SUCCEEDED 可能早於 SPELL_UPDATE_CHARGES；未先證明已消耗時一律保留。
             hasActiveCooldown = true
+            chargeCompletionDeferred = chargeFullSafe and chargeFull
         end
     elseif cooldownInfo then
+        CooldownService.chargeSpentObserved[alertID] = nil
         if infoSafe then
             hasActiveCooldown = type(startTime) == "number"
                 and type(duration) == "number"
@@ -334,6 +612,23 @@ local function refreshAlert(alert, eventName)
     state.icon = nil
     state.charges = isChargeBased and currentCharges or nil
     state.maxCharges = isChargeBased and maxCharges or nil
+    state.chargeSpellID = isChargeBased and chargeSpellID or nil
+    state.isChargeBased = isChargeBased
+    state.chargesSafe = chargesSafe
+    state.chargeActive = nil
+    if chargeActiveSafe then
+        state.chargeActive = chargeActive
+    end
+    state.chargeActiveSafe = chargeActiveSafe
+    state.chargeFull = nil
+    if chargeFullSafe then
+        state.chargeFull = chargeFull
+    end
+    state.chargeFullSafe = chargeFullSafe
+    state.chargeSpentObserved = chargeSpentObserved
+    state.chargeCompletionDeferred = chargeCompletionDeferred
+    state.displayValue = isChargeBased and chargesSafe and currentCharges or nil
+    state.displayMaxValue = isChargeBased and maxCharges or nil
     state.factsSafe = true
     state.active = true
     state.shown = true
@@ -365,13 +660,13 @@ local function refreshAlert(alert, eventName)
     elseif isChargeBased then
         if chargesSafe then
             if chargesInfo then
-                local start, startSafe = Util.readSafeField(
+                local start, startSafe = readChargeField(
                     chargesInfo,
                     "cooldownStartTime",
                     state.boundaryWarnings,
                     "charges"
                 )
-                local dur, durSafe = Util.readSafeField(
+                local dur, durSafe = readChargeField(
                     chargesInfo,
                     "cooldownDuration",
                     state.boundaryWarnings,
@@ -388,26 +683,26 @@ local function refreshAlert(alert, eventName)
                     state.timer.duration = dur
                     state.timer.expirationTime = start + dur
                     state.timer.durationObject = cSpell.GetSpellChargeDuration
-                        and cSpell.GetSpellChargeDuration(alert.spellID)
+                        and cSpell.GetSpellChargeDuration(chargeSpellID or alert.spellID)
                         or nil
                 else
                     setProtectedTimer(
                         state,
-                        getDurationObject(cSpell.GetSpellChargeDuration, alert.spellID),
+                        getDurationObject(cSpell.GetSpellChargeDuration, chargeSpellID or alert.spellID),
                         "chargeTimingProtected"
                     )
                 end
             else
                 setProtectedTimer(
                     state,
-                    getDurationObject(cSpell.GetSpellChargeDuration, alert.spellID),
+                    getDurationObject(cSpell.GetSpellChargeDuration, chargeSpellID or alert.spellID),
                     "chargeTimingUnavailable"
                 )
             end
         else
             setProtectedTimer(
                 state,
-                getDurationObject(cSpell.GetSpellChargeDuration, alert.spellID),
+                getDurationObject(cSpell.GetSpellChargeDuration, chargeSpellID or alert.spellID),
                 "chargeFactsProtected"
             )
         end
@@ -434,8 +729,10 @@ local function refreshAlert(alert, eventName)
     end
 
     state.source.event = eventName
-    state.source.api = "C_Spell.GetSpellCooldown"
+    state.source.api = isChargeBased and "C_Spell.GetSpellCharges" or "C_Spell.GetSpellCooldown"
     state.source.activation = "UNIT_SPELLCAST_SUCCEEDED:player"
+    state.source.activationSpellID = CooldownService.activationSpellIDs[alertID]
+    state.source.chargeSpellID = chargeSpellID
     state.source.updatedAt = api.GetTime and api.GetTime() or 0
 
     return state
@@ -452,6 +749,8 @@ local function cleanupDeletedAlerts()
     for alertID in pairs(CooldownService.activatedAlerts) do
         if not present[alertID] then
             CooldownService.activatedAlerts[alertID] = nil
+            CooldownService.activationSpellIDs[alertID] = nil
+            CooldownService.chargeSpentObserved[alertID] = nil
         end
     end
     for alertID, state in pairs(CooldownService.states) do
@@ -490,17 +789,37 @@ function CooldownService.initialize()
         router.register("UNIT_SPELLCAST_SUCCEEDED", CooldownService.onSpellcastSucceeded)
         router.register("PLAYER_REGEN_ENABLED", CooldownService.onCombatEvent)
         router.register("PLAYER_REGEN_DISABLED", CooldownService.onCombatEvent)
-        router.register("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", function(_, overriddenSpellID, originalSpellID)
-            if overriddenSpellID and not Util.isSecretValue(overriddenSpellID) then
-                CooldownService.refreshSpell(overriddenSpellID, "COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED")
+        router.register("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", function(eventName, overriddenSpellID, originalSpellID)
+            CooldownService.updateAlertList()
+            if EAM.db then
+                lastDbRevision = EAM.db.revision or 0
             end
-            if originalSpellID and not Util.isSecretValue(originalSpellID) then
-                CooldownService.refreshSpell(originalSpellID, "COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED")
+            local targetSpellID
+            if Util.isSafePositiveNumber(overriddenSpellID) then
+                targetSpellID = overriddenSpellID
+            elseif Util.isSafePositiveNumber(originalSpellID) then
+                targetSpellID = originalSpellID
+            end
+            if targetSpellID then
+                CooldownService.refreshSpell(targetSpellID, eventName, originalSpellID)
             end
         end)
     end
 end
-function CooldownService.refreshSpell(spellID, eventName)
+
+local function resolveEventSpellFamily(spellID, suppliedBaseSpellID)
+    local baseSpellID, overrideSpellID = resolveSpellFamily(spellID)
+    if Util.isSafePositiveNumber(suppliedBaseSpellID) then
+        baseSpellID = suppliedBaseSpellID
+        local _, suppliedOverrideSpellID = resolveSpellFamily(suppliedBaseSpellID)
+        if Util.isSafePositiveNumber(suppliedOverrideSpellID) then
+            overrideSpellID = suppliedOverrideSpellID
+        end
+    end
+    return baseSpellID, overrideSpellID
+end
+
+function CooldownService.refreshSpell(spellID, eventName, suppliedBaseSpellID)
     if not moduleEnabled() then
         return nil, "moduleDisabled"
     end
@@ -512,12 +831,13 @@ function CooldownService.refreshSpell(spellID, eventName)
         return nil
     end
 
+    local baseSpellID, overrideSpellID = resolveEventSpellFamily(spellID, suppliedBaseSpellID)
     local result
     for index = 1, alertCount do
         local alert = alertList[index]
         if alert
             and Util.isSafeTableKey(alert.id)
-            and alert.spellID == spellID
+            and alertMatchesSpellFamily(index, spellID, baseSpellID, overrideSpellID)
             and (
                 CooldownService.activatedAlerts[alert.id] == true
                 or CooldownService.states[alert.id] ~= nil
@@ -541,15 +861,18 @@ function CooldownService.activateSpell(spellID, eventName)
         return nil, "invalidSpellID"
     end
     verifyAlertList()
+    local baseSpellID, overrideSpellID = resolveEventSpellFamily(spellID)
     local result
     for index = 1, alertCount do
         local alert = alertList[index]
         if alert
             and Util.isSafeTableKey(alert.id)
             and alert.enabled ~= false
-            and alert.spellID == spellID
+            and alertMatchesSpellFamily(index, spellID, baseSpellID, overrideSpellID)
         then
             CooldownService.activatedAlerts[alert.id] = true
+            CooldownService.activationSpellIDs[alert.id] = spellID
+            CooldownService.chargeSpentObserved[alert.id] = nil
             local state = refreshAlert(alert, eventName or "UNIT_SPELLCAST_SUCCEEDED")
             if state then
                 fireStateChanged(state)
@@ -599,18 +922,14 @@ function CooldownService.onCooldownEvent(eventName, spellID, baseSpellID)
         return false, "moduleDisabled"
     end
     if eventName == "SPELL_UPDATE_COOLDOWN" then
-        local hasTarget = false
+        local targetSpellID
         if Util.isSafePositiveNumber(spellID) then
-            CooldownService.refreshSpell(spellID, eventName)
-            hasTarget = true
+            targetSpellID = spellID
+        elseif Util.isSafePositiveNumber(baseSpellID) then
+            targetSpellID = baseSpellID
         end
-        if Util.isSafePositiveNumber(baseSpellID)
-            and (not Util.isSafePositiveNumber(spellID) or baseSpellID ~= spellID)
-        then
-            CooldownService.refreshSpell(baseSpellID, eventName)
-            hasTarget = true
-        end
-        if hasTarget then
+        if targetSpellID then
+            CooldownService.refreshSpell(targetSpellID, eventName, baseSpellID)
             return true, "targeted"
         end
     end
@@ -626,6 +945,8 @@ function CooldownService.onModuleToggle(enabled, reason)
             fireStateChanged(state)
         end
         wipe(CooldownService.activatedAlerts)
+        wipe(CooldownService.activationSpellIDs)
+        wipe(CooldownService.chargeSpentObserved)
         return true, "disabled"
     end
     -- 重新啟用不會把設定清單視為已施放；只刷新先前仍被保留的 activation。

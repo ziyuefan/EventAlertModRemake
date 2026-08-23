@@ -14,8 +14,8 @@
 ### 原始碼 ZIP
 
 - 來源是整個 `D:\Project_EventAlertMod`，頂層固定為 `Project_EventAlertMod/`。
-- 排除 `Dist/`、`.git/`、`.codex-remote-attachments/`（及其他 attachments 暫存）、backup/trash、`TestResults/`、cache、pyc、log、zip 與本機衍生物。
-- 保留 `.vscode/`、`.codex/`、`.AI/`，以及 `.AI/docs_html/`；`.AI` 內的 `backup`、`TestResults`、trash 仍排除。原始碼包不是插件發布包。
+- 排除 `Dist/`、`.codex-remote-attachments/`（及其他 attachments 暫存）、`.AI/patch-temp/`，以及任意深度的 `.git/`、backup/trash、`TestResults/`、cache、pyc、log、zip 與本機衍生物。
+- 保留 `.vscode/`、`.codex/`、`.AI/`，以及 `.AI/docs_html/`；任何巢狀位置的 `backup`、`TestResults`、`.trash_*` 都排除，避免匯入器產生的 `.AI/.AI/TestResults` 漏入。原始碼包不是插件發布包。
 
 ### 部署選擇與安全前檢
 
@@ -24,7 +24,7 @@
 - 來源、目標與父層只要發現 SymbolicLink、Junction 或任何 Reparse Point，即 fail-closed，禁止追蹤、刪除、解除、覆蓋或自動重建。每次執行都要重新檢查，不得沿用舊快照。
 - 2026-08-21 現況：Retail/PTR `12.1.0.69382`、XPTR `12.0.7.68887`，三個 EventAlertMod 目標均為 physical，但目前只有 PTR 含 EventAlertMod.toc，Retail/XPTR 尚缺該檔；Test-LocalWoWEnvironment 為 1/3，不能宣稱三通道 ready。Deploy Status/DryRun 三通道通過只代表可安全部署前檢，尚未實際部署；先前 Retail/XPTR link blocked 的結果保留於歷史紀錄，不能取代本次 Status。
 
-本節覆蓋本文較早的舊根命令與內容描述；舊段落保留作歷史證據。此次文件更新不執行 Markdown→HTML 轉換，由主代理統一處理。
+本節覆蓋本文較早的舊根命令與內容描述；舊段落保留作歷史證據。本輪文件更新後已以 EAM_DOCS_OFFLINE=1 離線重建 docs_html，未使用外部翻譯服務。
 
 ## 快速指令
 
@@ -77,6 +77,9 @@ EventAlertMod_MN_20260504_205216.zip
 - 根目錄與插件內的 README／changelog 必須各自 SHA-256 相同。
 - `.AI/`、`Deploy/`、`Dist/` 與 Git metadata 不會進插件包，因為它們不在插件來源樹內。
 
+## WTF 存檔備份／還原
+
+Deploy-EventAlertMod.ps1 的 W／U 選單與 Backup／Restore 命令只處理選定版本通道的 WTF EventAlertMod 相關檔案。備份保留相對於版本根目錄的 WTF/... 路徑，manifest.json 記錄通道、版本與 SHA-256；還原前會建立 rollback 備份。一般插件部署不檢查 Wow.exe／WowT.exe 執行狀態，也不會因程序仍在執行而拒絕覆蓋；Reparse Point、路徑越界與雜湊不符仍維持 fail-closed。
 ## 可選參數
 
 只驗證、不建立 ZIP：
@@ -103,7 +106,7 @@ pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -OutputDirectory <目錄> -Pack
 - ZIP 解壓後 inventory、頂層目錄與 SVG 條目驗證。
 - 產生 ZIP、`.sha256` 與 `.inventory.json`。
 
-專案 source 包必須排除 `Dist/`、`.git/`、本機附件、`.AI/backup/`、`.AI/.trash_*`、`.AI/TestResults/`、快取、log 與既有 ZIP，同時保留 `.vscode/`、`.codex/`、`.AI/` 與 `.AI/docs_html/`。
+專案 source 包必須排除 `Dist/`、本機附件、`.AI/patch-temp/`，並以 leaf 規則排除任意深度的 `.git/`、`backup/`、`.trash_*/`、`TestResults/`、快取、log 與既有 ZIP；同時保留 `.vscode/`、`.codex/`、`.AI/skills/` 與 `.AI/docs_html/`。
 
 ## HTML 說明檔案轉換
 

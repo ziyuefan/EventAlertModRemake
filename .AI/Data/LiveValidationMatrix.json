@@ -224,7 +224,7 @@
       "id": "live.unitpower.combat_deferred",
       "category": "unitpower",
       "required": true,
-      "procedure": "Retail／PTR 12.1 與 XPTR 12.0.7 進入戰鬥後觀察資源變化，確認 EAM 不呼叫 UnitPower／UnitPowerMax／UnitPowerPercent 讀值；脫戰後由事件恢復更新，報告保留 combatDeferred 邊界。"
+      "procedure": "Retail／PTR 12.1 與 XPTR 12.0.7 進入戰鬥後觀察資源變化，確認安全 NUMERIC 資源與 Secret resource sink 仍依事件更新；不得以 Lua 讀回或匯出 Secret raw 值，也不得在戰鬥中做結構性重建。脫戰後只驗證 pending 結構變更由事件合併一次，報告保留 combatDeferred 邊界。"
     },
     {
       "id": "live.aura.duration_zero_regression",

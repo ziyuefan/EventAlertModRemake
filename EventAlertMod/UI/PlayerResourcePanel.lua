@@ -68,6 +68,7 @@ local SETTING_FIELDS = freeze({
 })
 
 local SLIDER_SPECS = freeze({
+    freeze({ field = "fontSize", key = "EAM_RESOURCE_FONT_SIZE", fallback = "資源名稱文字大小", min = 8, max = 36, step = 1, integer = true }),
     freeze({ field = "valueFontSize", key = "EAM_RESOURCE_VALUE_FONT_SIZE", fallback = "數字文字大小", min = 8, max = 36, step = 1, integer = true }),
     freeze({ field = "valueOffsetX", key = "EAM_RESOURCE_VALUE_OFFSET_X", fallback = "數字文字水平偏移", min = -100, max = 100, step = 1, integer = true }),
     freeze({ field = "valueOffsetY", key = "EAM_RESOURCE_VALUE_OFFSET_Y", fallback = "數字文字垂直偏移", min = -100, max = 100, step = 1, integer = true }),
@@ -247,6 +248,49 @@ local function cyclePoint(field)
     Panel.controls[field]:SetText(pointLabel(field, value))
 end
 
+local function cycleOrientation()
+    if not Panel.draft then
+        return
+    end
+    Panel.draft.orientation = Panel.draft.orientation == "VERTICAL" and "HORIZONTAL" or "VERTICAL"
+    Panel.orientationButton:SetText(
+        localized("EAM_RESOURCE_ORIENTATION", "方向") .. "："
+            .. localized("EAM_RESOURCE_ORIENTATION_" .. Panel.draft.orientation, Panel.draft.orientation)
+    )
+end
+
+local function fontFamilyLabel(value)
+    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    for index = 1, #options do
+        if options[index].value == value then
+            return localized(options[index].labelKey, value)
+        end
+    end
+    return value or "STANDARD"
+end
+
+local function cycleFontFamily()
+    if not Panel.draft then
+        return
+    end
+    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    if #options == 0 then
+        return
+    end
+    local nextIndex = 1
+    for index = 1, #options do
+        if options[index].value == Panel.draft.fontFamily then
+            nextIndex = index % #options + 1
+            break
+        end
+    end
+    Panel.draft.fontFamily = options[nextIndex].value
+    Panel.fontFamilyButton:SetText(
+        localized("EAM_RESOURCE_FONT_FAMILY", "字型") .. "："
+            .. fontFamilyLabel(Panel.draft.fontFamily)
+    )
+end
+
 local function refreshScopeButton()
     if not Panel.scopeButton then
         return
@@ -313,7 +357,15 @@ local function refreshEditor()
             .. localized("EAM_RESOURCE_MODE_" .. config.displayMode, config.displayMode)
     )
     Panel.controls.anchor:SetText(pointLabel("anchor", config.anchor))
-    Panel.controls.position:SetText(pointLabel("position", config.position))
+Panel.controls.position:SetText(pointLabel("position", config.position))
+    Panel.orientationButton:SetText(
+        localized("EAM_RESOURCE_ORIENTATION", "方向") .. "："
+            .. localized("EAM_RESOURCE_ORIENTATION_" .. config.orientation, config.orientation)
+    )
+    Panel.fontFamilyButton:SetText(
+        localized("EAM_RESOURCE_FONT_FAMILY", "字型") .. "："
+            .. fontFamilyLabel(config.fontFamily)
+    )
     for index = 1, #SLIDER_SPECS do
         local spec = SLIDER_SPECS[index]
         local value = config[spec.field]
@@ -533,6 +585,24 @@ local function createPanel()
     end)
     Panel.controls.position = positionButton
 
+local orientationButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    orientationButton:SetSize(210, 24)
+    orientationButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 270, -250)
+    if Theme and Theme.registerButton then
+        Theme.registerButton(orientationButton)
+    end
+    orientationButton:SetScript("OnClick", cycleOrientation)
+    Panel.orientationButton = orientationButton
+
+    local fontFamilyButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    fontFamilyButton:SetSize(250, 24)
+    fontFamilyButton:SetPoint("LEFT", orientationButton, "RIGHT", 10, 0)
+    if Theme and Theme.registerButton then
+        Theme.registerButton(fontFamilyButton)
+    end
+    fontFamilyButton:SetScript("OnClick", cycleFontFamily)
+    Panel.fontFamilyButton = fontFamilyButton
+
     createCheckbox(frame, "enabled", "EAM_RESOURCE_ENABLED", "啟用此資源", 270, -190)
     createCheckbox(frame, "showForeground", "EAM_RESOURCE_SHOW_FOREGROUND", "前景時顯示", 430, -190)
     createCheckbox(frame, "showBackground", "EAM_RESOURCE_SHOW_BACKGROUND", "背景時顯示", 590, -190)
@@ -545,7 +615,7 @@ local function createPanel()
         local spec = SLIDER_SPECS[index]
         local column = (index - 1) % 2
         local row = math.floor((index - 1) / 2)
-        createSlider(frame, spec, 270 + column * 265, -280 - row * 58)
+        createSlider(frame, spec, 270 + column * 265, -300 - row * 58)
     end
 
     local statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -656,12 +726,20 @@ function Panel.open()
     end
     Panel.refresh()
     frame:Show()
+    local service = EAM.Services and EAM.Services.PlayerResourceService
+    if service and type(service.refreshVisualState) == "function" then
+        service.refreshVisualState("resourcePanelOpened")
+    end
     return true, "opened"
 end
 
 function Panel.hide()
     if Panel.frame then
         Panel.frame:Hide()
+        local service = EAM.Services and EAM.Services.PlayerResourceService
+        if service and type(service.refreshVisualState) == "function" then
+            service.refreshVisualState("resourcePanelClosed")
+        end
     end
 end
 

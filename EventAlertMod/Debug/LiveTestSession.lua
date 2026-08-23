@@ -101,7 +101,7 @@ local CASE_PROCEDURES = freeze({
     ["live.aura.sound_removed"] = [=[Retail／PTR 12.1：只勾「光環移除」，由玩家讓 Aura 自然到期、驅散或實際移除；每次真實移除應播放一次，停用容器、改設定與 /reload 不得冒充 Aura 移除。XPTR 12.0.7 應維持 capability 降級。]=],
     ["live.unitpower.secondary_numeric"] = [=[由玩家切換可產生次要資源的專精並手動產生、消耗、歸零；確認 EAM 選中 HolyPower／ComboPoints／SoulShards／Chi／ArcaneCharges 等次要資源，數值 1 仍顯示。]=],
     ["live.unitpower.primary_native_sink"] = [=[從測試面板啟動 UnitPower 能力探針，由玩家產生／消耗主要資源；Retail／PTR 12.1 觀察 StatusBar 與 radial sink，XPTR 12.0.7 觀察 StatusBar fallback，標記結果並回傳 EAM_UNIT_POWER_CAPABILITY_REPORT。]=],
-    ["live.unitpower.combat_deferred"] = [=[Retail／PTR 12.1 與 XPTR 12.0.7 進入戰鬥後觀察資源變化，確認 EAM 不呼叫 UnitPower／UnitPowerMax／UnitPowerPercent 讀值；脫戰後由事件恢復更新，報告保留 combatDeferred 邊界。]=],
+    ["live.unitpower.combat_deferred"] = [=[Retail／PTR 12.1 與 XPTR 12.0.7 進入戰鬥後觀察資源變化，確認安全 NUMERIC 資源與 Secret resource sink 仍依事件更新；不得以 Lua 讀回或匯出 Secret raw 值，也不得在戰鬥中做結構性重建。脫戰後只驗證 pending 結構變更由事件合併一次，報告保留 combatDeferred 邊界。]=],
     ["live.aura.duration_zero_regression"] = [=[Retail／PTR 12.1 測試永久、零或瞬間結束 Aura，確認 PTR8 修正不再把有效 duration text 錯顯示為 0，無安全 duration 時仍只顯示官方允許的狀態。]=],
 })
 
