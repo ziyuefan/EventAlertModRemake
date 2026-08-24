@@ -927,6 +927,103 @@ function Renderer.onCombatEnd()
     end
 end
 
+local COW_ICON = "Interface\\Icons\\Spell_Nature_Polymorph_Cow"
+
+local PREVIEW_CONFIG = {
+    selfAura = {
+        title = "EAM - 自身光環框架",
+        slots = {
+            { text = "本身Debuff(2)", dx = -3, border = {1.0, 0.4, 0.4, 1.0}, bg = {1.0, 0.75, 0.75, 0.95} },
+            { text = "本身Debuff(1)\n或特殊框架", dx = -1.5, border = {1.0, 0.4, 0.4, 1.0}, bg = {1.0, 0.75, 0.75, 0.95} },
+            { text = "本身Buff(1)", dx = 0, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "本身Buff(2)", dx = 1.5, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+        }
+    },
+    targetAura = {
+        title = "EAM - 目標光環框架",
+        slots = {
+            { text = "目標Buff(2)", dx = -3, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "目標Buff(1)\n或特殊框架", dx = -1.5, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "目標Debuff(1)", dx = 0, border = {0.4, 1.0, 0.4, 1.0}, bg = {0.75, 1.0, 0.75, 0.95} },
+            { text = "目標Debuff(2)", dx = 1.5, border = {0.4, 1.0, 0.4, 1.0}, bg = {0.75, 1.0, 0.75, 0.95} },
+        }
+    },
+    spellCooldown = {
+        title = "EAM - 技能冷卻框架",
+        slots = {
+            { text = "技能CD(1)", dx = -0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "技能CD(2)", dx = 0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+        }
+    },
+    itemCooldown = {
+        title = "EAM - 物品冷卻框架",
+        slots = {
+            { text = "物品CD(1)", dx = -0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "物品CD(2)", dx = 0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+        }
+    },
+    groundEffect = {
+        title = "EAM - 地面效果框架",
+        slots = {
+            { text = "地面效果(1)", dx = -0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "地面效果(2)", dx = 0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+        }
+    },
+    classPower = {
+        title = "EAM - 職業能量框架",
+        slots = {
+            { text = "★ 玩家職業資源", dx = 0, border = {0.4, 0.8, 1.0, 1.0}, bg = {0.8, 0.9, 1.0, 0.95} },
+        }
+    },
+    totem = {
+        title = "EAM - 圖騰監控框架",
+        slots = {
+            { text = "圖騰監控(1)", dx = 0, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+        }
+    },
+}
+
+local function getOrCreatePreviewIcon(parent, index)
+    parent.previewIcons = parent.previewIcons or {}
+    if parent.previewIcons[index] then
+        return parent.previewIcons[index]
+    end
+
+    local icon = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    icon:SetFrameStrata("HIGH")
+
+    -- 經典奶牛頭貼圖
+    local tex = icon:CreateTexture(nil, "ARTWORK")
+    tex:SetPoint("TOPLEFT", icon, "TOPLEFT", 2, -2)
+    tex:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", -2, 2)
+    tex:SetTexture(COW_ICON)
+    tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    icon.texture = tex
+
+    -- TIME LEFT 文字
+    local timerText = icon:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    timerText:SetPoint("BOTTOM", icon, "TOP", 0, 3)
+    timerText:SetText("TIME LEFT")
+    timerText:SetTextColor(1, 1, 1, 1)
+    icon.timerText = timerText
+
+    -- 槽位說明文字
+    local nameText = icon:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    nameText:SetPoint("TOP", icon, "BOTTOM", 0, -3)
+    nameText:SetTextColor(1, 0.95, 0.5, 1)
+    icon.nameText = nameText
+
+    icon:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = false, tileSize = 0, edgeSize = 10,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 }
+    })
+
+    parent.previewIcons[index] = icon
+    return icon
+end
+
 -- 7 大告警框架特定/全部移動模式控制
 function Renderer.setActiveAnchors(targetFrames)
     if inCombat() then
@@ -957,23 +1054,15 @@ function Renderer.setActiveAnchors(targetFrames)
     end
 
     local anyActive = false
+    local size = (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or (EAM.db and EAM.db.config and EAM.db.config.iconSize) or Renderer.iconSize
+    local spacing = (EAM.db and EAM.db.layout and EAM.db.layout.spacing) or (EAM.db and EAM.db.config and EAM.db.config.iconSpacing) or Renderer.spacing
+
     for fName in pairs(nameLabels) do
         local parent = ensureParent(fName)
         local fState = initFrameState(fName)
         if parent then
-            if not parent.dragTexture then
-                -- 建立半透明移動背景
-                local bg = parent:CreateTexture(nil, "BACKGROUND")
-                bg:SetAllPoints(parent)
-                bg:SetColorTexture(0.15, 0.45, 0.9, 0.55)
-                parent.dragTexture = bg
-
-                -- 建立移動提示文字
-                local txt = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                txt:SetPoint("CENTER", parent, "CENTER", 0, 0)
-                txt:SetText((nameLabels[fName] or fName) .. " (按住左鍵拖曳)")
-                parent.dragText = txt
-
+            if not parent.dragSetupDone then
+                parent.dragSetupDone = true
                 parent:RegisterForDrag("LeftButton")
                 parent:SetScript("OnDragStart", parent.StartMoving)
                 parent:SetScript("OnDragStop", function(self)
@@ -985,26 +1074,58 @@ function Renderer.setActiveAnchors(targetFrames)
                         cfg.x = xOffset or 0
                         cfg.y = yOffset or 0
                     end
-                    print("|cff00ff96EAM|r [" .. (nameLabels[self.frameName] or self.frameName) .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
+                    local fLabel = (nameLabels and nameLabels[self.frameName]) or self.frameName
+                    print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
                 end)
+
+                local hint = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                hint:SetPoint("TOP", parent, "BOTTOM", 0, -26)
+                hint:SetTextColor(0.4, 0.9, 1.0, 1.0)
+                parent.dragHint = hint
             end
 
+            local pCfg = PREVIEW_CONFIG[fName]
             if activeMap[fName] then
                 anyActive = true
                 parent:SetMovable(true)
                 parent:EnableMouse(true)
                 parent:SetFrameStrata("HIGH")
                 parent:SetClampedToScreen(true)
-                if parent.dragTexture then parent.dragTexture:Show() end
-                if parent.dragText then parent.dragText:Show() end
-                local size = (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or (EAM.db and EAM.db.config and EAM.db.config.iconSize) or Renderer.iconSize
-                parent:SetSize(math.max(220, size * 3), math.max(36, size))
+                parent:SetSize(size, size)
+
+                if pCfg and pCfg.slots then
+                    for sIdx, slot in ipairs(pCfg.slots) do
+                        local pIcon = getOrCreatePreviewIcon(parent, sIdx)
+                        pIcon:SetSize(size, size)
+                        pIcon:ClearAllPoints()
+                        pIcon:SetPoint("CENTER", parent, "CENTER", slot.dx * (size + spacing), 0)
+                        pIcon.nameText:SetText(slot.text)
+                        pIcon.texture:SetVertexColor(slot.bg[1], slot.bg[2], slot.bg[3], slot.bg[4] or 1)
+                        pIcon:SetBackdropBorderColor(slot.border[1], slot.border[2], slot.border[3], slot.border[4] or 1)
+                        pIcon:SetBackdropColor(0.08, 0.08, 0.08, 0.8)
+                        pIcon:Show()
+                    end
+                    if parent.previewIcons then
+                        for sIdx = #pCfg.slots + 1, #parent.previewIcons do
+                            parent.previewIcons[sIdx]:Hide()
+                        end
+                    end
+                end
+
+                if parent.dragHint then
+                    parent.dragHint:SetText((nameLabels[fName] or fName) .. " (按住左鍵拖曳)")
+                    parent.dragHint:Show()
+                end
                 parent:Show()
             else
                 parent:SetMovable(false)
                 parent:EnableMouse(false)
-                if parent.dragTexture then parent.dragTexture:Hide() end
-                if parent.dragText then parent.dragText:Hide() end
+                if parent.dragHint then parent.dragHint:Hide() end
+                if parent.previewIcons then
+                    for _, pIcon in ipairs(parent.previewIcons) do
+                        pIcon:Hide()
+                    end
+                end
                 if fState then
                     fState.layoutDirty = true
                     layout(fName)

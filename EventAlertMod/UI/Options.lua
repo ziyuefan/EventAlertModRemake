@@ -1499,6 +1499,12 @@ local function createFrame()
     )
 
     createCheckbox(inner, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 12, -114)
+    createThemedButton(inner, localized("EAM_OPT_TEST_FLASH", "測試閃爍"), 118, -114, 54, 20, function()
+        local flash = EAM.UI and EAM.UI.CombatFlash
+        if flash and type(flash.trigger) == "function" then
+            flash.trigger()
+        end
+    end)
     createCheckbox(inner, localized("EAM_OPT_ALLOW_ESC", "啟用 ESC 鍵關閉"), "allowEscCancel", 180, -114)
 
     createCheckbox(inner, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 12, -138)

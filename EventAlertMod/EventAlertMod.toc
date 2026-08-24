@@ -76,6 +76,7 @@ UI\IconPool.lua
 UI\Renderer.lua
 UI\PowerRenderer.lua
 UI\NativeAuraRenderer.lua
+UI\CombatFlash.lua
 UI\TooltipMonitorMenu.lua
 Services\AuraSoundService.lua
 Services\AuraContainerService.lua
