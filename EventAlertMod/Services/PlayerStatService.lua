@@ -30,6 +30,16 @@ local PlayerStatService = {
 }
 EAM.Services.PlayerStatService = PlayerStatService
 
+local function isSafeNumber(val)
+    if val == nil then return false end
+    if Util and Util.isSecretValue and Util.isSecretValue(val) then return false end
+    if Util and Util.isSafeNumber then return Util.isSafeNumber(val) end
+    if type(val) ~= "number" then return false end
+    return val == val and val ~= math.huge and val ~= -math.huge
+end
+
+PlayerStatService.isSafeNumber = isSafeNumber
+
 -- 16 大支援屬性定義清單
 local STAT_DEFINITIONS = {
     -- 主屬性
@@ -40,8 +50,12 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136085, -- Spell_Nature_Strength
         category = "primary",
         getValue = function()
-            local stat, effectiveStat = UnitStat("player", 1)
-            return effectiveStat or stat or 0
+            if not UnitStat then return 0 end
+            local ok, stat, effectiveStat = pcall(UnitStat, "player", 1)
+            if not ok then return 0 end
+            local val = effectiveStat or stat
+            if not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "number",
     },
@@ -52,8 +66,12 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132212, -- Ability_Agility
         category = "primary",
         getValue = function()
-            local stat, effectiveStat = UnitStat("player", 2)
-            return effectiveStat or stat or 0
+            if not UnitStat then return 0 end
+            local ok, stat, effectiveStat = pcall(UnitStat, "player", 2)
+            if not ok then return 0 end
+            local val = effectiveStat or stat
+            if not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "number",
     },
@@ -64,8 +82,12 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136109, -- Spell_Nature_UnyeildingStamina
         category = "primary",
         getValue = function()
-            local stat, effectiveStat = UnitStat("player", 3)
-            return effectiveStat or stat or 0
+            if not UnitStat then return 0 end
+            local ok, stat, effectiveStat = pcall(UnitStat, "player", 3)
+            if not ok then return 0 end
+            local val = effectiveStat or stat
+            if not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "number",
     },
@@ -76,8 +98,12 @@ local STAT_DEFINITIONS = {
         defaultIcon = 135932, -- Spell_Holy_MagicalSentry
         category = "primary",
         getValue = function()
-            local stat, effectiveStat = UnitStat("player", 4)
-            return effectiveStat or stat or 0
+            if not UnitStat then return 0 end
+            local ok, stat, effectiveStat = pcall(UnitStat, "player", 4)
+            if not ok then return 0 end
+            local val = effectiveStat or stat
+            if not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "number",
     },
@@ -89,7 +115,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132223, -- Ability_CriticalStrike
         category = "secondary",
         getValue = function()
-            return GetCritChance and GetCritChance() or 0
+            if not GetCritChance then return 0 end
+            local ok, val = pcall(GetCritChance)
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "percent",
         suffix = "%",
@@ -101,7 +130,11 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132242, -- Ability_Hunter_RunningShot
         category = "secondary",
         getValue = function()
-            return GetHaste and GetHaste() or (UnitSpellHaste and UnitSpellHaste("player")) or 0
+            local fn = GetHaste or UnitSpellHaste
+            if not fn then return 0 end
+            local ok, val = pcall(fn, "player")
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "percent",
         suffix = "%",
@@ -113,7 +146,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 135907, -- Spell_Holy_GreaterBlessingofSanctuary
         category = "secondary",
         getValue = function()
-            return GetMasteryEffect and GetMasteryEffect() or 0
+            if not GetMasteryEffect then return 0 end
+            local ok, val = pcall(GetMasteryEffect)
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "percent",
         suffix = "%",
@@ -126,8 +162,15 @@ local STAT_DEFINITIONS = {
         category = "secondary",
         getValue = function()
             local cr = _G.CR_VERSATILITY_DAMAGE_DONE or 29
-            local bonus = (GetCombatRatingBonus and GetCombatRatingBonus(cr)) or 0
-            local vers = (GetVersatilityBonus and GetVersatilityBonus(cr)) or 0
+            local bonus, vers = 0, 0
+            if GetCombatRatingBonus then
+                local ok, b = pcall(GetCombatRatingBonus, cr)
+                if ok and isSafeNumber(b) then bonus = b end
+            end
+            if GetVersatilityBonus then
+                local ok, v = pcall(GetVersatilityBonus, cr)
+                if ok and isSafeNumber(v) then vers = v end
+            end
             return bonus + vers
         end,
         format = "percent",
@@ -140,7 +183,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136006, -- Spell_Magic_LesserInvisibilty
         category = "tertiary",
         getValue = function()
-            return GetAvoidance and GetAvoidance() or 0
+            if not GetAvoidance then return 0 end
+            local ok, val = pcall(GetAvoidance)
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "percent",
         suffix = "%",
@@ -152,7 +198,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136169, -- Spell_Shadow_LifeDrain02
         category = "tertiary",
         getValue = function()
-            return GetLifesteal and GetLifesteal() or 0
+            if not GetLifesteal then return 0 end
+            local ok, val = pcall(GetLifesteal)
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "percent",
         suffix = "%",
@@ -164,7 +213,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132297, -- Ability_Rogue_Feint
         category = "tertiary",
         getValue = function()
-            return GetSpeed and GetSpeed() or 0
+            if not GetSpeed then return 0 end
+            local ok, val = pcall(GetSpeed)
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "percent",
         suffix = "%",
@@ -177,9 +229,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132307, -- Ability_Rogue_Sprint
         category = "speed",
         getValue = function()
-            local currentSpeed, runSpeed = GetUnitSpeed("player")
-            local base = 7.0
-            return (currentSpeed or 0) / base * 100
+            if not GetUnitSpeed then return 0 end
+            local ok, currentSpeed = pcall(GetUnitSpeed, "player")
+            if not ok or not isSafeNumber(currentSpeed) then return 0 end
+            return (currentSpeed / 7.0) * 100
         end,
         format = "percent",
         suffix = "%",
@@ -191,9 +244,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 237558, -- Ability_Mount_Drake_Proto
         category = "speed",
         getValue = function()
-            local currentSpeed, runSpeed, flightSpeed = GetUnitSpeed("player")
-            local base = 7.0
-            return (currentSpeed or 0) / base * 100
+            if not GetUnitSpeed then return 0 end
+            local ok, currentSpeed = pcall(GetUnitSpeed, "player")
+            if not ok or not isSafeNumber(currentSpeed) then return 0 end
+            return (currentSpeed / 7.0) * 100
         end,
         format = "percent",
         suffix = "%",
@@ -206,7 +260,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 135940, -- Spell_Holy_PowerWordShield
         category = "survival",
         getValue = function()
-            return UnitGetTotalAbsorbs and UnitGetTotalAbsorbs("player") or 0
+            if not UnitGetTotalAbsorbs then return 0 end
+            local ok, val = pcall(UnitGetTotalAbsorbs, "player")
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "largeNumber",
     },
@@ -217,7 +274,10 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136120, -- Spell_Shadow_AntiShadow
         category = "survival",
         getValue = function()
-            return UnitGetTotalHealAbsorbs and UnitGetTotalHealAbsorbs("player") or 0
+            if not UnitGetTotalHealAbsorbs then return 0 end
+            local ok, val = pcall(UnitGetTotalHealAbsorbs, "player")
+            if not ok or not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "largeNumber",
     },
@@ -228,8 +288,12 @@ local STAT_DEFINITIONS = {
         defaultIcon = 134951, -- INV_Shield_04
         category = "survival",
         getValue = function()
-            local base, effectiveArmor = UnitArmor("player")
-            return effectiveArmor or base or 0
+            if not UnitArmor then return 0 end
+            local ok, base, effectiveArmor = pcall(UnitArmor, "player")
+            if not ok then return 0 end
+            local val = effectiveArmor or base
+            if not isSafeNumber(val) then return 0 end
+            return val
         end,
         format = "number",
     },
@@ -247,7 +311,12 @@ PlayerStatService.ORDERED_KEYS = ORDERED_KEYS
 
 local function formatStatNumber(val, formatType, decimals, shortNumber, suffix)
     decimals = decimals or 1
-    if val == nil then return "0" end
+    if not isSafeNumber(val) then
+        if formatType == "percent" then
+            return suffix and ("0.0" .. suffix) or "0.0"
+        end
+        return "0"
+    end
 
     if shortNumber and (formatType == "largeNumber" or (val >= 10000 and formatType ~= "percent")) then
         if val >= 1000000 then
@@ -276,7 +345,7 @@ function PlayerStatService.getStatValue(statKey)
     local def = STAT_DEFINITIONS[statKey]
     if def and def.getValue then
         local ok, val = pcall(def.getValue)
-        if ok and type(val) == "number" then
+        if ok and isSafeNumber(val) then
             return val
         end
     end
@@ -449,10 +518,12 @@ function PlayerStatService.update()
 
         -- 閾值警戒高亮
         local isAlert = false
-        if cfg.thresholdMin and val < cfg.thresholdMin then
-            isAlert = true
-        elseif cfg.thresholdMax and val > cfg.thresholdMax then
-            isAlert = true
+        if isSafeNumber(val) then
+            if cfg.thresholdMin and isSafeNumber(cfg.thresholdMin) and val < cfg.thresholdMin then
+                isAlert = true
+            elseif cfg.thresholdMax and isSafeNumber(cfg.thresholdMax) and val > cfg.thresholdMax then
+                isAlert = true
+            end
         end
 
         if isAlert then
