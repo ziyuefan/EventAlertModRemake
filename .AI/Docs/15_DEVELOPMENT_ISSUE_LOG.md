@@ -1,3 +1,16 @@
+### 2026-08-24 EAM-20260824-PREVIEW-AND-PANEL-CLOSE-FIX：經典奶牛頭位置預覽、全設定即時熱更新、進戰鬥全螢幕閃爍與側窗安全關閉修復
+
+- 狀態：已解決 (Lua 66/66, Flow 84/84, Contracts 493/493)，實機待玩家簽收。
+- 症狀：關閉主視窗時在 `closeAllSidePanels` 出現 `Options.lua:938: attempt to call a nil value`。
+- 原因判斷：`ProfileCodecPanel`、`ModulePanel`、`AboutPanel` 僅定義了 `.hide()` 或缺少 `.close()` 方法，而主視窗關閉時強制調用 `panel.close()` 導致空值調用錯誤。
+- 有效解法：
+  1. 在 `ProfileCodecPanel`、`ModulePanel`、`AboutPanel` 統一補齊 `.close` 與 `.hide` 別名。
+  2. 在 `Options.lua` 的 `closeAllSidePanels` 實作防禦性 `safeClosePanel(panel)` 函式，依序嘗試 `.close()`、`.hide()`、`frame:Hide()`。
+  3. 實作經典奶牛頭框架位置預覽 (`Interface\Icons\Spell_Nature_Polymorph_Cow`)、多槽位名稱標籤、紅/綠邊框色調與多框架滑鼠拖曳定位。
+  4. 實作全方位 60fps 即時熱預覽：圖示尺寸、水平/垂直間距、透明度、扇形倒數轉圈動畫、轉圈透明度、自身/目標減益色度、法術/倒數/堆疊字型大小、成長方向即時動態響應。
+  5. 實作進入戰鬥全螢幕紅框閃爍 (`UI\CombatFlash.lua`)，監聽 `PLAYER_REGEN_DISABLED` 事件並在主面板提供即時測試按鈕。
+- 驗證結果：Lua 66/66、Flow all 84/84、Validation Contracts 493/493。
+
 ### 2026-08-24 EAM-20260824-ALPHA77-ANCHORS-AND-MUTEX：Alpha 7.7 子視窗聯動移動錨點、側窗互斥機制與雙軌日誌分離
 
 - 狀態：Alpha 7.7 完成離線契約 (Lua 65/65, Flow 84/84, Contracts 493/493)，實機待玩家簽收。
