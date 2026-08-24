@@ -17,7 +17,7 @@
   4. 除錯中心修復：修正流程測試運行非同步回傳布林值導致的 index error，補全格式化輸出；修正系統診斷報告匯出按鈕調用。
 - 雙軌日誌與 Release 命名：
   1. 專案根目錄建立 `changelog.md` 承載完整工程與治理細節，`changelog.txt` 維持純粹魔獸插件更新。
-  2. GitHub Release 產物命名標準化為 `EventAlertMod_MN_yyyyMMdd_HHmmss-alpha-7.7.zip`（參考 alpha-6 格式）。
+  2. GitHub Release 產物命名標準化為 `EventAlertMod_MN_yyyyMMdd_HHmmss-<Tag>_AGY.zip`（後續發布預設帶 `_AGY` 後綴）。
 
 ## 2026-08-23 Alpha 7.5 發布與 UI/Profile/DK 符文重構快照
 

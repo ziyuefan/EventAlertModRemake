@@ -136,17 +136,18 @@ if ($newSourceZips.Count -eq 0) {
 }
 $rawSourceZip = $newSourceZips[-1]
 
-# 5.3 複製並依 alpha-6 標準命名格式 (EventAlertMod_MN_yyyyMMdd_HHmmss-alpha-7.7.zip)
+# 5.3 複製並依 Release 命名格式 (EventAlertMod_MN_yyyyMMdd_HHmmss-<Tag>_AGY.zip)
 $releaseTimestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$suffixFile = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "_" + $PackageSuffix }
 
-$addonZipName = "EventAlertMod_MN_${releaseTimestamp}-${Tag}.zip"
+$addonZipName = "EventAlertMod_MN_${releaseTimestamp}-${Tag}${suffixFile}.zip"
 $addonZip = Join-Path $distRoot $addonZipName
 Copy-Item -LiteralPath $rawAddonZip -Destination $addonZip -Force
 
 $addonHash = (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash.ToLowerInvariant()
 [System.IO.File]::WriteAllText($addonZip + ".sha256", "$addonHash  $addonZipName`r`n", $utf8)
 
-$sourceZipName = "Project_EventAlertMod_SRC_${releaseTimestamp}-${Tag}.zip"
+$sourceZipName = "Project_EventAlertMod_SRC_${releaseTimestamp}-${Tag}${suffixFile}.zip"
 $sourceZip = Join-Path $distRoot $sourceZipName
 Copy-Item -LiteralPath $rawSourceZip -Destination $sourceZip -Force
 

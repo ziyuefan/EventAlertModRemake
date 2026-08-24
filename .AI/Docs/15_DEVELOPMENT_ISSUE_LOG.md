@@ -7,7 +7,7 @@
   3. 全二級附屬側窗互斥：開啟職業資源、除錯中心、Profile 匯入/匯出、功能模組、關於或清單子視窗時，自動關閉其他側邊面板，消除多側窗重疊。
   4. 除錯中心修復：修正流程測試運行非同步回傳布林值導致的 index error，補全格式化輸出；修正系統診斷報告匯出按鈕調用。
   5. 雙軌日誌分離：專案根目錄建立 `changelog.md` 承載完整工程與治理細節，`changelog.txt` 維持純粹魔獸插件更新。
-  6. Release 包命名標準化：對齊 `EventAlertMod_MN_yyyyMMdd_HHmmss-alpha-7.7.zip`（參考 alpha-6 格式）。
+  6. Release 包命名標準化：對齊 `EventAlertMod_MN_yyyyMMdd_HHmmss-<Tag>_AGY.zip`（後續發布預設帶 `_AGY` 後綴）。
 - 驗證結果：Lua 65/65、Flow all 84/84、Validation Contracts 493/493。
 
 ### 2026-08-23 EAM-20260823-ALPHA75-UI-RESOURCE-OVERHAUL：Alpha 7.5 介面佈局重構、視窗吸附、Profile 升級與 DK 符文強化
