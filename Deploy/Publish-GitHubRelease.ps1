@@ -67,18 +67,16 @@ if ([string]::IsNullOrWhiteSpace($tocVersion)) {
 # 3. 決定 Tag 與 Title (基於原始格式，以 Suffix 作為後綴)
 $dateStamp = Get-Date -Format "yyyyMMdd"
 $suffixTag = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "-" + $PackageSuffix }
-$suffixFile = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "_" + $PackageSuffix }
 
 if ([string]::IsNullOrWhiteSpace($Tag)) {
-    $Tag = "alpha-7.5" + $suffixTag + "." + $dateStamp
+    $Tag = "alpha-7.7"
 }
 if ([string]::IsNullOrWhiteSpace($Title)) {
-    $Title = "Retail 12.1 Alpha 7.5"
+    $Title = "Retail 12.1 Alpha 7.7"
 }
 
 Write-Host "發布目標 Tag   : $Tag" -ForegroundColor Yellow
 Write-Host "發布目標 Title : $Title" -ForegroundColor Yellow
-Write-Host "檔名追加後綴   : $PackageSuffix" -ForegroundColor Yellow
 
 # 4. 離線門禁檢驗 (Validation Gate)
 if (-not $SkipGate) {
@@ -115,7 +113,7 @@ Write-Host "`n--> [2/4] 打包插件與原始碼套件..." -ForegroundColor Cyan
 
 $beforePackageZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
 
-# 5.1 呼叫原有打包腳本 (保留原本格式)
+# 5.1 呼叫原有打包腳本
 & pwsh -NoProfile -File $buildPackageScript
 if ($LASTEXITCODE -ne 0) { throw "Build-Package 失敗！" }
 
@@ -126,37 +124,29 @@ if ($newPackageZips.Count -eq 0) {
 }
 $rawAddonZip = $newPackageZips[-1]
 
-# 5.2 呼叫原始碼打包腳本 (保留原本格式)
+# 5.2 呼叫原始碼打包腳本
 $beforeSourceZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
 & pwsh -NoProfile -File $buildSourceScript
 if ($LASTEXITCODE -ne 0) { throw "Build-SourcePackage 失敗！" }
 
 $afterSourceZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
 $newSourceZips = @($afterSourceZips | Where-Object { $beforeSourceZips -notcontains $_ })
-if ($newSourceZips.Count -eq 0) {
-    throw "未找到新產出的 Source ZIP！"
-}
-$rawSourceZip = $newSourceZips[-1]
+# 5.3 複製並依 alpha-6 標準命名格式 (EventAlertMod_MN_yyyyMMdd_HHmmss-alpha-7.7.zip)
+$releaseTimestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
-# 5.3 複製並加上指定 Suffix (以區隔產物，預設 _AGY)
-$addonZip = $rawAddonZip
-$sourceZip = $rawSourceZip
+$addonZipName = "EventAlertMod_MN_${releaseTimestamp}-${Tag}.zip"
+$addonZip = Join-Path $distRoot $addonZipName
+Copy-Item -LiteralPath $rawAddonZip -Destination $addonZip -Force
 
-if (-not [string]::IsNullOrWhiteSpace($suffixFile)) {
-    $addonZipName = [System.IO.Path]::GetFileNameWithoutExtension($rawAddonZip) + $suffixFile + ".zip"
-    $addonZip = Join-Path $distRoot $addonZipName
-    Copy-Item -LiteralPath $rawAddonZip -Destination $addonZip -Force
-    
-    $addonHash = (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash
-    [System.IO.File]::WriteAllText($addonZip + ".sha256", "$addonHash  $addonZipName`n", $utf8)
-    
-    $sourceZipName = [System.IO.Path]::GetFileNameWithoutExtension($rawSourceZip) + $suffixFile + ".zip"
-    $sourceZip = Join-Path $distRoot $sourceZipName
-    Copy-Item -LiteralPath $rawSourceZip -Destination $sourceZip -Force
-    
-    $sourceHash = (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash
-    [System.IO.File]::WriteAllText($sourceZip + ".sha256", "$sourceHash  $sourceZipName`n", $utf8)
-}
+$addonHash = (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash.ToLowerInvariant()
+[System.IO.File]::WriteAllText($addonZip + ".sha256", "$addonHash  $addonZipName`r`n", $utf8)
+
+$sourceZipName = "Project_EventAlertMod_SRC_${releaseTimestamp}-${Tag}.zip"
+$sourceZip = Join-Path $distRoot $sourceZipName
+Copy-Item -LiteralPath $rawSourceZip -Destination $sourceZip -Force
+
+$sourceHash = (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash.ToLowerInvariant()
+[System.IO.File]::WriteAllText($sourceZip + ".sha256", "$sourceHash  $sourceZipName`r`n", $utf8)
 
 $filesToUpload = [System.Collections.Generic.List[string]]::new()
 if ($addonZip -and (Test-Path -LiteralPath $addonZip)) {

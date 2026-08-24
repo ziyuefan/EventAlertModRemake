@@ -950,6 +950,9 @@ function Options.closeAllSidePanels(except)
             panel.close()
         end
     end
+    if not except and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+        EAM.UI.Renderer.setActiveAnchors(nil)
+    end
 end
 EAM.UI = EAM.UI or {}
 EAM.UI.closeAllSidePanels = Options.closeAllSidePanels
@@ -1517,6 +1520,17 @@ local function createFrame()
     }
     Options.categoryDefinitions = categories
 
+    local categoryFrameMap = {
+        [1] = "selfAura",
+        [2] = "selfAura",
+        [3] = "targetAura",
+        [4] = "spellCooldown",
+        [5] = "itemCooldown",
+        [6] = "groundEffect",
+        [7] = "classPower",
+        [8] = "all",
+    }
+
     for idx, category in ipairs(categories) do
         createThemedButton(inner, localized(category.key, category.fallback), 12, -192 - (idx - 1) * 29, 332, 26, function()
             if idx <= 6 then
@@ -1527,16 +1541,25 @@ local function createFrame()
                     bindText(Options.listTitleText, category.key, category.fallback)
                 end
                 Options.refreshList()
+                if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+                    EAM.UI.Renderer.setActiveAnchors(categoryFrameMap[idx])
+                end
             elseif idx == 7 then
                 Options.closeAllSidePanels("resource")
                 local panel = EAM.UI and EAM.UI.PlayerResourcePanel
                 if panel and type(panel.open) == "function" then
                     panel.open()
                 end
+                if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+                    EAM.UI.Renderer.setActiveAnchors("classPower")
+                end
             else
                 Options.closeAllSidePanels("pos")
                 if Options.posFrame then
                     Options.posFrame:Show()
+                end
+                if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+                    EAM.UI.Renderer.setActiveAnchors("all")
                 end
             end
         end)
@@ -1575,9 +1598,6 @@ local function createFrame()
     -- ===================================================
     -- 2. Position & Energy Frame (Right Sliding Panel)
     -- ===================================================
-    -- ===================================================
-    -- 2. Position & Energy Frame (Right Sliding Panel)
-    -- ===================================================
     local posFrame = api.CreateFrame("Frame", "EAM_PositionOptionsFrame", frame, "BackdropTemplate")
     posFrame:SetSize(620, 600)
     posFrame:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, 0)
@@ -1585,6 +1605,11 @@ local function createFrame()
     posFrame:RegisterForDrag("LeftButton")
     posFrame:SetScript("OnDragStart", function() frame:StartMoving() end)
     posFrame:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
+    posFrame:SetScript("OnHide", function()
+        if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+            EAM.UI.Renderer.setActiveAnchors(nil)
+        end
+    end)
     posFrame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -2016,6 +2041,9 @@ local function createFrame()
     listFrame:SetScript("OnHide", function()
         if Options.condFrame then Options.condFrame:Hide() end
         if Options.batchFrame then Options.batchFrame:Hide() end
+        if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+            EAM.UI.Renderer.setActiveAnchors(nil)
+        end
     end)
     listFrame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",

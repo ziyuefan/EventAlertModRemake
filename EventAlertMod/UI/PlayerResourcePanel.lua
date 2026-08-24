@@ -790,6 +790,9 @@ function Panel.open()
     if service and type(service.refreshVisualState) == "function" then
         service.refreshVisualState("resourcePanelOpened")
     end
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+        EAM.UI.Renderer.setActiveAnchors("classPower")
+    end
     return true, "opened"
 end
 
@@ -801,6 +804,13 @@ function Panel.hide()
             service.refreshVisualState("resourcePanelClosed")
         end
     end
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+        EAM.UI.Renderer.setActiveAnchors(nil)
+    end
+end
+
+function Panel.close()
+    Panel.hide()
 end
 
 if Locale and type(Locale.registerRefresh) == "function" then

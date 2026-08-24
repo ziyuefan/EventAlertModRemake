@@ -927,14 +927,11 @@ function Renderer.onCombatEnd()
     end
 end
 
--- 7 大告警框架同步拖曳與位置調整模式開關
-function Renderer.toggleAnchors()
+-- 7 大告警框架特定/全部移動模式控制
+function Renderer.setActiveAnchors(targetFrames)
     if inCombat() then
-        Renderer.anchorTogglePending = not Renderer.anchorTogglePending
         return false, "combatDeferred"
     end
-    Renderer.anchorTogglePending = false
-    Renderer.isMoving = not Renderer.isMoving
 
     local nameLabels = {
         selfAura = EAM.L.EAM_FRAME_SELF_AURA or "EAM - 自身光環框架",
@@ -946,20 +943,35 @@ function Renderer.toggleAnchors()
         totem = EAM.L.EAM_FRAME_TOTEM or "EAM - 圖騰監控框架",
     }
 
-    for fName, fState in pairs(Renderer.frames) do
+    local activeMap = {}
+    if targetFrames == "all" then
+        for fName in pairs(nameLabels) do
+            activeMap[fName] = true
+        end
+    elseif type(targetFrames) == "table" then
+        for _, fName in ipairs(targetFrames) do
+            activeMap[fName] = true
+        end
+    elseif type(targetFrames) == "string" and targetFrames ~= "" then
+        activeMap[targetFrames] = true
+    end
+
+    local anyActive = false
+    for fName in pairs(nameLabels) do
         local parent = ensureParent(fName)
+        local fState = initFrameState(fName)
         if parent then
             if not parent.dragTexture then
                 -- 建立半透明移動背景
                 local bg = parent:CreateTexture(nil, "BACKGROUND")
                 bg:SetAllPoints(parent)
-                bg:SetColorTexture(0.8, 0.2, 0.2, 0.5)
+                bg:SetColorTexture(0.15, 0.45, 0.9, 0.55)
                 parent.dragTexture = bg
 
                 -- 建立移動提示文字
                 local txt = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                 txt:SetPoint("CENTER", parent, "CENTER", 0, 0)
-                txt:SetText(nameLabels[fName] or fName)
+                txt:SetText((nameLabels[fName] or fName) .. " (按住左鍵拖曳)")
                 parent.dragText = txt
 
                 parent:RegisterForDrag("LeftButton")
@@ -973,30 +985,47 @@ function Renderer.toggleAnchors()
                         cfg.x = xOffset or 0
                         cfg.y = yOffset or 0
                     end
-                    print("|cff00ff96EAM|r [" .. (nameLabels[self.frameName] or self.frameName) .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point, xOffset, yOffset))
+                    print("|cff00ff96EAM|r [" .. (nameLabels[self.frameName] or self.frameName) .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
                 end)
             end
 
-            if Renderer.isMoving then
+            if activeMap[fName] then
+                anyActive = true
                 parent:SetMovable(true)
                 parent:EnableMouse(true)
-                parent.dragTexture:Show()
-                parent.dragText:Show()
-                -- 給定基礎大小，以防它空載時無面積可供鼠標點選
-                local size = EAM.db and EAM.db.layout and EAM.db.layout.iconSize or Renderer.iconSize
-                parent:SetSize(400, size)
+                parent:SetFrameStrata("HIGH")
+                parent:SetClampedToScreen(true)
+                if parent.dragTexture then parent.dragTexture:Show() end
+                if parent.dragText then parent.dragText:Show() end
+                local size = (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or (EAM.db and EAM.db.config and EAM.db.config.iconSize) or Renderer.iconSize
+                parent:SetSize(math.max(220, size * 3), math.max(36, size))
                 parent:Show()
             else
                 parent:SetMovable(false)
                 parent:EnableMouse(false)
-                parent.dragTexture:Hide()
-                parent.dragText:Hide()
-                -- 恢復正常的佈局與大小
-                fState.layoutDirty = true
-                layout(fName)
+                if parent.dragTexture then parent.dragTexture:Hide() end
+                if parent.dragText then parent.dragText:Hide() end
+                if fState then
+                    fState.layoutDirty = true
+                    layout(fName)
+                end
             end
         end
     end
+
+    Renderer.isMoving = anyActive
+    return true, anyActive
+end
+
+-- 7 大告警框架同步拖曳與位置調整模式開關
+function Renderer.toggleAnchors()
+    if inCombat() then
+        Renderer.anchorTogglePending = not Renderer.anchorTogglePending
+        return false, "combatDeferred"
+    end
+    Renderer.anchorTogglePending = false
+    local nextState = not Renderer.isMoving
+    Renderer.setActiveAnchors(nextState and "all" or nil)
 
     if Renderer.isMoving then
         print("|cff00ff96EAM|r " .. (EAM.L.EAM_MOVE_MODE_ON or "已開啟「多框架移動模式」！所有框架已亮起，請用滑鼠左鍵拖曳移動它們，再次點擊按鈕可關閉。"))

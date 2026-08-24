@@ -1,0 +1,79 @@
+# EventAlertMod 開發與治理完整變更日誌 (Development & Governance Changelog)
+
+本檔案維護於專案根目錄，記載 EventAlertMod 的完整研發歷程、架構演進、AI 代理治理、離線驗證契約與版本發布紀錄。
+（註：WoW 插件發布專用的玩家可感知更新日誌僅維護於 `changelog.txt`，不含 AI 治理內容。）
+
+---
+
+## 📅 版本紀錄 (Version History)
+
+### [Retail 12.1.0 Alpha 7.7] - 2026.08.24
+- **子視窗聯動移動錨點 (Sub-window Interactive Frame Anchors)**：
+  - 點擊各類別監控（自身增益、跨職業、目標增益、技能冷卻、物品冷卻、地面效果、玩家職業資源）子視窗時，自動在畫面上亮起該模組專屬半透明移動錨點框（標記「按住左鍵拖曳」），方便玩家直觀拖曳調整在畫面上的定位。
+  - 開啟排版位置設定時亮起全部 7 大框架移動錨點，關閉子視窗或主選單時自動隱藏所有錨點並套用最新座標排版。
+- **全二級附屬側窗互斥 (Side Panel Mutual Exclusion)**：
+  - 建立全局二級視窗互斥管理機制 `Options.closeAllSidePanels(except)` / `EAM.UI.closeAllSidePanels(except)`。
+  - 開啟職業資源、除錯中心、Profile 匯入/匯出、功能模組、關於或清單子視窗時，自動關閉其他側邊面板，徹底消除多個側窗堆疊重疊問題。
+- **除錯中心與診斷匯出修復 (Debug Center Flow Runner & Prompt Export Fix)**：
+  - 修正流程測試分頁運行非同步回傳布林值導致的 index error，補全 `displayFlowReport` 格式化輸出。
+  - 修正第 4 分頁系統診斷報告匯出按鈕調用 `PromptExport.buildDetailed()`。
+- **AI 治理與自動化 (AI Governance & Automation)**：
+  - 統一 GitHub Release 產物命名規範：`EventAlertMod_MN_yyyyMMdd_HHmmss-alpha-7.7.zip`（與 Alpha 6 格式完全一致）。
+  - 分離雙軌日誌：專案根目錄新增 `changelog.md` 承載完整工程與治理細節，`changelog.txt` 維持純粹魔獸插件變更。
+  - 離線門禁：Lua 語法 65/65 通過、流程驗證 84/84 通過、靜態契約 493/493 通過。
+
+---
+
+### [Retail 12.1.0 Alpha 7.5] - 2026.08.23
+- **介面佈局重構與視覺優化**：
+  - 主選單第 7 項目提升為「★ 玩家職業資源設定」，排版位置微調為第 8 項目，除錯類功能統整至 4-Tab「除錯與測試診斷中心」。
+  - 全視窗快速關閉：所有 10 個 UI 視窗右上角加入原生 `UIPanelCloseButton` 快速關閉按鈕。
+  - 階層式無縫吸附 (APPEND Docking)：主選單 ➔ 清單/排版/資源 ➔ 細部條件/批次輸入 視窗依序向右緊密貼合，並支援多視窗同步平滑拖曳。
+- **Profile 分享功能升級 (Selective Profile Import/Export)**：
+  - 支援 8 大自選項目匯出／匯入（自身/目標光環、技能/物品冷卻、地面效果、框架排版位置、職業資源設定、一般偏好設定），並提供快捷選取按鈕與預覽區塊分析。
+- **職業資源設定即時生效與 DK 符文強化**：
+  - 設定滑桿與下拉選單數值變更時即時驅動原生渲染器更新，非戰鬥不需 `/reload`。
+  - 死亡騎士符文依血魄 (250)、冰霜 (251)、穢邪 (252) 專精動態切換專屬圖示；下方增設 6 格微型充能冷卻條；提供 `/eam rune` 槽位診斷與複製視窗。
+- **AI 治理規範**：
+  - 清理重複的 `.AI\.AI` 巢狀目錄，集中測試資產至 `.AI\TestResults\`。
+
+---
+
+### [Retail 12.1.0 Alpha 7.4] - 2026.08.23
+- **充能環形版面與冷卻移除優化**：
+  - 充能環形版面改用封裝的透明 TGA ring grid。
+  - 冷卻完成必須先觀測到已消耗充能，再於 `currentCharges` 回到 `maxCharges` 時成立，避免施放後的舊全滿快照提早移除。
+- **死亡騎士符文與地面效果族群**：
+  - 符文改由 `GetRuneCount`／`GetRuneCooldown` 六槽初始化與 `RUNE_POWER_UPDATE(index, added)` 即時驅動；消耗／恢復更新 0..6 分段。
+  - 地面效果設定在非戰鬥中編譯 Base／Override／目前 SpellInfo 法術族群；死亡凋零／褻瀆等替換 ID 可命中同一監控項，設定 ID 完全相符時優先。
+
+---
+
+### [Retail 12.1.0 Alpha 7.1 ~ 7.3] - 2026.08.23
+- **充能次數 StatusBar 與版面**：
+  - 充能 StatusBar 改以目前可用次數／最大次數顯示，不再讓段數跟著單層恢復時間前進；Secret `currentCharges` 只直送 Blizzard C-level `SetValue` sink。
+  - 新增框外 TOP／BOTTOM／LEFT／RIGHT 與環形 RING 版面；預設長度／環直徑為圖示 150%、厚度 8px，並依安全 `maxCharges` 顯示分隔線。
+  - SpellChargeInfo 改採欄位級 Secret 判讀；安全 current/max 顯示文字，Secret `currentCharges` 則以圖示同寬 StatusBar 接收官方 DurationObject。
+- **邊框發光與視覺修復**：
+  - 無計時時清除並隱藏 CooldownFrame 的 edge／bling，避免技能圖示留下白色空框。
+  - Glow Border 支援內嵌 LibButtonGlow-1.0；自訂顏色、戰鬥首次建框或 library 不可用時回退 EAM 動畫邊框。
+
+---
+
+### [Retail 12.1.0 Alpha 7.0] - 2026.08.23
+- **玩家職業資源模組 (Player Resource Module)**：
+  - 玩家職業資源改為 17 資源、13 職業／40 組專精候選拓撲；`UNIT_DISPLAYPOWER` 只更新前景，不再因形態切換拆除背景追蹤。
+  - 補強 Druid Bear／Cat／Caster／Moonkin／回 Bear、Energy→ComboPoints renderer ownership、PAIN 專用 legacy key 與模組停用清理。
+  - 每項資源新增／補齊字型、數字文字大小與位置、方向、尺寸、透明度、排序、前景／背景與數值能力設定；非戰鬥變更即時套用，戰鬥中離戰後合併一次。
+- **目標光環診斷與精確冷卻激活**：
+  - Target Aura 提供匿名 diagnostics 與明確 `/eam add target` 手動 popup route；不保存 Secret、AuraData、Frame 或猜測 ID。
+  - 技能冷卻監控改為只在玩家精確成功施放清單技能後首次 render；新增 `cooldownRemoveAura`、`showSCDOutsideCombat`、`glowSCDWhenUsable` 三項 per-spell nil／true／false 覆寫。
+
+---
+
+### [Retail 12.1.0 Alpha 6.0] - 2026.08.14
+- **12.1 Native Aura 與核心重構**：
+  - Retail 12.1 Native Aura gate 與 37 案三通道驗證矩陣。
+  - Aura 職業／跨職業清單、批次 SpellID 輸入與不存在法術拒絕。
+  - EAMAP1 JSON／Base64 Profile 匯入匯出與可捲動編輯區。
+  - 五語系即時切換、字型選擇、十一套主題與按鈕底色／四態／邊框。
