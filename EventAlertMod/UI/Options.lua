@@ -1179,6 +1179,9 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
             else
                 Options.notifyConfigChanged()
             end
+            if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+                EAM.UI.Renderer.refreshPreviewLayout()
+            end
         end
     end)
     if isTextLayoutSlider or isNativeStructureSlider or isNativeVisualSlider or isChargeBarSlider then
@@ -1729,6 +1732,9 @@ local function createFrame()
                     if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
                         EAM.UI.Renderer.requestLayout(frameName)
                     end
+                    if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+                        EAM.UI.Renderer.refreshPreviewLayout()
+                    end
                 end
                 menu:Hide()
             end)
@@ -2026,6 +2032,9 @@ local function createFrame()
                 for fName in pairs(EAM.Constants.ALERT_FRAME_TYPES) do
                     EAM.UI.Renderer.requestLayout(fName)
                 end
+            end
+            if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+                EAM.UI.Renderer.refreshPreviewLayout()
             end
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_RESET_FRAME_SUCCESS or "已將所有告警框架位置與成長方向重設為預設配置。"))
         end

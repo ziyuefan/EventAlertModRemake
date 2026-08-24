@@ -933,52 +933,52 @@ local PREVIEW_CONFIG = {
     selfAura = {
         title = "EAM - 自身光環框架",
         slots = {
-            { text = "本身Debuff(2)", dx = -3, border = {1.0, 0.4, 0.4, 1.0}, bg = {1.0, 0.75, 0.75, 0.95} },
-            { text = "本身Debuff(1)\n或特殊框架", dx = -1.5, border = {1.0, 0.4, 0.4, 1.0}, bg = {1.0, 0.75, 0.75, 0.95} },
-            { text = "本身Buff(1)", dx = 0, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
-            { text = "本身Buff(2)", dx = 1.5, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "本身Debuff(2)", step = -2, isDebuff = true, isSelfDebuff = true, sampleStack = 2, sampleCD = 6 },
+            { text = "本身Debuff(1)\n或特殊框架", step = -1, isDebuff = true, isSelfDebuff = true, sampleStack = 1, sampleCD = 8 },
+            { text = "本身Buff(1)", step = 0, isBuff = true, sampleStack = nil, sampleCD = 10 },
+            { text = "本身Buff(2)", step = 1, isBuff = true, sampleStack = 5, sampleCD = 4 },
         }
     },
     targetAura = {
         title = "EAM - 目標光環框架",
         slots = {
-            { text = "目標Buff(2)", dx = -3, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
-            { text = "目標Buff(1)\n或特殊框架", dx = -1.5, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
-            { text = "目標Debuff(1)", dx = 0, border = {0.4, 1.0, 0.4, 1.0}, bg = {0.75, 1.0, 0.75, 0.95} },
-            { text = "目標Debuff(2)", dx = 1.5, border = {0.4, 1.0, 0.4, 1.0}, bg = {0.75, 1.0, 0.75, 0.95} },
+            { text = "目標Buff(2)", step = -2, isBuff = true, sampleStack = 3, sampleCD = 5 },
+            { text = "目標Buff(1)\n或特殊框架", step = -1, isBuff = true, sampleStack = nil, sampleCD = 12 },
+            { text = "目標Debuff(1)", step = 0, isDebuff = true, isTargetDebuff = true, sampleStack = nil, sampleCD = 9 },
+            { text = "目標Debuff(2)", step = 1, isDebuff = true, isTargetDebuff = true, sampleStack = 4, sampleCD = 3 },
         }
     },
     spellCooldown = {
         title = "EAM - 技能冷卻框架",
         slots = {
-            { text = "技能CD(1)", dx = -0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
-            { text = "技能CD(2)", dx = 0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "技能CD(1)", step = 0, isCooldown = true, sampleStack = nil, sampleCD = 15 },
+            { text = "技能CD(2)", step = 1, isCooldown = true, sampleStack = 2, sampleCD = 6 },
         }
     },
     itemCooldown = {
         title = "EAM - 物品冷卻框架",
         slots = {
-            { text = "物品CD(1)", dx = -0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
-            { text = "物品CD(2)", dx = 0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "物品CD(1)", step = 0, isCooldown = true, sampleStack = 1, sampleCD = 30 },
+            { text = "物品CD(2)", step = 1, isCooldown = true, sampleStack = nil, sampleCD = 10 },
         }
     },
     groundEffect = {
         title = "EAM - 地面效果框架",
         slots = {
-            { text = "地面效果(1)", dx = -0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
-            { text = "地面效果(2)", dx = 0.75, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "地面效果(1)", step = 0, isGround = true, sampleStack = nil, sampleCD = 8 },
+            { text = "地面效果(2)", step = 1, isGround = true, sampleStack = nil, sampleCD = 4 },
         }
     },
     classPower = {
         title = "EAM - 職業能量框架",
         slots = {
-            { text = "★ 玩家職業資源", dx = 0, border = {0.4, 0.8, 1.0, 1.0}, bg = {0.8, 0.9, 1.0, 0.95} },
+            { text = "★ 玩家職業資源", step = 0, isPower = true, sampleStack = nil, sampleCD = nil },
         }
     },
     totem = {
         title = "EAM - 圖騰監控框架",
         slots = {
-            { text = "圖騰監控(1)", dx = 0, border = {0.85, 0.85, 0.85, 1.0}, bg = {1.0, 1.0, 1.0, 0.95} },
+            { text = "圖騰監控(1)", step = 0, isTotem = true, sampleStack = nil, sampleCD = 15 },
         }
     },
 }
@@ -993,25 +993,40 @@ local function getOrCreatePreviewIcon(parent, index)
     icon:SetFrameStrata("HIGH")
 
     -- 經典奶牛頭貼圖
-    local tex = icon:CreateTexture(nil, "ARTWORK")
+    local tex = icon:CreateTexture(nil, "BACKGROUND")
     tex:SetPoint("TOPLEFT", icon, "TOPLEFT", 2, -2)
     tex:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", -2, 2)
     tex:SetTexture(COW_ICON)
     tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     icon.texture = tex
 
-    -- TIME LEFT 文字
+    -- 倒數扇形轉圈 Cooldown 框架 (即時預覽扇形倒數轉圈)
+    local cd = api.CreateFrame("Cooldown", nil, icon, "CooldownFrameTemplate")
+    cd:SetAllPoints(icon)
+    cd:SetDrawEdge(true)
+    cd:SetDrawBling(false)
+    cd:SetDrawSwipe(true)
+    cd:SetReverse(true)
+    icon.cooldown = cd
+
+    -- TIME LEFT / 倒數文字
     local timerText = icon:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     timerText:SetPoint("BOTTOM", icon, "TOP", 0, 3)
     timerText:SetText("TIME LEFT")
     timerText:SetTextColor(1, 1, 1, 1)
     icon.timerText = timerText
 
-    -- 槽位說明文字
+    -- 槽位說明文字 (名稱)
     local nameText = icon:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     nameText:SetPoint("TOP", icon, "BOTTOM", 0, -3)
     nameText:SetTextColor(1, 0.95, 0.5, 1)
     icon.nameText = nameText
+
+    -- 堆疊層數文字
+    local stackText = icon:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    stackText:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", -2, 2)
+    stackText:SetTextColor(1, 1, 1, 1)
+    icon.stackText = stackText
 
     icon:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -1022,6 +1037,123 @@ local function getOrCreatePreviewIcon(parent, index)
 
     parent.previewIcons[index] = icon
     return icon
+end
+
+-- 即時熱更新所有作用中預覽框架的尺寸、間距、透明度、轉圈與顏色
+function Renderer.refreshPreviewLayout()
+    if inCombat() then return end
+    if not Renderer.activeAnchorMap then return end
+
+    local cfg = EAM.db and EAM.db.config or {}
+    local layoutCfg = EAM.db and EAM.db.layout or {}
+    local framesCfg = layoutCfg.frames or {}
+
+    local size = cfg.iconSize or layoutCfg.iconSize or Renderer.iconSize
+    local spacing = cfg.iconSpacing or layoutCfg.spacing or Renderer.spacing
+    local vertSpacing = cfg.verticalSpacing or spacing
+    local alpha = cfg.iconAlpha or 1.0
+    local swipeAlpha = cfg.cooldownSwipeAlpha or 0.8
+    local selfDebuffRed = cfg.selfDebuffRed or 0.5
+    local targetDebuffGreen = cfg.targetDebuffGreen or 0.5
+
+    local fontSpell = cfg.fontSizeSpellName or 12
+    local fontTime = cfg.fontSizeTimeVal or 12
+    local fontStack = cfg.fontSizeStack or 12
+
+    local now = (api.GetTime and api.GetTime()) or 0
+
+    for fName, active in pairs(Renderer.activeAnchorMap) do
+        if active then
+            local parent = ensureParent(fName)
+            local pCfg = PREVIEW_CONFIG[fName]
+            local fLayout = framesCfg[fName] or {}
+            local growDir = fLayout.growDirection or 1
+
+            if parent and pCfg and pCfg.slots then
+                parent:SetSize(size, size)
+
+                for sIdx, slot in ipairs(pCfg.slots) do
+                    local pIcon = getOrCreatePreviewIcon(parent, sIdx)
+                    pIcon:SetSize(size, size)
+                    pIcon:SetAlpha(alpha)
+
+                    -- 依照成長方向 (1:右, 2:左, 3:上, 4:下) 計算偏移
+                    local dx = 0
+                    local dy = 0
+                    local step = slot.step or 0
+                    if growDir == 1 then
+                        dx = step * (size + spacing)
+                    elseif growDir == 2 then
+                        dx = -step * (size + spacing)
+                    elseif growDir == 3 then
+                        dy = step * (size + vertSpacing)
+                    elseif growDir == 4 then
+                        dy = -step * (size + vertSpacing)
+                    end
+
+                    pIcon:ClearAllPoints()
+                    pIcon:SetPoint("CENTER", parent, "CENTER", dx, dy)
+
+                    -- 文字與字型大小即時更新
+                    pIcon.nameText:SetText(slot.text)
+                    if TextPlacement and TextPlacement.applyFont then
+                        TextPlacement.applyFont(pIcon.nameText, fontSpell, cfg)
+                        TextPlacement.applyFont(pIcon.timerText, fontTime, cfg)
+                        TextPlacement.applyFont(pIcon.stackText, fontStack, cfg)
+                    end
+
+                    pIcon.stackText:SetText(slot.sampleStack and tostring(slot.sampleStack) or "")
+
+                    -- 扇形倒數轉圈與透明度即時預覽
+                    if pIcon.cooldown then
+                        pIcon.cooldown:SetSwipeColor(0, 0, 0, swipeAlpha)
+                        if slot.sampleCD then
+                            pIcon.cooldown:SetCooldown(now - 2, slot.sampleCD)
+                            pIcon.cooldown:Show()
+                            pIcon.timerText:SetText(string.format("%.1f", math.max(0.1, slot.sampleCD - 2)))
+                        else
+                            pIcon.cooldown:Hide()
+                            pIcon.timerText:SetText("TIME LEFT")
+                        end
+                    end
+
+                    -- 顏色即時預覽 (紅/綠色度與常規邊框)
+                    if slot.isSelfDebuff then
+                        local r = 1.0
+                        local g = math.max(0, 1.0 - selfDebuffRed * 0.7)
+                        local b = math.max(0, 1.0 - selfDebuffRed * 0.7)
+                        pIcon:SetBackdropBorderColor(r, g, b, 1.0)
+                        pIcon.texture:SetVertexColor(r, math.max(0.2, 1.0 - selfDebuffRed * 0.35), math.max(0.2, 1.0 - selfDebuffRed * 0.35), 1.0)
+                    elseif slot.isTargetDebuff then
+                        local r = math.max(0, 1.0 - targetDebuffGreen * 0.7)
+                        local g = 1.0
+                        local b = math.max(0, 1.0 - targetDebuffGreen * 0.7)
+                        pIcon:SetBackdropBorderColor(r, g, b, 1.0)
+                        pIcon.texture:SetVertexColor(math.max(0.2, 1.0 - targetDebuffGreen * 0.35), g, math.max(0.2, 1.0 - targetDebuffGreen * 0.35), 1.0)
+                    elseif slot.isPower then
+                        pIcon:SetBackdropBorderColor(0.4, 0.8, 1.0, 1.0)
+                        pIcon.texture:SetVertexColor(0.8, 0.95, 1.0, 1.0)
+                    else
+                        pIcon:SetBackdropBorderColor(0.85, 0.85, 0.85, 1.0)
+                        pIcon.texture:SetVertexColor(1.0, 1.0, 1.0, 1.0)
+                    end
+                    pIcon:SetBackdropColor(0.08, 0.08, 0.08, 0.8)
+                    pIcon:Show()
+                end
+
+                if parent.previewIcons then
+                    for sIdx = #pCfg.slots + 1, #parent.previewIcons do
+                        parent.previewIcons[sIdx]:Hide()
+                    end
+                end
+
+                if parent.dragHint then
+                    parent.dragHint:Show()
+                end
+                parent:Show()
+            end
+        end
+    end
 end
 
 -- 7 大告警框架特定/全部移動模式控制
@@ -1053,10 +1185,9 @@ function Renderer.setActiveAnchors(targetFrames)
         activeMap[targetFrames] = true
     end
 
-    local anyActive = false
-    local size = (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or (EAM.db and EAM.db.config and EAM.db.config.iconSize) or Renderer.iconSize
-    local spacing = (EAM.db and EAM.db.layout and EAM.db.layout.spacing) or (EAM.db and EAM.db.config and EAM.db.config.iconSpacing) or Renderer.spacing
+    Renderer.activeAnchorMap = activeMap
 
+    local anyActive = false
     for fName in pairs(nameLabels) do
         local parent = ensureParent(fName)
         local fState = initFrameState(fName)
@@ -1081,42 +1212,16 @@ function Renderer.setActiveAnchors(targetFrames)
                 local hint = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
                 hint:SetPoint("TOP", parent, "BOTTOM", 0, -26)
                 hint:SetTextColor(0.4, 0.9, 1.0, 1.0)
+                hint:SetText((nameLabels[fName] or fName) .. " (按住左鍵拖曳)")
                 parent.dragHint = hint
             end
 
-            local pCfg = PREVIEW_CONFIG[fName]
             if activeMap[fName] then
                 anyActive = true
                 parent:SetMovable(true)
                 parent:EnableMouse(true)
                 parent:SetFrameStrata("HIGH")
                 parent:SetClampedToScreen(true)
-                parent:SetSize(size, size)
-
-                if pCfg and pCfg.slots then
-                    for sIdx, slot in ipairs(pCfg.slots) do
-                        local pIcon = getOrCreatePreviewIcon(parent, sIdx)
-                        pIcon:SetSize(size, size)
-                        pIcon:ClearAllPoints()
-                        pIcon:SetPoint("CENTER", parent, "CENTER", slot.dx * (size + spacing), 0)
-                        pIcon.nameText:SetText(slot.text)
-                        pIcon.texture:SetVertexColor(slot.bg[1], slot.bg[2], slot.bg[3], slot.bg[4] or 1)
-                        pIcon:SetBackdropBorderColor(slot.border[1], slot.border[2], slot.border[3], slot.border[4] or 1)
-                        pIcon:SetBackdropColor(0.08, 0.08, 0.08, 0.8)
-                        pIcon:Show()
-                    end
-                    if parent.previewIcons then
-                        for sIdx = #pCfg.slots + 1, #parent.previewIcons do
-                            parent.previewIcons[sIdx]:Hide()
-                        end
-                    end
-                end
-
-                if parent.dragHint then
-                    parent.dragHint:SetText((nameLabels[fName] or fName) .. " (按住左鍵拖曳)")
-                    parent.dragHint:Show()
-                end
-                parent:Show()
             else
                 parent:SetMovable(false)
                 parent:EnableMouse(false)
@@ -1135,6 +1240,9 @@ function Renderer.setActiveAnchors(targetFrames)
     end
 
     Renderer.isMoving = anyActive
+    if anyActive then
+        Renderer.refreshPreviewLayout()
+    end
     return true, anyActive
 end
 
