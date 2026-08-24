@@ -192,8 +192,10 @@ if (Test-Path -LiteralPath $changelogPath) {
     $recentChangelog = $extracted -join "`r`n"
 }
 
-$addonHash = if ($addonZip) { (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash } else { "N/A" }
-$sourceHash = if ($sourceZip) { (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash } else { "N/A" }
+$addonHash = if ($addonZip) { (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash.ToLowerInvariant() } else { "N/A" }
+$sourceHash = if ($sourceZip) { (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash.ToLowerInvariant() } else { "N/A" }
+$addonFileName = if ($addonZip) { [System.IO.Path]::GetFileName($addonZip) } else { "N/A" }
+$sourceFileName = if ($sourceZip) { [System.IO.Path]::GetFileName($sourceZip) } else { "N/A" }
 
 $releaseNotes = @"
 # $Title
@@ -210,8 +212,8 @@ $recentChangelog
 
 | 檔案名稱 | 說明 | SHA-256 雜湊值 |
 | :--- | :--- | :--- |
-| **`$([System.IO.Path]::GetFileName($addonZip))`** | 遊戲 AddOn 插件安裝包 | `$addonHash` |
-| **`$([System.IO.Path]::GetFileName($sourceZip))`** | 專案完整工程原始碼包 | `$sourceHash` |
+| **`$addonFileName`** | 遊戲 AddOn 插件安裝包 | `$addonHash` |
+| **`$sourceFileName`** | 專案完整工程原始碼包 | `$sourceHash` |
 "@
 
 $notesTempPath = Join-Path $distRoot "RELEASE_NOTES_$Tag.md"
