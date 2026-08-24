@@ -131,6 +131,11 @@ if ($LASTEXITCODE -ne 0) { throw "Build-SourcePackage 失敗！" }
 
 $afterSourceZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
 $newSourceZips = @($afterSourceZips | Where-Object { $beforeSourceZips -notcontains $_ })
+if ($newSourceZips.Count -eq 0) {
+    throw "未找到新產出的 Source ZIP！"
+}
+$rawSourceZip = $newSourceZips[-1]
+
 # 5.3 複製並依 alpha-6 標準命名格式 (EventAlertMod_MN_yyyyMMdd_HHmmss-alpha-7.7.zip)
 $releaseTimestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
