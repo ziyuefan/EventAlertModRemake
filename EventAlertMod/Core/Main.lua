@@ -77,6 +77,7 @@ function Main.initialize()
     initializeModule(EAM.Services.GroundEffectService, "GroundEffectService")
     initializeModule(EAM.Services.TotemService, "TotemService")
     initializeModule(EAM.Services.AuraContainerService, "AuraContainerService")
+    initializeModule(EAM.Services.PlayerStatService, "PlayerStatService")
 
     -- 啟動初始刷新，採用 pcall 故障隔離，防範單一服務崩潰卡死全盤
     if EAM.Services.AuraService then
@@ -94,6 +95,9 @@ function Main.initialize()
     end
     if EAM.Services.TotemService then
         pcall(EAM.Services.TotemService.scanAll)
+    end
+    if EAM.Services.PlayerStatService then
+        pcall(EAM.Services.PlayerStatService.update)
     end
 end
 

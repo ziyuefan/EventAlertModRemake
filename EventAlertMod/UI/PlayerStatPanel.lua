@@ -389,6 +389,7 @@ local function createFrame()
     -- 建立左側列表項目
     local function buildList()
         local keys = PlayerStatService and PlayerStatService.ORDERED_KEYS or {}
+        scrollChild:SetSize(210, math.max(440, #keys * 32 + 20))
         for idx, key in ipairs(keys) do
             local def = PlayerStatService.DEFINITIONS[key]
             local row = Panel.rows[idx]
@@ -478,6 +479,18 @@ local function createFrame()
             end
         end
     end
+
+    -- 面板開啟時即時刷新當前屬性數值
+    local panelElapsed = 0
+    frame:SetScript("OnUpdate", function(_, delta)
+        panelElapsed = panelElapsed + delta
+        if panelElapsed >= 0.15 then
+            panelElapsed = 0
+            if Panel.refreshList then
+                Panel.refreshList()
+            end
+        end
+    end)
 
     buildList()
     loadStatToDetail("crit")

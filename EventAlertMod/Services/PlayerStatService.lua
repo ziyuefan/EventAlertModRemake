@@ -209,7 +209,7 @@ local STAT_DEFINITIONS = {
     speedRating = {
         key = "speedRating",
         labelKey = "EAM_STAT_SPEED_RATING",
-        defaultLabel = "速度屬性",
+        defaultLabel = "速度 (屬性)",
         defaultIcon = 132297, -- Ability_Rogue_Feint
         category = "tertiary",
         getValue = function()
@@ -221,33 +221,101 @@ local STAT_DEFINITIONS = {
         format = "percent",
         suffix = "%",
     },
-    -- 移動與飛行速度
-    moveSpeed = {
-        key = "moveSpeed",
-        labelKey = "EAM_STAT_MOVE_SPEED",
-        defaultLabel = "地面跑速",
+    -- 速度相關：跑速、泳速、飛速、飛龍模式飛速
+    runSpeed = {
+        key = "runSpeed",
+        labelKey = "EAM_STAT_RUN_SPEED",
+        defaultLabel = "跑速",
         defaultIcon = 132307, -- Ability_Rogue_Sprint
         category = "speed",
         getValue = function()
-            if not GetUnitSpeed then return 0 end
-            local ok, currentSpeed = pcall(GetUnitSpeed, "player")
-            if not ok or not isSafeNumber(currentSpeed) then return 0 end
-            return (currentSpeed / 7.0) * 100
+            if not GetUnitSpeed then return 100 end
+            local ok, currentSpeed, runSpeed = pcall(GetUnitSpeed, "player")
+            if not ok then return 100 end
+            local isMoving = (currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0)
+            local isOtherMode = false
+            if IsFlying and IsFlying() then isOtherMode = true end
+            if IsSwimming and IsSwimming() then isOtherMode = true end
+            if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                local gOk, isGliding = pcall(C_PlayerInfo.GetGlidingInfo)
+                if gOk and isGliding then isOtherMode = true end
+            end
+            local speed = (isMoving and not isOtherMode) and currentSpeed or runSpeed
+            if not isSafeNumber(speed) or speed <= 0 then
+                speed = (runSpeed and isSafeNumber(runSpeed) and runSpeed > 0) and runSpeed or 7.0
+            end
+            return (speed / 7.0) * 100
         end,
         format = "percent",
         suffix = "%",
     },
-    flySpeed = {
-        key = "flySpeed",
-        labelKey = "EAM_STAT_FLY_SPEED",
-        defaultLabel = "飛行速度",
+    swimSpeed = {
+        key = "swimSpeed",
+        labelKey = "EAM_STAT_SWIM_SPEED",
+        defaultLabel = "泳速",
+        defaultIcon = 132150, -- Ability_Suffocate
+        category = "speed",
+        getValue = function()
+            if not GetUnitSpeed then return 67 end
+            local ok, currentSpeed, _, _, swimSpeed = pcall(GetUnitSpeed, "player")
+            if not ok then return 67 end
+            local isSwimming = IsSwimming and IsSwimming()
+            local speed = (isSwimming and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or swimSpeed
+            if not isSafeNumber(speed) or speed <= 0 then
+                speed = (swimSpeed and isSafeNumber(swimSpeed) and swimSpeed > 0) and swimSpeed or 4.7
+            end
+            return (speed / 7.0) * 100
+        end,
+        format = "percent",
+        suffix = "%",
+    },
+    flightSpeed = {
+        key = "flightSpeed",
+        labelKey = "EAM_STAT_FLIGHT_SPEED",
+        defaultLabel = "飛速",
         defaultIcon = 237558, -- Ability_Mount_Drake_Proto
         category = "speed",
         getValue = function()
+            if not GetUnitSpeed then return 100 end
+            local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
+            if not ok then return 100 end
+            local isFlying = IsFlying and IsFlying()
+            local isGliding = false
+            if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                local gOk, gliding = pcall(C_PlayerInfo.GetGlidingInfo)
+                if gOk and gliding then isGliding = true end
+            end
+            local speed = (isFlying and not isGliding and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
+            if not isSafeNumber(speed) or speed <= 0 then
+                speed = (flightSpeed and isSafeNumber(flightSpeed) and flightSpeed > 0) and flightSpeed or 7.0
+            end
+            return (speed / 7.0) * 100
+        end,
+        format = "percent",
+        suffix = "%",
+    },
+    skyridingSpeed = {
+        key = "skyridingSpeed",
+        labelKey = "EAM_STAT_SKYRIDING_SPEED",
+        defaultLabel = "飛龍模式飛速",
+        defaultIcon = 4661640, -- inv_dragonriding_glyph
+        category = "speed",
+        getValue = function()
+            if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                local ok, isGliding, canGlide, forwardSpeed = pcall(C_PlayerInfo.GetGlidingInfo)
+                if ok and isGliding and isSafeNumber(forwardSpeed) and forwardSpeed > 0 then
+                    return (forwardSpeed / 7.0) * 100
+                end
+            end
             if not GetUnitSpeed then return 0 end
-            local ok, currentSpeed = pcall(GetUnitSpeed, "player")
-            if not ok or not isSafeNumber(currentSpeed) then return 0 end
-            return (currentSpeed / 7.0) * 100
+            local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
+            if not ok then return 0 end
+            local isFlying = IsFlying and IsFlying()
+            local speed = (isFlying and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
+            if not isSafeNumber(speed) or speed <= 0 then
+                speed = 0
+            end
+            return (speed / 7.0) * 100
         end,
         format = "percent",
         suffix = "%",
@@ -309,7 +377,7 @@ local ORDERED_KEYS = {
     "strength", "agility", "stamina", "intellect",
     "crit", "haste", "mastery", "versatility",
     "avoidance", "leech", "speedRating",
-    "moveSpeed", "flySpeed",
+    "runSpeed", "swimSpeed", "flightSpeed", "skyridingSpeed",
     "totalAbsorb", "healAbsorb", "armor"
 }
 PlayerStatService.ORDERED_KEYS = ORDERED_KEYS
@@ -616,7 +684,7 @@ function PlayerStatService.update()
     end
 end
 
--- 定期更新計時器
+-- 定期更新計時器 (每 0.1 秒刷新一次，保障移動速度等即時數值流暢呈現)
 local tickerFrame = nil
 local function initTicker()
     if tickerFrame then return end
@@ -624,14 +692,14 @@ local function initTicker()
     local elapsed = 0
     tickerFrame:SetScript("OnUpdate", function(_, delta)
         elapsed = elapsed + delta
-        if elapsed >= 0.25 then
+        if elapsed >= 0.1 then
             elapsed = 0
             PlayerStatService.update()
         end
     end)
 end
 
-function PlayerStatService.init()
+function PlayerStatService.initialize()
     local router = EAM.Modules and EAM.Modules.EventRouter
     if router and type(router.register) == "function" then
         local onEvent = function()
@@ -643,6 +711,12 @@ function PlayerStatService.init()
         router.register("COMBAT_RATING_UPDATE", onEvent)
         router.register("SPEED_UPDATE", onEvent)
         router.register("PLAYER_ENTERING_WORLD", onEvent)
+        router.register("PLAYER_MOUNT_DISPLAY_CHANGED", onEvent)
     end
     initTicker()
 end
+
+PlayerStatService.init = PlayerStatService.initialize
+
+-- 載入時立即啟動計時器與事件監聽防護
+pcall(PlayerStatService.initialize)
