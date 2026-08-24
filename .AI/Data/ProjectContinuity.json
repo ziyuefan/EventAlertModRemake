@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-08-23.11",
-  "updatedAt": "2026-08-23",
+  "snapshotVersion": "2026-08-24.15",
+  "updatedAt": "2026-08-24",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",

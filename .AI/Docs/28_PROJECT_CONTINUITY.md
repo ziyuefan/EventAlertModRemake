@@ -5,11 +5,11 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-08-24.14 (Alpha 7.8)。
+目前快照版本：2026-08-24.15 (Alpha 7.9)。
 
-## 2026-08-24 Alpha 7.8 角色屬性與吸收量監控、全模組自訂圖示、經典奶牛頭預覽與 GitHub Pre-Release 快照（現行）
+## 2026-08-24 Alpha 7.9 全介面懸停提示、主視窗一鍵置中重置與圖文導覽快照（現行）
 
-- current-of-truth：專案進入 Alpha 7.8 發布階段；完成 68/68 語法、84/84 Flow 驗證與 493/493 契約測試，並正式上傳 GitHub Pre-Release `alpha-7.8`。
+- current-of-truth：專案進入 Alpha 7.9 發布階段；全介面 10 大視窗已完整配置 Hover Tooltips、主視窗螢幕邊界鎖定與一鍵居中重置命令 (`/eam reset`)、官方 README 加入 14 張高畫質介面圖文導覽，完成 68/68 語法、84/84 Flow 驗證與 493/493 契約測試。
 - 全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)：
   1. 在全部按鈕、核取方塊、滑桿、下拉選單、輸入編輯框與清單操作列加入直觀的懸停說明提示 (Hover Tooltips)，清晰標註控制項用途、設定範圍與操作指引。
   2. 實作通用工具函式 `EAM.UI.setTooltip`，支援純文字、多語系字串與表格綁定，徹底消除介面操作門檻。
