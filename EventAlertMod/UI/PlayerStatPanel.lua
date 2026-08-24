@@ -57,10 +57,14 @@ local function createFrame()
     local parent = _G.UIParent
     if not parent then return nil end
 
-    local frame = api.CreateFrame("Frame", "EAM_PlayerStatPanel", parent, "BackdropTemplate")
-    frame:SetSize(620, 520)
-    frame:SetPoint("CENTER", parent, "CENTER", 0, 0)
-    frame:SetFrameStrata("DIALOG")
+    local frame = api.CreateFrame("Frame", "EAM_PlayerStatOptionsFrame", parent, "BackdropTemplate")
+    frame:SetSize(620, 540)
+    local mainFrame = _G.EAM_MainOptionsFrame
+    if mainFrame and mainFrame:IsShown() then
+        frame:SetPoint("TOPLEFT", mainFrame, "TOPRIGHT", 2, 0)
+    else
+        frame:SetPoint("CENTER", parent, "CENTER", 0, 10)
+    end
     frame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -74,8 +78,22 @@ local function createFrame()
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
-    frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+    frame:SetScript("OnDragStart", function()
+        local main = _G.EAM_MainOptionsFrame
+        if main and main:IsShown() then
+            main:StartMoving()
+        else
+            frame:StartMoving()
+        end
+    end)
+    frame:SetScript("OnDragStop", function()
+        local main = _G.EAM_MainOptionsFrame
+        if main and main:IsShown() then
+            main:StopMovingOrSizing()
+        else
+            frame:StopMovingOrSizing()
+        end
+    end)
 
     -- 標題列
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -88,7 +106,7 @@ local function createFrame()
     local closeBtn = api.CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     closeBtn:SetSize(28, 28)
     closeBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -4, -4)
-    closeBtn:SetScript("OnClick", function() frame:Hide() end)
+    closeBtn:SetScript("OnClick", function() Panel.hide() end)
 
     -- ===================================================
     -- 【左側】：屬性列表 (寬度 240px)
@@ -489,7 +507,12 @@ function Panel.open()
 end
 
 function Panel.hide()
-    if Panel.frame then Panel.frame:Hide() end
+    if Panel.frame then
+        Panel.frame:Hide()
+    end
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+        EAM.UI.Renderer.setActiveAnchors(nil)
+    end
 end
 
 Panel.close = Panel.hide
