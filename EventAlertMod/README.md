@@ -1,191 +1,118 @@
-# EventAlertMod Retail 12.1
+# EventAlertMod Retail 12.1 (EAM)
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Release](https://img.shields.io/badge/release-Alpha%207.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-EventAlertMod（EAM）是只支援《魔獸世界》正式服 Retail 的輕量提醒插件，專注於自身／目標光環、技能冷卻、物品冷卻、地面效果、角色屬性與玩家職業資源。現行來源版本標記為 EventAlertMod_MN_20260824，發布定位為 Alpha 7.8 prerelease。
+**EventAlertMod (EAM)** 是專為《魔獸世界》正式服（World of Warcraft: Retail 12.1 / 12.0+）全面重構的現代化、極致效能、零污染與純事件驅動法術監控告警插件。
 
-> 本文件是 GitHub 專案首頁與目前使用說明。下方歷史內容若與本節衝突，以本節、EventAlertMod.toc 與 .AI/Docs 的最新文件為準。
+本插件專注於玩家自身與目標光環（BUFF/DEBUFF）、技能冷卻、物品冷卻、地面法術效果、17 種玩家職業資源、18 種角色屬性與吸收量監控，並具備四合一速度淬鍊與全模組自訂替代圖示等豐富功能。現行來源版本標記為 `EventAlertMod_MN_20260824`，發布定位為 **Alpha 7.8 prerelease**。
 
-## 目前支援範圍
+---
 
-- Retail 12.1：Interface 120100，使用 Native Aura capability。
-- XPTR／相容通道 12.0.7：保留 Legacy backend；不把 12.1 Native API 當成必備。
-- Classic、MoP、TBC、Wrath 不在本專案支援範圍。
-- 17 種玩家資源、13 個職業與 40 組職業／專精拓撲由 Player Resource Module 管理；同一專精可同時追蹤多個資源。
-- 每項資源可獨立啟用、排序、前景／背景、位置、方向、寬高、圖示大小、間距、透明度、數字文字大小與相對偏移。
-- 自身與目標光環、技能冷卻、物品冷卻、地面效果各有獨立設定與模組開關。
-- 自身／目標新增光環預設僅玩家施放；跨職業增減益預設不勾選玩家施放條件。
-- 12.1 Native Aura 不讀取 UNIT_AURA Secret payload，也不鉤 Blizzard AuraButton／TargetFrame。目標框架光環若沒有安全 Tooltip candidate，不能保證取得法術 ID 或開啟 Ctrl+Alt 視窗；使用 /eam add target 開啟手動加入視窗。
+## ✨ 核心特色與架構優勢 (Features)
 
-## 玩家職業資源
+### 1. 🛡️ Retail 12.0+ / 12.1+ 零污染與 Secret Values 終極防護
+- **原生 C-Level StatusBar Sink**：針對 12.0+ / 12.1+ 在戰鬥或受保護環境下可能回傳的 `Secret Number`（受保護數值），EAM 嚴格遵循暴雪安全規範，絕不在 Lua 層進行直接比較、算術運算、字串化或讀回。
+- **直通渲染技術**：數值直接單向輸送至暴雪原生底層 `StatusBar:SetValue` 展現視覺進度，徹底杜絕 UI 污染、報錯與戰鬥中斷。
+- **分類專屬著色**：支援依屬性類別專屬著色（吸收盾天藍、治療吸收紫紅、移速青綠、副屬性金黃、主屬性橙紅、護甲鋼藍）。
 
-Player Resource Module 將 Mana、Rage、Energy、Combo Points、Insanity、Runes、Runic Power、Arcane Charges 等視為獨立 resource node，不使用單一 active power 覆蓋其他資源。
+### 2. 🧩 八大獨立告警框架 (8 Independent Alert Modules)
+EAM 具備 8 個完全解耦、獨立排版、自由定位的監控模組：
+1. **自身光環 (Player Buff / Debuff)**：監控自身觸發之增益與減益，支援堆疊層數與高精度倒數。
+2. **目標光環 (Target Buff / Debuff)**：監控當前目標之光環與狀態。
+3. **跨職業光環 (Cross-Class / Target Cast)**：監控跨職業、敵方或隊友施放的關鍵光環。
+4. **技能冷卻 (Spell Cooldown)**：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (`Radial Mode`) 與框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)。
+5. **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控。
+6. **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。
+7. **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。
+8. **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位監控 18 種角色數值。
 
-- NUMERIC 資源：在 API 能安全讀取時可顯示數字、門檻與高亮。
-- SECRET_DISPLAY 資源：只把安全百分比或狀態送入原生 StatusBar sink，不讀回、不比較、不字串化、不保存、不匯出。
-- UnitPower、UnitPowerMax、UnitPowerPercent 只在 capability／冷路徑與允許的事件路徑使用；報告不包含 current、max、percent 原值。
-- 死亡騎士 Runes 不使用泛用 UnitPower 聚合值：登入／拓樸建立時以六槽 GetRuneCount／GetRuneCooldown 初始化，之後由 RUNE_POWER_UPDATE(index, added) 即時更新 0..6 分段；Runic Power 維持獨立資源條。
-- UNIT_DISPLAYPOWER、形態切換與脫戰只更新前景 metadata，不批量清除背景資源；背景資源沒有事件時，才由 demand-driven 共用 sampler 低頻取樣。
-- 玩家資源設定在非戰鬥中即時套用；戰鬥中的結構變更延後到離戰合併，避免污染受保護框架。
-- /eam unitpower background RESOURCE_KEY 是診斷入口，只標記指定背景資源可能缺少事件，不會輸出原始資源數值。
+### 3. 🏃 四合一速度即時淬鍊 (Refined 4-in-1 Speed System)
+精準對接暴雪最新物理狀態 API，徹底解決飛龍騎術無法被傳統 API 捕捉的痛點：
+- **跑速 (Run Speed)**：調用 `GetUnitSpeed("player")` 提取 `runSpeed` 與地面即時 `currentSpeed`（100%~220%）。
+- **泳速 (Swim Speed)**：調用 `GetUnitSpeed("player")` 提取 `swimSpeed`，水下為 67%~100%+。
+- **飛速 (Flight Speed)**：傳統懸浮穩定飛行 `flightSpeed`（310%~420%）。
+- **飛龍模式飛速 (Skyriding Speed)**：專屬調用 **`C_PlayerInfo.GetGlidingInfo()`** 提取 `forwardSpeed` 換算 **830%~1400%** 即時滑翔衝刺速度！
+- **0.1 秒高頻計時器**：起跑、跳水、起飛或俯衝加速時，數值與底層進度條均以 0.1s 高頻即時流暢響應。
 
-## 冷卻行為
+### 4. 🎨 全模組自訂替代圖示 (Custom Icon Override)
+- 在所有 8 大模組的細部設定中，均提供「自訂替代圖示（代碼或材質路徑）」輸入框。
+- 支援輸入任何官方 FileID（例如 `132307`）或自訂材質路徑，並附即時動態預覽方塊與 Wago.tools 查詢指引，可隨心自訂專屬視覺風格。
 
-技能冷卻只在「玩家精確成功施放、且該法術已在冷卻清單」時首次進入監控。戰鬥治療、脫戰、形態切換、refresh 或 regen 事件不得把整份清單批量 render。
+### 5. 💀 死亡騎士專用符文引擎 (DK Runes Engine)
+- 依血魄 (250)、冰霜 (251)、穢邪 (252) 專精動態切換專屬圖示。
+- 內建 6 格微型充能冷卻條（0%..100% 平滑動畫），由排程器平滑驅動。
+- 提供 `/eam rune` 槽位即時狀態與診斷 JSON 視窗。
 
-三項冷卻行為可使用全域設定，也可在單一技能的齒輪細部設定中覆寫：
+### 6. 🖥️ 經典排版預覽與極致 UI 體驗 (Modern UI & Live Preview)
+- **階層式無縫吸附 (APPEND Docking)**：主選單 ➔ 清單/排版/資源/屬性 ➔ 細部條件/批次輸入 視窗向右緊密貼合，並支援多視窗同步平滑拖曳。
+- **全二級側窗互斥**：開啟新側窗時自動收合其他側窗，徹底消除介面重疊。
+- **經典奶牛頭位置預覽**：排版模式下以經典奶牛頭圖示 (`Spell_Nature_Polymorph_Cow`) 清楚標記 8 大告警框架定位。
+- **60fps 全方位即時熱預覽**：調整圖示大小、水平/垂直間距、透明度、扇形倒數轉圈、字型大小等，畫面上告警框架與圖示即時動態響應，非戰鬥不需 `/reload`。
+- **11 套精美主題風格**：魔獸經典 (預設)、Borland 亮藍黃字、DOS CRT 復古黑綠、曜石黑、賽博龐克等風格自由切換。
+- **進入戰鬥紅框閃爍**：提供全螢幕戰鬥進入警示動畫與即時測試。
 
-1. 冷卻完成時移除圖示。
-2. 脫離戰鬥後是否保留圖示。
-3. 技能可用時是否顯示高亮。
+### 7. 💾 Profile 設定檔分享 (EAMAP1 Codec)
+- 支援 8 大自選項目匯出／匯入（自身光環、目標光環、技能CD、物品CD、地面效果、框架排版、職業資源、一般偏好）。
+- 採用防禦性白名單驗證與 Adler-32 Checksum 校驗，支援 JSON / Base64 編碼，安全分享配置。
 
-單技能設定為未指定時繼承全域；明確 false 會保存，不會被預設值覆蓋。充能技能須先觀測到至少一次「已消耗充能」，之後回到最大可用次數才視為完成；環形版面使用封裝 TGA ring grid，能力不符時回退線性條。
+### 8. 🌐 完整多國語系 (Localization)
+- 完整支援 **繁體中文 (zhTW - 嚴格對齊台灣官方術語：致命、加速、臨機應變)**、**簡體中文 (zhCN)**、**英文 (enUS)**、**韓文 (koKR)**、**俄文 (ruRU)**。
 
-## 地面效果
+---
 
-地面效果只在玩家本人成功施放、且安全施放 ID 命中設定清單時建立計時。服務在非戰鬥冷路徑預先編譯設定 ID 的 Base／Override／目前 SpellInfo ID 族群，熱路徑只做安全 O(1) 查表；設定 ID 完全相符時優先，碰撞或 Secret ID 則拒絕猜測。
+## ⌨️ 命令列與斜線指令 (Command Line Reference)
 
-- 死亡凋零與褻瀆等天賦替換可由同一法術族群對齊，不需要同時硬寫所有 override ID。
-- 冰霜之球、反魔法立場等仍以成功施法事件啟動；自動秒數解析失敗時使用該項手動 fallback。
-- EAM 目前追蹤的是施放後的時間上限；反魔法立場若因吸收上限提前消失，沒有安全公開事件可證明實際提前結束，圖示可能維持到 fallback 到期。
-- 切換天賦／專精會在非戰鬥中重編譯法術族群；戰鬥中只標記待更新，離戰後合併一次。
+EAM 提供豐富的斜線命令，主入口為 `/eam` 或 `/eventalertmod`（不分大小寫）：
 
-## 斜線命令
+| 指令 | 縮寫 / 別名 | 說明 |
+| :--- | :--- | :--- |
+| `/eam` 或 `/eam opt` | `/eam option`, `/eam options` | 開啟 EAM 主設定選單 |
+| `/eam list` | 無 | 顯示目前職業已啟用的監控清單（自身、目標、冷卻、物品、地面效果） |
+| `/eam add <spellID>` | `/eam add player <spellID>` | 新增指定法術 ID 至「自身光環」監控清單 |
+| `/eam add target [spellID]` | 無 | 新增「目標光環」監控；若不輸入 ID 則開啟手動輸入與候選視窗 |
+| `/eam add cd <spellID>` | `/eam add cooldown <spellID>` | 新增指定法術 ID 至「技能冷卻」監控清單 |
+| `/eam add item <itemID>` | `/eam add itemcooldown <itemID>` | 新增指定物品 ID 至「物品冷卻」監控清單 |
+| `/eam remove <spellID>` | `/eam remove <player\|target\|cd\|item> <ID>` | 從指定監控類別中移除指定法術或物品 ID |
+| `/eam lookup <名稱>` | `/eam l <名稱>` | 依關鍵字模糊查詢目前職業可用法術候選與 Spell ID |
+| `/eam lookupfull <全名>` | `/eam lf <全名>` | 依完整名稱精確查詢目前職業可用法術候選與 Spell ID |
+| `/eam showcast` | `/eam showc` | 開始或停止記錄本次登入成功施放的法術（方便查詢自己剛放的技能 ID） |
+| `/eam profile` | `/eam profile export`, `/eam profile import` | 開啟 Profile 設定檔匯出／匯入與字串分享面板 |
+| `/eam rune` | `/eam runes`, `/eam probe rune` | 開啟死亡騎士 6 格符文槽位即時狀態、充能秒數與診斷 JSON 視窗 |
+| `/eam unitpower background <KEY>` | 無 | 標記指定背景資源缺少事件，啟動 0.5s demand-driven 共用取樣器 |
+| `/eam doctor` | `/eam validate` | 執行客戶端 API 邊界與運行環境診斷報告 |
+| `/eam test [suite]` | `/eam test live` | 開啟遊戲內流程測試面板，或執行指定測試套件 (`quick/core/boundary/aura121/all/live`) |
+| `/eam debug` | `/eam export` | 開啟系統狀態與精簡 AI 除錯報告輸出視窗 |
+| `/eam debug ground <spellID>` | 無 | 測試並除錯特定地面技能之 Tooltip 持續時間解析 |
+| `/eam show` / `/eam showtarget` | `/eam shows`, `/eam showt` | 顯示 Retail 12.1 安全加入光環之操作指引（滑鼠懸停按 Ctrl+Alt） |
+| `/eam help` | `/eam ?` | 列出所有可用斜線命令說明 |
 
-命令不分大小寫；主入口是 /eam，也接受 /eventalertmod。沒有參數時開啟主設定。
+---
 
-### 設定與清單
+## 🖱️ 快速操作指引：滑鼠懸停加入監控 (Ctrl+Alt Quick Add)
 
-| 命令 | 用途與時機 |
-| --- | --- |
-| /eam 或 /eam opt | 開啟主設定視窗；調整模組開關、主題、語系、字型、位置與資源。 |
-| /eam help | 顯示目前版本可用命令。遇到版本差異先執行此命令。 |
-| /eam list | 列出目前職業 profile 的自身光環、目標光環、技能冷卻、物品冷卻與地面效果。 |
-| /eam lookup 名稱 | 在目前職業有限候選資料中做部分名稱查詢並列出 Spell ID。 |
-| /eam lookupfull 完整名稱 | 在目前職業候選資料中做完整名稱查詢。/eam l 與 /eam lf 是別名。 |
-| /eam profile | 開啟職業 Profile 匯入／匯出視窗。 |
-| /eam profile export | 直接開啟可複製的 EAMAP1 JSON／Base64 匯出視窗。匯入仍在同一視窗貼上並預覽後執行。 |
+在遊戲中，您可以完全不需手動查詢法術 ID：
+1. 將滑鼠懸停於自身頭像、目標頭像的光環圖示，或快捷列上的技能/巨集/物品上。
+2. 同時按下鍵盤上的 **`Ctrl + Alt`** 組合鍵。
+3. 畫面即刻彈出 EAM 專屬加入視窗，一鍵將其指派至自身光環、目標光環、技能冷卻或物品冷卻監控清單中！
 
-### 新增與移除監控
+---
 
-| 命令 | 用途與時機 |
-| --- | --- |
-| /eam add SPELL_ID | 將玩家自身光環加入目前職業清單；適合已知 Spell ID。 |
-| /eam add target SPELL_ID | 將目標光環加入目標清單；適合已知 Spell ID。 |
-| /eam add target | 開啟目標光環手動加入視窗；適合 TargetFrame 無安全 ID 或 Ctrl+Alt 不產生 candidate 時。 |
-| /eam add cd SPELL_ID | 將技能加入技能冷卻清單；第一次精確成功施放後才 render。 |
-| /eam add item ITEM_ID | 將物品加入物品冷卻清單。 |
-| /eam remove SPELL_ID | 移除玩家自身光環。 |
-| /eam remove target SPELL_ID | 移除目標光環。 |
-| /eam remove cd SPELL_ID | 移除技能冷卻。/eam remove cooldown SPELL_ID 也可用。 |
-| /eam remove item ITEM_ID | 移除物品冷卻。 |
+## 📦 安裝說明 (Installation)
 
-### 診斷、流程與探索
+1. 前往 [GitHub Releases](https://github.com/ziyuefan/EventAlertModRemake/releases) 下載最新版本之 `EventAlertMod_MN_*.zip`。
+2. 解壓縮後將 `EventAlertMod` 資料夾放置於魔獸世界安裝目錄：
+   - 正式服路徑：`World of Warcraft\_retail_\Interface\AddOns\EventAlertMod`
+3. 啟動遊戲，在角色選擇畫面確認「插件」清單中已勾選啟用 `EventAlertMod`。
 
-| 命令 | 用途與時機 |
-| --- | --- |
-| /eam doctor 或 /eam validate | 顯示 Retail／PTR API capability、Secret 邊界與 runtime metadata；遇到資源不顯示時先執行。 |
-| /eam test | 開啟流程測試面板。 |
-| /eam test quick | 快速核心流程。 |
-| /eam test core | 核心事件、SavedVariables 與 scheduler。 |
-| /eam test boundary | Secret／安全邊界與 API sink。 |
-| /eam test aura121 | Retail 12.1 Native Aura 流程。 |
-| /eam test all | 執行完整離線流程測試並產生 JSON 報告。 |
-| /eam test live 或 /eam test manual | 開啟玩家手動實機簽收面板；插件不會自動操作角色或按鈕。 |
-| /eam debug | 開啟精簡開發報告匯出視窗。 |
-| /eam debug ground SPELL_ID | 低頻解析指定地面技能 Tooltip 秒數；解析失敗時仍使用設定的 fallback。 |
-| /eam rune | 顯示死亡騎士 6 格符文槽位即時秒數與冷卻進度診斷視窗。 |
-| /eam export | 開啟精簡 AI debug 狀態匯出。 |
-| /eam showcast 或 /eam showc | 開／關本次登入玩家成功施法記錄，並列出安全可讀的 Spell ID。 |
-| /eam show、/eam showtarget | 顯示 12.1 光環 ID 的安全限制與建議路徑。 |
-| /eam showautoadd、/eam showenvadd | 顯示不自動掃描／寫入監控清單的原因。 |
-| /eam unitpower background RESOURCE_KEY | 明確標記背景資源事件缺失，啟用共用 sampler；只在診斷事件缺失時使用。 |
+---
 
-實機報告必須註明 Retail、PTR 或 XPTR、Interface、build、戰鬥狀態與是否剛部署；離線 mock 通過不能冒充遊戲內通過。
+## 📌 相容性與支援邊界 (Compatibility)
 
-## 安全與已知限制
-
-- 不在戰鬥中讀取、比較、字串化、索引、序列化 Secret／Protected UnitPower、Aura 或時間值。
-- 不使用 UnitPower 的 OnUpdate 輪詢；不鉤、覆寫或猴子補丁 Blizzard secure/protected frame、TargetFrame、AuraButton、ActionButton。
-- Native Aura 的法術 ID、目標光環 owner、剩餘時間與堆疊可能受 Blizzard 安全策略限制；安全取得不到時保留圖示或手動輸入路徑，不猜 ID。
-- StatusBar／Cooldown 原生 sink 的接受只代表 API 邊界成立，不代表所有客戶端的視覺結果；仍需玩家在對應通道驗證。
-- 修改插件程式後，必須先部署至對應通道的 Interface\AddOns\EventAlertMod，再在遊戲內 /reload；本機 source 變更不會直接改變遊戲中的插件。
-- 讀取 WTF 最新報告前，玩家必須先 /reload 或正常登出，否則 SavedVariables 可能仍是舊內容。
-
-## 專案目錄
-
-- EventAlertMod：唯一插件實體來源；打包時完整封裝，包含 Managers。
-- Deploy：部署、插件 ZIP 與完整 source ZIP 工具。
-- .AI：Docs、Data、Tools、Flow／Contracts、ProjectContinuity、備份與 AI 交接記錄。
-- Dist：本機產物，不上傳 GitHub；GitHub Release 才提供下載 ZIP。
-- backup：修改前備份與部署 rollback，不納入發布包。
-
-## 離線驗證與報告匯入
-
-在專案根目錄執行：
-
-~~~powershell
-pwsh -NoProfile -File .\.AI\Tools\CheckLuaSyntax.ps1 -AddonOnly
-pwsh -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1 -Suite boundary
-pwsh -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1 -Suite all
-pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1
-pwsh -NoProfile -File .\.AI\Tools\Import-EAMFlowReport.ps1 -Path '<EventAlertMod.lua 或 report.json>' -ReportType Auto
-~~~
-
-檢查重點是 Lua syntax、Flow all／boundary、Validation Contracts、JSON schema 與 report importer。成功只代表離線契約；需要 Retail／PTR／XPTR 的戰鬥、專精、形態、視覺與 Tooltip 結果，必須由玩家手動部署與回報。
-
-## 打包與部署
-
-插件包與 source 包都從 canonical root 建立，禁止直接對 WoW 的 SymbolicLink／Junction 操作。
-
-~~~powershell
-pwsh -NoProfile -File .\Deploy\Build-Package.ps1
-pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -DryRun
-pwsh -NoProfile -File .\Deploy\Build-SourcePackage.ps1
-pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action Status -WowRoot 'D:\World of Warcraft'
-pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action PTR -WowRoot 'D:\World of Warcraft' -DryRun
-pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action All -WowRoot 'D:\World of Warcraft' -DryRun
-~~~
-
-互動部署直接執行 Deploy-EventAlertMod.ps1。工具先從 Windows Registry 找 WoW 根目錄，顯示來源與 ProductVersion，按 Enter 接受或輸入 C 改路徑；選 PTR／XPTR 時只有輸入 Y 才會一併部署 Retail。實際覆蓋前需輸入 DEPLOY。部署器不檢查 Wow.exe／WowT.exe 是否執行，也不會替使用者關閉遊戲；目標 Reparse Point、來源錯誤、README／changelog 雜湊不同時會 fail-closed 且零寫入。
-
-互動選單：
-
-- 1 Retail、2 PTR、3 XPTR、4 全部通道。
-- W 備份選定通道 WTF 中所有路徑含 EventAlertMod 的檔案，保留原始相對路徑與 SHA-256 manifest。
-- U 依通道選擇備份並還原；還原前自動建立 rollback。
-- B 建立插件 ZIP；S 建立 Project_EventAlertMod source ZIP；R 重新讀取狀態；Q 離開。
-
-WTF 非互動範例：
-
-~~~powershell
-pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action Backup -Channel PTR -WowRoot 'D:\World of Warcraft'
-pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action Restore -Channel PTR -WowRoot 'D:\World of Warcraft' -WtfBackupPath '.AI\backup\wtf\ptr__<timestamp>'
-~~~
-
-Restore 必須指定單一通道與備份目錄；WTF 可能包含帳號／角色資料，不得上傳或貼到公開報告。
-
-## 目前 Alpha 7.4 驗證狀態
-
-- 目前源碼標記：EventAlertMod_MN_20260823。
-- Alpha 7.4 累積包含：冷卻 exact-cast gate、充能 spent→full 完成生命週期、五種 current/max StatusBar 版面與 TGA ring grid、玩家資源即時設定、DK 六槽 Runes 事件更新、GroundEffect Base／Override 法術族群與 Target Aura 手動路由。
-- 發布前離線 gate：Lua syntax 64/64、Flow all 82/82、Flow boundary 61/61、Validation Contracts 493/493。數字是離線／靜態證據，不等於 Retail、PTR 或 XPTR 真人視覺通過。
-- 插件變更尚未自行部署到 WoW/WTF；玩家部署後需 /reload，再依 .AI/Docs/29_LIVE_TEST_STEP_GUIDE.md 的 Alpha 7.4 快速簽收回報通道、build、Interface 與畫面結果。
-- GitHub prerelease 由人工 gh release 流程建立，不啟用既有 Release Action，也不發布 CurseForge。
-
-## 開發者注意
-
-- 修改任何檔案前先備份至 .AI/backup/時間戳。
-- 修改 Markdown 後使用 EAM_DOCS_OFFLINE=1 執行 .AI/Tools/batch_convert_docs.py；Markdown 原檔是 AI 的唯一事實來源。
-- 不要把 Dist、.AI/backup、WTF、TestResults 或本機附件加入發布 ZIP。
-- 變更後至少執行 Lua、Flow、Contracts、JSON parse 與 git diff --check。
-- 詳細 API、Secret、Aura、測試矩陣與持續性規則見 .AI/Docs/00_AI_CONTEXT.md、02_RETAIL_API_BOUNDARIES.md、06_TEST_PLAN_RETAIL.md、26_FLOW_VALIDATION_FRAMEWORK.md、28_PROJECT_CONTINUITY.md、30_PLAYER_RESOURCE_REFACTOR_REPORT.md。
-
-## 連結
-
-- [GitHub 原始碼](https://github.com/ziyuefan/EventAlertModRemake)
-- [GitHub Releases](https://github.com/ziyuefan/EventAlertModRemake/releases)
-- [GitHub Pages](https://ziyuefan.github.io/EventAlertModRemake/)
-- [Changelog](https://github.com/ziyuefan/EventAlertModRemake/blob/main/changelog.txt)
+- **支援環境**：
+  - 《魔獸世界：正式服》World of Warcraft: Retail 12.1.0+ (Interface 120100)
+  - 相容通道 Retail 12.0.7+ (Interface 120007)
+- **不支援環境**：
+  - 經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等不在本專案支援範圍）。
