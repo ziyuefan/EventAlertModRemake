@@ -167,14 +167,18 @@ local function createFrame()
     enableCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 14, -62)
     enableCb.text = enableCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     enableCb.text:SetPoint("LEFT", enableCb, "RIGHT", 4, 1)
-    enableCb.text:SetText(EAM.L.EAM_STAT_ENABLE or "啟用此屬性監控")
-
-    -- 2. 顯示圖示
+    -- 2. 顯示圖示 & 顯示進度條 (StatusBar)
     local showIconCb = api.CreateFrame("CheckButton", nil, detailContainer, "UICheckButtonTemplate")
-    showIconCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 160, -62)
+    showIconCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 140, -62)
     showIconCb.text = showIconCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     showIconCb.text:SetPoint("LEFT", showIconCb, "RIGHT", 4, 1)
     showIconCb.text:SetText(EAM.L.EAM_STAT_SHOW_ICON or "顯示圖示")
+
+    local showStatusBarCb = api.CreateFrame("CheckButton", nil, detailContainer, "UICheckButtonTemplate")
+    showStatusBarCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 225, -62)
+    showStatusBarCb.text = showStatusBarCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    showStatusBarCb.text:SetPoint("LEFT", showStatusBarCb, "RIGHT", 4, 1)
+    showStatusBarCb.text:SetText(EAM.L.EAM_STAT_SHOW_STATUSBAR or "進度條")
 
     -- 3. 替代圖示輸入框與預覽方塊
     local iconLabel = detailContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -314,6 +318,7 @@ local function createFrame()
         local cfg = getStatConfig(Panel.selectedKey)
         cfg.enabled = enableCb:GetChecked() and true or false
         cfg.showIcon = showIconCb:GetChecked() and true or false
+        cfg.showStatusBar = showStatusBarCb:GetChecked() and true or false
         cfg.customIcon = iconEditBox:GetText() or ""
         cfg.iconSize = sizeSlider:GetValue()
         cfg.fontSizeValue = fontValSlider:GetValue()
@@ -367,6 +372,7 @@ local function createFrame()
 
         enableCb:SetChecked(cfg.enabled == true)
         showIconCb:SetChecked(cfg.showIcon ~= false)
+        showStatusBarCb:SetChecked(cfg.showStatusBar ~= false)
         iconEditBox:SetText(cfg.customIcon or "")
 
         sizeSlider:SetValue(cfg.iconSize or 36)

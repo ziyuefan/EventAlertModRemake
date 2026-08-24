@@ -252,13 +252,15 @@ local STAT_DEFINITIONS = {
         format = "percent",
         suffix = "%",
     },
-    -- 吸收盾與護甲
     totalAbsorb = {
         key = "totalAbsorb",
         labelKey = "EAM_STAT_TOTAL_ABSORB",
         defaultLabel = "總吸收盾量",
         defaultIcon = 135940, -- Spell_Holy_PowerWordShield
         category = "survival",
+        getRawValue = function()
+            return UnitGetTotalAbsorbs and UnitGetTotalAbsorbs("player") or 0
+        end,
         getValue = function()
             if not UnitGetTotalAbsorbs then return 0 end
             local ok, val = pcall(UnitGetTotalAbsorbs, "player")
@@ -273,6 +275,9 @@ local STAT_DEFINITIONS = {
         defaultLabel = "治療吸收量",
         defaultIcon = 136120, -- Spell_Shadow_AntiShadow
         category = "survival",
+        getRawValue = function()
+            return UnitGetTotalHealAbsorbs and UnitGetTotalHealAbsorbs("player") or 0
+        end,
         getValue = function()
             if not UnitGetTotalHealAbsorbs then return 0 end
             local ok, val = pcall(UnitGetTotalHealAbsorbs, "player")
@@ -352,6 +357,20 @@ function PlayerStatService.getStatValue(statKey)
     return 0
 end
 
+function PlayerStatService.getRawStatValue(statKey)
+    local def = STAT_DEFINITIONS[statKey]
+    if def then
+        if def.getRawValue then
+            local ok, val = pcall(def.getRawValue)
+            if ok and val ~= nil then return val end
+        elseif def.getValue then
+            local ok, val = pcall(def.getValue)
+            if ok and val ~= nil then return val end
+        end
+    end
+    return 0
+end
+
 local parentFrame = nil
 local statItemFrames = {}
 
@@ -390,6 +409,16 @@ local function getOrCreateStatItemFrame(parent, index)
     icon:SetPoint("BOTTOMRIGHT", item, "BOTTOMRIGHT", -2, 2)
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     item.icon = icon
+
+    local statusBar = api.CreateFrame("StatusBar", nil, item)
+    statusBar:SetPoint("BOTTOMLEFT", item, "BOTTOMLEFT", 2, 2)
+    statusBar:SetPoint("BOTTOMRIGHT", item, "BOTTOMRIGHT", -2, 2)
+    statusBar:SetHeight(5)
+    statusBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    statusBar:SetStatusBarColor(0.2, 0.8, 1.0, 0.95)
+    statusBar:SetMinMaxValues(0, 100)
+    statusBar:Hide()
+    item.statusBar = statusBar
 
     local valText = item:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     valText:SetPoint("BOTTOM", item, "TOP", 0, 2)
@@ -430,6 +459,7 @@ function PlayerStatService.update()
                 cfg = cfg,
                 def = STAT_DEFINITIONS[key],
                 val = PlayerStatService.getStatValue(key),
+                rawVal = PlayerStatService.getRawStatValue(key),
             }
         end
     end
@@ -450,6 +480,7 @@ function PlayerStatService.update()
         local cfg = data.cfg
         local def = data.def
         local val = data.val
+        local rawVal = data.rawVal
         local item = getOrCreateStatItemFrame(parentFrame, idx)
 
         local size = cfg.iconSize or globalConfig.iconSize or 40
@@ -514,6 +545,50 @@ function PlayerStatService.update()
             item.labelText:SetTextColor(cfg.labelColor[1] or 1, cfg.labelColor[2] or 0.9, cfg.labelColor[3] or 0.5, cfg.labelColor[4] or 1)
         else
             item.labelText:SetTextColor(1, 0.9, 0.5, 1)
+        end
+
+        -- StatusBar 進度條原生 Sink 支援 (當為 Secret 數值或開啟進度條時)
+        local isSecret = Util and Util.isSecretValue and Util.isSecretValue(rawVal)
+        if cfg.showStatusBar ~= false or isSecret then
+            item.statusBar:SetHeight(math.max(4, math.floor(size * 0.15)))
+            local maxVal = 100
+            if def.format == "percent" then
+                maxVal = 100
+            elseif data.key == "totalAbsorb" or data.key == "healAbsorb" then
+                local ok, hm = pcall(UnitHealthMax, "player")
+                maxVal = (ok and isSafeNumber(hm) and hm > 0) and hm or 100000
+            elseif def.category == "primary" then
+                maxVal = 50000
+            elseif data.key == "armor" then
+                maxVal = 30000
+            end
+
+            -- 依類別設定 StatusBar 顏色
+            if data.key == "totalAbsorb" then
+                item.statusBar:SetStatusBarColor(0.1, 0.75, 1.0, 0.95)
+            elseif data.key == "healAbsorb" then
+                item.statusBar:SetStatusBarColor(0.85, 0.25, 0.85, 0.95)
+            elseif def.category == "speed" then
+                item.statusBar:SetStatusBarColor(0.2, 0.9, 0.8, 0.95)
+            elseif def.category == "secondary" then
+                item.statusBar:SetStatusBarColor(1.0, 0.82, 0.15, 0.95)
+            elseif def.category == "tertiary" then
+                item.statusBar:SetStatusBarColor(0.3, 0.9, 0.4, 0.95)
+            elseif def.category == "primary" then
+                item.statusBar:SetStatusBarColor(1.0, 0.5, 0.1, 0.95)
+            else
+                item.statusBar:SetStatusBarColor(0.4, 0.6, 0.8, 0.95)
+            end
+
+            pcall(item.statusBar.SetMinMaxValues, item.statusBar, 0, maxVal)
+            pcall(item.statusBar.SetValue, item.statusBar, rawVal)
+            item.statusBar:Show()
+
+            if isSecret then
+                item.valText:SetText("")
+            end
+        else
+            item.statusBar:Hide()
         end
 
         -- 閾值警戒高亮

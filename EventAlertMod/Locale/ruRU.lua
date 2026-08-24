@@ -955,6 +955,7 @@ L.EAM_MODULE_PLAYER_STAT = "Характеристики и поглощение
 L.EAM_FRAME_PLAYER_STAT = "EAM - Фрейм характеристик игрока"
 L.EAM_STAT_ENABLE = "Включить мониторинг характеристики"
 L.EAM_STAT_SHOW_ICON = "Показывать иконку"
+L.EAM_STAT_SHOW_STATUSBAR = "Полоса прогресса"
 L.EAM_STAT_ICON_SIZE = "Размер иконки"
 L.EAM_STAT_FONT_VALUE = "Размер шрифта значения"
 L.EAM_STAT_FONT_LABEL = "Размер шрифта названия"
