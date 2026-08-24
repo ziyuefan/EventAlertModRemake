@@ -112,8 +112,10 @@ local defaults = {
             classPower = { growDirection = 1, x = 0, y = -80, point = "CENTER" },
             groundEffect = { growDirection = 1, x = 0, y = -160, point = "CENTER" },
             totem = { growDirection = 1, x = 0, y = -240, point = "CENTER" },
+            playerStat = { growDirection = 1, x = 0, y = -220, point = "CENTER" },
         }
     },
+    playerStats = {},
     config = {
         language = "auto",
         theme = "eam",
@@ -127,6 +129,7 @@ local defaults = {
             groundEffect = true,
             classPower = true,
             totem = true,
+            playerStat = true,
             tooltipMonitor = true,
         },
         showFrame = true,

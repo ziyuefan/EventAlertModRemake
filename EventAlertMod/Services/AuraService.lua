@@ -218,6 +218,7 @@ local function resetState(state, alert)
     state.auraFilter = auraFilter
     state.name = nil
     state.icon = nil
+    state.customIcon = alert.customIcon
     state.stacks = nil
     state.fromPlayer = nil
     state.auraInstanceID = nil
@@ -315,6 +316,10 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
             name = name or info.name
             icon = icon or info.icon
         end
+    end
+
+    if state.customIcon and state.customIcon ~= "" then
+        icon = tonumber(state.customIcon) or state.customIcon
     end
 
     state.name = name or tostring(state.spellID)

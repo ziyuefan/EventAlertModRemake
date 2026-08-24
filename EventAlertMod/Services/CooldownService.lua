@@ -654,6 +654,10 @@ local function refreshAlert(alert, eventName)
         state.name = tostring(alert.spellID)
     end
 
+    if alert.customIcon and alert.customIcon ~= "" then
+        state.icon = tonumber(alert.customIcon) or alert.customIcon
+    end
+
     -- 5. Populate TimerState. Completed states deliberately clear old timing.
     if not hasActiveCooldown then
         Util.clearTimer(state.timer, EAM.Constants.TIMER_UNKNOWN)

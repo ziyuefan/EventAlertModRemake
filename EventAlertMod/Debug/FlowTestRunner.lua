@@ -2847,8 +2847,9 @@ FlowTestRunner.registerCase({
                 EAM.Constants.MODULE_KEYS.classPower,
                 true
             )
-            local catalogValid = #controller.ModuleOptions == 8
+            local catalogValid = #controller.ModuleOptions == 9
                 and controller.isValidKey(EAM.Constants.MODULE_KEYS.playerAura)
+                and controller.isValidKey(EAM.Constants.MODULE_KEYS.playerStat)
                 and controller.isValidKey(EAM.Constants.MODULE_KEYS.tooltipMonitor)
                 and not controller.isValidKey("notAModule")
 

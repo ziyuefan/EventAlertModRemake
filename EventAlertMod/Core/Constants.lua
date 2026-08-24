@@ -84,10 +84,11 @@ EAM.Constants = freeze({
         groundEffect = "groundEffect",
         classPower = "classPower",
         totem = "totem",
+        playerStat = "playerStat",
         tooltipMonitor = "tooltipMonitor",
     }),
 
-    -- 7 大獨立告警框架名稱
+    -- 8 大獨立告警框架名稱
     ALERT_FRAME_TYPES = freeze({
         selfAura = "selfAura",
         targetAura = "targetAura",
@@ -96,6 +97,7 @@ EAM.Constants = freeze({
         classPower = "classPower",
         groundEffect = "groundEffect",
         totem = "totem",
+        playerStat = "playerStat",
     }),
 
     ALERT_BORDER_STYLE_KEYS = freeze({

@@ -469,6 +469,9 @@ local function triggerGroundEffect(canonicalSpellID, activationSpellID)
     local state = GroundEffectService.activeStates[canonicalSpellID]
     if not state then
         local name, icon = readSpellPresentation(canonicalSpellID, alert)
+        if alert.customIcon and alert.customIcon ~= "" then
+            icon = tonumber(alert.customIcon) or alert.customIcon
+        end
         state = GroundEffectStatePool.acquire()
         state.id = "groundEffect_" .. canonicalSpellID
         state.kind = EAM.Constants.ALERT_KIND_GROUND_EFFECT

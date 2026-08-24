@@ -981,6 +981,12 @@ local PREVIEW_CONFIG = {
             { text = "圖騰監控(1)", step = 0, isTotem = true, sampleStack = nil, sampleCD = 15 },
         }
     },
+    playerStat = {
+        title = "EAM - 角色屬性與吸收量框架",
+        slots = {
+            { text = "★ 屬性/吸收量", step = 0, isStat = true, sampleStack = nil, sampleCD = nil },
+        }
+    },
 }
 
 local function getOrCreatePreviewIcon(parent, index)
@@ -1170,6 +1176,7 @@ function Renderer.setActiveAnchors(targetFrames)
         classPower = EAM.L.EAM_FRAME_CLASS_POWER or "EAM - 職業能量框架",
         groundEffect = EAM.L.EAM_FRAME_GROUND_EFFECT or "EAM - 地面效果框架",
         totem = EAM.L.EAM_FRAME_TOTEM or "EAM - 圖騰監控框架",
+        playerStat = EAM.L.EAM_FRAME_PLAYER_STAT or "EAM - 角色屬性與吸收量框架",
     }
 
     local activeMap = {}

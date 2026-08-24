@@ -183,8 +183,11 @@ local function refreshAlert(alert, eventName)
     state.id = alert.id
     state.kind = EAM.Constants.ALERT_KIND_ITEM_COOLDOWN
     state.itemID = alert.itemID
-    state.name = cItem.GetItemNameByID(alert.itemID) or ((EAM.L.EAM_ITEM_PREFIX or "物品 ") .. alert.itemID)
-    state.icon = cItem.GetItemIconByID(alert.itemID) or "Interface\\Icons\\INV_Misc_QuestionMark"
+    local itemIcon = cItem.GetItemIconByID(alert.itemID) or "Interface\\Icons\\INV_Misc_QuestionMark"
+    if alert.customIcon and alert.customIcon ~= "" then
+        itemIcon = tonumber(alert.customIcon) or alert.customIcon
+    end
+    state.icon = itemIcon
     state.factsSafe = true
     state.active = true
     state.shown = true

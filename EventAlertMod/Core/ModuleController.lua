@@ -39,6 +39,7 @@ local validKeys = freeze({
     groundEffect = true,
     classPower = true,
     totem = true,
+    playerStat = true,
     tooltipMonitor = true,
 })
 
@@ -50,6 +51,7 @@ local moduleOptions = {
     freeze({ key = Keys.groundEffect, labelKey = "EAM_MODULE_GROUND_EFFECT" }),
     freeze({ key = Keys.classPower, labelKey = "EAM_MODULE_CLASS_POWER" }),
     freeze({ key = Keys.totem, labelKey = "EAM_MODULE_TOTEM" }),
+    freeze({ key = Keys.playerStat, labelKey = "EAM_MODULE_PLAYER_STAT" }),
     freeze({ key = Keys.tooltipMonitor, labelKey = "EAM_MODULE_TOOLTIP_MONITOR" }),
 }
 ModuleController.ModuleOptions = freeze(moduleOptions)
@@ -62,6 +64,7 @@ local frameModules = freeze({
     classPower = Keys.classPower,
     groundEffect = Keys.groundEffect,
     totem = Keys.totem,
+    playerStat = Keys.playerStat,
 })
 
 local serviceNames = freeze({
@@ -70,6 +73,7 @@ local serviceNames = freeze({
     groundEffect = "GroundEffectService",
     classPower = "ClassPowerService",
     totem = "TotemService",
+    playerStat = "PlayerStatService",
     tooltipMonitor = "TooltipMonitorService",
 })
 

@@ -934,6 +934,9 @@ function Options.closeAllSidePanels(except)
     if except ~= "resource" then
         safeClosePanel(EAM.UI and EAM.UI.PlayerResourcePanel)
     end
+    if except ~= "stat" then
+        safeClosePanel(EAM.UI and EAM.UI.PlayerStatPanel)
+    end
     if except ~= "debug" then
         safeClosePanel(EAM.UI and EAM.UI.DebugCenterPanel)
     end
@@ -1512,7 +1515,7 @@ local function createFrame()
     createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -162)
     createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 180, -162)
 
-    -- 8 個主要功能大按鈕（職業資源提升至第 7 項目，排版位置提升至第 8 項目）
+    -- 9 個主要功能大按鈕（職業資源第 7 項、角色屬性與吸收量第 8 項、排版位置第 9 項）
     local categories = {
         { key = "EAM_OPT_CAT_SELF", fallback = "自身增益/減益提醒 (Self)" },
         { key = "EAM_OPT_CAT_CLASS", fallback = "跨職業增益/減益提醒 (Class)" },
@@ -1521,6 +1524,7 @@ local function createFrame()
         { key = "EAM_OPT_CAT_ITEM_CD", fallback = "物品冷卻監控設定 (Item CD)" },
         { key = "EAM_OPT_CAT_GROUND", fallback = "地面技能與效果設定 (Ground Effect)" },
         { key = "EAM_OPT_CAT_RESOURCE", fallback = localized("EAM_RESOURCE_OPEN", "★ 玩家職業資源設定 (Player Resource)") },
+        { key = "EAM_OPT_CAT_STAT", fallback = localized("EAM_STAT_OPEN", "★ 角色屬性與吸收量監控 (Player Stats)") },
         { key = "EAM_OPT_CAT_LAYOUT", fallback = "告警框架位置與排版 (Alert Frame Layout)" },
     }
     Options.categoryDefinitions = categories
@@ -1533,11 +1537,12 @@ local function createFrame()
         [5] = "itemCooldown",
         [6] = "groundEffect",
         [7] = "classPower",
-        [8] = "all",
+        [8] = "playerStat",
+        [9] = "all",
     }
 
     for idx, category in ipairs(categories) do
-        createThemedButton(inner, localized(category.key, category.fallback), 12, -192 - (idx - 1) * 29, 332, 26, function()
+        createThemedButton(inner, localized(category.key, category.fallback), 12, -188 - (idx - 1) * 26, 332, 24, function()
             if idx <= 6 then
                 Options.closeAllSidePanels("list")
                 Options.currentCategory = idx
@@ -1557,6 +1562,15 @@ local function createFrame()
                 end
                 if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
                     EAM.UI.Renderer.setActiveAnchors("classPower")
+                end
+            elseif idx == 8 then
+                Options.closeAllSidePanels("stat")
+                local panel = EAM.UI and EAM.UI.PlayerStatPanel
+                if panel and type(panel.open) == "function" then
+                    panel.open()
+                end
+                if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+                    EAM.UI.Renderer.setActiveAnchors("playerStat")
                 end
             else
                 Options.closeAllSidePanels("pos")
@@ -2725,7 +2739,7 @@ local function createFrame()
     -- 4. Spell Conditions Frame (Popup Sub-Window)
     -- ===================================================
     local condFrame = api.CreateFrame("Frame", "EAM_SpellConditionsFrame", UIParent, "BackdropTemplate")
-    condFrame:SetSize(340, 520)
+    condFrame:SetSize(340, 600)
     condFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     condFrame:SetFrameStrata("DIALOG")
     condFrame:SetBackdrop({
@@ -3058,10 +3072,60 @@ local function createFrame()
     bindText(auraSoundHint, "EAM_OPT_AURA_SOUND_INHERIT", "三項皆未勾選時沿用全域音效；實際觸發需 PTR 真人驗證。")
     condFrame.auraSoundHint = auraSoundHint
 
+    -- 自訂替代圖示 (代碼或材質路徑)
+    local customIconLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    customIconLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -450)
+    bindText(customIconLabel, "EAM_OPT_CUSTOM_ICON_LABEL", "自訂替代圖示 (代碼或材質路徑):")
+    condFrame.customIconLabel = customIconLabel
+
+    local customIconEditBox = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
+    customIconEditBox:SetSize(250, 20)
+    customIconEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -468)
+    customIconEditBox:SetAutoFocus(false)
+    condFrame.customIconEditBox = customIconEditBox
+
+    local customIconPreview = condFrame:CreateTexture(nil, "OVERLAY")
+    customIconPreview:SetSize(22, 22)
+    customIconPreview:SetPoint("LEFT", customIconEditBox, "RIGHT", 6, 0)
+    customIconPreview:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    condFrame.customIconPreview = customIconPreview
+
+    customIconEditBox:SetScript("OnTextChanged", function(self)
+        local txt = self:GetText()
+        if txt and txt ~= "" then
+            local iconTex = tonumber(txt) or txt
+            customIconPreview:SetTexture(iconTex)
+            customIconPreview:Show()
+        else
+            customIconPreview:SetTexture(condFrame.icon:GetTexture() or 134400)
+        end
+    end)
+
+    local customIconHint = condFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    customIconHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -494)
+    customIconHint:SetText("可在 WoW.tools / Wago Tools 查詢圖示代碼與路徑:")
+    condFrame.customIconHint = customIconHint
+
+    local customIconUrl = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
+    customIconUrl:SetSize(285, 18)
+    customIconUrl:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -510)
+    customIconUrl:SetAutoFocus(false)
+    customIconUrl:SetText("https://wago.tools/icons")
+    customIconUrl:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    condFrame.customIconUrl = customIconUrl
+
     -- 底部按鈕
-    createThemedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -470, 130, 26, function()
+    createThemedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -550, 130, 26, function()
         local d = Options.currentEditingAlert
         if d then
+            local customIconText = condFrame.customIconEditBox:GetText()
+            if customIconText then
+                customIconText = customIconText:gsub("^%s*(.-)%s*$", "%1")
+                if customIconText == "" then customIconText = nil end
+                if customIconText and tonumber(customIconText) then customIconText = tonumber(customIconText) end
+            end
+            d.customIcon = customIconText
+
             if d.kind == "groundEffect" then
                 local savedVariables = EAM.Modules.SavedVariables
                 if savedVariables and savedVariables.updateGroundEffectAlert then
@@ -3175,7 +3239,7 @@ local function createFrame()
     local cancelBtn = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(cancelBtn) end
     cancelBtn:SetSize(130, 26)
-    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -470)
+    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -550)
     bindText(cancelBtn, "EAM_OPT_COND_CANCEL_BTN", "取消關閉 (Cancel)")
     cancelBtn:SetScript("OnClick", function()
         condFrame.auraSoundMenu:Hide()
@@ -3348,6 +3412,12 @@ function Options.openConditionsFrame(data)
             cf.val3Cb:Show()
             cf.val4Cb:Show()
         end
+    end
+
+    if cf.customIconEditBox then
+        cf.customIconEditBox:SetText(data.customIcon and tostring(data.customIcon) or "")
+        local previewTex = data.customIcon and (tonumber(data.customIcon) or data.customIcon) or (texture or "Interface\\Icons\\INV_Misc_QuestionMark")
+        cf.customIconPreview:SetTexture(previewTex)
     end
 
     if Options.listFrame and Options.listFrame:IsShown() then

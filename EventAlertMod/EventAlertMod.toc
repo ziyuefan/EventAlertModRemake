@@ -65,6 +65,7 @@ Services\ClassPowerService.lua
 Services\GroundEffectService.lua
 Services\TotemService.lua
 Services\TooltipMonitorService.lua
+Services\PlayerStatService.lua
 
 Managers\AuraRuleCompiler.lua
 Managers\AlertManager.lua
@@ -83,6 +84,7 @@ Services\AuraContainerService.lua
 UI\AboutPanel.lua
 UI\ModulePanel.lua
 UI\PlayerResourcePanel.lua
+UI\PlayerStatPanel.lua
 UI\ProfileCodecPanel.lua
 UI\DebugCenterPanel.lua
 UI\Options.lua
