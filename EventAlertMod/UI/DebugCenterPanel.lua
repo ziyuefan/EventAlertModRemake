@@ -429,10 +429,10 @@ local function createFrame()
 
     -- Tab Buttons
     local tabDefs = {
-        { label = "即時後端狀態", key = "EAM_DEBUG_TAB_RUNTIME" },
-        { label = "DK 符文診斷", key = "EAM_DEBUG_TAB_RUNE" },
-        { label = "流程測試運行", key = "EAM_DEBUG_TAB_FLOW" },
-        { label = "系統診斷匯出", key = "EAM_DEBUG_TAB_EXPORT" },
+        { label = "即時後端狀態", key = "EAM_DEBUG_TAB_RUNTIME", tip = "檢視當前版本、12.1 光環容器狀態與各背景服務運行數據" },
+        { label = "DK 符文診斷", key = "EAM_DEBUG_TAB_RUNE", tip = "檢視死亡騎士 6 枚符文冷卻、進度與 JSON 診斷數據" },
+        { label = "流程測試運行", key = "EAM_DEBUG_TAB_FLOW", tip = "在遊戲內即時執行狀態機與流程整合測試" },
+        { label = "系統診斷匯出", key = "EAM_DEBUG_TAB_EXPORT", tip = "匯出包含版本、設定與環境的詳細診斷報告字串" },
     }
     local tabWidth = 142
     for i = 1, #tabDefs do
@@ -453,6 +453,9 @@ local function createFrame()
         bindText(btnText, tabDefs[i].key, tabDefs[i].label)
         if Theme and Theme.registerText then
             Theme.registerText(btnText, "body")
+        end
+        if EAM.UI.setTooltip then
+            EAM.UI.setTooltip(btn, tabDefs[i].tip, tabDefs[i].label)
         end
 
         btn:SetScript("OnClick", function()
@@ -492,12 +495,18 @@ local function createFrame()
     actionBtn1:SetSize(140, 26)
     actionBtn1:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 12)
     if Theme and Theme.registerButton then Theme.registerButton(actionBtn1) end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(actionBtn1, "執行目前分頁之主要操作（刷新/探測/測試/匯出）", "執行操作")
+    end
     Panel.actionButton1 = actionBtn1
 
     local actionBtn2 = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     actionBtn2:SetSize(120, 26)
     actionBtn2:SetPoint("LEFT", actionBtn1, "RIGHT", 10, 0)
     bindText(actionBtn2, "EAM_DEBUG_BTN_SELECT_ALL", "全選複製")
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(actionBtn2, "全選文字方塊中的所有文字以便按 Ctrl+C 複製分享", "全選複製")
+    end
     actionBtn2:SetScript("OnClick", selectAllForCopy)
     if Theme and Theme.registerButton then Theme.registerButton(actionBtn2) end
     Panel.actionButton2 = actionBtn2
@@ -506,6 +515,9 @@ local function createFrame()
     closeBtn:SetSize(100, 26)
     closeBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 12)
     bindText(closeBtn, "EAM_OPT_CLOSE_BTN", "關閉")
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(closeBtn, "關閉除錯與測試診斷中心", "關閉")
+    end
     closeBtn:SetScript("OnClick", function()
         frame:Hide()
     end)

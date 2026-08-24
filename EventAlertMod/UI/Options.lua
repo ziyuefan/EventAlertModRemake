@@ -122,6 +122,44 @@ local function setWidgetText(target, value)
     return false
 end
 
+local function resolveText(value)
+    if not value then return nil end
+    if type(value) == "table" and value.eamLocaleKey then
+        return (EAM.L and EAM.L[value.eamLocaleKey]) or value.fallback or value.eamLocaleKey
+    end
+    if type(value) == "string" and EAM.L and EAM.L[value] then
+        return EAM.L[value]
+    end
+    return tostring(value)
+end
+
+local function setTooltip(widget, tooltipText, tooltipTitle)
+    if not widget or not tooltipText then return end
+    
+    local origOnEnter = widget:GetScript("OnEnter")
+    local origOnLeave = widget:GetScript("OnLeave")
+    
+    widget:SetScript("OnEnter", function(self, ...)
+        if origOnEnter then origOnEnter(self, ...) end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        local title = resolveText(tooltipTitle)
+        if title and title ~= "" then
+            GameTooltip:AddLine(title, 0.95, 0.85, 0.4)
+        end
+        local desc = resolveText(tooltipText)
+        if desc and desc ~= "" then
+            GameTooltip:AddLine(desc, 1.0, 1.0, 1.0, true)
+        end
+        GameTooltip:Show()
+    end)
+    
+    widget:SetScript("OnLeave", function(self, ...)
+        if origOnLeave then origOnLeave(self, ...) end
+        GameTooltip:Hide()
+    end)
+end
+EAM.UI.setTooltip = setTooltip
+
 local MINIMAP_FALLBACK_TEXTURE = "Interface\\Icons\\Trade_Engineering"
 
 -- 12 種經典音效的 FileDataID 與自訂 PATH
@@ -987,7 +1025,7 @@ function Options.removeAlertFromCurrentCategory(id)
 end
 
 -- 建立通用 Checkbox
-local function createCheckbox(parent, text, key, x, y, onChange)
+local function createCheckbox(parent, text, key, x, y, onChange, tooltipText, tooltipTitle)
     local cb = api.CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     cb:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     cb.text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1013,11 +1051,14 @@ local function createCheckbox(parent, text, key, x, y, onChange)
             Options.notifyConfigChanged(rebuildNative)
         end
     end)
+    if tooltipText then
+        setTooltip(cb, tooltipText, tooltipTitle or text)
+    end
     return cb
 end
 
 -- 建立由 Theme 統一控制底色、狀態色與邊框的 EAM 按鈕。
-local function createThemedButton(parent, text, x, y, width, height, onClick)
+local function createThemedButton(parent, text, x, y, width, height, onClick, tooltipText, tooltipTitle)
     local btn = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     btn:SetSize(width or 120, height or 24)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -1025,6 +1066,9 @@ local function createThemedButton(parent, text, x, y, width, height, onClick)
     if Theme and Theme.registerButton then Theme.registerButton(btn) end
 
     btn:SetScript("OnClick", onClick)
+    if tooltipText then
+        setTooltip(btn, tooltipText, tooltipTitle or text)
+    end
     return btn
 end
 
@@ -1076,7 +1120,7 @@ local function finalizeDropdownMenuButton(button, label, menu)
 end
 
 -- 建立通用 Slider
-local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width, isPercent, isFloat)
+local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width, isPercent, isFloat, tooltipText, tooltipTitle)
     local slider = api.CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     slider:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     slider:SetMinMaxValues(minVal, maxVal)
@@ -1188,6 +1232,10 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
         slider:HookScript("OnHide", commitNativeChange)
     end
 
+    if tooltipText then
+        setTooltip(slider, tooltipText, tooltipTitle or text)
+    end
+
     return slider
 end
 
@@ -1238,6 +1286,7 @@ local function createFrame()
     moduleButton:SetSize(72, 22)
     moduleButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -13)
     bindText(moduleButton, "EAM_OPT_MODULES_BTN", "功能模組")
+    setTooltip(moduleButton, "開啟或關閉各項獨立功能模組（自身、目標、冷卻、物品、地面、資源、屬性等）", "功能模組")
     moduleButton:SetScript("OnClick", function()
         Options.closeAllSidePanels("module")
         local modulePanel = EAM.UI and EAM.UI.ModulePanel or nil
@@ -1251,6 +1300,7 @@ local function createFrame()
     aboutButton:SetSize(56, 22)
     aboutButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -34, -13)
     bindText(aboutButton, "EAM_OPT_ABOUT_BTN", "關於")
+    setTooltip(aboutButton, "查看插件版本資訊、作者、更新日誌與技術架構說明", "關於 EventAlertMod")
     aboutButton:SetScript("OnClick", function()
         Options.closeAllSidePanels("about")
         local aboutPanel = EAM.UI and EAM.UI.AboutPanel or nil
@@ -1283,6 +1333,7 @@ local function createFrame()
     if Theme and Theme.registerButton then Theme.registerButton(themeDropdown) end
     themeDropdown:SetSize(154, 22)
     themeDropdown:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -12, -10)
+    setTooltip(themeDropdown, "切換 EAM 設定介面之邊框與按鈕主題外觀風格", "介面佈局主題")
     Options.themeDropdown = themeDropdown
 
     local themeMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
@@ -1344,6 +1395,7 @@ local function createFrame()
     soundDropdown:SetSize(110, 22)
     soundDropdown:SetPoint("TOPLEFT", inner, "TOPLEFT", 12, -10)
     soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. "ShayBell")
+    setTooltip(soundDropdown, "選擇觸發提醒時播放的預設音效", "音效警告")
     Options.soundDropdown = soundDropdown
 
     local playSoundBtn = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
@@ -1351,6 +1403,7 @@ local function createFrame()
     playSoundBtn:SetSize(44, 22)
     playSoundBtn:SetPoint("LEFT", soundDropdown, "RIGHT", 6, 0)
     bindText(playSoundBtn, "EAM_OPT_TEST_BTN", "測試")
+    setTooltip(playSoundBtn, "播放當前選擇的音效檔案進行試聽", "測試音效")
 
     local soundMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
     soundMenu:SetSize(140, 268)
@@ -1410,6 +1463,7 @@ local function createFrame()
     if Theme and Theme.registerButton then Theme.registerButton(languageDropdown) end
     languageDropdown:SetSize(158, 22)
     languageDropdown:SetPoint("TOPLEFT", inner, "TOPLEFT", 12, -38)
+    setTooltip(languageDropdown, "切換插件顯示之語系（繁體中文/簡體中文/英文/韓文/俄文/自動偵測）", "插件語言")
     Options.languageDropdown = languageDropdown
 
     local languageMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
@@ -1475,6 +1529,7 @@ local function createFrame()
     nativeAuraRebuildButton:SetSize(54, 20)
     nativeAuraRebuildButton:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -12, -38)
     bindText(nativeAuraRebuildButton, "EAM_OPT_AURA_APPLY", "套用")
+    setTooltip(nativeAuraRebuildButton, "立即手動重建暴雪底層 Native Aura 結構以套用最新光環設定", "套用 Native Aura")
     nativeAuraRebuildButton:SetScript("OnClick", function()
         local service = EAM.Services.AuraContainerService
         if service and service.requestRebuild then
@@ -1485,10 +1540,10 @@ local function createFrame()
     Options.refreshAuraBackendStatus()
 
     -- 10 個核心設定 Checkboxes（對齊 2 欄 5 行）
-    createCheckbox(inner, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 12, -66)
-    createCheckbox(inner, localized("EAM_OPT_SHOW_SPELL_NAME", "顯示法術名稱"), "showSpellName", 180, -66)
+    createCheckbox(inner, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 12, -66, nil, "總開關：開啟或暫停所有畫面中央告警框架的顯示", "啟用提醒框架")
+    createCheckbox(inner, localized("EAM_OPT_SHOW_SPELL_NAME", "顯示法術名稱"), "showSpellName", 180, -66, nil, "在告警圖示上方或下方顯示技能與物品名稱", "顯示法術名稱")
 
-    createCheckbox(inner, localized("EAM_OPT_SHOW_TIME_VAL", "顯示倒數秒數"), "showTimeVal", 12, -90)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_TIME_VAL", "顯示倒數秒數"), "showTimeVal", 12, -90, nil, "在告警圖示上即時顯示剩餘持續時間或冷卻秒數", "顯示倒數秒數")
     createCheckbox(
         inner,
         localized("EAM_OPT_SHOW_SOUND", "啟用音效警告"),
@@ -1498,35 +1553,37 @@ local function createFrame()
         function()
             notifyAuraSoundChanged()
             return false
-        end
+        end,
+        "當新提醒觸發時播放對應警示音效",
+        "啟用音效警告"
     )
 
-    createCheckbox(inner, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 12, -114)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 12, -114, nil, "當特定重大光環觸發或進入戰鬥時，全螢幕邊緣閃爍紅框", "啟用全螢幕閃爍")
     createThemedButton(inner, localized("EAM_OPT_TEST_FLASH", "測試閃爍"), 118, -114, 54, 20, function()
         local flash = EAM.UI and EAM.UI.CombatFlash
         if flash and type(flash.trigger) == "function" then
             flash.trigger()
         end
-    end)
-    createCheckbox(inner, localized("EAM_OPT_ALLOW_ESC", "啟用 ESC 鍵關閉"), "allowEscCancel", 180, -114)
+    end, "立即觸發一次全螢幕紅框閃爍動畫預覽", "測試閃爍")
+    createCheckbox(inner, localized("EAM_OPT_ALLOW_ESC", "啟用 ESC 鍵關閉"), "allowEscCancel", 180, -114, nil, "按鍵盤 ESC 鍵時自動關閉 EAM 設定視窗", "啟用 ESC 鍵關閉")
 
-    createCheckbox(inner, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 12, -138)
-    createCheckbox(inner, localized("EAM_OPT_SHOW_SCD_OUTSIDE", "非戰鬥顯示技能冷卻"), "showSCDOutsideCombat", 180, -138)
+    createCheckbox(inner, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 12, -138, nil, "啟用特異光環與特殊職業機制的輔助提示", "顯示額外輔助提醒")
+    createCheckbox(inner, localized("EAM_OPT_SHOW_SCD_OUTSIDE", "非戰鬥顯示技能冷卻"), "showSCDOutsideCombat", 180, -138, nil, "脫離戰鬥後仍持續顯示技能冷卻倒數", "非戰鬥顯示技能冷卻")
 
-    createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -162)
-    createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 180, -162)
+    createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -162, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除光環")
+    createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 180, -162, nil, "技能冷卻完畢且可用時，圖示外框發出流光動畫提示", "可用時高亮技能冷卻")
 
     -- 9 個主要功能大按鈕（職業資源第 7 項、角色屬性與吸收量第 8 項、排版位置第 9 項）
     local categories = {
-        { key = "EAM_OPT_CAT_SELF", fallback = "自身增益/減益提醒 (Self)" },
-        { key = "EAM_OPT_CAT_CLASS", fallback = "跨職業增益/減益提醒 (Class)" },
-        { key = "EAM_OPT_CAT_TARGET", fallback = "目標增益/減益提醒 (Target)" },
-        { key = "EAM_OPT_CAT_SPELL_CD", fallback = "技能冷卻監控設定 (Spell CD)" },
-        { key = "EAM_OPT_CAT_ITEM_CD", fallback = "物品冷卻監控設定 (Item CD)" },
-        { key = "EAM_OPT_CAT_GROUND", fallback = "地面技能與效果設定 (Ground Effect)" },
-        { key = "EAM_OPT_CAT_RESOURCE", fallback = localized("EAM_RESOURCE_OPEN", "★ 玩家職業資源設定 (Player Resource)") },
-        { key = "EAM_OPT_CAT_STAT", fallback = localized("EAM_STAT_OPEN", "★ 角色屬性與吸收量監控 (Player Stats)") },
-        { key = "EAM_OPT_CAT_LAYOUT", fallback = "告警框架位置與排版 (Alert Frame Layout)" },
+        { key = "EAM_OPT_CAT_SELF", fallback = "自身增益/減益提醒 (Self)", tip = "設定玩家自身身上觸發的 Buff 與 Debuff 告警清單" },
+        { key = "EAM_OPT_CAT_CLASS", fallback = "跨職業增益/減益提醒 (Class)", tip = "設定所有其他職業之通用或重要光環監控" },
+        { key = "EAM_OPT_CAT_TARGET", fallback = "目標增益/減益提醒 (Target)", tip = "設定當前選取目標身上的 Buff/Debuff（如斬殺、流血、易傷等）" },
+        { key = "EAM_OPT_CAT_SPELL_CD", fallback = "技能冷卻監控設定 (Spell CD)", tip = "設定主要技能的冷卻時間、充能層數與可用高亮提醒" },
+        { key = "EAM_OPT_CAT_ITEM_CD", fallback = "物品冷卻監控設定 (Item CD)", tip = "設定飾品、藥水、主動使用裝備之冷卻時間監控" },
+        { key = "EAM_OPT_CAT_GROUND", fallback = "地面技能與效果設定 (Ground Effect)", tip = "設定死亡凋零、奉獻等無目標地面法術之持續時間提醒" },
+        { key = "EAM_OPT_CAT_RESOURCE", fallback = localized("EAM_RESOURCE_OPEN", "★ 玩家職業資源設定 (Player Resource)"), tip = "設定連擊點、聖能、符文、真氣、魂片、奧術充能等能量條與數值" },
+        { key = "EAM_OPT_CAT_STAT", fallback = localized("EAM_STAT_OPEN", "★ 角色屬性與吸收量監控 (Player Stats)"), tip = "設定力量/敏捷/致命/加速/精通/跑速/飛龍騎術/護甲/吸收盾等即時監控" },
+        { key = "EAM_OPT_CAT_LAYOUT", fallback = "告警框架位置與排版 (Alert Frame Layout)", tip = "調整各告警模組圖示大小、間距、排列方向、字型大小與排版" },
     }
     Options.categoryDefinitions = categories
 
@@ -1582,7 +1639,7 @@ local function createFrame()
                     EAM.UI.Renderer.setActiveAnchors("all")
                 end
             end
-        end)
+        end, category.tip, category.fallback)
     end
 
     -- 底部操作按鈕：Profile 匯入/匯出、整合診斷中心與關閉按鈕
@@ -1594,7 +1651,7 @@ local function createFrame()
         else
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_PROFILE_CODEC_STATUS_UNAVAILABLE or "Profile codec 尚未載入。"))
         end
-    end)
+    end, "將當前職業設定匯出為 JSON/Base64 字串，或從其他玩家字串匯入", "Profile 匯入／匯出")
 
     createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -432, 162, 26, function()
         Options.closeAllSidePanels("debug")
@@ -1606,11 +1663,11 @@ local function createFrame()
         else
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_DEBUG_NOT_LOADED or "除錯診斷模組尚未載入！"))
         end
-    end)
+    end, "執行流程自動化驗證、實機回報、運行探針與 AI 診斷報告輸出", "除錯與測試診斷中心")
 
     createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -462, 332, 26, function()
         frame:Hide()
-    end)
+    end, "關閉主設定面板與所有二級子視窗", "關閉設定")
 
     Options.frame = frame
 
@@ -1662,18 +1719,18 @@ local function createFrame()
     -- ---------------------------------------------------
     -- 【左側欄位】：告警圖示尺寸、間距與字型滑桿（寬度 250px）
     -- ---------------------------------------------------
-    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SIZE", "圖示大小 (Icon Size)"), "iconSize", 20, 100, 1, 16, -20, 250)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SPACING", "水平間距 (Horizontal Spacing)"), "iconSpacing", -200, 200, 1, 16, -68, 250)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_VERT_SPACING", "垂直間距 (Vertical Spacing)"), "verticalSpacing", -200, 200, 1, 16, -116, 250)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_SPELL", "法術名稱字型 (Spell Font)"), "fontSizeSpellName", 8, 32, 1, 16, -164, 250)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_CD", "秒數倒數字型 (CD Font)"), "fontSizeTimeVal", 8, 32, 1, 16, -212, 250)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_STACK", "堆疊層數字型 (Stack Font)"), "fontSizeStack", 8, 32, 1, 16, -260, 250)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_SHADOW_ALPHA", "倒數轉圈透明度 (Swipe Alpha)"), "cooldownSwipeAlpha", 0, 1, 0.05, 16, -308, 250, true)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自身減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 16, -356, 250, true)
-    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 16, -404, 250, true)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SIZE", "圖示大小 (Icon Size)"), "iconSize", 20, 100, 1, 16, -20, 250, nil, nil, "調整自身、目標、技能冷卻等所有告警圖示的寬高像素尺寸", "圖示大小")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SPACING", "水平間距 (Horizontal Spacing)"), "iconSpacing", -200, 200, 1, 16, -68, 250, nil, nil, "調整相鄰告警圖示之間的水平間距像素距離", "水平間距")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_VERT_SPACING", "垂直間距 (Vertical Spacing)"), "verticalSpacing", -200, 200, 1, 16, -116, 250, nil, nil, "調整圖示換行或垂直成長時的垂直間距像素距離", "垂直間距")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_SPELL", "法術名稱字型 (Spell Font)"), "fontSizeSpellName", 8, 32, 1, 16, -164, 250, nil, nil, "調整顯示在圖示上方之法術與物品名稱的文字大小", "法術名稱字型")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_CD", "秒數倒數字型 (CD Font)"), "fontSizeTimeVal", 8, 32, 1, 16, -212, 250, nil, nil, "調整顯示在圖示上之剩餘秒數倒數計時數字大小", "秒數倒數字型")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_STACK", "堆疊層數字型 (Stack Font)"), "fontSizeStack", 8, 32, 1, 16, -260, 250, nil, nil, "調整顯示在圖示上之 Buff/Debuff 堆疊層數數字大小", "堆疊層數字型")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_SHADOW_ALPHA", "倒數轉圈透明度 (Swipe Alpha)"), "cooldownSwipeAlpha", 0, 1, 0.05, 16, -308, 250, true, nil, "調整技能冷卻時扇形倒數陰影遮罩的透明度 (0~100%)", "倒數轉圈透明度")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自身減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 16, -356, 250, true, nil, "自身受到減益效果 (Debuff) 時圖示邊框的紅色著色程度", "自身減益色度")
+    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 16, -404, 250, true, nil, "目標身上為減益效果時圖示邊框的綠色著色程度", "目標減益色度")
     
-    createSlider(posInner, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 16, -452, 130, true)
-    createCheckbox(posInner, localized("EAM_OPT_ENABLE_EXECUTE", "啟用斬殺線"), "enableBossExecute", 160, -458)
+    createSlider(posInner, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 16, -452, 130, true, nil, "設定目標斬殺血量比例門檻（例如 20% 或 35%）", "斬殺血量閾值")
+    createCheckbox(posInner, localized("EAM_OPT_ENABLE_EXECUTE", "啟用斬殺線"), "enableBossExecute", 160, -458, nil, "啟用目標進入斬殺血量時之高亮提示與警示外框", "啟用斬殺線")
 
     -- ---------------------------------------------------
     -- 【右側欄位】：框架成長方向、文字錨點、全域字型與充能條
@@ -1694,6 +1751,7 @@ local function createFrame()
         if Theme and Theme.registerButton then Theme.registerButton(btn) end
         btn:SetSize(130, 20)
         btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
+        setTooltip(btn, "選擇此模組多個告警圖示出現時的排列延伸方向（向右/向左/向上/向下）", labelText)
         
         local directions = {
             localized("EAM_OPT_DIR_RIGHT", "往右 (→)"),
@@ -1785,6 +1843,7 @@ local function createFrame()
         if Theme and Theme.registerButton then Theme.registerButton(btn) end
         btn:SetSize(130, 20)
         btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
+        setTooltip(btn, "選擇文字或數字在圖示上的相對錨點位置（正中央、上方、下方、角落等）", labelText)
 
         local function updateBtnText()
             if EAM.db and EAM.db.config then
@@ -1859,6 +1918,7 @@ local function createFrame()
     if Theme and Theme.registerButton then Theme.registerButton(fontDropdown) end
     fontDropdown:SetSize(275, 20)
     fontDropdown:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -256)
+    setTooltip(fontDropdown, "切換所有告警文字與數字所使用的全局字型", "全域字型選擇")
     Options.fontDropdown = fontDropdown
 
     local fontOptions = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
@@ -1928,6 +1988,7 @@ local function createFrame()
     if Theme and Theme.registerButton then Theme.registerButton(chargeBarDropdown) end
     chargeBarDropdown:SetSize(275, 22)
     chargeBarDropdown:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -310)
+    setTooltip(chargeBarDropdown, "選擇技能充能次數條的顯示樣式（圖示下方、上方、左側、右側、環形）", "充能技能剩餘次數列")
     Options.chargeBarDropdown = chargeBarDropdown
 
     local chargeBarMenu = api.CreateFrame("Frame", nil, posInner, "BackdropTemplate")
@@ -1982,13 +2043,13 @@ local function createFrame()
         posInner,
         localized("EAM_CHARGE_BAR_LENGTH", "長度／環徑（圖示 %）"),
         "chargeBarLengthPercent",
-        100, 250, 5, 300, -345, 275
+        100, 250, 5, 300, -345, 275, nil, nil, "調整充能條長度佔圖示寬度的百分比", "充能條長度"
     )
     createSlider(
         posInner,
         localized("EAM_CHARGE_BAR_THICKNESS", "厚度（px）"),
         "chargeBarThickness",
-        4, 16, 1, 300, -393, 275
+        4, 16, 1, 300, -393, 275, nil, nil, "調整充能條本身的粗細像素高度", "充能條粗細"
     )
 
     local chargeBarHint = posInner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -2010,7 +2071,7 @@ local function createFrame()
         else
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_MOVE_MODE_ON_PRINT or "移動模式已啟動（請使用 /eam 拖曳）"))
         end
-    end)
+    end, "在畫面上亮起半透明移動錨點框，方便使用滑鼠直觀拖曳調整在畫面上的定位", "移動提醒框架")
 
     createThemedButton(posInner, localized("EAM_OPT_RESET_FRAME_BTN", "重設所有圖示與位置"), 300, -516, 275, 28, function()
         if EAM.db and EAM.db.layout then
@@ -2049,7 +2110,7 @@ local function createFrame()
             end
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_RESET_FRAME_SUCCESS or "已將所有告警框架位置與成長方向重設為預設配置。"))
         end
-    end)
+    end, "將所有告警模組之框架位置、成長方向、圖示尺寸與間距全部恢復為系統預設值", "重設所有圖示與位置")
 
     Options.posFrame = posFrame
 
@@ -2107,6 +2168,7 @@ local function createFrame()
     selectAllBtn:SetSize(86, 22)
     selectAllBtn:SetPoint("TOPLEFT", listInner, "TOPLEFT", 8, -8)
     bindText(selectAllBtn, "EAM_OPT_SELECT_ALL", "全部選擇")
+    setTooltip(selectAllBtn, "一鍵勾選啟用清單中的所有監控項目", "全部選擇")
     selectAllBtn:SetScript("OnClick", function() batchOperation("select") end)
 
     local deselectAllBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
@@ -2114,6 +2176,7 @@ local function createFrame()
     deselectAllBtn:SetSize(86, 22)
     deselectAllBtn:SetPoint("LEFT", selectAllBtn, "RIGHT", 4, 0)
     bindText(deselectAllBtn, "EAM_OPT_DESELECT_ALL", "全部取消")
+    setTooltip(deselectAllBtn, "一鍵取消勾選清單中的所有監控項目", "全部取消")
     deselectAllBtn:SetScript("OnClick", function() batchOperation("deselect") end)
 
     local defaultsBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
@@ -2121,6 +2184,7 @@ local function createFrame()
     defaultsBtn:SetSize(86, 22)
     defaultsBtn:SetPoint("LEFT", deselectAllBtn, "RIGHT", 4, 0)
     bindText(defaultsBtn, "EAM_OPT_DEFAULTS_BTN", "預設值")
+    setTooltip(defaultsBtn, "自動載入當前職業之推薦常用法術監控清單", "載入預設值")
     defaultsBtn:SetScript("OnClick", function()
         if Options.currentCategory == 2 then
             print("|cff00ff96EAM|r " .. (
@@ -2186,6 +2250,7 @@ local function createFrame()
     deleteAllBtn:SetSize(86, 22)
     deleteAllBtn:SetPoint("LEFT", defaultsBtn, "RIGHT", 4, 0)
     bindText(deleteAllBtn, "EAM_OPT_DELETE_ALL", "全部刪除")
+    setTooltip(deleteAllBtn, "清空當前分類下的所有法術與物品監控項目", "全部刪除")
     deleteAllBtn:SetScript("OnClick", function() batchOperation("delete") end)
 
     -- 專精篩選下拉選單按鈕
@@ -2193,6 +2258,7 @@ local function createFrame()
     if Theme and Theme.registerButton then Theme.registerButton(specDropdown) end
     specDropdown:SetSize(160, 22)
     specDropdown:SetPoint("TOPLEFT", listInner, "TOPLEFT", 8, -36)
+    setTooltip(specDropdown, "依當前職業天賦專精過濾顯示專屬推薦技能清單", "天賦專精過濾")
     Options.specDropdown = specDropdown
     Options.refreshSpecDropdown()
 
@@ -2343,6 +2409,7 @@ local function createFrame()
             itemFrame.delBtn = api.CreateFrame("Button", nil, itemFrame)
             itemFrame.delBtn:SetSize(16, 16)
             itemFrame.delBtn:SetPoint("RIGHT", itemFrame, "RIGHT", -10, 0)
+            setTooltip(itemFrame.delBtn, "從監控清單中移除此法術/物品", "刪除監控")
             
             local delText = itemFrame.delBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             delText:SetPoint("CENTER", itemFrame.delBtn, "CENTER", 0, 0)
@@ -2362,6 +2429,7 @@ local function createFrame()
             itemFrame.gearBtn:SetSize(18, 18)
             itemFrame.gearBtn:SetPoint("RIGHT", itemFrame.delBtn, "LEFT", -8, 0)
             itemFrame.gearBtn:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+            setTooltip(itemFrame.gearBtn, "開啟此法術之進階條件（倒數、堆疊、自訂替代圖示、音效警示、冷卻覆寫等）", "條件設定")
             local gTex = itemFrame.gearBtn:GetNormalTexture()
             if gTex then
                 gTex:SetVertexColor(1, 1, 1, 0.95)
@@ -2379,6 +2447,7 @@ local function createFrame()
         
         -- Checkbox
         itemFrame.checkbox:SetChecked(data.enabled)
+        setTooltip(itemFrame.checkbox, "勾選以啟用此項目在畫面上的告警提示", "啟用/停用")
         itemFrame.checkbox:SetScript("OnClick", function(self)
             data.enabled = self:GetChecked()
             Options.notifyConfigChanged()
@@ -2450,6 +2519,7 @@ local function createFrame()
     addEditBox:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 12, 38)
     addEditBox:SetAutoFocus(false)
     addEditBox:SetNumeric(true)
+    setTooltip(addEditBox, "輸入要加入或刪除的法術 ID (Spell ID) 或物品 ID (Item ID)", "輸入法術/物品 ID")
     Options.addEditBox = addEditBox
 
     local addBtn = createThemedButton(listInner, localized("EAM_OPT_ADD_BTN", "新增"), 158, 0, 60, 24, function()
@@ -2460,7 +2530,7 @@ local function createFrame()
         end
         Options.addAlertToCurrentCategory(idVal)
         addEditBox:SetText("")
-    end)
+    end, "將輸入框中的 ID 加入當前分類之監控清單", "新增監控")
     addBtn:ClearAllPoints()
     addBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 158, 38)
 
@@ -2472,7 +2542,7 @@ local function createFrame()
         end
         Options.removeAlertFromCurrentCategory(idVal)
         addEditBox:SetText("")
-    end)
+    end, "將輸入框中的 ID 從當前分類中移除", "刪除監控")
     delBtn:ClearAllPoints()
     delBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 224, 38)
 
@@ -2480,7 +2550,7 @@ local function createFrame()
         if Options.openBatchFrame then
             Options.openBatchFrame()
         end
-    end)
+    end, "開啟多行文字方塊，一次匯入、備份或管理多個法術 ID", "批次輸入")
     batchBtn:ClearAllPoints()
     batchBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 290, 38)
 
@@ -2627,12 +2697,15 @@ local function createFrame()
         setBatchStatus("EAM_OPT_BATCH_LOADED", "已載入目前清單，可按全選複製。")
     end
 
-    local function makeBatchButton(key, fallback, width, point, handler)
+    local function makeBatchButton(key, fallback, width, point, handler, tooltipText, tooltipTitle)
         local button = api.CreateFrame("Button", nil, batchFrame, "UIPanelButtonTemplate")
         button:SetSize(width, 26)
         button:SetPoint(unpack(point))
         bindText(button, key, fallback)
         button:SetScript("OnClick", handler)
+        if tooltipText then
+            setTooltip(button, tooltipText, tooltipTitle or fallback)
+        end
         if Theme and Theme.registerButton then Theme.registerButton(button) end
         return button
     end
@@ -2642,7 +2715,9 @@ local function createFrame()
         "載入目前清單",
         108,
         { "BOTTOMLEFT", batchFrame, "BOTTOMLEFT", 18, 24 },
-        loadBatchCurrent
+        loadBatchCurrent,
+        "讀取當前分類已啟用的所有法術 ID 至多行文字框中",
+        "載入目前清單"
     )
     makeBatchButton(
         "EAM_OPT_BATCH_SELECT",
@@ -2655,7 +2730,9 @@ local function createFrame()
             if not ok then
                 setBatchStatus("EAM_OPT_BATCH_COPY_FAILED", "無法自動選取，請按 Ctrl+A、Ctrl+C。")
             end
-        end
+        end,
+        "全選輸入框中的所有文字以便按 Ctrl+C 複製分享",
+        "全選複製"
     )
     makeBatchButton(
         "EAM_OPT_BATCH_ADD",
@@ -2680,7 +2757,9 @@ local function createFrame()
                 report.invalid,
                 report.reclassified
             )
-        end
+        end,
+        "解析並將輸入框中的所有 ID 批次新增至當前分類",
+        "一鍵加入"
     )
     makeBatchButton(
         "EAM_OPT_BATCH_CLEAR",
@@ -2690,7 +2769,9 @@ local function createFrame()
         function()
             batchEditBox:SetText("")
             batchStatusText:SetText("")
-        end
+        end,
+        "清空多行輸入框中的所有文字",
+        "清空"
     )
     makeBatchButton(
         "EAM_OPT_BATCH_CLOSE",
@@ -2700,7 +2781,9 @@ local function createFrame()
         function()
             batchEditBox:ClearFocus()
             batchFrame:Hide()
-        end
+        end,
+        "關閉批次輸入視窗",
+        "關閉"
     )
 
     function Options.openBatchFrame()
@@ -2811,6 +2894,7 @@ local function createFrame()
     stackSlider:SetValueStep(1)
     stackSlider:SetObeyStepOnDrag(true)
     stackSlider:SetSize(130, 16)
+    setTooltip(stackSlider, "當光環堆疊層數達到或超過此數值時才顯示提醒（0 表示無限制）", "堆疊層數閾值")
     local stackLabel = stackSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     stackLabel:SetPoint("BOTTOMLEFT", stackSlider, "TOPLEFT", 0, 5)
     bindText(stackLabel, "EAM_OPT_COND_STACK", "堆疊層數閾值")
@@ -2827,6 +2911,7 @@ local function createFrame()
     glowSlider:SetValueStep(1)
     glowSlider:SetObeyStepOnDrag(true)
     glowSlider:SetSize(130, 16)
+    setTooltip(glowSlider, "當光環堆疊層數達到此數值時觸發外框高亮流光動畫", "堆疊高亮閾值")
     local glowLabel = glowSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     glowLabel:SetPoint("BOTTOMLEFT", glowSlider, "TOPLEFT", 0, 5)
     bindText(glowLabel, "EAM_OPT_COND_GLOW", "堆疊高亮閾值")
@@ -2843,6 +2928,7 @@ local function createFrame()
     redLimitSlider:SetValueStep(1)
     redLimitSlider:SetObeyStepOnDrag(true)
     redLimitSlider:SetSize(130, 16)
+    setTooltip(redLimitSlider, "剩餘秒數低於此數值時倒數數字變為紅色警戒顯示", "倒數紅字限制")
     local redLimitLabel = redLimitSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     redLimitLabel:SetPoint("BOTTOMLEFT", redLimitSlider, "TOPLEFT", 0, 5)
     bindText(redLimitLabel, "EAM_OPT_COND_RED_LIMIT", "倒數紅字限制 (秒)")
@@ -2859,6 +2945,7 @@ local function createFrame()
     prioritySlider:SetValueStep(1)
     prioritySlider:SetObeyStepOnDrag(true)
     prioritySlider:SetSize(130, 16)
+    setTooltip(prioritySlider, "決定多個告警圖示並存時的排序優先權重（數值越大越靠前）", "排序優先級")
     local priorityLabel = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     priorityLabel:SetPoint("BOTTOMLEFT", prioritySlider, "TOPLEFT", 0, 5)
     bindText(priorityLabel, "EAM_OPT_COND_PRIORITY", "排序優先級 (Priority)")
@@ -2875,6 +2962,7 @@ local function createFrame()
     fromPlayerCb.text = fromPlayerCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fromPlayerCb.text:SetPoint("LEFT", fromPlayerCb, "RIGHT", 4, 1)
     bindText(fromPlayerCb.text, "EAM_OPT_COND_PLAYER_ONLY", "僅監控自己施放")
+    setTooltip(fromPlayerCb, "勾選時僅監控由玩家自己施放的光環，忽略其他玩家施放的相同技能", "僅監控自己施放")
     condFrame.fromPlayerCb = fromPlayerCb
 
     condFrame.cooldownBehaviorButtons = {}
@@ -2896,7 +2984,9 @@ local function createFrame()
                     self.eamValue = nil
                 end
                 Options.refreshCooldownBehaviorControls()
-            end
+            end,
+            "自訂此技能之冷卻狀態判斷行為（預設/強制啟用/強制停用）",
+            "冷卻行為覆寫"
         )
         button.eamBehaviorField = definition.field
         button.eamValue = nil
@@ -2914,6 +3004,7 @@ local function createFrame()
     val1Cb.text = val1Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val1Cb.text:SetPoint("LEFT", val1Cb, "RIGHT", 4, 1)
     bindText(val1Cb.text, "EAM_OPT_COND_VAL1", "顯示數值 1 (Value 1)")
+    setTooltip(val1Cb, "在圖示旁顯示暴雪光環數據中的第 1 個附加數值（如護盾吸收量）", "顯示數值 1")
     condFrame.val1Cb = val1Cb
 
     local val2Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
@@ -2921,6 +3012,7 @@ local function createFrame()
     val2Cb.text = val2Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val2Cb.text:SetPoint("LEFT", val2Cb, "RIGHT", 4, 1)
     bindText(val2Cb.text, "EAM_OPT_COND_VAL2", "顯示數值 2 (Value 2)")
+    setTooltip(val2Cb, "在圖示旁顯示暴雪光環數據中的第 2 個附加數值", "顯示數值 2")
     condFrame.val2Cb = val2Cb
 
     local val3Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
@@ -2928,6 +3020,7 @@ local function createFrame()
     val3Cb.text = val3Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val3Cb.text:SetPoint("LEFT", val3Cb, "RIGHT", 4, 1)
     bindText(val3Cb.text, "EAM_OPT_COND_VAL3", "顯示數值 3 (Value 3)")
+    setTooltip(val3Cb, "在圖示旁顯示暴雪光環數據中的第 3 個附加數值", "顯示數值 3")
     condFrame.val3Cb = val3Cb
 
     local val4Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
@@ -2935,6 +3028,7 @@ local function createFrame()
     val4Cb.text = val4Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val4Cb.text:SetPoint("LEFT", val4Cb, "RIGHT", 4, 1)
     bindText(val4Cb.text, "EAM_OPT_COND_VAL4", "顯示數值 4 (Value 4)")
+    setTooltip(val4Cb, "在圖示旁顯示暴雪光環數據中的第 4 個附加數值", "顯示數值 4")
     condFrame.val4Cb = val4Cb
 
     -- 地面技能專屬控制項
@@ -2943,6 +3037,7 @@ local function createFrame()
     durationModeCb.text = durationModeCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     durationModeCb.text:SetPoint("LEFT", durationModeCb, "RIGHT", 4, 1)
     bindText(durationModeCb.text, "EAM_OPT_COND_TOOLTIP", "啟用動態 Tooltip 擷取")
+    setTooltip(durationModeCb, "自動解析法術說明文字 (Tooltip) 中的秒數作為地面效果持續時間", "動態 Tooltip 擷取")
     condFrame.durationModeCb = durationModeCb
 
     local manualDurationLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -2955,6 +3050,7 @@ local function createFrame()
     manualDurationEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -165)
     manualDurationEditBox:SetAutoFocus(false)
     manualDurationEditBox:SetNumeric(false)
+    setTooltip(manualDurationEditBox, "若無法自動解析 Tooltip，可手動在此輸入固定持續秒數", "手動設定時間")
     condFrame.manualDurationEditBox = manualDurationEditBox
 
     local scrapeBtn = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
@@ -2962,6 +3058,7 @@ local function createFrame()
     scrapeBtn:SetSize(80, 20)
     scrapeBtn:SetPoint("LEFT", manualDurationEditBox, "RIGHT", 10, 0)
     bindText(scrapeBtn, "EAM_OPT_COND_SCRAPE_BTN", "一鍵擷取")
+    setTooltip(scrapeBtn, "立即解析當前法術說明文字並填入持續秒數", "一鍵擷取")
     scrapeBtn:SetScript("OnClick", function()
         local d = Options.currentEditingAlert
         if d and d.spellID then
@@ -2988,6 +3085,7 @@ local function createFrame()
     if Theme and Theme.registerButton then Theme.registerButton(auraSoundDropdown) end
     auraSoundDropdown:SetSize(140, 22)
     auraSoundDropdown:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -330)
+    setTooltip(auraSoundDropdown, "選擇此法術專屬觸發時播放的音效", "光環專屬音效")
     condFrame.auraSoundDropdown = auraSoundDropdown
 
     local auraSoundMenu = api.CreateFrame("Frame", nil, condFrame, "BackdropTemplate")
@@ -3038,6 +3136,7 @@ local function createFrame()
     auraSoundTestButton:SetSize(80, 22)
     auraSoundTestButton:SetPoint("LEFT", auraSoundDropdown, "RIGHT", 8, 0)
     bindText(auraSoundTestButton, "EAM_OPT_AURA_SOUND_TEST_ASSET_ONLY", "試聽素材")
+    setTooltip(auraSoundTestButton, "試聽目前選擇的光環專屬音效", "試聽素材")
     auraSoundTestButton:SetScript("OnClick", function()
         if not isAuraSoundAvailable() then
             return
@@ -3047,23 +3146,26 @@ local function createFrame()
     end)
     condFrame.auraSoundTestButton = auraSoundTestButton
 
-    local function createAuraSoundCheckbox(key, fallback, x, y)
+    local function createAuraSoundCheckbox(key, fallback, x, y, tipText)
         local checkbox = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
         checkbox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", x, y)
         checkbox.text = checkbox:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         checkbox.text:SetPoint("LEFT", checkbox, "RIGHT", 4, 1)
         bindText(checkbox.text, key, fallback)
+        if tipText then
+            setTooltip(checkbox, tipText, fallback)
+        end
         return checkbox
     end
 
     condFrame.auraSoundAddedCb = createAuraSoundCheckbox(
-        "EAM_OPT_AURA_SOUND_ADDED", "光環新增", 20, -365
+        "EAM_OPT_AURA_SOUND_ADDED", "光環新增", 20, -365, "獲得此光環時播放音效"
     )
     condFrame.auraSoundApplicationsCb = createAuraSoundCheckbox(
-        "EAM_OPT_AURA_SOUND_APPLICATIONS_INCREASED", "層數增加", 175, -365
+        "EAM_OPT_AURA_SOUND_APPLICATIONS_INCREASED", "層數增加", 175, -365, "光環堆疊層數增加時播放音效"
     )
     condFrame.auraSoundRemovedCb = createAuraSoundCheckbox(
-        "EAM_OPT_AURA_SOUND_REMOVED", "光環移除", 20, -395
+        "EAM_OPT_AURA_SOUND_REMOVED", "光環移除", 20, -395, "光環結束消失時播放音效"
     )
 
     local auraSoundHint = condFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
@@ -3083,6 +3185,7 @@ local function createFrame()
     customIconEditBox:SetSize(250, 20)
     customIconEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -468)
     customIconEditBox:SetAutoFocus(false)
+    setTooltip(customIconEditBox, "輸入替代圖示的 FileDataID 數字代碼或材質路徑（留空使用技能預設圖示）", "自訂替代圖示")
     condFrame.customIconEditBox = customIconEditBox
 
     local customIconPreview = condFrame:CreateTexture(nil, "OVERLAY")
@@ -3112,6 +3215,7 @@ local function createFrame()
     customIconUrl:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -510)
     customIconUrl:SetAutoFocus(false)
     customIconUrl:SetText("https://wago.tools/icons")
+    setTooltip(customIconUrl, "點擊反白複製網址前往 Wago Tools 查詢圖示代碼", "圖示查詢網站")
     customIconUrl:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
     condFrame.customIconUrl = customIconUrl
 
@@ -3235,13 +3339,14 @@ local function createFrame()
             Options.refreshList()
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_COND_SAVE_SUCCESS or "條件已儲存。"))
         end
-    end)
+    end, "儲存並套用當前法術的所有進階條件與替代圖示設定", "儲存設定")
 
     local cancelBtn = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(cancelBtn) end
     cancelBtn:SetSize(130, 26)
     cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -550)
     bindText(cancelBtn, "EAM_OPT_COND_CANCEL_BTN", "取消關閉 (Cancel)")
+    setTooltip(cancelBtn, "放棄變更並關閉條件設定視窗", "取消關閉")
     cancelBtn:SetScript("OnClick", function()
         condFrame.auraSoundMenu:Hide()
         condFrame:Hide()

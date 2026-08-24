@@ -166,6 +166,10 @@ local function createPanel()
             )
         end)
 
+        if EAM.UI.setTooltip then
+            EAM.UI.setTooltip(checkbox, "獨立開啟或關閉此功能模組之事件監聽與畫面告警", EAM.L[definition.labelKey] or definition.key)
+        end
+
         ModulePanel.checkboxes[definition.key] = checkbox
     end
 
@@ -183,6 +187,9 @@ local function createPanel()
     closeButton:SetSize(90, 24)
     closeButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -20, 18)
     Locale.bindText(closeButton, "EAM_ABOUT_CLOSE", "關閉")
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(closeButton, "關閉功能模組開關面板", "關閉")
+    end
     closeButton:SetScript("OnClick", function()
         frame:Hide()
     end)

@@ -196,7 +196,7 @@ local function updateSliderValueText(slider, value)
     end
 end
 
-local function createCheckbox(parent, field, key, fallback, x, y)
+local function createCheckbox(parent, field, key, fallback, x, y, tooltipText, tooltipTitle)
     local checkbox = api.CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     checkbox:SetSize(24, 24)
     checkbox:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -205,6 +205,9 @@ local function createCheckbox(parent, field, key, fallback, x, y)
     Locale.bindText(label, key, fallback)
     if Theme and Theme.registerText then
         Theme.registerText(label, "body")
+    end
+    if tooltipText and EAM.UI.setTooltip then
+        EAM.UI.setTooltip(checkbox, tooltipText, tooltipTitle or fallback)
     end
     checkbox:SetScript("OnClick", function(self)
         if not Panel.refreshing and Panel.draft then
@@ -232,6 +235,10 @@ local function createSlider(parent, spec, x, y)
     Locale.bindText(label, spec.key, spec.fallback)
     if Theme and Theme.registerText then
         Theme.registerText(label, "body")
+    end
+
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(slider, "調整此項資源之" .. (spec.fallback or "數值"), spec.fallback)
     end
 
     local valueText = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -541,6 +548,9 @@ local function createPanel()
     if Theme and Theme.registerButton then
         Theme.registerButton(scopeButton)
     end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(scopeButton, "切換目前專精專屬設定或全職業通用預設配置", "設定範圍")
+    end
     scopeButton:SetScript("OnClick", function()
         if Panel.specializationID then
             Panel.scope = Panel.scope == "spec" and "class" or "spec"
@@ -555,6 +565,9 @@ local function createPanel()
         button:SetPoint("TOP", listPanel, "TOP", 0, -52 - (index - 1) * 48)
         if Theme and Theme.registerButton then
             Theme.registerButton(button)
+        end
+        if EAM.UI.setTooltip then
+            EAM.UI.setTooltip(button, "點擊選取此項資源進行細部顯示與排版設定", "選擇資源")
         end
         local nameText = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         nameText:SetPoint("TOPLEFT", button, "TOPLEFT", 8, -6)
@@ -598,6 +611,9 @@ local function createPanel()
     if Theme and Theme.registerButton then
         Theme.registerButton(modeButton)
     end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(modeButton, "切換資源條顯示風格（自動/長條條形/離散點數）", "顯示模式")
+    end
     modeButton:SetScript("OnClick", function()
         if not Panel.draft then
             return
@@ -619,6 +635,9 @@ local function createPanel()
     if Theme and Theme.registerButton then
         Theme.registerButton(anchorButton)
     end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(anchorButton, "循環切換資源框架相對於父錨點的位置", "父框架錨點")
+    end
     anchorButton:SetScript("OnClick", function()
         cyclePoint("anchor")
     end)
@@ -629,6 +648,9 @@ local function createPanel()
     positionButton:SetPoint("LEFT", anchorButton, "RIGHT", 10, 0)
     if Theme and Theme.registerButton then
         Theme.registerButton(positionButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(positionButton, "循環切換自身定位錨點", "資源框架定位點")
     end
     positionButton:SetScript("OnClick", function()
         cyclePoint("position")
@@ -641,6 +663,9 @@ local function createPanel()
     if Theme and Theme.registerButton then
         Theme.registerButton(orientationButton)
     end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(orientationButton, "切換資源條生長排列方向（水平或垂直）", "排列方向")
+    end
     orientationButton:SetScript("OnClick", cycleOrientation)
     Panel.orientationButton = orientationButton
 
@@ -650,15 +675,18 @@ local function createPanel()
     if Theme and Theme.registerButton then
         Theme.registerButton(fontFamilyButton)
     end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(fontFamilyButton, "切換資源文字所使用的字型", "字型選擇")
+    end
     fontFamilyButton:SetScript("OnClick", cycleFontFamily)
     Panel.fontFamilyButton = fontFamilyButton
 
-    createCheckbox(frame, "enabled", "EAM_RESOURCE_ENABLED", "啟用此資源", 260, -184)
-    createCheckbox(frame, "showForeground", "EAM_RESOURCE_SHOW_FOREGROUND", "前景時顯示", 440, -184)
-    createCheckbox(frame, "showBackground", "EAM_RESOURCE_SHOW_BACKGROUND", "背景時顯示", 620, -184)
-    createCheckbox(frame, "showValue", "EAM_RESOURCE_SHOW_VALUE", "顯示安全數字", 260, -212)
-    createCheckbox(frame, "showPercent", "EAM_RESOURCE_SHOW_PERCENT", "顯示百分比", 440, -212)
-    createCheckbox(frame, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 620, -212)
+    createCheckbox(frame, "enabled", "EAM_RESOURCE_ENABLED", "啟用此資源", 260, -184, "啟用/停用此項職業資源之畫面監控", "啟用此資源")
+    createCheckbox(frame, "showForeground", "EAM_RESOURCE_SHOW_FOREGROUND", "前景時顯示", 440, -184, "主要資源或前景焦點時顯示", "前景時顯示")
+    createCheckbox(frame, "showBackground", "EAM_RESOURCE_SHOW_BACKGROUND", "背景時顯示", 620, -184, "非主要焦點或背景資源時顯示", "背景時顯示")
+    createCheckbox(frame, "showValue", "EAM_RESOURCE_SHOW_VALUE", "顯示安全數字", 260, -212, "在資源條旁顯示即時能量數值（僅非秘密資源支援）", "顯示安全數字")
+    createCheckbox(frame, "showPercent", "EAM_RESOURCE_SHOW_PERCENT", "顯示百分比", 440, -212, "在資源條旁顯示即時能量百分比", "顯示百分比")
+    createCheckbox(frame, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 620, -212, "當資源達到高亮門檻時觸發閃爍流光特效", "高於門檻時高亮")
 
     for index = 1, #SLIDER_SPECS do
         local spec = SLIDER_SPECS[index]
@@ -683,6 +711,9 @@ local function createPanel()
     Locale.bindText(applyButton, "EAM_RESOURCE_APPLY", "套用")
     if Theme and Theme.registerButton then
         Theme.registerButton(applyButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(applyButton, "立即提交並套用當前資源的所有設定", "套用")
     end
     applyButton:SetScript("OnClick", function()
         local saved = EAM.Modules and EAM.Modules.SavedVariables
@@ -717,6 +748,9 @@ local function createPanel()
     if Theme and Theme.registerButton then
         Theme.registerButton(resetButton)
     end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(resetButton, "清除當前專精之專屬覆寫並恢復為職業預設值", "清除專精覆寫")
+    end
     resetButton:SetScript("OnClick", function()
         if Panel.scope ~= "spec" or not Panel.specializationID or not Panel.selectedKey then
             return
@@ -750,6 +784,9 @@ local function createPanel()
     Locale.bindText(closeButton, "EAM_ABOUT_CLOSE", "關閉")
     if Theme and Theme.registerButton then
         Theme.registerButton(closeButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(closeButton, "關閉玩家職業資源設定面板", "關閉")
     end
     closeButton:SetScript("OnClick", function()
         frame:Hide()

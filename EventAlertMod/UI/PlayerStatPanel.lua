@@ -167,18 +167,22 @@ local function createFrame()
     enableCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 14, -62)
     enableCb.text = enableCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     enableCb.text:SetPoint("LEFT", enableCb, "RIGHT", 4, 1)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(enableCb, "啟用/停用此項屬性在畫面上的即時數值顯示", "啟用監控") end
+
     -- 2. 顯示圖示 & 顯示進度條 (StatusBar)
     local showIconCb = api.CreateFrame("CheckButton", nil, detailContainer, "UICheckButtonTemplate")
     showIconCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 140, -62)
     showIconCb.text = showIconCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     showIconCb.text:SetPoint("LEFT", showIconCb, "RIGHT", 4, 1)
     showIconCb.text:SetText(EAM.L.EAM_STAT_SHOW_ICON or "顯示圖示")
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(showIconCb, "是否在此屬性旁邊顯示技能/屬性圖示", "顯示圖示") end
 
     local showStatusBarCb = api.CreateFrame("CheckButton", nil, detailContainer, "UICheckButtonTemplate")
     showStatusBarCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 225, -62)
     showStatusBarCb.text = showStatusBarCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     showStatusBarCb.text:SetPoint("LEFT", showStatusBarCb, "RIGHT", 4, 1)
     showStatusBarCb.text:SetText(EAM.L.EAM_STAT_SHOW_STATUSBAR or "進度條")
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(showStatusBarCb, "是否在此屬性下方顯示進度條/狀態條", "顯示進度條") end
 
     -- 3. 替代圖示輸入框與預覽方塊
     local iconLabel = detailContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -189,6 +193,7 @@ local function createFrame()
     iconEditBox:SetSize(240, 20)
     iconEditBox:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 20, -114)
     iconEditBox:SetAutoFocus(false)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(iconEditBox, "輸入替代圖示的 FileDataID 數字代碼或材質路徑（留空使用預設圖示）", "自訂替代圖示") end
 
     local iconPreviewBox = detailContainer:CreateTexture(nil, "OVERLAY")
     iconPreviewBox:SetSize(22, 22)
@@ -217,6 +222,7 @@ local function createFrame()
     urlBox:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 20, -156)
     urlBox:SetAutoFocus(false)
     urlBox:SetText("https://wago.tools/icons")
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(urlBox, "點擊反白複製網址前往 Wago Tools 查詢圖示代碼", "圖示查詢網站") end
     urlBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
 
     -- 4. 圖示大小滑桿
@@ -226,6 +232,7 @@ local function createFrame()
     sizeSlider:SetValueStep(1)
     sizeSlider:SetObeyStepOnDrag(true)
     sizeSlider:SetSize(140, 16)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(sizeSlider, "調整此屬性圖示的像素大小 (16~80px)", "圖示大小") end
     local sizeLabel = sizeSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     sizeLabel:SetPoint("BOTTOMLEFT", sizeSlider, "TOPLEFT", 0, 4)
     sizeLabel:SetText(EAM.L.EAM_STAT_ICON_SIZE or "圖示大小 (Icon Size)")
@@ -242,6 +249,7 @@ local function createFrame()
     fontValSlider:SetValueStep(1)
     fontValSlider:SetObeyStepOnDrag(true)
     fontValSlider:SetSize(140, 16)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(fontValSlider, "調整屬性數值數字的文字大小 (8~32px)", "數值字型大小") end
     local fontValLabel = fontValSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     fontValLabel:SetPoint("BOTTOMLEFT", fontValSlider, "TOPLEFT", 0, 4)
     fontValLabel:SetText(EAM.L.EAM_STAT_FONT_VALUE or "數值字型大小")
@@ -258,6 +266,7 @@ local function createFrame()
     fontLabelSlider:SetValueStep(1)
     fontLabelSlider:SetObeyStepOnDrag(true)
     fontLabelSlider:SetSize(140, 16)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(fontLabelSlider, "調整屬性名稱標籤的文字大小 (8~24px)", "名稱字型大小") end
     local fontLabelLabel = fontLabelSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     fontLabelLabel:SetPoint("BOTTOMLEFT", fontLabelSlider, "TOPLEFT", 0, 4)
     fontLabelLabel:SetText(EAM.L.EAM_STAT_FONT_LABEL or "名稱字型大小")
@@ -276,6 +285,7 @@ local function createFrame()
     customLabelEditBox:SetSize(140, 20)
     customLabelEditBox:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 184, -240)
     customLabelEditBox:SetAutoFocus(false)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(customLabelEditBox, "自訂顯示在畫面上的屬性簡稱（留空使用預設名稱）", "名稱替代文字") end
 
     -- 8. 小數位數與大數值簡寫
     local decimalsLabel = detailContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -287,12 +297,14 @@ local function createFrame()
     decimalsEditBox:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 20, -292)
     decimalsEditBox:SetAutoFocus(false)
     decimalsEditBox:SetNumeric(true)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(decimalsEditBox, "數值顯示的小數位數（0 ~ 2 位）", "小數位數") end
 
     local shortNumberCb = api.CreateFrame("CheckButton", nil, detailContainer, "UICheckButtonTemplate")
     shortNumberCb:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 110, -288)
     shortNumberCb.text = shortNumberCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     shortNumberCb.text:SetPoint("LEFT", shortNumberCb, "RIGHT", 4, 1)
     shortNumberCb.text:SetText(EAM.L.EAM_STAT_SHORT_NUMBER or "大數值簡寫 (k/M)")
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(shortNumberCb, "數值過大時自動以 k / M 單位簡化顯示（例如 150.2k）", "大數值簡寫") end
 
     -- 9. 警戒值上限 / 下限
     local minThreshLabel = detailContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -303,6 +315,7 @@ local function createFrame()
     minThreshEditBox:SetSize(120, 20)
     minThreshEditBox:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 20, -342)
     minThreshEditBox:SetAutoFocus(false)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(minThreshEditBox, "當屬性數值低於此閾值時，邊框變紅高亮警戒（留空不啟用）", "低於警戒值") end
 
     local maxThreshLabel = detailContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     maxThreshLabel:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 180, -325)
@@ -312,6 +325,7 @@ local function createFrame()
     maxThreshEditBox:SetSize(120, 20)
     maxThreshEditBox:SetPoint("TOPLEFT", detailContainer, "TOPLEFT", 184, -342)
     maxThreshEditBox:SetAutoFocus(false)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(maxThreshEditBox, "當屬性數值高於此閾值時，邊框變紅高亮警戒（留空不啟用）", "高於警戒值") end
 
     -- 10. 底部儲存與移動按鈕
     local function saveSelectedStat()
@@ -341,6 +355,7 @@ local function createFrame()
     saveBtn:SetSize(140, 26)
     saveBtn:SetPoint("BOTTOMLEFT", detailContainer, "BOTTOMLEFT", 16, 16)
     saveBtn:SetText(EAM.L.EAM_OPT_COND_SAVE_BTN or "儲存設定 (Save)")
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(saveBtn, "儲存並套用當前屬性的所有顯示與警戒設定", "儲存設定") end
     saveBtn:SetScript("OnClick", saveSelectedStat)
 
     local moveBtn = api.CreateFrame("Button", nil, detailContainer, "UIPanelButtonTemplate")
@@ -348,6 +363,7 @@ local function createFrame()
     moveBtn:SetSize(150, 26)
     moveBtn:SetPoint("BOTTOMRIGHT", detailContainer, "BOTTOMRIGHT", -16, 16)
     moveBtn:SetText(EAM.L.EAM_STAT_MOVE_BTN or "移動屬性框架")
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(moveBtn, "在畫面上亮起屬性框架的錨點以方便滑鼠拖曳移動位置", "移動屬性框架") end
     moveBtn:SetScript("OnClick", function()
         if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
             EAM.UI.Renderer.setActiveAnchors("playerStat")

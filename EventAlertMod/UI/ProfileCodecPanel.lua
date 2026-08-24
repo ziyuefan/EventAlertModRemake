@@ -271,7 +271,7 @@ local function createFrame()
     if Theme and Theme.registerText then Theme.registerText(description, "body") end
 
     -- Checkboxes Row 1 (告警模組)
-    local function makeCheckbox(name, textKey, fallbackText, x, y)
+    local function makeCheckbox(name, textKey, fallbackText, x, y, tipText)
         local cb = api.CreateFrame("CheckButton", "EAM_ProfileCB_" .. name, frame, "UICheckButtonTemplate")
         cb:SetPoint("TOPLEFT", frame, "TOPLEFT", x, y)
         cb:SetChecked(true)
@@ -280,47 +280,53 @@ local function createFrame()
             bindText(label, textKey, fallbackText)
             if Theme and Theme.registerText then Theme.registerText(label, "body") end
         end
+        if tipText and EAM.UI.setTooltip then
+            EAM.UI.setTooltip(cb, tipText, fallbackText)
+        end
         Panel.checkboxes[name] = cb
         return cb
     end
 
-    makeCheckbox("playerAura", "EAM_PROFILE_SEC_SELF", "自身光環", 18, -62)
-    makeCheckbox("targetAura", "EAM_PROFILE_SEC_TARGET", "目標光環", 140, -62)
-    makeCheckbox("spellCooldown", "EAM_PROFILE_SEC_SPELL_CD", "技能冷卻", 262, -62)
-    makeCheckbox("itemCooldown", "EAM_PROFILE_SEC_ITEM_CD", "物品冷卻", 384, -62)
-    makeCheckbox("groundEffect", "EAM_PROFILE_SEC_GROUND", "地面效果", 506, -62)
+    makeCheckbox("playerAura", "EAM_PROFILE_SEC_SELF", "自身光環", 18, -62, "匯出/匯入自身光環之法術清單與條件")
+    makeCheckbox("targetAura", "EAM_PROFILE_SEC_TARGET", "目標光環", 140, -62, "匯出/匯入目標光環之法術清單與條件")
+    makeCheckbox("spellCooldown", "EAM_PROFILE_SEC_SPELL_CD", "技能冷卻", 262, -62, "匯出/匯入技能冷卻之法術清單與覆寫行為")
+    makeCheckbox("itemCooldown", "EAM_PROFILE_SEC_ITEM_CD", "物品冷卻", 384, -62, "匯出/匯入物品冷卻之監控清單")
+    makeCheckbox("groundEffect", "EAM_PROFILE_SEC_GROUND", "地面效果", 506, -62, "匯出/匯入地面效果之法術清單與秒數設定")
 
     -- Checkboxes Row 2 (排版與設定)
-    makeCheckbox("layout", "EAM_PROFILE_SEC_LAYOUT", "框架排版位置", 18, -92)
-    makeCheckbox("playerResources", "EAM_PROFILE_SEC_RESOURCE", "職業資源設定", 160, -92)
-    makeCheckbox("generalConfig", "EAM_PROFILE_SEC_CONFIG", "一般偏好設定", 302, -92)
+    makeCheckbox("layout", "EAM_PROFILE_SEC_LAYOUT", "框架排版位置", 18, -92, "匯出/匯入所有告警框架之螢幕座標與成長方向排版")
+    makeCheckbox("playerResources", "EAM_PROFILE_SEC_RESOURCE", "職業資源設定", 160, -92, "匯出/匯入玩家職業能量條之細部樣式與門檻設定")
+    makeCheckbox("generalConfig", "EAM_PROFILE_SEC_CONFIG", "一般偏好設定", 302, -92, "匯出/匯入音效、字型、倒數位置等全域偏好設定")
 
     -- Quick selection buttons
-    local function makeQuickBtn(textKey, fallbackText, width, x, y, handler)
+    local function makeQuickBtn(textKey, fallbackText, width, x, y, handler, tipText)
         local btn = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
         btn:SetSize(width, 22)
         btn:SetPoint("TOPLEFT", frame, "TOPLEFT", x, y)
         bindText(btn, textKey, fallbackText)
         btn:SetScript("OnClick", handler)
+        if tipText and EAM.UI.setTooltip then
+            EAM.UI.setTooltip(btn, tipText, fallbackText)
+        end
         if Theme and Theme.registerButton then Theme.registerButton(btn) end
         return btn
     end
 
     makeQuickBtn("EAM_PROFILE_BTN_SELECT_ALL", "全選", 55, 480, -94, function()
         setAllCheckboxes(true)
-    end)
+    end, "一鍵勾選所有告警清單、排版與偏好設定")
     makeQuickBtn("EAM_PROFILE_BTN_ALERTS_ONLY", "僅告警清單", 95, 540, -94, function()
         setAllCheckboxes(false)
         for i = 1, #MODULE_KEYS do
             if Panel.checkboxes[MODULE_KEYS[i]] then Panel.checkboxes[MODULE_KEYS[i]]:SetChecked(true) end
         end
-    end)
+    end, "僅勾選 5 大告警法術清單項目")
     makeQuickBtn("EAM_PROFILE_BTN_LAYOUT_ONLY", "僅排版設定", 95, 640, -94, function()
         setAllCheckboxes(false)
         for i = 1, #SECTION_KEYS do
             if Panel.checkboxes[SECTION_KEYS[i]] then Panel.checkboxes[SECTION_KEYS[i]]:SetChecked(true) end
         end
-    end)
+    end, "僅勾選框架排版、職業資源與一般設定")
 
     -- ScrollFrame & EditBox
     local scrollFrame = api.CreateFrame(
@@ -390,22 +396,25 @@ local function createFrame()
     if Theme and Theme.registerText then Theme.registerText(statusText, "body") end
     Panel.statusText = statusText
 
-    local function makeButton(key, fallback, width, point, handler)
+    local function makeButton(key, fallback, width, point, handler, tipText)
         local button = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
         button:SetSize(width, 26)
         button:SetPoint(unpack(point))
         bindText(button, key, fallback)
         button:SetScript("OnClick", handler)
+        if tipText and EAM.UI.setTooltip then
+            EAM.UI.setTooltip(button, tipText, fallback)
+        end
         if Theme and Theme.registerButton then Theme.registerButton(button) end
         return button
     end
 
-    makeButton("EAM_PROFILE_CODEC_EXPORT", "匯出所選項目", 120, { "BOTTOMLEFT", frame, "BOTTOMLEFT", 18, 18 }, exportCurrent)
-    makeButton("EAM_PROFILE_CODEC_SELECT", "全選複製", 90, { "LEFT", frame, "BOTTOMLEFT", 146, 18 }, selectAllForCopy)
-    makeButton("EAM_PROFILE_CODEC_PREVIEW", "預覽匯入", 95, { "LEFT", frame, "BOTTOMLEFT", 244, 18 }, function() preview("merge") end)
-    makeButton("EAM_PROFILE_CODEC_MERGE", "合併套用", 95, { "LEFT", frame, "BOTTOMLEFT", 347, 18 }, function() apply("merge") end)
-    makeButton("EAM_PROFILE_CODEC_REPLACE", "取代套用", 95, { "LEFT", frame, "BOTTOMLEFT", 450, 18 }, function() apply("replace") end)
-    makeButton("EAM_PROFILE_CODEC_CLOSE", "關閉", 80, { "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -18, 18 }, function() frame:Hide() end)
+    makeButton("EAM_PROFILE_CODEC_EXPORT", "匯出所選項目", 120, { "BOTTOMLEFT", frame, "BOTTOMLEFT", 18, 18 }, exportCurrent, "將勾選的模組設定序列化編碼為分享字串並填入文字方塊")
+    makeButton("EAM_PROFILE_CODEC_SELECT", "全選複製", 90, { "LEFT", frame, "BOTTOMLEFT", 146, 18 }, selectAllForCopy, "全選文字方塊中的所有文字以便按 Ctrl+C 複製分享")
+    makeButton("EAM_PROFILE_CODEC_PREVIEW", "預覽匯入", 95, { "LEFT", frame, "BOTTOMLEFT", 244, 18 }, function() preview("merge") end, "解析文字方塊中的字串並預覽即將變更的項目數量")
+    makeButton("EAM_PROFILE_CODEC_MERGE", "合併套用", 95, { "LEFT", frame, "BOTTOMLEFT", 347, 18 }, function() apply("merge") end, "將匯入字串與目前設定合併（保留現有項目並追加/更新）")
+    makeButton("EAM_PROFILE_CODEC_REPLACE", "取代套用", 95, { "LEFT", frame, "BOTTOMLEFT", 450, 18 }, function() apply("replace") end, "以匯入字串完全覆蓋取代目前的法術與設定")
+    makeButton("EAM_PROFILE_CODEC_CLOSE", "關閉", 80, { "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -18, 18 }, function() frame:Hide() end, "關閉 Profile 分享面板")
 
     if type(UISpecialFrames) == "table" then
         UISpecialFrames[#UISpecialFrames + 1] = "EAM_ProfileCodecPanel"
