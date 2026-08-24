@@ -1,10 +1,10 @@
 # EventAlertMod Retail 12.1
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Release](https://img.shields.io/badge/release-Alpha%207.7-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%207.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 
-EventAlertMod（EAM）是只支援《魔獸世界》正式服 Retail 的輕量提醒插件，專注於自身／目標光環、技能冷卻、物品冷卻、地面效果與玩家職業資源。現行來源版本標記為 EventAlertMod_MN_20260824，發布定位為 Alpha 7.7 prerelease。
+EventAlertMod（EAM）是只支援《魔獸世界》正式服 Retail 的輕量提醒插件，專注於自身／目標光環、技能冷卻、物品冷卻、地面效果、角色屬性與玩家職業資源。現行來源版本標記為 EventAlertMod_MN_20260824，發布定位為 Alpha 7.8 prerelease。
 
 > 本文件是 GitHub 專案首頁與目前使用說明。下方歷史內容若與本節衝突，以本節、EventAlertMod.toc 與 .AI/Docs 的最新文件為準。
 
