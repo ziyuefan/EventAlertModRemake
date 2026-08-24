@@ -1,3 +1,14 @@
+### 2026-08-24 EAM-20260824-PLAYER-STATS-SECRET-VALUE-FIX：角色屬性與吸收量監控 Secret Value 防護
+
+- 狀態：已解決 (Lua 68/68, Flow 84/84, Contracts 493/493)，實機待玩家簽收。
+- 症狀：開啟屬性監控面板時於 `PlayerStatService.lua:253` 拋出 `attempt to compare local 'val' (a secret number value, while execution tainted by 'EventAlertMod')`。
+- 原因判斷：WoW Retail 12.0+ / 12.1+ 當前環境下，部分 Unit API（如 `UnitGetTotalAbsorbs`、`UnitGetTotalHealAbsorbs`、`GetUnitSpeed`、戰鬥或污染狀態下的屬性讀取）會回傳受保護的 Secret Number。在 Lua 層直接對 Secret Number 執行比較（`val >= 10000`、`val < cfg.thresholdMin`）、算術運算（`val / 1000000`）或字串格式化（`string.format`）會觸發保護異常。
+- 有效解法：
+  1. 在 `PlayerStatService.lua` 中引入 `isSafeNumber(val)` 守衛，透過 `Util.isSecretValue` 與 `Util.isSafeNumber` 在執行任何算術、比較與格式化前先行過濾。
+  2. 16 項屬性之 `getValue` 全部採用 `pcall` 與安全數值守衛，回傳不安全數值時返回安全的數值預設值。
+  3. `formatStatNumber` 與 `update` 閾值比較全面加上 `isSafeNumber` 防禦，徹底根除 Secret Number 拋錯。
+- 驗證結果：Lua 68/68、Flow all 84/84、Validation Contracts 493/493。
+
 ### 2026-08-24 EAM-20260824-PLAYER-STATS-AND-CUSTOM-ICONS：全模組替代圖示自訂與「角色屬性及吸收量監控」全新模組
 
 - 狀態：已解決 (Lua 68/68, Flow 84/84, Contracts 493/493)，實機待玩家簽收。
