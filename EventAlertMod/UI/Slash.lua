@@ -59,6 +59,7 @@ end
 
 local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_OPT or "/eam opt - 開啟設定")
+    printLine(EAM.L.EAM_SLASH_HELP_RESET or "/eam reset (或 /eam center / resetpos) - 將主視窗重置回螢幕中央")
     printLine(EAM.L.EAM_SLASH_HELP_LIST or "/eam list - 顯示目前職業監控清單")
     printLine(EAM.L.EAM_SLASH_HELP_LOOKUP or "/eam lookup <名稱> - 查詢目前職業候選")
     printLine(EAM.L.EAM_SLASH_HELP_LOOKUPFULL or "/eam lookupfull <完整名稱> - 精確查詢目前職業候選")
@@ -437,6 +438,12 @@ local function handleSlash(input)
         printAutoAddGuidance()
     elseif command == "help" then
         printHelp()
+    elseif command == "reset" or command == "resetpos" or command == "center" then
+        if EAM.UI.Options and EAM.UI.Options.resetPosition then
+            EAM.UI.Options.resetPosition()
+        else
+            printLine("EAM: Options 模組尚未載入。")
+        end
     elseif (command == "opt" or command == "option" or command == "options") and EAM.UI.Options then
         EAM.UI.Options.open()
     elseif command == "" and EAM.UI.Options then

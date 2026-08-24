@@ -1212,6 +1212,7 @@ local function createFrame()
     frame:SetSize(380, 600)
     frame:SetPoint("LEFT", UIParent, "LEFT", 100, 0)
     frame:SetMovable(true)
+    frame:SetClampedToScreen(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
@@ -3456,6 +3457,32 @@ function Options.open()
     end
 end
 
+-- 將主視窗重置回螢幕正中央
+function Options.resetPosition()
+    if api.InCombatLockdown and api.InCombatLockdown() then
+        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_COMBAT_WARNING or "少年欸！戰鬥中暫不開啟設定視窗，脫離戰鬥後會自動為你開啟。"))
+        return
+    end
+
+    local frame = createFrame()
+    if not frame then
+        return
+    end
+
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    frame:SetClampedToScreen(true)
+    frame:Show()
+    frame:Raise()
+
+    if Options.posFrame then Options.posFrame:Hide() end
+    if Options.listFrame then Options.listFrame:Hide() end
+    Options.closeAllSidePanels()
+    Options.refreshLocalizedText()
+
+    print("|cff00ff96EAM|r " .. (EAM.L.EAM_SLASH_RESET_POS_SUCCESS or "已將 EAM 主視窗重置回螢幕中央。"))
+end
+
 local function createMinimapButton()
     if EAM.db and EAM.db.config and EAM.db.config.showMinimapButton == false then
         if EAM.UI.MinimapButton then EAM.UI.MinimapButton:Hide() end
@@ -3528,11 +3555,21 @@ local function createMinimapButton()
 
     btn:SetScript("OnClick", function(self, button)
         if button == "LeftButton" then
-            Options.open()
-        elseif button == "RightButton" then
-            if EAM.Debug.PromptExport and EAM.Debug.PromptExport.openWindow then
-                EAM.Debug.PromptExport.openWindow()
+            if IsShiftKeyDown() then
+                Options.resetPosition()
+            else
+                Options.open()
             end
+        elseif button == "RightButton" then
+            if IsShiftKeyDown() then
+                Options.resetPosition()
+            else
+                if EAM.Debug.PromptExport and EAM.Debug.PromptExport.openWindow then
+                    EAM.Debug.PromptExport.openWindow()
+                end
+            end
+        elseif button == "MiddleButton" then
+            Options.resetPosition()
         end
     end)
 
@@ -3541,6 +3578,7 @@ local function createMinimapButton()
         GameTooltip:AddLine("EventAlertMod", 0.95, 0.85, 0.4)
         GameTooltip:AddLine(EAM.L.EAM_OPT_MINIMAP_LCLICK or "左鍵點擊: 開啟/關閉設定面板", 1, 1, 1)
         GameTooltip:AddLine(EAM.L.EAM_OPT_MINIMAP_RCLICK or "右鍵點擊: 開啟系統除錯診斷", 1, 1, 1)
+        GameTooltip:AddLine(EAM.L.EAM_OPT_MINIMAP_MCLICK or "中鍵 / Shift+點擊: 重置主視窗至螢幕中央", 0.2, 1, 0.2)
         GameTooltip:AddLine(EAM.L.EAM_OPT_MINIMAP_DRAG or "拖曳小圖示可移動位置", 0.8, 0.8, 0.8)
         GameTooltip:Show()
     end)

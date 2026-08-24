@@ -27,9 +27,11 @@
   - 調整圖示尺寸、水平/垂直間距、透明度、扇形倒數轉圈動畫、轉圈透明度、自身/目標減益色度、法術/倒數/堆疊字型大小、成長方向時，畫面上告警框架與圖示即時 60fps 熱更新響應，無需重啟。
 - **進入戰鬥全螢幕紅框閃爍 (In-Combat Fullscreen Red Edge Flash)**：
   - 實作 `UI/CombatFlash.lua` 全螢幕低血/戰鬥紅框閃爍動畫，監聽 `PLAYER_REGEN_DISABLED` 事件觸發戰鬥進入警示，並在主選單提供即時測試按鈕。
-- **主題樣式與面板關閉修復**：
+- **主題樣式與主視窗螢幕邊界防護**：
   - EAM 預設主題改回經典魔獸紅色選單按鈕與仿石框邊緣。
   - 修正關閉主視窗時在 `closeAllSidePanels` 缺少 `close()` 引發的 nil call 錯誤，實作防禦性 `safeClosePanel` 機制。
+  - 主視窗增加 `SetClampedToScreen` 螢幕邊界鎖定，防止拖出畫面無法找回。
+  - 新增 `/eam reset` (或 `/eam center` / `resetpos`) 斜線命令、小地圖按鈕中鍵點擊與 Shift+點擊，一鍵將主視窗拉回螢幕正中央。
 - **AI 治理與離線門禁 (AI Governance & Quality Gates)**：
   - 離線門禁：Lua 語法 68/68 通過、流程驗證 84/84 通過、靜態契約 493/493 通過。
 
