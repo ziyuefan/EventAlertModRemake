@@ -232,3 +232,5 @@ function ModulePanel.hide()
         ModulePanel.frame:Hide()
     end
 end
+
+ModulePanel.close = ModulePanel.hide

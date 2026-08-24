@@ -226,3 +226,11 @@ function AboutPanel.open()
     frame:Raise()
     return true
 end
+
+function AboutPanel.hide()
+    if AboutPanel.frame then
+        AboutPanel.frame:Hide()
+    end
+end
+
+AboutPanel.close = AboutPanel.hide

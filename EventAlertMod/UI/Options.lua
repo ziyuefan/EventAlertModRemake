@@ -911,6 +911,17 @@ local function makeTitleCloseButton(parent, onClick)
     return btn
 end
 
+local function safeClosePanel(panel)
+    if not panel then return end
+    if type(panel.close) == "function" then
+        panel.close()
+    elseif type(panel.hide) == "function" then
+        panel.hide()
+    elseif panel.frame and panel.frame.Hide then
+        panel.frame:Hide()
+    end
+end
+
 function Options.closeAllSidePanels(except)
     if except ~= "list" and Options.listFrame then
         Options.listFrame:Hide()
@@ -921,34 +932,19 @@ function Options.closeAllSidePanels(except)
         Options.posFrame:Hide()
     end
     if except ~= "resource" then
-        local panel = EAM.UI and EAM.UI.PlayerResourcePanel
-        if panel and panel.frame and panel.frame:IsShown() then
-            panel.close()
-        end
+        safeClosePanel(EAM.UI and EAM.UI.PlayerResourcePanel)
     end
     if except ~= "debug" then
-        local panel = EAM.UI and EAM.UI.DebugCenterPanel
-        if panel and panel.frame and panel.frame:IsShown() then
-            panel.close()
-        end
+        safeClosePanel(EAM.UI and EAM.UI.DebugCenterPanel)
     end
     if except ~= "profile" then
-        local panel = EAM.UI and EAM.UI.ProfileCodecPanel
-        if panel and panel.frame and panel.frame:IsShown() then
-            panel.close()
-        end
+        safeClosePanel(EAM.UI and EAM.UI.ProfileCodecPanel)
     end
     if except ~= "module" then
-        local panel = EAM.UI and EAM.UI.ModulePanel
-        if panel and panel.frame and panel.frame:IsShown() then
-            panel.close()
-        end
+        safeClosePanel(EAM.UI and EAM.UI.ModulePanel)
     end
     if except ~= "about" then
-        local panel = EAM.UI and EAM.UI.AboutPanel
-        if panel and panel.frame and panel.frame:IsShown() then
-            panel.close()
-        end
+        safeClosePanel(EAM.UI and EAM.UI.AboutPanel)
     end
     if not except and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
         EAM.UI.Renderer.setActiveAnchors(nil)

@@ -449,3 +449,5 @@ function Panel.hide()
     if Panel.frame then Panel.frame:Hide() end
 end
 
+Panel.close = Panel.hide
+
