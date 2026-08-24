@@ -1,4 +1,4 @@
-### 2026-08-24 EAM-20260824-PLAYER-STATS-SECRET-VALUE-FIX：角色屬性與吸收量監控 Secret Value 防護
+### 2026-08-24 EAM-20260824-PLAYER-STATS-SECRET-VALUE-FIX：角色屬性與吸收量監控 Secret Value 防護與原生 StatusBar Sink 整合
 
 - 狀態：已解決 (Lua 68/68, Flow 84/84, Contracts 493/493)，實機待玩家簽收。
 - 症狀：開啟屬性監控面板時於 `PlayerStatService.lua:253` 拋出 `attempt to compare local 'val' (a secret number value, while execution tainted by 'EventAlertMod')`。
@@ -7,6 +7,8 @@
   1. 在 `PlayerStatService.lua` 中引入 `isSafeNumber(val)` 守衛，透過 `Util.isSecretValue` 與 `Util.isSafeNumber` 在執行任何算術、比較與格式化前先行過濾。
   2. 16 項屬性之 `getValue` 全部採用 `pcall` 與安全數值守衛，回傳不安全數值時返回安全的數值預設值。
   3. `formatStatNumber` 與 `update` 閾值比較全面加上 `isSafeNumber` 防禦，徹底根除 Secret Number 拋錯。
+  4. 整合原生 **StatusBar Write-Only Native Sink**：為每個屬性項目預建 C-Level `StatusBar`，當遭遇 Secret 數值（如受保護的吸收量）時，直接將 raw value 送入 `StatusBar:SetValue` 展現視覺進度比例，Lua 不進行字串轉換與數值讀回。
+  5. 設定面板提供「進度條 (StatusBar)」開關，支援依屬性類別著色（吸收盾天藍、治療吸收紫紅、速度青綠、副屬性金黃、主屬性橙紅）。
 - 驗證結果：Lua 68/68、Flow all 84/84、Validation Contracts 493/493。
 
 ### 2026-08-24 EAM-20260824-PLAYER-STATS-AND-CUSTOM-ICONS：全模組替代圖示自訂與「角色屬性及吸收量監控」全新模組
