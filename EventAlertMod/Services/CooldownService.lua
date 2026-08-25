@@ -405,6 +405,10 @@ function CooldownService.updateAlertList()
         alertBaseSpellIDs[index] = nil
         alertOverrideSpellIDs[index] = nil
     end
+
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
+        pcall(EAM.UI.Renderer.prewarmAlertFrames)
+    end
 end
 
 local function alertMatchesSpellFamily(index, spellID, baseSpellID, overrideSpellID)

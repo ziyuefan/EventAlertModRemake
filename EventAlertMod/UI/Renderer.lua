@@ -554,6 +554,42 @@ local function deferRender(alertState, frameName)
     Renderer.deferred[alertState.id] = { alertState = alertState, frameName = frameName }
 end
 
+function Renderer.prewarmAlertFrames()
+    if inCombat() then return end
+    local db = EAM.db
+    local alerts = db and db.alerts
+    if not alerts then return end
+
+    local frameTypes = {
+        spellCooldowns = EAM.Constants.ALERT_FRAME_TYPES.spellCooldown or "spellCooldown",
+        itemCooldowns = EAM.Constants.ALERT_FRAME_TYPES.itemCooldown or "itemCooldown",
+    }
+
+    for alertType, fName in pairs(frameTypes) do
+        local list = alerts[alertType]
+        if list and type(list) == "table" then
+            local parent = ensureParent(fName)
+            local fState = initFrameState(fName)
+            for _, alert in pairs(list) do
+                if alert and alert.id and alert.enabled ~= false and not fState.icons[alert.id] then
+                    local icon = IconPool.acquire()
+                    if icon then
+                        icon:SetParent(parent)
+                        fState.icons[alert.id] = icon
+                        fState.orderCount = fState.orderCount + 1
+                        fState.order[fState.orderCount] = alert.id
+                        icon:Hide()
+                        fState.layoutDirty = true
+                    end
+                end
+            end
+            if fState.layoutDirty then
+                layout(fName)
+            end
+        end
+    end
+end
+
 function Renderer.initialize()
     -- 在初始化時嘗試為所有預設框架預熱，若在戰鬥中則會自動在 onCombatEnd 執行
     for fName in pairs(EAM.Constants.ALERT_FRAME_TYPES) do
@@ -569,6 +605,8 @@ function Renderer.initialize()
             Renderer.prewarmPending = prewarmed == false
         end
     end
+
+    Renderer.prewarmAlertFrames()
 
     local router = EAM.Modules.EventRouter
     if router then
@@ -992,6 +1030,7 @@ function Renderer.onCombatEnd()
         Renderer.anchorTogglePending = false
         Renderer.toggleAnchors()
     end
+    Renderer.prewarmAlertFrames()
 end
 
 local COW_ICON = "Interface\\Icons\\Spell_Nature_Polymorph_Cow"
