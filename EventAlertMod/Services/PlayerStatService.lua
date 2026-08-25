@@ -23,6 +23,7 @@ local Constants = EAM.Constants or {}
 
 local PlayerStatService = {
     stats = {},
+    lastKnownStats = {},
     frames = {},
     active = false,
     sampleThrottle = 0.1,
@@ -68,7 +69,7 @@ function PlayerStatService.getPlayerStatsConfig()
     return db.playerStats, classToken or "GLOBAL"
 end
 
--- 16 大支援屬性定義清單
+-- 18 大支援屬性定義清單 (支援多重 API 容錯與戰鬥狀態最後已知有效值快取)
 local STAT_DEFINITIONS = {
     -- 主屬性
     strength = {
@@ -78,12 +79,17 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136085, -- Spell_Nature_Strength
         category = "primary",
         getValue = function()
-            if not UnitStat then return 0 end
-            local ok, stat, effectiveStat = pcall(UnitStat, "player", 1)
-            if not ok then return 0 end
-            local val = effectiveStat or stat
-            if not isSafeNumber(val) then return 0 end
-            return val
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 1)
+                if ok then
+                    local val = effectiveStat or stat
+                    if isSafeNumber(val) and val > 0 then
+                        PlayerStatService.lastKnownStats["strength"] = val
+                        return val
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["strength"] or 0
         end,
         format = "number",
     },
@@ -94,12 +100,17 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132212, -- Ability_Agility
         category = "primary",
         getValue = function()
-            if not UnitStat then return 0 end
-            local ok, stat, effectiveStat = pcall(UnitStat, "player", 2)
-            if not ok then return 0 end
-            local val = effectiveStat or stat
-            if not isSafeNumber(val) then return 0 end
-            return val
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 2)
+                if ok then
+                    local val = effectiveStat or stat
+                    if isSafeNumber(val) and val > 0 then
+                        PlayerStatService.lastKnownStats["agility"] = val
+                        return val
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["agility"] or 0
         end,
         format = "number",
     },
@@ -110,12 +121,17 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136109, -- Spell_Nature_UnyeildingStamina
         category = "primary",
         getValue = function()
-            if not UnitStat then return 0 end
-            local ok, stat, effectiveStat = pcall(UnitStat, "player", 3)
-            if not ok then return 0 end
-            local val = effectiveStat or stat
-            if not isSafeNumber(val) then return 0 end
-            return val
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 3)
+                if ok then
+                    local val = effectiveStat or stat
+                    if isSafeNumber(val) and val > 0 then
+                        PlayerStatService.lastKnownStats["stamina"] = val
+                        return val
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["stamina"] or 0
         end,
         format = "number",
     },
@@ -126,12 +142,17 @@ local STAT_DEFINITIONS = {
         defaultIcon = 135932, -- Spell_Holy_MagicalSentry
         category = "primary",
         getValue = function()
-            if not UnitStat then return 0 end
-            local ok, stat, effectiveStat = pcall(UnitStat, "player", 4)
-            if not ok then return 0 end
-            local val = effectiveStat or stat
-            if not isSafeNumber(val) then return 0 end
-            return val
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 4)
+                if ok then
+                    local val = effectiveStat or stat
+                    if isSafeNumber(val) and val > 0 then
+                        PlayerStatService.lastKnownStats["intellect"] = val
+                        return val
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["intellect"] or 0
         end,
         format = "number",
     },
@@ -143,10 +164,39 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132223, -- Ability_CriticalStrike
         category = "secondary",
         getValue = function()
-            if not GetCritChance then return 0 end
-            local ok, val = pcall(GetCritChance)
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            if GetCritChance then
+                local ok, val = pcall(GetCritChance)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["crit"] = val
+                    return val
+                end
+            end
+            if GetSpellCritChance then
+                for school = 1, 7 do
+                    local ok, val = pcall(GetSpellCritChance, school)
+                    if ok and isSafeNumber(val) and val > 0 then
+                        PlayerStatService.lastKnownStats["crit"] = val
+                        return val
+                    end
+                end
+            end
+            if GetRangedCritChance then
+                local ok, val = pcall(GetRangedCritChance)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["crit"] = val
+                    return val
+                end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_CRIT_MELEE or 9
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and isSafeNumber(val) and val > 0 then
+                    local totalCrit = 5.0 + val
+                    PlayerStatService.lastKnownStats["crit"] = totalCrit
+                    return totalCrit
+                end
+            end
+            return PlayerStatService.lastKnownStats["crit"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -159,10 +209,36 @@ local STAT_DEFINITIONS = {
         category = "secondary",
         getValue = function()
             local fn = GetHaste or UnitSpellHaste
-            if not fn then return 0 end
-            local ok, val = pcall(fn, "player")
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            if fn then
+                local ok, val = pcall(fn, "player")
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["haste"] = val
+                    return val
+                end
+            end
+            if GetMeleeHaste then
+                local ok, val = pcall(GetMeleeHaste)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["haste"] = val
+                    return val
+                end
+            end
+            if GetRangedHaste then
+                local ok, val = pcall(GetRangedHaste)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["haste"] = val
+                    return val
+                end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_HASTE_MELEE or 18
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["haste"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["haste"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -174,10 +250,29 @@ local STAT_DEFINITIONS = {
         defaultIcon = 135907, -- Spell_Holy_GreaterBlessingofSanctuary
         category = "secondary",
         getValue = function()
-            if not GetMasteryEffect then return 0 end
-            local ok, val = pcall(GetMasteryEffect)
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            if GetMasteryEffect then
+                local ok, val = pcall(GetMasteryEffect)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["mastery"] = val
+                    return val
+                end
+            end
+            if GetMastery then
+                local ok, val = pcall(GetMastery)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["mastery"] = val
+                    return val
+                end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_MASTERY or 26
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and isSafeNumber(val) and val > 0 then
+                    PlayerStatService.lastKnownStats["mastery"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["mastery"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -191,15 +286,27 @@ local STAT_DEFINITIONS = {
         getValue = function()
             local cr = _G.CR_VERSATILITY_DAMAGE_DONE or 29
             local bonus, vers = 0, 0
+            local hasReading = false
             if GetCombatRatingBonus then
                 local ok, b = pcall(GetCombatRatingBonus, cr)
-                if ok and isSafeNumber(b) then bonus = b end
+                if ok and isSafeNumber(b) then
+                    bonus = b
+                    hasReading = true
+                end
             end
             if GetVersatilityBonus then
                 local ok, v = pcall(GetVersatilityBonus, cr)
-                if ok and isSafeNumber(v) then vers = v end
+                if ok and isSafeNumber(v) then
+                    vers = v
+                    hasReading = true
+                end
             end
-            return bonus + vers
+            local total = bonus + vers
+            if hasReading and total > 0 then
+                PlayerStatService.lastKnownStats["versatility"] = total
+                return total
+            end
+            return PlayerStatService.lastKnownStats["versatility"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -211,10 +318,22 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136006, -- Spell_Magic_LesserInvisibilty
         category = "tertiary",
         getValue = function()
-            if not GetAvoidance then return 0 end
-            local ok, val = pcall(GetAvoidance)
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            if GetAvoidance then
+                local ok, val = pcall(GetAvoidance)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["avoidance"] = val
+                    return val
+                end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_AVOIDANCE or 21
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["avoidance"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["avoidance"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -226,10 +345,22 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136169, -- Spell_Shadow_LifeDrain02
         category = "tertiary",
         getValue = function()
-            if not GetLifesteal then return 0 end
-            local ok, val = pcall(GetLifesteal)
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            if GetLifesteal then
+                local ok, val = pcall(GetLifesteal)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["leech"] = val
+                    return val
+                end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_LIFESTEAL or 22
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["leech"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["leech"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -241,10 +372,22 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132297, -- Ability_Rogue_Feint
         category = "tertiary",
         getValue = function()
-            if not GetSpeed then return 0 end
-            local ok, val = pcall(GetSpeed)
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            if GetSpeed then
+                local ok, val = pcall(GetSpeed)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["speedRating"] = val
+                    return val
+                end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_SPEED or 23
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["speedRating"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["speedRating"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -257,22 +400,27 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132307, -- Ability_Rogue_Sprint
         category = "speed",
         getValue = function()
-            if not GetUnitSpeed then return 100 end
-            local ok, currentSpeed, runSpeed = pcall(GetUnitSpeed, "player")
-            if not ok then return 100 end
-            local isMoving = (currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0)
-            local isOtherMode = false
-            if IsFlying and IsFlying() then isOtherMode = true end
-            if IsSwimming and IsSwimming() then isOtherMode = true end
-            if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
-                local gOk, isGliding = pcall(C_PlayerInfo.GetGlidingInfo)
-                if gOk and isGliding then isOtherMode = true end
+            if GetUnitSpeed then
+                local ok, currentSpeed, runSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (isSafeNumber(currentSpeed) or isSafeNumber(runSpeed)) then
+                    local isMoving = (currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0)
+                    local isOtherMode = false
+                    if IsFlying and IsFlying() then isOtherMode = true end
+                    if IsSwimming and IsSwimming() then isOtherMode = true end
+                    if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                        local gOk, isGliding = pcall(C_PlayerInfo.GetGlidingInfo)
+                        if gOk and isGliding then isOtherMode = true end
+                    end
+                    local speed = (isMoving and not isOtherMode) and currentSpeed or runSpeed
+                    if not isSafeNumber(speed) or speed <= 0 then
+                        speed = (runSpeed and isSafeNumber(runSpeed) and runSpeed > 0) and runSpeed or 7.0
+                    end
+                    local pct = (speed / 7.0) * 100
+                    PlayerStatService.lastKnownStats["runSpeed"] = pct
+                    return pct
+                end
             end
-            local speed = (isMoving and not isOtherMode) and currentSpeed or runSpeed
-            if not isSafeNumber(speed) or speed <= 0 then
-                speed = (runSpeed and isSafeNumber(runSpeed) and runSpeed > 0) and runSpeed or 7.0
-            end
-            return (speed / 7.0) * 100
+            return PlayerStatService.lastKnownStats["runSpeed"] or 100
         end,
         format = "percent",
         suffix = "%",
@@ -284,15 +432,20 @@ local STAT_DEFINITIONS = {
         defaultIcon = 132150, -- Ability_Suffocate
         category = "speed",
         getValue = function()
-            if not GetUnitSpeed then return 67 end
-            local ok, currentSpeed, _, _, swimSpeed = pcall(GetUnitSpeed, "player")
-            if not ok then return 67 end
-            local isSwimming = IsSwimming and IsSwimming()
-            local speed = (isSwimming and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or swimSpeed
-            if not isSafeNumber(speed) or speed <= 0 then
-                speed = (swimSpeed and isSafeNumber(swimSpeed) and swimSpeed > 0) and swimSpeed or 4.7
+            if GetUnitSpeed then
+                local ok, currentSpeed, _, _, swimSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (isSafeNumber(currentSpeed) or isSafeNumber(swimSpeed)) then
+                    local isSwimming = IsSwimming and IsSwimming()
+                    local speed = (isSwimming and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or swimSpeed
+                    if not isSafeNumber(speed) or speed <= 0 then
+                        speed = (swimSpeed and isSafeNumber(swimSpeed) and swimSpeed > 0) and swimSpeed or 4.7
+                    end
+                    local pct = (speed / 7.0) * 100
+                    PlayerStatService.lastKnownStats["swimSpeed"] = pct
+                    return pct
+                end
             end
-            return (speed / 7.0) * 100
+            return PlayerStatService.lastKnownStats["swimSpeed"] or 67
         end,
         format = "percent",
         suffix = "%",
@@ -304,20 +457,25 @@ local STAT_DEFINITIONS = {
         defaultIcon = 237558, -- Ability_Mount_Drake_Proto
         category = "speed",
         getValue = function()
-            if not GetUnitSpeed then return 100 end
-            local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
-            if not ok then return 100 end
-            local isFlying = IsFlying and IsFlying()
-            local isGliding = false
-            if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
-                local gOk, gliding = pcall(C_PlayerInfo.GetGlidingInfo)
-                if gOk and gliding then isGliding = true end
+            if GetUnitSpeed then
+                local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (isSafeNumber(currentSpeed) or isSafeNumber(flightSpeed)) then
+                    local isFlying = IsFlying and IsFlying()
+                    local isGliding = false
+                    if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                        local gOk, gliding = pcall(C_PlayerInfo.GetGlidingInfo)
+                        if gOk and gliding then isGliding = true end
+                    end
+                    local speed = (isFlying and not isGliding and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
+                    if not isSafeNumber(speed) or speed <= 0 then
+                        speed = (flightSpeed and isSafeNumber(flightSpeed) and flightSpeed > 0) and flightSpeed or 7.0
+                    end
+                    local pct = (speed / 7.0) * 100
+                    PlayerStatService.lastKnownStats["flightSpeed"] = pct
+                    return pct
+                end
             end
-            local speed = (isFlying and not isGliding and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
-            if not isSafeNumber(speed) or speed <= 0 then
-                speed = (flightSpeed and isSafeNumber(flightSpeed) and flightSpeed > 0) and flightSpeed or 7.0
-            end
-            return (speed / 7.0) * 100
+            return PlayerStatService.lastKnownStats["flightSpeed"] or 100
         end,
         format = "percent",
         suffix = "%",
@@ -332,18 +490,24 @@ local STAT_DEFINITIONS = {
             if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
                 local ok, isGliding, canGlide, forwardSpeed = pcall(C_PlayerInfo.GetGlidingInfo)
                 if ok and isGliding and isSafeNumber(forwardSpeed) and forwardSpeed > 0 then
-                    return (forwardSpeed / 7.0) * 100
+                    local pct = (forwardSpeed / 7.0) * 100
+                    PlayerStatService.lastKnownStats["skyridingSpeed"] = pct
+                    return pct
                 end
             end
-            if not GetUnitSpeed then return 0 end
-            local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
-            if not ok then return 0 end
-            local isFlying = IsFlying and IsFlying()
-            local speed = (isFlying and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
-            if not isSafeNumber(speed) or speed <= 0 then
-                speed = 0
+            if GetUnitSpeed then
+                local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (isSafeNumber(currentSpeed) or isSafeNumber(flightSpeed)) then
+                    local isFlying = IsFlying and IsFlying()
+                    local speed = (isFlying and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
+                    if isSafeNumber(speed) and speed > 0 then
+                        local pct = (speed / 7.0) * 100
+                        PlayerStatService.lastKnownStats["skyridingSpeed"] = pct
+                        return pct
+                    end
+                end
             end
-            return (speed / 7.0) * 100
+            return PlayerStatService.lastKnownStats["skyridingSpeed"] or 0
         end,
         format = "percent",
         suffix = "%",
@@ -433,12 +597,17 @@ local STAT_DEFINITIONS = {
         defaultIcon = 134951, -- INV_Shield_04
         category = "survival",
         getValue = function()
-            if not UnitArmor then return 0 end
-            local ok, base, effectiveArmor = pcall(UnitArmor, "player")
-            if not ok then return 0 end
-            local val = effectiveArmor or base
-            if not isSafeNumber(val) then return 0 end
-            return val
+            if UnitArmor then
+                local ok, base, effectiveArmor = pcall(UnitArmor, "player")
+                if ok then
+                    local val = effectiveArmor or base
+                    if isSafeNumber(val) and val > 0 then
+                        PlayerStatService.lastKnownStats["armor"] = val
+                        return val
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["armor"] or 0
         end,
         format = "number",
     },
@@ -490,15 +659,25 @@ end
 
 PlayerStatService.formatStatNumber = formatStatNumber
 
+function PlayerStatService.prewarmStats()
+    for _, key in ipairs(ORDERED_KEYS) do
+        local def = STAT_DEFINITIONS[key]
+        if def and def.getValue then
+            pcall(def.getValue)
+        end
+    end
+end
+
 function PlayerStatService.getStatValue(statKey)
     local def = STAT_DEFINITIONS[statKey]
     if def and def.getValue then
         local ok, val = pcall(def.getValue)
-        if ok and isSafeNumber(val) then
+        if ok and isSafeNumber(val) and (val > 0 or (statKey == "totalAbsorb" or statKey == "healAbsorb" or statKey == "skyridingSpeed")) then
+            PlayerStatService.lastKnownStats[statKey] = val
             return val
         end
     end
-    return 0
+    return PlayerStatService.lastKnownStats[statKey] or 0
 end
 
 function PlayerStatService.getRawStatValue(statKey)
@@ -960,6 +1139,10 @@ function PlayerStatService.initialize()
         local onEvent = function()
             PlayerStatService.update()
         end
+        local onPrewarmEvent = function()
+            PlayerStatService.prewarmStats()
+            PlayerStatService.update()
+        end
         router.register("UNIT_STATS", onEvent)
         router.register("UNIT_AURA", onEvent)
         router.register("UNIT_ABSORB_AMOUNT_CHANGED", onEvent)
@@ -968,10 +1151,18 @@ function PlayerStatService.initialize()
         router.register("UNIT_MAXHEALTH", onEvent)
         router.register("COMBAT_RATING_UPDATE", onEvent)
         router.register("SPEED_UPDATE", onEvent)
-        router.register("PLAYER_SPECIALIZATION_CHANGED", onEvent)
-        router.register("PLAYER_ENTERING_WORLD", onEvent)
+        router.register("PLAYER_SPECIALIZATION_CHANGED", onPrewarmEvent)
+        router.register("PLAYER_ENTERING_WORLD", onPrewarmEvent)
+        router.register("PLAYER_LOGIN", onPrewarmEvent)
+        router.register("PLAYER_REGEN_ENABLED", onPrewarmEvent)
+        router.register("PLAYER_REGEN_DISABLED", onEvent)
+        router.register("PLAYER_EQUIPMENT_CHANGED", onPrewarmEvent)
+        router.register("TRAIT_CONFIG_UPDATED", onPrewarmEvent)
+        router.register("ACTIVE_TALENT_GROUP_CHANGED", onPrewarmEvent)
+        router.register("SPELLS_CHANGED", onPrewarmEvent)
         router.register("PLAYER_MOUNT_DISPLAY_CHANGED", onEvent)
     end
+    PlayerStatService.prewarmStats()
     initTicker()
 end
 
