@@ -5,7 +5,7 @@
 ## 邊界: 不載入 Classic/MOP/TBC/Wrath 分支，不載入 ReferenceLibs 或 LegacyReference。
 ## 維護: 新增正式模組時同步確認 Docs/04_MODULE_CONTRACTS.md 與 Docs/12_CODE_COMMENTARY_GUIDE.md。
 ## Interface: 120007, 120100
-## Version: EventAlertMod_MN_20260824
+## Version: EventAlertMod_MN_20260825
 ## X-WoWI-ID: 26550
 ## X-Curse-Project-ID: 826042
 
@@ -26,8 +26,11 @@
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: EAM_DB, EAM_FLOW_TEST_REPORT_JSON, EAM_VALIDATION_PROFILE, EAM_LIVE_TEST_SESSION, EAM_LIVE_TEST_REPORT_JSON, EAM_UNIT_POWER_CAPABILITY_REPORT_JSON, EAM_SVG_CAPABILITY_REPORT_JSON, EA_Config, EA_Position, EA_Items, EA_AltItems, EA_TarItems, EA_ScdItems, EA_GrpItems, EA_Pos
+## OptionalDeps: LibSharedMedia-3.0
 
 Lib\LibStub.lua
+Lib\CallbackHandler-1.0.lua
+Lib\LibSharedMedia-3.0.lua
 Lib\LibButtonGlow-1.0.lua
 
 Core\Env.lua
@@ -66,6 +69,8 @@ Services\GroundEffectService.lua
 Services\TotemService.lua
 Services\TooltipMonitorService.lua
 Services\PlayerStatService.lua
+Services\WeaponEnchantService.lua
+Services\MediaService.lua
 
 Managers\AuraRuleCompiler.lua
 Managers\AlertManager.lua
@@ -73,6 +78,7 @@ Managers\AlertManager.lua
 UI\Theme.lua
 UI\TextPlacement.lua
 UI\AlertBorderStyles.lua
+UI\RadialGauge.lua
 UI\IconPool.lua
 UI\Renderer.lua
 UI\PowerRenderer.lua

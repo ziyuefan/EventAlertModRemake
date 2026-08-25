@@ -743,6 +743,16 @@ local function createIcon()
     end
     button.glowAnimation = glowAnimation
 
+    local RadialGauge = EAM.UI.RadialGauge
+    if RadialGauge and RadialGauge.create then
+        button.radialGauge = RadialGauge.create(overlay, 40, {
+            feather = 0.08,
+            blendMode = "ADD",
+        }) or false
+    else
+        button.radialGauge = false
+    end
+
     button.rendered = {}
     button:EnableMouse(true)
     button:SetScript("OnEnter", showIconTooltip)
@@ -809,6 +819,13 @@ function IconPool.release(icon)
         icon.typeBorder:Hide()
     end
     hideChargeVisuals(icon)
+    local radialGauge = readField(icon, "radialGauge")
+    if radialGauge then
+        local RadialGauge = EAM.UI.RadialGauge
+        if RadialGauge and RadialGauge.setVisible then
+            RadialGauge.setVisible(radialGauge, false)
+        end
+    end
     IconPool.setGlow(icon, false)
 
     local count = IconPool.inactiveCount + 1

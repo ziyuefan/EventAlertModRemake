@@ -352,12 +352,23 @@ function Options.refreshFontDropdown()
         or (config and config.fontFamily)
         or "STANDARD"
     local label = family
-    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
-    for index = 1, #options do
-        local option = options[index]
-        if option.value == family then
-            label = (EAM.L and EAM.L[option.labelKey]) or option.labelKey or option.value
-            break
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    local mediaList = MediaService and MediaService.getMediaList("font")
+    if mediaList then
+        for _, item in ipairs(mediaList) do
+            if item.value == family then
+                label = item.text or item.value
+                break
+            end
+        end
+    else
+        local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+        for index = 1, #options do
+            local option = options[index]
+            if option.value == family then
+                label = (EAM.L and EAM.L[option.labelKey]) or option.labelKey or option.value
+                break
+            end
         end
     end
     Options.fontDropdown:SetText((EAM.L.EAM_OPT_FONT_PREFIX or "Font: ") .. label)
@@ -1254,10 +1265,10 @@ local function createFrame()
     end
 
     -- ==========================================
-    -- 1. Main Options Frame (Left Panel, 380x600)
+    -- 1. Main Options Frame (Left Panel, 380x560)
     -- ==========================================
     local frame = api.CreateFrame("Frame", "EAM_MainOptionsFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(380, 600)
+    frame:SetSize(380, 560)
     frame:SetPoint("LEFT", UIParent, "LEFT", 100, 0)
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
@@ -1539,7 +1550,7 @@ local function createFrame()
     end)
     Options.refreshAuraBackendStatus()
 
-    -- 10 個核心設定 Checkboxes（對齊 2 欄 5 行）
+    -- 11 個核心設定 Checkboxes（對齊 2 欄 6 行）與獨立測試閃爍按鈕
     createCheckbox(inner, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 12, -66, nil, "總開關：開啟或暫停所有畫面中央告警框架的顯示", "啟用提醒框架")
     createCheckbox(inner, localized("EAM_OPT_SHOW_SPELL_NAME", "顯示法術名稱"), "showSpellName", 180, -66, nil, "在告警圖示上方或下方顯示技能與物品名稱", "顯示法術名稱")
 
@@ -1559,12 +1570,6 @@ local function createFrame()
     )
 
     createCheckbox(inner, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 12, -114, nil, "當特定重大光環觸發或進入戰鬥時，全螢幕邊緣閃爍紅框", "啟用全螢幕閃爍")
-    createThemedButton(inner, localized("EAM_OPT_TEST_FLASH", "測試閃爍"), 118, -114, 54, 20, function()
-        local flash = EAM.UI and EAM.UI.CombatFlash
-        if flash and type(flash.trigger) == "function" then
-            flash.trigger()
-        end
-    end, "立即觸發一次全螢幕紅框閃爍動畫預覽", "測試閃爍")
     createCheckbox(inner, localized("EAM_OPT_ALLOW_ESC", "啟用 ESC 鍵關閉"), "allowEscCancel", 180, -114, nil, "按鍵盤 ESC 鍵時自動關閉 EAM 設定視窗", "啟用 ESC 鍵關閉")
 
     createCheckbox(inner, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 12, -138, nil, "啟用特異光環與特殊職業機制的輔助提示", "顯示額外輔助提醒")
@@ -1572,6 +1577,14 @@ local function createFrame()
 
     createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -162, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除光環")
     createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 180, -162, nil, "技能冷卻完畢且可用時，圖示外框發出流光動畫提示", "可用時高亮技能冷卻")
+
+    createCheckbox(inner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 12, -186, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
+    createThemedButton(inner, localized("EAM_OPT_TEST_FLASH", "測試閃爍"), 180, -186, 164, 22, function()
+        local flash = EAM.UI and EAM.UI.CombatFlash
+        if flash and type(flash.trigger) == "function" then
+            flash.trigger()
+        end
+    end, "立即觸發一次全螢幕紅框閃爍動畫預覽", "測試閃爍")
 
     -- 9 個主要功能大按鈕（職業資源第 7 項、角色屬性與吸收量第 8 項、排版位置第 9 項）
     local categories = {
@@ -1600,7 +1613,7 @@ local function createFrame()
     }
 
     for idx, category in ipairs(categories) do
-        createThemedButton(inner, localized(category.key, category.fallback), 12, -188 - (idx - 1) * 26, 332, 24, function()
+        createThemedButton(inner, localized(category.key, category.fallback), 12, -214 - (idx - 1) * 26, 332, 24, function()
             if idx <= 6 then
                 Options.closeAllSidePanels("list")
                 Options.currentCategory = idx
@@ -1643,7 +1656,7 @@ local function createFrame()
     end
 
     -- 底部操作按鈕：Profile 匯入/匯出、整合診斷中心與關閉按鈕
-    createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -432, 162, 26, function()
+    createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -452, 162, 24, function()
         Options.closeAllSidePanels("profile")
         local profilePanel = EAM.UI and EAM.UI.ProfileCodecPanel
         if profilePanel and type(profilePanel.open) == "function" then
@@ -1653,7 +1666,7 @@ local function createFrame()
         end
     end, "將當前職業設定匯出為 JSON/Base64 字串，或從其他玩家字串匯入", "Profile 匯入／匯出")
 
-    createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -432, 162, 26, function()
+    createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -452, 162, 24, function()
         Options.closeAllSidePanels("debug")
         local debugCenter = EAM.UI and EAM.UI.DebugCenterPanel
         if debugCenter and type(debugCenter.open) == "function" then
@@ -1665,7 +1678,7 @@ local function createFrame()
         end
     end, "執行流程自動化驗證、實機回報、運行探針與 AI 診斷報告輸出", "除錯與測試診斷中心")
 
-    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -462, 332, 26, function()
+    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -480, 332, 24, function()
         frame:Hide()
     end, "關閉主設定面板與所有二級子視窗", "關閉設定")
 
@@ -1676,7 +1689,7 @@ local function createFrame()
     -- 2. Position & Energy Frame (Right Sliding Panel)
     -- ===================================================
     local posFrame = api.CreateFrame("Frame", "EAM_PositionOptionsFrame", frame, "BackdropTemplate")
-    posFrame:SetSize(620, 600)
+    posFrame:SetSize(620, 560)
     posFrame:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, 0)
     posFrame:EnableMouse(true)
     posFrame:RegisterForDrag("LeftButton")
@@ -1921,9 +1934,8 @@ local function createFrame()
     setTooltip(fontDropdown, "切換所有告警文字與數字所使用的全局字型", "全域字型選擇")
     Options.fontDropdown = fontDropdown
 
-    local fontOptions = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
     local fontMenu = api.CreateFrame("Frame", nil, posInner, "BackdropTemplate")
-    fontMenu:SetSize(275, (#fontOptions * 22) + 8)
+    fontMenu:SetSize(275, 100)
     fontMenu:SetPoint("TOPLEFT", fontDropdown, "BOTTOMLEFT", 0, -2)
     fontMenu:SetFrameStrata("DIALOG")
     fontMenu:SetBackdrop({
@@ -1937,34 +1949,65 @@ local function createFrame()
     registerDropdownMenu(fontMenu, fontDropdown)
     fontMenu:Hide()
     Options.fontMenu = fontMenu
+    Options.fontMenuItems = {}
 
-    for index = 1, #fontOptions do
-        local option = fontOptions[index]
-        local menuButton = api.CreateFrame("Button", nil, fontMenu)
-        menuButton:SetSize(269, 20)
-        menuButton:SetPoint("TOPLEFT", fontMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        bindText(menuButtonText, option.labelKey, option.value)
-        finalizeDropdownMenuButton(menuButton, menuButtonText, fontMenu)
-        menuButton:SetScript("OnClick", function()
-            local saved = EAM.Modules and EAM.Modules.SavedVariables
-            if saved and saved.updateFontFamily then
-                local ok, status = saved.updateFontFamily(option.value)
-                if ok and status == "updated" then
-                    Options.refreshFontDropdown()
-                    Options.notifyTextLayoutChanged(true)
-                elseif ok then
-                    Options.refreshFontDropdown()
-                end
+    local function populateFontMenu()
+        for _, btn in ipairs(Options.fontMenuItems) do
+            btn:Hide()
+        end
+
+        local MediaService = EAM.Services and EAM.Services.MediaService
+        local mediaList = MediaService and MediaService.getMediaList("font")
+        local fontList = {}
+        if mediaList then
+            for _, item in ipairs(mediaList) do
+                fontList[#fontList + 1] = { value = item.value, text = item.text }
             end
-            fontMenu:Hide()
-        end)
+        else
+            local fontOptions = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+            for _, opt in ipairs(fontOptions) do
+                fontList[#fontList + 1] = { value = opt.value, text = (EAM.L and EAM.L[opt.labelKey]) or opt.value }
+            end
+        end
+
+        local total = #fontList
+        fontMenu:SetSize(275, (total * 22) + 8)
+
+        for index = 1, total do
+            local item = fontList[index]
+            local menuButton = Options.fontMenuItems[index]
+            if not menuButton then
+                menuButton = api.CreateFrame("Button", nil, fontMenu)
+                menuButton:SetSize(269, 20)
+                menuButton.text = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                menuButton.text:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+                finalizeDropdownMenuButton(menuButton, menuButton.text, fontMenu)
+                Options.fontMenuItems[index] = menuButton
+            end
+            menuButton:SetPoint("TOPLEFT", fontMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+            menuButton.text:SetText(item.text)
+            menuButton:SetScript("OnClick", function()
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.updateFontFamily then
+                    local ok, status = saved.updateFontFamily(item.value)
+                    if ok and status == "updated" then
+                        Options.refreshFontDropdown()
+                        Options.notifyTextLayoutChanged(true)
+                    elseif ok then
+                        Options.refreshFontDropdown()
+                    end
+                end
+                fontMenu:Hide()
+            end)
+            menuButton:Show()
+        end
     end
+
     fontDropdown:SetScript("OnClick", function()
         if fontMenu:IsShown() then
             fontMenu:Hide()
         else
+            populateFontMenu()
             fontMenu:Show()
         end
     end)
@@ -2061,6 +2104,8 @@ local function createFrame()
         "EAM_CHARGE_BAR_HINT",
         "分段代表剩餘可用次數；恢復時間只顯示於冷卻轉圈。"
     )
+
+    createCheckbox(posInner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 300, -462, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
 
     -- ---------------------------------------------------
     -- 【底部按鈕】：對稱分欄，重置 7 個框架的所有狀態

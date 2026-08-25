@@ -184,31 +184,36 @@ local function setCandidate(kind, spellID, itemID, macroID, tooltipType, validat
 end
 
 local function hasExactModifierChord()
-    if not api.IsControlKeyDown
-        or not api.IsAltKeyDown
-        or not api.IsShiftKeyDown
-        or not api.IsMetaKeyDown
-    then
+    if not api.IsControlKeyDown or not api.IsAltKeyDown then
         return false
     end
-    if not api.IsControlKeyDown() or not api.IsAltKeyDown() then
+    local isCtrlOK, isCtrl = pcall(api.IsControlKeyDown)
+    local isAltOK, isAlt = pcall(api.IsAltKeyDown)
+    if not isCtrlOK or not isCtrl or not isAltOK or not isAlt then
         return false
     end
-    if api.IsShiftKeyDown() then
-        return false
+    if api.IsShiftKeyDown then
+        local isShiftOK, isShift = pcall(api.IsShiftKeyDown)
+        if isShiftOK and isShift == true then
+            return false
+        end
     end
-    if api.IsMetaKeyDown() then
-        return false
+    if api.IsMetaKeyDown then
+        local isMetaOK, isMeta = pcall(api.IsMetaKeyDown)
+        if isMetaOK and isMeta == true then
+            return false
+        end
     end
     return true
 end
 
 local function hasKeyboardFocus()
-    if not api.GetCurrentKeyBoardFocus then
-        return true
+    local getFocus = api.GetCurrentKeyBoardFocus or api.GetKeyboardFocus or GetKeyboardFocus
+    if not getFocus then
+        return false
     end
-    local ok, focus = pcall(api.GetCurrentKeyBoardFocus)
-    return not ok or focus ~= nil
+    local ok, focus = pcall(getFocus)
+    return ok and focus ~= nil
 end
 
 inCombat = function()
@@ -246,10 +251,13 @@ local function isGameTooltipShown()
 end
 
 local function isCandidateTooltipCurrent()
-    if candidate.validationMode == VALIDATION_AURA_HEARTBEAT then
+    if candidate.validationMode == VALIDATION_AURA_HEARTBEAT or candidate.kind == "aura" then
         return true
     end
     if candidate.validationMode ~= VALIDATION_GAME_TOOLTIP then
+        return false
+    end
+    if not isGameTooltipShown() then
         return false
     end
     if candidate.tooltipType == nil or not GameTooltip or type(GameTooltip.IsTooltipType) ~= "function" then
@@ -289,7 +297,7 @@ local function tryOpenMenu()
         reject("tooltipTypeChanged")
         return false, "tooltipTypeChanged"
     end
-    if candidate.validationMode == VALIDATION_GAME_TOOLTIP and not isGameTooltipShown() then
+    if candidate.kind ~= "aura" and candidate.validationMode == VALIDATION_GAME_TOOLTIP and not isGameTooltipShown() then
         markTryOpenReason("tooltipHidden")
         reject("tooltipHidden")
         return false, "tooltipHidden"
@@ -518,7 +526,121 @@ local function onMacroTooltip(tooltip)
     end
 end
 
-local function onAuraTooltip(tooltip)
+local function resolvePetActionSpellID(tooltip, data)
+    local rawID = readTooltipDataID(data)
+    if rawID and rawID > 20 and api.C_Spell and api.C_Spell.GetSpellInfo then
+        local ok, info = pcall(api.C_Spell.GetSpellInfo, rawID)
+        if ok and info then
+            return rawID
+        end
+    end
+
+    if rawID and rawID >= 1 and rawID <= 10 then
+        if api.GetPetActionInfo then
+            local ok, _, _, _, _, _, _, spellID = pcall(api.GetPetActionInfo, rawID)
+            if ok and safePositiveInteger(spellID) then
+                return safePositiveInteger(spellID)
+            end
+        end
+        if api.GetPetActionSpell then
+            local ok, spellID = pcall(api.GetPetActionSpell, rawID)
+            if ok and safePositiveInteger(spellID) then
+                return safePositiveInteger(spellID)
+            end
+        end
+    end
+
+    if isGameTooltip(tooltip) and type(tooltip.GetProcessingTooltipInfo) == "function" then
+        local ok, info = pcall(tooltip.GetProcessingTooltipInfo, tooltip)
+        if ok and Util.isReadableTable(info) and Util.isReadableTable(info.getterArgs) then
+            local slot = safePositiveInteger(info.getterArgs[1])
+            if slot and slot >= 1 and slot <= 10 then
+                if api.GetPetActionInfo then
+                    local ok2, _, _, _, _, _, _, spellID = pcall(api.GetPetActionInfo, slot)
+                    if ok2 and safePositiveInteger(spellID) then
+                        return safePositiveInteger(spellID)
+                    end
+                end
+                if api.GetPetActionSpell then
+                    local ok2, spellID = pcall(api.GetPetActionSpell, slot)
+                    if ok2 and safePositiveInteger(spellID) then
+                        return safePositiveInteger(spellID)
+                    end
+                end
+            end
+        end
+    end
+
+    if rawID and rawID > 0 then
+        return rawID
+    end
+    return nil
+end
+
+local function onPetActionTooltip(tooltip, data)
+    if not moduleEnabled() then
+        return
+    end
+    if not isGameTooltip(tooltip) then
+        return
+    end
+    local spellID = resolvePetActionSpellID(tooltip, data)
+    if not spellID then
+        reject("unsafePetSpellID")
+        return
+    end
+    addDoubleLine(tooltip, EAM.L.EAM_TOOLTIP_SPELL_ID or "EAM Spell ID", spellID)
+    if setCandidate("spell", spellID, nil, nil, api.TooltipDataType and api.TooltipDataType.PetAction) then
+        addHintLine(tooltip, EAM.L.EAM_TOOLTIP_OPEN_HINT or "Ctrl+Alt: open EAM monitor menu")
+    end
+end
+
+local function resolveUnitAuraSpellID(tooltip, data)
+    local rawID = readTooltipDataID(data)
+    if rawID and rawID > 0 and api.C_Spell and api.C_Spell.GetSpellInfo then
+        local ok, info = pcall(api.C_Spell.GetSpellInfo, rawID)
+        if ok and info then
+            return rawID
+        end
+    end
+
+    if isGameTooltip(tooltip) and type(tooltip.GetProcessingTooltipInfo) == "function" then
+        local ok, info = pcall(tooltip.GetProcessingTooltipInfo, tooltip)
+        if ok and Util.isReadableTable(info) and Util.isReadableTable(info.getterArgs) then
+            local getterName = info.getterName
+            local args = info.getterArgs
+            local unit = args[1]
+            local cUnitAuras = api.C_UnitAuras or C_UnitAuras
+            if cUnitAuras and Util.isSafeString(unit) then
+                if getterName == "GetUnitAura" or getterName == "GetUnitBuff" or getterName == "GetUnitDebuff" then
+                    local index = safePositiveInteger(args[2])
+                    local filter = args[3]
+                    if index and type(cUnitAuras.GetAuraDataByIndex) == "function" then
+                        local aOK, aura = pcall(cUnitAuras.GetAuraDataByIndex, unit, index, filter)
+                        if aOK and type(aura) == "table" and safePositiveInteger(aura.spellId) then
+                            return safePositiveInteger(aura.spellId)
+                        end
+                    end
+                elseif getterName == "GetUnitAuraByAuraInstanceID" then
+                    local auraInstanceID = safePositiveInteger(args[2])
+                    if auraInstanceID and type(cUnitAuras.GetAuraDataByAuraInstanceID) == "function" then
+                        local aOK, aura = pcall(cUnitAuras.GetAuraDataByAuraInstanceID, unit, auraInstanceID)
+                        if aOK and type(aura) == "table" and safePositiveInteger(aura.spellId) then
+                            return safePositiveInteger(aura.spellId)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if rawID and rawID > 0 then
+        return rawID
+    end
+    return nil
+end
+
+local function onAuraTooltip(tooltip, data)
     if not moduleEnabled() then
         return
     end
@@ -535,11 +657,16 @@ local function onAuraTooltip(tooltip)
     end
     local usesGameTooltip = isGameTooltip(tooltip)
     local validationMode = usesGameTooltip and VALIDATION_GAME_TOOLTIP or VALIDATION_AURA_HEARTBEAT
-    local hint = Service.auraIDDisplayEnabled
+    local spellID = resolveUnitAuraSpellID(tooltip, data)
+    if spellID and usesGameTooltip then
+        addDoubleLine(tooltip, EAM.L.EAM_TOOLTIP_SPELL_ID or "EAM Spell ID", spellID)
+    end
+
+    local hint = (spellID ~= nil or Service.auraIDDisplayEnabled)
         and (EAM.L.EAM_TOOLTIP_AURA_HINT or "Aura ID is shown by Blizzard; Ctrl+Alt opens EAM")
         or (EAM.L.EAM_TOOLTIP_AURA_MANUAL_HINT
             or "Aura ID display is unavailable; Ctrl+Alt opens manual EAM entry")
-    if setCandidate("aura", nil, nil, nil, api.TooltipDataType and api.TooltipDataType.UnitAura, validationMode) then
+    if setCandidate("aura", spellID, nil, nil, api.TooltipDataType and api.TooltipDataType.UnitAura, validationMode) then
         if usesGameTooltip then
             addHintLine(tooltip, hint)
         else
@@ -773,6 +900,9 @@ function Service.initialize()
         registerPostCall(types.Item, onItemTooltip)
         registerPostCall(types.UnitAura, onAuraTooltip)
         registerPostCall(types.Macro, onMacroTooltip)
+        if types.PetAction then
+            registerPostCall(types.PetAction, onPetActionTooltip)
+        end
     end
 
     local router = EAM.Modules and EAM.Modules.EventRouter

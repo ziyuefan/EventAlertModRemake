@@ -60,7 +60,7 @@ local function createPanel()
         UIParent,
         "BackdropTemplate"
     )
-    frame:SetSize(430, 300)
+    frame:SetSize(430, 320)
     frame:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -128,7 +128,7 @@ local function createPanel()
         local column = (index - 1) % 2
         local row = math.floor((index - 1) / 2)
         local checkbox = api.CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
-        checkbox:SetPoint("TOPLEFT", frame, "TOPLEFT", 24 + column * 205, -88 - row * 40)
+        checkbox:SetPoint("TOPLEFT", frame, "TOPLEFT", 24 + column * 205, -82 - row * 32)
         checkbox:SetSize(24, 24)
         checkbox.eamModuleKey = definition.key
 
@@ -174,7 +174,7 @@ local function createPanel()
     end
 
     local statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 24, 24)
+    statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 24, 20)
     statusText:SetWidth(290)
     statusText:SetJustifyH("LEFT")
     Locale.bindText(statusText, "EAM_MODULE_STATUS_READY", "模組設定已就緒。")
@@ -185,7 +185,7 @@ local function createPanel()
 
     local closeButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     closeButton:SetSize(90, 24)
-    closeButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -20, 18)
+    closeButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -20, 16)
     Locale.bindText(closeButton, "EAM_ABOUT_CLOSE", "關閉")
     if EAM.UI.setTooltip then
         EAM.UI.setTooltip(closeButton, "關閉功能模組開關面板", "關閉")

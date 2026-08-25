@@ -148,7 +148,9 @@ EAM.Data.SpellArray = {
         },
         general = {
             { id = 186265, type = "spellCooldown" }, -- 龜殼守護
-            { id = 5384, type = "spellCooldown" } -- 假死
+            { id = 5384, type = "spellCooldown" }, -- 假死
+            { id = 264667, type = "spellCooldown" }, -- 原始暴怒 (寵物嗜血)
+            { id = 53271, type = "spellCooldown" } -- 主人的召喚 (寵物解控)
         }
     },
     ROGUE = {
@@ -247,7 +249,8 @@ EAM.Data.SpellArray = {
         },
         general = {
             { id = 48792, type = "spellCooldown" }, -- 冰封之韌
-            { id = 48707, type = "spellCooldown" } -- 反魔法護罩
+            { id = 48707, type = "spellCooldown" }, -- 反魔法護罩
+            { id = 47481, type = "spellCooldown" } -- 啃食 (食屍鬼昏迷)
         }
     },
     SHAMAN = {
@@ -393,7 +396,9 @@ EAM.Data.SpellArray = {
         },
         general = {
             { id = 104773, type = "spellCooldown" }, -- 不滅決心
-            { id = 20707, type = "spellCooldown" } -- 靈魂石
+            { id = 20707, type = "spellCooldown" }, -- 靈魂石
+            { id = 89808, type = "spellCooldown" }, -- 燒灼驅魔 (小鬼驅散)
+            { id = 19647, type = "spellCooldown" } -- 法術封鎖 (惡魔斷法)
         }
     },
     DEMONHUNTER = {

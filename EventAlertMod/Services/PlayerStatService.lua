@@ -30,6 +30,14 @@ local PlayerStatService = {
 }
 EAM.Services.PlayerStatService = PlayerStatService
 
+local canaccesstable = canaccesstable or function(t) return type(t) == "table" end
+local canaccessvalue = canaccessvalue or function() return true end
+local issecretvalue = issecretvalue or function() return false end
+
+local function inCombat()
+    return api.InCombatLockdown and api.InCombatLockdown()
+end
+
 local function isSafeNumber(val)
     if val == nil then return false end
     if Util and Util.isSecretValue and Util.isSecretValue(val) then return false end
@@ -39,6 +47,26 @@ local function isSafeNumber(val)
 end
 
 PlayerStatService.isSafeNumber = isSafeNumber
+
+-- 依職業獲取獨立的 playerStats 設定表 (Per-Class Profile Support)
+function PlayerStatService.getPlayerStatsConfig()
+    local db = EAM.db
+    if not db then return {}, "GLOBAL" end
+    local classToken = nil
+    if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.getActiveClassToken then
+        classToken = EAM.Modules.SavedVariables.getActiveClassToken()
+    end
+    if not classToken and UnitClassBase then
+        classToken = UnitClassBase("player")
+    end
+    if classToken and db.profiles and db.profiles.classes and db.profiles.classes[classToken] then
+        local profile = db.profiles.classes[classToken]
+        profile.playerStats = type(profile.playerStats) == "table" and profile.playerStats or {}
+        return profile.playerStats, classToken
+    end
+    db.playerStats = type(db.playerStats) == "table" and db.playerStats or {}
+    return db.playerStats, classToken or "GLOBAL"
+end
 
 -- 16 大支援屬性定義清單
 local STAT_DEFINITIONS = {
@@ -298,7 +326,7 @@ local STAT_DEFINITIONS = {
         key = "skyridingSpeed",
         labelKey = "EAM_STAT_SKYRIDING_SPEED",
         defaultLabel = "飛龍模式飛速",
-        defaultIcon = 4661640, -- inv_dragonriding_glyph
+        defaultIcon = 4667307, -- ability_dragonriding_surgeforward01
         category = "speed",
         getValue = function()
             if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
@@ -330,10 +358,32 @@ local STAT_DEFINITIONS = {
             return UnitGetTotalAbsorbs and UnitGetTotalAbsorbs("player") or 0
         end,
         getValue = function()
-            if not UnitGetTotalAbsorbs then return 0 end
-            local ok, val = pcall(UnitGetTotalAbsorbs, "player")
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            local total = 0
+            if UnitGetTotalAbsorbs then
+                local ok, val = pcall(UnitGetTotalAbsorbs, "player")
+                if ok and isSafeNumber(val) and val > 0 then
+                    total = val
+                end
+            end
+            if total <= 0 and C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+                local i = 1
+                while true do
+                    local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+                    if not aura then break end
+                    if aura.points and type(aura.points) == "table" and canaccesstable(aura.points) then
+                        for pIdx = 1, #aura.points do
+                            local pt = aura.points[pIdx]
+                            if pt and not issecretvalue(pt) and canaccessvalue(pt) and type(pt) == "number" and pt > 0 then
+                                total = total + pt
+                                break
+                            end
+                        end
+                    end
+                    i = i + 1
+                    if i > 40 then break end
+                end
+            end
+            return total
         end,
         format = "largeNumber",
     },
@@ -347,10 +397,32 @@ local STAT_DEFINITIONS = {
             return UnitGetTotalHealAbsorbs and UnitGetTotalHealAbsorbs("player") or 0
         end,
         getValue = function()
-            if not UnitGetTotalHealAbsorbs then return 0 end
-            local ok, val = pcall(UnitGetTotalHealAbsorbs, "player")
-            if not ok or not isSafeNumber(val) then return 0 end
-            return val
+            local total = 0
+            if UnitGetTotalHealAbsorbs then
+                local ok, val = pcall(UnitGetTotalHealAbsorbs, "player")
+                if ok and isSafeNumber(val) and val > 0 then
+                    total = val
+                end
+            end
+            if total <= 0 and C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+                local i = 1
+                while true do
+                    local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HARMFUL")
+                    if not aura then break end
+                    if aura.points and type(aura.points) == "table" and canaccesstable(aura.points) then
+                        for pIdx = 1, #aura.points do
+                            local pt = aura.points[pIdx]
+                            if pt and not issecretvalue(pt) and canaccessvalue(pt) and type(pt) == "number" and pt > 0 then
+                                total = total + pt
+                                break
+                            end
+                        end
+                    end
+                    i = i + 1
+                    if i > 40 then break end
+                end
+            end
+            return total
         end,
         format = "largeNumber",
     },
@@ -388,6 +460,10 @@ local function formatStatNumber(val, formatType, decimals, shortNumber, suffix)
         if formatType == "percent" then
             return suffix and ("0.0" .. suffix) or "0.0"
         end
+        return "0"
+    end
+
+    if val == 0 and (formatType == "number" or formatType == "largeNumber") then
         return "0"
     end
 
@@ -439,6 +515,25 @@ function PlayerStatService.getRawStatValue(statKey)
     return 0
 end
 
+function PlayerStatService.getStatIcon(statKey, customIcon)
+    if customIcon and customIcon ~= "" then
+        return tonumber(customIcon) or customIcon
+    end
+    local def = STAT_DEFINITIONS[statKey]
+    if not def then return 134400 end
+    if statKey == "skyridingSpeed" then
+        if C_Spell and C_Spell.GetSpellTexture then
+            local spellTex = C_Spell.GetSpellTexture(376777) or C_Spell.GetSpellTexture(361584) or C_Spell.GetSpellTexture(372610)
+            if spellTex then return spellTex end
+        elseif GetSpellTexture then
+            local spellTex = GetSpellTexture(376777) or GetSpellTexture(361584)
+            if spellTex then return spellTex end
+        end
+        return def.defaultIcon or 4667307
+    end
+    return def.defaultIcon or 134400
+end
+
 local parentFrame = nil
 local statItemFrames = {}
 
@@ -463,14 +558,15 @@ local function ensureParentFrame()
     return frame
 end
 
-local function getOrCreateStatItemFrame(parent, index)
-    if statItemFrames[index] then
-        return statItemFrames[index]
+local function getOrCreateStatItemFrame(statKey)
+    if statItemFrames[statKey] then
+        return statItemFrames[statKey]
     end
 
-    local item = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    local item = api.CreateFrame("Frame", "EAM_AlertFrame_playerStat_" .. tostring(statKey), UIParent, "BackdropTemplate")
     item:SetSize(40, 40)
     item:SetFrameStrata("MEDIUM")
+    item.statKey = statKey
 
     local icon = item:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("TOPLEFT", item, "TOPLEFT", 2, -2)
@@ -507,7 +603,7 @@ local function getOrCreateStatItemFrame(parent, index)
     item:SetBackdropColor(0.06, 0.06, 0.06, 0.85)
     item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
 
-    statItemFrames[index] = item
+    statItemFrames[statKey] = item
     return item
 end
 
@@ -515,10 +611,11 @@ function PlayerStatService.update()
     if not parentFrame and not ensureParentFrame() then return end
 
     local db = EAM.db
-    local statsConfig = db and db.playerStats or {}
+    local statsConfig = PlayerStatService.getPlayerStatsConfig()
     local globalConfig = db and db.config or {}
 
     local activeList = {}
+    local anyGrouped = false
     for _, key in ipairs(ORDERED_KEYS) do
         local cfg = statsConfig[key]
         if cfg and cfg.enabled then
@@ -529,59 +626,153 @@ function PlayerStatService.update()
                 val = PlayerStatService.getStatValue(key),
                 rawVal = PlayerStatService.getRawStatValue(key),
             }
+            if not cfg.useCustomPos then
+                anyGrouped = true
+            end
         end
     end
 
     if #activeList == 0 then
         parentFrame:Hide()
-        for _, item in ipairs(statItemFrames) do
+        for _, item in pairs(statItemFrames) do
             item:Hide()
         end
         return
     end
 
-    parentFrame:Show()
+    -- 處於拖曳移動模式時，只即時更新數值文字與進度條，不重設框架位置與拖曳外框
+    if PlayerStatService.isMoving then
+        for _, data in ipairs(activeList) do
+            local item = statItemFrames[data.key]
+            if item and item:IsShown() then
+                local valStr = formatStatNumber(data.val, data.def.format, data.cfg.decimals, data.cfg.shortNumber, data.def.suffix)
+                item.valText:SetText(valStr)
+            end
+        end
+        return
+    end
+
+    if anyGrouped then
+        parentFrame:Show()
+    else
+        parentFrame:Hide()
+    end
+
     local growDir = (db and db.layout and db.layout.frames and db.layout.frames.playerStat and db.layout.frames.playerStat.growDirection) or 1
     local spacing = (db and db.layout and db.layout.spacing) or globalConfig.iconSpacing or 6
+
+    local activeKeySet = {}
+    for _, data in ipairs(activeList) do
+        activeKeySet[data.key] = true
+    end
+    for k, item in pairs(statItemFrames) do
+        if not activeKeySet[k] then
+            item:Hide()
+        end
+    end
+
+    local groupedIdx = 0
+    local accumulatedOffset = 0
+    local prevDimension = 0
 
     for idx, data in ipairs(activeList) do
         local cfg = data.cfg
         local def = data.def
         local val = data.val
         local rawVal = data.rawVal
-        local item = getOrCreateStatItemFrame(parentFrame, idx)
+        local item = getOrCreateStatItemFrame(data.key)
+        item:Show()
 
         local size = cfg.iconSize or globalConfig.iconSize or 40
-        item:SetSize(size, size)
+        local itemW = size
+        local itemH = size
 
-        local dx = 0
-        local dy = 0
-        local step = idx - 1
-        if growDir == 1 then
-            dx = step * (size + spacing)
-        elseif growDir == 2 then
-            dx = -step * (size + spacing)
-        elseif growDir == 3 then
-            dy = step * (size + spacing)
-        elseif growDir == 4 then
-            dy = -step * (size + spacing)
+        -- 當取消圖示時，依數值相對方位自適應框架尺寸
+        if cfg.showIcon == false then
+            local placement = cfg.valuePlacement or "TOP"
+            if placement == "LEFT" or placement == "RIGHT" then
+                itemW = math.max(size * 1.8, 80)
+                itemH = math.max(size * 0.7, 24)
+            else
+                itemW = math.max(size * 1.2, 56)
+                itemH = math.max(size * 0.9, 36)
+            end
         end
+        item:SetSize(itemW, itemH)
 
         item:ClearAllPoints()
-        item:SetPoint("CENTER", parentFrame, "CENTER", dx, dy)
-
-        -- 圖示
-        if cfg.showIcon ~= false then
-            local iconTex = cfg.customIcon
-            if iconTex and iconTex ~= "" then
-                iconTex = tonumber(iconTex) or iconTex
+        if cfg.useCustomPos then
+            local pt = cfg.point or "CENTER"
+            local ox = cfg.offsetX or 0
+            local oy = cfg.offsetY or 0
+            item:SetPoint(pt, UIParent, pt, ox, oy)
+        else
+            groupedIdx = groupedIdx + 1
+            local curDimension = (growDir == 1 or growDir == 2) and itemW or itemH
+            if groupedIdx == 1 then
+                accumulatedOffset = 0
             else
-                iconTex = def.defaultIcon
+                accumulatedOffset = accumulatedOffset + (prevDimension / 2) + spacing + (curDimension / 2)
             end
+            prevDimension = curDimension
+
+            local dx, dy = 0, 0
+            if growDir == 1 then
+                dx = accumulatedOffset
+            elseif growDir == 2 then
+                dx = -accumulatedOffset
+            elseif growDir == 3 then
+                dy = accumulatedOffset
+            elseif growDir == 4 then
+                dy = -accumulatedOffset
+            end
+            item:SetPoint("CENTER", parentFrame, "CENTER", dx, dy)
+        end
+
+        -- 判斷是否顯示圖示與數值排版
+        item.valText:ClearAllPoints()
+        item.labelText:ClearAllPoints()
+
+        if cfg.showIcon ~= false then
+            local iconTex = PlayerStatService.getStatIcon(data.key, cfg.customIcon)
             item.icon:SetTexture(iconTex)
             item.icon:Show()
+            item.valText:SetJustifyH("CENTER")
+            item.labelText:SetJustifyH("CENTER")
+            item.valText:SetPoint("BOTTOM", item, "TOP", 0, 2)
+            item.labelText:SetPoint("TOP", item, "BOTTOM", 0, -2)
+            if not PlayerStatService.isMoving then
+                item:SetBackdropColor(0.06, 0.06, 0.06, 0.85)
+                item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
+            end
         else
             item.icon:Hide()
+            if not PlayerStatService.isMoving then
+                item:SetBackdropColor(0, 0, 0, 0)
+                item:SetBackdropBorderColor(0, 0, 0, 0)
+            end
+            local placement = cfg.valuePlacement or "TOP"
+            if placement == "BOTTOM" then
+                item.valText:SetJustifyH("CENTER")
+                item.labelText:SetJustifyH("CENTER")
+                item.labelText:SetPoint("BOTTOM", item, "CENTER", 0, 1)
+                item.valText:SetPoint("TOP", item, "CENTER", 0, -1)
+            elseif placement == "LEFT" then
+                item.valText:SetJustifyH("RIGHT")
+                item.labelText:SetJustifyH("LEFT")
+                item.valText:SetPoint("RIGHT", item, "CENTER", -2, 0)
+                item.labelText:SetPoint("LEFT", item, "CENTER", 2, 0)
+            elseif placement == "RIGHT" then
+                item.labelText:SetJustifyH("RIGHT")
+                item.valText:SetJustifyH("LEFT")
+                item.labelText:SetPoint("RIGHT", item, "CENTER", -2, 0)
+                item.valText:SetPoint("LEFT", item, "CENTER", 2, 0)
+            else -- "TOP" default
+                item.valText:SetJustifyH("CENTER")
+                item.labelText:SetJustifyH("CENTER")
+                item.valText:SetPoint("BOTTOM", item, "CENTER", 0, 1)
+                item.labelText:SetPoint("TOP", item, "CENTER", 0, -1)
+            end
         end
 
         -- 數值文字
@@ -618,7 +809,16 @@ function PlayerStatService.update()
         -- StatusBar 進度條原生 Sink 支援 (當為 Secret 數值或開啟進度條時)
         local isSecret = Util and Util.isSecretValue and Util.isSecretValue(rawVal)
         if cfg.showStatusBar ~= false or isSecret then
-            item.statusBar:SetHeight(math.max(4, math.floor(size * 0.15)))
+            item.statusBar:SetHeight(math.max(3, math.floor(itemH * 0.15)))
+            item.statusBar:ClearAllPoints()
+            if cfg.showIcon ~= false then
+                item.statusBar:SetPoint("BOTTOMLEFT", item, "BOTTOMLEFT", 2, 2)
+                item.statusBar:SetPoint("BOTTOMRIGHT", item, "BOTTOMRIGHT", -2, 2)
+            else
+                item.statusBar:SetPoint("BOTTOMLEFT", item, "BOTTOMLEFT", 4, 1)
+                item.statusBar:SetPoint("BOTTOMRIGHT", item, "BOTTOMRIGHT", -4, 1)
+            end
+
             local maxVal = 100
             if def.format == "percent" then
                 maxVal = 100
@@ -670,18 +870,73 @@ function PlayerStatService.update()
         end
 
         if isAlert then
-            item:SetBackdropBorderColor(1.0, 0.3, 0.3, 1.0)
+            if cfg.showIcon ~= false then
+                item:SetBackdropBorderColor(1.0, 0.3, 0.3, 1.0)
+            end
             item.valText:SetTextColor(1.0, 0.3, 0.3, 1.0)
         else
-            item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
+            if cfg.showIcon ~= false and not PlayerStatService.isMoving then
+                item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
+            end
         end
 
         item:Show()
     end
+end
 
-    for idx = #activeList + 1, #statItemFrames do
-        statItemFrames[idx]:Hide()
+-- 屬性框架特定/全部移動模式控制
+function PlayerStatService.setActiveAnchors(enable, targetKey)
+    if inCombat() then return false, "combatDeferred" end
+    PlayerStatService.isMoving = enable
+
+    if enable then
+        local statsConfig = PlayerStatService.getPlayerStatsConfig()
+        for k, item in pairs(statItemFrames) do
+            local cfg = statsConfig[k] or {}
+            local def = STAT_DEFINITIONS[k]
+            if (targetKey == "all" or targetKey == nil or targetKey == "playerStat" or targetKey == k) and cfg.enabled then
+                item:Show()
+                item:SetMovable(true)
+                item:EnableMouse(true)
+                item:SetFrameStrata("HIGH")
+                item:SetClampedToScreen(true)
+                item:RegisterForDrag("LeftButton")
+                item:SetScript("OnDragStart", item.StartMoving)
+                item:SetScript("OnDragStop", function(self)
+                    self:StopMovingOrSizing()
+                    local point, _, _, x, y = self:GetPoint()
+                    cfg.useCustomPos = true
+                    cfg.point = point or "CENTER"
+                    cfg.offsetX = x or 0
+                    cfg.offsetY = y or 0
+                    if EAM.UI.PlayerStatPanel and EAM.UI.PlayerStatPanel.syncSliders then
+                        EAM.UI.PlayerStatPanel.syncSliders(k, x, y)
+                    end
+                    local fLabel = (EAM.L and def and def.labelKey and EAM.L[def.labelKey]) or (def and def.defaultLabel) or k
+                    print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_STAT_POS_SAVED or "獨立位置已儲存: X: %.1f, Y: %.1f", x or 0, y or 0))
+                end)
+                if not item.dragHint then
+                    local hint = item:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                    hint:SetPoint("TOP", item, "BOTTOM", 0, -6)
+                    hint:SetTextColor(0.4, 0.9, 1.0, 1.0)
+                    item.dragHint = hint
+                end
+                local labelStr = (EAM.L and def and def.labelKey and EAM.L[def.labelKey]) or (def and def.defaultLabel) or k
+                item.dragHint:SetText(labelStr .. " (拖曳)")
+                item.dragHint:Show()
+                item:SetBackdropColor(0.2, 0.35, 0.5, 0.9)
+                item:SetBackdropBorderColor(0.4, 0.8, 1.0, 1)
+            end
+        end
+    else
+        for _, item in pairs(statItemFrames) do
+            item:SetMovable(false)
+            item:EnableMouse(false)
+            if item.dragHint then item.dragHint:Hide() end
+        end
+        PlayerStatService.update()
     end
+    return true
 end
 
 -- 定期更新計時器 (每 0.1 秒刷新一次，保障移動速度等即時數值流暢呈現)
@@ -708,8 +963,12 @@ function PlayerStatService.initialize()
         router.register("UNIT_STATS", onEvent)
         router.register("UNIT_AURA", onEvent)
         router.register("UNIT_ABSORB_AMOUNT_CHANGED", onEvent)
+        router.register("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", onEvent)
+        router.register("UNIT_HEALTH", onEvent)
+        router.register("UNIT_MAXHEALTH", onEvent)
         router.register("COMBAT_RATING_UPDATE", onEvent)
         router.register("SPEED_UPDATE", onEvent)
+        router.register("PLAYER_SPECIALIZATION_CHANGED", onEvent)
         router.register("PLAYER_ENTERING_WORLD", onEvent)
         router.register("PLAYER_MOUNT_DISPLAY_CHANGED", onEvent)
     end

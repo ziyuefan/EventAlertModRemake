@@ -131,11 +131,18 @@ function TextPlacement.apply(fontString, relativeFrame, placement)
 end
 
 function TextPlacement.normalizeFontFamily(value)
+    if type(value) ~= "string" or value == "" then
+        return EAM.Constants and EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
+    end
     local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
     for index = 1, #options do
         if options[index].value == value then
             return value
         end
+    end
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    if MediaService and MediaService.hasLSM then
+        return value
     end
     return EAM.Constants and EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
 end
@@ -156,6 +163,10 @@ function TextPlacement.getFontPath(configOrFamily)
         family = TextPlacement.normalizeFontFamily(configOrFamily)
     else
         family = TextPlacement.getFontFamily()
+    end
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    if MediaService then
+        return MediaService.getFontPath(family, STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF")
     end
     local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
     for index = 1, #options do

@@ -790,6 +790,7 @@ function CooldownService.initialize()
     if router then
         router.register("SPELL_UPDATE_COOLDOWN", CooldownService.onCooldownEvent)
         router.register("SPELL_UPDATE_CHARGES", CooldownService.onCooldownEvent)
+        router.register("PET_BAR_UPDATE", CooldownService.onCooldownEvent)
         router.register("UNIT_SPELLCAST_SUCCEEDED", CooldownService.onSpellcastSucceeded)
         router.register("PLAYER_REGEN_ENABLED", CooldownService.onCombatEvent)
         router.register("PLAYER_REGEN_DISABLED", CooldownService.onCombatEvent)
@@ -889,7 +890,9 @@ end
 
 function CooldownService.onSpellcastSucceeded(eventName, unit, castGUID, spellID)
     if eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" then
-        return false, "notPlayerCast"
+        if unit ~= "pet" then
+            return false, "notPlayerCast"
+        end
     end
     if not Util.isSafePositiveNumber(spellID) then
         return false, "invalidSpellID"

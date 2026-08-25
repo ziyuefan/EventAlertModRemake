@@ -156,6 +156,49 @@ function AuraCapabilityService.isLegacy()
     return AuraCapabilityService.selectedBackend == Constants.AURA_BACKEND_LEGACY
 end
 
+function AuraCapabilityService.getAuraFilters()
+    return Constants.AURA_FILTERS or {}
+end
+
+function AuraCapabilityService.isValidFilterString(filterString)
+    if type(filterString) ~= "string" or filterString == "" then
+        return false, "empty"
+    end
+    if type(AuraUtil) == "table" and type(AuraUtil.IsValidFilterString) == "function" then
+        local ok, valid, err = pcall(AuraUtil.IsValidFilterString, filterString)
+        if ok then
+            return valid, err
+        end
+    end
+    local filters = Constants.AURA_FILTERS
+    if not filters then
+        return true
+    end
+    for component in string.gmatch(filterString, "[^|%s]+") do
+        local token = component
+        if string.sub(token, 1, 1) == "!" then
+            token = string.sub(token, 2)
+            if token == "" then
+                return false, "emptyNegation"
+            end
+        end
+        if token ~= "" and not filters[token] then
+            -- Also check if token matches any filter value
+            local matched = false
+            for _, val in pairs(filters) do
+                if val == token or val == ("!" .. token) then
+                    matched = true
+                    break
+                end
+            end
+            if not matched then
+                return false, "invalidToken:" .. token
+            end
+        end
+    end
+    return true
+end
+
 function AuraCapabilityService.getSnapshot()
     return {
         clientInterface = AuraCapabilityService.clientInterface,

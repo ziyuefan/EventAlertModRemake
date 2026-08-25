@@ -61,6 +61,10 @@ function Main.initialize()
         pcall(EAM.Locale.setSelection, EAM.db.config.language)
     end
 
+    if EAM.Services.MediaService and EAM.Services.MediaService.init then
+        pcall(EAM.Services.MediaService.init)
+    end
+
     initializeModule(EAM.Modules.ModuleController, "ModuleController")
     initializeModule(EAM.Services.AuraCapabilityService, "AuraCapabilityService")
     initializeModule(EAM.UI.Renderer, "Renderer")
@@ -78,11 +82,16 @@ function Main.initialize()
     initializeModule(EAM.Services.TotemService, "TotemService")
     initializeModule(EAM.Services.AuraContainerService, "AuraContainerService")
     initializeModule(EAM.Services.PlayerStatService, "PlayerStatService")
+    initializeModule(EAM.Services.WeaponEnchantService, "WeaponEnchantService")
 
     -- 啟動初始刷新，採用 pcall 故障隔離，防範單一服務崩潰卡死全盤
     if EAM.Services.AuraService then
         pcall(EAM.Services.AuraService.refreshUnit, "player", "PLAYER_LOGIN")
         pcall(EAM.Services.AuraService.refreshUnit, "target", "PLAYER_LOGIN")
+        pcall(EAM.Services.AuraService.refreshUnit, "pet", "PLAYER_LOGIN")
+    end
+    if EAM.Services.WeaponEnchantService then
+        pcall(EAM.Services.WeaponEnchantService.refresh, "PLAYER_LOGIN")
     end
     if EAM.Services.CooldownService then
         pcall(EAM.Services.CooldownService.refreshAll, "PLAYER_LOGIN")

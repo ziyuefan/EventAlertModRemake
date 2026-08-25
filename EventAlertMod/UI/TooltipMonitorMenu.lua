@@ -192,14 +192,23 @@ local function configureForCandidate(source)
     end
 
     if source.kind == "aura" then
-        local description = service.auraIDDisplayEnabled
-            and (EAM.L.EAM_POPUP_DESC_AURA
-                or "請輸入 Tooltip 顯示的 Aura 法術 ID，再選擇監控單位。")
-            or (EAM.L.EAM_POPUP_DESC_AURA_MANUAL
-                or "官方 Aura ID 顯示不可用。請輸入已知的 Aura 法術 ID，再選擇監控單位。")
-        Menu.description:SetText(description)
-        Menu.idLabel:Show()
-        Menu.idEditBox:Show()
+        if source.spellID then
+            Menu.description:SetText(string.format(
+                EAM.L.EAM_POPUP_DESC_SPELL or "法術 ID：%s",
+                safeIDText(source.spellID)
+            ))
+            Menu.idLabel:Hide()
+            Menu.idEditBox:Hide()
+        else
+            local description = service.auraIDDisplayEnabled
+                and (EAM.L.EAM_POPUP_DESC_AURA
+                    or "請輸入 Tooltip 顯示的 Aura 法術 ID，再選擇監控單位。")
+                or (EAM.L.EAM_POPUP_DESC_AURA_MANUAL
+                    or "官方 Aura ID 顯示不可用。請輸入已知的 Aura 法術 ID，再選擇監控單位。")
+            Menu.description:SetText(description)
+            Menu.idLabel:Show()
+            Menu.idEditBox:Show()
+        end
         showButton(
             actionOne,
             EAM.L.EAM_POPUP_ADD_AURA_PLAYER or "加入玩家光環監控",

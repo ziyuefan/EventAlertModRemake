@@ -42,10 +42,12 @@ local AuraService = {
     unitCaches = {
         player = { byInstance = {}, spellCounts = {} },
         target = { byInstance = {}, spellCounts = {} },
+        pet = { byInstance = {}, spellCounts = {} },
     },
     alertIndex = {
         player = {},
         target = {},
+        pet = {},
     },
     indexedRevision = nil,
     scanLimit = 80,
@@ -110,6 +112,7 @@ function AuraStatePool.release(state)
     state.shown = false
     state.boundaryLimited = nil
     state.pandemicReady = nil
+    state.isImportant = nil
     state.releaseFunc = nil
     wipe(state.timer)
     wipe(state.source)
@@ -138,6 +141,9 @@ local function clearUnitCache(unit)
 end
 
 local function moduleEnabled(unit)
+    if unit == "pet" then
+        return not ModuleController or ModuleController.isAuraUnitEnabled("player")
+    end
     return not ModuleController or ModuleController.isAuraUnitEnabled(unit)
 end
 
@@ -145,7 +151,7 @@ function AuraService.clearUnit(unit, eventName)
     clearUnitCache(unit)
     local router = EAM.Modules.EventRouter
     for alertID, state in pairs(AuraService.states) do
-        if state.unit == unit then
+        if state.unit == unit or (unit == "pet" and state.unit == "pet") then
             state.shown = false
             AuraService.states[alertID] = nil
             if router then
@@ -164,6 +170,10 @@ local function indexAlert(list, unit)
     end
 
     local index = AuraService.alertIndex[unit]
+    if not index then
+        index = {}
+        AuraService.alertIndex[unit] = index
+    end
     for _, alert in pairs(list) do
         if alert.enabled ~= false and alert.spellID then
             local spellAlerts = index[alert.spellID]
@@ -184,11 +194,17 @@ local function ensureAlertIndex()
 
     wipe(AuraService.alertIndex.player)
     wipe(AuraService.alertIndex.target)
+    if not AuraService.alertIndex.pet then
+        AuraService.alertIndex.pet = {}
+    else
+        wipe(AuraService.alertIndex.pet)
+    end
     local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
     local alerts = savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts() or nil
     if alerts then
         if moduleEnabled("player") then
             indexAlert(alerts.playerAuras, "player")
+            indexAlert(alerts.playerAuras, "pet")
         end
         if moduleEnabled("target") then
             indexAlert(alerts.targetAuras, "target")
@@ -330,6 +346,29 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
     state.shown = true
     state.fromPlayer = (fromPlayer == true) or nil
     state.factsSafe = true
+
+    -- 🛡️ 護盾與傷害吸收量提取 (Aura Absorb / Shield Point Extraction)
+    local absorbAmount = nil
+    if type(auraData.points) == "table" and canaccesstable(auraData.points) then
+        for i = 1, #auraData.points do
+            local pt = auraData.points[i]
+            if pt and not issecretvalue(pt) and canaccessvalue(pt) and type(pt) == "number" and pt > 0 then
+                absorbAmount = pt
+                break
+            end
+        end
+    end
+    state.absorbAmount = absorbAmount
+
+    -- 🌟 重要光環與首領機制高亮 (Important / Boss / Priority / Stealable)
+    if auraData.isBossAura or auraData.isPriorityAura or auraData.isStealable then
+        state.isImportant = true
+    elseif api.C_Spell and api.C_Spell.IsSpellImportant and Util.isSafePositiveNumber(state.spellID) then
+        local ok, isImp = pcall(api.C_Spell.IsSpellImportant, state.spellID)
+        if ok and isImp == true then
+            state.isImportant = true
+        end
+    end
 
     -- 🌡️ 完美的 DoT Pandemic (傳染累加) 原生預測
     -- 僅在是有害技能(isDebuff) 且有原生預測 API 時執行
@@ -571,9 +610,12 @@ function AuraService.onRegenEnabled()
     if moduleEnabled("player") then
         if clearBlocked then
             clearBlocked("player")
+            clearBlocked("pet")
         end
         clearUnitCache("player")
+        clearUnitCache("pet")
         AuraService.refreshUnit("player", "PLAYER_REGEN_ENABLED")
+        AuraService.refreshUnit("pet", "PLAYER_REGEN_ENABLED")
     end
     if moduleEnabled("target") then
         if clearBlocked then
@@ -603,6 +645,12 @@ function AuraService.initialize()
         router.register("UNIT_AURA", AuraService.onUnitAura)
         router.register("PLAYER_TARGET_CHANGED", AuraService.onTargetChanged)
         router.register("PLAYER_REGEN_ENABLED", AuraService.onRegenEnabled)
+        router.register("UNIT_PET", function(eventName, unit)
+            if unit == "player" then
+                clearUnitCache("pet")
+                AuraService.refreshUnit("pet", "UNIT_PET")
+            end
+        end)
     end
 end
 
@@ -629,7 +677,7 @@ function AuraService.onUnitAura(_, unit, updateInfo)
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "onUnitAura", "unit=" .. tostring(unit) .. ", hasUpdateInfo=" .. tostring(updateInfo ~= nil))
     end
-    if unit ~= "player" and unit ~= "target" then
+    if unit ~= "player" and unit ~= "target" and unit ~= "pet" then
         return
     end
     if not moduleEnabled(unit) then

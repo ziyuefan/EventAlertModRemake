@@ -55,6 +55,19 @@ local Renderer = {
     anchorTogglePending = false,
 }
 
+local function readField(object, name)
+    if not object then
+        return nil
+    end
+    local ok, value = pcall(function()
+        return object[name]
+    end)
+    if ok then
+        return value
+    end
+    return nil
+end
+
 local function releaseTimerBinding(icon)
     if not icon or not icon.timerBinding then
         return
@@ -146,8 +159,25 @@ local function onLegacyTimerUpdate()
             if icon.timerText and icon.timerText.SetText then
                 icon.timerText:SetText(text)
             end
+
+            local radialGauge = readField(icon, "radialGauge")
+            if radialGauge and radialGauge.active and icon.rendered and icon.rendered.duration and icon.rendered.duration > 0 then
+                local pct = timeLeft / icon.rendered.duration
+                local isPandemic = icon.rendered.isPandemic or (timeLeft <= (icon.rendered.duration * 0.3))
+                local RadialGauge = EAM.UI.RadialGauge
+                if RadialGauge and RadialGauge.update then
+                    RadialGauge.update(radialGauge, pct, isPandemic)
+                end
+            end
         else
             activeLegacyTimers[icon] = nil
+            local radialGauge = readField(icon, "radialGauge")
+            if radialGauge and radialGauge.active then
+                local RadialGauge = EAM.UI.RadialGauge
+                if RadialGauge and RadialGauge.update then
+                    RadialGauge.update(radialGauge, 0, false)
+                end
+            end
             if icon.timerText then
                 if icon.timerText.ClearText then
                     icon.timerText:ClearText()
@@ -287,6 +317,19 @@ local function formatChargeText(alertState)
         return ""
     end
     return tostring(currentCharges) .. "/" .. tostring(maximumCharges)
+end
+
+local function formatAbsorbAmount(val)
+    if not val or type(val) ~= "number" or val <= 0 then return nil end
+    if val >= 1000000 then
+        return string.format("%.1fM", val / 1000000)
+    elseif val >= 10000 then
+        return string.format("%.0fk", val / 1000)
+    elseif val >= 1000 then
+        return string.format("%.1fk", val / 1000)
+    else
+        return tostring(math.floor(val + 0.5))
+    end
 end
 
 local function applyNameLayoutToIcon(icon, nameInside)
@@ -677,17 +720,26 @@ function Renderer.render(alertState, frameName)
 
     local stacks = formatChargeText(alertState)
     if stacks == nil then
-        stacks = alertState.displayValue
-        if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
-            stacks = ""
-        elseif stacks ~= nil then
-            stacks = Util.isSafeNonNegativeNumber(stacks) and tostring(stacks) or ""
+        if alertState.absorbAmount and Util.isSafePositiveNumber(alertState.absorbAmount) then
+            local absStr = formatAbsorbAmount(alertState.absorbAmount)
+            if alertState.stacks and alertState.stacks > 1 then
+                stacks = tostring(alertState.stacks) .. "(" .. absStr .. ")"
+            else
+                stacks = absStr
+            end
         else
-            stacks = alertState.stacks
+            stacks = alertState.displayValue
             if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
                 stacks = ""
+            elseif stacks ~= nil then
+                stacks = Util.isSafeNonNegativeNumber(stacks) and tostring(stacks) or ""
             else
-                stacks = (Util.isSafeNumber(stacks) and stacks > 1) and tostring(stacks) or ""
+                stacks = alertState.stacks
+                if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
+                    stacks = ""
+                else
+                    stacks = (Util.isSafeNumber(stacks) and stacks > 1) and tostring(stacks) or ""
+                end
             end
         end
     end
@@ -788,12 +840,24 @@ function Renderer.render(alertState, frameName)
         end
     end
 
+    rendered.duration = timer and timer.duration
+    rendered.isPandemic = alertState.pandemicReady or alertState.isImportant
+    local radialGauge = readField(icon, "radialGauge")
+    if radialGauge then
+        local RadialGauge = EAM.UI.RadialGauge
+        if RadialGauge and RadialGauge.setVisible then
+            local showRadial = EAM.db and EAM.db.config and EAM.db.config.showRadialGauge ~= false
+            local hasDuration = timer and Util.isSafePositiveNumber(timer.duration)
+            RadialGauge.setVisible(radialGauge, showRadial and hasDuration)
+        end
+    end
+
     if IconPool and type(IconPool.applyChargeProgress) == "function" then
         IconPool.applyChargeProgress(icon, alertState)
     end
 
-    -- 🌡️ Pandemic (傳染累加) 與 Action Bar Glow 亮框顯示控制
-    local shouldGlow = alertState.pandemicReady or alertState.overlayGlow or alertState.usableGlow
+    -- 🌡️ Pandemic (傳染累加)、重要法術與 Action Bar Glow 亮框顯示控制
+    local shouldGlow = alertState.pandemicReady or alertState.overlayGlow or alertState.usableGlow or alertState.isImportant
     if IconPool and type(IconPool.setGlow) == "function" then
         IconPool.setGlow(icon, shouldGlow == true)
     elseif shouldGlow then
@@ -1249,6 +1313,9 @@ function Renderer.setActiveAnchors(targetFrames)
     Renderer.isMoving = anyActive
     if anyActive then
         Renderer.refreshPreviewLayout()
+    end
+    if EAM.Services and EAM.Services.PlayerStatService and EAM.Services.PlayerStatService.setActiveAnchors then
+        EAM.Services.PlayerStatService.setActiveAnchors(anyActive, activeMap["playerStat"] and "playerStat" or nil)
     end
     return true, anyActive
 end

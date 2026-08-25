@@ -31,6 +31,7 @@ local _, EAM = ...
 local Slash = {}
 EAM.UI.Slash = Slash
 
+local api = EAM.API or {}
 local Util = EAM.Util
 local mathFloor = math.floor
 local stringFormat = string.format
@@ -73,11 +74,11 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_PROFILE or "/eam profile [export|import] - 開啟職業 profile JSON/Base64 分享")
     printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick|core|boundary|aura121|all|live] - 流程驗證或真人實機回報")
     printLine(EAM.L.EAM_SLASH_HELP_ADD or "/eam add <spellID> - 新增 player aura")
-printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam add target [spellID] - 新增 target aura；無 ID 開啟手動視窗")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam addt (或 /eam add target) [spellID] - 新增 target aura；無 ID 開啟手動視窗")
     printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER or "/eam unitpower background <RESOURCE_KEY> - 標記背景資源缺少事件，啟用共用 sampler")
-    printLine(EAM.L.EAM_SLASH_HELP_ADD_CD or "/eam add cd <spellID> - 新增 spell cooldown")
-    printLine(EAM.L.EAM_SLASH_HELP_ADD_ITEM or "/eam add item <itemID> - 新增 item cooldown")
-    printLine(EAM.L.EAM_SLASH_HELP_REMOVE or "/eam remove <spellID|target|cd|item> <id> - 移除 alert")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD_CD or "/eam addc (或 /eam add cd) <spellID> - 新增 spell cooldown")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD_ITEM or "/eam addi (或 /eam add item) <itemID> - 新增 item cooldown")
+    printLine(EAM.L.EAM_SLASH_HELP_REMOVE or "/eam remove (或 rem/del) <spellID|target|cd|item> <id> - 移除 alert")
 end
 
 local function parseKindAndID(iterator)
@@ -113,14 +114,16 @@ local function parseKindAndID(iterator)
     return kind, unit, mathFloor(numericID)
 end
 
-local function mutateAlert(action, input)
+local function mutateAlert(action, input, command)
     local savedVariables = EAM.Modules.SavedVariables
     if not savedVariables then
         printLine(EAM.L.EAM_SLASH_NOT_INIT or "SavedVariables 尚未初始化。")
         return
     end
 
-    if action == "add" and string.match(input, "^%s*add%s+target%s*$") then
+    if (action == "add" and string.match(input, "^%s*add%s+target%s*$"))
+        or (command == "addt" and string.match(input, "^%s*addt%s*$"))
+    then
         local service = EAM.Services and EAM.Services.TooltipMonitorService
         if service and type(service.openManualTargetAuraMenu) == "function" then
             local opened, reason = service.openManualTargetAuraMenu()
@@ -137,8 +140,36 @@ local function mutateAlert(action, input)
 
     local iterator = nextToken(input)
     iterator()
-    local kind, unit, numericID = parseKindAndID(iterator)
-    if not kind then
+    local kind, unit, numericID
+    if command == "addt" or command == "remt" or command == "delt" then
+        kind = "aura"
+        unit = "target"
+        local token = iterator()
+        local num = tonumber(token)
+        if num and num > 0 then
+            numericID = mathFloor(num)
+        end
+    elseif command == "addc" or command == "remc" or command == "delc" then
+        kind = "cooldown"
+        unit = "player"
+        local token = iterator()
+        local num = tonumber(token)
+        if num and num > 0 then
+            numericID = mathFloor(num)
+        end
+    elseif command == "addi" or command == "remi" or command == "deli" then
+        kind = "item"
+        unit = nil
+        local token = iterator()
+        local num = tonumber(token)
+        if num and num > 0 then
+            numericID = mathFloor(num)
+        end
+    else
+        kind, unit, numericID = parseKindAndID(iterator)
+    end
+
+    if not kind or not numericID then
         printHelp()
         return
     end
@@ -301,6 +332,55 @@ local function runLookup(input, exact)
     end
 end
 
+local function scanUnitAuras(unit)
+    unit = unit or "target"
+    if api.InCombatLockdown and api.InCombatLockdown() then
+        printLine(EAM.L.EAM_SLASH_COMBAT_AURA_SCAN_RESTRICTED
+            or "EAM：戰鬥中受暴雪 API 安全限制無法即時掃描光環。請在戰鬥中使用 /eam addt <法術ID>，或脫離戰鬥後使用 /eam showt。")
+        return
+    end
+
+    if not api.UnitExists or not api.UnitExists(unit) then
+        if unit == "target" then
+            printLine("EAM: 請先選取一個目標。已開啟手動加入視窗。")
+        end
+        local service = EAM.Services and EAM.Services.TooltipMonitorService
+        if service and type(service.openManualTargetAuraMenu) == "function" then
+            service.openManualTargetAuraMenu()
+        end
+        return
+    end
+    local unitLabel = (unit == "player") and (EAM.L.EAM_ALERT_GROUP_PLAYER_AURAS or "玩家自身") or (api.UnitName and api.UnitName(unit) or "目標")
+    printLine(stringFormat("|cff00ffff[EAM 光環掃描 - %s]|r", unitLabel))
+    local cUnitAuras = api.C_UnitAuras or C_UnitAuras
+    local found = 0
+    if cUnitAuras and type(cUnitAuras.GetAuraDataByIndex) == "function" then
+        for i = 1, 40 do
+            local ok, aura = pcall(cUnitAuras.GetAuraDataByIndex, unit, i, "HARMFUL")
+            if not ok or not aura then break end
+            if aura.spellId then
+                found = found + 1
+                printLine(stringFormat("  - |cffff4444[減益]|r %s (ID: |cffffff00%d|r)", aura.name or "未知", aura.spellId))
+            end
+        end
+        for i = 1, 40 do
+            local ok, aura = pcall(cUnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
+            if not ok or not aura then break end
+            if aura.spellId then
+                found = found + 1
+                printLine(stringFormat("  - |cff44ff44[增益]|r %s (ID: |cffffff00%d|r)", aura.name or "未知", aura.spellId))
+            end
+        end
+    end
+    if found == 0 then
+        printLine("  (身上無可讀取光環)")
+    end
+    local service = EAM.Services and EAM.Services.TooltipMonitorService
+    if service and type(service.openManualTargetAuraMenu) == "function" then
+        service.openManualTargetAuraMenu()
+    end
+end
+
 local function printAuraSafetyGuidance()
     printLine(EAM.L.EAM_SLASH_SHOW_UNSUPPORTED
         or "Retail 12.1 不以舊式 UnitAura 掃描完整光環；請將滑鼠移到光環圖示後按 Ctrl+Alt 加入監控。")
@@ -420,8 +500,12 @@ local function handleSlash(input)
         handleUnitPower(input)
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()
-    elseif command == "add" or command == "remove" then
-        mutateAlert(command, input)
+    elseif command == "add" or command == "addt" or command == "addc" or command == "addi" then
+        mutateAlert("add", input, command)
+    elseif command == "remove" or command == "rem" or command == "remt" or command == "remc" or command == "remi"
+        or command == "del" or command == "delt" or command == "delc" or command == "deli"
+    then
+        mutateAlert("remove", input, command)
     elseif command == "list" then
         printConfiguredList()
     elseif command == "lookup" or command == "l" then
@@ -430,8 +514,10 @@ local function handleSlash(input)
         runLookup(input, true)
     elseif command == "showcast" or command == "showc" then
         toggleShowCast()
-    elseif command == "show" or command == "shows" or command == "showtarget" or command == "showt" then
-        printAuraSafetyGuidance()
+    elseif command == "showtarget" or command == "showt" or command == "target" or command == "t" then
+        scanUnitAuras("target")
+    elseif command == "show" or command == "shows" then
+        scanUnitAuras("player")
     elseif command == "showautoadd" or command == "showa"
         or command == "showenvadd" or command == "showe"
     then

@@ -1,3 +1,26 @@
+### 2026-08-25 EAM-20260825-ALPHA8-PER-CLASS-STATS-AND-AURA-ABSORBS：Alpha 8.0 角色屬性依職業獨立配置、無圖示自適應排版、吸收盾雙軌強化與光環護盾顯示
+
+- 狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包與 Pre-release 準備。
+- 變更亮點：
+  1. 角色屬性依職業獨立設定 (Per-Class Player Stat Profiles)：
+     - 角色屬性設定接入 `db.profiles.classes[classToken].playerStats`，實現每種職業（戰士、聖騎士、法師、德魯伊等）擁有 100% 獨立的屬性監控配置與開關。
+     - 切換角色自動即時載入該職業設定；二級設定面板頂部標註當前職業名稱（例如 `[聖騎士]`）。
+  2. 總吸收盾量 (totalAbsorb) 與治療吸收量 (healAbsorb) 取值核心雙軌強化：
+     - 原生 Unit API + `C_UnitAuras` 增益/減益點數 (`aura.points`) 雙軌即時累加運算，徹底解決吸收盾不顯示或未捕捉到的問題。
+     - 補齊 `UNIT_HEAL_ABSORB_AMOUNT_CHANGED`、`UNIT_HEALTH`、`UNIT_MAXHEALTH` 與 `PLAYER_SPECIALIZATION_CHANGED` 事件監聽。
+  3. 取消圖示純文字自適應排版與獨立位置定位 (Iconless Adaptive Layout & Positioning)：
+     - 即使取消顯示圖示，純文字標籤與數值依然支援指定獨立自訂位置或依設定整體延伸排版。
+     - 實作動態尺寸自適應與累加間距演算法，不論垂直或水平排列，純文字項目與圖示項目均能完美等距貼齊、零文字重疊。
+     - 支援無圖示排版方位自訂（數值在名稱上方/下方/左側/右側）。
+  4. 光環模組護盾吸收量即時顯示 (Aura Shield Absorb Amount Display)：
+     - 自動從 `C_UnitAuras.points` 提取護盾類光環（真言術:盾、冰甲護盾、靈魂汲取等）即時剩餘吸收盾數值。
+     - 渲染器 (`Renderer.lua`) 於光環圖示右下角疊加層精確格式化顯示剩餘吸收盾量（如 `45.2k`、`1.2M`；多層數時如 `3(45k)`）。
+  5. 介面與系統穩定性修復：
+     - 補齊 `PlayerStatService.lua` 缺少之 `inCombat()` 本地函式定義，徹底消除點擊主選單分類按鈕與關閉面板時觸發的 nil call 報錯。
+     - 修復「測試閃爍」按鈕覆蓋文字問題，將「啟用 12.1 原生圓形光環倒數光圈」回歸主設定選單核心控制區。
+     - 修復飛龍模式飛速圖示黑框問題（FileDataID `4667307` 與動態 API 獲取）。
+- 驗證結果：Lua 71/71、Flow all 84/84、Validation Contracts 493/493。
+
 ### 2026-08-24 EAM-20260824-PLAYER-STATS-SECRET-VALUE-FIX：角色屬性與吸收量監控 Secret Value 防護與原生 StatusBar Sink 整合
 
 - 狀態：已解決 (Lua 68/68, Flow 84/84, Contracts 493/493)，實機待玩家簽收。

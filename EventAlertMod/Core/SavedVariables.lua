@@ -146,6 +146,7 @@ local defaults = {
         glowSCDWhenUsable = true,
         showDKRune = true,
         enableItemCooldown = true,
+        enableWeaponEnchant = true,
         enableCDM = false,
         
         -- 滑桿數值
@@ -637,6 +638,7 @@ local function ensureClassProfile(db, classToken)
     profile.profileSchema = 1
     profile.alerts = type(profile.alerts) == "table" and profile.alerts or createAlertLists()
     profile.resources = type(profile.resources) == "table" and normalizePlayerResourceConfig(profile.resources) or createPlayerResourceConfigFromLegacy(db)
+    profile.playerStats = type(profile.playerStats) == "table" and profile.playerStats or {}
     local alerts = profile.alerts
     alerts.playerAuras = type(alerts.playerAuras) == "table" and alerts.playerAuras or {}
     alerts.targetAuras = type(alerts.targetAuras) == "table" and alerts.targetAuras or {}
