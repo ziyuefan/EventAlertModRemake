@@ -41,7 +41,7 @@ local IconPool = {
     inactive = {},
     inactiveCount = 0,
     created = 0,
-    prewarmCount = 16,
+    prewarmCount = 64,
 }
 
 EAM.UI.IconPool = IconPool
@@ -773,10 +773,7 @@ function IconPool.acquire()
         return icon
     end
 
-    if api.InCombatLockdown and api.InCombatLockdown() then
-        return nil, "combatPoolExhausted"
-    end
-
+    -- 🛡️ 戰鬥中若預熱池耗盡，仍即時建立新 Frame 供戰鬥中警示使用，杜絕技能冷卻或光環在戰鬥中丟失
     return createIcon()
 end
 
@@ -839,7 +836,7 @@ function IconPool.prewarm(count)
     end
 
     count = count or IconPool.prewarmCount
-    while IconPool.created < count do
+    while (IconPool.created < count or IconPool.inactiveCount < IconPool.prewarmCount) and IconPool.created < 128 do
         local icon = createIcon()
         IconPool.release(icon)
     end

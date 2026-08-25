@@ -656,6 +656,9 @@ function Renderer.render(alertState, frameName)
     if not icon then
         icon = IconPool.acquire()
         if not icon then
+            if inCombat() then
+                deferRender(alertState, frameName)
+            end
             return
         end
         fState.icons[alertState.id] = icon
