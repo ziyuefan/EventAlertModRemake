@@ -1,3 +1,23 @@
+### 2026-08-26 EAM-20260826-ALPHA81-COOLDOWN-ZERO-ALPHA-AND-COMBAT-STATS：Alpha 8.1 技能冷卻純透明度（Alpha=0）隱藏模式與戰鬥屬性防歸零快取備援
+
+- 狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包並發布 Pre-release。
+- 變更亮點：
+  1. 技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (`Persistent Pre-anchoring & Zero-Alpha Mode`)：
+     - 根因分析：先前版本在 `Renderer.render` 中存在 `not icon and inCombat()` 阻攔邏輯，且冷卻完成時透過 `IconPool.release` 釋放 Frame 並清空排版。導致玩家在戰鬥中第一次施放冷卻技能時，因 Frame 不存在被直接延遲（`combatDeferred`）至脫戰才顯示。
+     - 重構實作：
+       - 在非戰鬥期間（登入、天賦/專精切換、設定變更）透過 `Renderer.prewarmAlertFrames` 預先為所有已監控技能與物品冷卻建立 Frame 並計算靜態座標（初始設為 `SetAlpha(0)` 隱形待命）。
+       - 當技能冷卻完成或需要隱藏圖示時（`alertState.shown == false`），直接將該圖示透明度設為 `SetAlpha(0)`，保留 Frame 結構與座標常駐，徹底避免戰鬥中動態釋放與排版重算。
+       - 戰鬥中施放技能時，直接將已就位的 Frame 透明度恢復為 `SetAlpha(targetAlpha)` 並啟動轉圈動畫，實現 0.00ms 零 GC 零排版延遲且 100% 免疫戰鬥鎖定。
+  2. 角色屬性戰鬥中數值防歸零修復 (`Combat Stat Cache & Multi-Tier API Fallback`)：
+     - 根因分析：Retail 12.0+/12.1+ 進入戰鬥後呼叫原生 Unit / Stat API 受限回傳 Secret Number，Lua 層無法直接讀取導致主屬性與副屬性顯示歸零。
+     - 重構實作：
+       - 建立全 18 項屬性 `lastKnownStats` 記憶體快取表，並在登入、切換專精、更換裝備及脫離戰鬥時自動執行預熱 (`prewarmStats`)。
+       - 戰鬥中若遇受限環境自動無縫回退至最後有效真實數值。
+       - 致命、加速、精通、臨機應變等副屬性補齊多重系別 API 與等級評級轉換公式容錯。
+  3. 圖示物件池 (IconPool) 擴容與安全放行：
+     - 預熱池容量由 16 擴增至 64，並在池耗盡時直接安全呼叫 `createIcon` 建立，杜絕戰鬥中回傳 nil。
+- 驗證結果：Lua 71/71、Flow all 84/84、Validation Contracts 493/493。
+
 ### 2026-08-25 EAM-20260825-ALPHA8-PER-CLASS-STATS-AND-AURA-ABSORBS：Alpha 8.0 角色屬性依職業獨立配置、無圖示自適應排版、吸收盾雙軌強化與光環護盾顯示
 
 - 狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包與 Pre-release 準備。

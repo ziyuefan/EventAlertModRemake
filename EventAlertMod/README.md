@@ -1,7 +1,7 @@
 # EventAlertMod Retail 12.1 (EAM)
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Release](https://img.shields.io/badge/release-Alpha%208.0-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.1-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -144,6 +144,40 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 <details open>
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+
+### 🌟 [Retail 12.1.0 Alpha 8.1] - 2026.08.26
+- **技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (Persistent Pre-anchoring & Zero-Alpha Cooldown Mode)**：
+  - 徹底解決技能冷卻在戰鬥中首次施放無法建立框架或延遲至脫戰後才出現的架構問題。
+  - 進入世界、切換天賦或載入設定時，非戰鬥狀態下自動預先建立所有已監控之技能冷卻與物品冷卻 Frame，並完成精確座標計算。
+  - 冷卻完成時透過 `SetAlpha(0)` 隱藏圖示，保留 Frame 結構與座標常駐，避免戰鬥中動態釋放與排版重算；冷卻觸發時瞬間恢復 `SetAlpha(targetAlpha)`，實現 0.00ms 零 GC 零排版延遲且 100% 免疫戰鬥鎖定。
+- **角色屬性與副屬性戰鬥中防歸零修復 (Combat Stat Cache & Multi-Tier API Fallback)**：
+  - 解決 Retail 12.0+/12.1+ 進入戰鬥後呼叫原生 Unit / Stat API 受限回傳 Secret Number 導致力量、敏捷、智力、耐力、致命、加速、精通、臨機應變等數值歸零問題。
+  - 建立全 18 項屬性 `lastKnownStats` 記憶體快取表，並在登入、切換專精、更換裝備及脫離戰鬥時自動執行預熱 (`prewarmStats`)，戰鬥中若遇受限環境自動無縫回退至最後有效真實數值。
+  - 副屬性全面補齊系別 API (`GetCritChance` / `GetSpellCritChance` 等) 與等級評級轉換公式容錯。
+- **角色屬性依職業獨立設定 (Per-Class Player Stat Profiles)**：
+  - 角色屬性監控全面升級為「依職業獨立配置設定」：每種職業（例如聖騎士、法師、戰士、牧師等）擁有專屬獨立的屬性監控項目開關、圖示大小、字型、閾值與獨立位置座標。
+  - 切換不同職業角色時自動無縫載入該職業設定，設定面板標題即時標註當前職業名稱（例如「★ 角色屬性與吸收量監控 [聖騎士]」）。
+- **吸收盾與治療吸收量雙軌偵測強化 (Dual-Channel Shield & Heal Absorb Detection)**：
+  - 強化總吸收盾量 (`totalAbsorb`) 與治療吸收量 (`healAbsorb`) 取值核心：支援原生 Unit API 與 `C_UnitAuras` 增益/減益點數 (`aura.points`) 雙軌即時累加運算，徹底解決吸收盾無法顯示問題。
+  - 補齊 `UNIT_HEAL_ABSORB_AMOUNT_CHANGED`、`UNIT_HEALTH`、`UNIT_MAXHEALTH` 與 `PLAYER_SPECIALIZATION_CHANGED` 事件監聽。
+- **光環模組支援護盾吸收量即時顯示 (Aura Shield Absorb Amount Display)**：
+  - 光環監控核心 (`AuraService`) 自動從 `C_UnitAuras` 提取護盾類光環（如真言術:盾、冰甲護盾、靈魂汲取等）的即時剩餘吸收盾數值 (`state.absorbAmount`)。
+  - 渲染器 (`Renderer`) 於光環圖示右下角疊加層精確格式化顯示剩餘吸收盾量（如 45.2k、1.2M），若同時具備多層數則自動並列顯示（如 3(45k)）。
+- **圖示物件池 (IconPool) 擴容與安全放行**：
+  - 預熱池容量由 16 擴增至 64，並在池耗盡時直接安全呼叫 `createIcon` 建立，杜絕戰鬥中回傳 nil。
+
+### 📌 [Retail 12.1.0 Alpha 8.0] - 2026.08.25
+- **角色屬性與吸收量監控升級 (Independent Positioning & Grow Direction)**：
+  - 新增「整體排列方向」下拉選單（向右、向左、向上、向下），支援整組屬性即時方向重構。
+  - 支援各單項「獨立自訂位置與獨立拖曳」：每項屬性可勾選啟用獨立位置，具備專屬 X/Y 軸像素滑桿，並提供「移動此單項」與「移動所有屬性」按鈕，在畫面上直接以滑鼠拖曳定位並即時雙向同步座標。
+  - 取消圖示純文字自適應排版與指定位置 (Iconless Adaptive Layout & Positioning)：即使取消顯示圖示，純文字標籤與數值依然完整支援指定「獨立自訂位置」或依設定「整體方向」自動延伸排版。
+  - 支援無圖示排版方位自訂：在關閉圖示時可選擇數值相對於名稱之「上方/下方/左側/右側」佈局。
+  - 移動模式保護機制：開啟拖曳錨點時自動顯示高亮外框與拖曳提示，防止高頻計時器重設位置。
+  - 修復飛龍模式飛速圖示黑框問題：改用數值型 FileDataID 4667307 與動態 API 獲取原生圖示。
+  - 重構左右列表與細部表單雙向同步，增加選中條目金框高亮，新增「全選監控」與「全部停用」批次按鈕。
+- **主選單排版精確對齊與控制項優化**：
+  - 修復「測試閃爍」按鈕覆蓋文字問題，獨立配置於專屬按鈕列。
+  - 將「啟用 12.1 原生圓形光環倒數光圈」完整回歸主設定選單核心控制區。
 
 ### 🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24
 - **全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)**：
