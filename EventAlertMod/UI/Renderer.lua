@@ -578,7 +578,8 @@ function Renderer.prewarmAlertFrames()
                         fState.icons[alert.id] = icon
                         fState.orderCount = fState.orderCount + 1
                         fState.order[fState.orderCount] = alert.id
-                        icon:Hide()
+                        icon:SetAlpha(0)
+                        icon:Show()
                         fState.layoutDirty = true
                     end
                 end
@@ -652,9 +653,35 @@ function Renderer.render(alertState, frameName)
         return false, "combatDeferred"
     end
 
-    -- 圖示隱藏/釋放處理
+    -- 圖示隱藏/釋放處理 (冷卻類型框架透過透明度 Alpha = 0 隱藏，保持 Frame 結構常駐)
     if not alertState.shown then
         if icon then
+            local isCooldownFrame = (frameName == "spellCooldown" or frameName == "itemCooldown")
+            if isCooldownFrame then
+                if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end
+                if icon.cooldown then
+                    local setCooldown = icon.cooldown.SetCooldown
+                    if setCooldown then pcall(setCooldown, icon.cooldown, 0, 0) end
+                    pcall(icon.cooldown.Hide, icon.cooldown)
+                end
+                if icon.timerBinding then
+                    local adapter = EAM.Modules.DurationAdapter
+                    if adapter then adapter.releaseTextBinding(icon.timerBinding) end
+                    icon.timerBinding = nil
+                end
+                if Renderer.unregisterLegacyTimer then
+                    Renderer.unregisterLegacyTimer(icon)
+                end
+                if icon.timerText then
+                    if icon.timerText.ClearText then icon.timerText:ClearText() else icon.timerText:SetText("") end
+                end
+                if icon.stackText then
+                    if icon.stackText.ClearText then icon.stackText:ClearText() else icon.stackText:SetText("") end
+                end
+                IconPool.setGlow(icon, false)
+                return
+            end
+
             if icon.isParasite and inCombat() then
                 if icon.rendered and icon.rendered.activeToken then
                     icon.rendered.activeToken.active = false
@@ -956,7 +983,9 @@ function Renderer.render(alertState, frameName)
         rendered.scheduledExpirationTime = nil
     end
 
-    icon:Show()
+    local targetAlpha = config and config.iconAlpha or 1.0
+    if icon.SetAlpha then pcall(icon.SetAlpha, icon, targetAlpha) end
+    if icon.Show then icon:Show() end
     if fState.layoutDirty then
         if isBatching then
             batchDirtyFrames[frameName] = true
