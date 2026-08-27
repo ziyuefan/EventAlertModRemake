@@ -224,12 +224,33 @@ function Get-CurseForgeGameVersions {
     param([string]$Token)
 
     $url = "https://wow.curseforge.com/api/game/versions"
+
+    # 1. 優先使用 curl.exe (Windows 內建，且具備最穩定的 WAF 白名單)
+    $curlPath = Get-Command "curl.exe" -ErrorAction SilentlyContinue
+    if ($curlPath) {
+        try {
+            $headers = @("-H", "User-Agent: BigWigs/Packager")
+            if (-not [string]::IsNullOrWhiteSpace($Token)) {
+                $headers += @("-H", "X-Api-Token: $Token")
+            }
+            $curlOut = & curl.exe -s --max-time 10 $headers $url
+            if (-not [string]::IsNullOrWhiteSpace($curlOut)) {
+                $versions = $curlOut | ConvertFrom-Json
+                return $versions
+            }
+        } catch {
+            # 忽視錯誤，轉至 HttpClient
+        }
+    }
+
+    # 2. 備援：HttpClient (明確帶上 User-Agent)
     $handler = [System.Net.Http.HttpClientHandler]::new()
     $client = [System.Net.Http.HttpClient]::new($handler)
     $client.Timeout = [System.TimeSpan]::FromSeconds(15)
 
     try {
         $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $url)
+        $request.Headers.Add("User-Agent", "BigWigs/Packager")
         if (-not [string]::IsNullOrWhiteSpace($Token)) {
             $request.Headers.Add("X-Api-Token", $Token)
         }
@@ -278,6 +299,61 @@ function Invoke-CurseForgeUpload {
 
     Write-Host "`n正在上傳插件包至 CurseForge..." -ForegroundColor Cyan
 
+    # 1. 優先使用 Windows 內建 curl.exe (最穩固支援大檔串流與 Cloudflare WAF 白名單)
+    $curlCmd = Get-Command "curl.exe" -ErrorAction SilentlyContinue
+    if ($curlCmd) {
+        try {
+            $metaArgs = "metadata=$metadataJson;type=application/json"
+            $fileArgs = "file=@$ZipFilePath"
+
+            $curlArgs = @(
+                "-s",
+                "-S",
+                "--max-time", "180",
+                "-H", "User-Agent: BigWigs/Packager",
+                "-H", "X-Api-Token: $Token",
+                "-F", $metaArgs,
+                "-F", $fileArgs,
+                $url
+            )
+
+            $curlResponse = & curl.exe @curlArgs
+            if (-not [string]::IsNullOrWhiteSpace($curlResponse)) {
+                try {
+                    $jsonRes = $curlResponse | ConvertFrom-Json
+                    if ($jsonRes.id) {
+                        Write-Host "`n🎉 上傳成功！CurseForge 檔案 ID: $($jsonRes.id)" -ForegroundColor Green
+                        Write-Host "專案頁面: https://www.curseforge.com/wow/addons/eventalertmod" -ForegroundColor Cyan
+                        return [pscustomobject]@{
+                            success = $true
+                            id = $jsonRes.id
+                            body = $curlResponse
+                        }
+                    } elseif ($jsonRes.errorMessage) {
+                        Write-Host "`n❌ 上傳失敗 (CurseForge API 回應)：" -ForegroundColor Red
+                        Write-Host "$($jsonRes.errorMessage) (代碼: $($jsonRes.errorCode))" -ForegroundColor Yellow
+                        return [pscustomobject]@{
+                            success = $false
+                            statusCode = 400
+                            error = $curlResponse
+                        }
+                    }
+                } catch {
+                    Write-Host "`n❌ 上傳失敗 (回應非預期格式)：" -ForegroundColor Red
+                    Write-Host $curlResponse -ForegroundColor Yellow
+                    return [pscustomobject]@{
+                        success = $false
+                        statusCode = 500
+                        error = $curlResponse
+                    }
+                }
+            }
+        } catch {
+            Write-Warning "curl.exe 上傳嘗試失敗，切換至 .NET HttpClient 備援通道：$($_.Exception.Message)"
+        }
+    }
+
+    # 2. 備援通道：.NET HttpClient (帶有完整 User-Agent 與 Content-Type)
     $handler = [System.Net.Http.HttpClientHandler]::new()
     $client = [System.Net.Http.HttpClient]::new($handler)
     $client.Timeout = [System.TimeSpan]::FromMinutes(3)
@@ -294,6 +370,7 @@ function Invoke-CurseForgeUpload {
 
     try {
         $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Post, $url)
+        $request.Headers.Add("User-Agent", "BigWigs/Packager")
         $request.Headers.Add("X-Api-Token", $Token)
         $request.Content = $form
 
@@ -384,11 +461,10 @@ if ([string]::IsNullOrWhiteSpace($ReleaseType)) {
     $ReleaseType = "alpha"
 }
 
-# 預設遊戲版本 (12.1.0 與 12.0.7)
-# 註：若無 API 取得 ID，採用 12.1.0 / 12.0.7 之常用標記，或於連線時抓取
+# 預設遊戲版本 (12.1.0: 16519)
 if ($GameVersionIds.Count -eq 0) {
-    # 預設暫定 12.1.0 相關版本 (若 API 取得成功將會即時對齊)
-    $GameVersionIds = @(11248) # 12.1.0
+    # 預設 12.1.0 官方版本 ID: 16519
+    $GameVersionIds = @(16519) # 12.1.0
 }
 
 # 4. 判斷是否進入互動詢問模式
