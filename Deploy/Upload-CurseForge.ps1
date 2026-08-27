@@ -74,6 +74,20 @@ function Get-TocVersionInfo {
     return $version
 }
 
+function Get-LatestReleaseTitle {
+    if (Test-Path -LiteralPath $changelogPath -PathType Leaf) {
+        foreach ($line in Get-Content -LiteralPath $changelogPath -Encoding UTF8) {
+            if ($line -match '^--\s*\[([^\]]+)\]') {
+                $rawTitle = $Matches[1].Trim()
+                if ($rawTitle -match '^(?:Retail\s+)?([0-9]+\.[0-9]+\.[0-9]+(?:\s+(?:Alpha|Beta|Release)\s+[0-9.]+)?|[0-9]+\.[0-9]+\.[0-9]+|(?:Alpha|Beta)\s+[0-9.]+)') {
+                    return $Matches[1].Trim()
+                }
+            }
+        }
+    }
+    return $null
+}
+
 function Extract-LatestChangelogSection {
     if (-not (Test-Path -LiteralPath $changelogPath -PathType Leaf)) {
         return "## EventAlertMod Update`n`n- Performance and compatibility update."
@@ -453,12 +467,24 @@ if ([string]::IsNullOrWhiteSpace($Changelog)) {
 }
 
 # 3. 預設值推導
-$tocVer = Get-TocVersionInfo
+$releaseTitle = Get-LatestReleaseTitle
 if ([string]::IsNullOrWhiteSpace($DisplayName)) {
-    $DisplayName = "EventAlertMod $tocVer"
+    if ($releaseTitle) {
+        $DisplayName = "EventAlertMod " + $releaseTitle
+    } else {
+        $tocVer = Get-TocVersionInfo
+        $cleanVer = $tocVer -replace '^EventAlertMod_', ''
+        $DisplayName = "EventAlertMod " + $cleanVer
+    }
 }
 if ([string]::IsNullOrWhiteSpace($ReleaseType)) {
-    $ReleaseType = "alpha"
+    if ($DisplayName -match '(?i)alpha') {
+        $ReleaseType = "alpha"
+    } elseif ($DisplayName -match '(?i)beta') {
+        $ReleaseType = "beta"
+    } else {
+        $ReleaseType = "release"
+    }
 }
 
 # 預設遊戲版本 (12.1.0: 16519)

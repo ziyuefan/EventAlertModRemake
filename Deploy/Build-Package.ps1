@@ -289,9 +289,36 @@ if (($outputItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 
     throw "輸出目錄不得為 Reparse Point：$outputRoot"
 }
 
-$label = if ([string]::IsNullOrWhiteSpace($PackageLabel)) { $version } else { "EventAlertMod_" + $PackageLabel }
+function Get-ChangelogSemanticVersion {
+    $changelogFile = Join-Path $addonRoot "changelog.txt"
+    if (Test-Path -LiteralPath $changelogFile -PathType Leaf) {
+        foreach ($line in Get-Content -LiteralPath $changelogFile -Encoding UTF8) {
+            if ($line -match '^--\s*\[([^\]]+)\]') {
+                $rawTitle = $Matches[1].Trim()
+                if ($rawTitle -match '^(?:Retail\s+)?([0-9]+\.[0-9]+\.[0-9]+(?:\s+(?:Alpha|Beta)\s+[0-9.]+)?|[0-9]+\.[0-9]+\.[0-9]+|(?:Alpha|Beta)\s+[0-9.]+)') {
+                    $cleanTag = ($Matches[1].Trim() -replace '\s+', '_')
+                    return $cleanTag
+                }
+            }
+        }
+    }
+    return $null
+}
+
+if ([string]::IsNullOrWhiteSpace($PackageLabel)) {
+    $semVer = Get-ChangelogSemanticVersion
+    if ($semVer) {
+        $label = "EventAlertMod_" + $semVer
+    } else {
+        $cleanVer = $version -replace '(_[0-9]{8})$', ''
+        $label = $cleanVer
+    }
+} else {
+    $label = "EventAlertMod_" + $PackageLabel
+}
+
 if ($label -notmatch '^[A-Za-z0-9_.-]+$') {
-    throw "PackageLabel 含不允許字元：$PackageLabel"
+    throw "PackageLabel 含不允許字元：$label"
 }
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $zipPath = Join-Path $outputRoot ($label + "_" + $timestamp + ".zip")
