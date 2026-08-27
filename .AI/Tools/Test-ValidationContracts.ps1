@@ -1979,6 +1979,37 @@ Assert-Contract (
     $deployScriptText.Contains('還原前會先建立 rollback 備份')
 ) "Deployment removes WoW process gate and exposes backup/restore actions"
 
+$addonLuaFiles = @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter "*.lua")
+$deprecatedSpellInfoCalls = @()
+$deprecatedItemInfoCalls = @()
+$deprecatedSpellCooldownCalls = @()
+
+foreach ($luaFile in $addonLuaFiles) {
+    $relativePath = $luaFile.FullName.Substring($root.Length + 1)
+    if ($relativePath.StartsWith("Debug\") -or $relativePath.StartsWith("Lib\")) {
+        continue
+    }
+    $lines = [System.IO.File]::ReadAllLines($luaFile.FullName, [System.Text.Encoding]::UTF8)
+    for ($i = 0; $i -lt $lines.Length; $i++) {
+        $line = $lines[$i]
+        $trimmed = $line.Trim()
+        if ($trimmed.StartsWith("--")) { continue }
+        if ($line -match '(?<![C_Spell|api|\.])\bGetSpellInfo\s*\(' -and -not ($line -match 'GetSpellInfo\s*and') -and -not ($line -match 'pcall\s*\(\s*GetSpellInfo') -and -not ($line -match 'function\s+.*GetSpellInfo')) {
+            $deprecatedSpellInfoCalls += ($relativePath + ":" + ($i + 1))
+        }
+        if ($line -match '(?<![C_Item|api|\.])\bGetItemInfo\s*\(' -and -not ($line -match 'GetItemInfo\s*and') -and -not ($line -match 'pcall\s*\(\s*GetItemInfo') -and -not ($line -match 'function\s+.*GetItemInfo')) {
+            $deprecatedItemInfoCalls += ($relativePath + ":" + ($i + 1))
+        }
+        if ($line -match '(?<![C_Spell|api|\.])\bGetSpellCooldown\s*\(' -and -not ($line -match 'GetSpellCooldown\s*and') -and -not ($line -match 'pcall\s*\(\s*GetSpellCooldown') -and -not ($line -match 'function\s+.*GetSpellCooldown')) {
+            $deprecatedSpellCooldownCalls += ($relativePath + ":" + ($i + 1))
+        }
+    }
+}
+
+Assert-Contract ($deprecatedSpellInfoCalls.Count -eq 0) "Zero deprecated GetSpellInfo calls in production Lua" ($deprecatedSpellInfoCalls -join ", ")
+Assert-Contract ($deprecatedItemInfoCalls.Count -eq 0) "Zero deprecated GetItemInfo calls in production Lua" ($deprecatedItemInfoCalls -join ", ")
+Assert-Contract ($deprecatedSpellCooldownCalls.Count -eq 0) "Zero deprecated GetSpellCooldown calls in production Lua" ($deprecatedSpellCooldownCalls -join ", ")
+
 $wowheadCandidateScript = Join-Path $PSScriptRoot "Test-WowheadCandidateData.ps1"
 $wowheadCandidateExists = Test-Path -LiteralPath $wowheadCandidateScript -PathType Leaf
 Assert-Contract $wowheadCandidateExists "Wowhead candidate data validator exists"
