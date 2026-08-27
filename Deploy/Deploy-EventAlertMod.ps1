@@ -31,6 +31,7 @@ $governanceRoot = Join-Path $projectRoot ".AI"
 $configPath = Join-Path $PSScriptRoot "DeploymentTargets.json"
 $buildScript = Join-Path $PSScriptRoot "Build-Package.ps1"
 $sourceBuildScript = Join-Path $PSScriptRoot "Build-SourcePackage.ps1"
+$uploadCurseForgeScript = Join-Path $PSScriptRoot "Upload-CurseForge.ps1"
 
 function Get-NormalizedPath {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -893,6 +894,7 @@ while ($true) {
     Write-Host "[U] 還原 WTF 中的 EventAlertMod 存檔"
     Write-Host "[B] 從 EventAlertMod 建立插件 ZIP"
     Write-Host "[S] 建立 Project_EventAlertMod 原始碼 ZIP"
+    Write-Host "[C] 發布至 CurseForge"
     Write-Host "[R] 重新讀取版本與目標狀態"
     Write-Host "[Q] 離開"
     $choice = (Read-Host "請選擇").Trim().ToUpperInvariant()
@@ -900,6 +902,25 @@ while ($true) {
         break
     }
     if ($choice -eq "R") {
+        continue
+    }
+    if ($choice -eq "C") {
+        try {
+            Write-Host ""
+            Write-Host "即將啟動 CurseForge 發布程序..." -ForegroundColor Cyan
+            Write-Host "【重要檢查】請確定是否已透過選項 [B] 在本地打包最新版本的插件包（Dist/*.zip）？" -ForegroundColor Yellow
+            $cfConfirm = (Read-Host "輸入 UPLOAD 開始發布至 CurseForge（或輸入 DRYRUN 進行模擬測試，其他鍵取消）").Trim().ToUpperInvariant()
+            if ($cfConfirm -eq "UPLOAD") {
+                & $uploadCurseForgeScript
+            } elseif ($cfConfirm -eq "DRYRUN") {
+                & $uploadCurseForgeScript -DryRun
+            } else {
+                Write-Host "已取消 CurseForge 發布。"
+            }
+        }
+        catch {
+            Write-Host ("CurseForge 發布失敗：" + $_.Exception.Message) -ForegroundColor Red
+        }
         continue
     }
     if ($choice -eq "W" -or $choice -eq "U") {
