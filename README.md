@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.2-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.3-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -40,6 +40,9 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 
 ## 🎨 現代化視覺與極致操作體驗
 
+- 📖 **次世代全量法術庫與智慧預設 (Master Spell Catalog)**：內建 5 語系先驗資料庫（收錄 4,463 個技能與 466 個光環），支援專精樹展開/收合、一鍵天賦技能智慧同步、目標模組清單自由指派（冷卻/光環/地面效果）與全法術 GameTooltip 懸停說明。
+- 🏷️ **多維戰術群組與標籤管理 (Group Management)**：支援技能多對多標籤歸屬、內建 4 大系統戰術群組（爆發/減傷/控場/地面）與自訂群組、獨立二級管理側窗、戰鬥情境過濾與技能細節視窗下拉複選器。
+- 🎵 **LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合**：動態探測所有第三方 SharedMedia 音效、字型與材質包，支援自適應長清單滑鼠滾輪選單與字型全域 60fps 熱套用（免 /reload 即時生效）。
 - 🐮 **經典奶牛頭位置預覽**：排版模式下以經典奶牛頭圖示 (`Spell_Nature_Polymorph_Cow`) 清楚標記 8 大告警框架定位。
 - 🖼️ **全模組自訂替代圖示 (Custom Icon Override)**：所有模組均可輸入官方 FileID（例如 `132307`）或材質路徑，自訂取代預設圖示，並附即時動態預覽方塊與 Wago.tools 查詢指引。
 - 💀 **死亡騎士符文儀表板**：依專精動態切換專屬圖示，內建 6 格微型充能冷卻條（0%..100% 平滑動畫）與 `/eam rune` 槽位診斷視窗。

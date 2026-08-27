@@ -1097,17 +1097,591 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-ai-entrance-guide-file">EventAlertMod AI entrance guide file</h1>
+<p>This project releases the Retail server rewrite of EventAlertMod (EAM). The existing solution code is used as a "behavior reference", and the old architecture can only be directly used as the basis of the new architecture.</p>
+<h2 id="dialog-and-documentation-principles">Dialog and Documentation Principles</h2>
+<ul>
+<li>Use the default Taiwanese Traditional Chinese.</li>
+<li>The username is "Younger".</li>
+<li>Reply directly to the task, keeping the technology clear and the structure clear.</li>
+<li>WoW AddOn Related tasks must first confirm the differences between the Retail server and the Classic server; this project only deals with the Retail server.</li>
+<li>When it comes to 12.x API, Secret Values, C_* namespaces or Widget behavior, you must first refer to <code>Docs</code> and the latest Warcraft Wiki API change information.</li>
+<li>Official WoW machine validation has not yet been completed, unless it is actually loaded and tested in WoW Retail.</li>
+<li>When developing, the files/related files must be actively updated simultaneously to maintain the consistency of the files and code, and must not wait for user instructions (don't move every moment).</li>
+<li><strong>File and HTML conversion rules</strong>:</li>
+<li>The absolute guidance document for subsequent development and AI collaboration will always use <code>.AI/AGENTS.md</code> and the <code>.md</code> file named in its content as the only fact and Facts-of-Truth reference.</li>
+<li>The HTML version is easy to read and use for adults (teenagers) in the browser. When AI reads and writes and references, it must always use the <code>.md</code> original file as the only benchmark, and HTML must not be used as a factual reference for development.</li>
+<li>When <code>.AI/Docs/*.md</code> or <code>.AI/AGENTS.md</code> is modified to include mind maps (Mermaids), tables, flow charts, and images, the conversion tool (<code>batch_convert_docs.py</code>) must be executed to generate an additional __EAMCODE___ file (such as a file) with the same name in <code>.AI/docs_html</code>.</li>
+<li>File conversion uses <code>$env:EAM_DOCS_OFFLINE='1'; python .\.AI\Tools\batch_convert_docs.py</code> by default, and it is prohibited to send the full Markdown text to external translation services without explicit authorization from Juvenile.</li>
+</ul>
+<h2 id="skillssh-candidate-rules">Skills.sh candidate rules</h2>
+<ul>
+<li>When stable and repeated capability gaps are found during development, you can go to <code>https://skills.sh/</code> to search and proactively recommend up to three candidates.</li>
+<li>Before searching, create a project requirement card and review the source, content, dependencies, permissions, maintenance status, authorization and supply chain risks; the rankings and installation numbers are for reference only.</li>
+<li>For read-only search and comparison by default, the "Do not install/modify project custom skills" option must be retained.</li>
+<li>Installation commands or global/project Skill modifications are not allowed without the user's explicit selection of candidates, installation scope, and authorization.</li>
+</ul>
+<h2 id="must-read-documents">Must-read documents</h2>
+<p>Before making changes to your code, please read the following documents:</p>
+<ul>
+<li><code>.AI/PROJECT_MEMORY.md</code></li>
+<li><code>.AI/Docs/00_AI_CONTEXT.md</code></li>
+<li><code>.AI/Docs/01_ARCHITECTURE.md</code></li>
+<li><code>.AI/Docs/02_RETAIL_API_BOUNDARIES.md</code></li>
+<li><code>.AI/Docs/03_STATE_SCHEMA.md</code></li>
+<li><code>.AI/Docs/04_MODULE_CONTRACTS.md</code></li>
+<li><code>.AI/Docs/05_PERFORMANCE_GUIDE.md</code></li>
+<li><code>.AI/Docs/06_TEST_PLAN_RETAIL.md</code></li>
+<li><code>.AI/Docs/07_MIGRATION_NOTES.md</code></li>
+<li><code>.AI/Docs/08_AI_PROMPT_EXPORT_SCHEMA.md</code></li>
+<li><code>.AI/Docs/09_KNOWN_LIMITATIONS.md</code></li>
+<li><code>.AI/Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md</code></li>
+<li><code>.AI/Docs/11_WARCRAFT_WIKI_MAIN_MENU_TREE.md</code></li>
+<li><code>.AI/Docs/12_CODE_COMMENTARY_GUIDE.md</code></li>
+<li><code>.AI/Docs/14_PACKAGING_GUIDE.md</code></li>
+<li><code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code></li>
+<li><code>.AI/Docs/16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md</code></li>
+<li><code>.AI/Docs/17_SUBAGENT_WORKFLOW.md</code></li>
+<li><code>.AI/Docs/18_RETAIL_12X_CLASS_SPECIALIZATION_HERO_TALENT_DATABASE.md</code></li>
+<li><code>.AI/Docs/19_AURA_1210_REDUX_BLUEPRINT.md</code></li>
+<li><code>.AI/Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</code></li>
+<li><code>.AI/Docs/21_RACI_EXPERTS_MATRIX.md</code></li>
+<li><code>.AI/Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md</code></li>
+<li><code>.AI/Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code></li>
+<li><code>.AI/Docs/24_EXPERT_COUNCIL_REVIEW_20260621.md</code></li>
+<li><code>.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code></li>
+<li><code>.AI/Docs/26_FLOW_VALIDATION_FRAMEWORK.md</code></li>
+<li><code>.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md</code></li>
+<li><code>.AI/Docs/28_PROJECT_CONTINUITY.md</code></li>
+<li><code>.AI/Docs/29_LIVE_TEST_STEP_GUIDE.md</code></li>
+<li><code>.AI/Data/ProjectContinuity.json</code></li>
+</ul>
+<h2 id="project-goal">Project goal</h2>
+<ul>
+<li>Target game: Only the official version of World of Warcraft.</li>
+<li>Target API Generation: Live 12.x / Midnight Era AddOn API.</li>
+<li>Architecture direction: event-driven, low GC, modular, and maintainable.</li>
+<li>User experience: retain the positioning of EAM as "simpler, lighter, focused Aura and cooldown reminder than WeakAuras".</li>
+<li>Existing data tables, localized strings, slash command semantics and user behavior visualization can be retained; the internal structure should be redesigned.</li>
+</ul>
+<h2 id="native-wow-development-environment-benchmark">Native WoW development environment benchmark</h2>
+<ul>
+<li>WoW The installation root directory is first detected from Windows Registry by <code>Deploy/Deploy-EventAlertMod.ps1</code>, and the user must confirm or change it before interactive deployment.</li>
+<li>Git project root: <code>D:\Project_EventAlertMod</code>; unique plug-in source: <code>D:\Project_EventAlertMod\EventAlertMod</code>; AI governance: <code>D:\Project_EventAlertMod\.AI</code>.</li>
+<li>The old directory <code>D:\EventAlertMod</code> is deactivated and no Agent may read, write, compare, or fallback.</li>
+<li>2026-08-21 Read-only metadata: <code>_retail_</code> and <code>_ptr_</code> are <code>12.1.0.69382</code>, <code>_xptr_</code> is <code>12.0.7.68887</code>; the version will change, and the execution file <code>ProductVersion</code> must be re-read before deployment and actual testing.</li>
+<li>2026-08-21 The three <code>Interface\AddOn\EventAlertMod</code> are currently entity folders; only PTR contains <code>EventAlertMod.toc</code>, and Retail/XPTR has not yet been fully deployed. The previous state of SymbolicLink pointing to the old directory is historical evidence only.</li>
+<li><code>.AI/Tools/Test-LocalWoWEnvironment.ps1</code> must fail-closed for Reparse Point; current situation expects PTR to pass, Retail/XPTR to fail due to missing TOC. The Deploy DryRun pass only means that the target is safe to deploy, but does not mean that the plug-in is complete.</li>
+<li>The deployment target is fixed to <code>Interface\AddOn\EventAlertMod</code> in each version directory. The secure entity folder can be backed up first and then updated; the missing target can be created; both the Reparse Point and the file target are stopped.</li>
+<li>Classic is not supported. PTR/XPTR During interactive deployment, you must ask whether to deploy Retail at the same time, and list all candidate versions on the confirmation screen.</li>
+<li><code>WTF</code> paths are only dynamically combined in explicit test tasks; <code>WTF\Account</code>'s account and role data may not be read or listed without need.</li>
+<li>See <code>.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md</code> for complete rules.</li>
+</ul>
+<h2 id="hard-limit">Hard limit</h2>
+<ul>
+<li>
+<p>Classi## secret/protected data rules and security checks are not supported
+Retail 12.x may mark Aura, cooldown, effect, time, unit or string data as Secret / Protected / Display-only. To defend against Lua collisions or head errors caused by Secret/Protected limitations in combat, four core checks API canonical factor table index defense mechanisms are implemented:</p>
+</li>
+<li>
+<p><strong>Four core checking functions</strong>:</p>
+</li>
+<li><code>issecretvalue(value)</code>: Secret Value to determine whether a specific value is protected.</li>
+<li><code>canaccessvalue(value)</code>: Determine whether you currently have permission to access and read the value.</li>
+<li><code>canaccesstable(table)</code>: Determines whether the entire table object can be safely read (not schema).</li>
+<li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Check whether the table object structure itself is restricted or contains secret values.</li>
+<li><strong>Table index protection (key)</strong>: It is strictly prohibited to use keys with secret values ​​(such as <code>spellId</code> or <code>text</code>, etc. that guarantee verification) to index any non-secure serious custom tables, otherwise the <code>attempted to index a table that cannot be indexed with Key Secrets</code> error will be triggered immediately. Before customizing the table index, you must first use <code>issecretvalue(key)</code> to confirm that the golden key is not a protected secret value, and use <code>canaccesstable(targetTable)</code> to check the table security.</li>
+<li>First confirm whether the source table is secret (<code>canaccesstable</code>), then read the field, and then confirm whether the field value is secret (<code>issecretvalue</code>).</li>
+<li>Do not perform arithmetic, comparison, stringification, table keying, serialization or any function input on duration, expirationTime, spellID, timeLeft and other values ​​before confirming safety.</li>
+<li>No squeeze on creation duration, transition time, cooldown, or required value.</li>
+<li>Guess values ​​must not be mixed with facts; derived value tags must be derived values.</li>
+<li>When the data cannot be obtained safely, the icon, name, and activity status that can be safely displayed are retained, and the timer is displayed as protected, displayOnly, or unknown.</li>
+<li>Error detection status needs to record boundaryWarnings.</li>
+<li>
+<p>If equipped, the schedule is refreshed after leaving combat. Ability to mark Aura, cooldown, spell, time, unit or string data as secret/protected/display only. In order to prevent Lua from crashing or crashing due to secret/protected restrictions during combat, four core inspections of API specifications and table index defense mechanisms are required:</p>
+</li>
+<li>
+<p><strong>Three core inspection functions</strong>:</p>
+</li>
+<li><code>issecretvalue(value)</code>: Secret Value to determine whether a specific value is protected.</li>
+<li><code>canaccessvalue(value)</code>: Determine whether you currently have permission to access and read the value.</li>
+<li><code>canaccesstable(table)</code>: Determines whether the entire table object can be safely read (not schema).</li>
+<li><strong>Table special checking and index defense</strong>:</li>
+<li><code>isserettable(table)</code>: Checks whether the target table itself has been marked as Secret Table.</li>
+<li><code>hasanysecretvalues(table)</code>: Check if the table contains any secret values ​​(Secret Values).</li>
+<li><strong>Table index protection (key)</strong>: It is strictly prohibited to use keys with secret values ​​(such as <code>spellId</code> or <code>text</code>, etc. that guarantee verification) to index any non-secure serious custom tables, otherwise the <code>attempted to index a table that cannot be indexed with Key Secrets</code> error will be triggered immediately. Before customizing the table index, you must first use <code>issecretvalue(key)</code> to confirm that the golden key is not a protected secret value, and use <code>canaccesstable(targetTable)</code> to check the table security.</li>
+<li>First confirm whether the source table is secret (<code>canaccesstable</code>), then read the field, and then confirm whether the field value is secret (<code>issecretvalue</code>).</li>
+<li>Do not perform arithmetic, comparison, stringification, table keying, serialization or any function input on duration, expirationTime, spellID, timeLeft and other values ​​before confirming safety.</li>
+<li>No squeeze on creation duration, transition time, cooldown, or required value.</li>
+<li>Guess values ​​must not be mixed with facts; derived value tags must be derived values.</li>
+<li>When the data cannot be obtained safely, the icon, name, and activity status that can be safely displayed are retained, and the timer is displayed as protected, displayOnly, or unknown.</li>
+<li>Error detection status needs to record boundaryWarnings.</li>
+<li>If possible, the schedule will leave combat shortly.</li>
+</ul>
+<h2 id="pollution-control-rules">Pollution Control Rules</h2>
+<ul>
+<li>No hooking, overriding, redefining or monkey-patching Blizzard secure/protected functions, FrameXML core functions, action buttons, unit frames, nameplates, spell casting, positioning, item usage related paths.</li>
+<li>Do not modify the protected frame's properties, parent, rule points, size, visibility, template or click behavior in combat.</li>
+<li>Do not use EAM runtime state, secret/protection values, debugging objects, or plug-in callbacks to form Blizzard frameworks that could pollute the security chain.</li>
+<li>Use EventRouter orphan framework; the rendering framework is only responsible for display and not responsible for safe operations or protected interactions.</li>
+<li>If you need to restrict operations to the frame below a UIParent, you must do so in unprotected display use, and delaying <code>InCombatLockdown()</code> may cause structural changes to the taint.</li>
+<li>Do not use <code>forceinsecure</code>, do not attempt to clear or bypass contamination points, or use third-party workarounds to suppress Blizzard blocking operations.</li>
+<li>When contamination, blocked actions, or combat lock errors are discovered, they need to be recorded to <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> and bound to the trigger path, combat status, and resettable steps.</li>
+</ul>
+<h2 id="durationobject-and-time-display">DurationObject and time display</h2>
+<ul>
+<li>Secret or protected time data may not be used with <code>OnUpdate</code> Mobile Countdown.</li>
+<li>If Retail provides DurationObject, override UI processing, e.g. <code>CooldownFrame:SetCooldownFromDurationObject()</code> or <code>FontString:SetDurationText()</code>.</li>
+<li><code>Cooldown:SetCountdownFormatter()</code>, <code>Cooldown:SetCountdownMillisecondsThreshold()</code>, etc. The related capabilities after 12.0.5 need to be confirmed with files and actual machines before use.</li>
+<li>Manual timer keypad is only used to confirm safe normal numbers.</li>
+</ul>
+<h2 id="tooltips-c_tooltipinfo-downgrade-strategy">Tooltips / C_TooltipInfo Downgrade Strategy</h2>
+<p>Tooltip parsing can only be used as a fallback for low-frequency, screenshots, and clearly marked sources:
+- Prefer using <code>C_TooltipInfo</code> or Blizzard supported display items.
+- Can parse explicit numerical values ​​in static description text.
+- Don't parse remaining time literals as facts.
+- No tooltip grabs performed in hot paths, in combat, or every frame.
+- The parsed results cannot overwrite the security API facts and can only be exported or displayed only as auxiliary.
+- Quiet must be downgraded when parsing fails, and dim timer cannot be generated.</p>
+<h2 id="event-and-frame-rules">Event and frame rules</h2>
+<ul>
+<li>Event specifications use a single EventRouter.</li>
+<li>Pure event listening architecture uses orphan framework: <code>CreateFrame("Frame", nil, nil)</code>.</li>
+<li>Does not assume logical dispatcher responsibilities on UIParent-parented frames.</li>
+<li>Do not dynamically register or unregister events to the UI parent frame during combat.</li>
+<li>Event registration changes should be managed centrally to avoid duplication of water supply.</li>
+</ul>
+<h2 id="scheduler-and-all-rules">Scheduler and all rules</h2>
+<ul>
+<li>Priority event driven; scheduled rollback must be concentrated, low-frequency, and throttling.</li>
+<li>Only use a single schedule <code>OnUpdate</code>.</li>
+<li>It is forbidden to attach icon timers, application timers, and hot paths to repeat <code>C_Timer.After(function() ...)</code>.</li>
+<li><code>UNIT_AURA</code>, <code>SPELL_UPDATE_COOLDOWN</code>, <code>OnUpdate</code>, renderer updates belong to the hot path.</li>
+<li>Hot paths must not be configured with temporary tables, closures or unnecessary strings.</li>
+<li>Hot path avoidance <code>pairs</code> / <code>ipairs</code>; use digit looping when stable numeric indexing is available.</li>
+<li>Hot path avoidance <code>table.insert</code>; use direct indexing when writing with direct indexing available.</li>
+<li>Use buffer and <code>table.concat</code> for group strings in loops to avoid continuous <code>..</code>.</li>
+<li>Non-essential work should be postponed, reduced or stopped during low FPS or combat.</li>
+<li>Large-scale item scanning cannot be performed when fighting normally; if magic storage is required, choose Join, Idle Only, Interruptible, FPS Fishing, or Combat Fishing.</li>
+</ul>
+<h2 id="tablecreate-tablefreeze-policy">table.create / table.freeze policy</h2>
+<ul>
+<li><code>table.create</code> is used for expected settings: charts, graphs, flow charts, record lists, icon pools, and default templates.</li>
+<li>Must provide <code>table.create</code>, <code>table.freeze</code>, <code>table.isfrozen</code> backup.</li>
+<li><code>table.freeze</code> only for immutable static data: enums, patterns, default field profiles, contract modules, prototypes, metatables.</li>
+<li>Stable API alias tables can be frozen, e.g. <code>EAM.API</code>, but only when confirmed without causing load sequence or test failures.</li>
+<li>SavedVariables, runtime cache, Aura/cooldown status, icon status, pool items, scheduler queue, debug/session records must not be frozen.</li>
+</ul>
+<h2 id="uirenderer-rules">UI/renderer rules</h2>
+<ul>
+<li>The renderer does not check the API directly; the information is provided by the service layer.</li>
+<li>Use the pool for icons, buttons, and FontString.</li>
+<li>The renderer does not perform safe operations, does not register click maps, does not modify Blizzard protection frames, and does not operate Taint column/unit frame/nameplate paths.</li>
+<li>Avoid building redundant frames after initialization.</li>
+<li><code>SetText</code>, <code>SetPoint</code>, <code>SetSize</code>, <code>SetTexture</code>, layout compare the last value before writing.</li>
+<li>During batch layout, you can hide the parent first and then show it after completion.</li>
+<li>Supports timers, potion names, and halo value labels, but only displays safety information.</li>
+<li>UI defaults are kept simple and EAM cannot be introduced into WeakAuras complex systems.</li>
+</ul>
+<h2 id="savedvariables-rules">SavedVariables Rules</h2>
+<ul>
+<li>SavedVariables must have an architecture version.</li>
+<li>Provide old data migration, default, and verification.</li>
+<li>Don't freeze SavedVariables.</li>
+<li>Does not read every frame or high runtime state.</li>
+<li>Fields that cannot be safely migrated must be backed up or marked as genetic, and user settings must not be silently destroyed.</li>
+</ul>
+<h2 id="debuggingai-handover-rules">Debugging/AI handover rules</h2>
+<ul>
+<li>Debugging is turned off by default.</li>
+<li>Debugging Debugging must be achieved.</li>
+<li>Snapshot needs to be split:</li>
+<li>Facts</li>
+<li>derived
+  ——Human Notes</li>
+<li>boundaryWarnings</li>
+<li>environment</li>
+<li>No huge log output.</li>
+<li>Export strings are only created when explicitly requested by the user.</li>
+</ul>
+<h2 id="course-style">Course Style</h2>
+<ul>
+<li>Use Chinese for identifiers.</li>
+<li>Annotations can be in Traditional Chinese, focusing on WoW API boundaries, reasons and architectural decisions.
+-All officially loaded project files must have file system annotations, describing the module, responsibility boundaries, data numbers and future precautions; details are as per <code>.AI/Docs/12_CODE_COMMENTARY_GUIDE.md</code>.</li>
+<li>Use 4 spaces for indentation.</li>
+<li>Do not use inline semicolons.</li>
+<li>Namespaces/modules use PascalCase.</li>
+<li>Use camelCase for functions/local variables.</li>
+<li>Conduit functions/conduit tables are exported as <code>_</code>.</li>
+<li>Symbol use UPPER_SNAKE_CASE.</li>
+</ul>
+<h2 id="file-backup-rules">File backup rules</h2>
+<ul>
+<li>Any files must be backed up to the <code>.AI/backup/</code> folder in the project root directory before being deleted, moved, overwritten or modified.</li>
+<li>The backup file name format is "original file name suffix <code>__yyyyMMddHHmmss</code>", for example <code>AGENTS.md__20260526122904</code>.</li>
+<li>Use the timer's local time in the format of year, month, day, hour, minute and second, which is convenient for sorting time and tracing.
+-When processing multiple files, they should be backed up one by one before starting the same job; actual modification, movement or deletion can only be carried out after the backup is completed.</li>
+<li>The backup folder is only used as a reference source for future development, modification and backtracking, and must not be compressed into CurseForge release files.</li>
+<li>If the original file does not exist, the reason must be returned first. An empty backup cannot be created to pretend to be the original content.</li>
+</ul>
+<h2 id="develop-problem-recording-rules">Develop problem recording rules</h2>
+<ul>
+<li>Bottlenecks, limitations, errors, tool failures, API requirements and solutions encountered during the development process are all recorded in <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
+<li>The ultimate purpose is to reduce repeated trial and error in the future, save AI up and down /token, and retain the context of decision-making.</li>
+<li>Each record contains at least the appointment, symptoms, cause judgment, tried methods, effective solutions, and follow-up matters and precautions.</li>
+<li>If the problem has not been resolved, please mark it as "Unresolved" and indicate the next step of verification.</li>
+<li>Do not log passwords, tokens, private account information, or any sensitive information entering project files.</li>
+</ul>
+<h2 id="project-specific-skill-rules">Project-specific skill rules</h2>
+<ul>
+<li>If similar processes are found to be repeated during the development process, and stable steps, input conditions, output results and risk control management are in place, they should be organized into EventAlertMod special case SKILL.</li>
+<li>Processes suitable for conversion to SKILL include: compressed release, Lua static verification, WoW API query, SavedVariables migration check, secret boundary review, file synchronization, and document synchronization.
+-Currently, <code>eam-Retail-p0-review</code> has been established at the location of <code>.AI/skills/eam-Retail-p0-review/SKILL.md</code>, which is used for static verification of the P0 Secret/Taint/API/static verification of the EAM Retail server rewrite.</li>
+<li>Before establishing SKILL, you need to confirm that the process is indeed repeatable. Jiangsu Lakes and solutions are recorded in <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
+<li>The SKILL content should include trigger conditions, necessary pre-checks, prohibited items, backup rules, verification methods and final return format.</li>
+<li>Process hard assistance skills that have not yet been verified, require manual judgment, or contain sensitive information.</li>
+</ul>
+<h2 id="subagent-program-usage-rules">Subagent program usage rules</h2>
+<ul>
+<li>The user has been authorized: If a role suitable for a sub-agent appears in this project in the future, you need to proactively plan and use it.</li>
+<li>Use to determine the critical path first; immediately block the work of the main process and process it locally by the main agent.</li>
+<li>Subagents are primarily taskable, clear, appreciable and do not override each other's sidecar tasks.</li>
+<li>Suitable molds include: Retail server API verification, Secret/taint review, hot path scanning, file consistency check, non-overlapping file slicing for modular replacement, and release check.</li>
+<li>Unsuitable architectures include: small single file modifications, high-risk operations that require immediate authorization, uninstalled moves/deletions that have not been lost, and high correlations with highly overlapping write ranges.</li>
+<li>When dispatching workers, the scope of file responsibilities, prohibited items, backup rules, verification output and final return format must be clearly specified.</li>
+<li>Subagent results need to be integrated by the master agent; subagent API determinations must not be considered machine-validated.</li>
+<li>Please refer to <code>.AI/Docs/17_SUBAGENT_WORKFLOW.md</code> for detailed procedures.</li>
+<li>All collaboration with PR review must strictly follow the RACI division of responsibilities and review principles of <a href=".AI/Docs/21_RACI_EXPERTS_MATRIX.md">.AI/Docs/21_RACI_EXPERTS_MATRIX.md</a>.</li>
+</ul>
+<h2 id="implementation-process">Implementation process</h2>
+<ol>
+<li>Audit: read the complete source code tree, TOC, XML, SavedVariables, global, Classic/MOP branch, OnUpdate__EAMCODE_5_ _, Halo/cooldownOnUpdate/C_Timer, auraEAMCODED__, ACODE_4<strong><em>_</em>, aCODE_3</strong>, auraEAMCODEA__, A__uraEA__3__A__a☺</li>
+<li>Solution design: first determine module responsibilities and migration strategies, and then start large-scale modules.</li>
+<li>Rewrite: Establish core, service, UI, and debugging modules to obtain available data and user semantics.</li>
+<li>Static verification: perform available Lua syntax check, global variable search, <code>C_Timer.After</code> closure search, <code>table.freeze</code> error search.</li>
+<li>Report: Clarify changes, unverified matters, risks and next steps.</li>
+</ol>
+<h2 id="secret-token-security-governance">Secret &amp; Token Security Governance</h2>
+<p>In order to prevent the creator's API Token, private key and sensitive key from being accidentally leaked, the following absolute security and isolation boundaries are implemented:</p>
+<ul>
+<li><strong>100% native isolation principle</strong>:</li>
+<li>Tokens issued by any platform (including CurseForge API Token, WoWInterface Token, personal Access Token, etc.) <strong>will only remain on the local machine</strong>.</li>
+<li>It is absolutely prohibited to write any tokens into code, comments, test files, Git commit history, or public conversations.</li>
+<li>It is absolutely prohibited to include files containing Token into any distributed ZIP compressed package (whether it is a AddOn plug-in package or a Source source code package).</li>
+<li><strong>Native double encryption protection (Windows DPAPI)</strong>:</li>
+<li>The local Token is encrypted into binary ciphertext and stored in <code>.AI/API_TOKEN.SEC</code> through Microsoft Windows DPAPI (Data Protection API).</li>
+<li>This ciphertext is strictly bound to the current Windows user login account and the local hardware key. Even if the file is leaked, others cannot decrypt it.</li>
+<li>Projects <code>.gitignore</code> and <code>Build-SourcePackage.ps1</code>, <code>Build-Package.ps1</code> must be forced to exclude <code>*.SEC</code>, <code>*.sec</code>, <code>API_TOKEN.SEC</code>, <code>*secret*</code>, <code>*token*</code>, <code>.env*</code>.</li>
+<li><strong>CurseForge release boundaries</strong>:</li>
+<li>Local publishing calls the <code>Deploy/Upload-CurseForge.ps1</code> tool, supports CLI transmission and participation in conversational inquiry mode, and provides <code>-DryRun</code> simulation mode for full verification before publishing.</li>
+<li>When executing the upload, the script only decrypts the token instantaneously in the memory and automatically masks it when displayed on the terminal. It is released from the memory after execution.</li>
+<li>GitHub Actions automatic publishing is currently disabled (<code>if: false</code>), and any cloud publishing script containing Token cannot be created or enabled without the authorization of Juvenile.</li>
+</ul>
+<h2 id="quick-instructions">Quick instructions</h2>
+<ul>
+<li>When the user only enters the word "resource", <code>pwsh -NoProfile -File .\Deploy\Build-Package.ps1</code> is executed directly.</li>
+<li>When the user enters "compressed development version", <code>pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -PackageLabel DEV</code> is executed directly.</li>
+<li>When the user needs to "publish to CurseForge", execute <code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1</code>.</li>
+<li>When the user needs "simulated release", execute <code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -DryRun</code>.</li>
+<li>Before adding the folder, make sure that <code>EventAlertMod/EventAlertMod.toc</code> and <code>## Version:</code> comply with <code>EventAlertMod_MN_yyyyMMdd</code>.</li>
+<li>Budget file name must match <code>EventAlertMod_MN_yyyyMMdd_HHmmss.zip</code>.</li>
+<li>Return zip path, Lua syntax check results, and excluded folder check results after compression.</li>
+<li>See <code>.AI/Docs/14_PACKAGING_GUIDE.md</code> for related rules.</li>
+</ul>
+<h2 id="the-final-return-must-contain">The final return must contain</h2>
+<p>Final reports on relevant practices are now available at least:</p>
+<ol>
+<li>Change the file.</li>
+<li>Major architectural changes.</li>
+<li>Retain the old EAM behavior.</li>
+<li>Remove old behavior.</li>
+<li>Lua / WoW API Assumptions.</li>
+<li><code>table.create</code> / <code>table.freeze</code> uses summary.</li>
+<li>Confidential/Protected Data Handling Policy.</li>
+<li>Static verification has been performed.</li>
+<li>Validation not performed.
+10.WoW officially serves the needs of real machine testing.</li>
+<li>Known risks.</li>
+<li>Next suggested task.</li>
+</ol>
+<h2 id="latest-reconstruction-details-of-the-project-updated-on-20260606">Latest reconstruction details of the project (updated on 2026.06.06)</h2>
+<h3 id="1-core-reconstruction-completed-retail-1207">1. Core reconstruction completed (Retail 12.0.7)</h3>
+<ul>
+<li><strong>Full code localization cleaning (12.0.7 - 2026.06.06)</strong>:</li>
+<li>All coded hard/English prompt terms and UI strings in the entire file (including all logic under the <code>Services</code> and <code>UI</code> directories) have been fully extracted into keys in <code>EAM.L</code>.</li>
+<li>Complete and seamlessly support five major language families: <code>zhTW</code> (Traditional Chinese), <code>zhCN</code> (Simplified Chinese), <code>enUS</code> (Simplified Chinese), <code>koKR</code> (Korean) and <code>ruRU</code> (Russian), with a total of 144 entries.</li>
+<li><strong>Dynamic Specialization Localization API Reconstruction</strong>: Introduce <code>CLASS_TOKEN_TO_ID</code> mapping in the filtering options of <code>EventAlertMod/UI/Options.lua</code>, give priority to calling the official grafting API <code>GetSpecializationInfoForClassID</code> to obtain the most accurate localized specialization name, and provide dual-track localization backup.</li>
+<li><strong>ClassPower Core Resource Security Investigation and Wrong Case Enhancement</strong>:</li>
+<li>Pay close attention to the <code>pcall</code> isolation and <code>issecretvalue</code> defense mechanisms for <code>detectClassPower</code> and <code>updatePower</code> deployments to prevent Lua crashes caused by size comparisons when energy value differences are secret tables in combat.</li>
+<li><strong>EventRouter/Scheduler Fault isolation</strong>:</li>
+<li>Parameterized <code>pcall</code> fault tolerance for the OnEvent core loop of <code>EventAlertMod/Core/EventRouter.lua</code> and the scheduled task callback of <code>EventAlertMod/Core/Scheduler.lua</code> to ensure that when a single module reports an error, it will not interfere with or interrupt the execution of other modules and timing.</li>
+<li><strong>Dual-track Native Binding Countdown and Pandemic Glow</strong>:<ul>
+<li>Temporal rendering priority implementation of <code>C_DurationUtil.CreateDurationTextBinding</code> and <code>SetCooldownFromDurationObject</code> downgrade passes.</li>
+<li>Enable the glowing bright frame effect for the Icon when the DoT Aura meets the Pandemic refresh time.</li>
+</ul>
+</li>
+<li><strong>13 professions and 28 hero talent database expansion</strong>:
+-Updated <code>EventAlertMod/Data/SpellArray.lua</code>, configured the latest weapon ID preset monitoring for all 13 professions and 28 hero talents (such as Tempest, Holy, Weapon Demon Ritual, etc.).</li>
+</ul>
+<h3 id="2-follow-up-maintenance-and-development-suggestions">2. Follow-up maintenance and development suggestions</h3>
+<ul>
+<li><strong>Security Defensive First</strong>: A defensive check with <code>issecretvalue</code> must be performed before size comparisons or table indexes against any Aura, cooldown, energy, time related values.</li>
+<li><strong>Modify syntax static check</strong>: <code>luac -p</code> check must be performed after any Lua file is processed.</li>
+<li><strong>12.0.7 &amp; 12.1.0 Expert Federation and Moon Carrier Research (updated on 2026.06.07)</strong>:</li>
+<li>Convene all experts and sub-agents for roundtable review. Lua VM experts pointed out that the hot path hidden package <code>pcall</code> caused the LuaJIT Trace compiler to interrupt the underlying process, and provided a module-level static local fallback mechanism; AddOn architects created the <code>.AI/Docs/19_AURA_1210_REDUX_BLUEPRINT.md</code> blueprint and comprehensively planned the __MEAM__CODE_4) zero-point storage</li>
+<li><strong>Shadow Host Technology (Shadow Host) Practice</strong>: Implemented for using the bridge <code>CooldownViewer</code> (Cooling Manager /CDM) as a shadow host to avoid secret/pollution restrictions. Create a new <code>EventAlertMod/Services/ShadowHostService.lua</code> implementation official pool Hook, and introduce parasitic rendering and cascading typesetting avoidance in <code>EventAlertMod/UI/Renderer.lua</code>, cooperating with the CPU and Taint in 100% darkness. Evaluation research can refer to <code>.AI/Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</code>.</li>
+<li><strong>12.1.0 Zero Allocation &amp; Event-Driven Full Module Refactoring (Completed on 2026.06.07)</strong>:</li>
+<li><strong>Data view disassociation</strong>: disassociate <code>AuraService</code>, <strong>complete EAMCODE_1</strong>, <code>ItemCooldownService</code>, <code>GroundEffectService</code> and <strong>EAMCODE_all</strong>. The five major data services are changed to driver events and are no longer directly connected to <code>Renderer</code>, but to EAM__CO8D__EAM1 86_DED__EAM__CODDE<strong><em>_EAM</em>_CO8DDEA</strong>EAM__CODDE_%<strong>EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAMCODE___EAMCODE6%</strong> <em>EAMCODE_5__%__EAM__CODDE</em>%<strong>EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%</strong>.</li>
+<li><strong>Introduction of domestic controller</strong>: Introduce <code>EventAlertMod/Managers/AlertManager.lua</code> to uniformly manage and schedule these five types of change events, use <code>Scheduler</code> to implement synchronous throttling and batch updates (<code>BeginBatch/EndBatch</code>), and eliminate the layout itself.</li>
+<li><strong>Multi-type zero-allocation Object Pool</strong>: Configure emphasized <code>StatePool</code> (such as <code>GroundEffectStatePool</code> and <code>TotemStatePool</code>, etc.) in all services, in <code>acquire</code> state object is bound to <code>releaseFunc</code>, and is recognized by <code>AlertManager</code> after rendering. Multiple __A__EA__A__3__4D__EAMCO`fstate__EAMCO"__EA safely restores the object and runs 0-allocation during completion to minimize GC goals.</li>
+<li><strong>Mirror carrier text clipping and masking modification</strong>: To address the problem that the skill name is not displayed due to the clipping and FrameLevel display of the pulling container <code>ClipsChildren</code> when adsorbing the official CooldownViewer (CDM), dynamic layout adjustments have been implemented. In parasitic mode, the skill name (<code>nameText</code>) is automatically moved to the bottom of the icon and the bottom of the icon is highlighted and the highlight color is set. At the same time, the privilege is elevated to <code>FrameLevel</code> (relative to) <code>hostIcon</code> + 10), which solves the pain point of "invisible skill names".</li>
+<li><strong>Static syntax security detection settings</strong>: 32 Lua files have 100% penetration of syntax security detection settings.</li>
+<li><strong>16Complete the integration of new and advanced events (as of June 7, 2026)</strong>:</li>
+<li>Do not use <code>forceinsecure</code>, do not attempt to clear or bypass contamination points, or use third-party workarounds to suppress Blizzard blocking operations.</li>
+<li>When contamination, blocked actions, or combat lock errors are discovered, they must be recorded to <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> and bound to the trigger path, combat status, and resettable steps.</li>
+</ul>
+<h2 id="durationobject-and-time-display_1">DurationObject and time display</h2>
+<ul>
+<li>Secret or protected time data may not be used with <code>OnUpdate</code> Mobile Countdown.</li>
+<li>If Retail provides DurationObject, override UI processing, such as <code>CooldownFrame:SetCooldownFromDurationObject()</code> or <code>FontString:SetDurationText()</code>.</li>
+<li><code>Cooldown:SetCountdownFormatter()</code>, <code>Cooldown:SetCountdownMillisecondsThreshold()</code>, etc. The related capabilities after 12.0.5 need to be confirmed with files and actual machines before use.</li>
+<li>Manual timer keypad is only used to confirm safe normal numbers.</li>
+</ul>
+<h2 id="tooltips-c_tooltipinfo-downgrade-strategy_1">Tooltips / C_TooltipInfo Downgrade Strategy</h2>
+<p>Tooltip parsing can only be used as a fallback for low-frequency, screenshots, and clearly marked sources:</p>
+<ul>
+<li>Prefer using <code>C_TooltipInfo</code> or Blizzard supported display items.</li>
+<li>Can parse explicit numerical values ​​in static description text.</li>
+<li>Don't parse remaining time literals as facts.</li>
+<li>No tooltip grabs performed in hot paths, in combat, or every frame.</li>
+<li>The parsed results cannot overwrite the security API facts and can only be exported or displayed only as auxiliary.</li>
+<li>Quiet must be downgraded when parsing fails, and dim timer cannot be generated.</li>
+</ul>
+<h2 id="event-and-frame-rules_1">Event and frame rules</h2>
+<ul>
+<li>Event specifications use a single EventRouter.</li>
+<li>Pure event listening architecture uses orphan framework: <code>CreateFrame("Frame", nil, nil)</code>.</li>
+<li>Does not assume logical dispatcher responsibilities on UIParent-parented frames.</li>
+<li>Do not dynamically register or unregister events to the UI parent frame during combat.</li>
+<li>Event registration changes should be managed centrally to avoid duplication of water supply.</li>
+</ul>
+<h2 id="scheduler-and-all-rules_1">Scheduler and all rules</h2>
+<ul>
+<li>Priority event driven; scheduled rollback must be concentrated, low-frequency, and throttling.</li>
+<li>Only use a single schedule <code>OnUpdate</code>.</li>
+<li>It is forbidden to attach icon timers, application timers, and hot paths to repeat <code>C_Timer.After(function() ...)</code>.</li>
+<li><code>UNIT_AURA</code>, <code>SPELL_UPDATE_COOLDOWN</code>, <code>OnUpdate</code>, renderer updates belong to the hot path.</li>
+<li>Hot paths must not be configured with temporary tables, closures or unnecessary strings.</li>
+<li>Hot path avoidance <code>pairs</code> / <code>ipairs</code>; use digit looping when stable numeric indexing is available.</li>
+<li>Hot path avoidance <code>table.insert</code>; use direct indexing when writing with direct indexing available.</li>
+<li>Use buffer and <code>table.concat</code> for group strings in loops to avoid continuous <code>..</code>.</li>
+<li>Non-essential work should be postponed, reduced or stopped during low FPS or combat.</li>
+<li>Large-scale item scanning cannot be performed when fighting normally; if magic storage is required, choose Join, Idle Only, Interruptible, FPS Fishing, or Combat Fishing.</li>
+</ul>
+<h2 id="tablecreate-tablefreeze-policy_1">table.create / table.freeze policy</h2>
+<ul>
+<li><code>table.create</code> is used for expected settings: charts, diagrams, flow charts, record lists, icon pools, and default templates.</li>
+<li>Must provide <code>table.create</code>, <code>table.freeze</code>, <code>table.isfrozen</code> backup.</li>
+<li><code>table.freeze</code> is only used for immutable static data: enums, patterns, default field profiles, module contracts, prototypes, metatables.</li>
+<li>Stable API alias tables can be frozen, e.g. <code>EAM.API</code>, but only when confirmed without causing load sequence or test failures.</li>
+<li>SavedVariables, runtime cache, Aura/cooldown status, icon status, pool items, scheduler queue, debug/session records must not be frozen.</li>
+</ul>
+<h2 id="uirenderer-rules_1">UI/renderer rules</h2>
+<ul>
+<li>The renderer does not check the API directly; the information is provided by the service layer.</li>
+<li>Use the pool for icons, buttons, and FontString.</li>
+<li>The renderer does not perform safe operations, does not register click maps, does not modify Blizzard protection frames, and does not operate Taint column/unit frame/nameplate paths.</li>
+<li>Avoid building redundant frames after initialization.</li>
+<li><code>SetText</code>, <code>SetPoint</code>, <code>SetSize</code>, <code>SetTexture</code>, layout compare the last value before writing.</li>
+<li>During batch layout, you can hide the parent first and then show it after completion.</li>
+<li>Supports timers, potion names, and halo value labels, but only displays safety information.</li>
+<li>Keep the UI defaults simple and do not introduce EAM into WeakAuras complex systems.</li>
+</ul>
+<h2 id="savedvariables-rules_1">SavedVariables Rules</h2>
+<ul>
+<li>SavedVariables must have schema version.</li>
+<li>Provide old data migration, default, and verification.</li>
+<li>Don't freeze SavedVariables.</li>
+<li>Does not read every frame or high runtime state.</li>
+<li>Fields that cannot be safely migrated must be backed up or marked as genetic, and user settings must not be silently destroyed.</li>
+</ul>
+<h2 id="debuggingai-handover-rules_1">Debugging/AI handover rules</h2>
+<ul>
+<li>Debugging is turned off by default.</li>
+<li>Debugging Debugging must be achieved.</li>
+<li>Snapshot needs to be split:</li>
+<li>Facts</li>
+<li>derived
+  ——Human Notes</li>
+<li>boundaryWarnings</li>
+<li>environment</li>
+<li>No huge log output.</li>
+<li>Export strings are only created when explicitly requested by the user.</li>
+</ul>
+<h2 id="course-style_1">Course Style</h2>
+<ul>
+<li>Use Chinese for identifiers.</li>
+<li>Annotations can be in Traditional Chinese, focusing on WoW API boundaries, reasons and architectural decisions.
+-All officially loaded project files must have file system comments describing the module, responsibility boundaries, data numbers and future precautions; details are as per <code>.AI/Docs/12_CODE_COMMENTARY_GUIDE.md</code>.</li>
+<li>Use 4 spaces for indentation.</li>
+<li>Do not use inline semicolons.</li>
+<li>Namespaces/modules use PascalCase.</li>
+<li>Use camelCase for functions/local variables.</li>
+<li>Conduit functions/conduit tables are exported as <code>_</code>.</li>
+<li>Symbol use UPPER_SNAKE_CASE.</li>
+</ul>
+<h2 id="file-backup-rules_1">File backup rules</h2>
+<ul>
+<li>Any files must be backed up to the <code>.AI/backup/</code> folder in the project root directory before being deleted, moved, overwritten or modified.</li>
+<li>The backup file name format is "original file name suffix <code>__yyyyMMddHHmmss</code>", for example <code>AGENTS.md__20260526122904</code>.</li>
+<li>Use the timer's local time in the format of year, month, day, hour, minute and second, which is convenient for sorting time and tracing.
+-When processing multiple files, they should be backed up one by one before starting the same job; actual modification, movement or deletion can only be carried out after the backup is completed.</li>
+<li>The backup folder is only used as a reference source for future development, modification and backtracking, and must not be compressed into CurseForge release files.</li>
+<li>If the original file does not exist, the reason must be returned first. An empty backup cannot be created to pretend to be the original content.</li>
+</ul>
+<h2 id="develop-problem-recording-rules_1">Develop problem recording rules</h2>
+<ul>
+<li>Bottlenecks, limitations, errors, tool failures, API requirements and solutions encountered during the development process are all recorded in <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
+<li>The ultimate purpose is to reduce repeated trial and error in the future, save AI up and down /token, and retain the context of decision-making.</li>
+<li>Each record contains at least the appointment, symptoms, cause judgment, tried methods, effective solutions, and follow-up matters and precautions.</li>
+<li>If the problem has not been resolved, please mark it as "Unresolved" and indicate the next step of verification.</li>
+<li>Do not log passwords, tokens, private account information, or any sensitive information entering project files.</li>
+</ul>
+<h2 id="project-specific-skill-rules_1">Project-specific skill rules</h2>
+<ul>
+<li>If similar processes are found to be repeated during the development process, and stable steps, input conditions, output results and risk control management are in place, they should be organized into EventAlertMod special case SKILL.</li>
+<li>Processes suitable for conversion to SKILL include: compressed release, Lua static verification, WoW API verification, SavedVariables migration check, secret boundary review, file synchronization, and language file synchronization.</li>
+<li>Currently, <code>eam-Retail-p0-review</code> has been created, located at <code>.AI/skills/eam-Retail-p0-review/SKILL.md</code>, which is used for static verification of the P0 Secret/Taint/API/static verification of the EAM Retail server rewrite.</li>
+<li>Before establishing SKILL, you need to confirm that the process is indeed repeatable. Jiangsu Lakes and solutions are recorded in <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
+<li>The SKILL content should include trigger conditions, necessary pre-checks, prohibited items, backup rules, verification methods and final return format.</li>
+<li>Process hard assistance skills that have not yet been verified, require manual judgment, or contain sensitive information.</li>
+</ul>
+<h2 id="subagent-program-usage-rules_1">Subagent program usage rules</h2>
+<ul>
+<li>The user has been authorized: If a role suitable for a sub-agent appears in this project in the future, you need to proactively plan and use it.</li>
+<li>Use to determine the critical path first; immediately block the work of the main process and process it locally by the main agent.</li>
+<li>Subagents are primarily taskable, clear, appreciable and do not override each other's sidecar tasks.</li>
+<li>Suitable molds include: Retail server API verification, Secret/taint review, hot path scanning, file consistency check, non-overlapping file slicing for modular replacement, and release check.</li>
+<li>Unsuitable architectures include: small single file modifications, high-risk operations that require immediate authorization, uninstalled moves/deletions that have not been lost, and high correlations with highly overlapping write ranges.</li>
+<li>When dispatching workers, the scope of file responsibilities, prohibited items, backup rules, verification output and final return format must be clearly specified.</li>
+<li>Subagent results need to be integrated by the master agent; subagent API determinations must not be considered machine-validated.</li>
+<li>Please refer to <code>.AI/Docs/17_SUBAGENT_WORKFLOW.md</code> for detailed procedures.</li>
+</ul>
+<h2 id="implementation-process_1">Implementation process</h2>
+<ol>
+<li>Review: Read the complete source code tree, TOC, XML, SavedVariables, global, Classic/MOP branch, OnUpdate/C_Timer, Aura/cooldownOnUpdateOnUpdate/C_Timer, Aura/cooldownOnUpdate__EAMCODE_6_EAMCODE_6__8, /cooldownOnUpdate__EAMCODE__8, __EAM__86_6%.</li>
+<li>Solution design: First, module responsibilities and migration strategies, and then start large-scale modules.</li>
+<li>Rewrite: Establish core, service, UI, and debugging modules to obtain available data and user semantics.</li>
+<li>Static verification: Perform available Lua syntax check, global variable search, <code>C_Timer.After</code> closure search, <code>table.freeze</code> error search.</li>
+<li>Report: Clarify changes, unverified matters, risks and next steps.</li>
+</ol>
+<h2 id="quick-instructions_1">Quick instructions</h2>
+<ul>
+<li>When the user only enters the word "resource", <code>.AI/Deploy/Build-Package.ps1</code> is executed directly.</li>
+<li>Before using resources, you need to confirm that <code>EventAlertMod/EventAlertMod.toc</code> and <code>## Version</code> conform to <code>EventAlertMod_MN_yyyyMMdd</code> (when developing the version, it will be overwritten and named DEV to skip date verification).</li>
+<li>The compressed output file name must comply with <code>EventAlertMod_MN_yyyyMMdd_HHmmss.zip</code>, and the development version is <code>EventAlertMod_DEV_yyyyMMdd_HHmmss.zip</code>.</li>
+<li>Return zip path, Lua syntax check results, and excluded folder check results after compression.</li>
+<li>Please refer to <code>.AI/Docs/14_PACKAGING_GUIDE.md</code> for related rules.</li>
+</ul>
+<h2 id="the-final-return-must-contain_1">The final return must contain</h2>
+<p>Final reports on relevant practices are now available at least:</p>
+<ol>
+<li>Change the file.</li>
+<li>Major architectural changes.</li>
+<li>Retain the old EAM behavior.</li>
+<li>Remove old behavior.</li>
+<li>Lua / WoW API Assumptions.</li>
+<li><code>table.create</code> / <code>table.freeze</code> uses summary.</li>
+<li>Confidential/Protected Data Handling Policy.</li>
+<li>Static verification has been performed.</li>
+<li>Validation not performed.
+10.WoW officially serves the needs of real machine testing.</li>
+<li>Known risks.</li>
+<li>Next suggested task.</li>
+</ol>
+<h2 id="latest-reconstruction-details-of-the-project-updated-on-20260606_1">Latest reconstruction details of the project (updated on 2026.06.06)</h2>
+<h3 id="1-core-reconstruction-completed-retail-1207_1">1. Core reconstruction completed (Retail 12.0.7)</h3>
+<ul>
+<li><strong>Full code localization cleaning (12.0.7 - 2026.06.06)</strong>:<ul>
+<li>All coded hard/English prompt terms and UI strings in the entire file (including all logic under the <code>Services</code> and <code>UI</code> directories) have been fully extracted into keys in <code>EAM.L</code>.</li>
+</ul>
+</li>
+<li>Complete and seamlessly support five major language families: <code>zhTW</code> (Traditional Chinese), <code>zhCN</code> (Simplified Chinese), <code>enUS</code> (Simplified Chinese), <code>koKR</code> (Korean) and <code>ruRU</code> (Russian), with a total of 144 entries.</li>
+<li><strong>Dynamic Specialization Localization API Reconstruction</strong>: Introduce <code>CLASS_TOKEN_TO_ID</code> mapping in the filtering options of <code>EventAlertMod/UI/Options.lua</code>, give priority to calling the official grafting API <code>GetSpecializationInfoForClassID</code> to obtain the most accurate localization specialization name, and provide dual-track localization backup.</li>
+<li><strong>ClassPower Core Resource Security Investigation and Wrong Case Enhancement</strong>:</li>
+<li>Pay close attention to the <code>pcall</code> isolation and <code>issecretvalue</code> defense mechanisms for <code>detectClassPower</code> and <code>updatePower</code> deployments to prevent Lua crashes caused by size comparisons when energy value differences are secret tables in combat.</li>
+<li><strong>EventRouter/Scheduler Fault isolation</strong>:</li>
+<li>Parameterized <code>pcall</code> fault tolerance for the OnEvent core loop of <code>EventAlertMod/Core/EventRouter.lua</code> and the scheduled task callback of <code>EventAlertMod/Core/Scheduler.lua</code> to ensure that when a single module reports an error, it will not interfere with or interrupt the execution of other modules and timing.</li>
+<li><strong>Dual-track Native Binding Countdown and Pandemic Glow</strong>:<ul>
+<li>Temporal rendering priority implementation of <code>C_DurationUtil.CreateDurationTextBinding</code> and <code>SetCooldownFromDurationObject</code> downgrade passes.</li>
+<li>Enable the glowing bright frame effect for the Icon when the DoT Aura meets the Pandemic refresh time.</li>
+</ul>
+</li>
+<li><strong>13 professions and 28 hero talent database expansion</strong>:
+-Updated <code>EventAlertMod/Data/SpellArray.lua</code>, configured the latest weapon ID preset monitoring for all 13 professions and 28 hero talents (such as Tempest, Holy, Weapon Demon Ritual, etc.).</li>
+</ul>
+<h3 id="2-follow-up-maintenance-and-development-suggestions_1">2. Follow-up maintenance and development suggestions</h3>
+<ul>
+<li><strong>Security Defensive First</strong>: A defensive check with <code>issecretvalue</code> must be performed before size comparisons or table indexes against any Aura, cooldown, energy, time related values.</li>
+<li><strong>Modify syntax static check</strong>: <code>luac -p</code> check must be performed after any Lua file is processed.</li>
+<li><strong>12.0.7 &amp; 12.1.0 Expert Federation and Moon Carrier Research (updated on 2026.06.07)</strong>:</li>
+<li>Convene all experts and sub-agents for roundtable review. Lua VM experts pointed out that the hot path hidden package <code>pcall</code> caused the LuaJIT Trace compiler to interrupt the underlying process, and provided a module-level static local fallback mechanism; AddOn architects created the <code>.AI/Docs/19_AURA_1210_REDUX_BLUEPRINT.md</code> blueprint and comprehensively planned the __MEAM__CODE_4) zero-point storage</li>
+<li><strong>Shadow Host Technology (Shadow Host) Practice</strong>: Implemented for using the bridge <code>CooldownViewer</code> (Cooling Manager /CDM) as a shadow host to avoid secret/pollution restrictions. Create a new <code>EventAlertMod/Services/ShadowHostService.lua</code> implementation official pool Hook, and introduce parasitic rendering and cascading typesetting avoidance in <code>EventAlertMod/UI/Renderer.lua</code>, cooperating with the CPU and Taint in 100% darkness. Evaluation research can refer to <code>.AI/Docs/20_CDM_BYPASS_FEASIBILITY_STUDY.md</code>.</li>
+<li><strong>12.1.0 Zero Allocation &amp; Event-Driven Full Module Refactoring (Completed on 2026.06.07)</strong>:</li>
+<li><strong>Data view disassociation</strong>: disassociate <code>AuraService</code>, <strong>complete EAMCODE_1</strong>, <code>ItemCooldownService</code>, <code>GroundEffectService</code> and <strong>EAMCODE_all</strong>. The five major data services are changed to driver events and are no longer directly connected to <code>Renderer</code>, but to EAM__CO8D__EAM1 86_DED__EAM__CODDE<strong><em>_EAM</em>_CO8DDEA</strong>EAM__CODDE_%<strong>EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAMCODE___EAMCODE6%</strong> <em>EAMCODE_5__%__EAM__CODDE</em>%<strong>EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_%__EAM__CODDE_0__EAM__CO8DDEA__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CO8DDE4__EAM__CODDE_%__EAM__CODDE_%</strong>.</li>
+<li><strong>Introduction of domestic controller</strong>: Introduce <code>EventAlertMod/Managers/AlertManager.lua</code> to uniformly manage and schedule these five types of change events, use <code>Scheduler</code> to implement synchronous throttling and batch updates (<code>BeginBatch/EndBatch</code>), and eliminate the layout itself.</li>
+<li><strong>Multi-type zero-allocation Object Pool</strong>: Configure emphasized <code>StatePool</code> (such as <code>GroundEffectStatePool</code> and <code>TotemStatePool</code>, etc.) in all services, in <code>acquire</code> state object is bound to <code>releaseFunc</code>, and is recognized by <code>AlertManager</code> after rendering. Multiple __A__EA__A__3__4D__EAMCO`fstate__EAMCO"__EA safely restores the object and runs 0-allocation during completion to minimize GC goals.</li>
+<li><strong>Mirror carrier text clipping and masking modification</strong>: To address the problem that the skill name is not displayed due to the clipping and FrameLevel display of the pulling container <code>ClipsChildren</code> when adsorbing the official CooldownViewer (CDM), dynamic layout adjustments have been implemented. In parasitic mode, the skill name (<code>nameText</code>) is automatically moved to the bottom of the icon and the bottom of the icon is highlighted and the highlight color is set. At the same time, the privilege is elevated to <code>FrameLevel</code> (relative to) <code>hostIcon</code> + 10), which solves the pain point of "invisible skill names".</li>
+<li><strong>Static syntax security detection settings</strong>: 32 Lua files have 100% penetration of syntax security detection settings.</li>
+<li><strong>16Complete the integration of new and advanced events (as of June 7, 2026)</strong>:<ul>
+<li><strong>Override invalid CLEU</strong>: Fully remove <code>COMBAT_LOG_EVENT_UNFILTERED</code> registration in <code>GroundEffectService</code>, subscribe to <code>UNIT_SPELLCAST_SUCCEEDED</code> instead and filter <code>unitTarget == "player"</code>, 100% <code>unitTarget == "player"</code>, 100% <code>unitTarget == __EAMCODE10%, CO __</code>EAMCODE_3__10%, 100%, 100%. <strong>EAMDE_0</strong> Waiting in the snow,</li>
+</ul>
+</li>
+<li><strong>High-frequency energy update without delay</strong>: Additional registration of <code>UNIT_POWER_FREQUENT</code> event in <code>ClassPowerService</code> enables the response speed of holy energy and combo point update to reach 0ms delay.<ul>
+<li><strong>Skill override dynamics follows</strong>: Register <code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code> in <code>CooldownService</code>. When a spell is changed due to talent/status override, the cooldown of the overwritten or original skill will be refreshed immediately, completely eliminating the consumption/residual bug when overwriting.</li>
+</ul>
+</li>
+<li><strong>New Year's Fast Golden Glow Synchronization</strong>: Listen for <code>SPELL_ACTIVATION_OVERLAY_GLOW_SHOW</code> and <code>SPELL_ACTIVATION_OVERLAY_GLOW_HIDE</code> shortcut column highlight events in <code>AlertManager</code>, maintain the local <code>glowSpells</code> table, and add the <code>state.overlayGlow</code>_EA_EA__MCO_EA dynamic tag for the Aura / Cooldown state in the form of Decorator (decoration attribute). <code>overlayGlow</code> Dual-track display golden glow, 100% synchronized official Proc glow.</li>
+<li><strong>Modify static syntax check</strong>: 100% pass the static syntax check of <code>luac -p</code> for all 5 core files.</li>
+<li><strong>Debug and complete diagnostic and statistical tool repairs and expansions (2026.06.07)</strong>:<ul>
+<li>After modifying the architecture module in 12.1.0, the statistics bug of <code>visibleIcons</code> always being <code>0</code> and <code>alertFrame.exists</code> always being <code>false</code> in the diagnosis log.</li>
+</ul>
+</li>
+<li>Supplement <code>/eam除錯</code> information, add <code>active</code> monitoring reagent ID list of each data service, memory usage <code>memoryKB</code>, <code>glowSpells</code> luminous report output list, coordinates and entities of all active icons under the 7 major alarm boxes: IsShown(5),
+-Modified static syntax check: 2 diagnostic module files passed <code>luac -p</code> static syntax check 100%.</li>
+<li><strong>Bug fix for forcibly displaying a blank icon when the skill has no cooldown (completed on 2026.06.07)</strong>:</li>
+<li>Modify the bug that when non-charge skills are not cooling down at all (<code>cooldownInfo</code> is <code>nil</code>), <code>infoSafe</code> excludes excessive defense and forcibly displays 15 empty icons with no countdown and no spiral geometry on the screen.</li>
+<li>Modify the <code>shouldShow</code> logic of <code>CooldownService.lua</code>, add <code>cooldownInfo</code> existence protection, directly keep it from being displayed when there is no cooling, and restore accurate monitoring.</li>
+<li>Modify the static syntax check: <code>CooldownService.lua</code> 100% passes the <code>luac -p</code> static syntax check.</li>
+<li><strong>Combat settings (secret) Halo time countdown downgrade and automatic recovery recovery mechanism (completed on 2026.06.07)</strong>:</li>
+<li>When the player is in combat, the Aura time and endpoint time are marked as secret times, and the priority perspective <code>C_TooltipInfo</code> is implemented to grab the duration in the description (<code>scrapedDur</code>) to create non-secret normal <code>DurationObject</code> and fractional timers (<code>TIMER_NUMERIC</code>) so that the device can render the countdown normally.</li>
+<li>Maintain <code>activeDurationObjects</code> in <code>EventAlertMod/UI/Renderer.lua</code>, and break through <code>:IsZero()</code> every frame in a unified <code>onLegacyTimerUpdate</code> system. Once it breaks out, it will be actively triggered and restored to completely resolve the remaining bugs in the secret halo.<ul>
+<li>Static syntax checking: <code>AuraService.lua</code> and <code>EventAlertMod/UI/Renderer.lua</code> 100% modified <code>luac -p</code> static syntax checking.</li>
+</ul>
+</li>
+<li><strong>12.1.0 zero-allocation StatePool recovery and JIT optimization practice based on Pool-Token delayed scheduling (completed on 2026.06.09)</strong>:</li>
+<li><strong>P0 memory leak fix</strong>: uniformly and safely bind <code>state.releaseFunc = in</code>AuraService.lua<code>,</code>GroundEffectService.lua<code>,</code>TotemService.lua<code>'s</code>StatePool.acquire<code>Pool.release</code>, and the state can be successfully restored after setting it to __EAMCODE_5%" icon, which solves the serious P0 bug that hides the GC loss of the asset pool grid in the early stage.</li>
+<li><strong>Remove JIT Trace Abort</strong>: Completely remove the <code>pairs</code> polling and <code>pcall</code> checks for <code>durationObj:IsZero()</code> in OnUpdate. Instead, when <code>Renderer.render</code> starts the clock, obtain the token through the <code>timerTokenPool</code> zero-allocation token pool, and register a single subsequent task with <code>Scheduler.after</code>.</li>
+<li><strong>Limit 0-allocation occurs</strong>: When replacing, the token activation status is judged by <code>onDurationTimerExpired(token)</code> to accurately and restore hiding. The entire timing and recovery process completely completes 0-allocation (zero heap memory configuration) and zero-polling the CPU dozens, eliminating combat micro-stutters, and 100% of the hot paths can be compiled by LuaJIT, increasing the speed by hundreds of times.<ul>
+<li><strong>Modify static syntax check</strong>: All 4 core files passed <code>luac -p</code> static syntax check 100%.</li>
+</ul>
+</li>
+<li><strong>12.1.0 Expert Matrix Expansion and New Expert Definition (Completed on 2026.06.09)</strong>:<ul>
+<li><strong>Expert Definition</strong>: Complete a brand new expert using <code>define_subagent</code> defined for <code>EAM_Mock_Sandbox_Expert</code> (MOCK), <code>EAM_Data_Guard_Expert</code> (DATA), <code>EAM_DevOps_Release_Expert</code> (DEVOPS) and <code>EAM_Combat_Scraper_Expert</code> (<strong>EA)CODE7</strong>.</li>
+</ul>
+</li>
+<li><strong>Modify RACI matrix upgrade</strong>: <code>.AI/Docs/21_RACI_EXPERTS_MATRIX.md</code> expands the RACI responsibility matrix of the project, introduces two new task areas of "Sandbox Testing" and "WTF Profile Migration", and recognizes the new expert's R/A__EAMCODE_4 extension positioning test</li>
+</ul>
+<h2 id="changelog-classification-rules">Changelog classification rules</h2>
+<ul>
+<li>The root layer <code>changelog.txt</code> and <code>EventAlertMod/changelog.txt</code> are public release records, and only record WoW plug-in functions, in-game behavior, version compatibility, player-perceivable modifications, and material or package modifications that will actually change the content of the released plug-in package.</li>
+<li>Public changelog does not record AI governance, agent division of labor, file synchronization, context connection, test pass number, offline verification number, GitHub/CI/workflow release process, backup location or internal work progress.</li>
+<li>AI governance issues, failed attempts, root cause analysis and subsequent decisions are recorded in <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>; routing, status and outstanding items across work stages are recorded in <code>.AI/Docs/28_PROJECT_CONTINUITY.md</code>.</li>
+<li>The two public changelogs must use the same content source. After completion, confirm with SHA-256 that <code>changelog.txt</code> is completely consistent with <code>EventAlertMod/changelog.txt</code>.</li>
+<li>Before modifying the public changelog, make a backup in accordance with the file security rules; do not rewrite historical technical facts for the sake of formatting, only remove pure process paragraphs or change the process wording of the same function into a behavior description that players can understand.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

@@ -690,17 +690,184 @@ flowchart TD
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="31-antigravity-takes-over-the-baseline-assessment">31. Antigravity takes over the Baseline Assessment</h1>
+<ul>
+<li><strong>Document number</strong>: <code>31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md</code></li>
+<li><strong>Base Time</strong>: 2026-08-23 20:06:15 (+08:00)</li>
+<li><strong>Maintenance Agent</strong>: Antigravity (Lead Developer + WoW AddOn Engineer + Lua Performance Engineer)</li>
+<li><strong>Working Branch</strong>: <code>agy/main</code></li>
+<li><strong>Project root directory</strong>: <code>D:\Project_EventAlertMod_AGY</code></li>
+<li><strong>Current verification status</strong>: OFFLINE VERIFIED (Syntax 64/64, Flow 82/82, Contracts 493/493)</li>
+</ul>
+<hr />
+<h2 id="1-project-background-and-positioning">1. Project background and positioning</h2>
+<p>This project is a fully modernized refactoring of Retail 12.x (Midnight-era) **EventAlertMod (EAM).
+Core engineering goal sequence:</p>
+<p>$$\text{Correctness} &gt; \text{WoW API Compatibility} &gt; \text{Runtime Stability} &gt; \text{Event Efficiency} &gt; \text{GC Control} &gt; \text{CPU Latency} &gt; \text{Maintainability} &gt; \text{Function Expansion}$$</p>
+<hr />
+<h2 id="2-ai-governance-boundaries">2. AI Governance &amp; Boundaries</h2>
+<pre class="codehilite"><code class="language-text">.AI/
+├── AGENTS.md                   # 唯一最高指導原則 (禁止在根目錄重複建立第二套規範)
+├── PROJECT_MEMORY.md           # 專案事實、連續性與未驗證項目追蹤
+├── Data/
+│   ├── ProjectContinuity.json  # 機器可讀連續性狀態
+│   ├── LiveValidationMatrix.json# 37 案實機簽收矩陣 (嚴禁離線 Mock 冒充實機通過)
+│   └── wow_spells_and_auras.json# 外部爬蟲候選資料 (嚴格隔離，禁止 TOC/Lua 載入)
+├── Docs/                       # 36 份架構、API、效能、變更情報與除錯歷史文件
+└── Tools/                      # 語法檢查、Flow 測試、靜態契約檢驗腳本
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<h3 id="hard-boundary-code">Hard Boundary Code:</h3>
+<ol>
+<li><strong>Single valid working directory</strong>: The only valid root directory is <code>D:\Project_EventAlertMod_AGY</code>; the old directory <code>D:\EventAlertMod</code> is completely abandoned, and reading, writing, comparison or use as fallback is strictly prohibited.</li>
+<li><strong>Reparse Point Absolute Protection</strong>: When the deployment tool explores the client directory of each version of <code>D:\World of Warcraft</code>, if the target or its parent layer is SymbolicLink/Junction/Reparse Point, the operation must be immediately <strong>Fail-Closed</strong> and deletion, overwriting or rebuilding the connection is strictly prohibited.</li>
+<li><strong>Dual-track evidence chain isolation</strong>:</li>
+<li><strong>Offline Verified</strong>: Represents Lua AST, Flow state machine, and static contract passed.</li>
+<li><strong>Real-machine verification (Requires WoW 12.1 Runtime)</strong>: When it comes to screen presentation, Taint, and security framework actions, they must be listed in <code>LiveValidationMatrix.json</code> to be signed by the player on the actual machine.</li>
+<li><strong>External candidate data isolation</strong>: <code>wow_spells_and_auras.json</code> is marked as <code>webCandidate</code>, independently verified by <code>Test-WowheadCandidateData.ps1</code>, and is strictly prohibited from being referenced by TOC or entering the execution period.</li>
+<li><strong>Privacy desensitization and WTF backup</strong>:</li>
+<li>Any path or log containing WTF, Account, or disk absolute path will be automatically replaced with <code>[privacy-redacted]</code> during execution.</li>
+<li>The deployment and restoration tool has a built-in WTF backup manifest (Manifest), which supports complete restoration in one second.</li>
+</ol>
+<hr />
+<h2 id="3-wow-retail-12x-midnight-low-level-defense-and-performance-specifications">3. WoW Retail 12.x / Midnight Low-level Defense and Performance Specifications</h2>
+<h3 id="31-secret-values-zero-leakage-defense">3.1 Secret Values Zero Leakage Defense</h3>
+<ul>
+<li><strong>Unreadable Principle</strong>: Protection values ​​in combat (such as <code>UnitPowerPercent</code>, Aura duration, cooldown) belong to Secret/Protected.</li>
+<li><strong>Operation Taboos</strong>: <code>&gt; 0</code> comparison, <code>string.format</code> formatting, <code>..</code> string concatenation, arithmetic operations, serialization or use as Table Key on Secret values ​​is strictly prohibited in Lua.</li>
+<li><strong>Write-Only Sink Channel</strong>:</li>
+<li>Resource percentage: Inject Blizzard native C-layer controls directly through <code>pcall(StatusBar.SetValue, bar, percent)</code>.</li>
+<li>Charging information: Use <code>readChargeField</code> to perform a field-level security check, safely retain <code>isActive</code> / <code>maxCharges</code>, and the protected current charging number is directly sent to StatusBar.</li>
+<li>Duration: Create native <code>DurationObject</code> and <code>DurationTextBinding</code> through <code>Core/DurationAdapter.lua</code>, and the C layer drives the timing text and Swipe animation.</li>
+</ul>
+<h3 id="32-taint-pollution-physical-isolation">3.2 Taint (Pollution) Physical isolation</h3>
+<ul>
+<li><strong>NO SECURE OPERATION</strong>: The EAM framework is for visual presentation only and is in no way responsible for secure/protected clicks or macro execution.</li>
+<li><strong>Single Orphan Frame Received Event</strong>: <code>Core/EventRouter.lua</code> uses a parentless orphan Frame and prohibits hanging custom callbacks into the Blizzard native security chain.</li>
+<li><strong>Lock protection during combat</strong>: When <code>InCombatLockdown()</code> is true, it is strictly prohibited to modify the Frame parent, anchor point, size, hierarchy, or perform structural Layout rearrangement. All changes will automatically be marked <code>combatRebuildDeferred</code> and will be merged and executed out of combat.</li>
+</ul>
+<h3 id="33-zero-onupdate-and-extreme-gc-control">3.3 Zero OnUpdate and extreme GC control</h3>
+<ul>
+<li><strong>0 Frame OnUpdate</strong>: Full plug-in eliminates any distributed <code>SetScript("OnUpdate")</code> or per-icon ticker, unified by <code>Core/Scheduler.lua</code> central low-frequency scheduling.</li>
+<li><strong>Preallocated Object Pooling</strong>:</li>
+<li><code>AuraService.AuraStatePool</code>: 80 state objects pre-allocated, zero Table created during combat.</li>
+<li><code>Renderer.timerTokenPool</code>: Reuse timing token to prevent closure (Closure) from being established.</li>
+<li><code>Util.warningStringCache</code>: Cache boundary alert strings to prevent dynamic string splicing garbage.</li>
+<li><strong>Table Freeze Strategy</strong>: All enumerations, static contracts, alias tables (<code>EAM.API</code>), font style tables, and default values ​​will be solidified using <code>table.freeze</code> after loading is completed to prevent accidental contamination and improve JIT execution efficiency.</li>
+</ul>
+<hr />
+<h2 id="4-decoupling-module-architecture-and-data-flow">4. Decoupling module architecture and data flow</h2>
+<div class="mermaid">
+flowchart TD
+    subgraph Event_Layer [事件接收層]
+        E[WoW Events] --> ER[Core/EventRouter.lua<br/>Numeric Array O(1) 分派 / pcall 容錯]
+    end
 
+    subgraph Service_Layer [事實服務層]
+        ER --> AS[Services/AuraService.lua<br/>增量 UNIT_AURA 處理 / 80-Item Pool]
+        ER --> CS[Services/CooldownService.lua<br/>UNIT_SPELLCAST_SUCCEEDED 精確施法門禁]
+        ER --> PRS[Services/PlayerResourceService.lua<br/>17 資源 / 40 專精 / DK 6 符文獨立槽位]
+        ER --> GES[Services/GroundEffectService.lua<br/>Base-Override 族群編譯]
+        ER --> OTS[Other Services<br/>Item, Totem, Tooltip, Sound]
+    end
+
+    subgraph Management_Layer [決策協調層]
+        AS & CS & GES --> AM[Managers/AlertManager.lua<br/>BeginBatch / EndBatch 單幀合併節流]
+        AS --> ARC[Managers/AuraRuleCompiler.lua<br/>優先級 1..20 正規化 / 雙指紋比對]
+    end
+
+    subgraph View_Layer [視圖渲染層]
+        AM --> R[UI/Renderer.lua<br/>7 大獨立告警框架 / IconPool / LibButtonGlow]
+        PRS --> PR[UI/PowerRenderer.lua<br/>17 預建資源框架 / C 層 StatusBar 寫入]
+        AS -.-> NAR[UI/NativeAuraRenderer.lua<br/>12.1 Native AuraContainer]
+    end
+</div>
+
+<h3 id="41-core-highlight-mechanism">4.1 Core Highlight Mechanism</h3>
+<ol>
+<li><strong>DK 6 Rune Slot Protection (<code>Services/PlayerResourceService.lua</code>)</strong>:</li>
+<li>Monitor <code>RUNE_POWER_UPDATE(runeIndex, added)</code> and only refresh a single change slot.</li>
+<li>Use <code>if Util.isSafeBoolean(added) then ready = added end</code> to strictly retain <code>false</code>, completely avoiding the Classic bug of ternary operation <code>added and ... or ...</code> swallowing <code>false</code>.</li>
+<li><strong>Three-state cooling behavior override (<code>Services/CooldownService.lua</code>)</strong>:</li>
+<li><code>cooldownRemoveAura</code>, <code>showSCDOutsideCombat</code>, <code>glowSCDWhenUsable</code> support <code>nil</code> (global inheritance), <code>true</code> or <code>false</code> (single spell override), explicitly retaining <code>false</code>.</li>
+<li><strong>Single frame batch typesetting (<code>Managers/AlertManager.lua</code>)</strong>:</li>
+<li>When an alarm update is triggered, freeze the layout through <code>Renderer.BeginBatch()</code>, traverse all changes, and then complete the rearrangement at once with <code>Renderer.EndBatch()</code> to prevent CPU from frequently recalculating geometric coordinates when multiple skills are triggered on the same screen.</li>
+<li><strong>Multi-language instant switching (<code>Locale/Common.lua</code> &amp; <code>UI/Options.lua</code>)</strong>:</li>
+<li>Keep <code>EAM.L</code> Table Identity, clear and merge Fallback in place, dynamically update UI text through registered <code>bindText</code>, <strong>effective immediately without <code>/reload</code></strong>.</li>
+</ol>
+<hr />
+<h2 id="5-version-release-and-github-automation-system-agy-track">5. Version release and GitHub automation system (AGY Track)</h2>
+<p>In order to completely separate Codex governance versions and save Tokens, a dedicated release process is established:</p>
+<h3 id="51-product-naming-convention-strictly-retain-the-original-format-_agy-suffix">5.1 Product naming convention (strictly retain the original format + <code>_AGY</code> suffix)</h3>
+<ul>
+<li><strong>AddOn Plug-in package</strong>: <code>EventAlertMod_MN_&lt;TOC_DATE&gt;_&lt;TIMESTAMP&gt;_AGY.zip</code></li>
+<li><strong>AddOn Verification file</strong>: <code>EventAlertMod_MN_&lt;TOC_DATE&gt;_&lt;TIMESTAMP&gt;_AGY.zip.sha256</code></li>
+<li><strong>Source source code package</strong>: <code>Project_EventAlertMod_SRC_&lt;TIMESTAMP&gt;_AGY.zip</code></li>
+<li><strong>Source check file</strong>: <code>Project_EventAlertMod_SRC_&lt;TIMESTAMP&gt;_AGY.zip.sha256</code></li>
+<li><strong>GitHub Release Tag</strong>: <code>alpha-7.4-AGY.&lt;DATE&gt;</code></li>
+</ul>
+<h3 id="52-automation-instructions">5.2 Automation instructions</h3>
+<ul>
+<li><strong>One-click publisher</strong>: <code>pwsh -NoProfile -File .\Deploy\Publish-GitHubRelease.ps1</code></li>
+<li>Automate offline access inspections (Syntax + Flow + Contracts).</li>
+<li>Automatically generate AddOn / Source dual package with <code>_AGY</code> suffix and SHA-256.</li>
+<li>Automatically assemble structured Release Notes (with offline transcripts, responsibility attribution, and one-click rollback Codex guidance).</li>
+<li>Automatically call <code>gh release create --prerelease</code> to complete publishing.</li>
+<li><strong>One-click branch synchronization and PR</strong>: <code>pwsh -NoProfile -File .\Deploy\Sync-GitHubBranch.ps1 [-CreatePR]</code></li>
+</ul>
+<hr />
+<h2 id="6-current-verification-reference-points-and-receipt-status">6. Current verification reference points and receipt status</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Inspection items</th>
+<th style="text-align: left;">Scope/Quantity</th>
+<th style="text-align: left;">Result</th>
+<th style="text-align: left;">Judgment attributes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Lua syntax check</strong></td>
+<td style="text-align: left;">64 Lua files</td>
+<td style="text-align: left;"><code>64/64 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Flow process test</strong></td>
+<td style="text-align: left;">82 groups of capability cases</td>
+<td style="text-align: left;"><code>82/82 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Validation Contracts</strong></td>
+<td style="text-align: left;">493 static contracts</td>
+<td style="text-align: left;"><code>493/493 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Candidate data isolation</strong></td>
+<td style="text-align: left;"><code>wow_spells_and_auras.json</code></td>
+<td style="text-align: left;"><code>23/23 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Local WoW environment probe</strong></td>
+<td style="text-align: left;">Retail, PTR, XPTR</td>
+<td style="text-align: left;"><code>3/3 PASS</code></td>
+<td style="text-align: left;">READY</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Real Machine Verification Matrix</strong></td>
+<td style="text-align: left;">37 Case Real Machine Observations</td>
+<td style="text-align: left;"><code>37 案待實機回報</code></td>
+<td style="text-align: left;">REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p>**This benchmark document was signed by Antigravity on 2026-08-23 20:06:15 and filed in <code>.AI/Docs/</code>. **</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

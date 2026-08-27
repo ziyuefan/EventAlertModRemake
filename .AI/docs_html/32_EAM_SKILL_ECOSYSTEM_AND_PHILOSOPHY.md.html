@@ -775,17 +775,269 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-21-core-skill-systems-and-agentic-ai-governance-philosophy-eam-skill-ecosystem-philosophy">EventAlertMod 21 core skill systems and Agentic AI governance philosophy (EAM Skill Ecosystem &amp; Philosophy)</h1>
+<blockquote>
+<p>🚀 <strong>Modern World of Warcraft plug-in AI collaboration system with skills as the core (Skill-Driven), progressive disclosure (Progressive Disclosure), and deterministic delivery (Deterministic Execution)</strong></p>
+</blockquote>
+<hr />
+<h2 id="1-core-philosophy-and-architecture-concept-core-philosophy">🧭 1. Core Philosophy and Architecture Concept (Core Philosophy)</h2>
+<p>In the past, the most common fatal bottlenecks faced in the collaborative development of large-scale software projects and AI included: <strong>Context Window Explosion (Context Window Explosion), attention dilution (Lost in the Middle), dialogue truncation and amnesia (Context Truncation), and architecture drift and damage (Architecture Drift) after replacing the Agent</strong>.</p>
+<p>In order to completely eradicate the above pain points, EventAlertMod (EAM) has introduced the industry-leading <strong>"Everything as a Skill"</strong> architecture:</p>
+<pre class="codehilite"><code>                           EAM Agentic AI 治理架構
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                    使用者意圖 / 宣告式指令 (User Intent)                 │
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │         Antigravity / Master Agent (大腦協調器 &amp; 意圖路由器)             │
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │ (動態漸進式加載 Progressive Loading)
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                     21 大專案標準化 SKILL 體系 (SOP 規範)                │
+  │  ┌──────────────────┐ ┌──────────────────┐ ┌─────────────────────────┐  │
+  │  │ 12.x 核心引擎與   │ │ 遊戲資料與監控   │ │ 介面互動與視覺系統      │  │
+  │  │ API 防禦體系      │ │ 服務體系         │ │ (UI/UX &amp; Interactivity) │  │
+  │  └──────────────────┘ └──────────────────┘ └─────────────────────────┘  │
+  │  ┌──────────────────┐ ┌──────────────────────────────────────────────┐  │
+  │  │ 測試驗證與除錯   │ │ DevOps、發布自動化與本機資安治理             │  │
+  │  │ 門禁體系 (QC)    │ │ (Release, Security &amp; Continuity)             │  │
+  │  └──────────────────┘ └──────────────────────────────────────────────┘  │
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │ (確定性執行 Deterministic Execution)
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │  Subagents (子代理集群) / 腳本工具鏈 / 493+ 靜態契約驗證 / 84+ Flow 沙盒  │
+  └────────────────────────────────────────────────────────────────────────┘
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<h3 id="five-major-qualitative-benefits-brought-about-by-skilling">💡 Five major qualitative benefits brought about by skilling:</h3>
+<ol>
+<li><strong>Progressive Disclosure and Ultimate Token Saving</strong>:</li>
+<li>No longer stuffing tens of thousands of lines of technical documents into Prompt at once.</li>
+<li>Normally, only 21 skills’ simplified metadata (Name + Description, consuming very low Token) is retained in the memory.</li>
+<li>Only when a specific task is triggered, the system dynamically injects the skill's exclusive <code>SKILL.md</code> into the context to complete the task with the highest concentration.</li>
+<li><strong>"Zero Cold-Start Continuity" cross-session and cross-agent continuity (Zero Cold-Start Continuity)</strong>:</li>
+<li>The conversation process is temporary (Ephemeral), but the placed SKILL is permanent (Permanent).</li>
+<li>
+<p>When a new conversation is created, or when switching to a different model (such as Flash / Claude / Codex), the new Agent looks up the corresponding SKILL and can master the most authoritative operating procedures in milliseconds.</p>
+</li>
+<li>
+<p><strong>Solidify the crystallization of debugging to prevent the recurrence of historical errors (Anti-Regression)</strong>:</p>
+</li>
+<li>Consolidate the problems that the project has taken several months to overcome (such as 12.x Secret Value Table Key error reporting, CurseForge Cloudflare WAF penetration, LSM dual-track data source deduplication, OnUpdate closure triggering JIT Abort, etc.) into strict "violations (Violations)" and "standard paradigms (Best Practices)".</li>
+<li>
+<p>Any Agent is bound by SKILL before writing code and will never repeat the same mistake.</p>
+</li>
+<li>
+<p><strong>Erase the model capability gap (Capability Equalization)</strong>:</p>
+</li>
+<li>Provide step-by-step clear operating instructions and verification standards for each task.</li>
+<li>
+<p>Even lightweight sub-agents (Subagents) can produce accurate results that are 100% consistent with the high-order flagship model as long as they are executed according to SKILL and SOP.</p>
+</li>
+<li>
+<p><strong>AI Native Smart Repository (Agent-Ready Smart Repository)</strong>:</p>
+</li>
+<li>The project not only contains the source code of the World of Warcraft plug-in, but also comes with intelligent assets for self-maintenance, self-repair, automatic testing and safe release, with extremely high long-term maintainability.</li>
+</ol>
+<hr />
+<h2 id="2-21-items-in-five-major-areas-skill-panoramic-catalog-the-21-skills-catalog">🏛️ 2. 21 items in five major areas SKILL Panoramic Catalog (The 21 SKILLs Catalog)</h2>
+<h3 id="area-one-core-architecture-wow-12x-modern-api-governance-core-engine-12x-api">Area One: Core Architecture &amp; WoW 12.x Modern API Governance (Core Engine &amp; 12.x API)</h3>
+<ol>
+<li><strong><code>eam-secret-taint-sentinel</code> (12.x Secret numerical defense and Taint isolation protection)</strong></li>
+<li><strong>Targeting</strong>: Blizzard 12.0/12.1+ The highest standards of defensive programming for protected data and contaminated environments.</li>
+<li>
+<p><strong>Core specification</strong>: <code>issecretvalue</code> Four major checks, Secret is strictly prohibited as Table Key, Lua arithmetic/formatting is strictly prohibited, native <code>StatusBar:SetValue</code> / <code>DurationObject</code> one-way Sink pass-through, zero readback principle.</p>
+</li>
+<li>
+<p><strong><code>eam-zero-alloc-statepool</code> (zero-allocation state Object Pool and LuaJIT performance optimization)</strong></p>
+</li>
+<li><strong>LOCATION</strong>: Implement 0-GC (zero memory allocation) and LuaJIT Zero Trace Abort in combat.</li>
+<li>
+<p><strong>Core Spec</strong>: Polytype <code>StatePool</code> multiplexing, <code>Scheduler.after</code> delayed scheduling token pool replacement OnUpdate polling, <code>AlertManager.BeginBatch</code> batch throttling.</p>
+</li>
+<li>
+<p><strong><code>eam-native-Aura-compiler</code> (12.1 Native Aura container and rule compilation architecture)</strong></p>
+</li>
+<li><strong>Positioning</strong>: Retail 12.1 native halo container rule fingerprint compilation architecture.</li>
+<li>
+<p><strong>Core Specifications</strong>: <code>buildLayoutFingerprint</code> layout fingerprint, separation of fixed slots (Fixed Slots) and dynamic flow groups (Flow Groups), decoupling of visual and sound fingerprints, and deferred application during battle.</p>
+</li>
+<li>
+<p><strong><code>eam-cdm-shadow-host</code> (CooldownViewer CDM Shadow Host parasitic technology)</strong></p>
+</li>
+<li><strong>Positioning</strong>: Utilize the official CooldownViewer as a Shadow Host to avoid combat lock.</li>
+<li>
+<p><strong>Core Specifications</strong>: Official pool Hook interception, <code>ClipsChildren</code> cropping avoidance, name relocation and <code>FrameLevel</code> privilege typesetting.</p>
+</li>
+<li>
+<p><strong><code>eam-api-change-intel</code> (WoW latest API change and intelligence research skills)</strong></p>
+</li>
+<li><strong>Positioning</strong>: Cross-version (Retail 12.1 / PTR 12.1 / XPTR 12.0.7) API evolution investigation and compatibility packaging.</li>
+<li><strong>Core specifications</strong>: Five authoritative data sources (Blizzard open source UI library, Wago.tools Diffs, Townlong-Yak), API three-step change evaluation method, standard downward compatibility downgrade packaging (Polyfill Wrappers).</li>
+</ol>
+<hr />
+<h3 id="area-2-game-information-career-resources-and-cooling-services-game-services-data">Area 2: Game Information, Career Resources and Cooling Services (Game Services &amp; Data)</h3>
+<ol>
+<li><strong><code>eam-player-resource-catalog</code> (17 professional/specialized resource topology and smooth rendering)</strong></li>
+<li><strong>Positioning</strong>: Dynamic detection and rendering of 40 specialized multi-resource topologies across all professions.</li>
+<li>
+<p><strong>Core Specs</strong>: Druid 5 form 0ms resource switching, DK 3 specialization dynamic icon + 6-cell micro charge cooldown bar, demand-oriented background sampler (<code>probe-gated sampler</code>).</p>
+</li>
+<li>
+<p><strong><code>eam-cooldown-activation-guard</code> (accurate casting filtering and spell coverage state machine)</strong></p>
+</li>
+<li><strong>Positioning</strong>: Accurate activation of cooling skills and synchronization of talent form coverage.</li>
+<li>
+<p><strong>Core Specifications</strong>: <code>UNIT_SPELLCAST_SUCCEEDED</code> Accurate player determination, <code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code> Dynamic override synchronization, three-state setting inheritance model.</p>
+</li>
+<li>
+<p><strong><code>eam-target-Aura-anonymous-probe</code> (Target halo anonymous detection and pollution-free collection)</strong></p>
+</li>
+<li><strong>Positioning</strong>: Achieve safe collection with zero pollution under the 12.x target halo privatization restrictions.</li>
+<li><strong>Core Specifications</strong>: <code>TooltipMonitorService</code> anonymous callback, Ctrl+Alt modifier key determination, non-combat safety gate, traversing Frame and GetMouseFocus is strictly prohibited.</li>
+<li><strong><code>eam-player-stat-monitor</code> (18 big character attributes and kinetic gliding speed real-time monitoring)</strong></li>
+<li><strong>Positioning</strong>: 18 character attribute monitoring, kinetic gliding speed calculation and visualization.</li>
+<li><strong>Core specifications</strong>: Four-in-one speed quenching (including <code>C_PlayerInfo.GetGlidingInfo</code> 830%~1400% flying dragon speed), native progress bar color diversion, custom warning value red frame.</li>
+</ol>
+<hr />
+<h3 id="area-3-interface-interaction-and-visual-system-uiux-interactivity">Area 3: Interface interaction and visual system (UI/UX &amp; Interactivity)</h3>
+<ol>
+<li><strong><code>eam-ui-interactive-suite</code> (Seamless side window adsorption, linked drag anchor points and adaptive menu)</strong><ul>
+<li><strong>Positioning</strong>: The layout and operation feedback standards of the modern Warcraft style setting interface.</li>
+<li><strong>Core specifications</strong>: APPEND Mode seamless side window adsorption, cross-window synchronous smooth dragging, side window mutual exclusion mechanism, cow head layout preview, screen lock and full interface hover prompt (<code>EAM.UI.setTooltip</code>).</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-sharedmedia-integration</code> (LibSharedMedia Material dynamic detection and global font hot application)</strong></p>
+<ul>
+<li><strong>Positioning</strong>: Access to <code>LibSharedMedia-3.0</code> (LSM) material ecology.</li>
+<li><strong>Core specifications</strong>: <code>ensureLSM()</code> Dual-track deduplication query, <code>EAM_FONT_FAMILY_CHANGED</code> event-wide hot application, SavedVariables whitelist defense removal, long list adaptive scrolling menu (<code>buildScrollableDropdownMenu</code>).</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-profile-codec-manager</code> (8 major classification string codecs, setting sharing and WTF migration)</strong></p>
+</li>
+<li>
+<p><strong>Positioning</strong>: Profile modular sharing, string compression and version backward compatibility.</p>
+<ul>
+<li><strong>Core specifications</strong>: 8 categories of independent optional export/import, check code analysis, WTF archive Schema automatic and lossless upgrade.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-glow-pandemic-visuals</code> (Proc golden glow, DoT Pandemic bright frame and battle red frame)</strong></p>
+<ul>
+<li><strong>Positioning</strong>: Combat visual feedback and highlighting system.</li>
+</ul>
+</li>
+<li><strong>Core specifications</strong>: Quick column Proc glow synchronization, DoT Pandemic window bright frame, double-layer Glow downgrade strategy (LibButtonGlow takes priority, battle fallback has its own animated border), full screen red frame flashing when entering battle (<code>CombatFlash</code>).</li>
+</ol>
+<hr />
+<h3 id="area-4-testing-verification-and-debugging-system-qc-validation">Area 4: Testing, verification and debugging system (QC &amp; Validation)</h3>
+<ol>
+<li><strong><code>eam-flow-validation-harness</code> (Offline Flow state machine sandbox automated verification)</strong><ul>
+<li><strong>Positioning</strong>: Automatically run 84+ business state machine tests in an offline environment.</li>
+</ul>
+</li>
+<li>
+<p><strong>Core Command</strong>: <code>pwsh -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1</code>.</p>
+<ul>
+<li><strong>Core Specifications</strong>: simulated combat entry and exit, form switching, Aura expiration, energy update and Secret injection.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-validation-contracts</code> (493+ full project code contract assertions and AST scans)</strong></p>
+<ul>
+<li><strong>Positioning</strong>: The highest gatekeeper before project release and change.</li>
+<li><strong>Core Command</strong>: <code>pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Core specifications</strong>: 71 Lua syntaxes in the entire project are 100% passed, TOC loading chain verification, 144 entries in 5 major language families, image alignment, and packaging exclusion contracts.</p>
+</li>
+<li>
+<p><strong><code>eam-live-matrix-inspector</code> (PTR / XPTR / Retail Real-person Test Matrix Guide)</strong></p>
+<ul>
+<li><strong>Positioning</strong>: Cross-version real machine testing specifications and reporting protocols.</li>
+<li><strong>Core Specification</strong>: Maintain <code>Data/LiveValidationMatrix.json</code> and <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>, and standardize the standard fields for real machine reports.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="area-five-devops-release-automation-and-native-information-security-governance-devops-security-continuity">Area Five: DevOps, Release Automation and Native Information Security Governance (DevOps, Security &amp; Continuity)</h3>
+<ol>
+<li><strong><code>eam-curseforge-publisher</code> (CurseForge Secure Release and Version Management)</strong><ul>
+<li><strong>Positioning</strong>: The entire standardized process of publishing plug-ins to CurseForge.</li>
+<li><strong>Core Command</strong>: <code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1</code> (supports <code>-DryRun</code> simulation).</li>
+<li><strong>Core Specs</strong>: Cloudflare WAF header penetration, MIME strict declaration, version code alignment (12.1.0 = <code>16519</code>), DPAPI memory decryption.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-secret-vault-manager</code> (Windows DPAPI Double encryption of local secrets and prevention of leakage)</strong></p>
+<ul>
+<li><strong>Targeting</strong>: 100% native isolation and encryption of creator API tokens and secret credentials.</li>
+<li><strong>Core Command</strong>: <code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -SetToken</code>.</li>
+<li><strong>Core Specifications</strong>: Operating system-level DPAPI binary encryption (<code>API_TOKEN.SEC</code>), 100% auditing of Git and packaging exclusions, instant memory decryption.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-local-wow-deployer</code> (WoW Native multi-client security deployment and archive backup and restoration)</strong></p>
+</li>
+<li>
+<p><strong>Positioning</strong>: Native multi-client automated security deployment with WTF backup.</p>
+<ul>
+<li><strong>Core Command</strong>: <code>pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1</code>.</li>
+<li><strong>Core specifications</strong>: Registry smart detection, Reparse Point fail-closed absolute defense, automatic timestamp backup and one-click Rollback.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-docs-site-builder</code> (GitHub Pages document website automatic construction and multi-language navigation)</strong></p>
+<ul>
+<li><strong>Positioning</strong>: Markdown documentation and update logs are automatically converted into modern documentation websites.</li>
+</ul>
+</li>
+<li>
+<p><strong>Core Command</strong>: <code>$env:EAM_DOCS_OFFLINE="1"; python .\.AI\Tools\batch_convert_docs.py</code>.</p>
+<ul>
+<li><strong>Core specifications</strong>: Top Navbar injection, Changelog semantic HTML rendering, offline pure conversion.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-project-continuity-governor</code> (Project memory, continuity and context handover governance)</strong></p>
+<ul>
+<li><strong>Positioning</strong>: Single source of truth maintenance across Sessions and multi-Agent collaboration.</li>
+<li><strong>Core Specification</strong>: Maintain <code>ProjectContinuity.json</code>, <code>28_PROJECT_CONTINUITY.md</code> and <code>15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="3-skill-deployment-structure-and-calling-method-deployment-usage">🛠️ 3. Skill deployment structure and calling method (Deployment &amp; Usage)</h2>
+<p>All 21 skills in the project are deployed using dual-track entities to ensure version control and global reachability:
+- <strong>Project Internal Version Control (VCS Tracked)</strong>:
+  - <code>D:\Project_EventAlertMod_AGY\.agents\skills\&lt;skill-name&gt;\SKILL.md</code>
+  - <code>D:\Project_EventAlertMod_AGY\.AI\skills\&lt;skill-name&gt;\SKILL.md</code>
+- <strong>Native Antigravity Global Directory (Global Discovery)</strong>:
+  - <code>C:\Users\ZYF\.gemini\config\skills\&lt;skill-name&gt;\SKILL.md</code></p>
+<h3 id="example-of-natural-language-and-intent-calling">💬 Example of natural language and intent calling:</h3>
+<pre class="codehilite"><code class="language-markdown">使用者輸入：「幫我發布目前的開發版至 CurseForge」
+➔ Agent 自動觸發：[eam-curseforge-publisher] + [eam-secret-vault-manager]
 
+使用者輸入：「12.1.0 戰鬥中這個能量 API 報錯了，請排查 Secret」
+➔ Agent 自動觸發：[eam-secret-taint-sentinel] + [eam-player-resource-catalog]
+
+使用者輸入：「幫我把更新日誌與文檔站重新編譯並推送到 GitHub Pages」
+➔ Agent 自動觸發：[eam-docs-site-builder] + [eam-validation-contracts]
+
+使用者輸入：「調查最新暴雪 PTR Build 關於技能冷卻覆蓋的 API 變更」
+➔ Agent 自動觸發：[eam-api-change-intel] + [eam-cooldown-activation-guard]
+</code></pre>
+
+<hr />
+<h2 id="4-conclusion">🏁 4. Conclusion</h2>
+<p>EventAlertMod Through these 21 highly specialized, modular and collaborative SKILL systems, the huge Warcraft plug-in reconstruction project is transformed into a modern software asset that is highly structured, deterministic and repeatable, and completely free of the risk of AI amnesia and hallucinations. This is not only the benchmark for WoW plug-in development, but also a model practice for modern Agentic AI collaborative governance.</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

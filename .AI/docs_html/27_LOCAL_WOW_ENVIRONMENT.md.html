@@ -754,17 +754,261 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eam-native-wow-development-environment-baseline">EAM Native WoW Development Environment Baseline</h1>
+<h2 id="2026-08-21-new-root-current-environment-snapshot-current-of-truth">2026-08-21 New root current environment snapshot (current-of-truth)</h2>
+<ul>
+<li>WoW Root directory: <code>D:\World of Warcraft</code>.</li>
+<li>Git/project root: <code>D:\Project_EventAlertMod</code>; plug-in entity source: <code>D:\Project_EventAlertMod\EventAlertMod</code>; AI management: <code>D:\Project_EventAlertMod\.AI</code>; deployment tool: <code>D:\Project_EventAlertMod\Deploy</code>; native product: <code>D:\Project_EventAlertMod\Dist</code> (ignored).</li>
+<li>Version and target (this Status read-only result): Retail <code>_retail_</code> <code>12.1.0.69382</code>／physical, PTR <code>_ptr_</code> <code>12.1.0.69382</code>／physical, XPTR <code>_xptr_</code> <code>12.0.7.68887</code>／physical. This is the environment status and does not represent the plug-in function or the human process sign-off; currently only PTR contains <code>EventAlertMod.toc</code>, and Retail/XPTR still lacks this file, so <code>Test-LocalWoWEnvironment</code> is 1/3. This is not a tool bug, and the three channels cannot be declared ready. Deploy Status/DryRun The three-channel pass only represents the pre-check for safe deployment.</li>
+<li>The previous "Retail/XPTR link blocked, PTR physical" was a historical snapshot; this time, the three are physical. You must recheck ProductVersion, LinkType, Target, ReparsePoint and inventory before each deployment in the future. You cannot just rely on this snapshot.</li>
+<li>The deployment tool takes Registry priority and DeploymentTargets.json fallback; it can be confirmed or specified by the user - WowRoot. Status lists the three-channel version; Retail inclusion of PTR/XPTR is only added after interaction confirmation, noninteractive is not added implicitly; Reparse Point is always fail-closed. The deployment does not check whether the WoW program is executed. Only W/U or Backup/Restore will read and write the EventAlertMod related files in each version of WTF, and save them with a relative path manifest.<blockquote>
+<p>This section takes precedence over the old date snapshot below; old paths and old versions are retained for historical evidence and are not current operational targets.</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="1-2026-08-14-historical-positioning-and-evidence-boundaries">1. 2026-08-14 Historical positioning and evidence boundaries</h2>
+<p>Sections 1 to 3 below record the old link basis of 2026-08-14, which is for retroactive purposes only; current operations are subject to the previous 2026-08-21 current-of-truth.</p>
+<ul>
+<li>WoW Root directory: <code>D:\World of Warcraft</code></li>
+<li>At that time EAM entity project: <code>D:\EventAlertMod</code> (deactivated)</li>
+<li>Historical read-only inventory: 2026-08-14 (Asia/Taipei)</li>
+<li>Evidence: executable file VersionInfo, directory existence, <code>LinkType</code>, <code>Target</code>, <code>ReparsePoint</code></li>
+<li>Not yet represented: role login, plug-in loading, process panel, taint or actual machine test passed</li>
+</ul>
+<p>The local path must not become a EAM Lua runtime dependency, nor must it be written into the runtime settings of the release package.</p>
+<h2 id="2-2026-08-14-history-retailptr-version-matrix">2. 2026-08-14 History Retail／PTR Version Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Version folder</th>
+<th>Executable file</th>
+<th>ProductVersion</th>
+<th>WTF／AddOn</th>
+<th>EAM Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td><code>Wow.exe</code></td>
+<td>12.1.0.69299</td>
+<td>All exist</td>
+<td>Retail server 12.1 Native actual machine verification</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.1.0.69299</td>
+<td>All exist</td>
+<td>12.1 PTR Native actual machine verification</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.0.7.68887</td>
+<td>All exist</td>
+<td>Darkest Night 12.0.7 PTR Verification</td>
+</tr>
+</tbody>
+</table>
+<p>Builds may change after Battle.net updates. VersionInfo must be re-read before each actual machine test. The version cannot be inferred solely based on the <code>_ptr_</code>/<code>_xptr_</code> names.</p>
+<h2 id="3-2026-08-14-history-eventalertmod-path-type">3. 2026-08-14 History EventAlertMod path type</h2>
+<table>
+<thead>
+<tr>
+<th>Version Folder</th>
+<th><code>Interface\AddOn\EventAlertMod</code> Type</th>
+<th>Target/Status</th>
+<th>EAM Support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td><code>SymbolicLink</code>／Reparse Point</td>
+<td><code>D:\EventAlertMod</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td><code>SymbolicLink</code>／Reparse Point</td>
+<td><code>D:\EventAlertMod</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td><code>SymbolicLink</code>／Reparse Point</td>
+<td><code>D:\EventAlertMod</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>_classic_</code></td>
+<td><code>SymbolicLink</code>／Reparse Point</td>
+<td><code>D:\EventAlertMod</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>_classic_era_</code></td>
+<td>Entity <code>Directory</code></td>
+<td>Not a link</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>_classic_ptr_</code></td>
+<td><code>SymbolicLink</code>／Reparse Point</td>
+<td><code>D:\EventAlertMod</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>_classic_era_ptr_</code></td>
+<td>Does not exist</td>
+<td>None</td>
+<td>No</td>
+</tr>
+<tr>
+<td>This table only describes the current state; the old root is now deactivated. The Classic path type is inconsistent and the batch link operation is still prohibited.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-current-reparse-point-and-deployment-protection-rules">4. Current Reparse Point and deployment protection rules</h2>
+<ul>
+<li>All source code, file and tool modifications can only be applied to the new project root; the only plug-in source is <code>EventAlertMod/</code>.</li>
+<li>If any <code>_retail_</code>, <code>_ptr_</code>, <code>_xptr_</code> target is a Reparse Point, SymbolicLink, or Junction, deployment and cleanup stop immediately; it must not be followed, deleted, overwritten, or rebuilt.</li>
+<li>Entity targets must also not be cleaned with unvalidated <code>robocopy /MIR</code> or recursively; they may only be deployed by <code>Deploy/Deploy-EventAlertMod.ps1</code> after full pre-check and user confirmation.</li>
+<li>The package can only create plug-in ZIP from <code>EventAlertMod/</code>; it cannot decompress and overwrite the Reparse Point with ZIP.</li>
+<li>Any link maintenance must independently explain the complete command, goals, risks and recovery methods, and obtain explicit authorization.</li>
+<li>Verify <code>LinkType</code>, <code>Target</code>, <code>ReparsePoint</code> and <code>EventAlertMod.toc</code> before operating AddOn; only the complete entity directory can be signed for the actual machine.</li>
+</ul>
+<h3 id="automatic-assertion-tool">Automatic assertion tool</h3>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
+    -File .\.AI\Tools\Test-LocalWoWEnvironment.ps1
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<p>The default assertion Retail <code>12.1.0</code>, PTR <code>12.1.0</code>, XPTR <code>12.0.7</code> patch train does not lock the build tail code; the complete <code>ProductVersion</code>, <code>FileVersion</code> and target type will be written to <code>.AI/TestResults/EAM_LocalWoWEnvironment_*.json</code> and <code>.md</code>. Version inconsistencies, Reparse Points, archive targets, nested Reparse Points, or entity directories missing TOC all return exit code 1 and do not perform repairs.
+After Battle.net switches version lines, you can temporarily overwrite the expected values ​​with <code>-RetailExpectedPatch</code>, <code>-PtrExpectedPatch</code>, and <code>-XPtrExpectedPatch</code>; after confirming the new baseline, you must still update this file and <code>AGENTS.md</code> simultaneously.</p>
+<p>Read-only verification example:</p>
+<pre class="codehilite"><code class="language-powershell">$link = Get-Item -LiteralPath 'D:\World of Warcraft\_ptr_\Interface\AddOns\EventAlertMod' -Force
+$link | Select-Object FullName, LinkType, Target, Attributes
+</code></pre>
 
+<h2 id="5-wtf-path-derivation">5. WTF path derivation</h2>
+<pre class="codehilite"><code class="language-text">&lt;WOW_ROOT&gt;\&lt;VERSION&gt;\WTF
+&lt;WOW_ROOT&gt;\&lt;VERSION&gt;\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+</code></pre>
+
+<p>Current candidates:</p>
+<pre class="codehilite"><code class="language-text">D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_ptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+</code></pre>
+
+<p><code>WTF\Account</code> should not be listed recursively. When reinjection is needed, first confirm the actual test version and build, and then the user provides a clear <code>EventAlertMod.lua</code> path to <code>.AI/Tools/Import-EAMFlowReport.ps1</code>.</p>
+<h2 id="6-privacy-and-physical-evidence">6. Privacy and physical evidence</h2>
+<ul>
+<li>Do not write account names, character names, Battle.net identifying information, or other SavedVariables to Git, Docs, or test reports.</li>
+<li>Do not move, overwrite, or modify WTF while WoW is writing to SavedVariables; this project importer is read-only.</li>
+<li><code>_retail_</code>, <code>_ptr_</code>, <code>_xptr_</code> reports cannot be mixed and must record the actual client build and source version tree.</li>
+<li>The existence of a Classic directory or link does not mean that this project supports Classic.</li>
+<li>The directory can be deployed safely, the plug-in target is complete, offline Mock, Retail real machine and PTR real machine are different levels of evidence and cannot be replaced by each other.</li>
+</ul>
+<h2 id="7-relationship-with-process-verification">7. Relationship with process verification</h2>
+<p><code>.AI/Docs/26_FLOW_VALIDATION_FRAMEWORK.md</code> defines test cases, in-game buttons, SavedVariable reports and feedback contracts; this file is only responsible for the native version, WTF and deployment target security boundaries.</p>
+<h2 id="8-2026-08-08-read-only-pre-check-snapshot">8. 2026-08-08 Read-only pre-check snapshot</h2>
+<table>
+<thead>
+<tr>
+<th>Product Catalog</th>
+<th>ProductVersion</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td>12.0.7.68974</td>
+<td>Retail server returns</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td>12.1.0.69189</td>
+<td>PTR8 Native Aura／UnitPower RQA Target</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td>12.0.7.68887</td>
+<td>Legacy compatibility regression</td>
+</tr>
+<tr>
+<td>This time the evidence is <code>TestResults/EAM_LocalWoWEnvironment_20260808_194717447.json</code>, the result is 3/3; the three AddOn paths are all SymbolicLink/Reparse Point and the target is <code>D:\EventAlertMod</code>. This is not an in-game process sign-off.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="9-2026-07-29-historical-read-only-pre-check-snapshot">9. 2026-07-29 Historical read-only pre-check snapshot</h2>
+<table>
+<thead>
+<tr>
+<th>Product Catalog</th>
+<th>ProductVersion</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td>12.0.7.68887</td>
+<td>Retail server returns</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td>12.1.0.68914</td>
+<td>Native Aura RQA Target</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td>12.0.7.68887</td>
+<td>Legacy compatibility regression</td>
+</tr>
+<tr>
+<td><code>_retail_</code>, <code>_ptr_</code>, <code>_xptr_</code>'s <code>Interface\AddOn\EventAlertMod</code> have all been read-only confirmed as SymbolicLink, targeting <code>D:\EventAlertMod</code>. Evidence is <code>TestResults/EAM_LocalWoWEnvironment_20260729_135335687.json</code>, result 3/3; this is not an in-game signature. All modifications in this round only apply to the physical project, and no deployment, deletion, move, overwrite or reconstruction of the link path is performed.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="9-2026-08-14-read-only-pre-check-snapshot">9. 2026-08-14 Read-only pre-check snapshot</h2>
+<table>
+<thead>
+<tr>
+<th>Product Catalog</th>
+<th>ProductVersion</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td>12.1.0.69299</td>
+<td>Retail server 12.1 Native returns</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td>12.1.0.69299</td>
+<td>PTR 12.1 Native／API Capability regression</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td>12.0.7.68887</td>
+<td>Legacy compatible regression</td>
+</tr>
+</tbody>
+</table>
+<p><code>TestResults/EAM_LocalWoWEnvironment_20260814_104354344.json</code> Result 3/3; the AddOn paths of the three supporting clients still point to the SymbolicLink/Reparse Point of the EAM entity project. This evidence only confirms the version train, executable file and link. It does not start WoW, nor is it signed for Aura, Tooltip, Profile or combat process.</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

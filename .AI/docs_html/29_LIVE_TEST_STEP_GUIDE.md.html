@@ -993,17 +993,479 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-retail-step-by-step-guide-to-real-time-testing">EventAlertMod Retail step-by-step guide to real-time testing</h1>
+<h2 id="purpose-and-boundaries">Purpose and Boundaries</h2>
+<p>This document converts 37 cases of <code>Data/LiveValidationMatrix.json</code> into conditions, steps and passing standards that players can directly operate. It only works with WoW Retail series:</p>
+<ul>
+<li><code>_ptr_</code>: 12.1 PTR.</li>
+<li><code>_xptr_</code>: 12.0.7 XPTR.</li>
+<li><code>_retail_</code>: 12.1 Retail server.
+All game input is done by the player himself. EAM and Codex do not cast spells, use items, execute macros, switch targets, automatically enter <code>/reload</code>, or modify restricted CVar. Offline mocks, Lua syntax and contract testing cannot replace actual machine observation of this document.</li>
+</ul>
+<h2 id="common-conditions-before-starting">Common conditions before starting</h2>
+<ol>
+<li>Execute <code>.AI/Tools/Test-LocalWoWEnvironment.ps1</code> after closing WoW; the client to be tested this time must report <code>status=pass</code> and the entity directory contains <code>EventAlertMod.toc</code>. Reparse Point will always stop; the lack of TOC in the entity directory means that the deployment has not been completed and the actual machine sign-in cannot be started.</li>
+<li>Open the client to be tested and confirm that EAM is enabled and there are no loading errors on the character selection screen.</li>
+<li>After entering the game, enter <code>/eam test live</code> and select the currently executed PTR, XPTR or Retail. Don't use the PTR identity record XPTR, and don't just guess the Build based on the folder name.</li>
+<li>Read the "Test Conditions/Steps" for each case on the panel. The results can only be selected: <code>pass</code>, <code>fail</code>, <code>blocked</code>, <code>pending</code>. Use <code>blocked</code> instead of <code>pass</code> when it is not visible, cannot be reproduced or the testing skills are lacking.</li>
+<li>Remarks only include observation results, Build, combat status, trigger conditions and error types. Do not post WTF absolute path, account, role, server or Secret original value.</li>
+<li>Turn on Lua error display. If Lua error, taint, blocked action or Forbidden access occurs, immediately record the case, combat status and reproduction steps.</li>
+<li>Before completion, a reload checkpoint must be created on the panel, and the player must enter <code>/reload</code> personally. Directly pressing continue during the same load does not count as cross-reload evidence.</li>
+</ol>
+<h2 id="panel-operation-method">Panel operation method</h2>
+<ul>
+<li><code>上一案／下一案</code>: Switch cases without changing the results.</li>
+<li><code>通過／失敗／受阻／待測</code>: Only record the current case.</li>
+<li><code>備註</code>: Maximum 500 characters; not written during combat.</li>
+<li><code>完成並產生 JSON</code>: It can only be completed if all 37 cases are passed, the environment identity is consistent, there is a real <code>/reload</code>, and there is zero boundary warning.</li>
+<li><code>全選實機 JSON</code>: Only focus and select all text. WoW There are no <code>EditBox:Copy()</code> API available, the player must still press <code>Ctrl+C</code>.</li>
+</ul>
+<h2 id="case-by-case-conditions-and-steps">Case-by-case conditions and steps</h2>
+<h3 id="1-liveenvironmentidentity">1. <code>live.environment.identity</code></h3>
+<ul>
+<li>Condition: Actual client selected.</li>
+<li>Steps: Compare the panel's patch, Build, Interface, and test-build judgments with the login screen/actual installed version.</li>
+<li>Pass: PTR displays the PTR identity, XPTR/Retail displays the respective identity, without mismatch warning.</li>
+<li>Return: Only patch, Build, Interface and channel are required, no local path is required.</li>
+</ul>
+<h3 id="2-livetooltipspellbook">2. <code>live.tooltip.spellbook</code></h3>
+<ul>
+<li>Conditions: Non-combat, skill book has identifiable spells.</li>
+<li>Steps: Hover the mouse over the skill icon and confirm that the Tooltip displays the Spell ID; keep the mouse over and press Ctrl+Alt without right-clicking; select "Add Skill Cooldown Monitoring".</li>
+<li>Passed: the small window appears, the ID is correct, and the list position after adding is skill cooldown; canceling does not write.</li>
+</ul>
+<h3 id="3-livetooltipactionbar_macro">3. <code>live.tooltip.actionbar_macro</code></h3>
+<ul>
+<li>Conditions: Create a spellcasting macro and an item-using macro, and place them in the action column.</li>
+<li>Steps: Stay on the icon and press Ctrl+Alt; observe whether EAM obtains spellID/itemID after the action column is parsed. Those that contain conditional branches or cannot be uniquely parsed can downgrade to manual input.</li>
+<li>Passed: The cast macro does not mistake resolved spellID for the macro index; the item macro can obtain itemID; when it cannot be resolved, it indicates "not yet resolved" and does not fill in the guess value.</li>
+</ul>
+<h3 id="4-livetooltipbag_item">4. <code>live.tooltip.bag_item</code></h3>
+<ul>
+<li>Conditions: Non-combat, backpack has cooldown or usable items.</li>
+<li>Steps: Stop the item and confirm the Item ID; press Ctrl+Alt and select to join item cooling monitoring.</li>
+<li>Passed: Write the item cooling list, the ID is consistent with the item; the item tooltip can be displayed when the mouse is hovering over the monitoring icon.</li>
+</ul>
+<h3 id="5-livetooltipplayer_aura">5. <code>live.tooltip.player_aura</code></h3>
+<ul>
+<li>Condition: The player must have one BUFF and one DEBUFF at the same time.</li>
+<li>Steps: Stay on the Aura of BuffFrame in the upper right corner and press Ctrl+Alt to join player Aura monitoring respectively.</li>
+<li>Passed: 12.1 Candidates can be obtained through the official Aura Tooltip process; 12.0.7 can be entered manually if incapable. EAM The player BUFF shown in the image has a cyan border, and the player DEBUFF is red.</li>
+</ul>
+<h3 id="6-livetooltiptarget_aura">6. live.tooltip.target_aura</h3>
+<ul>
+<li>Conditions: Select a target that can generate BUFF/DEBUFF, non-combat; do not right-click, do not check or hook TargetFrame/AuraButton.</li>
+<li>Steps: Move the mouse into TargetFrame.TargetFrameContent.TargetFrameContentContextual.Aura' AuraButton and press Ctrl+Alt while the official Tooltip/heartbeat is still fresh; select the player or target storage location.</li>
+<li>If there is no pop-up window: execute /eam doctor and only report the results of auraCallbackCount, lastAuraCallbackAt, lastAuraCandidateAt, auraCandidateExpiredCount, lastTryOpenReason, lastModifierKey/down and CVar read/set; do not post raw results AuraData, Secret, Frame or guess ID.</li>
+<li>Clear manual fallback: Enter /eam add target to open the EAM target Aura manual window, paste in the known Spell ID and click "Add target Aura monitoring"; /eam add target <spellID> still retains the direct new path.</li>
+<li>Passed: The small window can still be opened without reading the forbidden AuraButtonTooltip field; added to the target list. Target BUFF has a blue border and target DEBUFF has an orange border.</li>
+</ul>
+<h3 id="7-eamcode_6">7. <strong>​​EAMCODE_6</strong></h3>
+<ul>
+<li>Condition: Make sure <code>InCombatLockdown()</code> is false.</li>
+<li>Steps: Test skills, macros, items, player Aura, and target Aura in sequence.</li>
+<li>Pass: Ctrl+Alt The candidate only appears for the current mouseover source, EAM has its own monitoring icon to display the corresponding spell/item Tooltip.</li>
+</ul>
+<h3 id="8-livetooltipin_combat_rejected">8. <code>live.tooltip.in_combat_rejected</code></h3>
+<ul>
+<li>Conditions: Clear the candidates first, and then the player enters the battle.</li>
+<li>Steps: Hold the above source and press Ctrl+Alt; then hold the EAM monitoring icon.</li>
+<li>Passed: Do not open the join window, do not display EAM's own Tooltip, do not create delayed writing, and do not replay the candidates in the battle after exiting the battle.</li>
+</ul>
+<h3 id="9-livepopupescape_cancel">9. <code>live.popup.escape_cancel</code></h3>
+<ul>
+<li>Condition: Non-combat opening EAM join window.</li>
+<li>Steps: Press ESC, Cancel and window close respectively.</li>
+<li>Passed: No revision or list item will be added in any of the three methods.</li>
+</ul>
+<h3 id="10-livepopupcommit_added_unchanged">10. <code>live.popup.commit_added_unchanged</code></h3>
+<ul>
+<li>Condition: Prepare an unmonitored ID.</li>
+<li>Steps: Join for the first time, then join again with the same type and ID.</li>
+<li>Passed: first return <code>added</code>, second return <code>unchanged</code>; revision is only incremented on real changes.</li>
+</ul>
+<h3 id="11-livetooltipreload_resume">11. <code>live.tooltip.reload_resume</code></h3>
+<ul>
+<li>Condition: At least one join operation and one case result must be completed.</li>
+<li>Steps: Create a checkpoint, the player enters <code>/reload</code>, returns to the game and opens the panel.</li>
+<li>Pass: session and monitoring list are saved, reloadSequence is added, and the same load is not pretended to be reload.</li>
+</ul>
+<h3 id="12-liveblizzard_input_unchanged">12. <code>live.blizzard_input_unchanged</code></h3>
+<ul>
+<li>Condition: EAM is enabled.</li>
+<li>Steps: Perform original left-click, right-click, and no modifier key operations on skills, action columns, items, and target boxes Aura.</li>
+<li>Passed: Blizzard's original behavior remains unchanged; EAM does not hook clicks, does not intercept right clicks, and does not generate secure action taint.</li>
+</ul>
+<h3 id="13-livepopupcombat_transition">13. <code>live.popup.combat_transition</code></h3>
+<ul>
+<li>Conditions: Open the join window first without fighting.</li>
+<li>Steps: Do not press join, the player enters the battle.</li>
+<li>Passed: The window is closed safely or the submission is rejected; no automatic writing is done after exiting.</li>
+</ul>
+<h3 id="14-livetooltipgeneration_switch">14. <code>live.tooltip.generation_switch</code></h3>
+<ul>
+<li>Conditions: Prepare two different sources.</li>
+<li>Steps: Quickly switch from skill to item or from player Aura to target Aura, then press Ctrl+Alt.</li>
+<li>Pass: Only open the latest source, do not replay candidates five seconds ago or outside the 0.75 second Aura heartbeat period.</li>
+</ul>
+<h3 id="15-liveapiload_order">15. <code>live.api.load_order</code></h3>
+<ul>
+<li>Conditions: New login and <code>/reload</code> test once each.</li>
+<li>Steps: Open the Tooltip process and Options immediately, wait for the Blizzard LoD module to load, and then retest.</li>
+<li>Pass: PostCall, event and key listener are registered only once; no nil API, repeated addition or repeated prompt.</li>
+</ul>
+<h3 id="16-liveerrorsnone_observed">16. <code>live.errors.none_observed</code></h3>
+<ul>
+<li>Condition: Keep Lua error displayed throughout the round.</li>
+<li>Steps: Review the error window and taint/blocked action message.</li>
+<li>Passed: No Lua error, taint, blocked action, Forbidden access. If it does, it will be marked as fail even if the function appears to be normal.</li>
+</ul>
+<h3 id="17-eamcode_0">17. <strong>​​EAMCODE_0</strong></h3>
+<ul>
+<li>Condition: Prepare a Legacy icon with safe countdown and PTR Native Aura.</li>
+<li>Steps: At least test inside the frame, outside the frame, and font level 8, 14, and 32; click Apply/Rebuild after submitting the Native settings each time.</li>
+<li>Passed: The countdown position does move and no longer always stays in the box; it does not go out of bounds and is not obscured by the name.</li>
+</ul>
+<h3 id="18-livelayoutapplications_anchor_size">18. <code>live.layout.applications_anchor_size</code></h3>
+<ul>
+<li>Condition: Prepare stackable Aura.</li>
+<li>Steps: Measure the eight directions inside the frame, the eight corners and four sides outside the frame, and the font levels are 8, 12, and 32.</li>
+<li>Pass: applications/stack The position and size are updated according to the settings. Forged numbers are not displayed when there is a single layer/no layer.</li>
+</ul>
+<h3 id="19-liveaurasingle_countdown">19. <code>live.Aura.single_countdown</code></h3>
+<ul>
+<li>Condition: Turn off double countdown diagnostics and rebuild Native container.</li>
+<li>Steps: Observe a limited time Aura from the beginning to the last 3 seconds.</li>
+<li>Passed: Normal mode only has one set of counters; 12.0.7 Legacy also has only one set.</li>
+</ul>
+<h3 id="20-liveauradual_countdown_diagnostic">20. <code>live.Aura.dual_countdown_diagnostic</code></h3>
+<ul>
+<li>Condition: Diagnostic mode is only enabled in the test panel.</li>
+<li>Procedure: Observe two sets of countdowns at the beginning, middle and last 3 seconds.</li>
+<li>Passed: Both are in sync and share the same DurationObject; this is just a display cross-validation, not a secondary data source. Must be closed when finished.</li>
+</ul>
+<h3 id="21-livecooldownspell_countdown">21. <code>live.cooldown.spell_countdown</code></h3>
+<ul>
+<li>Condition: Monitor a non-GCD skill and a charged skill.</li>
+<li>Step: The player casts, and the charged skill consumes another layer.</li>
+<li>Pass: the icon, swipe, and countdown appear at the same time; the skill border is fixed in yellow; the Spell Tooltip can be displayed by staying on the EAM icon.</li>
+</ul>
+<h3 id="22-livecooldownitem_trigger">22. <code>live.cooldown.item_trigger</code></h3>
+<ul>
+<li>Condition: Monitor an available backpack item.</li>
+<li>Steps: Used by players to observe BAG_UPDATE_COOLDOWN/12.1 corresponding events.</li>
+<li>Pass: itemID is triggered correctly, other items are not accidentally touched; the border is fixed in green; the Item Tooltip can be displayed when staying.</li>
+</ul>
+<h3 id="23-livegroundduration_auto">23. <code>live.ground.duration_auto</code></h3>
+<ul>
+<li>Conditions: Add a non-combat ground skill with a clear seconds description in the description.</li>
+<li>Steps: First perform one-click capture, and then let the player cast it.</li>
+<li>Passed: Source is <code>spellDescription</code> or <code>tooltipDescription</code>, reciprocal matches static specification, border is fixed purple.</li>
+</ul>
+<h3 id="24-livegroundduration_manual_fallback">24. <code>live.ground.duration_manual_fallback</code></h3>
+<ul>
+<li>Condition: Select a ground skill whose seconds cannot be resolved and set manual seconds.</li>
+<li>Steps: Retrieval should clearly fail before being cast by the player.</li>
+<li>Passing: Source is <code>manualFallback</code>, using manual seconds, report with <code>groundDurationManualFallback</code>, no fake Tooltip seconds; border remains purple.</li>
+</ul>
+<h3 id="25-livevisualswipe_alpha">25. <code>live.visual.swipe_alpha</code></h3>
+<ul>
+<li>Conditions: Prepare skills, items, ground effects and PTR Native Aura.</li>
+<li>Steps: Set to 0, 0.5, and 1 respectively; Native Aura will be rebuilt after each submission.</li>
+<li>Passed: The four types of swipe transparency are consistent with the settings, and the text and fixed color borders do not disappear.</li>
+<li>Additional sign for color frame: self BUFF cyan, self DEBUFF red, target BUFF blue, target DEBUFF orange, skill yellow, item green, ground effect purple; classPower and totem maintain the existing appearance.</li>
+</ul>
+<h3 id="26-liveauratarget_transition">26. <code>live.Aura.target_transition</code></h3>
+<ul>
+<li>Conditions: PTR 12.1, prepare limited/permanent, single/multi-layer, target Aura for different casters.</li>
+<li>Steps: Switch targets, enter and exit combat, and transition between states.</li>
+<li>Pass: icons, official display countdowns and applications are updated normally; if "there is an icon but the text is blank", record what kind of conversion it is, and do not read back FontString.</li>
+</ul>
+<h3 id="27-eamcode_1">27. <strong>​​EAMCODE_1</strong></h3>
+<ul>
+<li>Condition: PTR 12.1.</li>
+<li>Steps: Check capability report and official dispelling texture.</li>
+<li>Passed: Only refer to <code>AddDispelTypeTexture</code> as an official dispersal/static border ability; no claims to be arbitrary replacements for Pandemic or Proc Glow. EAM The seven-color border is an independent static Texture.</li>
+</ul>
+<h3 id="28-liveauranative_pandemic_region">28. <code>live.Aura.native_pandemic_region</code></h3>
+<ul>
+<li>Conditions: PTR 12.1, monitor Aura with access to Pandemic Window.</li>
+<li>Step: Enable a Pandemic Region, which appears and disappears as observed by the player.</li>
+<li>Updated by: Blizzard Management, EAM does not read <code>SecretAspect.Shown</code>, does not create its own per-icon OnUpdate; 12.0.7 silent downgrade.</li>
+</ul>
+<h3 id="29-liveauranative_dispel_options">29. <code>live.Aura.native_dispel_options</code></h3>
+<ul>
+<li>Conditions: PTR 12.1, ready Helpful/Harmful with stealable Aura.</li>
+<li>Steps: Test <code>showAlways</code>, Helpful/Harmful, Stealable/NotStealable.</li>
+<li>Passed: <code>showAlways</code> no longer also outputs the invalid stealableFilter; does not use the old AuraBorder alias.</li>
+</ul>
+<h3 id="30-liveauracontainer_disable_clear">30. <code>live.Aura.container_disable_clear</code></h3>
+<ul>
+<li>Conditions: PTR 12.1, Native Aura shown.</li>
+<li>Steps: Disable AuraContainer and re-enable it.</li>
+<li>Pass: AuraButton and ItemEnchantment display data is cleared, the framework body can be reused, no repeated creation, no use of OnSizeChanged to estimate the number of Aura.</li>
+</ul>
+<h3 id="31-liveunitpowersecondary_numeric">31. <code>live.unitpower.secondary_numeric</code></h3>
+<ul>
+<li>Condition: Use a specialization that generates secondary resources.</li>
+<li>Steps: Player generates, consumes, zeroes HolyPower, ComboPoints, SoulShards, Chi or ArcaneCharges.</li>
+<li>Pass: EAM The correct secondary resource is selected, the value 1 is not treated as false. Single spell stacks such as Flower of Life are not UnitPower and should be tested by the Aura mod.</li>
+</ul>
+<h3 id="32-liveunitpowerprimary_native_sink">32. <code>live.unitpower.primary_native_sink</code></h3>
+<ul>
+<li>Conditions: First select the correct client in the Live panel, and then open the UnitPower capability probe.</li>
+<li>Steps: Players generate/consume main resources by themselves; observe StatusBar and radial sink, and then mark the artificial visual results.</li>
+<li>Passed: PTR 12.1 Secret values ​​are only fed one-way to the allowed C-level sink, without Lua comparison, stringification or export; the mage can still measure the main mana vision when he only has mana, but will not get readable Lua numbers.</li>
+</ul>
+<h3 id="33-liveunitpowercombat_deferred">33. <code>live.unitpower.combat_deferred</code></h3>
+<ul>
+<li>Conditions: PTR/XPTR, the probe or module has been created before the war.</li>
+<li>Steps: Players enter combat and change resources, then leave combat.</li>
+<li>Passed: Lua is not used to read/compare the UnitPower value during combat; allowed native sinks can be displayed; those who need structural changes are queued out of combat and only replayed once.</li>
+</ul>
+<h3 id="34-liveauraduration_zero_regression">34. <code>live.Aura.duration_zero_regression</code></h3>
+<ul>
+<li>Conditions: PTR 12.1 PTR8, prepared to end Aura permanently, zero time or instantaneously.</li>
+<li>Steps: Observe the official duration text and EAM icon.</li>
+<li>Passed: The effective duration no longer displays 0 by mistake; when there is no safe duration, only the officially allowed icon/display state is retained, and the number is not added by itself.</li>
+</ul>
+<h3 id="35-liveaurasound_added">35. <code>live.Aura.sound_added</code></h3>
+<ul>
+<li>Conditions: PTR 12.1, select a player or target Aura that can be obtained repeatedly; enable global sound effects, only check "Aura Added" for detailed settings, and the material can be clearly identified.</li>
+<li>Steps: Players obtain Aura by themselves, perform normal updates while keeping it, then remove it and obtain it again. Don't use test buttons instead of real Aura events.</li>
+<li>Passed: only played once each time from existence to existence; general updates, layer changes and removals will not be played accidentally. Reports include build, unit, and artificial hearing results.</li>
+<li>12.0.7: Control is disabled but settings remain, and <code>AddAuraSound</code> must not be called.</li>
+</ul>
+<h3 id="36-liveaurasound_applications_increased">36. <code>live.Aura.sound_applications_increased</code></h3>
+<ul>
+<li>Conditions: PTR 12.1, use Aura that can be safely layered repeatedly; only check "Increase the number of layers" for detailed settings.</li>
+<li>Steps: The player first obtains a layer, then gradually increases, maintains the same layer, reduces the layer and removes it completely.</li>
+<li>Passed: Do not play when adding new applications for the first time; Play once for each application that is actually added; Do not play when identical, reducing and removing applications. Secret applications must not be read back or compared by EAM Lua.</li>
+<li>12.0.7: Maintain capability downgrade and do not synthesize layer events.</li>
+</ul>
+<h3 id="37-eamcode_1">37. <strong>​​EAMCODE_1</strong></h3>
+<ul>
+<li>Conditions: PTR 12.1, detailed settings only check "Halo removal".</li>
+<li>Steps: separately test the natural expiration and the player's actual dispersion/removal; also test deactivating the module, changing settings, rebuilding the container and <code>/reload</code>.</li>
+<li>Passed: Each real Aura removal is played only once; deactivation, settings sync, container clearing and <code>/reload</code> are not allowed to impersonate removals. If API behaves differently for expiration and expiration, record it as a real fact.</li>
+<li>Also test <code>fromPlayer</code>/narrow polarity rules: same as unit+SpellID If other sources are over-fired, record <code>UnitAuraSoundInfo</code> without caster/auraFilter restrictions, not bypassed by Lua.</li>
+<li>12.0.7: Control unavailable and zero 12.1 API call.</li>
+</ul>
+<h2 id="ptr-69273-additional-return-steps">PTR 69273 Additional return steps</h2>
+<h3 id="a-unitpower-capability-report">A. UnitPower Capability Report</h3>
+<ol>
+<li>In PTR 12.1 build 69273, open the process panel in non-combat state, confirm that the environment is listed as PTR, patch 12.1.0, Interface 120100, and then enable the UnitPower capability.</li>
+<li>In the primary native percent case, players can change the primary resource by themselves; the mage can use mana and cast or consume any skill that changes mana. Only check whether StatusBar/radial changes accordingly, do not read the value or copy the Secret value.</li>
+<li>In the selected safe or native case, follow the panel prompts to select resources and generate, consume, and reset them by yourself; also only observe native widgets.</li>
+<li>Each case must be classified as normal, abnormal or unable to test. If the report is still visualObservation=pending or status=incomplete, it means that the receipt has not been completed, and it is not a pass.</li>
+<li>Stop the probe and then copy JSON; if you want to read the disk SavedVariables from the development end, first /reload or log out normally, otherwise the old report may still be there.</li>
+</ol>
+<h3 id="b-1079-first-frame-sorting">B. 1079 First frame sorting</h3>
+<ol>
+<li>Enable the 1079 tearing condition setting in the target Aura list and confirm the priority; the larger the number, the higher the priority and will enter the earlier native slot.</li>
+<li>If you don’t want the 1079 first grid, lower the 1079 priority and raise the other target Aura, and save it as /reload.</li>
+<li>Return to the target framework to confirm the order; if the priorities are the same, use SpellID for stable order. When reporting, attach the priority value and client/build. Do not just report the location shown in the icon.</li>
+</ol>
+<h3 id="c-theme-button">C. Theme button</h3>
+<ol>
+<li>Exit the main window and select EAM, FF7, Windows XP, Windows 7, Windows 10, Windows 3.1, Borland C++ IDE, DOS CRT, Yitian Chinese, Red Alert, macOS Aqua.</li>
+<li>For each theme, check the main window, About, Tooltip popup, Flow, Live, SVG, UnitPower, Prompt button normal, slide into highlight, press pushed, disabled, text, background color and 2px borders on four sides; Borland should be bright blue with bright yellow text, DOS CRT It should be green text on a black background, and other newly added themes must also be legible.</li>
+<li>Try switching when entering combat and confirm that only pending is saved; it will be applied after exiting combat. Complete /reload and then confirm that the settings are still retained.</li>
+<li>There is no need to check the Blizzard Action Bar or other plug-in buttons; the theme scope only contains EAM's own UI.</li>
+</ol>
+<h3 id="d-instant-language-switching">D. Instant language switching</h3>
+<ol>
+<li>After updating to a program that contains this function, players must first <code>/reload</code> once to ensure that the new Locale binding is included in this load; neither Codex nor EAM automatically input commands.</li>
+<li>Open the main window, About, function module, Flow/Live, UnitPower/SVG and Prompt panel at the same time during non-combat; you can also open the EAM popup when there is a safe candidate in the Tooltip.</li>
+<li>Select <code>Русский</code>, not <code>/reload</code>. The fixed title, button, drop-down label, environment summary and case status of the currently opened panel should be changed to Russian immediately; the output chat history will not be rewinded and rewritten, and subsequent EAM messages should be in Russian.</li>
+<li>Select fixed English <code>Auto Detect</code> instead of <code>/reload</code>. In zhTW the client should immediately return to Traditional Chinese; the spell/item names returned by the Blizzard UI, other plugins, and the client are not controlled by the EAM catalog.</li>
+<li>Select <code>Русский</code> again, and it is up to the player to select <code>/reload</code> and reopen the main window to confirm that it is still in Russian; this step only verifies that <code>EAM_DB.config.language</code> is saved and is not a prerequisite for dynamic application.</li>
+<li>Report clientChannel, patch, build, Interface, two instant switching results and reload saving results; screenshots must not contain account, role or WTF absolute path.</li>
+</ol>
+<h3 id="e-player-multi-resource-official-path">E. Player multi-resource official path</h3>
+<ol>
+<li>After updating the plug-in, the player can execute <code>/reload</code> out of combat, open the "Icon Position and Energy Settings" of the EAM main setting, and then enter the player resource panel.</li>
+<li>First test the minimum representative set: Mage Mana, Warrior Rage, Feral Druid Energy＋ComboPoints, Shadow Priest Insanity, Death Knight Runes+RunicPower; then all <code>UnitHasPowerType</code> available resources listed in the occupation/specialization inspection panel.</li>
+<li>Each resource is generated, consumed and reset separately; confirm that when multiple resources appear at the same time, each has its own independent frame, sorting and geometry, and will not cover each other or leave only the first item.</li>
+<li>Switch the foreground, background, and numerical text one by one, and adjust the position, zoom, alpha, foreground/background transparency, width and height, icon size, spacing, and order. Ordinary numbers can display text; Secret values ​​only require that the status column changes correctly, and raw numbers should not be displayed or exported by Lua.</li>
+<li>After modifying the specialization override, press Reset to confirm that it returns to the professional default and that other specializations will not be affected; recheck after switching specializations, transforming the druid, logging in/entering the world.</li>
+<li>Repeat resource changes during the battle and confirm that the existing status column is continuously updated; when switching specialization/structure settings during the battle, the reconstruction will only be postponed and applied once after the battle. Lua error, taint, blocked action or Forbidden access shall not occur.</li>
+<li>After closing the player resource module, confirm that all resources are hidden immediately and will no longer be read; re-enable them and restore them at a safe time.</li>
+<li>Copy the development report and confirm that it only contains key, powerType, token, capability, display settings and count, and does not include current, max, percent or the original value of Secret that can be reversed.</li>
+<li>UnitPower capability probe will be tested separately; <code>statusBarSink=accepted</code> only means that the setter has not been rejected and cannot replace the visual pass of the official player resource panel.</li>
+</ol>
+<h2 id="additional-smoke-test-for-this-round">Additional Smoke Test for this round</h2>
+<p>These projects do not add to the 37 case count, but each should be viewed at least once before this round of release:</p>
+<ol>
+<li>Click the "About" button on the upper right side of the main window to open a small window.</li>
+<li>About the window display plug-in version, author <code>ziyuefan死鬥</code>, API baseline <code>12.1.0 PTR 8 (Build 69189)</code>, 12.0.7 compatible track, current client Build, GitHub and Pages URL.</li>
+<li>Do not open the About window during battle.</li>
+<li>The development report, actual machine JSON, and the diagnostic information button only select all text; there is no <code>attempt to call a nil value</code> after the player presses Ctrl+C.</li>
+<li>EAM displays the monitored Aura/skill/item icon as a Tooltip in non-combat, but refuses to do so in combat; classPower and totem do not mistake powerType/slot for spellID.</li>
+</ol>
+<h2 id="get-reports-from-savedvariables">Get reports from SavedVariables</h2>
+<p>WoW will only write the latest SavedVariables to disk after the player enters <code>/reload</code> or logs out normally. When JSON has just been generated on the screen but has not yet been reloaded, the disk file may still be the previous version.</p>
+<p>After the player completes <code>/reload</code>, it can be read-only imported on the development side:</p>
+<pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\.AI\Tools\Import-EAMFlowReport.ps1 `
+  -Path '&lt;該客戶端 WTF\...\SavedVariables\EventAlertMod.lua&gt;' `
+  -ReportType Flow
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<p>Change <code>Flow</code> to <code>Live</code> or <code>UnitPower</code> when additional reports are required. The importer recalculates the digest and verifies client identity, schema, privacy, and raw flag; it does not modify WTF. Do not submit the complete command including the account path or the SavedVariables original file to Git.</p>
+<h2 id="report-format">Report format</h2>
+<p>The return contains at least:</p>
+<ul>
+<li>client: PTR/XPTR/Retail.</li>
+<li>patch, build, interface.</li>
+<li>case ID.</li>
+<li>In or out of combat.</li>
+<li>Operation prerequisites and actual steps.</li>
+<li>Differences between expected and actual.</li>
+<li>Whether there are Lua error, taint, blocked action, Forbidden access.</li>
+<li>JSON report; if imported using WTF, indicate that <code>/reload</code> has been executed after generating the report.</li>
+</ul>
+<h2 id="svg-ability-test-ptr-121-preferred">SVG Ability Test (PTR 12.1 preferred)</h2>
+<ol>
+<li>Players can enter <code>/reload</code> by themselves. After confirming that the revised version has been loaded, enter <code>/eam test</code> in non-combat situations.</li>
+<li>Select the correct client in the test panel; PTR 12.1 select <code>_ptr_</code>.</li>
+<li>Click "SVG Ability". The left cell is VectorGraphics, and the right cell is Texture; a cyan frame and a yellow-purple triangle should appear in both cells.</li>
+<li>Click "Display Normal/Display Abnormal/Unable to Test" one cell at a time. <code>SetSVG=accepted</code> only proves that the call was accepted and does not replace visual inspection.</li>
+<li>Click "Complete and generate report" and return the complete <code>EAM_SVG_CAPABILITY_REPORT</code> JSON; the report must contain patch, build, Interface, two cases clearReload, visualObservation, and <code>rawFileIDsCollected=false</code>.</li>
+<li>PTR 12.1 Normal fields:</li>
+<li>VectorGraphics: <code>setResult=accepted</code>, <code>hasSVG=true</code>, <code>fileIDClass=positive-number|zero|negative-number</code>, <code>clearReload=pass</code>, <code>visualObservation=pass</code>.</li>
+<li>Texture: <code>setResult=accepted</code>, <code>hasSVG=unavailable</code>, <code>fileIDClass=unavailable</code>, <code>clearReload=pass</code>, <code>visualObservation=pass</code>.</li>
+<li><code>fileIDClass=zero</code> of <strong>​​EAMCODE_5</strong> does not need to be judged as failure alone; Texture without HasSVG/GetSVGFileID does not need to be judged as failure. If the Texture is <code>clearReload=unavailable</code>, it means it is still an old Alpha 3 probe and must be updated and rerun after setting <code>/reload</code>.</li>
+<li>Texture has no introspection, so <code>clearReload=pass</code> means that the call to ClearSVG and re-SetSVG is successful, and the final reload pattern is confirmed visually by humans; the report cannot claim that Lua has read back the pixels at the moment of clearing.</li>
+<li>If you want to regurgitate from the disk, the player can use <code>/reload</code> after generating the report; use <code>ReportType SVG</code> when importing. The return of 12.0.7 unsupported is an expected capability downgrade.
+In the same round, also confirm the classification borders: self BUFF/DEBUFF, target BUFF/DEBUFF, skills, items, and ground effects should be completely continuous on all four sides, and the outer edges should be 3px longer than the illustration. Please attach client, UI scale, icon size and screenshots.</li>
+</ol>
+<h2 id="2026-08-13-alpha-4-additional-steps-for-modules-and-career-profiles-in-real-machines">2026-08-13 Alpha 4: Additional steps for modules and career profiles in real machines</h2>
+<p>This is an additional post-release check of Alpha 4 in addition to the 37 cases, case numbers that do not change the real-person matrix:
+1. Open the EAM main settings, click "Function Modules", and confirm that the eight modules are enabled by default.
+2. Disable one module one by one; confirm that the reminder of the module disappears and other modules are still normal. After re-enabling it, it will only be restored during the allowed out-of-combat time.
+3. Tried switching mods in combat, confirmed settings saved but structural Native changes deferred to PLAYER_REGEN_ENABLED, no taint or blocked action.
+4. Log in with at least two different professions and execute /eam list, /eam lookup <name>, /eam lookupfull <full name> and /eam showcast; confirm that the listed list only belongs to the current profession.
+5. After clearing the list of a profession, confirm that the built-in defaults will not be repopulated; switch back to another profession and confirm that its settings are not contaminated.
+6. Alpha 5 can be exported using the profile of the main setting; only accept formal strings starting with EAMAP1:, do not paste into Debug JSON, and do not execute any external Lua.
+7. Each client records client channel, build, Interface, /reload, Lua error, taint and blocked action; offline passes must not be rewritten as real machine passes.</p>
+<h2 id="2026-08-14-alpha-5-profile-font-and-dynamic-language-additional-steps">2026-08-14 Alpha 5: Profile, font and dynamic language additional steps</h2>
+<p>These steps do not change the total number of 37 case matrices and must be executed in PTR 12.1, XPTR 12.0.7, and Retail 12.1 respectively:
+1. Open the Profile panel when not in combat, export a module of the current profession, and confirm that the string starts with EAMAP1:; the player can press Ctrl+C by himself and do not paste the account, role or absolute path into the report.
+2. Press Preview first to confirm the add/update/unchanged/conflict count; apply it with Merge and check that the revision is only increased once, and then use another scope to do Replace to confirm that only the specified class/module is changed.
+3. If you try Apply during combat, you should reject it or show that you are waiting to exit the battle. You must not rebuild the Native structure or generate taint; re-Preview/Apply after exiting the battle.
+4. Select STANDARD, ARIALN, MORPHEUS, SKURRI one by one, and confirm that the timing, stacking and name text font/size are still in the expected position as shown in the icon; confirm the settings after /reload and save them.
+5. Switch zhTW, zhCN, enUS, koKR, ruRU and fixed English Auto Detect, confirm that the main window, buttons, drop-downs, conditions and special selections of EAM are refreshed in real time; do not judge EAM failure based on Blizzard UI or historical chat text.
+6. The report must be accompanied by client channel, build, Interface, whether /reload, Lua error/taint/blocked action, codec preview/apply results and language/font visual observation. Codex does not automatically operate on WoW.</p>
+<h2 id="2026-08-14-retail-121aura-catalogprofile-ui-additional-steps">2026-08-14 Retail 12.1／Aura catalog／Profile UI additional steps</h2>
+<p>These items do not increase the number of cases; Retail/PTR 12.1 and XPTR 12.0.7 must be operated by the player and attached with build/Interface.</p>
+<ol>
+<li>Open the language, font, theme, sound effects, direction, text position, specialization and AuraSound drop-down menu; each column must be visible when not hovered, and the hover/pressed/disabled status is consistent with the current theme.</li>
+<li>Click "Profile Import/Export" from the main settings. After exporting the long string, use the scroll wheel, scroll thumb, up and down arrows, Home/End/PageUp/PageDown to move it; the text cannot cross the viewport, and the status is fixed with the six footer buttons.</li>
+<li>Confirm that the <code>Trade_Engineering</code> gear of the minimap is completely located within the golden tracking circle, and cannot be the upper left empty circle plus the lower right gear; then test the left button switch, right button diagnosis, drag and <code>/reload</code> save. If there is still misalignment, green block, question mark or sound icon, return the screenshot, client, build and UI scale.</li>
+<li>Add an Aura that is available to the current profession to your own Aura list, open the gear and confirm that "Player Cast Only" is checked; repeat it for the target Aura, it should also be checked by default.</li>
+<li>Add Aura, which can be safely parsed but is not the current profession, to your own list, make sure that it appears in cross-professional buffs and debuffs and that the "Only player cast" default is unchecked; the original user data cannot be deleted for this reason.</li>
+<li>Paste <code>有效ID1;有效ID2；有效ID3</code> in the batch window and mix in line breaks, repeated IDs, text and non-existent positive integers; after pressing one button to add, only valid unique IDs will appear, without blank items or Lua errors.</li>
+<li>Press "Load Current ID" and "Select All to Copy", and the player presses Ctrl+C; after editing the text, the pending preview should be invalid and the old plan cannot be applied.</li>
+<li>Retail／PTR 12.1 Observe player／target Native Aura; XPTR 12.0.7 Observe Legacy. All three test in and out of combat with <code>/reload</code>, and record taint, blocked action, Forbidden access and boundaryWarnings.</li>
+<li>Wowhead candidate JSON is not loaded in the game, and presets will not be automatically added; any new presets must still have client spell/Aura ID actual evidence.</li>
+</ol>
+<h2 id="2026-08-14-alpha-6-small-map-circle-alignment-and-post-release-smoke-test">2026-08-14 Alpha 6: Small map circle alignment and post-release smoke test</h2>
+<p>These steps do not increase the case count and are performed by players on Retail/PTR 12.1 and XPTR 12.0.7 after Release installation:</p>
+<ol>
+<li>Confirm that the GitHub alpha-7 asset is installed, and then open EAM after completing <code>/reload</code>; do not sign with the Alpha 5 screen that is still loaded into the memory.</li>
+<li>Check the standard round button on the same mini-map to confirm that the EAM gear is located in the center of the golden circle and does not exceed it; the golden circle must not be biased to the upper left, and the gear must not fall outside the lower right circle.</li>
+<li>Take screenshots at 64%, 100% and the UI Scale commonly used by players; at the same time, confirm the left click, right click, drag, slide to highlight and <code>/reload</code> position to save.</li>
+<li>Open the language and eleven theme drop-downs and confirm that the hover text and button four-state/2px border are still normal to avoid UI regression caused by minimap insertion correction.</li>
+<li>Report client channel, patch, build, Interface, UI Scale, Lua error/taint/blocked action and screen results; offline Validation Contracts 459/459 cannot replace this visual sign-off.</li>
+</ol>
+<h2 id="2026-08-21-player-resource-setting-reward-supplement">2026-08-21 Player resource setting reward supplement</h2>
+<ul>
+<li>After the new version of the program is loaded, the player must manually /reload once to ensure that the current round of program is being tested; this is not a necessary step for changing the settings every time.</li>
+<li>Non-combat settings: After modifying enabled, showPercent, fontFamily, orientation or threshold, observe the screen directly instead of /reload. Expected EAM_PLAYER_RESOURCE_CONFIG_CHANGED -&gt; topology rebuild -&gt; renderer to apply.</li>
+<li>Combat settings: Change it once first or change it multiple times in succession, making sure not to perform structural reconstruction during the battle; only apply it once after leaving the battle. Report whether service lastConfigResult is combatRebuildDeferred, and then report visualObservation.</li>
+<li>If you still need /reload for non-combat purposes, please provide resource key, PTR/XPTR/Retail, patch, build, Interface, combat status, Lua error/taint/blocked action, and screen differences before and after changing the settings.</li>
+<li>These conditions are marked REQUIRES_WOW_12_1_RUNTIME; offline flow's topologyReady and sink accepted do not replace visual player sign-off.</li>
+</ul>
+<h2 id="2026-08-21-player-resources-resourceprobesampler-supplement">2026-08-21 Player resources ResourceProbe／sampler supplement</h2>
+<ol>
+<li>After updating the plug-in, players first manually run <code>/reload</code> and confirm that the test panel displays the current PTR, XPTR or Retail’s patch, build, and interface; this time <code>/reload</code> only means loading a new program and is not a necessary condition for setting changes.</li>
+<li>Start PlayerResourceProbe, first test normal events: Mage Mana, Warrior Rage, Feral Druid Caster/Cat/Bear/Moonkin, Shadow Priest Insanity, Death Knight Runes/RunicPower, and then expand to all career/specialty resources listed on the panel. Each record <code>tracked</code>, <code>available</code>, <code>foreground</code>, <code>background</code>, <code>capability</code>, <code>sinkAvailable</code>, <code>eventObserved</code>, raw power is not read or copied.</li>
+<li>After normal events are observed, confirm that the resource does not start the background sampler. If the player confirms that the background event is missing, first enter /eam unitpower background <RESOURCE_KEY>, and then enable a single demand-driven sampler; record the sampler start/stop, the 0.5 second test interval of the offline fixture, the delay in battle, and the exit after event recovery.</li>
+<li>Test the Druid's four forms and specialization switching, confirm that the foreground/background resource switching, Energy/ComboPoints will not be forced to the first grid, and the existing resources will not be dismantled in batches.</li>
+<li>Modify enabled, font, size, orientation, anchor, position, threshold out of war; it must not be <code>/reload</code> to take effect. Modifications during combat are only merged once in <code>PLAYER_REGEN_ENABLED</code>; after deactivating the module, confirm that frame and all PlayerResourceService/Probe events are unregistered.</li>
+<li>XPTR 12.0.7 separately confirms the numeric legacy adapter and StatusBar fallback; the 12.1 Secret sink capability or offline adapter result must not be passed off as XPTR visual pass.</li>
+<li>The report must include client channel, patch, build, Interface, combat, whether to manually /reload, ResourceProbe JSON, sampler status, visualObservation, Lua error/taint/blocked action. /eam unitpower background is just a test entrance for players to clearly mark missing events; unitpower.background_sampler_gate and static contracts have been passed offline, and real-person reports still need to be manually interpreted and cannot be filled in by fixtures.</li>
+</ol>
+<h2 id="2026-08-23-skill-cooldown-exact-castnon-batch-display-regression-test">2026-08-23 Skill cooldown exact-cast/non-batch display regression test</h2>
+<p>This section is a new real machine regression step. Offline cooldown.combat_heal_regen_no_bulk_render is not passed as a client. Retail/PTR 12.1 and XPTR 12.0.7 are done once each; before testing, make sure that this round of plug-ins is currently loaded. For the development version, you only need to manually /reload once.
+1. Create two skills A and B that can be actually cast in the "Skill Cooldown Monitoring" list; prepare another healing skill H that is not in the list. Record client channel (Retail/PTR/XPTR), patch, build, Interface, and combat status.
+2. /reload and then without casting A or B, observe the cooling zone; no activated icons are expected to appear due to initialization, refreshAll or the existence of the manifest.
+3. Cast H that is not in the list during combat, and then leave the combat to trigger PLAYER_REGEN_ENABLED; it is expected that neither A nor B will appear in batches due to treatment, withdrawal from combat, or refresh.
+4. Only the player himself successfully casts A (not pets, targets, others, or just starting the cast); it is expected that only A will enter render and B will remain unstarted. If A is not successfully cast, it should not be replaced with SPELL_UPDATE_COOLDOWN or /reload.
+5. After A has been activated, switch inside/outside of combat, transform or trigger form events; it is expected that the activated state of A will be retained and B will not be opened. Clearing A's startup status is only allowed if the cooling module is deactivated or A is deleted.
+6. Test the three behaviors one by one in the global settings and the gear settings of A, and record the results each time:
+   - cooldownRemoveAura: When it is turned off, the cooling is completed and should not be unconditionally removed by the service; when it is turned on, it is removed according to the settings.
+- showSCDOutsideCombat: When turned off, it will be hidden out of combat and displayed during combat; when turned on, it will still be displayed out of combat.
+   - glowSCDWhenUsable: Available highlighting is displayed when the cooldown is completed and the skill is available; when it is unavailable, it cannot be forced to highlight just because the timer expires.
+7. Select nil (global), true (single skill on), and false (single skill off) for A one by one, and confirm that the screen and gear summary are correct; especially confirm that false is still retained after /reload and will not be eaten by the default semantics of Lua and /or.
+8. Disable the cooling module and confirm that A’s activation status and icon are cleared; re-enable the module but do not cast A. It is expected that A will not be automatically restored. Recast A before rendering again.
+9. The report must be accompanied by whether A/B/H is in the list, the actual caster, combat transition, transformation event, three setting values, whether it is /reload, Lua error/taint/blocked action, screenshots and visualObservation. Any offline pass can only be marked as offline evidence.</p>
+<h2 id="alpha-7-quickly-receives-player-resources-after-deployment">Alpha 7 quickly receives player resources after deployment</h2>
+<p>This section is only used after the player has completed deployment; canonical source changes will not directly change the in-game plug-in.</p>
+<ol>
+<li>Execute Deploy/Deploy-EventAlertMod.ps1 on the project root, and first use Status or DryRun to confirm that the correct channel is selected and ProductVersion; the hashes of README.md and EventAlertMod/README.md must be consistent.</li>
+<li>Enter the actual Retail, PTR or XPTR, enter /reload, then execute /eam doctor, record patch, build, interface, client channel, combat and initialized.</li>
+<li>Open "Icon Position and Energy Settings" to test the resources available for the current occupation/specialization one by one. NUMERIC The resource measurement number, font size, relative position and setting will not change immediately after /reload; SECRET_DISPLAY only observes the native bar/graphic follower and does not require or return raw values.</li>
+<li>Test specialization switching, druid Caster/Cat/Bear/Moonkin/return to Bear, entry and exit of combat, and module deactivation/reactivation one by one; confirm that background resources are not cleared, and there are no Lua errors, taint or blocked actions.</li>
+<li>Only enter /eam unitpower background RESOURCE_KEY if it is judged that the background event is missing; wait for the probe report and then report observed event names/power tokens, sampler state and visualObservation. Do not paste current, max, and percent.</li>
+<li>Screenshots or reports must indicate the actual channel (Retail/PTR/XPTR), patch, build, interface, whether it has just been deployed, and whether it is manually /reload. Offline 77/77, setter accepted or eventObserved cannot fill in the visual pass directly.</li>
+</ol>
+<h2 id="alpha-73-charging-times-four-way-and-ring-statusbar-quick-sign-in-after-deployment">Alpha 7.3 Charging times, four-way and ring StatusBar Quick sign-in after deployment</h2>
+<p>This section is only executed after the player completes deployment; offline passing of the canonical source will not automatically be reflected in the game client.
+1. After deploying to the actual test channel, enter the game and manually <code>/reload</code>; record Retail/PTR/XPTR, patch, build, and Interface. This time <code>/reload</code> is loading a new program, not setting a change request.
+2. Add a skill with at least 2 levels of charge to the skill cooldown list; if the base ID is saved in the list, but the current talent/form actually casts the override ID, this situation must also be retained.
+3. <code>/reload</code> Don’t cast first: The icon may not appear on its own just because it is in the inventory, <code>SPELL_UPDATE_COOLDOWN</code>, <code>SPELL_UPDATE_CHARGES</code>, out of combat, or transformed.
+4. When the player successfully casts the skill for the first time: only this skill is monitored; pets, other units, spell casting that starts but fails, and non-list spells are not allowed to open the door.
+5. Observe the maximum number of times in sequence → one level less → 0 level → one level restored → full. StatusBar The filling amount and separated segments can only correspond to the "currently available times/maximum times" and cannot be continuously used as the number of segments to advance with the single-layer recovery seconds.
+6. Switch sequentially in "Icon Position and Energy Settings":
+   - BOTTOM, TOP: The default length is 150% of the width of the icon, located outside the frame; make sure not to suppress the skill name.
+- LEFT, RIGHT: The straight bar is based on the height shown in the figure. Make sure the direction and fill are correct.
+   - RING: Wrap the icon in a ring, confirm that the diameter, thickness, separation line and the icon/Glow do not overlap; 12.1 radial should be used, XPTR 12.0.7 If the capacity is insufficient, BOTTOM should be safely returned.
+   - Adjust length/ring diameter between 100% and 250%, thickness between 4px and 16px; non-combat should be reflected immediately, no need to <code>/reload</code> again.
+7. When <strong>​​EAMCODE_0</strong> is Secret, no Lua error or guessing text shall occur; StatusBar should still be followed by the Blizzard C sink for the available times. Do not report or try to read the original value of Secret, just do visual inspection <code>visualObservation</code>.
+8. Wait for full recharge and switch <code>cooldownRemoveAura</code>: For charging skills, "cooling completed" must be the maximum number of available times; when one level is missing but the skill can still be cast, it must not be mistakenly judged as completed. Also test the global and single skills nil/true/false of <code>showSCDOutsideCombat</code> and <code>glowSCDWhenUsable</code>.
+9. Turn on skill gear details: You can no longer see "Only monitor your own casts" overlapping the first cooldown action button; the three cooldown actions can still be switched separately and reflected immediately after saving.
+10. Repeat steps 3 to 9 after switching talents/forms inside and outside combat; report skill ID, override or not, each charging stage, layout/size, channel/patch/build/Interface, whether <code>/reload</code>, Lua error, taint, blocked action and screenshots.</p>
+<h2 id="alpha-74-dk-runes-groundeffect-family-and-charging-rings-are-deployed-and-signed-for-receipt">Alpha 7.4: DK runes, GroundEffect family and charging rings are deployed and signed for receipt.</h2>
+<p>This section can only be executed after the player has deployed. The canonical source has been modified but has not entered any WoW AddOn; first execute the deployment tool, confirm the channel/ProductVersion/target, and then the player enters the game <code>/reload</code>. Offline 82/82 cannot fill in the visual pass.</p>
+<h3 id="a-environment-and-loading">A. Environment and loading</h3>
+<ol>
+<li>Use <code>Deploy/Deploy-EventAlertMod.ps1</code> to select Retail, PTR or XPTR; first enter Status/DryRun, confirm that the source is this project <code>EventAlertMod/</code>, and then enter <code>DEPLOY</code>. Codex does not automate the game.</li>
+<li>After entering the game <code>/reload</code>, execute <code>/eam doctor</code>; record channel, patch, build, Interface, combat, initialized and whether it has just been deployed. If the old version is still loaded, the following sign-in will not be performed.</li>
+<li>Open the setting and then close it to confirm that all player resources will not disappear; non-combat setting changes should not require a second <code>/reload</code>.</li>
+</ol>
+<h3 id="b-dk-runesrunic-power">B. DK Runes／Runic Power</h3>
+<ol>
+<li>Use Death Knight to measure blood, ice, and evil at least once each; the screen should have six sections of "Rune" and an independent bar of "Rune Energy" at the same time. The two cannot replace each other.</li>
+<li>Should be 6/6 when not consumed. Use skills that consume one or two Runes to gradually confirm 5/6, 4/6; wait for recovery and return to 5/6, 6/6. The dividers are fixed to six slots, and the filling amount only changes with the number of available pieces.</li>
+<li>Accumulate/consume Runic Power at the same time, and make sure that only the runic power bar changes according to its value; the number of rune stages should not follow the runic power percentage.</li>
+<li>In and out of combat, turn on and off the resource setting panel, switch specializations, disable/re-enable player resource modules and retest; if Rune does not move, report <code>/eam doctor</code> among <code>runeSlotAPIAvailable</code>, <code>runeStateInitialized</code>, <code>runeReadyCount</code>, <code>runeEventCount</code>, <code>lastRuneResult</code>, do not post any Secret raw power.</li>
+</ol>
+<h3 id="c-groundeffect">C. GroundEffect</h3>
+<ol>
+<li>Add and activate in the ground effects list: Orb of Frost, Death and Decay, and Anti-Magic Stance. If the current talent replaces Death and Decay with Desecration, just keep one of the canonical IDs in the list; also record the actual Tooltip/<code>/eam showcast</code> cast ID that can be safely displayed.</li>
+<li>Each item starts with "Not yet cast, no icon" and is successfully cast once by the player; only this item is expected to appear. Other units, spellcasting that started but failed, and unknown IDs are not allowed to open the door.</li>
+<li>Death and Decay/Desecration: After switching the related talents, retest both Base and Override casts in non-combat situations; it is expected that both of them will hit this setting item, so there is no need to add two additional monitors.</li>
+<li>Anti-magic stance: If the AUTO analysis cannot obtain a clear number of seconds, change it to MANUAL and set the known seconds before retesting. If the position ends early due to the upper limit of absorption and the EAM icon is still counting down, mark it as <code>earlyTerminationUnavailable</code> limit and do not report it as Secret API success.</li>
+<li>Ball of Frost serves as the known normal control group; the three are tested one by one in and out of combat, specialization/talent switching and <code>/reload</code>. Any Lua error, taint, blocked action, icon not appearing or error canonical will be accompanied by screenshots and setting ID/safe cast ID.</li>
+</ol>
+<h3 id="d-charge-ring-returns">D. Charge RING returns</h3>
+<ol>
+<li>Test RING with at least two levels of charged skills; you should see a ring grid surrounding the icon, not a solid green strip or a single fan-shaped covering. Material/Radial capabilities should fall back to the BOTTOM linear bar when failing.</li>
+<li>After the first successful casting, even if API temporarily returns the old full snapshot, it cannot be removed immediately; the completion condition of <code>cooldownRemoveAura</code> can only be met by observing one layer less first and then returning it to full.</li>
+<li>Report the visual phase of current/max, RING/fallback, icon overlap with Glow, channel/build/Interface, Lua error/taint/blocked action. If current is Secret, only visualObservation is returned and no attempt is made to read the raw value.</li>
+</ol>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

@@ -621,17 +621,115 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="retail-server-addon-research-and-eventalertmod-optimization-route">Retail server AddOn research and EventAlertMod optimization route</h1>
+<p>This document compiles the research results discussed on 2026-05-26 on the Warcraft Wiki, Blizzard Forum, WoWInterface, CurseForge and Reddit AddOn, and plans the optimization matters and goals for the rewrite of the EventAlertMod Retail server.</p>
+<p>This document is not an actual machine verification report. All Retail 12.x behavior still requires loading tests in the WoW Retail / PTR client.</p>
+<h2 id="investigate-sources">Investigate sources</h2>
+<ul>
+<li>Warcraft Wiki: <code>API_change_summaries</code>, <code>Patch_12.0.0/API_changes</code>, <code>Patch_12.0.5/API_changes</code>, <code>Patch_12.0.7/API_changes</code>10EAMCODE_9__.</li>
+<li>Blizzard Forum: Discussions about Secret Values, UnitHealth, movement speed, PvP scoreboard, blocked action / taint in UI and Macro, Bug Report.</li>
+<li>WoWInterface: cells, TweaksUI: cooldown time, threat board, ViksUI, item upgrade quality icon, etc. Midnight update log.</li>
+<li>CurseForge: Midnight Sensei, MidnightSimpleAuras, Cooldown Cursor Manager, CooldownViewer Loader, MidnightCD, Enhance QoL and other project pages and change log files.</li>
+<li>Network and author feedback on 12.0 / 12.0.5 / Midnight AddOn API in Reddit: r/wow, r/WowUI, r/wowaddons, r/CompetitiveWoW.</li>
+</ul>
+<h2 id="latest-api-conclusion">Latest API conclusion</h2>
+<ul>
+<li>12.0.0 is the core starting point for Secret Values with AddOn versus API limitations.</li>
+<li>The most important for EAM in 12.0.5: API verbs, <code>table.freeze</code>, <code>table.isfrozen</code>, formatters, DurationObject, Aura field confidentiality adjustment, cooldown time <code>ignoreGCD</code>.</li>
+<li>12.0.7 API digested, TOC to <code>120007</code>; currently has minor direct core impact on EAM, but added <code>C_DurationUtil.CreateDurationTextBinding</code> exists, <code>C_DurationUtil.CreateManualClock</code>, and removed <code>C_DurationUtil.GetCurrentTime</code>.</li>
+<li><code>GetEventCPUUsage</code>, <code>GetFunctionCPUUsage</code>, <code>GetScriptCPUUsage</code> can be used as on-demand analysis candidates and cannot be placed in the hot path.</li>
+<li>Secret Values ​​is not a single field problem, but a general limitation in contaminated execution paths; it cannot be bypassed by <code>pcall</code>, comparison failure fallback, or tooltip grabbing.</li>
+</ul>
+<h2 id="community-and-cheat-trends">Community and cheat trends</h2>
+<ul>
+<li>Authors generally switch from "read the Aura/cooldown value and make your own judgment" to "let the Blizzard gadget / DurationObject display".</li>
+<li>Several plug-ins have been changed to value-by-value <code>issecretvalue</code> checks, and no longer only determine whether they are restricted based on context flags.</li>
+<li>Some Halo uptime plugins abandon combat Aura spellID comparison and instead use cast events and safe window prompts, but must be marked as derived and cannot pretend to be Halo facts.</li>
+<li>Cooldown plug-ins are obviously integrated with Blizzard CooldownViewer, DurationObject, cursor/HUD display and CDM configuration files to assist development.</li>
+<li>Nameplates, unit frames, PvP scoreboards, unit names / GUID / UnitIsUnit, movement speed, health/power type data are high risk in Midnight and EAM should not be included in core alert matching.</li>
+<li>Tooltip text may also contain secret values; tooltip parsing must be performed infrequently, checked line by line, and degraded quietly on failure.</li>
+<li>Taint/blocked actions are still a common pain point; avoiding polluting protected frames is more important than suppressing bugs after the fact.</li>
+</ul>
+<h2 id="eam-optimization-overall-goal">EAM Optimization overall goal</h2>
+<ol>
+<li>Maintain the lightweight positioning of EAM: simple, spellID-oriented, easier than WeakAuras.</li>
+<li>Rewrite the data layer as "security fact/derivative /displayOnly / boundaryWarnings" to clearly separate.</li>
+<li>The renderer prioritizes the Blizzard widget / DurationObject to avoid Lua’s own countdown and string cleaning.</li>
+<li>Adopt value-by-value security checks for Secret Values ​​and do not rely on single context protection.</li>
+<li>Try to support the Blizzard CooldownViewer ecosystem, but do not rely on external plug-ins.</li>
+<li>Reduce the risk of contamination: do not take safety actions, do not modify the protection framework, and do not hook up to the Blizzard protection chain.</li>
+<li>All debug/profiling/exports are on-demand and do not enter the hot path.</li>
+</ol>
+<h2 id="priority-p0-bottom-line-of-security-and-compatibility">Priority P0: Bottom line of security and compatibility</h2>
+<ul>
+<li>The TOC is currently fixed <code>120007</code>; the backup tool, CurseForge game version ID and actual machine verification must be confirmed before release.</li>
+<li>Establish a unified confidential and secure reading adapter for AuraService, CooldownService, and ItemCooldownService to avoid scattered judgments on each service.</li>
+<li>Disable Aura <code>spellID</code> from not checking the secret before direct comparison; if it is unsafe, the state changes to <code>boundaryLimited</code>.</li>
+<li>Disable tooltip columns without checking <code>string.match</code>.</li>
+<li>The renderer does not read back the cool frame getter as a fact.</li>
+<li>Defer any layout changes that may affect the frame structure while under combat lock.</li>
+</ul>
+<h2 id="priority-p1-stabilization-of-core-functions">Priority P1: Stabilization of core functions</h2>
+<ul>
+<li>Player Halo: Firstly, it supports the safe and absolutely safe self-buff/debuff; when it is unsafe, the icon/name or protected timer is displayed.</li>
+<li>Target Aura: Only track <code>target</code>, avoid target target/focus target/nameplate extension.</li>
+<li>Spell cooldown: Uses <code>C_Spell</code> structured return; takes precedence over <code>DurationObject</code>; supports <code>ignoreGCD</code>.</li>
+<li>Item cooling: direct itemID monitoring; no large-scale item scanning.</li>
+<li>State Model: Each alarm is clearly labeled <code>factsSafe</code>, <code>timer.mode</code>, <code>source.api</code>, <code>boundaryWarnings</code>.</li>
+<li>Debug snapshot: output facts/export/boundaryWarnings/environment, do not output unsafe raw values.</li>
+</ul>
+<h2 id="priority-p2-full-vs-low-gc">Priority P2: Full vs. Low GC</h2>
+<ul>
+<li>Add the scheduler task table to the pool to avoid repeated scheduling configurations.</li>
+<li>AuraService scan changed to "delta first + full update unit single scan" to avoid repeated scanning of the same units for each alert.</li>
+<li>The renderer gates the full value of <code>SetText</code>, <code>SetTexture</code>, <code>SetCooldown</code>, <code>SetPoint</code>.</li>
+<li>Reuse icon state and service state objects to avoid rendering and building a new table each time.</li>
+<li>On-demand analysis works on 12.0.7 CPU usage API, but is off by default.</li>
+</ul>
+<h2 id="priority-p3-user-experience">Priority P3: User experience</h2>
+<ul>
+<li>Keep simple semantics such as <code>/eam adds spellID</code>, <code>/eam deletes spellID</code>, and <code>/eam debug</code>.</li>
+<li>Options only perform necessary functions: adding/deleting and enabling switching of player Aura, target Aura, spell cooldown, and item cooldown.</li>
+<li>Added a simple UI state of "data protected" to avoid displaying errors to general users.</li>
+<li>Optionally provide CDM-related assistance: open the Blizzard Cooldown Viewer and prompt users to have cooldowns managed by CDM that are not suitable for EAM reading.</li>
+</ul>
+<h2 id="priority-p4-documentation-testing-and-release">Priority P4: Documentation, Testing and Release</h2>
+<ul>
+<li>Update <code>Docs/06_TEST_PLAN_RETAIL.md</code>: Added 12.0.7, DurationObject, secret tooltip, taint log, combat lock test.</li>
+<li>Create project-specific SKILL candidates:</li>
+<li>EAM folder and version synchronization.</li>
+<li>EAM WoW API Verification and file writeback.</li>
+<li>EAM Secret / Taint review.</li>
+<li>EAM Lua static verification and hot path scanning.</li>
+<li>Append to <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> when tool limit or API trap is encountered.</li>
+</ul>
+<h2 id="not-included-in-the-target">Not included in the target</h2>
+<ul>
+<li>No combat automation.</li>
+<li>Not making WeakAura script engine.</li>
+<li>Don't do PvP Enemy clickable frame.</li>
+<li>Disbelief in combat log reconstruction secret facts.</li>
+<li>Don't rebuild protected layouts in battle.</li>
+<li>Don’t treat tooltip scraping as a core source of data.</li>
+<li>Classic / MOP Classic / Cata / Wrath / Era are not supported.</li>
+</ul>
+<h2 id="next-step-suggestions">Next step suggestions</h2>
+<ol>
+<li>P0 safe reading, rendering combat delay, and scheduling task pool have been completed.</li>
+<li>Completed the first version of P1/P2: SavedVariables add/remove API, Slash add/remove, AuraService <code>UNIT_AURA</code> snapshot addition aware cache, debugging and debugging.</li>
+<li>The second half of P2 has been completed: AuraService fully updates the unit system in a single scan, with the minimum option to add/remove panel.</li>
+<li>P3 has actual measurement results: The user confirmed on the 12.0.7 PTR client that the <code>C_DurationUtil.CreateDurationTextBinding</code> minimum sample can be displayed normally.</li>
+<li>The next step should be to continue the actual machine verification of <code>UNIT_AURA</code> delta/full payload, DurationObject / DurationTextBinding integration, combat layout delay, and option template pollution log.</li>
+<li>After confirming the real machine, add the old EAM group/special power behavior, Options enable switching and CurseForge <code>120007</code> game version ID.</li>
+</ol>
+<h2 id="2026-07-26-route-status">2026-07-26 Route Status</h2>
+<ul>
+<li>Phase 1/2: Capability layer, rule compilation, schema v2, Legacy isolation and security scalar/key protection has been completed.</li>
+<li>Phase 3: player/target AuraContainer, Slot/Group, initializeFrame, out-of-war batch rebuild, Aura Sound 68914 completed contract PoC.</li>
+<li>Phase 4: Strict offline process and in-game reporting entrance completed; this round’s <code>all</code> suite is 17/17.</li>
+<li>Not yet completed: <code>_ptr_</code> real machine RQA, taint/Forbidden, actual sound, Reload UI and performance sign-off.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

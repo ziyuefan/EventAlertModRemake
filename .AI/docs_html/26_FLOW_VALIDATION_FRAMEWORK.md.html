@@ -982,17 +982,474 @@ D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAler
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eam-process-verification-and-development-feedback-framework">EAM Process verification and development feedback framework</h1>
+<h2 id="1-purpose">1. Purpose</h2>
+<p>Validation of EAM cannot stop at API to limit scanning with <code>luac -p</code>. This framework adds evidence of replayable behavioral processes:</p>
+<ol>
+<li>Static constraints and architectural boundaries.</li>
+<li>Lua 5.1 syntax.</li>
+<li>Offline Mock process.</li>
+<li>WoW Retail／PTR actual machine process.</li>
+<li>JSON／Markdown report feedback.</li>
+</ol>
+<p>Each layer of evidence must be marked independently; offline passing cannot be claimed as real machine passing.</p>
+<h2 id="2-architecture">2. Architecture</h2>
+<div class="mermaid">
+flowchart LR
+    A["正式 FlowTestRunner 案例"] --> B["Lua 5.1 Offline Harness"]
+    A --> C["Retail/PTR FlowTestPanel"]
+    C --> I["LiveTestPanel 37 案人工觀察"]
+    B --> D["JSON + Markdown"]
+    C --> E["EAM_FLOW_TEST_REPORT_JSON"]
+    I --> J["EAM_LIVE_TEST_REPORT_JSON"]
+    E --> F["WTF SavedVariables"]
+    J --> F
+    D --> G["開發環境 TestResults"]
+    F --> H["Import-EAMFlowReport.ps1"]
+    H --> G
+</div>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<table>
+<thead>
+<tr>
+<th>Components</th>
+<th>Execution Environment</th>
+<th>Responsibilities</th>
+<th>Release Packages</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Debug/FlowTestRunner.lua</code></td>
+<td>Offline and in-game</td>
+<td>Case registration, suite, asynchronous completion, JSON reporting</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Debug/FlowTestPanel.lua</code></td>
+<td>Retail／PTR</td>
+<td>Test buttons, status, copy reports</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Debug/ValidationEnvironment.lua</code></td>
+<td>Offline and in-game</td>
+<td>client build/Interface/declaration version identity cross-validated with three original test-build flags</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Debug/LiveTestSession.lua</code></td>
+<td>Retail／PTR</td>
+<td>37 case artificial state, boot-token <code>/reload</code> checkpoint, combat write guard, note masking and real person JSON</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Debug/LiveTestPanel.lua</code></td>
+<td>Retail／PTR</td>
+<td>Players manually record and copy reports, and do not automatically operate the game</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Tests/FlowValidationHarness.lua</code></td>
+<td>Lua 5.1</td>
+<td>Mock WoW API and load the official module directly</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>.AI/Tools/Run-FlowValidation.ps1</code></td>
+<td>Development side</td>
+<td>Execute suite, output JSON／Markdown</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>.AI/Tools/Import-EAMFlowReport.ps1</code></td>
+<td>Development side</td>
+<td>Import WTF or JSON, verify Flow/Live schema, recalculate summary and raw build flags, check client identity and reject privacy value</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>.AI/Tools/Test-ValidationContracts.ps1</code></td>
+<td>Development side</td>
+<td>Verify JSON Schema, 21 points/37 cases Lua synchronization, continuity drift, PowerShell AST and importer positive and negative examples</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>EAM_FLOW_TEST_REPORT_JSON</code></td>
+<td>WoW SavedVariables</td>
+<td>Save the last user triggered report string</td>
+<td>Data only</td>
+</tr>
+<tr>
+<td><code>EAM_LIVE_TEST_REPORT_JSON</code></td>
+<td>WoW SavedVariables</td>
+<td>Save the last player manual signature report string</td>
+<td>Data only</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-suite-and-built-in-cases">3. Suite and built-in cases</h2>
+<table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Case</th>
+<th>Verification content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>quick</td>
+<td><code>boot.initialized</code></td>
+<td>Main initialization completed</td>
+</tr>
+<tr>
+<td>quick／core</td>
+<td><code>event.custom_roundtrip</code></td>
+<td>Custom event registration, dispatch, removal handler</td>
+</tr>
+<tr>
+<td>core</td>
+<td><code>scheduler.next_frame</code></td>
+<td>Central Scheduler asynchronous callback and queue zeroing</td>
+</tr>
+<tr>
+<td>quick/core</td>
+<td><code>saved_variables.contract</code></td>
+<td>schema, alerts, and public mutations API</td>
+</tr>
+<tr>
+<td>boundary</td>
+<td><code>boundary.safe_scalar</code></td>
+<td>Safe normal value path for Secret/access helper</td>
+</tr>
+<tr>
+<td>boundary</td>
+<td><code>runtime_probe.schema</code></td>
+<td>The environment, capability and summary structure of the real machine capability probe</td>
+</tr>
+<tr>
+<td>quick／boundary</td>
+<td><code>report.json_roundtrip</code></td>
+<td>JSON serializer and case array contracts</td>
+</tr>
+</tbody>
+</table>
+<p><code>all</code> will execute all cases. When adding a cross-module process, you need to register a case with the official runner, and the offline harness will automatically obtain the same case.</p>
+<h2 id="4-offline-execution">4. Offline execution</h2>
+<p>Full verification:</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\.AI\Tools\CheckLuaSyntax.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\.AI\Tools\Run-FlowValidation.ps1 -Suite all
+pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1
+</code></pre>
 
+<p>Available suites:</p>
+<pre class="codehilite"><code class="language-powershell">.\.AI\Tools\Run-FlowValidation.ps1 -Suite quick
+.\.AI\Tools\Run-FlowValidation.ps1 -Suite core
+.\.AI\Tools\Run-FlowValidation.ps1 -Suite boundary
+.\.AI\Tools\Run-FlowValidation.ps1 -Suite all
+</code></pre>
+
+<p>The output is located at <code>.AI/TestResults/</code> and is not included in Git by default. If any case is <code>failed</code> or <code>pending</code>, the tool returns exit code 1.</p>
+<h2 id="5-in-game-actual-process">5. In-game actual process</h2>
+<p>Before running the actual machine, execute the local version and deployment target assertions:</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
+    -File .\.AI\Tools\Test-LocalWoWEnvironment.ps1
+</code></pre>
+
+<p>The tool compares the expected patch train with WoW main program <code>ProductVersion</code>, and checks that <code>Interface\AddOn\EventAlertMod</code> of the measured channel is a complete entity directory with no nested Reparse Point and containing TOC. In case of failure, exit code 1 is returned, prohibiting continued physical machine sign-in; the complete build and target evidence are output to <code>.AI/TestResults/</code>.</p>
+<p>For non-combat use:</p>
+<ul>
+<li>"Process Test" button at the bottom of Options.</li>
+<li><code>/eam test</code>: Open the panel.</li>
+<li><code>/eam test quick</code></li>
+<li><code>/eam test core</code></li>
+<li><code>/eam test boundary</code></li>
+<li><code>/eam test aura121</code></li>
+<li><code>/eam test all</code></li>
+<li><code>/eam test live</code> or <code>/eam test manual</code>: Open the 37-case live sign-in workbench.
+The ability panel provides Quick, Core, Boundary, Aura121, All, "Double Countdown Diagnosis", "UnitPower Ability" and "Copy Development Report" buttons; the live workbench also requires players to select <code>_ptr_</code>/<code>_xptr_</code>/<code>_retail_</code>. If the first creation of a panel is raised during combat, it will be delayed to <code>PLAYER_REGEN_ENABLED</code>; existing panels cannot start sessions, write cases/notes, create checkpoints, or complete sign-offs during combat.
+The live workbench only records player observations. It does not pause tooltips, click game buttons, cast spells, use items, execute macros, change targets, or call <code>ReloadUI</code>. <code>/reload</code> Both checkpoint and final writeback must be operated by the player. Note: Only anonymous observations are allowed. Accounts, roles, servers, WTF or absolute disk paths are not allowed.</li>
+</ul>
+<p>The actual machine report only represents that the runner was successfully executed on the client; RQA still needs to be completed:
+- Retail or PTR build, Interface, <code>isTestBuildKnown</code> and the three original build flags.
+- Characters, professions, specializations and scenarios.
+- Combat/non-combat status.
+- Lua error, taint log, blocked action.
+- Required images or videos.</p>
+<h2 id="6-development-feedback">6. Development feedback</h2>
+<p>After the in-game runner and live workbench are completed, independent SavedVariable will be updated:</p>
+<pre class="codehilite"><code class="language-lua">EAM_FLOW_TEST_REPORT_JSON = &quot;{...}&quot;
+EAM_LIVE_TEST_REPORT_JSON = &quot;{...}&quot;
+</code></pre>
+
+<p>Panel "Copy" directly obtains the latest JSON in memory. If you import from WTF, after completing the report, the player must <code>/reload</code> or log out normally, and WoW will write the latest SavedVariables back to the disk; without this step, the importer may still read the old schema/old session.</p>
+<p>The native development benchmark root directory is:</p>
+<pre class="codehilite"><code class="language-text">D:\World of Warcraft
+</code></pre>
+
+<p>It is currently confirmed that <code>_retail_</code>, <code>_ptr_</code>, <code>_xptr_</code> all have <code>WTF</code> and <code>Interface\AddOn</code>. The latest 2026-08-08 read-only snapshot is as follows; the build will be updated, and the environment assertion must still be re-run before the actual machine:</p>
+<table>
+<thead>
+<tr>
+<th>Version tree</th>
+<th>Executable file</th>
+<th>Actual version</th>
+<th>Process evidence purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_retail_</code></td>
+<td><code>Wow.exe</code></td>
+<td>12.0.7.68974</td>
+<td>Retail server</td>
+</tr>
+<tr>
+<td><code>_ptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.1.0.69189</td>
+<td>12.1 PTR</td>
+</tr>
+<tr>
+<td><code>_xptr_</code></td>
+<td><code>WowT.exe</code></td>
+<td>12.0.7.68887</td>
+<td>12.0.7 PTR</td>
+</tr>
+</tbody>
+</table>
+<p>EAM The actual machine report candidate path is deduced based on the test client:</p>
+<pre class="codehilite"><code class="language-text">D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_ptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+</code></pre>
+
+<p>Before importing, you must first confirm the client version used for testing. You are not allowed to obtain evidence from the Classic version tree, and you are not allowed to write account or role names into files and reports. 2026-08-21 The three AddOn targets are all entity directories, but only PTR contains TOC; Retail/XPTR must not be signed before the deployment is completed and the environment assertion is passed. The refill process only reads WTF and does not modify the AddOn target; see <code>.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md</code> for complete rules.</p>
+<p>Import command:</p>
+<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
+    -File .\.AI\Tools\Import-EAMFlowReport.ps1 `
+    -Path '&lt;EventAlertMod.lua 或 report.json&gt;'
+</code></pre>
+
+<p>The output is located at <code>TestResults/Imported/</code>. The import tool does not modify WTF.</p>
+<h2 id="7-report-contract">7. Report Contract</h2>
+<pre class="codehilite"><code class="language-json">{
+  &quot;schema&quot;: 2,
+  &quot;type&quot;: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
+  &quot;purpose&quot;: &quot;offline-contract|capability-probe&quot;,
+  &quot;matrixVersion&quot;: &quot;2026-08-08.1&quot;,
+  &quot;suite&quot;: &quot;all&quot;,
+  &quot;status&quot;: &quot;pass&quot;,
+  &quot;environment&quot;: {
+    &quot;executionSource&quot;: &quot;offline-mock|client&quot;,
+    &quot;source&quot;: &quot;offline-mock|ptr-live-manual|xptr-live-manual|retail-live-manual&quot;,
+    &quot;declaredInstallation&quot;: &quot;offline|_ptr_|_xptr_|_retail_&quot;,
+    &quot;channelValidation&quot;: &quot;pass|mismatch|unconfirmed&quot;,
+    &quot;interface&quot;: 120007,
+    &quot;isTestBuild&quot;: true,
+    &quot;isTestBuildKnown&quot;: true,
+    &quot;buildFlags&quot;: {
+      &quot;isPublicTestClient&quot;: true,
+      &quot;isTestBuild&quot;: true,
+      &quot;isBetaBuild&quot;: false
+    },
+    &quot;initialized&quot;: true,
+    &quot;inCombat&quot;: false,
+    &quot;locale&quot;: &quot;zhTW&quot;
+  },
+  &quot;summary&quot;: {
+    &quot;total&quot;: 32,
+    &quot;passed&quot;: 32,
+    &quot;failed&quot;: 0,
+    &quot;skipped&quot;: 0,
+    &quot;pending&quot;: 0
+  },
+  &quot;cases&quot;: [],
+  &quot;boundaryWarnings&quot;: []
+}
+</code></pre>
+
+<p>Use an independent contract for real person signature:</p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;schema&quot;: 1,
+  &quot;type&quot;: &quot;EAM_LIVE_VALIDATION_REPORT&quot;,
+  &quot;purpose&quot;: &quot;rqa-signoff&quot;,
+  &quot;matrixVersion&quot;: &quot;2026-08-08.1&quot;,
+  &quot;status&quot;: &quot;pass|fail|incomplete&quot;,
+  &quot;session&quot;: {
+    &quot;phase&quot;: &quot;active|complete&quot;,
+    &quot;reloadSequence&quot;: 1,
+    &quot;resumedAfterReload&quot;: true,
+    &quot;humanObserved&quot;: true
+  },
+  &quot;environment&quot;: {
+    &quot;executionSource&quot;: &quot;client&quot;,
+    &quot;declaredInstallation&quot;: &quot;_ptr_|_xptr_|_retail_&quot;,
+    &quot;source&quot;: &quot;ptr-live-manual|xptr-live-manual|retail-live-manual&quot;,
+    &quot;isTestBuild&quot;: true,
+    &quot;isTestBuildKnown&quot;: true,
+    &quot;buildFlags&quot;: {
+      &quot;isPublicTestClient&quot;: true,
+      &quot;isTestBuild&quot;: true,
+      &quot;isBetaBuild&quot;: false
+    }
+  },
+  &quot;automation&quot;: {
+    &quot;gameInputAutomated&quot;: false,
+    &quot;reloadUIAutomated&quot;: false,
+    &quot;playerOperated&quot;: true
+  },
+  &quot;summary&quot;: { &quot;total&quot;: 37, &quot;required&quot;: 37 },
+  &quot;cases&quot;: [],
+  &quot;boundaryWarnings&quot;: []
+}
+</code></pre>
+
+<p>The corresponding schemas are located at <code>Schemas/EAM_FlowValidationReport.schema.json</code> and <code>Schemas/EAM_LiveValidationReport.schema.json</code>. Live <code>pass</code> is constrained by schema at the same time complete phase, at least one reload, known build identity, 37/37, zero warning; schema 1 Flow lacks a trusted client identity and can only output <code>legacy-unverified</code> and refuse to sign with exit code 1.
+Reports may only contain test control values ​​and confirmed secure environment fields; they may not contain Secret, Protected, full SavedVariables, unbounded event logs, raw Aura/Cooldown facts, account/role/server, or file system paths. Masked first in the game, the importer will still recursively check the attribute name and string value.</p>
+<h2 id="8-add-case-rules">8. Add case rules</h2>
+<ol>
+<li>Use stable case ID: <code>domain.behavior</code>.</li>
+<li>Register as <code>FlowTestRunner.registerCase</code>.</li>
+<li>Specify quick/core/boundary suite.</li>
+<li>The synchronization case directly returns <code>true/false, message</code>.</li>
+<li>Asynchronous cases return <code>"pending"</code> and call <code>context.complete</code> when completed.</li>
+<li>Clean up the EventRouter handler, Scheduler task and any temporary status after the test is completed.</li>
+<li>Do not modify player settings; if the case must test mutation, use a copy or complete rollback.</li>
+<li>Update this document, test plan and problem log.</li>
+</ol>
+<h2 id="9-encapsulation-and-release-gate">9. Encapsulation and release gate</h2>
+<p>Formal package default execution:</p>
+<ol>
+<li>TOC Path and Consistency.</li>
+<li>Lua 5.1 syntax.</li>
+<li>Offline <code>all</code> process.</li>
+<li>JSON Schema, blackjack/37 cases Lua synchronization, continuity drift, TOC and PowerShell AST contracts.</li>
+<li>Sensitive information scanning.</li>
+<li>zip exclusion check.</li>
+</ol>
+<p><code>-SkipFlowValidation</code> should only be used to diagnose tool environment issues and should not be used as part of an official release. Even if the package is passed, it still does not mean that the Retail/PTR actual machine is passed.</p>
+<h2 id="10-known-limitations">10. Known limitations</h2>
+<ul>
+<li>Offline Harness does not have WoW C++ Secret, Forbidden, taint or protected frame semantics.</li>
+<li><code>boundary.safe_scalar</code> only verifies normal secure value paths; the real Secret must be observed in-game via the secure UI channel.</li>
+<li>The process panel does not perform spellcasting, item usage, target changing, or secure actions.</li>
+<li>Reports are not automatically uploaded to the network; feedback must be done by the user copying the JSON or providing the WTF file.</li>
+<li>12.1 AuraContainer/AuraButton and AuraSound cases have been included in the 37-case matrix, but PTR still needs to be completed on the actual machine.</li>
+<li>WoW only writes SavedVariables in the memory back to WTF at <code>/reload</code>, normal logout, etc.; the player must confirm that the save has been completed before directly reading the file.</li>
+</ul>
+<h2 id="2026-07-26aura121-suite">2026-07-26：aura121 suite</h2>
+<ul>
+<li>Added <code>Tests/Mocks/WoW121AuraMock.lua</code>, AuraContainer/AuraButton to use strict method whitelist; unknown methods will fail directly.</li>
+<li>Added <code>aura121</code> suite and in-game "12.1 Aura" button, <code>/eam test aura121</code>.</li>
+<li>Case coverage capability, zero Legacy pipeline, Slot/Group compiler, container rebuild with 18 build limit, battle pending, three Sound IDs and no-op revision.</li>
+<li>2026-07-26 This round of offline <code>aura121</code> first version is 7/7; after adding 12.0.7, migration, ShadowHost cases, <code>all</code> is 17/17. The report is located at <code>TestResults/</code>.</li>
+<li>These results only prove that Lua call contracts; PTR Widget, Sound, Forbidden, taint, CPU/GC are still signed by RQA.</li>
+</ul>
+<h2 id="2026-07-28-schema-2-text-layout-and-real-person-signature">2026-07-28: schema 2. Text layout and real person signature</h2>
+<ul>
+<li><code>Data/TextPlacementContract.json</code> defines the 21 o'clock position and word level 8–32 shared by timers/applications; 12.0.7 Renderer and 12.1 NativeAuraRenderer no longer hardcode inside/outside branches respectively.</li>
+<li><code>Data/LiveValidationMatrix.json</code> Definition 18 Case <code>_ptr_</code>/<code>_xptr_</code>/<code>_retail_</code> artificial matrix; <code>Schemas/</code> provides four schemas: Flow, Live, Matrix, TextPlacement.</li>
+<li>Added <code>ValidationEnvironment</code> to cross-verify player declarations with <code>GetBuildInfo</code>, Interface, test-build capabilities; mismatch/unconfirmed will cause reports to remain <code>incomplete</code>.</li>
+<li><code>LiveTestSession</code> supports 500 characters UTF-8 remarks, <code>/reload</code> checkpoint and cross-reload recovery; 18 cases, environment, warning or reload cannot be passed if any threshold is not completed.</li>
+<li>Importer recalculates summary, matrix, source and client identity; offline fixtures, old schema, wrong client profile or reports with privacy fields are fail-closed.</li>
+<li>2026-07-28 Offline results: Lua 45/45, Flow <code>all</code> 30/30, Validation Contracts 72/72; the importer accepts schema 2 <code>offline-mock</code> but does not upgrade the actual machine, and rejects Live offline fixture and Flow schema 1.</li>
+<li><code>.AI/Tools/Test-LocalWoWEnvironment.ps1</code> passed 3/3 on the same day: <code>_retail_</code> 12.0.7, <code>_ptr_</code> 12.1.0, <code>_xptr_</code> 12.0.7, and the three EAM Reparse Points all point to the entity project.</li>
+<li>The user-specified <code>_ptr_</code> SavedVariables was still Flow schema 1 when read-only imported on 2026-07-28, so the result is <code>legacy-unverified</code>; the new version must be loaded first in PTR, the artificial matrix must be completed, and then <code>/reload</code>/logout written back to disk.</li>
+<li>The real-life cases of <code>_ptr_</code> 12.1 and <code>_xptr_</code> 12.0.7 have not been signed yet; they cannot be replaced by the offline results of this section.</li>
+</ul>
+<h2 id="2026-07-29-p1-fail-closed-returns-to-the-existing-icon">2026-07-29: P1 fail-closed returns to the existing icon</h2>
+<ul>
+<li>Added <code>applyTextLayout()</code> to the general Renderer. Changes in settings will overwrite existing icons; all text/layout structures written during battle will only be set to pending/dirty, and playback after battle will be performed. Native AuraButton and all child regions are only allowed to be set within <code>initializeFrame</code>, and are no longer directly mutated after initialization.</li>
+<li>timer/applications/name font-level slider only updates SavedVariables and general icon preview during dragging; <code>OnMouseUp</code>/<code>OnHide</code> submits a Native container rebuild. icon size/spacing, swipe alpha and double countdown diagnosis are also applied with out-of-combat reconstruction; reaching the container limit requires the player <code>/reload</code>.</li>
+<li>AuraContainer has a single load creation limit of 18; after reaching the limit, the current container will be retained and <code>nativeReloadRequired</code> will be returned. The fingerprint no longer contains the global revision, only the actual rules, layout and necessary sound contracts.</li>
+<li>The newer SavedVariables schema retains the original <code>_G.EAM_DB</code>, and uses the safe defaults copy during execution; the downgraded version is not loaded to pretend to be migration.</li>
+<li>When there is no reload evidence in the real session, even if all 34 cases are passed, <code>complete()</code> still returns <code>reloadRequired</code>; the same load resume returns <code>sameLoadRejected</code>, and the producer is not allowed to output pass when the phase is still <code>active</code>; all session mutations in the battle return <code>combatDeferred</code>.</li>
+<li>Live/Flow schema retains the three original build flags. Live pass must be <code>isTestBuildKnown=true</code> and at least one raw flag is observable; the importer recalculates known/aggregate and rejects inconsistencies. Note: first block the absolute path, UNC, SavedVariables/WTF/Account, and then the importer will reject it recursively.</li>
+<li>2026-07-29 Latest offline results: Lua 45/45, Flow <code>all</code> 42/42, Validation Contracts 119/119; Flow artifact is <code>TestResults/EAM_FlowValidation_all_20260729_153728.json</code>, explicitly stated <code>purpose=offline-contract</code>, <code>executionSource/source=offline-mock</code>, <code>clientChannel=OFFLINE</code>. The contract test actually covers the complete synthesis pass, schema 2 Flow forward import and rejection cases; these are only offline contract evidence, not PTR/XPTR/Retail actual machine signing.</li>
+<li>The current 34 cases of manual sign-off for <code>_ptr_</code> 12.1 and <code>_xptr_</code> 12.0.7 have not yet been executed, and the status remains unchanged.</li>
+</ul>
+<h2 id="2026-08-01-ptr-report-correction-unitpower-probe-and-continuity-gate">2026-08-01: PTR report correction, UnitPower probe and continuity gate</h2>
+<ul>
+<li><code>Core/DurationAdapter.lua</code> solidifies without parameters Duration factory, <code>SetTimeFromStart</code>, DurationTextBinding setter and release life cycle; Cooldown, Item, Totem, GroundEffect are shared with Renderer.</li>
+<li>Native Aura normal mode hides CooldownFrame built-in second set of numbers; the test panel can clearly enable double reciprocal manual diagnosis. The two sets of displays share DurationObject and do not read back or compare automatically.</li>
+<li>strict Aura mock locks AuraButton and all child regions after <code>initializeFrame</code> ends; any subsequent <code>SetPoint</code>, <code>SetFont</code>, <code>SetSize</code> fails directly. Style fingerprint changes can only require a container rebuild.</li>
+<li>ItemCooldown monitors itemID of 12.1 <code>SPELL_UPDATE_COOLDOWN</code>; GroundEffect only parses static spell descriptions/Tooltip SpellDescription in non-combat, and uses manual fallback if it fails.</li>
+<li>ClassPower secondary resources take priority, use <code>displayValue</code> to make the value 1 still visible; the main resource Secret percent only directly sends the StatusBar/radial widget of the UnitPower capability probe, and the report does not contain the original value.</li>
+<li>Flow <code>all</code> offline results in 54/54. Live matrix was upgraded to <code>2026-08-08.1</code>, 34 cases; three clients are still pending, and offline results are not upgraded.</li>
+<li>Added <code>.AI/Docs/28_PROJECT_CONTINUITY.md</code>, <code>.AI/Data/ProjectContinuity.json</code> and strict Schema; <code>.AI/Tools/Test-ValidationContracts.ps1</code> is responsible for snapshot, ID, issue, matrix and privacy drift check.</li>
+</ul>
+<h2 id="2026-08-09-separation-of-real-machine-and-strict-mock-cases">2026-08-09: Separation of real machine and strict mock cases</h2>
+<ul>
+<li>If the Flow case requires <code>EAM.FlowTestMock</code>, overrides mock API, or checks the mock-only field, the mock must be checked first at the case entry; when the game client lacks mock, it returns <code>STATUS_SKIP</code> and a clear message, and must not return fail.</li>
+<li>Real client failures are only reserved for real capability/runtime contracts, such as Native backend unchecked, AuraContainer method missing, environment identity conflict, or player operation failure.</li>
+<li><code>EAM.API</code> is a frozen stable API alias; tests must not overwrite its top-level fields. When locale or API variants are required, they should be injected by an offline harness before freezing, or use a revertable nested mock.</li>
+<li>Client build raw flags must be retained item by item; test channel aggregate is calculated by the OR of public-test, test-build, beta. Strict mocks should reproduce observed false values ​​and cannot cover up conditional errors by setting all three flags to true.</li>
+<li>The failure message of <code>aura121.capability.native_complete</code> now includes backend, runtime, three raw flags and Container/Slot/Group/Layout capability for PTR to directly feed back the root cause.</li>
+<li>2026-08-09 Corrected offline results: Lua <code>47/47</code>, Flow <code>54/54</code>, Validation Contracts <code>217/217</code>, artifact is <code>TestResults/EAM_FlowValidation_all_20260809_185047.json</code>. The game client still requires players to rerun after <code>/reload</code>; offline results may not replace PTR Aura display.</li>
+</ul>
+<h2 id="2026-08-09-case-by-case-guidance-manual-copying-and-wtf-recirculation">2026-08-09: Case-by-case guidance, manual copying and WTF recirculation</h2>
+<ul>
+<li>The 34-case procedure of <code>Debug/LiveTestSession.lua</code> uses the same case ID as <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>; the panel must display the prerequisites, player steps, and passing evidence of the current case, not just a short, incomprehensible title.</li>
+<li>Flow/Live/Prompt exports EditBox without calling <code>Copy()</code>. The button only executes <code>SetFocus()</code> and <code>HighlightText()</code>, and then prompts the player to press Ctrl+C; the automatic clipboard is not part of the WoW public EditBox contract.</li>
+<li>Directly copy the panel content to obtain the latest report in memory. If <code>EventAlertMod.lua</code> is read from WTF, players must first <code>/reload</code> themselves or log out normally after completing the test, otherwise the disk content may fall behind.</li>
+<li>Use <code>.AI/Tools/Import-EAMFlowReport.ps1 -Path '&lt;使用者明確提供的檔案&gt;' -ReportType Flow|Live|UnitPower</code> for read-only import on the development side; the Account/role directory must not be enumerated, and the absolute path of the local machine must not be written into project files or reports.</li>
+<li><code>UnitPower</code> capability report only saves resultClass, sink accepted/rejected and manual visualObservation; <code>rawValuesCollected</code> must be false. Flower of Life and other non-UnitPower states should be verified in the Aura case.</li>
+<li>2026-08-09 The offline contracts are Flow <code>54/54</code> and Validation Contracts <code>264/264</code>; the real-person matrix did not automatically become a pass due to these results.</li>
+</ul>
+<h2 id="2026-08-09-svg-capability-probe-and-reinjection">2026-08-09: SVG Capability Probe and Reinjection</h2>
+<ul>
+<li>SVG probes are fixed in two cases: <code>svg.vector_graphics.set_svg</code> and <code>svg.texture.set_svg</code>, but the generated file adopts an asymmetric contract according to 69189.</li>
+<li>VectorGraphics sequentially validates SetSVG, HasSVG, GetSVGFileID classification, ClearSVG, HasSVG=false, re-SetSVG, HasSVG=true; fixed AddOn-local assets allow fileID classification as positive-number, zero or zero negative-number, still does not save raw file ID.</li>
+<li>Texture only requires SetSVG and ClearSVG; HasSVG/GetSVGFileID unavailable is the expected result. clearReload is determined by the pcall/callback values ​​of ClearSVG and SetSVG, and the final rendering is still marked by the player visualObservation.</li>
+<li>strict mock only allows VectorGraphics to expose four methods, Texture to expose Set/Clear, and assert that the Texture introspection call is 0; Flow all keeps 54 cases, and the SVG life cycle is merged into <code>boundary.safe_scalar</code>.</li>
+<li><code>EAM_SVG_CAPABILITY_REPORT_JSON</code> is included in SavedVariables; <code>ReportType SVG</code> of <code>.AI/Tools/Import-EAMFlowReport.ps1</code> recalculates capability, case, status according to kind, and the mutation test rejects false Vector HasSVG, missing Texture lifecycle and illegal Texture introspection.</li>
+<li>The original PTR report of Alpha 3 is retained as <code>Tests/Fixtures/EAM_SVGCapabilityReport.ptr69189-observed.json</code>: two cells SetSVG accepted and artificial pattern pass, but the old probe did not execute Texture clear/reload, so it is still incomplete evidence; it needs to be rerun with the revised version to sign for the complete capability pass.</li>
+<li>Latest offline evidence: Lua 50/50, Flow boundary 37/37, Flow all 54/54, Validation Contracts 264/264. Reporting still requires PTR player operation and visual inspection, no automatic operation WoW; 12.0.7 remains unsupported.</li>
+</ul>
+<h2 id="2026-08-13-aurasound-process-and-37-case-matrix">2026-08-13: AuraSound Process and 37 Case Matrix</h2>
+<ul>
+<li>Flow adds <code>aura121.sound.saved_variables_roundtrip</code>, <code>compiler_fingerprints</code>, <code>container_unchanged</code>, <code>failure_rollback</code>; <code>aura121.sound.lifecycle</code> to check three trigger payloads at the same time.</li>
+<li>strict mock injects Add return nil/throw and Remove throw and preserves call trace; does not relax unknown API.</li>
+<li>The Live matrix version is <code>2026-08-13.1</code>, with a total of 37 cases; three new artificial hearing cases: Added, ApplicationsIncreased, and Removed.</li>
+<li>The passing condition of the 12.0.7 case is that the control item capability is downgraded and zero 12.1 API is called, not AuraSound is actually broadcast.</li>
+<li>Offline Flow only proves normal setting data and registration life cycle; sound effect playback, dispersion, combat and caster/filter over-fire are still signed by the player.</li>
+<li>Offline gate in this round: Lua <code>54/54</code>, Flow <code>all 61/61</code>, Validation Contracts <code>355/355</code>; artifact is <code>TestResults/EAM_FlowValidation_all_20260813_013945.json</code>.</li>
+</ul>
+<h2 id="2026-08-13-alpha-4-module-and-profile-process">2026-08-13 Alpha 4: Module and profile process</h2>
+<ul>
+<li>The offline coverage of EAM_FLOW_TEST_REPORT includes v1-v5 class profile migration and modules.toggle.lifecycle; these cases only verify SavedVariables, handler gate, state cleanup and event registration number, and do not represent the screen signing of the game client.</li>
+<li>The candidate sources of /eam list, lookup, lookupfull, and showcast are fixed to the active class settings, SpellArray and safe casting candidates for this login; the output cannot be regarded as a complete professional database.</li>
+<li>Alpha 4 release archives are only packaged from the official TOC and whitelist; native deploy, Tests, TestResults, Tools, backup and LegacyReference are not included in Release ZIP.</li>
+<li>JSON/Base64 profile codec has not yet entered the Flow pass range; if it is added in the next round, parser rejection, checksum, preview/apply, replace/merge, combat deferral and no side effects tests need to be added.</li>
+</ul>
+<h2 id="2026-08-14-alpha-5-profile-font-and-language-process">2026-08-14 Alpha 5: Profile, font and language process</h2>
+<ul>
+<li>Flow adds EAMAP1 codec's round-trip, malformed/checksum/future schema rejection, preview zero side effects, merge/replace and combat guard; all parser results are verified with pure data mocks and no external Lua is executed.</li>
+<li>ui.text_layout.font_family Verify font whitelist, path mapping, SavedVariables revision no-op and invalid fallback.</li>
+<li>Locale contract verifies that EAM.L identity remains unchanged, EAM's own button/drop-down/condition/spec menu revalues ​​after EAM_LANGUAGE_CHANGED; Auto Detect label must be fixed in English.</li>
+<li>Offline gate in this round: Lua 56/56, Flow all 66/66, Validation Contracts 360/360. The latest Flow report is TestResults/EAM_FlowValidation_all_20260814_074036.json for this round; offline results do not replace PTR/XPTR/Retail real-person signature.</li>
+</ul>
+<h2 id="2026-08-14-retail-121-and-aura-catalog-process">2026-08-14 Retail 12.1 and Aura catalog process</h2>
+<ul>
+<li><code>ValidationEnvironment</code> Current profile: Retail/PTR 12.1, Interface 120100; XPTR 12.0.7, Interface 120007. Native backend relies on API/widget capability, test-build flags only do client identity.</li>
+<li>Flow adds <code>profile.catalog.batch_defaults</code> to isolate DB verification separator, deduplication, scope, <code>fromPlayer</code>, non-existent SpellID and single revision, and completely restore the test status at the end.</li>
+<li>The real-person matrix version has been upgraded to <code>2026-08-14.1</code>, which is still 37 cases; the program text synchronization writes Native as Retail/PTR 12.1, and Legacy is limited to XPTR 12.0.7.</li>
+<li>Profile ScrollFrame, dropdown three-state material, minimap gear and Wowhead candidate isolation are verified by Validation Contracts; visuals, wheel feel and Blizzard icon analysis are still determined by players.</li>
+<li>The latest offline gate: Lua 56/56, Flow 67/67, Validation Contracts 380/380. Latest Flow artifact: <code>TestResults/EAM_FlowValidation_all_20260814_110816.json</code>.</li>
+</ul>
+<h2 id="2026-08-21-player-multi-resource-and-package-pre-inspection">2026-08-21 Player multi-resource and package pre-inspection</h2>
+<p>New/updated offline cases in this round:</p>
+<ul>
+<li><code>unitpower.combat_native_sink_no_raw_reads</code></li>
+<li><code>unitpower.secondary_and_secret_sink</code></li>
+<li><code>unitpower.catalog_and_class_matrix</code></li>
+<li><code>unitpower.saved_variables_scope_roundtrip</code></li>
+<li><code>aura121.saved_variables.migration_v1_v6</code></li>
+</ul>
+<p>The complete <code>all</code> is 70/70 and the artifact is <code>.AI/TestResults/EAM_FlowValidation_all_20260821_043946.json</code>. <code>Deploy/Build-Package.ps1</code> will run AddOn Lua, Flow all, and Validation Contracts first. If any one is non-zero, it will stop immediately and ZIP will not be created.
+Flow will update the TestResults artifact used by the "latest report selection"; therefore, the development side must not execute Flow and Contracts in parallel. The correct sequence is to complete Flow and close the file before executing Contracts. This rule is an offline test arrangement requirement and does not mean that player resources have been visually passed in Retail/PTR.</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

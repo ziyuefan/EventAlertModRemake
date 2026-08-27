@@ -698,17 +698,197 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-expert-review-report-2026-06-21">EventAlertMod Expert review report (2026-06-21)</h1>
+<h2 id="1-report-scope">1. Report scope</h2>
+<p>This is a read-only review of expert governance of EventAlertMod Retail rewrite, Retail 12.1 Aura API, Secret/Taint, hot path, Object Pool and file fact consistency. The Lua function code has not been modified, nor has it been loaded into the WoW Retail or PTR client.</p>
+<p>Session seats:</p>
+<ul>
+<li>API/Aura Safety Seat: Check 12.1 AuraContainer/AuraButton and UnitAura exit risks.</li>
+<li>Taint/Performance Seat: Check the in-combat frame, Secret arithmetic, Scheduler and StatePool lifecycle.</li>
+<li>Architecture/Governance Chair: Check expert roster, RACI, Facts-of-Truth and document pollution.</li>
+<li>Master agent: cross-validates sources, performs static checks and makes final ratings.</li>
+</ul>
+<h2 id="2-evidence-baseline">2. Evidence Baseline</h2>
+<ul>
+<li>Blizzard Announcement: <a href="https://us.forums.blizzard.com/en/wow/t/AddOn-and-Aura-in-curse-of-ula%E2%80%99tek/2317456">AddOn and Aura in Curse of Ula'tek</a></li>
+<li>Warcraft Wiki: <a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes">Patch 12.1.0/API changes</a>, this verification and revision time is 2026-06-20 05:57 UTC.</li>
+<li>Native activity loading: <code>EventAlertMod.toc</code>, <code>Core/</code>, <code>Services/</code>, <code>Managers/</code>, <code>UI/</code>, <code>Debug/</code>.</li>
+<li>Static validation: <code>Tools/CheckLuaSyntax.ps1</code> with P0 keyword scan.</li>
+</ul>
+<p>Evidence status: Official/Wiki files have been verified, Lua statically passed; Retail/PTR has not been executed on the actual machine.</p>
+<h2 id="3-add-expert-decision-making">3. Add expert decision-making</h2>
+<table>
+<thead>
+<tr>
+<th>Abbreviation</th>
+<th>New role</th>
+<th>Reason for addition</th>
+<th>Single area of accountability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AURA121</code></td>
+<td><code>EAM_Aura_121_Migration_Expert</code></td>
+<td>Existing SEC/ARCH/UI No one continues to be responsible 12.1 Aura contract and old behavior exit conditions</td>
+<td>Retail 12.1 Aura migration</td>
+</tr>
+<tr>
+<td><code>RQA</code></td>
+<td><code>EAM_Retail_Client_QA_Expert</code></td>
+<td>Mock/static checking cannot replace real clients, taints and performance evidence</td>
+<td>Retail/PTR Real machine verification</td>
+</tr>
+<tr>
+<td><code>DOC</code></td>
+<td><code>EAM_Documentation_Governance_Expert</code></td>
+<td>Roster out of sync, <code>EAMCODE placeholder</code> contamination and mixed "implemented/live" lack of accountability</td>
+<td>Documentation and Facts-of-Truth</td>
+</tr>
+<tr>
+<td>The original roster was actually 20, but <code>Docs/17</code> claimed 16. After the addition, the canonical roster is 23, and the complete definition is based on <code>Docs/21_RACI_EXPERTS_MATRIX.md</code>.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-p0-blocked-items">4. P0 blocked items</h2>
+<h3 id="p0-1-there-is-no-legal-migration-path-for-retail-121-aura-core-yet">P0-1: There is no legal migration path for Retail 12.1 Aura core yet</h3>
+<ul>
+<li>Still using tick-by-tick AuraData scanning as of <code>Services/AuraService.lua:575</code>.</li>
+<li><code>Services/AuraService.lua:661</code> and <code>:701</code> still depend on <code>UNIT_AURA</code>/<code>GetAuraDataByAuraInstanceID</code>.</li>
+<li>The activity program does not have AuraContainer/AuraButton implementation.</li>
+<li>12.1 In restricted situations, the UnitAura class API may return complete secrets or <code>nil</code>, and the secret vector cannot be counted or iterated.</li>
+</ul>
+<p>Impact: Core player/target Aura reminders may be disabled in batches during combat, boss fights, M+ or PvP. This is a 12.1 readiness blocker, not a completed live reproduction.</p>
+<h3 id="p0-2-secret-time-may-re-enter-lua-comparison-and-scheduling">P0-2: Secret time may re-enter Lua comparison and scheduling</h3>
+<ul>
+<li><code>Services/AuraService.lua:392-400</code> After obtaining DurationObject, <code>duration</code>/<code>expirationTime</code> that have been determined to be possible Secrets are still saved.</li>
+<li><code>UI/Renderer.lua:679-698</code> does <code>&gt; 0</code> on <code>timer.duration</code> and passes in <code>Scheduler.after</code>.</li>
+</ul>
+<p>Impact: Secret comparison, arithmetic, or scheduling errors may be triggered. Protected/display-only paths must clear all old numbers instead of just changing the timer mode.</p>
+<h3 id="p0-3-itemcooldown-uses-wrong-secret-check-for-scalars">P0-3: ItemCooldown uses wrong Secret check for scalars</h3>
+<ul>
+<li><code>Services/ItemCooldownService.lua:147-152</code> Use <code>Util.isSecretTable</code> for time scalars instead of <code>isSecretValue</code>/<code>canAccessValue</code>.</li>
+<li>Subsequent type, size comparison and addition of values ​​are still performed.
+Impact: Restricted item cooldown may fail at Lua boundaries.</li>
+</ul>
+<h3 id="p0-4-protected-cooldown-may-retain-old-safety-numbers">P0-4: Protected cooldown may retain old safety numbers</h3>
+<ul>
+<li>The protected branch near <code>Services/CooldownService.lua:283</code> only updates mode/DurationObject, and the old <code>startTime</code>, <code>duration</code>, <code>expirationTime</code> are not cleared.</li>
+</ul>
+<p>Impact: Renderer may mistake the previous state for the current fact or continue scheduling.</p>
+<h2 id="5-p1-main-questions">5. P1 Main Questions</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Evidence</th>
+<th>Risk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tooltip nested Secret table</td>
+<td><code>AuraService.lua:275-294</code> directly obtains the length and index of <code>data.lines</code></td>
+<td>inaccessible table can be used immediately Lua error</td>
+</tr>
+<tr>
+<td>Static duration pretends to be remaining time</td>
+<td><code>AuraService.lua:359-385</code>, <code>:415-435</code> are marked with <code>now + scrapedDur</code> and <code>factsSafe=true</code></td>
+<td>Display wrong facts, violating derived value separation</td>
+</tr>
+<tr>
+<td>Complete scan misses HARMFUL</td>
+<td><code>AuraService.lua:596</code> without filter, declared player/target filters are not used</td>
+<td>Target debuff or player debuff complete refresh misses</td>
+</tr>
+<tr>
+<td>Aura instance removal scope error</td>
+<td><code>AuraService.lua:249-258</code>'s <code>count</code> is returned outside the block</td>
+<td>The last instance may not be hidden immediately when it is removed</td>
+</tr>
+<tr>
+<td>May be CreateFrame during combat</td>
+<td><code>IconPool.lua:93-104</code> directly after the pool is exhausted <code>createIcon()</code></td>
+<td>May be contaminated or blocked when exceeding 16 icons</td>
+</tr>
+<tr>
+<td>Structural UI operations in combat</td>
+<td><code>Renderer.lua:247-305</code> still executes Hide/Show/SetPoint/SetSize</td>
+<td>Inconsistent with stall and project combat-lockdown rules</td>
+</tr>
+<tr>
+<td>Scheduler task accumulation</td>
+<td><code>Renderer.lua:678-698</code> adds new due tasks for each render; <code>Scheduler.lua:73-94</code> linear scan for each frame</td>
+<td>Frequent events and long cooling may cause O(N)/frame</td>
+</tr>
+<tr>
+<td>StatePool overwriting/dangling reference</td>
+<td><code>AlertManager.lua:150</code>, <code>Renderer.lua:328-337</code></td>
+<td>hidden→shown overwriting may miss recycling; deferred state may have been wiped/reused</td>
+</tr>
+<tr>
+<td>Non-single OnUpdate</td>
+<td>Scheduler, Renderer, Options each have OnUpdate</td>
+<td>Inconsistent with the hard "single schedule OnUpdate"</td>
+</tr>
+<tr>
+<td>Shadow Host dormant attack surface</td>
+<td>Initialization and GetHostIcon have been disabled, but the hook/SetParent program is still active in the loading file</td>
+<td>Cannot be re-enabled directly, requires double gates of security and real machine</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-p2-and-file-governance-issues">6. P2 and file governance issues</h2>
+<ul>
+<li>The 16-bit claimed for <code>Docs/17</code> is inconsistent with the 20-bit actual roster for <code>Docs/21</code>.</li>
+<li>The old RACI table was translated as "arch/match/aud/a/right/i" and could not mechanically verify the unique <code>A</code>.</li>
+<li><code>Docs/20</code> describes the retired and unproven Shadow Host as 100% stable, 0-Taint/0-GC.</li>
+<li>Sections of <code>Docs/23</code>, LuaJIT, <code>pairs</code>, and branch prediction discussion lack WoW runtime measurements.</li>
+<li>The second half of <code>AGENTS.md</code> is repeated and contains a large amount of <code>EAMCODE placeholder</code> residue; it has not been modified in this round and should be cleaned up separately.</li>
+<li><code>Docs/02</code>, <code>Docs/10</code>, <code>Docs/19</code> are not yet incorporated into the new fact models of the 12.1 Aura Container/Forbidden Aspect.</li>
+</ul>
+<h2 id="7-verification-performed">7. Verification performed</h2>
+<ul>
+<li><code>git status --short --branch</code>: Confirm that existing untracked files have not been cleaned or overwritten.</li>
+<li><code>Tools/CheckLuaSyntax.ps1</code>: <code>Lua syntax OK: 32 files</code>.</li>
+<li>P0 static scan: old API, <code>OnUpdate</code>, <code>CreateFrame</code>, <code>SetParent</code>, <code>hooksecurefunc</code>, Secret and <code>table.freeze</code> paths.</li>
+<li>Warcraft Wiki MediaWiki API: Confirmed 12.1.0 TOC as <code>120100</code>, and obtained the 2026-06-20 revision.</li>
+</ul>
+<h2 id="8-validation-not-performed">8. Validation not performed</h2>
+<ul>
+<li>WoW Retail 12.0.7/12.1.0 PTR or Retail server loading.</li>
+<li>M+, PvP, raids, vehicles, specialization switching and Edit Mode.</li>
+<li>taint log, Lua error, CPU, memory, GC and frame time measurements.</li>
+<li>AuraContainer/AuraButton Eventually API behaves with Forbidden Aspects.</li>
+<li>More than 16 icons, single frame hidden→show with the same ID, deferred state recycling and Scheduler stress test.</li>
+</ul>
+<h2 id="9-release-and-repair-gate">9. Release and Repair Gate</h2>
+<ol>
+<li>Do not claim that Retail 12.1 is compatible or release 12.1 packages before P0 is closed.</li>
+<li>Shadow Host can only be tested in the isolated research branch; it cannot be enabled without dual evidence of <code>SEC</code> and <code>RQA</code>.</li>
+<li>Aura 12.1 migration is held accountable by <code>AURA121</code>, who must participate in consultation or verification.</li>
+<li>The actual machine can only be signed by <code>RQA</code> based on the build, steps, logs and results.</li>
+<li>The document conclusion is checked by <code>DOC</code> for source, date and verification status. It is prohibited to replace "implemented/to be implemented" with "completed".</li>
+</ol>
+<h2 id="10-implementation-summary-of-this-round">10. Implementation summary of this round</h2>
+<ol>
+<li>Change files: only modify expert governance and reporting Markdown/HTML, do not modify Lua.</li>
+<li>Major architecture changes: no program architecture changes; three new governance roles and three RACI areas added.</li>
+<li>Retain the old EAM behavior: All are retained, and the functions have not been changed in this round.</li>
+<li>Remove old behavior: None; only disables treating dormant Shadow Hosts as directly enableable.</li>
+<li>Lua／WoW API Assumption: 12.0.7 activity TOC; 12.1 API is still changing and requires capability detection and actual machine confirmation.</li>
+<li><code>table.create</code>/<code>table.freeze</code>: The usage method has not been modified in this round.</li>
+<li>Secret/Protected strategy: Do not bypass, do not forge time, and do not let old values ​​flow into the protected state.</li>
+<li>Static verification performed: 32 Lua archives syntax passed with P0 scan.</li>
+<li>No verification has been performed: Retail／PTR real machine, taint, performance and stress testing.</li>
+<li>WoW Retail server requirements: Required, traceability evidence established by <code>RQA</code>.</li>
+<li>Known risks: See P0/P1/P2 of this report.</li>
+<li>The next task: first establish the 12.1 Aura migration spike and ability matrix, and then repair the Secret time and combat frame P0.</li>
+</ol>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->
