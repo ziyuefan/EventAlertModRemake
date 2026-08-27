@@ -14,10 +14,17 @@ Dist/
 .codex/
 .codex-remote-attachments/
 
-# 其他衍生物。
+# 其他衍生物與本機機密憑證 (嚴格隔離，永不提交與上傳)。
 scratch/
 *.zip
 *.log
 __pycache__/
 *.pyc
 .AI/.AI/
+*secret*
+*secrets*
+*token*
+*.token
+.env
+.env.*
+.AI/local_secrets.json
