@@ -1048,4 +1048,15 @@ L.EAM_AUTO_SYNC_TALENTS = "Автосинхронизация талантов"
 L.EAM_TALENT_SYNC_SUCCESS = "Основные способности успешно синхронизированы с вашими активными талантами!"
 L.EAM_TOGGLE_ALL = "Развернуть/Свернуть"
 L.EAM_CATALOG_COMBAT_BLOCKED = "Каталог заклинаний недоступен во время боя."
+
+L.EAM_GROUP_ASSIGN_LABEL = "Группы (множественный выбор):"
+L.EAM_GROUP_NONE = "(Не назначено)"
+L.EAM_GROUP_SELECTED_COUNT = "Выбрано групп: %d"
+L.EAM_CATALOG_TARGET_MODULE = "Целевой модуль:"
+L.EAM_CATALOG_MOD_COOLDOWNS = "Кулдауны заклинаний"
+L.EAM_CATALOG_MOD_PLAYER_AURAS = "Ауры игрока"
+L.EAM_CATALOG_MOD_TARGET_AURAS = "Ауры цели"
+L.EAM_CATALOG_MOD_SPECIAL_AURAS = "Особые ауры"
+L.EAM_CATALOG_MOD_GROUND = "Наземные эффекты"
+
 end)

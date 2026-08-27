@@ -1046,4 +1046,15 @@ L.EAM_AUTO_SYNC_TALENTS = "활성 특성 자동 동기화"
 L.EAM_TALENT_SYNC_SUCCESS = "활성 특성에 맞는 핵심 능력이 성공적으로 동기화되었습니다!"
 L.EAM_TOGGLE_ALL = "확장/축소"
 L.EAM_CATALOG_COMBAT_BLOCKED = "전투 중에는 주문 카탈로그 패널을 열 수 없습니다."
+
+L.EAM_GROUP_ASSIGN_LABEL = "소속 그룹 (다중 선택):"
+L.EAM_GROUP_NONE = "(지정되지 않음)"
+L.EAM_GROUP_SELECTED_COUNT = "%d개 그룹 선택됨"
+L.EAM_CATALOG_TARGET_MODULE = "대상 모듈 목록:"
+L.EAM_CATALOG_MOD_COOLDOWNS = "주문 재사용 대기시간"
+L.EAM_CATALOG_MOD_PLAYER_AURAS = "자신 효과 (오라)"
+L.EAM_CATALOG_MOD_TARGET_AURAS = "대상 효과 (오라)"
+L.EAM_CATALOG_MOD_SPECIAL_AURAS = "특수 효과 (오라)"
+L.EAM_CATALOG_MOD_GROUND = "바닥 효과"
+
 end)

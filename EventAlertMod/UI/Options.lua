@@ -2999,7 +2999,7 @@ local function createFrame()
     -- 4. Spell Conditions Frame (Popup Sub-Window)
     -- ===================================================
     local condFrame = api.CreateFrame("Frame", "EAM_SpellConditionsFrame", UIParent, "BackdropTemplate")
-    condFrame:SetSize(340, 600)
+    condFrame:SetSize(360, 660)
     condFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     condFrame:SetFrameStrata("DIALOG")
     condFrame:SetBackdrop({
@@ -3030,6 +3030,7 @@ local function createFrame()
         end
     end)
     makeTitleCloseButton(condFrame, function()
+        if condFrame.groupMenu then condFrame.groupMenu:Hide() end
         if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
         condFrame:Hide()
     end)
@@ -3063,9 +3064,155 @@ local function createFrame()
     condIDText:SetText(string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", 0))
     condFrame.idText = condIDText
 
+    -- 所屬群組多選下拉選單 (Group Multi-select Dropdown)
+    local groupSelectLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    groupSelectLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -70)
+    bindText(groupSelectLabel, "EAM_GROUP_ASSIGN_LABEL", "所屬群組 (可複選):")
+    condFrame.groupSelectLabel = groupSelectLabel
+
+    local groupDropdown = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(groupDropdown) end
+    groupDropdown:SetSize(315, 22)
+    groupDropdown:SetPoint("TOPLEFT", groupSelectLabel, "BOTTOMLEFT", 0, -3)
+    setTooltip(groupDropdown, "點擊展開選單，為此技能複選歸屬戰術群組或自訂群組", "所屬群組")
+    condFrame.groupDropdown = groupDropdown
+
+    local groupMenu = api.CreateFrame("Frame", "EAM_CondGroupDropdownMenu", condFrame, "BackdropTemplate")
+    groupMenu:SetPoint("TOPLEFT", groupDropdown, "BOTTOMLEFT", 0, -2)
+    groupMenu:SetSize(315, 160)
+    groupMenu:SetFrameStrata("TOOLTIP")
+    groupMenu:SetClampedToScreen(true)
+    groupMenu:Hide()
+    if Theme and Theme.applyContainerBackground then
+        Theme.applyContainerBackground(groupMenu, true)
+    else
+        groupMenu:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 12, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 }
+        })
+        groupMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
+        groupMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    end
+    registerDropdownMenu(groupMenu, groupDropdown)
+    condFrame.groupMenu = groupMenu
+
+    local function updateGroupDropdownText(alertData)
+        if not alertData then return end
+        local GroupService = EAM.Services and EAM.Services.GroupService
+        local groups = GroupService and GroupService.getGroups and GroupService.getGroups() or {}
+        local selectedNames = {}
+        if type(alertData.groups) == "table" and #alertData.groups > 0 then
+            for _, g in ipairs(groups) do
+                for _, gid in ipairs(alertData.groups) do
+                    if gid == g.id then
+                        local gName = g.nameKey and EAM.L and EAM.L[g.nameKey] or g.name or g.id
+                        selectedNames[#selectedNames + 1] = gName
+                        break
+                    end
+                end
+            end
+        end
+        if #selectedNames == 0 then
+            groupDropdown:SetText(localized("EAM_GROUP_NONE", "(未指定群組)"))
+        elseif #selectedNames <= 2 then
+            groupDropdown:SetText(table.concat(selectedNames, ", "))
+        else
+            groupDropdown:SetText(string.format(localized("EAM_GROUP_SELECTED_COUNT", "已選 %d 個群組"), #selectedNames))
+        end
+    end
+    condFrame.updateGroupDropdownText = updateGroupDropdownText
+
+    local function populateGroupMenu(alertData)
+        if not alertData then return end
+        local GroupService = EAM.Services and EAM.Services.GroupService
+        local groups = GroupService and GroupService.getGroups and GroupService.getGroups() or {}
+        
+        local menuWidth = 315
+        local itemHeight = 22
+        local maxVisible = 7
+        local visibleCount = math.min(#groups, maxVisible)
+        groupMenu:SetSize(menuWidth, math.max(30, visibleCount * itemHeight + 8))
+
+        local buttons = groupMenu.buttons or {}
+        groupMenu.buttons = buttons
+
+        for i = 1, #buttons do
+            buttons[i]:Hide()
+        end
+
+        for idx, g in ipairs(groups) do
+            local btn = buttons[idx]
+            if not btn then
+                btn = api.CreateFrame("Button", nil, groupMenu)
+                btn:SetSize(menuWidth - 10, itemHeight)
+                
+                local icon = btn:CreateTexture(nil, "ARTWORK")
+                icon:SetSize(16, 16)
+                icon:SetPoint("LEFT", btn, "LEFT", 6, 0)
+                icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                btn.icon = icon
+
+                local text = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                text:SetPoint("LEFT", icon, "RIGHT", 6, 0)
+                text:SetPoint("RIGHT", btn, "RIGHT", -30, 0)
+                text:SetJustifyH("LEFT")
+                btn.text = text
+
+                local cb = api.CreateFrame("CheckButton", nil, btn, "UICheckButtonTemplate")
+                cb:SetSize(18, 18)
+                cb:SetPoint("RIGHT", btn, "RIGHT", -4, 0)
+                btn.cb = cb
+
+                finalizeDropdownMenuButton(btn, text, groupMenu)
+                buttons[idx] = btn
+            end
+
+            btn:ClearAllPoints()
+            btn:SetPoint("TOPLEFT", groupMenu, "TOPLEFT", 5, -4 - (idx - 1) * itemHeight)
+            btn.icon:SetTexture(g.icon or 134400)
+            local gName = g.nameKey and EAM.L and EAM.L[g.nameKey] or g.name or g.id
+            btn.text:SetText(gName)
+
+            local isSelected = false
+            if type(alertData.groups) == "table" then
+                for _, gid in ipairs(alertData.groups) do
+                    if gid == g.id then
+                        isSelected = true
+                        break
+                    end
+                end
+            end
+            btn.cb:SetChecked(isSelected)
+
+            local function toggle()
+                if GroupService and GroupService.toggleSpellGroup then
+                    GroupService.toggleSpellGroup(alertData, g.id)
+                end
+                populateGroupMenu(alertData)
+                updateGroupDropdownText(alertData)
+            end
+
+            btn:SetScript("OnClick", toggle)
+            btn.cb:SetScript("OnClick", toggle)
+            btn:Show()
+        end
+    end
+
+    groupDropdown:SetScript("OnClick", function()
+        if groupMenu:IsShown() then
+            groupMenu:Hide()
+        else
+            if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
+            populateGroupMenu(Options.currentEditingAlert)
+            groupMenu:Show()
+        end
+    end)
+
     -- Sliders (左側排版，Label 偏上 5px 防重疊)
     local stackSlider = api.CreateFrame("Slider", nil, condFrame, "OptionsSliderTemplate")
-    stackSlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -100)
+    stackSlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -135)
     stackSlider:SetMinMaxValues(0, 10)
     stackSlider:SetValueStep(1)
     stackSlider:SetObeyStepOnDrag(true)
@@ -3082,7 +3229,7 @@ local function createFrame()
     condFrame.stackSlider = stackSlider
 
     local glowSlider = api.CreateFrame("Slider", nil, condFrame, "OptionsSliderTemplate")
-    glowSlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -155)
+    glowSlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -190)
     glowSlider:SetMinMaxValues(0, 10)
     glowSlider:SetValueStep(1)
     glowSlider:SetObeyStepOnDrag(true)
@@ -3094,12 +3241,12 @@ local function createFrame()
     local glowVal = glowSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     glowVal:SetPoint("BOTTOMRIGHT", glowSlider, "TOPRIGHT", 0, 5)
     glowSlider:SetScript("OnValueChanged", function(self, val)
-        glowVal:SetText(mathFloor(val))
+        stackVal:SetText(mathFloor(val))
     end)
     condFrame.glowSlider = glowSlider
 
     local redLimitSlider = api.CreateFrame("Slider", nil, condFrame, "OptionsSliderTemplate")
-    redLimitSlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -210)
+    redLimitSlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -245)
     redLimitSlider:SetMinMaxValues(0, 10)
     redLimitSlider:SetValueStep(1)
     redLimitSlider:SetObeyStepOnDrag(true)
@@ -3116,7 +3263,7 @@ local function createFrame()
     condFrame.redLimitSlider = redLimitSlider
 
     local prioritySlider = api.CreateFrame("Slider", nil, condFrame, "OptionsSliderTemplate")
-    prioritySlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -265)
+    prioritySlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -300)
     prioritySlider:SetMinMaxValues(1, 20)
     prioritySlider:SetValueStep(1)
     prioritySlider:SetObeyStepOnDrag(true)
@@ -3134,7 +3281,7 @@ local function createFrame()
 
     -- Checkboxes (右側排版)
     local fromPlayerCb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
-    fromPlayerCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -96)
+    fromPlayerCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -131)
     fromPlayerCb.text = fromPlayerCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fromPlayerCb.text:SetPoint("LEFT", fromPlayerCb, "RIGHT", 4, 1)
     bindText(fromPlayerCb.text, "EAM_OPT_COND_PLAYER_ONLY", "僅監控自己施放")
@@ -3148,8 +3295,8 @@ local function createFrame()
             condFrame,
             "",
             175,
-            -96 - (index - 1) * 34,
-            150,
+            -131 - (index - 1) * 34,
+            160,
             26,
             function(self)
                 if self.eamValue == nil then
@@ -3170,13 +3317,13 @@ local function createFrame()
     end
 
     local valTitle = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    valTitle:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -135)
+    valTitle:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -170)
     valTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
     bindText(valTitle, "EAM_OPT_COND_VAL_TITLE", "顯示光環細部數值:")
     condFrame.valTitle = valTitle
 
     local val1Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
-    val1Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -160)
+    val1Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -195)
     val1Cb.text = val1Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val1Cb.text:SetPoint("LEFT", val1Cb, "RIGHT", 4, 1)
     bindText(val1Cb.text, "EAM_OPT_COND_VAL1", "顯示數值 1 (Value 1)")
@@ -3184,7 +3331,7 @@ local function createFrame()
     condFrame.val1Cb = val1Cb
 
     local val2Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
-    val2Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -190)
+    val2Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -225)
     val2Cb.text = val2Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val2Cb.text:SetPoint("LEFT", val2Cb, "RIGHT", 4, 1)
     bindText(val2Cb.text, "EAM_OPT_COND_VAL2", "顯示數值 2 (Value 2)")
@@ -3192,7 +3339,7 @@ local function createFrame()
     condFrame.val2Cb = val2Cb
 
     local val3Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
-    val3Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -220)
+    val3Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -255)
     val3Cb.text = val3Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val3Cb.text:SetPoint("LEFT", val3Cb, "RIGHT", 4, 1)
     bindText(val3Cb.text, "EAM_OPT_COND_VAL3", "顯示數值 3 (Value 3)")
@@ -3200,7 +3347,7 @@ local function createFrame()
     condFrame.val3Cb = val3Cb
 
     local val4Cb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
-    val4Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -250)
+    val4Cb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -285)
     val4Cb.text = val4Cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     val4Cb.text:SetPoint("LEFT", val4Cb, "RIGHT", 4, 1)
     bindText(val4Cb.text, "EAM_OPT_COND_VAL4", "顯示數值 4 (Value 4)")
@@ -3209,7 +3356,7 @@ local function createFrame()
 
     -- 地面技能專屬控制項
     local durationModeCb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
-    durationModeCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -100)
+    durationModeCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -135)
     durationModeCb.text = durationModeCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     durationModeCb.text:SetPoint("LEFT", durationModeCb, "RIGHT", 4, 1)
     bindText(durationModeCb.text, "EAM_OPT_COND_TOOLTIP", "啟用動態 Tooltip 擷取")
@@ -3217,13 +3364,13 @@ local function createFrame()
     condFrame.durationModeCb = durationModeCb
 
     local manualDurationLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    manualDurationLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -145)
+    manualDurationLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -175)
     bindText(manualDurationLabel, "EAM_OPT_COND_MANUAL_DUR", "手動設定時間 (秒)")
     condFrame.manualDurationLabel = manualDurationLabel
 
     local manualDurationEditBox = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
     manualDurationEditBox:SetSize(80, 20)
-    manualDurationEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -165)
+    manualDurationEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -195)
     manualDurationEditBox:SetAutoFocus(false)
     manualDurationEditBox:SetNumeric(false)
     setTooltip(manualDurationEditBox, "若無法自動解析 Tooltip，可手動在此輸入固定持續秒數", "手動設定時間")
@@ -3253,14 +3400,14 @@ local function createFrame()
 
     -- 12.1 AuraSound：使用 SavedVariables 的普通 Spell ID 與素材，不讀取 AuraData。
     local auraSoundTitle = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    auraSoundTitle:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -310)
+    auraSoundTitle:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -345)
     bindText(auraSoundTitle, "EAM_OPT_AURA_SOUND_TITLE", "12.1 光環事件音效")
     condFrame.auraSoundTitle = auraSoundTitle
 
     local auraSoundDropdown = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(auraSoundDropdown) end
     auraSoundDropdown:SetSize(160, 22)
-    auraSoundDropdown:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -330)
+    auraSoundDropdown:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -365)
     setTooltip(auraSoundDropdown, "選擇此法術專屬觸發時播放的音效", "光環專屬音效")
     condFrame.auraSoundDropdown = auraSoundDropdown
 
@@ -3318,6 +3465,7 @@ local function createFrame()
         if auraSoundMenu:IsShown() then
             auraSoundMenu:Hide()
         else
+            if condFrame.groupMenu then condFrame.groupMenu:Hide() end
             populateAuraSoundMenu()
             auraSoundMenu:Show()
         end
@@ -3357,31 +3505,31 @@ local function createFrame()
     end
 
     condFrame.auraSoundAddedCb = createAuraSoundCheckbox(
-        "EAM_OPT_AURA_SOUND_ADDED", "光環新增", 20, -365, "獲得此光環時播放音效"
+        "EAM_OPT_AURA_SOUND_ADDED", "光環新增", 20, -395, "獲得此光環時播放音效"
     )
     condFrame.auraSoundApplicationsCb = createAuraSoundCheckbox(
-        "EAM_OPT_AURA_SOUND_APPLICATIONS_INCREASED", "層數增加", 175, -365, "光環堆疊層數增加時播放音效"
+        "EAM_OPT_AURA_SOUND_APPLICATIONS_INCREASED", "層數增加", 175, -395, "光環堆疊層數增加時播放音效"
     )
     condFrame.auraSoundRemovedCb = createAuraSoundCheckbox(
-        "EAM_OPT_AURA_SOUND_REMOVED", "光環移除", 20, -395, "光環結束消失時播放音效"
+        "EAM_OPT_AURA_SOUND_REMOVED", "光環移除", 20, -425, "光環結束消失時播放音效"
     )
 
     local auraSoundHint = condFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    auraSoundHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -425)
-    auraSoundHint:SetWidth(300)
+    auraSoundHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -450)
+    auraSoundHint:SetWidth(320)
     auraSoundHint:SetJustifyH("LEFT")
     bindText(auraSoundHint, "EAM_OPT_AURA_SOUND_INHERIT", "三項皆未勾選時沿用全域音效；實際觸發需 PTR 真人驗證。")
     condFrame.auraSoundHint = auraSoundHint
 
     -- 自訂替代圖示 (代碼或材質路徑)
     local customIconLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    customIconLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -450)
+    customIconLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -475)
     bindText(customIconLabel, "EAM_OPT_CUSTOM_ICON_LABEL", "自訂替代圖示 (代碼或材質路徑):")
     condFrame.customIconLabel = customIconLabel
 
     local customIconEditBox = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
     customIconEditBox:SetSize(250, 20)
-    customIconEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -468)
+    customIconEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -493)
     customIconEditBox:SetAutoFocus(false)
     setTooltip(customIconEditBox, "輸入替代圖示的 FileDataID 數字代碼或材質路徑（留空使用技能預設圖示）", "自訂替代圖示")
     condFrame.customIconEditBox = customIconEditBox
@@ -3404,13 +3552,13 @@ local function createFrame()
     end)
 
     local customIconHint = condFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    customIconHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -494)
+    customIconHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -518)
     customIconHint:SetText("可在 WoW.tools / Wago Tools 查詢圖示代碼與路徑:")
     condFrame.customIconHint = customIconHint
 
     local customIconUrl = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
     customIconUrl:SetSize(285, 18)
-    customIconUrl:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -510)
+    customIconUrl:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -534)
     customIconUrl:SetAutoFocus(false)
     customIconUrl:SetText("https://wago.tools/icons")
     setTooltip(customIconUrl, "點擊反白複製網址前往 Wago Tools 查詢圖示代碼", "圖示查詢網站")
@@ -3418,7 +3566,7 @@ local function createFrame()
     condFrame.customIconUrl = customIconUrl
 
     -- 底部按鈕
-    createThemedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -550, 130, 26, function()
+    createThemedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -580, 130, 26, function()
         local d = Options.currentEditingAlert
         if d then
             local customIconText = condFrame.customIconEditBox:GetText()
@@ -3527,11 +3675,21 @@ local function createFrame()
                 end
             end
 
+            local GroupService = EAM.Services and EAM.Services.GroupService
+            if GroupService and GroupService.refreshCache then
+                GroupService.refreshCache()
+            end
+            local savedVariables = EAM.Modules.SavedVariables
+            if savedVariables and savedVariables.markRevisionChanged then
+                savedVariables.markRevisionChanged()
+            end
+
             local isAura = d.kind == EAM.Constants.ALERT_KIND_AURA
             Options.notifyConfigChanged(not isAura)
             if d.kind == "groundEffect" then
                 notifyGroundEffectConfigChanged()
             end
+            if condFrame.groupMenu then condFrame.groupMenu:Hide() end
             condFrame.auraSoundMenu:Hide()
             condFrame:Hide()
             Options.refreshList()
@@ -3542,13 +3700,15 @@ local function createFrame()
     local cancelBtn = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(cancelBtn) end
     cancelBtn:SetSize(130, 26)
-    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -550)
+    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -580)
     bindText(cancelBtn, "EAM_OPT_COND_CANCEL_BTN", "取消關閉 (Cancel)")
     setTooltip(cancelBtn, "放棄變更並關閉條件設定視窗", "取消關閉")
     cancelBtn:SetScript("OnClick", function()
+        if condFrame.groupMenu then condFrame.groupMenu:Hide() end
         condFrame.auraSoundMenu:Hide()
         condFrame:Hide()
     end)
+
 
     Options.condFrame = condFrame
 
@@ -3600,6 +3760,8 @@ function Options.openConditionsFrame(data)
     cf.auraSoundApplicationsCb:SetChecked(auraSound and auraSound.applicationsIncreased ~= nil)
     cf.auraSoundRemovedCb:SetChecked(auraSound and auraSound.removed ~= nil)
     cf.auraSoundMenu:Hide()
+    if cf.groupMenu then cf.groupMenu:Hide() end
+    if cf.updateGroupDropdownText then cf.updateGroupDropdownText(data) end
 
     local auraSoundWidgets = {
         cf.auraSoundTitle,

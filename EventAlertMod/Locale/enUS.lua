@@ -1049,4 +1049,15 @@ L.EAM_AUTO_SYNC_TALENTS = "Auto-Sync Active Talents"
 L.EAM_TALENT_SYNC_SUCCESS = "Successfully synchronized core abilities matching your active talent build!"
 L.EAM_TOGGLE_ALL = "Expand/Collapse"
 L.EAM_CATALOG_COMBAT_BLOCKED = "Spell catalog panel cannot be opened during combat."
+
+L.EAM_GROUP_ASSIGN_LABEL = "Assigned Groups (Multi-select):"
+L.EAM_GROUP_NONE = "(None)"
+L.EAM_GROUP_SELECTED_COUNT = "%d Groups Selected"
+L.EAM_CATALOG_TARGET_MODULE = "Target Module List:"
+L.EAM_CATALOG_MOD_COOLDOWNS = "Spell Cooldowns"
+L.EAM_CATALOG_MOD_PLAYER_AURAS = "Player Auras"
+L.EAM_CATALOG_MOD_TARGET_AURAS = "Target Auras"
+L.EAM_CATALOG_MOD_SPECIAL_AURAS = "Special Auras"
+L.EAM_CATALOG_MOD_GROUND = "Ground Effects"
+
 end)

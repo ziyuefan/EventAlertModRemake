@@ -5,11 +5,12 @@ Module: UI/SpellCatalogTreePanel
 
 理念:
 - 提供階層式全量法術庫與智慧預設面板（三態勾選樹）。
+- 支援選擇目標模組清單（技能冷卻、自身光環、目標光環、特殊光環、地面效果）。
 - 支援「依當前天賦自動勾選」一鍵同步與多維戰術情境範本套用。
 
 責任:
 - 呈現職業、專精、戰術分類（爆發/減傷/控場/地面）與英雄天賦之樹狀結構。
-- 支援法術一鍵批次啟用/停用。
+- 支援法術一鍵批次加入/移除至指定模組清單。
 - 整合 SpellBookScannerService 動態探測。
 
 邊界:
@@ -28,6 +29,7 @@ local Panel = {
     treeRows = {},
     controls = {},
     searchQuery = "",
+    targetModule = "spellCooldowns", -- "spellCooldowns" | "playerAuras" | "targetAuras" | "specialAuras" | "groundEffects"
     expandedNodes = {}, -- [nodeKey] = bool
 }
 EAM.UI.SpellCatalogTreePanel = Panel
@@ -76,6 +78,55 @@ local function getSpellDisplayInfo(sid)
     return "Spell " .. tostring(sid), 134400
 end
 
+local MODULE_OPTIONS = {
+    { id = "spellCooldowns", textKey = "EAM_CATALOG_MOD_COOLDOWNS", fallback = "技能冷卻" },
+    { id = "playerAuras", textKey = "EAM_CATALOG_MOD_PLAYER_AURAS", fallback = "自身光環" },
+    { id = "targetAuras", textKey = "EAM_CATALOG_MOD_TARGET_AURAS", fallback = "目標光環" },
+    { id = "specialAuras", textKey = "EAM_CATALOG_MOD_SPECIAL_AURAS", fallback = "特殊光環" },
+    { id = "groundEffects", textKey = "EAM_CATALOG_MOD_GROUND", fallback = "地面效果" },
+}
+
+local function getModuleName(modId)
+    for _, opt in ipairs(MODULE_OPTIONS) do
+        if opt.id == modId then
+            return localized(opt.textKey, opt.fallback)
+        end
+    end
+    return modId
+end
+
+local function addSpellToTargetModule(sv, sid)
+    if not sv then return end
+    local mod = Panel.targetModule or "spellCooldowns"
+    if mod == "playerAuras" then
+        if sv.addAuraAlert then sv.addAuraAlert("player", sid, { enabled = true, fromPlayer = true }) end
+    elseif mod == "targetAuras" then
+        if sv.addAuraAlert then sv.addAuraAlert("target", sid, { enabled = true, fromPlayer = true }) end
+    elseif mod == "specialAuras" then
+        if sv.addAuraAlert then sv.addAuraAlert("special", sid, { enabled = true, fromPlayer = false }) end
+    elseif mod == "groundEffects" then
+        if sv.addGroundEffectAlert then sv.addGroundEffectAlert(sid, { enabled = true, durationMode = "AUTO" }) end
+    else
+        if sv.addSpellCooldownAlert then sv.addSpellCooldownAlert(sid, { enabled = true }) end
+    end
+end
+
+local function removeSpellFromTargetModule(sv, sid)
+    if not sv then return end
+    local mod = Panel.targetModule or "spellCooldowns"
+    if mod == "playerAuras" then
+        if sv.removeAuraAlert then sv.removeAuraAlert("player", sid) end
+    elseif mod == "targetAuras" then
+        if sv.removeAuraAlert then sv.removeAuraAlert("target", sid) end
+    elseif mod == "specialAuras" then
+        if sv.removeAuraAlert then sv.removeAuraAlert("special", sid) end
+    elseif mod == "groundEffects" then
+        if sv.removeGroundEffectAlert then sv.removeGroundEffectAlert(sid) end
+    else
+        if sv.removeSpellCooldownAlert then sv.removeSpellCooldownAlert(sid) end
+    end
+end
+
 -- 建立面板 Frame
 local function createPanel()
     if Panel.frame then
@@ -83,7 +134,7 @@ local function createPanel()
     end
 
     local frame = CreateFrame("Frame", "EAM_SpellCatalogTreeFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(620, 540)
+    frame:SetSize(650, 560)
     frame:SetFrameStrata("HIGH")
     frame:SetToplevel(true)
     frame:EnableMouse(true)
@@ -111,15 +162,15 @@ local function createPanel()
 
     local subTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     subTitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
-    Locale.bindText(subTitle, "EAM_CATALOG_TREE_SUBTITLE", "以階層樹狀檢視全職業核心技能，支援三態勾選、戰術分類與依天賦智慧同步")
+    Locale.bindText(subTitle, "EAM_CATALOG_TREE_SUBTITLE", "以階層樹狀檢視全職業核心技能，支援自選目標模組、戰術分類與依天賦智慧同步")
 
     -- 搜尋框
     local searchLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     searchLabel:SetPoint("TOPLEFT", subTitle, "BOTTOMLEFT", 0, -12)
-    Locale.bindText(searchLabel, "EAM_SEARCH_LABEL", "🔍 搜尋:")
+    Locale.bindText(searchLabel, "EAM_SEARCH_LABEL", "搜尋:")
 
     local searchEdit = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
-    searchEdit:SetSize(160, 20)
+    searchEdit:SetSize(110, 20)
     searchEdit:SetPoint("LEFT", searchLabel, "RIGHT", 6, 0)
     searchEdit:SetAutoFocus(false)
     searchEdit:SetScript("OnTextChanged", function(self)
@@ -128,24 +179,61 @@ local function createPanel()
     end)
     Panel.controls.searchEdit = searchEdit
 
+    -- 目標模組下拉選單 (Target Module List Dropdown)
+    local modDropdown = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    modDropdown:SetSize(140, 22)
+    modDropdown:SetPoint("LEFT", searchEdit, "RIGHT", 10, 0)
+    if Theme and Theme.registerButton then Theme.registerButton(modDropdown) end
+    Panel.controls.modDropdown = modDropdown
+
+    local modMenu = CreateFrame("Frame", "EAM_CatalogModMenu", frame, "BackdropTemplate")
+    modMenu:SetSize(140, #MODULE_OPTIONS * 24 + 8)
+    modMenu:SetPoint("TOPLEFT", modDropdown, "BOTTOMLEFT", 0, -2)
+    modMenu:SetFrameStrata("TOOLTIP")
+    modMenu:SetClampedToScreen(true)
+    modMenu:Hide()
+    if Theme and Theme.applyContainerBackground then
+        Theme.applyContainerBackground(modMenu, true)
+    end
+    Panel.controls.modMenu = modMenu
+
+    for idx, opt in ipairs(MODULE_OPTIONS) do
+        local mBtn = CreateFrame("Button", nil, modMenu, "UIPanelButtonTemplate")
+        mBtn:SetSize(130, 20)
+        mBtn:SetPoint("TOPLEFT", modMenu, "TOPLEFT", 5, -4 - (idx - 1) * 24)
+        mBtn:SetText(localized(opt.textKey, opt.fallback))
+        if Theme and Theme.registerButton then Theme.registerButton(mBtn) end
+        mBtn:SetScript("OnClick", function()
+            Panel.targetModule = opt.id
+            modMenu:Hide()
+            Panel.refresh()
+        end)
+    end
+
+    modDropdown:SetScript("OnClick", function()
+        if modMenu:IsShown() then
+            modMenu:Hide()
+        else
+            modMenu:Show()
+        end
+    end)
+
     -- 智慧同步按鈕：依當前天賦自動勾選
     local syncBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    syncBtn:SetSize(150, 22)
-    syncBtn:SetPoint("LEFT", searchEdit, "RIGHT", 12, 0)
-    Locale.bindText(syncBtn, "EAM_AUTO_SYNC_TALENTS", "⚡ 依當前天賦智慧勾選")
+    syncBtn:SetSize(140, 22)
+    syncBtn:SetPoint("LEFT", modDropdown, "RIGHT", 8, 0)
+    Locale.bindText(syncBtn, "EAM_AUTO_SYNC_TALENTS", "依當前天賦智慧勾選")
     if Theme and Theme.registerButton then Theme.registerButton(syncBtn) end
     syncBtn:SetScript("OnClick", function()
         local scanner = getScannerService()
         if scanner then
             scanner.scan()
-            -- 自動為玩家點出的天賦打勾
             local sh = getSpellHeuristics()
             local sv = getSavedVariables()
             if sh and sv and scanner.knownSpells then
                 for spellId in pairs(scanner.knownSpells) do
-                    -- 若該法術存在於候選庫，自動確保其在 SavedVariables 中存在且啟用
                     if sh.SPELL_META and sh.SPELL_META[spellId] then
-                        sv.addSpellCooldownAlert(spellId, { enabled = true })
+                        addSpellToTargetModule(sv, spellId)
                     end
                 end
                 print("|cff00ff96EAM|r " .. localized("EAM_TALENT_SYNC_SUCCESS", "已成功依照當前天賦自動同步核心技能！"))
@@ -157,8 +245,8 @@ local function createPanel()
 
     -- 展開/收合全部
     local toggleAllBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    toggleAllBtn:SetSize(90, 22)
-    toggleAllBtn:SetPoint("LEFT", syncBtn, "RIGHT", 8, 0)
+    toggleAllBtn:SetSize(80, 22)
+    toggleAllBtn:SetPoint("LEFT", syncBtn, "RIGHT", 6, 0)
     Locale.bindText(toggleAllBtn, "EAM_TOGGLE_ALL", "展開/收合")
     if Theme and Theme.registerButton then Theme.registerButton(toggleAllBtn) end
     toggleAllBtn:SetScript("OnClick", function()
@@ -186,7 +274,7 @@ local function createPanel()
     treeScroll:SetPoint("BOTTOMRIGHT", treeContainer, "BOTTOMRIGHT", -26, 6)
 
     local treeContent = CreateFrame("Frame", nil, treeScroll)
-    treeContent:SetSize(560, 10)
+    treeContent:SetSize(580, 10)
     treeScroll:SetScrollChild(treeContent)
     Panel.controls.treeContent = treeContent
 
@@ -197,6 +285,7 @@ local function createPanel()
     Locale.bindText(closeBtn, "EAM_ABOUT_CLOSE", "關閉")
     if Theme and Theme.registerButton then Theme.registerButton(closeBtn) end
     closeBtn:SetScript("OnClick", function()
+        if Panel.controls.modMenu then Panel.controls.modMenu:Hide() end
         frame:Hide()
     end)
 
@@ -212,7 +301,7 @@ local function getOrCreateTreeRow(rowIndex, treeParent)
     local row = Panel.treeRows[rowIndex]
     if not row then
         row = CreateFrame("Button", nil, treeParent, "BackdropTemplate")
-        row:SetSize(550, 26)
+        row:SetSize(580, 26)
         if Theme and Theme.applyContainerBackground then
             Theme.applyContainerBackground(row, true)
         end
@@ -252,9 +341,39 @@ function Panel.refresh()
     local sv = getSavedVariables()
     local alerts = sv and sv.getActiveAlerts and sv.getActiveAlerts() or {}
     local activeSpells = {}
-    for kind, list in pairs(alerts) do
-        if type(list) == "table" then
-            for sId, alert in pairs(list) do
+
+    local mod = Panel.targetModule or "spellCooldowns"
+    if Panel.controls.modDropdown then
+        Panel.controls.modDropdown:SetText((localized("EAM_CATALOG_TARGET_MODULE", "目標模組: ")) .. getModuleName(mod))
+    end
+
+    if mod == "playerAuras" and alerts.playerAuras then
+        for sId, alert in pairs(alerts.playerAuras) do
+            if alert and (alert.enabled ~= false and alert.enable ~= false) then
+                activeSpells[tonumber(sId) or sId] = true
+            end
+        end
+    elseif mod == "targetAuras" and alerts.targetAuras then
+        for sId, alert in pairs(alerts.targetAuras) do
+            if alert and (alert.enabled ~= false and alert.enable ~= false) then
+                activeSpells[tonumber(sId) or sId] = true
+            end
+        end
+    elseif mod == "specialAuras" and alerts.specialAuras then
+        for sId, alert in pairs(alerts.specialAuras) do
+            if alert and (alert.enabled ~= false and alert.enable ~= false) then
+                activeSpells[tonumber(sId) or sId] = true
+            end
+        end
+    elseif mod == "groundEffects" and alerts.groundEffects then
+        for sId, alert in pairs(alerts.groundEffects) do
+            if alert and (alert.enabled ~= false and alert.enable ~= false) then
+                activeSpells[tonumber(sId) or sId] = true
+            end
+        end
+    else
+        if alerts.spellCooldowns then
+            for sId, alert in pairs(alerts.spellCooldowns) do
                 if alert and (alert.enabled ~= false and alert.enable ~= false) then
                     activeSpells[tonumber(sId) or sId] = true
                 end
@@ -280,7 +399,7 @@ function Panel.refresh()
 
         -- Spec 父節點
         local row = getOrCreateTreeRow(rowIndex, treeParent)
-        row:SetSize(550, 26)
+        row:SetSize(580, 26)
         row:ClearAllPoints()
         row:SetPoint("TOPLEFT", treeParent, "TOPLEFT", 0, -yOffset)
         if row.icon then row.icon:Hide() end
@@ -304,9 +423,9 @@ function Panel.refresh()
             local checkVal = self:GetChecked()
             for _, sid in ipairs(spellList) do
                 if checkVal then
-                    sv.addSpellCooldownAlert(sid, { enabled = true })
+                    addSpellToTargetModule(sv, sid)
                 else
-                    sv.removeSpellCooldownAlert(sid)
+                    removeSpellFromTargetModule(sv, sid)
                 end
             end
             Panel.refresh()
@@ -336,7 +455,7 @@ function Panel.refresh()
 
                 if matchesSearch then
                     local sRow = getOrCreateTreeRow(rowIndex, treeParent)
-                    sRow:SetSize(530, 24)
+                    sRow:SetSize(560, 24)
                     sRow:ClearAllPoints()
                     sRow:SetPoint("TOPLEFT", treeParent, "TOPLEFT", 16, -yOffset)
                     if sRow.icon then
@@ -363,9 +482,9 @@ function Panel.refresh()
                     sRow.cb:SetChecked(isChecked)
                     sRow.cb:SetScript("OnClick", function(self)
                         if self:GetChecked() then
-                            sv.addSpellCooldownAlert(sid, { enabled = true })
+                            addSpellToTargetModule(sv, sid)
                         else
-                            sv.removeSpellCooldownAlert(sid)
+                            removeSpellFromTargetModule(sv, sid)
                         end
                         Panel.refresh()
                     end)
@@ -408,6 +527,7 @@ end
 
 function Panel.hide()
     if Panel.frame then
+        if Panel.controls.modMenu then Panel.controls.modMenu:Hide() end
         Panel.frame:Hide()
     end
 end
