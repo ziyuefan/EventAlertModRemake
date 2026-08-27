@@ -1,11 +1,14 @@
 # EventAlertMod Retail 12.1 (EAM)
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
 [![Release](https://img.shields.io/badge/release-Alpha%208.2-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
 > 🚀 **專為《魔獸世界：正式服 (Retail 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
+>
+> 🌐 **官方線上說明文件與導航中心**：[https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
 
 ---
 
@@ -305,3 +308,12 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - 相容通道 Retail 12.0.7+ (Interface 120007)
 - **不支援環境**：
   - 經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等不在本專案支援範圍）。
+
+---
+
+## 🌐 說明文件與相關連結 (Documentation & Links)
+
+- 📖 **GitHub Pages 說明文件導航中心**：[https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
+- 📦 **GitHub 專案原始碼與 Release 發布**：[https://github.com/ziyuefan/EventAlertModRemake](https://github.com/ziyuefan/EventAlertModRemake)
+- 📜 **CurseForge 專案發布頁面**：[https://www.curseforge.com/wow/addons/eventalertmod](https://www.curseforge.com/wow/addons/eventalertmod)
+- 💬 **WoWInterface 專案發布頁面**：[https://www.wowinterface.com/downloads/info26550-EventAlertMod.html](https://www.wowinterface.com/downloads/info26550-EventAlertMod.html)
