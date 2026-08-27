@@ -208,6 +208,36 @@ local function createPanel()
     return frame
 end
 
+local function getOrCreateTreeRow(rowIndex, treeParent)
+    local row = Panel.treeRows[rowIndex]
+    if not row then
+        row = CreateFrame("Button", nil, treeParent, "BackdropTemplate")
+        row:SetSize(550, 26)
+        if Theme and Theme.applyContainerBackground then
+            Theme.applyContainerBackground(row, true)
+        end
+
+        local icon = row:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(18, 18)
+        icon:SetPoint("LEFT", row, "LEFT", 28, 0)
+        icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        row.icon = icon
+
+        local text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        text:SetPoint("LEFT", row, "LEFT", 10, 0)
+        text:SetJustifyH("LEFT")
+        row.text = text
+
+        local cb = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
+        cb:SetSize(20, 20)
+        cb:SetPoint("RIGHT", row, "RIGHT", -6, 0)
+        row.cb = cb
+
+        Panel.treeRows[rowIndex] = row
+    end
+    return row
+end
+
 -- 刷新勾選樹
 function Panel.refresh()
     if not Panel.frame or not Panel.frame:IsShown() then
@@ -249,28 +279,15 @@ function Panel.refresh()
         local isExpanded = Panel.allExpanded or Panel.expandedNodes[nodeKey] or true
 
         -- Spec 父節點
-        local row = Panel.treeRows[rowIndex]
-        if not row then
-            row = CreateFrame("Button", nil, treeParent, "BackdropTemplate")
-            row:SetSize(550, 26)
-            if Theme and Theme.applyContainerBackground then
-                Theme.applyContainerBackground(row, true)
-            end
-
-            local text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-            text:SetPoint("LEFT", row, "LEFT", 10, 0)
-            row.text = text
-
-            local cb = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
-            cb:SetSize(20, 20)
-            cb:SetPoint("RIGHT", row, "RIGHT", -6, 0)
-            row.cb = cb
-
-            Panel.treeRows[rowIndex] = row
-        end
-
+        local row = getOrCreateTreeRow(rowIndex, treeParent)
+        row:SetSize(550, 26)
         row:ClearAllPoints()
         row:SetPoint("TOPLEFT", treeParent, "TOPLEFT", 0, -yOffset)
+        if row.icon then row.icon:Hide() end
+        row.text:ClearAllPoints()
+        row.text:SetPoint("LEFT", row, "LEFT", 10, 0)
+        row.text:SetPoint("RIGHT", row.cb, "LEFT", -6, 0)
+
         local arrow = isExpanded and "▼ " or "▶ "
         row.text:SetText(string.format("%s專精 %s (共 %d 個推薦法術)", arrow, tostring(specId), #spellList))
 
@@ -318,37 +335,23 @@ function Panel.refresh()
                 end
 
                 if matchesSearch then
-                    local sRow = Panel.treeRows[rowIndex]
-                    if not sRow then
-                        sRow = CreateFrame("Button", nil, treeParent, "BackdropTemplate")
-                        sRow:SetSize(530, 24)
-                        if Theme and Theme.applyContainerBackground then
-                            Theme.applyContainerBackground(sRow, true)
-                        end
-
-                        local sIcon = sRow:CreateTexture(nil, "ARTWORK")
-                        sIcon:SetSize(18, 18)
-                        sIcon:SetPoint("LEFT", sRow, "LEFT", 28, 0)
-                        sIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-                        sRow.icon = sIcon
-
-                        local sText = sRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                        sText:SetPoint("LEFT", sIcon, "RIGHT", 6, 0)
-                        sText:SetPoint("RIGHT", sRow, "RIGHT", -30, 0)
-                        sText:SetJustifyH("LEFT")
-                        sRow.text = sText
-
-                        local sCb = CreateFrame("CheckButton", nil, sRow, "UICheckButtonTemplate")
-                        sCb:SetSize(18, 18)
-                        sCb:SetPoint("RIGHT", sRow, "RIGHT", -6, 0)
-                        sRow.cb = sCb
-
-                        Panel.treeRows[rowIndex] = sRow
-                    end
-
+                    local sRow = getOrCreateTreeRow(rowIndex, treeParent)
+                    sRow:SetSize(530, 24)
                     sRow:ClearAllPoints()
                     sRow:SetPoint("TOPLEFT", treeParent, "TOPLEFT", 16, -yOffset)
-                    sRow.icon:SetTexture(spellIcon or 134400)
+                    if sRow.icon then
+                        sRow.icon:Show()
+                        sRow.icon:ClearAllPoints()
+                        sRow.icon:SetPoint("LEFT", sRow, "LEFT", 28, 0)
+                        sRow.icon:SetTexture(spellIcon or 134400)
+                    end
+                    sRow.text:ClearAllPoints()
+                    if sRow.icon then
+                        sRow.text:SetPoint("LEFT", sRow.icon, "RIGHT", 6, 0)
+                    else
+                        sRow.text:SetPoint("LEFT", sRow, "LEFT", 28, 0)
+                    end
+                    sRow.text:SetPoint("RIGHT", sRow.cb, "LEFT", -6, 0)
 
                     local tagLabel = ""
                     if sMeta.tags and #sMeta.tags > 0 then
