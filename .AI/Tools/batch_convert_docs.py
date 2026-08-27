@@ -378,7 +378,15 @@ COMMON_CSS_VARIABLES = """
 CONTROL_PANEL_HTML = """
     <div class="top-nav-bar">
         <div class="nav-container">
-            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-brand-group">
+                <a href="index.html" class="nav-logo">⚡ EventAlertMod</a>
+                <nav class="nav-links">
+                    <a href="index.html" class="nav-link">導航首頁</a>
+                    <a href="README.md.html" class="nav-link">使用說明</a>
+                    <a href="changelog.txt.html" class="nav-link">更新日誌</a>
+                    <a href="AGENTS.md.html" class="nav-link">AI 規範</a>
+                </nav>
+            </div>
             <div class="nav-controls">
                 <!-- 語言 -->
                 <div class="nav-control-group">
@@ -397,7 +405,7 @@ CONTROL_PANEL_HTML = """
                         <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
                     </div>
                 </div>
-                <!-- 主題 -->
+                <!-- 主主題 -->
                 <div class="nav-control-group">
                     <span class="nav-label">主題 / Theme:</span>
                     <div class="nav-theme-dots">
@@ -439,6 +447,40 @@ CONTROL_PANEL_CSS = """
         display: flex;
         align-items: center;
         justify-content: space-between;
+    }
+    
+    .nav-brand-group {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .nav-link {
+        font-size: 0.9em;
+        font-weight: 500;
+        color: var(--heading-color);
+        text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-link:hover {
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        text-decoration: none;
+    }
+    
+    @media (max-width: 900px) {
+        .nav-links {
+            display: none;
+        }
     }
     
     .nav-logo {
@@ -827,8 +869,15 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
         </div>
         """
         
-    html_content_zh = f'<a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>\n' + html_content_zh
-    html_content_en = f'<a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>\n' + html_content_en
+    if "00_index" in filename.lower():
+        back_btn_zh = ""
+        back_btn_en = ""
+    else:
+        back_btn_zh = '<a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>\n'
+        back_btn_en = '<a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>\n'
+        
+    html_content_zh = back_btn_zh + html_content_zh
+    html_content_en = back_btn_en + html_content_en
 
     # Premium CSS design
     css_style = """
@@ -1227,12 +1276,19 @@ def convert_txt_to_html(txt_path, dest_dir):
     is_changelog = "changelog" in filename.lower()
     
     if is_changelog:
+        title_zh = "📜 EventAlertMod 完整版本更新日誌 (Changelog)"
+        title_en = "📜 EventAlertMod Complete Version History (Changelog)"
         body_zh = parse_changelog_to_html(content_zh)
-        body_en = parse_changelog_to_html(content_en) if content_en else """<div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated.</p>
-        </div>"""
+        if content_en:
+            body_en = parse_changelog_to_html(content_en)
+        else:
+            body_en = f"""<div class="translation-fallback">
+                <p><strong>Note:</strong> Auto translation service is currently in offline mode. Below is the complete changelog stream. You may use your browser's built-in translation to view in English.</p>
+            </div>
+            {parse_changelog_to_html(content_zh)}"""
     else:
+        title_zh = filename
+        title_en = filename
         import html as html_module
         escaped_zh = html_module.escape(content_zh)
         escaped_en = html_module.escape(content_en) if content_en else "Translation Unavailable"
@@ -1389,13 +1445,13 @@ def convert_txt_to_html(txt_path, dest_dir):
 <body>
     {CONTROL_PANEL_HTML}
     <div id="doc-content-zh" class="lang-content active">
-        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
-        <h1>{filename}</h1>
+        <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+        <h1>{title_zh}</h1>
         {body_zh}
     </div>
     <div id="doc-content-en" class="lang-content">
-        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
-        <h1>{filename}</h1>
+        <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+        <h1>{title_en}</h1>
         {body_en}
     </div>
     {CONTROL_PANEL_JS}
