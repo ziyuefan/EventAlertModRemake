@@ -62,20 +62,15 @@ end
 local function getSpellDisplayInfo(sid)
     local sInfoService = EAM.Services and EAM.Services.SpellInfoService
     if sInfoService and sInfoService.getSpellInfo then
-        local sName, sIcon = sInfoService.getSpellInfo(sid)
-        if sName then
-            return sName, sIcon
+        local record = sInfoService.getSpellInfo(sid)
+        if type(record) == "table" and record.name then
+            return tostring(record.name), record.icon or 134400
         end
     end
     if C_Spell and C_Spell.GetSpellInfo then
         local ok, info = pcall(C_Spell.GetSpellInfo, sid)
-        if ok and info then
-            return info.name, info.iconID
-        end
-    elseif GetSpellInfo then
-        local ok, sName, _, sIcon = pcall(GetSpellInfo, sid)
-        if ok and sName then
-            return sName, sIcon
+        if ok and type(info) == "table" and info.name then
+            return tostring(info.name), info.iconID or 134400
         end
     end
     return "Spell " .. tostring(sid), 134400
@@ -359,7 +354,7 @@ function Panel.refresh()
                     if sMeta.tags and #sMeta.tags > 0 then
                         tagLabel = " [" .. table.concat(sMeta.tags, ", ") .. "]"
                     end
-                    sRow.text:SetText(string.format("%s (ID: %d)%s", spellName, sid, tagLabel))
+                    sRow.text:SetText(string.format("%s (ID: %s)%s", tostring(spellName or ("Spell " .. sid)), tostring(sid), tagLabel))
 
                     local isChecked = activeSpells[sid] == true
                     sRow.cb:SetChecked(isChecked)

@@ -55,6 +55,56 @@ local function localized(key, fallback)
     return fallback or key
 end
 
+local function getSpellDisplayInfo(sid)
+    local sInfoService = EAM.Services and EAM.Services.SpellInfoService
+    if sInfoService and sInfoService.getSpellInfo then
+        local record = sInfoService.getSpellInfo(sid)
+        if type(record) == "table" and record.name then
+            return tostring(record.name), record.icon or 134400
+        end
+    end
+    if C_Spell and C_Spell.GetSpellInfo then
+        local ok, info = pcall(C_Spell.GetSpellInfo, sid)
+        if ok and type(info) == "table" and info.name then
+            return tostring(info.name), info.iconID or 134400
+        end
+    end
+    return "Spell " .. tostring(sid), 134400
+end
+
+local kindLabels = {
+    playerAuras = "自身光環",
+    targetAuras = "目標光環",
+    specialAuras = "特殊光環",
+    spellCooldowns = "技能冷卻",
+    itemCooldowns = "物品冷卻",
+    groundEffects = "地面效果",
+}
+
+local function resolveSpellItem(alert, rawKey, kind)
+    local numId = alert.spellID
+    if not numId and type(rawKey) == "string" then
+        numId = tonumber(rawKey:match("(%d+)"))
+    elseif not numId and type(rawKey) == "number" then
+        numId = rawKey
+    end
+    local sName, sIcon
+    if numId then
+        sName, sIcon = getSpellDisplayInfo(numId)
+    end
+    sName = alert.name or sName or ("Spell " .. tostring(numId or rawKey))
+    sIcon = alert.icon or sIcon or 134400
+    local kLabel = kindLabels[kind] or kind
+    return {
+        spellId = numId or rawKey,
+        name = sName,
+        icon = sIcon,
+        alert = alert,
+        kind = kind,
+        kindLabel = kLabel,
+    }
+end
+
 -- 建立面板 Frame
 local function createPanel()
     if Panel.frame then
@@ -134,9 +184,10 @@ local function createPanel()
     nameEdit:SetSize(160, 22)
     nameEdit:SetPoint("LEFT", nameLabel, "RIGHT", 8, 0)
     nameEdit:SetAutoFocus(false)
-    nameEdit:SetScript("OnEnterPressed", function(self)
-        self:ClearFocus()
-        local text = self:GetText()
+
+    local function commitGroupName()
+        if not nameEdit then return end
+        local text = (nameEdit:GetText() or ""):match("^%s*(.-)%s*$")
         local gs = getGroupService()
         if gs and Panel.selectedGroupId and text and text ~= "" then
             local sv = getSavedVariables()
@@ -146,8 +197,20 @@ local function createPanel()
             gs.refreshCache()
             Panel.refresh()
         end
-    end)
+        nameEdit:ClearFocus()
+    end
+
+    nameEdit:SetScript("OnEnterPressed", commitGroupName)
+    nameEdit:SetScript("OnEditFocusLost", commitGroupName)
     Panel.controls.nameEdit = nameEdit
+
+    local saveNameBtn = CreateFrame("Button", nil, rightContainer, "UIPanelButtonTemplate")
+    saveNameBtn:SetSize(60, 22)
+    saveNameBtn:SetPoint("LEFT", nameEdit, "RIGHT", 6, 0)
+    Locale.bindText(saveNameBtn, "EA_XOPT_SAVE", "儲存")
+    if Theme and Theme.registerButton then Theme.registerButton(saveNameBtn) end
+    saveNameBtn:SetScript("OnClick", commitGroupName)
+    Panel.controls.saveNameBtn = saveNameBtn
 
     -- 群組啟用 CheckBox
     local enableCb = CreateFrame("CheckButton", nil, rightContainer, "UICheckButtonTemplate")
@@ -349,13 +412,7 @@ function Panel.refresh()
             if type(list) == "table" then
                 for spellId, alert in pairs(list) do
                     if type(alert) == "table" then
-                        allAlertsList[#allAlertsList + 1] = {
-                            spellId = alert.spellID or spellId,
-                            name = alert.name or ("Spell " .. spellId),
-                            icon = alert.icon or 134400,
-                            alert = alert,
-                            kind = kind
-                        }
+                        allAlertsList[#allAlertsList + 1] = resolveSpellItem(alert, spellId, kind)
                     end
                 end
             end
@@ -398,7 +455,7 @@ function Panel.refresh()
             sRow:ClearAllPoints()
             sRow:SetPoint("TOPLEFT", rightParent, "TOPLEFT", 0, -sYOffset)
             sRow.icon:SetTexture(item.icon)
-            sRow.text:SetText(string.format("[%s] %s (ID: %s)", item.kind, item.name, tostring(item.spellId)))
+            sRow.text:SetText(string.format("[%s] %s (ID: %s)", tostring(item.kindLabel or item.kind), tostring(item.name), tostring(item.spellId)))
 
             -- 判斷該法術是否已被勾選入此群組
             local isMember = false
