@@ -414,7 +414,9 @@ function Panel.refresh()
             sRow.cb:SetChecked(isMember)
             sRow.cb:SetScript("OnClick", function(self)
                 gs.toggleSpellGroup(item.alert, Panel.selectedGroupId)
-                sv.touchRevision()
+                if sv and sv.markRevisionChanged then
+                    sv.markRevisionChanged()
+                end
                 Panel.refresh()
             end)
 

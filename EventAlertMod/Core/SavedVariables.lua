@@ -2045,6 +2045,7 @@ function SavedVariables.markRevisionChanged()
     touchRevision(EAM.db)
     return true, EAM.db.revision
 end
+SavedVariables.touchRevision = SavedVariables.markRevisionChanged
 
 function SavedVariables.updateLanguage(selection)
     local db = EAM.db
