@@ -328,8 +328,6 @@ local function normalizePlayerResourceFontFamily(value, fillDefaults)
     if MediaService then
         if MediaService.isValidMedia and MediaService.isValidMedia("font", value) then
             return value
-        elseif MediaService.hasLSM then
-            return value
         end
     end
     if _G.LibStub then
@@ -875,8 +873,6 @@ local function normalizeFontFamilySelection(value)
     local MediaService = EAM.Services and EAM.Services.MediaService
     if MediaService then
         if MediaService.isValidMedia and MediaService.isValidMedia("font", value) then
-            return value
-        elseif MediaService.hasLSM then
             return value
         end
     end

@@ -1153,13 +1153,18 @@ local function buildPayload(classToken, modules, sections)
             local list = getList(definition, classToken)
             if not list or not isSafeValue(list) then return nil, "alertListRestricted" end
             local records = {}
+            local seenIDs = {}
             local count = 0
             for _, alert in pairs(list) do
                 local record, reason = exportRecord(moduleName, alert)
                 if not record then return nil, reason end
-                count = count + 1
-                if count > LIMITS.maxPerModule then return nil, "moduleLimit" end
-                records[count] = record
+                local id = record[definition.idField]
+                if not seenIDs[id] then
+                    seenIDs[id] = true
+                    count = count + 1
+                    if count > LIMITS.maxPerModule then return nil, "moduleLimit" end
+                    records[count] = record
+                end
             end
             table.sort(records, function(left, right)
                 local leftID = left[definition.idField]

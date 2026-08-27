@@ -144,8 +144,6 @@ function TextPlacement.normalizeFontFamily(value)
     if MediaService then
         if MediaService.isValidMedia and MediaService.isValidMedia("font", value) then
             return value
-        elseif MediaService.hasLSM then
-            return value
         end
     end
     if _G.LibStub then
