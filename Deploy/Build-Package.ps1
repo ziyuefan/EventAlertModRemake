@@ -162,6 +162,42 @@ function Test-AddonSource {
     return $version
 }
 
+function Export-PackageReleaseNotes {
+    param([Parameter(Mandatory = $true)][string]$DestinationPath)
+
+    $changelogFile = Join-Path $addonRoot "changelog.txt"
+    if (-not (Test-Path -LiteralPath $changelogFile -PathType Leaf)) {
+        return
+    }
+
+    $lines = Get-Content -LiteralPath $changelogFile -Encoding UTF8
+    $sectionLines = [System.Collections.Generic.List[string]]::new()
+    $inSection = $false
+
+    foreach ($line in $lines) {
+        if ($line -match '^--\s*\[(.+)\](?:\s*\((.+)\))?') {
+            if ($inSection) {
+                break
+            }
+            $inSection = $true
+            $sectionLines.Add("## " + $Matches[1].Trim())
+            if ($Matches[2]) {
+                $sectionLines.Add("> 📅 **發布日期 / Release Date**: " + $Matches[2].Trim())
+                $sectionLines.Add("")
+            }
+            continue
+        }
+        if ($inSection) {
+            $sectionLines.Add($line)
+        }
+    }
+
+    if ($sectionLines.Count -gt 0) {
+        $content = ($sectionLines -join "`r`n").Trim() + "`r`n"
+        [System.IO.File]::WriteAllText($DestinationPath, $content, $utf8)
+    }
+}
+
 function Test-SensitiveInfo {
     $patterns = @(
         '(?i)https://discord\.com/api/webhooks/',
@@ -318,9 +354,13 @@ try {
     }
     [System.IO.File]::WriteAllText($inventoryPath, ($inventory | ConvertTo-Json -Depth 8), $utf8)
 
+    $releaseNotesPath = [System.IO.Path]::ChangeExtension($zipPath, ".md")
+    Export-PackageReleaseNotes -DestinationPath $releaseNotesPath
+
     Write-Host "PACKAGE_PATH=$zipPath"
     Write-Host "PACKAGE_SHA256=$hash"
     Write-Host "PACKAGE_INVENTORY=$inventoryPath"
+    Write-Host "PACKAGE_RELEASENOTES=$releaseNotesPath"
     Write-Host "PACKAGE_FILES=$($zipEntries.Count)"
     Write-Host "PACKAGE_SOURCE=$addonRoot"
     Write-Host "PACKAGE_MANAGERS=pass"
