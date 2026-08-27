@@ -835,17 +835,325 @@ importFrame, exportFrame, MyAddonFrame, tempFunc
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="state-mode">State mode</h1>
+<h2 id="savedvariables-review">SavedVariables Review</h2>
+<p>An overridden version of the current TOC declaration SavedVariables:</p>
+<pre class="codehilite"><code class="language-lua">EAM_DB
+EAM_FLOW_TEST_REPORT_JSON
+EAM_VALIDATION_PROFILE
+EAM_LIVE_TEST_SESSION
+EAM_LIVE_TEST_REPORT_JSON
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<p>Legacy compatibility and migration sources still include:</p>
+<pre class="codehilite"><code class="language-lua">EA_Config
+EA_Position
+EA_Items
+EA_AltItems
+EA_TarItems
+EA_ScdItems
+EA_GrpItems
+EA_Pos
+</code></pre>
 
+<h2 id="history-schema-v3-native-aura-and-text-layout-settings">History Schema v3: Native Aura and text layout settings</h2>
+<ul>
+<li><code>EAM_DB.schemaVersion = 3</code>; Both v1 Aura alert and v2 text layout sources will save serializable migration backups.</li>
+<li>Alert can save <code>nativeBackend</code>, <code>auraFilter</code>, <code>showStacks</code>, <code>showName</code>, <code>showCountdown</code> and pure data <code>sound</code>.</li>
+<li><code>Frame</code>, <code>ScriptObject</code>, <code>DurationObject</code>, <code>AuraContainer</code> and AuraButton must not write to SavedVariables.</li>
+<li>Runtime plan, fingerprint, pending revision and sound registration ID only exist in memory.</li>
+<li>The same settings are sent to the postback <code>unchanged</code> again, and the revision remains unchanged.</li>
+</ul>
+<h3 id="language-settings">Language settings</h3>
+<p><code>EAM_DB.config.language</code> is a migrateable plain string setting, accepting <code>auto</code>, <code>enUS</code>, <code>zhTW</code>, <code>zhCN</code>, <code>koKR</code>, <code>ruRU</code>; the default is <code>auto</code>. <code>auto</code> selects the catalog according to the client <code>GetLocale()</code>, and the missing keys are filled in by enUS fallback. <code>SavedVariables.updateLanguage()</code> only increments revision when the value changes, but updated/unchanged will all emit <code>EAM_LANGUAGE_CHANGED</code> synchronously to align the memory state with the loaded UI. <code>Locale.apply()</code> maintains <code>EAM.L</code> table identity, clears and merges enUS fallback and selected catalog in place, and then refreshes registered EAM own FontString, buttons and compound text. After the new version of the program is loaded, the language selection takes effect immediately, and there is no need to execute <code>/reload</code> for the applied language; <code>/reload</code> is only used to verify the configuration save, load the new program on the disk, or write the latest SavedVariables back to the disk.
+Text display settings use a single normalized structure:</p>
+<pre class="codehilite"><code class="language-lua">EAM_DB.config.textLayout = {
+    schema = 1,
+    timer = {
+        placement = &quot;OUTSIDE_TOP&quot;,
+        fontSize = 14,
+    },
+    applications = {
+        placement = &quot;INSIDE_BOTTOM_RIGHT&quot;,
+        fontSize = 12,
+    },
+}
+</code></pre>
+
+<ul>
+<li><code>placement</code> only accepts the 21 IDs defined by <code>Data/TextPlacementContract.json</code>: eight directions in the center of the box, eight corner positions and four front positions outside the box.</li>
+<li><code>fontSize</code> Fixed normalization to 8–32; timer defaults to 14, applications defaults to 12.</li>
+<li><code>fontSizeTimeVal</code>, <code>fontSizeStack</code> only make compatible mirrors for old fields; new programs use <code>textLayout</code> as the source of fact.</li>
+<li><code>SavedVariables.updateTextLayout()</code> only increments a revision when the value actually changes; repeated settings do not increment the revision. Text position/word level changes are directly overridden by Renderer in EAM self-built FontString, and are not used as conditions for AuraContainer structure reconstruction.</li>
+<li>Save the old version location/font source in <code>migrationBackups.textLayoutV2</code> when upgrading from v2 to v3, and do not discard user settings silently.</li>
+<li>If the <code>schemaVersion</code> on the disk is higher than the version currently understood by the program, initialization must not complement the default, normalize or overwrite the original <code>EAM_DB</code>. During execution, an independent copy of the current defaults is used, marked <code>futureSchemaPreserved</code> and <code>futureSchemaSourceVersion</code>; this is downgrade protection and does not mean that the new version data has been successfully migrated.</li>
+</ul>
+<p>Verify that status and reporting do not mix <code>EAM_DB</code>:
+- <code>EAM_VALIDATION_PROFILE</code>: player declares <code>_ptr_</code>, <code>_xptr_</code> or <code>_retail_</code>, and is cross-validated by the client build/Interface with <code>IsPublicTestClient</code>/<code>IsTestBuild</code>/<code>IsBetaBuild</code> raw flags; the importer must recalculate the known/aggregate from the three raw flags, and the distrust report is self-populated.
+- <code>EAM_LIVE_TEST_SESSION</code>: 37 case live observation status with <code>/reload</code> checkpoint. The boot token in the checkpoint is only used to compare the Lua table identity and is not output to JSON; a direct resume of the same load must return <code>sameLoadRejected</code>.
+- <code>EAM_LIVE_TEST_REPORT_JSON</code>: schema 1 human signature report; the phase is not <code>active</code>, has not crossed the <code>/reload</code> executed by the player, has no known test-build identity, has not passed all 37 cases, or still has warnings, it must not be <code>pass</code>.
+- Note that if it contains an absolute path to the disk, WTF or Account fragment, it will be replaced with <code>[privacy-redacted]</code> and <code>privacyNoteRedacted</code> will be added during execution; the importer will then perform a second layer of rejection and must not contain the account, role, server or WTF absolute path.
+- <code>EAM_FLOW_TEST_REPORT_JSON</code>: schema 2 capability/offline contract report; <code>offline-mock</code> shall not be upgraded to actual machine evidence.
+Observed default/runtime companion:</p>
+<pre class="codehilite"><code class="language-lua">EA_Config2
+EA_ShowScrollSpells
+EA_ShowScrollSpell_YPos
+</code></pre>
+
+<p><code>EA_Config</code> currently stores display and behavior switches, such as frames
+visibility, name/timer/flash display, sound, font size, backup alert,
+Target's own debuff filtering, cooling behavior, rune display and Aura value
+threshold.</p>
+<p><code>EA_Position</code> stores anchor points, offsets, debuff color settings, and targets
+Layout flags, SCD offsets, execution icon settings, boss-level logic, and
+Cooling display settings.</p>
+<p><code>EA_Items</code>, <code>EA_AltItems</code>, <code>EA_TarItems</code>, <code>EA_ScdItems</code> and <code>EA_GrpItems</code>
+Stores configured alert spell /item/group entries. their current exact area
+The shape is legacy and should be migrated by the version manager, not frozen.</p>
+<p><code>EA_Pos</code> stores shared location data for each category through <code>G.Pos</code>.</p>
+<h2 id="current-global-country-audits">Current global country audits</h2>
+<p>Namespace:</p>
+<pre class="codehilite"><code class="language-lua">_G.EventAlertMod
+G -- addon namespace from ...
+</code></pre>
+
+<p>Main namespace runtime table:</p>
+<pre class="codehilite"><code class="language-lua">G.Pos
+G.SPELLINFO_SELF
+G.SPELLINFO_TARGET
+G.SPELLINFO_SCD
+G.ClassAltSpellName
+G.GC_IndexOfGroupFrame
+G.EA_CurrentBuffs
+G.EA_TarCurrentBuffs
+G.EA_ScdCurrentBuffs
+G.EA_ShowScrollSpells
+G.SpecFrame_LifeBloom
+G.iconTextures
+G.runeTextures
+G.runeSetTexCoord
+G.runeEnergizeTextures
+G.runeColors
+G.runeTypeText
+G.RUNE_MAPPING
+G.Auras
+</code></pre>
+
+<p>Global Family:</p>
+<pre class="codehilite"><code class="language-lua">EA_CLASS*
+EA_SPELL_POWER*
+EA_X*
+EA_TTIP*
+EX_XCLSALERT*
+SLASH_EVENTALERTMOD1
+SLASH_EVENTALERTMOD2
+</code></pre>
+
+<p>Main XML/UI global variables:</p>
+<pre class="codehilite"><code class="language-lua">EA_Main_Frame
+EA_Version_Frame
+EA_Options_Frame
+EA_Icon_Options_Frame
+EA_Class_Events_Frame
+EA_Other_Events_Frame
+EA_Target_Events_Frame
+EA_SCD_Events_Frame
+EA_Group_Events_Frame
+EA_SpellCondition_Frame
+EA_GroupEventSetting_Frame
+EA_Anchor_Frame*
+EA_MinimapOption
+</code></pre>
+
+<p>Notable unexpected global candidates discovered through job scanning:</p>
+<pre class="codehilite"><code class="language-lua">auraData, eaf, eaf2, EAEXF, EAItems, EASCDFrame, EA_icon, EA_rank,
+EA_timeLeft, currentBuffs, startTime, duration, expirationTime, timeLeft,
+usable, spellId, spellName, icon, frame, importButton, exportButton,
+importFrame, exportFrame, MyAddonFrame, tempFunc
+</code></pre>
+
+<p>Overrides should move them to mod-owned local state or explicit
+Namespace field.</p>
+<h2 id="alertstate">AlertState</h2>
+<pre class="codehilite"><code class="language-js">AlertState = {
+  id: &quot;string&quot;,
+  kind: &quot;aura|spellCooldown|itemCooldown&quot;,
+  spellID: &quot;number?&quot;,
+  itemID: &quot;number?&quot;,
+  unit: &quot;player|pet|target?&quot;,
+  icon: &quot;number|string?&quot;,
+  name: &quot;string?&quot;,
+  stacks: &quot;number?&quot;,
+  timer: TimerState?,
+  flags: AlertFlags,
+  source: SourceState,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="timerstate">TimerState</h2>
+<pre class="codehilite"><code class="language-js">TimerState = {
+  mode: &quot;none|numeric|displayOnly|protected|unknown&quot;,
+  startTime: &quot;number?&quot;,
+  duration: &quot;number?&quot;,
+  expirationTime: &quot;number?&quot;,
+  timeLeft: &quot;number?&quot;,
+  displayText: &quot;string?&quot;
+}
+</code></pre>
+
+<h2 id="aurastate">AuraState</h2>
+<pre class="codehilite"><code class="language-js">AuraState = {
+  alertID: &quot;string&quot;,
+  unit: &quot;player|pet|target&quot;,
+  auraInstanceID: &quot;number?&quot;,
+  spellID: &quot;number?&quot;,
+  name: &quot;string?&quot;,
+  icon: &quot;number|string?&quot;,
+  applications: &quot;number?&quot;,
+  fromPlayer: &quot;boolean?&quot;,
+  timer: TimerState,
+  factsSafe: &quot;boolean&quot;,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="cooldownstate">CooldownState</h2>
+<pre class="codehilite"><code class="language-js">CooldownState = {
+  alertID: &quot;string&quot;,
+  spellID: &quot;number&quot;,
+  name: &quot;string?&quot;,
+  icon: &quot;number|string?&quot;,
+  usable: &quot;boolean?&quot;,
+  charges: &quot;number?&quot;,
+  maxCharges: &quot;number?&quot;,
+  timer: TimerState,
+  factsSafe: &quot;boolean&quot;,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="itemcooldownstate">ItemCooldownState</h2>
+<pre class="codehilite"><code class="language-js">ItemCooldownState = {
+  alertID: &quot;string&quot;,
+  itemID: &quot;number&quot;,
+  linkedSpellID: &quot;number?&quot;,
+  name: &quot;string?&quot;,
+  icon: &quot;number|string?&quot;,
+  timer: TimerState,
+  cacheStatus: &quot;none|direct|pending|ready|throttled|combatBlocked&quot;,
+  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
+}
+</code></pre>
+
+<h2 id="iconrenderstate">IconRenderState</h2>
+<pre class="codehilite"><code class="language-js">IconRenderState = {
+  alertID: &quot;string&quot;,
+  visible: &quot;boolean&quot;,
+  texture: &quot;number|string?&quot;,
+  stackText: &quot;string?&quot;,
+  timerText: &quot;string?&quot;,
+  nameText: &quot;string?&quot;,
+  cooldown: { start: &quot;number?&quot;, duration: &quot;number?&quot;, enabled: &quot;boolean?&quot; },
+  glow: &quot;none|active|usable|warning&quot;,
+  alpha: &quot;number?&quot;,
+  layoutKey: &quot;string&quot;
+}
+</code></pre>
+
+<h2 id="debugsnapshot">DebugSnapshot</h2>
+<pre class="codehilite"><code class="language-js">DebugSnapshot = {
+  schema: 1,
+  addon: { name: &quot;EventAlertMod&quot;, version: &quot;string?&quot;, build: &quot;number?&quot; },
+  environment: { retailOnly: true, inCombat: &quot;boolean&quot;, fps: &quot;number?&quot; },
+  facts: { alerts: &quot;array&lt;AlertState&gt;&quot; },
+  derived: { icons: &quot;array&lt;IconRenderState&gt;&quot;, dirtyQueues: &quot;object&quot; },
+  boundaryWarnings: &quot;array&lt;object&gt;&quot;,
+  humanNotes: &quot;array&lt;string&gt;&quot;
+}
+</code></pre>
+
+<h2 id="2026-08-12-theme-settings">2026-08-12 Theme Settings</h2>
+<p><code>EAM_DB.config.theme</code> is persistent EAM has its own UI theme selection. The allowed values and defaults are as follows:</p>
+<pre class="codehilite"><code class="language-js">config.theme = &quot;eam&quot; // &quot;eam|ff7|winxp|win7|win10|win31|borland|doscrt|eten|redalert|aqua&quot;
+</code></pre>
+
+<ul>
+<li><code>eam</code> is a brown-gold visual and a safe fallback for missing or illegal values.</li>
+<li>ff7 is dark indigo/royal blue/bright cyan; winxp is Luna blue; win7 is Aero ice blue; win10 is dark flat/system blue; win31 is gray background/navy blue; borland is bright blue background/bright yellow text; doscrt is pure black background/phosphorescent green text; eten is dark blue background/cyan yellow text; redalert is black and red industrial warning; aqua is blue gray/bright blue.</li>
+<li><code>SavedVariables.updateTheme()</code> only writes and increments revision when the actual value changes; repeated selections must not create revisions.</li>
+<li>Illegal values ​​will be normalized to <code>eam</code> at startup, and <code>invalidThemeDefaulted</code> will be left in migration warnings; other SavedVariables will not be overwritten.</li>
+<li>Only the pending theme is saved during the battle and will be applied by <code>EAM.Theme.flushPending()</code> after <code>PLAYER_REGEN_ENABLED</code>.</li>
+<li>Theme colors only belong to EAM's own window chrome; AlertBorderStyles's self/target Aura, skills, items, and ground effect semantic colors are not covered by the theme.</li>
+</ul>
+<h2 id="2026-08-13-aurasound-pure-data-contract">2026-08-13 AuraSound Pure data contract</h2>
+<p>Aura alert can save the following additive pure data without adding the current SavedVariables schema version:</p>
+<pre class="codehilite"><code class="language-lua">alert.sound = {
+    added = { soundFileID = 566564, outputChannel = &quot;Master&quot; },
+    applicationsIncreased = nil,
+    removed = { soundFileName = &quot;Interface\\AddOns\\EventAlertMod\\Media\\example.ogg&quot; },
+}
+</code></pre>
+
+<ul>
+<li>The trigger whitelist is fixed to <code>added</code>, <code>applicationsIncreased</code>, <code>removed</code>.</li>
+<li>Each trigger must provide a positive integer <code>soundFileID</code> or a non-blank <code>soundFileName</code>; if both are present, normalization retains only <code>soundFileID</code>. <code>outputChannel</code> must be a non-blank string if present.</li>
+<li><code>nil</code> or an empty table after normalization means that it is not overwritten, and the compiler will continue to use the global sound effect; global <code>config.showSound=false</code> is master off, and custom settings cannot be bypassed.</li>
+<li><code>SavedVariables.updateAuraSound(unit, spellID, sound)</code> is the only public mutation: illegal input is rejected; no revision is added for the same setting; true changes are only added once and send <code>EAM_AURA_SOUND_CHANGED</code>.</li>
+<li><code>auraSoundID</code> only belongs to the runtime registry of this Lua session and must not be written to SavedVariables, JSON, reports or table keys.</li>
+<li>Initialization only whitelists and normalizes the Aura sound of the existing class profile; adds <code>invalidAuraSoundNormalized</code> warning for values ​​that cannot be retained, and does not freeze user data.</li>
+<li>The current matrix of live sessions and reports is <code>2026-08-13.1</code>, a total of 37 cases; it must be 37/37, cross-player self-executed <code>/reload</code>, known build identity and zero warning to be completed.</li>
+</ul>
+<h2 id="2026-08-13-alpha-4-functional-modules-and-professional-profile-pure-data-contract">2026-08-13 Alpha 4: Functional modules and professional profile pure data contract</h2>
+<p>schemaVersion 5's EAM_DB currently contains two independent settings:</p>
+<ul>
+<li>config.moduleToggles: playerAura, targetAura, spellCooldown, itemCooldown, groundEffect, classPower, totem, tooltipMonitor; default value is true, writing must go through SavedVariables.updateModuleToggle.</li>
+<li>profiles.classes[CLASS_TOKEN]: playerAuras, targetAuras, spellCooldowns, itemCooldowns, groundEffects for the current profession. Formal services are read through getActiveClassToken/getAlertList, and the root level alerts mirror is not retained.</li>
+<li>When migrating the v4 root-level global list, save migrationBackups.globalAlertsV4 first; save profiles.unassignedLegacy when you cannot obtain a legal professional token, and guess the ownership is prohibited.</li>
+<li>/eam list, lookup, lookupfull and showcast use active class profile; after clearing, the default will not be reloaded due to reload. defaultsSeeded and legacyImportVersion jointly maintain idempotence.</li>
+<li>Currently, the official program does not have JSON/Base64 profile sharing codec; Debug export is not an applicable setting import format. Any future sharing format must reject external Lua, Secret values, unknown schemas, duplicate IDs, and overly large inputs.</li>
+</ul>
+<h2 id="2026-08-14-alpha-5-profile-sharing-and-font-settings">2026-08-14 Alpha 5: Profile sharing and font settings</h2>
+<p>Core/ProfileCodec.lua defines the official sharing format EAMAP1:<base64(JSON envelope)>. JSON is canonical UTF-8 pure data and cannot contain function, userdata, metatable, Secret value or execution string.
+- envelope must be type=EAM_ALERT_PROFILE, schema=1, addonSchema=5, with scope.classToken, allowed scope.modules, payload.modules, payloadBytes and checksum={algorithm="adler32",value="8hex"}.
+- Base64 only accepts strict alphabet/padding; encoded upper limit is 262144 bytes, decoded upper limit is 196608 bytes, JSON depth 8, nodes 16384, total alerts 4096, each module 1024.
+- import first performs parse, schema, checksum, scope, field whitelist and ID recalculation, and then generates preview; preview does not add revision and does not send events. merge only upserts items within the scope, replace only replaces the specified class/module and retains the bounded backup.
+- Structural apply is rejected in combat; EAMAP1 is not an encryption and does not claim a trusted source. Any malformed/future schema/duplicate key/duplicate derived ID are fail-closed.
+- config.fontFamily allows STANDARD, ARIALN, MORPHEUS, SKURRI, defaults to STANDARD; changes are normalized by SavedVariables.updateFontFamily, maintained in no-op revision, and applied to EAM by TextPlacement Own FontString.</p>
+<h2 id="2026-08-14-current-schema-v5-aura-catalog-scope-and-batch-mutation">2026-08-14 Current schema v5: Aura catalog scope and batch mutation</h2>
+<ul>
+<li><code>profiles.classes[CLASS_TOKEN].alerts</code> is still the only official listing source for occupations at this time; <code>catalogScope</code> only accepts <code>SELF</code> or <code>CROSS_CLASS</code>.</li>
+<li>Player Aura's <code>SELF</code> has a new default <code>fromPlayer=true</code>; player Aura's <code>CROSS_CLASS</code> has a new default <code>fromPlayer=false</code>; target Aura has a new default <code>fromPlayer=true</code>.</li>
+<li>Player Aura candidates that are not the current profession but can be parsed are conservatively written as <code>CROSS_CLASS</code> and must not be disguised as the professional skills; SpellID that does not exist or cannot be parsed will not create a record.</li>
+<li>Batch input can contain line breaks, half-width semicolons or full-width semicolons; after parsing, it is first deduplicated and sorted, and then written in a single deferred commit. Real changes only add one revision.</li>
+<li>EAMAP1 profile adopts whitelist normalization for <code>catalogScope</code>; missing values ​​are safely backfilled according to the module's old semantics, illegal values ​​are rejected, and external derived IDs are not trusted.</li>
+<li><code>Data/wow_spells_and_auras.json</code> does not belong to the SavedVariables schema and is not loaded by the runtime; it is only an offline candidate index.</li>
+</ul>
+<h2 id="2026-08-21-current-schema-v6-player-multiple-resource-settings">2026-08-21 Current schema v6: Player multiple resource settings</h2>
+<ul>
+<li><code>EAM_DB.schemaVersion=6</code>. When upgrading to v5, save the old <code>config.power*</code> flag to <code>migrationBackups.playerResourceFlagsV5</code> before creating resource settings; you must not discard the old value or write the runtime sink to SavedVariables.</li>
+<li>Added <code>resources = { schema = 3, globalDefaults = {}, classDefaults = {}, specs = {} }</code> to each career profile. <code>globalDefaults</code> 提供全域资源外观基线；<code>classDefaults[resourceKey]</code> 保存职业预设；<code>specs[specID][resourceKey]</code> 只保存该专精覆写，未覆写栏位继承 classDefaults。</li>
+<li>Each resource can be saved <code>enabled</code>, <code>displayMode</code>, <code>showForeground</code>, <code>showBackground</code>, <code>showValue</code>, <code>showPercent</code>, <code>fullGlow</code>, <code>fontFamily</code>, <code>fontSize</code>, <code>orientation</code>, <code>anchor</code>, <code>position</code>, <strong>EAM CODE_12</strong>, <code>offsetX</code>, <code>offsetY</code>, <code>scale</code>, <code>alpha</code>, <code>foregroundAlpha</code>, <code>backgroundAlpha</code>, <code>order</code>, <code>barWidth</code>, <code>barHeight</code>, <code>iconSize</code>, <code>spacing</code>. All fields are whitelisted, type and range normalized.</li>
+<li><code>SavedVariables.updatePlayerResourceConfig()</code> is the only formal write entry: no revision will be added if there is no change; only one revision will be added for true changes, and <code>EAM_PLAYER_RESOURCE_CONFIG_CHANGED</code> will be issued. During non-combat, it is immediately rebuilt by PlayerResourceService and reported to <code>configApplied</code>; during combat, only the settings are saved and marked as <code>combatRebuildDeferred</code>, and merged and rebuilt once in <code>PLAYER_REGEN_ENABLED</code>. <code>resetToClass</code> Only removes the override of the specified specialization, and does not change other professions or specializations.</li>
+<li>Catalog, capability, active sink, current percentage, current/max and event cache are in session/runtime state and must not be written to SavedVariables, reports or profile codec.</li>
+</ul>
+<h3 id="2026-08-21-player-resource-setting-life-cycle-supplement">2026-08-21 Player resource setting life cycle supplement</h3>
+<ul>
+<li>During non-combat, true changes to SavedVariables.updatePlayerResourceConfig will be sent to EAM_PLAYER_RESOURCE_CONFIG_CHANGED, PlayerResourceService will immediately rebuild the topology and apply valid settings again; /reload is only used to load new programs or verify saves.</li>
+<li>During the battle, the desired config is saved first, and the service returns combatRebuildDeferred; PLAYER_REGEN_ENABLED is only rebuilt once after merging multiple changes.</li>
+<li>foregroundPowerType/foregroundToken of runtime status only describe the current prospect metadata; activePowerType/activePowerToken are reserved as compatible fields and do not mean that only one resource is tracked.</li>
+<li>threshold, showPercent, fullGlow, fontFamily, fontSize, and orientation will be passed to PowerRenderer through valid settings; threshold and fullGlow only produce Lua visual effects for the NUMERIC display capability.</li>
+<li>Latest offline evidence: Lua syntax 64/64 (62 AddOn + 2 offline tests), Flow all 75/75, Flow boundary 54/54, Validation Contracts 436/436; Retail／PTR／XPTR Real person signing still requires player operation.</li>
+</ul>
+<h2 id="2026-08-21-player-resources-v6-completed-audit-supplement">2026-08-21 Player resources v6 completed audit supplement</h2>
+<ul>
+<li>Each data in player resource setting schema 3 includes <code>anchor</code> and <code>position</code>; the former is the parent frame anchor point, and the latter is the resource frame anchor point. Both are subject to whitelist verification and are matched with offset/scale.</li>
+<li><code>PlayerResourceProbe</code> only saves transient tracked/available/foreground/background/capability/sinkAvailable/eventObserved metadata, and does not save UnitPower, UnitPowerMax, percent or other Secret original values.</li>
+<li>XPTR 12.0.7 numeric legacy adapter entered by <code>PlayerResourceCapability.getClientAdapter()</code>; must not call 12.1 Secret sink. This is a compatibility contract and does not mean that the actual machine will be approved.</li>
+<li>A single background sampler is only allowed when the probe confirms that the event is missing; <code>unitpower.background_sampler_gate</code> and the static contract have passed offline verification and are still waiting to be signed by the real machine, and their execution results cannot be written as real machine evidence.</li>
+<li>The sampler's generation, event missing flag, schedule handle, capability binding strategy and <code>eventObserved</code> are all in session/runtime status and must not be written to SavedVariables, Profile or replicable reports; reports only retain security Boolean and metadata.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

@@ -1339,17 +1339,839 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="module-contract">Module contract</h1>
+<h2 id="ownership-rules">Ownership Rules</h2>
+<ul>
+<li><code>SavedVariables</code> holds persistent configuration tables and migrations.</li>
+<li>Services own runtime facts.</li>
+<li><code>Renderer</code> holds the rendered UI state.</li>
+<li><code>IconPool</code> owns the frame object.</li>
+<li><code>Scheduler</code> has the job he deserves.</li>
+<li><code>DebugState</code> owns the debug/session snapshot.</li>
+<li>Static constants may be frozen. Runtime state and SavedVariables must not
+  is frozen.</li>
+<li>Each auto-loaded source file must start with a module comment block
+  Document purpose, design philosophy, ownership, change boundaries, and
+  Maintenance precautions. Please keep this review up to date as mod contracts change.
+  See "Docs/12_CODE_COMMENTARY_GUIDE.md".</li>
+</ul>
+<h2 id="localecommon">Locale/Common</h2>
+<p>Input:</p>
+<ul>
+<li><code>GetLocale()</code>, loaded <code>EAM_DB.config.language</code>, each locale loader.</li>
+</ul>
+<p>Output:
+- <code>EAM.Locale</code> catalog, fixed English <code>Auto Detect</code> option, fallback/current or <code>EAM.L</code> after manual language merging.</p>
+<p>Status change:</p>
+<ul>
+<li>During loading, when calling <code>Locale.setSelection()</code> explicitly or receiving <code>EAM_LANGUAGE_CHANGED</code>, clear/merge the stable identity's <code>EAM.L</code> in place, and then refresh the registered text; the Locale itself does not write SavedVariables.</li>
+<li><code>Locale.LanguageOptions</code> is a static option table and can be frozen; catalog, <code>EAM.L</code>, widget binding registry and refresh callback registry must not be frozen.</li>
+<li><code>Locale.bindText()</code> only registers long-life EAM own widgets; pooled/released widgets must call <code>Locale.unbindText()</code> when recycling to avoid retaining expired references.</li>
+</ul>
+<h2 id="uioptions-language-selection">UI/Options Language selection</h2>
+<ul>
+<li>The drop-down list is saved in <code>EAM_DB.config.language</code> through <code>SavedVariables.updateLanguage()</code>, and the custom event is synchronously applied to the currently loading Locale.</li>
+<li>The fixed text of the main window, About, Module, Tooltip popup, Prompt export, Flow/Live, UnitPower and SVG panels use binding; compound text such as drop-down labels, environment summary and case status use low-frequency refresh callback to recalculate.</li>
+<li>Refresh EAM's own UI immediately after selection, without calling <code>ReloadUI()</code>. <code>Auto Detect</code> In the zhTW client, Traditional Chinese will still be selected back, which is expected behavior; when switching to a new program containing this feature for the first time, the player still needs to <code>/reload</code> load the file.</li>
+</ul>
+<h2 id="coreenv">Core/Env</h2>
+<p>Input:</p>
+<ul>
+<li>Plug-in name and namespace</li>
+<li>Retail server construction /flavor API</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Plug-in namespace</li>
+<li>Local API alias table</li>
+<li>Protective results for Retail servers only</li>
+</ul>
+<p>Status change:
+- Can initialize the plug-in namespace once
+- MUST NOT CHANGE SavedVariables</p>
+<h2 id="coreutil">Core/Util</h2>
+<p>Input:</p>
+<ul>
+<li>Original Lua/WoW table API</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li><code>CreateTable</code>, <code>FreezeTable</code>, <code>IsFrozen</code>, Pool Assistant, Secure Erase /release,
+  Stable enumeration helper, debugging assertions</li>
+<li>Secret/protected value safe reading assistant:</li>
+<li><code>readSafeField</code></li>
+<li><code>readSafeScalar</code></li>
+<li><code>markBoundary</code></li>
+<li><code>appendBoundaryWarning</code></li>
+<li><code>clearTimer</code></li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Have only secondary local pools</li>
+</ul>
+<h2 id="coreconstants">Core/Constants</h2>
+<p>Input:</p>
+<ul>
+<li>None after loading the module</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Freeze enumeration table, module name, event name, status constant, mode
+  Version, sentinel constants such as <code>UNKNOWN</code> and <code>EMPTY</code></li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>No after freezing</li>
+</ul>
+<h2 id="coreeventrouter">Core/EventRouter</h2>
+<p>Input:</p>
+<ul>
+<li>Module event registration</li>
+<li>Blizzard event
+Output:</li>
+<li>Distribute calls to registered module handlers by parameterizing <code>pcall</code> error isolation to ensure that failures in one module handler do not prevent other registrants</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Have event framework and event registry</li>
+<li>No closing allocation for each event registration</li>
+</ul>
+<h2 id="corescheduler">Core/Scheduler</h2>
+<p>Input:</p>
+<ul>
+<li>Due tasks requested by the module</li>
+</ul>
+<p>Output:
+- Callback scheduling under protective <code>pcall</code> isolation to ensure job runtime failures are caught without breaking the global code framework
+- Regardless of whether the callback is successful or not, security queue cleaning and task record recycling</p>
+<p>Status change:</p>
+<ul>
+<li>Has an OnUpdate framework, expiration queue, reusable job records and task pool</li>
+<li>No schedule for each icon</li>
+</ul>
+<h2 id="coresavedvariables">Core/SavedVariables</h2>
+<p>Input:
+- Old global variables: <code>EA_Config</code>, <code>EA_Position</code>, <code>EA_Items</code>, <code>EA_AltItems</code>,
+  <code>EA_TarItems</code>, <code>EA_ScdItems</code>, <code>EA_GrpItems</code>, <code>EA_Pos</code>
+Output:</p>
+<ul>
+<li>Versioned event configuration files</li>
+<li>Migration report</li>
+<li>Validation warning</li>
+<li>User-triggered alerts add/remove APIs for Aura, spell cooldowns, and item cooldowns</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>SavedVariables may change during loading of /migration/config changes</li>
+<li>Do not write the status during high-frequency operation</li>
+<li>No freezing SavedVariables</li>
+<li>Add <code>EAM_DB.revision</code> after user-triggered configuration changes</li>
+<li><code>EAM_DB.schemaVersion = 3</code>; <code>config.textLayout</code> holds the whitelist position of timer/applications with word level 8–32.</li>
+<li><code>updateTextLayout()</code> returns <code>unchanged</code> for no-op without incrementing the revision; real changes are only incremented once.</li>
+<li>When encountering a newer unknown schema, the original <code>_G.EAM_DB</code> must not be modified; only the current version of transient runtime defaults will be created and <code>futureSchemaPreserved</code> will be reported to prevent the old version from overwriting the new format.</li>
+</ul>
+<h2 id="coreperformance">Core/Performance</h2>
+<p>Input:
+- <code>GetFramerate</code>, Combat Lockdown state, select <code>debugprofilestop</code></p>
+<p>Output:</p>
+<p>-Throttling decisions, analysis samples, shared table pool</p>
+<p>Status change:</p>
+<ul>
+<li>Only has analytical /session counter</li>
+</ul>
+<h2 id="servicesauraservice">Services/AuraService</h2>
+<p>Input:</p>
+<ul>
+<li>Set player/target Aura alerts</li>
+<li><code>UNIT_AURA</code>, <code>PLAYER_TARGET_CHANGED</code>, login /world events</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li><code>EAM_AURA_STATE_CHANGED</code> event triggers to EventRouter via parameterized state and frameName</li>
+<li>Normalized <code>AuraState</code> and <code>AlertState</code> allocated from <code>AuraStatePool</code></li>
+<li>Boundary warning</li>
+<li>Incremental aware Aura cache typed by unit and <code>auraInstanceID</code></li>
+<li>Configure revision-aware alert indexing by cell type and configure spellID</li>
+<li>Full update fallback scans each tracking unit/filter once, rebuilds the unit halo cache, and marks mismatched configuration alerts as inactive</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Only has Aura runtime cache and <code>AuraStatePool</code></li>
+<li>No UI frames may be created</li>
+<li>must not write to SavedVariables</li>
+<li>Alert index may be rebuilt when SavedVariables version changes</li>
+</ul>
+<h2 id="managersalertmanager">Managers/AlertManager</h2>
+<p>Input:</p>
+<ul>
+<li><code>EAM_AURA_STATE_CHANGED</code>, <code>EAM_COOLDOWN_STATE_CHANGED</code>, <code>EAM_ITEM_COOLDOWN_STATE_CHANGED</code>, <code>EAM_GROUND_EFFECT_STATE_CHANGED</code> and <code>EAM_TOTEM_STATE_CHANGED</code> events from EventRouter</li>
+<li>Configure alert list</li>
+</ul>
+<p>Output:
+-batch/throttled calls <code>Renderer.render</code> wrapped in layout batch control (<code>Renderer.BeginBatch</code> / <code>Renderer.EndBatch</code>)
+- After the UI hidden rendering is completed, recycle multi-type state tables through <code>state.releaseFunc(state)</code> to recycle inactive states (Aura, Cooldown, Item, GroundEffect, Totem)</p>
+<p>Status change:</p>
+<ul>
+<li>Has pending update queue and throttling scheduler status</li>
+<li>Don't own AlertState, SavedVariables or UI icon</li>
+</ul>
+<h2 id="servicescooldownservice">Services/CooldownService</h2>
+<p>Input:</p>
+<ul>
+<li>Configure spell cooldown alarm</li>
+<li>Cooldown related events and scheduler fallback ticks</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Standardized <code>CooldownState</code> and <code>AlertState</code></li>
+<li>Dirty alert ID</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Only has spell cooldown cache</li>
+</ul>
+<h2 id="legacyreferenceservicesshadowhostservice-save-reference-do-not-load">LegacyReference/Services/ShadowHostService (save reference, do not load)</h2>
+<p>Status:</p>
+<ul>
+<li>Not included in <code>EventAlertMod.toc</code>, does not belong to the official implementation period module.</li>
+<li>The original research code is retained in <code>LegacyReference/Services/ShadowHostService.lua</code> and is only used for CDM/FramePool historical decision-making tracing.</li>
+<li>The official package excludes the entire <code>LegacyReference/</code>; the Renderer does not look for or snap to ShadowHost.</li>
+</ul>
+<p>Reason for storage:</p>
+<ul>
+<li>12.1 Native AuraContainer architecture does not require CooldownViewer as a Shadow Host.</li>
+<li>Hooking the official frame pool and changing the transparency and level of the official frame will increase the risk of taint, Forbidden and version drift.</li>
+<li>Process validation uses <code>EAM.Services.ShadowHostService == nil</code> as a zero-load contract.</li>
+</ul>
+<h2 id="servicesitemcooldownservice">Services/ItemCooldownService</h2>
+<p>Input:</p>
+<ul>
+<li>Set itemID alarm</li>
+<li>Item cool down event</li>
+<li>Optional explicit cache creation command</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Standardized <code>ItemCooldownState</code> and <code>AlertState</code></li>
+<li>cache status</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Have items cached while cooldown is running</li>
+<li>Any item-spell mapping cache must be incremental and interruptible</li>
+</ul>
+<h2 id="servicesspellinfoservice">Services/SpellInfoService</h2>
+<p>Input:</p>
+<ul>
+<li>spellID/itemID Find Request</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Security Name/icon/link Available Facts</li>
+<li>Bounded search cache, only safe fields and bounded warnings are stored</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Has a lookup cache</li>
+<li>Intense combat query loops must be avoided</li>
+</ul>
+<h2 id="dataplayerresourcecatalog-servicesplayerresourcecapability-servicesplayerresourceservice">Data/PlayerResourceCatalog + Services/PlayerResourceCapability + Services/PlayerResourceService</h2>
+<p>Input:
+- <code>PlayerResourceCatalog</code>'s 17 resource definitions and 13 professions/40 groups of professional specialization topologies
+- Safe Bollinger capabilities of <code>UnitHasPowerType("player", powerType)</code>
+- Player resources, specializations, talents, transformations, world entry and exit, and module setting events
+- Valid settings for class/spec of <code>EAM_DB.profiles.classes[classToken].resources</code></p>
+<p>Output:</p>
+<ul>
+<li>Each currently available and enabled resource has its own stable runtime descriptor; the same specialization can track multiple resources at the same time</li>
+<li><code>Numeric</code>, <code>Secret</code>, <code>Unavailable</code> capability classification; classification only determines the rendering channel and does not output raw current/max/percent</li>
+<li>O(1) power-token dispatcher, rune-specific events and morph/spec rebuild requirements; disallowed per-resource <code>OnUpdate</code></li>
+<li>Display the percentage through the <code>UI/PowerRenderer</code> pre-built dedicated StatusBar sink; <code>Services/ClassPowerService</code> only retains the compatible facade and no longer has a single resource selection logic</li>
+</ul>
+<p>State and Secret boundaries:
+- The <code>UnitPowerPercent(..., CurveConstants.ZeroToOne)</code> return value can only be sent to <code>StatusBar:SetValue</code> in one direction in the same call chain, and then local is cleared; saving, comparison, stringification, serialization, table keying, or reading back with getters are prohibited.
+- Normally accessible values ​​can display text; Secret resources only display C-side sink. Do not use <code>StatusBar:SetUnit</code>, <code>SetPowerTextFontString</code> or <code>SetOnUpdateMode</code> without official documentation.
+- Structure creation and rearrangement are only performed outside combat; numerical updates of existing pre-built sinks can be driven by resource events. When deactivating the module, gate API first, then hide and clear the runtime descriptor.
+- <code>Debug/PromptExport</code> only outputs key, powerType, token, capability, foreground setting and count, but does not output current/max/percent.</p>
+<h2 id="servicesgroundeffectservice">Services/GroundEffectService</h2>
+<p>Input:</p>
+<ul>
+<li>Configurable ground effects (dynamic/manual mode)</li>
+<li>Unfiltered combat log events (SPELL_CAST_SUCCESS)</li>
+<li>Low frequency C_TooltipInfo.GetSpellByID lookup during successful cast</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li><code>EAM_GROUND_EFFECT_STATE_CHANGED</code> event triggers to EventRouter with status and frameName</li>
+<li>Normalized <code>GroundEffectState</code> and <code>AlertState</code> allocated from <code>GroundEffectStatePool</code></li>
+<li>Schedule publishing timer via Scheduler.after</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Only has ground effect active timer table, activeStates cache and <code>GroundEffectStatePool</code></li>
+</ul>
+<h2 id="servicestotemservice">Services/TotemService</h2>
+<p>Input:</p>
+<ul>
+<li>Shaman Totem Event (PLAYER_TOTEM_UPDATE)</li>
+<li>Native C_Totems.GetTotemInfo API Update</li>
+</ul>
+<p>Output:
+- <code>EAM_TOTEM_STATE_CHANGED</code> event triggers to EventRouter with status and frameName
+- Normalized <code>TotemState</code> and <code>AlertState</code> allocated from <code>TotemStatePool</code></p>
+<p>Status change:</p>
+<ul>
+<li>Only has activeStates cache and <code>TotemStatePool</code></li>
+</ul>
+<h2 id="uiiconpool">UI/IconPool</h2>
+<p>Input:</p>
+<ul>
+<li>Number of icons required/class</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Get/released icon box record</li>
+<li>Warm up inactive icons to avoid creating mid-combat frames</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Has frames, textures, cooling areas, FontStrings</li>
+<li>Frame creation should happen during initialization or only during controlled growth</li>
+<li>New icon frames must not be created in battle when the pool is empty</li>
+</ul>
+<h2 id="uitextplacement">UI/TextPlacement</h2>
+<p>Input:</p>
+<ul>
+<li>21 fixed placement IDs corresponding to <code>Data/TextPlacementContract.json</code>.</li>
+<li><code>EAM_DB.config.textLayout.timer/applications</code> and word level.</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Whitelisted <code>point/relativePoint/x/y</code>.</li>
+<li>Execute <code>ClearAllPoints</code>, <code>SetPoint</code> and <code>SetFont</code> only for EAM self-built FontString.</li>
+</ul>
+<p>Status change:
+- Does not hold runtime status and does not read the original value of AuraData/reciprocal text/applications.
+- Runtime Lua mappings must be cross-validated with <code>Data/TextPlacementContract.json</code> by <code>Tools/Test-ValidationContracts.ps1</code>.</p>
+<h2 id="uinativeaurarenderer">UI/NativeAuraRenderer</h2>
+<ul>
+<li>The icon/cooldown/timer/applications/name sub-component of EAM is only created and completed during 12.1 AuraButton <code>initializeFrame</code>; the restricted buttons will not be tracked, rearranged or modified after the callback is completed.</li>
+<li>Do not read the restricted text or Aura payload of Native AuraButton; text position/character level changes will directly overwrite the EAM self-built Region, only set pending during the battle, playback after <code>PLAYER_REGEN_ENABLED</code>, and do not rebuild AuraContainer.</li>
+<li>Preview the general Renderer during text level slider dragging; <code>OnMouseUp</code>/<code>OnHide</code> only submits Native container rebuild once. icon size/spacing, swipe alpha and double reciprocal diagnosis also require at most one rebuild per gesture.</li>
+<li>12.0.7 Universal Renderer and 12.1 Native renderer share <code>UI/TextPlacement</code> and must not maintain location branches respectively.</li>
+</ul>
+<h2 id="uirenderer">UI/Renderer</h2>
+<p>Input:</p>
+<ul>
+<li><code>IconRenderState</code></li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Visible UI state</li>
+<li>Layout batch control endpoints (<code>Renderer.BeginBatch</code> / <code>Renderer.EndBatch</code>) to defer expensive X/Y layout calculations</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Only change UI frame</li>
+<li>Never get Aura/cooldown data
+-Control all expensive UI writing</li>
+<li>Postponed structural layout changes and first icon acquisition in battle</li>
+<li><code>applyTextLayout()</code> must immediately re-set the existing EAM icon's timer/applications position and font level and name font level; only set pending in the battle, and playback after <code>PLAYER_REGEN_ENABLED</code>.</li>
+<li><code>layout()</code>, <code>requestLayout()</code>, text positioning and movement mode in render cannot be executed during combat. <code>SetPoint</code>/<code>SetSize</code>/<code>SetFont</code> can only remain in dirty/blocked/pending status.</li>
+</ul>
+<h2 id="uioptions">UI/Options</h2>
+<p>Input:</p>
+<ul>
+<li>Active profile</li>
+<li>Category tag to category ID mapping table (<code>CLASS_TOKEN_TO_ID</code>)</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Configuration changes via <code>SavedVariables</code></li>
+<li>Use native "GetSpecializationInfoForClassID(classID, specIndex)" and powerful static lookback tables for dynamic, localized specialized drop-down filtering to ensure 100% localized category /spec UI text, no need to hardcode</li>
+<li>Minimal in-game panel for explicit add/remove action:</li>
+<li>Player Aura spellID</li>
+<li>Target Aura spellID</li>
+<li>spell cooling time spellID</li>
+<li>Item cooling time itemID</li>
+<li>Immediately refresh the service after the user triggers the change successfully</li>
+</ul>
+<p>Status change:
+- Only UI widgets and explicit configuration values
+- First frame creation must be delayed in combat if live server blocks or risks protected UI changes
+- The timer/applications position changes once and updates SavedVariables, immediately reapplying the general icon and disengaging the Native Region, and does not require container rebuild; font-level slider dragging is divided into instant preview and end drag single Native reapply.
+- icon size/spacing slider only updates the general layout during dragging, and only requires a Native structure reconstruction when the gesture is ended.</p>
+<h2 id="uislash">UI/Slash</h2>
+<p>Input:</p>
+<ul>
+<li><code>/eam</code> command text</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Set operations, status text, and debug export requests</li>
+<li>Simple '/eam add' and '/eam remove' commands for player Aura, target Aura, spell cooldowns and item cooldowns</li>
+</ul>
+<p>Status change:
+- You can call the module API; you are not allowed to directly edit the service internals
+- Only write persistent alert configuration via "Core/SavedVariables"</p>
+<h2 id="debugdebugstate">Debug/DebugState</h2>
+<p>Input:</p>
+<ul>
+<li>Module status snapshot</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Compact<code>DebugSnapshot</code></li>
+<li>Aggregation boundary warnings from service status</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Only has transient debugging records</li>
+</ul>
+<h2 id="debugpromptexport">Debug/PromptExport</h2>
+<p>Input:</p>
+<ul>
+<li><code>DebugSnapshot</code></li>
+<li>Export mode: <code>debug-min</code>, <code>analysis-full</code>, <code>github-issue</code></li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>compact text like JSON</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Nothing but transient string generator buffer</li>
+</ul>
+<h2 id="debugflowtestrunner">Debug/FlowTestRunner</h2>
+<p>Input:</p>
+<ul>
+<li>User or Offline Harness specified <code>quick/core/boundary/aura121/all</code> suite.</li>
+<li>EventRouter, Scheduler, SavedVariables, RuntimeProbe public API.</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Synchronous and asynchronous case results.</li>
+<li><code>EAM_FLOW_VALIDATION_REPORT</code> schema 2 JSON, clearly lists <code>purpose</code>, <code>matrixVersion</code>, <code>executionSource</code> and client identity.</li>
+<li>Last summary with independent SavedVariable <code>EAM_FLOW_TEST_REPORT_JSON</code>.</li>
+</ul>
+<p>Status change:</p>
+<ul>
+<li>Only have transient test sessions and recent reports.</li>
+<li>Offline cases can temporarily replace <code>EAM.db</code>/<code>EAM_DB</code>, but must be restored with <code>pcall</code>; the real SavedVariables must not be written.</li>
+<li>Does not auto-execute in the background or in combat.</li>
+</ul>
+<h2 id="debugflowtestpanel">Debug/FlowTestPanel</h2>
+<p>Input:</p>
+<ul>
+<li>User button or <code>/eam test</code>.</li>
+<li>FlowTestRunner report callback.</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Quick/Core/Boundary/All button.</li>
+<li>Copyable JSON with localization digest.</li>
+<li>Provides a "real-person machine sign-in" entrance, but does not automatically perform any game input.</li>
+</ul>
+<p>Status change:
+- Only has lazy UI and pendingOpen.
+- May not be created for the first time in combat; delayed until <code>PLAYER_REGEN_ENABLED</code>.</p>
+<h2 id="debugvalidationenvironment">Debug/ValidationEnvironment</h2>
+<ul>
+<li>Cross-check the <code>_ptr_</code>, <code>_xptr_</code>, <code>_retail_</code> declared by the player with <code>GetBuildInfo</code>, Interface and the three original test-build flags; the report retains both aggregate and <code>buildFlags</code>, not just the merged result.</li>
+<li>Sources can only be marked as <code>ptr-live-manual</code>, <code>xptr-live-manual</code>, <code>Retail-live-manual</code> or <code>offline-mock</code>; no path guessing client.</li>
+<li>mismatch/unconfirmed must be written to <code>boundaryWarnings</code> and must not generate a pass.</li>
+</ul>
+<h2 id="debuglivetestsession-and-debuglivetestpanel">Debug/LiveTestSession and Debug/LiveTestPanel</h2>
+<ul>
+<li>Manage 37 cases according to <code>Data/LiveValidationMatrix.json</code> manual observation by players, 500 character notes, <code>/reload</code> checkpoint and schema 1 JSON.</li>
+<li>No spells cast, no items used, no macros executed, no target switching, no synthesized inputs, no calls to <code>ReloadUI</code>.</li>
+<li>Session writing of start, case status/notes, checkpoint, reload recovery and complete will always return <code>combatDeferred</code> during combat.</li>
+<li>Checkpoint saves the exclusive boot token for this load; the resume call for the same load must return <code>sameLoadRejected</code>. Only the table identity rebuilt by the player after <code>/reload</code> can be restored.</li>
+<li>The session must span <code>/reload</code> executed by the player once, and all 37 cases must be passed, the test-build identity is known, and there are no warnings in the environment before entering <code>complete</code> from <code>active</code>; <code>active</code> phase can only output <code>incomplete</code> even if all other conditions are met.</li>
+<li>The absolute paths, UNC, SavedVariables, WTF and Account fragments in the remarks must be masked first in the producer; <code>Data/LiveValidationMatrix.json</code> is fixed to <code>personalDataAllowed=false</code>.</li>
+<li>Offline fixtures always maintain <code>incomplete</code>; the importer recalculates digests, matrices and client identities separately.</li>
+</ul>
+<h2 id="testsflowvalidationharness">Tests/FlowValidationHarness</h2>
+<p>Input:</p>
+<ul>
+<li>Lua 5.1, suite and output paths.</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Offline JSON report and exit code directly after loading the official module.</li>
+</ul>
+<p>Boundary:</p>
+<ul>
+<li>Not included in TOC or officially released packages.</li>
+<li>Mock passes must not be marked as Retail/PTR real machine passes.</li>
+</ul>
+<h2 id="2026-07-26-native-aura-mod-contract">2026-07-26: Native Aura Mod Contract</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Input</th>
+<th>Output</th>
+<th>Disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AuraCapabilityService</code></td>
+<td>build/API surface</td>
+<td>backend snapshot</td>
+<td>only see TOC judgment</td>
+</tr>
+<tr>
+<td><code>AuraRuleCompiler</code></td>
+<td>Pure configuration DB</td>
+<td>stable runtime plan</td>
+<td>AuraData/UI</td>
+</tr>
+<tr>
+<td><code>AuraContainerService</code></td>
+<td>plan／structure fingerprint</td>
+<td>player/target containers, pending／reloadRequired status</td>
+<td>Combat structure modification, single load to create more than 18 containers</td>
+</tr>
+<tr>
+<td><code>NativeAuraRenderer</code></td>
+<td>AuraButton callback</td>
+<td>Binding Regions</td>
+<td>Aura state derivation</td>
+</tr>
+<tr>
+<td><code>AuraSoundService</code></td>
+<td>sound rules</td>
+<td>registration IDs</td>
+<td>read AuraData</td>
+</tr>
+</tbody>
+</table>
+<p>The contract between Native mode and <code>AlertManager</code>/general <code>Renderer</code> is "zero Aura state events".</p>
+<h2 id="2026-07-27-tooltip-monitoring-popup-module-contract">2026-07-27: Tooltip Monitoring Popup Module Contract</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Input</th>
+<th>Output</th>
+<th>Disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Services/TooltipMonitorService</code></td>
+<td><code>GameTooltip</code> post-call, <code>MODIFIER_STATE_CHANGED</code>, EAM Popup action</td>
+<td>Security ID display, five seconds out of combat scalar candidate, action whitelist, SavedVariables public API call, anonymous status count</td>
+<td>Storage TooltipData/AuraData/Frame, Keep Combat Candidate, Read UnitAura payload, Hook Blizzard Click, Simulate Right Click</td>
+</tr>
+<tr>
+<td><code>UI/TooltipMonitorMenu</code></td>
+<td>Pure scalar candidate provided by the service</td>
+<td>EAM own window next to the cursor, monitoring type button, Aura/unresolved Macro manual ID</td>
+<td>direct write EAM_DB, secure action attribute, create or display in battle, save Blizzard frame</td>
+</tr>
+<tr>
+<td>The Tooltip callback is only responsible for "adding text and updating candidates" and cannot directly open the UI. During battle, only safe text can be added and candidates cannot be updated. The storage route is fixed as follows: Spell → spell cooldown; Item → item cooldown; Aura → user selects player/target; Macro → only provides spell/item that has been safely parsed. If it is not parsed, the user enters the ID and selects the type. EAM's own button is submitted through its <code>OnClick</code> script; only <code>added</code>/<code>updated</code> is refreshed by the official <code>Options.notifyConfigChanged()</code> five downstreams, and <code>unchanged</code> is not refreshed.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>## 2026-08-09: About, Monitoring Tooltip and Classification Border Contract</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Input</th>
+<th>Output</th>
+<th>Disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UI/AlertBorderStyles</code></td>
+<td>EAM own alert type, static <code>unit</code>, static <code>auraFilter</code></td>
+<td>seven fixed style keys/RGBA; <code>classPower</code>, <code>totem</code> return nil</td>
+<td>read UnitAura/AuraData, use Secret value as table key, impersonate Blizzard dispel border</td>
+</tr>
+<tr>
+<td><code>UI/IconPool</code></td>
+<td>alert state provided by Renderer</td>
+<td>General icon classification border; out of combat Spell/Item Tooltip</td>
+<td>Treat <code>powerType</code>/totem slot as spellID, open Tooltip during battle, hook Blizzard frame</td>
+</tr>
+<tr>
+<td><code>UI/NativeAuraRenderer</code></td>
+<td><code>unit</code> and <code>filterString</code> of compiler snapshot</td>
+<td>AuraButton creates classification borders during initialization; Tooltip is still managed by Blizzard AuraButton</td>
+<td>Add or rearrange Region after <code>initializeFrame</code></td>
+</tr>
+<tr>
+<td><code>UI/AboutPanel</code></td>
+<td>TOC metadata, GetBuildInfo, ValidationEnvironment security snapshot, Constants</td>
+<td>EAM version, actual client, API baseline, author and project URL</td>
+<td>Use static API baseline to pretend to be the current client build, first build frame in battle</td>
+</tr>
+<tr>
+<td>The fixed classification is: self BUFF cyan, self DEBUFF red, target BUFF blue, target DEBUFF orange, skill yellow, item green, ground effect purple. Aura colors only use <code>unit</code> and <code>auraFilter</code> known to SavedVariables/compiler, without reading the actual Aura payload; <code>classPower</code> and <code>totem</code> retain their original appearance. Generally, Renderer's monitoring Tooltip is only displayed during non-combat, while Native AuraButton follows the Blizzard Tooltip and combat hiding contract.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-08-09-svg-probe-and-3px-border-contract">2026-08-09: SVG Probe and 3px border contract</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Input</th>
+<th>Output</th>
+<th>Disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI/AlertBorderStyles</td>
+<td>EAM Own icon owner and fixed 3px padding</td>
+<td>Complete frame of TOPLEFT -3/+3, BOTTOMRIGHT +3/-3</td>
+<td>Then use transparent white space material to estimate the visible thickness</td>
+</tr>
+<tr>
+<td>Debug/SVGCapabilityProbe</td>
+<td>Player declaration client, fixed built-in SVG, visual results of two cases</td>
+<td>VectorGraphics／Texture A/B Life cycle and classification JSON</td>
+<td>Automatically operate the game, output raw file ID, treat offline mock as PTR pass</td>
+</tr>
+<tr>
+<td>Tools/Import-EAMFlowReport.ps1</td>
+<td>Explicitly provided JSON or game persistence report</td>
+<td>Schema, client identity, two case IDs, interfaceRequired and status recalculation</td>
+<td>List private directories, trust report claims pass</td>
+</tr>
+<tr>
+<td>VectorGraphics is a Region capability and is not equivalent to a Texture; the texcoord, rotation, mask or blend capabilities of a Texture cannot be directly assumed to exist in VectorGraphics. The main spell/item/Aura icon is still dynamic FileDataID, not changed to SVG. The first priority candidate is the Pandemic static prompt area; Dispel CustomAsset/PreserveAsset must first complete the asset map or preload contract, and the empty Texture cannot be regarded as completed.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-08-12-minimap-svg-and-theme-module-contract">2026-08-12: Minimap SVG and Theme module contract</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Input</th>
+<th>Output</th>
+<th>Disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI/Theme</td>
+<td>Static palette, EAM own frame/FontString/button registry, theme of SavedVariables</td>
+<td>Eleven theme palettes, combat-deferred application results, EAM button four-state neutral base image and 2px theme border</td>
+<td>Read Secret Value, modify Blizzard secure frame, overwrite AlertBorderStyles Semantic color</td>
+</tr>
+<tr>
+<td><code>UI/Options</code> minimap helper</td>
+<td>EAM Own minimap Texture, project SVG</td>
+<td><code>svg</code> or <code>fallback</code> results; retain original button interaction</td>
+<td>Use sound FileDataID When textures, rely on external wowtools materials, change safe interaction during battle</td>
+</tr>
+<tr>
+<td>Theme registry only saves the weak-key reference of EAM's own UI object; during combat, <code>setSelection</code> does not change the frame immediately, but saves the pending value and applies it after <code>PLAYER_REGEN_ENABLED</code>. The minimap SVG is only for visual material downgrade and does not participate in Aura, Cooldown, UnitPower or Secret logic.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-08-13-aurasound-detailed-settings-and-registration-contract">2026-08-13: AuraSound Detailed Settings and Registration Contract</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Input</th>
+<th>Output</th>
+<th>Disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Core/SavedVariables</code></td>
+<td>player／target Aura alert, three trigger pure data</td>
+<td>normalized sound, no-op revision, <code>EAM_AURA_SOUND_CHANGED</code></td>
+<td>save registration ID, any trigger／non-pure data</td>
+</tr>
+<tr>
+<td><code>UI/Options</code></td>
+<td>Aura detailed settings, shared materials, three trigger checkboxes</td>
+<td>per-alert sound draft, material audition</td>
+<td>Call 12.1 API on 12.0.7, pretend the audition is an Aura event</td>
+</tr>
+<tr>
+<td><code>Managers/AuraRuleCompiler</code></td>
+<td>Normal unit/SpellID, global master, alert sound</td>
+<td><code>containerFingerprint</code>, <code>soundFingerprint</code>, sound rules</td>
+<td>Read AuraData, let custom sound bypass master off</td>
+</tr>
+<tr>
+<td><code>Services/AuraContainerService</code></td>
+<td>container／sound fingerprint</td>
+<td>Structural reconstruction or pure sound sync</td>
+<td>Pure sound effect change to create a new container, change the structure during battle</td>
+</tr>
+<tr>
+<td><code>Services/AuraSoundService</code></td>
+<td>capability, static sound rules</td>
+<td>transactional active registry, retired removal retry</td>
+<td>read AuraData, serialization ID, pretend to stop the played sound with Remove</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Container fingerprint only describes the AuraContainer structure; Sound fingerprint only describes unit, SpellID, trigger, asset and channel. Separation of the two is a requirement for the 18-container quota.</li>
+<li>To register, create a candidate registry first; if any Add fails, clean the candidate and keep the old active registry. If Remove fails, the old ID remains in the retired registry and will be retried later or requires <code>/reload</code>.</li>
+<li>PTR 12.1's <code>UnitAuraSoundInfo</code> has no caster/auraFilter; <code>fromPlayer</code> or HELPFUL/HARMFUL cannot be accurately expressed by Native sound, and the compiler must leave limitations.</li>
+<li>C API parameters are only taken from the normalized SavedVariables of EAM; mixing in AuraData, Secret value, frame, DurationObject or registration ID is prohibited.</li>
+<li>12.0.7 does not have the usual Aura three-trigger native backend; detailed controls show unsupported, settings retained and zero 12.1 calls.</li>
+</ul>
+<h2 id="2026-08-13-alpha-4-module-and-profile-boundaries">2026-08-13 Alpha 4: Module and profile boundaries</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Official entrance</th>
+<th>Save data</th>
+<th>Prohibited</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core/ModuleController</td>
+<td>UI/ModulePanel, SavedVariables.updateModuleToggle</td>
+<td>Eight moduleToggles</td>
+<td>Repeatedly registering events, reading Secrets, and rebuilding Native structures during combat</td>
+</tr>
+<tr>
+<td>Core/SavedVariables profile resolver</td>
+<td>getActiveClassToken, getClassProfile, getAlertList</td>
+<td>profiles.classes and v4 migration backup</td>
+<td>Use SpellArray to guess the occupation affiliation of historical global data</td>
+</tr>
+<tr>
+<td>Services/LegacyDiscoveryService</td>
+<td>/eam list, lookup, lookupfull, showcast</td>
+<td>This login only cast candidates</td>
+<td>Global SpellID Scan, automatically join monitoring, serialization Secret</td>
+</tr>
+<tr>
+<td>UI/ModulePanel</td>
+<td>The "Function Module" button of the main setting</td>
+<td>Does not directly own the settings</td>
+<td>Create or rearrange the UIParent structure during combat</td>
+</tr>
+<tr>
+<td>Module deactivation uses handler gate plus existing state cleanup; events are still only registered once. Native Aura, Ground duration scrape, ClassPower re-detect and panels not yet created are delayed in combat until out of combat. The JSON/Base64 profile codec is not yet included in the official service contract, and the LegacyReference importer cannot be regarded as a new version of API.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-08-14-alpha-5-profile-codec-font-and-dynamic-language-contract">2026-08-14 Alpha 5: Profile codec, font and dynamic language contract</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Official entrance</th>
+<th>Export/Save</th>
+<th>Prohibited</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core/ProfileCodec</td>
+<td>ProfileCodec.export, previewImport, applyImport</td>
+<td>EAMAP1 canonical JSON/Base64, preview plan, bounded import backup</td>
+<td>loadstring, arbitrary Lua, Secret serialization, unknown schema/module, apply in combat</td>
+</tr>
+<tr>
+<td>UI/ProfileCodecPanel</td>
+<td>Options' Profile import/export button</td>
+<td>Manual Ctrl+C's export/preview/merge/replace UI</td>
+<td>Directly treat the content of EditBox as Lua, directly replace without preview</td>
+</tr>
+<tr>
+<td>Core/SavedVariables font</td>
+<td>Font drop-down and updateFontFamily</td>
+<td>config.fontFamily four-value whitelist, no-op revision</td>
+<td>directly mutate config, modify Blizzard FontString</td>
+</tr>
+<tr>
+<td>Locale／UI/Options</td>
+<td>EAM_LANGUAGE_CHANGED registry</td>
+<td>EAM Own buttons, drop-downs, conditions, spec menu instant refresh</td>
+<td>Cache unbound long-life text, rewrite Blizzard or case-fixed Traditional Chinese programs</td>
+</tr>
+</tbody>
+</table>
+<p>The checksum of the Profile codec is only used for clipping damage detection, not a security signature; the plan fingerprint must be rechecked before applying. Font and language refreshes only apply to EAM's own UI, and the structure and combat restrictions of Native AuraButton will not be relaxed.</p>
+<h2 id="2026-08-14-aura-catalog-batch-input-and-candidate-data-boundaries">2026-08-14: Aura catalog, batch input and candidate data boundaries</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Input</th>
+<th>Output</th>
+<th>Disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UI/Options</code> Aura catalog</td>
+<td>Player single transaction or line break/semicolon batch SpellID, current occupation</td>
+<td><code>SELF</code>/<code>CROSS_CLASS</code> routing, default <code>fromPlayer</code>, can copy the current list</td>
+<td>Display that there are no spells, disguise non-professional candidates as this occupation, increase transaction by transaction revision</td>
+</tr>
+<tr>
+<td><code>Core/SavedVariables</code></td>
+<td>Verified alert draft and deferred batch</td>
+<td>active class profile, single revision/event</td>
+<td>Write root mirror, freeze user data, accept unknown scope</td>
+</tr>
+<tr>
+<td><code>UI/ProfileCodecPanel</code></td>
+<td>EAMAP1 text</td>
+<td>ScrollFrame viewport, fixed footer, preview/apply</td>
+<td>Let long text cover buttons, automatic clipboard, apply during battle</td>
+</tr>
+<tr>
+<td><code>Tools/fetch_wowhead_spells.py</code></td>
+<td>Wowhead offline web page candidate</td>
+<td><code>Data/wow_spells_and_auras.json</code></td>
+<td>Write Docs, become TOC/runtime dependency, pass the web page data as live verified</td>
+</tr>
+<tr>
+<td><code>Tools/Test-WowheadCandidateData.ps1</code></td>
+<td>Unique Data JSON and scraping script</td>
+<td>schema/totals/class14/path/runtime isolation gate</td>
+<td>Auto-approval misplacement, PvP, passive or Aura effect ID</td>
+</tr>
+</tbody>
+</table>
+<p><code>catalogScope</code> is a data management flag that does not change the Blizzard Secret/protected boundary. Spellbook does not contain all Aura effect IDs, so "out of position" can only be classified conservatively and cannot be automatically deleted from the web candidate or upgraded to the official default.</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

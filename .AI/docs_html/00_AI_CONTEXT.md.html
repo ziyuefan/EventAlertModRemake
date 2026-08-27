@@ -667,17 +667,159 @@ OnUpdate/C_Timer的使用和分配風險。 <code>文件/07_MIGRATION_NOTES.md</
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-formal-clothing-rewrite-ai-context">EventAlertMod Formal Clothing Rewrite: AI Context</h1>
+<h2 id="2026-08-21-new-root-current-baseline-takes-precedence-over-historical-paragraphs">2026-08-21 New root current baseline (takes precedence over historical paragraphs)</h2>
+<ul>
+<li>Project Git root directory: <code>D:\Project_EventAlertMod</code>.</li>
+<li>The only source of distributable plug-ins: <code>D:\Project_EventAlertMod\EventAlertMod</code>; the plug-in ZIP must package this folder file by file, and the top level is fixed to <code>EventAlertMod/</code>.</li>
+<li>AI management data: <code>D:\Project_EventAlertMod\.AI</code>, including <code>Docs/</code>, <code>Tools/</code>, <code>Data/</code> and <code>docs_html/</code>; <code>Deploy/</code> only saves native deployment/packaging tools; <code>Dist/</code> only saves native products and is ignored by Git.</li>
+<li>Currently WoW root: <code>D:\World of Warcraft</code>. As of this snapshot, Retail/PTR is <code>12.1.0.69382</code>, XPTR is <code>12.0.7.68887</code>; the three EventAlertMod targets are currently physical; currently only PTR contains EventAlertMod.toc, Retail/XPTR still lacks this file, and Test-LocalWoWEnvironment is 1/3, cannot declare three channels ready. Deploy Status/DryRun Passing the three-channel only means that the pre-check can be safely deployed, and has not yet been actually deployed. Each deployment still must re-read ProductVersion, Reparse Point and target inventory.</li>
+<li>The current governance of <code>Deploy/Deploy-EventAlertMod.ps1</code> is Registry first, <code>Deploy/DeploymentTargets.json</code> fallback, user-confirmable, or <code>-WowRoot</code> using another WoW root; Status must list Retail/PTR/XPTR three-channel complete ProductVersion. Only when you select PTR/XPTR interactively will you be asked whether to include Retail; noninteractive cannot be added to Retail secretly; any Reparse Point is fail-closed.</li>
+<li><code>D:\EventAlertMod</code> is only the name of the historical path, not the access target of this new structure. If the old path still appears in the historical paragraph after this section, it will only be saved as past evidence and shall not be deployed or modified accordingly.</li>
+</ul>
+<h2 id="prioritize-route-continuation">Prioritize route continuation</h2>
+<p>When re-entering the project, context compression occurs, or when you need to confirm the current progress, read <code>Docs/28_PROJECT_CONTINUITY.md</code> first and then <code>Data/ProjectContinuity.json</code>. The former provides human-readable decisions and real machine to-dos; the latter uses a strict schema to separate facts, inferences, work items, trials, and unverified. Detailed trial and error only traced the stable issue ID of <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>, and did not guess the current status based on this file or old conversation summaries.
+The current snapshot of the renewal is 2026-08-14.4; the Retail server and PTR are 12.1 and XPTR are 12.0.7; offline passing shall not replace the real-person signature of Retail, PTR or XPTR.</p>
+<h2 id="project-summary">Project Summary</h2>
+<p>EventAlertMod (EAM) is a World of Warcraft AddOn for lightweight Halo,
+Cooldown time and item cooldown. Cooling's Identity Is Simple: Display Matters
+Attributes and item status are key icons without becoming WeakAuras clones.
+此重写仅针对魔兽世界正式服版，正式服版 12.x /
+午夜时代的 API 是预期的衍生性商品。 Existing Classic, Mystery of Panda Classic servers,
+Cataclysm Classic、Wrath of the Lich King Classic、TBC、Era 和特定地区的经典分店是
+Only historical behavior, no new structures may be processed.</p>
+<h2 id="language-family-and-language-selection-contract">Language Family and Language Selection Contract</h2>
+<ul>
+<li><code>Locale/Common.lua</code> 建立固定 catalog：<code>enUS</code>、<code>zhTW</code>、<code>zhCN</code>、<code>koKR</code>、<code>ruRU</code>。</li>
+<li><code>ruRU.lua</code> must be completely aligned with the <code>L.*</code> key of <code>enUS.lua</code>; missing keys in other languages ​​are filled in by the enUS fallback.</li>
+<li><code>Auto Detect</code> is the only fixed English name, and <code>EAM_DB.config.language</code> defaults to <code>auto</code>; the remaining options are shown in their native language names.</li>
+<li>The selector will refresh the <code>EAM.L</code> and registered EAM own UI in place, and will not automatically call <code>ReloadUI</code>; <code>/reload</code> is only used to load new Lua on the disk, verify the settings are saved, or let SavedVariables drop to disk.</li>
+</ul>
+<h2 id="rewrite-direction">Rewrite direction</h2>
+<p>The current source code tree retains much of the behavior but mixes compatibility
+Branching, UI construction, halo scanning, cooling project, cache generation,
+Special resources, slash directives, global variables, localization and frame layout
+Same runtime surface. Rewrites should preserve useful data and make it available to users
+images, while replacing internal structures with explicit modules.</p>
+<p>Required target mods:</p>
+<ul>
+<li><code>Core/Env.lua</code></li>
+<li><code>Core/Util.lua</code></li>
+<li><code>Core/Constants.lua</code></li>
+<li><code>Core/EventRouter.lua</code></li>
+<li><code>Core/Scheduler.lua</code></li>
+<li><code>Core/SavedVariables.lua</code></li>
+<li><code>Core/Performance.lua</code></li>
+<li><code>Services/AuraService.lua</code></li>
+<li><code>Services/CooldownService.lua</code></li>
+<li><code>Services/ItemCooldownService.lua</code></li>
+<li><code>Services/SpellInfoService.lua</code></li>
+<li><code>UI/IconPool.lua</code></li>
+<li><code>UI/Renderer.lua</code></li>
+<li><code>UI/Options.lua</code></li>
+<li><code>UI/Slash.lua</code></li>
+<li><code>Debug/DebugState.lua</code></li>
+<li><code>Debug/PromptExport.lua</code></li>
+</ul>
+<h2 id="non-negotiable-boundaries">Non-negotiable boundaries</h2>
+<ul>
+<li>There is no secret value to bypass.</li>
+<li>Unprotected data bypassed.</li>
+<li>No combat automation.</li>
+<li>No external dependencies.</li>
+<li>No complex user script engine.</li>
+<li>Intensive continuous scanning.</li>
+<li>There is no per-graph timer, per-scope timer, or per-project timer hardware.</li>
+</ul>
+<h2 id="simple-principle">Simple principle</h2>
+<p>EAM should be kept simple for general users: add text ID, enable alerts, see
+icon, adjust group display options, and export compact debug status
+Available only.</p>
+<h2 id="existing-discussion-anchors">Existing discussion anchors</h2>
+<p>The previous ChatGPT discussion context is at:</p>
+<ul>
+<li><code>DevDocument/ChatGPT/EventAlertMod_ChatGPT_Discussion_Context.md</code></li>
+</ul>
+<p>Important historical points from this document:
+- EAM is not based on Ace3.
+-Currently the directory uses <code>RequiredDeps: !Lib_ZYF</code>, but the rewrite target is not new
+  External dependencies.
+- <code>/eam opt</code> is the recorded setting command.
+- Existing behaviors include self-Aura, target Aura, character cooldown, and items
+  Cooldowns, tooltips/item IDs, localization and optional debugging assistants.
+- Older work has exceeded "Main/EventAlert_EAFun.lua" as a compatibility
+Facade. Prospective agents must not imagine the document as the final architecture.</p>
+<h2 id="first-time-passed-review-result">First time passed review result</h2>
+<p><code>Docs/01_ARCHITECTURE.md</code> contains the current file map and module
+<code>Docs/03_STATE_SCHEMA.md</code> contains SavedVariables and global variables
+<code>Docs/05_PERFORMANCE_GUIDE.md</code> contains candidate hot paths,
+OnUpdate/C_Timer usage and distribution risks. <code>文件/07_MIGRATION_NOTES.md</code>
+Contains behavioral migration notes.</p>
+<h2 id="2026-08-09-actual-steps-and-alpha-3-candidate-entrance">2026-08-09 Actual steps and Alpha 3 candidate entrance</h2>
+<ul>
+<li>The current machine-readable snapshot is <code>2026-08-09.3</code> of <code>Data/ProjectContinuity.json</code>; the human handover is <code>Docs/28_PROJECT_CONTINUITY.md</code>.</li>
+<li>For the prerequisites, step-by-step operations and passing evidence of Case 37 PTR/XPTR/Retail, see <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>.</li>
+<li>Alpha 3 candidates include Target Aura hover+Ctrl+Alt, Macro spell/item ID, manual Ctrl+C report handover, About, monitoring Tooltip and seven-color classification border; currently there is only an offline gate, which does not mean that the three clients have actually signed for it.</li>
+</ul>
+<h2 id="2026-08-09-svg-ab-continues-with-3px-border">2026-08-09 SVG A/B continues with 3px border</h2>
+<ul>
+<li>The ActionButton border with transparent white space has been abandoned for the category border. Both Legacy and Native use WHITE8X8 solid-color Texture, which is located on the BORDER layer and fixedly expanded by 3px on all sides.</li>
+<li>The Flow panel adds a new player-operated SVG ability test; VectorGraphics and Texture respectively verify SetSVG, HasSVG, GetSVGFileID classification, ClearSVG and reload.</li>
+<li>SVG report type is EAM_SVG_CAPABILITY_REPORT, rawFileIDsCollected is fixed to false; can be imported by JSON or in-game persistent files as ReportType SVG.</li>
+<li>The latest offline gates are Lua 50/50, Flow 54/54, Validation Contracts 264/264. PTR 69189 It has been confirmed that the two SVG patterns can be displayed, but the revised Texture clear/reload and 3px border are still to be retested by the player, and the complete real machine cannot be marked as passed.</li>
+</ul>
+<h2 id="2026-08-12-minimap-svg-and-eam-theme-selection">2026-08-12 Minimap SVG and EAM theme selection</h2>
+<ul>
+<li>The minimap button no longer treats the sound FileDataID or Texture SVG as the official icon; <code>UI/Options.lua</code> is fixed to use Blizzard's built-in <code>Interface\\Icons\\Trade_Engineering</code> gear, retaining the left-click, right-click and dragging behaviors.</li>
+<li>UI/Theme.lua centralized management EAM own window and button palette, providing EAM, FF7, Windows XP, Windows 7, Windows 10, Windows 3.1, Borland C++ IDE, DOS CRT, Yitian Chinese, Red Alert, macOS Aqua has eleven options; SavedVariables only saves the eleven whitelist values of config.theme. Illegal values fall back to eam and leave a migration warning.</li>
+<li>Theme switching only affects EAM's own Options/About/Tooltip popup, location/list/condition window and Flow/Live/Prompt/SVG/UnitPower debug panel. It does not change the seven content semantic colors of AlertBorderStyles and does not hook the Blizzard secure/protected frame.</li>
+<li>Selecting a theme during battle only saves the pending selection, which is applied after <code>PLAYER_REGEN_ENABLED</code>; neither the loading of the minimap SVG nor the theme palette reads or writes the Secret Value.</li>
+<li><code>wowtools.work</code> is only used as a reference for read-only data browsing. The project does not rely on external FileDataID or remote materials.</li>
+<li>This round of offline gates: Lua 51/51, Flow 54/54, Validation Contracts 328/328; still does not mean that PTR/XPTR/Retail is signed by a real person.</li>
+</ul>
+<h2 id="2026-08-13-aurasound-detailed-settings-continued">2026-08-13 AuraSound Detailed settings continued</h2>
+<ul>
+<li>PTR 12.1 build 69273 fixed generated file confirmation <code>C_UnitAuras.AddAuraSound</code> supports Added, ApplicationsIncreased, and Removed; the structure only contains unit, SpellID, audio file name/FileDataID and output channel, without soundKitID, caster or auraFilter.</li>
+<li>Aura's detailed settings allow you to select shared sound effects materials, and independently select Add, Add Layers, and Remove; when none of these three items are selected, the global sound effects will be used. The 12.0.7 control is capability downgrade and must not call 12.1 API.</li>
+<li>Global <code>showSound</code> is the master gate; pure sound effect changes only synchronize the C-side registration and do not create a new AuraContainer. If registration fails, the old registry will be retained, and the failed ID will be removed for subsequent retries.</li>
+<li>Flow has added SavedVariables round-trip, container/sound fingerprint separation, pure sound zero container reconstruction, three trigger payload and failure rollback; the real-life matrix has been upgraded to <code>2026-08-13.1</code>, a total of 37 cases.</li>
+<li>Native AuraSound can only be triggered by unit+SpellID and cannot accurately express <code>fromPlayer</code> or Aura polarity; this is a public API restriction and must be observed over-fire by PTR real people, and offline results cannot be used to claim that the live broadcast has passed.</li>
+<li>Offline gate in this round: Lua <code>54/54</code>, Flow <code>all 61/61</code>, Validation Contracts <code>355/355</code>; Flow artifact is <code>TestResults/EAM_FlowValidation_all_20260813_013945.json</code>.</li>
+</ul>
+<h2 id="2026-08-13-alpha-4-release-handover">2026-08-13 Alpha 4 release handover</h2>
+<ul>
+<li>Alpha 4 will include the existing eight function module switches and career profiles in the release scope; the module panel can be opened from the "Function Module" button in the main settings window.</li>
+<li>The default value of moduleToggles is all enabled; disabling only short-circuits event entries, clears existing reminders, and avoids repeatedly registering events or rebuilding protected structures in battle.</li>
+<li>The active class profile is determined by the UnitClass whitelist; when the v4 global list cannot be reliably split, the migration backup or unassignedLegacy is retained, and SpellArray is not used to guess other career information.</li>
+<li>/eam list, lookup, lookupfull and showcast only operate on safe candidates for the current occupation; they do not scan the entire SpellID space, nor automatically write to the monitoring list.</li>
+<li>JSON/Base64 profile sharing has not yet become the official runtime API; the official program does not use the loadstring import path of LegacyReference. If implemented in the next round, strict parser, checksum, preview/apply and combat postponement contracts must be completed first.</li>
+<li>This round of offline gate maintains Lua 54/54, Flow all 61/61, Validation Contracts 355/355; Alpha 4 Release still does not represent PTR, XPTR or Retail real-person signature.</li>
+</ul>
+<h2 id="2026-08-14-alpha-5-release-handover">2026-08-14 Alpha 5 release handover</h2>
+<ul>
+<li>Alpha 5 incorporates Core/ProfileCodec.lua and UI/ProfileCodecPanel.lua into the official runtime; the sharing string format is EAMAP1:<base64(canonical JSON)>, which only processes the allowed module scope of the current active class.</li>
+<li>The codec uses strict JSON/Base64 parser, Adler-32 checksum, size/depth/node limit and preview fingerprint; merge/replace is only applied in non-combat, rejecting external Lua, Secret values, unknown schema, duplicate IDs and illegal class/module.</li>
+<li>Added four new EAM own font options; SavedVariables.updateFontFamily does whitelist normalization and no-op revision, TextPlacement only changes EAM self-built FontString.</li>
+<li>Locale registry will re-apply EAM's own buttons, drop-downs, conditions and spec menu after EAM_LANGUAGE_CHANGED; Auto Detect is fixed in English and does not require /reload to see dynamic switching.</li>
+<li>The offline gates of this round are Lua 56/56, Flow all 66/66, and Validation Contracts 360/360; the Flow artifacts are subject to the products of this round TestResults. PTR／XPTR／Retail Players still need to conduct actual testing by themselves, and cannot be upgraded to a real person pass.</li>
+</ul>
+<h2 id="2026-08-14-retail-121-and-aura-list-follow-up">2026-08-14 Retail 12.1 and Aura list follow-up</h2>
+<ul>
+<li>Retail／PTR 12.1 selects Native backend with Interface <code>120100</code> and AuraContainer widget capability; test-build flags only verifies client identity and no longer blocks the Retail server 12.1.</li>
+<li>Added <code>catalogScope=SELF|CROSS_CLASS</code> to Aura manifest. A new preset for self and target is <code>fromPlayer=true</code>; a preset for cross-professional gains and losses is <code>fromPlayer=false</code>. Self-candidates who are not in the current profession will be conservatively transferred to the cross-professional list.</li>
+<li>Batch input accepts newlines, half-width semicolons, and full-width semicolons, and first deduplicates/sorts/verifies SpellID; spells that do not exist will not be displayed or written.</li>
+<li>The Profile panel uses scrollable multiline EditBox and is opened directly by Options; the custom dropdown complements the normal/pushed/highlight material and clear FrameLevel.</li>
+<li>Wowhead export files only retain <code>Data/wow_spells_and_auras.json</code>, the status is fixed to candidate-only, and runtime dependencies or automatic defaults are prohibited.</li>
+<li>The latest offline evidence: Lua 56/56, Flow 68/68, Contracts 387/387, native environment 3/3; 37 case real-person matrix version is <code>2026-08-14.1</code>, and the three clients are still pending.</li>
+</ul>
+<h2 id="2026-08-14-alpha-6-release-handover">2026-08-14 Alpha 6 release handover</h2>
+<ul>
+<li>Alpha 6 integrates Retail 12.1 Native gate, Aura career scope/batch input, EAMAP1 Profile, dynamic language, and eleven theme buttons to align with the mini map circle.</li>
+<li>The golden circle of the minimap is <code>MiniMap-TrackingBorder</code> 53x53 composite material; the button body remains 31x31, the background and gears are anchored according to the standards <code>TOPLEFT +7,-5</code>, <code>TOPLEFT +7,-6</code> respectively, the gears are trimmed by 5%, and the composite border is not allowed to be centered.</li>
+<li>GitHub <code>release.yml</code> maintain <code>workflow_dispatch</code> plus <code>if: false</code>; Alpha 6 is only released by the native official package with <code>gh release create --prerelease</code>, and does not trigger CurseForge/WoWInterface.</li>
+<li>The offline gate before release is Lua 56/56, Flow 68/68, Validation Contracts 394/394; the minimap pixel position, eleven themes and language still need to be visually inspected by players after going to Retail/PTR/XPTR <code>/reload</code>.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

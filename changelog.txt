@@ -1,3 +1,20 @@
+-- [Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
+    -- 次世代全量法術庫與智慧預設系統 (Next-Gen Master Spell Catalog & Intelligent Presets)：
+       -- 5 語系離線先驗資料庫：收錄全 13 職業、40 專精與 39 英雄天賦樹共 4,463 個核心法術與 466 個光環，支援繁中/簡中/英文/韓文/俄文即時切換。
+       -- 階層式樹狀法術庫面板 (SpellCatalogTreePanel)：支援專精展開/收合、三態勾選、名稱與 ID 即時搜尋。
+       -- 目標模組自由切換：頂部下拉選單可自選將勾選技能指派至技能冷卻、自身光環、目標光環、特殊光環或地面效果模組清單。
+       -- 一鍵天賦智慧同步：整合 SpellBookScannerService 動態探測玩家當前天賦樹與法術書，一鍵自動同步核心技能至所選模組。
+       -- 全法術懸停原生技能說明提示 (GameTooltip:SetSpellByID)：滑鼠懸停於法術項目時完整顯示原生法術說明、射程、施法時間與 ID。
+    -- 多維戰術群組與標籤管理模組 (Multidimensional Group Management Module)：
+       -- 群組管理核心服務 (GroupService)：內建 4 大系統戰術群組（主要爆發、關鍵減傷、控場打斷、地面效果）並支援玩家自訂標籤群組。
+       -- 支援法術與群組多對多歸屬、群組獨立全域開關與「僅戰鬥中顯示」情境過濾。
+       -- 獨立群組管理側窗 (GroupManagerPanel)：支援群組名稱編輯、獨立儲存按鈕、戰鬥情境切換、所屬法術多選與全介面 GameTooltip 懸停說明。
+       -- 技能細節視窗整合群組下拉複選器 (Options.lua)：所有技能條件設定視窗頂部增設「所屬群組 (可複選)」下拉按鈕與即時摘要。
+    -- 穩定性與相容性強化 (Hardening & Bug Fixes)：
+       -- 嚴格禁止過時 API：全面替換 GetSpellInfo, GetItemInfo, GetSpellCooldown 為現代 C_Spell / C_Item API，並於 CI 加入靜態 AST 審查。
+       -- Profile Codec 匯出/解碼修復：在 buildPayload 加入唯一性過濾，徹底修復實機歷史重複 ID 導致的 duplicateAlertID 報錯。
+       -- 字型驗證修復：修正 LSM 載入時的旁路判斷，確保非法字型一律安全回退為 STANDARD。
+       -- 修正條件設定視窗下拉文字 SetText 型別不相容問題。
 -- [Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
     -- LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)：
        -- 全面接入社群廣泛使用的 LibSharedMedia-3.0 素材生態，完整支援所有第三方 SharedMedia 音效包、字型包與材質包。

@@ -1233,17 +1233,725 @@ ADDON_RESTRICTION_STATE_CHANGED
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="warcraft-wiki-12x-api-change-notes">Warcraft Wiki 12.x API Change Notes</h1>
+<p>This file is compiled from the Warcraft Wiki's <code>API Change Summary</code> and Retail 12.x
+Related pages serve as an implementation reference for the Retail server rewrite of EventAlertMod / EAM.</p>
+<p>This is not a complete backup of the API archive; this note only retains the Aura, cooldown, and
+Project cooling, UI renderer, debug export, SavedVariables migration directly
+Relevant emphasis.</p>
+<h2 id="source">Source</h2>
+<ul>
+<li>https://EAMCODE_4__.wiki.gg/wiki/API_change_summaries</li>
+<li>https://EAMCODE_7__.wiki.gg/wiki/Patch_12.0.0/API_changes</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Patch_12.0.1/API_changes</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Patch_12.0.5/API_changes</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Patch_12.0.7/API_changes</li>
+<li>https://EAMCODE_4__.wiki.gg/wiki/Patch_12.0.5</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/Patch_12.0.7</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/Public_client_builds</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Patch_12.0.0/Planned_API_changes</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/API_Cooldown_SetCooldownFromDurationObject</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/API_FontString_ClearText</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/Secret_Values</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/ScriptObject_DurationObject</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/API_C_Spell.GetSpellCooldown</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_C_Spell.GetSpellCharges</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_C_UnitAuras.GetAuraDataByAuraInstanceID</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_C_TooltipInfo.GetUnitBuffByAuraInstanceID</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_C_TooltipInfo.GetUnitDebuffByAuraInstanceID</li>
+<li>https://EAMCODE_5__.wiki.gg/wiki/Category:API_systems/TooltipInfo</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/Category:API_systems/UnitAuras</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_Cooldown_SetCooldown</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_Cooldown_SetCooldownDuration</li>
+<li>https://EAMCODE_0__.wiki.gg/wiki/API_Cooldown_GetCooldownDisplayDuration</li>
+</ul>
+<h2 id="2026-05-26-review-summary">2026-05-26 Review Summary</h2>
+<p>After re-searching the Warcraft Wiki this time, the conclusions directly related to EAM are as follows:</p>
+<ul>
+<li><code>API change summaries</code> and search indexes currently find <code>12.0.0</code>, <code>12.0.1</code>, <code>12.0.5</code>, <code>12.0.7</code> API change summaries.</li>
+<li><code>Patch 12.0.0/API Change</code> is the core starting point for Secret Values ​​and AddOn security restrictions.</li>
+<li><code>Patch 12.0.1/API Changes</code> is a midnight launch patch; has less direct impact on EAM than 12.0.0/12.0.5, but still needs to track the addition of the halo filter and tooltip/filter behavior.</li>
+<li><code>Patch 12.0.5/API Changes</code> Explicitly added <code>table.freeze</code>, <code>table.isfrozen</code>, API predicate files, cooldown countdown formatter, FontString smooth scaling, and enhanced secret/security related messages.</li>
+<li>12.x introduces the powerful C language underlying Blocked Aura engine <code>C_UnitAuras.AddBlockedAura(unit, auraInstanceID)</code> and time black box <code>C_UnitAuras.GetAuraDuration(unit, auraInstanceID)</code>, providing 0-GC and 100% safe anti-pollution execution chain.</li>
+<li>12.x introduces a data-driven Tooltip system, replacing the old <code>SetUnitBuff</code> simulation rendering with <code>C_TooltipInfo.GetUnitBuffByAuraInstanceID(unit, auraInstanceID)</code> and <code>GetUnitDebuffByAuraInstanceID</code>, which completely separates data from UI, and replaces the old <code>SetUnitBuff</code> simulation rendering, which separates data and UI Completely separated and perfectly connected with a bridge.</li>
+<li><code>Secret_Values</code>, <code>ScriptObject_DurationObject</code>, <code>C_Spell.GetSpellCooldown</code>, <code>C_TooltipInfo.GetUnitBuffByAuraInstanceID</code> These single-page archives have been demonstrated to support the architectural decisions of EAM: the source layer must handle secret boundaries and the renderer should try to migrate Blizzard gadget display durations.</li>
+<li>Public API change summary for 12.0.7 currently shows no direct impact EAM Aura/cooldown/item Large API changes to Cooldown core logic, but new __EAM__CODE_4__6, EA DurationObject/timers show tracking matters.
+Note: The above is a cross-collation of files and indexes, which has not been verified in the WoW Retail 12.x client.</li>
+</ul>
+<h2 id="2026-05-29-user-provided-1207-ptr-rc-review-summary">2026-05-29 User provided 12.0.7 PTR / RC review summary</h2>
+<p>The source of this section is the 12.0.7 PTR / RC changes posted by users. This round of public Internet searches has not yet found a reply page that can be directly quoted, so the following is first used as a basis for "pending review by public sources and pending WoW Retail/PTR actual machine verification"; it should not be regarded as a verified fact.</p>
+<h3 id="2026-05-29-ptr-actual-measurement-update-durationtextbinding">2026-05-29 PTR actual measurement update: DurationTextBinding</h3>
+<ul>
+<li>The user has executed the <code>C_DurationUtil.CreateDurationTextBinding</code> minimal test example on the WoW 12.0.7 PTR client.</li>
+<li>Result: FontString can display the countdown text driven by <code>DurationTextBinding</code> normally.</li>
+<li>Verification scope: Only the minimum sample is confirmed to be displayed; it does not yet mean that EAM Renderer has been integrated.</li>
+<li>Not yet verified: In-combat behavior, taint logs, text cleanup after icon reuse, locale display, transition text, zero duration, integration strategy with main <code>Cooldown:SetCooldownFromDurationObject()</code>.</li>
+<li>EAM Implementation rules: <code>DurationTextBinding</code> can be considered an available candidate path for 12.0.7 PTR, but formal integration still requires feature detection and rollback.</li>
+</ul>
+<h3 id="directly-related-to-eam">Directly related to EAM</h3>
+<ul>
+<li>Tool tip money: Added <code>GameTooltip_AddMoneyLine</code>, use atlas/<code>MoneyFormatter</code> to display money instead; it is recommended that AddOn avoid the old <code>SetTooltipMoney</code> to reduce the problem of tool tip secret value.</li>
+<li>Unit identification: API of locally limited unit tokens, such as <code>UnitGUID</code>, <code>UnitAura</code>, health/power category API. When encountering unsupported tokens, <code>nil</code> or the default value is returned instead. When encountering unsupported tokens, <code>nil</code> or the default value is no longer directly returned. It is no longer directly lost. EAM Still must not rely on errors as a control flow.</li>
+<li>File resources: Added <code>C_UIFileAsset</code>, you can use <code>GetFileID</code>, <code>IsKnownFile</code>, <code>IsLooseFile</code> to verify whether the resource exists before using fonts and materials. EAM can be used at low frequency during Options/Renderer initialization and must not release heat paths.</li>
+<li>Profiling: <code>GetEventCPUUsage</code>, <code>GetFunctionCPUUsage</code>, <code>GetScriptCPUUsage</code> are reopened to AddOn. EAM can only be used to debug on demand/profiling, and it cannot run normally.</li>
+<li>Debug keys: <code>debugstack</code> and <code>debuglocals</code> If the current function or calls a key value that has been touched before, the key value may be returned. EAM Debug export must not set stack/local to safe text for direct output.</li>
+<li>ScrollBox secret: Officially correct the problem caused when secret appears in the scroll box area. If EAM makes a setting list in the future, it still needs to avoid putting the secret/protected original value into the scrollable UI.</li>
+<li>Chat gain events: Currency, honor, loot, money, reputation, XP gain chat events are no longer secret. EAM currently does not use chat events as the core data source, and only includes subsequent debug/notification reference.</li>
+<li>TOC Per-command conditions: TOC supports per-command conditions, for example <code>## Dep: Addon_X [AllowLoadGameType Classic]</code>. EAM still maintains the Retail server and does not have the ability to reintroduce the Classic branch.</li>
+<li><code>SetFont</code>: Clearer error message when determining invalid font flags. The EAM option should prevent the user from entering an unvalidated flag.</li>
+<li>Duration text: Added <code>DurationTextBinding</code> script object, which can bind <code>DurationObject</code> directly to <code>FontString</code>, and the text will be updated by the temporary system. The EAM timer tag should give priority to evaluating the path in the future, instead of Lua OnUpdate counting down by itself.</li>
+<li>AuraData: <code>isFromPlayerOrPlayerPet</code> will be set to true on Aura cast by player-controlled vehicles. The "player or player pet source" judgment of EAM requires the vehicle to be included in the actual machine test.</li>
+<li>Private halo sound: <code>C_UnitAuras.AddPrivateAuraAppliedSound</code> can be called during active M+ when not in combat. EAM does not include private halo sounds into core functions for the time being.</li>
+<li>Aura refactoring timeline: The official target is to put the Aura exposed refactoring in 12.1.0. AuraService of EAM should keep the adapter boundary clear and avoid hard-coding the 12.0.x Aura table structure to UI/Renderer.</li>
+</ul>
+<h3 id="less-relevant-to-eam-but-something-to-note">Less relevant to EAM but something to note</h3>
+<ul>
+<li><code>ENCOUNTER_END</code> Added boss <code>EncounterUnitStatus</code> list, including <code>creatureID</code>, <code>creatureName</code>, <code>remainingHealthPercent</code>, and marked as non-secret. EAM currently does not implement a boss encounter timeline.</li>
+<li><code>C_EncounterEvents</code> color API supports text warnings, timeline events, 5 seconds remaining events and alpha values. EAM encountered an event timeline that is temporarily unintegrated.</li>
+<li>SimulateMouse API no longer carries contamination, but currently can only be used when the mouse focus is not prohibited, locked, script-inaccessible or protected frame, and still restricts game controller operations. EAM should not be added to the operation model.</li>
+<li><code>C_ScenarioInfo.GetUnitCriteriaProgressValues</code> The second return value is changed to <code>[0, 1]</code>. EAM does not use this API.</li>
+<li>Battle.net: <code>BNInviteFriend</code> migrated to <code>C_BattleNet.InviteFriend</code>. EAM is not used.</li>
+<li>Mythic Plus run history/best API returns <code>CalendarTime</code> struct. EAM is not used.</li>
+<li><code>GROUP_FORMED</code> Modified event sending when entering Follower Dungeon/Deep solo. EAM is not currently relied upon.</li>
+<li><code>raidtarget</code> security operations added <code>"set-unmarked"</code>; EAM does not operate security raid target operations.</li>
+</ul>
+<h3 id="classic-ptr-information-processing-principles">Classic PTR information processing principles</h3>
+<p>The content provided by users also includes the upcoming Classic PTR version, but this project is only officially served. Changes to Classic secret files, raid targets, macro chat, minimap pings, etc. are only made as "non-returnable EAM architecture" and do not enter campaign code, TOC or module contracts.</p>
+<h2 id="version-positioning">Version positioning</h2>
+<ul>
+<li>TOC in Retail 12.0.0 is <code>120000</code>.</li>
+<li>TOC is <code>120001</code> in Retail 12.0.1.</li>
+<li>Retail PTR 12.0.5 displays interface <code>120005</code> in Public Client Build.</li>
+<li>The API change summary tag TOC for Retail 12.0.7 is <code>120007</code>.</li>
+<li>EAM Live server rewrite should target 12.x/Midnight-era API.</li>
+<li>Classic, MOP Classic, Cataclysm Classic, Wrath of the Lich King Classic, TBC, and Era are not suitable for entering the new architecture.</li>
+</ul>
+<h2 id="1205-api-change-focus">12.0.5 API Change focus</h2>
+<p>The API change page of 12.0.5 has the greatest impact on EAM: Lua formatter, DurationObject, Aura field confidentiality, <code>table.freeze</code>, and cooling timer display API.</p>
+<h3 id="api-predicate-file">API predicate file</h3>
+<p>12.0.5 A new predicate table is added to the Lua API file to describe the constraints of each API.
+EAM implementation rules:</p>
+<ul>
+<li>Look at the API predicates before implementation, not just the function name and return type.</li>
+<li>If marked <code>SecretWhen...</code>, <code>AllowedWhenUntainted</code>, <code>SecretArguments</code>, <code>SecretReturnsForAspect</code>, this API must pass through the service layer or renderer isolation layer.</li>
+<li>Debug export should not output raw values ​​that are still unsafe after predicate evaluation.</li>
+<li>When the document is not listed or the search index is incomplete, "safety" cannot be inferred; it can only be marked to be verified on a real machine.</li>
+</ul>
+<h3 id="lua-formatter-with-durationobject">Lua formatter with DurationObject</h3>
+<p>12.0.5 added Lua digital formatting type:</p>
+<pre class="codehilite"><code class="language-lua">AbbreviatedNumberFormatter
+NumericRuleFormatter
+SecondsFormatter
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<p>The documentation states that these formatters can receive a secret number through the duration object's <code>Format</code> function and provide it for use in the cooling frame.</p>
+<p>New cooling time API:</p>
+<pre class="codehilite"><code class="language-lua">Cooldown:SetCountdownFormatter(formatter)
+Cooldown:SetCountdownMillisecondsThreshold(seconds)
+</code></pre>
 
+<p>EAM renderer rules:</p>
+<ul>
+<li>Timer literals don't spell strings themselves in the Lua hot path.</li>
+<li>When <code>DurationObject</code> is present, give priority to <code>Cooldown</code> to use the formatter.</li>
+<li>Less than a few/decimal display exchanges <code>SetCountdownMillisecondsThreshold</code>.</li>
+<li>The seconds text formatter must be tested on the Retail server in real time and cannot be assumed to be the same in all locales.</li>
+</ul>
+<h3 id="number-of-recharges-recovery-time-and-zero-span-duration">Number of recharges, recovery time and zero span duration</h3>
+<p>12.0.5 states that the following charge duration API will return zero span <code>DurationObject</code> when the maximum charge has been reached:</p>
+<pre class="codehilite"><code class="language-lua">C_SpellBook.GetSpellBookItemChargeDuration
+C_Spell.GetSpellChargeDuration
+C_ActionBar.GetActionChargeDuration
+</code></pre>
+
+<p><code>DurationObject</code> describes the "next layer recovery time" and is not equal to the "current remaining available times". In <code>C_Spell.GetSpellCharges</code> of 12.1, <code>currentCharges</code> can be Secret, while <code>maxCharges</code> and <code>isActive</code> can remain safe; <code>StatusBar:SetValue</code> can receive Secret BarValue, and <code>StatusBar:SetRenderMode(Enum.StatusBarRenderMode.Radial)</code> can change the same status column to circular progress.</p>
+<p>EAM CooldownService/IconPool Rules:</p>
+<ul>
+<li>The number of charging stages can only represent <code>currentCharges / maxCharges</code>, and it is prohibited to calculate the stage number based on <code>GetSpellChargeDuration</code> or recovery seconds.</li>
+<li>First call <code>StatusBar:SetMinMaxValues(0, maxCharges)</code> with safe <code>maxCharges</code>, complete all anchor points, sizes and styles, and finally send the original <code>currentCharges</code> directly to <code>StatusBar:SetValue</code>.</li>
+<li>If <code>currentCharges</code> is a Secret, it cannot be compared, operated, stringified, serialized, stored in a custom table, or read back from StatusBar; Lua only saves safe <code>maxCharges</code>, <code>isActive</code> and display settings.</li>
+<li><code>GetSpellChargeDuration</code> can only drive the cooldown swipe/countdown of the skill itself, and cannot drive the charging sequence.</li>
+<li>The "cooldown completion" of charged skills is defined as returning to maximum charge. The safe current/max can be directly judged; when current is Secret, the safe <code>isActive ~= true</code> is used as the full judgment.</li>
+<li>The circular layout supported by 12.1 uses <code>StatusBarRenderMode.Radial</code>; if the client or material does not support it, fail-closed falls back to the bottom linear StatusBar and does not guess the circular percentage.</li>
+</ul>
+<p>Official reference:</p>
+<ul>
+<li>https://EAMCODE_4__.wiki.gg/wiki/API_C_Spell.GetSpellCharges</li>
+<li>https://EAMCODE_4__.wiki.gg/wiki/API_StatusBar_SetValue</li>
+<li>https://EAMCODE_4__.wiki.gg/wiki/API:StatusBar_SetRenderMode</li>
+<li>https://EAMCODE_4__.wiki.gg/wiki/UIOBJECT_StatusBar</li>
+</ul>
+<h3 id="ignoregcd-parameters">ignoreGCD Parameters</h3>
+<p>12.0.5 Added the <code>ignoreGCD</code> parameter of the cooldown duration constructor API.</p>
+<p>EAM Rules:
+- Spell cooldown alert default ignores GCD category cooldown.
+- If API provides <code>ignoreGCD</code>, give priority to using the official parameters instead of guessing based on the 61304 difference.
+- The GCD virtual spell <code>61304</code> is still required as a test/compatibility watchpoint, but is not suitable as the only architecture.</p>
+<h3 id="auradata-field-is-no-longer-secret">AuraData Field is no longer secret</h3>
+<p>12.0.5 states that the following <code>AuraData</code> fields are no longer secret:</p>
+<pre class="codehilite"><code class="language-lua">isHelpful
+isHarmful
+isRaid
+isNameplateOnly
+isFromPlayerOrPlayerPet
+</code></pre>
+
+<p>EAM AuraService Rules:</p>
+<ul>
+<li>These bit fields can be prioritized candidates for sorting/filtering, but the target build behavior still needs to be checked.</li>
+<li><code>isFromPlayerOrPlayerPet</code> replaces part of the old-style <code>unitCaster == "player"</code> logic.</li>
+<li>It does not represent the safety of the entire <code>AuraData</code>; the period, validity period, spellID, name, and icons still need to be checked individually.</li>
+</ul>
+<h3 id="aura-instance-id-re-randomized">Aura instance ID re-randomized</h3>
+<p>12.0.5 The specified Aura instance ID will be re-randomized when entering encounters, Mythic+, and PvP.</p>
+<p>EAM AuraService Rules:
+- <code>auraInstanceID</code> can be used as a safe anchor within the single-session/single-time limit.
+- No cross-border encounters / M+ / PvP Long-term storage.
+- The Halo cache should be cleared when entering a restricted scene or receiving a target /world/combat status change.
+- SavedVariables interface can save <code>auraInstanceID</code>.</p>
+<h3 id="unit-api-and-identity">Unit API and identity</h3>
+<p>12.0.5 Strengthen unit identity restrictions:</p>
+<ul>
+<li><code>UnitName</code> No longer accepts secret unit tokens.</li>
+<li><code>UnitSpellTargetName</code> only returns the player unit name.</li>
+<li><code>UnitTokenFromGUID</code> does not return arena, nameplate, boss, team, raid, and target tokens when the identity is secret.</li>
+<li><code>UnitIsUnit</code> may return a secret for <code>targettarget</code> / <code>focustarget</code> and disables returning nil when comparing.</li>
+</ul>
+<p>EAM Rules:</p>
+<ul>
+<li>Do not use <code>targettarget</code> / <code>focustarget</code> as core alert matching.</li>
+<li>Target Aura alerts only track <code>target</code> and do not automatically extend to target targets.</li>
+<li>Bugfix that export should not attempt to convert secret unit identities into names /GUID.</li>
+<li>If the unit name of the UI label is unsafe, it will be displayed as blank or as a safe fallback.</li>
+</ul>
+<h3 id="tablefreeze-tableisfrozen">table.freeze / table.isfrozen</h3>
+<p>New in 12.0.5:</p>
+<pre class="codehilite"><code class="language-lua">table.freeze(tbl)
+table.isfrozen(tbl)
+</code></pre>
+
+<p>EAM Rules:</p>
+<ul>
+<li>Enums, modes, module names, status constants available for <code>Core/Constants.lua</code>.</li>
+<li>Not available for SavedVariables.</li>
+<li>Not available in runtime Aura/cooldown/icon state.</li>
+<li>Not available for scheduler queue or pool objects.</li>
+<li>Fallbacks are required as development environments or older versions may not have these API.</li>
+</ul>
+<h3 id="secret-string-cleaning-restrictions">Secret string cleaning restrictions</h3>
+<p>12.0.5 Specify string format API no longer applies field width modifiers to secret strings, e.g. <code>"%.5s"</code> does not break secret strings.</p>
+<p>EAM Rules:</p>
+<ul>
+<li>Do not rely on severance of secretly derived text.</li>
+<li><code>C_TooltipInfo</code> still checks whether the text is secret before parsing.</li>
+<li>Debug export not to hard-export the secret string through <code>format</code>.
+-timer/name The length control of text should be done on the safe string.</li>
+</ul>
+<h3 id="player-statistics-associated-with-aura-secret">Player statistics associated with Aura Secret</h3>
+<p>12.0.5 states that APIs that return player statistics may also return secrets when Halo is secret.</p>
+<p>EAM Rules:</p>
+<ul>
+<li>The special abilities/resources UI cannot imagine that player statistics are ever safe.</li>
+<li><code>SpecialPower</code> Rewrite should follow the same boundary strategy.</li>
+<li>If power/resource is unsafe, only render the icon or modify the display supported by Blizzard.</li>
+</ul>
+<h3 id="smooth-font-scaling">Smooth font scaling</h3>
+<p>New in 12.0.5:</p>
+<pre class="codehilite"><code class="language-lua">FontString:GetSmoothScaling()
+FontString:SetSmoothScaling(smooth)
+</code></pre>
+
+<p>The EAM renderer can be used for the timer /name/stack label visual quality after the real-time Retail server verification, but it is not suitable to be placed in the hot path and set repeatedly.</p>
+<h3 id="secret-aspects-of-the-cooling-widget">Secret Aspects of the Cooling Widget</h3>
+<p><code>Cooldown:SetCooldown</code> and <code>Cooldown:SetCooldownDuration</code> allow receiving certain secret parameters in Taint paths, but will add <code>Enum.SecretAspect.Cooldown</code>. <code>Cooldown:GetCooldownDisplayDuration</code> may rely on the Cooldown secret aspect to return the secret.</p>
+<p>EAM renderer rules:
+- Safe digital cooldown time can be set to <code>SetCooldown(start, period, modRate)</code>.
+- If the source is <code>DurationObject</code>, use <code>SetCooldownFromDurationObject(duration, clearIfZero)</code> first.
+- Don't read <code>GetCooldownDisplayDuration()</code> as fact in renderer.
+- Any cooldown frames that may be marked by secret aspects are used for display only; do not send getter return values ​​back to the service state.</p>
+<h2 id="1207-api-change-highlights">12.0.7 API Change highlights</h2>
+<p>Review on 2026-05-26, the Warcraft Wiki already has <code>Patch 12.0.7/API_changes</code>, the marked TOC is <code>120007</code>, and the error interval is `12.0.5 (67602) -&gt; PTR 176767676767676767205% (21767)。</p>
+<p>與EAM直接相關或需要追蹤的項目：</p>
+<ul>
+<li>新增<code>C_DurationUtil.CreateDurationTextBinding</code>。</li>
+<li>新增<code>C_DurationUtil.CreateManualClock</code>。</li>
+<li>刪除 <code>C_DurationUtil.GetCurrentTime</code>。</li>
+<li>新增分析/CPU使用類別API：<code>GetEventCPUUsage</code>、<code>GetFunctionCPUUsage</code>、<code>GetScriptCPUUsage</code>.</li>
+<li>
+<p>Most other new items are biased toward Delves, Housing, Merchant, PartyInfo, UIFileAsset and other systems, and are not currently used as EAM core dependencies.
+EAM file rules:</p>
+</li>
+<li>
+<p><code>EventAlertMod.toc</code> is currently fixed for <code>120007</code>; still need to confirm CurseForge game version ID and WoW Retail/PTR live loading status before release.</p>
+</li>
+<li>DurationObject / The timer display layer needs to evaluate whether <code>CreateDurationTextBinding</code> and <code>CreateManualClock</code> can replace the handwritten reciprocal string.</li>
+<li>Don't use removed <code>C_DurationUtil.GetCurrentTime</code>.</li>
+<li>Added CPU usage API can only be used as debug/profiling on-demand tool and cannot be placed in the hot path.</li>
+<li>12.0.7 still needs live Retail/PTR actual testing, and cannot rely solely on files to ensure full compatibility.</li>
+</ul>
+<h2 id="120-addon-security-core-changes">12.0 AddOn Security Core Changes</h2>
+<p>12.0.0 introduces AddOn security changes with the goal of restricting AddOn from using combat information to make complex decisions, but still allowing UI appearance adjustments.</p>
+<p>The core concept is "secret value":</p>
+<ul>
+<li>The secret value is the black box value.</li>
+<li>Taint plug-in code can receive secrets and pass secrets to partially allowed APIs.</li>
+<li>Taint plug-in code cannot read secret internal values.</li>
+<li>General Lua arithmetic, comparison, string conversion, <code>tonumber</code>, <code>string.match</code>, table key and other operations cannot be performed on secrets.</li>
+<li>If the API document states that a secret will be returned, EAM must treat the data as unsafe and cannot mix it with the truth.</li>
+</ul>
+<h2 id="secret-related-api">Secret related API</h2>
+<p>12.0.0 adds multiple secret checking/processing APIs. EAM rewriting should be centrally packaged in <code>Core/Env.lua</code> or <code>Core/Util.lua</code>, and do not let each service be directly called scattered.
+Important global APIs:</p>
+<pre class="codehilite"><code class="language-lua">issecretvalue
+issecrettable
+hasanysecretvalues
+canaccesstable
+canaccessvalue
+canaccessallvalues
+canaccesssecrets
+scrubsecretvalues
+dropsecretaccess
+mapvalues
+secretwrap
+</code></pre>
+
+<p>Important <code>C_Secrets</code> API:</p>
+<pre class="codehilite"><code class="language-lua">C_Secrets.HasSecretRestrictions
+C_Secrets.ShouldAurasBeSecret
+C_Secrets.ShouldCooldownsBeSecret
+C_Secrets.ShouldSpellAuraBeSecret
+C_Secrets.ShouldSpellCooldownBeSecret
+C_Secrets.ShouldSpellBookItemCooldownBeSecret
+C_Secrets.ShouldUnitAuraIndexBeSecret
+C_Secrets.ShouldUnitAuraInstanceBeSecret
+C_Secrets.ShouldUnitAuraSlotBeSecret
+C_Secrets.ShouldUnitPowerBeSecret
+C_Secrets.ShouldUnitPowerMaxBeSecret
+C_Secrets.ShouldUnitSpellCastBeSecret
+C_Secrets.ShouldUnitSpellCastingBeSecret
+C_Secrets.GetSpellAuraSecrecy
+C_Secrets.GetSpellCooldownSecrecy
+C_Secrets.GetSpellCastSecrecy
+C_Secrets.GetPowerTypeSecrecy
+</code></pre>
+
+<p>Implementation rules:</p>
+<ul>
+<li>Check the necessity of the meter itself before reading it.</li>
+<li>Check if the value is secret after reading it.</li>
+<li>Only confirmed safe values ​​can enter <code>facts</code>.</li>
+<li>unsafe values ​​can only form <code>boundaryWarnings</code> or <code>timer.mode = "protected" / "unknown" / "displayOnly"</code>.</li>
+<li>Do not write secret values ​​to SavedVariables.</li>
+</ul>
+<h3 id="secret-values-single-page-supplement">Secret Values ​​Single Page Supplement</h3>
+<p>The Warcraft Wiki <code>Secret_Values</code> describes Secrets as a new mechanism introduced in Patch 12.0.0; taint-affected plug-in code can usually only save the secret or pass it to the allowed API, but cannot view the content.</p>
+<p>EAM Judgment rules:</p>
+<ul>
+<li><code>if value then</code> can only be used to distinguish whether it is nil; it cannot indicate that value is comparable, deletable or serializable.</li>
+<li>Do not throw secret strings into <code>string.match</code>, <code>string.format</code> or the tooltip parser.</li>
+<li>Secret numbers cannot be used for timer violations, sorting, differences, and table keys.</li>
+<li>If <code>ConditionalSecret</code> or <code>SecretWhen...</code> appears on the API single page, even if the test environment temporarily returns a normal value, the boundary processing will be retained.</li>
+</ul>
+<h2 id="secret-aspects-and-ui-objects">Secret aspects and UI objects</h2>
+<p>Secret not only affects Lua values, but also the aspects of genome replication script objects.</p>
+<p>Important risks:</p>
+<ul>
+<li>Pass the secret into some widgets and put it into the API, so that the relevant getter of the widget can return the secret.</li>
+<li>Secret anchors may spread down the anchor chain.</li>
+<li>Layout frames should not receive secret feeds directly.</li>
+<li>Renderers should separate the frames that host secret display objects from those that are responsible for layout anchors.</li>
+</ul>
+<p>EAM UI practical suggestions:</p>
+<ul>
+<li><code>IconPool</code> Establish a stable framework structure.</li>
+<li><code>Renderer</code> only accepts normalized <code>IconRenderState</code>.</li>
+<li>Any possible secret texture, alpha, display, text, duration display, should be limited to the smallest UI node.</li>
+<li>If the framework needs to be reused, it should be studied and tested whether <code>SetToDefaults</code> can safely clear the secret aspect.</li>
+</ul>
+<h2 id="aura-api-change-focus">Aura API Change focus</h2>
+<p>12.x has secret restrictions on Aura access. Planning notes state:
+- Obtaining the Aura will become a secret under restricted conditions.
+- The vector containers of <code>GetUnitAuras</code> / <code>UNIT_AURA</code> may not be secrets, but the content values ​​may be secrets.
+- <code>AuraInstanceID</code> is not a secret.
+- Directly query the API of a single Aura based on spellID/name, which may not be called when Aura accesses secrets.</p>
+<p>EAM <code>AuraService</code> Implementation rules:</p>
+<ul>
+<li>Prioritize the use of <code>UNIT_AURA</code> incremental information.</li>
+<li>Use <code>auraInstanceID</code> as a security identification anchor.</li>
+<li>Don't assume spellID lookup will be available in combat.</li>
+<li>Just write <code>AuraState.factsSafe = true</code>.</li>
+<li>Keep security icon /name when not forcing, timer set to <code>protected</code> or <code>unknown</code>.</li>
+<li>Do a safety rescan after exiting the war to remove residual images and boundary restrictions.</li>
+</ul>
+<p>Related APIs:</p>
+<pre class="codehilite"><code class="language-lua">C_UnitAuras.GetAuraDuration
+C_UnitAuras.GetAuraBaseDuration
+C_UnitAuras.DoesAuraHaveExpirationTime
+C_UnitAuras.GetAuraApplicationDisplayCount
+C_UnitAuras.GetUnitAuraInstanceIDs
+C_TooltipInfo.GetUnitAuraByAuraInstanceID
+</code></pre>
+
+<h3 id="c_unitaurasgetauradatabyaurainstanceid">C_UnitAuras.GetAuraDataByAuraInstanceID</h3>
+<p>The <code>auraInstanceID</code> parameter of <code>C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)</code> is marked as <code>NeverSecret</code>, but the returned <code>UnitAuraInfo</code> may be <code>SecretWhenUnitAuraRestricted</code>.</p>
+<p>EAM implementation rules:</p>
+<ul>
+<li><code>auraInstanceID</code> can be used as a runtime anchor, but cannot be saved to SavedVariables.</li>
+<li>Four core security check defenses:</li>
+<li><code>canaccesstable(table)</code>: A security check must be made before accessing any postback table fields.</li>
+<li><code>canaccessvalue(value)</code>: Perform access permission determination before reading the field content.</li>
+<li><code>issecretvalue(value)</code>: Confirms whether a field (such as <code>spellId</code> or <code>duration</code>) is encrypted as a confidential value.</li>
+<li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Check whether the table structure itself has been restricted or contains secrets.</li>
+<li><strong>Table index protection specifications (key)</strong>:</li>
+<li>Direct <code>tbl[spellId]</code> lookups of any self-modifying Lua table (e.g. <code>EAM.SavedVariables</code>, <code>EAM.db</code>) with keys that may be secret values (e.g. <code>spellId</code> in the restricted state) are strictly prohibited.</li>
+<li>This operation will cause a fatal error: "Attempting to index a table that cannot be indexed using a key".</li>
+<li>Before looking up the table, a preventive check must be performed in the local in-place mode of <code>if not issecretvalue(key) and canaccesstable(tbl) then ... end</code> to refuse to use the key.</li>
+<li>Only fields that can be safely read are entered in <code>facts</code>; the rest are only entered in <code>boundaryWarnings</code>.</li>
+<li>Halo pairing cannot rely solely on unsafe <code>spellID</code>; use settings, events, security anchors and display degradation to handle it together when necessary.</li>
+</ul>
+<h2 id="cooldown-api-change-focus">Cooldown API Change Focus</h2>
+<p>12.0 Removed or obsoleted many old global spells API. EAM The Classic/ legacy decompression return layer should no longer be retained.</p>
+<p>The old global API should be used instead: <code>C_Spell</code>:</p>
+<pre class="codehilite"><code class="language-lua">GetSpellInfo       -&gt; C_Spell.GetSpellInfo
+GetSpellCooldown   -&gt; C_Spell.GetSpellCooldown
+GetSpellTexture    -&gt; C_Spell.GetSpellTexture
+GetSpellCharges    -&gt; C_Spell.GetSpellCharges
+IsUsableSpell      -&gt; C_Spell.IsSpellUsable
+</code></pre>
+
+<p>12.0 Related <code>C_Spell</code> Highlights:</p>
+<pre class="codehilite"><code class="language-lua">C_Spell.GetSpellCooldownDuration
+C_Spell.GetSpellChargeDuration
+C_Spell.GetSpellDisplayCount
+C_Spell.GetSpellMaxCumulativeAuraApplications
+C_Spell.IsPriorityAura
+C_Spell.IsSelfBuff
+</code></pre>
+
+<p><code>SpellCooldownInfo</code> has new fields in 12.x, for example:</p>
+<pre class="codehilite"><code class="language-lua">timeUntilEndOfStartRecovery
+isOnGCD
+</code></pre>
+
+<p>The Warcraft wiki page states that <code>C_Spell.GetSpellCooldown</code> was added in patch 11.0.0 to replace the old <code>GetSpellCooldown</code> with API; it may return nil and may return secrets when spell cooldowns are limited. The <code>isOnGCD</code> field is <code>NeverSecret</code>, but the file reminds you not to trust this field unless you are responding to <code>SPELL_UPDATE_COOLDOWN</code>.</p>
+<p>EAM <code>CooldownService</code> Implementation rules:</p>
+<ul>
+<li>Prefer structured <code>C_Spell</code> returns.</li>
+<li>No longer relies on the old <code>start,uration,enabled = GetSpellCooldown(id)</code> unpack.</li>
+<li>Use <code>C_Secrets.ShouldSpellCooldownBeSecret(spellID)</code> or the secret API judgment.</li>
+<li>When the cooling time is unsafe, please do not guess start/duration.</li>
+<li>GCD determines that a safe field should be used, such as <code>isOnGCD</code>, and is verified with the real-time Retail server.</li>
+<li><code>isOnGCD</code> is only a credible candidate for judgment in the context of <code>SPELL_UPDATE_COOLDOWN</code> events.</li>
+<li><code>C_Spell.GetSpellCharges</code> may also be affected by cooldown restrictions; charge slots cannot be directly front armored without checking.</li>
+<li>The old <code>GetSpellCooldown</code> page has been clearly marked to be removed/replaced starting from 11.0.0, and the new architecture must not use it as a core fallback.</li>
+</ul>
+<h2 id="durationobject-and-c_curveutil-systems">DurationObject and C_CurveUtil systems</h2>
+<p>12.0.0 added <code>DurationObject</code>, 12.0.1 added <code>DurationObject:GetClockTime</code>, and 12.0.7 enhanced the binding of border text and curves.</p>
+<h3 id="durationobject-core-built-in-methods-and-security-traps">🔑 DurationObject Core built-in methods and security traps</h3>
+<ul>
+<li><strong><code>durationObj:IsZero()</code></strong>:</li>
+<li><em>Purpose</em>: Detect whether the duration has reached 0 (expired).</li>
+<li><em>Fatal Trap</em>: In combat or restricted (set) state, this method returns <strong><code>SecretBoolean</code></strong>. If <code>if durationObj:IsZero() then</code> is executed directly in Lua, a fatal crash will immediately occur: <code>attempt to Perform boolean test on a Secret value</code>!</li>
+<li><em>Security Defense</em>: Must use <code>issecretvalue(val)</code> or <code>pcall</code> for preventive protection, or completely replace C++'s <code>clearIfZero</code> parameter (e.g. set in <code>SetCooldownFromDurationObject</code>).</li>
+<li><strong><code>durationObj:GetRemainingDuration()</code></strong>:</li>
+<li><em>Use</em>: Get the remaining seconds.</li>
+<li><em>Restrictions</em>: In the restricted (combat restricted) state, the encrypted <strong><code>SecretValue</code></strong> will be returned. Directly performing a Lua arithmetic attack on it (such as <code>+ - * / &lt; &gt; ==</code>) will directly and fatally trigger a red letter error.</li>
+<li><strong><code>durationObj:GetClockTime()</code></strong>:</li>
+<li><em>Purpose</em>: Used for preliminary clock synchronization to prevent contamination with the UI. But in combat this is also <code>SecretValue</code>.</li>
+</ul>
+<h3 id="c_curveutil-curve-tool-combat-anti-pollution-mechanism">🎨 C_CurveUtil (curve tool) combat anti-pollution mechanism</h3>
+<p>In order to solve the problem that the "if remaining &lt; 5 then" time ratio cannot be directly resolved in combat to change the icon color or trigger (because it will trigger the <code>SecretValue</code> comparison crash), Blizzard introduced <strong><code>C_CurveUtil</code></strong>:
+* <strong>Mechanism</strong>: AddOn can use <code>C_CurveUtil.CreateCurve()</code> to establish non-linear color or contour curve mapping, such as defining "turn red when the remaining time is less than 20% (epidemic determination)".
+* <strong>Binding</strong>: The elliptic curve is bound to the Status/Progress Bar or Cooldown control (such as <code>statusBar:SetColorCurve(curve, durationObject)</code>) along with <code>DurationObject</code>.
+* <strong>Advantages</strong>: All mathematical comparisons and color conversions occur at the C++ syntax layer, <strong>100% avoiding the Taint completely recovered by Lua, and eliminating the OnUpdate garbage recovery pressure of each frame</strong>!</p>
+<h3 id="1207-fontstring-and-cooldown-display-binding">12.0.7 FontString and Cooldown display binding</h3>
+<ul>
+<li><strong><code>C_DurationUtil.CreateDurationTextBinding()</code></strong>：</li>
+<li>Factory does not accept <code>DurationObject</code> or <code>FontString</code> parameters. First create the binding without parameters, then call <code>SetFontString()</code>, <code>SetDuration()</code>, <code>SetFormatter()</code> in sequence, and finally use <code>SetEnabled(true)</code> or <code>Enable()</code>.</li>
+<li>The countdown text is updated by the native side, there is no need to create Lua <code>OnUpdate</code> for each icon.</li>
+<li>Public contracts do not guarantee the existence of <code>Unbind()</code>. When releasing, <code>Disable()</code> or <code>SetEnabled(false)</code> should be called first, and then <code>SetToDefaults()</code> should be called when the ability exists; guessing methods must not be called.</li>
+<li><strong><code>C_DurationUtil.CreateDuration()</code></strong>:</li>
+<li>Factory does not accept start/duration parameters. Only common numbers that have been confirmed to be safe can be called to <code>DurationObject:SetTimeFromStart(startTime, duration)</code> after establishment.</li>
+<li>The Secret <code>DurationObject</code> provided by API can only be handed over to the widget/binding supported by Blizzard as it is, and will not be read back, compared, or serialized.</li>
+<li><strong><code>Cooldown:SetCooldownFromDurationObject(durationObject [, clearIfZero])</code></strong>:</li>
+<li>Cooldown swipe-specific native binding; the zero interval can be handed over to the native side for processing by <code>clearIfZero = true</code>.
+<code>DurationObject</code> is used to allow the native side to process time data that may be Secret. It can be created by <code>C_DurationUtil.CreateDuration()</code>, may be provided by an Aura, spellcasting, or cooldown API, and can be passed to <code>Cooldown:SetCooldownFromDurationObject()</code> or other widgets that explicitly accept DurationObject.
+The planning direction for 12.x is to delete the remaining time API and use the duration object instead:</li>
+</ul>
+<pre class="codehilite"><code class="language-lua">C_ActionBar.GetActionCooldownRemaining
+C_ActionBar.GetActionCooldownRemainingPercent
+C_Spell.GetSpellCooldownRemaining
+C_Spell.GetSpellCooldownRemainingPercent
+C_UnitAuras.GetAuraDurationRemaining
+C_UnitAuras.GetAuraDurationRemainingPercent
+</code></pre>
+
+<p>Therefore API should avoid becoming a new architecture dependency.</p>
+<p>Important gadget API:</p>
+<pre class="codehilite"><code class="language-lua">Cooldown:SetCooldownFromDurationObject(duration [, clearIfZero])
+Cooldown:SetCooldownFromExpirationTime(expirationTime, duration [, modRate])
+Cooldown:SetPaused(paused)
+Cooldown:GetCountdownFontString()
+</code></pre>
+
+<p>EAM <code>Renderer</code> Implementation rules:</p>
+<ul>
+<li>If there is security <code>DurationObject</code>, prioritize <code>Cooldown:SetCooldownFromDurationObject()</code>.</li>
+<li>Don't calculate remaining seconds in Lua hotpath yourself every frame.</li>
+<li>If the timer text cannot be reached safely, do not display false seconds.</li>
+<li><code>IconRenderState.timer.mode</code> To be clear: <code>numeric</code>, <code>displayOnly</code>, <code>protected</code>, <code>unknown</code>.</li>
+<li>Do not serialize <code>DurationObject</code>, do not write SavedVariables, do not put debugging facts.
+-Button display duration, the renderer is only responsible for passing objects to supported widgets; the service status only marks the source and mode.</li>
+</ul>
+<h2 id="fontstring-and-secret-aspects-of-text">FontString and secret aspects of text</h2>
+<p>New in 12.0.1:</p>
+<pre class="codehilite"><code class="language-lua">FontString:ClearText()
+</code></pre>
+
+<p>Its purpose is to set the literal to an empty string and remove the secret aspect of the literal.</p>
+<p>EAM Renderer suggestions:</p>
+<ul>
+<li>When clearing FontStrings that may have been exposed to ciphertext, priority is given to testing <code>ClearText()</code>.</li>
+<li>If <code>ClearText()</code> is available, use it when clearing the timer/name/stack tag.</li>
+<li>Don't do <code>SetText</code> with a secret derived string and then read it back.</li>
+<li><code>SetText</code> must do value gating to avoid repeated UI writing and GC.</li>
+</ul>
+<h2 id="tooltips-c_tooltipinfo-duration-parsing">Tooltips / C_TooltipInfo Duration parsing</h2>
+<p><code>C_TooltipInfo</code> can be used as a low-frequency fallback, but cannot be a hot path.
+In 12.x / Midnight trade, <strong><code>C_TooltipInfo.GetUnitBuffByAuraInstanceID(unitToken, auraInstanceID [, filter])</code></strong> and **<code>GetUnitDebuffByAuraInstanceID(unitToken, auraInstanceID [, filter]) should be specialized. These two API perfectly bridge</code>NeverSecret<code></code>AuraInstanceID<code>realizes data-driven decoupling of data and UI, provides extremely low GC overhead and is far safer than the old</code>SetUnitBuff` simulated rendering.</p>
+<h3 id="key-avoidance-point-1-calling-tooltiputilsurfaceargs-is-strictly-prohibited">🚨Key avoidance point 1: Calling <code>TooltipUtil.SurfaceArgs</code> is strictly prohibited</h3>
+<p>After Patch 10.1.0, the data of <code>C_TooltipInfo</code> has been automatically "Surfaced" by Qianshui when it is returned to Lua. This SharedXML library helper function has been completely removed (nil) by Blizzard.
+* Any call to <code>TooltipUtil.SurfaceArgs</code> that directly triggers <code>attempt to call field 'SurfaceArgs' (a nil value)</code> will cause AddOn to crash.
+* 12.x development applications directly access <code>TooltipDataLine.leftText</code>.</p>
+<h3 id="key-pitfall-2-direct-access-to-attribute-reading-of-linelefttext-crashes-and-custom-function-parameter-passing-doubles">🚨 Key pitfall 2: Direct access to attribute reading of <code>line.leftText</code> crashes and custom function parameter passing doubles</h3>
+<blockquote>
+<p>[!WARNING]
+<strong>Young man’s top practical discovery (super critical)</strong>:
+1. Try to wrap a Table that constitutes/marks Secret Aspect into a self-modifying Lua function (such as <code>GetSafeLeftText(line)</code>) for processing. **In the step of "passing the packaging table as a parameter to the custom Lua function", it will crash because the sandbox security defense directly throws a parameter error! **
+2. Because this is set, the Secret/Protected object is prohibited from being delivered to untrusted custom Lua functions.</p>
+<p>Therefore, the path of "Including customized FUNCTION parameters" is absolutely not feasible in battle! **</p>
+</blockquote>
+<h4 id="100-absolutely-feasible-and-safe-local-inline-pcall-closed-anonymous-package-defense-solution">🛡️ 100% absolutely feasible and safe "local inline pcall closed anonymous package" defense solution:</h4>
+<p>In order to safely read table attributes without calling a custom function to pass parameters, we must use the system's built-in <strong><code>pcall</code></strong> with the underlying C++ execution sleep and error capture rights to perform local inline anonymous closure reading** in the same local scope (Scope):</p>
+<pre class="codehilite"><code class="language-lua">-- ====================================================================
+-- 本地 Inline pcall 屬性盾範例 (在業務代碼中直接原地 inline 呼叫)
+-- ====================================================================
+local data = C_TooltipInfo.GetUnitBuffByAuraInstanceID(&quot;player&quot;, instanceID)
+
+-- 1. 用 pcall 在本地安全讀取 lines 表，防止 data 被限制時直接讀屬性崩潰
+local dataOk, lines
+if data then
+    dataOk, lines = pcall(function() return data.lines end)
+end
+
+if dataOk and lines then
+    for i = 1, #lines do
+        local line = lines[i]
+
+        -- 2. 用 pcall 本地匿名閉包讀取 leftText，絕不將 line 作為參數傳出！
+        local lineOk, text
+        if line then
+            lineOk, text = pcall(function() return line.leftText end)
+        end
+
+        -- 3. 確保讀取成功，且最終獲取的字串值不是 Secret Value，此時 text 100% 安全
+        if lineOk and text and not issecretvalue(text) then
+            -- 在此安全地進行任何 string.find 等 Lua 運算！
+            if string.find(text, &quot;恢復&quot;) then
+                -- 處理邏輯
+            end
+        end
+    end
+end
+</code></pre>
+
+<p>EAM <code>AuraService</code> and other analysis modules must strictly follow this local inline pcall anonymous closure mode when accessing any C_TooltipInfo return value that may be restricted, and prevent any naked table lookup and custom function parameter passing.</p>
+<p><code>C_TooltipInfo.GetUnitAuraByAuraInstanceID</code> was added in 12.0.0, predicates include <code>MayReturnNothing</code> and <code>SecretWhenInCombat</code>, and <code>SecretArguments</code> only allows untainted use. Its filters were added in 12.0.1 <code>CROWD_CONTROL</code>, <code>RAID_IN_COMBAT</code>, <code>RAID_PLAYER_DISPELLABLE</code>, <code>BIG_DEFENSIVE</code>, <code>IMPORTANT</code>.
+Consider analyzing:
+- Static "lasts for X seconds" description.
+- Static "recovery time" description.
+- Static maximum cooldown description.</p>
+<p>Must note:</p>
+<ul>
+<li>Dynamic countdown text.</li>
+<li>Contains the text "yet".</li>
+<li>Text containing <code>Remaining</code>.</li>
+<li>Any <code>issecretvalue(text)</code> check for line text.</li>
+</ul>
+<p>Reason:</p>
+<ul>
+<li>Dynamic text generated from secret values in 12.x may itself be secret user data.</li>
+<li>Doing <code>string.match</code> on secret text may be a direct error.</li>
+<li>Tooltip parsing will incur string and table parsing costs and cannot be placed in <code>OnUpdate</code>.</li>
+</ul>
+<p>EAM implementation rules:</p>
+<ul>
+<li>Tooltip parsing can only be performed when an event is triggered, cache miss, setting change, or low-frequency idle fallback.</li>
+<li>Not executable in <code>Renderer</code>.</li>
+<li>Cannot be executed on every icon timer.</li>
+<li>Check text security before parsing.</li>
+<li>If the tooltip API returns a secret or nil during combat, it will be downgraded directly without retrying the hot loop.</li>
+<li>The new filter can only narrow down the tooltip sources and cannot be used as a security guarantee.</li>
+<li>Blacklist keywords take precedence over pattern matching.</li>
+<li>If the parsing result is not the original fact API, it should be marked as <code>derived</code> or <code>fallback</code> and cannot be passed off as the original fact.</li>
+</ul>
+<h2 id="item-cooldown-and-item-spell-mapping">Item Cooldown and Item-Spell Mapping</h2>
+<p>Warcraft Wiki 12.x Change Highlights: EAM will not be supported and itemID will continue to be scanned extensively.</p>
+<p>EAM <code>ItemCooldownService</code> Rules:</p>
+<ul>
+<li>Direct itemID cooling monitoring takes priority.</li>
+<li>Item-spell mapping cache is opt-in only.</li>
+<li>Cache builds must be idle only, non-combat, FPS-aware, and interruptible.</li>
+<li>Large-scale items cannot be cleared during combat.</li>
+<li>The cache builder cannot be placed in the login hot path.</li>
+</ul>
+<h2 id="events-and-structure">Events and Structure</h2>
+<p>12.x is not suitable for EAM to continue to rely on blind scanning of combat logs.
+Suggested activities:</p>
+<pre class="codehilite"><code class="language-lua">PLAYER_LOGIN
+PLAYER_ENTERING_WORLD
+PLAYER_REGEN_ENABLED
+PLAYER_REGEN_DISABLED
+PLAYER_TARGET_CHANGED
+UNIT_AURA
+SPELL_UPDATE_COOLDOWN
+SPELL_UPDATE_CHARGES
+BAG_UPDATE_COOLDOWN
+UNIT_SPELLCAST_SUCCEEDED
+ADDON_RESTRICTION_STATE_CHANGED
+</code></pre>
+
+<p>Implementation rules:</p>
+<ul>
+<li>Use a single <code>EventRouter</code> framework.</li>
+<li>The event frame can use <code>CreateFrame("Frame", nil, nil)</code> to form an orphan frame to reduce the risk of UI pollution.</li>
+<li>Do not use <code>RegisterAllEvents</code>.</li>
+<li>Do not create a shutdown within an event handler.</li>
+<li>Event only marks dirty state, actual UI changes renderer batch.</li>
+</ul>
+<h2 id="savedvariables-rules">SavedVariables Rules</h2>
+<p>12.x plans/points out that file secrets should not be entered into SavedVariables; secret serialization may be replaced with nil.</p>
+<p>EAM Rules:
+- SavedVariables only stores user configuration.
+- There is no Aura runtime state.
+- There is no status during cooling operation.
+- <code>DurationObject</code> does not exist.
+- There is no secret value.
+- There are no unsafe raw values ​​in debugging snapshots.</p>
+<h2 id="debug-export-rules">Debug export rules</h2>
+<p>Debug export must be layered:</p>
+<pre class="codehilite"><code class="language-js">{
+  facts: {},
+  derived: {},
+  boundaryWarnings: [],
+  humanNotes: [],
+  environment: {}
+}
+</code></pre>
+
+<p>Rules:</p>
+<ul>
+<li>Only safety facts can enter <code>facts</code>.</li>
+<li>Tooltip parsing results into <code>derived</code> or tag <code>fallback</code>.</li>
+<li>Secret /protected/unavailable status goes to <code>boundaryWarnings</code>.</li>
+<li>No huge log output.</li>
+<li>No automatic export.</li>
+<li>Don't convert secret values ​​to strings.</li>
+</ul>
+<h2 id="live-broadcast-retail-server-12x-must-test-items">Live broadcast Retail server 12.x must test items</h2>
+<p>None of the following can be assumed solely based on documentation:</p>
+<ul>
+<li><code>issecretvalue</code>, <code>canaccesstable</code>, <code>canaccessvalue</code> Actual names and behavior.</li>
+<li>Whether the <code>C_Secrets.Should*</code> series all exist in the target build.</li>
+<li><code>C_Secrets.GetSpellAuraSecrecy</code>, <code>GetSpellCooldownSecrecy</code> return enum content.</li>
+<li><code>DurationObject</code> behavior returned by <code>C_UnitAuras.GetAuraDuration</code>.</li>
+<li><code>Cooldown:SetCooldownFromDurationObject()</code> Whether the secret security duration is acceptable.</li>
+<li><code>FontString:ClearText()</code> Whether it can safely clear text secrets.</li>
+<li>Whether <code>Cooldown:SetCountdownFormatter()</code> and <code>SecondsFormatter</code> can safely receive secret durations.</li>
+<li><code>Cooldown:SetCountdownMillisecondsThreshold()</code> Actual effect of decimal display in zhTW/enUS locale.</li>
+<li><code>C_Spell.GetSpellChargeDuration()</code> Whether to return zero span duration at max cost.</li>
+<li>Whether the complete past behavior of zero-span <code>DurationObject</code> is consistent with the cooling completion determination of EAM.</li>
+<li>Cooldown-duration API's <code>ignoreGCD</code> parameter actual name, default value and list of applicable API.</li>
+<li>Whether <code>AuraData.isHelpful</code>, <code>isHarmful</code>, <code>isRaid</code>, <code>isNameplateOnly</code>, <code>isFromPlayerOrPlayerPet</code> is stable in a restricted state is not secret.</li>
+<li>Whether <code>auraInstanceID</code> is re-randomized as documented when encountering /M+/PvP start.</li>
+<li>Whether <code>table.freeze</code> and <code>table.isfrozen</code> exist on the target client, and whether misuse of the SavedVariables/runtime state will cause errors.</li>
+<li><code>SPELL_UPDATE_COOLDOWN</code> Whether there is a spellID or the update scope can be narrowed.</li>
+<li>Is <code>SpellCooldownInfo.isOnGCD</code> reliable?</li>
+<li><code>C_TooltipInfo.GetUnitAuraByAuraInstanceID</code> Restrictions on secret Aura.</li>
+<li>Whether dynamic tooltip lines may be secret user data.</li>
+<li>Secret restrictions enforce name and availability of CVars.</li>
+<li>Actual impact of 12.0.7's <code>C_DurationUtil.CreateDurationTextBinding</code>, <code>CreateManualClock</code> and removal of <code>GetCurrentTime</code> on the EAM timer display layer.</li>
+</ul>
+<h2 id="conclusion-on-eam-rewrite">Conclusion on EAM Rewrite</h2>
+<p>EAM 12.x architecture application adopts:</p>
+<ul>
+<li>Retail server only.</li>
+<li>Event-driven priority.</li>
+<li>Single scheduler.</li>
+<li>There is no timer for each icon.</li>
+<li>There is no timer for each spell.</li>
+<li>Large items are not scanned by default.</li>
+<li>fact /derived/boundaryWarnings detached.</li>
+<li>DurationObject takes precedence over Lua seconds violations.</li>
+<li>Tooltip parsing is only a low-frequency backup.</li>
+<li>The renderer does not check the API.</li>
+<li>SavedVariables never stores execution time /secret state.</li>
+</ul>
+<h2 id="1210-build-68914-implementation-verification-2026-07-26">12.1.0 build 68914 implementation verification (2026-07-26)</h2>
+<ul>
+<li><code>CustomAuraContainerTemplate</code>, <code>CustomAuraButtonTemplate</code>, <code>SetUnit</code>, <code>AddAuraSlot</code>, <code>AddAuraGroup</code>, <code>SetAuraGroupLayout</code> have been incorporated into feature detection.</li>
+<li>The sort type comes from the FrameXML global <code>AuraContainerSortMethod</code>/<code>AuraContainerSortDirection</code>, not <code>Enum.UnitAuraSortRule</code>.</li>
+<li>Public API has no Remove Slot/Group; EAM will be replaced and the old container will be deactivated after successful use.</li>
+<li>AuraButton exposes bindings using <code>SetIcon</code>, <code>SetDurationCooldown</code>, <code>SetDurationText</code>, <code>SetApplicationCount</code>, <code>SetSpellName</code>.</li>
+<li><code>C_UnitAuras.AddAuraSound</code>/<code>RemoveAuraSound</code> and three triggers have implemented the ID life cycle; the actual playback will be PTR.</li>
+<li>See <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>, <code>Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code> for fixed evidence versions and complete restrictions.</li>
+</ul>
+<h2 id="2026-08-08-ptr8unitpower-additional-notes">2026-08-08 PTR8／UnitPower Additional notes</h2>
+<ul>
+<li>The Pandemic state of PTR8 must use <code>AuraButton:AddPandemicRegion</code>, do not read the <code>Shown</code> Secret aspect of the Region, and do not rebuild the Blizzard Pandemic window with EAM OnUpdate.</li>
+<li>Dispel borders must use <code>AddDispelTypeTexture(texture, options)</code>; <code>showAlways</code> to override other conditions, and <code>stealable=true</code> or the old AuraBorder alias cannot be used as replacements.</li>
+<li>Disabling AuraContainer will clear the display data belonging to AuraButton/ItemEnchantment, but it does not mean that the frame is destroyed.</li>
+<li>Public makefiles for UnitPower are not confirmed for <code>StatusBar:SetUnit</code>, <code>SetPowerTextFontString</code>, <code>SetOnUpdateMode</code>. The confirmed 12.1 Secret sink is a one-way input for StatusBar <code>SetValue</code> and Texture <code>SetRadialProgressBarPercent</code>.</li>
+<li>EAM does not call <code>UnitPower</code>, <code>UnitPowerMax</code> or <code>UnitPowerPercent</code> in combat; <code>ClassPowerService</code> and ability probes return <code>combatDeferred</code> in combat and are restored by events after leaving the battle.</li>
+</ul>
+<p>Official PTR 12.1.0.69189 generates API:</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">UnitDocumentation.lua</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua">SimpleStatusBarAPIDocumentation.lua</a></li>
+</ul>
+<h2 id="2026-08-13-ptr-69273-aurasound-fixed-contract">2026-08-13 PTR 69273 AuraSound Fixed Contract</h2>
+<p>Fixed evidence for Gethe <code>ptr</code> commit <code>6e348870ed8f93d95f0cd16d299b51dbce500296</code> (12.1.0.69273):</p>
+<ul>
+<li><code>C_UnitAuras.AddAuraSound(trigger, sound)</code> returns a registration ID that can be nil; <code>RemoveAuraSound(id)</code> cancels registration.</li>
+<li><code>Enum.UnitAuraSoundTrigger</code>: Added=0, ApplicationsIncreased=1, Removed=2.</li>
+<li><code>UnitAuraSoundInfo</code> required <code>unitToken</code>, <code>spellID</code>; optional <code>soundFileName</code>, <code>soundFileID</code>, <code>outputChannel</code>. There is no <code>soundKitID</code>, caster or auraFilter.</li>
+<li>Add/Remove is marked restricted and SecretArguments is AllowedWhenUntainted; EAM only creates parameters from the normalized SavedVariables and does not pass in AuraData or Secret value.</li>
+<li>Registration ID is session runtime state, not playback handle; it cannot be saved or passed to <code>StopSound</code>.</li>
+<li>12.0.7 only has private Aura applied old API, which is not enough to implement general Aura three triggers, so capability downgrade is adopted.</li>
+</ul>
+<p>Fixed source:</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua">UnitAuraDocumentation.lua</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua">UnitAuraConstantsDocumentation.lua</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua">UnitConstantsDocumentation.lua</a></li>
+</ul>
+<h2 id="2026-08-23-dk-rune-and-groundeffect-spell-group-fixed-notes">2026-08-23 DK Rune and GroundEffect Spell Group Fixed Notes</h2>
+<h3 id="dk-rune">DK Rune</h3>
+<ul>
+<li>The argument to <code>RUNE_POWER_UPDATE</code> is <code>runeIndex, added</code>; the event covers both Rune becoming available and unavailable. Lua must save <code>added=false</code> explicitly, not <code>safe and added or nil</code>.</li>
+<li><code>GetRuneCount(index)</code> returns ready count (0/1) for fixed slot <code>1..6</code>; <code>GetRuneCooldown(index)</code> can provide <code>isRuneReady</code> fallback when count API is unavailable or returns an unsafe value. EAM only saves six safe booleans and 0..6 summaries, and does not save start/duration.</li>
+<li>Rune ready count displays six segments with the existing POINTS renderer; Runic Power is still handled by its own powerType node. Rune event hot paths must not fall back to <code>UnitPower</code>, <code>UnitPowerMax</code>, or <code>UnitPowerPercent</code>.</li>
+<li>Source: <a href="https://warcraft.wiki.gg/wiki/RUNE_POWER_UPDATE">RUNE_POWER_UPDATE</a>, <a href="https://warcraft.wiki.gg/wiki/API_GetRuneCount">GetRuneCount</a>, <a href="https://warcraft.wiki.gg/wiki/API_GetRuneCooldown">GetRuneCooldown</a>.</li>
+</ul>
+<h3 id="groundeffect-spell-family">GroundEffect spell family</h3>
+<ul>
+<li>Setting list save canonical spellID; non-combat cold path uses <code>C_Spell.GetBaseSpell</code>, <code>C_Spell.GetOverrideSpell</code> and safe <code>C_Spell.GetSpellInfo(...).spellID</code> to create event ID → canonical ID index.</li>
+<li>spellID of <code>UNIT_SPELLCAST_SUCCEEDED</code> may be Secret in restricted casting situations; the hot path must pass through the safe positive integer/table-key gate before indexing the custom table. The restricted value only increments the anonymous rejection count and does not save the raw value.</li>
+<li>The exact configured ID always takes precedence; if two settings allow the same alias to point to different canonicals, the alias will be marked ambiguous and refuse to trigger, and will not choose sides with names, icons or guessed IDs.</li>
+<li>Talent/Specialization/Spell topology events are recompiled outside of combat; only pending in combat and merged once out of combat. The casting hot path does not check the Tooltip and does not make the family API call.</li>
+<li>Source: <a href="https://warcraft.wiki.gg/wiki/API_types/SpellIdentifier">SpellIdentifier／Base and Override</a>, <a href="https:/__EAM CODE_2__.wiki.gg/wiki/API_C_Spell.GetSpellInfo">C_Spell.GetSpellInfo</a>, <a href="https://warcraft.wiki.gg/wiki/UNIT_SPELLCAST_SUCCEEDED">UNIT_SPELLCAST_SUCCEEDED</a>.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->
