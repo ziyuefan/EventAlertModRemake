@@ -104,6 +104,8 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
     *   Retail 12.1 Aura readiness、Secret／Taint、效能與文件治理的分級檢討結果。
 *   🚀 **[Antigravity 接手理解基準檔 (Baseline Assessment)](31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md.html)**
     *   AI 治理、WoW Retail 12.x API 邊界、零 GC 效能架構、多職業資源與發布體系之權威理解基準點。
+*   🧠 **[21 大核心技能體系與 Agentic AI 治理哲學 (Skill Ecosystem & Philosophy)](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
+    *   **全面技能化（Everything as a Skill）核心手冊**。涵蓋 5 大領域 21 項技能全景目錄、漸進式揭露（Progressive Disclosure）、確定性交付與永續維護哲學。
 
 ### 🏗️ 系統架構與 API 邊界 (Architecture & API)
 *   📐 **[整體重構系統架構 (Architecture)](01_ARCHITECTURE.md.html)**

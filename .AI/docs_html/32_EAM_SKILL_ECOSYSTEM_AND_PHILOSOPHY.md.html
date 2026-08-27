@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Details & Summary Accordion Styling */
+    details {
+        background-color: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 24px 0;
+        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    details[open] {
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.25);
+    }
+    summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1.15rem;
+        color: var(--heading-color);
+        outline: none;
+        user-select: none;
+        padding: 6px 0;
+        transition: color 0.2s ease;
+    }
+    summary:hover {
+        color: var(--accent-color);
+    }
+    details summary > * {
+        display: inline;
+    }
+    details h3 {
+        margin-top: 1.4em;
+        margin-bottom: 0.5em;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed var(--border-color);
+        color: var(--accent-color);
+        font-size: 1.25rem;
+    }
+    details ul {
+        margin-top: 8px;
+        margin-bottom: 16px;
+        padding-left: 28px;
+    }
+    details li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+    details ul ul {
+        margin-top: 6px;
+        margin-bottom: 8px;
+        padding-left: 20px;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-brand-group {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .nav-link {
+        font-size: 0.9em;
+        font-weight: 500;
+        color: var(--heading-color);
+        text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+        .nav-links {
+            display: none;
+        }
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <div class="nav-brand-group">
+                <a href="index.html" class="nav-logo">⚡ EventAlertMod</a>
+                <nav class="nav-links">
+                    <a href="index.html" class="nav-link">導航首頁</a>
+                    <a href="README.md.html" class="nav-link">使用說明</a>
+                    <a href="changelog.txt.html" class="nav-link">更新日誌</a>
+                    <a href="AGENTS.md.html" class="nav-link">AI 規範</a>
+                </nav>
+            </div>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-21-agentic-ai-eam-skill-ecosystem-philosophy">EventAlertMod 21 大核心技能體系與 Agentic AI 治理哲學 (EAM Skill Ecosystem &amp; Philosophy)</h1>
+<blockquote>
+<p>🚀 <strong>以技能為核心（Skill-Driven）、漸進式揭露（Progressive Disclosure）、確定性交付（Deterministic Execution）的現代化魔獸插件 AI 協同體系</strong></p>
+</blockquote>
+<hr />
+<h2 id="1-core-philosophy">🧭 1. 核心治理哲學與架構理念 (Core Philosophy)</h2>
+<p>在過去大型軟體專案與 AI 協同開發中，最常面臨的致命瓶頸包含：<strong>上下文窗口爆炸（Context Window Explosion）、注意力稀釋（Lost in the Middle）、對話截斷失憶（Context Truncation）、以及更換 Agent 後的架構漂移與破壞（Architecture Drift）</strong>。</p>
+<p>為徹底根除上述痛點，EventAlertMod (EAM) 引入了業界領先的 <strong>「全面技能化（Everything as a Skill）」</strong> 架構：</p>
+<pre class="codehilite"><code>                           EAM Agentic AI 治理架構
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                    使用者意圖 / 宣告式指令 (User Intent)                 │
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │         Antigravity / Master Agent (大腦協調器 &amp; 意圖路由器)             │
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │ (動態漸進式加載 Progressive Loading)
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                     21 大專案標準化 SKILL 體系 (SOP 規範)                │
+  │  ┌──────────────────┐ ┌──────────────────┐ ┌─────────────────────────┐  │
+  │  │ 12.x 核心引擎與   │ │ 遊戲資料與監控   │ │ 介面互動與視覺系統      │  │
+  │  │ API 防禦體系      │ │ 服務體系         │ │ (UI/UX &amp; Interactivity) │  │
+  │  └──────────────────┘ └──────────────────┘ └─────────────────────────┘  │
+  │  ┌──────────────────┐ ┌──────────────────────────────────────────────┐  │
+  │  │ 測試驗證與除錯   │ │ DevOps、發布自動化與本機資安治理             │  │
+  │  │ 門禁體系 (QC)    │ │ (Release, Security &amp; Continuity)             │  │
+  │  └──────────────────┘ └──────────────────────────────────────────────┘  │
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │ (確定性執行 Deterministic Execution)
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │  Subagents (子代理集群) / 腳本工具鏈 / 493+ 靜態契約驗證 / 84+ Flow 沙盒  │
+  └────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<h3 id="_1">💡 技能化帶來的五大質變效益：</h3>
+<ol>
+<li><strong>漸進式揭露（Progressive Disclosure）與極致 Token 節約</strong>：</li>
+<li>不再一次性將數萬行技術文檔全部塞入 Prompt。</li>
+<li>平時僅在記憶體保留 21 個技能的精簡元資料（Name + Description，耗費極低 Token）。</li>
+<li>
+<p>只有當觸發特定任務時，系統才動態將該技能的專屬 <code>SKILL.md</code> 注入上下文，以最高專注度完成任務。</p>
+</li>
+<li>
+<p><strong>「零暖機」跨 Session 與跨 Agent 永續續接（Zero Cold-Start Continuity）</strong>：</p>
+</li>
+<li>對話歷程是暫時的（Ephemeral），但落盤的 SKILL 是永久的（Permanent）。</li>
+<li>
+<p>當新對話建立、或切換至不同模型（如 Flash / Claude / Codex）時，新 Agent 查閱對應 SKILL 即可在數毫秒內掌握最權威的作業程序。</p>
+</li>
+<li>
+<p><strong>固化除錯結晶，杜絕歷史錯誤重現（Anti-Regression）</strong>：</p>
+</li>
+<li>將專案歷經數月攻克的難題（如 12.x Secret Value Table Key 報錯、CurseForge Cloudflare WAF 穿透、LSM 雙軌資料源去重、OnUpdate 閉包引發 JIT Abort 等）固化為嚴格的「違規禁令（Violations）」與「標準範式（Best Practices）」。</li>
+<li>
+<p>任何 Agent 在撰寫代碼前均受 SKILL 約束，永遠不會重蹈覆轍。</p>
+</li>
+<li>
+<p><strong>抹平模型能力差距（Capability Equalization）</strong>：</p>
+</li>
+<li>為各項任務提供 Step-by-Step 的明確操作指令與驗證標準。</li>
+<li>
+<p>即使是輕量級子代理人（Subagents），只要依照 SKILL 的 SOP 執行，也能產出與高階旗艦模型 100% 一致的精確成果。</p>
+</li>
+<li>
+<p><strong>AI Native 智慧代碼庫（Agent-Ready Smart Repository）</strong>：</p>
+</li>
+<li>專案不僅包含魔獸插件源碼，更隨附了自我維護、自我修復、自動測試與安全發布的智慧資產，具備極高的長期可維護性。</li>
+</ol>
+<hr />
+<h2 id="2-21-skill-the-21-skills-catalog">🏛️ 2. 五大領域 21 項 SKILL 全景目錄 (The 21 SKILLs Catalog)</h2>
+<h3 id="wow-12x-api-core-engine-12x-api">領域一：核心架構與 WoW 12.x 現代 API 治理 (Core Engine &amp; 12.x API)</h3>
+<ol>
+<li><strong><code>eam-secret-taint-sentinel</code> (12.x Secret 數值防禦與 Taint 隔離防護)</strong></li>
+<li><strong>定位</strong>：暴雪 12.0/12.1+ 受保護資料與受污染環境的防禦性編程最高準則。</li>
+<li>
+<p><strong>核心規範</strong>：<code>issecretvalue</code> 四大檢查、嚴禁用 Secret 作為 Table Key、嚴禁 Lua 算術/格式化、原生 <code>StatusBar:SetValue</code> / <code>DurationObject</code> 單向 Sink 直通、零讀回原則。</p>
+</li>
+<li>
+<p><strong><code>eam-zero-alloc-statepool</code> (零分配狀態物件池與 LuaJIT 效能優化)</strong></p>
+</li>
+<li><strong>定位</strong>：實現戰鬥中 0-GC（零記憶體分配）與 LuaJIT Zero Trace Abort。</li>
+<li>
+<p><strong>核心規範</strong>：多型 <code>StatePool</code> 復用、<code>Scheduler.after</code> 延遲調度令牌池替代 OnUpdate 輪詢、<code>AlertManager.BeginBatch</code> 批量節流。</p>
+</li>
+<li>
+<p><strong><code>eam-native-aura-compiler</code> (12.1 Native Aura 容器與規則編譯架構)</strong></p>
+</li>
+<li><strong>定位</strong>：Retail 12.1 原生光環容器規則指紋編譯架構。</li>
+<li>
+<p><strong>核心規範</strong>：<code>buildLayoutFingerprint</code> 佈局指紋、固定槽位 (Fixed Slots) 與動態流動群組 (Flow Groups) 分離、視覺與音效指紋解耦、戰鬥中遞延套用。</p>
+</li>
+<li>
+<p><strong><code>eam-cdm-shadow-host</code> (CooldownViewer CDM 影子載體寄生技術)</strong></p>
+</li>
+<li><strong>定位</strong>：利用官方冷卻管理器作為影子載體以避開戰鬥鎖定。</li>
+<li>
+<p><strong>核心規範</strong>：官方池 Hook 攔截、<code>ClipsChildren</code> 裁切避讓、名稱重定位與 <code>FrameLevel</code> 提權排版。</p>
+</li>
+<li>
+<p><strong><code>eam-api-change-intel</code> (WoW 最新 API 變更與情報調研技能)</strong></p>
+</li>
+<li><strong>定位</strong>：跨版本（Retail 12.1 / PTR 12.1 / XPTR 12.0.7）API 演進調查與相容性封裝。</li>
+<li><strong>核心規範</strong>：五大權威資料源（暴雪開源 UI 庫、Wago.tools Diffs、Townlong-Yak）、API 變更三步評估法、標準向下相容降級封裝（Polyfill Wrappers）。</li>
+</ol>
+<hr />
+<h3 id="game-services-data">領域二：遊戲資料、職業資源與冷卻服務 (Game Services &amp; Data)</h3>
+<ol>
+<li><strong><code>eam-player-resource-catalog</code> (17 大全職業/專精資源拓撲與平滑渲染)</strong></li>
+<li><strong>定位</strong>：全職業 40 種專精多資源拓撲動態偵測與渲染。</li>
+<li>
+<p><strong>核心規範</strong>：德魯伊 5 形態 0ms 資源切換、DK 3 專精動態圖示 + 6 格微型充能冷卻條、需求導向背景取樣器 (<code>probe-gated sampler</code>)。</p>
+</li>
+<li>
+<p><strong><code>eam-cooldown-activation-guard</code> (精確施法過濾與法術覆蓋狀態機)</strong></p>
+</li>
+<li><strong>定位</strong>：冷卻技能精確啟動與天賦形態覆蓋同步。</li>
+<li>
+<p><strong>核心規範</strong>：<code>UNIT_SPELLCAST_SUCCEEDED</code> 精確玩家判定、<code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code> 動態覆蓋同步、三態設定繼承模型。</p>
+</li>
+<li>
+<p><strong><code>eam-target-aura-anonymous-probe</code> (目標光環匿名偵測與無污染採集)</strong></p>
+</li>
+<li><strong>定位</strong>：在 12.x 目標光環私有化限制下，實現零污染的安全採集。</li>
+<li>
+<p><strong>核心規範</strong>：<code>TooltipMonitorService</code> 匿名回呼、Ctrl+Alt 修飾鍵判定、非戰鬥安全閘門、嚴禁遍歷 Frame 與 GetMouseFocus。</p>
+</li>
+<li>
+<p><strong><code>eam-player-stat-monitor</code> (18 大人物屬性與動能滑翔移速即時監控)</strong></p>
+</li>
+<li><strong>定位</strong>：18 種人物屬性監控、動能滑翔速度計算與視覺化。</li>
+<li><strong>核心規範</strong>：四合一速度淬鍊（含 <code>C_PlayerInfo.GetGlidingInfo</code> 830%~1400% 飛龍速度）、原生進度條色彩分流、自訂警戒值紅框。</li>
+</ol>
+<hr />
+<h3 id="uiux-interactivity">領域三：介面互動與視覺系統 (UI/UX &amp; Interactivity)</h3>
+<ol>
+<li>
+<p><strong><code>eam-ui-interactive-suite</code> (無縫側窗吸附、聯動拖曳錨點與自適應選單)</strong></p>
+<ul>
+<li><strong>定位</strong>：現代化魔獸風格設定介面之佈局與操作反饋標準。</li>
+<li><strong>核心規範</strong>：APPEND 模式無縫側窗吸附、跨視窗同步平滑拖曳、側窗互斥機制、奶牛頭排版預覽、螢幕鎖定與全介面懸停提示 (<code>EAM.UI.setTooltip</code>)。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-sharedmedia-integration</code> (LibSharedMedia 素材動態探測與全域字型熱套用)</strong></p>
+<ul>
+<li><strong>定位</strong>：接入 <code>LibSharedMedia-3.0</code> (LSM) 素材生態。</li>
+<li><strong>核心規範</strong>：<code>ensureLSM()</code> 雙軌去重查詢、<code>EAM_FONT_FAMILY_CHANGED</code> 事件全域熱套用、SavedVariables 白名單防禦解除、長清單自適應捲動選單 (<code>buildScrollableDropdownMenu</code>)。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-profile-codec-manager</code> (8 大分類字串編解碼、設定分享與 WTF 遷移)</strong></p>
+<ul>
+<li><strong>定位</strong>：設定檔（Profile）模組化分享、字串壓縮與版本向後相容。</li>
+<li><strong>核心規範</strong>：8 大分類獨立自選匯出/匯入、校驗碼分析、WTF 存檔 Schema 自動無損升級。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-glow-pandemic-visuals</code> (Proc 金色發光、DoT Pandemic 亮框與戰鬥紅框)</strong></p>
+<ul>
+<li><strong>定位</strong>：戰鬥視覺反饋與高亮系統。</li>
+<li><strong>核心規範</strong>：快捷列 Proc 發光同步、DoT Pandemic 窗口亮框、雙層 Glow 降級策略（LibButtonGlow 優先，戰鬥回退自有動畫邊框）、全螢幕進入戰鬥紅框閃爍 (<code>CombatFlash</code>)。</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="qc-validation">領域四：測試驗證與除錯體系 (QC &amp; Validation)</h3>
+<ol>
+<li>
+<p><strong><code>eam-flow-validation-harness</code> (離線 Flow 狀態機沙盒自動化驗證)</strong></p>
+<ul>
+<li><strong>定位</strong>：離線環境下自動化運行 84+ 項業務狀態機測試。</li>
+<li><strong>核心指令</strong>：<code>pwsh -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1</code>。</li>
+<li><strong>核心規範</strong>：模擬戰鬥進出、形態切換、光環過期、能量更新與 Secret 注入。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-validation-contracts</code> (493+ 項全專案代碼契約斷言與 AST 掃描)</strong></p>
+<ul>
+<li><strong>定位</strong>：專案發布與變更前的最高門禁（Gatekeeper）。</li>
+<li><strong>核心指令</strong>：<code>pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1</code>。</li>
+<li><strong>核心規範</strong>：全專案 71 個 Lua 語法 100% 通過、TOC 載入鏈驗證、5 大語系 144 詞條鏡像對齊、打包排除契約。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-live-matrix-inspector</code> (PTR / XPTR / Retail 真人實機測試矩陣指南)</strong></p>
+<ul>
+<li><strong>定位</strong>：跨版本實機測試規範與回報協議。</li>
+<li><strong>核心規範</strong>：維護 <code>Data/LiveValidationMatrix.json</code> 與 <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code>，規範實機回報標準欄位。</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="devops-devops-security-continuity">領域五：DevOps、發布自動化與本機資安治理 (DevOps, Security &amp; Continuity)</h3>
+<ol>
+<li>
+<p><strong><code>eam-curseforge-publisher</code> (CurseForge 安全發布與版本管理)</strong></p>
+<ul>
+<li><strong>定位</strong>：發布插件至 CurseForge 的標準化全流程。</li>
+<li><strong>核心指令</strong>：<code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1</code>（支援 <code>-DryRun</code> 模擬）。</li>
+<li><strong>核心規範</strong>：Cloudflare WAF 穿透標頭、MIME 嚴格宣告、版本代碼對齊（12.1.0 = <code>16519</code>）、DPAPI 記憶體解密。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-secret-vault-manager</code> (Windows DPAPI 本機機密雙重加密與防外流)</strong></p>
+<ul>
+<li><strong>定位</strong>：創作者 API Token 與機密憑證的 100% 本機隔離與加密。</li>
+<li><strong>核心指令</strong>：<code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -SetToken</code>。</li>
+<li><strong>核心規範</strong>：作業系統級 DPAPI 二進位加密（<code>API_TOKEN.SEC</code>）、Git 與打包排除 100% 審查、記憶體瞬時解密。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-local-wow-deployer</code> (WoW 本機多客戶端安全部署與存檔備份還原)</strong></p>
+<ul>
+<li><strong>定位</strong>：本機多客戶端自動化安全部署與 WTF 備份。</li>
+<li><strong>核心指令</strong>：<code>pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1</code>。</li>
+<li><strong>核心規範</strong>：Registry 智慧偵測、Reparse Point fail-closed 絕對防禦、自動時間戳備份與一鍵 Rollback。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-docs-site-builder</code> (GitHub Pages 文件網站自動建置與多語系導覽)</strong></p>
+<ul>
+<li><strong>定位</strong>：Markdown 文檔與更新日誌自動轉換為現代化說明網站。</li>
+<li><strong>核心指令</strong>：<code>$env:EAM_DOCS_OFFLINE="1"; python .\.AI\Tools\batch_convert_docs.py</code>。</li>
+<li><strong>核心規範</strong>：頂部 Navbar 注入、Changelog 語意化 HTML 渲染、離線純淨轉換。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>eam-project-continuity-governor</code> (專案記憶、連續性與上下文交接治理)</strong></p>
+<ul>
+<li><strong>定位</strong>：跨 Session 與多 Agent 協同的單一事實來源維護。</li>
+<li><strong>核心規範</strong>：維護 <code>ProjectContinuity.json</code>、<code>28_PROJECT_CONTINUITY.md</code> 與 <code>15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="3-deployment-usage">🛠️ 3. 技能部署架構與調用方式 (Deployment &amp; Usage)</h2>
+<p>專案中所有 21 項技能皆採用雙軌實體部署，確保版本控制與全域可達性：
+- <strong>專案內部版本控制（VCS Tracked）</strong>：
+  - <code>D:\Project_EventAlertMod_AGY\.agents\skills\&lt;skill-name&gt;\SKILL.md</code>
+  - <code>D:\Project_EventAlertMod_AGY\.AI\skills\&lt;skill-name&gt;\SKILL.md</code>
+- <strong>本機 Antigravity 全域目錄（Global Discovery）</strong>：
+  - <code>C:\Users\ZYF\.gemini\config\skills\&lt;skill-name&gt;\SKILL.md</code></p>
+<h3 id="_2">💬 自然語言與意圖調用範例：</h3>
+<pre class="codehilite"><code class="language-markdown">使用者輸入：「幫我發布目前的開發版至 CurseForge」
+➔ Agent 自動觸發：[eam-curseforge-publisher] + [eam-secret-vault-manager]
+
+使用者輸入：「12.1.0 戰鬥中這個能量 API 報錯了，請排查 Secret」
+➔ Agent 自動觸發：[eam-secret-taint-sentinel] + [eam-player-resource-catalog]
+
+使用者輸入：「幫我把更新日誌與文檔站重新編譯並推送到 GitHub Pages」
+➔ Agent 自動觸發：[eam-docs-site-builder] + [eam-validation-contracts]
+
+使用者輸入：「調查最新暴雪 PTR Build 關於技能冷卻覆蓋的 API 變更」
+➔ Agent 自動觸發：[eam-api-change-intel] + [eam-cooldown-activation-guard]
+</code></pre>
+
+<hr />
+<h2 id="4-conclusion">🏁 4. 結語 (Conclusion)</h2>
+<p>EventAlertMod 透過這 21 項高度專業化、模組化且相互協同的 SKILL 體系，將龐大的魔獸插件重構工程轉化為<strong>高度結構化、可確定性重複執行、且完全免除 AI 失憶與幻覺風險的現代化軟體資產</strong>。這不僅是 WoW 插件開發的標竿，更是現代 Agentic AI 協同治理的典範實踐。</p>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>
