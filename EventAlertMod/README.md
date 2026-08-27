@@ -145,7 +145,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 ## 📜 版本更新歷史 (Beautified CHANGELOG.TXT)
 
-<details open>
+<details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
 
 ### 🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27
@@ -289,7 +289,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - 引入 AlertManager 中介控制器與 Scheduler 節流，消除 Layout Churn 與高頻重複計算。
 </details>
 
-<details>
+<details markdown="1">
 <summary><b>📜 歷史經典版本摘要 (TWW / DF / SL / Classic) (點擊展開/收合)</b></summary>
 
 - **[Retail 12.0.7] 2026.06**：專精名稱動態本地化重構、五大語系字典補齊；重構地面效果多國語言 Tooltip Scraping；拆分 7 大獨立告警框架。

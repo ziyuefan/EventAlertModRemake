@@ -785,10 +785,21 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
             print("  [Auto ZH] Translating content to Traditional Chinese...")
             content_zh = translate_via_google_api(content_en, src_lang="en", dest_lang="zh-TW")
 
-    pattern = re.compile(r'```mermaid\s*\n(.*?)\n```', re.DOTALL)
+    def preprocess_markdown(text):
+        if not text:
+            return text
+        # 1. Mermaid
+        mermaid_pattern = re.compile(r'```mermaid\s*\n(.*?)\n```', re.DOTALL)
+        text = mermaid_pattern.sub(r'\n<div class="mermaid">\n\1\n</div>\n', text)
+        # 2. Ensure details tag has markdown="1" so python-markdown parses its inner content
+        text = re.sub(r'<details(\s*[^>]*)>', lambda m: f'<details{m.group(1)} markdown="1">' if 'markdown=' not in m.group(0) else m.group(0), text, flags=re.IGNORECASE)
+        # 3. Ensure blank line after </summary> and before </details>
+        text = re.sub(r'(</summary>)(\s*\n*)([^\n])', r'\1\n\n\3', text, flags=re.IGNORECASE)
+        text = re.sub(r'([^\n])(\s*\n*)(</details>)', r'\1\n\n\3', text, flags=re.IGNORECASE)
+        return text
     
     if content_zh:
-        processed_content_zh = pattern.sub(r'\n<div class="mermaid">\n\1\n</div>\n', content_zh)
+        processed_content_zh = preprocess_markdown(content_zh)
         html_content_zh = markdown.markdown(processed_content_zh, extensions=['extra', 'codehilite', 'toc'])
         html_content_zh = rewrite_local_markdown_links(html_content_zh)
     else:
@@ -800,7 +811,7 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
         """
 
     if content_en:
-        processed_content_en = pattern.sub(r'\n<div class="mermaid">\n\1\n</div>\n', content_en)
+        processed_content_en = preprocess_markdown(content_en)
         html_content_en = markdown.markdown(processed_content_en, extensions=['extra', 'codehilite', 'toc'])
         html_content_en = rewrite_local_markdown_links(html_content_en)
     else:
@@ -976,6 +987,58 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
         opacity: 0.95;
     }
     
+    /* Details & Summary Accordion Styling */
+    details {
+        background-color: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 24px 0;
+        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    details[open] {
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.25);
+    }
+    summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1.15rem;
+        color: var(--heading-color);
+        outline: none;
+        user-select: none;
+        padding: 6px 0;
+        transition: color 0.2s ease;
+    }
+    summary:hover {
+        color: var(--accent-color);
+    }
+    details summary > * {
+        display: inline;
+    }
+    details h3 {
+        margin-top: 1.4em;
+        margin-bottom: 0.5em;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed var(--border-color);
+        color: var(--accent-color);
+        font-size: 1.25rem;
+    }
+    details ul {
+        margin-top: 8px;
+        margin-bottom: 16px;
+        padding-left: 28px;
+    }
+    details li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+    details ul ul {
+        margin-top: 6px;
+        margin-bottom: 8px;
+        padding-left: 20px;
+    }
+
     /* Mermaid Graph Center Alignment */
     .mermaid {
         display: flex;
@@ -1081,6 +1144,72 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
     write_html_file(dest_path, full_html)
     return True
 
+def parse_changelog_to_html(content):
+    if not content:
+        return ""
+    import html as html_module
+    lines = content.splitlines()
+    html_out = ['<div class="changelog-container">']
+    
+    in_version = False
+    in_sub_list = False
+    in_main_list = False
+    
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+            
+        m_ver = re.match(r'^--\s*\[([^\]]+)\]\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})?', stripped)
+        if m_ver:
+            if in_sub_list:
+                html_out.append('</ul>')
+                in_sub_list = False
+            if in_main_list:
+                html_out.append('</ul>')
+                in_main_list = False
+            if in_version:
+                html_out.append('</div></div>')
+                
+            ver_title = m_ver.group(1).strip()
+            ver_date = m_ver.group(2).strip() if m_ver.group(2) else ""
+            
+            html_out.append(f'''<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ {html_module.escape(ver_title)}</span>
+        <span class="changelog-date">📅 {html_module.escape(ver_date)}</span>
+    </div>
+    <div class="changelog-body">''')
+            in_version = True
+            continue
+            
+        indent = len(line) - len(line.lstrip())
+        text = re.sub(r'^[-\s]+', '', stripped)
+        
+        if indent >= 7 or line.startswith('       --') or line.startswith('        --'):
+            if not in_sub_list:
+                html_out.append('<ul class="changelog-sublist">')
+                in_sub_list = True
+            html_out.append(f'<li>{html_module.escape(text)}</li>')
+        else:
+            if in_sub_list:
+                html_out.append('</ul>')
+                in_sub_list = False
+            if not in_main_list:
+                html_out.append('<ul class="changelog-mainlist">')
+                in_main_list = True
+            html_out.append(f'<li><strong>{html_module.escape(text)}</strong></li>')
+            
+    if in_sub_list:
+        html_out.append('</ul>')
+    if in_main_list:
+        html_out.append('</ul>')
+    if in_version:
+        html_out.append('</div></div>')
+    html_out.append('</div>')
+    
+    return '\n'.join(html_out)
+
 def convert_txt_to_html(txt_path, dest_dir):
     filename = os.path.basename(txt_path)
     out_filename = filename + ".html"
@@ -1095,19 +1224,20 @@ def convert_txt_to_html(txt_path, dest_dir):
     print("  [Auto EN] Translating text to English...")
     content_en = translate_via_google_api(content_zh)
     
-    import html
-    escaped_zh = html.escape(content_zh)
+    is_changelog = "changelog" in filename.lower()
     
-    if content_en:
-        escaped_en = html.escape(content_en)
+    if is_changelog:
+        body_zh = parse_changelog_to_html(content_zh)
+        body_en = parse_changelog_to_html(content_en) if content_en else """<div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated.</p>
+        </div>"""
     else:
-        escaped_en = """[English Translation Offline / Unavailable]
-The English translation for this document could not be dynamically generated. 
-This usually happens when:
-- You are executing the build script in an offline environment.
-- The dynamically accessed Google Translate API is temporarily blocked or timed out.
-
-Recommended Solution: Directly use your browser's built-in "Translate to English" function by right-clicking on the page."""
+        import html as html_module
+        escaped_zh = html_module.escape(content_zh)
+        escaped_en = html_module.escape(content_en) if content_en else "Translation Unavailable"
+        body_zh = f"<pre><code>{escaped_zh}</code></pre>"
+        body_en = f"<pre><code>{escaped_en}</code></pre>"
 
     css_style = """
     html, body {
@@ -1119,7 +1249,7 @@ Recommended Solution: Directly use your browser's built-in "Translate to English
         color: var(--text-color);
         font-size: var(--base-font-size);
         line-height: 1.6;
-        max-width: 900px;
+        max-width: 1000px;
         margin: 0 auto;
         padding: 80px 20px 40px 20px;
         transition: background-color 0.3s ease, color 0.3s ease;
@@ -1161,6 +1291,67 @@ Recommended Solution: Directly use your browser's built-in "Translate to English
         color: var(--accent-color);
         text-decoration: none;
     }
+    
+    /* Changelog Cards */
+    .changelog-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        margin: 30px 0;
+    }
+    .changelog-card {
+        background-color: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.25);
+        transition: border-color 0.2s ease;
+    }
+    .changelog-card:hover {
+        border-color: var(--accent-color);
+    }
+    .changelog-header {
+        background-color: rgba(0, 0, 0, 0.25);
+        border-bottom: 1px solid var(--border-color);
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .changelog-tag {
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: var(--accent-color);
+    }
+    .changelog-date {
+        font-size: 0.9em;
+        color: var(--text-color);
+        opacity: 0.8;
+    }
+    .changelog-body {
+        padding: 18px 24px;
+    }
+    .changelog-mainlist {
+        padding-left: 20px;
+        margin: 0;
+    }
+    .changelog-mainlist > li {
+        margin-bottom: 12px;
+        line-height: 1.6;
+        color: var(--heading-color);
+    }
+    .changelog-sublist {
+        padding-left: 24px;
+        margin-top: 6px;
+        margin-bottom: 12px;
+    }
+    .changelog-sublist > li {
+        margin-bottom: 6px;
+        line-height: 1.55;
+        color: var(--text-color);
+    }
     """
     
     full_html = f"""<!DOCTYPE html>
@@ -1200,12 +1391,12 @@ Recommended Solution: Directly use your browser's built-in "Translate to English
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
         <h1>{filename}</h1>
-        <pre><code>{escaped_zh}</code></pre>
+        {body_zh}
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
         <h1>{filename}</h1>
-        <pre><code>{escaped_en}</code></pre>
+        {body_en}
     </div>
     {CONTROL_PANEL_JS}
 </body>
