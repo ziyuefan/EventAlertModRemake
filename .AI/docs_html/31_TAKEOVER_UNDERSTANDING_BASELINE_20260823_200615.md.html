@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <a href="AGENTS.md.html" class="nav-logo">EventAlertMod Docs</a>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="31-antigravity-baseline-assessment">31. Antigravity 接手理解基準檔 (Baseline Assessment)</h1>
+<ul>
+<li><strong>文檔編號</strong>：<code>31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md</code></li>
+<li><strong>基準時間</strong>：2026-08-23 20:06:15 (+08:00)</li>
+<li><strong>維護代理</strong>：Antigravity (Lead Developer + WoW AddOn Engineer + Lua Performance Engineer)</li>
+<li><strong>工作分支</strong>：<code>agy/main</code></li>
+<li><strong>專案根目錄</strong>：<code>D:\Project_EventAlertMod_AGY</code></li>
+<li><strong>當前驗證狀態</strong>：OFFLINE VERIFIED (Syntax 64/64, Flow 82/82, Contracts 493/493)</li>
+</ul>
+<hr />
+<h2 id="1">1. 專案背景與定位</h2>
+<p>本專案為 <strong>EventAlertMod (EAM) 的 Retail 12.x (Midnight-era) 完整現代化重構版本</strong>。
+核心工程目標順序：</p>
+<p>$$\text{正確性} &gt; \text{WoW API 相容性} &gt; \text{Runtime 穩定性} &gt; \text{事件效率} &gt; \text{GC 控制} &gt; \text{CPU Latency} &gt; \text{可維護性} &gt; \text{功能擴充}$$</p>
+<hr />
+<h2 id="2-ai-ai-governance-boundaries">2. AI 治理體系與硬性邊界 (AI Governance &amp; Boundaries)</h2>
+<pre class="codehilite"><code class="language-text">.AI/
+├── AGENTS.md                   # 唯一最高指導原則 (禁止在根目錄重複建立第二套規範)
+├── PROJECT_MEMORY.md           # 專案事實、連續性與未驗證項目追蹤
+├── Data/
+│   ├── ProjectContinuity.json  # 機器可讀連續性狀態
+│   ├── LiveValidationMatrix.json# 37 案實機簽收矩陣 (嚴禁離線 Mock 冒充實機通過)
+│   └── wow_spells_and_auras.json# 外部爬蟲候選資料 (嚴格隔離，禁止 TOC/Lua 載入)
+├── Docs/                       # 36 份架構、API、效能、變更情報與除錯歷史文件
+└── Tools/                      # 語法檢查、Flow 測試、靜態契約檢驗腳本
+</code></pre>
+
+<h3 id="_1">硬性邊界守則：</h3>
+<ol>
+<li><strong>單一有效工作目錄</strong>：唯一有效根目錄為 <code>D:\Project_EventAlertMod_AGY</code>；舊目錄 <code>D:\EventAlertMod</code> 徹底廢棄，嚴禁讀取、寫入、比對或作為 fallback。</li>
+<li><strong>Reparse Point 絕對保護</strong>：部署工具在探索 <code>D:\World of Warcraft</code> 之各版本客戶端目錄時，若目標或其父層為 SymbolicLink / Junction / Reparse Point，必須立即 <strong>Fail-Closed</strong> 中止操作，嚴禁刪除、覆蓋或重建連結。</li>
+<li><strong>雙軌證據鏈隔離</strong>：</li>
+<li><strong>離線全綠 (Offline Verified)</strong>：代表 Lua AST、Flow 狀態機、靜態契約通過。</li>
+<li><strong>實機驗證 (Requires WoW 12.1 Runtime)</strong>：涉及畫面呈現、Taint、安全框架動作時，一律列入 <code>LiveValidationMatrix.json</code> 待玩家實機簽收。</li>
+<li><strong>外部候選資料隔離</strong>：<code>wow_spells_and_auras.json</code> 標記為 <code>webCandidate</code>，由 <code>Test-WowheadCandidateData.ps1</code> 獨立檢驗，嚴禁被 TOC 引用或進入執行期。</li>
+<li><strong>隱私脫敏與 WTF 備份</strong>：</li>
+<li>任何路徑或日誌中包含 WTF、Account、磁碟絕對路徑者，執行期自動替換為 <code>[privacy-redacted]</code>。</li>
+<li>部署與還原工具內建 WTF 備份清單（Manifest），支援一秒完整還原。</li>
+</ol>
+<hr />
+<h2 id="3-wow-retail-12x-midnight">3. WoW Retail 12.x / Midnight 底層防禦與效能規範</h2>
+<h3 id="31-secret-values">3.1 Secret Values 零洩漏防禦</h3>
+<ul>
+<li><strong>不可讀原則</strong>：戰鬥中的保護值（如 <code>UnitPowerPercent</code>、Aura 持續時間、冷卻時間）屬於 Secret/Protected。</li>
+<li><strong>操作禁忌</strong>：嚴禁在 Lua 中對 Secret 值進行 <code>&gt; 0</code> 比較、<code>string.format</code> 格式化、<code>..</code> 字串拼接、算術運算、序列化或作為 Table Key。</li>
+<li><strong>Write-Only Sink 通道</strong>：</li>
+<li>資源百分比：直接透過 <code>pcall(StatusBar.SetValue, bar, percent)</code> 注入 Blizzard 原生 C 層控制項。</li>
+<li>充能資訊：以 <code>readChargeField</code> 進行欄位級安全檢查，安全保留 <code>isActive</code> / <code>maxCharges</code>，受保護的目前充能數直送 StatusBar。</li>
+<li>持續時間：透過 <code>Core/DurationAdapter.lua</code> 建立原生 <code>DurationObject</code> 與 <code>DurationTextBinding</code>，由 C 層驅動計時文字與 Swipe 動畫。</li>
+</ul>
+<h3 id="32-taint">3.2 Taint (污染) 物理隔離</h3>
+<ul>
+<li><strong>無安全操作</strong>：EAM 框架僅作視覺呈現，絕不承擔 secure/protected 點擊或巨集執行。</li>
+<li><strong>單一孤兒 Frame 接收事件</strong>：<code>Core/EventRouter.lua</code> 採用無父級孤兒 Frame，禁止將自訂 callback 掛入 Blizzard 原生安全鏈。</li>
+<li><strong>戰鬥中鎖定防護</strong>：<code>InCombatLockdown()</code> 為 true 時，嚴禁修改 Frame 父級、錨點、尺寸、層級或執行結構性 Layout 重排，所有變更自動標記 <code>combatRebuildDeferred</code> 於脫戰合併執行。</li>
+</ul>
+<h3 id="33-onupdate-gc">3.3 零 OnUpdate 與極致 GC 控制</h3>
+<ul>
+<li><strong>0 Frame OnUpdate</strong>：全插件杜絕任何分散式的 <code>SetScript("OnUpdate")</code> 或 per-icon ticker，統一由 <code>Core/Scheduler.lua</code> 中央低頻排程。</li>
+<li><strong>預分配物件池 (Object Pooling)</strong>：</li>
+<li><code>AuraService.AuraStatePool</code>：預先分配 80 個狀態物件，戰鬥中零 Table 建立。</li>
+<li><code>Renderer.timerTokenPool</code>：重用計時 Token，杜絕閉包 (Closure) 建立。</li>
+<li><code>Util.warningStringCache</code>：快取邊界警報字串，杜絕動態字串拼接垃圾。</li>
+<li><strong>Table Freeze 策略</strong>：所有列舉、靜態契約、別名表（<code>EAM.API</code>）、字體樣式表、預設值在載入完成後一律使用 <code>table.freeze</code> 固化，防止意外污染並提升 JIT 執行效率。</li>
+</ul>
+<hr />
+<h2 id="4">4. 模組架構與資料流解耦</h2>
+<div class="mermaid">
+flowchart TD
+    subgraph Event_Layer [事件接收層]
+        E[WoW Events] --> ER[Core/EventRouter.lua<br/>Numeric Array O(1) 分派 / pcall 容錯]
+    end
+
+    subgraph Service_Layer [事實服務層]
+        ER --> AS[Services/AuraService.lua<br/>增量 UNIT_AURA 處理 / 80-Item Pool]
+        ER --> CS[Services/CooldownService.lua<br/>UNIT_SPELLCAST_SUCCEEDED 精確施法門禁]
+        ER --> PRS[Services/PlayerResourceService.lua<br/>17 資源 / 40 專精 / DK 6 符文獨立槽位]
+        ER --> GES[Services/GroundEffectService.lua<br/>Base-Override 族群編譯]
+        ER --> OTS[Other Services<br/>Item, Totem, Tooltip, Sound]
+    end
+
+    subgraph Management_Layer [決策協調層]
+        AS & CS & GES --> AM[Managers/AlertManager.lua<br/>BeginBatch / EndBatch 單幀合併節流]
+        AS --> ARC[Managers/AuraRuleCompiler.lua<br/>優先級 1..20 正規化 / 雙指紋比對]
+    end
+
+    subgraph View_Layer [視圖渲染層]
+        AM --> R[UI/Renderer.lua<br/>7 大獨立告警框架 / IconPool / LibButtonGlow]
+        PRS --> PR[UI/PowerRenderer.lua<br/>17 預建資源框架 / C 層 StatusBar 寫入]
+        AS -.-> NAR[UI/NativeAuraRenderer.lua<br/>12.1 Native AuraContainer]
+    end
+</div>
+
+<h3 id="41">4.1 核心亮點機制</h3>
+<ol>
+<li><strong>DK 6 符文槽位防護 (<code>Services/PlayerResourceService.lua</code>)</strong>：</li>
+<li>監聽 <code>RUNE_POWER_UPDATE(runeIndex, added)</code>，只刷新單一變動槽位。</li>
+<li>使用 <code>if Util.isSafeBoolean(added) then ready = added end</code> 嚴格保留 <code>false</code>，徹底避免三元運算式 <code>added and ... or ...</code> 把 <code>false</code> 吞掉的經典 Bug。</li>
+<li><strong>三態冷卻行為覆寫 (<code>Services/CooldownService.lua</code>)</strong>：</li>
+<li><code>cooldownRemoveAura</code>、<code>showSCDOutsideCombat</code>、<code>glowSCDWhenUsable</code> 支援 <code>nil</code>（繼承全域）、<code>true</code> 或 <code>false</code>（單法術覆寫），明確保留 <code>false</code>。</li>
+<li><strong>單幀批次排版 (<code>Managers/AlertManager.lua</code>)</strong>：</li>
+<li>觸發告警更新時，透過 <code>Renderer.BeginBatch()</code> 凍結排版，遍歷所有變動後再由 <code>Renderer.EndBatch()</code> 一次性完成重排，防止同一畫面多個技能觸發時 CPU 頻繁重算幾何坐標。</li>
+<li><strong>多語系即時切換 (<code>Locale/Common.lua</code> &amp; <code>UI/Options.lua</code>)</strong>：</li>
+<li>保持 <code>EAM.L</code> Table Identity，原地清除並合併 Fallback，透過註冊之 <code>bindText</code> 動態更新 UI 文字，<strong>無需 <code>/reload</code> 立即生效</strong>。</li>
+</ol>
+<hr />
+<h2 id="5-github-agy-track">5. 版本發布與 GitHub 自動化體系 (AGY Track)</h2>
+<p>為了徹底區隔 Codex 治理版本並節省 Token，建立專屬發布流程：</p>
+<h3 id="51-_agy">5.1 產物命名規範 (嚴格保留原格式 + <code>_AGY</code> 後綴)</h3>
+<ul>
+<li><strong>AddOn 插件包</strong>：<code>EventAlertMod_MN_&lt;TOC_DATE&gt;_&lt;TIMESTAMP&gt;_AGY.zip</code></li>
+<li><strong>AddOn 校驗檔</strong>：<code>EventAlertMod_MN_&lt;TOC_DATE&gt;_&lt;TIMESTAMP&gt;_AGY.zip.sha256</code></li>
+<li><strong>Source 源碼包</strong>：<code>Project_EventAlertMod_SRC_&lt;TIMESTAMP&gt;_AGY.zip</code></li>
+<li><strong>Source 校驗檔</strong>：<code>Project_EventAlertMod_SRC_&lt;TIMESTAMP&gt;_AGY.zip.sha256</code></li>
+<li><strong>GitHub Release Tag</strong>：<code>alpha-7.4-AGY.&lt;DATE&gt;</code></li>
+</ul>
+<h3 id="52">5.2 自動化指令</h3>
+<ul>
+<li><strong>一鍵發布器</strong>：<code>pwsh -NoProfile -File .\Deploy\Publish-GitHubRelease.ps1</code></li>
+<li>自動執行離線門禁檢驗 (Syntax + Flow + Contracts)。</li>
+<li>自動產生帶 <code>_AGY</code> 後綴之 AddOn / Source 雙套件及 SHA-256。</li>
+<li>自動組裝結構化 Release Notes (附帶離線成績單、責任歸屬與一鍵回退 Codex 指引)。</li>
+<li>自動呼叫 <code>gh release create --prerelease</code> 完成發布。</li>
+<li><strong>一鍵分支同步與 PR</strong>：<code>pwsh -NoProfile -File .\Deploy\Sync-GitHubBranch.ps1 [-CreatePR]</code></li>
+</ul>
+<hr />
+<h2 id="6">6. 當前驗證基準點與簽收現況</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">檢驗項目</th>
+<th style="text-align: left;">範圍 / 數量</th>
+<th style="text-align: left;">結果</th>
+<th style="text-align: left;">判定屬性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Lua 語法檢查</strong></td>
+<td style="text-align: left;">64 個 Lua 檔案</td>
+<td style="text-align: left;"><code>64/64 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Flow 流程測試</strong></td>
+<td style="text-align: left;">82 組能力案例</td>
+<td style="text-align: left;"><code>82/82 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Validation Contracts</strong></td>
+<td style="text-align: left;">493 項靜態契約</td>
+<td style="text-align: left;"><code>493/493 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>候選資料隔離性</strong></td>
+<td style="text-align: left;"><code>wow_spells_and_auras.json</code></td>
+<td style="text-align: left;"><code>23/23 PASS</code></td>
+<td style="text-align: left;">OFFLINE VERIFIED</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>本地 WoW 環境探測</strong></td>
+<td style="text-align: left;">Retail, PTR, XPTR</td>
+<td style="text-align: left;"><code>3/3 PASS</code></td>
+<td style="text-align: left;">READY</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>實機驗證矩陣</strong></td>
+<td style="text-align: left;">37 案真人實機觀察</td>
+<td style="text-align: left;"><code>37 案待實機回報</code></td>
+<td style="text-align: left;">REQUIRES_WOW_12_1_RUNTIME</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>本基準文檔由 Antigravity 於 2026-08-23 20:06:15 簽署並歸檔至 <code>.AI/Docs/</code>。</strong></p>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

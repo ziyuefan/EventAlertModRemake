@@ -417,27 +417,114 @@
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 <h1 id="eventalertmod-remake-documentation-hub">EventAlertMod Remake 說明文件導航中心 / Documentation Hub</h1>
-<p>歡迎使用 EventAlertMod (EAM) 正式服重構版本說明文件中心。本中心為<strong>插件使用者 (Players &amp; Users)</strong> 以及<strong>代理開發者 (AI &amp; Human Developers)</strong> 提供了專屬的資訊入口。</p>
+<p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.2-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
+<blockquote>
+<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.0 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
+</blockquote>
+<p>歡迎使用 EventAlertMod (EAM) 正式服重構版本說明文件中心。本中心為<strong>插件使用者 (Players &amp; Users)</strong> 以及<strong>代理開發者 (AI &amp; Human Developers)</strong> 提供完整的資訊導覽與架構參考。</p>
+<hr />
+<h2 id="eventalertmod-eam">🌟 現代版 EventAlertMod (EAM) 四大核心優勢</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">傳統法術監控 / 複雜大型插件</th>
+<th style="text-align: left;">現代重構版 EventAlertMod (EAM)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">⚠️ <strong>沉重且佔用資源</strong>：大量背景 OnUpdate 輪詢、吃記憶體、引發戰鬥掉幀。</td>
+<td style="text-align: left;">⚡ <strong>極致輕量與零負擔</strong>：純事件驅動架構，全面引入物件池技術（State Pools），消滅 GC 記憶體垃圾。</td>
+</tr>
+<tr>
+<td style="text-align: left;">❌ <strong>容易受污染報錯</strong>：12.0+ 暴雪引入 Secret Values 後，常常在戰鬥中報錯噴黃字或引發 UI 異常。</td>
+<td style="text-align: left;">🛡️ <strong>暴雪 12.0+ 終極安全防護</strong>：獨家採用原生 C-Level <code>StatusBar:SetValue</code> 直通渲染技術，絕不觸發 Taint 污染。</td>
+</tr>
+<tr>
+<td style="text-align: left;">🔄 <strong>設定繁瑣、需匯入字串</strong>：需手動到網站翻找 WA 字串或手寫 Lua 條件判斷。</td>
+<td style="text-align: left;">🎯 <strong>直覺易用、秒加監控</strong>：滑鼠停在任何技能、光環或物品上按 <strong><code>Ctrl + Alt</code></strong> 一秒加入，無需查 ID。</td>
+</tr>
+<tr>
+<td style="text-align: left;">🐢 <strong>速度顯示不準確</strong>：傳統插件無法偵測 10.0+ / 11.0+ / 12.0+ 飛龍騎術的真實衝刺速度。</td>
+<td style="text-align: left;">🏃 <strong>業界唯一：四合一速度淬鍊</strong>：專屬對接 <code>C_PlayerInfo.GetGlidingInfo()</code>，完美支援 <strong>830%~1400%</strong> 動態極速！</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-independent-alert-modules">✨ 八大獨立告警模組 (8 Independent Alert Modules)</h2>
+<p>EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>
+<ol>
+<li>🔮 <strong>自身光環 (Player Buff / Debuff)</strong>：監控自身增益與減益，支援堆疊層數、剩餘吸收盾量與高精度倒數。</li>
+<li>🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態。</li>
+<li>⚔️ <strong>跨職業光環 (Cross-Class / Target Cast)</strong>：監控敵方關鍵爆發或隊友重要增益。</li>
+<li>⏳ <strong>技能冷卻 (Spell Cooldown)</strong>：純透明度（Alpha=0）常駐預載模式，0.00ms 零排版延遲；支援圓形環狀進度條 (<code>Radial Mode</code>) 與框外線性條 (<code>TOP/BOTTOM/LEFT/RIGHT</code>)。</li>
+<li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控。</li>
+<li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。</li>
+<li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。</li>
+<li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：依職業獨立配置，全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。</li>
+</ol>
+<hr />
+<h2 id="recent-release-milestones">🔥 近期版本重大里程碑 (Recent Release Milestones)</h2>
+<ul>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.2] - 2026.08.27</strong></li>
+<li><strong>LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合</strong>：實作 <code>ensureLSM</code> 動態探測與 <code>PLAYER_LOGIN</code> 延遲同步，支援第三方音效/字型包，支援安全雙軌音效播放 (<code>MediaService.playSound</code>) 與 12.1 Native Aura 音效接入。</li>
+<li><strong>全域字型熱套用（免 <code>/reload</code> 即時生效）</strong>：解鎖存檔白名單，預覽圖示、一般圖示、職業資源與人物屬性文字即時重繪。</li>
+<li><strong>UI 下拉選單長清單自適應捲動容器</strong>：支援數十至數百項素材之捲軸與滑鼠滾輪平滑捲動。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.1] - 2026.08.26</strong></li>
+<li><strong>技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定</strong>：非戰鬥狀態預先建立 Frame 與計算座標，冷卻完成透過 <code>SetAlpha(0)</code> 隱藏，實現 0.00ms 零 GC 零排版延遲且 100% 免疫戰鬥鎖定。</li>
+<li><strong>角色屬性與副屬性戰鬥中防歸零快取備援</strong>：建立 18 項屬性 <code>lastKnownStats</code> 記憶體快取，戰鬥受限自動無縫回退真實數值。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.0] - 2026.08.25</strong></li>
+<li><strong>角色屬性依職業獨立設定 (Per-Class Player Stat Profiles)</strong>：每種職業擁有 100% 獨立的屬性監控配置、閾值與獨立位置座標。</li>
+<li><strong>吸收盾與治療吸收量雙軌偵測強化</strong>：原生 Unit API + <code>C_UnitAuras</code> 點數雙軌即時累加運算。</li>
+<li><strong>取消圖示純文字自適應排版與指定位置 (Iconless Adaptive Layout)</strong>：純文字與圖示項目均能完美等距貼齊、零文字重疊。</li>
+<li><strong>光環模組支援護盾吸收量即時顯示 (Aura Shield Absorb Amount Display)</strong>：光環圖示右下角疊加層精確格式化顯示剩餘吸收盾量（如 <code>45.2k</code>、<code>1.2M</code>、<code>3(45k)</code>）。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.9] - 2026.08.24</strong></li>
+<li><strong>全介面 10 大視窗控制項懸停提示 (Comprehensive UI Hover Tooltips)</strong>：所有按鈕、核取方塊、滑桿、選單附帶直觀操作指引。</li>
+<li><strong>主視窗螢幕邊界鎖定與一鍵居中重置 (<code>/eam reset</code>)</strong>：支援螢幕邊界鎖定與 <code>/eam reset</code> 一鍵居中重置命令。</li>
+<li><strong>官方 README 14 張高畫質介面圖文導覽 (Showcase)</strong>。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.8] - 2026.08.24</strong></li>
+<li><strong>「★ 角色屬性與吸收量監控」全新模組</strong>：18 種核心屬性取值監控，四合一速度（地面、水下、懸浮飛行、飛龍滑翔 830%~1400%）。</li>
+<li><strong>全模組自訂替代圖示支援 (Custom Icon Override)</strong>：所有模組均可輸入官方 FileID 或材質路徑取代預設圖示。</li>
+<li><strong>經典奶牛頭位置預覽 (Classic Cow Head Preview)</strong>：以經典奶牛頭圖示清晰標記 8 大告警框架排版定位。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.5 ~ 7.7] - 2026.08.23</strong></li>
+<li><strong>子視窗聯動移動錨點與多框架排版全開模式</strong>。</li>
+<li><strong>階層式無縫吸附 (APPEND Docking)</strong> 與全二級側窗互斥機制。</li>
+<li><strong>Profile 設定檔跨角色分享 (EAMAP1 JSON / Base64)</strong>。</li>
+<li><strong>死亡騎士符文儀表板</strong>：依專精動態切換圖示，內建 6 格微型充能冷卻條與 <code>/eam rune</code> 診斷視窗。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.1 ~ 7.4] - 2026.08.23</strong></li>
+<li><strong>充能技能 Secret 邊界防護與環形進度條 (<code>Radial Ring Mode</code>)</strong>。</li>
+<li><strong>地面效果 Base / Override 法術族群智能對齊</strong>。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 5 ~ 7.0] - 2026.08.14 ~ 2026.08.23</strong></li>
+<li><strong>17 種玩家職業資源獨立監控節點</strong>。</li>
+<li><strong>11 套精美主題風格與 5 大語言本地化 (zhTW, zhCN, enUS, koKR, ruRU)</strong>。</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 1 ~ 4] - 2026.07 ~ 2026.08</strong></li>
+<li><strong>Retail 12.1 Native Aura (<code>CustomAuraContainer</code>) 重構首發</strong>。</li>
+<li><strong>零分配狀態緩衝池 (Zero-Allocation State Pools)</strong>。</li>
+<li><strong>Tooltip <code>Ctrl + Alt</code> 一秒快捷加入監控通道</strong>。</li>
+</ul>
 <hr />
 <h2 id="players-users">🎮 插件使用者 / 玩家專區 (Players &amp; Users)</h2>
-<p>如果您是使用此插件的玩家，請造訪以下檔案了解如何安裝、使用插件以及查看最近的更新日誌：</p>
+<p>如果您是使用此插件的玩家，請造訪以下檔案了解如何安裝、使用插件以及查看完整的更新歷史：</p>
 <ul>
 <li>📖 <strong><a href="README.md.html">快速使用指南 (README)</a></strong><ul>
-<li>插件安裝方法、命令列指令、主畫面調整、以及特色功能介紹（Pandemic 刷新提示、英雄天賦支援）。</li>
+<li>插件安裝指引、命令列指令大全、圖文介面導覽、自訂圖示與 8 大模組特色功能詳解。</li>
 </ul>
 </li>
 <li>📜 <strong><a href="changelog.txt.html">版本更新日誌 (Changelog)</a></strong><ul>
-<li>查看 12.0.7 與 12.1.0 版本的完整重構更新細節，包含零分配垃圾回收與影子載體 (Shadow Host) 渲染避讓技術的部署歷史。</li>
+<li>查看自重構以來所有 Alpha 版本的完整更新條目與修正細節。</li>
 </ul>
 </li>
 </ul>
 <hr />
-<h2 id="ai-human-developers">🤖 代理開發與協作者專區 (AI &amp; Human Developers)</h2>
-<p>如果您是參與本專案的 AI 編碼助理或是人類協作者，請詳細閱讀以下專案架構與開發規範：</p>
+<h2 id="ai-human-developers">🤖 代理開發與技術文檔專區 (AI &amp; Human Developers)</h2>
+<p>如果您是參與本專案的 AI 編碼助理或是人類協作者，請詳細閱讀以下專案架構、開發規範與技術報告：</p>
 <h3 id="core-guidelines">🛠️ 開發核心指導與規範 (Core Guidelines)</h3>
 <ul>
 <li>🔑 <strong><a href="AGENTS.md.html">AI 開發入口與硬性限制 (AGENTS)</a></strong><ul>
-<li><strong>開發 Fact-of-Truth 最核心導引</strong>。包含戰鬥中 Secret 檢查機制、Taint 防禦防禦規則、 OnUpdate 控制、以及開發版打包快捷指令。</li>
+<li><strong>開發 Fact-of-Truth 最核心導引</strong>。包含戰鬥中 Secret 檢查機制、Taint 防禦防禦規則、OnUpdate 控制、以及開發版打包快捷指令。</li>
 </ul>
 </li>
 <li>🔄 <strong><a href="17_SUBAGENT_WORKFLOW.md.html">子代理派工與協作工作流 (Subagent Workflow)</a></strong><ul>
@@ -450,6 +537,10 @@
 </li>
 <li>🔎 <strong><a href="24_EXPERT_COUNCIL_REVIEW_20260621.md.html">2026-06-21 專家會審報告</a></strong><ul>
 <li>Retail 12.1 Aura readiness、Secret／Taint、效能與文件治理的分級檢討結果。</li>
+</ul>
+</li>
+<li>🚀 <strong><a href="31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md.html">Antigravity 接手理解基準檔 (Baseline Assessment)</a></strong><ul>
+<li>AI 治理、WoW Retail 12.x API 邊界、零 GC 效能架構、多職業資源與發布體系之權威理解基準點。</li>
 </ul>
 </li>
 </ul>
@@ -469,6 +560,10 @@
 </li>
 <li>🧩 <strong><a href="23_AURA_CONTAINER_IMPLEMENTATION.md.html">Retail 12.1 AuraContainer Native Backend</a></strong><ul>
 <li>68914 API 契約、Native/Legacy 分流、Slot/Group、Aura Sound、SavedVariables v2 與 PTR RQA 清單。</li>
+</ul>
+</li>
+<li>⚡ <strong><a href="30_PLAYER_RESOURCE_REFACTOR_REPORT.md.html">玩家職業資源重構報告 (Player Resource Refactor)</a></strong><ul>
+<li>17 種資源、13 職業／40 專精候選拓撲、德魯伊形態切換、DK 六槽符文與 Secret 資源寫入槽架構。</li>
 </ul>
 </li>
 <li>💾 <strong><a href="03_STATE_SCHEMA.md.html">數據狀態 Schema 規範 (State Schema)</a></strong><ul>
@@ -502,28 +597,114 @@
 <li>記錄所有已解決的 JIT Abort、Blizzard protected frames 限制、與 frame clipsChildren 等邊界問題。</li>
 </ul>
 </li>
+<li>🔄 <strong><a href="28_PROJECT_CONTINUITY.md.html">專案續接與試錯索引 (Project Continuity)</a></strong><ul>
+<li>上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。</li>
+</ul>
+</li>
+<li>🎮 <strong><a href="29_LIVE_TEST_STEP_GUIDE.md.html">真人實機驗證操作指南 (Live Test Step Guide)</a></strong><ul>
+<li>37 個真實遊戲客戶端操作案例的執行步驟與簽收手冊。</li>
+</ul>
+</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="AGENTS.md.html" class="back-btn">← Back to AI Entrance (AGENTS)</a>
 <h1 id="eventalertmod-remake-documentation-hub">EventAlertMod Remake Documentation Hub</h1>
-<p>Welcome to the EventAlertMod (EAM) Retail Rewrite Documentation Hub. This center provides tailored entry portals for both <strong>AddOn users/players</strong> and <strong>AI/Human developers</strong>.</p>
+<p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.2-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
+<blockquote>
+<p>🚀 <strong>Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.0 / 12.0+)!</strong></p>
+</blockquote>
+<p>Welcome to the EventAlertMod (EAM) Retail Rewrite Documentation Hub. This portal provides tailored navigation and architectural references for both <strong>AddOn users/players</strong> and <strong>AI/Human developers</strong>.</p>
+<hr />
+<h2 id="four-core-architectural-advantages-of-modern-eam">🌟 Four Core Architectural Advantages of Modern EAM</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Traditional Spell Alerts / Heavy AddOns</th>
+<th style="text-align: left;">Modern Remake EventAlertMod (EAM)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">⚠️ <strong>Heavy resource drain</strong>: Massive background OnUpdate polling, high memory consumption, combat frame drops.</td>
+<td style="text-align: left;">⚡ <strong>Ultra-lightweight &amp; zero burden</strong>: Pure event-driven architecture with zero-allocation State Pools, eliminating GC memory spikes.</td>
+</tr>
+<tr>
+<td style="text-align: left;">❌ <strong>Vulnerable to combat taint</strong>: 12.0+ Secret Values frequently cause yellow Lua errors or broken frames in combat.</td>
+<td style="text-align: left;">🛡️ <strong>Blizzard 12.0+ Secret Protection</strong>: Direct native C-Level <code>StatusBar:SetValue</code> throughput, 100% immune to Lua taint.</td>
+</tr>
+<tr>
+<td style="text-align: left;">🔄 <strong>Tedious setup &amp; string imports</strong>: Requires searching online for WeakAura strings or complex custom scripting.</td>
+<td style="text-align: left;">🎯 <strong>Intuitive one-second monitor</strong>: Hover over any spell, aura, or item and press <strong><code>Ctrl + Alt</code></strong> to instantly add to monitor.</td>
+</tr>
+<tr>
+<td style="text-align: left;">🐢 <strong>Inaccurate flight speed</strong>: Traditional addons fail to read 10.0+ / 11.0+ / 12.0+ Dragonriding dynamic gliding velocity.</td>
+<td style="text-align: left;">🏃 <strong>Industry-first 4-in-1 Velocity</strong>: Dedicated integration with <code>C_PlayerInfo.GetGlidingInfo()</code> supporting <strong>830%~1400%</strong> dynamic speed!</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-independent-alert-modules">✨ 8 Independent Alert Modules</h2>
+<p>EAM features 8 decoupled, independently positioned and freely draggable alert modules:</p>
+<ol>
+<li>🔮 <strong>Player Buff / Debuff</strong>: Self buffs &amp; debuffs with stack counts, remaining shield absorb amount, and high-precision timers.</li>
+<li>🎯 <strong>Target Buff / Debuff</strong>: Precise tracking of target auras, CC, and debuff states.</li>
+<li>⚔️ <strong>Cross-Class / Target Cast</strong>: Key enemy burst cooldowns and crucial friendly buffs.</li>
+<li>⏳ <strong>Spell Cooldown</strong>: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode &amp; outer linear bars (<code>TOP/BOTTOM/LEFT/RIGHT</code>).</li>
+<li>🎒 <strong>Item Cooldown</strong>: Trinkets, on-use equipment, and consumables monitoring.</li>
+<li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, AMZ) with Base/Override talent family matching.</li>
+<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types (Mana, Rage, Energy, Combo Points, Chi, Insanity, Runic Power, Arcane Charges, Soul Shards, Holy Power, Essence, etc.).</li>
+<li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18 core stats (Primary, Secondary, 4-in-1 Speeds, Armor, Total Shield Absorbs, and Heal Absorbs).</li>
+</ol>
+<hr />
+<h2 id="recent-release-milestones">🔥 Recent Release Milestones</h2>
+<ul>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.2] - 2026.08.27</strong></li>
+<li><strong>Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration</strong>: <code>ensureLSM</code> dynamic discovery, <code>PLAYER_LOGIN</code> deferred sync, third-party sound/font package support, dual-channel safe playback (<code>MediaService.playSound</code>), and 12.1 Native Aura sound routing.</li>
+<li><strong>Zero-Delay Live Font Application (No <code>/reload</code> Needed)</strong>: SavedVariables whitelist unlock, live refresh of preview icons, general alert icons, player resources, and player stats text.</li>
+<li><strong>Scrollable Dropdown Menus</strong>: Adaptive <code>UIPanelScrollFrameTemplate</code> with smooth mouse wheel scrolling for long lists of media assets.</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.1] - 2026.08.26</strong></li>
+<li><strong>Persistent Pre-anchoring &amp; Zero-Alpha Cooldown Mode</strong>: Pre-created frame structures and pre-calculated layout coordinates; <code>SetAlpha(0)</code> hiding on cooldown completion for 0.00ms latency and 100% combat lockdown immunity.</li>
+<li><strong>Combat Stat Memory Cache &amp; Multi-Tier Fallback</strong>: Memory cache table (<code>lastKnownStats</code>) across 18 stats for seamless non-zero combat displays under restricted APIs.</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.0] - 2026.08.25</strong></li>
+<li><strong>Per-Class Player Stat Profiles</strong>: Completely isolated stat monitoring profiles, thresholds, and positions per class.</li>
+<li><strong>Dual-Channel Shield &amp; Heal Absorb Detection</strong>: Native Unit APIs + <code>C_UnitAuras.points</code> accumulation.</li>
+<li><strong>Iconless Adaptive Layout</strong>: Perfect equal spacing and zero text overlapping when icons are hidden.</li>
+<li><strong>Aura Shield Absorb Amount Display</strong>: Overlay formatted shield amounts (e.g. <code>45.2k</code>, <code>1.2M</code>, <code>3(45k)</code>).</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.9] - 2026.08.24</strong></li>
+<li><strong>10 Full UI Windows Comprehensive Hover Tooltips</strong>: Intuitive guidance on all buttons, checkboxes, sliders, and menus.</li>
+<li><strong>ClampedToScreen &amp; <code>/eam reset</code> Window Center Reset Command</strong>.</li>
+<li><strong>Official Visual Showcase with 14 High-Res Screenshots</strong>.</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.8] - 2026.08.24</strong></li>
+<li><strong>Player Stats &amp; Absorbs Module</strong>: 18 stats &amp; 4-in-1 velocities (gliding 830%~1400%).</li>
+<li><strong>Custom Icon Override Across All Modules</strong>: Custom FileDataIDs or texture paths.</li>
+<li><strong>Classic Cow Head Anchor Preview</strong>.</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.5 ~ 7.7] - 2026.08.23</strong></li>
+<li>Sub-window Multi-Anchor Positioning Mode, APPEND Window Docking, Profile Export/Import (EAMAP1), and Death Knight Runes Dashboard.</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 7.1 ~ 7.4] - 2026.08.23</strong></li>
+<li>Spell Charge Info Secret Boundary, Radial Ring Mode, and Ground Effect Base/Override Families.</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 5 ~ 7.0] - 2026.08.14 ~ 2026.08.23</strong></li>
+<li>17 Player Resources, 11 Themes, and 5 Locales (zhTW, zhCN, enUS, koKR, ruRU).</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 1 ~ 4] - 2026.07 ~ 2026.08</strong></li>
+<li>Retail 12.1 Native Aura (<code>CustomAuraContainer</code>) initial rewrite, Zero-Allocation state pools, and Tooltip <code>Ctrl+Alt</code> shortcut.</li>
+</ul>
 <hr />
 <h2 id="players-users-portal">🎮 Players &amp; Users Portal</h2>
-<p>If you are a player using this AddOn, please visit the following documents to learn about installation, usage, and recent update logs:</p>
 <ul>
 <li>📖 <strong><a href="README.md.html">Quick Start Guide (README)</a></strong><ul>
-<li>AddOn installation, slash commands, frame adjustments, and feature highlights (Pandemic glow, hero talent support).</li>
+<li>Installation guide, slash commands, screenshot showcase, custom icons, and 8 module feature details.</li>
 </ul>
 </li>
 <li>📜 <strong><a href="changelog.txt.html">Changelog (Updates)</a></strong><ul>
-<li>Full details of rewrite updates in 12.0.7 and 12.1.0, including zero-allocation JIT optimizations and shadow host CDM bypass rendering history.</li>
+<li>Full release history and technical change details for all Alpha releases.</li>
 </ul>
 </li>
 </ul>
 <hr />
 <h2 id="ai-human-developers-portal">🤖 AI &amp; Human Developers Portal</h2>
-<p>If you are an AI coding agent or a human developer contributing to this project, please read the system architecture and development guidelines carefully:</p>
 <h3 id="core-guidelines">🛠️ Core Guidelines</h3>
 <ul>
 <li>🔑 <strong><a href="AGENTS.md.html">AI Entrance &amp; Hard Constraints (AGENTS)</a></strong><ul>
@@ -532,6 +713,18 @@
 </li>
 <li>🔄 <strong><a href="17_SUBAGENT_WORKFLOW.md.html">Subagent Workflows (Collab)</a></strong><ul>
 <li>Multi-agent collaboration procedures, RACI expert matrix, and QA root cause analysis guidelines.</li>
+</ul>
+</li>
+<li>🧭 <strong><a href="21_RACI_EXPERTS_MATRIX.md.html">Expert RACI Matrix</a></strong><ul>
+<li>24 canonical expert roles, single point of accountability, evidence grading, and task signoff protocols.</li>
+</ul>
+</li>
+<li>🔎 <strong><a href="24_EXPERT_COUNCIL_REVIEW_20260621.md.html">2026-06-21 Expert Council Review</a></strong><ul>
+<li>Graded review of Retail 12.1 Aura readiness, Secret/Taint protection, performance, and documentation governance.</li>
+</ul>
+</li>
+<li>🚀 <strong><a href="31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md.html">Antigravity Takeover Baseline Assessment</a></strong><ul>
+<li>Authoritative baseline assessment of AI governance, WoW Retail 12.x API boundaries, zero-GC performance architecture, player resources, and deployment workflow.</li>
 </ul>
 </li>
 </ul>
@@ -545,8 +738,16 @@
 <li>The 4 core Secret/Protected value checking functions, secure table indexing guards, and C++ DurationObject rendering pipelines.</li>
 </ul>
 </li>
+<li>📡 <strong><a href="25_RETAIL_API_CHANGE_INTELLIGENCE.md.html">Retail API Change Intelligence</a></strong><ul>
+<li>APICHG version intelligence, TOC/revision matrix, 12.0.0~12.1.0 evolution, and EAM migration window.</li>
+</ul>
+</li>
 <li>🧩 <strong><a href="23_AURA_CONTAINER_IMPLEMENTATION.md.html">Retail 12.1 AuraContainer Native Backend</a></strong><ul>
-<li>Build 68914 contracts, Native/Legacy routing, Slot/Group, Aura Sound, schema v4, and pending PTR RQA acceptance.</li>
+<li>Build 68914 contracts, Native/Legacy routing, Slot/Group, Aura Sound, schema v4, and PTR RQA acceptance.</li>
+</ul>
+</li>
+<li>⚡ <strong><a href="30_PLAYER_RESOURCE_REFACTOR_REPORT.md.html">Player Resource Refactor Report</a></strong><ul>
+<li>17 resources, 13 classes / 40 spec topologies, Druid form switching, DK 6-slot runes, and Secret write-only sinks.</li>
 </ul>
 </li>
 <li>💾 <strong><a href="03_STATE_SCHEMA.md.html">Data State Schema</a></strong><ul>
@@ -578,6 +779,14 @@
 </li>
 <li>📓 <strong><a href="15_DEVELOPMENT_ISSUE_LOG.md.html">Development Issue Log</a></strong><ul>
 <li>A comprehensive log of resolved JIT Aborts, Blizzard protected frame restrictions, and frame clipsChildren issues.</li>
+</ul>
+</li>
+<li>🔄 <strong><a href="28_PROJECT_CONTINUITY.md.html">Project Continuity &amp; Timeline</a></strong><ul>
+<li>First human-readable continuity point after context compression or subagent handover.</li>
+</ul>
+</li>
+<li>🎮 <strong><a href="29_LIVE_TEST_STEP_GUIDE.md.html">Live In-Game Test Step Guide</a></strong><ul>
+<li>Execution steps and signoff manual for 37 real client verification test cases.</li>
 </ul>
 </li>
 </ul>

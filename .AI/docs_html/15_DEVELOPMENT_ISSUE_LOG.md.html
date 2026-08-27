@@ -415,6 +415,163 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="AGENTS.md.html" class="back-btn">← 返回 AI 入口指導檔 (AGENTS)</a>
+<h3 id="2026-08-27-eam-20260827-alpha82-sharedmedia-ecosystem-and-zero-delay-fontalpha-82-libsharedmedia-30-reload">2026-08-27 EAM-20260827-ALPHA82-SHAREDMEDIA-ECOSYSTEM-AND-ZERO-DELAY-FONT：Alpha 8.2 LibSharedMedia-3.0 素材生態全面接入、全域字型熱套用（免 /reload）與捲動選單支援</h3>
+<ul>
+<li>狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包並發布 Pre-release。</li>
+<li>變更亮點：</li>
+<li>LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合與動態探測 (<code>ensureLSM</code>)：<ul>
+<li>根因分析：過去 EAM 依字母排序早於 SharedMedia 擴充插件載入，<code>MediaService.init()</code> 執行時 LSM 實例或自訂素材尚未註冊，選單清單快取被凍結為 12 種內建音效；回呼參數格式未相容 CallbackHandler 導致清除快取失效；部分插件僅以 <code>HashTable</code> 登記。</li>
+<li>重構實作：</li>
+<li>實作 <code>MediaService.ensureLSM()</code> 動態探測函式，在任何查詢或播放時動態確認 LSM 實例與回呼註冊狀態。</li>
+<li>註冊 <code>PLAYER_LOGIN</code> 事件，在所有插件載入完成後自動刷新 LSM 實例與清空快取。</li>
+<li><code>MediaService.getMediaList</code> 同時整合 <code>lsm:List</code> 與 <code>lsm:HashTable</code> 雙重查詢並自動去重。</li>
+<li>實作安全雙軌播放 <code>MediaService.playSound</code>，無縫支援 FileDataID、SoundKitID 與自訂 FilePath (.ogg / .mp3)。</li>
+<li>12.1 Native Aura 規則編譯器 (<code>AuraRuleCompiler</code>) 接入 <code>MediaService.getSoundPath</code>，光環觸發時亦可播放 LSM 音效。</li>
+</ul>
+</li>
+<li>全域字型熱套用與存檔解鎖（免 <code>/reload</code> 即時生效）：<ul>
+<li>根因分析：</li>
+<li><code>AuraRuleCompiler.lua</code> 之 <code>buildLayoutFingerprint</code> 缺少 <code>config.fontFamily</code>，更改字型時 fingerprint 不變導致 Native 容器誤判跳過重建。</li>
+<li><code>Renderer</code> 與 <code>AuraContainerService</code> 未訂閱 <code>EAM_FONT_FAMILY_CHANGED</code> 事件。</li>
+<li>設定面板更換字型時，畫面上的位置預覽圖示（Preview Icons）未被指示重繪。</li>
+<li><code>SavedVariables.lua</code> 的字型白名單過濾器會將 LSM 自訂字型強制退回 <code>"STANDARD"</code>。</li>
+<li>重構實作：</li>
+<li><code>SavedVariables.lua</code> 放行所有通過 LSM 註冊之字型名稱。</li>
+<li><code>AuraRuleCompiler.lua</code> 納入 <code>config.fontFamily</code> 佈局指紋。</li>
+<li><code>AuraContainerService.lua</code> 與 <code>Renderer.lua</code> 註冊 <code>EAM_FONT_FAMILY_CHANGED</code> 事件監聽。</li>
+<li><code>Options.notifyTextLayoutChanged</code> 聯動調用 <code>Renderer.refreshPreviewLayout()</code>、<code>PlayerResourceService.refreshActiveResources()</code> 與 <code>PlayerStatService.updateDisplay()</code>。</li>
+</ul>
+</li>
+<li>UI 下拉選單長清單自適應捲動容器 (<code>buildScrollableDropdownMenu</code>)：<ul>
+<li>實作通用的捲動下拉選單，當 SharedMedia 包含數十或數百種字型／音效時，自動限制高度為 10 筆並啟用 <code>UIPanelScrollFrameTemplate</code> 捲軸與滾輪支援。</li>
+<li>展開選單時啟用 <code>forceRefresh = true</code> 強制即時向 LSM 拉取最新素材清單。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 71/71、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
+<h3 id="2026-08-26-eam-20260826-alpha81-cooldown-zero-alpha-and-combat-statsalpha-81-alpha0">2026-08-26 EAM-20260826-ALPHA81-COOLDOWN-ZERO-ALPHA-AND-COMBAT-STATS：Alpha 8.1 技能冷卻純透明度（Alpha=0）隱藏模式與戰鬥屬性防歸零快取備援</h3>
+<ul>
+<li>狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包並發布 Pre-release。</li>
+<li>變更亮點：</li>
+<li>技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (<code>Persistent Pre-anchoring &amp; Zero-Alpha Mode</code>)：<ul>
+<li>根因分析：先前版本在 <code>Renderer.render</code> 中存在 <code>not icon and inCombat()</code> 阻攔邏輯，且冷卻完成時透過 <code>IconPool.release</code> 釋放 Frame 並清空排版。導致玩家在戰鬥中第一次施放冷卻技能時，因 Frame 不存在被直接延遲（<code>combatDeferred</code>）至脫戰才顯示。</li>
+<li>重構實作：</li>
+<li>在非戰鬥期間（登入、天賦/專精切換、設定變更）透過 <code>Renderer.prewarmAlertFrames</code> 預先為所有已監控技能與物品冷卻建立 Frame 並計算靜態座標（初始設為 <code>SetAlpha(0)</code> 隱形待命）。</li>
+<li>當技能冷卻完成或需要隱藏圖示時（<code>alertState.shown == false</code>），直接將該圖示透明度設為 <code>SetAlpha(0)</code>，保留 Frame 結構與座標常駐，徹底避免戰鬥中動態釋放與排版重算。</li>
+<li>戰鬥中施放技能時，直接將已就位的 Frame 透明度恢復為 <code>SetAlpha(targetAlpha)</code> 並啟動轉圈動畫，實現 0.00ms 零 GC 零排版延遲且 100% 免疫戰鬥鎖定。</li>
+</ul>
+</li>
+<li>角色屬性戰鬥中數值防歸零修復 (<code>Combat Stat Cache &amp; Multi-Tier API Fallback</code>)：<ul>
+<li>根因分析：Retail 12.0+/12.1+ 進入戰鬥後呼叫原生 Unit / Stat API 受限回傳 Secret Number，Lua 層無法直接讀取導致主屬性與副屬性顯示歸零。</li>
+<li>重構實作：</li>
+<li>建立全 18 項屬性 <code>lastKnownStats</code> 記憶體快取表，並在登入、切換專精、更換裝備及脫離戰鬥時自動執行預熱 (<code>prewarmStats</code>)。</li>
+<li>戰鬥中若遇受限環境自動無縫回退至最後有效真實數值。</li>
+<li>致命、加速、精通、臨機應變等副屬性補齊多重系別 API 與等級評級轉換公式容錯。</li>
+</ul>
+</li>
+<li>圖示物件池 (IconPool) 擴容與安全放行：<ul>
+<li>預熱池容量由 16 擴增至 64，並在池耗盡時直接安全呼叫 <code>createIcon</code> 建立，杜絕戰鬥中回傳 nil。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 71/71、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
+<h3 id="2026-08-25-eam-20260825-alpha8-per-class-stats-and-aura-absorbsalpha-80">2026-08-25 EAM-20260825-ALPHA8-PER-CLASS-STATS-AND-AURA-ABSORBS：Alpha 8.0 角色屬性依職業獨立配置、無圖示自適應排版、吸收盾雙軌強化與光環護盾顯示</h3>
+<ul>
+<li>狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包與 Pre-release 準備。</li>
+<li>變更亮點：</li>
+<li>角色屬性依職業獨立設定 (Per-Class Player Stat Profiles)：<ul>
+<li>角色屬性設定接入 <code>db.profiles.classes[classToken].playerStats</code>，實現每種職業（戰士、聖騎士、法師、德魯伊等）擁有 100% 獨立的屬性監控配置與開關。</li>
+<li>切換角色自動即時載入該職業設定；二級設定面板頂部標註當前職業名稱（例如 <code>[聖騎士]</code>）。</li>
+</ul>
+</li>
+<li>總吸收盾量 (totalAbsorb) 與治療吸收量 (healAbsorb) 取值核心雙軌強化：<ul>
+<li>原生 Unit API + <code>C_UnitAuras</code> 增益/減益點數 (<code>aura.points</code>) 雙軌即時累加運算，徹底解決吸收盾不顯示或未捕捉到的問題。</li>
+<li>補齊 <code>UNIT_HEAL_ABSORB_AMOUNT_CHANGED</code>、<code>UNIT_HEALTH</code>、<code>UNIT_MAXHEALTH</code> 與 <code>PLAYER_SPECIALIZATION_CHANGED</code> 事件監聽。</li>
+</ul>
+</li>
+<li>取消圖示純文字自適應排版與獨立位置定位 (Iconless Adaptive Layout &amp; Positioning)：<ul>
+<li>即使取消顯示圖示，純文字標籤與數值依然支援指定獨立自訂位置或依設定整體延伸排版。</li>
+<li>實作動態尺寸自適應與累加間距演算法，不論垂直或水平排列，純文字項目與圖示項目均能完美等距貼齊、零文字重疊。</li>
+<li>支援無圖示排版方位自訂（數值在名稱上方/下方/左側/右側）。</li>
+</ul>
+</li>
+<li>光環模組護盾吸收量即時顯示 (Aura Shield Absorb Amount Display)：<ul>
+<li>自動從 <code>C_UnitAuras.points</code> 提取護盾類光環（真言術:盾、冰甲護盾、靈魂汲取等）即時剩餘吸收盾數值。</li>
+<li>渲染器 (<code>Renderer.lua</code>) 於光環圖示右下角疊加層精確格式化顯示剩餘吸收盾量（如 <code>45.2k</code>、<code>1.2M</code>；多層數時如 <code>3(45k)</code>）。</li>
+</ul>
+</li>
+<li>介面與系統穩定性修復：<ul>
+<li>補齊 <code>PlayerStatService.lua</code> 缺少之 <code>inCombat()</code> 本地函式定義，徹底消除點擊主選單分類按鈕與關閉面板時觸發的 nil call 報錯。</li>
+<li>修復「測試閃爍」按鈕覆蓋文字問題，將「啟用 12.1 原生圓形光環倒數光圈」回歸主設定選單核心控制區。</li>
+<li>修復飛龍模式飛速圖示黑框問題（FileDataID <code>4667307</code> 與動態 API 獲取）。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 71/71、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
+<h3 id="2026-08-24-eam-20260824-player-stats-secret-value-fix-secret-value-statusbar-sink">2026-08-24 EAM-20260824-PLAYER-STATS-SECRET-VALUE-FIX：角色屬性與吸收量監控 Secret Value 防護與原生 StatusBar Sink 整合</h3>
+<ul>
+<li>狀態：已解決 (Lua 68/68, Flow 84/84, Contracts 493/493)，實機待玩家簽收。</li>
+<li>症狀：開啟屬性監控面板時於 <code>PlayerStatService.lua:253</code> 拋出 <code>attempt to compare local 'val' (a secret number value, while execution tainted by 'EventAlertMod')</code>。</li>
+<li>原因判斷：WoW Retail 12.0+ / 12.1+ 當前環境下，部分 Unit API（如 <code>UnitGetTotalAbsorbs</code>、<code>UnitGetTotalHealAbsorbs</code>、<code>GetUnitSpeed</code>、戰鬥或污染狀態下的屬性讀取）會回傳受保護的 Secret Number。在 Lua 層直接對 Secret Number 執行比較（<code>val &gt;= 10000</code>、<code>val &lt; cfg.thresholdMin</code>）、算術運算（<code>val / 1000000</code>）或字串格式化（<code>string.format</code>）會觸發保護異常。</li>
+<li>有效解法：</li>
+<li>在 <code>PlayerStatService.lua</code> 中引入 <code>isSafeNumber(val)</code> 守衛，透過 <code>Util.isSecretValue</code> 與 <code>Util.isSafeNumber</code> 在執行任何算術、比較與格式化前先行過濾。</li>
+<li>16 項屬性之 <code>getValue</code> 全部採用 <code>pcall</code> 與安全數值守衛，回傳不安全數值時返回安全的數值預設值。</li>
+<li><code>formatStatNumber</code> 與 <code>update</code> 閾值比較全面加上 <code>isSafeNumber</code> 防禦，徹底根除 Secret Number 拋錯。</li>
+<li>整合原生 <strong>StatusBar Write-Only Native Sink</strong>：為每個屬性項目預建 C-Level <code>StatusBar</code>，當遭遇 Secret 數值（如受保護的吸收量）時，直接將 raw value 送入 <code>StatusBar:SetValue</code> 展現視覺進度比例，Lua 不進行字串轉換與數值讀回。</li>
+<li>設定面板提供「進度條 (StatusBar)」開關，支援依屬性類別著色（吸收盾天藍、治療吸收紫紅、速度青綠、副屬性金黃、主屬性橙紅）。</li>
+<li>驗證結果：Lua 68/68、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
+<h3 id="2026-08-24-eam-20260824-player-stats-and-custom-icons">2026-08-24 EAM-20260824-PLAYER-STATS-AND-CUSTOM-ICONS：全模組替代圖示自訂與「角色屬性及吸收量監控」全新模組</h3>
+<ul>
+<li>狀態：已解決 (Lua 68/68, Flow 84/84, Contracts 493/493)，實機待玩家簽收。</li>
+<li>變更亮點：</li>
+<li>全模組自訂替代圖示支援：在所有告警項目細部設定視窗（自身光環、目標光環、技能冷卻、物品冷卻、地面效果等）中新增「自訂替代圖示（代碼或材質路徑）」輸入框、即時預覽方塊、WoW Tools 提示文字與一鍵複製 URL（<code>https://wago.tools/icons</code>）。</li>
+<li>服務層全支援：<code>AuraService</code>、<code>CooldownService</code>、<code>GroundEffectService</code>、<code>ItemCooldownService</code> 全面支援 <code>alert.customIcon</code> 優先覆蓋預設圖示。</li>
+<li>「角色屬性與吸收量監控」全新模組：<ul>
+<li>涵蓋 16 種核心屬性取值（力量、敏捷、耐力、智力、致命、加速、精通、臨機應變、閃避、汲取、速度、地面跑速、飛行速度、總吸收盾量、治療吸收量、護甲值）。</li>
+<li>獨立二級設定面板 (<code>UI\PlayerStatPanel.lua</code>)：左側 16 屬性列表與即時數值預覽，右側提供開關、替代圖示、圖示大小、數值字型大小、名稱字型大小、名稱替代文字、小數位數、大數值簡寫 (k/M)、警戒值上下限高亮與獨立框架排版移動。</li>
+<li>繁體中文術語嚴格對齊台灣正式服用語（致命、加速、臨機應變）。</li>
+</ul>
+</li>
+<li>獨立第 8 大告警框架 (<code>playerStat</code>) 納入 <code>Renderer.lua</code> 經典奶牛頭位置預覽與排版管理。</li>
+<li>驗證結果：Lua 68/68、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
+<h3 id="2026-08-24-eam-20260824-preview-and-panel-close-fix">2026-08-24 EAM-20260824-PREVIEW-AND-PANEL-CLOSE-FIX：經典奶牛頭位置預覽、全設定即時熱更新、進戰鬥全螢幕閃爍與側窗安全關閉修復</h3>
+<ul>
+<li>狀態：已解決 (Lua 66/66, Flow 84/84, Contracts 493/493)，實機待玩家簽收。</li>
+<li>症狀：關閉主視窗時在 <code>closeAllSidePanels</code> 出現 <code>Options.lua:938: attempt to call a nil value</code>。</li>
+<li>原因判斷：<code>ProfileCodecPanel</code>、<code>ModulePanel</code>、<code>AboutPanel</code> 僅定義了 <code>.hide()</code> 或缺少 <code>.close()</code> 方法，而主視窗關閉時強制調用 <code>panel.close()</code> 導致空值調用錯誤。</li>
+<li>有效解法：</li>
+<li>在 <code>ProfileCodecPanel</code>、<code>ModulePanel</code>、<code>AboutPanel</code> 統一補齊 <code>.close</code> 與 <code>.hide</code> 別名。</li>
+<li>在 <code>Options.lua</code> 的 <code>closeAllSidePanels</code> 實作防禦性 <code>safeClosePanel(panel)</code> 函式，依序嘗試 <code>.close()</code>、<code>.hide()</code>、<code>frame:Hide()</code>。</li>
+<li>實作經典奶牛頭框架位置預覽 (<code>Interface\Icons\Spell_Nature_Polymorph_Cow</code>)、多槽位名稱標籤、紅/綠邊框色調與多框架滑鼠拖曳定位。</li>
+<li>實作全方位 60fps 即時熱預覽：圖示尺寸、水平/垂直間距、透明度、扇形倒數轉圈動畫、轉圈透明度、自身/目標減益色度、法術/倒數/堆疊字型大小、成長方向即時動態響應。</li>
+<li>實作進入戰鬥全螢幕紅框閃爍 (<code>UI\CombatFlash.lua</code>)，監聽 <code>PLAYER_REGEN_DISABLED</code> 事件並在主面板提供即時測試按鈕。</li>
+<li>驗證結果：Lua 66/66、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
+<h3 id="2026-08-24-eam-20260824-alpha77-anchors-and-mutexalpha-77">2026-08-24 EAM-20260824-ALPHA77-ANCHORS-AND-MUTEX：Alpha 7.7 子視窗聯動移動錨點、側窗互斥機制與雙軌日誌分離</h3>
+<ul>
+<li>狀態：Alpha 7.7 完成離線契約 (Lua 65/65, Flow 84/84, Contracts 493/493)，實機待玩家簽收。</li>
+<li>變更亮點：</li>
+<li>子視窗聯動移動錨點：點擊各類別監控子視窗時，自動在畫面上亮起該模組專屬半透明移動錨點框（標記「按住左鍵拖曳」），方便玩家直觀拖曳調整在畫面上的定位；關閉子視窗時自動隱藏所有錨點並套用排版。</li>
+<li>排版位置全開模式：開啟「告警框架位置與排版」視窗時自動亮起全部 7 大框架移動錨點。</li>
+<li>全二級附屬側窗互斥：開啟職業資源、除錯中心、Profile 匯入/匯出、功能模組、關於或清單子視窗時，自動關閉其他側邊面板，消除多側窗重疊。</li>
+<li>除錯中心修復：修正流程測試運行非同步回傳布林值導致的 index error，補全格式化輸出；修正系統診斷報告匯出按鈕調用。</li>
+<li>雙軌日誌分離：專案根目錄建立 <code>changelog.md</code> 承載完整工程與治理細節，<code>changelog.txt</code> 維持純粹魔獸插件更新。</li>
+<li>Release 包命名標準化：對齊 <code>EventAlertMod_MN_yyyyMMdd_HHmmss-&lt;Tag&gt;_AGY.zip</code>（後續發布預設帶 <code>_AGY</code> 後綴）。</li>
+<li>驗證結果：Lua 65/65、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
+<h3 id="2026-08-23-eam-20260823-alpha75-ui-resource-overhaulalpha-75-profile-dk">2026-08-23 EAM-20260823-ALPHA75-UI-RESOURCE-OVERHAUL：Alpha 7.5 介面佈局重構、視窗吸附、Profile 升級與 DK 符文強化</h3>
+<ul>
+<li>狀態：Alpha 7.5 完成離線契約 (Lua 65/65, Flow 84/84, Contracts 493/493)，實機待玩家簽收。</li>
+<li>變更亮點：</li>
+<li>視窗右上加入原生 [X] 快速關閉按鈕，並實作階層式無縫吸附 (APPEND Docking) 與多視窗同步拖曳。</li>
+<li>主選單分類 7 提升為「★ 玩家職業資源設定」，整合除錯類功能至 4-Tab「除錯與測試診斷中心」。</li>
+<li>Profile 分享升級支援 8 大自選項目（含框架排版位置、職業資源設定與一般偏好設定）與預覽區塊分析。</li>
+<li>職業資源設定面板滑桿與下拉選單支援即時熱預覽與自動套用。</li>
+<li>死亡騎士符文支援 3 大專精動態圖示、6 格微型充能進度條與 /eam rune 槽位診斷視窗。</li>
+<li>驗證結果：Lua 65/65、Flow all 84/84、Validation Contracts 493/493。</li>
+</ul>
 <h3 id="2026-08-13-eam-20260813-alpha4-module-profilesalpha-4-profile">2026-08-13 EAM-20260813-ALPHA4-MODULE-PROFILES：Alpha 4 模組開關與職業 profile 發布</h3>
 <ul>
 <li>狀態：Alpha 4 已完成離線契約，實機仍待 PTR／XPTR／Retail 玩家簽收。</li>
@@ -1792,6 +1949,82 @@
 <li>驗證：Lua 64/64；Flow all 82/82；boundary 61/61；Validation Contracts 493/493。<code>unitpower.runes_event_driven_segments</code> 與 <code>ground.spell_family_activation</code> 均 pass，Secret scalar/key operation 為 0。</li>
 <li>後續注意：目前 Rune 只呈現六段 readiness count，不呈現每顆獨立 recharge sweep。反魔法立場若因吸收上限提前結束，固定施放秒數只代表上限；需玩家實機回報，不能猜測提前結束事件。</li>
 <li>發布打包陷阱：首份 Alpha 7.4 source ZIP 雖排除 <code>.AI/TestResults</code>，仍因匯入器留下 <code>.AI/.AI/TestResults</code> 而混入 4 個報告；根因是排除器只檢查首層。已改成任意深度 leaf 排除 <code>.git</code>、<code>backup</code>、<code>TestResults</code>、<code>.trash_*</code>，並由同一條 source-package Contract 鎖定。提交前另發現 <code>.AI/skills/wow-addon-dev/.git</code> 上游 metadata，已在路徑與 Reparse Point 驗證後備份並移至 <code>.AI/.trash_*</code>；Skill 本體保留為一般專案檔。錯誤 ZIP 僅保留於 ignored <code>Dist</code> 作稽核證據，不得上傳。</li>
+</ul>
+<h3 id="eam-20260823-runes-capability-recount-fixdk-capability">EAM-20260823-RUNES-CAPABILITY-RECOUNT-FIX：DK 符文 Capability 判定與狀態計數精準同步</h3>
+<ul>
+<li>日期：2026-08-23。</li>
+<li>狀態：已完成代碼修復、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待 Retail 12.1 實機簽收。</li>
+<li>症狀：死亡騎士符文在玩家資源設定面板中可能被識別為 UNAVAILABLE 或 SECRET_DISPLAY，導致 <code>showValue</code>（數值文字）控制項與字級被禁用；單槽事件在極端狀態變更時可能產生計數漂移。</li>
+<li>根因一：<code>Services/PlayerResourceCapability.lua</code> 的 <code>classify()</code> 依賴 <code>UnitHasPowerType(5)</code>，但在 Retail 12.x 中 DK 主 PowerType 是 6 (符能)，<code>UnitHasPowerType(5)</code> 常回傳 false，導致 Capability 誤判。</li>
+<li>根因二：<code>applyRuneEvent()</code> 既有邏輯採用直接 <code>+1</code> / <code>-1</code> 算術，若遇事件重送或邊界槽位狀態變更，存在累計漂移風險。</li>
+<li>有效解法：</li>
+<li>在 <code>PlayerResourceCapability.lua</code> 中針對 <code>RUNES</code> 進行特化，只要 <code>GetRuneCount</code> 或 <code>GetRuneCooldown</code> 可用即判定為 <code>Capability.NUMERIC</code>，開放 UI 面板中符文的數值文字與格式設定。</li>
+<li>在 <code>applyRuneEvent()</code> 中，當槽位狀態變更時，直接以 6 槽位 boolean 進行零分配 O(1) 確定性重算，徹底消除任何計數漂移。</li>
+<li>驗證：Lua 語法檢查 64/64 PASS；Flow 測試 82/82 PASS；Validation Contracts 493/493 PASS。</li>
+</ul>
+<h3 id="eam-20260823-dk-rune-spec-bars-diagnosticdk-6">EAM-20260823-DK-RUNE-SPEC-BARS-DIAGNOSTIC：DK 符文專精圖示、6 格獨立下方冷卻條與專屬除錯診斷工具</h3>
+<ul>
+<li>日期：2026-08-23。</li>
+<li>狀態：已完成代碼實作、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。</li>
+<li>需求與症狀：</li>
+<li>玩家希望 DK 符文圖示能依照專精（血魄 250、冰霜 251、穢邪 252）自動動態切換專屬圖示。</li>
+<li>玩家希望在符文主狀態列每一格下方增設獨立的冷卻微型條 (StatusBar)，即時呈現每顆符文 0%..100% 充能進度。</li>
+<li>提供專屬除錯回報工具，供玩家一鍵輸出並複製 6 槽位即時秒數與狀態 JSON 向 AI 回報。</li>
+<li>實作方案：</li>
+<li><strong>專精圖示</strong>：在 <code>Data/PlayerResourceCatalog.lua</code> 建立 <code>SPEC_ICONS</code> 對照表，並提供 <code>Catalog.getResourceIcon(key, specID)</code>；<code>PowerRenderer.lua</code> 與 <code>PlayerResourceService.lua</code> 拓樸重建與專精切換事件時自動套用。</li>
+<li><strong>6 格下方微型冷卻條</strong>：在 <code>PowerRenderer.lua</code> 中建立 6 條 3px 微型 <code>slotBars</code> 並對齊於主條每一格下方；<code>PlayerResourceService.lua</code> 在有符文冷卻時每 0.05s 啟動輕量排程計時器平滑更新充能進度，全滿時立即休眠 (0 CPU)。</li>
+<li><strong>專屬除錯工具</strong>：在 <code>PlayerResourceProbe.lua</code> 提供 <code>buildRuneDiagnostic()</code>，彙整 6 槽位 readiness、start、duration、remainingSeconds 與 progressPercent，並在 <code>Slash.lua</code> 支援 <code>/eam rune</code> (或 <code>/eam probe rune</code>)，於聊天框印出摘要並彈出全選 EditBox 供玩家一鍵 <code>Ctrl+C</code> 複製。</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：64/64 PASS。</li>
+<li>Flow 狀態機測試：82/82 PASS。</li>
+<li>Validation Contracts：493/493 PASS。</li>
+</ul>
+<h3 id="eam-20260823-resource-options-vanish-and-nil-ticker-fix-nil">EAM-20260823-RESOURCE-OPTIONS-VANISH-AND-NIL-TICKER-FIX：排程回呼 nil 函數修復與設定頁面資源消失問題</h3>
+<ul>
+<li>日期：2026-08-23。</li>
+<li>狀態：已完成代碼修復、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。</li>
+<li>症狀與原因判斷：</li>
+<li><strong>實機報錯 <code>PlayerResourceService.lua:398: attempt to call a nil value</code></strong>：<code>runeCooldownTickerCallback</code> 在回呼結束時呼叫了 <code>updateRunePoints(node)</code>，但在 Lua 語法中該函數在下方以 <code>local function</code> 宣告，導致回呼執行時該變數仍為 <code>nil</code>。</li>
+<li><strong>設定視窗開啟時職業資源全部消失</strong>：在 <code>UI/Options.lua</code> 開啟設定頁面或刷新版面時呼叫了 <code>Renderer.requestLayout()</code>，其對 <code>classPower</code> 執行 <code>layout()</code>；由於 modern EAM 職業資源已移至 <code>PowerRenderer</code>（子框架數為 0），<code>Renderer.lua:layout()</code> 執行了 <code>parent:Hide()</code>，將所有資源條的父錨點 <code>EAM_AlertFrame_classPower</code> 隱藏，導致所有職業資源永久消失直至 <code>/reload</code>。</li>
+<li><strong>DK 三專精專屬圖示更新</strong>：依據 wowtools 與 WoW 官方 DB，將血魄、冰霜、穢邪三專精的符文圖示設定為官方對應專精圖示（血魄 <code>135770</code>、冰霜 <code>135773</code>、穢邪 <code>135775</code>），並支援動態查詢 <code>GetSpecializationInfoByID</code>。</li>
+<li>有效解法：</li>
+<li>在 <code>Services/PlayerResourceService.lua</code> 頂部前置宣告 <code>local updateRunePoints</code>，並在呼叫處增加防禦性判定，徹底消除 nil 調用崩潰。</li>
+<li>在 <code>UI/Renderer.lua</code> 的 <code>layout()</code> 函數開頭增加 <code>if frameName == "classPower" then parent:Show() ... return true, "classPowerAnchor"</code>，確保作為 17 項獨立資源錨點的 <code>EAM_AlertFrame_classPower</code> 永遠保持顯示，不再因設定頁面或排版刷新被誤隱藏。</li>
+<li>在 <code>Data/PlayerResourceCatalog.lua</code> 更新 <code>SPEC_ICONS</code> 與 <code>Catalog.getResourceIcon</code>，精準映射 12.x DK 專精圖示。</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：64/64 PASS。</li>
+<li>Flow 狀態機測試：82/82 PASS。</li>
+<li>Validation Contracts：493/493 PASS。</li>
+</ul>
+<h3 id="eam-20260823-resource-panel-live-auto-apply">EAM-20260823-RESOURCE-PANEL-LIVE-AUTO-APPLY：玩家資源設定面板改動即時聯動生效</h3>
+<ul>
+<li>日期：2026-08-23。</li>
+<li>狀態：已完成代碼實作、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。</li>
+<li>需求與設計：</li>
+<li>玩家希望在職業資源設定面板中調整各項數值時能夠「即時生效」，邊調邊看，無須每次點擊「套用」按鈕。</li>
+<li>有效解法：</li>
+<li>在 <code>UI/PlayerResourcePanel.lua</code> 實作 <code>autoApplyDraft()</code> 輕量聯動核心，在 <code>refreshing == false</code> 狀態下，當玩家拖曳任何滑桿 (<code>OnValueChanged</code>)、勾選任何核取方塊 (<code>OnClick</code>)、切換顯示模式／錨點／偏向／字型／方向按鈕時，即時調用 <code>SavedVariables.updatePlayerResourceConfig</code>，非戰鬥中直接觸發 <code>PowerRenderer.configureResource</code> 與 <code>reflowResourceFrames</code> 即時重繪更新，並於底部顯示「資源設定已即時生效。」。</li>
+<li>戰鬥中變更則安全記錄為 <code>combatRebuildDeferred</code>，並於脫戰後自動套用。</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：64/64 PASS。</li>
+<li>Flow 狀態機測試：82/82 PASS。</li>
+<li>Validation Contracts：493/493 PASS。</li>
+</ul>
+<h3 id="eam-20260823-resource-alignment-and-spec-drift-fix">EAM-20260823-RESOURCE-ALIGNMENT-AND-SPEC-DRIFT-FIX：即時調整時圖示跑掉與對齊位移修復</h3>
+<ul>
+<li>日期：2026-08-23。</li>
+<li>狀態：已完成代碼修復、Flow 測試 (82/82) 與靜態契約檢驗 (493/493)；等待玩家實機部署驗證。</li>
+<li>症狀與原因判斷：</li>
+<li><strong>調整過程專精圖示變回通用圖示</strong>：在 <code>PlayerResourceService.lua</code> 的 <code>applyResourceConfigChange</code> 呼叫 <code>PowerRenderer.configureResource</code> 時，未傳入 <code>specializationID</code> 參數，導致 <code>Catalog.getResourceIcon</code> 在 <code>specializationID</code> 為 nil 時回退為通用圖示。</li>
+<li><strong>圖示與狀態列/標籤垂直對齊跑掉</strong>：在 <code>PowerRenderer.lua</code> 的 <code>configureResource</code> 中，狀態列垂直偏移曾寫死為 <code>-7</code>，當玩家調整 <code>barHeight</code> 或 <code>iconSize</code> 時，狀態列、標籤與圖示之間產生錯位；且標籤與高亮邊框在重設尺寸時未同步對齊。</li>
+<li>有效解法：</li>
+<li>在 <code>Data/PlayerResourceCatalog.lua</code> 的 <code>Catalog.getResourceIcon</code> 中增加動態專精查詢保底：即使傳入 nil 也會自動查詢當前玩家 <code>GetSpecialization()</code> 取得專精 ID，保證 100% 顯示專精圖示。</li>
+<li>在 <code>Services/PlayerResourceService.lua</code> 的 <code>applyResourceConfigChange</code> 中將 <code>PlayerResourceService.specializationID</code> 正式傳遞給 <code>configureResource</code>。</li>
+<li>在 <code>UI/PowerRenderer.lua</code> 中全面重構相對定位：狀態列嚴格以 <code>frame.icon</code> 為水平/垂直基準（Y 偏移 0），<code>label</code> 對齊狀態列上方，<code>glow</code> 對齊圖示，<code>icon</code> 補齊標準 <code>SetTexCoord(0.08, 0.92, 0.08, 0.92)</code> 避免邊界拉伸，各部件在拖動任何滑桿時均保持幾何穩固。</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：64/64 PASS。</li>
+<li>Flow 狀態機測試：82/82 PASS。</li>
+<li>Validation Contracts：493/493 PASS。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

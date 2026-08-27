@@ -419,7 +419,82 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-08-23.11。</p>
+<p>目前快照版本：2026-08-24.15 (Alpha 8.2)。</p>
+<h2 id="2026-08-27-alpha-82-libsharedmedia-30">2026-08-27 Alpha 8.2 LibSharedMedia-3.0 素材生態全面整合、字型熱套用與捲動選單快照（現行）</h2>
+<ul>
+<li>current-of-truth：專案進入 Alpha 8.2 發布階段；全面接入 LibSharedMedia-3.0 (SharedMedia) 素材生態，支援動態探測與第三方音效/字型讀取，修復字型修改免 <code>/reload</code> 即時生效，實作 UI 下拉選單自適應捲動容器，完成 71/71 語法、84/84 Flow 驗證與 493/493 契約測試。</li>
+<li>LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合：</li>
+<li>實作 <code>MediaService.ensureLSM()</code> 動態探測機制與 <code>PLAYER_LOGIN</code> 延遲同步刷新，徹底解決插件載入順序先後導致快取被凍結在 12 種內建音效的問題。</li>
+<li>同時查詢 <code>lsm:List("sound")</code> 與 <code>lsm:HashTable("sound")</code> 雙軌資料源並去重，完整收錄所有第三方音效。</li>
+<li>支援雙軌安全播放 (<code>MediaService.playSound</code>)，相容 FileDataID、SoundKitID 與自訂 FilePath (.ogg / .mp3)。</li>
+<li>12.1 Native Aura 規則編譯器接入 <code>MediaService.getSoundPath</code>。</li>
+<li>全域字型熱套用（免 <code>/reload</code> 即時生效）：</li>
+<li><code>SavedVariables.lua</code> 放行所有通過 LSM 註冊之字型名稱。</li>
+<li><code>AuraRuleCompiler.lua</code> 將 <code>fontFamily</code> 納入 Native 佈局指紋。</li>
+<li><code>Renderer</code> 與 <code>AuraContainerService</code> 註冊 <code>EAM_FONT_FAMILY_CHANGED</code> 事件監聽。</li>
+<li><code>Options.notifyTextLayoutChanged</code> 聯動刷新預覽圖示、職業資源與人物屬性文字。</li>
+<li>UI 下拉選單長清單自適應捲動容器 (<code>buildScrollableDropdownMenu</code>)：</li>
+<li>當素材超過 10 筆時自動限制高度並啟用捲軸與滑鼠滾輪支援。</li>
+<li>
+<p>展開選單時啟用 <code>forceRefresh = true</code> 即時向 LSM 拉取最新素材清單。</p>
+</li>
+<li>
+<p>current-of-truth：專案進入 Alpha 7.9 發布階段；全介面 10 大視窗已完整配置 Hover Tooltips、主視窗螢幕邊界鎖定與一鍵居中重置命令 (<code>/eam reset</code>)、官方 README 加入 14 張高畫質介面圖文導覽，完成 68/68 語法、84/84 Flow 驗證與 493/493 契約測試。</p>
+</li>
+<li>全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)：</li>
+<li>在全部按鈕、核取方塊、滑桿、下拉選單、輸入編輯框與清單操作列加入直觀的懸停說明提示 (Hover Tooltips)，清晰標註控制項用途、設定範圍與操作指引。</li>
+<li>實作通用工具函式 <code>EAM.UI.setTooltip</code>，支援純文字、多語系字串與表格綁定，徹底消除介面操作門檻。</li>
+<li>覆蓋主設定面板、告警框架排版、法術清單、條件設定、批次輸入、角色屬性、職業資源、功能模組、Profile 分享與除錯中心共 10 大視窗。</li>
+<li>角色屬性與吸收量監控（全新模組）：</li>
+<li>支援 18 種核心屬性取值監控（力量、敏捷、耐力、智力、致命、加速、精通、臨機應變、閃避、汲取、速度屬性評級、跑速、泳速、飛速、飛龍模式飛速、總吸收盾量、治療吸收量、護甲值）。</li>
+<li>速度類別淬鍊為 4 大項：跑速 (<code>GetUnitSpeed</code> 地面)、泳速 (水下)、飛速 (傳統懸浮飛行 310%~420%)、飛龍模式飛速 (調用 <code>C_PlayerInfo.GetGlidingInfo</code> 取得 830%~1400% 動能滑翔速度)，並以 0.1s 高頻計時器即時平滑刷新。</li>
+<li>繁體中文術語嚴格對齊台灣官方用語（致命、加速、臨機應變）。</li>
+<li>獨立二級設定面板 (<code>UI/PlayerStatPanel.lua</code>)：無縫吸附主視窗右側並支援同步平滑拖曳，支援單項開關、替代圖示/代碼、圖示大小、數值/名稱字型大小、替代文字、小數位數 (0~2)、簡寫 (k/M)、警戒值上下限紅框、進度條開關與獨立框架排版。</li>
+<li>Secret Value 防護與原生 StatusBar Sink 整合：</li>
+<li>針對 Retail 12.0+ / 12.1+ 部分 Unit API（如吸收量、移速等）在戰鬥/受污染環境下回傳受保護之 Secret Number，全面加入安全數值檢查，防止 Lua 層運算或格式化報錯。</li>
+<li>為屬性框架預建原生 C-Level <code>StatusBar</code>，遭遇 Secret 數值時直接將原始數值單向傳入 <code>StatusBar:SetValue</code> 展現視覺進度比例，Lua 不進行字串轉換與數值讀回。</li>
+<li>支援依屬性類別專屬著色（吸收盾天藍、治療吸收紫紅、移速青綠、副屬性金黃、主屬性橙紅、護甲鋼藍）。</li>
+<li>全模組自訂替代圖示支援 (Custom Icon Override Across All Modules)：</li>
+<li>在自身光環、目標光環、技能冷卻、物品冷卻、地面效果等所有模組細部設定中，新增「自訂替代圖示（代碼或材質路徑）」輸入框、即時動態預覽方塊與 Wago.tools 查詢網址框。</li>
+<li>服務層發布告警狀態時優先採用自訂圖示覆蓋原生預設圖示。</li>
+<li>經典奶牛頭位置預覽 (Classic Cow Head Anchor Preview)：</li>
+<li>拖曳排版位置時改用經典奶牛頭圖示 (<code>Interface\Icons\Spell_Nature_Polymorph_Cow</code>) 作為畫面預覽，並支援 8 大告警框架即時標籤名稱與紅/綠框高亮區分。</li>
+<li>全方位即時熱預覽 (Live Real-time Config Preview)：</li>
+<li>調整圖示尺寸、水平/垂直間距、透明度、扇形倒數轉圈動畫、轉圈透明度、自身/目標減益色度、法術/倒數/堆疊字型大小、成長方向時，畫面上告警框架與圖示即時 60fps 熱更新響應，無需重啟。</li>
+<li>進入戰鬥全螢幕紅框閃爍 (In-Combat Fullscreen Red Edge Flash)：</li>
+<li>實作 <code>UI/CombatFlash.lua</code> 全螢幕低血/戰鬥紅框閃爍動畫，監聽 <code>PLAYER_REGEN_DISABLED</code> 事件觸發戰鬥進入警示，並在主選單提供即時測試按鈕。</li>
+<li>主題樣式與主視窗螢幕邊界防護：</li>
+<li>EAM 預設主題改回經典魔獸紅色選單按鈕與仿石框邊緣。</li>
+<li>修正關閉主視窗時在 <code>closeAllSidePanels</code> 缺少 <code>close()</code> 引發的 nil call 錯誤，實作防禦性 <code>safeClosePanel</code> 機制。</li>
+<li>主視窗增加 <code>SetClampedToScreen</code> 螢幕邊界鎖定，防止拖出畫面無法找回。</li>
+<li>新增 <code>/eam reset</code> (或 <code>/eam center</code> / <code>resetpos</code>) 斜線命令、小地圖按鈕中鍵點擊與 Shift+點擊，一鍵將主視窗拉回螢幕正中央。</li>
+</ul>
+<h2 id="2026-08-24-alpha-77">2026-08-24 Alpha 7.7 聯動移動錨點、側窗互斥與雙軌日誌快照</h2>
+<ul>
+<li>current-of-truth：專案進入 Alpha 7.7 發布階段；完成 65/65 語法、84/84 Flow 驗證與 493/493 契約測試。</li>
+<li>介面與互動升級：</li>
+<li>子視窗聯動移動錨點：點擊各類別監控子視窗時，自動在畫面上亮起該模組專屬半透明移動錨點框（標記「按住左鍵拖曳」），方便玩家直觀拖曳調整在畫面上的定位；關閉子視窗時自動隱藏所有錨點並套用排版。</li>
+<li>排版位置全開模式：開啟「告警框架位置與排版」視窗時自動亮起全部 7 大框架移動錨點。</li>
+<li>全二級附屬側窗互斥：開啟職業資源、除錯中心、Profile 匯入/匯出、功能模組、關於或清單子視窗時，自動關閉其他側邊面板，徹底消除多側窗重疊。</li>
+<li>除錯中心修復：修正流程測試運行非同步回傳布林值導致的 index error，補全格式化輸出；修正系統診斷報告匯出按鈕調用。</li>
+<li>雙軌日誌與 Release 命名：</li>
+<li>專案根目錄建立 <code>changelog.md</code> 承載完整工程與治理細節，<code>changelog.txt</code> 維持純粹魔獸插件更新。</li>
+<li>GitHub Release 產物命名標準化為 <code>EventAlertMod_MN_yyyyMMdd_HHmmss-&lt;Tag&gt;_AGY.zip</code>（後續發布預設帶 <code>_AGY</code> 後綴）。</li>
+</ul>
+<h2 id="2026-08-23-alpha-75-uiprofiledk">2026-08-23 Alpha 7.5 發布與 UI/Profile/DK 符文重構快照</h2>
+<ul>
+<li>current-of-truth：專案進入 Alpha 7.5 發布階段；完成 65/65 語法、84/84 Flow 驗證與 493/493 契約測試。</li>
+<li>介面與交互：</li>
+<li>所有視窗右上角實作原生 <code>UIPanelCloseButton</code> (<code>[X]</code>) 快速關閉按鈕。</li>
+<li>視窗階層採用 APPEND 側邊無縫吸附（主選單 ➔ 清單/排版/職業資源 ➔ 細部條件/批次輸入），並支援跨視窗同步連動拖曳。</li>
+<li>主選單分類提升：「★ 玩家職業資源設定」提升至第 7 項目；除錯類功能統整至 4-Tab「除錯與測試診斷中心」。</li>
+<li>Profile 模組升級：</li>
+<li>支援 8 大分類自選匯出／匯入（自身光環、目標光環、技能CD、物品CD、地面效果、框架排版位置、職業資源設定、一般偏好設定）。</li>
+<li>提供 <code>[全選]</code>、<code>[僅告警清單]</code>、<code>[僅排版設定]</code> 快速勾選按鈕與預覽區塊分析。</li>
+<li>職業資源與 DK 符文：</li>
+<li>職業資源設定支援滑桿即時熱預覽與自動儲存。</li>
+<li>死亡騎士符文支援 3 大專精動態圖示、6 格微型充能冷卻條（0%..100% 平滑動畫）與 <code>/eam rune</code> 槽位診斷視窗。</li>
+</ul>
 <h2 id="2026-08-21">2026-08-21 新根與部署治理交接快照（現行）</h2>
 <ul>
 <li>current-of-truth：專案根為 <code>D:\Project_EventAlertMod</code>；插件唯一來源為 <code>EventAlertMod/</code>；AI 治理為 <code>.AI/</code>；部署工具為 <code>Deploy/</code>；<code>Dist/</code> 為 ignored 本機產物。</li>
