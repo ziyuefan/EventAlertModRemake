@@ -6,6 +6,7 @@ Module: UI/SpellCatalogTreePanel
 理念:
 - 提供階層式全量法術庫與智慧預設面板（三態勾選樹）。
 - 支援選擇目標模組清單（技能冷卻、自身光環、目標光環、特殊光環、地面效果）。
+- 支援法術懸停標準 GameTooltip 技能說明與圖示預覽。
 - 支援「依當前天賦自動勾選」一鍵同步與多維戰術情境範本套用。
 
 責任:
@@ -95,35 +96,84 @@ local function getModuleName(modId)
     return modId
 end
 
+local function extractSpellID(key, alert)
+    if type(alert) == "table" and (alert.spellID or alert.spellId) then
+        return tonumber(alert.spellID or alert.spellId)
+    end
+    if type(key) == "number" then
+        return key
+    end
+    if type(key) == "string" then
+        local num = tonumber(key:match("(%d+)$"))
+        if num then return num end
+        return tonumber(key)
+    end
+    return nil
+end
+
 local function addSpellToTargetModule(sv, sid)
-    if not sv then return end
+    if not sv or not sid then return end
+    sid = tonumber(sid)
+    if not sid then return end
     local mod = Panel.targetModule or "spellCooldowns"
     if mod == "playerAuras" then
-        if sv.addAuraAlert then sv.addAuraAlert("player", sid, { enabled = true, fromPlayer = true }) end
+        if sv.addAuraAlert then
+            sv.addAuraAlert("player", sid, { enabled = true, fromPlayer = true, catalogScope = "SELF" })
+        end
     elseif mod == "targetAuras" then
-        if sv.addAuraAlert then sv.addAuraAlert("target", sid, { enabled = true, fromPlayer = true }) end
+        if sv.addAuraAlert then
+            sv.addAuraAlert("target", sid, { enabled = true, fromPlayer = true, catalogScope = "SELF" })
+        end
     elseif mod == "specialAuras" then
-        if sv.addAuraAlert then sv.addAuraAlert("special", sid, { enabled = true, fromPlayer = false }) end
+        if sv.addAuraAlert then
+            sv.addAuraAlert("player", sid, { enabled = true, fromPlayer = false, catalogScope = "CROSS_CLASS" })
+        end
     elseif mod == "groundEffects" then
-        if sv.addGroundEffectAlert then sv.addGroundEffectAlert(sid, { enabled = true, durationMode = "AUTO" }) end
+        if sv.addGroundEffectAlert then
+            sv.addGroundEffectAlert(sid, { enabled = true, durationMode = "AUTO" })
+        end
     else
-        if sv.addSpellCooldownAlert then sv.addSpellCooldownAlert(sid, { enabled = true }) end
+        if sv.addSpellCooldownAlert then
+            sv.addSpellCooldownAlert(sid, { enabled = true })
+        end
+    end
+    if sv.markRevisionChanged then
+        sv.markRevisionChanged()
+    end
+    local Options = EAM.UI and EAM.UI.Options
+    if Options and Options.refreshList then
+        Options.refreshList()
     end
 end
 
 local function removeSpellFromTargetModule(sv, sid)
-    if not sv then return end
+    if not sv or not sid then return end
+    sid = tonumber(sid)
+    if not sid then return end
     local mod = Panel.targetModule or "spellCooldowns"
-    if mod == "playerAuras" then
-        if sv.removeAuraAlert then sv.removeAuraAlert("player", sid) end
+    if mod == "playerAuras" or mod == "specialAuras" then
+        if sv.removeAuraAlert then
+            sv.removeAuraAlert("player", sid)
+        end
     elseif mod == "targetAuras" then
-        if sv.removeAuraAlert then sv.removeAuraAlert("target", sid) end
-    elseif mod == "specialAuras" then
-        if sv.removeAuraAlert then sv.removeAuraAlert("special", sid) end
+        if sv.removeAuraAlert then
+            sv.removeAuraAlert("target", sid)
+        end
     elseif mod == "groundEffects" then
-        if sv.removeGroundEffectAlert then sv.removeGroundEffectAlert(sid) end
+        if sv.removeGroundEffectAlert then
+            sv.removeGroundEffectAlert(sid)
+        end
     else
-        if sv.removeSpellCooldownAlert then sv.removeSpellCooldownAlert(sid) end
+        if sv.removeSpellCooldownAlert then
+            sv.removeSpellCooldownAlert(sid)
+        end
+    end
+    if sv.markRevisionChanged then
+        sv.markRevisionChanged()
+    end
+    local Options = EAM.UI and EAM.UI.Options
+    if Options and Options.refreshList then
+        Options.refreshList()
     end
 end
 
@@ -194,6 +244,15 @@ local function createPanel()
     modMenu:Hide()
     if Theme and Theme.applyContainerBackground then
         Theme.applyContainerBackground(modMenu, true)
+    else
+        modMenu:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 12, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 }
+        })
+        modMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
+        modMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
     end
     Panel.controls.modMenu = modMenu
 
@@ -349,33 +408,38 @@ function Panel.refresh()
 
     if mod == "playerAuras" and alerts.playerAuras then
         for sId, alert in pairs(alerts.playerAuras) do
-            if alert and (alert.enabled ~= false and alert.enable ~= false) then
-                activeSpells[tonumber(sId) or sId] = true
+            if alert and (alert.enabled ~= false and alert.enable ~= false) and (alert.catalogScope ~= "CROSS_CLASS") then
+                local numId = extractSpellID(sId, alert)
+                if numId then activeSpells[numId] = true end
+            end
+        end
+    elseif mod == "specialAuras" and alerts.playerAuras then
+        for sId, alert in pairs(alerts.playerAuras) do
+            if alert and (alert.enabled ~= false and alert.enable ~= false) and (alert.catalogScope == "CROSS_CLASS" or alert.fromPlayer == false) then
+                local numId = extractSpellID(sId, alert)
+                if numId then activeSpells[numId] = true end
             end
         end
     elseif mod == "targetAuras" and alerts.targetAuras then
         for sId, alert in pairs(alerts.targetAuras) do
             if alert and (alert.enabled ~= false and alert.enable ~= false) then
-                activeSpells[tonumber(sId) or sId] = true
-            end
-        end
-    elseif mod == "specialAuras" and alerts.specialAuras then
-        for sId, alert in pairs(alerts.specialAuras) do
-            if alert and (alert.enabled ~= false and alert.enable ~= false) then
-                activeSpells[tonumber(sId) or sId] = true
+                local numId = extractSpellID(sId, alert)
+                if numId then activeSpells[numId] = true end
             end
         end
     elseif mod == "groundEffects" and alerts.groundEffects then
         for sId, alert in pairs(alerts.groundEffects) do
             if alert and (alert.enabled ~= false and alert.enable ~= false) then
-                activeSpells[tonumber(sId) or sId] = true
+                local numId = extractSpellID(sId, alert)
+                if numId then activeSpells[numId] = true end
             end
         end
     else
         if alerts.spellCooldowns then
             for sId, alert in pairs(alerts.spellCooldowns) do
                 if alert and (alert.enabled ~= false and alert.enable ~= false) then
-                    activeSpells[tonumber(sId) or sId] = true
+                    local numId = extractSpellID(sId, alert)
+                    if numId then activeSpells[numId] = true end
                 end
             end
         end
@@ -406,6 +470,8 @@ function Panel.refresh()
         row.text:ClearAllPoints()
         row.text:SetPoint("LEFT", row, "LEFT", 10, 0)
         row.text:SetPoint("RIGHT", row.cb, "LEFT", -6, 0)
+        row:SetScript("OnEnter", nil)
+        row:SetScript("OnLeave", nil)
 
         local arrow = isExpanded and "▼ " or "▶ "
         row.text:SetText(string.format("%s專精 %s (共 %d 個推薦法術)", arrow, tostring(specId), #spellList))
@@ -471,6 +537,18 @@ function Panel.refresh()
                         sRow.text:SetPoint("LEFT", sRow, "LEFT", 28, 0)
                     end
                     sRow.text:SetPoint("RIGHT", sRow.cb, "LEFT", -6, 0)
+
+                    -- 懸停技能 Tooltip 提示
+                    sRow:SetScript("OnEnter", function(self)
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                        if GameTooltip.SetSpellByID then
+                            GameTooltip:SetSpellByID(sid)
+                        end
+                        GameTooltip:Show()
+                    end)
+                    sRow:SetScript("OnLeave", function()
+                        GameTooltip:Hide()
+                    end)
 
                     local tagLabel = ""
                     if sMeta.tags and #sMeta.tags > 0 then

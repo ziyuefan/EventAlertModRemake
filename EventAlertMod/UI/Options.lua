@@ -3099,7 +3099,7 @@ local function createFrame()
     condFrame.groupMenu = groupMenu
 
     local function updateGroupDropdownText(alertData)
-        if not alertData then return end
+        if not alertData or not groupDropdown then return end
         local GroupService = EAM.Services and EAM.Services.GroupService
         local groups = GroupService and GroupService.getGroups and GroupService.getGroups() or {}
         local selectedNames = {}
@@ -3108,18 +3108,20 @@ local function createFrame()
                 for _, gid in ipairs(alertData.groups) do
                     if gid == g.id then
                         local gName = g.nameKey and EAM.L and EAM.L[g.nameKey] or g.name or g.id
-                        selectedNames[#selectedNames + 1] = gName
+                        selectedNames[#selectedNames + 1] = tostring(gName)
                         break
                     end
                 end
             end
         end
+        local noneText = (EAM.L and EAM.L.EAM_GROUP_NONE) or "(未指定群組)"
+        local selectedFmt = (EAM.L and EAM.L.EAM_GROUP_SELECTED_COUNT) or "已選 %d 個群組"
         if #selectedNames == 0 then
-            groupDropdown:SetText(localized("EAM_GROUP_NONE", "(未指定群組)"))
+            groupDropdown:SetText(tostring(noneText))
         elseif #selectedNames <= 2 then
             groupDropdown:SetText(table.concat(selectedNames, ", "))
         else
-            groupDropdown:SetText(string.format(localized("EAM_GROUP_SELECTED_COUNT", "已選 %d 個群組"), #selectedNames))
+            groupDropdown:SetText(string.format(selectedFmt, #selectedNames))
         end
     end
     condFrame.updateGroupDropdownText = updateGroupDropdownText
