@@ -141,8 +141,18 @@ function TextPlacement.normalizeFontFamily(value)
         end
     end
     local MediaService = EAM.Services and EAM.Services.MediaService
-    if MediaService and MediaService.hasLSM then
-        return value
+    if MediaService then
+        if MediaService.isValidMedia and MediaService.isValidMedia("font", value) then
+            return value
+        elseif MediaService.hasLSM then
+            return value
+        end
+    end
+    if _G.LibStub then
+        local ok, lsm = pcall(_G.LibStub, "LibSharedMedia-3.0", true)
+        if ok and lsm and lsm.IsValid and lsm:IsValid("font", value) then
+            return value
+        end
     end
     return EAM.Constants and EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
 end

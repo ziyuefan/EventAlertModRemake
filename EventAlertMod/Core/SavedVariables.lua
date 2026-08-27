@@ -314,9 +314,26 @@ local PLAYER_RESOURCE_ANCHOR_POINTS = freeze({
 })
 
 local function normalizePlayerResourceFontFamily(value, fillDefaults)
+    if type(value) ~= "string" or value == "" then
+        return fillDefaults and (EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD") or nil
+    end
     local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
     for index = 1, #options do
         if options[index].value == value then
+            return value
+        end
+    end
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    if MediaService then
+        if MediaService.isValidMedia and MediaService.isValidMedia("font", value) then
+            return value
+        elseif MediaService.hasLSM then
+            return value
+        end
+    end
+    if _G.LibStub then
+        local ok, lsm = pcall(_G.LibStub, "LibSharedMedia-3.0", true)
+        if ok and lsm and lsm.IsValid and lsm:IsValid("font", value) then
             return value
         end
     end
@@ -845,13 +862,30 @@ local function normalizeThemeSelection(value)
 end
 
 local function normalizeFontFamilySelection(value)
+    if type(value) ~= "string" or value == "" then
+        return EAM.Constants and EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
+    end
     local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
     for index = 1, #options do
         if options[index].value == value then
             return value
         end
     end
-    return EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    if MediaService then
+        if MediaService.isValidMedia and MediaService.isValidMedia("font", value) then
+            return value
+        elseif MediaService.hasLSM then
+            return value
+        end
+    end
+    if _G.LibStub then
+        local ok, lsm = pcall(_G.LibStub, "LibSharedMedia-3.0", true)
+        if ok and lsm and lsm.IsValid and lsm:IsValid("font", value) then
+            return value
+        end
+    end
+    return EAM.Constants and EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD"
 end
 
 local function normalizeFontFamilyConfig(db)

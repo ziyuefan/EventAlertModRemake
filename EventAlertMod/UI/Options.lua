@@ -213,7 +213,10 @@ function Options.buildAuraSoundConfig(soundName, added, applicationsIncreased, r
     if not added and not applicationsIncreased and not removed then
         return nil
     end
-    local asset = soundAssets[soundName] or soundAssets.ShayBell
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    local asset = (MediaService and MediaService.getSoundPath(soundName))
+        or soundAssets[soundName]
+        or soundAssets.ShayBell
     local sound = {}
     if added then
         sound.added = createAuraSoundEntry(asset)
@@ -236,13 +239,21 @@ function Options.resolveAuraSoundName(sound)
         return nil
     end
     local asset = entry.soundFileID or entry.soundFileName
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    if MediaService and MediaService.getMediaList then
+        local soundList = MediaService.getMediaList("sound")
+        for _, item in ipairs(soundList) do
+            if item.path == asset or item.value == asset then
+                return item.value
+            end
+        end
+    end
     for index = 1, #soundNames do
         local soundName = soundNames[index]
         if soundAssets[soundName] == asset then
             return soundName
         end
     end
-    return nil
 end
 -- Texture:SetSVG 在 12.1 實機可接受呼叫但不保證繪製；小地圖固定使用經典齒輪避免空白或問號。
 function Options.applyMinimapTexture(texture)
@@ -297,6 +308,15 @@ end
 function Options.notifyTextLayoutChanged(reapplyNative)
     if EAM.UI.Renderer and EAM.UI.Renderer.applyTextLayout then
         EAM.UI.Renderer.applyTextLayout()
+    end
+    if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+        EAM.UI.Renderer.refreshPreviewLayout()
+    end
+    if EAM.Services and EAM.Services.PlayerResourceService and EAM.Services.PlayerResourceService.refreshActiveResources then
+        EAM.Services.PlayerResourceService.refreshActiveResources("OPTIONS_TEXT_LAYOUT_CHANGED")
+    end
+    if EAM.Services and EAM.Services.PlayerStatService and EAM.Services.PlayerStatService.updateDisplay then
+        EAM.Services.PlayerStatService.updateDisplay()
     end
     if reapplyNative then
         markAuraSettingsDirty("OPTIONS_NATIVE_TEXT_LAYOUT_CHANGED")
@@ -415,7 +435,18 @@ function Options.refreshSoundDropdown()
         return
     end
     local soundName = EAM.db and EAM.db.config and EAM.db.config.soundName or "ShayBell"
-    Options.soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. soundName)
+    local label = soundName
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    if MediaService and MediaService.getMediaList then
+        local soundList = MediaService.getMediaList("sound")
+        for _, item in ipairs(soundList) do
+            if item.value == soundName then
+                label = item.text or item.value
+                break
+            end
+        end
+    end
+    Options.soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. label)
 end
 
 function Options.refreshSpecDropdown()
@@ -1130,6 +1161,80 @@ local function finalizeDropdownMenuButton(button, label, menu)
     end
 end
 
+local function buildScrollableDropdownMenu(menuFrame, parentButton, getListFunc, onSelectFunc, menuWidth, maxVisibleItems)
+    menuWidth = menuWidth or 200
+    maxVisibleItems = maxVisibleItems or 10
+    local itemHeight = 22
+    local scrollFrame = menuFrame.scrollFrame
+    local scrollChild = menuFrame.scrollChild
+    local buttons = menuFrame.buttons or {}
+    menuFrame.buttons = buttons
+
+    if not scrollFrame then
+        scrollFrame = api.CreateFrame("ScrollFrame", nil, menuFrame, "UIPanelScrollFrameTemplate")
+        scrollFrame:SetPoint("TOPLEFT", menuFrame, "TOPLEFT", 4, -4)
+        scrollFrame:SetPoint("BOTTOMRIGHT", menuFrame, "BOTTOMRIGHT", -24, 4)
+        scrollFrame:EnableMouseWheel(true)
+        scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+            local current = self:GetVerticalScroll() or 0
+            local maxScroll = self:GetVerticalScrollRange() or 0
+            local step = itemHeight * 2
+            local target = math.max(0, math.min(maxScroll, current - delta * step))
+            self:SetVerticalScroll(target)
+        end)
+        scrollChild = api.CreateFrame("Frame", nil, scrollFrame)
+        scrollChild:SetPoint("TOPLEFT", scrollFrame, "TOPLEFT", 0, 0)
+        scrollFrame:SetScrollChild(scrollChild)
+        menuFrame.scrollFrame = scrollFrame
+        menuFrame.scrollChild = scrollChild
+    end
+
+    local list = getListFunc() or {}
+    local total = #list
+    local visibleCount = math.min(total, maxVisibleItems)
+    local menuHeight = math.max(30, (visibleCount * itemHeight) + 8)
+
+    local buttonWidth = total > maxVisibleItems and (menuWidth - 30) or (menuWidth - 8)
+    menuFrame:SetSize(menuWidth, menuHeight)
+    scrollChild:SetSize(buttonWidth, math.max(1, total * itemHeight))
+    if total <= maxVisibleItems then
+        scrollFrame:SetPoint("BOTTOMRIGHT", menuFrame, "BOTTOMRIGHT", -4, 4)
+        local scrollBar = scrollFrame.ScrollBar or (scrollFrame.GetName and _G[scrollFrame:GetName() .. "ScrollBar"])
+        if scrollBar then scrollBar:Hide() end
+    else
+        scrollFrame:SetPoint("BOTTOMRIGHT", menuFrame, "BOTTOMRIGHT", -24, 4)
+        local scrollBar = scrollFrame.ScrollBar or (scrollFrame.GetName and _G[scrollFrame:GetName() .. "ScrollBar"])
+        if scrollBar then scrollBar:Show() end
+    end
+    scrollFrame:SetVerticalScroll(0)
+
+    for i = 1, #buttons do
+        buttons[i]:Hide()
+    end
+
+    for index = 1, total do
+        local item = list[index]
+        local btn = buttons[index]
+        if not btn then
+            btn = api.CreateFrame("Button", nil, scrollChild)
+            btn:SetSize(buttonWidth, 20)
+            local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            btnText:SetPoint("LEFT", btn, "LEFT", 6, 0)
+            btn.text = btnText
+            finalizeDropdownMenuButton(btn, btnText, menuFrame)
+            buttons[index] = btn
+        end
+        btn:SetSize(buttonWidth, 20)
+        btn:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 2, -2 - (index - 1) * itemHeight)
+        btn.text:SetText(item.text or item.value)
+        btn:SetScript("OnClick", function()
+            onSelectFunc(item)
+            menuFrame:Hide()
+        end)
+        btn:Show()
+    end
+end
+
 -- 建立通用 Slider
 local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width, isPercent, isFloat, tooltipText, tooltipTitle)
     local slider = api.CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
@@ -1403,7 +1508,7 @@ local function createFrame()
     -- 自製 Sound Dropdown
     local soundDropdown = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(soundDropdown) end
-    soundDropdown:SetSize(110, 22)
+    soundDropdown:SetSize(130, 22)
     soundDropdown:SetPoint("TOPLEFT", inner, "TOPLEFT", 12, -10)
     soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. "ShayBell")
     setTooltip(soundDropdown, "選擇觸發提醒時播放的預設音效", "音效警告")
@@ -1417,7 +1522,7 @@ local function createFrame()
     setTooltip(playSoundBtn, "播放當前選擇的音效檔案進行試聽", "測試音效")
 
     local soundMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
-    soundMenu:SetSize(140, 268)
+    soundMenu:SetSize(220, 228)
     soundMenu:SetPoint("TOPLEFT", soundDropdown, "BOTTOMLEFT", 0, -2)
     soundMenu:SetFrameStrata("DIALOG")
     soundMenu:SetBackdrop({
@@ -1431,42 +1536,62 @@ local function createFrame()
     registerDropdownMenu(soundMenu, soundDropdown)
     soundMenu:Hide()
 
-    for idx, sName in ipairs(soundNames) do
-        local menuBtn = api.CreateFrame("Button", nil, soundMenu)
-        menuBtn:SetSize(134, 20)
-        menuBtn:SetPoint("TOPLEFT", soundMenu, "TOPLEFT", 3, -3 - (idx - 1) * 22)
-
-        local menuBtnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        menuBtnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
-        menuBtnText:SetText(sName)
-        finalizeDropdownMenuButton(menuBtn, menuBtnText, soundMenu)
-
-        menuBtn:SetScript("OnClick", function()
-            if EAM.db and EAM.db.config then
-                EAM.db.config.soundName = sName
-                if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
-                    EAM.Modules.SavedVariables.markRevisionChanged()
+    local function populateSoundMenu()
+        buildScrollableDropdownMenu(
+            soundMenu,
+            soundDropdown,
+            function()
+                local MediaService = EAM.Services and EAM.Services.MediaService
+                if MediaService and MediaService.getMediaList then
+                    return MediaService.getMediaList("sound", true)
                 end
-                Options.refreshSoundDropdown()
-                notifyAuraSoundChanged()
-                Options.notifyConfigChanged(false)
-            end
-            soundMenu:Hide()
-        end)
+                local list = {}
+                for _, sName in ipairs(soundNames) do
+                    list[#list + 1] = { value = sName, text = sName }
+                end
+                return list
+            end,
+            function(item)
+                if EAM.db and EAM.db.config then
+                    EAM.db.config.soundName = item.value
+                    if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+                        EAM.Modules.SavedVariables.markRevisionChanged()
+                    end
+                    Options.refreshSoundDropdown()
+                    notifyAuraSoundChanged()
+                    Options.notifyConfigChanged(false)
+                    local MediaService = EAM.Services and EAM.Services.MediaService
+                    if MediaService and MediaService.playSound then
+                        MediaService.playSound(item.value)
+                    end
+                end
+            end,
+            220,
+            10
+        )
+        for _, btn in ipairs(soundMenu.buttons or {}) do
+            finalizeDropdownMenuButton(btn, btn.text, soundMenu)
+        end
     end
 
     soundDropdown:SetScript("OnClick", function()
         if soundMenu:IsShown() then
             soundMenu:Hide()
         else
+            populateSoundMenu()
             soundMenu:Show()
         end
     end)
 
     playSoundBtn:SetScript("OnClick", function()
         local sName = (EAM.db and EAM.db.config and EAM.db.config.soundName) or "ShayBell"
-        local asset = soundAssets[sName] or 568154
-        PlaySoundFile(asset, "Master")
+        local MediaService = EAM.Services and EAM.Services.MediaService
+        if MediaService and MediaService.playSound then
+            MediaService.playSound(sName)
+        else
+            local asset = soundAssets[sName] or 568154
+            PlaySoundFile(asset, "Master")
+        end
     end)
 
     -- 語系選擇下拉選單
@@ -1952,41 +2077,22 @@ local function createFrame()
     Options.fontMenuItems = {}
 
     local function populateFontMenu()
-        for _, btn in ipairs(Options.fontMenuItems) do
-            btn:Hide()
-        end
-
-        local MediaService = EAM.Services and EAM.Services.MediaService
-        local mediaList = MediaService and MediaService.getMediaList("font")
-        local fontList = {}
-        if mediaList then
-            for _, item in ipairs(mediaList) do
-                fontList[#fontList + 1] = { value = item.value, text = item.text }
-            end
-        else
-            local fontOptions = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
-            for _, opt in ipairs(fontOptions) do
-                fontList[#fontList + 1] = { value = opt.value, text = (EAM.L and EAM.L[opt.labelKey]) or opt.value }
-            end
-        end
-
-        local total = #fontList
-        fontMenu:SetSize(275, (total * 22) + 8)
-
-        for index = 1, total do
-            local item = fontList[index]
-            local menuButton = Options.fontMenuItems[index]
-            if not menuButton then
-                menuButton = api.CreateFrame("Button", nil, fontMenu)
-                menuButton:SetSize(269, 20)
-                menuButton.text = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                menuButton.text:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-                finalizeDropdownMenuButton(menuButton, menuButton.text, fontMenu)
-                Options.fontMenuItems[index] = menuButton
-            end
-            menuButton:SetPoint("TOPLEFT", fontMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-            menuButton.text:SetText(item.text)
-            menuButton:SetScript("OnClick", function()
+        buildScrollableDropdownMenu(
+            fontMenu,
+            fontDropdown,
+            function()
+                local MediaService = EAM.Services and EAM.Services.MediaService
+                if MediaService and MediaService.getMediaList then
+                    return MediaService.getMediaList("font", true)
+                end
+                local fontOptions = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+                local list = {}
+                for _, opt in ipairs(fontOptions) do
+                    list[#list + 1] = { value = opt.value, text = (EAM.L and EAM.L[opt.labelKey]) or opt.value }
+                end
+                return list
+            end,
+            function(item)
                 local saved = EAM.Modules and EAM.Modules.SavedVariables
                 if saved and saved.updateFontFamily then
                     local ok, status = saved.updateFontFamily(item.value)
@@ -1997,9 +2103,12 @@ local function createFrame()
                         Options.refreshFontDropdown()
                     end
                 end
-                fontMenu:Hide()
-            end)
-            menuButton:Show()
+            end,
+            275,
+            10
+        )
+        for _, btn in ipairs(fontMenu.buttons or {}) do
+            finalizeDropdownMenuButton(btn, btn.text, fontMenu)
         end
     end
 
@@ -3128,13 +3237,13 @@ local function createFrame()
 
     local auraSoundDropdown = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(auraSoundDropdown) end
-    auraSoundDropdown:SetSize(140, 22)
+    auraSoundDropdown:SetSize(160, 22)
     auraSoundDropdown:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -330)
     setTooltip(auraSoundDropdown, "選擇此法術專屬觸發時播放的音效", "光環專屬音效")
     condFrame.auraSoundDropdown = auraSoundDropdown
 
     local auraSoundMenu = api.CreateFrame("Frame", nil, condFrame, "BackdropTemplate")
-    auraSoundMenu:SetSize(140, 268)
+    auraSoundMenu:SetSize(220, 228)
     auraSoundMenu:SetPoint("TOPLEFT", auraSoundDropdown, "BOTTOMLEFT", 0, -2)
     auraSoundMenu:SetFrameStrata("TOOLTIP")
     auraSoundMenu:SetBackdrop({
@@ -3149,20 +3258,35 @@ local function createFrame()
     auraSoundMenu:Hide()
     condFrame.auraSoundMenu = auraSoundMenu
 
-    for index = 1, #soundNames do
-        local soundName = soundNames[index]
-        local menuButton = api.CreateFrame("Button", nil, auraSoundMenu)
-        menuButton:SetSize(134, 20)
-        menuButton:SetPoint("TOPLEFT", auraSoundMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        local menuText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        menuText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        menuText:SetText(soundName)
-        finalizeDropdownMenuButton(menuButton, menuText, auraSoundMenu)
-        menuButton:SetScript("OnClick", function()
-            condFrame.auraSoundName = soundName
-            auraSoundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. soundName)
-            auraSoundMenu:Hide()
-        end)
+    local function populateAuraSoundMenu()
+        buildScrollableDropdownMenu(
+            auraSoundMenu,
+            auraSoundDropdown,
+            function()
+                local MediaService = EAM.Services and EAM.Services.MediaService
+                if MediaService and MediaService.getMediaList then
+                    return MediaService.getMediaList("sound", true)
+                end
+                local list = {}
+                for _, sName in ipairs(soundNames) do
+                    list[#list + 1] = { value = sName, text = sName }
+                end
+                return list
+            end,
+            function(item)
+                condFrame.auraSoundName = item.value
+                auraSoundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. (item.text or item.value))
+                local MediaService = EAM.Services and EAM.Services.MediaService
+                if MediaService and MediaService.playSound then
+                    MediaService.playSound(item.value)
+                end
+            end,
+            220,
+            10
+        )
+        for _, btn in ipairs(auraSoundMenu.buttons or {}) do
+            finalizeDropdownMenuButton(btn, btn.text, auraSoundMenu)
+        end
     end
 
     auraSoundDropdown:SetScript("OnClick", function()
@@ -3172,6 +3296,7 @@ local function createFrame()
         if auraSoundMenu:IsShown() then
             auraSoundMenu:Hide()
         else
+            populateAuraSoundMenu()
             auraSoundMenu:Show()
         end
     end)
@@ -3186,8 +3311,14 @@ local function createFrame()
         if not isAuraSoundAvailable() then
             return
         end
-        local asset = soundAssets[condFrame.auraSoundName] or soundAssets.ShayBell
-        PlaySoundFile(asset, "Master")
+        local sName = condFrame.auraSoundName or (EAM.db and EAM.db.config and EAM.db.config.soundName) or "ShayBell"
+        local MediaService = EAM.Services and EAM.Services.MediaService
+        if MediaService and MediaService.playSound then
+            MediaService.playSound(sName)
+        else
+            local asset = soundAssets[sName] or soundAssets.ShayBell
+            PlaySoundFile(asset, "Master")
+        end
     end)
     condFrame.auraSoundTestButton = auraSoundTestButton
 

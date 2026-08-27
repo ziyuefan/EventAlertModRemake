@@ -343,6 +343,7 @@ local function buildVisualFingerprint(db)
     local applications = textLayout and textLayout.applications or nil
     return table.concat({
         tostring(config and config.fontSizeSpellName or 12),
+        tostring(config and config.fontFamily or "STANDARD"),
         tostring(timer and timer.placement or Constants.TEXT_PLACEMENT_TIMER_DEFAULT),
         tostring(timer and timer.fontSize or 14),
         tostring(applications and applications.placement or Constants.TEXT_PLACEMENT_APPLICATIONS_DEFAULT),
@@ -357,7 +358,11 @@ local function buildDefaultSound(db)
     if not config or config.showSound ~= true then
         return nil
     end
-    local asset = SOUND_ASSETS[config.soundName or "ShayBell"] or SOUND_ASSETS.ShayBell
+    local sName = config.soundName or "ShayBell"
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    local asset = (MediaService and MediaService.getSoundPath(sName))
+        or SOUND_ASSETS[sName]
+        or SOUND_ASSETS.ShayBell
     local added = {}
     if type(asset) == "number" then
         added.soundFileID = asset

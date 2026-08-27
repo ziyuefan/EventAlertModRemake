@@ -5,7 +5,7 @@
 ## 邊界: 不載入 Classic/MOP/TBC/Wrath 分支，不載入 ReferenceLibs 或 LegacyReference。
 ## 維護: 新增正式模組時同步確認 Docs/04_MODULE_CONTRACTS.md 與 Docs/12_CODE_COMMENTARY_GUIDE.md。
 ## Interface: 120007, 120100
-## Version: EventAlertMod_MN_20260826
+## Version: EventAlertMod_MN_20260827
 ## X-WoWI-ID: 26550
 ## X-Curse-Project-ID: 826042
 

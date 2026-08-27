@@ -294,7 +294,25 @@ local function cycleOrientation()
     autoApplyDraft()
 end
 
+local function getFontOptionsList()
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    local mediaList = MediaService and MediaService.getMediaList and MediaService.getMediaList("font")
+    if mediaList and #mediaList > 0 then
+        return mediaList
+    end
+    return EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+end
+
 local function fontFamilyLabel(value)
+    local MediaService = EAM.Services and EAM.Services.MediaService
+    if MediaService and MediaService.getMediaList then
+        local mediaList = MediaService.getMediaList("font")
+        for _, item in ipairs(mediaList) do
+            if item.value == value then
+                return item.text or item.value
+            end
+        end
+    end
     local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
     for index = 1, #options do
         if options[index].value == value then
@@ -308,7 +326,7 @@ local function cycleFontFamily()
     if not Panel.draft then
         return
     end
-    local options = EAM.Constants and EAM.Constants.FONT_FAMILY_OPTIONS or {}
+    local options = getFontOptionsList()
     if #options == 0 then
         return
     end

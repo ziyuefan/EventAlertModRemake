@@ -329,6 +329,7 @@ function AuraContainerService.initialize()
         router.register("EAM_AURA_CONFIG_CHANGED", AuraContainerService.requestRebuild)
         router.register("EAM_AURA_STYLE_CHANGED", AuraContainerService.requestRebuild)
         router.register("EAM_AURA_SOUND_CHANGED", AuraContainerService.requestRebuild)
+        router.register("EAM_FONT_FAMILY_CHANGED", AuraContainerService.requestRebuild)
     end
 
     if capability.clientInterface >= Constants.INTERFACE then

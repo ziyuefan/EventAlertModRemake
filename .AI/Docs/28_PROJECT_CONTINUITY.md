@@ -5,9 +5,24 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-08-24.15 (Alpha 7.9)。
+目前快照版本：2026-08-24.15 (Alpha 8.2)。
 
-## 2026-08-24 Alpha 7.9 全介面懸停提示、主視窗一鍵置中重置與圖文導覽快照（現行）
+## 2026-08-27 Alpha 8.2 LibSharedMedia-3.0 素材生態全面整合、字型熱套用與捲動選單快照（現行）
+
+- current-of-truth：專案進入 Alpha 8.2 發布階段；全面接入 LibSharedMedia-3.0 (SharedMedia) 素材生態，支援動態探測與第三方音效/字型讀取，修復字型修改免 `/reload` 即時生效，實作 UI 下拉選單自適應捲動容器，完成 71/71 語法、84/84 Flow 驗證與 493/493 契約測試。
+- LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合：
+  1. 實作 `MediaService.ensureLSM()` 動態探測機制與 `PLAYER_LOGIN` 延遲同步刷新，徹底解決插件載入順序先後導致快取被凍結在 12 種內建音效的問題。
+  2. 同時查詢 `lsm:List("sound")` 與 `lsm:HashTable("sound")` 雙軌資料源並去重，完整收錄所有第三方音效。
+  3. 支援雙軌安全播放 (`MediaService.playSound`)，相容 FileDataID、SoundKitID 與自訂 FilePath (.ogg / .mp3)。
+  4. 12.1 Native Aura 規則編譯器接入 `MediaService.getSoundPath`。
+- 全域字型熱套用（免 `/reload` 即時生效）：
+  1. `SavedVariables.lua` 放行所有通過 LSM 註冊之字型名稱。
+  2. `AuraRuleCompiler.lua` 將 `fontFamily` 納入 Native 佈局指紋。
+  3. `Renderer` 與 `AuraContainerService` 註冊 `EAM_FONT_FAMILY_CHANGED` 事件監聽。
+  4. `Options.notifyTextLayoutChanged` 聯動刷新預覽圖示、職業資源與人物屬性文字。
+- UI 下拉選單長清單自適應捲動容器 (`buildScrollableDropdownMenu`)：
+  1. 當素材超過 10 筆時自動限制高度並啟用捲軸與滑鼠滾輪支援。
+  2. 展開選單時啟用 `forceRefresh = true` 即時向 LSM 拉取最新素材清單。
 
 - current-of-truth：專案進入 Alpha 7.9 發布階段；全介面 10 大視窗已完整配置 Hover Tooltips、主視窗螢幕邊界鎖定與一鍵居中重置命令 (`/eam reset`)、官方 README 加入 14 張高畫質介面圖文導覽，完成 68/68 語法、84/84 Flow 驗證與 493/493 契約測試。
 - 全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)：

@@ -378,6 +378,7 @@ local function applyTextLayoutToIcon(icon, config)
 
     local rendered = icon.rendered
     local refFrame = icon.overlay or icon
+    local fontFamily = TextPlacement.getFontFamily(config)
     local timerPlacement = TextPlacement.getPlacement(config, "timer")
     local applicationsPlacement = TextPlacement.getPlacement(config, "applications")
     local timerFontSize = TextPlacement.getFontSize(config, "timer")
@@ -395,18 +396,19 @@ local function applyTextLayoutToIcon(icon, config)
         TextPlacement.apply(icon.stackText, refFrame, applicationsPlacement)
         rendered.applicationsPlacement = applicationsPlacement
     end
-    if rendered.timerFontSize ~= timerFontSize then
+    if rendered.timerFontSize ~= timerFontSize or rendered.fontFamily ~= fontFamily then
         TextPlacement.applyFont(icon.timerText, timerFontSize, config)
         rendered.timerFontSize = timerFontSize
     end
-    if rendered.applicationsFontSize ~= applicationsFontSize then
+    if rendered.applicationsFontSize ~= applicationsFontSize or rendered.fontFamily ~= fontFamily then
         TextPlacement.applyFont(icon.stackText, applicationsFontSize, config)
         rendered.applicationsFontSize = applicationsFontSize
     end
-    if icon.nameText and rendered.nameFontSize ~= nameFontSize then
+    if icon.nameText and (rendered.nameFontSize ~= nameFontSize or rendered.fontFamily ~= fontFamily) then
         TextPlacement.applyFont(icon.nameText, nameFontSize, config)
         rendered.nameFontSize = nameFontSize
     end
+    rendered.fontFamily = fontFamily
     return true
 end
 
@@ -419,11 +421,21 @@ function Renderer.applyTextLayout()
     local config = EAM.db and EAM.db.config or nil
     local updated = 0
     for _, fState in pairs(Renderer.frames) do
-        for _, icon in pairs(fState.icons) do
+        for _, icon in pairs(fState.icons or {}) do
             if applyTextLayoutToIcon(icon, config) then
                 updated = updated + 1
             end
         end
+    end
+    if IconPool and IconPool.active then
+        for _, icon in pairs(IconPool.active) do
+            if applyTextLayoutToIcon(icon, config) then
+                updated = updated + 1
+            end
+        end
+    end
+    if Renderer.refreshPreviewLayout then
+        Renderer.refreshPreviewLayout()
     end
     Renderer.textLayoutPending = false
     return true, updated
@@ -612,6 +624,9 @@ function Renderer.initialize()
     local router = EAM.Modules.EventRouter
     if router then
         router.register("PLAYER_REGEN_ENABLED", Renderer.onCombatEnd)
+        router.register("EAM_FONT_FAMILY_CHANGED", function()
+            Renderer.applyTextLayout()
+        end)
     end
 end
 

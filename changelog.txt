@@ -1,3 +1,19 @@
+-- [Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
+    -- LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)：
+       -- 全面接入社群廣泛使用的 LibSharedMedia-3.0 素材生態，完整支援所有第三方 SharedMedia 音效包、字型包與材質包。
+       -- 實作 MediaService.ensureLSM() 動態探測機制與 PLAYER_LOGIN 延遲同步刷新，徹底解決 EAM 早於其他 SharedMedia 擴充插件載入時音效清單被凍結在初始 12 種內建音效的問題。
+       -- 同時查詢 lsm:List("sound") 與 lsm:HashTable("sound") 雙軌資料來源並自動去重，保證 100% 完整抓取所有第三方 SharedMedia 註冊音效。
+       -- 支援安全雙軌音效播放 (MediaService.playSound)：無縫相容數字 FileDataID、原生 SoundKitID 與自訂字串 FilePath (.ogg / .mp3) 檔案。
+       -- 12.1 Native Aura 原生光環規則編譯器 (AuraRuleCompiler) 接入 MediaService，光環觸發時亦可播放 LSM 自訂音效。
+    -- 全域字型熱套用與存檔修復（免 /reload 即時生效）(Zero-Delay Font Application & SavedVariables Whitelist)：
+       -- 解除字型存檔白名單限制：SavedVariables.lua 放行所有通過 LSM 註冊的自訂字型名稱，防止重登、重載或切換專精後被強制還原為預設字型。
+       -- 畫面預覽圖示即時聯動：更換字型時，畫面上的奶牛頭與位置預覽圖示 (Preview Icons) 立即同步重繪新字型。
+       -- 12.1 Native Aura 規則指紋補齊：將 fontFamily 納入 Native 佈局指紋 (buildLayoutFingerprint)，修復過去因指紋相同而略過原生容器重建的問題。
+       -- 全子系統文字廣播聯動：透過 EAM_FONT_FAMILY_CHANGED 事件，同步即時刷新一般告警圖示 (Renderer)、能量條文字 (PowerRenderer / PlayerResourceService) 與人物屬性文字 (PlayerStatService)，選取字型後畫面上所有文字零延遲即時套用。
+       -- 職業資源文字面板 (PlayerResourcePanel) 之字型切換按鈕全面支援循環切換所有 SharedMedia 字型。
+    -- UI 下拉選單長清單自適應捲動容器 (Scrollable Dropdown Menus with MouseWheel)：
+       -- 實作通用自適應捲動選單 buildScrollableDropdownMenu：當 SharedMedia 包含數十或數百種字型／音效時，選單自動限制高度為 10 筆並啟用 UIPanelScrollFrameTemplate 捲軸與滑鼠滾輪支援，版面整潔不破圖。
+       -- 展開音效與字型選單時自動以 forceRefresh 模式向 LSM 抓取最新註冊素材清單。
 -- [Retail 12.1.0 Alpha 8.1 Cooldown Zero-Alpha Mode & Combat Stat Memory Fallbacks] 2026.08.26
     -- 技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (Persistent Pre-anchoring & Zero-Alpha Cooldown Mode)：
        -- 徹底解決技能冷卻在戰鬥中首次施放無法建立框架或延遲至脫戰後才出現的架構問題。

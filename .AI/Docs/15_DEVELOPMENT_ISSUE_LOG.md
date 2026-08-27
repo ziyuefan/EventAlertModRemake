@@ -1,3 +1,31 @@
+### 2026-08-27 EAM-20260827-ALPHA82-SHAREDMEDIA-ECOSYSTEM-AND-ZERO-DELAY-FONT：Alpha 8.2 LibSharedMedia-3.0 素材生態全面接入、全域字型熱套用（免 /reload）與捲動選單支援
+
+- 狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包並發布 Pre-release。
+- 變更亮點：
+  1. LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合與動態探測 (`ensureLSM`)：
+     - 根因分析：過去 EAM 依字母排序早於 SharedMedia 擴充插件載入，`MediaService.init()` 執行時 LSM 實例或自訂素材尚未註冊，選單清單快取被凍結為 12 種內建音效；回呼參數格式未相容 CallbackHandler 導致清除快取失效；部分插件僅以 `HashTable` 登記。
+     - 重構實作：
+       - 實作 `MediaService.ensureLSM()` 動態探測函式，在任何查詢或播放時動態確認 LSM 實例與回呼註冊狀態。
+       - 註冊 `PLAYER_LOGIN` 事件，在所有插件載入完成後自動刷新 LSM 實例與清空快取。
+       - `MediaService.getMediaList` 同時整合 `lsm:List` 與 `lsm:HashTable` 雙重查詢並自動去重。
+       - 實作安全雙軌播放 `MediaService.playSound`，無縫支援 FileDataID、SoundKitID 與自訂 FilePath (.ogg / .mp3)。
+       - 12.1 Native Aura 規則編譯器 (`AuraRuleCompiler`) 接入 `MediaService.getSoundPath`，光環觸發時亦可播放 LSM 音效。
+  2. 全域字型熱套用與存檔解鎖（免 `/reload` 即時生效）：
+     - 根因分析：
+       - `AuraRuleCompiler.lua` 之 `buildLayoutFingerprint` 缺少 `config.fontFamily`，更改字型時 fingerprint 不變導致 Native 容器誤判跳過重建。
+       - `Renderer` 與 `AuraContainerService` 未訂閱 `EAM_FONT_FAMILY_CHANGED` 事件。
+       - 設定面板更換字型時，畫面上的位置預覽圖示（Preview Icons）未被指示重繪。
+       - `SavedVariables.lua` 的字型白名單過濾器會將 LSM 自訂字型強制退回 `"STANDARD"`。
+     - 重構實作：
+       - `SavedVariables.lua` 放行所有通過 LSM 註冊之字型名稱。
+       - `AuraRuleCompiler.lua` 納入 `config.fontFamily` 佈局指紋。
+       - `AuraContainerService.lua` 與 `Renderer.lua` 註冊 `EAM_FONT_FAMILY_CHANGED` 事件監聽。
+       - `Options.notifyTextLayoutChanged` 聯動調用 `Renderer.refreshPreviewLayout()`、`PlayerResourceService.refreshActiveResources()` 與 `PlayerStatService.updateDisplay()`。
+  3. UI 下拉選單長清單自適應捲動容器 (`buildScrollableDropdownMenu`)：
+     - 實作通用的捲動下拉選單，當 SharedMedia 包含數十或數百種字型／音效時，自動限制高度為 10 筆並啟用 `UIPanelScrollFrameTemplate` 捲軸與滾輪支援。
+     - 展開選單時啟用 `forceRefresh = true` 強制即時向 LSM 拉取最新素材清單。
+- 驗證結果：Lua 71/71、Flow all 84/84、Validation Contracts 493/493。
+
 ### 2026-08-26 EAM-20260826-ALPHA81-COOLDOWN-ZERO-ALPHA-AND-COMBAT-STATS：Alpha 8.1 技能冷卻純透明度（Alpha=0）隱藏模式與戰鬥屬性防歸零快取備援
 
 - 狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包並發布 Pre-release。

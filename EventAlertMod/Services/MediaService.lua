@@ -43,11 +43,24 @@ local BUILTIN_FONTS = {
 
 local BUILTIN_SOUNDS = {
     { value = "NONE", labelKey = "EAM_OPT_SOUND_NONE", path = nil },
-    { value = "ALARM_1", labelKey = "EAM_OPT_SOUND_ALARM1", path = "Sound\\Spells\\ShaysBell.ogg" },
-    { value = "ALARM_2", labelKey = "EAM_OPT_SOUND_ALARM2", path = "Sound\\Spells\\PVPFlagCaptured.ogg" },
-    { value = "BELL", labelKey = "EAM_OPT_SOUND_BELL", path = "Sound\\Spells\\SimonGame_LargeBlueTree.ogg" },
-    { value = "DRUM", labelKey = "EAM_OPT_SOUND_DRUM", path = "Sound\\Spells\\Gong_Small.ogg" },
-    { value = "WHISTLE", labelKey = "EAM_OPT_SOUND_WHISTLE", path = "Sound\\Spells\\GoblinLandMineArmed.ogg" },
+    { value = "ShayBell", labelKey = "EAM_OPT_SOUND_SHAYBELL", path = 568154 },
+    { value = "FluteRun", labelKey = "EAM_OPT_SOUND_FLUTERUN", path = 569642 },
+    { value = "Netherwind", labelKey = "EAM_OPT_SOUND_NETHERWIND", path = 569487 },
+    { value = "PolyMorphCow", labelKey = "EAM_OPT_SOUND_COW", path = 568761 },
+    { value = "RockBiter", labelKey = "EAM_OPT_SOUND_ROCKBITER", path = 569545 },
+    { value = "YarrrrImpact", labelKey = "EAM_OPT_SOUND_YARRRR", path = 568382 },
+    { value = "BrokenHeart", labelKey = "EAM_OPT_SOUND_BROKENHEART", path = 568945 },
+    { value = "MillhouseReady", labelKey = "EAM_OPT_SOUND_MILLHOUSE_READY", path = 555336 },
+    { value = "MillhousePyro", labelKey = "EAM_OPT_SOUND_MILLHOUSE_PYRO", path = 555337 },
+    { value = "SatyrePissed", labelKey = "EAM_OPT_SOUND_SATYRE_PISSED", path = 559630 },
+    { value = "MortarTeamPissed", labelKey = "EAM_OPT_SOUND_MORTAR_PISSED", path = 555839 },
+    { value = "ShaolinFootball", labelKey = "EAM_OPT_SOUND_SHAOLIN", path = "Interface\\AddOns\\EventAlertMod\\Media\\Music\\ShaolinFootball.mp3" },
+    -- 舊版相容別名
+    { value = "ALARM_1", labelKey = "EAM_OPT_SOUND_ALARM1", path = 568154, aliasOf = "ShayBell" },
+    { value = "ALARM_2", labelKey = "EAM_OPT_SOUND_ALARM2", path = 569642, aliasOf = "FluteRun" },
+    { value = "BELL", labelKey = "EAM_OPT_SOUND_BELL", path = 568154, aliasOf = "ShayBell" },
+    { value = "DRUM", labelKey = "EAM_OPT_SOUND_DRUM", path = 569545, aliasOf = "RockBiter" },
+    { value = "WHISTLE", labelKey = "EAM_OPT_SOUND_WHISTLE", path = 568382, aliasOf = "YarrrrImpact" },
 }
 
 local BUILTIN_STATUSBARS = {
@@ -56,7 +69,10 @@ local BUILTIN_STATUSBARS = {
     { value = "SMOOTH", labelKey = "EAM_OPT_BAR_SMOOTH", path = "Interface\\AddOns\\EventAlertMod\\Textures\\Smooth" },
 }
 
-function MediaService.init()
+function MediaService.ensureLSM()
+    if MediaService.hasLSM and MediaService.lsm then
+        return MediaService.lsm
+    end
     if _G.LibStub then
         local ok, lsm = pcall(_G.LibStub, "LibSharedMedia-3.0", true)
         if ok and lsm then
@@ -65,15 +81,48 @@ function MediaService.init()
             MediaService.registerBuiltinsToLSM()
             if not MediaService.registeredCallbacks and lsm.RegisterCallback then
                 lsm.RegisterCallback(MediaService, "LibSharedMedia_Registered", "onMediaRegistered")
+                lsm.RegisterCallback(MediaService, "LibSharedMedia_SetGlobal", "onMediaRegistered")
                 MediaService.registeredCallbacks = true
             end
+            return lsm
         end
+    end
+    return nil
+end
+
+function MediaService.clearCache(mediaType)
+    if mediaType then
+        MediaService.cache[mediaType] = nil
+    else
+        MediaService.cache.font = nil
+        MediaService.cache.sound = nil
+        MediaService.cache.statusbar = nil
     end
 end
 
-function MediaService.onMediaRegistered(event, mediaType, key)
-    if mediaType and MediaService.cache[mediaType] then
-        MediaService.cache[mediaType] = nil
+function MediaService.init()
+    MediaService.ensureLSM()
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router and router.register then
+        router.register("PLAYER_LOGIN", function()
+            MediaService.ensureLSM()
+            MediaService.clearCache()
+        end)
+    end
+end
+
+function MediaService.onMediaRegistered(selfOrEvent, eventOrMediaType, mediaTypeOrKey, key)
+    local mType = nil
+    if type(selfOrEvent) == "string" and (selfOrEvent == "LibSharedMedia_Registered" or selfOrEvent == "LibSharedMedia_SetGlobal") then
+        mType = eventOrMediaType
+    elseif type(eventOrMediaType) == "string" and (eventOrMediaType == "LibSharedMedia_Registered" or eventOrMediaType == "LibSharedMedia_SetGlobal") then
+        mType = mediaTypeOrKey
+    end
+
+    if mType and MediaService.cache[mType] then
+        MediaService.cache[mType] = nil
+    else
+        MediaService.clearCache()
     end
 end
 
@@ -88,7 +137,7 @@ function MediaService.registerBuiltinsToLSM()
         end
     end
     for _, item in ipairs(BUILTIN_SOUNDS) do
-        if item.path then
+        if item.path and not item.aliasOf then
             pcall(lsm.Register, lsm, "sound", "EAM " .. item.value, item.path)
         end
     end
@@ -99,9 +148,11 @@ function MediaService.registerBuiltinsToLSM()
     end
 end
 
-function MediaService.getMediaList(mediaType)
+function MediaService.getMediaList(mediaType, forceRefresh)
     mediaType = mediaType or "font"
-    if MediaService.cache[mediaType] then
+    MediaService.ensureLSM()
+
+    if not forceRefresh and MediaService.cache[mediaType] then
         return MediaService.cache[mediaType]
     end
 
@@ -116,29 +167,50 @@ function MediaService.getMediaList(mediaType)
     end
 
     for _, item in ipairs(builtins) do
-        local label = EAM.L and EAM.L[item.labelKey] or item.value
-        list[#list + 1] = {
-            value = item.value,
-            text = label,
-            path = item.path,
-            isBuiltin = true,
-        }
-        seen[item.value] = true
+        if not item.aliasOf and not seen[item.value] then
+            local label = EAM.L and EAM.L[item.labelKey] or item.value
+            list[#list + 1] = {
+                value = item.value,
+                text = label,
+                path = item.path,
+                isBuiltin = true,
+            }
+            seen[item.value] = true
+        end
     end
 
-    if MediaService.hasLSM and MediaService.lsm and MediaService.lsm.List then
-        local ok, lsmKeys = pcall(MediaService.lsm.List, MediaService.lsm, mediaType)
-        if ok and type(lsmKeys) == "table" then
-            for _, key in ipairs(lsmKeys) do
-                if not seen[key] then
-                    local path = MediaService.lsm:Fetch(mediaType, key, true)
-                    list[#list + 1] = {
-                        value = key,
-                        text = key,
-                        path = path,
-                        isLSM = true,
-                    }
-                    seen[key] = true
+    local lsm = MediaService.lsm
+    if lsm then
+        if lsm.List then
+            local ok, lsmKeys = pcall(lsm.List, lsm, mediaType)
+            if ok and type(lsmKeys) == "table" then
+                for _, key in ipairs(lsmKeys) do
+                    if not seen[key] then
+                        local path = lsm.Fetch and lsm:Fetch(mediaType, key, true)
+                        list[#list + 1] = {
+                            value = key,
+                            text = key,
+                            path = path,
+                            isLSM = true,
+                        }
+                        seen[key] = true
+                    end
+                end
+            end
+        end
+        if lsm.HashTable then
+            local okHash, lsmHash = pcall(lsm.HashTable, lsm, mediaType)
+            if okHash and type(lsmHash) == "table" then
+                for key, path in pairs(lsmHash) do
+                    if not seen[key] then
+                        list[#list + 1] = {
+                            value = key,
+                            text = key,
+                            path = path,
+                            isLSM = true,
+                        }
+                        seen[key] = true
+                    end
                 end
             end
         end
@@ -148,11 +220,43 @@ function MediaService.getMediaList(mediaType)
     return list
 end
 
+function MediaService.isValidMedia(mediaType, key)
+    if not key or key == "" then
+        return false
+    end
+    if key == "NONE" and mediaType == "sound" then
+        return true
+    end
+    MediaService.ensureLSM()
+    if MediaService.hasLSM and MediaService.lsm and MediaService.lsm.IsValid then
+        local ok, valid = pcall(MediaService.lsm.IsValid, MediaService.lsm, mediaType, key)
+        if ok and valid then
+            return true
+        end
+    end
+
+    local builtins = BUILTIN_FONTS
+    if mediaType == "sound" then
+        builtins = BUILTIN_SOUNDS
+    elseif mediaType == "statusbar" then
+        builtins = BUILTIN_STATUSBARS
+    end
+
+    for _, item in ipairs(builtins) do
+        if item.value == key or (item.aliasOf and item.aliasOf == key) then
+            return true
+        end
+    end
+
+    return false
+end
+
 function MediaService.fetchMedia(mediaType, key, fallback)
     if not key or key == "" or key == "NONE" then
         return fallback
     end
 
+    MediaService.ensureLSM()
     if MediaService.hasLSM and MediaService.lsm and MediaService.lsm.Fetch then
         local ok, fetched = pcall(MediaService.lsm.Fetch, MediaService.lsm, mediaType, key, true)
         if ok and fetched then
@@ -168,12 +272,17 @@ function MediaService.fetchMedia(mediaType, key, fallback)
     end
 
     for _, item in ipairs(builtins) do
-        if item.value == key then
+        if item.value == key or (item.aliasOf and item.aliasOf == key) then
             if item.path == "STANDARD" then
                 return STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
             end
             return item.path or fallback
         end
+    end
+
+    -- 若 key 本身即為數字 FileDataID 或字串檔案路徑
+    if type(key) == "number" or (type(key) == "string" and (key:find("\\") or key:find("/"))) then
+        return key
     end
 
     return fallback
@@ -190,3 +299,38 @@ end
 function MediaService.getStatusBarPath(key, fallback)
     return MediaService.fetchMedia("statusbar", key, fallback or "Interface\\TargetingFrame\\UI-StatusBar")
 end
+
+function MediaService.playSound(soundName, channel)
+    channel = channel or "Master"
+    if not soundName or soundName == "" or soundName == "NONE" then
+        return false
+    end
+    MediaService.ensureLSM()
+    local asset = MediaService.getSoundPath(soundName)
+    if not asset then
+        return false
+    end
+    if type(asset) == "number" then
+        if _G.PlaySoundFile then
+            local ok, handle = pcall(_G.PlaySoundFile, asset, channel)
+            if ok and handle then return true end
+        end
+        if _G.PlaySound then
+            local ok, handle = pcall(_G.PlaySound, asset, channel)
+            if ok and handle then return true end
+        end
+    elseif type(asset) == "string" then
+        if _G.PlaySoundFile then
+            local ok, handle = pcall(_G.PlaySoundFile, asset, channel)
+            if ok and handle then return true end
+        end
+        if _G.PlaySound then
+            pcall(_G.PlaySound, asset, channel)
+            return true
+        end
+    end
+    return false
+end
+
+-- 模組載入時立即嘗試連接 LSM
+pcall(MediaService.init)

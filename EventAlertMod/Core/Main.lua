@@ -50,6 +50,10 @@ function Main.initialize()
     end
     Main.initialized = true
 
+    if EAM.Services.MediaService and EAM.Services.MediaService.init then
+        pcall(EAM.Services.MediaService.init)
+    end
+
     if EAM.Modules.SavedVariables then
         local ok, err = pcall(EAM.Modules.SavedVariables.initialize)
         if not ok then
@@ -59,10 +63,6 @@ function Main.initialize()
 
     if EAM.Locale and EAM.Locale.setSelection and EAM.db and EAM.db.config then
         pcall(EAM.Locale.setSelection, EAM.db.config.language)
-    end
-
-    if EAM.Services.MediaService and EAM.Services.MediaService.init then
-        pcall(EAM.Services.MediaService.init)
     end
 
     initializeModule(EAM.Modules.ModuleController, "ModuleController")
