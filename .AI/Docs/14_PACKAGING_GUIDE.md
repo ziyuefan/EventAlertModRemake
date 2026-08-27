@@ -38,6 +38,16 @@ pwsh -NoProfile -File .\Deploy\Build-Package.ps1
 pwsh -NoProfile -File .\Deploy\Build-SourcePackage.ps1
 ```
 
+使用者輸入「發布至 CurseForge」時執行：
+```powershell
+pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1
+```
+
+使用者輸入「模擬發布」時執行：
+```powershell
+pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -DryRun
+```
+
 需要部署時先檢查狀態，再由互動選單確認版本與目標：
 ```powershell
 pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action Status
@@ -138,3 +148,10 @@ python .\.AI\Tools\batch_convert_docs.py
 - 正式流程是在本機執行 `Deploy/Build-Package.ps1` 與 `Deploy/Build-SourcePackage.ps1`，檢查兩份 ZIP 清單與 SHA-256，再以 `gh release create <tag> <addon.zip> <source.zip> --prerelease` 上傳 GitHub Release。
 - GitHub Release 不等於 CurseForge／WoWInterface 發布；`-w`、`-p` 外部目標本輪不使用。
 - tag 必須指向已通過 gate 且已推送的 commit；ZIP 不提交 Git。插件包只含 `EventAlertMod/`，source 包依排除契約移除本機衍生物。
+
+## CurseForge 本機發布與 Token 安全契約
+
+- **100% 本機隔離原則**：任何平台發布 Token（CurseForge API Token、WoWInterface Token、Personal Access Token）嚴禁以明文寫入任何檔案、禁止提交 Git、禁止出現在公開對話中。
+- **Windows DPAPI 雙重加密防護**：本機 Token 統一使用 Windows DPAPI 加密保存於 `.AI/API_TOKEN.SEC`，綁定當前 Windows 登入帳號，禁止上傳與打包。
+- **發布工具規範**：手動發布統一由 `Deploy/Upload-CurseForge.ps1` 執行，支援 CLI 模式與詢問模式，並提供 `-DryRun` 模擬模式；上傳時於記憶體中解密並自動遮蔽輸出。
+- **CI 凍結原則**：GitHub Actions 發布流程維持停用，未獲授權不得配置任何雲端發布腳本。

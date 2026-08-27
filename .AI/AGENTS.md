@@ -253,14 +253,33 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 3.重寫：建立核心、服務、UI、偵錯模組，取得可用的資料與使用者語意。
 4.靜態驗證：執行可用的Lua語法檢查、全域變數搜尋、`C_Timer.After`閉包搜尋、`table.freeze`錯誤搜尋。
 5. 報告：明確變更變更、未驗證事項、風險與下一步。
+## 機密憑證與 Token 安全防護規範 (Secret & Token Security Governance)
+
+為防止創作者 API Token、私鑰與敏感金鑰意外洩漏，實施以下絕對安全與隔離邊界：
+
+- **100% 本機隔離原則**：
+  - 任何平台發布 Token（包括 CurseForge API Token、WoWInterface Token、個人 Access Token 等）**永遠只留存在本機**。
+  - 絕對禁止將任何 Token 寫入程式碼、註解、測試檔案、Git 提交歷史或公開對話中。
+  - 絕對禁止將含有 Token 的檔案納入任何發布 ZIP 壓縮包（無論是 AddOn 插件包還是 Source 原始碼包）。
+- **本機雙重加密防護 (Windows DPAPI)**：
+  - 本機 Token 統一透過微軟 Windows DPAPI (Data Protection API) 加密成二進位密文保存於 `.AI/API_TOKEN.SEC`。
+  - 該密文嚴格綁定當前 Windows 使用者登入帳號與本機硬體金鑰，即使檔案外流他人也無法解密。
+  - 專案 `.gitignore` 與 `Build-SourcePackage.ps1`、`Build-Package.ps1` 必須強制排除 `*.SEC`、`*.sec`、`API_TOKEN.SEC`、`*secret*`、`*token*`、`.env*`。
+- **CurseForge 發布邊界**：
+  - 本機發布統一調用 `Deploy/Upload-CurseForge.ps1` 工具，支援 CLI 傳參與對話式詢問模式，並提供 `-DryRun` 模擬模式供發布前全真驗證。
+  - 執行上傳時，腳本僅在記憶體中瞬時解密 Token，並在終端機顯示時自動遮蔽（Masking），執行完畢即自記憶體釋放。
+  - GitHub Actions 自動發布目前維持停用狀態 (`if: false`)，未經少年欸授權不得建立或啟用任何包含 Token 的雲端發布腳本。
+
 ## 快速指令
 
-- 當使用者只輸入「資源」兩個字時，直接執行`.AI/Deploy/Build-Package.ps1`。
-- 當使用者輸入「壓縮開發版」時，直接執行`.AI/Deploy/Build-Package.ps1 -PackageLabel DEV`。
-- 資料夾前需確認`EventAlertMod/EventAlertMod.toc`的`##版本`符合`EventAlertMod_MN_yyyyMMdd`。
-- 預算檔名必須符合`EventAlertMod_MN_yyyyMMdd_HHmmss.zip`。
+- 當使用者只輸入「資源」兩個字時，直接執行 `pwsh -NoProfile -File .\Deploy\Build-Package.ps1`。
+- 當使用者輸入「壓縮開發版」時，直接執行 `pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -PackageLabel DEV`。
+- 當使用者需要「發布至 CurseForge」時，執行 `pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1`。
+- 當使用者需要「模擬發布」時，執行 `pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -DryRun`。
+- 資料夾前需確認 `EventAlertMod/EventAlertMod.toc` 的 `## Version:` 符合 `EventAlertMod_MN_yyyyMMdd`。
+- 預算檔名必須符合 `EventAlertMod_MN_yyyyMMdd_HHmmss.zip`。
 - 壓縮後返回 zip 路徑、Lua 語法檢查結果、排除資料夾檢查結果。
-- 相關規則請參閱`.AI/Docs/14_PACKAGING_GUIDE.md`。
+- 相關規則請參閱 `.AI/Docs/14_PACKAGING_GUIDE.md`。
 
 ##回最終傳必須包含
 

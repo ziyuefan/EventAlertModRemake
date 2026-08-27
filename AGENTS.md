@@ -19,8 +19,11 @@
 - `changelog.txt` 只記 WoW 插件功能、玩家可感知修正、遊戲版本／API 相容性及實際套件內容變更。
 - AI 治理、代理分工、文件同步、測試進度與 CI／GitHub 操作改記 `.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md` 或 `.AI/Docs/28_PROJECT_CONTINUITY.md`。
 - `Dist/` 不提交 Git；Release 使用 `Deploy/Build-Package.ps1` 建立插件包，並可另建排除本機衍生物的專案 `src` 包。
+- 機密憑證與 Token（如 CurseForge API Token）100% 永久留存本機，透過 Windows DPAPI（`API_TOKEN.SEC`）雙重加密隔離；絕對禁止提交至 Git、禁止納入任何發布 ZIP 壓縮包。
 
 ## 快速命令
 
 - 使用者只輸入「資源」：執行 `pwsh -NoProfile -File .\Deploy\Build-Package.ps1`。
 - 「壓縮開發版」：執行 `pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -PackageLabel DEV`。
+- 「發布至 CurseForge」：執行 `pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1`。
+- 「模擬發布」：執行 `pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -DryRun`。
