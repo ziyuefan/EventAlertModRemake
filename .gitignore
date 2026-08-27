@@ -25,6 +25,10 @@ __pycache__/
 *secrets*
 *token*
 *.token
+*.sec
+*.SEC
+API_TOKEN.SEC
+API_TOKEN.sec
 .env
 .env.*
 .AI/local_secrets.json

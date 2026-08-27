@@ -64,8 +64,8 @@ function Test-ExcludedDirectory {
 function Test-ExcludedFile {
     param([Parameter(Mandatory = $true)][System.IO.FileInfo]$File)
     if ($File.Name -eq ".translation_cache.json") { return $true }
-    if ($File.Name -like "*secret*" -or $File.Name -like "*token*" -or $File.Name -like ".env*") { return $true }
-    if ($File.Extension.ToLowerInvariant() -in @(".pyc", ".log", ".zip", ".tmp", ".bak", ".swp", ".old")) { return $true }
+    if ($File.Name -like "*secret*" -or $File.Name -like "*token*" -or $File.Name -like "*.sec*" -or $File.Name -like ".env*") { return $true }
+    if ($File.Extension.ToLowerInvariant() -in @(".pyc", ".log", ".zip", ".tmp", ".bak", ".swp", ".old", ".sec")) { return $true }
     return $File.Name.EndsWith("~")
 }
 

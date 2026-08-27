@@ -25,7 +25,9 @@ param(
     [string]$ApiToken = "",
     [switch]$DryRun,
     [switch]$NonInteractive,
-    [switch]$FetchGameVersions
+    [switch]$FetchGameVersions,
+    [switch]$SetToken,
+    [string]$SaveToken = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -136,26 +138,75 @@ function Get-LatestReleaseNotes {
     return @{ Path = "(動態由 changelog.txt 解析)"; Content = $parsed }
 }
 
+$secCandidates = @(
+    (Join-Path $governanceDir "API_TOKEN.SEC"),
+    (Join-Path $PSScriptRoot "API_TOKEN.SEC"),
+    (Join-Path $projectRoot "API_TOKEN.SEC")
+)
+
+function Protect-EAMToken {
+    param(
+        [Parameter(Mandatory = $true)][string]$PlainToken,
+        [string]$TargetSecFile = (Join-Path $governanceDir "API_TOKEN.SEC")
+    )
+
+    $secureString = ConvertTo-SecureString -String $PlainToken.Trim() -AsPlainText -Force
+    $encrypted = ConvertFrom-SecureString -SecureString $secureString
+    [System.IO.File]::WriteAllText($TargetSecFile, $encrypted, [System.Text.Encoding]::UTF8)
+    Write-Host "`n✔ 已成功將 API Token 透過 Windows DPAPI 安全加密儲存至: $TargetSecFile" -ForegroundColor Green
+    Write-Host "  (此檔案僅能在當前 Windows 登入帳號下解密，且已列入 .gitignore，絕不上傳或封裝)" -ForegroundColor DarkGray
+}
+
+function Unprotect-EAMToken {
+    foreach ($candidate in $secCandidates) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            try {
+                $encrypted = [System.IO.File]::ReadAllText($candidate, [System.Text.Encoding]::UTF8).Trim()
+                if (-not [string]::IsNullOrWhiteSpace($encrypted)) {
+                    $secureString = ConvertTo-SecureString -String $encrypted
+                    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureString)
+                    $plain = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+                    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+                    if (-not [string]::IsNullOrWhiteSpace($plain)) {
+                        return @{ Token = $plain.Trim(); Source = "DPAPI 加密檔 (API_TOKEN.SEC)" }
+                    }
+                }
+            } catch {
+                Write-Warning "無法解密 $candidate (可能由其他 Windows 帳號建立)：$($_.Exception.Message)"
+            }
+        }
+    }
+    return $null
+}
+
 function Get-EffectiveApiToken {
     param([string]$ExplicitToken)
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitToken)) {
-        return $ExplicitToken.Trim()
-    }
-    if (-not [string]::IsNullOrWhiteSpace($env:CF_API_TOKEN)) {
-        return $env:CF_API_TOKEN.Trim()
-    }
-    if (-not [string]::IsNullOrWhiteSpace($env:CURSEFORGE_TOKEN)) {
-        return $env:CURSEFORGE_TOKEN.Trim()
+        return @{ Token = $ExplicitToken.Trim(); Source = "CLI 參數 (-ApiToken)" }
     }
 
-    # 檢查本機私有設定檔 .AI/local_secrets.json (若存在)
+    # 1. 優先從 Windows DPAPI 加密的 API_TOKEN.SEC 解密
+    $secResult = Unprotect-EAMToken
+    if ($secResult) {
+        return $secResult
+    }
+
+    # 2. 檢查環境變數
+    if (-not [string]::IsNullOrWhiteSpace($env:CF_API_TOKEN)) {
+        return @{ Token = $env:CF_API_TOKEN.Trim(); Source = "環境變數 (\$env:CF_API_TOKEN)" }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:CURSEFORGE_TOKEN)) {
+        return @{ Token = $env:CURSEFORGE_TOKEN.Trim(); Source = "環境變數 (\$env:CURSEFORGE_TOKEN)" }
+    }
+
+    # 3. 檢查本機私有設定檔 .AI/local_secrets.json (若存在)
     $localSecretsFile = Join-Path $governanceDir "local_secrets.json"
     if (Test-Path -LiteralPath $localSecretsFile -PathType Leaf) {
         try {
             $json = Get-Content -LiteralPath $localSecretsFile -Encoding UTF8 -Raw | ConvertFrom-Json
             if ($json.CF_API_TOKEN) {
-                return [string]($json.CF_API_TOKEN).Trim()
+                return @{ Token = [string]($json.CF_API_TOKEN).Trim(); Source = ".AI/local_secrets.json" }
             }
         } catch {
             # 忽視解析錯誤
@@ -287,6 +338,24 @@ Write-Host "==================================================" -ForegroundColor
 Write-Host "  EventAlertMod CurseForge Local Upload Tool" -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Cyan
 
+# 0. 快速設定與加密儲存 API Token
+if ($SetToken -or (-not [string]::IsNullOrWhiteSpace($SaveToken))) {
+    $tokenToSave = $SaveToken
+    if ([string]::IsNullOrWhiteSpace($tokenToSave)) {
+        Write-Host "`n=== [CurseForge API Token Windows DPAPI 加密設定] ===" -ForegroundColor Cyan
+        Write-Host "請輸入欲加密儲存的 CurseForge API Token (輸入時隱藏)：" -ForegroundColor Yellow
+        $secInput = Read-Host -AsSecureString
+        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secInput)
+        $tokenToSave = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+    }
+    if ([string]::IsNullOrWhiteSpace($tokenToSave)) {
+        throw "未輸入任何 Token，取消設定。"
+    }
+    Protect-EAMToken -PlainToken $tokenToSave
+    return
+}
+
 # 1. 探索 ZIP 檔案
 if ([string]::IsNullOrWhiteSpace($ZipPath)) {
     $foundZip = Get-LatestDistPackage
@@ -392,17 +461,24 @@ if ($isInteractive) {
     }
 
     # --- 步驟 5: 確認 API Token ---
-    $resolvedToken = Get-EffectiveApiToken -ExplicitToken $ApiToken
-    if ([string]::IsNullOrWhiteSpace($resolvedToken)) {
+    $tokenInfo = Get-EffectiveApiToken -ExplicitToken $ApiToken
+    if (-not $tokenInfo) {
         Write-Host "`n5. CurseForge API Token 驗證：" -ForegroundColor Yellow
-        Write-Host "   未在環境變數 (\$env:CF_API_TOKEN) 或本機設定中偵測到 Token。" -ForegroundColor DarkYellow
+        Write-Host "   未在 DPAPI 加密檔 (API_TOKEN.SEC)、環境變數或本機設定中偵測到 Token。" -ForegroundColor DarkYellow
         $secureInput = Read-Host "   請輸入您的 CurseForge API Token (輸入時隱藏)" -AsSecureString
         $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureInput)
         $resolvedToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
         [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+        if (-not [string]::IsNullOrWhiteSpace($resolvedToken)) {
+            $saveChoice = Read-Host "   是否將此 Token 加密保存為本機 API_TOKEN.SEC (Windows DPAPI 雙重防護，日後免再輸入)？ [Y/N] [預設: Y]"
+            if ($saveChoice -ne "N" -and $saveChoice -ne "n") {
+                Protect-EAMToken -PlainToken $resolvedToken
+            }
+        }
     } else {
+        $resolvedToken = $tokenInfo.Token
         Write-Host "`n5. CurseForge API Token 驗證：" -ForegroundColor Yellow
-        Write-Host "   ✔ 已自動由本機環境/設定檔偵測到有效 Token (已遮蔽保護)。" -ForegroundColor Green
+        Write-Host "   ✔ 已成功從 $($tokenInfo.Source) 載入有效 Token (已遮蔽保護)。" -ForegroundColor Green
     }
 
     if ([string]::IsNullOrWhiteSpace($resolvedToken)) {
@@ -433,10 +509,11 @@ if ($isInteractive) {
     }
 } else {
     # CLI 模式下的 Token 取得
-    $resolvedToken = Get-EffectiveApiToken -ExplicitToken $ApiToken
-    if ([string]::IsNullOrWhiteSpace($resolvedToken)) {
-        throw "CLI 模式缺少 API Token。請傳入 -ApiToken 或設定 \$env:CF_API_TOKEN。"
+    $tokenInfo = Get-EffectiveApiToken -ExplicitToken $ApiToken
+    if (-not $tokenInfo) {
+        throw "CLI 模式缺少 API Token。請傳入 -ApiToken、設定 \$env:CF_API_TOKEN 或執行 .\Deploy\Upload-CurseForge.ps1 -SetToken 加密保存。"
     }
+    $resolvedToken = $tokenInfo.Token
     if (-not (Test-Path -LiteralPath $ZipPath -PathType Leaf)) {
         throw "指定的 ZIP 檔案不存在：$ZipPath"
     }
