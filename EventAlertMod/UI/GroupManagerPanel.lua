@@ -82,21 +82,29 @@ local kindLabels = {
 }
 
 local function resolveSpellItem(alert, rawKey, kind)
-    local numId = alert.spellID
+    local isItem = (kind == "itemCooldowns" or alert.kind == "itemCooldown")
+    local numId = alert.spellID or alert.itemID
     if not numId and type(rawKey) == "string" then
-        numId = tonumber(rawKey:match("(%d+)"))
+        numId = tonumber(rawKey:match("(%d+)$"))
     elseif not numId and type(rawKey) == "number" then
         numId = rawKey
     end
     local sName, sIcon
-    if numId then
+    if isItem and numId then
+        if C_Item and C_Item.GetItemInfo then
+            local name, _, _, _, _, _, _, _, _, icon = C_Item.GetItemInfo(numId)
+            sName = name
+            sIcon = icon
+        end
+    elseif numId then
         sName, sIcon = getSpellDisplayInfo(numId)
     end
-    sName = alert.name or sName or ("Spell " .. tostring(numId or rawKey))
+    sName = alert.name or sName or (isItem and ("Item " .. tostring(numId or rawKey)) or ("Spell " .. tostring(numId or rawKey)))
     sIcon = alert.icon or sIcon or 134400
     local kLabel = kindLabels[kind] or kind
     return {
         spellId = numId or rawKey,
+        isItem = isItem,
         name = sName,
         icon = sIcon,
         alert = alert,
@@ -377,6 +385,23 @@ function Panel.refresh()
             Panel.refresh()
         end)
 
+        row:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(displayName or g.id, 1, 0.82, 0)
+            if g.isSystem then
+                GameTooltip:AddLine(localized("EAM_GROUP_TIP_SYSTEM", "系統預設戰術群組"), 0.7, 0.7, 0.7)
+            else
+                GameTooltip:AddLine(localized("EAM_GROUP_TIP_CUSTOM", "玩家自訂標籤群組"), 0.7, 0.7, 0.7)
+            end
+            if g.inCombatOnly then
+                GameTooltip:AddLine(localized("EAM_GROUP_TIP_COMBAT", "狀態: 僅戰鬥中顯示"), 0.9, 0.6, 0.2)
+            end
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+
         row:SetScript("OnClick", function()
             Panel.selectedGroupId = g.id
             Panel.refresh()
@@ -456,6 +481,27 @@ function Panel.refresh()
             sRow:SetPoint("TOPLEFT", rightParent, "TOPLEFT", 0, -sYOffset)
             sRow.icon:SetTexture(item.icon)
             sRow.text:SetText(string.format("[%s] %s (ID: %s)", tostring(item.kindLabel or item.kind), tostring(item.name), tostring(item.spellId)))
+
+            -- 懸停法術/物品 Tooltip 提示
+            sRow:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                if item.isItem and item.spellId then
+                    if GameTooltip.SetItemByID then
+                        GameTooltip:SetItemByID(item.spellId)
+                    else
+                        GameTooltip:SetHyperlink("item:" .. tostring(item.spellId))
+                    end
+                elseif item.spellId then
+                    local numericSpellId = tonumber(item.spellId)
+                    if numericSpellId and GameTooltip.SetSpellByID then
+                        GameTooltip:SetSpellByID(numericSpellId)
+                    end
+                end
+                GameTooltip:Show()
+            end)
+            sRow:SetScript("OnLeave", function()
+                GameTooltip:Hide()
+            end)
 
             -- 判斷該法術是否已被勾選入此群組
             local isMember = false
