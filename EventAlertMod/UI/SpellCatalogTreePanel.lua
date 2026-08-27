@@ -59,6 +59,28 @@ local function localized(key, fallback)
     return fallback or key
 end
 
+local function getSpellDisplayInfo(sid)
+    local sInfoService = EAM.Services and EAM.Services.SpellInfoService
+    if sInfoService and sInfoService.getSpellInfo then
+        local sName, sIcon = sInfoService.getSpellInfo(sid)
+        if sName then
+            return sName, sIcon
+        end
+    end
+    if C_Spell and C_Spell.GetSpellInfo then
+        local ok, info = pcall(C_Spell.GetSpellInfo, sid)
+        if ok and info then
+            return info.name, info.iconID
+        end
+    elseif GetSpellInfo then
+        local ok, sName, _, sIcon = pcall(GetSpellInfo, sid)
+        if ok and sName then
+            return sName, sIcon
+        end
+    end
+    return "Spell " .. tostring(sid), 134400
+end
+
 -- 建立面板 Frame
 local function createPanel()
     if Panel.frame then
@@ -291,7 +313,7 @@ function Panel.refresh()
         if isExpanded then
             for _, sid in ipairs(spellList) do
                 local sMeta = sh.SPELL_META and sh.SPELL_META[sid] or {}
-                local spellName, _, spellIcon = GetSpellInfo(sid)
+                local spellName, spellIcon = getSpellDisplayInfo(sid)
                 spellName = spellName or ("Spell " .. sid)
 
                 -- 搜尋過濾
