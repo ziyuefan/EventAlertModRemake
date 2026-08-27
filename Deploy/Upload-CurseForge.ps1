@@ -304,7 +304,7 @@ function Invoke-CurseForgeUpload {
     if ($curlCmd) {
         try {
             $metaArgs = "metadata=$metadataJson;type=application/json"
-            $fileArgs = "file=@$ZipFilePath"
+            $fileArgs = "file=@$ZipFilePath;type=application/zip"
 
             $curlArgs = @(
                 "-s",
