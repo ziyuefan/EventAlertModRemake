@@ -1029,6 +1029,12 @@ function Options.closeAllSidePanels(except)
     if except ~= "about" then
         safeClosePanel(EAM.UI and EAM.UI.AboutPanel)
     end
+    if except ~= "group" then
+        safeClosePanel(EAM.UI and EAM.UI.GroupManagerPanel)
+    end
+    if except ~= "catalog" then
+        safeClosePanel(EAM.UI and EAM.UI.SpellCatalogTreePanel)
+    end
     if not except and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
         EAM.UI.Renderer.setActiveAnchors(nil)
     end
@@ -1370,10 +1376,10 @@ local function createFrame()
     end
 
     -- ==========================================
-    -- 1. Main Options Frame (Left Panel, 380x560)
+    -- 1. Main Options Frame (Left Panel, 380x600)
     -- ==========================================
     local frame = api.CreateFrame("Frame", "EAM_MainOptionsFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(380, 560)
+    frame:SetSize(380, 600)
     frame:SetPoint("LEFT", UIParent, "LEFT", 100, 0)
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
@@ -1711,7 +1717,7 @@ local function createFrame()
         end
     end, "立即觸發一次全螢幕紅框閃爍動畫預覽", "測試閃爍")
 
-    -- 9 個主要功能大按鈕（職業資源第 7 項、角色屬性與吸收量第 8 項、排版位置第 9 項）
+    -- 11 個主要功能大按鈕（職業資源第 7 項、角色屬性第 8 項、群組管理第 9 項、全量法術庫第 10 項、排版第 11 項）
     local categories = {
         { key = "EAM_OPT_CAT_SELF", fallback = "自身增益/減益提醒 (Self)", tip = "設定玩家自身身上觸發的 Buff 與 Debuff 告警清單" },
         { key = "EAM_OPT_CAT_CLASS", fallback = "跨職業增益/減益提醒 (Class)", tip = "設定所有其他職業之通用或重要光環監控" },
@@ -1721,6 +1727,8 @@ local function createFrame()
         { key = "EAM_OPT_CAT_GROUND", fallback = "地面技能與效果設定 (Ground Effect)", tip = "設定死亡凋零、奉獻等無目標地面法術之持續時間提醒" },
         { key = "EAM_OPT_CAT_RESOURCE", fallback = localized("EAM_RESOURCE_OPEN", "★ 玩家職業資源設定 (Player Resource)"), tip = "設定連擊點、聖能、符文、真氣、魂片、奧術充能等能量條與數值" },
         { key = "EAM_OPT_CAT_STAT", fallback = localized("EAM_STAT_OPEN", "★ 角色屬性與吸收量監控 (Player Stats)"), tip = "設定力量/敏捷/致命/加速/精通/跑速/飛龍騎術/護甲/吸收盾等即時監控" },
+        { key = "EAM_OPT_CAT_GROUP", fallback = localized("EAM_GROUP_OPEN", "★ 群組分類與標籤管理 (Group Management)"), tip = "管理戰術分類與自訂標籤群組，支援多對多法術複選與情境過濾" },
+        { key = "EAM_OPT_CAT_CATALOG", fallback = localized("EAM_CATALOG_OPEN", "★ 全量法術庫與智慧預設 (Spell Catalog)"), tip = "以階層樹狀檢視全職業核心技能，支援三態勾選與依天賦智慧同步" },
         { key = "EAM_OPT_CAT_LAYOUT", fallback = "告警框架位置與排版 (Alert Frame Layout)", tip = "調整各告警模組圖示大小、間距、排列方向、字型大小與排版" },
     }
     Options.categoryDefinitions = categories
@@ -1734,11 +1742,13 @@ local function createFrame()
         [6] = "groundEffect",
         [7] = "classPower",
         [8] = "playerStat",
-        [9] = "all",
+        [9] = nil,
+        [10] = nil,
+        [11] = "all",
     }
 
     for idx, category in ipairs(categories) do
-        createThemedButton(inner, localized(category.key, category.fallback), 12, -214 - (idx - 1) * 26, 332, 24, function()
+        createThemedButton(inner, localized(category.key, category.fallback), 12, -214 - (idx - 1) * 24, 332, 22, function()
             if idx <= 6 then
                 Options.closeAllSidePanels("list")
                 Options.currentCategory = idx
@@ -1768,6 +1778,18 @@ local function createFrame()
                 if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
                     EAM.UI.Renderer.setActiveAnchors("playerStat")
                 end
+            elseif idx == 9 then
+                Options.closeAllSidePanels("group")
+                local panel = EAM.UI and EAM.UI.GroupManagerPanel
+                if panel and type(panel.open) == "function" then
+                    panel.open()
+                end
+            elseif idx == 10 then
+                Options.closeAllSidePanels("catalog")
+                local panel = EAM.UI and EAM.UI.SpellCatalogTreePanel
+                if panel and type(panel.open) == "function" then
+                    panel.open()
+                end
             else
                 Options.closeAllSidePanels("pos")
                 if Options.posFrame then
@@ -1781,7 +1803,7 @@ local function createFrame()
     end
 
     -- 底部操作按鈕：Profile 匯入/匯出、整合診斷中心與關閉按鈕
-    createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -452, 162, 24, function()
+    createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -484, 162, 22, function()
         Options.closeAllSidePanels("profile")
         local profilePanel = EAM.UI and EAM.UI.ProfileCodecPanel
         if profilePanel and type(profilePanel.open) == "function" then
@@ -1791,7 +1813,7 @@ local function createFrame()
         end
     end, "將當前職業設定匯出為 JSON/Base64 字串，或從其他玩家字串匯入", "Profile 匯入／匯出")
 
-    createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -452, 162, 24, function()
+    createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -484, 162, 22, function()
         Options.closeAllSidePanels("debug")
         local debugCenter = EAM.UI and EAM.UI.DebugCenterPanel
         if debugCenter and type(debugCenter.open) == "function" then
@@ -1803,7 +1825,7 @@ local function createFrame()
         end
     end, "執行流程自動化驗證、實機回報、運行探針與 AI 診斷報告輸出", "除錯與測試診斷中心")
 
-    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -480, 332, 24, function()
+    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -510, 332, 24, function()
         frame:Hide()
     end, "關閉主設定面板與所有二級子視窗", "關閉設定")
 

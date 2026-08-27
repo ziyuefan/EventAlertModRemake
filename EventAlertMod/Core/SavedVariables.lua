@@ -116,6 +116,7 @@ local defaults = {
         }
     },
     playerStats = {},
+    groups = {},
     config = {
         language = "auto",
         theme = "eam",
@@ -2908,3 +2909,55 @@ function SavedVariables.updateConfigBoolean(key, value)
     touchRevision(EAM.db)
     return true, "updated", EAM.db.revision
 end
+
+function SavedVariables.getGroups()
+    if type(EAM.db) ~= "table" then
+        return {}
+    end
+    EAM.db.groups = EAM.db.groups or {}
+    return EAM.db.groups
+end
+
+function SavedVariables.saveGroup(groupId, data)
+    if type(EAM.db) ~= "table" or not groupId or type(data) ~= "table" then
+        return false, "invalidGroupArgs"
+    end
+    EAM.db.groups = EAM.db.groups or {}
+    EAM.db.groups[groupId] = data
+    touchRevision(EAM.db)
+    return true, "saved", EAM.db.revision
+end
+
+function SavedVariables.removeGroup(groupId)
+    if type(EAM.db) ~= "table" or not groupId then
+        return false, "invalidGroupId"
+    end
+    if EAM.db.groups and EAM.db.groups[groupId] then
+        EAM.db.groups[groupId] = nil
+        touchRevision(EAM.db)
+        return true, "removed", EAM.db.revision
+    end
+    return true, "unchanged"
+end
+
+function SavedVariables.setGroupProperty(groupId, key, value)
+    if type(EAM.db) ~= "table" or not groupId or not key then
+        return false, "invalidArgs"
+    end
+    EAM.db.groups = EAM.db.groups or {}
+    EAM.db.groups[groupId] = EAM.db.groups[groupId] or {}
+    EAM.db.groups[groupId][key] = value
+    touchRevision(EAM.db)
+    return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.updateAlertGroups(kind, unit, spellID, itemID, groups)
+    local alert = SavedVariables.getAlert(kind, unit, spellID, itemID)
+    if not alert then
+        return false, "alertNotFound"
+    end
+    alert.groups = type(groups) == "table" and groups or {}
+    touchRevision(EAM.db)
+    return true, "updated", EAM.db.revision
+end
+

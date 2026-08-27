@@ -37,6 +37,7 @@ Core\Env.lua
 Core\Util.lua
 Core\Constants.lua
 Data\PlayerResourceCatalog.lua
+Data\SpellHeuristics.lua
 Core\DurationAdapter.lua
 Core\EventRouter.lua
 Core\Scheduler.lua
@@ -71,6 +72,8 @@ Services\TooltipMonitorService.lua
 Services\PlayerStatService.lua
 Services\WeaponEnchantService.lua
 Services\MediaService.lua
+Services\GroupService.lua
+Services\SpellBookScannerService.lua
 
 Managers\AuraRuleCompiler.lua
 Managers\AlertManager.lua
@@ -92,6 +95,8 @@ UI\ModulePanel.lua
 UI\PlayerResourcePanel.lua
 UI\PlayerStatPanel.lua
 UI\ProfileCodecPanel.lua
+UI\GroupManagerPanel.lua
+UI\SpellCatalogTreePanel.lua
 UI\DebugCenterPanel.lua
 UI\Options.lua
 UI\Slash.lua
