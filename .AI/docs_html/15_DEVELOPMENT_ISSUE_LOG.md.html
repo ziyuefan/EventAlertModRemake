@@ -509,6 +509,38 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-08-30-eam-20260830-cooldown-reorder-and-prerender-placeholder">2026-08-30 EAM-20260830-COOLDOWN-REORDER-AND-PRERENDER-PLACEHOLDER：技能冷卻清單順序自訂（拖曳與上下移動）與預渲染佔位（灰階遮罩）</h3>
+<ul>
+<li>狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。</li>
+<li>需求背景與問題分析：</li>
+<li>技能冷卻告警過去依照 ID 順序排序，玩家無法自訂畫面上各冷卻圖示的先後排列順位。</li>
+<li>傳統技能冷卻在首次施放前不建立圖示，而在進入戰鬥後首次施法觸發冷卻時，因 <code>InCombatLockdown()</code> 限制，建立新 Frame 或執行 <code>SetPoint</code> 排版重算會被阻攔或延遲，導致首次施放無法即時渲染冷卻倒數。</li>
+<li>重構實作：</li>
+<li><strong>技能清單自訂排序與互動（Options.lua / SavedVariables.lua）</strong>：<ul>
+<li>清單每一列項目新增 <code>▲</code> (上移順位) 與 <code>▼</code> (下移順位) 操作按鈕。</li>
+<li>支援滑鼠左鍵點擊拖曳 (Drag &amp; Drop) 直接在清單中快速調換順位。</li>
+<li>實作 <code>moveAlertInCurrentList</code> 與 <code>swapAlertsInCurrentList</code>，自動維護並持久化 <code>alert.order</code>。</li>
+<li><code>Options.refreshList()</code> 依 <code>alert.order</code> 進行高優先排序。</li>
+</ul>
+</li>
+<li><strong>圖示佈局順序編譯（Renderer.lua）</strong>：<ul>
+<li><code>Renderer.layout("spellCooldown")</code> 依 <code>alertOrder</code> 進行穩定排序，確保畫面上圖示嚴格遵循玩家自訂的槽位順序。</li>
+</ul>
+</li>
+<li><strong>技能冷卻預渲染佔位（CooldownService.lua / Renderer.lua）</strong>：<ul>
+<li>新增全域開關 <code>cooldownPreRender</code>（並於法術條件設定提供三態覆寫：全域 / 覆寫開 / 覆寫關）。</li>
+<li>脫離戰鬥時（<code>PLAYER_ENTERING_WORLD</code>、<code>PLAYER_REGEN_ENABLED</code>、天賦/設定變更），自動為所有已啟用之技能冷卻建立待命圖示槽位。</li>
+<li>尚未進入冷卻的技能以暗色灰階遮罩 (<code>SetDesaturated(true)</code> + <code>SetVertexColor(0.4, 0.4, 0.4, 0.65)</code>) 佔位顯示，隱藏計時與流光。</li>
+<li>施法進入冷卻瞬間瞬間切換為全彩 (<code>SetDesaturated(false)</code> + <code>SetVertexColor(1, 1, 1, 1)</code>) 正常計時，戰鬥中零 Frame 建立、零排版重算，100% 免疫戰鬥鎖定延遲。</li>
+<li>冷卻結束後自動平滑切回灰階佔位遮罩。</li>
+</ul>
+</li>
+<li><strong>多語系支援</strong>：<ul>
+<li>5 大語系（zhTW, zhCN, enUS, koKR, ruRU）同步補齊 <code>EAM_OPT_COOLDOWN_PRERENDER</code>, <code>EAM_OPT_COOLDOWN_PRERENDER_TIP</code>, <code>EAM_OPT_MOVE_UP</code>, <code>EAM_OPT_MOVE_DOWN</code>, <code>EAM_OPT_ORDER_HINT</code>, <code>EAM_OPT_PRERENDER_PLACEHOLDER</code> 詞條。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 76/76、Flow all 84/84、Validation Contracts 496/496。</li>
+</ul>
 <h3 id="2026-08-30-eam-20260830-player-stat-setformattedtext-fix-fontstringsetformattedtext-gc">2026-08-30 EAM-20260830-PLAYER-STAT-SETFORMATTEDTEXT-FIX：角色屬性全面接入 FontString:SetFormattedText 零 GC 渲染與戰鬥即時更新修復</h3>
 <ul>
 <li>狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。</li>
@@ -2137,6 +2169,40 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<h3 id="2026-08-30-eam-20260830-cooldown-reorder-and-prerender-placeholder-skill-cooldown-list-order-customization-drag-and-move-up-and-down-and-pre-rendering-placeholder-grayscale-mask">2026-08-30 EAM-20260830-COOLDOWN-REORDER-AND-PRERENDER-PLACEHOLDER: Skill cooldown list order customization (drag and move up and down) and pre-rendering placeholder (grayscale mask)</h3>
+<ul>
+<li>Status: Resolved (Lua 76/76, Flow 84/84, Contracts 496/496).</li>
+<li>Demand background and problem analysis:</li>
+<li>Skill cooling warnings used to be sorted according to ID order, and players could not customize the order of cooling icons on the screen.</li>
+<li>Traditional skill cooldown does not create an icon before the first cast. When the cooldown is triggered by the first cast after entering combat, due to the <code>InCombatLockdown()</code> restriction, creating a new Frame or executing <code>SetPoint</code> typesetting recalculation will be blocked or delayed, resulting in the first cast not being able to render the cooldown countdown immediately.</li>
+<li>Refactoring implementation:</li>
+<li><strong>Customized sorting and interaction of skill list (Options.lua / SavedVariables.lua)</strong>:</li>
+<li>Added <code>▲</code> (move up order) and <code>▼</code> (move down order) operation buttons for each column item in the list.<ul>
+<li>Supports left-click dragging (Drag &amp; Drop) to quickly change the order directly in the list.</li>
+<li>Implement <code>moveAlertInCurrentList</code> and <code>swapAlertsInCurrentList</code>, automatically maintain and persist <code>alert.order</code>.</li>
+<li><code>Options.refreshList()</code> is sorted by <code>alert.order</code> with high priority.</li>
+</ul>
+</li>
+<li><strong>Image layout sequential compilation (Renderer.lua)</strong>:</li>
+<li><code>Renderer.layout("spellCooldown")</code> performs stable sorting according to <code>alertOrder</code> to ensure that the icons on the screen strictly follow the player's customized slot order.</li>
+<li><strong>Skill cooldown pre-rendering placeholder (CooldownService.lua / Renderer.lua)</strong>:<ul>
+<li>Added global switch <code>cooldownPreRender</code> (and provides three-state override in spell condition setting: global/overwrite on/overwrite off).</li>
+</ul>
+</li>
+<li>When out of combat (<code>PLAYER_ENTERING_WORLD</code>, <code>PLAYER_REGEN_ENABLED</code>, talent/setting changes), standby icon slots are automatically created for all enabled skill cooldowns.<ul>
+<li>Skills that have not yet entered the cooldown are displayed with a dark grayscale mask (<code>SetDesaturated(true)</code> + <code>SetVertexColor(0.4, 0.4, 0.4, 0.65)</code>), hiding the timing and streamer.</li>
+</ul>
+</li>
+<li>Instantly switches to full color (<code>SetDesaturated(false)</code> + <code>SetVertexColor(1, 1, 1, 1)</code>) when casting is on cooldown, with normal timing, zero Frame establishment during combat, zero typesetting recalculation, and 100% immunity to battle lock delays.<ul>
+<li>Automatically and smoothly switches back to the grayscale placeholder mask after cooling.</li>
+</ul>
+</li>
+<li><strong>Multi-language support</strong>:<ul>
+<li>5 major language families (zhTW, zhCN, enUS, koKR, ruRU) are synchronized to complete <code>EAM_OPT_COOLDOWN_PRERENDER</code>, <code>EAM_OPT_COOLDOWN_PRERENDER_TIP</code>, <code>EAM_OPT_MOVE_UP</code>, <code>EAM_OPT_MOVE_DOWN</code>, <code>EAM_OPT_ORDER_HINT</code>, <code>EAM_OPT_PRERENDER_PLACEHOLDER</code> entry.</li>
+</ul>
+</li>
+<li>Verification results: Lua 76/76, Flow all 84/84, Validation Contracts 496/496.</li>
+</ul>
 <h3 id="2026-08-30-eam-20260830-player-stat-setformattedtext-fix-full-access-to-character-attributes-fontstringsetformattedtext-zero-gc-rendering-and-combat-real-time-update-fix">2026-08-30 EAM-20260830-PLAYER-STAT-SETFORMATTEDTEXT-FIX: Full access to character attributes FontString:SetFormattedText Zero GC rendering and combat real-time update fix</h3>
 <ul>
 <li>Status: Resolved (Lua 76/76, Flow 84/84, Contracts 496/496).</li>

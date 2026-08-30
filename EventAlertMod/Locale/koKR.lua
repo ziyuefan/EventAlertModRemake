@@ -1057,4 +1057,13 @@ L.EAM_CATALOG_MOD_TARGET_AURAS = "대상 효과 (오라)"
 L.EAM_CATALOG_MOD_SPECIAL_AURAS = "특수 효과 (오라)"
 L.EAM_CATALOG_MOD_GROUND = "바닥 효과"
 
+
+-- Cooldown Reordering and Pre-rendering Placeholders
+L.EAM_OPT_COOLDOWN_PRERENDER = "재사용 대기시간 사전 렌더링 자리표시자 (비활성 시 회색 마스크)"
+L.EAM_OPT_COOLDOWN_PRERENDER_TIP = "비전투 상태에서 모든 재사용 대기시간 아이콘 슬롯을 미리 생성하고 배치합니다. 대기시간 중이 아닌 스킬은 흑백 마스크로 표시되어 전투 중 첫 시전 시 레이아웃 지연 문제를 완전히 해결합니다."
+L.EAM_OPT_MOVE_UP = "위로 이동"
+L.EAM_OPT_MOVE_DOWN = "아래로 이동"
+L.EAM_OPT_ORDER_HINT = "▲/▼를 클릭하거나 드래그하여 화면 표시 순서를 조정할 수 있습니다."
+L.EAM_OPT_PRERENDER_PLACEHOLDER = "사전 렌더링 자리표시자"
+
 end)

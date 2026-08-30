@@ -1060,4 +1060,14 @@ L.EAM_CATALOG_MOD_TARGET_AURAS = "Target Auras"
 L.EAM_CATALOG_MOD_SPECIAL_AURAS = "Special Auras"
 L.EAM_CATALOG_MOD_GROUND = "Ground Effects"
 
+
+
+-- Cooldown Reordering and Pre-rendering Placeholders
+L.EAM_OPT_COOLDOWN_PRERENDER = "Pre-render Cooldown Placeholders (Grayed Out when Inactive)"
+L.EAM_OPT_COOLDOWN_PRERENDER_TIP = "Pre-creates and positions all cooldown icon slots out of combat. Skills not currently on cooldown appear as desaturated, grayed-out icons, completely eliminating combat lockdown layout delays on first cast."
+L.EAM_OPT_MOVE_UP = "Move Up"
+L.EAM_OPT_MOVE_DOWN = "Move Down"
+L.EAM_OPT_ORDER_HINT = "Click ▲/▼ or drag to reorder display priority on screen."
+L.EAM_OPT_PRERENDER_PLACEHOLDER = "Pre-render Placeholder"
+
 end)

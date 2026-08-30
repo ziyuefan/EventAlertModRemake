@@ -1,3 +1,27 @@
+### 2026-08-30 EAM-20260830-COOLDOWN-REORDER-AND-PRERENDER-PLACEHOLDER：技能冷卻清單順序自訂（拖曳與上下移動）與預渲染佔位（灰階遮罩）
+
+- 狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。
+- 需求背景與問題分析：
+  1. 技能冷卻告警過去依照 ID 順序排序，玩家無法自訂畫面上各冷卻圖示的先後排列順位。
+  2. 傳統技能冷卻在首次施放前不建立圖示，而在進入戰鬥後首次施法觸發冷卻時，因 `InCombatLockdown()` 限制，建立新 Frame 或執行 `SetPoint` 排版重算會被阻攔或延遲，導致首次施放無法即時渲染冷卻倒數。
+- 重構實作：
+  1. **技能清單自訂排序與互動（Options.lua / SavedVariables.lua）**：
+     - 清單每一列項目新增 `▲` (上移順位) 與 `▼` (下移順位) 操作按鈕。
+     - 支援滑鼠左鍵點擊拖曳 (Drag & Drop) 直接在清單中快速調換順位。
+     - 實作 `moveAlertInCurrentList` 與 `swapAlertsInCurrentList`，自動維護並持久化 `alert.order`。
+     - `Options.refreshList()` 依 `alert.order` 進行高優先排序。
+  2. **圖示佈局順序編譯（Renderer.lua）**：
+     - `Renderer.layout("spellCooldown")` 依 `alertOrder` 進行穩定排序，確保畫面上圖示嚴格遵循玩家自訂的槽位順序。
+  3. **技能冷卻預渲染佔位（CooldownService.lua / Renderer.lua）**：
+     - 新增全域開關 `cooldownPreRender`（並於法術條件設定提供三態覆寫：全域 / 覆寫開 / 覆寫關）。
+     - 脫離戰鬥時（`PLAYER_ENTERING_WORLD`、`PLAYER_REGEN_ENABLED`、天賦/設定變更），自動為所有已啟用之技能冷卻建立待命圖示槽位。
+     - 尚未進入冷卻的技能以暗色灰階遮罩 (`SetDesaturated(true)` + `SetVertexColor(0.4, 0.4, 0.4, 0.65)`) 佔位顯示，隱藏計時與流光。
+     - 施法進入冷卻瞬間瞬間切換為全彩 (`SetDesaturated(false)` + `SetVertexColor(1, 1, 1, 1)`) 正常計時，戰鬥中零 Frame 建立、零排版重算，100% 免疫戰鬥鎖定延遲。
+     - 冷卻結束後自動平滑切回灰階佔位遮罩。
+  4. **多語系支援**：
+     - 5 大語系（zhTW, zhCN, enUS, koKR, ruRU）同步補齊 `EAM_OPT_COOLDOWN_PRERENDER`, `EAM_OPT_COOLDOWN_PRERENDER_TIP`, `EAM_OPT_MOVE_UP`, `EAM_OPT_MOVE_DOWN`, `EAM_OPT_ORDER_HINT`, `EAM_OPT_PRERENDER_PLACEHOLDER` 詞條。
+- 驗證結果：Lua 76/76、Flow all 84/84、Validation Contracts 496/496。
+
 ### 2026-08-30 EAM-20260830-PLAYER-STAT-SETFORMATTEDTEXT-FIX：角色屬性全面接入 FontString:SetFormattedText 零 GC 渲染與戰鬥即時更新修復
 
 - 狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。

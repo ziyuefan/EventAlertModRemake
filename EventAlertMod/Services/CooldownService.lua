@@ -248,6 +248,7 @@ local COOLDOWN_BEHAVIOR_DEFAULTS = {
     cooldownRemoveAura = false,
     showSCDOutsideCombat = true,
     glowSCDWhenUsable = true,
+    cooldownPreRender = false,
 }
 
 local function isInCombat()
@@ -448,23 +449,64 @@ local function refreshAlert(alert, eventName)
         return setStateHidden(alertID, oldState, true)
     end
 
-    -- refreshAll、設定變更與一般 cooldown event 只更新已開啟的警示。
+    local behaviorRemove = resolveBehavior(alert, "cooldownRemoveAura")
+    local behaviorOutside = resolveBehavior(alert, "showSCDOutsideCombat")
+    local behaviorGlow = resolveBehavior(alert, "glowSCDWhenUsable")
+    local isPreRender = resolveBehavior(alert, "cooldownPreRender")
+    local visibleNow = behaviorOutside or isInCombat() or isPreRender
+
+    -- refreshAll、設定變更與一般 cooldown event 只更新已開啟的警示 (若開啟預渲染則在非戰鬥或全域時放行佔位)
     if CooldownService.activatedAlerts[alertID] ~= true then
-        if oldState then
-            return setStateHidden(alertID, oldState, true)
+        if not isPreRender then
+            if oldState then
+                return setStateHidden(alertID, oldState, true)
+            end
+            return nil
+        else
+            -- 預渲染待命佔位（尚未施放過，以灰階暗色遮罩佔位）
+            local state = oldState
+            if not state then
+                state = CooldownStatePool.acquire()
+                CooldownService.states[alertID] = state
+            end
+            state.id = alertID
+            state.kind = EAM.Constants.ALERT_KIND_SPELL_COOLDOWN
+            state.spellID = alert.spellID
+            state.order = alert.order
+            state.rawAlert = alert
+            state.isPlaceholder = true
+            state.isDesaturated = true
+            state.active = true
+            state.shown = true
+            state.completed = false
+            state.usableGlow = false
+            state.factsSafe = true
+            state.cooldownRemoveAura = behaviorRemove
+            state.showSCDOutsideCombat = behaviorOutside
+            state.glowSCDWhenUsable = behaviorGlow
+            state.cooldownPreRender = isPreRender
+            state.boundaryLimited = false
+            wipe(state.boundaryWarnings)
+            wipe(state.source)
+            if SpellInfoService then
+                local spellInfo = SpellInfoService.getSpellInfo(alert.spellID)
+                state.name = spellInfo and spellInfo.name or tostring(alert.spellID)
+                state.icon = spellInfo and spellInfo.iconID or (cSpell and cSpell.GetSpellTexture and cSpell.GetSpellTexture(alert.spellID))
+            end
+            if not state.icon and cSpell and cSpell.GetSpellTexture then
+                state.icon = cSpell.GetSpellTexture(alert.spellID)
+            end
+            state.timer = nil
+            Renderer.render(state, EAM.Constants.ALERT_FRAME_TYPES.spellCooldown)
+            fireStateChanged(state)
+            return state
         end
-        return nil
     end
 
     local cSpell = api.C_Spell
     if not cSpell then
         return setStateHidden(alertID, oldState, false)
     end
-
-    local behaviorRemove = resolveBehavior(alert, "cooldownRemoveAura")
-    local behaviorOutside = resolveBehavior(alert, "showSCDOutsideCombat")
-    local behaviorGlow = resolveBehavior(alert, "glowSCDWhenUsable")
-    local visibleNow = behaviorOutside or isInCombat()
 
     -- 1. Check Charges first. A non-nil SpellChargeInfo establishes charge capability;
     -- safe NeverSecret fields remain usable even when currentCharges is Secret.
@@ -593,8 +635,8 @@ local function refreshAlert(alert, eventName)
     local shouldShow = hasActiveCooldown
     if not visibleNow then
         shouldShow = false
-    elseif not hasActiveCooldown and not behaviorRemove then
-        -- 第一次施放後，完成狀態仍可依設定保留圖示。
+    elseif not hasActiveCooldown and (not behaviorRemove or isPreRender) then
+        -- 第一次施放後，完成狀態仍可依設定保留圖示 (若開啟預渲染佔位則保留為灰階遮罩)
         shouldShow = true
     end
 
@@ -612,6 +654,8 @@ local function refreshAlert(alert, eventName)
     state.id = alertID
     state.kind = EAM.Constants.ALERT_KIND_SPELL_COOLDOWN
     state.spellID = alert.spellID
+    state.order = alert.order
+    state.rawAlert = alert
     state.name = nil
     state.icon = nil
     state.charges = isChargeBased and currentCharges or nil
@@ -637,10 +681,17 @@ local function refreshAlert(alert, eventName)
     state.active = true
     state.shown = true
     state.completed = not hasActiveCooldown
+    local isPlaceholder = isPreRender and not hasActiveCooldown
+    state.isPlaceholder = isPlaceholder
+    state.isDesaturated = isPlaceholder
     state.usableGlow = state.completed and behaviorGlow or false
+    if isPlaceholder then
+        state.usableGlow = false
+    end
     state.cooldownRemoveAura = behaviorRemove
     state.showSCDOutsideCombat = behaviorOutside
     state.glowSCDWhenUsable = behaviorGlow
+    state.cooldownPreRender = isPreRender
     state.boundaryLimited = false
     wipe(state.boundaryWarnings)
     wipe(state.source)

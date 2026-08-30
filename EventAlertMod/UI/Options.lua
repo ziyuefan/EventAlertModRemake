@@ -82,6 +82,11 @@ local COOLDOWN_BEHAVIOR_OPTIONS = {
         labelKey = "EAM_OPT_COND_CD_GLOW",
         labelFallback = "可用時高亮",
     },
+    {
+        field = "cooldownPreRender",
+        labelKey = "EAM_OPT_PRERENDER_PLACEHOLDER",
+        labelFallback = "預渲染佔位",
+    },
 }
 
 local function cooldownBehaviorStateLabel(value)
@@ -793,6 +798,11 @@ function Options.refreshList()
         end
     end
     table.sort(listData, function(a, b)
+        local orderA = a.order or 9999
+        local orderB = b.order or 9999
+        if orderA ~= orderB then
+            return orderA < orderB
+        end
         local idA = a.spellID or a.itemID or 0
         local idB = b.spellID or b.itemID or 0
         return idA < idB
@@ -810,6 +820,97 @@ function Options.refreshList()
     elseif Options.scrollBox.Rebuild then
         Options.scrollBox:Rebuild()
     end
+end
+
+local function moveAlertInCurrentList(targetAlert, delta)
+    if not targetAlert then return end
+    local rawList = Options.getCurrentCategoryList()
+    if not rawList then return end
+    
+    local listData = {}
+    for _, alert in pairs(rawList) do
+        if alertMatchesCategory(alert, Options.currentCategory) and isAlertDisplayable(alert) then
+            listData[#listData + 1] = alert
+        end
+    end
+    table.sort(listData, function(a, b)
+        local orderA = a.order or 9999
+        local orderB = b.order or 9999
+        if orderA ~= orderB then return orderA < orderB end
+        local idA = a.spellID or a.itemID or 0
+        local idB = b.spellID or b.itemID or 0
+        return idA < idB
+    end)
+    
+    local targetIdx = nil
+    for idx = 1, #listData do
+        if listData[idx] == targetAlert or (listData[idx].id and listData[idx].id == targetAlert.id) then
+            targetIdx = idx
+            break
+        end
+    end
+    if not targetIdx then return end
+    
+    local destIdx = targetIdx + delta
+    if destIdx < 1 or destIdx > #listData then return end
+    
+    local item = table.remove(listData, targetIdx)
+    table.insert(listData, destIdx, item)
+    
+    for idx = 1, #listData do
+        listData[idx].order = idx
+    end
+    
+    if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+        EAM.Modules.SavedVariables.markRevisionChanged()
+    end
+    Options.notifyConfigChanged()
+    Options.refreshList()
+end
+
+local function swapAlertsInCurrentList(alertA, alertB)
+    if not alertA or not alertB or alertA == alertB then return end
+    local rawList = Options.getCurrentCategoryList()
+    if not rawList then return end
+    
+    local listData = {}
+    for _, alert in pairs(rawList) do
+        if alertMatchesCategory(alert, Options.currentCategory) and isAlertDisplayable(alert) then
+            listData[#listData + 1] = alert
+        end
+    end
+    table.sort(listData, function(a, b)
+        local orderA = a.order or 9999
+        local orderB = b.order or 9999
+        if orderA ~= orderB then return orderA < orderB end
+        local idA = a.spellID or a.itemID or 0
+        local idB = b.spellID or b.itemID or 0
+        return idA < idB
+    end)
+    
+    local idxA, idxB
+    for idx = 1, #listData do
+        if listData[idx] == alertA or (listData[idx].id and listData[idx].id == alertA.id) then
+            idxA = idx
+        end
+        if listData[idx] == alertB or (listData[idx].id and listData[idx].id == alertB.id) then
+            idxB = idx
+        end
+    end
+    if not idxA or not idxB then return end
+    
+    local item = table.remove(listData, idxA)
+    table.insert(listData, idxB, item)
+    
+    for idx = 1, #listData do
+        listData[idx].order = idx
+    end
+    
+    if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+        EAM.Modules.SavedVariables.markRevisionChanged()
+    end
+    Options.notifyConfigChanged()
+    Options.refreshList()
 end
 
 -- 批次操作 (Select All, Deselect All, Delete All)
@@ -1709,13 +1810,8 @@ local function createFrame()
     createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -162, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除光環")
     createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 180, -162, nil, "技能冷卻完畢且可用時，圖示外框發出流光動畫提示", "可用時高亮技能冷卻")
 
-    createCheckbox(inner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 12, -186, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
-    createThemedButton(inner, localized("EAM_OPT_TEST_FLASH", "測試閃爍"), 180, -186, 164, 22, function()
-        local flash = EAM.UI and EAM.UI.CombatFlash
-        if flash and type(flash.trigger) == "function" then
-            flash.trigger()
-        end
-    end, "立即觸發一次全螢幕紅框閃爍動畫預覽", "測試閃爍")
+    createCheckbox(inner, localized("EAM_OPT_COOLDOWN_PRERENDER", "冷卻預渲染佔位 (未使用灰色遮罩)"), "cooldownPreRender", 12, -186, nil, localized("EAM_OPT_COOLDOWN_PRERENDER_TIP", "在脫戰狀態下預先建立並排列冷卻圖示槽位。尚未進入冷卻的技能以暗色灰階圖示佔位顯示，徹底解決戰鬥中首次施放因戰鬥鎖定無法排版渲染的問題。"), "冷卻預渲染佔位")
+    createCheckbox(inner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 180, -186, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
 
     -- 11 個主要功能大按鈕（職業資源第 7 項、角色屬性第 8 項、群組管理第 9 項、全量法術庫第 10 項、排版第 11 項）
     local categories = {
@@ -2584,7 +2680,7 @@ local function createFrame()
             -- Red "X" Quick Delete Button
             itemFrame.delBtn = api.CreateFrame("Button", nil, itemFrame)
             itemFrame.delBtn:SetSize(16, 16)
-            itemFrame.delBtn:SetPoint("RIGHT", itemFrame, "RIGHT", -10, 0)
+            itemFrame.delBtn:SetPoint("RIGHT", itemFrame, "RIGHT", -6, 0)
             setTooltip(itemFrame.delBtn, "從監控清單中移除此法術/物品", "刪除監控")
             
             local delText = itemFrame.delBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2602,14 +2698,48 @@ local function createFrame()
             
             -- White Gear Button
             itemFrame.gearBtn = api.CreateFrame("Button", nil, itemFrame)
-            itemFrame.gearBtn:SetSize(18, 18)
-            itemFrame.gearBtn:SetPoint("RIGHT", itemFrame.delBtn, "LEFT", -8, 0)
+            itemFrame.gearBtn:SetSize(16, 16)
+            itemFrame.gearBtn:SetPoint("RIGHT", itemFrame.delBtn, "LEFT", -4, 0)
             itemFrame.gearBtn:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
             setTooltip(itemFrame.gearBtn, "開啟此法術之進階條件（倒數、堆疊、自訂替代圖示、音效警示、冷卻覆寫等）", "條件設定")
             local gTex = itemFrame.gearBtn:GetNormalTexture()
             if gTex then
                 gTex:SetVertexColor(1, 1, 1, 0.95)
             end
+
+            -- Down Button (▼)
+            itemFrame.downBtn = api.CreateFrame("Button", nil, itemFrame)
+            itemFrame.downBtn:SetSize(16, 16)
+            itemFrame.downBtn:SetPoint("RIGHT", itemFrame.gearBtn, "LEFT", -4, 0)
+            local downText = itemFrame.downBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            downText:SetPoint("CENTER", itemFrame.downBtn, "CENTER", 0, 0)
+            downText:SetText("▼")
+            downText:SetTextColor(0.7, 0.8, 0.9, 1.0)
+            itemFrame.downBtn.text = downText
+            setTooltip(itemFrame.downBtn, EAM.L.EAM_OPT_MOVE_DOWN or "下移順位", "下移")
+            itemFrame.downBtn:SetScript("OnEnter", function(self)
+                downText:SetTextColor(1.0, 1.0, 1.0, 1.0)
+            end)
+            itemFrame.downBtn:SetScript("OnLeave", function(self)
+                downText:SetTextColor(0.7, 0.8, 0.9, 1.0)
+            end)
+
+            -- Up Button (▲)
+            itemFrame.upBtn = api.CreateFrame("Button", nil, itemFrame)
+            itemFrame.upBtn:SetSize(16, 16)
+            itemFrame.upBtn:SetPoint("RIGHT", itemFrame.downBtn, "LEFT", -4, 0)
+            local upText = itemFrame.upBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            upText:SetPoint("CENTER", itemFrame.upBtn, "CENTER", 0, 0)
+            upText:SetText("▲")
+            upText:SetTextColor(0.7, 0.8, 0.9, 1.0)
+            itemFrame.upBtn.text = upText
+            setTooltip(itemFrame.upBtn, EAM.L.EAM_OPT_MOVE_UP or "上移順位", "上移")
+            itemFrame.upBtn:SetScript("OnEnter", function(self)
+                upText:SetTextColor(1.0, 1.0, 1.0, 1.0)
+            end)
+            itemFrame.upBtn:SetScript("OnLeave", function(self)
+                upText:SetTextColor(0.7, 0.8, 0.9, 1.0)
+            end)
         end
         
         -- 取得圖示
@@ -2659,6 +2789,32 @@ local function createFrame()
         -- Gear click
         itemFrame.gearBtn:SetScript("OnClick", function()
             Options.openConditionsFrame(data)
+        end)
+
+        -- Up / Down click
+        itemFrame.upBtn:SetScript("OnClick", function()
+            moveAlertInCurrentList(data, -1)
+        end)
+        itemFrame.downBtn:SetScript("OnClick", function()
+            moveAlertInCurrentList(data, 1)
+        end)
+
+        -- Drag and drop reordering
+        itemFrame:RegisterForDrag("LeftButton")
+        itemFrame:SetScript("OnDragStart", function(self)
+            Options.draggingAlert = data
+        end)
+        itemFrame:SetScript("OnReceiveDrag", function(self)
+            if Options.draggingAlert and Options.draggingAlert ~= data then
+                swapAlertsInCurrentList(Options.draggingAlert, data)
+                Options.draggingAlert = nil
+            end
+        end)
+        itemFrame:SetScript("OnMouseUp", function(self)
+            if Options.draggingAlert and Options.draggingAlert ~= data then
+                swapAlertsInCurrentList(Options.draggingAlert, data)
+                Options.draggingAlert = nil
+            end
         end)
         
         -- Click row item to auto-populate Spell ID

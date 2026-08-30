@@ -41,6 +41,7 @@ local COOLDOWN_BEHAVIOR_FIELDS = {
     "cooldownRemoveAura",
     "showSCDOutsideCombat",
     "glowSCDWhenUsable",
+    "cooldownPreRender",
 }
 
 local function normalizeCooldownBehaviorOverride(value)
@@ -145,6 +146,7 @@ local defaults = {
         cooldownRemoveAura = false,
         showSCDOutsideCombat = true,
         glowSCDWhenUsable = true,
+        cooldownPreRender = false,
         showDKRune = true,
         enableItemCooldown = true,
         enableWeaponEnchant = true,
@@ -2825,6 +2827,33 @@ function SavedVariables.updateCooldownBehavior(spellID, field, value)
         router.fire("EAM_COOLDOWN_CONFIG_CHANGED", numericSpellID, field, value, db.revision)
     end
     return true, "updated", db.revision
+end
+
+function SavedVariables.updateAlertOrder(kind, unit, spellID, itemID, order)
+    local db = EAM.db
+    if type(db) ~= "table" then return false, "dbUnavailable" end
+    local list = getAlertList(db, kind, unit)
+    local id = buildAlertID(kind, unit, spellID, itemID)
+    local alert = id and list and list[id] or nil
+    if type(alert) ~= "table" then return false, "notFound" end
+    alert.order = type(order) == "number" and order or nil
+    touchRevision(db)
+    return true, "updated", db.revision
+end
+
+function SavedVariables.swapAlertOrder(kind, unit, id1, id2)
+    local db = EAM.db
+    if type(db) ~= "table" then return false, "dbUnavailable" end
+    local list = getAlertList(db, kind, unit)
+    local alert1 = id1 and list and list[id1] or nil
+    local alert2 = id2 and list and list[id2] or nil
+    if not alert1 or not alert2 then return false, "notFound" end
+    local o1 = alert1.order
+    local o2 = alert2.order
+    alert1.order = o2
+    alert2.order = o1
+    touchRevision(db)
+    return true, "swapped", db.revision
 end
 
 function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDuration)

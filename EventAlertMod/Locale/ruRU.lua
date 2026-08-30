@@ -1059,4 +1059,13 @@ L.EAM_CATALOG_MOD_TARGET_AURAS = "Ауры цели"
 L.EAM_CATALOG_MOD_SPECIAL_AURAS = "Особые ауры"
 L.EAM_CATALOG_MOD_GROUND = "Наземные эффекты"
 
+
+-- Cooldown Reordering and Pre-rendering Placeholders
+L.EAM_OPT_COOLDOWN_PRERENDER = "Предварительный рендеринг заполнителей восстановления (серые в неактивном состоянии)"
+L.EAM_OPT_COOLDOWN_PRERENDER_TIP = "Предварительно создает и размещает слоты значков восстановления вне боя. Неактивные заклинания отображаются серыми значками, устраняя задержки рендеринга при первом применении в бою."
+L.EAM_OPT_MOVE_UP = "Вверх"
+L.EAM_OPT_MOVE_DOWN = "Вниз"
+L.EAM_OPT_ORDER_HINT = "Нажмите ▲/▼ или перетащите, чтобы изменить приоритет отображения на экране."
+L.EAM_OPT_PRERENDER_PLACEHOLDER = "Предварительный рендеринг заполнителя"
+
 end)

@@ -1017,4 +1017,14 @@ L.EAM_CATALOG_MOD_TARGET_AURAS = "目标光环"
 L.EAM_CATALOG_MOD_SPECIAL_AURAS = "特殊光环"
 L.EAM_CATALOG_MOD_GROUND = "地面效果"
 
+
+
+-- Cooldown Reordering and Pre-rendering Placeholders
+L.EAM_OPT_COOLDOWN_PRERENDER = "冷却预渲染占位 (未使用灰色遮罩)"
+L.EAM_OPT_COOLDOWN_PRERENDER_TIP = "在脱战状态下预先建立并排列冷却图标槽位。尚未进入冷却的技能以暗色灰阶图标占位显示，彻底解决战斗中首次施放因战斗锁定无法排版渲染的问题。"
+L.EAM_OPT_MOVE_UP = "上移"
+L.EAM_OPT_MOVE_DOWN = "下移"
+L.EAM_OPT_ORDER_HINT = "点击 ▲/▼ 或拖曳可调整技能在画面上的显示顺位。"
+L.EAM_OPT_PRERENDER_PLACEHOLDER = "预渲染占位显示"
+
 end)

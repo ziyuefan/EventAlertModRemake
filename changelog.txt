@@ -18,6 +18,10 @@
      -- 角色屬性戰鬥即時更新與 C-Level 零 GC 渲染 (FontString:SetFormattedText & In-Combat Stat Updates)：
         -- 全面採用暴雪原生 FontString:SetFormattedText 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。
         -- 補齊全 18 大屬性之 getRawValue 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 AllowedWhenTainted 與 Enum.SecretAspect.Text 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。
+     -- 技能冷卻清單順序自訂與預渲染佔位（未使用灰色遮罩）(Cooldown Custom Sorting & Pre-render Placeholders)：
+        -- 技能冷卻清單排序控制：清單每一列新增 ▲ (上移) 與 ▼ (下移) 快捷按鈕，並支援滑鼠左鍵點擊拖曳 (Drag & Drop) 快速調換順位，自訂告警圖示在畫面上的排列先後順序。
+        -- 技能冷卻預渲染佔位模式 (cooldownPreRender)：脫戰時自動預先建立並排列所有啟用中之技能冷卻圖示槽位。尚未進入冷卻的技能以暗色灰階遮罩圖示佔位顯示 (SetDesaturated)，施法進入冷卻瞬間切換為全彩正常計時，徹底根除戰鬥中首次施放因 InCombatLockdown() 限制而無法排版渲染的難題。
+        -- 條件設定支援三態預渲染覆寫：支援全域設定與單一法術條件設定視窗獨立覆寫 (全域 / 覆寫開 / 覆寫關)。
 -- [Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
     -- LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)：
        -- 全面接入社群廣泛使用的 LibSharedMedia-3.0 素材生態，完整支援所有第三方 SharedMedia 音效包、字型包與材質包。

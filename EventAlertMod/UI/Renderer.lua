@@ -493,6 +493,19 @@ local function layout(frameName)
     local offset = EAM.Constants.LAYOUT_OFFSETS[dirIdx]
     local dx, dy = offset[1], offset[2]
 
+    if count > 1 then
+        table.sort(fState.order, function(idA, idB)
+            local iconA = fState.icons[idA]
+            local iconB = fState.icons[idB]
+            local orderA = (iconA and iconA.alertOrder) or 9999
+            local orderB = (iconB and iconB.alertOrder) or 9999
+            if orderA ~= orderB then
+                return orderA < orderB
+            end
+            return tostring(idA) < tostring(idB)
+        end)
+    end
+
     parent:Hide()
     local layoutIndex = 0
     for index = 1, count do
@@ -788,9 +801,22 @@ function Renderer.render(alertState, frameName)
         rendered.parasiteLayoutPending = nil
     end
 
-    if alertState.icon and rendered.icon ~= alertState.icon then
+    icon.alertOrder = alertState.order or (alertState.rawAlert and alertState.rawAlert.order) or nil
+
+    if alertState.icon and rendered.icon ~= alertState.icon and icon.texture then
         icon.texture:SetTexture(alertState.icon)
         rendered.icon = alertState.icon
+    end
+
+    local isPlaceholder = (alertState.isPlaceholder == true) or (alertState.isDesaturated == true)
+    if icon.texture then
+        if isPlaceholder then
+            if icon.texture.SetDesaturated then icon.texture:SetDesaturated(true) end
+            if icon.texture.SetVertexColor then icon.texture:SetVertexColor(0.4, 0.4, 0.4, 0.65) end
+        else
+            if icon.texture.SetDesaturated then icon.texture:SetDesaturated(false) end
+            if icon.texture.SetVertexColor then icon.texture:SetVertexColor(1, 1, 1, 1) end
+        end
     end
 
     IconPool.applyTooltipSource(icon, alertState)
