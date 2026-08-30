@@ -39,9 +39,29 @@ local function inCombat()
     return api.InCombatLockdown and api.InCombatLockdown()
 end
 
+local function shouldUnitStatsBeSecret(unit)
+    unit = unit or "player"
+    if C_Secrets and type(C_Secrets.ShouldUnitStatsBeSecret) == "function" then
+        local ok, isSecret = pcall(C_Secrets.ShouldUnitStatsBeSecret, unit)
+        if ok and isSecret == true then
+            return true
+        end
+    end
+    if api.C_Secrets and type(api.C_Secrets.ShouldUnitStatsBeSecret) == "function" then
+        local ok, isSecret = pcall(api.C_Secrets.ShouldUnitStatsBeSecret, unit)
+        if ok and isSecret == true then
+            return true
+        end
+    end
+    return false
+end
+
+PlayerStatService.shouldUnitStatsBeSecret = shouldUnitStatsBeSecret
+
 local function isSafeNumber(val)
     if val == nil then return false end
     if Util and Util.isSecretValue and Util.isSecretValue(val) then return false end
+    if issecretvalue and issecretvalue(val) then return false end
     if Util and Util.isSafeNumber then return Util.isSafeNumber(val) end
     if type(val) ~= "number" then return false end
     return val == val and val ~= math.huge and val ~= -math.huge
@@ -849,7 +869,9 @@ PlayerStatService.ORDERED_KEYS = ORDERED_KEYS
 local function renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)
     if not fontString then return end
     decimals = decimals or 1
-    local isSecret = Util and Util.isSecretValue and (Util.isSecretValue(rawVal) or Util.isSecretValue(val))
+    local isSecret = shouldUnitStatsBeSecret("player")
+        or (Util and Util.isSecretValue and (Util.isSecretValue(rawVal) or Util.isSecretValue(val)))
+        or (issecretvalue and (issecretvalue(rawVal) or issecretvalue(val)))
 
     if isSecret then
         local targetVal = (rawVal ~= nil and rawVal ~= 0) and rawVal or val
