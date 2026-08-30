@@ -352,9 +352,14 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
     if type(auraData.points) == "table" and canaccesstable(auraData.points) then
         for i = 1, #auraData.points do
             local pt = auraData.points[i]
-            if pt and not issecretvalue(pt) and canaccessvalue(pt) and type(pt) == "number" and pt > 0 then
-                absorbAmount = pt
-                break
+            if pt and canaccessvalue(pt) then
+                if not issecretvalue(pt) and type(pt) == "number" and pt > 0 then
+                    absorbAmount = pt
+                    break
+                elseif issecretvalue(pt) then
+                    absorbAmount = pt
+                    break
+                end
             end
         end
     end

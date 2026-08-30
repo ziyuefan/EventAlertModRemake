@@ -147,17 +147,20 @@ local function onLegacyTimerUpdate()
         local timeLeft = Util.isSafeNumber(expirationTime) and expirationTime - now or 0
         if timeLeft > 0 then
             hasTimer = true
-            local text
-            if timeLeft < 3.05 then
-                -- 3 秒以下顯示一位小數，如 2.4, 0.8
-                text = string.format("%.1f", timeLeft)
-            else
-                -- 3 秒以上四捨五入整數
-                text = string.format("%d", math.ceil(timeLeft))
-            end
-            
-            if icon.timerText and icon.timerText.SetText then
-                icon.timerText:SetText(text)
+            if icon.timerText then
+                if icon.timerText.SetFormattedText then
+                    if timeLeft < 3.05 then
+                        icon.timerText:SetFormattedText("%.1f", timeLeft)
+                    else
+                        icon.timerText:SetFormattedText("%d", math.ceil(timeLeft))
+                    end
+                elseif icon.timerText.SetText then
+                    if timeLeft < 3.05 then
+                        icon.timerText:SetText(string.format("%.1f", timeLeft))
+                    else
+                        icon.timerText:SetText(string.format("%d", math.ceil(timeLeft)))
+                    end
+                end
             end
 
             local radialGauge = readField(icon, "radialGauge")
@@ -801,32 +804,51 @@ function Renderer.render(alertState, frameName)
     end
     IconPool.applyCooldownStyle(icon, config)
 
-    local stacks = formatChargeText(alertState)
-    if stacks == nil then
-        if alertState.absorbAmount and Util.isSafePositiveNumber(alertState.absorbAmount) then
-            local absStr = formatAbsorbAmount(alertState.absorbAmount)
-            if alertState.stacks and alertState.stacks > 1 then
-                stacks = tostring(alertState.stacks) .. "(" .. absStr .. ")"
+    local chargeText = formatChargeText(alertState)
+    if chargeText ~= nil then
+        setTextIfChanged(icon.stackText, rendered, "stacks", chargeText)
+    elseif alertState.absorbAmount then
+        local absorb = alertState.absorbAmount
+        local isSecretAbsorb = Util.isSecretValue and Util.isSecretValue(absorb)
+        if isSecretAbsorb then
+            if icon.stackText and icon.stackText.SetFormattedText then
+                pcall(icon.stackText.SetFormattedText, icon.stackText, "%d", absorb)
+                rendered["stacks"] = "SECRET_ABSORB"
             else
-                stacks = absStr
+                setTextIfChanged(icon.stackText, rendered, "stacks", "")
+            end
+        elseif Util.isSafePositiveNumber(absorb) then
+            local absStr = formatAbsorbAmount(absorb)
+            if alertState.stacks and Util.isSafeNumber(alertState.stacks) and alertState.stacks > 1 then
+                setTextIfChanged(icon.stackText, rendered, "stacks", tostring(alertState.stacks) .. "(" .. absStr .. ")")
+            else
+                setTextIfChanged(icon.stackText, rendered, "stacks", absStr)
             end
         else
-            stacks = alertState.displayValue
-            if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
-                stacks = ""
-            elseif stacks ~= nil then
-                stacks = Util.isSafeNonNegativeNumber(stacks) and tostring(stacks) or ""
+            setTextIfChanged(icon.stackText, rendered, "stacks", "")
+        end
+    else
+        local val = alertState.displayValue ~= nil and alertState.displayValue or alertState.stacks
+        local isSecretVal = Util.isSecretValue and Util.isSecretValue(val)
+        if isSecretVal then
+            if icon.stackText and icon.stackText.SetFormattedText then
+                pcall(icon.stackText.SetFormattedText, icon.stackText, "%d", val)
+                rendered["stacks"] = "SECRET_VALUE"
             else
-                stacks = alertState.stacks
-                if Util.isSecretValue(stacks) or not Util.canAccessValue(stacks) then
-                    stacks = ""
+                setTextIfChanged(icon.stackText, rendered, "stacks", "")
+            end
+        else
+            local stacks = ""
+            if val ~= nil and Util.canAccessValue(val) then
+                if alertState.displayValue ~= nil then
+                    stacks = Util.isSafeNonNegativeNumber(val) and tostring(val) or ""
                 else
-                    stacks = (Util.isSafeNumber(stacks) and stacks > 1) and tostring(stacks) or ""
+                    stacks = (Util.isSafeNumber(val) and val > 1) and tostring(val) or ""
                 end
             end
+            setTextIfChanged(icon.stackText, rendered, "stacks", stacks)
         end
     end
-    setTextIfChanged(icon.stackText, rendered, "stacks", stacks)
 
     local nameInside = shouldBeParasite
     if rendered.nameInside ~= nameInside then
