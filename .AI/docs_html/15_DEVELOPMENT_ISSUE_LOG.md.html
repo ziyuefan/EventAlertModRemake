@@ -509,6 +509,20 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-08-30-eam-20260830-player-stat-setformattedtext-fix-fontstringsetformattedtext-gc">2026-08-30 EAM-20260830-PLAYER-STAT-SETFORMATTEDTEXT-FIX：角色屬性全面接入 FontString:SetFormattedText 零 GC 渲染與戰鬥即時更新修復</h3>
+<ul>
+<li>狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。</li>
+<li>根因分析：</li>
+<li>過去在 <code>PlayerStatService.lua</code> 中，數值文字更新採用傳統 <code>string.format</code> 與 <code>fontString:SetText(valStr)</code>，每次事件與計時器更新皆產生 Lua 暫態字串物件，增加 GC 負擔。</li>
+<li>過去因防禦性過濾引入 <code>isSafeNumber(val)</code> 守衛，而 Retail 12.0+/12.1+ 在戰鬥中或 Taint 環境下調用原生 Stat API 會回傳受保護的 Secret Number；<code>isSafeNumber</code> 將其判定為 false 並丟棄，導致 <code>getValue</code> 一律回退到脫戰前的 <code>lastKnownStats</code> 快取，造成戰鬥中屬性數值（如飾品觸發、嗜血加速、護盾吸收等）完全凍結不更新。</li>
+<li>在 <code>update()</code> 流程中曾存在 <code>if isSecret then item.valText:SetText("") end</code> 邏輯，當偵測到 Secret 數值時直接將文字清空為空白。</li>
+<li>重構實作：</li>
+<li>依據暴雪 Retail 12.x 原生規範，<code>FontString:SetFormattedText</code> 具備 <code>AllowedWhenTainted = true</code> 與 <code>SecretArgumentsAddAspect = Enum.SecretAspect.Text</code> 切面。C-Level 原生能直接接受並安全格式化 Secret Numbers。</li>
+<li>實作 <code>renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)</code>，全面改用 <code>FontString:SetFormattedText</code> 進行 C 引擎層零 Lua GC 暫態字串格式化渲染。</li>
+<li>為 18 大屬性補齊 <code>getRawValue</code> 戰鬥即時取值路由，直接取得底層 API 原始回傳值並傳遞至 <code>SetFormattedText</code> 與 <code>StatusBar:SetValue</code>。</li>
+<li>移除清空文字邏輯，確保在戰鬥中觸發特效或受保護狀態下，玩家依然能流暢且即時看到正確更新的數值文字。</li>
+<li>驗證結果：Lua 76/76、Flow all 84/84、Validation Contracts 496/496。</li>
+</ul>
 <h3 id="2026-08-27-eam-20260827-alpha82-sharedmedia-ecosystem-and-zero-delay-fontalpha-82-libsharedmedia-30-reload">2026-08-27 EAM-20260827-ALPHA82-SHAREDMEDIA-ECOSYSTEM-AND-ZERO-DELAY-FONT：Alpha 8.2 LibSharedMedia-3.0 素材生態全面接入、全域字型熱套用（免 /reload）與捲動選單支援</h3>
 <ul>
 <li>狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包並發布 Pre-release。</li>
@@ -2123,7 +2137,21 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<h3 id="2026-08-27-eam-20260827-alpha82-sharedmedia-ecosystem-and-zero-delay-font-alpha-82-libsharedmedia-30-comprehensive-access-to-the-material-ecosystem-global-font-hot-application-without-reload-and-scrolling-menu-support">2026-08-27 EAM-20260827-ALPHA82-SHAREDMEDIA-ECOSYSTEM-AND-ZERO-DELAY-FONT: Alpha 8.2 LibSharedMedia-3.0 Comprehensive access to the material ecosystem, global font hot application (without /reload) and scrolling menu support</h3>
+<h3 id="2026-08-30-eam-20260830-player-stat-setformattedtext-fix-full-access-to-character-attributes-fontstringsetformattedtext-zero-gc-rendering-and-combat-real-time-update-fix">2026-08-30 EAM-20260830-PLAYER-STAT-SETFORMATTEDTEXT-FIX: Full access to character attributes FontString:SetFormattedText Zero GC rendering and combat real-time update fix</h3>
+<ul>
+<li>Status: Resolved (Lua 76/76, Flow 84/84, Contracts 496/496).</li>
+<li>Root cause analysis:</li>
+<li>In the past, in <code>PlayerStatService.lua</code>, the traditional <code>string.format</code> and <code>fontString:SetText(valStr)</code> were used for numeric literal updates. Lua transient string objects were generated for each event and timer update, increasing the GC burden.</li>
+<li>In the past, the <code>isSafeNumber(val)</code> guard was introduced due to defensive filtering. However, when Retail 12.0+/12.1+ calls the native Stat API in combat or Taint environment, it will return the protected Secret Number; <code>isSafeNumber</code> will judge it as false and discard it, causing <code>getValue</code> to fall back to the <code>lastKnownStats</code> before leaving the war. Caching causes attribute values during battle (such as accessory triggers, bloodthirsty acceleration, shield absorption, etc.) to be completely frozen and not updated.</li>
+<li>There was <code>if isSecret then item.valText:SetText("") end</code> logic in the <code>update()</code> process. When the Secret value is detected, the text is directly cleared to blank.</li>
+<li>Refactoring implementation:</li>
+<li>According to the Blizzard Retail 12.x native specification, <code>FontString:SetFormattedText</code> has <code>AllowedWhenTainted = true</code> and <code>SecretArgumentsAddAspect = Enum.SecretAspect.Text</code> aspects. C-Level can natively accept and securely format Secret Numbers.</li>
+<li>Implement <code>renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)</code> and completely switch to <code>FontString:SetFormattedText</code> for C engine layer zero Lua GC transient string formatting rendering.</li>
+<li>Complete the <code>getRawValue</code> combat real-time value routing for 18 major attributes, directly obtain the original return value of the underlying API and pass it to <code>SetFormattedText</code> and <code>StatusBar:SetValue</code>.</li>
+<li>Remove the clear text logic to ensure that when special effects are triggered during battle or in a protected state, players can still see the correctly updated numerical text smoothly and instantly.</li>
+<li>Verification results: Lua 76/76, Flow all 84/84, Validation Contracts 496/496.</li>
+</ul>
+<h3 id="2026-08-27-eam-20260827-alpha82-sharedmedia-ecosystem-and-zero-delay-font-alpha-82-libsharedmedia-30-comprehensive-access-to-the-material-ecosystem-hot-application-of-global-fonts-free-of-reload-and-scrolling-menu-support">2026-08-27 EAM-20260827-ALPHA82-SHAREDMEDIA-ECOSYSTEM-AND-ZERO-DELAY-FONT: Alpha 8.2 LibSharedMedia-3.0 Comprehensive access to the material ecosystem, hot application of global fonts (free of /reload) and scrolling menu support</h3>
 <ul>
 <li>Status: Resolved (Lua 71/71, Flow 84/84, Contracts 493/493), packaged and released as Pre-release.</li>
 <li>Highlights of changes:</li>

@@ -406,6 +406,11 @@
 <li>字型驗證修復：修正 LSM 載入時的旁路判斷，確保非法字型一律安全回退為 STANDARD。</li>
 <li>修正條件設定視窗下拉文字 SetText 型別不相容問題。</li>
 </ul>
+<li><strong>角色屬性戰鬥即時更新與 C-Level 零 GC 渲染 (FontString:SetFormattedText &amp; In-Combat Stat Updates)：</strong></li>
+<ul class="changelog-sublist">
+<li>全面採用暴雪原生 FontString:SetFormattedText 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。</li>
+<li>補齊全 18 大屬性之 getRawValue 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 AllowedWhenTainted 與 Enum.SecretAspect.Text 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。</li>
+</ul>
 </ul>
 </div></div>
 <div class="changelog-card">
@@ -2241,7 +2246,12 @@
 <li>Profile Codec export/decoding repair: Add uniqueness filtering to buildPayload to completely fix the duplicateAlertID error caused by duplicate IDs in real machine history.</li>
 <li>Font verification repair: Correct the bypass judgment when loading LSM to ensure that illegal fonts will always fall back to STANDARD safely.</li>
 </ul>
-<li><strong>Fixed the type incompatibility issue of SetText in the drop-down text of the condition setting window.</strong></li>
+<li><strong>Fixed the type incompatibility issue of SetText drop-down text in the condition setting window.</strong></li>
+<li><strong>Character attribute combat in-time updates with C-Level zero GC rendering (FontString:SetFormattedText &amp; In-Combat Stat Updates):</strong></li>
+<ul class="changelog-sublist">
+<li>Fully adopt Blizzard&#x27;s native FontString:SetFormattedText for attribute value text rendering, achieving 0.00ms C-Level formatting and zero Lua GC transient string memory allocation.</li>
+</ul>
+<li><strong>Complete the getRawValue real-time combat value routing of the 18 major attributes, and cooperate with the AllowedWhenTainted and Enum.SecretAspect.Text specifications of Retail 12.</strong></li>
 </ul>
 </div></div>
 <div class="changelog-card">
@@ -2252,32 +2262,32 @@
     <div class="changelog-body">
 <ul class="changelog-mainlist">
 <li><strong>LibSharedMedia-3.0 (SharedMedia) Full LSM Integration &amp; Dynamic Discovery:</strong></li>
+<li><strong>Full access to the LibSharedMedia-3.0 material ecosystem widely used by the community, and full support for all third-party SharedMedia sound effects packs, font packs, and texture packs.</strong></li>
 <ul class="changelog-sublist">
-<li>Full access to the LibSharedMedia-3.0 material ecosystem widely used by the community, and full support for all third-party SharedMedia sound effects packs, font packs, and texture packs.</li>
+<li>Implemented MediaService.ensureLSM() dynamic detection mechanism and delayed synchronous refresh of PLAYER_LOGIN, completely solving the problem that the sound effect list is frozen at the initial 12 built-in sound effects when EAM is loaded earlier than other SharedMedia expansion plug-ins.</li>
 </ul>
-<li><strong>Implemented MediaService.ensureLSM() dynamic detection mechanism and PLAYER_LOGIN delayed synchronous refresh, completely solving the problem that the sound effect list is frozen at the initial 12 built-in sound effects when EAM is loaded earlier than other SharedMedia expansion plug-ins.</strong></li>
+<li><strong>Query lsm:List(&quot;sound&quot;) and lsm:HashTable(&quot;sound&quot;) dual-track data sources at the same time and automatically remove duplicates, ensuring 100% complete capture of all third-party SharedMedia registered sound effects.</strong></li>
 <ul class="changelog-sublist">
-<li>Query lsm:List(&quot;sound&quot;) and lsm:HashTable(&quot;sound&quot;) dual-track data sources at the same time and automatically remove duplicates, ensuring 100% complete capture of all third-party SharedMedia registered sound effects.</li>
-</ul>
-<li><strong>Supports secure dual-track audio playback (MediaService.playSound): seamlessly compatible with digital FileDataID, native SoundKitID and custom string FilePath (.ogg / .mp3) files.</strong></li>
-<ul class="changelog-sublist">
+<li>Supports secure dual-track audio playback (MediaService.playSound): seamlessly compatible with digital FileDataID, native SoundKitID and custom string FilePath (.ogg / .mp3) files.</li>
 <li>12.1 Native Aura native Aura rule compiler (AuraRuleCompiler) is connected to MediaService, and LSM custom sound effects can also be played when the Aura is triggered.</li>
 </ul>
 <li><strong>Global font hot application and archive repair (free of /reload, effective immediately) (Zero-Delay Font Application &amp; SavedVariables Whitelist):</strong></li>
-<li><strong>Unlock font archive whitelist restrictions: SavedVariables.lua releases all custom font names registered through LSM to prevent them from being forced to revert to default fonts after re-logging, reloading or switching specializations.</strong></li>
 <ul class="changelog-sublist">
-<li>Real-time linkage of screen preview icons: When changing fonts, the cow head and position preview icons (Preview Icons) on the screen will immediately redraw the new font synchronously.</li>
+<li>Lift font archive whitelist restrictions: SavedVariables.lua releases all custom font names registered through LSM to prevent them from being forced to revert to default fonts after re-logging, reloading or switching specializations.</li>
 </ul>
-<li><strong>12.1 Native Aura rule fingerprint completion: Incorporate fontFamily into the Native layout fingerprint (buildLayoutFingerprint) to fix the problem of skipping native container reconstruction because the fingerprints were the same in the past.</strong></li>
+<li><strong>Real-time linkage of screen preview icons: When changing fonts, the cow head and position preview icons (Preview Icons) on the screen will immediately redraw the new font synchronously.</strong></li>
 <ul class="changelog-sublist">
-<li>Full subsystem text broadcast linkage: Through the EAM_FONT_FAMILY_CHANGED event, the general alarm icon (Renderer), energy bar text (PowerRenderer / PlayerResourceService) and character attribute text (PlayerStatService) are refreshed simultaneously and instantly. After selecting the font, all text on the screen is applied immediately with zero delay.</li>
+<li>12.1 Native Aura rule fingerprint completion: Incorporate fontFamily into the Native layout fingerprint (buildLayoutFingerprint) to fix the problem of skipping native container reconstruction because the fingerprints were the same in the past.</li>
 </ul>
-<li><strong>Career Resource Text Panel (PlayerResourcePanel) The zigzag switching button fully supports cycling through all SharedMedia fonts.</strong></li>
+<li><strong>Full subsystem text broadcast linkage: Through the EAM_FONT_FAMILY_CHANGED event, the general alarm icon (Renderer), energy bar text (PowerRenderer / PlayerResourceService) and character attribute text (PlayerStatService) are refreshed simultaneously and instantly. After selecting the font, all text on the screen is applied immediately with zero delay.</strong></li>
+<ul class="changelog-sublist">
+<li>Career Resource Text Panel (PlayerResourcePanel) The zigzag switching button fully supports cycling through all SharedMedia fonts.</li>
+</ul>
 <li><strong>UI dropdown menu long list adaptive scrolling container (Scrollable Dropdown Menus with MouseWheel):</strong></li>
 <ul class="changelog-sublist">
-<li>Implement universal adaptive scrolling menu buildScrollableDropdownMenu: When SharedMedia contains dozens or hundreds of fonts/sound effects, the menu automatically limits the height to 10 items and enables UIPanelScrollFrameTemplate scroll and mouse wheel support, making the layout clean and unobtrusive.</li>
+<li>Implement universal adaptive scrolling menu buildScrollableDropdownMenu: When SharedMedia contains dozens or hundreds of fonts/sound effects, the menu automatically limits the height to 10 items and enables UIPanelScrollFrameTemplate scroll and mouse wheel support, making the layout tidy and unobtrusive.</li>
+<li>When the sound effects and font menu is expanded, the latest registered material list is automatically fetched from LSM in forceRefresh mode.</li>
 </ul>
-<li><strong>When the sound effects and font menu is expanded, the latest registered material list is automatically fetched from LSM in forceRefresh mode.</strong></li>
 </ul>
 </div></div>
 <div class="changelog-card">

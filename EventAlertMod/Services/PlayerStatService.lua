@@ -5,11 +5,11 @@ Module: Services/PlayerStatService
 
 理念:
 - 負責玩家主屬性、副屬性、移動速度、飛行速度與傷害/治療吸收護盾的資料採樣與狀態發布。
-- 採用安全 API 讀取，不執行私有字串化或受保護資料讀回。
+- 採用安全 API 讀取，並透過 FontString:SetFormattedText 提供 Retail 12.x / Midnight 的 C-Level 零 GC 分配與 Secret Values / Taint 容錯渲染。
 
 責任:
 - 監聽屬性、光環與吸收量相關事件。
-- 支援 16 種核心屬性取值、單位格式化、小數點處理與閾值判定。
+- 支援 18 種核心屬性取值、單位格式化、小數點處理與閾值判定。
 - 管理 playerStat 獨立告警框架生命週期與 UI 渲染。
 ]]
 local _, EAM = ...
@@ -69,7 +69,7 @@ function PlayerStatService.getPlayerStatsConfig()
     return db.playerStats, classToken or "GLOBAL"
 end
 
--- 18 大支援屬性定義清單 (支援多重 API 容錯與戰鬥狀態最後已知有效值快取)
+-- 18 大支援屬性定義清單 (支援多重 API 容錯、戰鬥即時取值與最後已知有效值快取)
 local STAT_DEFINITIONS = {
     -- 主屬性
     strength = {
@@ -78,6 +78,15 @@ local STAT_DEFINITIONS = {
         defaultLabel = "力量",
         defaultIcon = 136085, -- Spell_Nature_Strength
         category = "primary",
+        getRawValue = function()
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 1)
+                if ok and (effectiveStat or stat) ~= nil then
+                    return effectiveStat or stat
+                end
+            end
+            return PlayerStatService.lastKnownStats["strength"] or 0
+        end,
         getValue = function()
             if UnitStat then
                 local ok, stat, effectiveStat = pcall(UnitStat, "player", 1)
@@ -99,6 +108,15 @@ local STAT_DEFINITIONS = {
         defaultLabel = "敏捷",
         defaultIcon = 132212, -- Ability_Agility
         category = "primary",
+        getRawValue = function()
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 2)
+                if ok and (effectiveStat or stat) ~= nil then
+                    return effectiveStat or stat
+                end
+            end
+            return PlayerStatService.lastKnownStats["agility"] or 0
+        end,
         getValue = function()
             if UnitStat then
                 local ok, stat, effectiveStat = pcall(UnitStat, "player", 2)
@@ -120,6 +138,15 @@ local STAT_DEFINITIONS = {
         defaultLabel = "耐力",
         defaultIcon = 136109, -- Spell_Nature_UnyeildingStamina
         category = "primary",
+        getRawValue = function()
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 3)
+                if ok and (effectiveStat or stat) ~= nil then
+                    return effectiveStat or stat
+                end
+            end
+            return PlayerStatService.lastKnownStats["stamina"] or 0
+        end,
         getValue = function()
             if UnitStat then
                 local ok, stat, effectiveStat = pcall(UnitStat, "player", 3)
@@ -141,6 +168,15 @@ local STAT_DEFINITIONS = {
         defaultLabel = "智力",
         defaultIcon = 135932, -- Spell_Holy_MagicalSentry
         category = "primary",
+        getRawValue = function()
+            if UnitStat then
+                local ok, stat, effectiveStat = pcall(UnitStat, "player", 4)
+                if ok and (effectiveStat or stat) ~= nil then
+                    return effectiveStat or stat
+                end
+            end
+            return PlayerStatService.lastKnownStats["intellect"] or 0
+        end,
         getValue = function()
             if UnitStat then
                 local ok, stat, effectiveStat = pcall(UnitStat, "player", 4)
@@ -163,6 +199,28 @@ local STAT_DEFINITIONS = {
         defaultLabel = "致命",
         defaultIcon = 132223, -- Ability_CriticalStrike
         category = "secondary",
+        getRawValue = function()
+            if GetCritChance then
+                local ok, val = pcall(GetCritChance)
+                if ok and val ~= nil then return val end
+            end
+            if GetSpellCritChance then
+                for school = 1, 7 do
+                    local ok, val = pcall(GetSpellCritChance, school)
+                    if ok and val ~= nil then return val end
+                end
+            end
+            if GetRangedCritChance then
+                local ok, val = pcall(GetRangedCritChance)
+                if ok and val ~= nil then return val end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_CRIT_MELEE or 9
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and val ~= nil then return 5.0 + val end
+            end
+            return PlayerStatService.lastKnownStats["crit"] or 0
+        end,
         getValue = function()
             if GetCritChance then
                 local ok, val = pcall(GetCritChance)
@@ -207,6 +265,27 @@ local STAT_DEFINITIONS = {
         defaultLabel = "加速",
         defaultIcon = 132242, -- Ability_Hunter_RunningShot
         category = "secondary",
+        getRawValue = function()
+            local fn = GetHaste or UnitSpellHaste
+            if fn then
+                local ok, val = pcall(fn, "player")
+                if ok and val ~= nil then return val end
+            end
+            if GetMeleeHaste then
+                local ok, val = pcall(GetMeleeHaste)
+                if ok and val ~= nil then return val end
+            end
+            if GetRangedHaste then
+                local ok, val = pcall(GetRangedHaste)
+                if ok and val ~= nil then return val end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_HASTE_MELEE or 18
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["haste"] or 0
+        end,
         getValue = function()
             local fn = GetHaste or UnitSpellHaste
             if fn then
@@ -249,6 +328,22 @@ local STAT_DEFINITIONS = {
         defaultLabel = "精通",
         defaultIcon = 135907, -- Spell_Holy_GreaterBlessingofSanctuary
         category = "secondary",
+        getRawValue = function()
+            if GetMasteryEffect then
+                local ok, val = pcall(GetMasteryEffect)
+                if ok and val ~= nil then return val end
+            end
+            if GetMastery then
+                local ok, val = pcall(GetMastery)
+                if ok and val ~= nil then return val end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_MASTERY or 26
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["mastery"] or 0
+        end,
         getValue = function()
             if GetMasteryEffect then
                 local ok, val = pcall(GetMasteryEffect)
@@ -283,6 +378,19 @@ local STAT_DEFINITIONS = {
         defaultLabel = "臨機應變",
         defaultIcon = 132362, -- Ability_Warrior_ShieldReflection
         category = "secondary",
+        getRawValue = function()
+            local cr = _G.CR_VERSATILITY_DAMAGE_DONE or 29
+            local bonus, vers = 0, 0
+            if GetCombatRatingBonus then
+                local ok, b = pcall(GetCombatRatingBonus, cr)
+                if ok and b ~= nil then bonus = b end
+            end
+            if GetVersatilityBonus then
+                local ok, v = pcall(GetVersatilityBonus, cr)
+                if ok and v ~= nil then vers = v end
+            end
+            return bonus + vers
+        end,
         getValue = function()
             local cr = _G.CR_VERSATILITY_DAMAGE_DONE or 29
             local bonus, vers = 0, 0
@@ -317,6 +425,18 @@ local STAT_DEFINITIONS = {
         defaultLabel = "閃避",
         defaultIcon = 136006, -- Spell_Magic_LesserInvisibilty
         category = "tertiary",
+        getRawValue = function()
+            if GetAvoidance then
+                local ok, val = pcall(GetAvoidance)
+                if ok and val ~= nil then return val end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_AVOIDANCE or 21
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["avoidance"] or 0
+        end,
         getValue = function()
             if GetAvoidance then
                 local ok, val = pcall(GetAvoidance)
@@ -344,6 +464,18 @@ local STAT_DEFINITIONS = {
         defaultLabel = "汲取",
         defaultIcon = 136169, -- Spell_Shadow_LifeDrain02
         category = "tertiary",
+        getRawValue = function()
+            if GetLifesteal then
+                local ok, val = pcall(GetLifesteal)
+                if ok and val ~= nil then return val end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_LIFESTEAL or 22
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["leech"] or 0
+        end,
         getValue = function()
             if GetLifesteal then
                 local ok, val = pcall(GetLifesteal)
@@ -371,6 +503,18 @@ local STAT_DEFINITIONS = {
         defaultLabel = "速度 (屬性)",
         defaultIcon = 132297, -- Ability_Rogue_Feint
         category = "tertiary",
+        getRawValue = function()
+            if GetSpeed then
+                local ok, val = pcall(GetSpeed)
+                if ok and val ~= nil then return val end
+            end
+            if GetCombatRatingBonus then
+                local cr = _G.CR_SPEED or 23
+                local ok, val = pcall(GetCombatRatingBonus, cr)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["speedRating"] or 0
+        end,
         getValue = function()
             if GetSpeed then
                 local ok, val = pcall(GetSpeed)
@@ -399,6 +543,26 @@ local STAT_DEFINITIONS = {
         defaultLabel = "跑速",
         defaultIcon = 132307, -- Ability_Rogue_Sprint
         category = "speed",
+        getRawValue = function()
+            if GetUnitSpeed then
+                local ok, currentSpeed, runSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (currentSpeed or runSpeed) ~= nil then
+                    local isMoving = (currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0)
+                    local isOtherMode = false
+                    if IsFlying and IsFlying() then isOtherMode = true end
+                    if IsSwimming and IsSwimming() then isOtherMode = true end
+                    if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                        local gOk, isGliding = pcall(C_PlayerInfo.GetGlidingInfo)
+                        if gOk and isGliding then isOtherMode = true end
+                    end
+                    local speed = (isMoving and not isOtherMode) and currentSpeed or runSpeed
+                    if speed then
+                        return (speed / 7.0) * 100
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["runSpeed"] or 100
+        end,
         getValue = function()
             if GetUnitSpeed then
                 local ok, currentSpeed, runSpeed = pcall(GetUnitSpeed, "player")
@@ -431,6 +595,19 @@ local STAT_DEFINITIONS = {
         defaultLabel = "泳速",
         defaultIcon = 132150, -- Ability_Suffocate
         category = "speed",
+        getRawValue = function()
+            if GetUnitSpeed then
+                local ok, currentSpeed, _, _, swimSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (currentSpeed or swimSpeed) ~= nil then
+                    local isSwimming = IsSwimming and IsSwimming()
+                    local speed = (isSwimming and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or swimSpeed
+                    if speed then
+                        return (speed / 7.0) * 100
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["swimSpeed"] or 67
+        end,
         getValue = function()
             if GetUnitSpeed then
                 local ok, currentSpeed, _, _, swimSpeed = pcall(GetUnitSpeed, "player")
@@ -456,6 +633,24 @@ local STAT_DEFINITIONS = {
         defaultLabel = "飛速",
         defaultIcon = 237558, -- Ability_Mount_Drake_Proto
         category = "speed",
+        getRawValue = function()
+            if GetUnitSpeed then
+                local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (currentSpeed or flightSpeed) ~= nil then
+                    local isFlying = IsFlying and IsFlying()
+                    local isGliding = false
+                    if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                        local gOk, gliding = pcall(C_PlayerInfo.GetGlidingInfo)
+                        if gOk and gliding then isGliding = true end
+                    end
+                    local speed = (isFlying and not isGliding and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
+                    if speed then
+                        return (speed / 7.0) * 100
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["flightSpeed"] or 100
+        end,
         getValue = function()
             if GetUnitSpeed then
                 local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
@@ -486,6 +681,24 @@ local STAT_DEFINITIONS = {
         defaultLabel = "飛龍模式飛速",
         defaultIcon = 4667307, -- ability_dragonriding_surgeforward01
         category = "speed",
+        getRawValue = function()
+            if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+                local ok, isGliding, canGlide, forwardSpeed = pcall(C_PlayerInfo.GetGlidingInfo)
+                if ok and forwardSpeed ~= nil then
+                    return (forwardSpeed / 7.0) * 100
+                end
+            end
+            if GetUnitSpeed then
+                local ok, currentSpeed, _, flightSpeed = pcall(GetUnitSpeed, "player")
+                if ok and (currentSpeed or flightSpeed) ~= nil then
+                    local speed = (currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
+                    if speed then
+                        return (speed / 7.0) * 100
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["skyridingSpeed"] or 0
+        end,
         getValue = function()
             if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
                 local ok, isGliding, canGlide, forwardSpeed = pcall(C_PlayerInfo.GetGlidingInfo)
@@ -596,6 +809,15 @@ local STAT_DEFINITIONS = {
         defaultLabel = "護甲值",
         defaultIcon = 134951, -- INV_Shield_04
         category = "survival",
+        getRawValue = function()
+            if UnitArmor then
+                local ok, base, effectiveArmor = pcall(UnitArmor, "player")
+                if ok and (effectiveArmor or base) ~= nil then
+                    return effectiveArmor or base
+                end
+            end
+            return PlayerStatService.lastKnownStats["armor"] or 0
+        end,
         getValue = function()
             if UnitArmor then
                 local ok, base, effectiveArmor = pcall(UnitArmor, "player")
@@ -622,6 +844,77 @@ local ORDERED_KEYS = {
     "totalAbsorb", "healAbsorb", "armor"
 }
 PlayerStatService.ORDERED_KEYS = ORDERED_KEYS
+
+-- 透過 FontString:SetFormattedText 進行 C-Level 零 GC 分配與 Secret Values 容錯渲染
+local function renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)
+    if not fontString then return end
+    decimals = decimals or 1
+    local isSecret = Util and Util.isSecretValue and (Util.isSecretValue(rawVal) or Util.isSecretValue(val))
+
+    if isSecret then
+        local targetVal = (rawVal ~= nil and rawVal ~= 0) and rawVal or val
+        if formatType == "percent" then
+            local fmt = "%." .. decimals .. "f" .. (suffix or "")
+            local ok = pcall(fontString.SetFormattedText, fontString, fmt, targetVal)
+            if not ok then pcall(fontString.SetText, fontString, "0.0" .. (suffix or "")) end
+        elseif formatType == "number" or formatType == "largeNumber" then
+            if decimals == 0 then
+                local ok = pcall(fontString.SetFormattedText, fontString, "%d", targetVal)
+                if not ok then pcall(fontString.SetText, fontString, "0") end
+            else
+                local fmt = "%." .. decimals .. "f"
+                local ok = pcall(fontString.SetFormattedText, fontString, fmt, targetVal)
+                if not ok then pcall(fontString.SetText, fontString, "0") end
+            end
+        else
+            local ok = pcall(fontString.SetFormattedText, fontString, "%s", targetVal)
+            if not ok then pcall(fontString.SetText, fontString, "") end
+        end
+        return
+    end
+
+    local numVal = isSafeNumber(val) and val or (isSafeNumber(rawVal) and rawVal or nil)
+    if not numVal then
+        if formatType == "percent" then
+            fontString:SetFormattedText("%." .. decimals .. "f" .. (suffix or ""), 0)
+        else
+            fontString:SetFormattedText("%d", 0)
+        end
+        return
+    end
+
+    if numVal == 0 and (formatType == "number" or formatType == "largeNumber") then
+        fontString:SetFormattedText("%d", 0)
+        return
+    end
+
+    if shortNumber and (formatType == "largeNumber" or (numVal >= 10000 and formatType ~= "percent")) then
+        if numVal >= 1000000 then
+            local fmt = "%." .. decimals .. "fM"
+            fontString:SetFormattedText(fmt, numVal / 1000000)
+            return
+        elseif numVal >= 1000 then
+            local fmt = "%." .. decimals .. "fk"
+            fontString:SetFormattedText(fmt, numVal / 1000)
+            return
+        end
+    end
+
+    if formatType == "percent" then
+        local fmt = "%." .. decimals .. "f" .. (suffix or "")
+        fontString:SetFormattedText(fmt, numVal)
+    elseif formatType == "number" or formatType == "largeNumber" then
+        if decimals == 0 then
+            fontString:SetFormattedText("%d", math.floor(numVal + 0.5))
+        else
+            local fmt = "%." .. decimals .. "f"
+            fontString:SetFormattedText(fmt, numVal)
+        end
+    else
+        fontString:SetFormattedText("%s", tostring(numVal))
+    end
+end
+PlayerStatService.renderStatValueText = renderStatValueText
 
 local function formatStatNumber(val, formatType, decimals, shortNumber, suffix)
     decimals = decimals or 1
@@ -656,7 +949,6 @@ local function formatStatNumber(val, formatType, decimals, shortNumber, suffix)
     end
     return tostring(val)
 end
-
 PlayerStatService.formatStatNumber = formatStatNumber
 
 function PlayerStatService.prewarmStats()
@@ -824,8 +1116,7 @@ function PlayerStatService.update()
         for _, data in ipairs(activeList) do
             local item = statItemFrames[data.key]
             if item and item:IsShown() then
-                local valStr = formatStatNumber(data.val, data.def.format, data.cfg.decimals, data.cfg.shortNumber, data.def.suffix)
-                item.valText:SetText(valStr)
+                renderStatValueText(item.valText, data.val, data.rawVal, data.def.format, data.cfg.decimals, data.cfg.shortNumber, data.def.suffix)
             end
         end
         return
@@ -954,9 +1245,8 @@ function PlayerStatService.update()
             end
         end
 
-        -- 數值文字
-        local valStr = formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix)
-        item.valText:SetText(valStr)
+        -- 數值文字 (透過 FontString:SetFormattedText 進行 C-Level 零 GC 分配與 Secret Values 容錯渲染)
+        renderStatValueText(item.valText, val, rawVal, def.format, cfg.decimals, cfg.shortNumber, def.suffix)
         if cfg.fontSizeValue then
             if EAM.UI.TextPlacement and EAM.UI.TextPlacement.applyFont then
                 EAM.UI.TextPlacement.applyFont(item.valText, cfg.fontSizeValue, globalConfig)
@@ -1030,10 +1320,6 @@ function PlayerStatService.update()
             pcall(item.statusBar.SetMinMaxValues, item.statusBar, 0, maxVal)
             pcall(item.statusBar.SetValue, item.statusBar, rawVal)
             item.statusBar:Show()
-
-            if isSecret then
-                item.valText:SetText("")
-            end
         else
             item.statusBar:Hide()
         end

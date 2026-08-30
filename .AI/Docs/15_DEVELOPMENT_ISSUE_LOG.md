@@ -1,3 +1,17 @@
+### 2026-08-30 EAM-20260830-PLAYER-STAT-SETFORMATTEDTEXT-FIX：角色屬性全面接入 FontString:SetFormattedText 零 GC 渲染與戰鬥即時更新修復
+
+- 狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。
+- 根因分析：
+  1. 過去在 `PlayerStatService.lua` 中，數值文字更新採用傳統 `string.format` 與 `fontString:SetText(valStr)`，每次事件與計時器更新皆產生 Lua 暫態字串物件，增加 GC 負擔。
+  2. 過去因防禦性過濾引入 `isSafeNumber(val)` 守衛，而 Retail 12.0+/12.1+ 在戰鬥中或 Taint 環境下調用原生 Stat API 會回傳受保護的 Secret Number；`isSafeNumber` 將其判定為 false 並丟棄，導致 `getValue` 一律回退到脫戰前的 `lastKnownStats` 快取，造成戰鬥中屬性數值（如飾品觸發、嗜血加速、護盾吸收等）完全凍結不更新。
+  3. 在 `update()` 流程中曾存在 `if isSecret then item.valText:SetText("") end` 邏輯，當偵測到 Secret 數值時直接將文字清空為空白。
+- 重構實作：
+  1. 依據暴雪 Retail 12.x 原生規範，`FontString:SetFormattedText` 具備 `AllowedWhenTainted = true` 與 `SecretArgumentsAddAspect = Enum.SecretAspect.Text` 切面。C-Level 原生能直接接受並安全格式化 Secret Numbers。
+  2. 實作 `renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)`，全面改用 `FontString:SetFormattedText` 進行 C 引擎層零 Lua GC 暫態字串格式化渲染。
+  3. 為 18 大屬性補齊 `getRawValue` 戰鬥即時取值路由，直接取得底層 API 原始回傳值並傳遞至 `SetFormattedText` 與 `StatusBar:SetValue`。
+  4. 移除清空文字邏輯，確保在戰鬥中觸發特效或受保護狀態下，玩家依然能流暢且即時看到正確更新的數值文字。
+- 驗證結果：Lua 76/76、Flow all 84/84、Validation Contracts 496/496。
+
 ### 2026-08-27 EAM-20260827-ALPHA82-SHAREDMEDIA-ECOSYSTEM-AND-ZERO-DELAY-FONT：Alpha 8.2 LibSharedMedia-3.0 素材生態全面接入、全域字型熱套用（免 /reload）與捲動選單支援
 
 - 狀態：已解決 (Lua 71/71, Flow 84/84, Contracts 493/493)，已完成打包並發布 Pre-release。
