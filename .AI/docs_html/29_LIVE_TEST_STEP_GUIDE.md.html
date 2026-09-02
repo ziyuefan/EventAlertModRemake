@@ -1246,7 +1246,7 @@ All game input is done by the player himself. EAM and Codex do not cast spells, 
 </ul>
 <h3 id="37-eamcode_1">37. <strong>​​EAMCODE_1</strong></h3>
 <ul>
-<li>Conditions: PTR 12.1, detailed settings only check "Halo removal".</li>
+<li>Conditions: PTR 12.1, detailed settings only check "Aura removal".</li>
 <li>Steps: separately test the natural expiration and the player's actual dispersion/removal; also test deactivating the module, changing settings, rebuilding the container and <code>/reload</code>.</li>
 <li>Passed: Each real Aura removal is played only once; deactivation, settings sync, container clearing and <code>/reload</code> are not allowed to impersonate removals. If API behaves differently for expiration and expiration, record it as a real fact.</li>
 <li>Also test <code>fromPlayer</code>/narrow polarity rules: same as unit+SpellID If other sources are over-fired, record <code>UnitAuraSoundInfo</code> without caster/auraFilter restrictions, not bypassed by Lua.</li>

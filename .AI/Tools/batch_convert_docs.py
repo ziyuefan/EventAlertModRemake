@@ -125,13 +125,26 @@ def post_process_translation(text, src_lang, dest_lang):
         text = re.sub(r'\b(?:stocks?|stock\s+tickers?)\b', 'Ticker', text, flags=re.IGNORECASE)
         text = re.sub(r'\b(?:tainted?|dye|coloration)\b', 'Taint', text, flags=re.IGNORECASE)
         text = re.sub(r'\bcombat\s+(?:locking|locked)\b', 'Combat Lockdown', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bbattle\s+lock(?:down)?\b', 'Combat Lockdown', text, flags=re.IGNORECASE)
         text = re.sub(r'\bshadow\s+carrier\b', 'Shadow Host', text, flags=re.IGNORECASE)
         text = re.sub(r'\bzero\s+distribution\b', 'zero-allocation', text, flags=re.IGNORECASE)
         text = re.sub(r'\b(?:object\s+pool|entity\s+pool)\b', 'Object Pool', text, flags=re.IGNORECASE)
         text = re.sub(r'\bcooldown\s+manager\b', 'CooldownViewer', text, flags=re.IGNORECASE)
         text = re.sub(r'\badd-ons?\b', 'AddOn', text, flags=re.IGNORECASE)
         text = re.sub(r'\baddons?\b', 'AddOn', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bhalos?\b', 'Aura', text, flags=re.IGNORECASE)
         text = re.sub(r'\bauras?\b', 'Aura', text, flags=re.IGNORECASE)
+        text = re.sub(r'\b(?:suction\s+shield|absorbing\s+shield)\b', 'Shield Absorb', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bsecret\s+numbers?\b', 'Secret Value', text, flags=re.IGNORECASE)
+        text = re.sub(r'\binfectious\s+accumulation\b', 'Pandemic Refresh Window', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bbiological\s+parasite\b', 'Parasitic Binding', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bstreamers?\b', 'Overlay Glow', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bcombo\s+marks?\b', 'Combo Points', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bholy\s+force\b', 'Holy Power', text, flags=re.IGNORECASE)
+        text = re.sub(r'\btrue\s+energy\b', 'Chi', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bsoul\s+debris\b', 'Soul Shards', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bdragon\s+flying\s+glide\b', 'Dynamic Flight Gliding Velocity', text, flags=re.IGNORECASE)
+        text = re.sub(r'\bdesaturated\s+gray\s+mask\b', 'Desaturated Placeholder Mask', text, flags=re.IGNORECASE)
     return text
 
 def protect_symbols(text):
@@ -1269,9 +1282,16 @@ def convert_txt_to_html(txt_path, dest_dir):
         
     print(f"[Process] Converting txt {filename} -> {out_filename}")
     
-    # Translate to English
-    print("  [Auto EN] Translating text to English...")
-    content_en = translate_via_google_api(content_zh)
+    # Look for local English version
+    base, ext = os.path.splitext(txt_path)
+    en_txt_path = base + "_en" + ext
+    if os.path.exists(en_txt_path):
+        print(f"  [Local EN] Found local English text file: {os.path.basename(en_txt_path)}")
+        with open(en_txt_path, "r", encoding="utf-8") as f:
+            content_en = f.read()
+    else:
+        print("  [Auto EN] Translating text to English...")
+        content_en = translate_via_google_api(content_zh)
     
     is_changelog = "changelog" in filename.lower()
     

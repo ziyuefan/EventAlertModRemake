@@ -726,223 +726,77 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="architecture">Architecture</h1>
-<h2 id="2026-08-21-new-root-directory-and-responsibility-boundaries-current">2026-08-21 New root directory and responsibility boundaries (current)</h2>
+<!-- EAM_DOCUMENTATION_SOURCE: enUS -->
+<h1 id="system-architecture">System Architecture</h1>
+<h2 id="root-directory-structure-responsibilities-current">Root Directory Structure &amp; Responsibilities (Current)</h2>
 <ul>
-<li><code>D:\Project_EventAlertMod</code> is the Git/project root; <code>EventAlertMod/</code> is the only plug-in runtime source; <code>.AI/</code> is AI management, files, tools and materials; <code>Deploy/</code> is the local menu deployment and packaging tool; <code>Dist/</code> is the ignored local product area.</li>
-<li>The plug-in loading boundary only includes the <code>Core/</code>, <code>Data/</code> runtime Lua, <code>Debug/</code>, <code>Locale/</code>, <code>Managers/</code>, <code>Media/</code>, <code>Services/</code>, <code>UI/</code> pointed to by <code>EventAlertMod/EventAlertMod.toc</code> and the public descriptions in the plug-in. <code>.AI/Docs</code>, <code>.AI/Tools</code>, <code>.AI/Data</code> must not be loaded by TOC.</li>
-<li>Plug-in ZIP must be the exact tree of <code>EventAlertMod/</code>; management data, deployment tools, Dist, and test results are not spelled out by the plug-in wrapper. Only source code ZIP can retain <code>.vscode/</code>, <code>.codex/</code>, <code>.AI/</code> (including <code>.AI/docs_html/</code>), but local products and temporary storage are excluded.</li>
-<li>Before the deployment tool can write to the WoW directory, the three-channel version/target/Reparse pre-check must be completed and explicitly confirmed; any link, junction or other Reparse Point fail-closed cannot be deleted or followed for repair.</li>
+<li><code>D:\Project_EventAlertMod</code> is the Git project root; <code>EventAlertMod/</code> is the sole AddOn runtime source tree; <code>.AI/</code> contains AI governance, documentation, validation tools, and test suites; <code>Deploy/</code> houses deployment scripts and packaging tools; <code>Dist/</code> is the ignored local build artifacts directory.</li>
+<li>The AddOn runtime boundary includes only files listed in <code>EventAlertMod/EventAlertMod.toc</code>: <code>Core/</code>, <code>Data/</code> runtime Lua, <code>Debug/</code>, <code>Locale/</code>, <code>Managers/</code>, <code>Media/</code>, <code>Services/</code>, and <code>UI/</code>. Files under <code>.AI/Docs</code>, <code>.AI/Tools</code>, and <code>.AI/Data</code> must NEVER be loaded by the TOC.</li>
+<li>AddOn release ZIPs must be the exact tree of <code>EventAlertMod/</code>. Source ZIPs may include <code>.vscode/</code>, <code>.codex/</code>, and <code>.AI/</code> (including <code>.AI/docs_html/</code>), strictly excluding local artifacts and temporary scratch files.</li>
+<li>Automated deployment scripts must perform three-way version / target / Reparse Point checks before modifying WoW directories. Any SymbolicLink or Junction must fail-closed.</li>
 </ul>
-<blockquote>
-<p>This section is the current-of-truth of the new root; the old architecture and old paths below retain only historical design evidence.</p>
-</blockquote>
-<p>Current ## file mapping</p>
-<p>Root:</p>
+<hr />
+<h2 id="modern-module-decoupling-mapping">Modern Module Decoupling &amp; Mapping</h2>
+<h3 id="1-core-layer-eventalertmodcore">1. Core Layer (<code>EventAlertMod/Core/</code>)</h3>
 <ul>
-<li><code>EventAlertMod_Mainline.toc</code>: Formal clothing/mainline directory, current interface
-  <code>120000</code>, version <code>TWW_11.2.5_20251111</code>.</li>
-<li><code>EventAlertMod_Cata.toc</code>, <code>EventAlertMod_Mists.toc</code>,
-  <code>EventAlertMod_TBC.toc</code>, <code>EventAlertMod_Wrath.toc</code>: Unsupported legacy directories.</li>
-<li><code>embeds.xml</code>: Load bundle library.</li>
-<li><code>README.md</code>, <code>changelog.txt</code>: historical behavior and command context.</li>
-<li><code>libs/</code>: Bundle <code>LibCustomGlow-1.0</code>, <code>LibDebug</code>, <code>LibStub</code>.</li>
-<li><code>locale/</code>: <code>本地化.comm.lua</code>, <code>.en.lua</code>, <code>.tw.lua</code>, <code>.cn.lua</code>,
-  <code>.kr.lua</code>, <code>.ru.lua</code>.</li>
-<li><code>Images/</code>, <code>Sounds/</code>: Media assets.</li>
-<li><code>DevDocument/</code>: Reference to URL and the previous ChatGPT context.</li>
-<li><code>Classic/</code>, <code>TBC/</code>, <code>Wrath/</code>: Inherited sources are not supported.</li>
-<li><code>Main/</code>: Current mainline implementation.</li>
+<li><strong><code>Env.lua</code></strong>: Runtime namespace (<code>EAM</code>), environment probes, build flavor checks, and Retail-only guards.</li>
+<li><strong><code>Util.lua</code></strong>: Safe arithmetic, object pooling helpers, table traversal, enum helpers, and defensive assertions.</li>
+<li><strong><code>Constants.lua</code></strong>: Global enumerations, alert kinds, frame types, layout direction offsets, and schema versions.</li>
+<li><strong><code>EventRouter.lua</code></strong>: Single-frame event bus. Manages dynamic <code>OnEvent</code> subscriptions and dispatch tables.</li>
+<li><strong><code>Scheduler.lua</code></strong>: Unified central <code>OnUpdate</code> scheduler. Enforces frame-budgeted callbacks and throttled tasks without per-icon timers.</li>
+<li><strong><code>SavedVariables.lua</code></strong>: Data schema migration, validation, class profiles, and transactional mutation helpers.</li>
 </ul>
-<p>Current main line load equipment:
-- <code>Main/EventAlertMod.xml</code>: Load the mainline Lua module and create it
-  <code>EA_Main_Frame</code> / <code>EA_Version_Frame</code>.
-- XML options panel:
-  - <code>Main/EventAlert_Options.xml</code>
-  - <code>Main/EventAlert_IconOptions.xml</code>
-  - <code>Main/EventAlert_ClassAlerts.xml</code>
-  - <code>Main/EventAlert_OtherAlerts.xml</code>
-  - <code>Main/EventAlert_TargetAlerts.xml</code>
-  - <code>Main/EventAlert_SCDAlerts.xml</code>
-  - <code>Main/EventAlert_GroupAlerts.xml</code>
-Current mainline Lua modules:</p>
+<h3 id="2-services-layer-eventalertmodservices">2. Services Layer (<code>EventAlertMod/Services/</code>)</h3>
 <ul>
-<li><code>EventAlert_LoadDefault.lua</code>: Default <code>EA_Config2</code> value.</li>
-<li><code>EventAlert_InitVar.lua</code>: initialize <code>EA_Config</code>, <code>EA_Position</code>, namespace
-Runtime tables, debug flags, class/specification global variables.</li>
-<li><code>EventAlert_InitVar_DK.lua</code>: Death Knight runes/textures.</li>
-<li><code>EventAlert_SpellItem.lua</code>: Large weapon/item data sheet.</li>
-<li><code>EventAlert_CreateFrames.lua</code>: Create icons, auxiliary points, scrolling lists,
-  Minimap button, group frame and special resource frame.</li>
-<li><code>EventAlert_SpellArray.lua</code>: category/default coordinate system and data loading.</li>
-<li><code>EventAlert_Animation.lua</code>: Visual animation/background helper.</li>
-<li><code>EventAlert_Util.lua</code>: printing assistant, tooltip assistant, halo search,
-  Buff list flaws, glowing assistant, spell/talent checks.</li>
-<li><code>EventAlert_EAFun.lua</code>: rolling/debugging, migration compatibility appearance,
-  Tooltips, conditions, timer text, grouped results, layouts and prompt bindings.</li>
-<li><code>EventAlert_SlashCommand.lua</code>: <code>/eam</code> instruction processing.</li>
-<li><code>EventAlert_GroupEvent.lua</code>: User-defined conditional/group alert checking.</li>
-<li><code>EventAlert_Core.lua</code>: plugin loading, event registration/scheduling, most
-  Top-level event handlers, lookups, version checks, update loops.</li>
-<li><code>EventAlert_ItemSpellCache.lua</code>: item to spell cache browser with large items
-  Scan.</li>
-<li><code>EventAlert_Aura_Core.lua</code>: Full/incremental Aura cache helper.</li>
-<li><code>EventAlert_Aura_Self.lua</code>: Player/pet Aura alerts and self-icon layout.</li>
-<li><code>EventAlert_Aura_Target.lua</code>: Target Aura alert and target icon layout.</li>
-<li><code>EventAlert_Cooldown.lua</code>: Asset/item cooldown and SCD layout.</li>
-<li><code>EventAlert_SpecialPower.lua</code>: runes, combination points, category resources,
-  Frame of life bloom, vitality and other special powers.</li>
-<li><code>EventAlert_API.lua</code>: API alias layer, currently not in the XML loading list.</li>
-<li><code>EventAlert_Options.lua</code>: Options UI logic and group event editor.</li>
-<li><code>EventAlert_IconOptions.lua</code>: Icon option UI, button point movement, font/position
-settings.</li>
-<li><code>EventAlert_ImportExport.lua</code>: Import/export prototype, currently annotated
-Output in XML format.</li>
+<li><strong><code>AuraService.lua</code></strong>: Safe player and target aura monitoring with shield absorb accumulation.</li>
+<li><strong><code>CooldownService.lua</code></strong>: Charge-based spell cooldown tracking, exact player cast activation, and pre-render placeholder management.</li>
+<li><strong><code>ItemCooldownService.lua</code></strong>: Trinket, equipment, and consumable cooldown queues.</li>
+<li><strong><code>SpellInfoService.lua</code></strong>: Caching layer for spell names, icons, and links via <code>C_Spell</code>.</li>
+<li><strong><code>PlayerResourceService.lua</code></strong>: Multi-class resource tracking (Combo Points, Holy Power, Chi, Soul Shards, Runes, Arcane Charges, etc.).</li>
+<li><strong><code>PlayerStatService.lua</code></strong>: 18-stat real-time monitor, 4-in-1 speed measurements, and Secret-safe <code>StatusBar</code> sinks.</li>
+<li><strong><code>GroundEffectService.lua</code></strong>: Ground AoE spell detection with Base/Override talent family matching.</li>
+<li><strong><code>GroupService.lua</code></strong>: Multi-dimensional tactical tagging and group management.</li>
 </ul>
-<p>Current ## XML/UI template usage</p>
-<p>The static XML panel uses these template families:</p>
+<h3 id="3-ui-rendering-layer-eventalertmodui">3. UI &amp; Rendering Layer (<code>EventAlertMod/UI/</code>)</h3>
 <ul>
-<li><code>UIPanelButtonTemplate</code></li>
-<li><code>UICheckButtonTemplate</code></li>
-<li><code>OptionsSliderTemplate</code></li>
-<li><code>UIDropDownMenuTemplate</code></li>
-<li><code>UIPanelScrollFrameTemplate</code></li>
-<li><code>InputBoxTemplate</code></li>
-<li><code>BackdropTemplate</code></li>
-<li><code>GameFontNormal</code></li>
-<li><code>GameFontHighlight</code></li>
-<li><code>EA_SpellEditTextTemplate</code></li>
+<li><strong><code>IconPool.lua</code></strong>: Recycled allocation of icon buttons, textures, cooldown frames, borders, and font strings.</li>
+<li><strong><code>Renderer.lua</code></strong>: Consumes normalized <code>AlertState</code> records to update visual widgets; never queries Blizzard <code>C_*</code> data APIs directly.</li>
+<li><strong><code>Options.lua</code></strong>: Modern settings interface with 3-level APPEND docking, live preview, and multi-select dropdowns.</li>
+<li><strong><code>Slash.lua</code></strong>: Command-line parser for <code>/eam</code> slash commands.</li>
 </ul>
-<p>Dynamic Lua framework is built and used:</p>
+<h3 id="4-diagnostic-testing-eventalertmoddebug">4. Diagnostic &amp; Testing (<code>EventAlertMod/Debug/</code>)</h3>
 <ul>
-<li><code>CreateFrame("Frame", ...)</code> for alert icons, items, inventory containers, groups
-Frame and minimap buttons.</li>
-<li><code>CreateFrame("Cooldown", ..., "CooldownFrameTemplate")</code> for cooling slide
-  One frame.</li>
-<li><code>CreateFrame("ScrollFrame", ..., "UIPanelScrollFrameTemplate")</code> for spells
-  List and import/export panels.</li>
-<li><code>CreateFrame("EditBox", ..., "InputBoxTemplate")</code> and XML edit boxes
-  Templates for code IDs and import/export text.</li>
-<li><code>CreateFrame("Button", ..., "UIPanelButtonTemplate")</code> and XML options
-  button.</li>
-<li><code>CreateFontString(..., "GameFontNormal")</code> and related game fonts.</li>
-<li>Call context through <code>Lib_ZYF:SetBackdrop</code> and directly <code>BackdropTemplate</code>
-Use in initialization import/export code.
-Rewrite rules: UI templates belong to <code>UI/IconPool</code>, <code>UI/Renderer</code> and
-<code>用戶界面/選項</code>. Services cannot directly create frames or change frame layouts.</li>
+<li><strong><code>DebugState.lua</code></strong>: Comprehensive runtime snapshots separating facts, derived states, boundary warnings, and environment stats.</li>
+<li><strong><code>RuntimeProbe.lua</code></strong>: Safe metadata inspection without triggering Secret access violations.</li>
 </ul>
-<p>Current ## Responsibilities</p>
-<p>Current course number responsibilities are mixed:</p>
-<ul>
-<li><code>Core.lua</code> has loading sequence, event registration, event routing, and functions
-  Processors, discovery scans, version checks and rollback update schedules.</li>
-<li>Aura services are divided into "Aura_Core", "Aura_Self" and "Aura_Target",
-But it's still direct rendering and scheduling.</li>
-<li>Cooling service performs cooling query, cooling item query,
-  Rendering delays, and delayed updates in a mod.</li>
-<li>Frame creation and renderer behavior are distributed in "CreateFrames",
-  <code>EAFun</code>, <code>Aura_*</code>, <code>Cooldown</code>, <code>SpecialPower</code> and option modules.</li>
-<li>SavedVariables are initialized directly in the global table, consumption mode
-  Versioning or validation boundaries.</li>
-<li>Localization uses global strings and mixes into UI settings.</li>
-</ul>
-<h2 id="target-module-mapping">Target module mapping</h2>
-<p>Core:</p>
-<ul>
-<li><code>Env</code>: plug-in mode namespace, local API alias, build/flavor protection, production server only
-  guard.</li>
-<li><code>Util</code>: contribution assistant, pool, backing table API, enumeration assistant,
-  assert.</li>
-<li><code>預設</code>: Lists enumerations, event names, status codes, schema versions.</li>
-<li><code>EventRouter</code>: One frame, one <code>OnEvent</code>, events to the module's schedule.
--<code>Scheduler</code>: one <code>OnUpdate</code>, inconsistent queuing, low frequency fallback, none
-Timer for each icon.</li>
-<li><code>SavedVariables</code>: Defaults, migrations, validations, versioning modes.</li>
-<li><code>性能</code>: FPS/Combat throttling, optional analysis, shared pool.</li>
-</ul>
-<p>Services:</p>
-<ul>
-<li><code>AuraService</code>: Safe player/target halo holder and cache owner.</li>
-<li><code>CooldownService</code>: Automatic cooling and normalized cooling status.</li>
-<li><code>ItemCooldownService</code>: Item cooldown queue and optional incremental cache.</li>
-<li><code>SpellInfoService</code>: spell name/icon/link cache.</li>
-<li><code>ClassPowerService</code>: Player professional special energy (holy power, soul fragments, combo points, chi, arcane charge) and central status management.</li>
-<li><code>GroundEffectService</code>: Ground effects induction (SPELL_CAST_SUCCESS) with dual duration (dynamic tooltip grab vs. manual input) timer tracking.</li>
-<li><code>TotemService</code>: Shaman Totem slots are monitored using C_Totems.GetTotemInfo.</li>
-</ul>
-<p>User profile:</p>
-<ul>
-<li><code>IconPool</code>: Retrieve buttons, textures, cooldown areas and FontStrings.</li>
-<li><code>Renderer</code>: only consumes standardized rendering state; no data is obtained.</li>
-<li><code>選項</code>: Simple configuration panel.</li>
-<li><code>Slash</code>: <code>/eam</code> command parser and detect mis-exported commands.</li>
-</ul>
-<p>False detection:
-- <code>DebugState</code>: Concise execution phase snapshot splitting facts, derived states,
-Human notes, border vigilance, and the environment.
-- <code>PromptExport</code>: A continuous sequence of output similar to JSON.</p>
-<h2 id="data-flow">Data flow</h2>
+<hr />
+<h2 id="data-flow-architecture">Data Flow Architecture</h2>
+<div class="mermaid">
+flowchart TD
+    A[Blizzard WoW Events] --> B[EventRouter]
+    B --> C[Data Services: Aura / Cooldown / Resource / Stat]
+    C -->|Secret Validation & StatePool| D[AlertManager / State Records]
+    D -->|Throttled Batch Update| E[Renderer]
+    E -->|Acquire & Update Widgets| F[IconPool]
+    G[Scheduler] -->|Frame-budgeted Throttle| D
+    H[SavedVariables] -->|Schema Validation| C
+</div>
+
 <ol>
-<li>The Blizzard event enters <code>EventRouter</code>.</li>
-<li>The router schedules to a certain or set service.</li>
-<li>The service reads the secure official service API and updates its execution time status.</li>
-<li>Service release or mark "AlertState" record.</li>
-<li><code>Renderer</code> receives the alarm status and updates the pool icon.</li>
-<li>The "Scheduler" only handles refresh, backsampling, and debug bursts.</li>
-<li><strong>​​​​EAMCODE_0</strong> is read/migrated on load and only configuration changes are read.</li>
+<li>Blizzard engine events enter <strong><code>EventRouter</code></strong>.</li>
+<li><code>EventRouter</code> dispatches payloads to registered services.</li>
+<li>Services query safe Retail APIs (<code>C_Spell</code>, <code>C_UnitAuras</code>, etc.) and update runtime state objects.</li>
+<li>Services acquire state buffers from zero-allocation <strong><code>StatePool</code></strong> and emit normalized <code>AlertState</code> records.</li>
+<li><strong><code>AlertManager</code></strong> batches and throttles layout dirty flags.</li>
+<li><strong><code>Renderer</code></strong> receives state records and updates pooled visual frames from <strong><code>IconPool</code></strong>.</li>
+<li>In-combat mutations are either pre-anchored via <code>SetAlpha(0)</code> / desaturated masks or deferred to <code>PLAYER_REGEN_ENABLED</code>.</li>
 </ol>
-<h2 id="event-flow">Event flow</h2>
-<p>Major events should only include necessary Retail server events, such as:</p>
+<hr />
+<h2 id="121-native-aura-vs-legacy-routing">12.1 Native Aura vs. Legacy Routing</h2>
 <ul>
-<li><code>PLAYER_LOGIN</code></li>
-<li><code>PLAYER_ENTERING_WORLD</code></li>
-<li><code>PLAYER_REGEN_ENABLED</code></li>
-<li><code>PLAYER_REGEN_DISABLED</code></li>
-<li><code>PLAYER_TARGET_CHANGED</code></li>
-<li><code>UNIT_AURA</code></li>
-<li><code>SPELL_UPDATE_COOLDOWN</code></li>
-<li><code>SPELL_UPDATE_CHARGES</code></li>
-<li><code>BAG_UPDATE_COOLDOWN</code></li>
-<li><code>UNIT_SPELLCAST_SUCCEEDED</code></li>
-<li>Energy/resource events only occur when special resource UI is enabled (Power/Resource)</li>
-</ul>
-<p>There is no "RegisterAllEvents".</p>
-<h2 id="ui-rendering-process">UI rendering process</h2>
-<p>The renderer input is "IconRenderState", not the raw Aura/cooldown API data. Renderer:</p>
-<ul>
-<li>Get the icon from "IconPool";</li>
-<li>Change the texture's name, time, timer, cooldown, glow and alpha simply after writing;</li>
-<li>Change the layout in batches and hide the parent, then show it once;</li>
-<li>Avoid changing <code>ClearAllPoints</code> and <code>SetPoint</code> without layout keys;</li>
-<li>Never query C_* API.</li>
-</ul>
-<h2 id="scheduling-planning-process">Scheduling planning process</h2>
-<p>A scheduler framework tracks jobs in digital time. Work is a reusable record,
-Configuration points are not blocked. Fallback polling must be low frequency and
-In combat/low FPS or fail throttling unless it protects correctness.</p>
-<h2 id="retail-server-change-plan-only">Retail server change plan only</h2>
-<ol>
-<li>Import new module components under <code>Core/</code>, <code>Services/</code> and load the sequence.
-   "UI/" and "DEBUG/".</li>
-<li>When creating a new table, only keep the old "Main/" table as a migration/reference
-   architecture.</li>
-<li>Migrate SavedVariables to the versioned profile and alert list model.</li>
-<li>Port localized strings into independent localization modules.</li>
-<li>Implement <code>EventRouter</code> and <code>Scheduler</code> before porting services.</li>
-<li>Transplant player Aura, target Aura, character cooling, and cooling service functions.</li>
-<li>Implement the pooled renderer to place the frame and create the removal service module.</li>
-<li>Rebuild slash directives and debug exporter for new services.</li>
-<li>Remove legacy TOC and Classic/MOP compatibility branches from active loads.</li>
-<li>Perform static inspection followed immediately by formal garment verification.</li>
-</ol>
-<h2 id="2026-07-26-121-native-aura-shunt">2026-07-26: 12.1 Native Aura shunt</h2>
-<ul>
-<li>12.1: <code>EAM_DB -&gt; AuraCapabilityService -&gt; AuraRuleCompiler -&gt; AuraContainerService -&gt; AuraSlot/AuraGroup -&gt; Blizzard AuraButton</code>.</li>
-<li>12.0.7: Preserve <code>AuraService -&gt; AlertManager -&gt; Renderer -&gt; IconPool</code> Legacy path.</li>
-<li>Native Aura does not create AuraState, does not send <code>EAM_AURA_STATE_CHANGED</code>, and does not use Renderer Scheduler token.</li>
-<li>12.1 capability <code>UNSUPPORTED</code> when missing, must not fall back to Secret AuraData scanning.</li>
-<li>See <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code> for complete life cycle.</li>
+<li><strong>Retail 12.1.0+</strong>: Routes through <code>AuraCapabilityService</code> ➔ <code>AuraRuleCompiler</code> ➔ <code>AuraContainerService</code> ➔ Blizzard native <code>CustomAuraContainer</code> / <code>AuraButton</code>.</li>
+<li><strong>Legacy 12.0.7 Fallback</strong>: Retains the <code>AuraService</code> ➔ <code>AlertManager</code> ➔ <code>Renderer</code> ➔ <code>IconPool</code> pipeline.</li>
+<li>Native Aura does not create <code>AuraState</code> objects, emits no <code>EAM_AURA_STATE_CHANGED</code> events, and bypasses the legacy scheduler token queue.</li>
 </ul>
     </div>
 

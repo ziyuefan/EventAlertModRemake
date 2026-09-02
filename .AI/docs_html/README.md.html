@@ -1022,106 +1022,108 @@
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
 <blockquote>
-<p>🚀 **Ultra-lightweight, zero-pollution, pure event-driven spell monitoring and combat alarm plug-in specially created for "World of Warcraft: Retail server (Retail 12.1 / 12.0+)"! **</p>
-<p>🌐 <strong>Official online documentation and navigation center</strong>: <a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a></p>
+<p>🚀 <strong>Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.0 / 12.0+)!</strong></p>
+<p>🌐 <strong>Official Online Documentation &amp; Navigation Hub</strong>: <a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a></p>
 </blockquote>
 <hr />
-<h2 id="why-choose-the-modern-version-eventalertmod-eam-four-differentiated-core-advantages">🌟 Why choose the modern version EventAlertMod (EAM)? (Four differentiated core advantages)</h2>
+<h2 id="why-choose-modern-eventalertmod-eam-four-core-architectural-advantages">🌟 Why Choose Modern EventAlertMod (EAM)? (Four Core Architectural Advantages)</h2>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Traditional spell monitoring / complex large plug-in</th>
-<th style="text-align: left;">Modern reconstructed version EventAlertMod (EAM)</th>
+<th style="text-align: left;">Traditional Spell Alerts / Heavy AddOns</th>
+<th style="text-align: left;">Modern Remake EventAlertMod (EAM)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">⚠️ <strong>Heavy and resource intensive</strong>: Lots of background OnUpdate polling, eating memory, causing combat frame drops.</td>
-<td style="text-align: left;">⚡ <strong>Extremely lightweight and zero burden</strong>: Pure event-driven architecture, fully introducing Object Pool technology (State Pools), eliminating GC memory garbage.</td>
+<td style="text-align: left;">⚠️ <strong>Heavy resource drain</strong>: Massive background OnUpdate polling, high memory consumption, combat frame drops.</td>
+<td style="text-align: left;">⚡ <strong>Ultra-lightweight &amp; zero burden</strong>: Pure event-driven architecture with zero-allocation State Pools, eliminating GC memory spikes.</td>
 </tr>
 <tr>
-<td style="text-align: left;">❌ <strong>Susceptible to contamination and error reporting</strong>: 12.0+ After Blizzard introduced Secret Values, errors were often reported with yellow text or caused UI exceptions during battles.</td>
-<td style="text-align: left;">🛡️ <strong>Blizzard 12.0+ Ultimate Security</strong>: Exclusively uses native C-Level <code>StatusBar:SetValue</code> pass-through rendering technology, never triggering Taint pollution.</td>
+<td style="text-align: left;">❌ <strong>Vulnerable to combat taint</strong>: 12.0+ Secret Values frequently cause yellow Lua errors or broken frames in combat.</td>
+<td style="text-align: left;">🛡️ <strong>Blizzard 12.0+ Secret Protection</strong>: Direct native C-Level <code>StatusBar:SetValue</code> throughput, 100% immune to Lua taint.</td>
 </tr>
 <tr>
-<td style="text-align: left;">🔄 <strong>The setting is cumbersome and strings need to be imported</strong>: You need to manually search the website for WA strings or hand-write Lua condition judgments.</td>
-<td style="text-align: left;">🎯 <strong>Intuitive and easy to use, add monitoring in seconds</strong>: Hover your mouse on any skill, Aura or item and press <strong><code>Ctrl + Alt</code></strong> to join in one second, no need to check ID.</td>
+<td style="text-align: left;">🔄 <strong>Tedious setup &amp; string imports</strong>: Requires searching online for WeakAura strings or complex custom scripting.</td>
+<td style="text-align: left;">🎯 <strong>Intuitive one-second monitor</strong>: Hover over any spell, aura, or item and press <strong><code>Ctrl + Alt</code></strong> to instantly add to monitor.</td>
 </tr>
 <tr>
-<td style="text-align: left;">🐢 <strong>Inaccurate speed display</strong>: Traditional plug-ins cannot detect the true sprint speed of 10.0+ / 11.0+ / 12.0+ Dragon Riding.</td>
-<td style="text-align: left;">🏃 <strong>The only one in the industry: four-in-one speed quenching</strong>: Exclusive docking <code>C_PlayerInfo.GetGlidingInfo()</code>, perfect support <strong>830%~1400%</strong> Dynamic speed!</td>
+<td style="text-align: left;">🐢 <strong>Inaccurate flight speed</strong>: Traditional addons fail to read 10.0+ / 11.0+ / 12.0+ Dragonriding dynamic gliding velocity.</td>
+<td style="text-align: left;">🏃 <strong>Industry-first 4-in-1 Velocity</strong>: Dedicated integration with <code>C_PlayerInfo.GetGlidingInfo()</code> supporting <strong>830%~1400%</strong> dynamic speed!</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h2 id="8-independent-alert-modules">✨ 8 Independent Alert Modules</h2>
-<p>EAM has 8 professional monitoring modules that are completely decoupled, independently typed, and freely dragged:
-1. 🔮 <strong>Self Aura (Player Buff / Debuff)</strong>: Monitors own gain and debuff, supports stacking layers and high-precision countdown.
-2. 🎯 <strong>Target Buff / Debuff</strong>: Accurately monitor the current target’s Aura, control and debuff status.
-3. ⚔️ <strong>Cross-Class/Target Cast</strong>: Monitor the enemy’s key bursts or teammates’ important gains.
-4. ⏳ <strong>Spell Cooldown</strong>: Accurately monitor skill cooling and charging levels; support circular progress bar (<code>Radial Mode</code>) and linear bars outside the frame (<code>TOP/BOTTOM/LEFT/RIGHT</code>).
-5. 🎒 <strong>Item Cooldown</strong>: Cooling monitoring of accessories, actively used equipment and consumables.
-6. 🌋 <strong>Ground Effect</strong>: Monitor the non-Aura ground range skills cast by players (such as Death and Decay, Desecration, Ball of Frost, Anti-Magic Stance), and support the intelligent alignment of talent spell groups.
-7. ⚡ <strong>Player Resource</strong>: Supports all 13 professions, 40 groups of specializations, and 17 independent resource nodes (mana, rage, energy, combo points, chi, frenzy, runes, arcane charges, soul shards, holy energy, essence, etc.).
-8. 📊 <strong>Player Stats &amp; Absorbs</strong>: Comprehensive real-time monitoring of 18 types of character values ​​(main attributes, secondary attributes, four-in-one speed, armor value, total absorption shield amount and treatment absorption amount).</p>
+<p>EAM features 8 completely decoupled, independently positioned, and freely draggable alert modules:</p>
+<ol>
+<li>🔮 <strong>Player Buff / Debuff</strong>: Self buffs &amp; debuffs with stack counts, remaining shield absorb amount, and high-precision timers.</li>
+<li>🎯 <strong>Target Buff / Debuff</strong>: Precise tracking of target auras, CC, and debuff states.</li>
+<li>⚔️ <strong>Cross-Class / Target Cast</strong>: Key enemy burst cooldowns and crucial friendly buffs.</li>
+<li>⏳ <strong>Spell Cooldown</strong>: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode &amp; outer linear bars (<code>TOP/BOTTOM/LEFT/RIGHT</code>), custom reordering (drag &amp; drop, up/down), and desaturated placeholder masks.</li>
+<li>🎒 <strong>Item Cooldown</strong>: Trinkets, on-use equipment, and consumables monitoring.</li>
+<li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.</li>
+<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types (Mana, Rage, Energy, Combo Points, Chi, Insanity, Runic Power, Arcane Charges, Soul Shards, Holy Power, Essence, etc.).</li>
+<li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18 core stats (Primary, Secondary, 4-in-1 Speeds, Armor, Total Shield Absorbs, and Heal Absorbs).</li>
+</ol>
 <hr />
-<h2 id="modern-vision-and-ultimate-operating-experience">🎨 Modern vision and ultimate operating experience</h2>
+<h2 id="modern-visuals-streamlined-experience">🎨 Modern Visuals &amp; Streamlined Experience</h2>
 <ul>
-<li>📖 <strong>Full Next Generation Spell Catalog and Wisdom Presets (Master Spell Catalog)</strong>: Built-in 5 language a priori database (including 4,463 skills and 466 Aura), supports expansion/collapse of specialization tree, one-click talent skill wisdom synchronization, free assignment of target module list (cooling/Aura/ground effect) and full spell GameTooltip hover description.</li>
-<li>🏷️ <strong>Multi-dimensional tactical group and tag management (Group Management)</strong>: Supports many-to-many tag attribution of skills, built-in four major system tactical groups (burst/damage reduction/field control/ground) and custom groups, independent secondary management side window, combat situation filtering and skill details window drop-down checker.</li>
-<li>🎵 <strong>LibSharedMedia-3.0 (SharedMedia) fully integrates the material ecosystem</strong>: dynamically detects all third-party SharedMedia sound effects, fonts and texture packs, supports adaptive long list mouse wheel menu and font global 60fps hot application (free of /reload and takes effect immediately).</li>
-<li>🐮 <strong>Classic cow head position preview</strong>: In layout mode, the Classic cow head icon (<code>Spell_Nature_Polymorph_Cow</code>) is used to clearly mark the positioning of the 8 major alarm frames.</li>
-<li>🖼️ <strong>Custom Icon Override for all modules</strong>: All modules can enter the official FileID (such as <code>132307</code>) or material path to customize and replace the default icon, and a real-time dynamic preview box and Wago.tools query guide are included.</li>
-<li>💀 <strong>Death Knight Rune Dashboard</strong>: Dynamically switch exclusive icons according to specialization, built-in 6-slot micro charge cooling bar (0%..100% smooth animation) and <code>/eam rune</code> slot diagnostic window.</li>
-<li>⚡ <strong>60fps all-round real-time hot preview</strong>: adjust size, spacing, transparency, circle animation, text size, etc., real-time dynamic response on the screen, no <code>/reload</code> required for non-combat.</li>
-<li>💬 <strong>Hover Tooltips</strong> for full-interface controls: All buttons, check boxes, sliders, edit boxes and menus come with intuitive guidance, and the threshold for use is zero.</li>
-<li>🎨 <strong>11 sets of exquisite theme styles</strong>: Warcraft Classic (default), Borland bright blue and yellow characters, DOS CRT retro black and green, obsidian black, cyberpunk and other styles to switch freely.</li>
-<li>🚨 <strong>Flashing red frame when entering combat</strong>: Provides full-screen combat entry warning animation and real-time test button.</li>
-<li>📦 <strong>Profile cross-role sharing</strong>: Supports export/import of 8 major categories of optional items (EAMAP1 JSON / Base64 encoding), with defensive whitelist verification.</li>
-<li>🌐 <strong>Full multi-language support</strong>: Traditional Chinese (zhTW - strictly aligned with Taiwanese official terms: fatal, accelerated, improvised), Simplified Chinese (zhCN), English (enUS), Korean (koKR), Russian (ruRU).</li>
+<li>📖 <strong>Next-Gen Master Spell Catalog &amp; Intelligent Presets</strong>: Built-in 5-language offline database (4,463 core spells &amp; 466 auras) with collapsible spec trees, one-click talent book auto-sync, target module redirection (cooldowns/auras/ground), and native GameTooltip hovering.</li>
+<li>🏷️ <strong>Multi-dimensional Tactical Groups &amp; Tag Management</strong>: Many-to-many tag associations, 4 built-in tactical groups (Burst, Mitigation, CC/Interrupt, Ground AoE) + custom groups, secondary docking manager panel, combat-only filters, and multi-select group dropdown in spell conditions.</li>
+<li>🎵 <strong>Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration</strong>: Dynamic runtime discovery of third-party sounds, fonts, and borders (<code>ensureLSM</code>), adaptive scrollable dropdowns with mouse wheel support, and zero-delay global font hot-swapping (no <code>/reload</code> needed).</li>
+<li>🐮 <strong>Classic Cow Head Anchor Preview</strong>: Displays classic cow head icons (<code>Spell_Nature_Polymorph_Cow</code>) to preview all 8 alert frame positions during layout configuration.</li>
+<li>🖼️ <strong>Custom Icon Override Across All Modules</strong>: Enter any official FileDataID (e.g. <code>132307</code>) or texture path to override default icons, with live texture preview box and Wago.tools lookup reference.</li>
+<li>💀 <strong>Death Knight Runes Dashboard</strong>: Dynamic spec-specific rune textures with 6 micro charge bars (0%..100% smooth animation) and <code>/eam rune</code> slot diagnostics.</li>
+<li>⚡ <strong>60fps Real-Time Live Preview</strong>: Adjust sizes, spacing, opacity, cooldown swipes, text sizes, and positions with immediate 60fps dynamic UI response out of combat.</li>
+<li>💬 <strong>Comprehensive Hover Tooltips</strong>: Intuitive, clear tooltips on all buttons, checkboxes, sliders, edit boxes, and menus.</li>
+<li>🎨 <strong>11 Themed Visual Styles</strong>: Warcraft Classic (default), Borland Blue/Yellow, DOS CRT Retro Green, Obsidian Black, Cyberpunk, and more.</li>
+<li>🚨 <strong>In-Combat Fullscreen Red Edge Flash</strong>: Fullscreen combat entry and low-health warning flash animations with instant preview button.</li>
+<li>📦 <strong>Cross-Character Profile Sharing</strong>: Export and import settings across 8 selective categories using standard EAMAP1 Base64/JSON strings with strict whitelist validation.</li>
+<li>🌐 <strong>Comprehensive Multi-Language Support</strong>: Traditional Chinese (<code>zhTW</code>), Simplified Chinese (<code>zhCN</code>), English (<code>enUS</code>), Korean (<code>koKR</code>), and Russian (<code>ruRU</code>).</li>
 </ul>
 <hr />
-<h2 id="interface-graphic-navigation-and-function-display-feature-ui-showcase">📸 Interface graphic navigation and function display (Feature &amp; UI Showcase)</h2>
+<h2 id="feature-ui-showcase">📸 Feature &amp; UI Showcase</h2>
 <h3 id="1-main-options-system-preferences">1. Main Options &amp; System Preferences</h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Main Settings Panel (Main Options)</th>
-<th style="text-align: center;">Function Module Switch (Module Options)</th>
-<th style="text-align: center;">About Plug-in Information (About Panel)</th>
+<th style="text-align: center;">Main Options Panel</th>
+<th style="text-align: center;">Module Toggles</th>
+<th style="text-align: center;">About Panel</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><img src="https://EAMCODE_0__.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/01_%E4%B8%BB%E8%A8%AD%E5%AE%9A%E9%9D%A2%E6%9D%BF_MainOptions.jpg" width="100%" alt="EAM Main settings panel" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI_ _EAMCODE_4__/02_%E5%8A%9F%E8%83%BD%E6%A8%A1%E7%B5%84%E9%96%8B%E9%97%9C_ModuleOptions.jpg" width="100%" alt="Function module switch" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/03_%E9%97%9C%E6%96%BC%E6%8F%92%E4%BB%B6%E8%B3%87%E8%A8%8A_AboutPanel.jpg" width="100%" alt="About plug-in information" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/01_%E4%B8%BB%E8%A8%AD%E5%AE%9A%E9%9D%A2%E6%9D%BF_MainOptions.jpg" width="100%" alt="EAM Main Options" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/02_%E5%8A%9F%E8%83%BD%E6%A8%A1%E7%B5%84%E9%96%8B%E9%97%9C_ModuleOptions.jpg" width="100%" alt="Module Toggles" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/03_%E9%97%9C%E6%96%BC%E6%8F%92%E4%BB%B6%E8%B3%87%E8%A8%8A_AboutPanel.jpg" width="100%" alt="About Panel" /></td>
 </tr>
 <tr>
-<td style="text-align: center;">Integrated theme/sound effects/language menu, Halo backend switching and global switch</td>
-<td style="text-align: center;">8 major functional modules independent event monitoring and resource switching</td>
-<td style="text-align: center;">Plug-in version, author information, API benchmark (12.1.0 PTR) and project link</td>
+<td style="text-align: center;">Theme/Sound/Locale menus, Aura backend switch &amp; global options</td>
+<td style="text-align: center;">Independent event listener toggles for 8 modules</td>
+<td style="text-align: center;">Version info, author, API baseline (12.1.0 PTR), and project links</td>
 </tr>
 </tbody>
 </table>
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">11 sets of theme styles (Theme Dropdown)</th>
-<th style="text-align: center;">12 Classic sound effects (Sound Dropdown)</th>
-<th style="text-align: center;">6 most Chinese languages (Locale Dropdown)</th>
+<th style="text-align: center;">11 Theme Styles</th>
+<th style="text-align: center;">12 Classic Sound Effects</th>
+<th style="text-align: center;">5 Locales (Auto Detect)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/04_%E4%B8%BB%E9%A1%8C%E6%A8%A3%E5%BC%8F%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_ThemeDropdown.jpg" width="100%" alt="Theme style drop-down menu" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/05_%E6%8F%90%E7%A4%BA%E9%9F%B3%E6%95%88%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_SoundDropdown.jpg" width="100%" alt="Alert sound effect drop-down menu" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/06_%E5%A4%9A%E5%9C%8B%E8%AA%9E%E7%B3%BB%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_LocaleDropdown.jpg" width="100%" alt="Multi-language drop-down menu" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/04_%E4%B8%BB%E9%A1%8C%E6%A8%A3%E5%BC%8F%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_ThemeDropdown.jpg" width="100%" alt="Theme Dropdown" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/05_%E6%8F%90%E7%A4%BA%E9%9F%B3%E6%95%88%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_SoundDropdown.jpg" width="100%" alt="Sound Dropdown" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/06_%E5%A4%9A%E5%9C%8B%E8%AA%9E%E7%B3%BB%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_LocaleDropdown.jpg" width="100%" alt="Locale Dropdown" /></td>
 </tr>
 <tr>
-<td style="text-align: center;">Built-in 11 sets of styles such as Warcraft Classic, FF7, WinXP, Borland, etc.</td>
-<td style="text-align: center;">Built-in sound effects such as ShayBell, Netherwind, PolyMorphCow, etc.</td>
-<td style="text-align: center;">Automatic detection, Traditional Chinese (Taiwan official terminology), Simplified Chinese, English, Korean, Russian</td>
+<td style="text-align: center;">Classic, FF7, WinXP, Borland, Dark, Cyberpunk styles</td>
+<td style="text-align: center;">ShayBell, Netherwind, PolyMorphCow, and SharedMedia audio</td>
+<td style="text-align: center;">Auto Detect, Traditional Chinese, Simplified Chinese, English, Korean, Russian</td>
 </tr>
 </tbody>
 </table>
@@ -1130,85 +1132,85 @@
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Self Aura &amp; Preview</th>
-<th style="text-align: center;">Spell Cooldown Overrides</th>
+<th style="text-align: center;">Self Aura &amp; Cow Head Preview</th>
+<th style="text-align: center;">Spell Cooldown &amp; Behavior Overrides</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/07_%E8%87 %AA%E8%BA%AB%E5%85%89%E7%92%B0%E6%B8%85%E5%96%AE%E8%88%87%E7%B4%B0%E9%83%A8%E6%A2%9D%E4%BB%B6%E8%A8%AD%E5%AE%9A_SelfAuraConditions.jpg" width="100%" alt="Self-halo list and detailed condition settings" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/08_%E6%8A %80%E8%83%BD%E5%86%B7%E5%8D%BB%E7%9B%A3%E6%8E%A7%E8%88%87%E8%A1%8C%E7%82%BA%E8%A6%86%E5%AF%AB%E8%A8%AD%E5%AE%9A_SpellCooldownOptions.jpg" width="100%" alt="Skill cooldown monitoring and behavior override settings" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/07_%E8%87%AA%E8%BA%AB%E5%85%89%E7%92%B0%E6%B8%85%E5%96%AE%E8%88%87%E7%B4%B0%E9%83%A8%E6%A2%9D%E4%BB%B6%E8%A8%AD%E5%AE%9A_SelfAuraConditions.jpg" width="100%" alt="Self Aura Conditions" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/08_%E6%8A%80%E8%83%BD%E5%86%B7%E5%8D%BB%E7%9B%A3%E6%8E%A7%E8%88%87%E8%A1%8C%E7%82%BA%E8%A6%86%E5%AF%AB%E8%A8%AD%E5%AE%9A_SpellCooldownOptions.jpg" width="100%" alt="Spell Cooldown Options" /></td>
 </tr>
 <tr>
-<td style="text-align: center;">Own spell list, cow head layout preview, layer number/highlighting/red text limit, 12.1 halo event sound effects and custom icons</td>
-<td style="text-align: center;">Skill cooldown list, removal after completion/non-combat display/highlight three-state override and custom replacement icon when available</td>
+<td style="text-align: center;">Spell list, Cow Head layout preview, stack/glow/timer limits, 12.1 sound triggers</td>
+<td style="text-align: center;">Cooldown list, remove-on-complete, out-of-combat display, usable glow overrides</td>
 </tr>
 </tbody>
 </table>
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Item Cooldown</th>
-<th style="text-align: center;">Three-level adsorption and ground effect (Ground Effect Docking)</th>
+<th style="text-align: center;">Item Cooldown Settings</th>
+<th style="text-align: center;">3-Level Docking &amp; Ground Effects</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/09_%E7%89 %A9%E5%93%81%E5%86%B7%E5%8D%BB%E7%9B%A3%E6%8E%A7%E8%88%87%E7%B4%B0%E9%83%A8%E6%A2%9D%E4%BB%B6%E8%A8%AD%E5%AE%9A_ItemCooldownOptions.jpg" width="100%" alt="Item cooling monitoring settings" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/10_%E5%9C %B0%E9%9D%A2%E6%95%88%E6%9E%9C%E7%93%A3%E6%8E%A7%E8%88%87%E4% B8%89%E7%B4%9A%E9%9A%8E%E5%B1%A4%E5%90%B8%E9%99%84_GroundEffectDocking.jpg" width="100%" alt="Ground effect monitoring and three-level layer adsorption" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/09_%E7%89%A9%E5%93%81%E5%86%B7%E5%8D%BB%E7%9B%A3%E6%8E%A7%E8%88%87%E7%B4%B0%E9%83%A8%E6%A2%9D%E4%BB%B6%E8%A8%AD%E5%AE%9A_ItemCooldownOptions.jpg" width="100%" alt="Item Cooldown Settings" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/10_%E5%9C%B0%E9%9D%A2%E6%95%88%E6%9E%9C%E7%93%A3%E6%8E%A7%E8%88%87%E4%B8%89%E7%B4%9A%E9%9A%8E%E5%B1%A4%E5%90%B8%E9%99%84_GroundEffectDocking.jpg" width="100%" alt="Ground Effect & 3-Level Docking" /></td>
 </tr>
 <tr>
-<td style="text-align: center;">Equipment and accessories cooldown list, layer threshold, priority and custom icons</td>
-<td style="text-align: center;">Main Menu ➔ List ➔ Seamless smooth fitting of detailed conditions (APPEND Docking) and dynamic Tooltip capture</td>
+<td style="text-align: center;">Equipment &amp; trinket cooldown list, stack thresholds, priorities &amp; custom icons</td>
+<td style="text-align: center;">Main Options ➔ List ➔ Conditions seamless APPEND Docking &amp; dynamic Tooltip probe</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h3 id="3-career-resources-character-attributes-and-layout-settings-resources-stats-layout">3. Career resources, character attributes and layout settings (Resources, Stats &amp; Layout)</h3>
+<h3 id="3-resources-stats-layout">3. Resources, Stats &amp; Layout</h3>
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Player Resource Panel (Player Resource Panel)</th>
-<th style="text-align: center;">Character Attributes and Absorb Amount Monitoring (Player Stats &amp; Absorbs)</th>
+<th style="text-align: center;">Player Resource Panel</th>
+<th style="text-align: center;">Player Stats &amp; Absorbs Monitor</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot__EAMC ODE_5__%E7%8E%A9%E5%AE%B6%E8%81%B7%E6%A5%AD%E8%B3%87%E6%BA%90%E8%A8%AD%E5%AE%9A%E9%9D%A2%E6%9D%BF_PlayerResourcePanel.jpg" width="100%" alt="Player career resource setting panel" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/12_%E 8%A7%92%E8%89%B2%E5%B1%AC%E6%80%A7%E8%88%87%E5%90%B8%E6%94%B6%E9%87%8F%E7%9B%A3%E6%8E%A7%E9%9D%A2%E6%9D%BF_PlayerStatsPanel.jpg" width="100%" alt="Character attributes and absorption monitoring panel" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/11_%E7%8E%A9%E5%AE%B6%E8%81%B7%E6%A5%AD%E8%B3%87%E6%BA%90%E8%A8%AD%E5%AE%9A%E9%9D%A2%E6%9D%BF_PlayerResourcePanel.jpg" width="100%" alt="Player Resource Panel" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/12_%E8%A7%92%E8%89%B2%E5%B1%AC%E6%80%A7%E8%88%87%E5%90%B8%E6%94%B6%E9%87%8F%E7%9B%A3%E6%8E%A7%E9%9D%A2%E6%9D%BF_PlayerStatsPanel.jpg" width="100%" alt="Player Stats Panel" /></td>
 </tr>
 <tr>
-<td style="text-align: center;">Runes/runes and each specialization energy bar, display mode, anchor point positioning, 16 detailed sliders and Secret native protection</td>
-<td style="text-align: center;">18 core attribute values, running speed/swimming speed/flying speed/dragon speed, icon/progress bar switch and warning value setting</td>
+<td style="text-align: center;">Runes, Power Bars, display modes, anchor positioning, sliders &amp; Secret protection</td>
+<td style="text-align: center;">18 core stats, run/swim/fly/gliding speed, icon/bar toggles &amp; threshold warnings</td>
 </tr>
 </tbody>
 </table>
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Alert frame layout and hover tips (Layout &amp; Tooltips)</th>
-<th style="text-align: center;">Career Profile sharing and import and export (Profile Codec)</th>
+<th style="text-align: center;">Layout Positioning &amp; Tooltips</th>
+<th style="text-align: center;">Profile Sharing &amp; Import/Export</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/13_%E5%91 %8A%E8%AD%A6%E6%A1%86%E6%9E%B6%E4%BD%8D%E7%BD%AE%E6%8E%92%E7%89%88%E8%88%87%E6%87%B8%E5%81%9C%E6%8F%90%E7%A4%BA_LayoutPositionOptions.jpg" width="100%" alt="Alert frame position layout and hover prompt" /></td>
-<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/14_% E8%81%B7%E6%A5%ADProfile%E5%88%86%E4%BA%AB%E8%88%87%E5%8C%AF%E5%85%A5%E5%8C%AF%E5%87%BA%E9%9D%A2%E6%9D%BF_ProfileCodecPanel.jpg" width="100%" alt="Professional Profile Sharing and Import and Export Panel" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/13_%E5%91%8A%E8%AD%A6%E6%A1%86%E6%9E%B6%E4%BD%8D%E7%BD%AE%E6%8E%92%E7%89%88%E8%88%87%E6%87%B8%E5%81%9C%E6%8F%90%E7%A4%BA_LayoutPositionOptions.jpg" width="100%" alt="Layout Options & Tooltips" /></td>
+<td style="text-align: center;"><img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/14_%E8%81%B7%E6%A5%ADProfile%E5%88%86%E4%BA%AB%E8%88%87%E5%8C%AF%E5%85%A5%E5%8C%AF%E5%87%BA%E9%9D%A2%E6%9D%BF_ProfileCodecPanel.jpg" width="100%" alt="Profile Codec Panel" /></td>
 </tr>
 <tr>
-<td style="text-align: center;">Size/spacing/font/transparency slider, 7 major frame growth directions, charging bar settings and control item hover Tooltip guide</td>
-<td style="text-align: center;">8 major custom options, shortcut buttons and EAMAP1 Base64 string export/preview/merge apply/replace apply</td>
+<td style="text-align: center;">Size/spacing/font/alpha sliders, 7 frame growth directions, tooltips on all controls</td>
+<td style="text-align: center;">8 selective categories, one-click export/preview/merge/replace via EAMAP1 Base64</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="command-line-and-slash-command-command-line-reference">⌨️ Command line and slash command (Command Line Reference)</h2>
-<p>EAM provides rich and complete slash commands. The main entry is <code>/eam</code> or <code>/eventalertmod</code> (case-insensitive):</p>
+<h2 id="command-line-reference">⌨️ Command Line Reference</h2>
+<p>EAM provides a rich suite of slash commands via <code>/eam</code> or <code>/eventalertmod</code> (case-insensitive):</p>
 <table>
 <thead>
 <tr>
 <th style="text-align: left;">Command</th>
-<th style="text-align: left;">Abbreviation/alias</th>
+<th style="text-align: left;">Aliases</th>
 <th style="text-align: left;">Description</th>
 </tr>
 </thead>
@@ -1216,305 +1218,188 @@
 <tr>
 <td style="text-align: left;"><code>/eam</code> or <code>/eam opt</code></td>
 <td style="text-align: left;"><code>/eam option</code>, <code>/eam options</code></td>
-<td style="text-align: left;">Open EAM main settings menu</td>
+<td style="text-align: left;">Open EAM Main Options menu</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam reset</code></td>
 <td style="text-align: left;"><code>/eam resetpos</code>, <code>/eam center</code></td>
-<td style="text-align: left;"><strong>Reset the EAM main window back to the center of the screen</strong> (solve the problem of the window being dragged out of the screen and not being found)</td>
+<td style="text-align: left;"><strong>Reset main window to the center of the screen</strong> (fixes windows dragged offscreen)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam list</code></td>
 <td style="text-align: left;">None</td>
-<td style="text-align: left;">Displays the monitoring list currently enabled for the profession (self, target, cooldown, items, ground effects)</td>
+<td style="text-align: left;">Print monitored alerts for current class (Self, Target, Cooldown, Item, Ground)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam add &lt;spellID&gt;</code></td>
 <td style="text-align: left;"><code>/eam add player &lt;spellID&gt;</code></td>
-<td style="text-align: left;">Add specified spell ID to "Self Aura" monitoring list</td>
+<td style="text-align: left;">Add specified Spell ID to "Player Buff/Debuff" monitor list</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam add target [spellID]</code></td>
 <td style="text-align: left;">None</td>
-<td style="text-align: left;">Added "Target Halo" monitoring; if no ID is entered, the manual input and candidate window will be opened</td>
+<td style="text-align: left;">Add to "Target Buff/Debuff" monitor; opens manual entry if ID omitted</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam add cd &lt;spellID&gt;</code></td>
 <td style="text-align: left;"><code>/eam add cooldown &lt;spellID&gt;</code></td>
-<td style="text-align: left;">Add the specified spell ID to the "Skill Cooldown" monitoring list</td>
+<td style="text-align: left;">Add specified Spell ID to "Spell Cooldown" monitor list</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam add item &lt;itemID&gt;</code></td>
 <td style="text-align: left;"><code>/eam add itemcooldown &lt;itemID&gt;</code></td>
-<td style="text-align: left;">Add the specified item ID to the "Item Cooling" monitoring list</td>
+<td style="text-align: left;">Add specified Item ID to "Item Cooldown" monitor list</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam remove &lt;spellID&gt;</code></td>
 <td style="text-align: left;"><code>/eam remove &lt;player\|target\|cd\|item&gt; &lt;ID&gt;</code></td>
-<td style="text-align: left;">Removes the specified spell or item ID from the specified monitoring category</td>
+<td style="text-align: left;">Remove spell or item ID from specified monitor category</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>/eam lookup &lt;名稱&gt;</code></td>
-<td style="text-align: left;"><code>/eam l &lt;名稱&gt;</code></td>
-<td style="text-align: left;">Fuzzy query of spell candidates and Spell IDs available for the current profession based on keywords</td>
+<td style="text-align: left;"><code>/eam lookup &lt;name&gt;</code></td>
+<td style="text-align: left;"><code>/eam l &lt;name&gt;</code></td>
+<td style="text-align: left;">Fuzzy search candidate spells and Spell IDs for current class</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>/eam lookupfull &lt;全名&gt;</code></td>
-<td style="text-align: left;"><code>/eam lf &lt;全名&gt;</code></td>
-<td style="text-align: left;">Accurately query the spell candidates and Spell IDs available for the current profession according to the complete name</td>
+<td style="text-align: left;"><code>/eam lookupfull &lt;fullName&gt;</code></td>
+<td style="text-align: left;"><code>/eam lf &lt;fullName&gt;</code></td>
+<td style="text-align: left;">Exact search candidate spells and Spell IDs for current class</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam showcast</code></td>
 <td style="text-align: left;"><code>/eam showc</code></td>
-<td style="text-align: left;">Start or stop recording the spells successfully cast during this login (to facilitate querying the ID of the skill you just cast)</td>
+<td style="text-align: left;">Start/stop logging spells cast successfully during current session</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam profile</code></td>
 <td style="text-align: left;"><code>/eam profile export</code>, <code>/eam profile import</code></td>
-<td style="text-align: left;">Open the Profile export/import and string sharing panel</td>
+<td style="text-align: left;">Open Profile Export/Import and string sharing panel</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam rune</code></td>
 <td style="text-align: left;"><code>/eam runes</code>, <code>/eam probe rune</code></td>
-<td style="text-align: left;">Turn on the real-time status, charging seconds and diagnosis of the death knight's 6 rune slots JSON window</td>
+<td style="text-align: left;">Open Death Knight 6-slot rune dashboard, charge status &amp; diagnostic JSON</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam unitpower background &lt;KEY&gt;</code></td>
 <td style="text-align: left;">None</td>
-<td style="text-align: left;">Mark the missing event of the specified background resource and start the 0.5s demand-driven shared sampler</td>
+<td style="text-align: left;">Mark background resource missing event, triggering 0.5s demand-driven sampler</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam doctor</code></td>
 <td style="text-align: left;"><code>/eam validate</code></td>
-<td style="text-align: left;">Execution client API Boundary and operating environment diagnostic report</td>
+<td style="text-align: left;">Run client API boundary and environment diagnostic report</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam test [suite]</code></td>
 <td style="text-align: left;"><code>/eam test live</code></td>
-<td style="text-align: left;">Open the in-game process test panel, or execute the specified test suite (<code>quick/core/boundary/aura121/all/live</code>)</td>
+<td style="text-align: left;">Open in-game flow test panel or run specified suite (<code>quick/core/boundary/aura121/all/live</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam debug</code></td>
 <td style="text-align: left;"><code>/eam export</code></td>
-<td style="text-align: left;">Open the system status and streamlined AI debugging report output window</td>
+<td style="text-align: left;">Open system status and compact AI debug report export window</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam debug ground &lt;spellID&gt;</code></td>
 <td style="text-align: left;">None</td>
-<td style="text-align: left;">Test and debug Tooltip duration analysis of specific ground skills</td>
+<td style="text-align: left;">Test and debug ground effect tooltip duration parsing for a spell</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam show</code> / <code>/eam showtarget</code></td>
 <td style="text-align: left;"><code>/eam shows</code>, <code>/eam showt</code></td>
-<td style="text-align: left;">Display the instructions for safely joining Halo in Retail 12.1 (mouseover and press Ctrl+Alt)</td>
+<td style="text-align: left;">Display Retail 12.1 safe aura monitoring guide (hover + Ctrl+Alt)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>/eam help</code></td>
 <td style="text-align: left;"><code>/eam ?</code></td>
-<td style="text-align: left;">List all available slash command descriptions</td>
+<td style="text-align: left;">Print all available slash commands</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="quick-operation-guide-hover-the-mouse-to-add-monitoring-ctrlalt-quick-add">🖱️ Quick operation guide: hover the mouse to add monitoring (Ctrl+Alt Quick Add)</h2>
-<p>In the game, you can query spell IDs completely without having to do it manually:
-1. Hover the mouse over your own avatar, the Aura icon of the target avatar, or the skill/macro/item on the shortcut bar.
-2. Press the <strong><code>Ctrl + Alt</code></strong> key combination on your keyboard simultaneously.
-3. The EAM exclusive addition window will pop up immediately, and you can assign it to your own Aura, target Aura, skill cooldown or item cooldown monitoring list with one click!</p>
+<h2 id="quick-add-via-mouse-hover-ctrl-alt">🖱️ Quick Add via Mouse Hover (<code>Ctrl + Alt</code>)</h2>
+<p>In-game, you never need to manually look up Spell IDs:
+1. Hover your mouse over any aura icon on player/target unit frames, or action bar buttons/macros/items.
+2. Press <strong><code>Ctrl + Alt</code></strong> simultaneously.
+3. The EAM Quick Add dialog pops up immediately, letting you add it to Player Buff, Target Buff, Spell Cooldown, or Item Cooldown with a single click!</p>
 <hr />
-<h2 id="installation-instructions-installation">📦 Installation Instructions (Installation)</h2>
+<h2 id="installation">📦 Installation</h2>
 <ol>
-<li>Go to <a href="https://github.com/ziyuefan/EventAlertModRemake/releases">GitHub Releases</a> to download the latest version <code>EventAlertMod_MN_*.zip</code>.</li>
-<li>After decompressing, place the <code>EventAlertMod</code> folder in the World of Warcraft installation directory:</li>
-<li>Retail server path: <code>World of Warcraft\_retail_\Interface\AddOn\EventAlertMod</code></li>
-<li>Start the game and confirm that <code>EventAlertMod</code> is checked in the "Plugins" list on the character selection screen.</li>
+<li>Visit <a href="https://github.com/ziyuefan/EventAlertModRemake/releases">GitHub Releases</a> and download the latest <code>EventAlertMod_MN_*.zip</code>.</li>
+<li>Extract the archive and place the <code>EventAlertMod</code> folder into your World of Warcraft directory:</li>
+<li>Retail Path: <code>World of Warcraft\_retail_\Interface\AddOns\EventAlertMod</code></li>
+<li>Launch World of Warcraft. On the Character Selection screen, verify that <code>EventAlertMod</code> is checked in the "AddOns" menu.</li>
 </ol>
 <hr />
-<h2 id="version-update-history-beautified-changelogtxt">📜 Version update history (Beautified CHANGELOG.TXT)</h2>
+<h2 id="version-history-changelogtxt">📜 Version History (CHANGELOG.TXT)</h2>
 <details open="open">
-<summary><b>🔥 Retail 12.1.0 reconstruction and Alpha series update record (click to expand/collapse)</b></summary>
+<summary><b>🔥 Retail 12.1.0 Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+<h3 id="retail-1210-alpha-83-20260830">🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.30</h3>
+<ul>
+<li><strong>Cooldown Custom Reordering (Drag &amp; Drop, Up/Down) &amp; Pre-render Placeholders</strong>:</li>
+<li><strong>Cooldown Reordering Controls</strong>: Each row in the cooldown list now features <code>▲</code> (Move Up) and <code>▼</code> (Move Down) buttons, plus full Left-Click Drag &amp; Drop support to instantly reorder alert slots.</li>
+<li><strong>Pre-render Placeholder Mode (<code>cooldownPreRender</code>)</strong>: Automatically creates and positions cooldown icons out of combat. Spells not yet on cooldown display a desaturated grayscale mask (<code>SetDesaturated(true)</code> + <code>SetVertexColor(0.4, 0.4, 0.4, 0.65)</code>). Upon casting, the icon seamlessly transitions to full color without in-combat <code>CreateFrame</code> or <code>SetPoint</code> calls, 100% eliminating combat lockdown layout delays.</li>
+<li><strong>Tri-State Cooldown Behavior Overrides</strong>: Full support for global settings and per-spell condition overrides (Global / Override On / Override Off).</li>
+<li><strong>Player Stats In-Combat Live Updates &amp; C-Level Zero-GC Rendering</strong>:</li>
+<li>Full adoption of native <code>FontString:SetFormattedText</code> for all 18 stats, achieving zero Lua GC string allocations in OnUpdate timer loops.</li>
+<li>Implemented <code>getRawValue</code> routing across all 18 attributes, respecting Retail 12.x / Midnight <code>AllowedWhenTainted</code> and <code>Enum.SecretAspect.Text</code> contracts.</li>
+</ul>
 <h3 id="retail-1210-alpha-82-20260827">🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27</h3>
 <ul>
-<li><strong>LibSharedMedia-3.0 (SharedMedia) Material Library Full Integration &amp; Dynamic Discovery (Full LSM Integration &amp; Dynamic Discovery)</strong>:</li>
-<li>Full access to the LibSharedMedia-3.0 material ecosystem widely used by the community, and full support for all third-party SharedMedia sound effects packs, font packs and texture packs.</li>
-<li>Implemented <code>MediaService.ensureLSM()</code> dynamic detection mechanism and <code>PLAYER_LOGIN</code> delayed synchronous refresh, completely solving the problem that the sound effect list is frozen at the initial 12 built-in sound effects when EAM is loaded earlier than other SharedMedia expansion plug-ins.</li>
-<li>Query <code>lsm:List("sound")</code> and <code>lsm:HashTable("sound")</code> dual-track data sources at the same time and automatically remove duplicates, ensuring 100% complete capture of all third-party SharedMedia registered sound effects.</li>
-<li>Supports secure dual-track audio playback (<code>MediaService.playSound</code>): seamlessly compatible with digital <code>FileDataID</code>, native <code>SoundKitID</code> and custom string <code>FilePath</code> (.ogg / .mp3) files.</li>
-<li>12.1 Native Aura native Aura rule compiler (<code>AuraRuleCompiler</code>) is connected to <code>MediaService</code>, and LSM custom sound effects can also be played when the Aura is triggered.</li>
-<li><strong>Global font hot application and archive repair (free of /reload, effective immediately) (Zero-Delay Font Application &amp; SavedVariables Whitelist)</strong>:</li>
-<li>Lift font archive whitelist restrictions: <code>SavedVariables.lua</code> releases all custom font names registered through LSM to prevent them from being forced to revert to default fonts after re-logging, reloading or switching specializations.</li>
-<li>Real-time linkage of screen preview icons: when changing fonts, the cow head and position preview icons (Preview Icons) on the screen will immediately redraw the new font synchronously.</li>
-<li>12.1 Native Aura rule fingerprint completion: Incorporate <code>fontFamily</code> into the Native layout fingerprint (<code>buildLayoutFingerprint</code>) to fix the problem of skipping native container reconstruction because the fingerprints were the same in the past.</li>
-<li>Full subsystem text broadcast linkage: Through the <code>EAM_FONT_FAMILY_CHANGED</code> event, the general alarm icon (<code>Renderer</code>), energy bar text (<code>PowerRenderer</code> / <code>PlayerResourceService</code>) and character attribute text (<code>PlayerStatService</code>) are refreshed simultaneously and instantly. After selecting the font, all text on the screen is applied immediately with zero delay.</li>
-<li>Career resource text panel (<code>PlayerResourcePanel</code>) zigzag switching button fully supports cycling through all SharedMedia fonts.</li>
-<li><strong>UI dropdown menu long list adaptive scrolling container (Scrollable Dropdown Menus with MouseWheel)</strong>:</li>
-<li>Implement universal adaptive scrolling menu <code>buildScrollableDropdownMenu</code>: When SharedMedia contains dozens or hundreds of fonts/sound effects, the menu automatically limits the height to 10 items and enables <code>UIPanelScrollFrameTemplate</code> scroll and mouse wheel support, making the layout tidy and unobtrusive.</li>
-<li>When the sound effects and font menu is expanded, the latest registered material list is automatically fetched from LSM in <code>forceRefresh</code> mode.</li>
+<li><strong>Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration</strong>:</li>
+<li>Dynamic discovery (<code>MediaService.ensureLSM()</code>), <code>PLAYER_LOGIN</code> deferred sync, third-party sound/font package support, dual-channel safe playback (<code>MediaService.playSound</code>), and 12.1 Native Aura sound routing.</li>
+<li><strong>Zero-Delay Live Font Application (No <code>/reload</code> Needed)</strong>:</li>
+<li>SavedVariables whitelist unlock, live refresh of preview icons, general alert icons, player resources, and player stats text.</li>
+<li><strong>Scrollable Dropdown Menus</strong>:</li>
+<li>Adaptive <code>UIPanelScrollFrameTemplate</code> with smooth mouse wheel scrolling for long lists of media assets.</li>
 </ul>
 <h3 id="retail-1210-alpha-81-20260826">📌 [Retail 12.1.0 Alpha 8.1] - 2026.08.26</h3>
 <ul>
-<li><strong>Skill Cooldown Pure Transparency (Alpha=0) Hidden Mode and Full Monitor Cooldown Pre-anchoring (Persistent Pre-anchoring &amp; Zero-Alpha Cooldown Mode)</strong>:</li>
-<li>Completely solved the structural problem that the skill cooldown cannot establish the frame for the first time in the battle or is delayed until after the battle.</li>
-<li>When entering the world, switching talents, or loading settings, all monitored skill cooling and item cooling frames are automatically pre-established in non-combat states, and accurate coordinate calculations are completed.</li>
-<li>When the cooldown is completed, the icon is hidden through <code>SetAlpha(0)</code>, and the Frame structure and coordinates are retained to avoid dynamic release and layout recalculation during combat; <code>SetAlpha(targetAlpha)</code> is instantly restored when the cooldown is triggered, achieving 0.00ms zero GC, zero layout delay and 100% immunity to combat lock.</li>
-<li><strong>Repair for preventing character attributes and secondary attributes from returning to zero during battle (Combat Stat Cache &amp; Multi-Tier API Fallback)</strong>:</li>
-<li>Solve the problem that when Retail 12.0+/12.1+ calls the native Unit / Stat API after entering the battle, the limited return Secret Number causes the values of strength, agility, intelligence, endurance, lethality, acceleration, mastery, adaptability and other values to return to zero.</li>
-<li>Create a memory cache table of all 18 attributes <code>lastKnownStats</code>, and automatically perform warm-up (<code>prewarmStats</code>) when logging in, switching specializations, changing equipment, and leaving combat. If a restricted environment is encountered during combat, it will automatically and seamlessly fall back to the last effective real value.</li>
-<li>Sub-attributes fully complement the system API (<code>GetCritChance</code> / <code>GetSpellCritChance</code>, etc.) and the level rating conversion formula is fault-tolerant.</li>
-<li><strong>Character attributes are set independently by profession (Per-Class Player Stat Profiles)</strong>:</li>
-<li>Character attribute monitoring has been fully upgraded to "independent configuration settings based on occupation": each occupation (such as Paladin, Mage, Warrior, Priest, etc.) has its own independent attribute monitoring item switches, icon size, font, threshold and independent position coordinates.</li>
-<li>When switching between different professional roles, the professional settings are automatically and seamlessly loaded, and the setting panel title is immediately marked with the current professional name (for example, "★Character Attributes and Absorption Amount Monitoring [Paladin]").</li>
+<li><strong>Persistent Pre-anchoring &amp; Zero-Alpha Cooldown Mode</strong>:</li>
+<li>Pre-created frame structures and pre-calculated layout coordinates; <code>SetAlpha(0)</code> hiding on cooldown completion for 0.00ms latency and 100% combat lockdown immunity.</li>
+<li><strong>Combat Stat Memory Cache &amp; Multi-Tier Fallback</strong>:</li>
+<li>Memory cache table (<code>lastKnownStats</code>) across 18 stats for seamless non-zero combat displays under restricted APIs.</li>
 <li><strong>Dual-Channel Shield &amp; Heal Absorb Detection</strong>:</li>
-<li>Enhanced total absorption shield amount (<code>totalAbsorb</code>) and treatment absorption amount (<code>healAbsorb</code>) value core: supports native Unit API and <code>C_UnitAuras</code> gain/debuff points (<code>Aura.points</code>) dual-track real-time accumulation calculation, completely solving the problem of the absorption shield not being displayed.</li>
-<li>Complete <code>UNIT_HEAL_ABSORB_AMOUNT_CHANGED</code>, <code>UNIT_HEALTH</code>, <code>UNIT_MAXHEALTH</code> and <code>PLAYER_SPECIALIZATION_CHANGED</code> event listening.</li>
-<li><strong>Aura module supports real-time display of shield absorption amount (Aura Shield Absorb Amount Display)</strong>:</li>
-<li>The Aura monitoring core (<code>AuraService</code>) automatically extracts the instant remaining absorption shield value (<code>state.absorbAmount</code>) of shield-type Aura (such as Power Word: Shield, Ice Shield, Soul Drain, etc.) from <code>C_UnitAuras</code>.</li>
-<li>The renderer (<code>Renderer</code>) accurately formats the remaining absorption shield amount (such as 45.2k, 1.2M) in the overlay in the lower right corner of the halo icon. If there are multiple layers at the same time, it will automatically display them side by side (such as 3 (45k)).</li>
-<li><strong>Image Object Pool (IconPool) expansion and safe release</strong>:</li>
-<li>The capacity of the preheating pool is expanded from 16 to 64, and when the pool is exhausted, it will be directly established by calling <code>createIcon</code> safely to prevent nil from being returned during combat.</li>
+<li>Native Unit APIs + <code>C_UnitAuras.points</code> accumulation.</li>
+<li><strong>Aura Shield Absorb Amount Display</strong>:</li>
+<li>Overlay formatted shield amounts (e.g. <code>45.2k</code>, <code>1.2M</code>, <code>3(45k)</code>).</li>
 </ul>
 <h3 id="retail-1210-alpha-80-20260825">📌 [Retail 12.1.0 Alpha 8.0] - 2026.08.25</h3>
 <ul>
-<li><strong>Character attribute and absorption monitoring upgrade (Independent Positioning &amp; Grow Direction)</strong>:</li>
-<li>Added "Overall Arrangement Direction" drop-down menu (right, left, up, down) to support real-time direction reconstruction of the entire set of attributes.</li>
-<li>Supports "independent custom positioning and independent dragging" of each individual item: each attribute can be checked to enable independent positioning, has a dedicated</li>
-<li>Cancel icon-only text adaptive layout and positioning (Iconless Adaptive Layout &amp; Positioning): Even if the display of icons is cancelled, plain-text labels and values ​​still fully support specifying "independent custom position" or automatically extending layout according to the set "overall direction".</li>
-<li>Support customization of layout orientation without icons: When closing the icon, you can select the "top/bottom/left/right" layout of the value relative to the name.</li>
-<li>Mobile mode protection mechanism: When dragging anchor points is turned on, the highlighted frame and drag prompts are automatically displayed to prevent the high-frequency timer from resetting its position.</li>
-<li>Fixed the black frame problem of flying dragon mode flying icon: use numerical FileDataID 4667307 and dynamic API to obtain the native icon.</li>
-<li>Restructured two-way synchronization between left and right lists and detail forms, added gold frame highlighting for selected items, and added "Select All Monitor" and "Deactivate All" batch buttons.</li>
-<li><strong>Precise alignment of main menu layout and optimization of control items</strong>:</li>
-<li>Fixed the problem of the "Test Flashing" button covering text, and configured it independently in the dedicated button bar.</li>
-<li>"Enable 12.1 native circular halo countdown aperture" will be fully returned to the core control area of ​​the main settings menu.</li>
+<li><strong>Per-Class Player Stat Profiles</strong>:</li>
+<li>Completely isolated stat monitoring profiles, thresholds, and positions per class.</li>
+<li><strong>Iconless Adaptive Layout</strong>:</li>
+<li>Perfect equal spacing and zero text overlapping when icons are hidden.</li>
 </ul>
 <h3 id="retail-1210-alpha-79-20260824">🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24</h3>
 <ul>
-<li><strong>Comprehensive UI Hover Tooltips</strong>:</li>
-<li>Add intuitive hover tooltips (Hover Tooltips) to all buttons, check boxes, sliders, drop-down menus, input edit boxes and list operation columns to clearly mark the purpose, setting range and operation guidance of the control items.</li>
-<li>Implemented the common tool function <code>EAM.UI.setTooltip</code>, supporting plain text, multilingual string and table binding, completely eliminating the interface operation barrier.</li>
-<li>Covers a total of 10 windows including the main setting panel, alarm frame layout, spell list, detailed conditions, batch input, character attributes, career resources, functional modules, and Profile sharing and debugging center.</li>
-<li><strong>Main window screen border lock and one-click center reset (ClampedToScreen &amp; Center Reset Command)</strong>:</li>
-<li>Added <code>SetClampedToScreen</code> screen border lock to the main window to prevent the screen from being dragged out and unable to be retrieved.</li>
-<li>Added <code>/eam reset</code> (or <code>/eam center</code> / <code>resetpos</code>) slash command, middle click on the minimap button and Shift+click to bring the main window back to the center of the screen with one click.</li>
-<li>Fixed the nil call error caused by the lack of <code>close()</code> in <code>closeAllSidePanels</code> when closing the main window, and implemented the defensive <code>safeClosePanel</code> mechanism.</li>
-<li><strong>Official README graphic tour and GitHub direct display (Visual Showcase)</strong>:</li>
-<li>Organized 14 full-featured high-definition interface screenshots, covering system menus, spell conditions and class adsorption, career resources and attribute layout.</li>
+<li><strong>10 Full UI Windows Comprehensive Hover Tooltips</strong>.</li>
+<li><strong>ClampedToScreen &amp; <code>/eam reset</code> Window Center Reset Command</strong>.</li>
+<li><strong>Official Visual Showcase with 14 High-Res Screenshots</strong>.</li>
 </ul>
 <h3 id="retail-1210-alpha-78-20260824">📌 [Retail 12.1.0 Alpha 7.8] - 2026.08.24</h3>
 <ul>
-<li><strong>"★Character Attributes and Absorption Amount Monitoring" new module</strong>:</li>
-<li>Supports 18 core attribute value monitoring (primary attributes: strength, agility, endurance, intelligence; secondary attributes: lethality, acceleration, proficiency, adaptability; auxiliary and survival: dodge, absorption, speed attribute rating, running speed, swimming speed, flying speed, dragon mode speed, total absorbed shield amount, healing absorption amount, armor value).</li>
-<li>Speed categories are fully quenched: running speed (<code>GetUnitSpeed</code> real-time and upper limit running speed on the ground), swimming speed (underwater speed), flying speed (310%~420% for stable flight), flying dragon mode speed (calling <code>C_PlayerInfo.GetGlidingInfo</code> exclusive API to obtain 830%~1400% kinetic energy gliding speed), and 0.1s High frequency timer refreshes smoothly.</li>
-<li>Traditional Chinese terminology is strictly aligned with official Taiwanese terminology (fatal, accelerated, improvised).</li>
-<li>Independent secondary setting panel: Seamlessly attached to the right side of the main window and supports synchronous smooth dragging; supports individual customization switches, whether to display icons, alternative icon paths/codes, icon size, numerical font size, representative name font size, name alternative text, number of decimal places (0~2), large value abbreviation (k/M), warning value upper and lower limit red box warning, progress bar switch and independent frame positioning typesetting.</li>
-<li><strong>Secret Value protection and native StatusBar Sink integration</strong>:</li>
-<li>For Retail 12.0+ / 12.1+ part Unit API returns a protected Secret Number in combat/polluted environments, and fully adds safety value checks to prevent Lua layer operations or formatting errors.</li>
-<li>Pre-built native C-Level <code>StatusBar</code> for the attribute framework. When encountering a Secret value, the original value is directly passed into <code>StatusBar:SetValue</code> in one direction to show the visual progress ratio.</li>
-<li>Supports exclusive coloring based on attribute categories (absorption shield sky blue, healing absorption purple, movement speed green, secondary attribute golden, main attribute orange-red, armor steel blue).</li>
-<li><strong>Full-module custom icon override support (Custom Icon Override)</strong>:</li>
-<li>Added a "Customized alternative icon (code or material path)" input box, real-time dynamic preview box and Wago.tools query URL box in all module detailed settings such as self Aura, target Aura, skill cooldown, item cooldown, ground effects, etc.</li>
-<li>When the service layer releases alarm status, custom icons will be used first to override the native default icons.</li>
-<li><strong>Classic Cow Head Anchor Preview</strong>:</li>
-<li>The Classic cow head icon (<code>Spell_Nature_Polymorph_Cow</code>) is used as the screen preview when dragging the layout position, and supports real-time label names and red/green frame highlighting of 8 major alarm frames.</li>
-<li><strong>Live Real-time Config Preview</strong>:</li>
-<li>When adjusting the icon size, horizontal/vertical spacing, transparency, fan-shaped countdown circle animation, circle transparency, self/target debuff color, spell/countdown/stack font size, and growth direction, the alarm frame and icon on the screen will respond to 60fps hot updates in real time without restarting.</li>
-<li><strong>In-Combat Fullscreen Red Edge Flash</strong>:</li>
-<li>Implemented <code>UI/CombatFlash.lua</code> full-screen low health/combat red frame flashing animation, monitored <code>PLAYER_REGEN_DISABLED</code> event to trigger combat entry warning, and provided an instant test button in the main menu.</li>
-<li><strong>Theme styles and presets return</strong>:</li>
-<li>EAM The default theme is changed back to Classic Warcraft red menu buttons and imitation stone frame edges.</li>
-</ul>
-<h3 id="retail-1210-alpha-77-20260824">📌 [Retail 12.1.0 Alpha 7.7] - 2026.08.24</h3>
-<ul>
-<li><strong>Sub-window linked moving anchor</strong>: When clicking on each category of monitoring sub-window, the module's exclusive translucent moving anchor box will automatically light up on the screen (mark and hold down the left button and drag), allowing players to intuitively drag and adjust their position on the screen.</li>
-<li><strong>Typesetting position fully open mode</strong>: When the "Alert frame position and typesetting" window is opened, all 7 major frame movement anchor points are automatically illuminated. When the sub-window or main menu is closed, all anchor points are automatically hidden and the latest coordinate typesetting is applied.</li>
-<li><strong>Mutual exclusion of all second-level subsidiary side windows</strong>: When opening career resources, debug center, Profile import/export, function modules, about or list sub-windows, other side panels will be automatically closed, completely eliminating the overlapping problem of multiple side windows.</li>
-<li><strong>Debug Center and Diagnostic Export Repair</strong>: Fixed the index error caused by asynchronous return of Boolean values ​​during process test paging operation, completed the formatted output; corrected the call of the system diagnostic report export button.</li>
-</ul>
-<h3 id="retail-1210-alpha-75-20260823">📌 [Retail 12.1.0 Alpha 7.5] - 2026.08.23</h3>
-<ul>
-<li><strong>Interface Layout Reconstruction</strong>: The 7th item in the main menu is upgraded to "★ Player Career Resource Settings", the layout position is fine-tuned to the 8th item, and the debugging functions are integrated into the 4-Tab "Debug and Test Diagnostic Center".</li>
-<li><strong>Quick close of all windows</strong>: Add native <code>[X]</code> quick close button in the upper right corner of all windows.</li>
-<li><strong>Hierarchical Seamless Docking (APPEND Docking)</strong>: Main Menu ➔ List/Typesetting/Resources ➔ Detailed Conditions/Batch Input The windows are closely aligned to the right in order, and multiple windows are supported for simultaneous smooth dragging.</li>
-<li><strong>Profile sharing function upgrade</strong>: supports the export/import of 8 major optional items (self/target Aura, skill/item cooldown, ground effect, frame layout position, career resource settings, general preference settings), and provides quick selection buttons and preview block analysis.</li>
-<li><strong>Professional resource settings take effect immediately</strong>: When the slider and drop-down menu values ​​are changed, the native renderer is updated immediately, and <code>/reload</code> is not required for non-combat purposes.</li>
-<li><strong>Death Knight Rune Enhancement</strong>: The icons are dynamically switched according to the special icons of Blood (250), Frost (251), and Evil (252); a 6-cell micro charge cooling bar is added below, which is smoothly driven by the scheduler; provides <code>/eam rune</code> slot diagnosis and copying window.</li>
-</ul>
-<h3 id="retail-1210-alpha-74-20260823">📌 [Retail 12.1.0 Alpha 7.4] - 2026.08.23</h3>
-<ul>
-<li>The charging ring layout is changed to the encapsulated transparent TGA ring grid; the cooling completion must first observe that the charging has been consumed, and then it is established when <code>currentCharges</code> returns to <code>maxCharges</code>.</li>
-<li>Death Knight runes are changed from <code>GetRuneCount</code>/<code>GetRuneCooldown</code> six-slot initialization and <code>RUNE_POWER_UPDATE(index, added)</code> real-time drive; consumption/restoration updates 0..6 segments, runes are still independent resources.</li>
-<li>Ground effect settings will be compiled in the non-combat Base/Override/current SpellInfo spell group; replacement IDs such as Death and Decay/Desecration can hit the same monitoring item, and priority will be given when the set IDs are completely consistent.</li>
-</ul>
-<h3 id="retail-1210-alpha-73-20260823">📌 [Retail 12.1.0 Alpha 7.3] - 2026.08.23</h3>
-<ul>
-<li>Charging StatusBar is changed to display the current available times/maximum times, and the number of stages is no longer advanced with the recovery time of a single layer; Secret <code>currentCharges</code> is only sent directly to the Blizzard C-level <code>SetValue</code> sink.</li>
-<li>Added TOP/BOTTOM/LEFT/RIGHT and ring RING layouts; the default length/ring diameter is 150% of the illustration, thickness 8px, and the separation line is displayed according to safety <code>maxCharges</code>.</li>
-<li>12.1 Circular uses StatusBar Radial render mode; falls back to BOTTOM linear bars when abilities or materials are unavailable.</li>
-</ul>
-<h3 id="retail-1210-alpha-72-20260823">📌 [Retail 12.1.0 Alpha 7.2] - 2026.08.23</h3>
-<ul>
-<li>Charged skills are still monitored only after the player successfully casts them for the first time, and the stored base ID and current override ID can be aligned.</li>
-<li><code>SpellChargeInfo</code> changed to field-level Secret interpretation; safe current/max displays text, and Secret <code>currentCharges</code> uses the same width as the icon StatusBar to receive the official DurationObject.</li>
-<li>The detailed setting of the cooling skill is hidden for Aura, "Only monitor your own casting", and the three cooling action buttons no longer overlap.</li>
-</ul>
-<h3 id="retail-1210-alpha-71-20260823">📌 [Retail 12.1.0 Alpha 7.1] - 2026.08.23</h3>
-<ul>
-<li>Charge-based skills display current/max when safely retrieving charging data, and retain the native DurationObject cooldown countdown.</li>
-<li>Clear and hide the edge/bling of CooldownFrame when there is no timer to prevent the skill icon from leaving a white empty frame.</li>
-<li>Glow Border supports built-in <code>LibButtonGlow-1.0</code>; fallback to EAM animated border when customizing color, first building frame in battle, or library is unavailable.</li>
-<li>The visual state will be re-applied immediately after the player's resource setting panel is switched on and off. <code>/reload</code> is not required when not in combat.</li>
-</ul>
-<h3 id="retail-121-alpha-7-20260823">📌 [Retail 12.1 Alpha 7] - 2026.08.23</h3>
-<ul>
-<li>Player professional resources are changed to 17 resources, 13 professions/40 groups of specialization candidate topologies; <code>UNIT_DISPLAYPOWER</code> only updates the foreground, and no longer dismantles background tracking due to form switching.</li>
-<li>Reinforce Druid Bear/Cat/Caster/Moonkin/Return to Bear, Energy→ComboPoints renderer ownership, PAIN dedicated legacy key and module deactivation cleanup.</li>
-<li>Added/completed font, numeric text size and position, orientation, size, transparency, sorting, foreground/background and numerical ability settings for each resource; non-combat changes are applied immediately.</li>
-</ul>
-<h3 id="retail-121-alpha-6-20260823">📌 [Retail 12.1 Alpha 6] - 2026.08.23</h3>
-<ul>
-<li>Skill cooldown monitoring is changed to only render for the first time after the player accurately and successfully casts the skill list; three new per-spell overrides are added: <code>cooldownRemoveAura</code>, <code>showSCDOutsideCombat</code>, and <code>glowSCDWhenUsable</code>.</li>
-<li>Target Aura provides anonymous diagnostics with explicit <code>/eam add target</code> manual popup route; does not save Secret, AuraData, Frame or guess IDs.</li>
-</ul>
-<h3 id="retail-121-alpha-5-20260814">📌 [Retail 12.1 Alpha 5] - 2026.08.14</h3>
-<ul>
-<li>Added EAMAP1 JSON/Base64 profile codec, including whitelist fields, size/depth/node limits, Adler-32 checksum, preview, merge/replace and combat guard.</li>
-<li>Added STANDARD, ARIALN, MORPHEUS, SKURRI font selection; eleven sets of themes unified control button background colors and borders.</li>
-</ul>
-<h3 id="retail-121-alpha-4-alpha-1-202607-202608">📌 [Retail 12.1 Alpha 4 ~ Alpha 1] - 2026.07 ~ 2026.08</h3>
-<ul>
-<li>The first version of 12.1 modern reconstruction is released, with full access to native AuraContainer and Tooltip Ctrl+Alt quick monitoring channels.</li>
-<li>Introduced VectorGraphics / Texture SVG A/B capability probe and complete process test.</li>
-<li>Completely reconstruct and decouple the five major data services AuraService, CooldownService, ItemCooldownService, GroundEffectService.</li>
-<li>The data service introduces a zero-allocation state buffer pool (such as AuraStatePool, etc.) to completely eliminate runtime GC memory garbage.</li>
-<li>Introducing AlertManager intermediary controller and Scheduler throttling to eliminate Layout Churn and high-frequency repeated calculations.</li>
-</ul>
-</details>
-<details>
-<summary><b>📜 Summary of historical Classic versions (TWW / DF / SL / Classic) (click to expand/collapse)</b></summary>
-<ul>
-<li><strong>[Retail 12.0.7] 2026.06</strong>: Dynamic localization reconstruction of specialization names, completion of dictionaries of five major language families; reconstruction of ground effects multi-language Tooltip Scraping; splitting of 7 independent alarm frameworks.</li>
-<li><strong>[Classic MOP / Retail TWW] 2025.11</strong>: Added Russian language support; fine-tuned the decimal point carrying method for displaying seconds; the halo value supports the /K/M abbreviation according to the language system.</li>
-<li><strong>[Retail TWW] 2025.07</strong>: Scheduled updates are driven by C_Timer; PositionFrame update frequency is optimized, greatly reducing CPU occupancy.</li>
-<li><strong>[Retail DF] 2023.02</strong>: Support Evoker profession and Essence display; support Vigor prompt.</li>
-<li><strong>[Retail SL] 2020.10</strong>: Supports core energy highlighting for all professions (Qi, Holy Energy, Shards, Frenzy, Fury); supports DK rune column switching.</li>
+<li><strong>Player Stats &amp; Absorbs Module</strong>: 18 stats &amp; 4-in-1 velocities (gliding 830%~1400%).</li>
+<li><strong>Custom Icon Override Across All Modules</strong>.</li>
 </ul>
 </details>
 <hr />
-<h2 id="compatibility-and-support-boundaries-compatibility">📌 Compatibility and support boundaries (Compatibility)</h2>
+<h2 id="compatibility">📌 Compatibility</h2>
 <ul>
-<li><strong>Support Environment</strong>:</li>
-<li>"World of Warcraft: Retail server" World of Warcraft: Retail 12.1.0+ (Interface 120100)</li>
-<li>Compatible channel Retail 12.0.7+ (Interface 120007)</li>
-<li><strong>Not supported environment</strong>:</li>
-<li>The entire series of Classic nostalgic servers (Classic Era, MoP Classic, The Burning Crusade Classic, Wrath, etc. are not supported by this project).</li>
+<li><strong>Supported Client Environments</strong>:</li>
+<li>World of Warcraft: Retail 12.1.0+ (Interface <code>120100</code>)</li>
+<li>Retail Compatibility Channel 12.0.7+ (Interface <code>120007</code>)</li>
+<li><strong>Unsupported Environments</strong>:</li>
+<li>Classic Era, MoP Classic, TBC Classic, Wrath Classic (Out of scope for this Retail remake project).</li>
 </ul>
 <hr />
 <h2 id="documentation-links">🌐 Documentation &amp; Links</h2>
 <ul>
-<li>📖 <strong>GitHub Pages Description File Navigation Center</strong>: <a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a></li>
-<li>📦 <strong>GitHub project source code and Release release</strong>: <a href="https://github.com/ziyuefan/EventAlertModRemake">https://github.com/ziyuefan/EventAlertModRemake</a></li>
-<li>📜 <strong>CurseForge project release page</strong>: <a href="https://www.curseforge.com/wow/AddOn/eventalertmod">https://www.curseforge.com/wow/AddOn/eventalertmod</a></li>
-<li>💬 <strong>WoWInterface project release page</strong>: <a href="https://www.wowinterface.com/downloads/info26550-EventAlertMod.html">https://www.wowinterface.com/downloads/info26550-EventAlertMod.html</a></li>
+<li>📖 <strong>GitHub Pages Documentation Hub</strong>: <a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a></li>
+<li>📦 <strong>GitHub Repository &amp; Releases</strong>: <a href="https://github.com/ziyuefan/EventAlertModRemake">https://github.com/ziyuefan/EventAlertModRemake</a></li>
+<li>📜 <strong>CurseForge Addon Page</strong>: <a href="https://www.curseforge.com/wow/addons/eventalertmod">https://www.curseforge.com/wow/addons/eventalertmod</a></li>
+<li>💬 <strong>WoWInterface Addon Page</strong>: <a href="https://www.wowinterface.com/downloads/info26550-EventAlertMod.html">https://www.wowinterface.com/downloads/info26550-EventAlertMod.html</a></li>
 </ul>
     </div>
 

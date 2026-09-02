@@ -661,10 +661,10 @@ end
 <h3 id="1-pain-points-of-the-current-situation">1. Pain points of the current situation</h3>
 <p>In 12.0.7, <code>AuraService.lua</code> directly calls <code>Renderer.render</code> and <code>Renderer.requestLayout</code> of <code>UI/Renderer.lua</code>. This leads to the following disadvantages:
 * <strong>High Coupling</strong>: <code>AuraService</code> must know the interface of <code>Renderer</code>, which makes it impossible to perform independent unit testing (test unit) of the library and event vehicle layer in a UI-less environment.
-* <strong>Layout Churn (layout iteration)</strong>: In the <code>UNIT_AURA</code> incremental update, simultaneous changes in multiple halos will trigger multiple <code>render</code>, causing the renderer to repeatedly calculate the UI coordinates (Layout) and waste CPU time.</p>
+* <strong>Layout Churn (layout iteration)</strong>: In the <code>UNIT_AURA</code> incremental update, simultaneous changes in multiple Aura will trigger multiple <code>render</code>, causing the renderer to repeatedly calculate the UI coordinates (Layout) and waste CPU time.</p>
 <h3 id="2-decoupling-goals">2. Decoupling goals</h3>
 <p>Introduced <strong>AlertManager</strong> (controller layer) as a join.
-* <code>AuraService</code>: Pure data service, only listens to and carries <code>UNIT_AURA</code> events, and writes the entity facts of the halo to <code>AuraStatePool</code>. After the data is changed, only <code>EAM_AURA_STATE_CHANGED</code> events are actively sent to <code>EventRouter</code>.
+* <code>AuraService</code>: Pure data service, only listens to and carries <code>UNIT_AURA</code> events, and writes the entity facts of the Aura to <code>AuraStatePool</code>. After the data is changed, only <code>EAM_AURA_STATE_CHANGED</code> events are actively sent to <code>EventRouter</code>.
 * <code>AlertManager</code>: For this listening event, the user is responsible for setting (alert list, enable flags), making filtering and rendering decisions, and requesting <code>Renderer</code> updates in a throttling or batch manner.
 * <code>Renderer</code>: A pure view rendering layer that only receives the packaged rendering state and writes it to the screen through IconPool.</p>
 <div class="mermaid">
@@ -686,8 +686,8 @@ graph TD
 <ul>
 <li>Use <code>table.create(preallocatedSize, 0)</code> to pre-assign the size of the specified connection space, mainly assigned to the active state of <code>player</code> and <code>target</code>.</li>
 <li><strong>Restore Queue (Restore Queue)</strong>:</li>
-<li>When the halo disappears, the state table will not be deleted by <code>nil</code>, but <code>resetState()</code> will be called to erase its dynamic content and placed in <code>AuraStatePool.recycleBin</code>.</li>
-<li>When a new halo is triggered, the old table <code>acquire</code> in <code>recycleBin</code> will be reused first, and new objects will only be created when the Pool dries up.</li>
+<li>When the Aura disappears, the state table will not be deleted by <code>nil</code>, but <code>resetState()</code> will be called to erase its dynamic content and placed in <code>AuraStatePool.recycleBin</code>.</li>
+<li>When a new Aura is triggered, the old table <code>acquire</code> in <code>recycleBin</code> will be reused first, and new objects will only be created when the Pool dries up.</li>
 </ul>
 <h3 id="2-core-code-design">2. Core code design</h3>
 <pre class="codehilite"><code class="language-lua">local AuraStatePool = {
@@ -746,7 +746,7 @@ end
 <h3 id="3secret-value-index-security-defense">3.Secret Value Index Security Defense</h3>
 <p>In combat, if a custom table is indexed with a non-validated Key, Lua will crash fatally once the Key becomes a secret value.
 * <strong>Rule</strong>: Before writing <code>spellID</code>, <code>auraInstanceID</code>, etc. fields to any hash index (such as <code>cache.byInstance[id]</code> or <code>alertIndex[spellID]</code>), they must be defended with <code>issecretvalue.
-* **Downgrade**: If Key is Secret, this halo is directly written to the fixed</code>EAM.Constants.FALLBACK_SECRET_KEY` without dynamic hash mapping.</p>
+* **Downgrade**: If Key is Secret, this Aura is directly written to the fixed</code>EAM.Constants.FALLBACK_SECRET_KEY` without dynamic hash mapping.</p>
 <hr />
 <h2 id="3-dual-track-rendering-c-native-binding-and-lua-onupdate-downgrade-channel">3. Dual-track rendering: C++ Native Binding and Lua OnUpdate downgrade channel</h2>
 <p>In order to maximize the engine performance of WoW 12.x, the renderer will use a <strong>dual-track time display render tray</strong>.</p>

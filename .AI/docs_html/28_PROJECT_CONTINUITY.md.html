@@ -943,431 +943,53 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-project-continuation-and-trial-and-error-index">EventAlertMod Project continuation and trial and error index</h1>
-<h2 id="1-purpose-and-rights-and-responsibilities">1. Purpose and Rights and Responsibilities</h2>
-<p>This file is the first human-readable continuation point after context compression, agent handover, or long interruption. The machine-readable current state is subject to <code>Data/ProjectContinuity.json</code>; the detailed trial and error timeline is retained in <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>; the real-life case definition is retained in <code>Data/LiveValidationMatrix.json</code>. The three parties are not allowed to copy the entire content of each other.</p>
-<p>Current snapshot version: 2026-08-24.15 (Alpha 8.2).</p>
-<h2 id="2026-08-27-alpha-82-libsharedmedia-30-full-integration-of-material-ecology-font-hot-application-and-scroll-menu-snapshot-current">2026-08-27 Alpha 8.2 LibSharedMedia-3.0 Full integration of material ecology, font hot application and scroll menu snapshot (current)</h2>
+<!-- EAM_DOCUMENTATION_SOURCE: enUS -->
+<h1 id="project-continuity-knowledge-handoff-snapshot">Project Continuity &amp; Knowledge Handoff Snapshot</h1>
+<h2 id="1-purpose-authority">1. Purpose &amp; Authority</h2>
+<p>This document serves as the authoritative primary human-readable continuity point following context compression, subagent handover, or extended development interruptions.
+- Machine-readable status is maintained in <code>Data/ProjectContinuity.json</code>.
+- Chronological engineering trial details are logged in <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.
+- Live client verification matrices are maintained in <code>Data/LiveValidationMatrix.json</code>.</p>
+<hr />
+<h2 id="2-current-state-snapshot-alpha-83-active-baseline">2. Current State Snapshot: Alpha 8.3 (Active Baseline)</h2>
 <ul>
-<li>current-of-truth: The project has entered the Alpha 8.2 release stage; fully integrated into the LibSharedMedia-3.0 (SharedMedia) material ecology, supporting dynamic detection and third-party sound effects/font reading, repairing font modifications without <code>/reload</code>, taking immediate effect, implementing the UI drop-down menu adaptive scrolling container, completed 71/71 Syntax, 84/84 Flow validation and 493/493 contract testing.</li>
-<li>LibSharedMedia-3.0 (SharedMedia) fully integrated material library:</li>
-<li>Implemented <code>MediaService.ensureLSM()</code> dynamic detection mechanism and <code>PLAYER_LOGIN</code> delayed synchronous refresh, completely solving the problem that the plug-in loading sequence caused the cache to be frozen in 12 built-in sound effects.</li>
-<li>Query the <code>lsm:List("sound")</code> and <code>lsm:HashTable("sound")</code> dual-track data sources at the same time and remove duplicates, and completely include all third-party sound effects.</li>
-<li>Supports dual-track safe playback (<code>MediaService.playSound</code>), compatible with FileDataID, SoundKitID and custom FilePath (.ogg / .mp3).</li>
-<li>12.1 Native Aura rule compiler accesses <code>MediaService.getSoundPath</code>.</li>
-<li>Global font hot application (no need for <code>/reload</code>, effective immediately):</li>
-<li><code>SavedVariables.lua</code> releases all zigzag names registered through LSM.</li>
-<li><code>AuraRuleCompiler.lua</code> incorporates <code>fontFamily</code> into the Native layout fingerprint.</li>
-<li><code>Renderer</code> and <code>AuraContainerService</code> register the <code>EAM_FONT_FAMILY_CHANGED</code> event listener.</li>
-<li><code>Options.notifyTextLayoutChanged</code> links to refresh preview icons, career resources and character attribute text.</li>
-<li>UI drop-down menu long list adaptive scrolling container (<code>buildScrollableDropdownMenu</code>):</li>
-<li>When the material exceeds 10 strokes, the height is automatically limited and scroll and mouse wheel support are enabled.</li>
-<li>Enable <code>forceRefresh = true</code> when the menu is expanded to instantly pull the latest material list from LSM.</li>
-<li>current-of-truth: The project has entered the Alpha 7.9 release stage; the 10 major windows of the entire interface have been fully configured with Hover Tooltips, main window screen border locking and one-click center reset command (<code>/eam reset</code>), official README has added 14 high-definition interface graphic tours, and completed 68/68 syntax, 84/84 Flow Verification and 493/493 contract testing.</li>
-<li>Comprehensive UI Hover Tooltips:</li>
-<li>Add intuitive hover tooltips (Hover Tooltips) to all buttons, check boxes, sliders, drop-down menus, input edit boxes and list operation columns to clearly mark the purpose, setting range and operation instructions of the control items.</li>
-<li>Implement the general tool function <code>EAM.UI.setTooltip</code>, which supports plain text, multilingual string and table binding, completely eliminating the interface operation threshold.</li>
-<li>Covers a total of 10 windows including the main setting panel, alarm frame layout, spell list, condition setting, batch input, character attributes, career resources, functional modules, and Profile sharing and debugging center.</li>
-<li>Character attributes and absorption amount monitoring (new module):</li>
-<li>Supports 18 core attribute value monitoring (strength, agility, endurance, intelligence, lethality, acceleration, mastery, adaptability, dodge, absorption, speed attribute rating, running speed, swimming speed, flying speed, dragon mode flying speed, total absorbed shield amount, treatment absorption amount, armor value).</li>
-<li>The speed category is quenched into four categories: running speed (<code>GetUnitSpeed</code> on the ground), swimming speed (underwater), flying speed (traditional suspension flight 310%~420%), dragon mode flying speed (calling <code>C_PlayerInfo.GetGlidingInfo</code> to obtain 830%~1400% kinetic energy gliding speed), and is smoothly refreshed in real time with a 0.1s high-frequency timer.</li>
-<li>Traditional Chinese terminology is strictly aligned with official Taiwanese terminology (fatal, accelerated, improvised).</li>
-<li>Independent secondary setting panel (<code>UI/PlayerStatPanel.lua</code>): seamlessly adsorbs to the right side of the main window and supports synchronous smooth dragging. It supports single switches, alternative icons/codes, icon sizes, numerical/name font sizes, alternative text, decimal places (0~2), abbreviations (k/M), upper and lower limit red boxes for warning values, progress bar switches and independent frame layout.</li>
-<li>Secret Value protection integrated with native StatusBar Sink:</li>
-<li>For Retail 12.0+ / 12.1+, part of Unit API (such as absorption volume, movement speed, etc.) returns the protected Secret Number in combat/polluted environments, and fully adds safety value checks to prevent Lua layer operations or formatting errors.</li>
-<li>Pre-build the native C-Level <code>StatusBar</code> for the attribute framework. When encountering a Secret value, the original value is directly passed into <code>StatusBar:SetValue</code> in one direction to display the visual progress ratio. Lua does not perform string conversion and read back the value.</li>
-<li>Supports exclusive coloring based on attribute categories (absorption shield sky blue, healing absorption purple, movement speed green, secondary attribute golden, main attribute orange-red, armor steel blue).</li>
-<li>Custom Icon Override Across All Modules support:</li>
-<li>In all detailed module settings such as self Aura, target Aura, skill cooldown, item cooldown, ground effects, etc., a "customized alternative icon (code or material path)" input box, real-time dynamic preview box and Wago.tools query URL box are added.</li>
-<li>When the service layer releases alarm status, the custom icon will be used first to overwrite the native default icon.</li>
-<li>Classic Cow Head Anchor Preview:</li>
-<li>When dragging the layout position, the Classic cow head icon (<code>Interface\Icons\Spell_Nature_Polymorph_Cow</code>) is used as the screen preview, and supports real-time label names and red/green frame highlighting of 8 major alarm frames.</li>
-<li>Live Real-time Config Preview:</li>
-<li>When adjusting the icon size, horizontal/vertical spacing, transparency, fan-shaped countdown circle animation, circle transparency, self/target debuff color, spell/countdown/stack font size, and growth direction, the alarm frame and icon on the screen will respond to 60fps hot updates in real time without restarting.</li>
-<li>In-Combat Fullscreen Red Edge Flash:</li>
-<li>Implement <code>UI/CombatFlash.lua</code> full-screen low health/combat red frame flashing animation, monitor the <code>PLAYER_REGEN_DISABLED</code> event to trigger the battle entry warning, and provide an instant test button in the main menu.</li>
-<li>Theme style and main window screen border protection:</li>
-<li>EAM The default theme is changed back to the Classic Warcraft red menu button and imitation stone frame edge.</li>
-<li>Fixed the nil call error caused by the lack of <code>close()</code> in <code>closeAllSidePanels</code> when closing the main window, and implemented the defensive <code>safeClosePanel</code> mechanism.</li>
-<li>Added <code>SetClampedToScreen</code> to the main window to lock the screen boundaries to prevent the screen from being dragged out and unable to be retrieved.</li>
-<li>Added <code>/eam reset</code> (or <code>/eam center</code> / <code>resetpos</code>) slash command, middle click on the minimap button and Shift+click to bring the main window back to the center of the screen with one click.</li>
+<li><strong>Current Status</strong>: Project is in active Alpha 8.3 release development.</li>
+<li><strong>Cooldown Reordering &amp; Pre-render Placeholders</strong>:</li>
+<li>Full Drag-and-Drop and Up/Down (<code>▲</code>/<code>▼</code>) slot reordering in cooldown options.</li>
+<li>Pre-render Placeholder Mode (<code>cooldownPreRender</code>) displays a desaturated grayscale mask out of combat, dynamically transitioning to full color upon spell cast with zero combat <code>CreateFrame</code> overhead.</li>
+<li><strong>Player Stats In-Combat Live Updates</strong>:</li>
+<li>Direct adoption of native <code>FontString:SetFormattedText</code> for all 18 attributes, achieving zero Lua GC string allocations in OnUpdate timer loops.</li>
+<li>Implemented <code>getRawValue</code> routing across all 18 attributes, respecting Retail 12.x / Midnight <code>AllowedWhenTainted</code> and <code>Enum.SecretAspect.Text</code> contracts.</li>
+<li><strong>LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration</strong>:</li>
+<li>Dynamic discovery (<code>MediaService.ensureLSM()</code>), <code>PLAYER_LOGIN</code> deferred synchronization, third-party sound/font package support, dual-channel safe playback (<code>MediaService.playSound</code>), and 12.1 Native Aura sound routing.</li>
+<li><strong>Zero-Delay Live Font Application (No <code>/reload</code> Needed)</strong>:</li>
+<li>SavedVariables whitelist unlock, live refresh of preview icons, general alert icons, player resources, and player stats text.</li>
+<li><strong>Scrollable Dropdown Menus</strong>:</li>
+<li>Adaptive <code>UIPanelScrollFrameTemplate</code> with smooth mouse wheel scrolling for long lists of media assets.</li>
+<li><strong>Validation Baseline</strong>:</li>
+<li>Lua Syntax Check: <strong>76/76 PASSED</strong>.</li>
+<li>Flow Validation Harness: <strong>84/84 PASSED</strong>.</li>
+<li>Validation Contracts: <strong>496/496 PASSED</strong>.</li>
 </ul>
-<h2 id="2026-08-24-alpha-77-linked-mobile-anchor-point-side-window-mutual-exclusion-and-dual-track-log-snapshot">2026-08-24 Alpha 7.7 Linked mobile anchor point, side window mutual exclusion and dual-track log snapshot</h2>
+<hr />
+<h2 id="3-fixed-project-boundaries">3. Fixed Project Boundaries</h2>
 <ul>
-<li>current-of-truth: The project has entered the Alpha 7.7 release stage; completed 65/65 syntax, 84/84 Flow verification and 493/493 contract testing.</li>
-<li>Interface and interaction upgrade:</li>
-<li>Sub-window linked moving anchor points: When you click on each category of monitoring sub-window, the module's exclusive translucent moving anchor point box (marked "Hold down the left button and drag") will automatically light up on the screen, allowing players to intuitively drag and adjust their position on the screen; when closing the sub-window, all anchor points will be automatically hidden and layout will be applied.</li>
-<li>Fully open layout position mode: When the "Alert Frame Position and Layout" window is opened, all 7 frame movement anchor points will automatically light up.</li>
-<li>All second-level subsidiary side windows are mutually exclusive: when opening career resources, debug center, Profile import/export, function modules, about or list sub-windows, other side panels will be automatically closed to completely eliminate the overlap of multiple side windows.</li>
-<li>Debug center repairs: Fixed the index error caused by asynchronous return of Boolean values ​​during the process test run, completed the formatted output; corrected the system diagnostic report export button call.</li>
-<li>Dual-track logs and Release naming:</li>
-<li>Create the project root directory <code>changelog.md</code> to carry complete project and management details, and <code>changelog.txt</code> to maintain pure Warcraft plug-in updates.</li>
-<li>GitHub Release product naming is standardized to <code>EventAlertMod_MN_yyyyMMdd_HHmmss-&lt;Tag&gt;_AGY.zip</code> (subsequent releases will have the <code>_AGY</code> suffix by default).</li>
+<li><strong>Git Project Root</strong>: <code>D:\Project_EventAlertMod</code></li>
+<li><strong>AddOn Runtime Tree</strong>: <code>D:\Project_EventAlertMod\EventAlertMod</code></li>
+<li><strong>AI Governance &amp; Tools</strong>: <code>D:\Project_EventAlertMod\.AI</code></li>
+<li><strong>Packaging &amp; Deployment</strong>: <code>D:\Project_EventAlertMod\Deploy</code></li>
+<li><strong>Build Output</strong>: <code>D:\Project_EventAlertMod\Dist</code> (Git ignored)</li>
+<li><strong>Deprecated Directory</strong>: <code>D:\EventAlertMod</code> is obsolete; agents must never read, write, or fall back to it.</li>
+<li><strong>Symbolic Link Protection</strong>: Any Reparse Point, Junction, or Symlink targeting AddOns must fail-closed.</li>
 </ul>
-<h2 id="2026-08-23-alpha-75-released-with-uiprofiledk-rune-reconstruction-snapshot">2026-08-23 Alpha 7.5 released with UI/Profile/DK rune reconstruction snapshot</h2>
-<ul>
-<li>current-of-truth: The project has entered the Alpha 7.5 release stage; completed 65/65 syntax, 84/84 Flow verification and 493/493 contract testing.</li>
-<li>Interface and interaction:</li>
-<li>Implement native <code>UIPanelCloseButton</code> (<code>[X]</code>) quick close button in the upper right corner of all windows.</li>
-<li>The window level adopts APPEND seamless side adsorption (Main Menu ➔ List/Typesetting/Career Resources ➔ Detailed Conditions/Batch Input), and supports cross-window synchronized dragging.</li>
-<li>The categories of the main menu have been improved: "★ Player Career Resource Settings" has been upgraded to item 7; debugging functions have been integrated into the 4-Tab "Debugging and Testing Diagnostic Center".</li>
-<li>Profile module upgrade:</li>
-<li>Supports 8 major categories of optional export/import (self Aura, target Aura, skill CD, item CD, ground effect, frame layout position, professional resource settings, general preference settings).</li>
-<li>Provide <code>[全選]</code>, <code>[僅告警清單]</code>, <code>[僅排版設定]</code> quick check buttons and preview block analysis.</li>
-<li>Career resources and DK runes:</li>
-<li>Career resource settings support real-time hot preview and automatic storage of sliders.</li>
-<li>The death knight rune supports 3 major specialization dynamic icons, 6-slot micro charge cooling bar (0%..100% smooth animation) and <code>/eam rune</code> slot diagnosis window.</li>
-</ul>
-<h2 id="2026-08-21-new-root-and-deployment-governance-handover-snapshot-current">2026-08-21 New root and deployment governance handover snapshot (current)</h2>
-<ul>
-<li>current-of-truth: Project root is <code>D:\Project_EventAlertMod</code>; plug-in unique source is <code>EventAlertMod/</code>; AI management is <code>.AI/</code>; deployment tool is <code>Deploy/</code>; <code>Dist/</code> is ignored native product.</li>
-<li>Local read-only Status: Retail/PTR <code>12.1.0.69382</code>, XPTR <code>12.0.7.68887</code>; the three EventAlertMod targets are currently physical, but only PTR contains <code>EventAlertMod.toc</code>, Retail/XPTR still lacks this file; <code>Test-LocalWoWEnvironment</code> is 1/3, Deploy Status/DryRun The three-channel pass only represents the pre-check for safe deployment, and cannot declare the three-channel ready. The previous results of Retail/XPTR link blocked and PTR physical are only historical evidence and must still be rechecked before each execution.</li>
-<li>Deployment management: Registry priority, <code>Deploy/DeploymentTargets.json</code> JSON fallback; users can confirm candidate roots or specify <code>-WowRoot</code>; Status column three channels ProductVersion; PTR/XPTR only interactively asks whether Retail is included; noninteractive does not add implicitly; any Reparse Point fail-closed.</li>
-<li>Package management: The plug-in ZIP only takes the <code>EventAlertMod/</code> exact tree; the source code ZIP excludes native derivatives such as <code>Dist/.git/.codex-remote-attachments/attachments/backup/trash/TestResults/cache/log/zip</code>, but retains <code>.vscode/</code>, <code>.codex/</code>, <code>.AI/</code> and <code>.AI/docs_html/</code>.</li>
-<li>This time only the <code>.AI</code> governance file, continuity JSON, two player-visible changelogs and offline <code>docs_html</code> are updated; Deploy is not executed, the WoW directory is not written, and external translation services are not used.</li>
-<li>The machine-readable continuation data is based on the schema 1 structure of <code>Data/ProjectContinuity.json</code>; this snapshot uses the new fact/work/trial ID to append the current situation and does not delete historical evidence.</li>
-</ul>
-<h2 id="2026-08-21-player-multi-resource-handover-snapshot-current-supplement">2026-08-21 Player multi-resource handover snapshot (current supplement)</h2>
-<ul>
-<li>The official player resource path has been split into Catalog, Capability, Service, PowerRenderer and Setting Panel; <code>ClassPowerService</code> only retains the compatible facade.</li>
-<li>Catalog is a topology of 17 resources, 13 professions/40 groups of specializations; the same specialization can track multiple currently available resources at the same time. Druid topology includes Mana, Rage, Energy, ComboPoints, LunarPower.</li>
-<li>Schema v6/resource schema 3 provides global defaults, class defaults, spec overrides, independent display fields, reset and no-op revision; non-combat setting events are immediately rebuilt, and in combat only structural changes are delayed to <code>PLAYER_REGEN_ENABLED</code>.</li>
-<li>The Secret value can only be sent to the dedicated StatusBar in one direction from <code>UnitPowerPercent(..., CurveConstants.ZeroToOne)</code>. It is not saved, compared, stringified, serialized, or read back; the development report only outputs security metadata.</li>
-<li>The latest offline results: Lua syntax 62/62 (62 AddOn); Flow all 77/77, boundary 56/56, Validation Contracts 459/459; the latest artifact is .AI/TestResults/EAM_FlowValidation_all_20260823_063557.json and .AI/TestResults/EAM_FlowValidation_boundary_20260823_063609.json; Retail／PTR／XPTR The receipt of all-professional and all-specialized real machines is still pending.</li>
-</ul>
-<h2 id="2026-08-23-target-aura-diagnostics-handover-supplement-current">2026-08-23 Target Aura diagnostics handover supplement (current)</h2>
-<ul>
-<li>TooltipMonitorService only outputs anonymous callback/candidate time, expiration count, Ctrl+Alt modifier status, CVar read/set result and last attempt reason; does not save or serialize Secret, AuraData, Frame or guess ID.</li>
-<li>tryOpenMenu still requires non-combat, no keyboard focus, exact Ctrl+Alt, current tooltip/heartbeat and fresh candidates; Target Aura does not use GetMouseFocus, GetChildren, TargetFrame/AuraButton hooks.</li>
-<li>Make it clear that the manual path is /eam add target to open the existing Aura popup; /eam add target <spellID> is still written directly. When the offline harness is not loaded into the Slash UI, the slash accessibility is covered by the static contract and cannot be claimed to be passed by the real-person UI.</li>
-<li>Latest offline artifacts: .AI/TestResults/EAM_FlowValidation_all_20260823_033310.json, .AI/TestResults/EAM_FlowValidation_boundary_20260823_033311.json; Lua 64/64, Flow all 75/75, boundary 54/54, Validation Contracts 441/441. Still need to be verified by PTR/XPTR/Retail players.</li>
-</ul>
-<h2 id="2026-08-23-skill-cooldown-activation-and-behavior-setting-handover-current">2026-08-23 Skill cooldown activation and behavior setting handover (current)</h2>
-<ul>
-<li>CooldownService is only created with the renderable state after the unit of UNIT_SPELLCAST_SUCCEEDED is accurate to the player and the safe base/override spell family hits the skill cooldown list; refreshAll, PLAYER_REGEN_ENABLED, shape events, setting refreshes and non-list healing spells cannot be enabled in batches.</li>
-<li>cooldownRemoveAura, showSCDOutsideCombat, glowSCDWhenUsable adopt three-state fields: nil inherits the global field, true or false represents single skill override; SavedVariables, ProfileCodec and Options all retain clear false.</li>
-<li>After the cooldown visual timer expires, CooldownService determines whether to hide it; Renderer is no longer unconditionally removed. Available highlights can be merged with existing Pandemic/overlay glow without reading or stringifying Secret values.</li>
-<li>cooldown.combat_heal_regen_no_bulk_render fixture coverage: non-list healing spells, out-of-combat, error unit, and form refresh are not allowed to open the door; precise player casting only turns on the corresponding skills, and the startup status is cleared when the module is deactivated.</li>
-<li>Latest offline evidence: Lua 64/64, Flow all 76/76, Flow boundary 55/55, Validation Contracts 447/447; artifacts are .AI/TestResults/EAM_FlowValidation_all_20260823_042614.json and .AI/TestResults/EAM_FlowValidation_boundary_20260823_042834.json. The above is still not the actual machine receipt of PTR/XPTR/Retail.</li>
-<li>Real machine sign-in must be done in Retail/PTR 12.1 and XPTR 12.0.7 respectively to test exact cast, non-list healing spells, combat transitions, form events, three behavior settings, module deactivation/reactivation and /reload persistence.</li>
-</ul>
-<h2 id="2026-08-23-snapshot-of-the-final-prompt-handover-of-player-professional-resources">2026-08-23 Snapshot of the final prompt handover of player professional resources</h2>
-<ul>
-<li>This round completed ResourceCatalog only source, PAIN dedicated legacy key, UNIT_DISPLAYPOWER foreground-only, Druid Bear/Cat/Caster/Moonkin/back Bear Flow, Energy→ComboPoints renderer ownership regression, Probe stop life cycle, font/orientation/numeric text controls and non-combat real-time settings.</li>
-<li>/eam unitpower background <RESOURCE_KEY> is a diagnostic entry for players to clearly mark "missing background events"; it does not mean that the event has been proven to be truly missing, nor will it automatically add all background resources to the sampler.</li>
-<li>The background sampler is still a single, demand-driven, probe-gated schedule; the 0.5 second offline is just the fixture clock, and the event frequency and visual effects of Retail/PTR/XPTR still need to be reported by the player's real machine.</li>
-<li>Latest offline evidence: Lua 62/62, Flow all 77/77, boundary 56/56, Validation Contracts 459/459; all runtime visual, Secret sink, all-pro/specialization, taint and blocked-action are still marked REQUIRES_WOW_12_1_RUNTIME or REQUIRES_XPTR_12_0_7_RUNTIME.</li>
-<li>In this round, the actual WoW directory was not deployed, nor was the real game archive read or written; the deployment tool only used the temporary fixture to complete the backup/restore verification, and did not perform Git commit/push/release. Pre-modification backups are located at .AI/backup/20260823052637_resource-module, .AI/backup/20260823061137_resource-docs and .AI/backup/20260823070959_final-continuity-sync.</li>
-</ul>
-<h2 id="2026-08-23-deployment-tool-game-archive-backuprestore-handover-supplement">2026-08-23 Deployment tool game archive backup/restore handover supplement</h2>
-<ul>
-<li>Deploy/Deploy-EventAlertMod.ps1 has been removed WoW Check during program execution; deployment still maintains source/target Reparse Point fail-closed, only explicit backup or restore actions will read and write game saves.</li>
-<li>Added [W] backup and [U] restore in the interactive menu; you can select according to the Retail, PTR, XPTR channels. The backup retains the relative WTF/... path, manifest and SHA-256 in the root directory of the version. Rollback is automatically created before restore.</li>
-<li>CLI available -Action Backup -Channel PTR -DryRun Preview first, also available -Action Restore -Channel PTR -WtfBackupPath <package> Specifies a single backup; fail-closed when restore verification fails and attempts rollback.</li>
-<li>The 2 related file backups, modified restores, and SHA-256 verification of the temporary fixture all passed; the latest Validation Contracts are 459/459; this is not the actual writing evidence of WoW/WTF. When players want to obtain the latest real machine status, please use the deployment tool to deploy first, and then report the channel, version, build, combat, /reload and screen results according to .AI/Docs/29_LIVE_TEST_STEP_GUIDE.md.</li>
-</ul>
-<h2 id="2026-08-238-charging-glow-and-deployment-notification-handover-snapshot">2026-08-23.8 Charging, Glow and Deployment Notification Handover Snapshot</h2>
-<ul>
-<li>The charging skill of the cooling service now retains current/max when safely obtaining C_Spell.GetSpellCharges; the Renderer displays the charging text first and uses the native DurationObject countdown without reading back the Secret value or doing Lua arithmetic.</li>
-<li>Clear and hide CooldownFrame when there is no countdown, and use available methods such as SetDrawEdge(false), SetDrawBling(false) to close the white edges/bling to avoid empty skill frames remaining.</li>
-<li>Glow Border adopts a two-layer strategy: the preset conditions give priority to the embedded LibButtonGlow-1.0; custom colors, third-party overlays are unavailable, or fallback to the EAM own animated border when the frame is first built in battle. The embedded files only retain EventAlertMod/Lib/LibStub.lua and EventAlertMod/Lib/LibButtonGlow-1.0.lua, and the other tests/files are not included in the plug-in package.</li>
-<li>Project Skill wow-AddOn-dev has been installed in .AI/skills/wow-AddOn-dev. This round is used for TOC sequence, 12.x Secret/taint and library packaging static checks; TOC validator has passed.</li>
-<li>Offline gate in this round: Lua 62/62, Flow all 78/78, Flow boundary 57/57, Validation Contracts 472/472; these results are still not Retail/PTR/XPTR real machine vision or taint sign-off.</li>
-<li>Real machine deployment protocol: When player verification is required, the main agent must first notify the channel/patch/build/Interface, source and target, whether it is covered, requires /reload or a complete restart, and the expected return field; wait for the player to clearly complete the deployment before starting to interpret the runtime report. This round has not been deployed, the real WTF has not been read or written, and the GitHub release has not been executed.</li>
-</ul>
-<h2 id="2-re-enter-the-reading-order-of-the-project">2. Re-enter the reading order of the project</h2>
+<hr />
+<h2 id="4-subsystem-responsibilities">4. Subsystem Responsibilities</h2>
 <ol>
-<li><code>AGENTS.md</code></li>
-<li>This document</li>
-<li><code>Data/ProjectContinuity.json</code></li>
-<li><code>Docs/02_RETAIL_API_BOUNDARIES.md</code></li>
-<li><code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code></li>
-<li><code>Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code></li>
-<li><strong>​​EAMCODE_2</strong></li>
-<li><code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code></li>
-<li><code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> stable issue ID corresponding to the current work item</li>
+<li><strong><code>Core/</code></strong>: Environment initialization, central event bus, frame-budgeted scheduler, and SavedVariables schema migration.</li>
+<li><strong><code>Services/</code></strong>: Runtime facts extraction (Auras, Cooldowns, Resources, Stats, Ground Spells) with strict Secret Value gating.</li>
+<li><strong><code>UI/</code></strong>: Pooled visual widgets, 60fps live configuration preview, 3-level APPEND docking, hover tooltips, and 11 visual themes.</li>
+<li><strong><code>Debug/</code></strong>: Flow test runners, runtime probes, live test session checkpoints, and compact AI diagnostic reporting.</li>
 </ol>
-<p>The original Markdown file may not be replaced with <code>docs_html</code>, nor may this snapshot be overwritten with the old conversation summary.</p>
-<h2 id="3-current-target">3. Current target</h2>
-<p>Completed the program, test and evidence synchronization of the final reconstruction prompts of the Retail 12.1 player professional resource independent module; the deployment tool has removed the Wow-running check, and completed the EventAlertMod game save backup/restore and relative path manifest by channel/version. Offline pass must not pretend to be Retail/PTR/XPTR real machine sign; the actual deployment and WoW runtime still need to be operated by the player.</p>
-<h2 id="4-confirmed-facts">4. Confirmed facts</h2>
-<ul>
-<li>12.1 PTR In actual user testing, two sets of highly synchronized Aura countdowns have appeared.</li>
-<li>Both sets of numbers are driven by the same Native Aura DurationObject at the same time, so manual A/B display can be observed simultaneously, but they are not two independent data sources.</li>
-<li>Normal mode only displays the EAM positionable set of reciprocals; double reciprocals can only be explicitly enabled by the test panel and closed when complete.</li>
-<li>Native AuraButton and its sub-components can only complete size, anchor point, font, reciprocal and border settings in <code>initializeFrame</code>; they cannot be rearranged directly after initialization.</li>
-<li><code>AddDispelTypeTexture</code> is the official dispel/static Aura border ability and does not replace Pandemic, Proc, or any conditional Glow.</li>
-<li>Player resources are divided according to each capability: ordinary security numbers can display text; Secret percentages can only be sent directly to the dedicated StatusBar and cannot be saved, read back, compared, stringified or serialized.</li>
-<li>The latest offline gate in this round is Lua syntax 62/62 (62 AddOn), Flow all 77/77, Flow boundary 56/56, Validation Contracts 459/459; the real matrix is 37 cases, PTR, XPTR and Retail All are still waiting for player signature.</li>
-<li>If importing in-game reports from disk, players must first complete <code>/reload</code> or log out normally, otherwise the old snapshot may still be there. Player resource settings should not require <code>/reload</code> in non-combat situations; if <code>/reload</code> is still required, <code>EAM_PLAYER_RESOURCE_CONFIG_CHANGED</code> should be reported as not received, combat delay not cleared, or Lua error.</li>
-<li>2026-08-08 Read-only environment assertion: Retail <code>12.0.7.68974</code>, PTR <code>12.1.0.69189</code>, XPTR <code>12.0.7.68887</code>; three AddOn SymbolicLink all point to <code>D:\EventAlertMod</code>.</li>
-<li>The language catalog already contains <code>enUS</code>, <code>zhTW</code>, <code>zhCN</code>, <code>koKR</code>, <code>ruRU</code>; ruRU is fully aligned with the <code>L.*</code> key of enUS, and <code>Auto Detect</code> is fixed in English and defaults to <code>auto</code>. The new version adopts stable <code>EAM.L</code> identity and widget binding/refresh registry for instant application.</li>
-</ul>
-<h2 id="5-current-decision">5. Current decision</h2>
-<table>
-<thead>
-<tr>
-<th>Topic</th>
-<th>Decision-making</th>
-<th>Things not to be misunderstood</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Aura reciprocal</td>
-<td>Normal single reciprocal; test panel switchable double reciprocal diagnostics</td>
-<td>Synchronization does not equal two independent sources of truth</td>
-</tr>
-<tr>
-<td>Native style</td>
-<td>Restart the container after changing</td>
-<td>Do not initialize directly <code>SetPoint</code>／<code>SetFont</code></td>
-</tr>
-<tr>
-<td>Cooling time</td>
-<td>Use the parameterless Duration factory correctly, then set the time and binding</td>
-<td>Do not use guessed construction parameters or non-existent <code>Unbind</code></td>
-</tr>
-<tr>
-<td>Ground effect</td>
-<td>Spell description, Tooltip SpellDescription, manual fallback</td>
-<td>Do not parse remaining time text, do not grab Tooltip on hot path</td>
-</tr>
-<tr>
-<td>Player resources</td>
-<td>17 types of Catalog; each item is divided according to Numeric/Secret/Unavailable and can display multiple resources at the same time</td>
-<td>Secret is write-only sink; the report does not output current/max/percent original value</td>
-</tr>
-<tr>
-<td>Actual operation</td>
-<td>Players cast spells, use items, switch specializations, enter and exit battles and <code>/reload</code></td>
-<td>EAM and Codex do not automatically operate the game</td>
-</tr>
-<tr>
-<td>Language settings</td>
-<td>Save <code>EAM_DB.config.language</code>; <code>auto</code> is the default, Russian can be manually selected</td>
-<td>Refresh immediately after the new program is loaded EAM Own UI; not automatic <code>ReloadUI()</code>, <code>/reload</code> only verify loading and saving</td>
-</tr>
-</tbody>
-</table>
-<h2 id="6-verification-status">6. Verification status</h2>
-<ul>
-<li>Offline: Lua syntax <code>64/64</code> (62 AddOn + 2 offline tests), Flow all <code>75/75</code>, Flow boundary <code>54/54</code>, Validation Contracts <code>437/437</code>; Five languages, eleven themes, Profile, AuraSound, Aura catalog, Retail 12.1 Native Gate, geometry within the minimap circle, and player multi-resource contracts all passed. The latest Flow artifact is <code>.AI/TestResults/EAM_FlowValidation_all_20260823_033310.json</code>; offline results do not replace PTR, XPTR or Retail human sign-off.</li>
-<li>PTR 12.1: Alpha 2 Native gate has been fixed offline, but players have not <code>/reload</code> signed off on the Aura display; may not carry over from Alpha 1 or pre-fix observations.</li>
-<li>XPTR 12.0.7: Not signed for yet.</li>
-<li>Retail 12.1: The current client gate and offline contract have been updated, and the real person signature has not yet been completed.</li>
-<li>Real person reporting: 37 case workbench using <code>matrixVersion=2026-08-14.1</code>.</li>
-<li>UnitPower report: another return <code>EAM_UNIT_POWER_CAPABILITY_REPORT</code>; PTR 69273 latest report that both sink calls are accepted, but both the primary and selected visuals are pending, still not PTR pass.</li>
-</ul>
-<h2 id="7-next-round-of-player-testing">7. Next round of player testing</h2>
-<ol>
-<li>Confirm that the pre-assertion of the connection between the client and the project passes.</li>
-<li>Turn on <code>/eam test</code> when not in combat, and confirm that "Double Countdown Diagnosis" is turned off by default.</li>
-<li>Execute <code>all</code> and copy Flow JSON; it is evidence of ability, not a real person signing in case 37.</li>
-<li>Open "Real-person Report", select the correct <code>_ptr_</code>, <code>_xptr_</code> or <code>_retail_</code>, and operate on a case-by-case basis.</li>
-<li>The Aura double countdown case is only temporarily enabled in PTR 12.1, and is immediately closed after observing the beginning, middle, and last three seconds.</li>
-<li>First test the mana, rage, energy + combo points, madness value, runes + runes and all available resources of the current specialization in the official player resource panel one by one; then start the UnitPower ability probe mark diagnosis sink. The results of the two cannot be faked.</li>
-<li>Create a reload checkpoint and let the player <code>/reload</code> complete the report after returning.</li>
-<li>If imported from disk, the player will save it once after completing the report; directly copying the panel JSON does not require additional saving.</li>
-<li>Open the language drop-down list, select <code>Русский</code>, <code>Auto Detect</code> in order, and confirm that the currently opened main window, About, functional modules and test panel are switched synchronously without reloading; finally, use the player's manual <code>/reload</code> to verify the settings and save them.</li>
-<li>Compare with other standard minimap buttons to confirm that the EAM gear is completely located in the golden circle; take a screenshot in the UI Scale commonly used by players, and cannot just report the button to click.</li>
-</ol>
-<h2 id="8-repeated-trials-are-prohibited">8. Repeated trials are prohibited</h2>
-<ul>
-<li>No longer use <code>C_DurationUtil.CreateDuration(duration)</code> or duration/fontString as binding factory parameter.</li>
-<li>No more structural mutations for AuraButton/FontString/Cooldown that have completed <code>initializeFrame</code>.</li>
-<li>Do not read back Secret FontString, StatusBar or radial percent for automatic comparison.</li>
-<li>Do not declare official dispel border as arbitrary conditional Glow.</li>
-<li>Do not use offline mocks, synthetic live passes or old disk reports to pretend that PTR/XPTR passed the actual machine.</li>
-<li>Execute contract scripts with <code>#requires -Version 7.0</code> without Windows PowerShell 5.1; use <code>pwsh</code>.</li>
-<li>It is not assumed that all cross-file patches will be rolled back when they fail; after failure, they will be checked file by file and single-file small patches will be used for important files.</li>
-<li><code>IsPublicTestClient AND IsTestBuild</code> is no longer used to determine PTR; raw flags must be retained individually, channel aggregate adopts OR, and Native methods still use capability gate item by item.</li>
-</ul>
-<h2 id="9-drift-check">9. Drift check</h2>
-<p><code>.AI/Tools/Test-ValidationContracts.ps1</code> must confirm:</p>
-<ul>
-<li>This file is consistent with <code>snapshotVersion</code> from JSON.</li>
-<li><code>AGENTS.md</code> and <code>Docs/00_AI_CONTEXT.md</code> both point to this continuation route.</li>
-<li>fact, inference, work item and issue ID are unique and reference resolvable.</li>
-<li>Live matrix, Live runtime, Schema and fixture are all the same version and 37 cases.</li>
-<li>PTR/XPTR/Retail If marked as pass, there must be a corresponding real-person evidence index; offline evidence cannot be upgraded.</li>
-<li>Continuity JSON must not contain private absolute paths, accounts, characters, or game profile snapshots.</li>
-</ul>
-<h2 id="2026-08-08-ptr8unitpower-handover-snapshot">2026-08-08 PTR8/UnitPower handover snapshot</h2>
-<ul>
-<li>Live matrix has been upgraded to version <code>2026-08-08.1</code>, and there are currently 34 cases in total; three clients are still waiting for player signature.</li>
-<li>PTR8 Pandemic Region, Dispel options, disable container cleanup and UnitPower combatDeferred have been added to program, strict mock, JSON schema and artificial matrix.</li>
-<li>The official PTR 12.1.0.69189 document does not confirm <code>StatusBar:SetUnit</code>, <code>SetPowerTextFontString</code>, <code>SetOnUpdateMode</code>; currently only one-way feeding of <code>UnitPowerPercent</code> into <code>SetValue</code>/<code>SetRadialProgressBarPercent</code> is considered a known feasible direction.</li>
-<li>This round does not execute WoW, does not block player input, and does not touch <code>_ptr_</code>/<code>_xptr_</code>/<code>_retail_</code> AddOn symbolic link; the actual machine requires players to return the report after <code>/reload</code>.</li>
-</ul>
-<h2 id="2026-08-09-alpha-2-native-auraunitpower-handover-snapshot">2026-08-09 Alpha 2 Native Aura／UnitPower handover snapshot</h2>
-<ul>
-<li>Player Observation: Alpha 1 displays Aura, Alpha 2 does not display it at all.</li>
-<li>P0 root cause: <code>AuraCapabilityService</code> writes public-test and test-build as AND; PTR 69189's test-build is actually false, causing <code>nativeRuntimeAllowed=false</code> and stopping before the container is created.</li>
-<li>Program correction: The raw flags of the three test channels are safely read and then ORed; the mock is fixed to reproduce public-test=true, test-build=false, beta=false; the mock-only Flow is changed to skip in the client; the Native capability failure message is filled with complete fields.</li>
-<li>Offline evidence at the time: Lua <code>47/47</code>, Flow <code>54/54</code>, artifact <code>TestResults/EAM_FlowValidation_all_20260809_185047.json</code>; Validation Contracts <code>217/217</code>. Later, the latest gate of this round has been updated to 50/54/264.</li>
-<li>PTR Next step: The player first <code>/reload</code>, execute <code>/eam doctor</code> and <code>/eam test aura121</code>, confirm the capability pass, player/target Aura display, and then continue running the 34-case real-person matrix.</li>
-<li>UnitPower: The primary Secret and selected safe-number have been accepted by both sinks, but the artificial vision is pending/blocked respectively; players need to generate, consume, reset resources and explicitly press pass/fail.</li>
-</ul>
-<h2 id="2026-08-09-alpha-3-candidate-function-handover-snapshot">2026-08-09 Alpha 3 candidate function handover snapshot</h2>
-<ul>
-<li>TargetFrame/BuffFrame AuraButton's hover+Ctrl+Alt no longer relies on the right click; non-GameTooltip paths only save anonymous 0.75 second heartbeats, and Aura ID and player/target routing are still confirmed by the player in EAM Popup.</li>
-<li>Action Bar Macro first resolves the secure resolved action subtype/ID, and then downgrades to <code>GetMacroSpell</code>/<code>GetMacroItem</code>; only enter manually if there is no safe result.</li>
-<li>The Flow/Live/Prompt panel no longer calls the non-existent <code>EditBox:Copy()</code>, but instead selects all and asks the player to press Ctrl+C.</li>
-<li>EAM Added About to the main window; displays TOC version, actual client, fixed API baseline <code>12.1.0 PTR 8 (69189)</code>, author <code>ziyuefan死鬥</code> and repo/Pages.</li>
-<li>A new out-of-combat Tooltip is added to the general monitoring icon; the seven-color classification border is self BUFF cyan, self DEBUFF red, target BUFF blue, target DEBUFF orange, skill yellow, ground purple, item green, classPower/totem remains as it is.</li>
-<li><code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code> provides step-by-step conditions and passing evidence for 34 cases; WTF reports are only considered up-to-date after the player completes <code>/reload</code> or logs out normally.</li>
-<li>Latest offline evidence: Lua <code>50/50</code>, Flow <code>54/54</code>, Validation Contracts <code>264/264</code>. PTR, XPTR, Retail still does not have a complete real person signature.</li>
-</ul>
-<h2 id="2026-08-09-svg3px-border-transfer-snapshot">2026-08-09 SVG／3px border transfer snapshot</h2>
-<ul>
-<li>The ActionButton border enlargement plan has been rejected by the actual screenshot; it was finally changed to WHITE8X8, BORDER layer, 3px extension on all sides, and Legacy/Native share AlertBorderStyles.anchorTexture.</li>
-<li>PTR 69189 It has been confirmed on the actual machine that both VectorGraphics and Texture's Alpha 3 SVG patterns can be displayed; both cases SetSVG accepted, visualObservation=pass. HasSVG=true, fileIDClass=zero, clearReload=pass of VectorGraphics are also true.</li>
-<li>Alpha 3 probe mistakenly regarded Texture as HasSVG/GetSVGFileID, causing legal unavailable to be marked as a warning and Texture clear/reload was not executed. The revised version has been changed to an asymmetric contract for Vector four methods, Texture Set/Clear, and the original report remains as a regression fixture.</li>
-<li><a href="https://warcraft.wiki.gg/wiki/UIOBJECT_VectorGraphics">UIOBJECT_VectorGraphics</a> has been listed as a continuously updated knowledge base; the reproducible baseline for this round is still the 12.1.0.69189 build file of Gethe <code>a520b6c...</code>.</li>
-<li>Project level JSON has been upgraded to snapshot 2026-08-09.3; WORK-20260809-002, WORK-20260809-003, TRIAL-20260809-003 and issue EAM-20260809-PTR69189-SVG-ASYMMETRY can be traced to each other.</li>
-<li>The latest offline gates are Lua 50/50, Flow boundary 37/37, Flow all 54/54, Validation Contracts 264/264. PTR also needs to be re-run with the revised version Texture clear/reload and 3px border for visual inspection; XPTR/Retail 12.0.7 remains unsupported.</li>
-</ul>
-<h2 id="2026-08-12-language-handover-snapshot">2026-08-12 Language handover snapshot</h2>
-<ul>
-<li><code>Locale/Common.lua</code> uses catalog to merge enUS fallback with the current/specified language; <code>Locale.LanguageOptions</code> The first item is fixed English <code>Auto Detect</code>.</li>
-<li><code>EAM.L</code> table identity remains unchanged during execution; clear/merge catalog in place when switching, refresh bound widgets and low-frequency composite text callbacks.</li>
-<li><code>Core/SavedVariables.lua</code> normalizes the selection to the six allowed values; <code>SavedVariables.updateLanguage()</code> only increments revision when an actual change is made, but both updated/unchanged emit <code>EAM_LANGUAGE_CHANGED</code>.</li>
-<li><code>Core/Main.lua</code> applies the saved value after SavedVariables is initialized to prevent the locale file from first creating the table with client zhTW and then ignoring manual selection.</li>
-<li>The main window, About, function module, Tooltip popup, Prompt, Flow/Live, UnitPower and SVG panels have been connected to dynamic binding/refresh; <code>ReloadUI()</code> will not be automatically called.</li>
-<li><code>ruRU.lua</code> has completed the same <code>L.*</code> key set as enUS; the missing historical Live keys of zhCN/koKR are still filled by enUS fallback.</li>
-<li>The actual machine is still waiting for players to select <code>Русский</code> and <code>Auto Detect</code> one by one in PTR/XPTR/Retail, first verify the instant switching without reload, and then use the player's manual <code>/reload</code> to verify and save.</li>
-</ul>
-<h2 id="2026-08-12-minimap-svgeam-topic-handover-snapshot">2026-08-12 Minimap SVG/EAM topic handover snapshot</h2>
-<ul>
-<li>The minimap Texture of <code>UI/Options.lua</code> is fixed to use Blizzard's built-in <code>Trade_Engineering</code> gear; the unreliable Texture SVG path has been suspended, and the left-click, right-click, and drag semantics have not been changed.</li>
-<li>UI/Theme.lua now provides eleven sets of palettes: EAM, FF7, Windows XP, Windows 7, Windows 10, Windows 3.1, Borland C++ IDE, DOS CRT, Yitian Chinese, Red Alert, macOS Aqua; config.theme Only the corresponding whitelist values are accepted, and illegal values fall back to EAM.</li>
-<li>Theme only registers EAM's own window; only saves pending when switching during battle, and then applies it after <code>PLAYER_REGEN_ENABLED</code>. AlertBorderStyles The seven-color content semantics remain independent.</li>
-<li><code>wowtools.work</code> is only used for read-only data reference and is not a dependency during execution; external raw FileDataID is not collected or saved.</li>
-<li>There is no automatic Codex operation in this round WoW; PTR/XPTR/Retail. Players still need to sign <code>/reload</code> visually and interactively.</li>
-</ul>
-<h2 id="2026-08-12-ptr-69273sorttheme-buttondruid-energy-handover-snapshot">2026-08-12 PTR 69273／Sort／Theme Button／Druid Energy Handover Snapshot</h2>
-<ul>
-<li>Players provide UnitPower capability report for PTR 12.1 build 69273: primary native percent is Secret, selected is safe-number, StatusBar/radial sink are both accepted; both cases visualObservation are pending, status=incomplete, and still need to be visually marked by players.</li>
-<li>The full Flow report summary for the same build is 17 passed, 1 failed, and 36 skipped out of 54; the only failure was boundary.safe_scalar, with the message indicating that Secret, manual-copy, About, or SVG boundary helpers were unavailable. This is a helper availability issue and cannot be regarded as a UnitPower pass or directly inferred as the root cause of API.</li>
-<li>PTR has priority=20 for target Aura 1079 in the archive; the compiler originally ignored priority, causing the SpellID tie-break to make 1079 appear to be ranked first. It has now been changed to priority 1..20. The larger the number, the earlier it is; if you want to move 1079, please lower its priority in the condition setting and rebuild the Native Aura structure after setting /reload.</li>
-<li>UI/Theme.lua added buttons palette and registerButton; Options, About, Tooltip popup, Flow, Live, SVG, UnitPower, Prompt's EAM own buttons are all connected, and the seven content semantics of AlertBorderStyles are not covered by the theme color.</li>
-<li>The Druid candidates of ClassPowerService are changed to Energy, Combo Points, and Lunar Power; Feral should display Energy first when the UnitPower value predicate is clear and safe. If PTR current is Secret, it will fallback safely first and cannot pretend to be a completed native sink.</li>
-<li>This round of verification: The syntax of the affected Lua files has passed. This round of Validation Contracts has been fully executed as <code>328/328</code>, including Aura priority, Druid Energy and EAM button theme contracts. There is no automatic Codex operation for WoW, PTR/XPTR/Retail. The actual machine is still signed by the player.</li>
-<li>The Theme button getter triggered an unknown method error in strict mock for the first time and has been changed to pcall capability guard; after the correction, the offline Flow artifact is <code>54/54</code>, which does not yet mean that the three clients have signed it.</li>
-<li>Continuation route: first read FACT/WORK/UNVERIFIED of Data/ProjectContinuity.json, and then follow the eleven additional steps of Docs/29_LIVE_TEST_STEP_GUIDE.md; the disk SavedVariables still needs to be /reload or log out normally to be the latest.</li>
-</ul>
-<h2 id="2026-08-13-aurasound">2026-08-13 AuraSound 交接快照</h2>
-<ul>
-<li>Fixed API Evidence: PTR 12.1.0.69273 commit <code>6e348870ed8f93d95f0cd16d299b51dbce500296</code>; three triggers are Added, ApplicationsIncreased, Removed, sound info does not have soundKitID, caster or auraFilter.</li>
-<li>Added shared materials and three trigger switches to Aura's detailed settings; global sound effects will be used when none of the three are selected, and global <code>showSound=false</code> can turn off all custom sounds.</li>
-<li>SavedVariables only stores pure data; <code>updateAuraSound</code> provides whitelist, no-op revision and events. The registration ID only exists in the runtime registry.</li>
-<li>Compiler splits container/sound fingerprint; pure sound effect changes zero container creation. Sound service will exchange the candidate after complete success. If Add fails, it will be rolled back. If Remove fails, the retired ID will be retained.</li>
-<li>12.0.7 general Aura three trigger controls are unsupported and zero 12.1 API calls; not synthesized with private-Aura old API.</li>
-<li>Live matrix was upgraded to <code>2026-08-13.1</code>, a total of 37 cases; three new AuraSound artificial hearing cases were added. PTR still needs to be tested for live streaming, combat delay, <code>/reload</code> and caster/filter over-fire.</li>
-<li>See issue <code>EAM-20260813-AURASOUND-DETAILS</code> for detailed trial and error; machine-readable work item, trial and unverified are located in <code>Data/ProjectContinuity.json</code>.</li>
-</ul>
-<h2 id="2026-08-13-alpha-4-release-snapshot">2026-08-13 Alpha 4 release snapshot</h2>
-<ul>
-<li>Alpha 4 release scope: Core/ModuleController, UI/ModulePanel, schema v5 class profiles, LegacyDiscoveryService, and the AuraSound, themes, languages, SVG, UnitPower and 37 case test contracts completed in the previous round.</li>
-<li>All eight module keys are enabled by default; single-event registration to join the gate is disabled, and Native structure and status changes during combat are postponed until out of combat.</li>
-<li>The monitoring list is isolated by active class profile; the v4 mixed global list retains migration backup or unassignedLegacy and does not automatically guess other occupations.</li>
-<li>/eam list, lookup, lookupfull, showcast have been reverted to limited security candidate queries for the current occupation; results will not be automatically added to monitoring.</li>
-<li>JSON/Base64 profile sharing is still the next round of planning, and there is no applicable codec for the official program; Release does not include LegacyReference, Tools, Tests, TestResults, backup or local deploy.</li>
-<li>Offline gate before release: Lua 54/54, Flow all 61/61, Validation Contracts 355/355; PTR/XPTR/Retail still requires players to sign for the additional steps.</li>
-</ul>
-<h2 id="2026-08-14-alpha-5-release-snapshot">2026-08-14 Alpha 5 release snapshot</h2>
-<ul>
-<li>Alpha 5 release scope: Core/ProfileCodec.lua, UI/ProfileCodecPanel.lua, four EAM font selections, Locale dynamic buttons/spec menu refresh, and previous round of AuraSound, mod switches, career profile, themes, SVG, UnitPower abilities.</li>
-<li>EAMAP1 only accepts canonical JSON/Base64 and whitelist module scope; preview has zero side effects, merge/replace requires fingerprint unchanged and non-combat, any external Lua, Secret, unknown schema/duplicate/overly large payload are rejected.</li>
-<li>config.fontFamily defaults to STANDARD; after language switching, EAM's own buttons and drop-downs are refreshed immediately, Auto Detect is fixed in English; Blizzard UI, historical chat and Live case are fixed in Traditional Chinese programs and will not be rewritten.</li>
-<li>Alpha 5 release package is provided by GitHub Release, excluding local deploy, Tests, TestResults, Tools, backup, LegacyReference and workspace miscellaneous; AddOn symlink has not been modified.</li>
-<li>Offline gate before release: Lua 56/56, Flow all 66/66, Validation Contracts 360/360; PTR/XPTR/Retail is yet to be signed by the player.</li>
-</ul>
-<h3 id="eam-20260814-alpha5-profile-font-locale">EAM-20260814-ALPHA5-PROFILE-FONT-LOCALE</h3>
-<p>-Status: Offline implementation has been completed, waiting to be signed by real people from the three clients.
-- Symptom: Alpha4 files still mark profile sharing as incomplete; after adding fonts, you need to confirm that all EAM long-life buttons and specialization menus have access to EAM.L.
-- Solution: Create a strict EAMAP1 codec/Profile panel, add fontFamily mutation and TextPlacement application, let the Locale registry rebuild the spec menu after the language event and refresh the bound text.
-- Validation: Lua 56/56, Flow 66/66, Contracts 360/360; no Codex automatic operation WoW.
-- Follow-up: Players perform profile export/preview/merge/replace, four-character and five-language/Auto Detect visual tests in PTR, XPTR, and Retail, and report build, Interface, reload, and boundaryWarnings.</p>
-<h2 id="2026-08-14-retail-121aura-catalog-follow-up-handover">2026-08-14 Retail 12.1／Aura catalog follow-up handover</h2>
-<ul>
-<li>2026-08-14 Channels at that time: Retail/PTR 12.1.0.69299, XPTR 12.0.7.68887; at that time, the local environment passed SymbolicLink 3/3, but WoW was not started. This trip is a historical snapshot and does not represent the current situation on 2026-08-21.</li>
-<li>The Aura list is managed with <code>catalogScope=SELF|CROSS_CLASS</code>; SELF player and target defaults to <code>fromPlayer=true</code>, and cross-class defaults to false. Batch input accepts Enter, <code>;</code>, <code>；</code>, if SpellID does not exist, it will not be displayed or written.</li>
-<li>dropdown row completes normal/pushed/highlight and FrameLevel; the language series directly uses LanguageOptions.label to avoid nil labelKey causing blank space; the Profile panel has ScrollFrame, fixed footer and Options entries; the minimap officially falls back to the built-in gear.</li>
-<li>Wowhead export only retains the Data unique file, and the capture script fixedly outputs the project Data; candidate validator 23 pass/0 fail/4 warning, warning cannot be regarded as an actual machine error or default approval.</li>
-<li>Latest offline results: Lua 56/56, Flow 68/68, Validation Contracts 387/387; 37 cases of real-person matrix <code>2026-08-14.1</code> are still pending for Retail/PTR/XPTR.</li>
-<li>Continuation sequence: first look at <code>WORK-20260814-002</code> and <code>UNVERIFIED-20260814-001</code> of <code>Data/ProjectContinuity.json</code>, and then follow the additional steps of <code>Docs/29_LIVE_TEST_STEP_GUIDE.md</code> for this round to be tested by the player.</li>
-</ul>
-<h2 id="2026-08-14-theme-chromelanguage-series-follow-up-handover">2026-08-14 Theme chrome/language series follow-up handover</h2>
-<ul>
-<li>The blank space in the language series is not a font or reload problem; LanguageOptions does not have labelKey. Now it is changed to display each option.label directly, and Auto Detect is still fixed in English.</li>
-<li>EAM text button is no longer forced to red; Theme.registerButton will create WHITE8X8 normal/highlight/pushed/disabled base image and four 2px theme borders. The red overlay of Debug/PromptExport has also been removed.</li>
-<li>The theme catalog has been expanded to eleven sets: EAM, FF7, Windows XP, Windows 7, Windows 10, Windows 3.1, Borland C++ IDE, DOS CRT, Yitian Chinese, Red Alert, macOS Aqua. Borland has bright yellow characters on a bright blue background; DOS CRT has green characters on a black background.</li>
-<li>The seven semantic borders of AlertBorderStyles's self/target Aura, skills, items and ground effects remain independent and do not change color with the setting window theme.</li>
-<li>The offline results are Lua 56/56, Flow 68/68, Validation Contracts 387/387; Retail/PTR/XPTR. The actual machine still requires visual sign by the player after /reload.</li>
-</ul>
-<h2 id="2026-08-14-alpha-6-release-snapshot">2026-08-14 Alpha 6 release snapshot</h2>
-<ul>
-<li>Alpha 6 release scope includes Retail 12.1 Native capability correction, Aura SELF/CROSS_CLASS and batch input, EAMAP1 Profile, five-language dynamic refresh, eleven theme button chrome, AuraSound and minimap circle alignment.</li>
-<li>Minimap <code>Trade_Engineering</code> Gears use 17px ARTWORK, 5% TexCoord Trim with <code>TOPLEFT +7,-6</code>; 20px background use <code>TOPLEFT +7,-5</code>; 53px <code>MiniMap-TrackingBorder</code> Fixed buttons TOPLEFT. This geometry only changes the EAM own button.</li>
-<li><code>.github/workflows/release.yml</code> remains completely disabled; GitHub Alpha 6 uses natively official ZIP and <code>gh release create --prerelease</code>, and does not release to CurseForge/WoWInterface.</li>
-<li>Offline gate: Lua 56/56, Flow 68/68, Validation Contracts 394/394. The minimap pixels, eleven themes, languages, AuraSound and complete 37 cases of Retail/PTR/XPTR are still signed by the player.</li>
-<li>Continuation index: <code>WORK-20260814-004</code>, <code>UNVERIFIED-20260814-003</code>, issue <code>EAM-20260814-ALPHA6-MINIMAP-RING</code>.</li>
-</ul>
-<h2 id="2026-08-21-player-resource-setting-life-cycle-correction">2026-08-21 Player resource setting life cycle correction</h2>
-<ul>
-<li>Root cause: The setting mutation originally did not synchronize the topology/renderer of driver PlayerResourceService; the change was only seen after /reload was re-initialized.</li>
-<li>Current status: non-combat EAM_PLAYER_RESOURCE_CONFIG_CHANGED is applied immediately; combat mark combatRebuildDeferred, out of combat is merged once by PLAYER_REGEN_ENABLED.</li>
-<li>This round of testing: Lua 64/64, Flow all 75/75, Flow boundary 54/54, Validation Contracts 441/441; <code>unitpower.config_immediate_lifecycle</code> and sampler gate have all passed offline.</li>
-<li>Players still need to verify the actual machine in Retail/PTR 12.1 and XPTR 12.0.7 respectively; the screen seen after /reload must not be applied immediately as non-combat.</li>
-</ul>
-<h2 id="2026-08-21-player-resource-completion-audit-current-supplement">2026-08-21 Player resource completion audit (current supplement)</h2>
-<ul>
-<li>The current program has <code>PlayerResourceProbe</code>, XPTR 12.0.7 numeric legacy adapter, Druid Caster/Cat/Bear/Moonkin form flow, event unregister for each resource <code>anchor</code>/<code>position</code> and PlayerResourceService/Probe.</li>
-<li>The background sampler is only enabled when the probe explicitly confirms that the event is missing. It is a single demand-driven sampler; <code>unitpower.background_sampler_gate</code> and the static contract have been passed offline, covering single task, event recovery stop, module deactivation, combat delay and stale generation. It is still runtime-only and needs to be verified on real machines.</li>
-<li>Latest offline evidence: Lua <code>64/64</code>, Flow all <code>75/75</code>, Flow boundary <code>54/54</code>, Validation Contracts <code>437/437</code>. Artifact: <code>.AI/TestResults/EAM_FlowValidation_all_20260823_033310.json</code> and <code>.AI/TestResults/EAM_FlowValidation_boundary_20260823_033311.json</code>.</li>
-<li>The actual machine is not yet complete: Retail/PTR 12.1 and XPTR 12.0.7 full-professional/specialized resources, Druid transformation, Secret/numeric vision, sampler gate, combat delay, settings without reload, instant application and taint/blocked action.</li>
-</ul>
-<h2 id="2026-08-236-synchronization-snapshot-of-player-resources-and-public-files">2026-08-23.6 Synchronization snapshot of player resources and public files</h2>
-<ul>
-<li>continuity snapshot upgraded to 2026-08-23.6; machine-readable JSON resolved.</li>
-<li>The latest offline gate: Lua 62/62, Flow all 77/77, boundary 56/56, Validation Contracts 461/461. The flow artifacts are .AI/TestResults/EAM_FlowValidation_all_20260823_081553.json and .AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json.</li>
-<li>The automatic missing event check for PlayerResourceProbe is only performed once and included in the restart gate; the Frozen Catalog is no longer written by SavedVariables, and the Options pair is missing SavedVariables API fail-closed.</li>
-<li>Root README has been refactored to Alpha 7 current usage instructions, the root directory and EventAlertMod/README.md SHA-256 are both 7EB8752ACA994769356757AED7E1FB4483497930E4A0CB9C567403D14D161509.</li>
-<li>WoW has not been deployed in this round, real WTF has not been read or written, and GitHub push/release has not been executed; Retail/PTR/XPTR runtime is still waiting for player operation.</li>
-</ul>
-<h2 id="2026-08-237-final-gate-synchronized-with-github-readme-instructions">2026-08-23.7 Final gate synchronized with GitHub README instructions</h2>
-<ul>
-<li>continuity snapshot has been upgraded to 2026-08-23.7; Data/ProjectContinuity.json is resolved and FACT-20260823-008 is added.</li>
-<li>The latest offline gate: Lua 62/62, Flow all 77/77, Flow boundary 56/56, Validation Contracts 464/464. The latest artifacts are .AI/TestResults/EAM_FlowValidation_all_20260823_083630.json and .AI/TestResults/EAM_FlowValidation_boundary_20260823_083631.json.</li>
-<li>README has been normalized to LF, the root directory is the same as EventAlertMod/README.md SHA-256 635C545E7B535B85730AA28D24176E291299A86F47D5036682C1FE5877935AB3; The GitHub root page now contains the Alpha 7 release range, complete /eam commands, offline verification, deployment and backup/restore timings.</li>
-<li>The privacy contract of ProjectContinuity has been re-approved; the continuity evidence only retains public program/file paths, and does not record private game data words or account paths.</li>
-<li>This round has not been deployed to Retail/PTR/XPTR, the real game archive has not been read or written, and GitHub push/release has not been executed; players must still use /reload to sign for the three-channel real machine after deployment.</li>
-</ul>
-<h2 id="2026-08-2310-charging-times-statusbar-and-five-layout-snapshots">2026-08-23.10 Charging times StatusBar and five layout snapshots</h2>
-<ul>
-<li>continuity snapshot has been raised to <code>2026-08-23.10</code>; existing <code>FACT-20260823-010</code>, <code>WORK-20260823-003</code> and <code>UNVERIFIED-20260823-001</code> have been synchronized to current/max times semantics.</li>
-<li>The first startup of the cooldown still only accepts players <code>UNIT_SPELLCAST_SUCCEEDED</code>, and safely aligns the storage ID, base ID and current override ID; <code>SPELL_UPDATE_COOLDOWN</code>/<code>SPELL_UPDATE_CHARGES</code>/regen/form events only refresh activated skills.</li>
-<li>Charge column no longer uses <code>DurationObject</code> or recovery seconds. Security <code>maxCharges</code> sets StatusBar scope, raw <code>currentCharges</code> and finally directs <code>SetValue</code>; Secret current does not enter Lua comparisons, arithmetic, literals, table indexes, or serialization.</li>
-<li>Display support TOP/BOTTOM/LEFT/RIGHT/RING; the default length/ring diameter is 150% of the illustration and 8px thickness, which can be set instantly. maxCharges Displays a safe divider between 2 and 20; no misleading dividers are drawn above the upper limit.</li>
-<li>Ring grid uses 12.1 <code>StatusBarRenderMode.Radial</code> and <code>Media/Images/eam-charge-ring.tga</code> ring grid; fallback to BOTTOM linear bar when capability is not available. This still requires players to confirm the material, direction, thickness and occlusion on the actual machine.</li>
-<li>The recharging skill will not be considered complete until it returns to the maximum number of times; the removal semantics of <code>cooldownRemoveAura</code> is therefore "remove only when fully charged". Security current/max is determined directly, Secret current is determined using security <code>isActive</code>.</li>
-<li>The detailed cooling settings remain hidden. Aura's exclusive "Only monitor your own casts", and the three per-spell nil/true/false behaviors are not affected.</li>
-<li>The latest offline gate: Lua 64/64, Flow all 79/79, boundary 58/58, Validation Contracts 483/483. The artifacts are <code>.AI/TestResults/EAM_FlowValidation_all_20260823_162316.json</code> and <code>.AI/TestResults/EAM_FlowValidation_boundary_20260823_162320.json</code>.</li>
-<li>WoW has not been deployed in this round, the real game data has not been read or written, and GitHub push/release has not been executed; Retail/PTR/XPTR runtime visual, taint and blocked actions are still waiting for player operations.</li>
-</ul>
-<h2 id="2026-08-2311-alpha-74-runeground-family-handover-snapshot">2026-08-23.11 Alpha 7.4 Rune/Ground family handover snapshot</h2>
-<ul>
-<li>continuity snapshot has been upgraded to <code>2026-08-23.11</code>; added <code>FACT-20260823-011</code>, <code>WORK-20260823-004</code>, <code>UNVERIFIED-20260823-002</code> and <code>UNVERIFIED-20260823-003</code>. The current offline summary is Flow all <code>82/82</code>; the real-life matrix is ​​still Retail/PTR/XPTR pending.</li>
-<li>DK Runes no longer reads the general UnitPower aggregate value; use <code>GetRuneCount</code> when creating the topology, and use <code>GetRuneCooldown</code> readiness fallback when necessary to synchronize six slots. <code>RUNE_POWER_UPDATE(runeIndex, added)</code> directly updates 0..6 ready count; <code>added=false</code> must be saved with an explicit if and cannot be written as Lua <code>and/or</code>.</li>
-<li>The current Rune vision is a summary of six ready-counts, not six individual recharge timers. Runic Power still maintains another independent resource node; the actual machine must confirm that both exist at the same time and rune consumption/regeneration will change.</li>
-<li>GroundEffect compiles and sets spellID's Base/Override/GetSpellInfo spellID family in non-combat cold path; <code>UNIT_SPELLCAST_SUCCEEDED</code> hot path only accepts safe positive integers and does O(1) table lookup, with the exact configured ID taking precedence. collision, unknown or Secret activation spellID are all fail-closed.</li>
-<li>Death and Decay/Desecration can be aligned by spell family; the anti-magic position automatically explains that when the analysis fails, the monitoring item manual fallback is used. If the anti-magic stance disappears early due to the upper limit of absorption, the casting time of EAM will not prove to end prematurely on its own, and it is a limitation that needs to be confirmed by the actual machine.</li>
-<li>Final core offline evidence: Lua <code>64/64</code>, Flow all <code>82/82</code> (<code>.AI/TestResults/EAM_FlowValidation_all_20260823_174946.json</code>), boundary <code>61/61</code> (<code>.AI/TestResults/EAM_FlowValidation_boundary_20260823_174739.json</code>), Validation Contracts <code>493/493</code>.</li>
-<li>The backup before this round of modification is located at <code>.AI/backup/20260823173540</code> and <code>.AI/backup/20260823175220</code>. Not deployed yet, not read and written WoW/WTF, not done real-person operation; players will report according to the Alpha 7.4 paragraph of Docs/29 after deployment.</li>
-</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

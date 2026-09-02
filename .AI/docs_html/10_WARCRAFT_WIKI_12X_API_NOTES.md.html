@@ -1271,7 +1271,7 @@ Relevant emphasis.</p>
 <ul>
 <li><code>API change summaries</code> and search indexes currently find <code>12.0.0</code>, <code>12.0.1</code>, <code>12.0.5</code>, <code>12.0.7</code> API change summaries.</li>
 <li><code>Patch 12.0.0/API Change</code> is the core starting point for Secret Values ​​and AddOn security restrictions.</li>
-<li><code>Patch 12.0.1/API Changes</code> is a midnight launch patch; has less direct impact on EAM than 12.0.0/12.0.5, but still needs to track the addition of the halo filter and tooltip/filter behavior.</li>
+<li><code>Patch 12.0.1/API Changes</code> is a midnight launch patch; has less direct impact on EAM than 12.0.0/12.0.5, but still needs to track the addition of the Aura filter and tooltip/filter behavior.</li>
 <li><code>Patch 12.0.5/API Changes</code> Explicitly added <code>table.freeze</code>, <code>table.isfrozen</code>, API predicate files, cooldown countdown formatter, FontString smooth scaling, and enhanced secret/security related messages.</li>
 <li>12.x introduces the powerful C language underlying Blocked Aura engine <code>C_UnitAuras.AddBlockedAura(unit, auraInstanceID)</code> and time black box <code>C_UnitAuras.GetAuraDuration(unit, auraInstanceID)</code>, providing 0-GC and 100% safe anti-pollution execution chain.</li>
 <li>12.x introduces a data-driven Tooltip system, replacing the old <code>SetUnitBuff</code> simulation rendering with <code>C_TooltipInfo.GetUnitBuffByAuraInstanceID(unit, auraInstanceID)</code> and <code>GetUnitDebuffByAuraInstanceID</code>, which completely separates data from UI, and replaces the old <code>SetUnitBuff</code> simulation rendering, which separates data and UI Completely separated and perfectly connected with a bridge.</li>
@@ -1302,7 +1302,7 @@ Note: The above is a cross-collation of files and indexes, which has not been ve
 <li><code>SetFont</code>: Clearer error message when determining invalid font flags. The EAM option should prevent the user from entering an unvalidated flag.</li>
 <li>Duration text: Added <code>DurationTextBinding</code> script object, which can bind <code>DurationObject</code> directly to <code>FontString</code>, and the text will be updated by the temporary system. The EAM timer tag should give priority to evaluating the path in the future, instead of Lua OnUpdate counting down by itself.</li>
 <li>AuraData: <code>isFromPlayerOrPlayerPet</code> will be set to true on Aura cast by player-controlled vehicles. The "player or player pet source" judgment of EAM requires the vehicle to be included in the actual machine test.</li>
-<li>Private halo sound: <code>C_UnitAuras.AddPrivateAuraAppliedSound</code> can be called during active M+ when not in combat. EAM does not include private halo sounds into core functions for the time being.</li>
+<li>Private Aura sound: <code>C_UnitAuras.AddPrivateAuraAppliedSound</code> can be called during active M+ when not in combat. EAM does not include private Aura sounds into core functions for the time being.</li>
 <li>Aura refactoring timeline: The official target is to put the Aura exposed refactoring in 12.1.0. AuraService of EAM should keep the adapter boundary clear and avoid hard-coding the 12.0.x Aura table structure to UI/Renderer.</li>
 </ul>
 <h3 id="less-relevant-to-eam-but-something-to-note">Less relevant to EAM but something to note</h3>
@@ -1345,7 +1345,7 @@ NumericRuleFormatter
 SecondsFormatter
 </code></pre>
 
-<p>The documentation states that these formatters can receive a secret number through the duration object's <code>Format</code> function and provide it for use in the cooling frame.</p>
+<p>The documentation states that these formatters can receive a Secret Value through the duration object's <code>Format</code> function and provide it for use in the cooling frame.</p>
 <p>New cooling time API:</p>
 <pre class="codehilite"><code class="language-lua">Cooldown:SetCountdownFormatter(formatter)
 Cooldown:SetCountdownMillisecondsThreshold(seconds)
@@ -1408,7 +1408,7 @@ isFromPlayerOrPlayerPet
 <p>EAM AuraService Rules:
 - <code>auraInstanceID</code> can be used as a safe anchor within the single-session/single-time limit.
 - No cross-border encounters / M+ / PvP Long-term storage.
-- The Halo cache should be cleared when entering a restricted scene or receiving a target /world/combat status change.
+- The Aura cache should be cleared when entering a restricted scene or receiving a target /world/combat status change.
 - SavedVariables interface can save <code>auraInstanceID</code>.</p>
 <h3 id="unit-api-and-identity">Unit API and identity</h3>
 <p>12.0.5 Strengthen unit identity restrictions:</p>
@@ -1449,7 +1449,7 @@ table.isfrozen(tbl)
 -timer/name The length control of text should be done on the safe string.</li>
 </ul>
 <h3 id="player-statistics-associated-with-aura-secret">Player statistics associated with Aura Secret</h3>
-<p>12.0.5 states that APIs that return player statistics may also return secrets when Halo is secret.</p>
+<p>12.0.5 states that APIs that return player statistics may also return secrets when Aura is secret.</p>
 <p>EAM Rules:</p>
 <ul>
 <li>The special abilities/resources UI cannot imagine that player statistics are ever safe.</li>
@@ -1550,7 +1550,7 @@ C_Secrets.GetPowerTypeSecrecy
 <ul>
 <li><code>if value then</code> can only be used to distinguish whether it is nil; it cannot indicate that value is comparable, deletable or serializable.</li>
 <li>Do not throw secret strings into <code>string.match</code>, <code>string.format</code> or the tooltip parser.</li>
-<li>Secret numbers cannot be used for timer violations, sorting, differences, and table keys.</li>
+<li>Secret Value cannot be used for timer violations, sorting, differences, and table keys.</li>
 <li>If <code>ConditionalSecret</code> or <code>SecretWhen...</code> appears on the API single page, even if the test environment temporarily returns a normal value, the boundary processing will be retained.</li>
 </ul>
 <h2 id="secret-aspects-and-ui-objects">Secret aspects and UI objects</h2>
@@ -1608,7 +1608,7 @@ C_TooltipInfo.GetUnitAuraByAuraInstanceID
 <li>This operation will cause a fatal error: "Attempting to index a table that cannot be indexed using a key".</li>
 <li>Before looking up the table, a preventive check must be performed in the local in-place mode of <code>if not issecretvalue(key) and canaccesstable(tbl) then ... end</code> to refuse to use the key.</li>
 <li>Only fields that can be safely read are entered in <code>facts</code>; the rest are only entered in <code>boundaryWarnings</code>.</li>
-<li>Halo pairing cannot rely solely on unsafe <code>spellID</code>; use settings, events, security anchors and display degradation to handle it together when necessary.</li>
+<li>Aura pairing cannot rely solely on unsafe <code>spellID</code>; use settings, events, security anchors and display degradation to handle it together when necessary.</li>
 </ul>
 <h2 id="cooldown-api-change-focus">Cooldown API Change Focus</h2>
 <p>12.0 Removed or obsoleted many old global spells API. EAM The Classic/ legacy decompression return layer should no longer be retained.</p>

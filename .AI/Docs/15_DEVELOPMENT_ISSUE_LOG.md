@@ -1,3 +1,24 @@
+### 2026-09-03 EAM-20260903-DOCS-THREE-TIER-ENGLISH-TRANSLATION-AND-IOPAGE-SYNC：三梯次說明文件原生專業英文版建置與 GitHub Pages (iopage) 全面同步
+
+- 狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496, 40 HTML files converted)。
+- 需求背景與問題分析：
+  1. HTML 說明文件網站先前僅 `00_INDEX_en.md` 具備手寫英文版，其餘文件在 `batch_convert_docs.py` 中皆依賴 Google 翻譯 API 暴力機翻。
+  2. 免費 Google API 頻繁遭遇 HTTP 429 Too Many Requests 失敗降級，且缺乏魔獸與插件專業術語保護，容易產生「英中英」二次硬翻怪詞（如將 Retail 翻為 formal clothing、將 Aura 翻為 halo、將 Shield Absorb 翻為 suction shield、將 InCombatLockdown 翻為 battle lock、將 Taint 翻為 dye 等）。
+- 重構實作：
+  1. **第一梯次（門面與核心架構）**：
+     - 手寫並同步雙份根目錄與插件內英文版：`README_en.md`、`EventAlertMod/README_en.md`。
+     - 撰寫 AI 治理入口英文版：`.AI/AGENTS_en.md`。
+     - 撰寫核心系統架構與規範英文版：`01_ARCHITECTURE_en.md`、`02_RETAIL_API_BOUNDARIES_en.md`、`03_STATE_SCHEMA_en.md`、`04_MODULE_CONTRACTS_en.md`、`05_PERFORMANCE_GUIDE_en.md`。
+  2. **第二梯次（深度技術藍圖與連續性）**：
+     - 撰寫技術路線圖與驗證框架英文版：`16_RETAIL_ADDON_OPTIMIZATION_ROADMAP_en.md`、`26_FLOW_VALIDATION_FRAMEWORK_en.md`。
+     - 撰寫專案記憶與接手事實英文版：`28_PROJECT_CONTINUITY_en.md`。
+     - 撰寫 21 大技能生態系與 Agentic AI 理念英文版：`32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY_en.md`。
+  3. **第三梯次（工具鏈升級、全站編譯與 GitHub Pages 發布）**：
+     - 撰寫並同步雙份更新日誌英文版：`changelog_en.txt`、`EventAlertMod/changelog_en.txt`。
+     - 升級 `batch_convert_docs.py`：`convert_txt_to_html` 優先檢測本機 `_en.txt`；擴充 `dest_lang == 'en'` 後處理正則詞庫，全面防護魔獸專有名詞。
+     - 重新編譯產出全站 40 份 HTML 文件至 `.AI/docs_html/` 與 `index.html`。
+- 驗證結果：Lua 76/76、Flow all 84/84、Validation Contracts 496/496、HTML 40/40 檔案成功轉換。
+
 ### 2026-08-30 EAM-20260830-COOLDOWN-REORDER-AND-PRERENDER-PLACEHOLDER：技能冷卻清單順序自訂（拖曳與上下移動）與預渲染佔位（灰階遮罩）
 
 - 狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。

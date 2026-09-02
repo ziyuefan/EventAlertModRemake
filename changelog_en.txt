@@ -1,0 +1,62 @@
+-- [Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
+    -- Next-Gen Master Spell Catalog & Intelligent Presets:
+       -- Built-in 5-language offline database: 4,463 core spells & 466 auras covering 13 classes, 40 specs, and 39 Hero Talent trees, with real-time switching across zhTW, zhCN, enUS, koKR, and ruRU.
+       -- Hierarchical Spell Catalog Tree Panel (SpellCatalogTreePanel): Spec tree expand/collapse, tri-state toggles, instant search by spell name or ID.
+       -- Target Module Redirection: Header dropdown assigns selected spells directly to Spell Cooldown, Player Buff, Target Buff, Special Aura, or Ground Effect.
+       -- One-Click Talent Auto-Sync: Integrated SpellBookScannerService scans current talent loadouts and spellbook, synchronizing active spells to target modules.
+       -- Native Spell Tooltips (GameTooltip:SetSpellByID): Full spell description, cast time, range, and ID shown on hover.
+    -- Multidimensional Tactical Group Management Module:
+       -- Core Group Service (GroupService): 4 built-in system tactical groups (Major Burst, Critical Mitigation, CC/Interrupt, Ground AoE) + custom tag groups.
+       -- Many-to-many spell and group associations, independent global group toggles, and combat-only filters.
+       -- Dedicated Group Manager Panel (GroupManagerPanel): Group name editing, independent save button, combat context filters, multi-select spell associations, and comprehensive hover tooltips.
+       -- Spell Detail Window Group Multi-Select (Options.lua): Integrated multi-select dropdown button with live summaries in all spell condition windows.
+    -- Hardening & Bug Fixes:
+       -- Deprecated API ban: Replaced all GetSpellInfo, GetItemInfo, GetSpellCooldown with modern C_Spell / C_Item APIs, guarded by CI static AST assertions.
+       -- Profile Codec export/import: Added uniqueness deduplication in buildPayload, fixing duplicateAlertID errors from legacy imported data.
+       -- Font validation fix: Added LSM fallback checks, ensuring invalid or unmapped font names safely fall back to STANDARD.
+       -- Fixed condition window dropdown SetText type incompatibility.
+    -- In-Combat Player Stats Live Updates & C-Level Zero-GC Rendering:
+       -- Full adoption of native FontString:SetFormattedText for all 18 stat displays, achieving 0.00ms C-level formatting with zero Lua GC string allocation.
+       -- Implemented getRawValue routing across 18 attributes, aligning with Retail 12.x / Midnight AllowedWhenTainted and Enum.SecretAspect.Text contracts, fixing stat freezing in combat.
+    -- Cooldown Custom Sorting & Pre-render Placeholders:
+       -- Cooldown list custom reordering: Added ▲ (Move Up) and ▼ (Move Down) buttons to each row, plus full Left-Click Drag & Drop support to reorder alert display priority.
+       -- Pre-render placeholder mode (cooldownPreRender): Pre-creates and positions all monitored cooldown slots out of combat. Uncast spells display a desaturated grayscale mask (SetDesaturated) out of combat and instantly transition to full color on cast, 100% eliminating InCombatLockdown layout restrictions.
+       -- Tri-state condition overrides: Supports global pre-render toggle with independent per-spell condition overrides (Global / Override On / Override Off).
+-- [Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
+    -- Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration:
+       -- Complete integration with LibSharedMedia-3.0, supporting third-party sound, font, and border asset packages.
+       -- Implemented MediaService.ensureLSM() dynamic runtime discovery with PLAYER_LOGIN deferred sync, preventing sounds from being frozen at the default 12 items.
+       -- Dual-channel sound queries (lsm:List and lsm:HashTable) with automated deduplication for 100% sound coverage.
+       -- Dual-channel safe audio playback (MediaService.playSound) compatible with FileDataIDs, SoundKitIDs, and relative file paths (.ogg / .mp3).
+       -- 12.1 Native Aura Rule Compiler (AuraRuleCompiler) integrated with MediaService for custom LSM aura trigger audio.
+    -- Zero-Delay Live Font Application (No /reload Needed):
+       -- Whitelist unlocked in SavedVariables.lua to allow all LSM-registered fonts without reverting on reload.
+       -- Live font refresh across preview icons, general alert icons, player resources, and player stats text via EAM_FONT_FAMILY_CHANGED.
+       -- Included fontFamily in Native Aura layout fingerprint (buildLayoutFingerprint).
+    -- Adaptive Scrollable Dropdown Menus:
+       -- Implemented buildScrollableDropdownMenu with UIPanelScrollFrameTemplate and mouse wheel scrolling for long asset lists.
+-- [Retail 12.1.0 Alpha 8.1 Cooldown Zero-Alpha Mode & Combat Stat Memory Fallbacks] 2026.08.26
+    -- Persistent Pre-anchoring & Zero-Alpha Cooldown Mode:
+       -- Out-of-combat pre-creation of cooldown frame objects and static layout calculation.
+       -- Uses SetAlpha(0) on cooldown completion, preserving frame structures and layout coordinates with 0.00ms latency and 100% combat lockdown immunity.
+    -- Combat Stat Memory Fallbacks:
+       -- In-memory cache table (lastKnownStats) across 18 stats for seamless non-zero combat displays under restricted APIs.
+    -- Per-Class Player Stat Profiles:
+       -- Completely isolated stat monitoring profiles, thresholds, and positions per class.
+    -- Dual-Channel Shield & Heal Absorb Detection:
+       -- Native Unit APIs + C_UnitAuras.points accumulation.
+    -- Aura Shield Absorb Amount Display:
+       -- Formatted shield amount overlays (e.g. 45.2k, 1.2M, 3(45k)).
+-- [Retail 12.1.0 Alpha 8.0 Independent Stat Positioning & Adaptive Layout] 2026.08.25
+    -- Independent positioning and grow directions across all 18 player stats.
+    -- Iconless adaptive layout with automatic spacing and zero text overlapping.
+-- [Retail 12.1.0 Alpha 7.9 UI Hover Tooltips & Center Reset] 2026.08.24
+    -- Comprehensive UI hover tooltips across all 10 major configuration windows.
+    -- ClampedToScreen & /eam reset window center reset command.
+-- [Retail 12.1.0 Alpha 7.8 Player Stats & Absorbs Module] 2026.08.24
+    -- 18 core stats, 4-in-1 velocities (ground, swim, flight, gliding 830%~1400%).
+    -- Custom icon overrides across all modules.
+-- [Retail 12.1.0 Alpha 7.5 ~ 7.7 Window Docking & DK Runes] 2026.08.23
+    -- Seamless 3-level APPEND docking and synchronized multi-window dragging.
+    -- Profile sharing with EAMAP1 Base64 codec.
+    -- Death Knight 6-slot dynamic rune dashboard with micro charge bars.

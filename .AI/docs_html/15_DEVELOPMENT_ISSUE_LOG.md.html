@@ -509,6 +509,33 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-09-03-eam-20260903-docs-three-tier-english-translation-and-iopage-sync-github-pages-iopage">2026-09-03 EAM-20260903-DOCS-THREE-TIER-ENGLISH-TRANSLATION-AND-IOPAGE-SYNC：三梯次說明文件原生專業英文版建置與 GitHub Pages (iopage) 全面同步</h3>
+<ul>
+<li>狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496, 40 HTML files converted)。</li>
+<li>需求背景與問題分析：</li>
+<li>HTML 說明文件網站先前僅 <code>00_INDEX_en.md</code> 具備手寫英文版，其餘文件在 <code>batch_convert_docs.py</code> 中皆依賴 Google 翻譯 API 暴力機翻。</li>
+<li>免費 Google API 頻繁遭遇 HTTP 429 Too Many Requests 失敗降級，且缺乏魔獸與插件專業術語保護，容易產生「英中英」二次硬翻怪詞（如將 Retail 翻為 formal clothing、將 Aura 翻為 halo、將 Shield Absorb 翻為 suction shield、將 InCombatLockdown 翻為 battle lock、將 Taint 翻為 dye 等）。</li>
+<li>重構實作：</li>
+<li><strong>第一梯次（門面與核心架構）</strong>：<ul>
+<li>手寫並同步雙份根目錄與插件內英文版：<code>README_en.md</code>、<code>EventAlertMod/README_en.md</code>。</li>
+<li>撰寫 AI 治理入口英文版：<code>.AI/AGENTS_en.md</code>。</li>
+<li>撰寫核心系統架構與規範英文版：<code>01_ARCHITECTURE_en.md</code>、<code>02_RETAIL_API_BOUNDARIES_en.md</code>、<code>03_STATE_SCHEMA_en.md</code>、<code>04_MODULE_CONTRACTS_en.md</code>、<code>05_PERFORMANCE_GUIDE_en.md</code>。</li>
+</ul>
+</li>
+<li><strong>第二梯次（深度技術藍圖與連續性）</strong>：<ul>
+<li>撰寫技術路線圖與驗證框架英文版：<code>16_RETAIL_ADDON_OPTIMIZATION_ROADMAP_en.md</code>、<code>26_FLOW_VALIDATION_FRAMEWORK_en.md</code>。</li>
+<li>撰寫專案記憶與接手事實英文版：<code>28_PROJECT_CONTINUITY_en.md</code>。</li>
+<li>撰寫 21 大技能生態系與 Agentic AI 理念英文版：<code>32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY_en.md</code>。</li>
+</ul>
+</li>
+<li><strong>第三梯次（工具鏈升級、全站編譯與 GitHub Pages 發布）</strong>：<ul>
+<li>撰寫並同步雙份更新日誌英文版：<code>changelog_en.txt</code>、<code>EventAlertMod/changelog_en.txt</code>。</li>
+<li>升級 <code>batch_convert_docs.py</code>：<code>convert_txt_to_html</code> 優先檢測本機 <code>_en.txt</code>；擴充 <code>dest_lang == 'en'</code> 後處理正則詞庫，全面防護魔獸專有名詞。</li>
+<li>重新編譯產出全站 40 份 HTML 文件至 <code>.AI/docs_html/</code> 與 <code>index.html</code>。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 76/76、Flow all 84/84、Validation Contracts 496/496、HTML 40/40 檔案成功轉換。</li>
+</ul>
 <h3 id="2026-08-30-eam-20260830-cooldown-reorder-and-prerender-placeholder">2026-08-30 EAM-20260830-COOLDOWN-REORDER-AND-PRERENDER-PLACEHOLDER：技能冷卻清單順序自訂（拖曳與上下移動）與預渲染佔位（灰階遮罩）</h3>
 <ul>
 <li>狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。</li>
@@ -2169,6 +2196,33 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<h3 id="2026-09-03-eam-20260903-docs-three-tier-english-translation-and-iopage-sync-three-step-description-file-native-professional-english-version-construction-and-github-pages-iopage-full-synchronization">2026-09-03 EAM-20260903-DOCS-THREE-TIER-ENGLISH-TRANSLATION-AND-IOPAGE-SYNC: Three-step description file native professional English version construction and GitHub Pages (iopage) full synchronization</h3>
+<ul>
+<li>状态：已解决 (Lua 76/76, Flow 84/84, Contracts 496/496, 40 HTML files converted)。</li>
+<li>Requirement background and problem analysis:</li>
+<li>The HTML documentation website previously only had handwritten English versions for <code>00_INDEX_en.md</code>, and the rest of the documents in <code>batch_convert_docs.py</code> relied on Google Translate API for violent machine translation.</li>
+<li>Free Google API frequently encountered HTTP 429 Too Many Requests failed to downgrade, and lacked the protection of professional terminology of World of Warcraft and plug-ins. It is easy to produce "English-Chinese-English" double translation of strange words (such as translating Retail into formal clothing, translating Aura into Aura, translating Shield Absorb into Shield Absorb, translating InCombatLockdown into Combat Lockdown, translating Taint into Taint etc.).</li>
+<li>Refactoring implementation:</li>
+<li><strong>The first level (facade and core architecture)</strong>:</li>
+<li>Handwrite and synchronize the double root directory and the English version in the plug-in: <code>README_en.md</code>, <code>EventAlertMod/README_en.md</code>.
+     -Write the English version of the AI ​​governance portal: <code>.AI/AGENTS_en.md</code>.
+     -Write the English version of the core system architecture and specifications: <code>01_ARCHITECTURE_en.md</code>, <code>02_RETAIL_API_BOUNDARIES_en.md</code>, <code>03_STATE_SCHEMA_en.md</code>, <code>04_MODULE_CONTRACTS_en.md</code>, <code>05_PERFORMANCE_GUIDE_en.md</code>.</li>
+<li><strong>The second level (in-depth technical blueprint and continuity)</strong>:</li>
+<li>Write the English version of the technology roadmap and verification framework: <code>16_RETAIL_ADDON_OPTIMIZATION_ROADMAP_en.md</code>, <code>26_FLOW_VALIDATION_FRAMEWORK_en.md</code>.<ul>
+<li>Write the English version of project memories and takeover facts: <code>28_PROJECT_CONTINUITY_en.md</code>.
+ -Written the English version of the 21 major skill ecosystems and Agentic AI concepts: <code>32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY_en.md</code>.</li>
+</ul>
+</li>
+<li><strong>The third level (tool chain upgrade, full site compilation and GitHub Pages release)</strong>:<ul>
+<li>Compose and synchronize two English versions of the update log: <code>changelog_en.txt</code>, <code>EventAlertMod/changelog_en.txt</code>.</li>
+</ul>
+</li>
+<li>Upgraded <code>batch_convert_docs.py</code>: <code>convert_txt_to_html</code> gives priority to detecting local <code>_en.txt</code>; expanded <code>dest_lang == 'en'</code> post-processing regular vocabulary to fully protect Warcraft proper nouns.<ul>
+<li>Recompile and produce 40 HTML files in the entire site to <code>.AI/docs_html/</code> and <code>index.html</code>.</li>
+</ul>
+</li>
+<li>Verification results: Lua 76/76, Flow all 84/84, Validation Contracts 496/496, HTML 40/40 files successfully converted.</li>
+</ul>
 <h3 id="2026-08-30-eam-20260830-cooldown-reorder-and-prerender-placeholder-skill-cooldown-list-order-customization-drag-and-move-up-and-down-and-pre-rendering-placeholder-grayscale-mask">2026-08-30 EAM-20260830-COOLDOWN-REORDER-AND-PRERENDER-PLACEHOLDER: Skill cooldown list order customization (drag and move up and down) and pre-rendering placeholder (grayscale mask)</h3>
 <ul>
 <li>Status: Resolved (Lua 76/76, Flow 84/84, Contracts 496/496).</li>
@@ -2190,10 +2244,10 @@
 </ul>
 </li>
 <li>When out of combat (<code>PLAYER_ENTERING_WORLD</code>, <code>PLAYER_REGEN_ENABLED</code>, talent/setting changes), standby icon slots are automatically created for all enabled skill cooldowns.<ul>
-<li>Skills that have not yet entered the cooldown are displayed with a dark grayscale mask (<code>SetDesaturated(true)</code> + <code>SetVertexColor(0.4, 0.4, 0.4, 0.65)</code>), hiding the timing and streamer.</li>
+<li>Skills that have not yet entered the cooldown are displayed with a dark grayscale mask (<code>SetDesaturated(true)</code> + <code>SetVertexColor(0.4, 0.4, 0.4, 0.65)</code>), hiding the timing and Overlay Glow.</li>
 </ul>
 </li>
-<li>Instantly switches to full color (<code>SetDesaturated(false)</code> + <code>SetVertexColor(1, 1, 1, 1)</code>) when casting is on cooldown, with normal timing, zero Frame establishment during combat, zero typesetting recalculation, and 100% immunity to battle lock delays.<ul>
+<li>Instantly switches to full color (<code>SetDesaturated(false)</code> + <code>SetVertexColor(1, 1, 1, 1)</code>) when casting is on cooldown, with normal timing, zero Frame establishment during combat, zero typesetting recalculation, and 100% immunity to Combat Lockdown delays.<ul>
 <li>Automatically and smoothly switches back to the grayscale placeholder mask after cooling.</li>
 </ul>
 </li>
@@ -2208,10 +2262,10 @@
 <li>Status: Resolved (Lua 76/76, Flow 84/84, Contracts 496/496).</li>
 <li>Root cause analysis:</li>
 <li>In the past, in <code>PlayerStatService.lua</code>, the traditional <code>string.format</code> and <code>fontString:SetText(valStr)</code> were used for numeric literal updates. Lua transient string objects were generated for each event and timer update, increasing the GC burden.</li>
-<li>In the past, the <code>isSafeNumber(val)</code> guard was introduced due to defensive filtering. However, when Retail 12.0+/12.1+ calls the native Stat API in combat or Taint environment, it will return the protected Secret Number; <code>isSafeNumber</code> will judge it as false and discard it, causing <code>getValue</code> to fall back to the <code>lastKnownStats</code> before leaving the war. Caching causes attribute values during battle (such as accessory triggers, bloodthirsty acceleration, shield absorption, etc.) to be completely frozen and not updated.</li>
+<li>In the past, the <code>isSafeNumber(val)</code> guard was introduced due to defensive filtering. However, when Retail 12.0+/12.1+ calls the native Stat API in combat or Taint environment, it will return the protected Secret Value; <code>isSafeNumber</code> will judge it as false and discard it, causing <code>getValue</code> to fall back to the <code>lastKnownStats</code> before leaving the war. Caching causes attribute values during battle (such as accessory triggers, bloodthirsty acceleration, shield absorption, etc.) to be completely frozen and not updated.</li>
 <li>There was <code>if isSecret then item.valText:SetText("") end</code> logic in the <code>update()</code> process. When the Secret value is detected, the text is directly cleared to blank.</li>
 <li>Refactoring implementation:</li>
-<li>According to the Blizzard Retail 12.x native specification, <code>FontString:SetFormattedText</code> has <code>AllowedWhenTainted = true</code> and <code>SecretArgumentsAddAspect = Enum.SecretAspect.Text</code> aspects. C-Level can natively accept and securely format Secret Numbers.</li>
+<li>According to the Blizzard Retail 12.x native specification, <code>FontString:SetFormattedText</code> has <code>AllowedWhenTainted = true</code> and <code>SecretArgumentsAddAspect = Enum.SecretAspect.Text</code> aspects. C-Level can natively accept and securely format Secret Value.</li>
 <li>Implement <code>renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)</code> and completely switch to <code>FontString:SetFormattedText</code> for C engine layer zero Lua GC transient string formatting rendering.</li>
 <li>Complete the <code>getRawValue</code> combat real-time value routing for 18 major attributes, directly obtain the original return value of the underlying API and pass it to <code>SetFormattedText</code> and <code>StatusBar:SetValue</code>.</li>
 <li>Remove the clear text logic to ensure that when special effects are triggered during battle or in a protected state, players can still see the correctly updated numerical text smoothly and instantly.</li>
@@ -2270,7 +2324,7 @@
 </ul>
 </li>
 <li>Fixed the problem of preventing character attribute values from returning to zero during battle (<code>Combat Stat Cache &amp; Multi-Tier API Fallback</code>):<ul>
-<li>Root cause analysis: Retail 12.0+/12.1+ calls the native Unit / Stat API after entering the battle and is restricted from returning the Secret Number. The Lua layer cannot read it directly, causing the main and secondary attributes to be displayed back to zero.</li>
+<li>Root cause analysis: Retail 12.0+/12.1+ calls the native Unit / Stat API after entering the battle and is restricted from returning the Secret Value. The Lua layer cannot read it directly, causing the main and secondary attributes to be displayed back to zero.</li>
 <li>Refactoring implementation:</li>
 <li>Create a memory cache table of all 18 attributes <code>lastKnownStats</code>, and automatically perform warm-up (<code>prewarmStats</code>) when logging in, switching specializations, changing equipment, and leaving combat.</li>
 </ul>
@@ -2307,12 +2361,12 @@
 </li>
 <li>Aura Shield Absorb Amount Display:<ul>
 <li>Automatically extract shield-type Aura (Power Word: Shield, Ice Armor Shield, Soul Drain, etc.) from <code>C_UnitAuras.points</code> to obtain the instant remaining absorption shield value.</li>
-<li>The renderer (<code>Renderer.lua</code>) accurately formats the overlay in the lower right corner of the halo icon to display the remaining absorption shield amount (such as <code>45.2k</code>, <code>1.2M</code>; when there are multiple layers, such as <code>3(45k)</code>).</li>
+<li>The renderer (<code>Renderer.lua</code>) accurately formats the overlay in the lower right corner of the Aura icon to display the remaining absorption shield amount (such as <code>45.2k</code>, <code>1.2M</code>; when there are multiple layers, such as <code>3(45k)</code>).</li>
 </ul>
 </li>
 <li>Interface and system stability fixes:</li>
 <li>Complete the missing <code>inCombat()</code> local function definition in <code>PlayerStatService.lua</code> to completely eliminate the nil call error triggered when clicking the main menu category button and closing the panel.<ul>
-<li>Fixed the problem of the "Test Flicker" button covering the text, and returned "Enable 12.1 Native Circular Halo Countdown Aperture" to the core control area of ​​the main settings menu.</li>
+<li>Fixed the problem of the "Test Flicker" button covering the text, and returned "Enable 12.1 Native Circular Aura Countdown Aperture" to the core control area of ​​the main settings menu.</li>
 <li>Fixed the black frame problem of flying dragon mode flying icon (obtained from FileDataID <code>4667307</code> and dynamic API).</li>
 </ul>
 </li>
@@ -2321,12 +2375,12 @@
 <h3 id="2026-08-24-eam-20260824-player-stats-secret-value-fix-character-attribute-and-absorption-monitoring-secret-value-protection-and-native-statusbar-sink-integration">2026-08-24 EAM-20260824-PLAYER-STATS-SECRET-VALUE-FIX: Character attribute and absorption monitoring Secret Value protection and native StatusBar Sink integration</h3>
 <ul>
 <li>Status: Resolved (Lua 68/68, Flow 84/84, Contracts 493/493), the actual machine is waiting for player signature.</li>
-<li>Symptom: <code>attempt to compare local 'val' (a secret number value, while execution Taint by 'EventAlertMod')</code> is thrown at <code>PlayerStatService.lua:253</code> when opening the property monitoring panel.</li>
-<li>Cause determination: WoW Retail 12.0+ / 12.1+ In the current environment, some Units API (such as <code>UnitGetTotalAbsorbs</code>, <code>UnitGetTotalHealAbsorbs</code>, <code>GetUnitSpeed</code>, attribute reading in combat or pollution states) will return a protected Secret Number. Directly performing comparisons (<code>val &gt;= 10000</code>, <code>val &lt; cfg.thresholdMin</code>), arithmetic operations (<code>val / 1000000</code>) or string formatting (<code>string.format</code>) on Secret Numbers at the Lua layer will trigger protection exceptions.</li>
+<li>Symptom: <code>attempt to compare local 'val' (a Secret Value value, while execution Taint by 'EventAlertMod')</code> is thrown at <code>PlayerStatService.lua:253</code> when opening the property monitoring panel.</li>
+<li>Cause determination: WoW Retail 12.0+ / 12.1+ In the current environment, some Units API (such as <code>UnitGetTotalAbsorbs</code>, <code>UnitGetTotalHealAbsorbs</code>, <code>GetUnitSpeed</code>, attribute reading in combat or pollution states) will return a protected Secret Value. Directly performing comparisons (<code>val &gt;= 10000</code>, <code>val &lt; cfg.thresholdMin</code>), arithmetic operations (<code>val / 1000000</code>) or string formatting (<code>string.format</code>) on Secret Value at the Lua layer will trigger protection exceptions.</li>
 <li>Effective solution:</li>
 <li>Introduce the <code>isSafeNumber(val)</code> guard in <code>PlayerStatService.lua</code> and filter through <code>Util.isSecretValue</code> and <code>Util.isSafeNumber</code> before performing any arithmetic, comparison and formatting.</li>
 <li>Among the 16 attributes, <code>getValue</code> all use <code>pcall</code> and safe value guards. When returning unsafe values, safe value default values ​​are returned.</li>
-<li><code>formatStatNumber</code> and <code>update</code> thresholds are more comprehensive and combined with <code>isSafeNumber</code> defense to completely eradicate Secret Number errors.</li>
+<li><code>formatStatNumber</code> and <code>update</code> thresholds are more comprehensive and combined with <code>isSafeNumber</code> defense to completely eradicate Secret Value errors.</li>
 <li>Integrate native <strong>StatusBar Write-Only Native Sink</strong>: C-Level <code>StatusBar</code> is pre-built for each attribute item. When encountering a Secret value (such as protected absorption amount), the raw value is directly sent to <code>StatusBar:SetValue</code> to show the visual progress ratio. Lua does not perform string conversion and read back the value.</li>
 <li>The setting panel provides a "Progress Bar (StatusBar)" switch, which supports coloring by attribute type (absorption shield sky blue, treatment absorption purple-red, speed cyan, secondary attribute golden, main attribute orange-red).</li>
 <li>Verification results: Lua 68/68, Flow all 84/84, Validation Contracts 493/493.</li>
@@ -2419,7 +2473,7 @@
 <li>Trial and error record: Flow and Contracts were started at the same time, and Contracts temporarily failed after reading the previous 69/70 artifact; the packager itself is executed sequentially and is not affected by this race condition. The development side will always complete Flow first and then execute Contracts.</li>
 <li>Final verification: Flow <code>70/70</code>, Contracts <code>426/426</code>. This only proves that the offline gate has been restored before packaging, and is not equivalent to WoW actual machine receipt.</li>
 </ul>
-<h3 id="2026-08-13-eam-20260813-aurasound-details-121-aurasound-halo-detailed-settings-and-registration-life-cycle">2026-08-13 EAM-20260813-AURASOUND-DETAILS: 12.1 AuraSound Halo detailed settings and registration life cycle</h3>
+<h3 id="2026-08-13-eam-20260813-aurasound-details-121-aurasound-aura-detailed-settings-and-registration-life-cycle">2026-08-13 EAM-20260813-AURASOUND-DETAILS: 12.1 AuraSound Aura detailed settings and registration life cycle</h3>
 <ul>
 <li>Status: The program and offline process have been completed; the real-life machine sign-in for PTR 12.1, XPTR 12.0.7 and Retail 12.0.7 is still waiting for the player to execute.</li>
 <li>Scenario: According to the fixed generation file of PTR 12.1.0 build 69273, the three triggers of Added, ApplicationsIncreased and Removed of <code>C_UnitAuras.AddAuraSound</code> are included in the detailed settings of Aura.</li>
@@ -2718,14 +2772,14 @@ Introduced <code>safeCheckIsZero(durationObj)</code> defensive wrapper function 
 <li>Modify the traversal of <code>activeDurationObjects</code> in <code>onLegacyTimerUpdate</code> and use <code>safeCheckIsZero(durationObj)</code> for conditional judgment instead.</li>
 <li>Follow-up notes: During the actual verification, confirm whether the icon can automatically disappear when the Aura or cooldown is triggered in battle, and the chat window will no longer spout Bollinger test errors.</li>
 </ul>
-<h3 id="2026-06-07-combat-settings-secret-halo-time-countdown-downgrade-and-automatic-recovery-recovery-mechanism-resolved">2026-06-07 Combat settings (secret) Halo time countdown downgrade and automatic recovery recovery mechanism (resolved)</h3>
+<h3 id="2026-06-07-combat-settings-secret-aura-time-countdown-downgrade-and-automatic-recovery-recovery-mechanism-resolved">2026-06-07 Combat settings (secret) Aura time countdown downgrade and automatic recovery recovery mechanism (resolved)</h3>
 <ul>
 <li>Status: Resolved
 -Threat:
-When the obtained Buff/Debuff is marked as secret by the destroyed world during the battle (for example, when the player or the timeout determines that it cannot be read), EAM cannot disassemble itself and is counted down by OnUpdate, and due to the inability to arrange scheduling tasks, when the halo disappears naturally due to destruction, the EAM icon cannot restore the frame and restore the icon.</li>
+When the obtained Buff/Debuff is marked as secret by the destroyed world during the battle (for example, when the player or the timeout determines that it cannot be read), EAM cannot disassemble itself and is counted down by OnUpdate, and due to the inability to arrange scheduling tasks, when the Aura disappears naturally due to destruction, the EAM icon cannot restore the frame and restore the icon.</li>
 <li>Judgment of symptoms and causes:</li>
 <li>Although the <code>DurationObject</code> returned by the inheritance <code>C_UnitAuras.GetAuraDuration</code> of World of Warcraft 12.x is protected (secret), the native UI itself can be bound and rendered.</li>
-<li>Since <code>DurationObject</code> cannot read the remaining time in Lua, the original EAM scheduler (Scheduler) and bounce mechanism cannot know that this time is coming, and can only rely entirely on the <code>UNIT_AURA</code> halo removal event. However, in-battle events are often officially optimized, throttled, and even partially delayed.</li>
+<li>Since <code>DurationObject</code> cannot read the remaining time in Lua, the original EAM scheduler (Scheduler) and bounce mechanism cannot know that this time is coming, and can only rely entirely on the <code>UNIT_AURA</code> Aura removal event. However, in-battle events are often officially optimized, throttled, and even partially delayed.</li>
 <li>Fortunately, <code>DurationObject</code> is a safe, callable predicate in Secret state (returning a plain boolean) compared to the <code>IsZero()</code> method.</li>
 <li>Tried methods:
   Back up <code>Services/AuraService.lua</code> and <code>UI/Renderer.lua</code> to the <code>backup/</code> directory.</li>
@@ -2979,7 +3033,7 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura time 
 - Follow-up notes: During actual machine verification, you need to pay attention to whether the value can be written normally by dragging the slider, and whether there is memory leakage or countdown afterimage when the switch alarm icon and button CD are released/restored.</p>
 <h3 id="2026-05-30-p1p2-tooltip-analysis-and-tablefreeze-reconstruction-of-multi-language-ground-effects-resolved">2026-05-30 P1/P2: Tooltip analysis and table.freeze reconstruction of multi-language ground effects (resolved)</h3>
 <p>-Status: Resolved, waiting for actual machine verification
-- Mold: Extended ground effect (GroundEffectService.lua) monitoring, using Tooltip in the 12.0.7 Retail server environment Scraping obtains the duration of the non-halo ground skill and must support Traditional Chinese (zhTW), Simplified Chinese (zhCN), Chinese (enUS/enGB), Korean (koKR), and Russian (ruRU).
+- Mold: Extended ground effect (GroundEffectService.lua) monitoring, using Tooltip in the 12.0.7 Retail server environment Scraping obtains the duration of the non-Aura ground skill and must support Traditional Chinese (zhTW), Simplified Chinese (zhCN), Chinese (enUS/enGB), Korean (koKR), and Russian (ruRU).
 - Symptom: The original implementation only supports Traditional Chinese, and directly uses the ad-hoc string key HASH in the loop to find a match with the regular expression, which may introduce results and GC garbage collection load in the WoW execution environment.
 - Cause judgment: The string key HASH of the Lua table is found to have a certain hash collision cost. Even if it is locked with <code>table.freeze</code>, the hash mechanism cannot be completely eliminated. To achieve completeness, a numeric index array (numeric index array) should be used as the matching pattern carrier, and loop iterations should be performed with numbers. This can eliminate hash searches and completely avoid runtime GC.
 - Tried method: Encapsulate the regular expression styles of the five language client into a numerical index array according to the locale. The PCB is deep-frozen (table.freeze) on the overall and sub-alignment by <code>EAM.Util.tableFreeze</code>. When calling <code>parseTooltipDuration</code>, it automatically recognizes <code>GetLocale()</code> and downgrades it back to Chinese, and then executes the digital index digital cycle.
@@ -3132,10 +3186,10 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura time 
 <p>-Status: awaiting actual machine verification
 - Relying on: Continue to sort out the core functions and low GC hot paths of EAM Retail server rewrite based on P1/P2 goals.
 - Symptoms: Converter <code>/eam</code> is only bug/option stub, SavedVariables is not officially added /remove API; AuraService still falls back to full scan at <code>UNIT_AURA</code>, not used AuraService still falls back to full scan at <code>UNIT_AURA</code>, unused <code>updateInfo</code> payload.
-- Reason: If there is no stable configuration change API, the subsequent option UI cannot safely write settings; if the alert/full halo is scanned every time <code>UNIT_AURA</code>, the hot path cost will be increased.
+- Reason: If there is no stable configuration change API, the subsequent option UI cannot safely write settings; if the alert/full Aura is scanned every time <code>UNIT_AURA</code>, the hot path cost will be increased.
 - Tried methods: Added <code>SavedVariables.add/remove</code> series API, <code>/eam add/remove/export/help</code>, AuraService configuration revision index, EAM__MCOD. <code>updatedAuraInstanceIDs</code> / <code>removedAuraInstanceIDs</code> processing increments, and debug snapshot DB revision/cache/renderer counter.
 - Effective solution: Slash only writes SavedVariables, and the service is responsible for refreshing /render; AuraService goes to delta when it has <code>updateInfo</code>, and falls back to the full scan when there is no payload or complete update.
-- Follow-up Notes: Still need WoW Retail/PTR Real machine verification <code>UNIT_AURA</code> Payload Actual slots, secret halo spellID behavior, remove instance cache Hit rate and target rapid change behavior.</p>
+- Follow-up Notes: Still need WoW Retail/PTR Real machine verification <code>UNIT_AURA</code> Payload Actual slots, secret Aura spellID behavior, remove instance cache Hit rate and target rapid change behavior.</p>
 <h3 id="2026-05-26-skill-creator-quick_validate-shortage-python-yaml-module">2026-05-26 Skill Creator quick_validate Shortage Python yaml module</h3>
 <ul>
 <li>Status: Resolved</li>
@@ -3235,7 +3289,7 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura time 
 - Effective solution:
   - The reconstructed code has been successfully written, and the four Lua files <code>AuraService.lua</code>, <code>GroundEffectService.lua</code>, <code>TotemService.lua</code> and <code>UI/Renderer.lua</code> have all passed the static syntax security review of <code>luac -p</code> 100%.
 - Follow-up notes:
-- Start EAM on the official WoW server, and observe whether the memory curve does not rise when switching between buffs and cooldowns, and confirm that the halo can accurately and automatically disappear when it approaches, completely eliminating combat pollution and JIT interruption.</p>
+- Start EAM on the official WoW server, and observe whether the memory curve does not rise when switching between buffs and cooldowns, and confirm that the Aura can accurately and automatically disappear when it approaches, completely eliminating combat pollution and JIT interruption.</p>
 <h3 id="2026-06-21-retail-121-aura-readiness-and-expert-governance-review-unresolved">2026-06-21 Retail 12.1 Aura readiness and expert governance review (unresolved)</h3>
 <ul>
 <li>Status: Unresolved; expert governance has been updated, Lua technical issues need to be fixed later and Retail/PTR real machine verification.</li>
@@ -3294,7 +3348,7 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura time 
 <h3 id="2026-08-01-eam-20260801-ptr121-aura-dual-countdown-native-aura-double-reciprocal-and-initialization-limitations">2026-08-01 EAM-20260801-PTR121-Aura-DUAL-COUNTDOWN: Native Aura double reciprocal and initialization limitations</h3>
 <ul>
 <li>Status: The program and offline contract have been corrected; to be downgraded to PTR 12.1 and 12.0.7 for actual machine verification.</li>
-<li>Symptom: PTR 12.1 The same halo displays the built-in numbers of Blizzard Cooldown and EAM DurationText at the same time, and the two sets of countdowns are highly synchronized; the old layout process will be restarted after <code>initializeFrame</code> <code>SetPoint</code>/<code>SetFont</code>.</li>
+<li>Symptom: PTR 12.1 The same Aura displays the built-in numbers of Blizzard Cooldown and EAM DurationText at the same time, and the two sets of countdowns are highly synchronized; the old layout process will be restarted after <code>initializeFrame</code> <code>SetPoint</code>/<code>SetFont</code>.</li>
 <li>Cause judgment: <code>SetDurationCooldown</code> and <code>SetDurationText</code> receive the same Aura DurationObject at the same time; 68914 restricts AuraButton and its subcomponents after the initialization callback is completed, and post-rearrangement is a Forbidden risk.</li>
 <li>Tried methods: Check the fixed build FrameXML; move the slot anchor, FontString, Cooldown, swipe, and text display options all into the initialization callback; strict mock locks the button and child region after the callback is completed.</li>
 <li>Effective solution: Normal mode <code>SetHideCountdownNumbers(true)</code> only retains a set of text EAM; the process panel can clearly switch the double reciprocal diagnosis and rebuild it with the out-of-war container. Offline case validation post-mutation must fail.</li>
@@ -3622,7 +3676,7 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura time 
 <li>Valid solution: TooltipMonitorService adds callback/candidate timestamp, candidate expiry count, last attempt reason, modifier key/down, CVar read/set result; getStatus only returns safe scalar. openManualTargetAuraMenu() is added, and /eam add target calls the existing TooltipMonitorMenu Aura popup; /eam add target <spellID> with ID remains unchanged.</li>
 <li>Prohibited items: Do not hook TargetFrame/AuraButton, do not call GetChildren/GetMouseFocus, do not save or serialize Secret/AuraData/Frame, and do not pass offline fallback as a real machine.</li>
 <li>Validation: Lua 64/64; Flow all 75/75; Flow boundary 54/54; Validation Contracts 441/441. When the offline harness is not loaded into the Slash UI, the service manual route is measured and the slash source is covered by the static contract.</li>
-<li>Real-machine sign-in: Move the mouse into the target halo and press Ctrl+Alt when not in combat; if there is no pop-up window reporting the /eam doctor security field, then use /eam add target to manually enter the known ID to test the target button. Each report must be accompanied by client channel, patch, build, Interface, combat, /reload, Lua error/taint/blocked action and visualObservation.</li>
+<li>Real-machine sign-in: Move the mouse into the target Aura and press Ctrl+Alt when not in combat; if there is no pop-up window reporting the /eam doctor security field, then use /eam add target to manually enter the known ID to test the target button. Each report must be accompanied by client channel, patch, build, Interface, combat, /reload, Lua error/taint/blocked action and visualObservation.</li>
 </ul>
 <h3 id="eam-20260823-cooldown-activation-tristate-the-cooling-list-refresh-causes-the-batch-display-and-false-settings-to-be-lost">EAM-20260823-COOLDOWN-ACTIVATION-TRISTATE: The cooling list refresh causes the batch display and false settings to be lost</h3>
 <ul>

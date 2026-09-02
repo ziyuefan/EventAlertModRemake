@@ -686,173 +686,90 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="retail-server-api-boundary">Retail server API boundary</h1>
-<h2 id="retail-server-12x-assumptions">Retail server 12.x assumptions</h2>
-<p>This rewrite targets Retail 12.x/Midnight-era API. All API notes in this file are considered file assumptions unless they have been loaded and tested on WoW Retail.</p>
-<p>Prefer namespaces:</p>
+<!-- EAM_DOCUMENTATION_SOURCE: enUS -->
+<h1 id="retail-api-boundaries-taint-defense">Retail API Boundaries &amp; Taint Defense</h1>
+<h2 id="retail-12x-architectural-assumptions">Retail 12.x Architectural Assumptions</h2>
+<p>This rewrite specifically targets the World of Warcraft: Retail 12.x / Midnight AddOn API.</p>
+<p>Primary Namespaces in Use:
+- <code>C_AddOns</code>
+- <code>C_Spell</code>
+- <code>C_Item</code>
+- <code>C_UnitAuras</code>
+- <code>C_TooltipInfo</code>
+- <code>AuraUtil</code>
+- <code>C_Timer</code> (restricted to central Scheduler or explicit non-hot paths)</p>
+<hr />
+<h2 id="taint-control-combat-security-policy">Taint Control &amp; Combat Security Policy</h2>
+<p>In World of Warcraft FrameXML, AddOns and <code>/script</code> snippets are treated as untrusted execution states. Once execution taint infects a secure execution path, protected combat actions are blocked. EAM treats Taint Prevention as an inviolable architectural boundary rather than a mere bug.</p>
+<h3 id="mandatory-rules">Mandatory Rules:</h3>
+<ol>
+<li><strong>Never Hook or Monkey-Patch Secure Functions</strong>:
+   Do not hook, overwrite, or replace Blizzard secure/protected functions, unit frames, nameplates, spellcasting execution, targeting, or action button pipelines.</li>
+<li><strong>No Combat Structural Mutations</strong>:
+   Never modify properties, parentage, anchor points (<code>SetPoint</code>), size, visibility, or templates of protected frames during <code>InCombatLockdown()</code>.</li>
+<li><strong>No Tainted References on Blizzard Frames</strong>:
+   Never store AddOn tables, callbacks, runtime caches, or debug closures directly onto Blizzard frames.</li>
+<li><strong>Isolate EventRouter &amp; Alert Frames</strong>:
+   Use orphan frames for <code>EventRouter</code>. Alert frames serve strictly display-only purposes with zero secure action attributes.</li>
+<li><strong>No <code>forceinsecure</code> Bypasses</strong>:
+   Never attempt to force insecure states or bypass Blizzard protected action guards. Log any taint violation directly to <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
+</ol>
+<hr />
+<h2 id="aura-api-generational-boundaries">Aura API Generational Boundaries</h2>
+<p>The following legacy APIs are obsolete in 12.1 Native mode and must never be called in modern paths:
+- <code>C_UnitAuras.GetBuffDataByIndex</code> / <code>GetDebuffDataByIndex</code> / <code>GetAuraDataByIndex</code>
+- <code>C_UnitAuras.GetAuraDataByAuraInstanceID</code>
+- <code>C_UnitAuras.GetAuraDuration</code> / <code>GetAuraBaseDuration</code> / <code>GetRefreshExtendedDuration</code>
+- <code>AuraUtil.ForEachAura</code> / <code>FindAuraByName</code>
+- <code>select(10, UnitAura(...))</code></p>
+<h3 id="121-native-aura-container-rules">12.1 Native Aura Container Rules:</h3>
 <ul>
-<li><code>C_AddOns</code></li>
-<li><code>C_Spell</code></li>
-<li><code>C_Item</code></li>
-<li><code>C_UnitAuras</code></li>
-<li><code>C_TooltipInfo</code></li>
-<li><code>AuraUtil</code></li>
-<li><code>C_Timer</code> Only via central dispatcher or explicit non-thermal settings
-The legacy decompression return phase content layer is not retained unless there are clear, strict, and documented Retail server security fallbacks.</li>
+<li>AuraInstanceID is NOT guaranteed to be a <code>NeverSecret</code> scalar anchor. Never save raw <code>AuraData</code> tables.</li>
+<li>Tracking and rendering are delegated to native <code>CustomAuraContainer</code> / <code>AuraButton</code> contracts.</li>
+<li>EAM only binds authorized visual Regions during <code>initializeFrame</code>.</li>
+<li>Any Secret or protected value must never be stringified, compared, serialized, or used as a table key.</li>
 </ul>
-<h2 id="pollution-control-policy">Pollution Control Policy</h2>
-<p>The Warcraft Wiki's safe execution/taint document states that AddOn and <code>/script</code> are untrusted sources; once taint enters the protected/secure path, Blizzard UI actions may be starved during combat. EAM Avoiding polluting modifications must be considered an architectural boundary, not just a bug.</p>
-<p>Implementation rules:
-- No hooking, overwriting, redefining or monkey-patching Blizzard secure/protected functions, FrameXML core functions, action buttons, unit frames, nameplates, spell casting, targeting, item usage related paths.
-- Do not modify the protected frame's properties, parent, anchors, size, visibility, templates or click behavior in combat.
-- Not identifying secret/protected values, runtime caches, debugging objects or AddOn callbacks that could pollute the Blizzard framework's security chain.
-- EventRouter uses orphan frames; the frames are rendered for display only and do not assume safe operation or protected interaction.
-- When UIPalent frames are required, limit them to unprotected display purposes; if <code>InCombatLockdown()</code> is true, defer structural UI changes.
-- No use of <code>forceinsecure</code>, no attempts to bypass contamination, and no workarounds to suppress Blizzard blocking actions.
-- When contamination, blocked actions, or combat lock errors are discovered, they need to be logged to <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</p>
-<h2 id="aura-api-generation-boundary">Aura API Generation Boundary</h2>
-<p>The following API is only for 12.0.7 old path and migration audit reference, and shall not be directly brought into the 12.1 Native backend:</p>
+<hr />
+<h2 id="cooldown-api-boundaries">Cooldown API Boundaries</h2>
 <ul>
-<li><code>C_UnitAuras.GetBuffDataByIndex</code></li>
-<li><code>C_UnitAuras.GetDebuffDataByIndex</code></li>
-<li><code>C_UnitAuras.GetAuraDataByIndex</code></li>
-<li><code>C_UnitAuras.GetAuraDataByAuraInstanceID</code></li>
-<li><code>C_UnitAuras.GetAuraDuration</code></li>
-<li><code>C_UnitAuras.GetAuraBaseDuration</code></li>
-<li><code>C_UnitAuras.GetRefreshExtendedDuration</code></li>
-<li><code>C_UnitAuras.GetUnitAuraInstanceIDs</code></li>
-<li><code>C_UnitAuras.AddBlockedAura</code> / <code>C_UnitAuras.ClearBlockedAuras</code></li>
-<li><code>C_TooltipInfo.GetUnitBuffByAuraInstanceID</code></li>
-<li><code>C_TooltipInfo.GetUnitDebuffByAuraInstanceID</code></li>
-<li><code>AuraUtil.ForEachAura</code></li>
-<li><code>AuraUtil.FindAuraByName</code></li>
-<li><code>GameTooltip:SetUnitAura</code></li>
-<li>Legacy <code>UnitAura</code> / <code>select(10, UnitAura(...))</code> fallback paths</li>
+<li>Use structured <code>C_Spell</code> APIs: <code>C_Spell.GetSpellCooldown</code>, <code>C_Spell.GetSpellCharges</code>, <code>C_Spell.GetSpellInfo</code>, <code>C_Spell.GetSpellTexture</code>.</li>
+<li>When cooldown info is secret or protected, treat cooldown facts as restricted.</li>
+<li>Never forge cooldown start, duration, or expiration timestamps.</li>
+<li>Avoid repetitive per-frame cooldown queries inside OnUpdate loops.</li>
 </ul>
-<p>12.1 Native backend rules:
-- Don't treat AuraInstanceID as a stable anchor for <code>NeverSecret</code>, don't call the index/slot/instance-ID Aura getter, and don't save AuraData.
-- Aura tracking and display are handed over to the <code>AuraContainer</code>/<code>AuraButton</code> native contract; EAM is only bound to the officially allowed display Region in <code>initializeFrame</code>.
-- Do not do Lua arithmetic/comparisons to derive Pandemic on <code>GetRefreshExtendedDuration</code>, <code>GetAuraBaseDuration</code>, duration, expirationTime or timeLeft; must downgrade when there is no safe ordinary number fact.
-- Do not call <code>AddBlockedAura</code>/<code>ClearBlockedAuras</code> in Native backend; if used in another case in the future, you must first obtain the 12.1 file and PTR taint evidence.
-- Any Secret/protected/display-only value may not be stringified, compared, operated on, serialized, used as a table key, or passed into a custom unsafe chain.
-- 12.0.7 old data extraction can only be retained in explicitly isolated compatible paths and cannot be reflowed to the 12.1 Native runtime.</p>
-<h2 id="current-cooling-time-api-usage-review">Current cooling time API usage review</h2>
-<p>Current main line reference:</p>
-<ul>
-<li><code>C_Spell.GetSpellCooldown</code></li>
-<li><code>C_Spell.GetSpellBaseCooldown</code></li>
-<li><code>C_Spell.GetSpellCharges</code></li>
-<li><code>C_Spell.GetSpellInfo</code></li>
-<li><code>C_Spell.GetSpellTexture</code></li>
-<li><code>C_Spell.GetSpellLink</code></li>
-<li><code>C_Spell.IsSpellUsable</code></li>
-<li><code>C_Spell.DoesSpellExist</code></li>
-<li>Old version global <code>GetSpellCooldown</code>, <code>GetSpellInfo</code>, <code>GetSpellTexture</code>,
-  <code>GetSpellLink</code>, <code>GetSpellCharges</code>, <code>IsUsableSpell</code></li>
-<li><code>C_Secrets.ShouldSpellCooldownBeSecret</code></li>
-<li>GCD Spell ID <code>61304</code></li>
+<hr />
+<h2 id="secret-protected-values-policy">Secret &amp; Protected Values Policy</h2>
+<p>When data is restricted or inaccessible in combat:</p>
+<ol>
+<li><strong>Four Core Safety Check APIs</strong>:</li>
+<li><code>issecretvalue(value)</code>: Checks if a value is categorized as a Secret Value.</li>
+<li><code>canaccessvalue(value)</code>: Checks if the current context has read access.</li>
+<li><code>canaccesstable(table)</code>: Evaluates if table keys and values can be traversed.</li>
+<li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Checks if table structure contains secret properties.</li>
+<li><strong>Table Indexing Protection (CRITICAL)</strong>:</li>
+<li>AddOns MUST NOT use unverified keys that may be Secret Values to index standard Lua tables (e.g. <code>spellID</code> or <code>text</code> returned during combat restrictions).</li>
+<li>Attempting to index with a secret key triggers a fatal Lua error:
+     <code>attempted to index a table that cannot be indexed with Key Secrets</code>.</li>
+<li>Always guard lookups: <code>if not issecretvalue(key) and canaccesstable(tbl) then ... end</code>.</li>
+<li><strong>No <code>TooltipUtil.SurfaceArgs</code></strong>:</li>
+<li>In 12.x / Midnight, <code>TooltipUtil.SurfaceArgs</code> has been completely removed. Calling it results in a fatal <code>nil value</code> error.</li>
+<li><strong>C-Level Write-Only Sinks</strong>:</li>
+<li>For protected numbers, route them directly into native Blizzard C-Level sinks without Lua readback:<ul>
+<li><code>FontString:SetFormattedText("%d", secretNum)</code> (AllowedWhenTainted = true, SecretAspect.Text).</li>
+<li><code>StatusBar:SetValue(secretNum)</code> (Write-only sink).</li>
+<li>Native <code>DurationObject</code> for CooldownFrame widgets.</li>
 </ul>
-<p>Rewrite rules:</p>
+</li>
+</ol>
+<hr />
+<h2 id="prohibited-patterns-summary">Prohibited Patterns Summary</h2>
 <ul>
-<li>Prefer structured <code>C_Spell</code> returns.</li>
-<li>Treat cooldown facts as unavailable when secret/protected.</li>
-<li>Do not fake the cooldown start, duration, or expiration time.</li>
-<li>Avoid repeated cooldown queries every frame.</li>
-</ul>
-<h2 id="current-item-cooldown-api-usage-review">Current item cooldown API usage review</h2>
-<p>Current main line reference:</p>
-<ul>
-<li><code>C_Item.GetItemCooldown</code></li>
-<li><code>C_Item.GetItemSpell</code></li>
-<li><code>C_Item.DoesItemExistByID</code></li>
-<li><code>C_Container.GetItemCooldown</code> as a fallback for an alias layer</li>
-<li>Old version global <code>GetItemCooldown</code>, <code>GetItemSpell</code></li>
-<li><code>GetInventoryItemCooldown</code></li>
-<li><code>GetInventoryItemID</code></li>
-<li>Optional <code>HeroDBC.DBC.ItemSpell</code></li>
-<li>Large item range scanning in <code>EventAlert_ItemSpellCache.lua</code></li>
-</ul>
-<p>Rewrite rules:</p>
-<ul>
-<li>First supports direct itemID cooling time monitoring.</li>
-<li>Do not scan a wide range of items during normal operation.</li>
-<li>Any item-spell relationship cache must be opt-in, idle-only, interruptible,
-  FPS awareness and combat awareness.</li>
-</ul>
-<h2 id="current-specialization-and-localization-api-review">Current specialization and localization API review</h2>
-<p>Current main line reference:</p>
-<ul>
-<li><code>GetSpecializationInfoForClassID</code></li>
-<li><code>GetClassInfo</code></li>
-<li><code>GetSpecializationInfo</code></li>
-</ul>
-<p>Rewrite rules:
-- <strong>DYNAMIC LOCALIZATION</strong>: Use native API to query for match strings that are dynamically aligned with the client's current language setting, rather than hardcoding localization specialization or class names in the configuration UI.
-- <strong>Canonical dropdown filtering</strong>: Map category tags to category IDs (use static enum mapping, e.g. <code>CLASS_TOKEN_TO_ID</code> matches WoW category ID). Dynamically retrieve the canonical name via <code>GetSpecializationInfoForClassID(classID, specIndex)</code> (where <code>classID</code> is a number between 1 and 13 and <code>specIndex</code> is a number between 1 and 4).
-- <strong>Dual Path Fallback</strong>: When native localization API returns <code>nil</code> or null, use a static localization table (<code>EAM.L</code>) to implement reliable fallback mapping to ensure that UI elements always have readable names.</p>
-<h2 id="secretprotected-value-policy">Secret/Protected Value Policy</h2>
-<p>When data is not secure or available:</p>
-<ul>
-<li><strong>Four security checks API</strong>:</li>
-<li><code>issecretvalue(value)</code>: Check if a value is classified as secret.</li>
-<li><code>canaccessvalue(value)</code>: Determine whether the current context has permission to read a certain value.</li>
-<li><code>canaccesstable(table)</code>: Evaluates whether the table's keys and values ​​are readable.</li>
-<li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Check whether the table structure is restricted or contains secrets.</li>
-<li><strong>Table Index Protection (Critical)</strong>:</li>
-<li>AddOn MUST NOT index standard Lua tables using unvalidated keys that may be "secret values" (e.g. returning <code>spellId</code> or <code>text</code> during combat restrictions).</li>
-<li>Attempting to index a table using a key produces a fatal error: "Attempting to index a table that cannot be indexed using a key."</li>
-<li>Always use "if not issecretvalue(key) and canaccesstable(tbl) then ... end" to protect table lookups.</li>
-<li><strong>Data-Driven Tooltips and Privacy Defense</strong>:</li>
-<li>A direct <code>C_TooltipInfo</code> query (<code>GetUnitBuffByAuraInstanceID</code>) in the combat return structure <code>TooltipData</code> may be marked as a "secret table".</li>
-<li>When parsing static values ​​from <code>line.leftText</code>, be sure to use "if text and not issecretvalue(text) and canaccessvalue(text) then ... end" to prevent secret propagation.</li>
-<li><strong>None <code>TooltipUtil.SurfaceArgs</code></strong>: In 12.x/Midnight, the tooltip table is displayed natively. The <code>TooltipUtil.SurfaceArgs</code> helper has been completely removed; trying to call it throws a fatal "nil value" Lua error.</li>
-<li>Continue rendering safe state such as icon/name if available.</li>
-<li>Use timer mode <code>protected</code>, <code>displayOnly</code> or <code>unknown</code>.</li>
-<li>Added boundary warning for debugging status.</li>
-<li>Schedule non-combat refreshes only when it is safe to do so.</li>
-<li>Never confuse guesswork with fact.</li>
-<li>Never pass unsafe values ​​into the secure/protected UI chain.</li>
-</ul>
-<h2 id="intentionally-avoided-apimode">Intentionally avoided API/mode</h2>
-<ul>
-<li>Classic API branch.</li>
-<li>MOP/Cata/Wrath/TBC API returns the mapping.</li>
+<li>Classic / MoP / TBC / Wrath backward-compatibility forks in the active mainline.</li>
 <li><code>RegisterAllEvents</code>.</li>
-<li>Tooltip scan as normal source (only use it for low frequency static duration crawl fallback).</li>
-<li><code>TooltipUtil.SurfaceArgs</code> usage (always let the native engine display parameters).</li>
-<li>Scan a large number of items ID/combat during login.</li>
-<li>Each icon represents <code>SetScript("OnUpdate")</code>.</li>
-<li>Duplicate <code>C_Timer.After(function() ...)</code> chain in hot path.</li>
-<li>Configured external frame dependencies.</li>
-<li><code>forceinsecure</code> or any taint workaround to bypass or suppress blocked operations.</li>
-</ul>
-<h2 id="2026-07-26-121-auracontainer-boundary">2026-07-26: 12.1 AuraContainer boundary</h2>
-<ul>
-<li>Native mode does not register or resolve <code>UNIT_AURA</code>, nor does it call the index/slot/instance-ID Aura getter.</li>
-<li><code>initializeFrame</code> only binds Icon, DurationCooldown, DurationText, ApplicationCount and SpellName Region; does not read AuraData.</li>
-<li>AuraButton does not derive state from <code>OnShow</code>, <code>OnHide</code>, <code>IsShown</code>, Hooks, or events.</li>
-<li>Secret identity filter only ensures friendly helpful or enemy harmful; the reverse polarity must be marked as limitation.</li>
-<li>68914 Allow combat to create containers, but EAM still adopts the out-of-combat structure modification policy.</li>
-</ul>
-<h2 id="2026-07-27-gametooltip-id-and-eam-own-popup-boundary">2026-07-27: GameTooltip ID and EAM own Popup boundary</h2>
-<ul>
-<li><code>TooltipDataProcessor.AddTooltipPostCall</code> is registered globally according to TooltipDataType; the callback immediately excludes other Tooltips with <code>tooltip == GameTooltip</code>. Initialization must be idempotent, since FrameXML has no corresponding deregistration of API.</li>
-<li>Post-call callback can only append Tooltip display text and update pure scalar candidates. Popup UI cannot be created, displayed or operated within the callback; Popup can only be opened by subsequent <code>MODIFIER_STATE_CHANGED</code> events.</li>
-<li>Spell/Item is only displayed and cached after the entire <code>TooltipData</code> and <code>data.id</code> pass the Secret/access/positive integer check; candidates are only kept for five seconds and contain only normal scalar.</li>
-<li>Macro does not use <code>TooltipData.id</code>. <code>GameTooltip:GetProcessingTooltipInfo()</code> and getter metadata are the actual source of PTR 68914 FrameXML, not the stable Generated API contract; only when it is safe and the source is <code>GetAction</code>, call <code>GetActionInfo</code> with the action slot, and then <code>GetMacroSpell</code>/<code>GetMacroItem</code> parse. Any API, source, or value that is unavailable will always fall back to manually entering the spell/item ID.</li>
-<li>UnitAura callback never reads <code>TooltipData</code>, AuraData, AuraButton, Aura index/slot/instance IDs, nor parses remaining time or Tooltip text. 12.1 Priority is given to the official session CVar <code>tooltipShowAuraSpellIDs=1</code> to display the Aura ID; when the CVar does not exist, the setting fails, or the readback fails, the Tooltip/Popup must clearly indicate "Official ID display is not available" and only accept the user's input of known IDs.</li>
-<li>Not using Ctrl+Alt+right-click: <code>GLOBAL_MOUSE_DOWN</code> can only observe, but cannot inhibit item use, equipment or Blizzard actions; 12.1 AuraButton also has Forbidden Aspects. The safe interaction is changed to pressing the precise <code>Ctrl+Alt</code> after the cursor stays, opening the EAM own Popup, and then clicking the EAM button to confirm.</li>
-<li>Popup does not Hook/overwrite Blizzard <code>OnClick</code>, <code>OnMouseDown</code>, <code>OnMouseUp</code>, does not register the secure action attribute, and does not simulate mouse events. Combat, keyboard focus, Secret/unreadable value, missing necessary check API, Tooltip is hidden, Tooltip type changes or candidate timeout are all fail-closed; safe display text can be added during combat, but a candidate that can be replayed after the battle cannot be created.</li>
-<li>Writing only goes through <code>SavedVariables.add*Alert()</code>; <code>action</code> must first pass the safe string and four EAM action whitelists. Only <code>added</code>/<code>updated</code> notifies the service to refresh, <code>unchanged</code> does not increase revision and does not trigger unnecessary refresh.</li>
-<li>The generation/owner identity of the same type of Tooltip has no public contract that can be safely relied on; it is currently overwritten with the latest post-call, five seconds TTL, shown and tooltip type are jointly constrained, and PTR is still required to quickly switch for actual testing. The initialization adopts single idempotence. If the ability to load the current API is temporarily lacking, it will not be retried to avoid repeated registration of PostCall without unblocking API.</li>
-</ul>
-<h2 id="2026-08-08-unitpower-and-ptr8-boundary-added">2026-08-08: UnitPower and PTR8 boundary added</h2>
-<ul>
-<li><code>UnitPower</code>, <code>UnitPowerMax</code>, <code>UnitPowerPercent</code> must not be read by Lua in a combat/Secret context and do arithmetic, comparison, stringification or table keying; EAM can only be read in non-combat-safe numeric paths explicitly allowed by predicate.</li>
-<li>User-supplied <code>StatusBar:SetUnit</code>, <code>SetPowerTextFontString</code>, <code>SetOnUpdateMode</code> have not been confirmed in the PTR 12.1.0.69189 public build files; they must not be hardcoded in a new build without official documentation.</li>
-<li>The main resource Secret display adopts one-way C-level sink: <code>StatusBar:SetValue</code> or <code>Texture:SetRadialProgressBarPercent</code>; the widget value is not read back.</li>
-<li>PTR8 Pandemic/Dispel APIs only create Region/texture in initializeFrame; do not read <code>Shown</code>, do not create custom tickers, and disable container cleanup managed by Blizzard.</li>
+<li>Heavy tooltip scanning as a routine data source.</li>
+<li>Bulk item ID iteration during login or combat.</li>
+<li>Per-icon <code>SetScript("OnUpdate")</code> timer loops.</li>
+<li>Chained <code>C_Timer.After</code> closures in hot execution paths.</li>
 </ul>
     </div>
 

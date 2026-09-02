@@ -674,167 +674,49 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="performance-guide">Performance Guide</h1>
-<h2 id="hot-path-candidates">Hot path candidates</h2>
-<p>Current mainline hot path candidates:</p>
-<ul>
-<li><code>Main/EventAlert_Core.lua</code></li>
-<li>Event dispatch and handlers</li>
-<li><code>COMBAT_LOG_EVENT_UNFILTERED</code></li>
-<li><code>UNIT_AURA</code></li>
-<li><code>BAG_UPDATE_COOLDOWN</code></li>
-<li><code>SPELL_UPDATE_COOLDOWN</code></li>
-<li><code>SPELL_UPDATE_CHARGES</code></li>
-<li><code>SPELL_UPDATE_USABLE</code></li>
-<li><code>ACTIONBAR_UPDATE_COOLDOWN</code></li>
-<li>Use code /coroutine to perform a lookup scan</li>
-<li><code>Main/EventAlert_Aura_Self.lua</code></li>
-<li><code>Buffs_Update</code></li>
-<li><code>OnUpdate</code></li>
-<li><code>PositionFrames</code></li>
-<li><code>Main/EventAlert_Aura_Target.lua</code></li>
-<li><code>TarBuffs_Update</code></li>
-<li><code>OnTarUpdate</code></li>
-<li><code>TarPositionFrames</code></li>
-<li><code>Main/EventAlert_Cooldown.lua</code></li>
-<li><code>OnSCDUpdate</code></li>
-<li><code>ScdBuffs_Update</code></li>
-<li><code>UpdateScdFrame</code></li>
-<li><code>ScdPositionFrames</code></li>
-<li><code>Main/EventAlert_ItemSpellCache.lua</code></li>
-<li>Item range scan builder</li>
-<li><code>Main/EventAlert_SpecialPower.lua</code></li>
-<li>Resource /power updated</li>
-<li>rune OnUpdate script</li>
-<li><code>Main/EventAlert_CreateFrames.lua</code></li>
-<li>Frame creation and scrolling list generation</li>
-<li><code>Main/EventAlert_EAFun.lua</code></li>
-<li>Layout configuration, tool tips, timer text, debugging label assistant</li>
-</ul>
-<h2 id="current-onupdate-c_timer-usage">Current OnUpdate / C_Timer usage</h2>
-<p>Observed mainline usage:</p>
-<ul>
-<li><code>EventAlert_Core.lua</code></li>
-<li>recurses <code>C_Timer.After(tempInterval, RecurringFrameUpdate)</code></li>
-<li>FPS - Adjusted the cadence of position /special frame updates</li>
-<li><code>C_Timer.NewTicker(1 / GetFramerate(), function() ...)</code> is used to find</li>
-<li><code>EventAlert_Aura_Self.lua</code></li>
-<li><code>G:OnUpdate(spellId)</code> for Aura timer refresh</li>
-<li>previously assigned <strong>E​​​AMCODE_5</strong>
-    <code>C_Timer.After(delay, tempFunc)</code></li>
-<li><code>EventAlert_Aura_Target.lua</code></li>
-<li><code>C_Timer.After(delay, G.OnTarUpdate, G, spellId)</code></li>
-<li><code>EventAlert_Cooldown.lua</code></li>
-<li><code>C_Timer.After(nextInterval, G.OnSCDUpdate, G, sid)</code></li>
-<li><code>EventAlert_ItemSpellCache.lua</code></li>
-<li><code>C_Timer.NewTicker(0.01, function() ...)</code></li>
-<li><code>C_Timer.After(1, ProcessBatch)</code> for batch scan continuation</li>
-<li><code>EventAlert_SpecialPower.lua</code></li>
-<li>Each rune <code>SetScript("OnUpdate", function(self, elapsedTime) ...)</code></li>
-<li><code>C_Timer.After</code> for life bloom refresh</li>
-<li><code>EventAlert_Util.lua</code></li>
-<li>Call <code>Lib_ZYF:StopOnUpdate(eaf)</code> during frame cleaning</li>
-</ul>
-<p>Rewrite rules:</p>
-<ul>
-<li>Replace them with a central dispatcher.</li>
-<li>Dispatcher callback records should be reusable and keyed by alert/service ID.</li>
-<li>No per-icon timers and closures assigned in repeated refresh paths.</li>
-</ul>
-<h2 id="allocation-policy">Allocation policy</h2>
-<p>Use <code>table.create</code> for:</p>
-<ul>
-<li>Configure alert array
--Activity status array</li>
-<li>dirty queue</li>
-<li>Illustrated pool records</li>
-<li>Scheduler operation records</li>
-<li>Debug ring buffer</li>
-<li>
-<p>Default profile template
-Avoid being in the hot path:</p>
-</li>
-<li>
-<p>Transient table for each Aura</p>
-</li>
-<li><code>table.insert</code> when direct numeric index allocation is sufficient</li>
-<li><code>pairs</code>/<code>ipairs</code> where deterministic numeric loops are available</li>
-<li>Temporary string construction</li>
-<li>Anonymous callback function</li>
-</ul>
-<h2 id="tablefreeze-strategy">table.freeze strategy</h2>
-<p>Freeze only:</p>
-<ul>
-<li>constant</li>
-<li>enumerate</li>
-<li>status name</li>
-<li>Mode description</li>
-<li>Immutable default field configuration file</li>
-<li>Static module contracts</li>
-</ul>
-<p>Never freeze:</p>
-<ul>
-<li>SavedVariables</li>
-<li>Halo/cooldown state during runtime</li>
-<li>Illustration of rendering status</li>
-<li>UI framework record</li>
-<li>Scheduler queue</li>
-<li>pool object</li>
-<li>Debug snapshot</li>
-</ul>
-<h2 id="ui-writing-strategy">UI writing strategy</h2>
-<p>The renderer must cache the last rendered value and skip no-op writes:</p>
-<ul>
-<li><code>SetText</code></li>
-<li><code>SetTexture</code></li>
-<li><code>SetAlpha</code></li>
-<li><code>SetCooldown</code></li>
-<li><code>SetPoint</code></li>
-<li><code>SetSize</code></li>
-<li><code>Show</code> / <code>Hide</code></li>
-</ul>
-<p>The layout should be batched:</p>
+<!-- EAM_DOCUMENTATION_SOURCE: enUS -->
+<h1 id="performance-luajit-optimization-guide">Performance &amp; LuaJIT Optimization Guide</h1>
+<h2 id="core-performance-principles">Core Performance Principles</h2>
 <ol>
-<li>Collect dirty layout keys.</li>
-<li>Hide the parent frame.</li>
-<li>Only apply the changed location /sizes.</li>
-<li>Show the parent frame once.</li>
+<li><strong>Zero Garbage Collection Allocation in Hot Paths</strong>:
+   Eliminate transient table allocations, anonymous closure instantiations, and string concatenations inside <code>OnUpdate</code> loops or high-frequency event handlers (<code>UNIT_AURA</code>, <code>SPELL_UPDATE_COOLDOWN</code>).</li>
+<li><strong>Centralized Scheduling</strong>:
+   Replace scattered <code>C_Timer.After</code> closures and per-icon <code>OnUpdate</code> scripts with a single central <code>Scheduler</code> frame budget.</li>
+<li><strong>Recycled State Objects (StatePool)</strong>:
+   All state records (<code>AuraState</code>, <code>CooldownState</code>, <code>TimerToken</code>) are managed through reusable object pools (<code>acquire</code> / <code>release</code>).</li>
 </ol>
-<h2 id="combatlow-fps-throttling">combat/low-FPS throttling</h2>
-<p>Heavy work must be blocked, delayed, or degraded when:</p>
+<hr />
+<h2 id="memory-allocation-policies">Memory Allocation Policies</h2>
+<h3 id="allowed-pre-allocations">Allowed Pre-Allocations:</h3>
 <ul>
-<li><code>InCombatLockdown()</code> is true;</li>
-<li>FPS is below the configured threshold;</li>
-<li>The work requires large scans;</li>
-<li>Protected /secret boundary reached.</li>
+<li>Bounded alert arrays and dirty queues pre-allocated with <code>table.create(narr, nrec)</code>.</li>
+<li>Icon frame objects prewarmed during non-combat loading.</li>
+<li>Reusable timer token tables indexed by alert ID.</li>
 </ul>
-<p>Allowed downgrade behavior:</p>
+<h3 id="strictly-prohibited-in-hot-paths">Strictly Prohibited in Hot Paths:</h3>
 <ul>
-<li>Show only the security icon /name;</li>
-<li>Mark the timer as <code>unknown</code>, <code>protected</code> or <code>displayOnly</code>;</li>
-<li>Skip optional item caching process;</li>
-<li>Schedule non-combat refreshes.</li>
+<li><strong>Anonymous Closures</strong>: Avoid <code>C_Timer.After(delay, function() ... end)</code>. Use parameterized handlers or static callback pointers.</li>
+<li><strong><code>table.insert</code> in Loops</strong>: Use direct integer indexing (<code>arr[#arr + 1] = item</code> or pre-indexed assignment).</li>
+<li><strong>Dynamic String Concatenation</strong>: Avoid <code>text:SetText(str1 .. " " .. str2)</code>. Use <code>FontString:SetFormattedText(format, ...)</code> which formats directly in Blizzard's C-engine without allocating Lua string objects.</li>
+<li><strong>Unbounded <code>pairs</code> Traversal</strong>: Use numeric <code>for index = 1, count do</code> arrays wherever deterministic order is feasible.</li>
 </ul>
-<h2 id="current-configuration-risk">Current configuration risk</h2>
-<p>For the first time, an audit identified these possible sources:</p>
+<hr />
+<h2 id="table-freezing-policy-tablefreeze">Table Freezing Policy (<code>table.freeze</code>)</h2>
+<p>To facilitate LuaJIT trace compilation and enforce read-only immutability, apply <code>table.freeze</code> strictly to:
+- Static constants and enumerations (<code>Constants.lua</code>).
+- Theme definitions and color palettes.
+- Text placement schemas (<code>TextPlacementContract.json</code>).
+- Static layout offset vectors (<code>LAYOUT_OFFSETS</code>).</p>
+<p><strong>Never Freeze</strong>:
+- Runtime state caches (<code>AuraState</code>, <code>CooldownState</code>).
+- Active object pools (<code>IconPool</code>, <code>StatePool</code>).
+- <code>SavedVariables</code> tables (<code>EAM_DB</code>).
+- Registered text binding dictionaries (<code>Locale.lua</code>).</p>
+<hr />
+<h2 id="combat-lockdown-optimization">Combat Lockdown Optimization</h2>
 <ul>
-<li>Repeat Aura scan cycle for more than 1..40 useful and harmful exponents;</li>
-<li><code>AuraUtil.ForEachAura</code> callback use;</li>
-<li>Tooltip call post hook and tooltip parsing path;</li>
-<li><code>C_Timer.After(function() ...)</code> closure allocation in Aura update;</li>
-<li>Dynamic frame creation in cooldown update backup;</li>
-<li>Item range scanning with timer callback;</li>
-<li>Bugfix string formatting in label and search output;</li>
-<li>Unexpected global variables lead to unclear lifetime and GC behavior.</li>
-</ul>
-<h2 id="2026-07-26-native-aura-performance-budget">2026-07-26: Native Aura Performance Budget</h2>
-<ul>
-<li>Combat Aura updates are handled by Blizzard AuraContainer/AuraButton; EAM hot path configuration, AuraState, OnUpdate and Scheduler token are all 0.</li>
-<li>Rules are only compiled during login, specialization/setting changes, and out-of-combat pending commits.</li>
-<li>If the fingerprint remains unchanged, no new container will be created and the sound will not be re-registered.</li>
-<li>Compatible rules are merged into AuraGroup; player/target each retains the first Slot PoC.</li>
-<li>Only the count is retained after the old container is deactivated, and the Lua pairing table for each rebuild is not saved.</li>
+<li><strong>Pre-Anchored Widgets</strong>: Pre-create and calculate static positions for all active cooldown and aura slots during non-combat states.</li>
+<li><strong>Zero Layout Churn</strong>: During combat, toggling icon display state is achieved via <code>SetAlpha(0)</code> or desaturated masks (<code>SetDesaturated(true)</code>), 100% avoiding <code>icon:SetPoint</code> calls while <code>InCombatLockdown() == true</code>.</li>
 </ul>
     </div>
 
