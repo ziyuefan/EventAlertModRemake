@@ -5,19 +5,20 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-09-04.18 (Alpha 8.4 發布完成 / 單一屬性圖示拖曳格式化修復 / Ketho 參考庫收錄 / GitHub Pre-Release 與 CurseForge 8805930 成功同步)。
+目前快照版本：2026-09-04.19 (Alpha 8.4 發布完成 / 停用 SRC 打包與上傳 / 治理文檔與 Deploy 腳本同步更新)。
 
 ## 2026-09-04 多進度儲存點：Alpha 8.4 Pre-release 與 CurseForge 發布續接狀態（現行儲存點）
 
-- current-of-truth：建立多進度續接儲存點（Checkpoint）；全專案所有檔案變更、語法檢查、業務沙盒與代碼契約檢驗（497/497 PASS）全數完成；全專案 115 個目錄與 1496 個檔案之 `FOLDER_INDEX.html` 已建置完畢；GitHub Pre-release 與 CurseForge 雙端最新修復套件已全數發布上線。
+- current-of-truth：建立多進度續接儲存點（Checkpoint）；全專案所有檔案變更、語法檢查、業務沙盒與代碼契約檢驗（497/497 PASS）全數完成；全專案 115 個目錄與 1496 個檔案之 `FOLDER_INDEX.html` 已建置完畢；GitHub Pre-release 與 CurseForge 雙端最新修復套件已全數發布上線；自此全面停用本機與 Release 的 SRC 重複打包流程。
 - 當前多進度各環節達成狀態（Multi-Stage Status）：
   1. [x] 【Alpha 8.4 版本全要素梳理完成】：整理 GitHub tag `alpha-8.3` (commit 517fb81, 2026.08.28) 之後全部變更（2D Grid 換行排版、冷卻戰鬥透明度常駐、跑速戰鬥限制防護、人物屬性戰鬥更新、滾動選取高亮），更新 4 份 changelog、4 份 README、TOC 與 AI 日誌。
   2. [x] 【跑速戰鬥中顯示 14.3% 根因排查與修復完成】：暴雪 12.0.5+ 戰鬥中 `GetUnitSpeed("player")` 受限回傳 1.0 導致 `(1.0/7.0)*100 = 14.3%`。於 `PlayerStatService.lua` 實作受限檢測與真實快取 `lastKnownStats` 安全回退，且戰鬥中禁止以受限值覆蓋快取。
   3. [x] 【全資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完成】：實作 `.AI/Tools/generate_folder_indexes.py`，全離線深色玻璃擬態 UI，內嵌 JSON-LD (`DirectoryGovernanceReport`) 與 meta 標籤，涵蓋 115 個工作目錄、1496 個檔案，附即時檢索篩選器，`--verify` 100% 通過。
   4. [x] 【自動化質量門禁全綠通過】：Lua 語法 76/76 PASS、Flow 業務狀態機 85/85 PASS、Validation Contracts 497/497 PASS。
-  5. [x] 【更新 GitHub 文檔與發布 Alpha 8.4 Pre-release 完成】：文檔站以 `batch_convert_docs.py` 全數編譯至 `.AI/docs_html/`，Git 提交推送至 `origin/main`，成功發布 GitHub Pre-release：`https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.4`，並上傳最新 Hotfix 插件與源碼包。
+  5. [x] 【更新 GitHub 文檔與發布 Alpha 8.4 Pre-release 完成】：文檔站以 `batch_convert_docs.py` 全數編譯至 `.AI/docs_html/`，Git 提交推送至 `origin/main`，成功發布 GitHub Pre-release：`https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.4`，附件為最新 Hotfix 插件包。
   6. [x] 【發布至 CurseForge 完成】：呼叫 `Deploy/Upload-CurseForge.ps1 -NonInteractive` 成功上傳正式服插件包 `EventAlertMod_12.1.0_Alpha_8.4_20260904_181245.zip`，CurseForge 檔案 ID：`8805930`（專案網址：`https://www.curseforge.com/wow/addons/eventalertmod`）。
   7. [x] 【單一屬性圖示拖曳報錯修復與 Ketho 權威庫全面收錄】：修復 `PlayerStatService.lua:1452` `string.format` 佔位符（3 個）與參數數量（2 個）不符引發 bad argument #4 的 Lua 錯誤；收錄 Ketho 三大權威資源庫 (WowDoc, BlizzardInterfaceResources, wow-ui-source-midnight-ptr) 至 4 份核心文檔並建立專題問題日誌。
+  8. [x] 【停用本機與 GitHub Release 之 SRC 打包與上傳】：遵照少年欸指示，因 GitHub Release 於發布 Tag 時原生自動生成完整 Source code (zip/tar.gz)，本機日常與發布全面停用專案 SRC 打包，同步清理 GitHub `alpha-8.4` Release 之重複 SRC 附件，並重構 `Deploy/Publish-GitHubRelease.ps1` 排除 SRC 產生與上傳流程。
 
 ## 2026-09-04 Retail 12.1.0 Alpha 8.4 2D 矩陣折行排版、預渲染戰鬥透明度切換與跑速防護
 

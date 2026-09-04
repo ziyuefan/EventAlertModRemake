@@ -29,7 +29,7 @@
 ## 目前目錄契約
 
 - `EventAlertMod/`：唯一可打包的插件目錄，必須包含 TOC、Core、Data、Debug、Locale、Managers、Media、Services、UI、README 與 changelog。
-- `Deploy/`：部署、插件包與專案 source 包工具。
+- `Deploy/`：部署與插件包封裝工具（GitHub Release 原生自動打包 Source，本機與發布已停用專案 SRC 打包）。
 - `Dist/`：僅存放本機生成的 ZIP／摘要；不再保留 `Dist/EventAlertMod` 中介副本。
 - `.AI/`：AGENTS、PROJECT_MEMORY、Docs、Tools、Tests、Schemas、TestResults、候選資料、歷史參考、備份與專案 Skills。
 - 根目錄與 `EventAlertMod/` 的 `README.md`、`changelog.txt` 必須保持同步。
@@ -39,8 +39,9 @@
 1. 新根目錄、`EventAlertMod/` 唯一插件來源、`.AI/` 治理、`Deploy/` 工具與 `Dist/` ignored 契約已完成。
 2. Registry／JSON fallback、根目錄確認、自訂 `-WowRoot`、三通道版本選單、PTR／XPTR 是否納入 Retail 與 Reparse Point fail-closed 已完成離線驗證。
 3. 玩家職業資源獨立模組已完成核心重構：17 種資源、13 職業／40 組專精拓撲、獨立 capability／renderer ownership、Druid 五資源形態 Flow、Probe／sampler gate、每資源設定與非戰鬥即時套用均已離線驗證；WoW runtime 仍 pending。
-4. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 已同步；封裝前檢通過並建立 AddOn／source 兩包。Retail／PTR／XPTR 玩家實機簽收仍未完成，且本輪尚未執行 Git commit、push、tag 或 GitHub Release。
+4. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 已同步；封裝前檢通過並建立 AddOn 插件包。Retail／PTR／XPTR 玩家實機簽收仍未完成，且本輪尚未執行 Git commit、push、tag 或 GitHub Release。
 5. 2026-09-04 確立雙軌治理體系，新增專供 AI 代理人讀取約束之結構化 XML 指導規範（`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`）與說明手冊（`33_AI_GOVERNANCE_DIRECTIVE.md`），明確四大增設/加載觸發門檻與跨模型記憶錨定機制。
+6. 2026-09-04 停用 SRC 打包發布：GitHub Release 於發布 Tag 時原生自動生成完整 Source code（zip / tar.gz），本機全面停用 SRC 打包，GitHub Release 亦不再上傳 SRC 附件，避免重疊產物與資源浪費。
 
 ## 已完成的結構工作
 

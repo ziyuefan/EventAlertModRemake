@@ -281,10 +281,10 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 - 當使用者輸入「壓縮開發版」時，直接執行 `pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -PackageLabel DEV`。
 - 當使用者需要「發布至 CurseForge」時，執行 `pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1`。
 - 當使用者需要「模擬發布」時，執行 `pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -DryRun`。
-- 資料夾前需確認 `EventAlertMod/EventAlertMod.toc` 的 `## Version:` 符合 `EventAlertMod_MN_yyyyMMdd`。
-- 預算檔名必須符合 `EventAlertMod_MN_yyyyMMdd_HHmmss.zip`。
+- 封裝檔名必須符合 `EventAlertMod_MN_yyyyMMdd_HHmmss.zip`。
 - 壓縮後返回 zip 路徑、Lua 語法檢查結果、排除資料夾檢查結果。
 - 相關規則請參閱 `.AI/Docs/14_PACKAGING_GUIDE.md`。
+- **原始碼包（SRC）規範**：自 2026-09-04 起，GitHub Release 發布時 GitHub 會自動為該 Tag 打包完整的 Source code (zip / tar.gz)；本機不再打包或生成專案 SRC 原始碼版本，上傳 GitHub Release 亦不再上傳 SRC 額外附件，徹底避免產物重複。
 
 ##回最終傳必須包含
 

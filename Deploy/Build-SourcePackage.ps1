@@ -3,9 +3,9 @@ EventAlertMod Retail Rewrite
 檔案: Deploy\Build-SourcePackage.ps1
 
 責任:
-- 建立未來 Release 用的完整 Project_EventAlertMod 原始碼包。
-- 保留專案原始碼與 AI 治理資料，排除本機、衍生與敏感暫存內容。
-- 產生 SHA256 與 archive inventory，並驗證 ZIP 內容。
+- 【2026-09-04 停用聲明】：GitHub Release 於發布 Tag 時會自動產生完整的 Source code (zip/tar.gz)，本機發布流程全面停用專案 SRC 打包。
+- 本腳本僅保留作歷史規範與 AST 契約靜態檢驗之用，日常與自動化發布管線不再調用。
+- 原責任：建立完整 Project_EventAlertMod 原始碼包，排除本機、衍生與敏感暫存內容。
 
 邊界:
 - 不部署、不上傳、不執行 Git。

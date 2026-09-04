@@ -800,10 +800,10 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 <li>當使用者輸入「壓縮開發版」時，直接執行 <code>pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -PackageLabel DEV</code>。</li>
 <li>當使用者需要「發布至 CurseForge」時，執行 <code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1</code>。</li>
 <li>當使用者需要「模擬發布」時，執行 <code>pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -DryRun</code>。</li>
-<li>資料夾前需確認 <code>EventAlertMod/EventAlertMod.toc</code> 的 <code>## Version:</code> 符合 <code>EventAlertMod_MN_yyyyMMdd</code>。</li>
-<li>預算檔名必須符合 <code>EventAlertMod_MN_yyyyMMdd_HHmmss.zip</code>。</li>
+<li>封裝檔名必須符合 <code>EventAlertMod_MN_yyyyMMdd_HHmmss.zip</code>。</li>
 <li>壓縮後返回 zip 路徑、Lua 語法檢查結果、排除資料夾檢查結果。</li>
 <li>相關規則請參閱 <code>.AI/Docs/14_PACKAGING_GUIDE.md</code>。</li>
+<li><strong>原始碼包（SRC）規範</strong>：自 2026-09-04 起，GitHub Release 發布時 GitHub 會自動為該 Tag 打包完整的 Source code (zip / tar.gz)；本機不再打包或生成專案 SRC 原始碼版本，上傳 GitHub Release 亦不再上傳 SRC 額外附件，徹底避免產物重複。</li>
 </ul>
 <h2 id="_15">回最終傳必須包含</h2>
 <p>相關實踐的最終報告至少已上市：</p>

@@ -20,6 +20,7 @@
     -- In-Combat Player Stats Live Updates & C-Level Zero-GC Rendering:
        -- Full adoption of native FontString:SetFormattedText for all 18 stat displays, achieving 0.00ms C-level formatting with zero Lua GC string allocation.
        -- Implemented getRawValue routing across 18 attributes, aligning with Retail 12.x / Midnight AllowedWhenTainted and Enum.SecretAspect.Text contracts, fixing stat freezing in combat.
+       -- Single Stat Icon Drag-and-Drop Fix: Fixed a bad argument #4 (format) Lua error in PlayerStatService caused by argument mismatch with localized string templates upon releasing dragged stat icons.
 -- [Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
     -- Next-Gen Master Spell Catalog & Intelligent Presets:
        -- Built-in 5-language offline database: 4,463 core spells & 466 auras covering 13 classes, 40 specs, and 39 Hero Talent trees, with real-time switching across zhTW, zhCN, enUS, koKR, and ruRU.

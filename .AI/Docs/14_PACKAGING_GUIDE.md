@@ -11,11 +11,10 @@
 - ZIP 內必須是 `EventAlertMod/` exact tree，保留插件資料夾內的 `EventAlertMod.toc`、`Core/`、`Data/`、`Debug/`、`Locale/`、`Managers/`、`Media/`、`Services/`、`UI/` 及插件內公開說明；不納入 `.AI`、`Deploy`、`Dist`、測試、備份或本機 deploy。
 - 產物寫入 `D:\Project_EventAlertMod\Dist`；`Dist` 為 ignored 本機產物區，不提交 Git，也不直接部署成 AddOn 來源。
 
-### 原始碼 ZIP
+### 原始碼 ZIP（2026-09-04 停用聲明）
 
-- 來源是整個 `D:\Project_EventAlertMod`，頂層固定為 `Project_EventAlertMod/`。
-- 排除 `Dist/`、`.codex-remote-attachments/`（及其他 attachments 暫存）、`.AI/patch-temp/`，以及任意深度的 `.git/`、backup/trash、`TestResults/`、cache、pyc、log、zip 與本機衍生物。
-- 保留 `.vscode/`、`.codex/`、`.AI/`，以及 `.AI/docs_html/`；任何巢狀位置的 `backup`、`TestResults`、`.trash_*` 都排除，避免匯入器產生的 `.AI/.AI/TestResults` 漏入。原始碼包不是插件發布包。
+- **停用規範**：自 2026-09-04 起，GitHub Release 於發布 Tag 時會自動為版本打包完整 Source code（`zip` 與 `tar.gz`）。本機發布流程全面停用專案 SRC 打包，亦不再上傳 SRC 附件至 GitHub Release，杜絕資源浪費與重複封裝。
+- **歷史規則保留**：原腳本 `Deploy/Build-SourcePackage.ps1` 僅作為歷史證據與 AST 契約靜態檢驗之用，不再納入本機日常或自動化發布流程。
 
 ### 部署選擇與安全前檢
 
@@ -33,10 +32,8 @@
 pwsh -NoProfile -File .\Deploy\Build-Package.ps1
 ```
 
-使用者輸入「打包原始碼」時執行：
-```powershell
-pwsh -NoProfile -File .\Deploy\Build-SourcePackage.ps1
-```
+使用者輸入「打包原始碼」時（已停用）：
+> 註：自 2026-09-04 起，本機不再打包 SRC 版本，由 GitHub Release 原生自動打包提供。
 
 使用者輸入「發布至 CurseForge」時執行：
 ```powershell

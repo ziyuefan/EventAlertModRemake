@@ -5,7 +5,7 @@ EventAlertMod Retail Rewrite
 責任:
 - 提供一鍵式 GitHub Release 發布自動化，減少 Agent 與使用者手動操作 Token 消耗。
 - 發布前強制執行 Lua 語法、Flow 流程測試與 Validation Contracts 離線門禁。
-- 自動建立帶有標籤（預設 AGY）的 AddOn 插件包與專案 Source 源碼包及其 SHA-256 校驗檔。
+- 自動建立帶有標籤（預設 AGY）的 AddOn 插件包及其 SHA-256 校驗檔（GitHub Release 原生自動打包 Source，不再上傳 SRC 附件）。
 - 自動抓取 changelog.txt，組裝結構化 Release Notes（含離線證據、責任歸屬與回退指引）。
 - 透過 gh CLI 建立 GitHub Release / Pre-release 並上傳產物。
 
@@ -34,7 +34,6 @@ $distRoot = Join-Path $projectRoot "Dist"
 $tocPath = Join-Path $addonRoot "EventAlertMod.toc"
 $changelogPath = Join-Path $addonRoot "changelog.txt"
 $buildPackageScript = Join-Path $PSScriptRoot "Build-Package.ps1"
-$buildSourceScript = Join-Path $PSScriptRoot "Build-SourcePackage.ps1"
 
 Write-Host "=== EventAlertModRemake GitHub Release Publisher ===" -ForegroundColor Cyan
 
@@ -107,8 +106,8 @@ if (-not $SkipGate) {
     Write-Host "⚠ 跳過離線門禁檢驗 (-SkipGate)" -ForegroundColor Magenta
 }
 
-# 5. 打包 AddOn 與 Source (基於原本格式)
-Write-Host "`n--> [2/4] 打包插件與原始碼套件..." -ForegroundColor Cyan
+# 5. 打包 AddOn 插件套件 (GitHub Release 原生自動打包 Source，不重複生成或上傳 SRC)
+Write-Host "`n--> [2/4] 打包插件套件..." -ForegroundColor Cyan
 [System.IO.Directory]::CreateDirectory($distRoot) | Out-Null
 
 $beforePackageZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
@@ -124,19 +123,7 @@ if ($newPackageZips.Count -eq 0) {
 }
 $rawAddonZip = $newPackageZips[-1]
 
-# 5.2 呼叫原始碼打包腳本
-$beforeSourceZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
-& pwsh -NoProfile -File $buildSourceScript
-if ($LASTEXITCODE -ne 0) { throw "Build-SourcePackage 失敗！" }
-
-$afterSourceZips = @(Get-ChildItem -LiteralPath $distRoot -Filter "*.zip" -File | Select-Object -ExpandProperty FullName)
-$newSourceZips = @($afterSourceZips | Where-Object { $beforeSourceZips -notcontains $_ })
-if ($newSourceZips.Count -eq 0) {
-    throw "未找到新產出的 Source ZIP！"
-}
-$rawSourceZip = $newSourceZips[-1]
-
-# 5.3 複製並依 Release 命名格式 (EventAlertMod_MN_yyyyMMdd_HHmmss-<Tag>_AGY.zip)
+# 5.2 複製並依 Release 命名格式 (EventAlertMod_MN_yyyyMMdd_HHmmss-<Tag>_AGY.zip)
 $releaseTimestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $suffixFile = if ([string]::IsNullOrWhiteSpace($PackageSuffix)) { "" } else { "_" + $PackageSuffix }
 
@@ -147,13 +134,6 @@ Copy-Item -LiteralPath $rawAddonZip -Destination $addonZip -Force
 $addonHash = (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash.ToLowerInvariant()
 [System.IO.File]::WriteAllText($addonZip + ".sha256", "$addonHash  $addonZipName`r`n", $utf8)
 
-$sourceZipName = "Project_EventAlertMod_SRC_${releaseTimestamp}-${Tag}${suffixFile}.zip"
-$sourceZip = Join-Path $distRoot $sourceZipName
-Copy-Item -LiteralPath $rawSourceZip -Destination $sourceZip -Force
-
-$sourceHash = (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash.ToLowerInvariant()
-[System.IO.File]::WriteAllText($sourceZip + ".sha256", "$sourceHash  $sourceZipName`r`n", $utf8)
-
 $filesToUpload = [System.Collections.Generic.List[string]]::new()
 if ($addonZip -and (Test-Path -LiteralPath $addonZip)) {
     $filesToUpload.Add($addonZip)
@@ -161,11 +141,6 @@ if ($addonZip -and (Test-Path -LiteralPath $addonZip)) {
     if (Test-Path -LiteralPath $hashFile) { $filesToUpload.Add($hashFile) }
     $invFile = [System.IO.Path]::ChangeExtension($addonZip, ".inventory.json")
     if (Test-Path -LiteralPath $invFile) { $filesToUpload.Add($invFile) }
-}
-if ($sourceZip -and (Test-Path -LiteralPath $sourceZip)) {
-    $filesToUpload.Add($sourceZip)
-    $hashFile = $sourceZip + ".sha256"
-    if (Test-Path -LiteralPath $hashFile) { $filesToUpload.Add($hashFile) }
 }
 
 Write-Host "✓ 待上傳產物清單:" -ForegroundColor Green
@@ -194,9 +169,7 @@ if (Test-Path -LiteralPath $changelogPath) {
 }
 
 $addonHash = if ($addonZip) { (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash.ToLowerInvariant() } else { "N/A" }
-$sourceHash = if ($sourceZip) { (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash.ToLowerInvariant() } else { "N/A" }
 $addonFileName = if ($addonZip) { [System.IO.Path]::GetFileName($addonZip) } else { "N/A" }
-$sourceFileName = if ($sourceZip) { [System.IO.Path]::GetFileName($sourceZip) } else { "N/A" }
 
 $releaseNotes = @"
 # $Title
@@ -214,7 +187,8 @@ $recentChangelog
 | 檔案名稱 | 說明 | SHA-256 雜湊值 |
 | :--- | :--- | :--- |
 | **`$addonFileName`** | 遊戲 AddOn 插件安裝包 | `$addonHash` |
-| **`$sourceFileName`** | 專案完整工程原始碼包 | `$sourceHash` |
+
+> ℹ️ **原始碼取得**：GitHub 已於下方自動提供本版本完整源碼包（`Source code (zip)` 與 `Source code (tar.gz)`），本機不再重複打包上傳 SRC 附件。
 "@
 
 $notesTempPath = Join-Path $distRoot "RELEASE_NOTES_$Tag.md"
