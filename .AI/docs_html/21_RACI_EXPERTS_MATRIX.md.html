@@ -981,17 +981,475 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-expert-role-raci-matrix">EventAlertMod Expert role RACI Matrix</h1>
+<p>This document is the sole benchmark for EventAlertMod expert rosters, abbreviations and accountability relationships. All sub-agent dispatching, review, document signing and release decisions must follow this matrix.</p>
+<h2 id="1-raci-definition-and-hard-rules">1. RACI Definition and Hard Rules</h2>
+<ul>
+<li><code>R</code> (Responsible): Responsible for execution and production of evidence.</li>
+<li><code>A</code> (Accountable): Final approval or rejection of this task area; there must be exactly one <code>A</code> per column.</li>
+<li><code>C</code> (Consulted): Provides professional consultation and is not responsible for final approval.</li>
+<li><code>I</code> (Informed): Receive notification of results and risks.</li>
+<li>The same character can be <code>A/R</code>, but there cannot be a second <code>A</code> in the same mission area.</li>
+<li>Role definitions are work dispatch specifications and do not mean that resident agents, tools, game clients, or real machine capabilities already exist.</li>
+<li>Static, Mock, PTR and Retail actual evidence must be marked separately.</li>
+</ul>
+<h2 id="2-canonical-expert-roster-24">2. Canonical Expert Roster (24)</h2>
+<table>
+<thead>
+<tr>
+<th>Abbreviations</th>
+<th>Expert roles</th>
+<th>Core functions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ARCH</code></td>
+<td><code>EAM_Addon_Architect</code></td>
+<td>Core architecture, loading sequence, module boundaries and safety chain design</td>
+</tr>
+<tr>
+<td><code>SEC</code></td>
+<td><code>EAM_API_Security_Expert</code></td>
+<td>Retail API, Secret/Protected Data and taint security decisions</td>
+</tr>
+<tr>
+<td><code>PERF</code></td>
+<td><code>EAM_Performance_Expert</code></td>
+<td>CPU, GC, event frequency, scheduling and frame pool performance budget</td>
+</tr>
+<tr>
+<td><code>UI</code></td>
+<td><code>EAM_UI_Renderer_Expert</code></td>
+<td>Renderer, IconPool, DurationObject and setting interface</td>
+</tr>
+<tr>
+<td><code>LUA</code></td>
+<td><code>EAM_Lua_VM_Expert</code></td>
+<td>Lua semantics, data structures, closures and local optimization</td>
+</tr>
+<tr>
+<td><code>AUD</code></td>
+<td><code>EAM_Security_Auditor</code></td>
+<td>Independent pollution, bypass and protected chain auditing</td>
+</tr>
+<tr>
+<td><code>UX</code></td>
+<td><code>EAM_UX_Gameplay_Expert</code></td>
+<td>Combat information hierarchy, visual burden, and player usability</td>
+</tr>
+<tr>
+<td><code>SPEC</code></td>
+<td><code>EAM_Class_Expert</code></td>
+<td>Classes, Specializations, Hero Talents and spellID Data Accountability</td>
+</tr>
+<tr>
+<td><code>TANK_P</code></td>
+<td><code>EAM_Class_Tanks</code></td>
+<td>Tank Specialty Monitoring Consulting</td>
+</tr>
+<tr>
+<td><code>HEAL_P</code></td>
+<td><code>EAM_Class_Healers</code></td>
+<td>Treatment Specialty Monitoring Consultation</td>
+</tr>
+<tr>
+<td><code>MEL_P</code></td>
+<td><code>EAM_Class_Melee</code></td>
+<td>Melee Specialization Monitoring Consulting</td>
+</tr>
+<tr>
+<td><code>RNG_P</code></td>
+<td><code>EAM_Class_Ranged</code></td>
+<td>Remote professional monitoring consultation</td>
+</tr>
+<tr>
+<td><code>PRO_T</code></td>
+<td><code>EAM_Tank_Pro</code></td>
+<td>Actual combat consultation for tank players</td>
+</tr>
+<tr>
+<td><code>PRO_H</code></td>
+<td><code>EAM_Healer_Pro</code></td>
+<td>Practical consultation on treating players</td>
+</tr>
+<tr>
+<td><code>PRO_M</code></td>
+<td><code>EAM_Melee_DPS_Pro</code></td>
+<td>Practical consultation for melee players</td>
+</tr>
+<tr>
+<td><code>PRO_R</code></td>
+<td><code>EAM_Ranged_DPS_Pro</code></td>
+<td>Remote player practical consultation</td>
+</tr>
+<tr>
+<td><code>MOCK</code></td>
+<td><code>EAM_Mock_Sandbox_Expert</code></td>
+<td>Mock, unit, integration and offline process testing</td>
+</tr>
+<tr>
+<td><code>DATA</code></td>
+<td><code>EAM_Data_Guard_Expert</code></td>
+<td>SavedVariables schema, WTF Migration and setting compatibility</td>
+</tr>
+<tr>
+<td><code>DEVOPS</code></td>
+<td><code>EAM_DevOps_Release_Expert</code></td>
+<td>TOC, static verification, packaging, CI and release thresholds</td>
+</tr>
+<tr>
+<td><code>SCRAPER</code></td>
+<td><code>EAM_Combat_Scraper_Expert</code></td>
+<td>Candidate collection of combat information, not directly verifying facts</td>
+</tr>
+<tr>
+<td><code>APICHG</code></td>
+<td><code>EAM_API_Change_Intelligence_Expert</code></td>
+<td>Retail API Version differences, migration windows and architecture warnings</td>
+</tr>
+<tr>
+<td><code>AURA121</code></td>
+<td><code>EAM_Aura_121_Migration_Expert</code></td>
+<td>12.1 AuraContainer/AuraButton, Forbidden Aspects and Aura Migration</td>
+</tr>
+<tr>
+<td><code>RQA</code></td>
+<td><code>EAM_Retail_Client_QA_Expert</code></td>
+<td>Retail／PTR Actual machine testing, taint/error/performance evidence signing</td>
+</tr>
+<tr>
+<td><code>DOC</code></td>
+<td><code>EAM_Documentation_Governance_Expert</code></td>
+<td>Facts-of-Truth, provenance and verification status, Markdown/HTML Conformance</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-task-area-raci">3. Task area RACI</h2>
+<p>To keep the table verifiable, professional think tanks and player representatives do not have separate fields; Class DB and UI/UX related tasks will be listed as <code>C</code> by default.</p>
+<table>
+<thead>
+<tr>
+<th>Task Area</th>
+<th style="text-align: center;">ARCH</th>
+<th style="text-align: center;">SEC</th>
+<th style="text-align: center;">PERF</th>
+<th style="text-align: center;">UI</th>
+<th style="text-align: center;">LUA</th>
+<th style="text-align: center;">AUD</th>
+<th style="text-align: center;">UX</th>
+<th style="text-align: center;">SPEC</th>
+<th style="text-align: center;">MOCK</th>
+<th style="text-align: center;">DATA</th>
+<th style="text-align: center;">DEVOPS</th>
+<th style="text-align: center;">SCRAPER</th>
+<th style="text-align: center;">APICHG</th>
+<th style="text-align: center;">AURA121</th>
+<th style="text-align: center;">RQA</th>
+<th style="text-align: center;">DOC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Core Routing and Scheduling</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>2. Services data layer</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>3. UI／Renderer</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>4. Secret／Taint Security</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>5. Config／Options</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>6. Class DB</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>7. Packaging and Release</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>8. Mock／Automatic/Process Test</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+</tr>
+<tr>
+<td>9. SavedVariables／WTF Migration</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>10. Documentation and Facts-of-Truth</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+</tr>
+<tr>
+<td>11. Retail／PTR Actual machine verification</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>12. Retail 12.1 Aura Migration</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+<tr>
+<td>13. Retail API change intelligence</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">I</td>
+<td style="text-align: center;">A/R</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">C</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-add-new-role-responsibility-boundaries">4. Add new role responsibility boundaries</h2>
+<h3 id="apichgretail-api-change-intelligence">APICHG：Retail API change intelligence</h3>
+<ul>
+<li>Maintain API version, TOC, Wiki revision, official announcement and UI source code difference matrix from 12.0.0.</li>
+<li>Convert new additions, removals, deprecations, Secret/Forbidden predicates and Widget behavior changes into the P0/P1/P2 impact, migration window and exit conditions of EAM.</li>
+<li>Establish capability gate, adapter and compatibility strategy in advance; do not remove the official version path before PTR is stable.</li>
+<li>We are not responsible for the final approval of Secret/taint. We must not regard the Wiki revision time as the patch release date, nor claim the actual results of unexecuted PTR/Retail.</li>
+<li>The version baseline and workflow are based on <code>Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code> and <code>skills/eam-Retail-api-change-intelligence/SKILL.md</code> respectively.</li>
+</ul>
+<h3 id="aura121-retail-121-aura-migration">AURA121: Retail 12.1 Aura migration</h3>
+<ul>
+<li>Maintenance 12.0.7/12.1 Aura API build matrix.</li>
+<li>Track Blizzard announcements, official UI source code differences, and Warcraft Wiki revisions.</li>
+<li>Define exit conditions for AuraContainer/AuraButton, Forbidden Partition/Aspect and old UnitAura scans.</li>
+<li>Explicitly document per-spellID, stack, pandemic, or source judgment actions that cannot legally be retained.</li>
+<li>Secret/Forbidden Aspect bypasses are not allowed; final security review remains the responsibility of <code>SEC</code>.</li>
+</ul>
+<h3 id="rqaretail-client-qa">RQA：Retail client QA</h3>
+<ul>
+<li>Manage Retail/PTR builds, characters, specializations, combat situations and replay steps.</li>
+<li>Collect taint log, Lua error, event, CPU, memory, GC, screen or video evidence.</li>
+<li>Human testers are the source of external operations and evidence; without client evidence, <code>RQA</code> can only produce test designs or interpretation results.</li>
+<li>When P0 is not closed and the Shadow Host has not been double signed by security and real machines, the release or activation must be rejected.</li>
+</ul>
+<h3 id="doc-file-fact-management">DOC: File fact management</h3>
+<ul>
+<li>Maintain source of truth, date, build and verification status.</li>
+<li>Make sure Markdown is the only source and HTML can only be generated in one direction.</li>
+<li><code>EAMCODE placeholder</code>, bad links, table fields and number of experts must be scanned after conversion.</li>
+<li>Does not adjudicate the technical authenticity of API; version facts are compiled by <code>APICHG</code>, security conclusions are approved by <code>SEC</code>, and Aura migration conclusions are provided by <code>AURA121</code>.</li>
+</ul>
+<h2 id="5-role-deduplication-rules">5. Role deduplication rules</h2>
+<ul>
+<li><code>ARCH</code> manages architecture boundaries; <code>APICHG</code> manages version change intelligence and migration lead time; <code>SEC</code> manages API/Secret security decisions; <code>AUD</code> does independent confrontation auditing.</li>
+<li><code>AURA121</code> is responsible for Aura contract migration and does not replace the cross-version intelligence of <code>APICHG</code> nor the security final review of <code>SEC</code>.</li>
+<li><code>PERF</code> is responsible for measurement and budgeting; <code>LUA</code> is responsible for language semantics and local optimization.</li>
+<li><code>UI</code> manages technical implementation; <code>UX</code> provides usability consultation with player representatives.</li>
+<li><code>SPEC</code> is the only accountable person of Class DB; <code>SCRAPER</code> only provides candidate data to be verified.</li>
+<li><code>MOCK</code> is responsible for offline process cases and Mock evidence and does not replace <code>RQA</code>; static, syntax or simulation passes must not be marked as Retail real machine passes.</li>
+<li><code>DEVOPS</code> is the sole accountable person for the release; <code>ARCH/SEC/APICHG/RQA/DOC</code> provides gate input.</li>
+</ul>
+<h2 id="6-work-dispatch-and-sign-in-inspection">6. Work dispatch and sign-in inspection</h2>
+<ol>
+<li>Confirm the task area and unique <code>A</code> before dispatching workers.</li>
+<li>Specify the file/problem scope, prohibitions and evidence output of <code>R</code>.</li>
+<li>API Conclusion indicates source, date, build, revision and uncertainty.</li>
+<li>Implementation, static, Mock, PTR, and Retail states cannot be mixed.</li>
+<li>Modify Markdown and synchronize HTML according to the specification, and scan for <code>EAMCODE placeholder</code> pollution.</li>
+<li>Before merging or publishing, it must be signed by the only <code>A</code> in this field; P0 cannot be released until it is closed.</li>
+</ol>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

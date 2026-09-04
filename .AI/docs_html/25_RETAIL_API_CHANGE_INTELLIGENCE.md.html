@@ -814,17 +814,312 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="retail-api-change-intelligence-1200-starting-baseline">Retail API Change Intelligence: 12.0.0 starting baseline</h1>
+<h2 id="1-file-purpose-and-status">1. File purpose and status</h2>
+<p>This document is the version baseline of EventAlertMod Retail server AddOn API change information. The goal is not to copy the complete changelog, but to convert the addition, removal, deprecation, Secret/Forbidden rules and Widget behavior changes of API into executable architecture warnings, migration windows and verification work.</p>
+<ul>
+<li>Project scope: WoW Retail only.</li>
+<li>Starting baseline: 12.0.0.</li>
+<li>Activity project TOC: <code>120007, 120100</code>, the same program uses capability gate to distinguish 12.0.7 and 12.1.</li>
+<li>12.1 Status: PTR/Continuous revision; no formal compatibility claims.</li>
+<li>Last verified: 2026-08-13.</li>
+<li>Wiki revision time is the page revision time, not the game patch release time.</li>
+</ul>
+<h2 id="2-apichg-expert-charter">2. APICHG Expert Charter</h2>
+<p><code>EAM_API_Change_Intelligence_Expert</code> (<code>APICHG</code>) is responsible for:</p>
+<ol>
+<li>Maintenance version, TOC, build status, source URL, revision ID and revision time.</li>
+<li>Distinguish between API facts, EAM engineering inferences and PTR/Retail actual machine results.</li>
+<li>Split the changes into <code>P0 阻斷</code>, <code>P1 遷移</code>, <code>P2 觀察</code>, <code>無直接影響</code>.</li>
+<li>Provide lead time for adapter, capability gate, downgrade path and old path exit conditions.</li>
+<li>When the new PTR, RC, official version or source revision changes, trigger impact scanning and file updates.</li>
+</ol>
+<p>Boundaries of Responsibility:</p>
+<ul>
+<li><code>APICHG</code> does not replace the Secret/taint security finalization of <code>SEC</code>.</li>
+<li><code>APICHG</code> does not replace the AuraContainer/AuraButton migration implementation of <code>AURA121</code>.</li>
+<li><code>APICHG</code> does not replace PTR/Retail client evidence for <code>RQA</code>.</li>
+<li><code>DOC</code> is responsible for the consistency of the source and status, and does not judge the technical authenticity of API on its own.</li>
+</ul>
+<h2 id="3-evidence-priority">3. Evidence priority</h2>
+<ol>
+<li>Blizzard official announcement, PTR/RC development notes.</li>
+<li>Blizzard UI source code or traceable version diff:</li>
+<li><a href="https://github.com/Ketho/wow-ui-source-midnight-ptr">Ketho/wow-ui-source-midnight-ptr</a> (Blizzard Midnight / 12.x PTR official UI source code mirror)</li>
+<li><a href="https://github.com/Ketho/WowDoc">Ketho/WowDoc</a> (the most complete community WoW API / FrameXML document and signature library)</li>
+<li><a href="https://github.com/Ketho/BlizzardInterfaceResources">Ketho/BlizzardInterfaceResources</a> (Blizzard UI materials, Atlas, Texture and sound effects list)</li>
+<li>Warcraft Wiki <code>API_change_summaries</code> and each patch API changes page, and revisions must be recorded.</li>
+<li>Project Markdown, activity TOC and actual Lua hits.</li>
+<li>The search summary is only a clue and cannot be used as a structural conclusion alone.</li>
+</ol>
+<h2 id="4-version-evolution-from-1200-to-1210">4. Version evolution from 12.0.0 to 12.1.0</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th style="text-align: right;">TOC</th>
+<th>Wiki revision (UTC)</th>
+<th>Changes directly related to EAM</th>
+<th>Strategy interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API change summaries</td>
+<td style="text-align: right;">—</td>
+<td><code>6747807</code>, 2026-06-19 05:45:08</td>
+<td>Provide version index and cross-version positioning entrance</td>
+<td>revision changes trigger a difference review and do not regard the index page as the only fact</td>
+</tr>
+<tr>
+<td>12.0.0</td>
+<td style="text-align: right;"><code>120000</code></td>
+<td><code>6747189</code>, 2026-06-18 08:59:26</td>
+<td>Introducing Secret Values generation, predicate and a large number of API removed/deprecated</td>
+<td>Secret-safe adapter must become the basis of the service layer, old numerical models cannot be moved directly into 12.x</td>
+</tr>
+<tr>
+<td>12.0.1</td>
+<td style="text-align: right;"><code>120001</code></td>
+<td><code>6747895</code>, 2026-06-19 08:48:51</td>
+<td>Blocking strings and secret laundering such as StatusBar; Secret cooling is changed to <code>SetCooldownFromDurationObject</code>; Some Private Aura calls are restricted in battle</td>
+<td>The display channel and readable data must be separated, <code>pcall</code> or UI relay cannot be used as a bypass</td>
+</tr>
+<tr>
+<td>12.0.5</td>
+<td style="text-align: right;"><code>120005</code></td>
+<td><code>6747894</code>, 2026-06-19 08:48:14</td>
+<td>Formatter, DurationObject zero range behavior, Aura Boolean secretness adjustment, <code>table.freeze</code>/predicate changes; preview Aura overhaul</td>
+<td>Capability gate must check capabilities instead of scattering patch strings; keep stable path first</td>
+</tr>
+<tr>
+<td>12.0.7</td>
+<td style="text-align: right;"><code>120007</code></td>
+<td><code>6747893</code>, 2026-06-19 08:46:57</td>
+<td><code>C_DurationUtil.CreateDurationTextBinding</code>; restricted unit token changed back to nil/default; <code>debugstack</code>/<code>debuglocals</code> secret propagation; Aura refactor points to 12.1</td>
+<td>Current activity baseline; error and debug output may also carry secrecy, and the Aura extraction architecture needs to be prepared to exit</td>
+</tr>
+<tr>
+<td>12.1.0</td>
+<td style="text-align: right;"><code>120100</code></td>
+<td><code>6749767</code>, 2026-06-20 05:57:01</td>
+<td>AuraContainer/AuraButton, Private Script Objects, Forbidden Partition/Aspects; restricted UnitAura data may be all secret or nil</td>
+<td>existing bytes AuraData/spellID The extracted model is a P0 compatibility risk; the content of PTR still needs to be continuously reviewed and revised with real machines</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-change-context">5. Change context</h2>
+<p>The core of 12.x is not a single API name change, but a gradual tightening of the data permission model:</p>
+<ol>
+<li>12.0.0 establishes the foundation of Secret Values and predicate.</li>
+<li>12.0.1 Closes paths for shuffling secret data through strings, StatusBar, or other UI objects.</li>
+<li>12.0.5 Directs the security display to Formatter/DurationObject, and foreshadows the Aura architecture reorganization.</li>
+<li>12.0.7 provides DurationTextBinding, which expands secret propagation to debug output and explicitly 12.1 Aura refactor.</li>
+<li>12.1.0 Move Aura display to controlled Container/Button and Forbidden boundaries, restricting AddOn to directly extract sensitive Aura facts.
+Therefore, the long-term layout of EAM must be converted from "calculate and render by itself after reading the value" to "service layer recognition capability, retaining legal facts, and UI using native display objects supported by Blizzard".</li>
+</ol>
+<h2 id="6-eam-architecture-strategy">6. EAM Architecture Strategy</h2>
+<ul>
+<li>API The boundary is concentrated in service/adapter, and version judgment is not scattered in Renderer.</li>
+<li>Prioritize feature detection and capability gate; only use TOC judgment when the functional semantics are determined to be consistent.</li>
+<li>PTR The new path coexists with the current stable path until the official contract, UI source and RQA evidence meet the exit conditions.</li>
+<li>Secret/Forbidden data must not be subjected to arithmetic, comparison, stringification, serialization or custom table keys.</li>
+<li>Time display takes precedence over formatters supported by DurationObject, DurationTextBinding and Blizzard.</li>
+<li>Tooltip scraping can only be low-frequency, non-combat, clearly marked sources, and cannot overwrite API security facts.</li>
+<li>Check SavedVariables schema, event payload, Frame/Widget behavior, TOC and packaging settings at the same time for each version change.</li>
+<li>The version file is not compatible with the actual machine; the four types of evidence, static, Mock, PTR, and Retail, are signed separately.</li>
+</ul>
+<h2 id="7-monitor-trigger-conditions">7. Monitor trigger conditions</h2>
+<p>In any of the following situations, start the <code>eam-Retail-api-change-intelligence</code> process:</p>
+<ul>
+<li><code>API_change_summaries</code> Add new patch pages or revision changes.</li>
+<li>Blizzard releases PTR/RC/Official version AddOn, Aura or UI restriction announcement.</li>
+<li>New, removed, deprecated, predicate or mixin/widget interface changes appear in UI source diff.</li>
+<li>TOC／Interface version release or project target version adjustment.</li>
+<li>There is new evidence for the behavior of Secret, Forbidden, Duration, Aura, Tooltip, FrameXML, and event payload.</li>
+<li>EAM active Lua hit has removed API, old global API, or a data stream that is no longer valid.</li>
+</ul>
+<h2 id="8-affects-output-format">8. Affects output format</h2>
+<p>Each verification will produce at least:</p>
+<ol>
+<li>Target version, previous stable version, TOC, build status and source revision.</li>
+<li>Add/remove/deprecate/behavior change list.</li>
+<li>EAM hits the file and line number.</li>
+<li><code>P0／P1／P2／無直接影響</code> classification.</li>
+<li>Disposal window immediately, during PTR, pre-release or follow-up observation.</li>
+<li>adapter/capability gate/downgrade/exit conditions.</li>
+<li>Verifications performed and not performed, and matters requiring signature by <code>SEC/AURA121/RQA/DOC</code>.</li>
+</ol>
+<h2 id="9-current-eam-interpretation">9. Current EAM interpretation</h2>
+<ul>
+<li>12.0.7 retains the readable Legacy Aura path; 12.1 has AuraContainer/AuraButton Native backend, and verifies the initialization period setting with zero Legacy Aura pipeline in offline strict mock.</li>
+<li>Native backend has landed and is not equal to PTR signature. Illustrations, single countdowns, applications, target transitions, Forbidden Aspects, combat restrictions and taint still require <code>_ptr_</code> real-life evidence.</li>
+<li>Cooldown display set via <code>Core/DurationAdapter.lua</code>: <code>CreateDuration()</code> and <code>CreateDurationTextBinding()</code> are both created without parameters and then set with public setters; no longer assume construction parameters or <code>Unbind()</code>.</li>
+<li>12.1 <code>SPELL_UPDATE_COOLDOWN</code> payload is available in <code>spellID</code>, <code>baseSpellID</code> and <code>itemID</code>. EAM uses the security ID as the target refresh, and returns to merged refresh when the value is missing.</li>
+<li>UnitPower uses dual channels: the predicate determines that readable secondary resources can output safe numeric state; the primary resource that may be a Secret only sends <code>UnitPowerPercent()</code> directly to the StatusBar/radial sink supported by Blizzard, and does not read back, compare, or export the original value.</li>
+<li><code>AuraContainerUtil.AddDispelTypeTexture</code> is only considered a dispel type cosmetic ability and does not replace any proc/Pandemic Glow.</li>
+<li>This round of offline process and capability classification testing cannot be regarded as completed for 12.1 PTR or 12.0.7 real machine compatibility.</li>
+</ul>
+<h2 id="10-source">10. Source</h2>
+<ul>
+<li><a href="https://warcraft.wiki.gg/wiki/API_change_summaries">Warcraft Wiki API change summaries</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.0/API_changes?oldid=6747189">Patch 12.0.0 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.1/API_changes?oldid=6747895">Patch 12.0.1 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.5/API_changes?oldid=6747894">Patch 12.0.5 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.7/API_changes?oldid=6747893">Patch 12.0.7 API changes</a></li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes?oldid=6749767">Patch 12.1.0 API changes</a></li>
+<li><a href="https://EAMCODE_6__.forums.blizzard.com/en/wow/t/AddOn-and-Aura-in-curse-of-ula%E2%80%99tek/2317456">Blizzard: AddOn and Aura in Curse of Ula’tek</a></li>
+</ul>
+<h2 id="2026-07-26-121068914-fixed-evidence">2026-07-26: 12.1.0.68914 Fixed evidence</h2>
+<ul>
+<li>Native <code>_ptr_</code>: 12.1.0.68914; compare to Gethe/wow-ui-source commit <code>d3915c78aba77a7a9be76acbfa35c674bbb6abe9</code>.</li>
+<li>Native <code>_xptr_</code>: 12.0.7.68887; compare to commit <code>4383ced30106d51b27e3e86d1987f1552f0d259d</code>.</li>
+<li>AuraContainer sorting uses FrameXML global <code>AuraContainerSortMethod</code>/<code>AuraContainerSortDirection</code>; 68914 Generated Documentation does not log in to these two tables.</li>
+<li><code>UnitAuraSortRule</code> is another set of types of Aura getter and cannot be passed in AuraContainer options.</li>
+<li>EAM implementation and API restriction matrix see <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>.</li>
+</ul>
+<h2 id="2026-08-01-duration-cooling-aura-appearance-and-unitpower-layout">2026-08-01: Duration, cooling, Aura appearance and UnitPower layout</h2>
+<h3 id="api-facts">API Facts</h3>
+<ul>
+<li>Duration factory and DurationTextBinding factory are both created without parameters and configured through ScriptObject setter; EAM uses a single adapter to manage the life cycle.</li>
+<li><code>SPELL_UPDATE_COOLDOWN</code> can carry <code>itemID</code> in 12.1, item cooldown should not wait for only <code>BAG_UPDATE_COOLDOWN</code>.</li>
+<li><code>UnitPowerPercent(unitToken, powerType, unmodified, curve)</code> produces a percentage suitable for native display sinks; <code>C_Secrets.ShouldUnitPowerBeSecret</code>, <code>ShouldUnitPowerMaxBeSecret</code> and <code>GetPowerTypeSecrecy</code> are used for first-class sorting capabilities.</li>
+<li>StatusBar/radial sink can accept Secret input, but it does not mean that AddOn can read back ordinary numbers from the widget; this path can only be displayed and cannot be used as a custom judgment, serialization or trigger condition for EAM.</li>
+<li>68914 The dispel texture of CustomAuraButton is a specific Aura appearance capability and cannot be extrapolated to arbitrary border/Glow API.</li>
+</ul>
+<h3 id="implementation-and-verification-status">Implementation and verification status</h3>
+<ul>
+<li><code>ClassPowerService</code> has corrected event parameters and resource selection, giving priority to secondary resources such as Holy Power, Combo Points, Soul Shards, Chi, Arcane Charges; the safety value <code>1</code> is no longer hidden by the Renderer as "no layer".</li>
+<li><code>UnitPowerCapabilityProbe</code> can only be activated by player buttons, output ability classification and manual pass/fail/blocked; <code>rawValuesCollected</code> is fixed to <code>false</code>.</li>
+<li>Offline mock has been proven safe. Numeric secondary resources and Secret native sink data streams are accessible; actual professions, specializations, combat restrictions and visual updates still require <code>_ptr_</code> 12.1 and <code>_xptr_</code> 12.0.7 player testing.</li>
+</ul>
+<p>Fixed source:</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">68914 Unit API documentation source</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">68914 Secret predicate documentation source</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_AuraContainer/Blizzard_AuraContainerFrameProviders.lua">68914 AuraContainer frame provider</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_AuraContainer/Blizzard_CustomAuraButton.lua">68914 CustomAuraButton implementation</a></li>
+</ul>
+<h2 id="2026-08-08-ptr8-and-unitpower-public-api-fixed-evidence">2026-08-08: PTR8 and UnitPower public API fixed evidence</h2>
+<h3 id="ptr8-api-facts">PTR8 API Facts</h3>
+<ul>
+<li>Fixed source for Gethe/wow-ui-source PTR commit <code>a520b6c27bb897e6be2333b6cc2be36d52c7c11b</code>, version <code>12.1.0.69189</code>.</li>
+<li><code>AuraButton:AddPandemicRegion(region)</code>, <code>RemovePandemicRegion(index)</code>, and <code>ClearPandemicRegions()</code> are Pandemic Region contracts; EAM only creates textures when explicitly required by the rules and binds them to <code>initializeFrame</code>. It does not read <code>Enum.SecretAspect.Shown</code> and does not create its own OnUpdate.</li>
+<li><code>AuraButton:AddDispelTypeTexture(texture, options)</code> does not output the useless <code>stealableFilter</code> when using <code>showAlways</code>, Harmful/Helpful and <code>Enum.CustomAuraButtonDispelTypeStealableFilter</code>; <code>showAlways=true</code>. The new program does not depend on the AuraBorder deprecated alias.</li>
+<li>AuraButton and ItemEnchantment display data cleared by Blizzard when <code>AuraContainer</code> is disabled; frames may still exist. This behavior has been added to strict mock, and the PTR real machine still needs to be signed.</li>
+<li>PTR8's tooltip 200ms throttle, duration 0 bug fix and OnSizeChanged exploit fix are Blizzard behaviors, not self-polled or exploited by EAM.</li>
+</ul>
+<h3 id="unitpower-api-facts-and-negative-conclusions">UnitPower API Facts and negative conclusions</h3>
+<ul>
+<li><code>SimpleStatusBarAPIDocumentation.lua</code>, <code>UnitDocumentation.lua</code> and <code>SecretPredicateAPIDocumentation.lua</code> of the same PTR commit are not confirmed <code>StatusBar:SetUnit</code>, <code>SetPowerTextFontString</code>, <code>SetOnUpdateMode</code>; the three methods provided by users must not be regarded as public API or hard dependencies.</li>
+<li>The confirmable Secret display path is <code>UnitPowerPercent()</code>. After obtaining the classification result, send it to <code>StatusBar:SetValue()</code> or <code>Texture:SetRadialProgressBarPercent()</code> in one direction; reading back the widget, comparison, stringification or serialization of the Secret value is prohibited.</li>
+<li><code>ClassPowerService</code> only reads plain numbers if <code>C_Secrets.ShouldUnitPowerBeSecret</code>/<code>ShouldUnitPowerMaxBeSecret</code> are explicitly available and returns <code>false</code>; all UnitPowerEAMCODE_5__ reads in combat are deferred to <code>PLAYER_REGEN_ENABLED</code>.</li>
+<li><code>statusBarSecretSink</code> of <code>UnitPowerCapabilityProbe</code> only retains the initialization compatibility field, and the actual pass still requires case <code>accepted</code> plus player visual pass; files or offline mocks are not upgraded to PTR real machine evidence.</li>
+</ul>
+<p>Fixed source:</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua">SimpleStatusBar API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua">SimpleTextureBase API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">Unit API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">Secret predicate API 12.1.0.69189</a></li>
+</ul>
+<h2 id="2026-08-09-ptr-channel-flags-and-alpha-2-native-aura-gate">2026-08-09: PTR channel flags and Alpha 2 Native Aura gate</h2>
+<h3 id="confirmed-regression-chain">Confirmed regression chain</h3>
+<ul>
+<li>Players' actual observation shows that Alpha 1 can display Aura, and Alpha 2 does not display it at all. The new Native runtime gate in Alpha 2 requires <code>IsPublicTestClient()==true</code> and <code>IsTestBuild()==true</code>.</li>
+<li>The actual machine reports of PTR <code>12.1.0.69189</code> are <code>isPublicTestClient=true</code>, <code>isTestBuild=false</code>, <code>isBetaBuild=false</code>, so the old AND condition must close the Native backend; this is not AuraContainer API which was removed by PTR8.</li>
+<li>After correction, only three raw flags are considered as alternative evidence for the test channel: Interface <code>&gt;=120100</code> and any one of public-test, test-build, and beta is true. Each flag uses <code>pcall</code> to obtain the safe Boolean value; AuraContainer, Slot, Group, and Layout methods still perform capability gates respectively.</li>
+<li>PTR 69189 Fixed FrameXML still having <code>AuraContainerMixin:SetEnabled</code>, <code>SetUnit</code> and Custom container's <code>AddAuraSlot</code>, <code>AddAuraGroup</code>, <code>SetAuraGroupLayout</code>. Therefore, the focus channel determination is currently corrected and fail-closed when the method is missing is not relaxed.</li>
+<li>Offline mock has been changed to public-test=true, test-build=false, beta=false to specifically cover this real flag combination. The strict-mock-only Flow case on the game client was changed to <code>skip</code>, which no longer pretends that the mock function fails.</li>
+</ul>
+<p>Fixed source:</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_AuraContainer/Blizzard_AuraContainer.lua">AuraContainer 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_AuraContainer/Blizzard_CustomAuraContainer.lua">CustomAuraContainer 12.1.0.69189</a></li>
+</ul>
+<h3 id="unitpower-actual-machine-report-boundary">UnitPower Actual machine report boundary</h3>
+<ul>
+<li>The return for the same PTR build shows: primary is <code>secret</code>, StatusBar and radial calls are all <code>accepted</code>, but <code>visualObservation=pending</code>; selected is <code>safe-number</code>, both sinks are also <code>accepted</code>, but the visual state is <code>blocked</code>.</li>
+<li><code>rawValuesCollected=false</code> Complies with security contracts. This report confirms that the API call was not rejected, that the screen scaled correctly with resources, and that it was not upgraded to the UnitPower PTR pass.</li>
+</ul>
+<h2 id="2026-08-09-ptr8-aurabutton-border-and-eam-classification-border-separation">2026-08-09: PTR8 AuraButton border and EAM classification border separation</h2>
+<ul>
+<li><code>AuraButton:AddDispelTypeTexture(texture, options)</code> of PTR8 is used for the Blizzard Aura dispellable/stealable/showAlways contract; the seven-color classification border of EAM only indicates the monitoring source type, and the two cannot impersonate each other.</li>
+<li>12.1 Native path can only create EAM own Texture in <code>initializeFrame</code> and apply static <code>unit + filterString</code> color; it is not allowed to add Region after initialization, track <code>OnSizeChanged</code> or use size changes to calculate the number of Aura.</li>
+<li>Aura Tooltips for TargetFrame and BuffFrame may be displayed by Blizzard tooltip objects other than <code>GameTooltip</code>. EAM only receives <code>SetUnitAura</code> post-call for anonymous short-term hover heartbeat, does not read the callback payload, does not save the frame, and does not deduce spellID; after the player presses Ctrl+Alt, he still manually confirms the ID and player/target routing in EAM Popup.</li>
+<li>Macro action ID uses the safe resolved subtype/ID of <code>GetActionInfo</code> as the first source, and then downgrades to <code>GetMacroSpell</code>/<code>GetMacroItem</code>; it does not rely on <code>id</code> in TooltipData which may only represent macro index.</li>
+</ul>
+<h2 id="2026-08-09-ptr8-svg-api-fixed-evidence">2026-08-09: PTR8 SVG API Fixed evidence</h2>
+<p>Fixed verification snapshot for Gethe/wow-ui-source commit a520b6c27bb897e6be2333b6cc2be36d52c7c11b, version 12.1.0.69189:</p>
+<ul>
+<li>Frame:CreateVectorGraphics() returns SimpleVectorGraphics; the generated file marks its SecretArguments as NotAllowed.</li>
+<li>SimpleVectorGraphics provides SetSVG, ClearSVG, HasSVG, GetSVGFileID; VectorGraphics: SecretArguments for SetSVG is AllowedWhenUntainted.</li>
+<li>SimpleTextureBase provides Texture:SetSVG and ClearSVG, but fixed generated files do not have Texture:HasSVG or Texture:GetSVGFileID; Texture:SetSVG's SecretArguments is AllowedWhenTainted. This only describes the Secret argument policy and does not mean allowing the creation or rearrangement of regions during combat.</li>
+<li>VectorGraphics only has the Region capability and does not have the rotation, mask, texcoord and blend contracts of the Texture; EAM is verified separately with the A/B probe, and no inference of capability equivalence is made.</li>
+<li>PTR 69189 Alpha 3 actual machine report confirms that two SetSVG paths are accepted and manual pattern observation is passed. VectorGraphics is HasSVG=true, GetSVGFileID classification zero, clear/reload pass; Texture introspection unavailable is the expected contract, and the old probe did not execute Texture clear/reload due to an error request for HasSVG.</li>
+<li><code>GetSVGFileID() == 0</code> is only considered a non-blocking diagnosis when the fixed AddOn-local package material, HasSVG=true, life cycle and artificial visual inspection are passed; it cannot be generalized to be valid for any SVG path.</li>
+</ul>
+<p>Fixed version source:</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleFrameAPIDocumentation.lua">SimpleFrame API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleVectorGraphicsAPIDocumentation.lua">SimpleVectorGraphics API 12.1.0.69189</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua">SimpleTextureBase API 12.1.0.69189</a></li>
+</ul>
+<p>Continuously update the knowledge base:</p>
+<ul>
+<li><a href="https://warcraft.wiki.gg/wiki/UIOBJECT_VectorGraphics">Warcraft Wiki: UIOBJECT_VectorGraphics</a> is used to track methods, inheritance and subsequent Patch changes; the page may be updated with the Wiki and cannot replace the build evidence of the above fixed commit.</li>
+<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes">Warcraft Wiki: Patch 12.1.0/API changes</a> is used to track the PTR batch changes and official instructions.
+Applicable evaluation: Pandemic static prompt Region is the highest value candidate; Dispel CustomAsset/PreserveAsset needs to complete asset map/preload first; Legacy Glow can evaluate 12.1 SVG and 12.0.7 original material dual-track. Dynamic spell/item/Aura main icon, UnitPower radial, Tooltip Popup are currently unchanged.</li>
+</ul>
+<h2 id="2026-08-13-ptr-69273-aurasound-intelligence">2026-08-13: PTR 69273 AuraSound Intelligence</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>69273 Facts</th>
+<th>EAM Policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trigger</td>
+<td>Added／ApplicationsIncreased／Removed</td>
+<td>per-alert three switches and three strokes registration</td>
+</tr>
+<tr>
+<td>Sound info</td>
+<td>unitToken, spellID, file name/FileDataID, channel</td>
+<td>Only constructed from ordinary SavedVariables</td>
+</tr>
+<tr>
+<td>Filtering capabilities</td>
+<td>None caster/auraFilter</td>
+<td>Flag limitation, PTR Observation over-fire</td>
+</tr>
+<tr>
+<td>Life cycle</td>
+<td>Add returns registration ID, Remove returns by ID</td>
+<td>session registry, transactional exchange, removal failure and retry</td>
+</tr>
+<tr>
+<td>12.0.7</td>
+<td>only private Aura applied old API</td>
+<td>general Aura three trigger shows unsupported</td>
+</tr>
+<tr>
+<td>P0 boundary: Sound triggers must not be read/derived from AuraData, registration IDs must not be saved, Secret values ​​must not be compared, stringified, table keyed, or JSON. <code>RemoveAuraSound</code> only proves that subsequent registration is cancelled, and cannot be inferred that the played sound effect will stop.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Fixed evidence:</p>
+<ul>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua">12.1.0.69273 UnitAura API</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua">12.1.0.69273 Trigger enum</a></li>
+<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua">12.1.0.69273 UnitAuraSoundInfo</a></li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

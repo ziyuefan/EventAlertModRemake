@@ -680,17 +680,174 @@ EAM 狀態，消耗轉儲大量日誌。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="ai-prompt-export-structure">AI prompt export structure</h1>
+<h2 id="purpose">Purpose</h2>
+<p>Mainly for debugging and exporting. It exists to aid users or artificial intelligence agents in checking
+EAM status, which consumes a large amount of log dumps.</p>
+<p>Model:</p>
+<ul>
+<li><code>debug-min</code>: Compact structure and fast support.</li>
+<li><code>analysis-full</code>: Detailed but limited status for architectural /debug analysis.</li>
+<li><code>github-issue</code>: User-readable problem payload.</li>
+</ul>
+<h2 id="need-to-separate">Need to separate</h2>
+<p>Exports must be separated:
+- Facts: direct, safe API information;
+- Export: calculate UI/rendering status;
+- Manual annotations: the most important annotations from users;
+- boundaryWarnings: secret /protected/unsafe data restriction;
+- Environment: Construction, area settings, combat status, FPS, plug-in version.</p>
+<p>Don't confuse guesswork with facts.</p>
+<h2 id="simple-mode">Simple mode</h2>
+<pre class="codehilite"><code class="language-js">{
+  schema: 1,
+  mode: &quot;debug-min|analysis-full|github-issue&quot;,
+  environment: {
+    addon: &quot;EventAlertMod&quot;,
+    addonVersion: &quot;string?&quot;,
+    interface: &quot;number?&quot;,
+    build: &quot;string?&quot;,
+    locale: &quot;string?&quot;,
+    inCombat: &quot;boolean&quot;,
+    fps: &quot;number?&quot;,
+    retailOnly: true
+  },
+  facts: {
+    alertCount: &quot;number&quot;,
+    alerts: [
+      {
+        id: &quot;string&quot;,
+        kind: &quot;aura|spellCooldown|itemCooldown&quot;,
+        spellID: &quot;number?&quot;,
+        itemID: &quot;number?&quot;,
+        unit: &quot;string?&quot;,
+        name: &quot;string?&quot;,
+        icon: &quot;number|string?&quot;,
+        stacks: &quot;number?&quot;,
+        timerMode: &quot;none|numeric|displayOnly|protected|unknown&quot;,
+        active: &quot;boolean&quot;,
+        sourceAPI: &quot;string?&quot;
+      }
+    ]
+  },
+  derived: {
+    visibleIcons: &quot;number&quot;,
+    dirtyQueues: { aura: &quot;number&quot;, cooldown: &quot;number&quot;, item: &quot;number&quot; },
+    schedulerJobs: &quot;number&quot;
+  },
+  boundaryWarnings: [
+    { id: &quot;string?&quot;, code: &quot;string&quot;, note: &quot;string&quot; }
+  ],
+  humanNotes: [&quot;string&quot;]
+}
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<h2 id="example">example</h2>
+<pre class="codehilite"><code class="language-js">{
+  schema: 1,
+  mode: &quot;debug-min&quot;,
+  environment: {
+    addon: &quot;EventAlertMod&quot;,
+    interface: 120000,
+    locale: &quot;zhTW&quot;,
+    inCombat: false,
+    fps: 118,
+    retailOnly: true
+  },
+  facts: {
+    alertCount: 2,
+    alerts: [
+      {
+        id: &quot;aura:player:12345&quot;,
+        kind: &quot;aura&quot;,
+        spellID: 12345,
+        unit: &quot;player&quot;,
+        name: &quot;Example Buff&quot;,
+        timerMode: &quot;numeric&quot;,
+        active: true,
+        sourceAPI: &quot;C_UnitAuras&quot;
+      },
+      {
+        id: &quot;spellCooldown:67890&quot;,
+        kind: &quot;spellCooldown&quot;,
+        spellID: 67890,
+        timerMode: &quot;protected&quot;,
+        active: true,
+        sourceAPI: &quot;C_Spell&quot;
+      }
+    ]
+  },
+  derived: {
+    visibleIcons: 2,
+    dirtyQueues: { aura: 0, cooldown: 0, item: 0 },
+    schedulerJobs: 1
+  },
+  boundaryWarnings: [
+    {
+      id: &quot;spellCooldown:67890&quot;,
+      code: &quot;SPELL_COOLDOWN_SECRET&quot;,
+      note: &quot;Timer details unavailable; icon-only render used.&quot;
+    }
+  ],
+  humanNotes: []
+}
+</code></pre>
 
+<h2 id="export-restrictions">Export restrictions</h2>
+<ul>
+<li>No automatic export.</li>
+<li>No unlimited Aura list.</li>
+<li>Default does not have a complete SavedVariables dump.</li>
+<li>No battle log garbage/useless.</li>
+<li>No large project warehouse dumps.</li>
+<li>Strings only construct explicit export instructions when they occur.</li>
+</ul>
+<h2 id="process-verification-report">Process Verification Report</h2>
+<p>Process tests use an independent schema, not mixed with the general DebugSnapshot:</p>
+<pre class="codehilite"><code class="language-js">{
+  schema: 1,
+  type: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
+  suite: &quot;quick|core|boundary|all&quot;,
+  status: &quot;pass|fail&quot;,
+  environment: {
+    source: &quot;offline-mock|retail-client&quot;,
+    interface: &quot;number&quot;,
+    initialized: &quot;boolean&quot;,
+    inCombat: &quot;boolean&quot;,
+    locale: &quot;string&quot;
+  },
+  summary: {
+    total: &quot;number&quot;,
+    passed: &quot;number&quot;,
+    failed: &quot;number&quot;,
+    skipped: &quot;number&quot;,
+    pending: &quot;number&quot;
+  },
+  cases: [
+    {
+      id: &quot;string&quot;,
+      suite: &quot;string&quot;,
+      status: &quot;pass|fail|skip|pending&quot;,
+      durationMs: &quot;number&quot;,
+      message: &quot;safe string&quot;
+    }
+  ],
+  boundaryWarnings: []
+}
+</code></pre>
+
+<p>Limitations:</p>
+<ul>
+<li>Do not output Secret/Protected values, full SavedVariables or raw Aura/Cooldown facts.</li>
+<li><code>source</code> must be retained, Offline Mock cannot be rewritten to Retail/PTR.</li>
+<li>The last report in the game is saved as a string in <code>EAM_FLOW_TEST_REPORT_JSON</code>, which is only for user feedback.</li>
+</ul>
+<h2 id="eamap1-profile-sharing-format">EAMAP1 Profile sharing format</h2>
+<p>Profile sharing is not a debug report, nor is it an executable program. The formal string is:</p>
+<p>EAMAP1:<base64(canonical UTF-8 JSON envelope)>
+Envelope contains at least type=EAM_ALERT_PROFILE, schema=1, addonSchema=5, scope, payload, payloadBytes and Adler-32 checksum. payload.modules is an array and does not accept external map keys; the derived ID of each alert is recalculated by module and safe SpellID/ItemID.
+The parser rejects loose Base64, duplicate JSON key, trailing data, NaN/Infinity, unknown schema/class/module, too deep/too large nodes, duplicate derived IDs, and any Lua code. previewImport must have zero revision/zero events; applyImport only accepts plans with unchanged fingerprint, and rejects or postpones them during combat. Base64 does not provide encryption or author verification.</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

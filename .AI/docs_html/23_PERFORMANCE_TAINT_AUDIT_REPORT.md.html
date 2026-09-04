@@ -628,17 +628,122 @@ local offsetY = dy * dist
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="implementation-and-pollution-control-review-report-unify-onupdate-and-version-offset">Implementation and pollution control review report: Unify OnUpdate and version offset</h1>
+<blockquote>
+<p>[!NOTE]
+This document was written by EAM Performance &amp; Taint Control Expert to evaluate the unified (legacyTimer) compatibility timeout in the EventAlertMod refactored version, the arithmetic allocation performance of the LAYOUT_OFFSETS static offset array, and to identify potential implicit garbage allocation issues in combat.</p>
+</blockquote>
+<hr />
+<h2 id="1-unify-onupdate-timer-legacytimer-effective-header-review">1. Unify OnUpdate timer (legacyTimer) effective header review</h2>
+<p><code>legacyTimer</code> in <code>UI/Renderer.lua</code> seconds is responsible for providing an alternate countdown display when immediate duration binding is not used (especially providing a single decimal countdown when $_​​​​_EAMCODE_2__ &lt; 3.05$). The compatibility mechanism is to use the only implicit listening listening framework <code>OnUpdate</code>, and operate <code>activeLegacyTimers</code> and <code>activeDurationObjects</code> to update the illustrated <code>timerText</code>.</p>
+<h3 id="11-complete-advantages">1.1 Complete advantages</h3>
+<ul>
+<li><strong>Single frame centralized driver</strong>: Avoid the high-cost design of binding <code>OnUpdate</code> to each icon or each perfume. When no task is started, <code>legacyTimerFrame:SetScript("OnUpdate", nil)</code> will be called to unbind and maintain zero CPU usage.</li>
+<li><strong>Orphan framework isolation</strong>: <code>legacyTimerFrame</code> is a parentless framework (<code>CreateFrame("Frame")</code>), completely decoupled from the <code>UIParent</code> core chain, eliminating the risk of contamination propagation during event dispatch.</li>
+</ul>
+<h3 id="12-runnable-overhead-and-gc-bottleneck-analysis">1.2 Runnable overhead and GC bottleneck analysis</h3>
+<p>Current practice has significant GC and CPU headers when creating a combat environment (e.g. 60-120 FPS, with multiple active monitor icons):
+1. <strong>String cleaning of walls (main source of GC heap garbage)</strong>:
+    * In <code>onLegacyTimerUpdate</code>, each screen is executed for all active icons:
+        <code>lua
+        if timeLeft &lt; 3.05 then
+            text = string.format("%.1f", timeLeft)
+        else
+            text = string.format("%d", math.ceil(timeLeft))
+        end</code>
+* In Lua VM, <code>string.format</code> will generate a new string object. At 60 FPS, if there are 5 icons counting down at the same time, $60 \times 5 = 300$ strings will be configured in one second. This will directly accelerate GC triggering and cause frame rate (stop microstuttering).
+2. <strong><code>pairs</code>Duplicate header in hash table</strong>:
+* Use <code>pairs(activeLegacyTimers)</code> to traverse traversal activities. In LuaJIT, if the hash table (Hash part) is traversed, the JIT compiler may not be able to effectively perform Trace Compiler compilation, and it is easy to delete <code>activeLegacyTimers[icon] = nil</code> on the table during the iteration process, resulting in subsequent reorganization of the internal Hash structure and GC.
+3. <strong><code>pcall</code> causes JIT Trace Abort</strong>:
+    * In the <code>activeDurationObjects</code> iteration, <code>safeCheckIsZero(durationObj)</code> is called, which contains <code>pcall(durationObj.IsZero, durationObj)</code>.
+* In LuaJIT, <code>pcall</code> will directly cause the current Trace compilation failure (Trace Abort), so that the core execution path of OnUpdate can only return to the inefficient interpreter mode execution, which greatly increases the arithmetic and call peak of CPU in each frame.</p>
+<hr />
+<h2 id="2-7-major-framework-static-association-layout_offsets-libraries">2. 7 major framework static association (LAYOUT_OFFSETS) libraries</h2>
+<p>EAM defines 7 large independent frameworks and uses <code>EAM.Constants.LAYOUT_OFFSETS</code> for earthquake warning during typesetting:</p>
+<pre class="codehilite"><code class="language-lua">LAYOUT_OFFSETS = freeze({
+    freeze({ 1, 0 }),  -- 1 = RIGHT (向右成長)
+    freeze({ -1, 0 }), -- 2 = LEFT (向左成長)
+    freeze({ 0, 1 }),  -- 3 = UP (向上成長)
+    freeze({ 0, -1 })  -- 4 = DOWN (向下成長)
+})
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<h3 id="21-cpu-arithmetic-fee-compensation">2.1 CPU arithmetic fee compensation</h3>
+<p>When <code>layout(frameName)</code> is executed, its positioning is calculated as:</p>
+<pre class="codehilite"><code class="language-lua">local offset = EAM.Constants.LAYOUT_OFFSETS[dirIdx]
+local dx, dy = offset[1], offset[2]
+...
+local dist = (layoutIndex - 1) * (size + spacing)
+local offsetX = dx * dist
+local offsetY = dy * dist
+</code></pre>
 
+<ul>
+<li><strong>Arithmetic</strong>: First, for the dormant <code>if-else</code> or <code>switch</code> branch judgment of the old version EventAlert (such as <code>if dir == 1 then x = ... else ...</code>), the continuous numerical index may comply with the judgment, completely eliminating CPU The prediction of branch errors (Branchpretion) may conform to the judgment, completely eliminating CPU The prediction of branch errors (Branchpretion) may conform to the discrimination, completely eliminating CPU The prediction of branch errors (Branchpretion) may conform to the discrimination, completely eliminating CPU Branch misprediction (Branchpretion) may be consistent with CPU Branch misprediction (Branch_3%), CPU Branch misprediction (Branch_3%) may be consistent with CPU Branch misprediction (Branchpretion) may be consistent with CPU Branch wrong prediction (Branch_38) may be true CPU Branch misprediction (Branch_3%). The predicted value of the branch error may be consistent with the CPUBranchpretion) complete discrimination, which may be consistent with the CPU branch error.</li>
+<li><strong>Read-only freeze</strong>: Use <code>table.freeze</code> to ensure that the input cannot be tampered with during execution, taking into account security and portability.</li>
+<li>**Lookup table header evaluation: Although each positioning requires reading internal table elements from <code>LAYOUT_OFFSETS</code>, in actual operation, <code>layout</code> is only triggered when icons are added or removed or settings are changed (throttled by <code>BeginBatch/EndBatch</code>, not the study type of the decision path type generated in hot path design.</li>
+</ul>
+<hr />
+<h2 id="3-assessment-of-hidden-pollution-emissions-and-gc-heap-garbage-allocation-during-combat">3. Assessment of hidden pollution emissions and GC heap garbage allocation during combat</h2>
+<p>By deeply studying the process code, we found the following key issues that may lead to hidden Taint leaks or GC heap garbage allocation under high-frequency events and rendering in combat:</p>
+<h3 id="31-hidden-taint-leak-and-combat-lockdown-combat-lockdown">3.1 Hidden Taint Leak and Combat Lockdown (Combat Lockdown)</h3>
+<ol>
+<li><strong>Dynamics during battle<code>CreateFrame</code> (high risk point)</strong>:</li>
+<li>Although <code>ensureParent</code> has <code>InCombatLockdown</code> guards, in <code>Renderer.render</code>, if the buffer icons of <code>IconPool</code> are exhausted, for example (multiple combat talents/coolings/magics are triggered at the same time in <code>InCombatLockdown</code>, making the number of activations greater than the previous 16), `IconPool.acv)(
+        <code>lua
+        local function createIcon()
+            local button = api.CreateFrame("Frame", name, UIParent)
+            ...
+            local cooldown = api.CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")</code></li>
+<li><strong>Risk</strong>: Calling <code>CreateFrame("Frame", name, UIParent)</code> during combat lock and loading the official <code>CooldownFrameTemplate</code> may pollute the security template chain inside Snow and trigger an "Action block by an AddOn" error with a high probability.</li>
+<li><strong>Potential Taint spread of Shadow Host parasitic mode (extremely high risk point)</strong>:</li>
+<li>Although currently <code>useCDM</code> has been forced to set <code>false</code>, if this mode is enabled, the icon of EAM can be parasitic on the official <code>CooldownViewer</code> or ActionButton:
+        <code>lua
+        icon:SetParent(hostIcon)
+        icon:ClearAllPoints()
+        icon:SetAllPoints(hostIcon)</code></li>
+<li><strong>RISK</strong>: The official <code>CooldownViewer</code> and ActionButton belong to a highly protected security/protected framework. The non-safe EAM icon is attached to the safe frame by calling <code>SetParent</code> during combat. When Blizzard UI attempts to rearrange the layout or the safe frame, it will operate its subsystem to contain the unsafe frame, causing the entire chain execution to be marked as contaminated, which in turn causes a fatal error in which the operation button is flooded and cannot be clicked.</li>
+</ol>
+<h3 id="32-implicit-gc-heap-garbage-allocation">3.2 Implicit GC heap garbage allocation</h3>
+<ol>
+<li><strong>Anonymous closure<code>pcall</code></strong> in hot path:<ul>
+<li>In <code>Renderer.render</code>:
+    <code>lua
+    pcall(function()
+        icon:SetFrameStrata("MEDIUM")
+        icon:SetFrameLevel(hostIcon:GetFrameLevel() + 10)
+    end)</code></li>
+</ul>
+</li>
+<li>When rendering updates (such as the following information, cooling updates), these two anonymous closure functions will be dynamically allocated in the hot path and call <code>pcall</code>. This will not only block Trace compilation of LuaJIT VM, but also generate continuous GC garbage usage.<ul>
+<li>*Note: <code>icon.overlay</code> and <code>icon.cooldown</code> are both frameworks built internally by EAM. Their methods are 100% certain to exist and there is no need to use <code>pcall</code> for protection. *</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="4-specific-reconstruction-and-optimization-suggestions">4. Specific reconstruction and optimization suggestions</h2>
+<p>In order to eliminate the above assumptions and achieve the maximum completion and zero pollution point requirements of the EAM rewritten version, it is recommended to implement the following optimal refactoring:</p>
+<h3 id="41-deleting-strings-and-allocating-eamcode_1-iteration-introducing-time-string-storage-and-collection-connection-sequence">4.1 Deleting strings and <strong>allocating EAMCODE_1</strong> iteration: introducing "time string storage" and "collection connection sequence"</h3>
+<ul>
+<li><strong>Time string storage (time text server)</strong>:
+Pre-generate a list of integer strings from $0.0$ to $3.0$ seconds (0.1 second intervals, 30 in total) and $3$ to $3600$ seconds. In OnUpdate, this storage table is directly indexed through numerical calculation and the initial value will be initialized.</li>
+<li><strong>Recent link/numeric index ranking</strong>:
+Change the use of <code>activeLegacyTimers</code> to numerically indexed interconnects, use <code>for i = 1, count</code> for numerical loop iteration in gaps, and remove the iterator allocation and header of <code>pairs</code> under the path.</li>
+</ul>
+<h3 id="42-remove-hot-path-pcall-and-anonymous-closure">4.2 Remove hot path <code>pcall</code> and anonymous closure</h3>
+<ul>
+<li>Delete the <code>pcall(function() ... end)</code> wrapper for self-built frameworks in <code>Renderer.render</code> and replace it with direct assignment or use pre-defined static auxiliary functions to avoid high-frequency allocation.</li>
+</ul>
+<h3 id="43-enforce-createframe-and-setparent-delays-in-combat">4.3 Enforce <code>CreateFrame</code> and <code>SetParent</code> delays in combat</h3>
+<ul>
+<li>Add <code>InCombatLockdown</code> detection to <code>IconPool.acquire()</code>. If in combat and no icon is available, it should be downgraded or added to the deferred rendering queue (<code>deferRender</code>), strictly prohibited during a locked battle call <code>api.CreateFrame</code>.</li>
+<li>Completely abolish or strictly limit the <code>SetParent</code> behavior of Shadow Host parasitic mode in combat to avoid any direct father connection with Secure Frame.</li>
+</ul>
+<hr />
+<h2 id="raci-division-of-powers-and-responsibilities-and-review-conclusions">RACI Division of powers and responsibilities and review conclusions</h2>
+<p>This report reviews <a href="file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md">Docs/21_RACI_EXPERTS_MATRIX.md</a> specifications, which are handled by <strong>performance and pollution control expert</strong> (Responsible), who provide core technical decision-making consultation to <strong>main agent</strong>.
+* **In the next reconstruction cycle, partial reconstruction should be carried out immediately for <code>UI/Renderer.lua</code> and <code>UI/IconPool.lua</code> to implement "time string storage", "direct call without pcall" and "CreateFrame delay defense in combat" to ensure the highest low-defense when AddOnMCO is compatible", which is absolutely compatible</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

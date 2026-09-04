@@ -666,17 +666,158 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
-
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="known-limitations">Known limitations</h1>
+<h2 id="instant-verification-gap">Instant verification gap</h2>
+<p>This audit is static. There is no WoW Retail 12.x client available, hence the API name,
+Return shape, secret/protected behavior and XML runtime behavior are still required
+In-game verification.</p>
+<h2 id="offline-process-verification-restrictions">Offline process verification restrictions</h2>
+<p><code>Tests/FlowValidationHarness.lua</code> can verify Lua module contract, event round-trip, Scheduler and report closed loop, but cannot reproduce WoW C++ Secret/Forbidden/taint/protected frame semantics.
+- Mock passes must not be marked as PTR or Retail passes.
+- The test panel does not perform spellcasting, item usage, retargeting, or secure actions.
+- Real AuraContainer, DurationObject, combat lock and contamination are still signed by the real machine <code>RQA</code>.
+- Reports are not automatically uploaded; users need to copy JSON or provide WTF SavedVariables.</p>
+<h2 id="secretprotected-value">Secret/protected value</h2>
+<p>Live servers may return secret, protected, display-only, or unavailable Aura data
+and cooling status. Rewrites must be downgraded safely:</p>
+<ul>
+<li>Only the icons are shown;</li>
+<li>Only the safe name /icon/stacks is known;</li>
+<li>Timing mode <code>protected</code>, <code>displayOnly</code> or <code>unknown</code>;</li>
+<li>No fabrication of duration/expiration/cooldown fact;</li>
+<li>Debug boundary warning only when requesting debug/export.</li>
+</ul>
+<h2 id="combat-restrictions">Combat restrictions</h2>
+<p>Some UI or profile updates may be unsafe or unavailable during combat. heavy work,
+Cache creation, layout rebuilding, and migration-like operations must be delayed
+Or throttling.</p>
+<h2 id="unsupported-branches">Unsupported branches</h2>
+<p>Rewriting is not supported:</p>
+<ul>
+<li>Classic</li>
+<li>Mists of Pandaria Classic server</li>
+<li>Catastrophe and Rebirth Classic server Competition</li>
+<li>Wrath of the Lich King Classic server</li>
+<li>The Burning Crusade Classic</li>
+<li>era</li>
+<li>Region-specific Classic compatibility branches</li>
+</ul>
+<p>Old catalogs may remain in the repository for reference only.</p>
+<h2 id="current-source-risk">Current source risk</h2>
+<p>The following risks were discovered through the audit for the first time:</p>
+<ul>
+<li>Mixed Retail servers and legacy compatibility branches in the main line;</li>
+<li>Legacy TOC still exists at the root;</li>
+<li>Currently TOC and <code>Lib_ZYF</code> which are required by many runtime mods;</li>
+<li>Large spell/item data table;</li>
+<li>Item range scanning in <code>EventAlert_ItemSpellCache.lua</code>;</li>
+<li>Recursive timer scheduling and per-resource OnUpdate scripts;</li>
+<li>Extensive use of global variables and unexpected global variables;</li>
+<li>Tooltips and Aura that may conflict with protected material API assumptions;</li>
+<li>There is a duplicate /archived file under <code>Main/</code>, its name is garbled, and
+<code>DevDocument/ChatGPT/</code>;</li>
+<li><code>EventAlert_ImportExport.lua</code> has prototype global variables and is annotated
+  Loading order.</li>
+</ul>
+<h2 id="user-interface-restrictions">User interface restrictions</h2>
+<p>Currently XML builds a large static options panel and many global frame names. of
+The rewrite should prefer a smaller options surface and pooled runtime icons, but
+Existing UI behavior must be mapped before removal.</p>
+<h2 id="areas-that-require-retail-server-verification">Areas that require Retail server verification</h2>
+<ul>
+<li>Accurate <code>C_UnitAuras</code> secure access behavior;</li>
+<li>Exact <code>C_Spell.GetSpellCooldown</code> structured postback behavior;</li>
+<li>exact <code>C_Item.GetItemCooldown</code> direct itemID behavior;</li>
+<li><code>C_Secrets</code> Availability and return behavior;</li>
+<li>Cooling charging behavior;</li>
+<li>Target Aura update payload;</li>
+<li>Combat restrictions on all planned UI operations;</li>
+<li>tooltip API (if the tooltip is left displayed);</li>
+<li>Partial rendering in zhTW/enUS/koKR/zhCN;</li>
+<li>SavedVariables Migrate real old user profiles.</li>
+</ul>
+<h2 id="2026-07-26-121-yet-to-be-confirmed-by-real-machine">2026-07-26: 12.1 yet to be confirmed by real machine</h2>
+<ul>
+<li>68914 Template actual loading timing, AuraButton Forbidden Aspect and conditional access constraints.</li>
+<li>Candidate Spell ID filter's true acceptance range for various Secret Aura/unit polarities.</li>
+<li><code>initializeFrame</code> Name, countdown, number of layers, actual display of Tooltip and container cropping.</li>
+<li>Added/ApplicationsIncreased/Removed's actual play times, sound effect file field and output channel.</li>
+<li>Combat pending, out-of-combat reconstruction, Reload UI migration, taint/blocked action and CPU/GC.</li>
+<li><code>UNSUPPORTED</code> only means to safely disable Native Aura, but does not mean that the functionality is equivalent to Legacy.</li>
+</ul>
+<h2 id="2026-08-09-interaction-tooltip-border-and-version-information-restrictions">2026-08-09: Interaction, Tooltip, border and version information restrictions</h2>
+<ul>
+<li>The 12.1 AuraButton hover detection of TargetFrame/BuffFrame only saves the anonymous "Currently Aura Tooltip" heartbeat, and does not read TooltipData, AuraData, frame name or Aura ID; Ctrl+Alt only opens the manual Aura ID Popup. Therefore, the target framework is safely supported, but restricted Aura IDs are not automatically resolved.</li>
+<li>Action Bar Macro only accepts safe resolved action subtype/ID, <code>GetMacroSpell</code> or <code>GetMacroItem</code>; conditionals, sequences, or macros that cannot be safely parsed by the client must still be entered manually.</li>
+<li>Generally, EAM spell/item tooltip is only displayed in non-combat; <code>classPower</code> and <code>totem</code> do not have reliable Spell/Item tooltip source, so no guessing is required. Native Aura uses the Blizzard AuraButton Tooltip.</li>
+<li>The seven-color classification border is EAM's own static Texture, which is different from PTR8's <code>AddDispelTypeTexture</code>, Pandemic Region, and Proc Glow; the dispersible status cannot be inferred by color. classPower/totem preserves the existing vision.</li>
+<li>About's API baseline is the fixed evidence of this development <code>12.1.0 PTR 8 (69189)</code>; the actual client version is shown by <code>GetBuildInfo</code>. Constants/API intelligence must be synchronized when updating PTR build in the future, and baseline must not be used as a real-time query.</li>
+<li>WoW EditBox does not have a common <code>Copy()</code> contract; the panel can only select all text and ask the player to press Ctrl+C. This is a manual data transfer, not scrapbook automation.</li>
+<li>Main resources such as mana may be restricted by UnitPower Secret rules; Flower of Life, Hot, DoT, etc. are Aura and must be monitored by AuraButton/Aura and do not belong to UnitPower.</li>
+</ul>
+<h2 id="2026-08-09-svg-with-full-coverage-border-limit">2026-08-09: SVG with full coverage border limit</h2>
+<ul>
+<li>Currently only capability probes and packaging pipelines have been established, and the official Pandemic, Dispel or Glow vision has not been replaced with SVG.</li>
+<li>PTR 69189 Fixed contract is asymmetric: VectorGraphics provides SetSVG/ClearSVG/HasSVG/GetSVGFileID; Texture only provides SetSVG/ClearSVG. The two have different Secret argument policies and must not share introspection or security assumptions.</li>
+<li>Alpha 3 actual machine report has confirmed that two cells SetSVG accepted and the pattern visually passed; VectorGraphics's AddOn-local <code>GetSVGFileID()</code> returns 0, which does not mean rendering failure. Texture's lack of HasSVG/GetSVGFileID is an expected capability, not a defect.</li>
+<li>Texture's <code>clearReload=pass</code> can only prove that the call to ClearSVG and SetSVG is successful, and then visually confirm the reload with the final pattern; because there is no HasSVG, the pixel state at the moment of clearing still cannot be automatically read back by Lua.</li>
+<li>12.0.7 It is safe to report unsupported; methods that do not exist must not be called for the sake of compatibility.</li>
+<li>The 3px solid color border has geometric offline assertions, but the final visual confirmation of different UI scales, icon sizes, and PTR Native AuraButton still needs to be signed by the player through screenshots.</li>
+<li>SVG The presence of ZIP only proves that the material was packaged; it does not prove that combat boundaries, scaling quality, or official Pandemic/Dispel integration has passed.</li>
+</ul>
+<h2 id="2026-08-12-dynamic-language-switching-boundary">2026-08-12: Dynamic language switching boundary</h2>
+<ul>
+<li>After the new program is loaded, the registered EAM own fixed text and compound status will be refreshed immediately when selecting the language; there is no need to call <code>/reload</code> for the applied language. When you just update the Lua file on the disk, you still need to load the new program with <code>/reload</code> once. Subsequent <code>/reload</code> only verifies saving or downloading.</li>
+<li><code>Auto Detect</code> is forced to be displayed in English and cannot be renamed from the translation file; it represents the client <code>GetLocale()</code>, so zhTW maintaining Traditional Chinese after the client selects it is the correct result, not a switching failure.</li>
+<li>The spell/item/specialization names returned by Blizzard UI, other plug-ins, and clients, as well as the output chat/error history will not be overwritten by EAM; only subsequent EAM messages will use the current <code>EAM.L</code>.</li>
+<li>The 37 cases signed by real people <code>CASE_PROCEDURES</code> are versioned Traditional Chinese evidence texts and do not belong to the UI locale; the case name, status and panel chrome will switch, but the full text of the program remains in Traditional Chinese to avoid translation differences from changing the signing conditions.</li>
+<li><code>ruRU</code> has been aligned with enUS key; zhCN/koKR still has history. The Live case string is supplemented with enUS fallback, which does not mean that the translation completeness outside Russian has reached 100%.</li>
+<li>The language catalog only handles <code>L.*</code>. Any new EAM long-lived widget that still directly caches static strings without bind/refresh is considered an implementation defect; pooled widgets must be unbind during recycling.</li>
+</ul>
+<h2 id="2026-08-13-aurasound-limit">2026-08-13: AuraSound limit</h2>
+<ul>
+<li>PTR 12.1 <code>UnitAuraSoundInfo</code> only has unit+SpellID and audio data, no caster, <code>fromPlayer</code> or <code>auraFilter</code>; other sources with the same SpellID may over-fire and must be manually observed by PTR.</li>
+<li><code>RemoveAuraSound</code> can cancel subsequent triggering, but the generated file is not guaranteed to stop the sound that has started playing; EAM does not pass the registration ID to <code>StopSound</code>.</li>
+<li>The UI currently uses a shared material to apply to the three selected triggers, without editing trigger channels one by one; re-save will unify the current material.</li>
+<li>Formalization takes priority with <code>soundFileID</code>; when two audio sources are provided at the same time, the game's native priority, invalid audio source return, and all legal channels still need to be verified by PTR.</li>
+<li>The private-Aura applied API of 12.0.7 cannot be an equivalent replacement for the general Aura three triggers; capability downgrade is adopted in this round.</li>
+<li>Offline mocks only demonstrate payload, lifecycle, rollback and zero-container rebuild, not actual playback, audio installation, dispersal or combat behavior.</li>
+</ul>
+<h2 id="2026-08-13-alpha-4-limitations-and-unfinished-projects">2026-08-13 Alpha 4 limitations and unfinished projects</h2>
+<ul>
+<li>The eight module switches are runtime gates, not uninstall mechanisms; to avoid repeated registration, service events may still exist, but their hot paths API must not be read after deactivation, and the existing status must be cleared.</li>
+<li>The v4 old root layer list may contain multiple professions and lacks reliable provenance; the migration only belongs to the legal active class at the time, and other data will be retained in backup/unassignedLegacy and will not be automatically split.</li>
+<li>The official program does not yet provide JSON/Base64 profile sharing and application codec; currently it is not possible to paste debug JSON back into the game, nor is it possible to use the loadstring of LegacyReference.</li>
+<li>The module panel currently manages eight functional modules; the debug panel, mini map display and global showFrame are not new independent module toggles in this round.</li>
+<li>The return of Alpha 4 modules and profiles is still offline evidence; PTR, XPTR, Retail need to be confirmed by the player on the actual machine for combat delay, /reload persistence and cross-professional isolation.</li>
+</ul>
+<h2 id="2026-08-14-alpha-5-restrictions-and-items-to-be-signed">2026-08-14 Alpha 5 restrictions and items to be signed</h2>
+<ul>
+<li>EAMAP1 codec has entered the official runtime, but only supports the five currently defined alert modules; ClassPower/Totem has no alert list that can be exported and cannot be disguised as a profile payload.</li>
+<li>Adler-32 only detects corruption of cut and paste content, not an anti-tampering or source-trusting mechanism; imported content is still considered untrusted data.</li>
+<li>Profile apply is rejected during combat to avoid Native AuraContainer, Ground duration or ClassPower structural changes; players need to re-preview/apply after leaving the battle.</li>
+<li>Fonts only apply EAM's own FontString; Blizzard AuraButton, Tooltip, Action Bar and other plug-in texts will not be changed. The actual font shapes of some fonts in different clients still need to be visually confirmed by players.</li>
+<li>Dynamic language refresh has covered EAM, which has its own long life cycle buttons, drop-downs, conditions and spec menu; client/Blizzard/history chat text will not be written back, and the Live case program itself is fixed in Traditional Chinese.</li>
+<li>The offline gates of this round are Lua 56/56, Flow 66/66, Contracts 360/360; PTR/XPTR/Retail has not yet been operated or signed by Codex, EAMAP1, font and language visual results.</li>
+</ul>
+<h2 id="2026-08-14-aura-catalog-and-wowhead-candidate-restrictions">2026-08-14 Aura catalog and Wowhead candidate restrictions</h2>
+<ul>
+<li><code>C_SpellBook</code>／Spellbook membership only proves the player's learnable or known abilities, and does not cover all Aura effect IDs; when the current career data is not hit, the conservative <code>CROSS_CLASS</code> is used and cannot be automatically deleted accordingly.</li>
+<li>Wowhead JSON lacks PTR/Retail build, Aura effect ID real source and complete error list, and contains PvP, shared, passive or misplaced candidates; can only assist manual discovery.</li>
+<li><code>has_aura</code> comes from the web page tooltip hint and is not equal to <code>UnitAura</code> actual spellID; crawl failure cannot be confused with true no Aura.</li>
+<li>UI filtering that does not exist for SpellID is a low-frequency configuration path; Secret Aura values ​​must not be fed into spell existence checks, stringification, table keys, or reports.</li>
+<li>Texture SVG will appear accepted/rejected asymmetry in the observed build, so the official path of the minimap temporarily uses the built-in gear; SVG still only retains the player operation capability probe.</li>
+<li>The latest offline gates are Lua 56/56, Flow 67/67, Contracts 380/380; batch classification, dropdown, Profile scrolling and gear icons still need to be visually inspected by Retail/PTR/XPTR.</li>
+</ul>
+<h2 id="2026-08-21-known-restrictions-on-multiple-resources-for-players">2026-08-21 Known restrictions on multiple resources for players</h2>
+<ul>
+<li>The Catalog has been offline covering 17 resources and 40 groups of professional/specialty topologies, but this is a data and process contract, not a real-machine signature of Retail/PTR for all professions and specializations.</li>
+<li>The formal service uses <code>UnitHasPowerType</code> to determine whether the current client provides resources; candidates that exist in the Catalog but are unavailable in client return will be marked as <code>Unavailable</code> and remain hidden, and raw <code>UnitPowerMax</code> speculation will not be attempted.</li>
+<li>Ordinary accessible values ​​can display numeric text; Secret values ​​can only drive the native StatusBar sink, so the text may not be displayed intentionally. This is a safe downgrade and must not be read back into sinks, tooltips, or estimated complements.</li>
+<li>Not using <code>StatusBar:SetUnit</code>, <code>SetPowerTextFontString</code>, <code>SetOnUpdateMode</code> which are not confirmed by current public documents. If these methods are added to future builds, the build, generated files, and real machine evidence must be re-locked before evaluation.</li>
+<li>Resource structure reconstruction caused by specialization/morphing will be delayed during combat; percentage updates of existing sinks are still driven by resource events. All professions, specializations, transformations and combat statuses are still to be verified by players on the actual machine.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

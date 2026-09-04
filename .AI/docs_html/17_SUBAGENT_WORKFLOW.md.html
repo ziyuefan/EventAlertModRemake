@@ -665,17 +665,159 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="subagent-workflow-planning">Subagent workflow planning</h1>
+<p>This document defines EventAlertMod for planning and using subagents during development. The goal is to allow large-scale work to be added, postponed, and risks controllable; not to outsource all tasks, nor to increase all unnecessary coordination costs.</p>
+<h2 id="basic-principles">Basic principles</h2>
+<ul>
+<li>Explicit boundaries can only be used if the user has authorized the subagent and the task can be removed.</li>
+<li>The main agent first determines the critical path (critical path): the work that is stopped immediately in the next step must be handled by the main agent itself.</li>
+<li>The subagent processes sidecar tasks (bypass tasks): can be completed, specific, acceptable, and does not stop the main agent for the next step.</li>
+<li>No duplicate work will be assigned; when the same problem has sub-agent results, a second agent will not be assigned to do the same analysis unless there is new evidence or a different perspective.</li>
+<li>Program modification subagent must have a clear writing range to prevent multiple agents from modifying the same file.</li>
+<li>All sub-agent results are subject to integration and final judgment by the main agent and are not directly regarded as verified facts.</li>
+</ul>
+<h2 id="suitable-posture-for-using-subagents">Suitable posture for using subagents</h2>
+<ul>
+<li>In large rewrite channels, modules can be precisely non-overlapping:</li>
+<li><code>Services/AuraService.lua</code></li>
+<li><code>Services/CooldownService.lua</code></li>
+<li><code>UI/Renderer.lua</code></li>
+<li><code>Debug/PromptExport.lua</code></li>
+<li>API Query and file organization can be implemented with local furniture, for example:</li>
+<li>12.x API Change source review.</li>
+<li>Secret value/contamination discussion organized.</li>
+<li>DurationObject / DurationTextBinding Comparison of practical methods.</li>
+<li>Verify and scan parts that can be repaired, such as:</li>
+<li>Search for old API calls directly.</li>
+<li>Check for <code>table.freeze</code> errors.</li>
+<li>Check <code>C_Timer.After(function() ...)</code> hot path.</li>
+<li>Conformance check between Docs and AGENTS.</li>
+<li>Unified culture and terminology in a large number of documents, and completed test lists.</li>
+<li>Package/CurseForge Bypass checks for the release process, such as exclusion lists, TOC versions, zip naming rules.</li>
+</ul>
+<h2 id="unsuitable-posture-for-using-subagents">Unsuitable posture for using subagents</h2>
+<ul>
+<li>Small single file modifications can be completed directly by the main agent.</li>
+<li>The next step relies entirely on this result, waiting for the subagent to slow down the critical path instead.</li>
+<li>Operations that require immediate judgment of user intent, risk, or authorization.</li>
+<li>Involves deleting, relocating, and overwriting a large number of files without backup and scope confirmation.</li>
+<li>Highly modified connections, such as changing <code>SavedVariables</code> schema, migration, Options UI, Slash command at the same time and the start scope has not yet started.</li>
+<li>No clear exploratory questions yet.</li>
+</ul>
+<h2 id="suggestions-for-using-roles">Suggestions for using roles</h2>
+<ul>
+<li>explorer: Used for complex investigations of specific problems, such as "Find all cooldown API calls in active Lua".
+-worker: used for separable implementations, such as "只修改UI/Options.lua, add a setting field, do not touch SavedVariables".
+Unless there is a clear reason for the task, subagents use the default inheritance model; do not specify a more expensive or different model.</li>
+</ul>
+<h2 id="work-dispatch-template">Work dispatch template</h2>
+<pre class="codehilite"><code class="language-text">你是 EventAlertMod Retail rewrite 的 subagent。
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+範圍：
+- 只能處理：&lt;檔案或問題範圍&gt;
+- 不得修改：&lt;明確排除範圍&gt;
 
+必要規則：
+- Retail only。
+- 不支援 Classic / MOP / Cata / Wrath / Era。
+- 不繞過 Secret / Protected Data。
+- 避免 taint；不 hook secure/protected chain。
+- 修改任何既有檔案前需先備份到 backup/。
+- 不還原他人變更。
+
+輸出：
+- 完成事項。
+- 修改檔案。
+- 驗證方式與結果。
+- 未驗證事項。
+- 風險與建議。
+</code></pre>
+
+<h2 id="master-agent-integration-rules">Master agent integration rules</h2>
+<ul>
+<li>After the sub-agent is completed, the main agent needs to quickly review the results and document differences.</li>
+<li>If the subagent modifies the project code, the main agent still needs to perform static verification of the project.</li>
+<li>If the sub-agent provides API information, the main agent needs to indicate the source system:</li>
+<li>Official documentation or the Warcraft Wiki.</li>
+<li>User provided.</li>
+<li>Search index.</li>
+<li>Real machine verification.</li>
+<li>If the subagent encounters tool limitations, API uncertainties, or errors, it needs to be appended to <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
+<li><strong>Markdown absolute facts and HTML conversion code</strong>:</li>
+<li>The absolute guidance document for this project and subagent development collaboration will always use <code>AGENTS.md</code> and the <code>.md</code> file named in its content as the only fact and Facts-of-Truth reference.</li>
+<li>HTML version for human readability and preview use. When the subagent performs development, read-only analysis, and writeback, it must always use the <code>.md</code> original file as the only factual basis, and must not use the HTML file as the factual reference.</li>
+<li>If the task modifies the <code>.md</code> file or <code>AGENTS.md</code> under the file, the conversion tool must be executed after the modification and the corresponding <code>.html</code> file under <code>docs_html/</code> is updated to ensure consistency.</li>
+</ul>
+<h2 id="raci-expert-division-of-labor-and-pr-review-principles">RACI Expert division of labor and PR review principles</h2>
+<p>In order to make the positioning of 24 AI experts clear in different development tasks, the project implemented the RACI (Responsible, Accountable, Consulted, Informed) division of labor.</p>
+<p>Full roster, abbreviation and RACI matrix uniquely referenced to <a href="21_RACI_EXPERTS_MATRIX.md.html">Docs/21_RACI_EXPERTS_MATRIX.md</a>.
+All subsequent sub-agents should pay attention to the following when dispatching work:
+1. <strong>R (Responsible)</strong>: When dispatching work, the role and function of the sub-agent should be assigned to the expert who belongs to the task area <strong>R</strong> (for example, when modifying Class DB, assign <strong>E​​AMCODE_3</strong>).
+2. <strong>A (Accountable)</strong>: After the sub-agent submits a PR or result, the main agent must be moved to <strong>A</strong> experts in the task area for review and approval.
+3. <strong>C (Consultation)</strong>: When the sub-agent encounters difficult problems during development, he must take the initiative to consult experts from <strong>C</strong> in the task field.</p>
+<h2 id="project-quality-control-and-factor-analysis-principles">Project quality control and factor analysis principles</h2>
+<p>In order to ensure the quality of the program code and the rigor of development, this project introduced 5 Whys (WHY-WHY factor analysis), fishbone diagram, countermeasure evaluation matrix and PDPC anomaly defense mechanism.</p>
+<p>For detailed QC specifications and guidelines, please see: <a href="22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md.html">Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md</a>.
+Subsequent development follows the requirements:
+1. <strong>Bug Diagnosis</strong>: If you encounter any runtime crash or logic bug, you must first perform <strong>5 why analysis</strong> and <strong>fishbone diagram analysis</strong> to trace the root cause and read the problem record.
+2. <strong>Countermeasure formulation</strong>: When designing a complex solution, at least two candidate solutions must be proposed in <code>implementation_plan.md</code>, and quantitatively scored using a countermeasure matrix from dimensions such as effect, suction, feeling, and safety.
+3. <strong>Dependent Scheduling</strong>: <code>task.md</code> Tasks must be marked with dependencies (relationship Gantt chart spirit) to ensure that there will be no conflicts in task development.</p>
+<h2 id="eam-project-priority-use-case">EAM Project priority use case</h2>
+<ol>
+<li>Retail API Change review and Docs writeback.</li>
+<li>Secret / taint risk review.</li>
+<li>AuraService 12.1.0 Refactoring pre-investigation.</li>
+<li>Renderer / DurationObject / DurationTextBinding implementation comparison.</li>
+<li>SavedVariables Compilation of migration test cases.</li>
+<li>Budget and CurseForge Release Check.</li>
+</ol>
+<hr />
+<h2 id="predefined-subagent-expert-directory-24-bits">Predefined subagent expert directory (24 bits)</h2>
+<p>This section provides a summary of roles when assigned; complete abbreviations, boundaries of responsibility, and sole accountable person are listed in <code>Docs/21_RACI_EXPERTS_MATRIX.md</code>.</p>
+<h3 id="evidence-level-and-capability-boundary">Evidence Level and Capability Boundary</h3>
+<ul>
+<li><code>文件已查證</code>: Has official announcements, official UI source code, or Warcraft Wiki revision sources.</li>
+<li><code>靜態通過</code>: only indicates that syntax or static scanning passed.</li>
+<li><code>Mock 通過</code>: only represents the simulation environment passed.</li>
+<li><code>PTR 實機通過</code>: PTR build, operation steps and results need to be recorded.</li>
+<li><code>Retail 實機通過</code>: Retail server build, character/scene, taint and Lua error evidence need to be recorded.</li>
+<li>The sub-agent role is just a specification for dispatching workers, and does not mean that the resident agent, game client or real machine capabilities already exist. Without WoW evidence of client and human operation, the actual machine shall not be claimed to have passed.</li>
+</ul>
+<h3 id="1-core-api-and-rendering-6-bit">1. Core, API and rendering (6-bit)</h3>
+<ul>
+<li><code>EAM_Addon_Architect</code>: core architecture, module boundaries, loading sequence and safety chain design.</li>
+<li><code>EAM_API_Security_Expert</code>: Retail API, Secret/Protected Data and taint security decisions.</li>
+<li><code>EAM_Performance_Expert</code>: CPU, GC, event frequency and framework pool performance budget.</li>
+<li><code>EAM_UI_Renderer_Expert</code>: Renderer, IconPool, DurationObject and setting interface.</li>
+<li><code>EAM_Lua_VM_Expert</code>: Lua semantics, data structures, closures and local hot path optimization.</li>
+<li><code>EAM_Security_Auditor</code>: Independently inspects pollution, bypass and protected chain risks, and does not participate in self-approval of its audit objects.</li>
+</ul>
+<h3 id="2-player-experience-and-career-monitoring-10-people">2. Player experience and career monitoring (10 people)</h3>
+<ul>
+<li><code>EAM_UX_Gameplay_Expert</code>: Information level, visual burden and combat usability.</li>
+<li><code>EAM_Class_Expert</code>: Responsible for professions, specializations, hero talents and spellID data.</li>
+<li><code>EAM_Class_Tanks</code>, <code>EAM_Class_Healers</code>, <code>EAM_Class_Melee</code>, <code>EAM_Class_Ranged</code>: Four types of specialized think tanks.</li>
+<li><code>EAM_Tank_Pro</code>, <code>EAM_Healer_Pro</code>, <code>EAM_Melee_DPS_Pro</code>, <code>EAM_Ranged_DPS_Pro</code>: Player actual combat consultation seats, which cannot replace API or actual machine evidence.</li>
+</ul>
+<h3 id="3-testing-documentation-release-and-governance-8-people">3. Testing, documentation, release and governance (8 people)</h3>
+<ul>
+<li><code>EAM_Mock_Sandbox_Expert</code>: Mock, unit and integration testing; simulation results must not be called real machine results.</li>
+<li><code>EAM_Data_Guard_Expert</code>: SavedVariables schema, WTF migration and setting compatibility.</li>
+<li><code>EAM_DevOps_Release_Expert</code>: TOC, static verification, packaging, CI and release thresholds.</li>
+<li><code>EAM_Combat_Scraper_Expert</code>: Candidate collection of combat data; the output must be verified by SPEC/SEC.</li>
+<li><code>EAM_API_Change_Intelligence_Expert</code> (<code>APICHG</code>): Track API change summaries, TOC/revision, official announcements and UI source diff from 12.0.0 onwards, and output version differences, migration windows and architecture warnings.</li>
+<li><code>EAM_Aura_121_Migration_Expert</code> (<code>AURA121</code>): 12.1 AuraContainer/AuraButton, Forbidden Aspects, UnitAura exit conditions and behavior migration.</li>
+<li><code>EAM_Retail_Client_QA_Expert</code> (<code>RQA</code>): Retail/PTR Real machine case, taint log, Lua error, CPU/GC evidence and verification sign-off. Without a game environment, you can only design and interpret tests.</li>
+<li><code>EAM_Documentation_Governance_Expert</code> (<code>DOC</code>): Facts-of-Truth, source date, validation status, Markdown→HTML one-way sync with <code>EAMCODE placeholder</code> taint threshold.</li>
+</ul>
+<h3 id="added-prohibitions-for-new-roles">Added prohibitions for new roles</h3>
+<ul>
+<li><code>APICHG</code> must not supersede the security final review of <code>SEC</code>, use Wiki revision time as the patch release date, or claim unimplemented PTR/Retail live results.</li>
+<li><code>AURA121</code> may not design Secret/Forbidden Aspect bypasses; final review of general security remains the responsibility of <code>SEC</code>.</li>
+<li><code>RQA</code> may not claim that unexecuted client tests have passed, nor may they be replaced by the author of the tested module.</li>
+<li><code>DOC</code> shall not adjudicate the technical authenticity of API; API facts are provided by <code>SEC/AURA121</code>, the document role is responsible for provenance and status consistency.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

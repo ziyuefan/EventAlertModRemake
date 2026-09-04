@@ -513,17 +513,18 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-09-04.17 (Alpha 8.4 發布儲存點 / 全目錄 HTML 治理清單 / GitHub Pre-Release 與 CurseForge 準備)。</p>
+<p>目前快照版本：2026-09-04.18 (Alpha 8.4 發布完成 / 單一屬性圖示拖曳格式化修復 / Ketho 參考庫收錄 / GitHub Pre-Release 與 CurseForge 8805930 成功同步)。</p>
 <h2 id="2026-09-04-alpha-84-pre-release-curseforge">2026-09-04 多進度儲存點：Alpha 8.4 Pre-release 與 CurseForge 發布續接狀態（現行儲存點）</h2>
 <ul>
-<li>current-of-truth：建立多進度續接儲存點（Checkpoint）；全專案所有檔案變更、語法檢查、業務沙盒與代碼契約檢驗（497/497 PASS）全數完成；全專案 115 個目錄與 1480 個檔案之 <code>FOLDER_INDEX.html</code> 已建置完畢；此存檔點用於防範模型配額中斷或重啟時能無縫接續進行 GitHub Pre-release 與 CurseForge 上傳作業。</li>
+<li>current-of-truth：建立多進度續接儲存點（Checkpoint）；全專案所有檔案變更、語法檢查、業務沙盒與代碼契約檢驗（497/497 PASS）全數完成；全專案 115 個目錄與 1496 個檔案之 <code>FOLDER_INDEX.html</code> 已建置完畢；GitHub Pre-release 與 CurseForge 雙端最新修復套件已全數發布上線。</li>
 <li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
 <li>[x] 【Alpha 8.4 版本全要素梳理完成】：整理 GitHub tag <code>alpha-8.3</code> (commit 517fb81, 2026.08.28) 之後全部變更（2D Grid 換行排版、冷卻戰鬥透明度常駐、跑速戰鬥限制防護、人物屬性戰鬥更新、滾動選取高亮），更新 4 份 changelog、4 份 README、TOC 與 AI 日誌。</li>
 <li>[x] 【跑速戰鬥中顯示 14.3% 根因排查與修復完成】：暴雪 12.0.5+ 戰鬥中 <code>GetUnitSpeed("player")</code> 受限回傳 1.0 導致 <code>(1.0/7.0)*100 = 14.3%</code>。於 <code>PlayerStatService.lua</code> 實作受限檢測與真實快取 <code>lastKnownStats</code> 安全回退，且戰鬥中禁止以受限值覆蓋快取。</li>
-<li>[x] 【全資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完成】：實作 <code>.AI/Tools/generate_folder_indexes.py</code>，全離線深色玻璃擬態 UI，內嵌 JSON-LD (<code>DirectoryGovernanceReport</code>) 與 meta 標籤，涵蓋 115 個工作目錄、1480 個檔案，附即時檢索篩選器，<code>--verify</code> 100% 通過。</li>
+<li>[x] 【全資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完成】：實作 <code>.AI/Tools/generate_folder_indexes.py</code>，全離線深色玻璃擬態 UI，內嵌 JSON-LD (<code>DirectoryGovernanceReport</code>) 與 meta 標籤，涵蓋 115 個工作目錄、1496 個檔案，附即時檢索篩選器，<code>--verify</code> 100% 通過。</li>
 <li>[x] 【自動化質量門禁全綠通過】：Lua 語法 76/76 PASS、Flow 業務狀態機 85/85 PASS、Validation Contracts 497/497 PASS。</li>
-<li>[x] 【更新 GitHub 文檔與發布 Alpha 8.4 Pre-release 完成】：文檔站以 <code>batch_convert_docs.py</code> 全數編譯至 <code>.AI/docs_html/</code>，Git 提交推送至 <code>origin/main</code>，成功發布 GitHub Pre-release：<code>https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.4</code>。</li>
-<li>[x] 【發布至 CurseForge 完成】：呼叫 <code>Deploy/Upload-CurseForge.ps1 -NonInteractive</code> 成功上傳正式服插件包 <code>EventAlertMod_12.1.0_Alpha_8.4_20260904_180758.zip</code>，CurseForge 檔案 ID：<code>8805890</code>（專案網址：<code>https://www.curseforge.com/wow/addons/eventalertmod</code>）。</li>
+<li>[x] 【更新 GitHub 文檔與發布 Alpha 8.4 Pre-release 完成】：文檔站以 <code>batch_convert_docs.py</code> 全數編譯至 <code>.AI/docs_html/</code>，Git 提交推送至 <code>origin/main</code>，成功發布 GitHub Pre-release：<code>https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.4</code>，並上傳最新 Hotfix 插件與源碼包。</li>
+<li>[x] 【發布至 CurseForge 完成】：呼叫 <code>Deploy/Upload-CurseForge.ps1 -NonInteractive</code> 成功上傳正式服插件包 <code>EventAlertMod_12.1.0_Alpha_8.4_20260904_181245.zip</code>，CurseForge 檔案 ID：<code>8805930</code>（專案網址：<code>https://www.curseforge.com/wow/addons/eventalertmod</code>）。</li>
+<li>[x] 【單一屬性圖示拖曳報錯修復與 Ketho 權威庫全面收錄】：修復 <code>PlayerStatService.lua:1452</code> <code>string.format</code> 佔位符（3 個）與參數數量（2 個）不符引發 bad argument #4 的 Lua 錯誤；收錄 Ketho 三大權威資源庫 (WowDoc, BlizzardInterfaceResources, wow-ui-source-midnight-ptr) 至 4 份核心文檔並建立專題問題日誌。</li>
 </ul>
 <h2 id="2026-09-04-retail-1210-alpha-84-2d">2026-09-04 Retail 12.1.0 Alpha 8.4 2D 矩陣折行排版、預渲染戰鬥透明度切換與跑速防護</h2>
 <ul>

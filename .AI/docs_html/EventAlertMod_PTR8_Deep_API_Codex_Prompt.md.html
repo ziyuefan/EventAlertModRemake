@@ -1633,17 +1633,1127 @@ PTR 實機通過
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<h1 id="eventalertmod_remake-wow-121-ptr-8-api-in-depth-auditing-and-ptr-specific-fix-tips">EventAlertMod_Remake: WoW 12.1 PTR 8 API In-depth auditing and PTR specific fix tips</h1>
+<h2 id="0-task-positioning-and-current-environment">0. Task positioning and current environment</h2>
+<p>You are currently still working on existing tasks for <code>EventAlertMod_Remake</code> and have maintained previous work on WoW 12.1 PTR 1-7, AuraContainer, AuraButton, Secret/Forbidden security model, and EAM Native Aura Backend.</p>
+<p>This tip belongs to:</p>
+<pre class="codehilite"><code class="language-text">PTR 8 增量校正
+＋
+相關 API 詳細文件與 FrameXML 深入稽核
+＋
+PTR 專用實作／驗證
+</code></pre>
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+<p>It is not a restart of the project, nor is it required that current Retail servers use 12.1 Native Aura immediately.</p>
+<h3 id="current-version-premise">Current version premise</h3>
+<pre class="codehilite"><code class="language-text">目前正式服：WoW 12.0.7
+目前測試環境：WoW 12.1 PTR
+預定正式服切換窗口：2026-08-13（台灣時間）
+</code></pre>
 
+<p>Before the Retail server is actually updated to 12.1:</p>
+<pre class="codehilite"><code class="language-text">12.1 Native AuraContainer 路徑
+→ 只允許在 PTR 啟用與驗證
+
+正式服 12.0.7
+→ 維持既有 12.0.7／Legacy Backend
+</code></pre>
+
+<p>**It is not allowed to automatically unblock version gates based on date only. **</p>
+<p>2026-08-13 or later, it must still be confirmed by actual client information first:</p>
+<pre class="codehilite"><code class="language-lua">local version, build, buildDate, interfaceVersion = GetBuildInfo()
+</code></pre>
+
+<p>Only after the Retail server actually meets the following conditions can the Retail server 12.1 Native Backend be evaluated and activated:</p>
+<pre class="codehilite"><code class="language-text">interfaceVersion &gt;= 120100
+且
+必要的 AuraContainer／AuraButton API 實際存在
+且
+正式服實機 smoke test 通過
+</code></pre>
+
+<p>If the date has arrived, but the Retail server still reports 12.0.7/<code>120007</code>:</p>
+<pre class="codehilite"><code class="language-text">不得啟用 12.1 Native Backend
+不得以日期覆蓋 runtime version gate
+</code></pre>
+
+<hr />
+<h1 id="1-working-principles">1. Working principles</h1>
+<p>Please comply with:</p>
+<ul>
+<li>Retain the current working tree, uncommitted modifications, existing architecture and test results.</li>
+<li>Identify which problems have been solved first, and do not refactor again.</li>
+<li>Correct modifications unrelated to PTR 8 may not be undone.</li>
+<li>Only make modifications supported by PTR announcement, Generated API Documentation, or FrameXML evidence.</li>
+<li>Behavior that cannot be proven by Mock must be marked as PTR for verification on the real machine.</li>
+<li>Live server 12.0.7 must not be Taint by the PTR-only API probe.</li>
+<li>Prioritize changes that are minimal, verifiable, and reversible.</li>
+<li>Classic/Legacy Backend must be decoupled from Retail 12.1 Native Backend.</li>
+<li>A pass of PTR must not be described as a formal service pass.</li>
+</ul>
+<p>project:</p>
+<pre class="codehilite"><code class="language-text">https://github.com/ziyuefan/EventAlertMod_Remake
+</code></pre>
+
+<p>Authoritative source:</p>
+<pre class="codehilite"><code class="language-text">https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes
+https://github.com/Gethe/wow-ui-source
+</code></pre>
+
+<p>PTR UI Source benchmark checked:</p>
+<pre class="codehilite"><code class="language-text">12.1.0.69111
+</code></pre>
+
+<p>It still has to be rechecked when executing:</p>
+<pre class="codehilite"><code class="language-text">Gethe/wow-ui-source ptr/version.txt
+</code></pre>
+
+<p>and log:</p>
+<pre class="codehilite"><code class="language-text">WoW build
+Interface version
+wow-ui-source commit SHA
+稽核日期
+涉及的 FrameXML 路徑
+涉及的 Generated Documentation 路徑
+PTR 實機測試日期
+</code></pre>
+
+<hr />
+<h1 id="2-patch-notes-summary-cannot-be-read-only">2. Patch Notes summary cannot be read-only</h1>
+<p>This audit must establish a three-layer evidence chain:</p>
+<pre class="codehilite"><code class="language-text">PTR 1～8 公告演進
+→ Generated API Documentation
+→ Blizzard FrameXML 實際實作
+</code></pre>
+
+<p>Each entry related to EAM must be confirmed:</p>
+<ol>
+<li>PTR The description name used in the announcement.</li>
+<li>The latest public method name.</li>
+<li>Method signature and parameter type.</li>
+<li>The actual field name of the options table.</li>
+<li>Enum’s formal name and value range.</li>
+<li>Nilable/Default behavior.</li>
+<li><strong>​​EAMCODE_2</strong>, Predicate or Access Constraint.</li>
+<li>Actual calling sequence.</li>
+<li>Dirty flag and update phase.</li>
+<li>Region/Frame ownership and life cycle.</li>
+<li>Whether OnUpdate will be created or enabled.</li>
+<li>Is it an engine behavior/Bug Fix rather than detectable API.</li>
+<li>EAM should modify programs, documentation, tests, or just include PTR verification.</li>
+</ol>
+<p>You must not directly generate Lua code based solely on the natural language name of a Wiki entry.</p>
+<p>For example, the "stealable option" in the PTR 8 announcement is currently completed:</p>
+<pre class="codehilite"><code class="language-lua">stealableFilter =
+    Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable
+</code></pre>
+
+<p>no:</p>
+<pre class="codehilite"><code class="language-lua">stealable = true
+</code></pre>
+
+<hr />
+<h1 id="3-take-ticker-of-existing-progress-before-starting">3. Take Ticker of existing progress before starting</h1>
+<p>Priority checks:</p>
+<pre class="codehilite"><code class="language-text">Services/AuraCapabilityService.lua
+Services/AuraContainerService.lua
+Services/AuraSoundService.lua
+Managers/AuraRuleCompiler.lua
+UI/NativeAuraRenderer.lua
+Tests/Mocks/WoW121AuraMock.lua
+Tests/FlowValidationHarness.lua
+Docs/02_RETAIL_API_BOUNDARIES.md
+Docs/09_KNOWN_LIMITATIONS.md
+Docs/19_AURA_1210_REDUX_BLUEPRINT.md
+Docs/23_AURA_CONTAINER_IMPLEMENTATION.md
+CHANGELOG.md
+</code></pre>
+
+<p>Before starting to modify, output:</p>
+<pre class="codehilite"><code class="language-text">已由既有工作完整處理
+已部分處理
+PTR 8 新增需求
+既有判斷需要校正
+目前不影響 EAM
+只需 PTR 實機驗證
+正式服 12.0.7 必須保持不變
+</code></pre>
+
+<p>Also check:</p>
+<pre class="codehilite"><code class="language-text">git status
+最近與 AuraContainer 有關的 commits
+尚未提交的修改
+目前測試狀態
+文件是否落後於程式碼
+</code></pre>
+
+<hr />
+<h1 id="4-create-a-hard-version-gate">4. Create a hard version gate</h1>
+<h2 id="41-backend-selection-must-not-only-look-at-the-existence-of-api">4.1 Backend selection must not only look at the existence of API</h2>
+<p>Backend selection must also consider at least:</p>
+<pre class="codehilite"><code class="language-text">產品分支
+Interface version
+必要 API 契約
+PTR／正式服環境
+</code></pre>
+
+<p>Suggested concepts:</p>
+<pre class="codehilite"><code class="language-lua">local _, _, _, interfaceVersion = GetBuildInfo()
+
+local isRetail121OrLater =
+    WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+    and type(interfaceVersion) == &quot;number&quot;
+    and interfaceVersion &gt;= 120100
+
+local hasRequiredNativeAuraContract =
+    -- 只檢查必要契約，不把可選視覺 API 當必要條件
+    false
+</code></pre>
+
+<h3 id="ptr-stage">PTR stage</h3>
+<pre class="codehilite"><code class="language-text">Retail PTR 12.1
+＋ interfaceVersion &gt;= 120100
+＋必要契約存在
+→ 允許 Native Aura Backend
+</code></pre>
+
+<h3 id="retail-server-1207">Retail server 12.0.7</h3>
+<pre class="codehilite"><code class="language-text">interfaceVersion == 120007
+→ 強制 Legacy／12.0.7 Backend
+→ 不建立 CustomAuraContainer
+→ 不執行 PTR-only destructive probe
+</code></pre>
+
+<h3 id="after-switching-to-the-retail-server">After switching to the Retail server</h3>
+<pre class="codehilite"><code class="language-text">正式服 interfaceVersion &gt;= 120100
+＋必要契約存在
+＋正式服 smoke test 通過
+→ 才正式啟用 Native Aura Backend
+</code></pre>
+
+<h2 id="42-the-date-can-only-be-used-as-a-reminder-for-publishing-assignments">4.2 The date can only be used as a reminder for publishing assignments</h2>
+<pre class="codehilite"><code class="language-text">2026-08-13
+</code></pre>
+
+<p>Can only be used as:</p>
+<pre class="codehilite"><code class="language-text">重新檢查正式服 build
+執行 release smoke test
+評估解除 PTR-only gate
+</code></pre>
+
+<p>Not available as:</p>
+<pre class="codehilite"><code class="language-text">直接啟用 12.1 Native Backend 的唯一條件
+</code></pre>
+
+<hr />
+<h1 id="5-ptr-8-cumulative-changes">5. PTR 8 Cumulative changes</h1>
+<p>Update evolution matrix:</p>
+<pre class="codehilite"><code class="language-text">12.0.7
+→ PTR 1
+→ PTR 2
+→ PTR 3
+→ PTR 4
+→ PTR 5
+→ PTR 6
+→ PTR 7
+→ PTR 8
+</code></pre>
+
+<p>PTR 8 AddOn-facing changes:</p>
+<ol>
+<li>AuraButton adds Pandemic state Region API.</li>
+<li>Dispel/Border display options add <code>showAlways</code> and stealable filtering capabilities.</li>
+<li>AuraButton Tooltip is changed to throttle updates every 200 ms.</li>
+<li>When AuraContainer is deactivated, its AuraButton and ItemEnchantment assignments will be cleared.</li>
+<li><code>UnitIsPossessed</code>, <code>UnitIsCharmed</code> will no longer return Secret to <code>player</code>, <code>pet</code>, <code>vehicle</code>.</li>
+<li>Fixed the problem that AddOn cannot be used with SVG/VectorGraphics.</li>
+<li>Fixed AuraButton Duration Text occasionally displaying 0.</li>
+<li>Fixed <code>PingableUnitFrameTemplate</code> Lua Error when pinging enemy units.</li>
+<li>Block the vulnerability that tracks the number of AuraContainer Aura through <code>OnSizeChanged</code>.</li>
+</ol>
+<p>You must not just write the final state of PTR 8, you must still retain the changing context of PTR 1 to 8.</p>
+<hr />
+<h1 id="6-pandemic-api-use-actual-names-and-lifecycles">6. Pandemic API: Use actual names and lifecycles</h1>
+<h2 id="61-confirmed-api">6.1 Confirmed API</h2>
+<p>Latest <code>Blizzard_CustomAuraButton.lua</code> uses:</p>
+<pre class="codehilite"><code class="language-lua">auraButton:AddPandemicRegion(region)
+auraButton:RemovePandemicRegion(index)
+auraButton:ClearPandemicRegions()
+</code></pre>
+
+<p>Note:</p>
+<ul>
+<li>The parameter type is <code>Region</code>, not limited to Texture.</li>
+<li><code>AddPandemicRegion</code> returns the index.</li>
+<li>Region must pass inbound script object validation.</li>
+<li>Region must be AuraButton descendant.</li>
+<li>Region obtained after binding:</li>
+</ul>
+<pre class="codehilite"><code class="language-lua">Enum.SecretAspect.Shown
+</code></pre>
+
+<ul>
+<li>AddOn must not read its Shown status back to the Aura.</li>
+<li>Must not reparent after binding.</li>
+</ul>
+<h2 id="62-blizzard-internal-calculations">6.2 Blizzard internal calculations</h2>
+<p>FrameXML will use:</p>
+<pre class="codehilite"><code class="language-lua">C_UnitAuras.GetRefreshExtendedDuration(unitToken, auraInstanceID)
+C_UnitAuras.GetAuraBaseDuration(unitToken, auraInstanceID)
+</code></pre>
+
+<p>The Pandemic Window is calculated, and the Region is controlled by Blizzard's private logic.</p>
+<p>EAM may not:</p>
+<pre class="codehilite"><code class="language-text">讀取 AuraData
+讀取 expirationTime
+讀取 duration
+假定固定 30%
+建立 Pandemic Ticker
+建立 Pandemic Scheduler 任務
+使用 UNIT_AURA Secret payload
+透過 Region Show／Hide 建立 AuraState
+</code></pre>
+
+<h2 id="63-onupdate-cost">6.3 OnUpdate Cost</h2>
+<p><code>CustomAuraButtonPrivateMixin</code> enables itself OnUpdate only if the following conditions are simultaneously true:</p>
+<pre class="codehilite"><code class="language-text">至少配置一個 Pandemic Region
+且
+當前 Aura 存在有效 Pandemic Window
+</code></pre>
+
+<p>Therefore do not unconditionally join the Pandemic Region for all AuraButton.</p>
+<p>suggestion:</p>
+<pre class="codehilite"><code class="language-text">規則明確啟用 Pandemic
+→ 才在 initializeFrame 綁定
+
+規則未啟用
+→ 不建立、不綁定 Pandemic Region
+</code></pre>
+
+<p>Priority is limited to:</p>
+<pre class="codehilite"><code class="language-text">重要 Slot
+少量高優先 Group
+使用者明確啟用的規則
+</code></pre>
+
+<p>Avoid a large number of AuraButton entering Blizzard private OnUpdate at the same time.</p>
+<h2 id="64-capability-naming">6.4 Capability naming</h2>
+<p>Don't use:</p>
+<pre class="codehilite"><code class="language-lua">hasPandemicTexture
+</code></pre>
+
+<p>Change to:</p>
+<pre class="codehilite"><code class="language-lua">hasPandemicRegionAPI
+</code></pre>
+
+<p>Detection contract:</p>
+<pre class="codehilite"><code class="language-lua">type(auraButton.AddPandemicRegion) == &quot;function&quot;
+and type(auraButton.RemovePandemicRegion) == &quot;function&quot;
+and type(auraButton.ClearPandemicRegions) == &quot;function&quot;
+</code></pre>
+
+<p>Probes should be performed and cached during the allowed <code>initializeFrame</code> phase, and Containers must not be created repeatedly for probing.</p>
+<hr />
+<h1 id="7-dispel-textureborder-use-the-latest-api">7. Dispel Texture／Border: Use the latest API</h1>
+<h2 id="71-latest-method">7.1 Latest method</h2>
+<p>Preferred use:</p>
+<pre class="codehilite"><code class="language-lua">auraButton:AddDispelTypeTexture(texture, options)
+auraButton:RemoveDispelTypeTexture(index)
+auraButton:ClearDispelTypeTextures()
+auraButton:GetDispelTypeTextureCount()
+auraButton:GetDispelTypeTexture(index)
+</code></pre>
+
+<p>Old PTR name:</p>
+<pre class="codehilite"><code class="language-lua">GetAuraBorder
+SetAuraBorder
+ClearAuraBorder
+</code></pre>
+
+<p>Currently only Deprecated alias, expected to be removed after 12.1.</p>
+<p>New code must not rely on the AuraBorder alias.</p>
+<h2 id="72-options-actual-structure">7.2 Options actual structure</h2>
+<p>Currently <code>CustomAuraButtonDispelTypeTextureOptions</code> contains at least:</p>
+<pre class="codehilite"><code class="language-lua">{
+    showAlways = false,
+    showWhenHarmful = true,
+    showWhenHelpful = false,
+    showWithoutDispelType = false,
+
+    stealableFilter =
+        Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable,
+        -- 或 NotStealable
+
+    style =
+        Enum.CustomAuraButtonDispelTypeTextureStyle.BorderWithIcon,
+
+    customDispelAssetMap = nil,
+    customDispelColorMap = nil,
+    customDispelColorCurve = nil,
+}
+</code></pre>
+
+<p>Enum:</p>
+<pre class="codehilite"><code class="language-lua">Enum.CustomAuraButtonDispelTypeStealableFilter.Stealable
+Enum.CustomAuraButtonDispelTypeStealableFilter.NotStealable
+</code></pre>
+
+<p>Style：</p>
+<pre class="codehilite"><code class="language-lua">Enum.CustomAuraButtonDispelTypeTextureStyle.Border
+Enum.CustomAuraButtonDispelTypeTextureStyle.BorderWithIcon
+Enum.CustomAuraButtonDispelTypeTextureStyle.Icon
+Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset
+Enum.CustomAuraButtonDispelTypeTextureStyle.CustomAsset
+</code></pre>
+
+<h2 id="73-showalways-priority">7.3 <code>showAlways</code> Priority</h2>
+<p>Current FrameXML judgment order:</p>
+<pre class="codehilite"><code class="language-text">無 Aura
+→ 不顯示
+
+showAlways == true
+→ 立即顯示，略過其他條件
+
+否則
+→ harmful／helpful
+→ 有無 dispel type
+→ stealableFilter
+</code></pre>
+
+<p>Therefore <code>showAlways = true</code> will override:</p>
+<pre class="codehilite"><code class="language-text">showWhenHarmful
+showWhenHelpful
+showWithoutDispelType
+stealableFilter
+</code></pre>
+
+<p>EAM specifies that the compiler shall not interpret these fields as independent conditions that can be arbitrarily AND superimposed.</p>
+<h2 id="74-recommended-setting-mode">7.4 Recommended setting mode</h2>
+<p>The EAM visual setting compiles to:</p>
+<pre class="codehilite"><code class="language-text">Always
+HarmfulDispel
+HelpfulDispel
+StealableOnly
+NotStealableOnly
+AnyDispel
+NoDispelType
+CustomAsset
+PreserveAssetColorized
+</code></pre>
+
+<p>If <code>showAlways = true</code>, do not output <code>stealableFilter</code> which has no effect.</p>
+<hr />
+<h1 id="8-capability-classification-must-be-revised">8. Capability classification must be revised</h1>
+<p>Do not write PTR 8 all changes as <code>hasXXX</code>.</p>
+<h2 id="81-callable-api-capability">8.1 Callable API Capability</h2>
+<pre class="codehilite"><code class="language-lua">hasPandemicRegionAPI
+hasMultipleDispelTypeTextures
+hasDispelTypeTextAPI
+hasApplicationBarAPI
+hasDurationBarAPI
+hasTooltipAnchorAPI
+hasHideTooltipInCombatAPI
+hasAuraGroupFilterSetter
+hasAuraGroupCandidateFilterSetter
+hasAuraGroupSortSetter
+hasAuraGroupLayoutSetter
+hasColumnLayout
+</code></pre>
+
+<h2 id="82-optionsenum-schema-capability">8.2 Options／Enum Schema Capability</h2>
+<pre class="codehilite"><code class="language-lua">hasDispelShowAlways
+hasDispelStealableFilter
+hasDispelTextureStyle
+hasCustomDispelAssetMap
+hasCustomDispelColorMap
+hasCustomDispelColorCurve
+</code></pre>
+
+<p>Priority based on:</p>
+<pre class="codehilite"><code class="language-text">Interface version
+WoW build
+Enum 是否存在
+Generated Documentation
+受控 options probe
+</code></pre>
+
+<p>judge.</p>
+<p>Do not do destructive probes in combat or when AuraButton has disabled reconfiguration.</p>
+<h2 id="83-build-behaviorengine-fix">8.3 Build Behavior／Engine Fix</h2>
+<p>The following are not callable capabilities:</p>
+<pre class="codehilite"><code class="language-text">Tooltip 每 200 ms 節流
+Duration Text 0 Bug 修正
+SetEnabled(false) 清除 Aura assignment
+SVG Bug 修正
+PingableUnitFrameTemplate Bug 修正
+OnSizeChanged exploit fix
+</code></pre>
+
+<p>Don't build:</p>
+<pre class="codehilite"><code class="language-lua">hasTooltipThrottle200ms
+hasContainerDisableClear
+hasDurationZeroFix
+</code></pre>
+
+<p>Change to:</p>
+<pre class="codehilite"><code class="language-text">buildBehavior
+engineFixMatrix
+knownPTRBehavior
+PTRVerificationChecklist
+</code></pre>
+
+<h2 id="84-security-contract">8.4 Security Contract</h2>
+<p>The following are not function switches, but contracts that must be adhered to:</p>
+<pre class="codehilite"><code class="language-text">SecretAspect
+ForbiddenAspect
+Inbound descendant requirement
+ChangeParent 禁止
+AuraButton reparent 禁止
+Child Region reparent 禁止
+UntrustedScriptExecution
+UntrustedLayoutScriptExecution
+EventRegistrations
+OnSizeChanged 防洩漏
+initializeFrame 配置時機
+PLAYER_LOGIN 前後限制
+</code></pre>
+
+<hr />
+<h1 id="9-tooltip-200-ms-throttling">9. Tooltip 200 ms throttling</h1>
+<p>AuraButton Tooltip still has OnUpdate, but it is passed through first:</p>
+<pre class="codehilite"><code class="language-lua">GameTooltip_IsUpdateNeeded(self, elapsedTime)
+</code></pre>
+
+<p>PTR 8 Update threshold is every 200 ms, up to about 5 times/second.</p>
+<p>This behavior:</p>
+<pre class="codehilite"><code class="language-text">由 Blizzard Tooltip Mixin 管理
+不是 EAM Scheduler
+不是 runtime Aura capability
+不需要 EAM 模擬
+</code></pre>
+
+<p>Search for EAM if it exists:</p>
+<pre class="codehilite"><code class="language-text">Aura Tooltip 自製 OnUpdate
+每幀刷新 Tooltip
+Hook AuraButton UpdateTooltip
+滑鼠停留時重掃 AuraData
+重複 PopulateTooltip
+額外 C_Timer Tooltip ticker
+</code></pre>
+
+<p>Native Aura paths should be given priority to Blizzard Tooltip.</p>
+<p>existing:</p>
+<pre class="codehilite"><code class="language-lua">auraButton:SetHideTooltipInCombat(true)
+</code></pre>
+
+<p>If API exists and the actual machine PTR is normal, it can be retained.</p>
+<hr />
+<h1 id="10-auracontainer-actual-call-chain-disabled">10. AuraContainer Actual call chain disabled</h1>
+<h2 id="101-shared-mixin">10.1 Shared Mixin</h2>
+<pre class="codehilite"><code class="language-lua">container:SetEnabled(false)
+</code></pre>
+
+<p>trigger:</p>
+<pre class="codehilite"><code class="language-text">UpdateEventRegistrations()
+UpdateAllAuras()
+</code></pre>
+
+<p>When deactivated or hidden, dynamic events are dismissed:</p>
+<pre class="codehilite"><code class="language-text">UNIT_AURA
+Private Aura callback
+WEAPON_ENCHANT_CHANGED
+WEAPON_SLOT_CHANGED
+</code></pre>
+
+<h2 id="102-managedauracontainer">10.2 ManagedAuraContainer</h2>
+<p><code>UpdateAllAuras()</code> will:</p>
+<pre class="codehilite"><code class="language-text">MarkDirty(FullAuraRebuild)
+</code></pre>
+
+<p>When deactivated:</p>
+<pre class="codehilite"><code class="language-text">ClearActiveItemEnchantments()
+</code></pre>
+
+<p>Parse stage first:</p>
+<pre class="codehilite"><code class="language-text">清 Aura cache
+清 AuraGroup candidates
+清 AuraSlot candidates
+</code></pre>
+
+<p>Then because disabled is returned, the new Aura will no longer be parsed.</p>
+<p>The subsequent dirty pipeline completes the AuraButton assignment clearing and display refresh.</p>
+<h2 id="103-correct-conclusion">10.3 Correct conclusion</h2>
+<p>After PTR 8, you may no longer claim:</p>
+<pre class="codehilite"><code class="language-text">停用 Container 仍保留舊 Aura assignment
+</code></pre>
+
+<p>But must keep:</p>
+<pre class="codehilite"><code class="language-text">Aura assignment 被清除
+≠
+Frame／Region／FrameProvider 被銷毀
+</code></pre>
+
+<p>The following objects may still exist:</p>
+<pre class="codehilite"><code class="language-text">AuraContainer
+AuraButton
+Texture
+FontString
+Cooldown
+StatusBar
+DurationTextBinding
+FrameProvider
+initializeFrame closure
+Group 預配置批次
+</code></pre>
+
+<hr />
+<h1 id="11-container-reconstruction-and-gcframe-accumulation">11. Container reconstruction and GC/Frame accumulation</h1>
+<p>PTR 8 Improve deactivation cleanup, but WoW Frame will not be destroyed by Lua GC as a result.</p>
+<p>Prioritize in-place updates:</p>
+<pre class="codehilite"><code class="language-text">Sound-only
+→ 只更新 AuraSoundService
+
+位置變更
+→ 移動既有 Container
+
+FilterString
+→ SetAuraGroupFilterString
+
+CandidateFilters
+→ SetAuraGroupCandidateFilters
+
+Sort
+→ SetAuraGroupSortMethod
+
+MaxFrameCount
+→ SetAuraGroupMaxFrameCount
+
+Layout
+→ SetAuraGroupLayout／FlowLayout setters
+
+只有無法由公開 API 修改的結構變更
+→ 才建立新 Container 世代
+</code></pre>
+
+<p>Stress test:</p>
+<pre class="codehilite"><code class="language-text">連續變更設定 100 次
+Sound-only 100 次
+Layout-only 100 次
+Style-only 100 次
+Enable／Disable 100 次
+</code></pre>
+
+<p>statistics:</p>
+<pre class="codehilite"><code class="language-text">containerCreateCount
+containerRetireCount
+auraButtonInitializeCount
+regionCreateCount
+activeOnUpdateCount
+soundRegistrationCount
+eventRegistrationCount
+</code></pre>
+
+<p>Target:</p>
+<pre class="codehilite"><code class="language-text">Sound-only：0 個新 Container
+Layout-only：0 個新 Container
+位置變更：0 個新 Container
+Enable／Disable：0 個新 Container
+</code></pre>
+
+<hr />
+<h1 id="12-duration-text-0-bug">12. Duration Text 0 Bug</h1>
+<p>PTR 8 Fixed AuraButton Duration Text occasionally showing 0.</p>
+<p>Latest FrameXML uses stable:</p>
+<pre class="codehilite"><code class="language-lua">C_DurationUtil.CreateDurationTextBinding()
+</code></pre>
+
+<p>And when updating:</p>
+<pre class="codehilite"><code class="language-text">SetDuration(auraDuration)
+SetEnabled(not auraDuration:IsZero())
+</code></pre>
+
+<p>Search for old workarounds:</p>
+<pre class="codehilite"><code class="language-text">每幀倒數 OnUpdate
+0 秒時重建 Container
+反覆 SetDurationText
+自行讀 expirationTime
+延遲 timer 重綁
+C_Timer workaround
+額外 duration cache
+</code></pre>
+
+<p>If only for old bugs:</p>
+<pre class="codehilite"><code class="language-text">PTR 8 Native 路徑移除
+或
+依舊 Build 隔離
+</code></pre>
+
+<p>The Retail server 12.0.7 Legacy path must not accidentally delete necessary logic due to PTR 8 audit.</p>
+<hr />
+<h1 id="13-onsizechanged-exploit-block">13. OnSizeChanged exploit block</h1>
+<p>Comprehensive search:</p>
+<pre class="codehilite"><code class="language-text">OnSizeChanged
+ResizeToBoundsRect
+GetSize
+GetWidth
+GetHeight
+GetRect
+GetBoundsRect
+SetSize hook
+SetPoint hook
+anchored frame movement
+children bounds
+layout size polling
+</code></pre>
+
+<p>Verify that this information is not used to:</p>
+<pre class="codehilite"><code class="language-text">判斷 Aura 出現
+判斷 Aura 消失
+計算 Aura 數量
+觸發提示
+觸發音效
+建立 AuraState
+更新 SavedVariables
+回流 AlertManager
+</code></pre>
+
+<p>prohibit:</p>
+<pre class="codehilite"><code class="language-text">AuraContainer 尺寸
+→ OnSizeChanged
+→ 推導 Aura 數量
+
+AuraContainer 排版
+→ 錨定 Frame 位移
+→ EAM OnUpdate 比對位置
+→ 推導 Aura 狀態
+
+AuraButton children bounds
+→ ResizeToBoundsRect
+→ 推導顯示數
+</code></pre>
+
+<p>The FlowLayout output can only be used as a visual result and must not become a EAM logical input.</p>
+<hr />
+<h1 id="14-svgvectorgraphics">14. SVG／VectorGraphics</h1>
+<p>PTR 8 Fixed AddOn not being able to use the new SVG technology.</p>
+<p>This feature is not a requirement for Native Aura Backend.</p>
+<p>Don't do a full migration for the time being. First create an independent PTR experiment and evaluate:</p>
+<pre class="codehilite"><code class="language-text">建立成本
+記憶體
+縮放品質
+UI Scale
+旋轉支援
+Mask 支援
+TexCoord 支援
+Forbidden／Secret 相容性
+AuraButton descendant 限制
+</code></pre>
+
+<p>SVG/VectorGraphics Failure can only deactivate the corresponding visual, but not downgrade Native Aura Backend.</p>
+<p>Retail server 12.0.7 may not load the PTR-only SVG experimental module.</p>
+<hr />
+<h1 id="15-unitispossessedunitischarmed">15. UnitIsPossessed／UnitIsCharmed</h1>
+<p>PTR After 8:</p>
+<pre class="codehilite"><code class="language-lua">UnitIsPossessed(&quot;player&quot;)
+UnitIsPossessed(&quot;pet&quot;)
+UnitIsPossessed(&quot;vehicle&quot;)
+
+UnitIsCharmed(&quot;player&quot;)
+UnitIsCharmed(&quot;pet&quot;)
+UnitIsCharmed(&quot;vehicle&quot;)
+</code></pre>
+
+<p>Secrets will no longer be returned for these tokens.</p>
+<p>Only for the above tokens.</p>
+<p>Other unit tokens:</p>
+<pre class="codehilite"><code class="language-text">不可假設解除 Secret
+不可用 compound token 擴張
+不可影響 Aura Backend 選擇
+</code></pre>
+
+<p>EAM Flag when not used:</p>
+<pre class="codehilite"><code class="language-text">No Direct Impact
+</code></pre>
+
+<hr />
+<h1 id="16-pingableunitframetemplate">16. PingableUnitFrameTemplate</h1>
+<p>Search for:</p>
+<pre class="codehilite"><code class="language-text">PingableUnitFrameTemplate
+</code></pre>
+
+<p>Not used:</p>
+<pre class="codehilite"><code class="language-text">No Impact
+</code></pre>
+
+<p>There are uses:</p>
+<ul>
+<li>Removed workaround only for old PTR hostile Ping Error.</li>
+<li>Preserve Build isolation.</li>
+<li>PTR tests friendly/hostile/player/target.</li>
+<li>MUST NOT be mixed into the AuraContainer core.</li>
+</ul>
+<hr />
+<h1 id="17-eamcode_2-design-requirements">17. <strong>​​EAMCODE_2</strong> Design Requirements</h1>
+<p><code>UI/NativeAuraRenderer.lua</code> must maintain:</p>
+<pre class="codehilite"><code class="language-text">只在 initializeFrame 建立 Region
+只設定靜態材質、字型、尺寸與錨點
+使用 AuraButton 原生 display binding
+不讀 AuraData
+不註冊 UNIT_AURA
+不建立 EAM Aura OnUpdate
+不使用 OnShow／OnHide 推導狀態
+不讀 Region Shown secret
+不 reparent 綁定後的 children
+不將 Native Aura 回流 Legacy AlertManager 熱路徑
+</code></pre>
+
+<p>Optional PTR 8 extension:</p>
+<pre class="codehilite"><code class="language-text">Pandemic Region
+Multiple Dispel Type Textures
+Stealable Filter
+ShowAlways
+Custom Dispel Asset Map
+Custom Dispel Color Map
+Custom Dispel Color Curve
+</code></pre>
+
+<p>Each optional feature:</p>
+<pre class="codehilite"><code class="language-text">獨立安全降級
+不使整個 Native Backend 失效
+不因功能缺失建立新 Container
+</code></pre>
+
+<hr />
+<h1 id="18-style-compilation-and-frameprovider-grouping">18. Style compilation and FrameProvider grouping</h1>
+<p>EAM may:</p>
+<pre class="codehilite"><code class="language-lua">showStacks
+showName
+showCountdown
+showPandemic
+showDispel
+</code></pre>
+
+<p>Put it in individual rule style.</p>
+<p>However, <code>initializeFrame</code> is called when FrameProvider creates AuraButton and may not have the rule context for each Aura assignment.</p>
+<p>Please confirm:</p>
+<pre class="codehilite"><code class="language-text">不同 style signature 是否共用同一 AuraGroup
+initializeFrame closure 是否安全承載 style
+是否需要依 style signature 分組
+是否需要不同額外 XML Template
+</code></pre>
+
+<p>Recommended style signature:</p>
+<pre class="codehilite"><code class="language-text">unit
+filterString
+candidateFilters
+sort
+showStacks
+showName
+showCountdown
+showPandemic
+dispelMode
+tooltipMode
+buttonSize
+</code></pre>
+
+<p>Only the same signatures share FrameProvider/AuraGroup.</p>
+<p>Do not unconditionally create a separate Container for each Spell ID rule.</p>
+<hr />
+<h1 id="19-keep-the-previous-p0-problem">19. Keep the previous P0 problem</h1>
+<p>PTR 8 will not automatically solve the following existing risks, please keep auditing:</p>
+<h2 id="191-identity-candidate-filter-degradation">19.1 Identity Candidate Filter degradation</h2>
+<p>Check:</p>
+<pre class="codehilite"><code class="language-text">player + HARMFUL
+assistable unit + HARMFUL
+hostile target + HELPFUL
+</code></pre>
+
+<p>When the identity candidate filter does not allow it, Blizzard may skip <code>includeSpellIDs</code> instead of rejecting the entire candidate.</p>
+<p>Must not just tag:</p>
+<pre class="codehilite"><code class="language-text">secretIdentityFilterMayBeRejected
+</code></pre>
+
+<p>It should be judged whether it is possible to:</p>
+<pre class="codehilite"><code class="language-text">identityFilterIgnored
+possibleUnrelatedAuraDisplay
+unsupportedSecretAuraIdentity
+</code></pre>
+
+<h2 id="192-repeat-template">19.2 Repeat Template</h2>
+<p>Confirm whether FrameProvider has been automatically added:</p>
+<pre class="codehilite"><code class="language-text">CustomAuraButtonTemplate
+</code></pre>
+
+<p>If automatically added, EAM must not be specified repeatedly in <code>templateNames</code>.</p>
+<h2 id="193-repeat-layout-dirty">19.3 Repeat Layout Dirty</h2>
+<p>If <code>AddAuraGroup(options.layout)</code> has a layout set, do not call the same <code>SetAuraGroupLayout</code> immediately.</p>
+<h2 id="194-fixed-setsize">19.4 Fixed SetSize</h2>
+<p>Avoid fixing ten columns and two columns from conflicting with Container auto FlowLayout.</p>
+<hr />
+<h1 id="20-ptr-special-test-matrix">20. PTR Special test matrix</h1>
+<h2 id="201-retail-server-1207-return">20.1 Retail server 12.0.7 Return</h2>
+<p>The Retail server is currently only testing:</p>
+<pre class="codehilite"><code class="language-text">Legacy Backend 正常載入
+12.1 模組不載入或安全短路
+不建立 CustomAuraContainer
+不呼叫 PTR-only API
+不產生 Lua Error
+Classic／Legacy 功能不退化
+SavedVariables 相容
+</code></pre>
+
+<p>Verification of 12.1 Native Aura functionality may not be performed on the production server 12.0.7.</p>
+<h2 id="202-ptr-121-static-check">20.2 PTR 12.1 Static check</h2>
+<p>Search for:</p>
+<pre class="codehilite"><code class="language-text">OnSizeChanged
+SetScript(&quot;OnUpdate&quot;
+SetScript(&quot;OnShow&quot;
+SetScript(&quot;OnHide&quot;
+hooksecurefunc
+GetWidth
+GetHeight
+GetSize
+GetRect
+expirationTime
+UNIT_AURA
+GetAuraDataBy
+CustomAuraButtonTemplate
+SetParent
+SetAuraBorder
+GetAuraBorder
+ClearAuraBorder
+</code></pre>
+
+<h2 id="203-ptr-121-mockprocess-test">20.3 PTR 12.1 Mock／Process Test</h2>
+<pre class="codehilite"><code class="language-text">Backend version gate
+12.0.7 強制 Legacy
+12.1 PTR 選擇 Native
+必要 API 缺失時安全降級
+可選 PTR 8 API 缺失不影響 Native 核心
+SetEnabled(false) 清除 AuraButton
+SetEnabled(false) 清除 ItemEnchantment
+SetEnabled(false) 不等於 Frame 銷毀
+Sound-only 不重建 Container
+Layout-only 不重建 Container
+Enable／Disable 不重建 Container
+Pandemic API 缺失安全降級
+Dispel options 缺失安全降級
+showAlways 優先權
+Stealable／NotStealable Enum
+Tooltip 無 EAM 每幀更新
+Duration Text 0 不觸發 workaround
+OnSizeChanged 不參與 Aura 狀態判斷
+</code></pre>
+
+<h2 id="204-ptr-real-machine-verification">20.4 PTR Real machine verification</h2>
+<pre class="codehilite"><code class="language-text">AddPandemicRegion 實際顯示
+Pandemic Window 切換
+Pandemic Region SecretAspect.Shown
+大量 Pandemic AuraButton 的 CPU 成本
+AddDispelTypeTexture
+多個 Dispel Texture
+showAlways
+Stealable
+NotStealable
+CustomAsset
+Tooltip 200 ms 節流
+SetEnabled(false) 清除 assignment
+Duration Text 不再錯誤顯示 0
+OnSizeChanged 無法洩漏 Aura 數量
+SVG／VectorGraphics
+戰鬥中建立與設定限制
+PLAYER_LOGIN 前後差異
+Forbidden／taint log
+</code></pre>
+
+<p>Mock passes must not be described as PTR real machine passes.</p>
+<hr />
+<h1 id="21-2026-08-13-retail-server-switching-procedure">21. 2026-08-13 Retail server switching procedure</h1>
+<p>After reaching the scheduled revision window, do not merge the "date switch" directly.</p>
+<p>Execute in order:</p>
+<h2 id="phase-a-confirm-the-retail-server-version">Phase A: Confirm the Retail server version</h2>
+<pre class="codehilite"><code class="language-lua">GetBuildInfo()
+</code></pre>
+
+<p>Record:</p>
+<pre class="codehilite"><code class="language-text">version
+build
+buildDate
+interfaceVersion
+WOW_PROJECT_ID
+</code></pre>
+
+<p>only:</p>
+<pre class="codehilite"><code class="language-text">WOW_PROJECT_MAINLINE
+且 interfaceVersion &gt;= 120100
+</code></pre>
+
+<p>Just enter the next stage.</p>
+<h2 id="phase-b-confirm-the-retail-server-api-contract">Phase B: Confirm the Retail server API contract</h2>
+<p>Minimum confirmation:</p>
+<pre class="codehilite"><code class="language-text">CustomAuraContainerTemplate
+SetUnit
+SetEnabled
+AddAuraGroup
+AddAuraSlot
+必要 Group setter
+AuraButton initializeFrame callback
+必要 display binding
+</code></pre>
+
+<p>Optional PTR 8 Lack of visual capabilities, which must not prevent the Native core from being enabled.</p>
+<h2 id="phase-c-retail-server-smoke-test">Phase C: Retail server smoke test</h2>
+<pre class="codehilite"><code class="language-text">登入
+重載 UI
+切換目標
+進出戰鬥
+玩家 Buff
+玩家 Debuff
+目標 Buff
+目標 Debuff
+Enable／Disable
+設定變更
+音效
+Tooltip
+taint log
+Lua Error
+</code></pre>
+
+<h2 id="phase-d-remove-ptr-only-flag">Phase D: Remove PTR-only flag</h2>
+<p>Only after the Retail server smoke test is passed, you can:</p>
+<pre class="codehilite"><code class="language-text">更新文件為正式服已驗證
+解除 PTR-only feature flag
+發布正式服 12.1 相容版本
+</code></pre>
+
+<hr />
+<h1 id="22-priority">22. Priority</h1>
+<h2 id="p0-version-isolation-and-security-correctness">P0: Version isolation and security correctness</h2>
+<ol>
+<li>Retail server 12.0.7 mandatory Legacy.</li>
+<li>Native is only enabled in PTR 12.1.</li>
+<li>Remove any OnSizeChanged Aura derivation.</li>
+<li>Not reading Secret AuraData.</li>
+<li>Correct identity candidate filter degradation risk.</li>
+<li>Do not pass the PTR test as Retail server verification.</li>
+</ol>
+<h2 id="p1-resources-and-performance">P1: Resources and Performance</h2>
+<ol>
+<li>Sound-only does not rebuild.</li>
+<li>Layout-only does not rebuild.</li>
+<li>Enable/Disable does not rebuild.</li>
+<li>Control the retired Container.</li>
+<li>Pandemic Region is configured on demand.</li>
+<li>Avoid large numbers of AuraButton private OnUpdate.</li>
+</ol>
+<h2 id="p2-ptr-8-visual-function">P2: PTR 8 visual function</h2>
+<ol>
+<li>Pandemic Region.</li>
+<li>Multiple Dispel Type Texture.</li>
+<li><code>stealableFilter</code>.</li>
+<li><code>showAlways</code>.</li>
+<li>Custom Asset/Color.</li>
+<li>SVG Experiment.</li>
+</ol>
+<h2 id="p3-low-relevance-projects">P3: Low relevance projects</h2>
+<ol>
+<li><code>UnitIsPossessed</code>/<code>UnitIsCharmed</code>.</li>
+<li><code>PingableUnitFrameTemplate</code>.</li>
+<li>Document matrix.</li>
+</ol>
+<hr />
+<h1 id="23-delivery-content">23. Delivery content</h1>
+<p>Report after completion:</p>
+<h2 id="231-existing-progress-integration">23.1 Existing progress integration</h2>
+<pre class="codehilite"><code class="language-text">原任務已完成內容
+原任務進行中內容
+PTR 8 新增內容
+既有判斷校正
+重複項目
+未修改項目
+</code></pre>
+
+<h2 id="232-version-matrix">23.2 Version Matrix</h2>
+<p>Contains at least:</p>
+<pre class="codehilite"><code class="language-text">環境
+Interface version
+Backend
+允許的功能
+禁止的功能
+測試狀態
+</code></pre>
+
+<p>Required columns:</p>
+<pre class="codehilite"><code class="language-text">正式服 12.0.7
+PTR 12.1
+正式服 12.1 尚未驗證
+正式服 12.1 已驗證
+</code></pre>
+
+<h2 id="233-ptr-8-api-audit-table">23.3 PTR 8 API Audit table</h2>
+<pre class="codehilite"><code class="language-text">公告描述
+Generated API 名稱
+FrameXML 方法
+Options／Enum
+Secret／Forbidden 行為
+EAM 使用位置
+是否修改
+是否需 PTR 驗證
+</code></pre>
+
+<h2 id="234-modify-files">23.4 Modify files</h2>
+<p>File by file description:</p>
+<pre class="codehilite"><code class="language-text">修改原因
+行為差異
+版本影響
+效能影響
+回退方式
+</code></pre>
+
+<h2 id="235-resource-statistics">23.5 Resource Statistics</h2>
+<pre class="codehilite"><code class="language-text">Container rebuild 次數
+AuraButton 初始化數
+Pandemic Region 數
+啟用 OnUpdate 的 AuraButton 數
+retired Container 數
+事件註冊數
+Sound-only Frame 建立數
+Layout-only Frame 建立數
+</code></pre>
+
+<h2 id="236-verification-status">23.6 Verification status</h2>
+<p>Strictly distinguish:</p>
+<pre class="codehilite"><code class="language-text">程式碼稽核完成
+靜態測試通過
+Mock 通過
+PTR 實機通過
+正式服 12.0.7 回歸通過
+正式服 12.1 尚未驗證
+</code></pre>
+
+<hr />
+<h1 id="24-prohibited-matters">24. Prohibited matters</h1>
+<ul>
+<li>The original task may not be reset due to PTR 8.</li>
+<li>Not read-only PTR Announcement summary.</li>
+<li>Do not guess the API name.</li>
+<li><code>stealable = true</code> must not be used instead of <code>stealableFilter</code>.</li>
+<li>Pandemic qualification must not be mistakenly written as Texture-only API.</li>
+<li>Pandemic Region must not be configured unconditionally for all AuraButton.</li>
+<li>No homemade Pandemic OnUpdate.</li>
+<li>Aura may not be derived from OnSizeChanged, size, position, display state.</li>
+<li>The UNIT_AURA Secret payload must not be re-imported.</li>
+<li>Per-frame updates must not be created for Tooltips.</li>
+<li>New Native Aura OnUpdate must not be created for Duration Text.</li>
+<li>Do not mistake <code>SetEnabled(false)</code> for a Frame that has been released.</li>
+<li>Optional PTR 8 must not be allowed to degrade the entire Native Backend due to lack of visual capabilities.</li>
+<li>Do not let production servers 12.0.7 call PTR-only AuraContainer API.</li>
+<li>12.1 must not be activated solely based on the 2026-08-13 date.</li>
+<li>Do not write PTR pass as official pass.</li>
+<li>Do not destroy Classic/Legacy Backend.</li>
+<li>Modules that are not related to this audit and are already functioning normally may not be modified.
+Please use <strong>PTR dedicated verification, strict isolation of Retail server 12.0.7, API files and FrameXML dual evidence, and minimum reversible correction</strong> as implementation guidelines.</li>
+</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->
