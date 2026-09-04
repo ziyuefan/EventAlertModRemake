@@ -1449,7 +1449,7 @@ function PlayerStatService.setActiveAnchors(enable, targetKey)
                         EAM.UI.PlayerStatPanel.syncSliders(k, x, y)
                     end
                     local fLabel = (EAM.L and def and def.labelKey and EAM.L[def.labelKey]) or (def and def.defaultLabel) or k
-                    print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_STAT_POS_SAVED or "獨立位置已儲存: X: %.1f, Y: %.1f", x or 0, y or 0))
+                    print("|cff00ff96EAM|r " .. string.format((EAM.L and EAM.L.EAM_STAT_POS_SAVED) or "[%s] 獨立位置已儲存: X: %.1f, Y: %.1f", fLabel, x or 0, y or 0))
                 end)
                 if not item.dragHint then
                     local hint = item:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")

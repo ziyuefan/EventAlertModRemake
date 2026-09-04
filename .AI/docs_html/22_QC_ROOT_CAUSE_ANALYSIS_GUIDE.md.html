@@ -640,134 +640,17 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-quality-control-and-root-cause-analysis-guidelines-qc-and-root-cause-analysis-guidelines">EventAlertMod Quality Control and Root Cause Analysis Guidelines (QC and Root Cause Analysis Guidelines)</h1>
-<p>Boy! In order to ensure the program code quality of EAM during reconstruction and future development and avoid planting the same bug repeatedly, this document formally combines the control quality of enterprise management (TQM), the seven new QC methods, the 5 whys (WHY-WHYDE), fish chart factor analysis, matrix strategy evaluation and Gantt, the mental method of chart phase analysis.
-All subsequent sub-agents must follow this QC guideline when conducting problem troubleshooting, plan design (implementation plan) and PR review.</p>
-<hr />
-<h2 id="1-5-whys-why-why-factor-analysis-implementation-specifications">1. 5 Whys (WHY-WHY factor analysis) implementation specifications</h2>
-<p>When any bug, Taint outbreak or Lua error occurs in EAM, the main agent and sub-agent must not directly try to modify the program code. They must first perform <strong>5 why analysis</strong> in the <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code> record and ask "why" 5 times in a row until the root cause (Root Cause) is found.</p>
-<h3 id="example-iszero-bryn-crisis-collapse-analysis-in-combat">Example: IsZero() Bryn Crisis Collapse Analysis in Combat</h3>
-<ul>
-<li><strong>Why 1 (one question)</strong>: Why does the plug-in program and crash the UI when OnUpdate is executed?<ul>
-<li><em>Answer</em>: Because in <code>Renderer.lua:97</code> a direct Boolean judgment is made on the return value of <code>durationObj:IsZero()</code> (<code>if durationObj:IsZero() then</code>).</li>
-</ul>
-</li>
-<li><strong>Why 2 (second question)</strong>: Why does <code>IsZero()</code> cause a crash?</li>
-<li><em>Answer</em>: Because the <code>DurationObject</code> represents the confidentiality limit returned by the Aura in combat, its IsZero()<code>method is a protected</code>Secret Boolean`.</li>
-<li><strong>Why 3 (Three Questions)</strong>: Why can’t the protected <code>Secret Boolean</code> do Bollinger judgment?<ul>
-<li><em>Answer</em>: Because the World of Warcraft 12.x engine prevents AddOn crystals from being determined by API to assist combat decision-making, it is strictly prohibited to execute Boolean Test instructions on Secret Boolean in Lua.</li>
-</ul>
-</li>
-<li><strong>Why 4 (four questions)</strong>: Why do we have to call <code>IsZero()</code> in OnUpdate?<ul>
-<li><em>Answer</em>: Because the <code>UNIT_AURA</code> event in combat will be officially throttled, and in the secret state we cannot obtain the remaining time to pre-schedule the scheduler, the renderer must poll this predicate to actively restore the icon when the Aura disappears.</li>
-</ul>
-</li>
-<li><strong>Why 5 (Five Questions/Root Reasons)</strong>: Why was there no protection before?</li>
-<li><em>Answer</em>: Because the renderer lacks pre-detection and security wrapping of Secret Value, and does not know that the return value of <code>IsZero()</code> is a Secret.</li>
-<li><strong>Basic Countermeasure</strong>: Introduce <code>safeCheckIsZero</code>, use <code>Util.isSecretValue</code> to filter the returned value, and if it is a Secret, perform the Boolean test yourself.</li>
-</ul>
-<hr />
-<h2 id="2-fishbone-diagram-ishikawa-diagram-factor-analysis-template">2. Fishbone Diagram (Ishikawa Diagram) factor analysis template</h2>
-<p>When encountering complex systemic problems (such as "not a single ICON appears" or "the UI is severely stuck in the high-level combat"), a fishbone diagram must be used to analyze from the following five dimensions:</p>
-<pre class="codehilite"><code class="language-text">  【人 (Agent)】                   【機 (Client/WoW API)】         【料 (SavedVariables/Data)】
-  - 載入順序快取 nil 漏配           - 12.x Secrecy 加密與限制       - 舊 SavedVariables 資料遷移失效
-  - 靜態變數被提早快取             - 事件節流與 CLEU 事件停用       - 預設 Alerts 表為空 (WTF遺失)
-          \                             \                               \
-           \                             \                               \
-            --------------------------------------------------------------------&gt; [ 系統異常/Bug ]
-           /                             /                               /
-          /                             /                               /
-  - 戰鬥中 layout 頻繁重排         - 戰鬥中 InCombatLockdown 限制
-  - 輪詢 pcall 產生 Heap 垃圾       - 脫戰後 defer 釋放機制
-  【法 (Algorithm/邏輯)】          【環 (Environment/戰鬥狀態)】
-</code></pre>
 
-<ul>
-<li><strong>People (Agent/Developer)</strong>: AI agent's code loading sequence, quick fetch logic, and improper use of static variables.</li>
-<li>** Machine (Client / WoW API)**: Behavior changes, encryption restrictions, event throttling for Warcraft client API.</li>
-<li><strong>Data (SavedVariables / Data)</strong>: database structure, default profile, localization strings.</li>
-<li><strong>Method (algorithm/logical process)</strong>: algorithm cost, loop design, event registration, GC garbage generation rate.</li>
-<li><strong>Ring (Environment/Game State)</strong>: In combat/not in combat, low FPS, a lot of Buff special fears.</li>
-</ul>
-<hr />
-<h2 id="3-countermeasure-matrix">3. Countermeasure Matrix</h2>
-<p>When designing complex plans in <code>implementation_plan.md</code>, at least <strong>two entrepreneurial plans</strong> must be proposed and quantitatively evaluated in the form of a matrix diagram (1 to 5 points, with 5 dividing the best), and finally some with the highest comprehensive scores are obtained.</p>
-<h3 id="example-evaluation-of-strategies-to-solve-the-secret-countdown-problem-in-combat">Example: Evaluation of strategies to solve the secret countdown problem in combat</h3>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Countermeasures</th>
-<th style="text-align: center;">Effect (effect)</th>
-<th style="text-align: center;">Breathing (breathing)</th>
-<th style="text-align: center;">Enough hunger (Low GC/CPU)</th>
-<th style="text-align: center;">Safety risk (Low pollution/Secret)</th>
-<th style="text-align: center;">Comprehensive score</th>
-<th style="text-align: center;">Decision</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>Countermeasure A: Forcibly use Tooltip Scraping in each frame OnUpdate crawling time</strong></td>
-<td style="text-align: center;">2</td>
-<td style="text-align: center;">4</td>
-<td style="text-align: center;">1 (cliff string GC)</td>
-<td style="text-align: center;">2 (extremely easy to be contaminated)</td>
-<td style="text-align: center;"><strong>9</strong></td>
-<td style="text-align: center;">Elimination</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Countermeasure B: Use Shadow Host adsorption to produce adsorption official CooldownViewer</strong></td>
-<td style="text-align: center;">5</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">5 (100% avoidance layout)</td>
-<td style="text-align: center;">4 (safety isolation)</td>
-<td style="text-align: center;"><strong>17</strong></td>
-<td style="text-align: center;">** (Adopt backup)**</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Countermeasure C: AuraService Description parsing + renderer dual-rail IsZero Alternative recycling</strong></td>
-<td style="text-align: center;">5</td>
-<td style="text-align: center;">5</td>
-<td style="text-align: center;">4 (only poll on countdown)</td>
-<td style="text-align: center;">5 (explode with safeCheck)</td>
-<td style="text-align: center;"><strong>19</strong></td>
-<td style="text-align: center;"><strong>Best Adopted</strong></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="4-gantt-chart-scheduling-and-dependency-spirit-gantt-spirit">4. Gantt Chart Scheduling and Dependency Spirit (Gantt Spirit)</h2>
-<p>In <code>task.md</code>, the <strong>Dependency</strong> and <strong>Critical Path</strong> of the Gantt chart must be reflected to prevent the sub-agent developed by the tool from "idling due to unready pre-program code" or "high correlation program code conflict".</p>
-<h3 id="scheduling-principles">Scheduling principles:</h3>
-<ol>
-<li><strong>Dependency Guard (dependency)</strong>: Clearly mark dependencies in <code>task.md</code>. For example:<ul>
-<li><code>[ ] Task C (AuraService Refactored) [Depends on: Task A (EventRouter Revised)]</code></li>
-</ul>
-</li>
-<li><strong>Critical Path First (Critical Path First)</strong>: Prioritize tasks that determine the stability of the architecture (such as Core, SavedVariables), and allocate the most expensive resources with first-level review experts.</li>
-<li><strong>Milestone Gate (milestone level)</strong>: At the end of each stage, Milestone must be set for quality inspection (such as: <code>luac -p</code> check, <code>/eam doctor</code> diagnosis passed), otherwise the stage cannot be entered.</li>
-</ol>
-<hr />
-<h2 id="5-implementation-of-the-new-seven-qc-methods-in-eam">5. Implementation of the new seven QC methods in EAM</h2>
-<ol>
-<li><strong>Relationship Diagram Method (RelationsDiagram)</strong>:<ul>
-<li><em>Application</em>: Clarify the causal propagation network between EAM internal events (such as <code>EAM_AURA_STATE_CHANGED</code>) and WoW events (such as <code>UNIT_AURA</code>) to prevent event storms and infinite returns.</li>
-</ul>
-</li>
-<li><strong>Systematic Chart</strong>:<ul>
-<li><em>Application</em>: Layer large refactoring goals (such as "12.1.0 zero allocation") into sub-module changes (AuraService pooling, CooldownService pooling, AlertManager duplication, renderer multi-type rendering).</li>
-</ul>
-</li>
-<li><strong>Matrix Diagram</strong>:<ul>
-<li><em>Application</em>: The <strong><a href="file:///d:/EventAlertMod/Docs/21_RACI_EXPERTS_MATRIX.md">Docs/21_RACI_EXPERTS_MATRIX.md</a></strong> that has been implemented in this case is used to clarify the responsibilities of experts and development tasks.</li>
-</ul>
-</li>
-<li><strong>PDPC method (Process Decision Program Chart/Process Decision Program Chart)</strong>:</li>
-<li><em>Application</em>: Before writing the program code, predict all possible abnormal paths (such as: the official API returns nil, the data is not cached, and limits are set during combat), and prepare backup countermeasures such as <code>pcall</code> fault isolation, <code>safeCheckIsZero</code> and <code>Util.isSecretValue</code> in advance in the program code.</li>
-<li><strong>Arrow Bar Chart Method (Arrow Chart)</strong>:</li>
-<li><em>Application</em>: Clarify the work order of sub-agent artifacts, avoid multiple agents from writing the same file at the same time, and ensure smooth merging of version branches.</li>
-</ol>
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

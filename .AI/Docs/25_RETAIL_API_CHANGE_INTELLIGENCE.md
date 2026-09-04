@@ -32,7 +32,10 @@
 ## 3. 證據優先序
 
 1. Blizzard 官方公告、PTR／RC development notes。
-2. Blizzard UI 原始碼或可追溯的版本 diff。
+2. Blizzard UI 原始碼或可追溯的版本 diff：
+   - [Ketho/wow-ui-source-midnight-ptr](https://github.com/Ketho/wow-ui-source-midnight-ptr)（暴雪 Midnight / 12.x PTR 官方 UI 原始碼鏡像）
+   - [Ketho/WowDoc](https://github.com/Ketho/WowDoc)（社群最完整 WoW API / FrameXML 文檔與簽名庫）
+   - [Ketho/BlizzardInterfaceResources](https://github.com/Ketho/BlizzardInterfaceResources)（暴雪 UI 素材、Atlas、Texture 與音效清單）
 3. Warcraft Wiki `API_change_summaries` 與各 patch API changes 頁，且必須記錄 revision。
 4. 專案 Markdown、活動 TOC 與實際 Lua 命中。
 5. 搜尋摘要只作線索，不得單獨成為架構結論。

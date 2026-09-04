@@ -33,6 +33,9 @@
 - https://EAMCODE_0__.wiki.gg/wiki/API_Cooldown_SetCooldown
 - https://EAMCODE_0__.wiki.gg/wiki/API_Cooldown_SetCooldownDuration
 - https://EAMCODE_0__.wiki.gg/wiki/API_Cooldown_GetCooldownDisplayDuration
+- https://github.com/Ketho/WowDoc (Ketho WoW API / FrameXML Documentation)
+- https://github.com/Ketho/BlizzardInterfaceResources (Ketho Blizzard UI Textures, Atlas & Sound Resources)
+- https://github.com/Ketho/wow-ui-source-midnight-ptr (Ketho WoW Midnight / 12.x PTR UI Source Code)
 ## 2026-05-26 複查摘要
 
 這次重新檢索魔獸爭霸Wiki後，與EAM直接相關的結論如下：

@@ -653,141 +653,17 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="retail-121-player-professional-resource-independent-module-reconstruction-report">Retail 12.1 Player professional resource independent module reconstruction report</h1>
-<ul>
-<li>Date: 2026-08-23</li>
-<li>Target channel: Retail/PTR 12.1; XPTR 12.0.7 using isolated numeric legacy adapter</li>
-<li>Evidence level: Program and test conclusions are offline-mock/static contract; no WoW client visual signature has been claimed yet.</li>
-</ul>
-<h2 id="a-current-architecture">A. Current architecture</h2>
-<p>Player resources have been separated from the Aura, Spell Cooldown and Item Cooldown data paths, and the responsibility boundaries are as follows:
-1. <code>Data/PlayerResourceCatalog.lua</code>: 17 resource definitions, tokens, powerType, 13 professions/40 groups of specialization candidate topologies.
-2. <code>Services/PlayerResourceCapability.lua</code>: Divide <code>NUMERIC</code>, <code>SECRET_DISPLAY</code>, <code>UNAVAILABLE</code> with each resource according to the client adapter.
-3. <code>Services/PlayerResourceService.lua</code>: unique runtime registry, event routing, topology, effective config, background sampler.
-4. <code>Debug/PlayerResourceProbe.lua</code>: Resource-by-resource event/sink ability report manually initiated by the player; raw power is not read.
-5. <code>UI/PowerRenderer.lua</code>: EAM has its own StatusBar/icon/text and Secret write-only sink.
-6. <code>UI/PlayerResourcePanel.lua</code>: Per resource settings, anchor/position, size and appearance control.
-7. <strong>​​EAMCODE_1</strong>: Only retain the old entrance facade and do not establish a second resource pipeline.</p>
-<h2 id="b-reload-symptoms-and-root-causes">B. /reload Symptoms and Root Causes</h2>
-<p>The old process mixes the writing of SavedVariables with the initialization frame creation, and the setting changes are only visible after reloading. The current contract divides into two situations:
-- Non-combat: <code>SavedVariables.updatePlayerResourceConfig</code> issues <code>EAM_PLAYER_RESOURCE_CONFIG_CHANGED</code>, the service is immediately rebuilt and applied, <code>/reload</code> should not be requested.
-- Combat: Set the desired state to be saved first, and the structural change markers <code>combatRebuildDeferred</code>; <code>PLAYER_REGEN_ENABLED</code> are merged and rebuilt once.
-- Module deactivation: stop the background sampler, clean the frame, and cancel the event registration of PlayerResourceService and PlayerResourceProbe; re-register only after re-enabling it.
-If the actual machine still needs <code>/reload</code>, it needs to report resource key, client channel, patch/build/interface, combat status, service status, Lua error, taint or blocked action.</p>
-<h2 id="c-n-resource-topology-and-druid-flow">C. N-resource topology and Druid flow</h2>
-<p>Take one specialization versus N candidate resources. Candidate topology is not deleted due to <code>enabled=false</code>; capability, foreground/background are separated from renderer state. Druid retains Mana, Rage, Energy, ComboPoints, LunarPower candidates according to the transformation process, and re-evaluates the prospects and availability through <code>UNIT_DISPLAYPOWER</code>/<code>UPDATE_SHAPESHIFT_FORM</code>, without forcing Energy or ComboPoints into the first slot.</p>
-<h2 id="d-config-hierarchy-anchor-and-position">D. Config hierarchy, anchor and position</h2>
-<p>Valid settings are merged according to <code>globalDefaults -&gt; classDefaults -&gt; spec overrides</code>. Each resource can be saved independently <code>enabled</code>, display mode, foreground/background, value/percent, font, size, orientation, threshold, alpha, width and height, icon size, spacing, order, <code>anchor</code> and <code>position</code>. Anchor is the anchor point of the parent frame, and position is the positioning point of the resource frame itself; both are selected by the whitelist cycle and have offset/scale. Unoverridden fields are inherited by class/global and cannot cause cross-professional pollution.</p>
-<h2 id="e-capability-1207-adapter-and-secret-sourcesink">E. Capability, 12.0.7 adapter and Secret source/sink</h2>
-<p><code>PlayerResourceCapability</code> uses client adapter to shunt: Retail/PTR 12.1 can use NUMERIC or Secret display; XPTR 12.0.7 uses an isolated numeric legacy adapter and cannot call 12.1 Native Aura/Secret sink. The Secret resource only writes the percent allowed by the security boundary directly to the StatusBar/radial sink, without saving, comparing, mathematical operations, tostring, serialization, table key or read back getter. All reports only output security metadata and do not output the original values ​​of current, max, and percent.</p>
-<h2 id="f-resourceprobe-events-and-background-sampler">F. ResourceProbe, events and background sampler</h2>
-<p><code>PlayerResourceProbe</code> only registers events during manual startup by the player, recording tracked/available/foreground/background/capability/sinkAvailable/eventObserved item by item; unregistered when stopped. <code>eventObserved</code> only means that the event is triggered by the actual machine process, and does not mean that the visual or numerical values ​​are correct.
-Background resources can only request a single probe-gated, demand-driven sampler after the player/Probe explicitly confirms that the relevant event is missing; the current 0.5 second interval used by the offline fixture is only a test clock, not the actual frequency conclusion of Retail 12.1. It is not a scheduled poll, nor does it perform structural changes in combat. If the event is observed, the resource exits the sampler immediately. Sampler fixture/contract has passed offline verification; it is still not possible to enable the sampler or setter accepted to pass as a real machine.</p>
-<h2 id="g-renderer-ownership">G. Renderer ownership</h2>
-<p><code>PowerRenderer</code> preheats the fixed resource frame and StatusBar, using direct source-to-sink updates; the Secret frame is independently owned by the resource key. Renderer does not read back widget values, does not poll with OnUpdate, does not build ShadowHost or the second Aura/Cooldown pipeline.</p>
-<h2 id="h-performance-boundary">H. Performance boundary</h2>
-<p>Event routing is guided by token/powerType registry O(1); all resource frames are pre-built to avoid event hot paths from repeatedly building frames. The update strategy of <code>NUMERIC</code>/<code>SECRET_DISPLAY</code> is bound to the cold path after capability classification; NUMERIC only executes the protection read pair once per event, and the text is updated to <code>FontString:SetFormattedText()</code> to avoid <code>string.format</code> or string concatenation per event; Secret only executes write-only sink. The background sampler is a single, probe-gated, demand-driven schedule that clears nodes and generations when stopped. Sampler fixture/contract passed offline validation; remaining gaps are WoW runtime visual, event and taint signoffs.</p>
-<h2 id="i-legacy-1207">I. Legacy 12.0.7</h2>
-<p><code>getClientAdapter()</code> is determined by interface/client profile XPTR 12.0.7 numeric legacy adapter, and is verified by Flow <code>unitpower.legacy_120007_adapter</code> not to enter the 12.1 Secret sink. This is a compatibility capability classification and downgrade contract, not XPTR actual machine visual evidence; Classic/MoP is outside the scope of this project.</p>
-<h2 id="j-offline-verification">J. Offline verification</h2>
-<p>The latest artifact in this round:</p>
-<ul>
-<li>Lua syntax (62 AddOn + 2 offline tests): 62/62.</li>
-<li>Flow all: 77/77, .AI/TestResults/EAM_FlowValidation_all_20260823_063557.json.</li>
-<li>Flow boundary: 56/56, .AI/TestResults/EAM_FlowValidation_boundary_20260823_063609.json.</li>
-<li>Validation Contracts: 459/459, has been rerun with the latest Flow artifact; and has passed the deployment contract and continuity tracking simultaneously.</li>
-<li>Covered ResourceProbe schema, 12.0.7 adapter, Druid Bear/Cat/Caster/Moonkin/Back Bear topology, Energy→ComboPoints renderer ownership, module event unregister, anchor/position, font/orientation, cold path policy binding, source/sink boundary, config immediate/combat deferred and unitpower.background_sampler_gate.</li>
-<li>Background sampler fixture/contract passed; the above offline results cannot replace the WoW real-machine visual, taint or blocked-action sign-off.</li>
-</ul>
-<h2 id="k-real-machine-signing-threshold">K. Real machine signing threshold</h2>
-<p>Items marked <code>REQUIRES_WOW_12_1_RUNTIME</code> or <code>REQUIRES_XPTR_12_0_7_RUNTIME</code>:</p>
-<ol>
-<li>The out-of-combat/combat generation, consumption, and reset of Mage Mana, Warrior Rage, Wild Druid Energy＋ComboPoints, Shadow Priest Insanity, and Death Knight Runes+RunicPower.</li>
-<li>All <code>UnitHasPowerType</code> available resources for other professions/specialties, record ResourceProbe’s <code>eventObserved</code> and visualObservation item by item.</li>
-<li>Druid Caster/Cat/Bear/Moonkin transformation and foreground/background resource switching must not force 1079 or other spell first grid.</li>
-<li>Non-combat settings cannot be updated until <code>/reload</code>; combat modifications need to be rebuilt only once after the war; deactivation/restarting requires confirmation of event registration and frame cleaning.</li>
-<li>anchor/position, size, text, threshold, Secret StatusBar vision, Druid Flow and XPTR numeric fallback.</li>
-<li>Lua error, taint, blocked action, Forbidden access and reporting privacy.
-Human reports must be marked with PTR, XPTR or Retail, patch, build, interface, combat status, manual or not <code>/reload</code> and visualObservation. API accepted, offline pass, ResourceProbe eventObserved or sampler output cannot be directly upgraded to visual pass.</li>
-</ol>
-<h2 id="l-acceptance-matrix">L. Acceptance matrix</h2>
-<table>
-<thead>
-<tr>
-<th>Project</th>
-<th>Offline/Static Evidence</th>
-<th>WoW 12.1 Actual Machine Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Catalog, 17 resources, 40 groups class/spec topology</td>
-<td>PASS</td>
-<td>REQUIRES_WOW_12_1_RUNTIME</td>
-</tr>
-<tr>
-<td>NUMERIC／SECRET_DISPLAY／UNAVAILABLE capability shunt</td>
-<td>PASS</td>
-<td>REQUIRES_WOW_12_1_RUNTIME</td>
-</tr>
-<tr>
-<td>UNIT_DISPLAYPOWER only refreshes the foreground and keeps the background nodes</td>
-<td>PASS</td>
-<td>REQUIRES_WOW_12_1_RUNTIME</td>
-</tr>
-<tr>
-<td>Druid five resources and Bear／Cat／Caster／Moonkin／Back Bear flow</td>
-<td>PASS</td>
-<td>REQUIRES_WOW_12_1_RUNTIME</td>
-</tr>
-<tr>
-<td>Energy updates are not hidden ComboPoints, per resource frame ownership</td>
-<td>PASS</td>
-<td>REQUIRES_WOW_12_1_RUNTIME</td>
-</tr>
-<tr>
-<td>Non-combat settings are applied immediately, and are rebuilt once during combat</td>
-<td>PASS</td>
-<td>REQUIRES_WOW_12_1_RUNTIME</td>
-</tr>
-<tr>
-<td>Probe metadata, manual background sampler gate, module deactivation cleanup</td>
-<td>PASS</td>
-<td>REQUIRES_WOW_12_1_RUNTIME</td>
-</tr>
-<tr>
-<td>Retail／PTR 12.1 and XPTR 12.0.7 Full Class/Specialization Vision, Events, taint</td>
-<td>Not proven by offline testing</td>
-<td>REQUIRES_WOW_12_1_RUNTIME／REQUIRES_XPTR_12_0_7_RUNTIME</td>
-</tr>
-</tbody>
-</table>
-<p>Offline PASS only means that the program, strict mock, and flow are consistent with the contract; any StatusBar setter accepted, eventObserved or sampler tick cannot be upgraded to player visual pass.</p>
-<h2 id="m-alpha-7-final-offline-correction">M. Alpha 7 final offline correction</h2>
-<p>This section replaces the old artifact number in the previous paragraph and serves as the current player resource offline evidence index.
-- PlayerResourceProbe Added a one-time missing-event check: After Probe start, the Scheduler will delay checking the background resources, and generate safety metadata after executing it once; stop, generation invalidation or module disable will all cancel it.
-- UNIT_DISPLAYPOWER, UPDATE_SHAPESHIFT_FORM and PLAYER_REGEN_ENABLED only refresh foreground metadata and do not batch reread or delete background resources; SavedVariables Catalog map remains read-only to avoid frozen table writes.
-- Options returns savedVariablesMethodUnavailable when SavedVariables API is not completed, and no longer cascades initialization errors into nil methods.
-- Final offline gate: Lua 62/62, Flow all 77/77, Flow boundary 56/56, Validation Contracts 461/461. Latest artifacts: .AI/TestResults/EAM_FlowValidation_all_20260823_081553.json, .AI/TestResults/EAM_FlowValidation_boundary_20260823_081542.json.
-- The above is still an offline-mock/static contract; mana, rage, energy, combo points, madness, runes, Secret sink, full profession/specialization and taint must be signed by Retail/PTR/XPTR after the player deploys them.</p>
-<h2 id="n-464464-final-offline-gate-and-public-readme">N. 464/464 final offline gate and public README</h2>
-<ul>
-<li>Latest Lua syntax: 62/62.</li>
-<li>Latest Flow: all 77/77, boundary 56/56; artifacts are EAM_FlowValidation_all_20260823_083630.json and EAM_FlowValidation_boundary_20260823_083631.json respectively.</li>
-<li>Latest Validation Contracts: 464/464; the new gate includes Probe restart/one-time missing-event check, Frozen Catalog read-only, Options fail-closed, README/changelog package synchronization and privacy contract.</li>
-<li>Root README is synchronized with the plug-in copy, including Alpha 7 status, actual /eam command line usage, execution timing, deployment menu and WTF backup/restore instructions; two copies of SHA-256 are 635C545E7B535B85730AA28D24176E291299A86F47D5036682C1FE5877935AB3.</li>
-<li>The above is still offline/static evidence; Secret sink, all-professional/specialized vision, taint, blocked action, combat/out of combat and three-channel runtime must be signed by the player after deployment.</li>
-</ul>
-<h2 id="2026-08-23-dk-rune-six-slot-event-path">2026-08-23 DK Rune six-slot event path</h2>
-<ul>
-<li>Problem: RUNES powerType cannot be regarded as a continuous aggregation bar of Runic Power type; the general UnitPower path cannot reflect the available/cooling status of each Rune.</li>
-<li>Implementation: <code>GetRuneCount(1..6)</code> initializes each slot ready boolean; if API is missing or the safe value is unavailable, try <code>isRuneReady</code> of <code>GetRuneCooldown(index)</code>. Any unsafe results are fail-closed and start/duration is not read.</li>
-<li>Hot path: <code>RUNE_POWER_UPDATE(runeIndex, added)</code> only updates one slot with 0..6 ready count, explicitly saves <code>added=false</code>. The event itself does not call UnitPower/UnitPowerMax/UnitPowerPercent, nor configure a new frame.</li>
-<li>Rendering: Use the pre-established RUNES POINTS StatusBar and five separators, and convert safe count to count/6 percentage. This is a six-segment ready-count summary, not six individual recharge sweeps; if individual recharge animations are to be added, each slot's DurationObject/widget capabilities and Secret boundaries must be verified separately.</li>
-<li>Diagnosis: <code>getStatus()</code> only outputs <code>runeSlotAPIAvailable</code>, <code>runeStateInitialized</code>, <code>runeReadyCount</code>, <code>runeEventCount</code>, <code>lastRuneResult</code> and other safe metadata.</li>
-<li>Offline verification: <code>unitpower.runes_event_driven_segments</code> verification 6/6→5/6→6/6, commonly used during Rune event UnitPower read 0, Secret operation 0; players still need to confirm after deployment Retail 12.1 blood/ice/evil specialization vision.</li>
-</ul>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

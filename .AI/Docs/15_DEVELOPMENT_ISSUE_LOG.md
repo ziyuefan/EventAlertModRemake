@@ -1,3 +1,20 @@
+### 2026-09-04 EAM-20260904-PLAYERSTAT-DRAG-FORMAT-ARG4-NIL：拖曳移動單一屬性圖示報錯 bad argument #4 to 'format' 修復
+
+- 狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。
+- 需求背景與問題分析：
+  1. 少年欸實機測試回報：「移動單一屬性圖示發生這個錯誤：9x EventAlertMod/Services/PlayerStatService.lua:1452: bad argument #4 to 'format' (number expected, got no value)」。
+  2. 根本原因排查：
+     - 在 `PlayerStatService.lua:1452` 處理圖示拖曳停止事件時，代碼呼叫：
+       `print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_STAT_POS_SAVED or "...", x or 0, y or 0))`
+     - 各語系字典中的 `EAM_STAT_POS_SAVED`（如 `zhTW.lua`）定義為：
+       `L.EAM_STAT_POS_SAVED = "[%s] 獨立位置已儲存: X: %.1f, Y: %.1f"`，格式包含 3 個佔位符（`%s`、`%.1f`、`%.1f`）。
+     - 但呼叫端在 `string.format` 外部已經手動字串拼接了 `[" .. fLabel .. "] "`，且在 `string.format` 內只傳入 2 個參數 `x or 0, y or 0`，導致 Lua 將 `x` 作為 `%s` 的引數、`y` 作為第一個 `%.1f` 的引數，而第二個 `%.1f`（第 4 引數）完全沒有傳值（got no value），進而噴出 `bad argument #4 to 'format'` 致命錯誤。
+- 重構實作：
+  1. 將 `PlayerStatService.lua:1452` 修改為：
+     `print("|cff00ff96EAM|r " .. string.format((EAM.L and EAM.L.EAM_STAT_POS_SAVED) or "[%s] 獨立位置已儲存: X: %.1f, Y: %.1f", fLabel, x or 0, y or 0))`
+  2. 移除外層重複拼接的 `[" .. fLabel .. "] "`，將 `fLabel` 正確作為第 1 引數傳入 `%s`，`x` 作為第 2 引數傳入 `%.1f`，`y` 作為第 3 引數傳入 `%.1f`。
+  3. 驗證拖曳停止後能完美輸出 `|cff00ff96EAM|r [智力] 獨立位置已儲存: X: 8.7, Y: -165.3`，徹底消除報錯。
+
 ### 2026-09-04 EAM-20260904-COMBAT-SPEED-RESTRICTION-FALLBACK-GUARD：戰鬥中移動速度受限回傳 1.0 導致 14.3% 跑速問題修復
 
 - 狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。

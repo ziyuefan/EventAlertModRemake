@@ -181,3 +181,12 @@ Warcraft Wiki 的安全執行 / taint 文件指出，AddOn 與 `/script` 屬於�
 - 使用者提供的 `StatusBar:SetUnit`、`SetPowerTextFontString`、`SetOnUpdateMode` 尚未在 PTR 12.1.0.69189 公開生成文件中證實；在新 build 未提供官方文件前不得硬編碼。
 - 主要資源 Secret 顯示採單向 C-level sink：`StatusBar:SetValue` 或 `Texture:SetRadialProgressBarPercent`；不讀回 widget 值。
 - PTR8 Pandemic／Dispel APIs 僅於 initializeFrame 建立 Region／texture；不讀 `Shown`、不建立自製 ticker，停用容器清除由 Blizzard 管理。
+
+## 權威社群參考資源 (Authoritative Community Reference Repositories)
+
+- **Ketho/WowDoc**: [https://github.com/Ketho/WowDoc](https://github.com/Ketho/WowDoc)
+  社群最完整的 WoW Lua API、FrameXML 文檔與事件註解庫，涵蓋各版本 API 簽名與參數定義。
+- **Ketho/BlizzardInterfaceResources**: [https://github.com/Ketho/BlizzardInterfaceResources](https://github.com/Ketho/BlizzardInterfaceResources)
+  暴雪官方介面素材、UI 資源、Texture、Atlas、SoundKitID 與字型資產清單。
+- **Ketho/wow-ui-source-midnight-ptr**: [https://github.com/Ketho/wow-ui-source-midnight-ptr](https://github.com/Ketho/wow-ui-source-midnight-ptr)
+  暴雪 Midnight / Retail 12.x PTR 官方 UI 原始碼 (FrameXML) 鏡像倉庫，追蹤最新 API 變更、AuraContainer 實作與 Secret/Taint 底層變革。

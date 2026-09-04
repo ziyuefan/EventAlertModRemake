@@ -92,3 +92,14 @@ When data is restricted or inaccessible in combat:
 - Bulk item ID iteration during login or combat.
 - Per-icon `SetScript("OnUpdate")` timer loops.
 - Chained `C_Timer.After` closures in hot execution paths.
+
+---
+
+## Authoritative Community Reference Repositories
+
+- **Ketho/WowDoc**: [https://github.com/Ketho/WowDoc](https://github.com/Ketho/WowDoc)
+  The community's most exhaustive WoW Lua API documentation, FrameXML reference, and event signatures across versions.
+- **Ketho/BlizzardInterfaceResources**: [https://github.com/Ketho/BlizzardInterfaceResources](https://github.com/Ketho/BlizzardInterfaceResources)
+  Catalog of Blizzard UI textures, sound assets, fonts, atlases, and interface resources.
+- **Ketho/wow-ui-source-midnight-ptr**: [https://github.com/Ketho/wow-ui-source-midnight-ptr](https://github.com/Ketho/wow-ui-source-midnight-ptr)
+  Blizzard Midnight / Retail 12.x PTR UI source code (FrameXML) mirror repository, tracking API changes, AuraContainer implementation, and Secret/Taint internals.

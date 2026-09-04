@@ -654,148 +654,17 @@ end
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="1210-aura-reconstruction-auraservice-decoupling-aurastatepool-design-and-dual-track-rendering-blueprint">12.1.0 Aura reconstruction: AuraService decoupling, AuraStatePool design and dual-track rendering blueprint</h1>
-<p>This file defines the core refactoring plan of EventAlertMod (EAM) entering the 12.1.0 generation, which aims to completely decouple data sources and UI rendering, alleviate Lua VM battle memory pain (GC Churn), and complete the Retail server 12.x C++ Native Duration Binding channel.</p>
-<h2 id="1-architecture-evolution-from-push-connection-to-event-driven-pull">1. Architecture evolution: from Push connection to Event-Driven Pull</h2>
-<h3 id="1-pain-points-of-the-current-situation">1. Pain points of the current situation</h3>
-<p>In 12.0.7, <code>AuraService.lua</code> directly calls <code>Renderer.render</code> and <code>Renderer.requestLayout</code> of <code>UI/Renderer.lua</code>. This leads to the following disadvantages:
-* <strong>High Coupling</strong>: <code>AuraService</code> must know the interface of <code>Renderer</code>, which makes it impossible to perform independent unit testing (test unit) of the library and event vehicle layer in a UI-less environment.
-* <strong>Layout Churn (layout iteration)</strong>: In the <code>UNIT_AURA</code> incremental update, simultaneous changes in multiple Aura will trigger multiple <code>render</code>, causing the renderer to repeatedly calculate the UI coordinates (Layout) and waste CPU time.</p>
-<h3 id="2-decoupling-goals">2. Decoupling goals</h3>
-<p>Introduced <strong>AlertManager</strong> (controller layer) as a join.
-* <code>AuraService</code>: Pure data service, only listens to and carries <code>UNIT_AURA</code> events, and writes the entity facts of the Aura to <code>AuraStatePool</code>. After the data is changed, only <code>EAM_AURA_STATE_CHANGED</code> events are actively sent to <code>EventRouter</code>.
-* <code>AlertManager</code>: For this listening event, the user is responsible for setting (alert list, enable flags), making filtering and rendering decisions, and requesting <code>Renderer</code> updates in a throttling or batch manner.
-* <code>Renderer</code>: A pure view rendering layer that only receives the packaged rendering state and writes it to the screen through IconPool.</p>
-<div class="mermaid">
-graph TD
-    A[Wow UNIT_AURA Event] --> B[AuraService]
-    B -->|Wipe & Populate| C[(AuraStatePool)]
-    B -->|Fire Event| D[EventRouter]
-    D -->|EAM_AURA_STATE_CHANGED| E[AlertManager]
-    E -->|Pull states| C
-    E -->|Throttle & Batch| F[Renderer]
-    F -->|Draw| G[UI / Icons]
-</div>
 
-<h2 id="2026-07-26-implementation-status">2026-07-26 Implementation status</h2>
-<h2 id="this-blueprint-was-originally-designed-to-extract-redux-the-official-implementation-in-121-build-68914-has-been-changed-to-auracontainer-native-backend-native-aura-no-longer-enters-redux-aurastate-alertmanager-or-renderer-the-state-pipeline-of-this-file-is-only-retained-in-1207-readable-legacy-the-new-fact-source-is-docs23_aura_container_implementationmd">This blueprint was originally designed to extract /Redux. The official implementation in 12.1 build 68914 has been changed to AuraContainer Native backend; Native Aura no longer enters Redux AuraState, AlertManager or Renderer. The state pipeline of this file is only retained in 12.0.7 Readable Legacy. The new fact source is <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>.</h2>
-<h2 id="2-aurastatepool-low-gc-storage-pool-design">2. AuraStatePool: Low GC storage pool design</h2>
-<p>In order to eliminate GC pressure and lag in allocating and restoring Lua tables in the combat hot path, 12.1.0 will promote the parent company's <strong>AuraStatePool</strong>.</p>
-<h3 id="1-structural-design">1. Structural design</h3>
-<ul>
-<li>Use <code>table.create(preallocatedSize, 0)</code> to pre-assign the size of the specified connection space, mainly assigned to the active state of <code>player</code> and <code>target</code>.</li>
-<li><strong>Restore Queue (Restore Queue)</strong>:</li>
-<li>When the Aura disappears, the state table will not be deleted by <code>nil</code>, but <code>resetState()</code> will be called to erase its dynamic content and placed in <code>AuraStatePool.recycleBin</code>.</li>
-<li>When a new Aura is triggered, the old table <code>acquire</code> in <code>recycleBin</code> will be reused first, and new objects will only be created when the Pool dries up.</li>
-</ul>
-<h3 id="2-core-code-design">2. Core code design</h3>
-<pre class="codehilite"><code class="language-lua">local AuraStatePool = {
-    active = {},
-    recycleBin = {},
-    binSize = 0,
-}
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-function AuraStatePool.initialize()
-    -- 預先建立 80 個 AuraState 對象備用
-    for i = 1, 80 do
-        local state = table.create(0, 16)
-        state.timer = table.create(0, 4)
-        state.source = table.create(0, 3)
-        state.boundaryWarnings = table.create(0, 4)
-
-        AuraStatePool.recycleBin[i] = state
-    end
-    AuraStatePool.binSize = 80
-end
-
-function AuraStatePool.acquire()
-    if AuraStatePool.binSize &gt; 0 then
-        local state = AuraStatePool.recycleBin[AuraStatePool.binSize]
-        AuraStatePool.recycleBin[AuraStatePool.binSize] = nil
-        AuraStatePool.binSize = AuraStatePool.binSize - 1
-        return state
-    else
-        -- 溢出時才分配新對象
-        local state = table.create(0, 16)
-        state.timer = table.create(0, 4)
-        state.source = table.create(0, 3)
-        state.boundaryWarnings = table.create(0, 4)
-        return state
-    end
-end
-
-function AuraStatePool.release(state)
-    -- 清洗狀態，防止殘留資料污染
-    state.id = nil
-    state.spellID = nil
-    state.name = nil
-    state.icon = nil
-    state.stacks = nil
-    state.active = false
-    state.shown = false
-    wipe(state.timer)
-    wipe(state.source)
-    wipe(state.boundaryWarnings)
-
-    AuraStatePool.binSize = AuraStatePool.binSize + 1
-    AuraStatePool.recycleBin[AuraStatePool.binSize] = state
-end
-</code></pre>
-
-<h3 id="3secret-value-index-security-defense">3.Secret Value Index Security Defense</h3>
-<p>In combat, if a custom table is indexed with a non-validated Key, Lua will crash fatally once the Key becomes a secret value.
-* <strong>Rule</strong>: Before writing <code>spellID</code>, <code>auraInstanceID</code>, etc. fields to any hash index (such as <code>cache.byInstance[id]</code> or <code>alertIndex[spellID]</code>), they must be defended with <code>issecretvalue.
-* **Downgrade**: If Key is Secret, this Aura is directly written to the fixed</code>EAM.Constants.FALLBACK_SECRET_KEY` without dynamic hash mapping.</p>
-<hr />
-<h2 id="3-dual-track-rendering-c-native-binding-and-lua-onupdate-downgrade-channel">3. Dual-track rendering: C++ Native Binding and Lua OnUpdate downgrade channel</h2>
-<p>In order to maximize the engine performance of WoW 12.x, the renderer will use a <strong>dual-track time display render tray</strong>.</p>
-<h3 id="1-track-a-native-duration-binding-preferred-0-lua-cpu">1. Track A: Native duration binding (preferred, 0-Lua-CPU)</h3>
-<ul>
-<li><strong>Principle</strong>:
-<code>C_UnitAuras.GetAuraDuration(unit, auraInstanceID)</code> gets the underlying <code>DurationObject</code>.</li>
-<li><strong>Execution Steps</strong>:<ol>
-<li>The renderer obtains <code>timer.durationObject</code>.</li>
-<li>Call <code>C_DurationUtil.CreateDurationTextBinding()</code> without parameters to establish binding.</li>
-<li>Call <code>SetFontString(圖示.timerText)</code>, <code>SetDuration(durationObject)</code>, <code>SetFormatter(formatter)</code> in sequence, and then enable binding.</li>
-<li>Call <code>icon.cooldown:SetCooldownFromDurationObject(durationObject)</code>.</li>
-</ol>
-</li>
-<li><strong>Advantages</strong>:
-The second countdown and circle rendering on the icon are completely driven by the high-level timer of the game client C++. <strong>There is no need to register the Lua OnUpdate script</strong>, achieving 0 heads and 0 memory.</li>
-</ul>
-<h3 id="2-track-b-lua-onupdate-central-scheduler-downgrade-channel">2. Track B: Lua OnUpdate Central Scheduler (downgrade channel)</h3>
-<ul>
-<li><strong>Principle</strong>:
-When <code>DurationObject</code> is unavailable (such as non-combat skill cooldown, manually set ground effect time, or PTR API downgrade), the traditional Lua countdown is returned.</li>
-<li><strong>Execution Steps</strong>:</li>
-<li>Disable the native binding and call <code>SetToDefaults()</code> if the capability exists; the presence of <code>Unbind()</code> must not be assumed.<ol>
-<li>The prompt icon is registered to the <code>EAM.Core.Scheduler</code> centralized scheduler.</li>
-<li>The scheduler uses a single <code>OnUpdate</code> to calculate <code>timeLeft</code> at 0.1 second intervals (throttle), and updates the text.</li>
-</ol>
-</li>
-<li><strong>Security Defense</strong>:
-Before updating text in Scheduler, you must first use <code>issecretvalue(timeLeft)</code> to ensure the time when the numbers can be safely accessed. Otherwise, the text will be displayed as <code>"unknown"</code>, completely eliminating Indexing/Arithmetic with Secret errors.</li>
-</ul>
-<hr />
-<h2 id="4-expected-modular-directory-structure-in-1210">4. Expected modular directory structure in 12.1.0</h2>
-<p>The refactoring of 12.1.0 will further optimize the module structure, as shown below:</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod/
-├── Core/
-│   ├── EventRouter.lua      (單一事件分派器)
-│   └── Scheduler.lua        (集中式 OnUpdate 排程器，驅動 Track B)
-├── Services/
-│   ├── AuraService.lua      (純數據服務，操作 AuraStatePool)
-│   └── CooldownService.lua  (純數據服務)
-├── Managers/
-│   └── AlertManager.lua     (新增：決策與邏輯過濾層，解耦 UI 與 Service)
-├── UI/
-│   ├── Renderer.lua         (純渲染層，支持 C++ Native Binding 雙軌渲染)
-│   ├── IconPool.lua         (Icon 緩衝物件池)
-│   └── Options.lua          (設定面板，防戰鬥 Taint)
-└── Locale/
-    └── Common.lua           (語系註冊入口，無熱路徑消耗)
-</code></pre>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->
