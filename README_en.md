@@ -151,15 +151,46 @@ In-game, you never need to manually look up Spell IDs:
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
 
-### 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.30
+### 🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04
+- **2D Grid Layout Engine & Columns per Row Configuration**:
+  - **2D Grid Layout Engine**: Upgraded `selfAura`, `targetAura`, `spellCooldown`, `itemCooldown`, and `groundEffect` to a 2-dimensional grid layout. Excess icons automatically wrap to the next row when exceeding the configured column count, preventing infinite horizontal or vertical screen spillover.
+  - **Header Columns Slider**: Added a dedicated Columns per Row slider (range 1~20, default 8) to the top of the monitor list frame right next to the specialization dropdown, supporting instant adjustments and per-category persistence.
+  - **Zero-Latency Dynamic Relayout**: Immediate relayout upon slider drag with automatic container bounding box recalculation and combat-deferred safety.
+  - **ProfileCodec & SavedVariables Backward Compatibility**: Automatic schema migration and profile export/import with safe integer normalization for `columns`.
+- **Pre-rendered Cooldown Combat Visibility & Zero-Alpha Toggle**:
+  - **Combat Visibility Respect**: Cooldown pre-render placeholder icons respect the `showSCDOutsideCombat` setting, automatically hiding via `SetAlpha(0)` outside of combat when configured.
+  - **Smooth Combat State Transitions**: Instantly reveals desaturated placeholder icons (`SetAlpha(1)`) on entering combat, running normal color countdowns on trigger, and smoothly hiding on combat drop (`SetAlpha(0)`).
+  - **Persistent Anchor Slots**: Maintains persistent frame instances and layout order slots without frame recreation or taint in combat.
+- **Combat Speed Restriction Guard & True Cache Fallback**:
+  - **Combat 14.3% Speed Fix**: Defends against Retail 12.x / Midnight returning a restricted fixed 1.0 from `GetUnitSpeed("player")` in combat which resulted in an erroneous 14.3% speed calculation.
+  - **Safe Memory Cache Fallback**: Seamlessly falls back to the last valid out-of-combat memory cache (`lastKnownStats["runSpeed"]`) when values <= 1.05 are detected during combat.
 - **Cooldown Location Order, Strict Inactive Guard & Per-Spell Pre-render Placeholders**:
-  - **Cooldown Location Order**: Each row features a dedicated Location Order numeric input box displaying its unique natural number slot (1..N). Supports `▲`/`▼` shifting, drag-and-drop reordering, and direct numeric jump with automatic normalization.
-  - **Strict Guard for Disabled Spells**: Spells that are disabled (`enabled == false`) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.
-  - **Per-Spell Independent Pre-render Toggle**: Replaced global setting with independent per-spell condition overrides (desaturated placeholder when inactive, full color on cooldown), default false.
-  - **Smooth Scroll Tracking & Selection Highlight**: Reordering or clicking items smoothly scrolls the ScrollBox to follow the target spell and maintains a persistent blue selection highlight.
+  - **Location Order Input**: Each row features a dedicated numeric input box displaying its natural number slot (1..N). Supports `▲`/`▼` shifting, drag-and-drop reordering, and direct numeric jump with automatic normalization.
+  - **Strict Guard for Disabled Spells**: Disabled spells (`enabled == false`) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.
+  - **Per-Spell Pre-render Toggle**: Replaced global toggle with independent per-spell condition toggles (desaturated placeholder when inactive, full color on cooldown), default false.
+  - **Smooth Scroll Tracking & Selection Highlight**: Reordering or clicking items smoothly scrolls the ScrollBox to track the target spell with a distinct blue highlight.
 - **Player Stats In-Combat Live Updates & C-Level Zero-GC Rendering**:
-  - Full adoption of native `FontString:SetFormattedText` for all 18 stats, achieving zero Lua GC string allocations in OnUpdate timer loops.
+  - Full adoption of native `FontString:SetFormattedText` for all 18 stats, achieving 0.00ms C-level formatting with zero Lua GC string allocations in timer loops.
   - Implemented `getRawValue` routing across all 18 attributes, respecting Retail 12.x / Midnight `AllowedWhenTainted` and `Enum.SecretAspect.Text` contracts.
+  - **Single Stat Icon Drag-and-Drop Fix**: Fixed a `bad argument #4 (format)` Lua error in `PlayerStatService` caused by argument mismatch with localized string templates upon releasing dragged stat icons.
+
+### 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28
+- **Next-Gen Master Spell Catalog & Intelligent Presets**:
+  - **5-Language Offline Database**: 4,463 core spells & 466 auras covering 13 classes, 40 specs, and 39 Hero Talent trees, with real-time switching across zhTW, zhCN, enUS, koKR, and ruRU.
+  - **Hierarchical Spell Catalog Tree Panel (`SpellCatalogTreePanel`)**: Spec tree expand/collapse, tri-state toggles, instant search by spell name or ID.
+  - **Target Module Redirection**: Header dropdown assigns selected spells directly to Spell Cooldown, Player Buff, Target Buff, Special Aura, or Ground Effect.
+  - **One-Click Talent Auto-Sync**: Integrated `SpellBookScannerService` scans current talent loadouts and spellbook, synchronizing active spells to target modules.
+  - **Native Spell Tooltips (`GameTooltip:SetSpellByID`)**: Full spell description, cast time, range, and ID shown on hover.
+- **Multidimensional Tactical Group Management Module**:
+  - **Core Group Service (`GroupService`)**: 4 built-in system tactical groups (Major Burst, Critical Mitigation, CC/Interrupt, Ground AoE) + custom tag groups.
+  - Many-to-many spell and group associations, independent global group toggles, and combat-only filters.
+  - **Dedicated Group Manager Panel (`GroupManagerPanel`)**: Group name editing, independent save button, combat context filters, multi-select spell associations, and comprehensive hover tooltips.
+  - **Spell Detail Window Group Multi-Select (`Options.lua`)**: Integrated multi-select dropdown button with live summaries in all spell condition windows.
+- **Hardening & Bug Fixes**:
+  - **Deprecated API Ban**: Replaced all `GetSpellInfo`, `GetItemInfo`, `GetSpellCooldown` with modern `C_Spell` / `C_Item` APIs, guarded by CI static AST assertions.
+  - **Profile Codec Export/Import**: Added uniqueness deduplication in `buildPayload`, fixing duplicateAlertID errors from legacy imported data.
+  - **Font Validation Fix**: Added LSM fallback checks, ensuring invalid or unmapped font names safely fall back to STANDARD.
+  - Fixed condition window dropdown `SetText` type incompatibility.
 
 ### 🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27
 - **Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration**:

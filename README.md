@@ -151,7 +151,19 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
 
-### 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.30
+### 🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04
+- **光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine & Columns per Row Configuration)**：
+  - **2D 網格折行排版引擎 (2D Grid Layout Engine)**：自身光環 (`selfAura`)、目標光環 (`targetAura`)、技能冷卻 (`spellCooldown`)、物品冷卻 (`itemCooldown`) 與地面效果 (`groundEffect`) 等模組全面升級為二維矩陣排版。圖示數量超過指定欄數 (Columns) 時，依成長方向自動向下一列 (Row) 折行，杜絕圖示單向無限延伸遮擋或超出螢幕。
+  - **清單視窗頂部每列欄數控制滑桿 (Columns per Row Slider)**：於監控清單視窗 (`listFrame`) 頂部專精下拉選單右側增設「每列欄數 (Columns)」滑桿 (範圍 1~20，預設 8)，支援即時調整與多分類獨立設定保存。
+  - **零延遲即時重新排版**：滑桿拖曳或切換時，畫面圖示與父容器尺寸零延遲即時重新折行計算，且完全相容非戰鬥/戰鬥中延遲套用防護。
+  - **設定檔匯出匯入與存檔向後相容**：`ProfileCodec` 匯出/匯入與 `SavedVariables` 自動遷移補齊各框架 `columns` 欄位，升級無痛無縫相容。
+- **預渲染冷卻隨戰鬥隱藏與純透明度切換 (Pre-rendered Cooldown Combat Visibility & Zero-Alpha Toggle)**：
+  - **尊重「非戰鬥顯示技能冷卻」設定**：開啟預渲染 (`cooldownPreRender`) 佔位的技能冷卻圖示，若設定為隨戰鬥關閉 (`showSCDOutsideCombat == false`)，在戰鬥外 (`not inCombat`) 自動透過 `SetAlpha(0)` 隱藏。
+  - **戰鬥狀態自動切換**：進入戰鬥時圖示瞬間以灰階待命顯現 (`SetAlpha(1)`)，施法進入冷卻正常彩色計時；脫離戰鬥時再次平滑隱藏 (`SetAlpha(0)`)。
+  - **槽位完全常駐**：隱藏過程僅變更透明度，絕不釋放 Frame 物件或更動排版 order 槽位，杜絕戰鬥中 Frame 創建限制、Taint 污染與 2D 矩陣跳動。
+- **戰鬥中移動速度防護與回退機制 (Combat Speed Restriction Guard & True Cache Fallback)**：
+  - **解決 14.3% 戰鬥跑速異常**：解決 Retail 12.x / Midnight 進入戰鬥後，暴雪將 `GetUnitSpeed("player")` 限制並固定回傳 1.0 導致插件依照傳統公式除以 7.0 計算出荒謬的 14.3% (1.0 / 7.0 * 100) 跑速問題。
+  - **安全快取回退機制**：當檢測到數值 `<= 1.05` 且處於戰鬥狀態時，自動回退至脫戰真實有效記憶快取 (`lastKnownStats`)，確保在戰鬥中依然穩定顯示 100% 或 130% 等真實移動速度。
 - **技能冷卻清單 Location Order 排序與單一法術獨立預佔位 (Cooldown Location Order & Per-Spell Pre-render Placeholders)**：
   - **技能冷卻排序位置 (Location Order)**：清單每一列新增 Location Order 數字輸入框，顯示在畫面排版中的唯一自然數槽位 (1..N)。支援點擊 `▲`/`▼` 上下調換、拖曳排序或直接輸入數字快速跳轉，順位自動連續校正。
   - **嚴格禁止未啟用項目預先佔位**：未啟用 (`enabled == false`) 的技能冷卻項目徹底杜絕建立預渲染圖示或佔位顯示，完全不佔用畫面槽位與系統資源。
@@ -159,7 +171,26 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - **清單視窗滾動緊密跟隨與選定高亮 (Scroll Tracking & Selection Highlight)**：調換順位或點擊項目時，卷軸視窗平滑滾動並緊密跟隨目標技能，並呈現湛藍選定背景高亮，徹底避免操作時視窗重置至頂部或失焦。
 - **角色屬性戰鬥即時更新與 C-Level 零 GC 渲染 (FontString:SetFormattedText & In-Combat Stat Updates)**：
   - 全面採用暴雪原生 `FontString:SetFormattedText` 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。
-  - 補齊全 18 大屬性之 `getRawValue` 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 `AllowedWhenTainted` 與 `Enum.SecretAspect.Text` 規範，修復戰鬥中屬性凍結問題。
+  - 補齊全 18 大屬性之 `getRawValue` 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 `AllowedWhenTainted` 與 `Enum.SecretAspect.Text` 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。
+  - **單一屬性圖示自訂拖曳報錯修復**：修復 `PlayerStatService` 於拖曳移動單一屬性圖示放開後，在地化格式字串參數個數不足導致的 `bad argument #4 (format)` Lua 報錯。
+
+### 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28
+- **次世代全量法術庫與智慧預設系統 (Next-Gen Master Spell Catalog & Intelligent Presets)**：
+  - **5 語系離線先驗資料庫**：收錄全 13 職業、40 專精與 39 英雄天賦樹共 4,463 個核心法術與 466 個光環，支援繁中/簡中/英文/韓文/俄文即時切換。
+  - **階層式樹狀法術庫面板 (`SpellCatalogTreePanel`)**：支援專精展開/收合、三態勾選、名稱與 ID 即時搜尋。
+  - **目標模組自由切換**：頂部下拉選單可自選將勾選技能指派至技能冷卻、自身光環、目標光環、特殊光環或地面效果模組清單。
+  - **一鍵天賦智慧同步**：整合 `SpellBookScannerService` 動態探測玩家當前天賦樹與法術書，一鍵自動同步核心技能至所選模組。
+  - **全法術懸停原生技能說明提示 (`GameTooltip:SetSpellByID`)**：滑鼠懸停於法術項目時完整顯示原生法術說明、射程、施法時間與 ID。
+- **多維戰術群組與標籤管理模組 (Multidimensional Group Management Module)**：
+  - **群組管理核心服務 (`GroupService`)**：內建 4 大系統戰術群組（主要爆發、關鍵減傷、控場打斷、地面效果）並支援玩家自訂標籤群組。
+  - 支援法術與群組多對多歸屬、群組獨立全域開關與「僅戰鬥中顯示」情境過濾。
+  - **獨立群組管理側窗 (`GroupManagerPanel`)**：支援群組名稱編輯、獨立儲存按鈕、戰鬥情境切換、所屬法術多選與全介面 `GameTooltip` 懸停說明。
+  - **技能細節視窗整合群組下拉複選器 (`Options.lua`)**：所有技能條件設定視窗頂部增設「所屬群組 (可複選)」下拉按鈕與即時摘要。
+- **穩定性與相容性強化 (Hardening & Bug Fixes)**：
+  - **嚴格禁止過時 API**：全面替換 `GetSpellInfo`, `GetItemInfo`, `GetSpellCooldown` 為現代 `C_Spell` / `C_Item` API，並於 CI 加入靜態 AST 審查。
+  - **Profile Codec 匯出/解碼修復**：在 `buildPayload` 加入唯一性過濾，徹底修復實機歷史重複 ID 導致的 `duplicateAlertID` 報錯。
+  - **字型驗證修復**：修正 LSM 載入時的旁路判斷，確保非法字型一律安全回退為 STANDARD。
+  - 修正條件設定視窗下拉文字 `SetText` 型別不相容問題。
 
 ### 🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27
 - **LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)**：

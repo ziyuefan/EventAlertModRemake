@@ -16,9 +16,10 @@
   3. [x] 【全資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完成】：實作 `.AI/Tools/generate_folder_indexes.py`，全離線深色玻璃擬態 UI，內嵌 JSON-LD (`DirectoryGovernanceReport`) 與 meta 標籤，涵蓋 115 個工作目錄、1496 個檔案，附即時檢索篩選器，`--verify` 100% 通過。
   4. [x] 【自動化質量門禁全綠通過】：Lua 語法 76/76 PASS、Flow 業務狀態機 85/85 PASS、Validation Contracts 497/497 PASS。
   5. [x] 【更新 GitHub 文檔與發布 Alpha 8.4 Pre-release 完成】：文檔站以 `batch_convert_docs.py` 全數編譯至 `.AI/docs_html/`，Git 提交推送至 `origin/main`，成功發布 GitHub Pre-release：`https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.4`，附件為最新 Hotfix 插件包。
-  6. [x] 【發布至 CurseForge 完成】：呼叫 `Deploy/Upload-CurseForge.ps1 -NonInteractive` 成功上傳正式服插件包 `EventAlertMod_12.1.0_Alpha_8.4_20260904_181245.zip`，CurseForge 檔案 ID：`8805930`（專案網址：`https://www.curseforge.com/wow/addons/eventalertmod`）。
+  6. [x] 【發布至 CurseForge 完成】：呼叫 `Deploy/Upload-CurseForge.ps1 -NonInteractive` 成功上傳正式服插件包 `EventAlertMod_12.1.0_Alpha_8.4_20260904_183007.zip`，CurseForge 檔案 ID：`8805983`（專案網址：`https://www.curseforge.com/wow/addons/eventalertmod`）。
   7. [x] 【單一屬性圖示拖曳報錯修復與 Ketho 權威庫全面收錄】：修復 `PlayerStatService.lua:1452` `string.format` 佔位符（3 個）與參數數量（2 個）不符引發 bad argument #4 的 Lua 錯誤；收錄 Ketho 三大權威資源庫 (WowDoc, BlizzardInterfaceResources, wow-ui-source-midnight-ptr) 至 4 份核心文檔並建立專題問題日誌。
   8. [x] 【停用本機與 GitHub Release 之 SRC 打包與上傳】：遵照少年欸指示，因 GitHub Release 於發布 Tag 時原生自動生成完整 Source code (zip/tar.gz)，本機日常與發布全面停用專案 SRC 打包，同步清理 GitHub `alpha-8.4` Release 之重複 SRC 附件，並重構 `Deploy/Publish-GitHubRelease.ps1` 排除 SRC 產生與上傳流程。
+  9. [x] 【根目錄與插件內 README / CHANGELOG 雙語 4 份全量鏡像同步】：完整復原 Alpha 8.3 先前截斷之條目，補齊 Alpha 8.4 全量更新說明，嚴格對齊 `README.md`、`README_en.md`、`changelog.txt` 與 `changelog_en.txt` 在根目錄與 `EventAlertMod/` 目錄中雜湊完全一致。
 
 ## 2026-09-04 Retail 12.1.0 Alpha 8.4 2D 矩陣折行排版、預渲染戰鬥透明度切換與跑速防護
 

@@ -829,8 +829,20 @@
 <h2 id="beautified-changelogtxt">📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
-<h3 id="retail-1210-alpha-83-20260830">🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.30</h3>
+<h3 id="retail-1210-alpha-84-20260904">🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04</h3>
 <ul>
+<li><strong>光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine &amp; Columns per Row Configuration)</strong>：</li>
+<li><strong>2D 網格折行排版引擎 (2D Grid Layout Engine)</strong>：自身光環 (<code>selfAura</code>)、目標光環 (<code>targetAura</code>)、技能冷卻 (<code>spellCooldown</code>)、物品冷卻 (<code>itemCooldown</code>) 與地面效果 (<code>groundEffect</code>) 等模組全面升級為二維矩陣排版。圖示數量超過指定欄數 (Columns) 時，依成長方向自動向下一列 (Row) 折行，杜絕圖示單向無限延伸遮擋或超出螢幕。</li>
+<li><strong>清單視窗頂部每列欄數控制滑桿 (Columns per Row Slider)</strong>：於監控清單視窗 (<code>listFrame</code>) 頂部專精下拉選單右側增設「每列欄數 (Columns)」滑桿 (範圍 1~20，預設 8)，支援即時調整與多分類獨立設定保存。</li>
+<li><strong>零延遲即時重新排版</strong>：滑桿拖曳或切換時，畫面圖示與父容器尺寸零延遲即時重新折行計算，且完全相容非戰鬥/戰鬥中延遲套用防護。</li>
+<li><strong>設定檔匯出匯入與存檔向後相容</strong>：<code>ProfileCodec</code> 匯出/匯入與 <code>SavedVariables</code> 自動遷移補齊各框架 <code>columns</code> 欄位，升級無痛無縫相容。</li>
+<li><strong>預渲染冷卻隨戰鬥隱藏與純透明度切換 (Pre-rendered Cooldown Combat Visibility &amp; Zero-Alpha Toggle)</strong>：</li>
+<li><strong>尊重「非戰鬥顯示技能冷卻」設定</strong>：開啟預渲染 (<code>cooldownPreRender</code>) 佔位的技能冷卻圖示，若設定為隨戰鬥關閉 (<code>showSCDOutsideCombat == false</code>)，在戰鬥外 (<code>not inCombat</code>) 自動透過 <code>SetAlpha(0)</code> 隱藏。</li>
+<li><strong>戰鬥狀態自動切換</strong>：進入戰鬥時圖示瞬間以灰階待命顯現 (<code>SetAlpha(1)</code>)，施法進入冷卻正常彩色計時；脫離戰鬥時再次平滑隱藏 (<code>SetAlpha(0)</code>)。</li>
+<li><strong>槽位完全常駐</strong>：隱藏過程僅變更透明度，絕不釋放 Frame 物件或更動排版 order 槽位，杜絕戰鬥中 Frame 創建限制、Taint 污染與 2D 矩陣跳動。</li>
+<li><strong>戰鬥中移動速度防護與回退機制 (Combat Speed Restriction Guard &amp; True Cache Fallback)</strong>：</li>
+<li><strong>解決 14.3% 戰鬥跑速異常</strong>：解決 Retail 12.x / Midnight 進入戰鬥後，暴雪將 <code>GetUnitSpeed("player")</code> 限制並固定回傳 1.0 導致插件依照傳統公式除以 7.0 計算出荒謬的 14.3% (1.0 / 7.0 * 100) 跑速問題。</li>
+<li><strong>安全快取回退機制</strong>：當檢測到數值 <code>&lt;= 1.05</code> 且處於戰鬥狀態時，自動回退至脫戰真實有效記憶快取 (<code>lastKnownStats</code>)，確保在戰鬥中依然穩定顯示 100% 或 130% 等真實移動速度。</li>
 <li><strong>技能冷卻清單 Location Order 排序與單一法術獨立預佔位 (Cooldown Location Order &amp; Per-Spell Pre-render Placeholders)</strong>：</li>
 <li><strong>技能冷卻排序位置 (Location Order)</strong>：清單每一列新增 Location Order 數字輸入框，顯示在畫面排版中的唯一自然數槽位 (1..N)。支援點擊 <code>▲</code>/<code>▼</code> 上下調換、拖曳排序或直接輸入數字快速跳轉，順位自動連續校正。</li>
 <li><strong>嚴格禁止未啟用項目預先佔位</strong>：未啟用 (<code>enabled == false</code>) 的技能冷卻項目徹底杜絕建立預渲染圖示或佔位顯示，完全不佔用畫面槽位與系統資源。</li>
@@ -838,7 +850,27 @@
 <li><strong>清單視窗滾動緊密跟隨與選定高亮 (Scroll Tracking &amp; Selection Highlight)</strong>：調換順位或點擊項目時，卷軸視窗平滑滾動並緊密跟隨目標技能，並呈現湛藍選定背景高亮，徹底避免操作時視窗重置至頂部或失焦。</li>
 <li><strong>角色屬性戰鬥即時更新與 C-Level 零 GC 渲染 (FontString:SetFormattedText &amp; In-Combat Stat Updates)</strong>：</li>
 <li>全面採用暴雪原生 <code>FontString:SetFormattedText</code> 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。</li>
-<li>補齊全 18 大屬性之 <code>getRawValue</code> 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 <code>AllowedWhenTainted</code> 與 <code>Enum.SecretAspect.Text</code> 規範，修復戰鬥中屬性凍結問題。</li>
+<li>補齊全 18 大屬性之 <code>getRawValue</code> 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 <code>AllowedWhenTainted</code> 與 <code>Enum.SecretAspect.Text</code> 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。</li>
+<li><strong>單一屬性圖示自訂拖曳報錯修復</strong>：修復 <code>PlayerStatService</code> 於拖曳移動單一屬性圖示放開後，在地化格式字串參數個數不足導致的 <code>bad argument #4 (format)</code> Lua 報錯。</li>
+</ul>
+<h3 id="retail-1210-alpha-83-20260828">🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28</h3>
+<ul>
+<li><strong>次世代全量法術庫與智慧預設系統 (Next-Gen Master Spell Catalog &amp; Intelligent Presets)</strong>：</li>
+<li><strong>5 語系離線先驗資料庫</strong>：收錄全 13 職業、40 專精與 39 英雄天賦樹共 4,463 個核心法術與 466 個光環，支援繁中/簡中/英文/韓文/俄文即時切換。</li>
+<li><strong>階層式樹狀法術庫面板 (<code>SpellCatalogTreePanel</code>)</strong>：支援專精展開/收合、三態勾選、名稱與 ID 即時搜尋。</li>
+<li><strong>目標模組自由切換</strong>：頂部下拉選單可自選將勾選技能指派至技能冷卻、自身光環、目標光環、特殊光環或地面效果模組清單。</li>
+<li><strong>一鍵天賦智慧同步</strong>：整合 <code>SpellBookScannerService</code> 動態探測玩家當前天賦樹與法術書，一鍵自動同步核心技能至所選模組。</li>
+<li><strong>全法術懸停原生技能說明提示 (<code>GameTooltip:SetSpellByID</code>)</strong>：滑鼠懸停於法術項目時完整顯示原生法術說明、射程、施法時間與 ID。</li>
+<li><strong>多維戰術群組與標籤管理模組 (Multidimensional Group Management Module)</strong>：</li>
+<li><strong>群組管理核心服務 (<code>GroupService</code>)</strong>：內建 4 大系統戰術群組（主要爆發、關鍵減傷、控場打斷、地面效果）並支援玩家自訂標籤群組。</li>
+<li>支援法術與群組多對多歸屬、群組獨立全域開關與「僅戰鬥中顯示」情境過濾。</li>
+<li><strong>獨立群組管理側窗 (<code>GroupManagerPanel</code>)</strong>：支援群組名稱編輯、獨立儲存按鈕、戰鬥情境切換、所屬法術多選與全介面 <code>GameTooltip</code> 懸停說明。</li>
+<li><strong>技能細節視窗整合群組下拉複選器 (<code>Options.lua</code>)</strong>：所有技能條件設定視窗頂部增設「所屬群組 (可複選)」下拉按鈕與即時摘要。</li>
+<li><strong>穩定性與相容性強化 (Hardening &amp; Bug Fixes)</strong>：</li>
+<li><strong>嚴格禁止過時 API</strong>：全面替換 <code>GetSpellInfo</code>, <code>GetItemInfo</code>, <code>GetSpellCooldown</code> 為現代 <code>C_Spell</code> / <code>C_Item</code> API，並於 CI 加入靜態 AST 審查。</li>
+<li><strong>Profile Codec 匯出/解碼修復</strong>：在 <code>buildPayload</code> 加入唯一性過濾，徹底修復實機歷史重複 ID 導致的 <code>duplicateAlertID</code> 報錯。</li>
+<li><strong>字型驗證修復</strong>：修正 LSM 載入時的旁路判斷，確保非法字型一律安全回退為 STANDARD。</li>
+<li>修正條件設定視窗下拉文字 <code>SetText</code> 型別不相容問題。</li>
 </ul>
 <h3 id="retail-1210-alpha-82-20260827">🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27</h3>
 <ul>
@@ -1346,16 +1378,48 @@
 <h2 id="version-history-changelogtxt">📜 Version History (CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
-<h3 id="retail-1210-alpha-83-20260830">🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.30</h3>
+<h3 id="retail-1210-alpha-84-20260904">🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04</h3>
 <ul>
+<li><strong>2D Grid Layout Engine &amp; Columns per Row Configuration</strong>:</li>
+<li><strong>2D Grid Layout Engine</strong>: Upgraded <code>selfAura</code>, <code>targetAura</code>, <code>spellCooldown</code>, <code>itemCooldown</code>, and <code>groundEffect</code> to a 2-dimensional grid layout. Excess icons automatically wrap to the next row when exceeding the configured column count, preventing infinite horizontal or vertical screen spillover.</li>
+<li><strong>Header Columns Slider</strong>: Added a dedicated Columns per Row slider (range 1~20, default 8) to the top of the monitor list frame right next to the specialization dropdown, supporting instant adjustments and per-category persistence.</li>
+<li><strong>Zero-Latency Dynamic Relayout</strong>: Immediate relayout upon slider drag with automatic container bounding box recalculation and combat-deferred safety.</li>
+<li><strong>ProfileCodec &amp; SavedVariables Backward Compatibility</strong>: Automatic schema migration and profile export/import with safe integer normalization for <code>columns</code>.</li>
+<li><strong>Pre-rendered Cooldown Combat Visibility &amp; Zero-Alpha Toggle</strong>:</li>
+<li><strong>Combat Visibility Respect</strong>: Cooldown pre-render placeholder icons respect the <code>showSCDOutsideCombat</code> setting, automatically hiding via <code>SetAlpha(0)</code> outside of combat when configured.</li>
+<li><strong>Smooth Combat State Transitions</strong>: Instantly reveals desaturated placeholder icons (<code>SetAlpha(1)</code>) on entering combat, running normal color countdowns on trigger, and smoothly hiding on combat drop (<code>SetAlpha(0)</code>).</li>
+<li><strong>Persistent Anchor Slots</strong>: Maintains persistent frame instances and layout order slots without frame recreation or taint in combat.</li>
+<li><strong>Combat Speed Restriction Guard &amp; True Cache Fallback</strong>:</li>
+<li><strong>Combat 14.3% Speed Fix</strong>: Defends against Retail 12.x / Midnight returning a restricted fixed 1.0 from <code>GetUnitSpeed("player")</code> in combat which resulted in an erroneous 14.3% speed calculation.</li>
+<li><strong>Safe Memory Cache Fallback</strong>: Seamlessly falls back to the last valid out-of-combat memory cache (<code>lastKnownStats["runSpeed"]</code>) when values &lt;= 1.05 are detected during combat.</li>
 <li><strong>Cooldown Location Order, Strict Inactive Guard &amp; Per-Spell Pre-render Placeholders</strong>:</li>
-<li><strong>Cooldown Location Order</strong>: Each row features a dedicated Location Order numeric input box displaying its unique natural number slot (1..N). Supports <code>▲</code>/<code>▼</code> shifting, drag-and-drop reordering, and direct numeric jump with automatic normalization.</li>
-<li><strong>Strict Guard for Disabled Spells</strong>: Spells that are disabled (<code>enabled == false</code>) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.</li>
-<li><strong>Per-Spell Independent Pre-render Toggle</strong>: Replaced global setting with independent per-spell condition overrides (desaturated placeholder when inactive, full color on cooldown), default false.</li>
-<li><strong>Smooth Scroll Tracking &amp; Selection Highlight</strong>: Reordering or clicking items smoothly scrolls the ScrollBox to follow the target spell and maintains a persistent blue selection highlight.</li>
+<li><strong>Location Order Input</strong>: Each row features a dedicated numeric input box displaying its natural number slot (1..N). Supports <code>▲</code>/<code>▼</code> shifting, drag-and-drop reordering, and direct numeric jump with automatic normalization.</li>
+<li><strong>Strict Guard for Disabled Spells</strong>: Disabled spells (<code>enabled == false</code>) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.</li>
+<li><strong>Per-Spell Pre-render Toggle</strong>: Replaced global toggle with independent per-spell condition toggles (desaturated placeholder when inactive, full color on cooldown), default false.</li>
+<li><strong>Smooth Scroll Tracking &amp; Selection Highlight</strong>: Reordering or clicking items smoothly scrolls the ScrollBox to track the target spell with a distinct blue highlight.</li>
 <li><strong>Player Stats In-Combat Live Updates &amp; C-Level Zero-GC Rendering</strong>:</li>
-<li>Full adoption of native <code>FontString:SetFormattedText</code> for all 18 stats, achieving zero Lua GC string allocations in OnUpdate timer loops.</li>
+<li>Full adoption of native <code>FontString:SetFormattedText</code> for all 18 stats, achieving 0.00ms C-level formatting with zero Lua GC string allocations in timer loops.</li>
 <li>Implemented <code>getRawValue</code> routing across all 18 attributes, respecting Retail 12.x / Midnight <code>AllowedWhenTainted</code> and <code>Enum.SecretAspect.Text</code> contracts.</li>
+<li><strong>Single Stat Icon Drag-and-Drop Fix</strong>: Fixed a <code>bad argument #4 (format)</code> Lua error in <code>PlayerStatService</code> caused by argument mismatch with localized string templates upon releasing dragged stat icons.</li>
+</ul>
+<h3 id="retail-1210-alpha-83-20260828">🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28</h3>
+<ul>
+<li><strong>Next-Gen Master Spell Catalog &amp; Intelligent Presets</strong>:</li>
+<li><strong>5-Language Offline Database</strong>: 4,463 core spells &amp; 466 auras covering 13 classes, 40 specs, and 39 Hero Talent trees, with real-time switching across zhTW, zhCN, enUS, koKR, and ruRU.</li>
+<li><strong>Hierarchical Spell Catalog Tree Panel (<code>SpellCatalogTreePanel</code>)</strong>: Spec tree expand/collapse, tri-state toggles, instant search by spell name or ID.</li>
+<li><strong>Target Module Redirection</strong>: Header dropdown assigns selected spells directly to Spell Cooldown, Player Buff, Target Buff, Special Aura, or Ground Effect.</li>
+<li><strong>One-Click Talent Auto-Sync</strong>: Integrated <code>SpellBookScannerService</code> scans current talent loadouts and spellbook, synchronizing active spells to target modules.</li>
+<li><strong>Native Spell Tooltips (<code>GameTooltip:SetSpellByID</code>)</strong>: Full spell description, cast time, range, and ID shown on hover.</li>
+<li><strong>Multidimensional Tactical Group Management Module</strong>:</li>
+<li><strong>Core Group Service (<code>GroupService</code>)</strong>: 4 built-in system tactical groups (Major Burst, Critical Mitigation, CC/Interrupt, Ground AoE) + custom tag groups.</li>
+<li>Many-to-many spell and group associations, independent global group toggles, and combat-only filters.</li>
+<li><strong>Dedicated Group Manager Panel (<code>GroupManagerPanel</code>)</strong>: Group name editing, independent save button, combat context filters, multi-select spell associations, and comprehensive hover tooltips.</li>
+<li><strong>Spell Detail Window Group Multi-Select (<code>Options.lua</code>)</strong>: Integrated multi-select dropdown button with live summaries in all spell condition windows.</li>
+<li><strong>Hardening &amp; Bug Fixes</strong>:</li>
+<li><strong>Deprecated API Ban</strong>: Replaced all <code>GetSpellInfo</code>, <code>GetItemInfo</code>, <code>GetSpellCooldown</code> with modern <code>C_Spell</code> / <code>C_Item</code> APIs, guarded by CI static AST assertions.</li>
+<li><strong>Profile Codec Export/Import</strong>: Added uniqueness deduplication in <code>buildPayload</code>, fixing duplicateAlertID errors from legacy imported data.</li>
+<li><strong>Font Validation Fix</strong>: Added LSM fallback checks, ensuring invalid or unmapped font names safely fall back to STANDARD.</li>
+<li>Fixed condition window dropdown <code>SetText</code> type incompatibility.</li>
 </ul>
 <h3 id="retail-1210-alpha-82-20260827">🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27</h3>
 <ul>
