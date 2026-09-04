@@ -21,6 +21,7 @@
        -- 全面採用暴雪原生 FontString:SetFormattedText 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。
        -- 補齊全 18 大屬性之 getRawValue 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 AllowedWhenTainted 與 Enum.SecretAspect.Text 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。
 -- [Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
+-- [Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
     -- LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)：
        -- 全面接入社群廣泛使用的 LibSharedMedia-3.0 素材生態，完整支援所有第三方 SharedMedia 音效包、字型包與材質包。
        -- 實作 MediaService.ensureLSM() 動態探測機制與 PLAYER_LOGIN 延遲同步刷新，徹底解決 EAM 早於其他 SharedMedia 擴充插件載入時音效清單被凍結在初始 12 種內建音效的問題。
