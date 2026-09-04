@@ -15,8 +15,8 @@
   2. [x] 【跑速戰鬥中顯示 14.3% 根因排查與修復完成】：暴雪 12.0.5+ 戰鬥中 `GetUnitSpeed("player")` 受限回傳 1.0 導致 `(1.0/7.0)*100 = 14.3%`。於 `PlayerStatService.lua` 實作受限檢測與真實快取 `lastKnownStats` 安全回退，且戰鬥中禁止以受限值覆蓋快取。
   3. [x] 【全資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完成】：實作 `.AI/Tools/generate_folder_indexes.py`，全離線深色玻璃擬態 UI，內嵌 JSON-LD (`DirectoryGovernanceReport`) 與 meta 標籤，涵蓋 115 個工作目錄、1480 個檔案，附即時檢索篩選器，`--verify` 100% 通過。
   4. [x] 【自動化質量門禁全綠通過】：Lua 語法 76/76 PASS、Flow 業務狀態機 85/85 PASS、Validation Contracts 497/497 PASS。
-  5. [->] 【進行中：更新 GitHub 文檔與發布 Alpha 8.4 Pre-release】：重新編譯 `batch_convert_docs.py`，執行 Git 提交與分支推送，呼叫 `Deploy/Publish-GitHubRelease.ps1 -Tag "alpha-8.4" -Title "Retail 12.1 Alpha 8.4" -Prerelease`。
-  6. [ ] 【接續項目：發布至 CurseForge】：呼叫 `Deploy/Upload-CurseForge.ps1 -ReleaseType alpha -NonInteractive` 完成 CurseForge 發布。
+  5. [x] 【更新 GitHub 文檔與發布 Alpha 8.4 Pre-release 完成】：文檔站以 `batch_convert_docs.py` 全數編譯至 `.AI/docs_html/`，Git 提交推送至 `origin/main`，成功發布 GitHub Pre-release：`https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.4`。
+  6. [x] 【發布至 CurseForge 完成】：呼叫 `Deploy/Upload-CurseForge.ps1 -NonInteractive` 成功上傳正式服插件包 `EventAlertMod_12.1.0_Alpha_8.4_20260904_180758.zip`，CurseForge 檔案 ID：`8805890`（專案網址：`https://www.curseforge.com/wow/addons/eventalertmod`）。
 
 ## 2026-09-04 Retail 12.1.0 Alpha 8.4 2D 矩陣折行排版、預渲染戰鬥透明度切換與跑速防護
 

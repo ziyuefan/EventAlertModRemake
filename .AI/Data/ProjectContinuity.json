@@ -22,7 +22,7 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "完成 Retail 12.1 Alpha 8.4 的 2D 矩陣折行排版、冷卻預渲染隨戰鬥透明度隱藏、戰鬥中跑速回退防護、全專案 115 個資料夾 HTML 說明清單架構建置；儲存多進度續接點，準備發布 GitHub Alpha 8.4 Pre-Release 與 CurseForge。",
+    "objective": "Retail 12.1 Alpha 8.4 已成功發布至 GitHub Pre-release (tag: alpha-8.4) 與 CurseForge (ID: 8805890)；全專案 115 個資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完畢；已建立多進度續接存檔點，隨時可無縫接續後續開發。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 85,
