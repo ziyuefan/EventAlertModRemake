@@ -77,6 +77,7 @@ local COOLDOWN_BEHAVIOR_FIELDS = {
     "cooldownRemoveAura",
     "showSCDOutsideCombat",
     "glowSCDWhenUsable",
+    "cooldownPreRender",
 }
 
 local Codec = {
@@ -942,6 +943,7 @@ local function normalizeLayoutRecord(layout)
                     x = isSafeFiniteNumber(fDef.x, -2000, 2000) and fDef.x or 0,
                     y = isSafeFiniteNumber(fDef.y, -2000, 2000) and fDef.y or 0,
                     point = isSafeString(fDef.point, 32) and fDef.point or "CENTER",
+                    columns = isSafeInteger(fDef.columns, 1, 32) and fDef.columns or 8,
                 }
             end
         end
@@ -1043,6 +1045,7 @@ local function exportLayout()
                     x = isSafeFiniteNumber(fDef.x, -2000, 2000) and fDef.x or 0,
                     y = isSafeFiniteNumber(fDef.y, -2000, 2000) and fDef.y or 0,
                     point = type(fDef.point) == "string" and fDef.point or "CENTER",
+                    columns = isSafeInteger(fDef.columns, 1, 32) and fDef.columns or 8,
                 }
             end
         end

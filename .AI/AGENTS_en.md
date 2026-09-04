@@ -54,6 +54,11 @@ Before modifying production code, agents must review:
 - `.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md`
 - `.AI/Docs/28_PROJECT_CONTINUITY.md`
 - `.AI/Docs/29_LIVE_TEST_STEP_GUIDE.md`
+- `.AI/Docs/30_PLAYER_RESOURCE_REFACTOR_REPORT.md`
+- `.AI/Docs/31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md`
+- `.AI/Docs/32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md`
+- `.AI/Docs/33_AI_GOVERNANCE_DIRECTIVE.md`
+- `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`
 - `.AI/Data/ProjectContinuity.json`
 
 ---

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>33_AI_GOVERNANCE_DIRECTIVE.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Details & Summary Accordion Styling */
+    details {
+        background-color: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 24px 0;
+        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    details[open] {
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.25);
+    }
+    summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1.15rem;
+        color: var(--heading-color);
+        outline: none;
+        user-select: none;
+        padding: 6px 0;
+        transition: color 0.2s ease;
+    }
+    summary:hover {
+        color: var(--accent-color);
+    }
+    details summary > * {
+        display: inline;
+    }
+    details h3 {
+        margin-top: 1.4em;
+        margin-bottom: 0.5em;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed var(--border-color);
+        color: var(--accent-color);
+        font-size: 1.25rem;
+    }
+    details ul {
+        margin-top: 8px;
+        margin-bottom: 16px;
+        padding-left: 28px;
+    }
+    details li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+    details ul ul {
+        margin-top: 6px;
+        margin-bottom: 8px;
+        padding-left: 20px;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-brand-group {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .nav-link {
+        font-size: 0.9em;
+        font-weight: 500;
+        color: var(--heading-color);
+        text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+        .nav-links {
+            display: none;
+        }
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <div class="nav-brand-group">
+                <a href="index.html" class="nav-logo">⚡ EventAlertMod</a>
+                <nav class="nav-links">
+                    <a href="index.html" class="nav-link">導航首頁</a>
+                    <a href="README.md.html" class="nav-link">使用說明</a>
+                    <a href="changelog.txt.html" class="nav-link">更新日誌</a>
+                    <a href="AGENTS.md.html" class="nav-link">AI 規範</a>
+                </nav>
+            </div>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-ai-xml-ai-governance-directive-manual">EventAlertMod AI 代理人專用結構化 XML 治理指引手冊 (AI Governance Directive Manual)</h1>
+<blockquote>
+<p>🤖 <strong>專供 AI 代理人 (Agentic AI / Subagents) 讀取、錨定與任務注入之最高權威 XML 結構化治理體系</strong></p>
+</blockquote>
+<hr />
+<h2 id="1-core-definition-positioning">🧭 1. 核心定義與技術定位 (Core Definition &amp; Positioning)</h2>
+<p>本檔案所規範之 <strong>.xml 治理文件</strong>，與魔獸世界插件前端所使用的 FrameXML（如 UI 佈局 XML）具有本質上的區別：</p>
+<ul>
+<li>❌ <strong>非插件運行時 XML (Not AddOn FrameXML)</strong>：不參與遊戲內 UI 繪製、不載入於 <code>EventAlertMod.toc</code>。</li>
+<li>✅ <strong>AI 代理人治理專用 XML (Agentic AI Governance XML)</strong>：作為大型語言模型（LLMs，如 Claude、Gemini Pro、Codex）與子代理集群（Subagents）的高保真度（High-Fidelity）、零歧義結構化指導檔。實體 XML 儲存於 <a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a>。</li>
+</ul>
+<pre class="codehilite"><code>                       EAM 雙軌治理體系 (Dual Governance Tracks)
+                                          │
+                 ┌────────────────────────┴────────────────────────┐
+                 ▼                                                 ▼
+     【人類人類讀取軌 (Human Track)】                   【AI 代理人結構化軌 (AI Agent Track)】
+     - 格式：Markdown (.md) / HTML                     - 格式：結構化 XML (.xml)
+     - 用途：瀏覽器閱讀、圖文導覽、架構討論            - 用途：System Prompt 注入、精確約束、零暖機錨定
+     - 核心：00_INDEX, 01_ARCHITECTURE 等             - 核心：AI_GOVERNANCE_DIRECTIVE.xml
+</code></pre>
+
+<hr />
+<h2 id="2-xml-ai-why-structured-xml">💡 2. 為什麼採用結構化 XML 作為 AI 指導檔？(Why Structured XML?)</h2>
+<p>在多代理人（Multi-Agent）與跨對話（Cross-Session）協作中，傳統純文字或純 Markdown 面臨嚴重挑戰：<strong>注意力稀釋（Lost-in-the-Middle）、模型換代失憶、以及對否定約束（Negative Constraints）遵循度下降</strong>。</p>
+<p>結構化 XML 帶來三大質變優勢：</p>
+<ol>
+<li><strong>嚴格標籤閉合與樹狀階層（Hierarchical Scoping）</strong>：</li>
+<li>LLM 內部具備極高的 XML 標籤解析專注度。透過 <code>&lt;iron_rules&gt;</code>、<code>&lt;secret_values_sentinel&gt;</code> 等語意標籤，模型能精確識別約束範圍，杜絕語意混淆。</li>
+<li><strong>子代理零負擔動態切片注入（Subagent Subtree Injection）</strong>：</li>
+<li>當調用 <code>invoke_subagent</code> 派發任務時，主代理無需將上百頁文檔全部發送，只需抽取 XML 中對應的 <code>&lt;section&gt;</code>（如派發審查任務時僅提取 <code>&lt;secret_values_sentinel&gt;</code> 與 <code>&lt;hot_path_rules&gt;</code>），極致節約 Token 且達成 100% 約束力。</li>
+<li><strong>模型換代與上下文截斷的「零暖機錨點」（Zero Cold-Start Anchor）</strong>：</li>
+<li>當使用者更換底層模型（例如由 Pro 切換至 Flash、或交接給其他 Agent）時，新 Agent 首要讀取 <code>AI_GOVERNANCE_DIRECTIVE.xml</code> 即可在毫秒級瞬間完全恢復記憶，確保架構絕不漂移。</li>
+</ol>
+<hr />
+<h2 id="3-ai-xmldecisional-matrix-triggers">⚖️ 3. 何時該增設與加載 AI 治理 XML？(Decisional Matrix &amp; Triggers)</h2>
+<p>本專案將增設與加載 AI 治理 XML 的權責賦予技術架構師，明確建立以下<strong>四大觸發門檻</strong>：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">觸發條件代碼</th>
+<th style="text-align: left;">觸發場景</th>
+<th style="text-align: left;">執行動作與加載策略</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>C1_CROSS_MODEL_CONTINUITY</strong></td>
+<td style="text-align: left;"><strong>模型版本更換 / 對話歷程截斷</strong></td>
+<td style="text-align: left;"><strong>強制必讀</strong>。當 Agent 遭遇記憶中斷或模型切換時，第一步必須讀取 <code>AI_GOVERNANCE_DIRECTIVE.xml</code> 錨定 5 大鐵律與防禦規範。</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>C2_SUBAGENT_PROMPT_INJECTION</strong></td>
+<td style="text-align: left;"><strong>子代理派工與背景任務</strong></td>
+<td style="text-align: left;"><strong>動態提取注入</strong>。主代理調用 <code>invoke_subagent</code> 時，根據子代理角色自 XML 切割對應標籤注入其 Prompt。</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>C3_COMPLEX_MODULE_REFACTOR</strong></td>
+<td style="text-align: left;"><strong>核心模組重大重構</strong></td>
+<td style="text-align: left;"><strong>結構化擴充</strong>。當重構光環、冷卻、資源或屬性模組時，於 XML 的 <code>&lt;architecture_contracts&gt;</code> 追加狀態機邊界。</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>C4_PROTECTED_API_INCIDENT</strong></td>
+<td style="text-align: left;"><strong>暴雪版本更新引發 Taint 事故</strong></td>
+<td style="text-align: left;"><strong>即時封鎖</strong>。當 Retail 12.1+ 出現新 Secret 報錯時，立即在 XML 的 <code>&lt;secret_values_sentinel&gt;</code> 登錄禁止操作黑名單。</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-xml-directives-overview">🛡️ 4. 核心治理節點架構一覽 (XML Directives Overview)</h2>
+<p>實體 XML 檔案包含 8 大核心模組節點：</p>
+<pre class="codehilite"><code class="language-xml">&lt;eam_ai_governance version=&quot;1.0&quot; last_updated=&quot;2026-09-04&quot;&gt;
+    &lt;!-- 1. 元資料與受眾：界定專案路徑、台灣繁中與「少年欸」稱呼習慣 --&gt;
+    &lt;metadata&gt; ... &lt;/metadata&gt;
+
+    &lt;!-- 2. 生命週期與何時增設決策：定義四大觸發場景 (C1~C4) --&gt;
+    &lt;lifecycle_and_triggers&gt; ... &lt;/lifecycle_and_triggers&gt;
+
+    &lt;!-- 3. 五大絕對鐵律：禁止自動部署、正式服限定、舊目錄廢棄、TokenDPAPI加密、修改前備份 --&gt;
+    &lt;iron_rules&gt; ... &lt;/iron_rules&gt;
+
+    &lt;!-- 4. Secret Values 與 Taint 哨兵：五大檢定 API、禁止四則運算/比對、原生 C-Level Sink --&gt;
+    &lt;secret_values_sentinel&gt; ... &lt;/secret_values_sentinel&gt;
+
+    &lt;!-- 5. 系統架構契約：Core, Services, UI, Managers 四層邊界職責 --&gt;
+    &lt;architecture_contracts&gt; ... &lt;/architecture_contracts&gt;
+
+    &lt;!-- 6. 極限效能與熱路徑鐵律：零匿名閉包、零臨時 Table、數字循環、物件池規範 --&gt;
+    &lt;hot_path_guidelines&gt; ... &lt;/hot_path_guidelines&gt;
+
+    &lt;!-- 7. 驗證門禁體系：語法 76/76、Flow 84/84、契約 496/496、Deploy DryRun --&gt;
+    &lt;verification_gates&gt; ... &lt;/verification_gates&gt;
+
+    &lt;!-- 8. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核 --&gt;
+    &lt;agent_behavior_protocol&gt; ... &lt;/agent_behavior_protocol&gt;
+&lt;/eam_ai_governance&gt;
+</code></pre>
+
+<hr />
+<h2 id="5-physical-file-reference">📌 5. 權威實體檔案位置 (Physical File Reference)</h2>
+<ul>
+<li><strong>AI 治理專用 XML 實體檔</strong>：<a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a></li>
+<li><strong>語法合規驗證</strong>：已通過 Python <code>xml.etree.ElementTree</code> 完整語法與結構檢定（8 大核心子節點完整就位）。</li>
+</ul>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="eventalertmod-ai-agent-structured-xml-governance-directive-manual">EventAlertMod AI Agent Structured XML Governance Directive Manual</h1>
+<blockquote>
+<p>🤖 <strong>Authoritative XML Structured Governance Directive Designed for LLM / Agentic AI Prompt Ingestion and Zero Cold-Start Anchoring</strong></p>
+</blockquote>
+<hr />
+<h2 id="1-core-definition-technical-positioning">🧭 1. Core Definition &amp; Technical Positioning</h2>
+<p>The <strong>.xml governance directive</strong> established in this specification is fundamentally distinct from the FrameXML used in World of Warcraft AddOn UI layouts:</p>
+<ul>
+<li>❌ <strong>Not AddOn Runtime XML</strong>: Does not render in-game frames; not loaded by <code>EventAlertMod.toc</code>.</li>
+<li>✅ <strong>Agentic AI Governance XML</strong>: Serves as a high-fidelity, zero-ambiguity structured directive for Large Language Models (LLMs such as Claude, Gemini Pro, Codex) and Subagent clusters. The physical XML file is maintained at <a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a>.</li>
+</ul>
+<hr />
+<h2 id="2-why-structured-xml-for-ai-governance">💡 2. Why Structured XML for AI Governance?</h2>
+<p>In multi-agent and cross-session collaboration, standard prose and markdown often suffer from <strong>attention dilution (Lost-in-the-Middle), memory loss during model upgrades, and degradation of negative constraint adherence</strong>.</p>
+<p>Structured XML provides three decisive advantages:
+1. <strong>Hierarchical Scoping &amp; Tag Boundaries</strong>: Explicit tags such as <code>&lt;iron_rules&gt;</code> and <code>&lt;secret_values_sentinel&gt;</code> eliminate ambiguity and ensure strict boundary enforcement.
+2. <strong>Subtree Extraction for Subagents</strong>: When calling <code>invoke_subagent</code>, the primary agent can extract relevant subtrees (e.g., <code>&lt;secret_values_sentinel&gt;</code>) and inject them directly into subagent prompts without cluttering context windows.
+3. <strong>Zero Cold-Start Continuity</strong>: When switching model tiers or recovering from conversation truncation, ingesting <code>AI_GOVERNANCE_DIRECTIVE.xml</code> restores complete architectural awareness in milliseconds.</p>
+<hr />
+<h2 id="3-decisional-matrix-when-to-establish-and-ingest-ai-governance-xml">⚖️ 3. Decisional Matrix: When to Establish and Ingest AI Governance XML</h2>
+<p>The architecture framework delegates the timing and triggers for establishing and expanding AI governance XMLs to four distinct criteria:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Trigger ID</th>
+<th style="text-align: left;">Scenario</th>
+<th style="text-align: left;">Required Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>C1_CROSS_MODEL_CONTINUITY</strong></td>
+<td style="text-align: left;"><strong>Model Switch / Context Window Truncation</strong></td>
+<td style="text-align: left;"><strong>Mandatory Ingestion</strong>. When an agent experiences memory reset, ingesting <code>AI_GOVERNANCE_DIRECTIVE.xml</code> is the first required step.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>C2_SUBAGENT_PROMPT_INJECTION</strong></td>
+<td style="text-align: left;"><strong>Subagent Task Delegation</strong></td>
+<td style="text-align: left;"><strong>Dynamic Slicing</strong>. Extract corresponding XML nodes based on subagent duties and inject into prompts.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>C3_COMPLEX_MODULE_REFACTOR</strong></td>
+<td style="text-align: left;"><strong>Major Module Refactoring</strong></td>
+<td style="text-align: left;"><strong>Structured Expansion</strong>. Update state machine and pool boundaries within <code>&lt;architecture_contracts&gt;</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>C4_PROTECTED_API_INCIDENT</strong></td>
+<td style="text-align: left;"><strong>Blizzard API Change / Taint Incident</strong></td>
+<td style="text-align: left;"><strong>Immediate Lockdown</strong>. Append forbidden operations into <code>&lt;secret_values_sentinel&gt;</code> as an unbreakable firewall.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-physical-file-reference">📌 4. Physical File Reference</h2>
+<ul>
+<li><strong>Physical AI Governance XML Directive</strong>: <a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a></li>
+<li><strong>Validation</strong>: Fully validated with Python <code>xml.etree.ElementTree</code> parser with 8 top-level structural modules intact.</li>
+</ul>
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

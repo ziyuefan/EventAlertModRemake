@@ -509,6 +509,110 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-09-04-eam-20260904-combat-speed-restriction-fallback-guard-10-143">2026-09-04 EAM-20260904-COMBAT-SPEED-RESTRICTION-FALLBACK-GUARD：戰鬥中移動速度受限回傳 1.0 導致 14.3% 跑速問題修復</h3>
+<ul>
+<li>狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸實機測試回報：「人物屬性與吸收量可於戰鬥中更新，但跑速戰鬥中顯示不正確 (顯示為 14.3%)，脫離戰鬥正確，是否暴雪又增加甚麼規則？」。</li>
+<li>根本原因調研：暴雪在 WoW Retail 12.x / Midnight (12.0.5+) 中對戰鬥中獲取玩家移動速度增加了受保護的戰鬥限制（Combat Speed Restriction）。在戰鬥中，<code>GetUnitSpeed("player")</code> 會被保護並固定截斷回傳數值 <code>1.0</code>（代表 scaled base speed）。</li>
+<li>插件若依傳統地面跑步速度基準公式計算 <code>(speed / 7.0) * 100</code>，在戰鬥中會算出 <code>(1.0 / 7.0) * 100 = 14.2857%</code>，四捨五入後精確呈現為 <strong>14.3%</strong>！</li>
+<li>脫離戰鬥後暴雪解除保護，<code>GetUnitSpeed</code> 恢復回傳真實碼/秒（如 7.0 碼/秒），計算 <code>(7.0 / 7.0) * 100 = 100%</code>，因此脫戰完全正常。</li>
+<li>重構實作：</li>
+<li>在 <code>PlayerStatService.lua</code> 中對 <code>runSpeed</code>、<code>swimSpeed</code>、<code>flightSpeed</code> 之 <code>getRawValue</code> 與 <code>getValue</code> 建立戰鬥保護防禦閥門。</li>
+<li>當檢測到 <code>speed &lt;= 1.05</code> 且處於戰鬥狀態（<code>inCombat()</code>）時，判定為暴雪 12.x 戰鬥受限數值，杜絕將 1.0 帶入公式除以 7.0，自動回退至脫戰時記錄的最後有效真實記憶快取 <code>PlayerStatService.lastKnownStats["runSpeed"]</code>（如 100% 或 130%）。</li>
+<li>在戰鬥中若數值 <code>&lt;= 15%</code> 嚴格禁止覆蓋快取，確保在整場戰鬥期間跑速穩定正確呈現真實玩家移速。</li>
+</ul>
+<h3 id="2026-09-04-eam-20260904-cooldown-prerender-combat-visibility-zero-alpha">2026-09-04 EAM-20260904-COOLDOWN-PRERENDER-COMBAT-VISIBILITY-ZERO-ALPHA：預渲染冷卻隨戰鬥關閉隱藏與純透明度切換</h3>
+<ul>
+<li>狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸提出需求：「另外預渲染部分我希望能根據冷卻是否隨戰鬥關閉而隱藏(應該只能改透明度)」。</li>
+<li>先前 <code>CooldownService.lua</code> 行 473 寫法為 <code>local visibleNow = behaviorOutside or isInCombat() or isPreRender</code>，因 <code>or isPreRender</code> 導致只要開啟預渲染，<code>visibleNow</code> 永遠為 <code>true</code>，完全忽略了 <code>showSCDOutsideCombat == false</code>，脫戰後圖示依然常駐顯示。</li>
+<li>隱藏方式鐵律：絕不能直接調用 <code>icon:Hide()</code> 或將圖示自 <code>fState.order</code> 排版中移除釋放，否則會導致 2D 矩陣跳動、戰鬥中重新 acquire 觸發 Frame 創建限制與 Taint。</li>
+<li>重構實作：</li>
+<li><strong>冷卻服務可見度精確校正 (<code>CooldownService.lua</code>)</strong>：<ul>
+<li>將 <code>visibleNow</code> 改為 <code>behaviorOutside or isInCombat()</code>，移除 <code>or isPreRender</code>。</li>
+<li>預渲染待命分支區分 <code>visibleNow</code>：若 <code>not visibleNow</code>（戰鬥外且隨戰鬥關閉），產生 <code>shown = false</code> 之 state，自 <code>states</code> 卸載並回傳 Renderer。若進入戰鬥（<code>PLAYER_REGEN_DISABLED</code>），重新整理評估 <code>visibleNow = true</code>，產生 <code>shown = true, isDesaturated = true</code> 恢復灰階待命顯示。</li>
+</ul>
+</li>
+<li><strong>渲染器純透明度防禦隔離 (<code>Renderer.lua</code>)</strong>：<ul>
+<li>在 <code>Renderer.render</code> 中，冷卻框架若收到 <code>shown == false</code> 且未被徹底停用，僅調用 <code>icon:SetAlpha(0)</code>，清除文字與冷卻遮罩，保留 Frame 物件於 <code>fState.icons</code> 與 <code>fState.order</code> 排版槽位常駐。</li>
+<li>若冷卻 Frame 尚未存在且非戰鬥中，防禦性 pre-acquire icon，確保戰鬥前 100% 預熱就緒，進入戰鬥時無須重新創建 Frame，零 GC、零 Taint、零 Deferred。</li>
+</ul>
+</li>
+<li><strong>新增 Flow 業務狀態機與代碼契約測試</strong>：<ul>
+<li>於 <code>FlowTestRunner.lua</code> 註冊 <code>cooldown.prerender_combat_visibility</code> 案例（85/85 PASS）。</li>
+<li>於 <code>Test-ValidationContracts.ps1</code> 擴充契約斷言（497/497 PASS）。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2026-09-04-eam-20260904-grid-2d-columns-layout-engine-columns-2d">2026-09-04 EAM-20260904-GRID-2D-COLUMNS-LAYOUT-ENGINE：光環與冷卻模組指定換行欄數 (Columns) 與 2D 矩陣排版引擎</h3>
+<ul>
+<li>狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸提出需求：「增加光環與冷卻模組若超過指定COLUMN 就跳到下一ROW, 建議在清單視窗設定, 預設COLUMN 為8」。</li>
+<li>過去渲染器僅支援一維單向延伸排版（如水平向右無限延伸），當自身光環、目標光環、技能冷卻、物品冷卻或地面效果圖示數量較多時，容易超出螢幕邊界或覆蓋其他 UI 元件。</li>
+<li>需要支援各分類框架獨立的欄數控制（Columns per Row，1~20，預設 8），於監控清單視窗即時調整並支援戰鬥中延遲保護與存檔持久化。</li>
+<li>重構實作：</li>
+<li><strong>2D 矩陣折行排版引擎 (<code>Renderer.lua</code>)</strong>：<ul>
+<li>升級核心排版演算法 <code>layout(frameName)</code>：讀取框架 <code>columns</code>（1..32，預設 8）與垂直間距 <code>vSpacing = cfg.verticalSpacing or spacing</code>。</li>
+<li>計算已排序圖示之二維網格位置：<code>col = itemIdx % maxCols</code>、<code>row = math.floor(itemIdx / maxCols)</code>。</li>
+<li>依四大主要成長方向計算精確位移：</li>
+<li><code>RIGHT (1)</code>：<code>offsetX = col * (size + spacing)</code>，<code>offsetY = -row * (size + vSpacing)</code>（往右排列，超過指定欄數自動向下換列）。</li>
+<li><code>LEFT (2)</code>：<code>offsetX = -col * (size + spacing)</code>，<code>offsetY = -row * (size + vSpacing)</code>（往左排列，超過指定欄數自動向下換列）。</li>
+<li><code>UP (3)</code>：<code>offsetX = row * (size + spacing)</code>，<code>offsetY = col * (size + vSpacing)</code>（往上排列，超過指定欄數向右開行）。</li>
+<li><code>DOWN (4)</code>：<code>offsetX = row * (size + spacing)</code>，<code>offsetY = -col * (size + vSpacing)</code>（往下排列，超過指定欄數向右開行）。</li>
+<li>動態計算父框架包覆尺寸 <code>parent:SetSize(math.max(size, totalSpanX), math.max(size, totalSpanY))</code>。</li>
+</ul>
+</li>
+<li><strong>監控清單視窗控制項整合 (<code>Options.lua</code>)</strong>：<ul>
+<li>於清單視窗（<code>listInner</code>）頂部專精下拉選單旁（<code>X = 180, Y = -44</code>）增設「每列欄數 (Columns)」滑桿（範圍 1~20，步進 1，預設 8）。</li>
+<li>實作 <code>Options.refreshColumnsControl()</code>：根據當前分類框架（<code>selfAura</code>, <code>targetAura</code>, <code>spellCooldown</code>, <code>itemCooldown</code>, <code>groundEffect</code>）自動同步呈現當前數值；非圖示框架自動隱藏。</li>
+<li>滑桿變更時即時寫入 <code>EAM.db.layout.frames[frameName].columns</code>，標記 revision changed 並立即調用 <code>Renderer.requestLayout(frameName)</code> 實現零延遲重繪。</li>
+<li>在 <code>Options.refreshList()</code> 與切換分類分頁時自動呼叫 <code>refreshColumnsControl()</code> 保持介面同步。</li>
+</ul>
+</li>
+<li><strong>資料持久化與設定檔編解碼相容 (<code>SavedVariables.lua</code> / <code>ProfileCodec.lua</code>)</strong>：<ul>
+<li>在 <code>defaults.layout.frames</code> 的 8 大框架預設值補齊 <code>columns = 8</code>。</li>
+<li>於 <code>SavedVariables</code> 升級遷移邏輯中加入 <code>columns</code> 防禦校驗，保證舊存檔無痛相容。</li>
+<li>在 <code>ProfileCodec.lua</code> 的 <code>normalizeLayoutRecord</code> 與 <code>exportLayout</code> 中納入 <code>columns</code> 欄位驗證（1..32，安全整數）。</li>
+</ul>
+</li>
+<li><strong>五大語系字典完整對齊 (<code>Locale/*.lua</code>)</strong>：<ul>
+<li><code>zhTW</code>、<code>zhCN</code>、<code>enUS</code>、<code>koKR</code>、<code>ruRU</code> 全數補齊 <code>EAM_OPT_COLUMNS</code> 與 <code>EAM_OPT_COLUMNS_TIP</code>。</li>
+</ul>
+</li>
+<li>驗證結果：</li>
+<li>Lua 語法檢驗：<code>CheckLuaSyntax.ps1</code> 通過 76/76。</li>
+<li>Flow 業務沙盒：<code>Run-FlowValidation.ps1</code> 通過 84/84。</li>
+<li>全專案代碼契約：<code>Test-ValidationContracts.ps1</code> 通過 496/496。</li>
+<li><code>Deploy/</code> 部署腳本零異動。</li>
+</ul>
+<h3 id="2026-09-04-eam-20260904-ai-governance-structured-xml-directiveai-xml">2026-09-04 EAM-20260904-AI-GOVERNANCE-STRUCTURED-XML-DIRECTIVE：AI 代理人專用結構化 XML 指導規範建置與決策體系確立</h3>
+<ul>
+<li>狀態：已解決 (XML validated, Docs 33 &amp; 33_en created, 00_INDEX updated)。</li>
+<li>需求背景與問題分析：</li>
+<li>在多模型（Pro / Flash / Codex 等）交接或對話歷程截斷（Context Truncation）時，純 Markdown 文本容易產生注意力稀釋（Lost-in-the-Middle）與邊界防線失憶。</li>
+<li>少年欸明確指示在 <code>.AI/Docs/</code> 增設 AI 治理專用 XML 指導檔（非插件前端 FrameXML），並由技術架構師裁定何時增設與擴充。</li>
+<li>重構實作：</li>
+<li><strong>實體結構化治理 XML 建置 (<code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code>)</strong>：<ul>
+<li>包含 8 大核心節點：<code>&lt;metadata&gt;</code>、<code>&lt;lifecycle_and_triggers&gt;</code>、<code>&lt;iron_rules&gt;</code>、<code>&lt;secret_values_sentinel&gt;</code>、<code>&lt;architecture_contracts&gt;</code>、<code>&lt;hot_path_guidelines&gt;</code>、<code>&lt;verification_gates&gt;</code>、<code>&lt;agent_behavior_protocol&gt;</code>。</li>
+<li>通過 Python <code>xml.etree.ElementTree</code> 完整語法檢定。</li>
+</ul>
+</li>
+<li><strong>確立何時增設/加載之四大觸發門檻 (C1~C4)</strong>：<ul>
+<li><code>C1_CROSS_MODEL_CONTINUITY</code>：模型版本切換或截斷失憶時作為第一讀取錨點。</li>
+<li><code>C2_SUBAGENT_PROMPT_INJECTION</code>：調用 <code>invoke_subagent</code> 派工時動態切片提取標籤注入 Prompt。</li>
+<li><code>C3_COMPLEX_MODULE_REFACTOR</code>：重大模組重構時擴充狀態機與物件池契約。</li>
+<li><code>C4_PROTECTED_API_INCIDENT</code>：暴雪 API 變更引發 Taint 事故時追加受限操作黑名單。</li>
+</ul>
+</li>
+<li><strong>配套雙語指引文件與導航中心整合</strong>：<ul>
+<li>建立繁中版 <code>33_AI_GOVERNANCE_DIRECTIVE.md</code> 與英文版 <code>33_AI_GOVERNANCE_DIRECTIVE_en.md</code>。</li>
+<li>更新 <code>00_INDEX.md</code>、<code>00_INDEX_en.md</code>、<code>AGENTS.md</code>、<code>AGENTS_en.md</code>。</li>
+</ul>
+</li>
+</ul>
 <h3 id="2026-09-03-eam-20260903-docs-three-tier-english-translation-and-iopage-sync-github-pages-iopage">2026-09-03 EAM-20260903-DOCS-THREE-TIER-ENGLISH-TRANSLATION-AND-IOPAGE-SYNC：三梯次說明文件原生專業英文版建置與 GitHub Pages (iopage) 全面同步</h3>
 <ul>
 <li>狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496, 40 HTML files converted)。</li>
@@ -2193,12 +2297,152 @@
 <li>Flow 狀態機測試：82/82 PASS。</li>
 <li>Validation Contracts：493/493 PASS。</li>
 </ul>
+<h3 id="eam-20260904-options-list-scroll-tracking-and-selection-ux">EAM-20260904-OPTIONS-LIST-SCROLL-TRACKING-AND-SELECTION：清單排序視窗滾動跟隨與選定高亮 UX 優化</h3>
+<ul>
+<li>日期：2026-09-04。</li>
+<li>狀態：已完成代碼實作、Flow 測試 (84/84) 與靜態契約檢驗 (496/496)；等待少年欸實機部署驗證。</li>
+<li>需求與設計：</li>
+<li>少年欸反饋：在監控清單點擊上下箭頭 <code>▲</code> / <code>▼</code> 調換技能順位時，每按一次卷軸視窗不會捲動到該技能並選定，視窗容易重置回頂部導致追蹤困難。</li>
+<li>有效解法：</li>
+<li><strong>ScrollBox 視窗平滑跟隨</strong>：<ul>
+<li>重構 <code>Options.refreshList(selectedAlert, scrollToIdx)</code>，在 <code>scrollBox:SetDataProvider</code> 時啟用 <code>retainScrollPosition = true</code> 防禦視窗猛烈跳回頂部。</li>
+<li>取得調換後的目標索引 <code>resolvedScrollIdx</code>，透過暴雪原生 <code>scrollBox:ScrollToElementDataIndex(resolvedScrollIdx, alignMode)</code> 與 <code>ScrollToElementData</code> 搭配 <code>pcall</code> 進行平滑防禦性滾動，確保移動後的項目始終保持在可見視窗範圍中。</li>
+</ul>
+</li>
+<li><strong>選定狀態記憶與高亮渲染</strong>：<ul>
+<li>引入 <code>Options.selectedAlert</code> 狀態與 <code>isAlertSelected</code> 判定，為選定項目渲染清爽的湛藍高亮背景色 <code>(0.18, 0.45, 0.80, 0.28)</code>（懸停時微升為 <code>(0.22, 0.52, 0.90, 0.38)</code>），滑鼠移開後依舊清晰高亮。</li>
+</ul>
+</li>
+<li><strong>全面互動聯動</strong>：<ul>
+<li>在 <code>moveAlertInCurrentList</code>（上下箭頭）、<code>repositionAlertOrder</code>（輸入唯一自然數）、<code>swapAlertsInCurrentList</code>（滑鼠拖曳）、新增監控（<code>addAlertToCurrentCategory</code>）與單擊清單列（<code>OnMouseDown</code>）中全面同步 <code>selectedAlert</code> 與滾動定位。</li>
+<li>在切換分類標籤（<code>Options.currentCategory</code> 變更）或批次刪除時，安全清理 <code>selectedAlert = nil</code>，避免跨分類殘留。</li>
+</ul>
+</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：76/76 PASS。</li>
+<li>Flow 狀態機測試：84/84 PASS。</li>
+<li>Validation Contracts：496/496 PASS。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<h3 id="2026-09-03-eam-20260903-docs-three-tier-english-translation-and-iopage-sync-three-step-description-file-native-professional-english-version-construction-and-github-pages-iopage-full-synchronization">2026-09-03 EAM-20260903-DOCS-THREE-TIER-ENGLISH-TRANSLATION-AND-IOPAGE-SYNC: Three-step description file native professional English version construction and GitHub Pages (iopage) full synchronization</h3>
+<h3 id="2026-09-04-eam-20260904-combat-speed-restriction-fallback-guard-fixed-movement-speed-limitation-in-battle-backhaul-10-resulting-in-143-running-speed-problem">2026-09-04 EAM-20260904-COMBAT-SPEED-RESTRICTION-FALLBACK-GUARD: Fixed movement speed limitation in battle backhaul 1.0 resulting in 14.3% running speed problem</h3>
 <ul>
-<li>状态：已解决 (Lua 76/76, Flow 84/84, Contracts 496/496, 40 HTML files converted)。</li>
+<li>Status: Resolved (Lua 76/76, Flow 85/85, Contracts 497/497).</li>
+<li>Requirement background and problem analysis:</li>
+<li>Boy Ye real machine test report: "Character attributes and absorption capacity can be updated in battle, but the running speed is displayed incorrectly in battle (displayed as 14.3%), and out of battle is correct. Has Blizzard added any rules?"</li>
+<li>Root cause investigation: Blizzard has added a protected combat restriction (Combat Speed ​​Restriction) to the player's movement speed during combat in WoW Retail 12.x / Midnight (12.0.5+). During combat, <code>GetUnitSpeed("player")</code> will be protected and the returned truncated value <code>1.0</code> (representing scaled base speed) will be fixed.</li>
+<li>If the plug-in calculates <code>(speed / 7.0) * 100</code> based on the traditional ground running speed benchmark formula, it will calculate <code>(1.0 / 7.0) * 100 = 14.2857%</code> during combat, which is accurately presented as <strong>14.3%</strong> after rounding!</li>
+<li>After leaving the battle, Blizzard releases the protection, <code>GetUnitSpeed</code> resumes transmitting the real code/second (such as 7.0 yards/second), and calculates <code>(7.0 / 7.0) * 100 = 100%</code>, so it is completely normal to leave the battle.</li>
+<li>Refactoring implementation:</li>
+<li>Establish combat protection defense valves in <code>PlayerStatService.lua</code> for <code>runSpeed</code>, <code>swimSpeed</code>, <code>flightSpeed</code>, <code>getRawValue</code> and <code>getValue</code>.</li>
+<li>When <code>speed &lt;= 1.05</code> is detected and in a combat state (<code>inCombat()</code>), it will be determined as the Blizzard 12.</li>
+<li>During battle, if the value is <code>&lt;= 15%</code>, it is strictly prohibited to overwrite the cache to ensure that the running speed is stable and correctly represents the real player movement speed during the entire battle.</li>
+</ul>
+<h3 id="2026-09-04-eam-20260904-cooldown-prerender-combat-visibility-zero-alpha-pre-render-cooldown-switched-with-combat-turned-off-hiding-and-pure-transparency">2026-09-04 EAM-20260904-COOLDOWN-PRERENDER-COMBAT-VISIBILITY-ZERO-ALPHA: Pre-render cooldown switched with combat turned off hiding and pure transparency</h3>
+<ul>
+<li>Status: Resolved (Lua 76/76, Flow 85/85, Contracts 497/497).</li>
+<li>Requirement background and problem analysis:</li>
+<li>The boy made a request: "In addition, I hope that the pre-rendering part can be hidden according to whether the cooling is turned off with the battle (the transparency should only be changed)".</li>
+<li>The previous <code>CooldownService.lua</code> line 473 was written as <code>local visibleNow = behaviorOutside or isInCombat() or isPreRender</code>. Because <code>or isPreRender</code> causes that as long as pre-rendering is turned on, <code>visibleNow</code> will always be <code>true</code>, completely ignoring <code>showSCDOutsideCombat == false</code>. The icon will still be permanently displayed after the battle.</li>
+<li>The iron law of hiding methods: Never call <code>icon:Hide()</code> directly or remove the icon from the layout of <code>fState.order</code>, otherwise it will cause the 2D matrix to jump, and re-acquire in battle to trigger Frame creation restrictions and Taint.</li>
+<li>Refactoring implementation:</li>
+<li><strong>Cooling service visibility exact correction (<code>CooldownService.lua</code>)</strong>:<ul>
+<li>Changed <code>visibleNow</code> to <code>behaviorOutside or isInCombat()</code>, removed <code>or isPreRender</code>.</li>
+<li>Pre-rendering standby branch distinction <code>visibleNow</code>: If <code>not visibleNow</code> (outside combat and closed with combat), the state of <code>shown = false</code> is generated, unloaded from <code>states</code> and returned to Renderer. If entering combat (<code>PLAYER_REGEN_DISABLED</code>), re-evaluate <code>visibleNow = true</code> and generate <code>shown = true, isDesaturated = true</code> to restore grayscale standby display.</li>
+</ul>
+</li>
+<li><strong>Renderer pure transparency defense isolation (<code>Renderer.lua</code>)</strong>:<ul>
+<li>In <code>Renderer.render</code>, if the cooling frame receives <code>shown == false</code> and is not completely deactivated, only call <code>icon:SetAlpha(0)</code>, clear the text and cooling mask, and keep the Frame object in the <code>fState.icons</code> and <code>fState.order</code> typesetting slots.</li>
+</ul>
+</li>
+<li>If the cooling Frame does not yet exist and is not in combat, the defensive pre-acquire icon ensures 100% pre-heating readiness before combat. There is no need to re-create the Frame when entering combat, zero GC, zero Taint, and zero Deferred.</li>
+<li><strong>Added Flow business state machine and code contract testing</strong>:<ul>
+<li>Registered <code>cooldown.prerender_combat_visibility</code> case (85/85 PASS) at <code>FlowTestRunner.lua</code>.</li>
+<li>Extended contract assertion in <code>Test-ValidationContracts.ps1</code> (497/497 PASS).</li>
+</ul>
+</li>
+</ul>
+<h3 id="2026-09-04-eam-20260904-grid-2d-columns-layout-engine-aura-and-cooling-modules-specify-the-number-of-line-wrapping-columns-columns-and-2d-matrix-layout-engine">2026-09-04 EAM-20260904-GRID-2D-COLUMNS-LAYOUT-ENGINE: Aura and cooling modules specify the number of line wrapping columns (Columns) and 2D matrix layout engine</h3>
+<ul>
+<li>Status: Resolved (Lua 76/76, Flow 84/84, Contracts 496/496).</li>
+<li>Requirement background and problem analysis:</li>
+<li>The boy made a request: "If the Aura and cooling module exceeds the specified COLUMN, it will jump to the next ROW. It is recommended to set it in the list window. The default COLUMN is 8."</li>
+<li>In the past, renderers only supported one-dimensional one-dimensional extended layout (such as extending horizontally to the right infinitely). When there were a large number of self-Aura, target Aura, skill cooldown, item cooldown, or ground effect icons, they would easily exceed the screen boundaries or cover other UI components.</li>
+<li>It is necessary to support independent column number control for each category frame (Columns per Row, 1~20, default 8), real-time adjustment in the monitoring list window, and support for delayed protection and archive persistence during combat.</li>
+<li>Refactoring implementation:</li>
+<li><strong>2D matrix wrapping typesetting engine (<code>Renderer.lua</code>)</strong>:<ul>
+<li>Upgrade core typesetting algorithm <code>layout(frameName)</code>: read frame <code>columns</code> (1..32, default 8) and vertical spacing <code>vSpacing = cfg.verticalSpacing or spacing</code>.</li>
+</ul>
+</li>
+<li>Calculate the 2D grid positions of sorted icons: <code>col = itemIdx % maxCols</code>, <code>row = math.floor(itemIdx / maxCols)</code>.<ul>
+<li>Calculate precise displacements based on four main growth directions:</li>
+<li><code>RIGHT (1)</code>: <code>offsetX = col * (size + spacing)</code>, <code>offsetY = -row * (size + vSpacing)</code> (arrange to the right, and automatically change columns downward if the specified number of columns is exceeded).</li>
+<li><code>LEFT (2)</code>: <code>offsetX = -col * (size + spacing)</code>, <code>offsetY = -row * (size + vSpacing)</code> (arrange to the left, and automatically change columns downward if the specified number of columns is exceeded).</li>
+</ul>
+</li>
+<li><code>UP (3)</code>: <code>offsetX = row * (size + spacing)</code>, <code>offsetY = col * (size + vSpacing)</code> (arrange upward, and move to the right beyond the specified number of columns).<ul>
+<li><code>DOWN (4)</code>: <code>offsetX = row * (size + spacing)</code>, <code>offsetY = -col * (size + vSpacing)</code> (arrange downwards, and move to the right beyond the specified number of columns).</li>
+<li>Dynamically calculate the parent frame cladding size <code>parent:SetSize(math.max(size, totalSpanX), math.max(size, totalSpanY))</code>.</li>
+</ul>
+</li>
+<li><strong>Monitoring list window control item integration (<code>Options.lua</code>)</strong>:</li>
+<li>Added a "Columns" slider (range 1~20, step 1, default 8) next to the specialization drop-down menu (<code>X = 180, Y = -44</code>) at the top of the list window (<code>listInner</code>).<ul>
+<li>Implementation <code>Options.refreshColumnsControl()</code>: Automatically and synchronously present the current value according to the current classification frame (<code>selfAura</code>, <code>targetAura</code>, <code>spellCooldown</code>, <code>itemCooldown</code>, <code>groundEffect</code>); non-illustrated frames are automatically hidden.</li>
+</ul>
+</li>
+<li>Write <code>EAM.db.layout.frames[frameName].columns</code> immediately when the slider changes, mark revision changed and call <code>Renderer.requestLayout(frameName)</code> immediately to achieve zero-delay redrawing.<ul>
+<li>Automatically call <code>refreshColumnsControl()</code> when switching category paging between <code>Options.refreshList()</code> and maintain interface synchronization.</li>
+</ul>
+</li>
+<li><strong>Data persistence is compatible with profile codec (<code>SavedVariables.lua</code> / <code>ProfileCodec.lua</code>)</strong>:<ul>
+<li>Completed <code>columns = 8</code> in <code>defaults.layout.frames</code>'s 8 major frame defaults.</li>
+</ul>
+</li>
+<li>Added <code>columns</code> defense check to <code>SavedVariables</code> upgrade migration logic to ensure painless compatibility of old archives.<ul>
+<li>Include <code>columns</code> field validation (1..32, safe integer) in <code>normalizeLayoutRecord</code> and <code>exportLayout</code> of <code>ProfileCodec.lua</code>.</li>
+</ul>
+</li>
+<li><strong>Complete alignment of dictionaries of the five major language families (<code>Locale/*.lua</code>)</strong>:<ul>
+<li><code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> are all completed with <code>EAM_OPT_COLUMNS</code> and <code>EAM_OPT_COLUMNS_TIP</code>.</li>
+</ul>
+</li>
+<li>Verification results:</li>
+<li>Lua syntax check: <code>CheckLuaSyntax.ps1</code> passes 76/76.</li>
+<li>Flow Business Sandbox: <code>Run-FlowValidation.ps1</code> through 84/84.</li>
+<li>Full project code contract: <code>Test-ValidationContracts.ps1</code> through 496/496.</li>
+<li><code>Deploy/</code> deployment script with zero changes.</li>
+</ul>
+<h3 id="2026-09-04-eam-20260904-ai-governance-structured-xml-directive-ai-agent-specific-structured-xml-guides-the-establishment-of-specifications-and-the-establishment-of-a-decision-making-system">2026-09-04 EAM-20260904-AI-GOVERNANCE-STRUCTURED-XML-DIRECTIVE: AI agent-specific structured XML guides the establishment of specifications and the establishment of a decision-making system</h3>
+<ul>
+<li>Status: Resolved (XML validated, Docs 33 &amp; 33_en created, 00_INDEX updated).</li>
+<li>Requirement background and problem analysis:</li>
+<li>During multi-model (Pro/Flash/Codex, etc.) handover or dialogue process truncation (Context Truncation), pure Markdown text is prone to attention dilution (Lost-in-the-Middle) and borderline amnesia.</li>
+<li>The boy clearly instructed to add the AI ​​governance-specific XML guidance file (non-plugin front-end FrameXML) in <code>.AI/Docs/</code>, and the technical architect decided when to add and expand it.</li>
+<li>Refactoring implementation:</li>
+<li><strong>Entity Structured Governance XML Construction (<code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code>)</strong>:</li>
+<li>Contains 8 core nodes: <code>&lt;metadata&gt;</code>, <code>&lt;lifecycle_and_triggers&gt;</code>, <code>&lt;iron_rules&gt;</code>, <code>&lt;secret_values_sentinel&gt;</code>, <code>&lt;architecture_contracts&gt;</code>, <code>&lt;hot_path_guidelines&gt;</code>, <code>&lt;verification_gates&gt;</code>, <code>&lt;agent_behavior_protocol&gt;</code>.<ul>
+<li>Passed the Python <code>xml.etree.ElementTree</code> full syntax check.</li>
+</ul>
+</li>
+<li><strong>Establish the four trigger thresholds (C1~C4) for when to add/load</strong>:<ul>
+<li><code>C1_CROSS_MODEL_CONTINUITY</code>: used as the first read anchor point when switching model versions or truncating amnesia.</li>
+</ul>
+</li>
+<li><code>C2_SUBAGENT_PROMPT_INJECTION</code>: Call <code>invoke_subagent</code> to dispatch dynamic slicing to extract tags and inject Prompt.<ul>
+<li><code>C3_COMPLEX_MODULE_REFACTOR</code>: Expanded state machine and Object Pool contracts during major module reconstruction.</li>
+<li><code>C4_PROTECTED_API_INCIDENT</code>: Blizzard's API change adds a blacklist of restricted operations when a Taint incident occurs.</li>
+</ul>
+</li>
+<li><strong>Integration of supporting bilingual guidance documents and navigation center</strong>:<ul>
+<li>Create Traditional Chinese version <code>33_AI_GOVERNANCE_DIRECTIVE.md</code> and English version <code>33_AI_GOVERNANCE_DIRECTIVE_en.md</code>.</li>
+</ul>
+</li>
+<li>Updated <code>00_INDEX.md</code>, <code>00_INDEX_en.md</code>, <code>AGENTS.md</code>, <code>AGENTS_en.md</code>.</li>
+</ul>
+<h3 id="2026-09-03-eam-20260903-docs-three-tier-english-translation-and-iopage-sync-three-step-documentation-native-professional-english-version-build-and-github-pages-iopage-full-synchronization">2026-09-03 EAM-20260903-DOCS-THREE-TIER-ENGLISH-TRANSLATION-AND-IOPAGE-SYNC: Three-step documentation native professional English version build and GitHub Pages (iopage) Full synchronization</h3>
+<ul>
+<li>Status: Resolved (Lua 76/76, Flow 84/84, Contracts 496/496, 40 HTML files converted).</li>
 <li>Requirement background and problem analysis:</li>
 <li>The HTML documentation website previously only had handwritten English versions for <code>00_INDEX_en.md</code>, and the rest of the documents in <code>batch_convert_docs.py</code> relied on Google Translate API for violent machine translation.</li>
 <li>Free Google API frequently encountered HTTP 429 Too Many Requests failed to downgrade, and lacked the protection of professional terminology of World of Warcraft and plug-ins. It is easy to produce "English-Chinese-English" double translation of strange words (such as translating Retail into formal clothing, translating Aura into Aura, translating Shield Absorb into Shield Absorb, translating InCombatLockdown into Combat Lockdown, translating Taint into Taint etc.).</li>
@@ -3855,6 +4099,30 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura time 
 <li>Lua syntax check: 64/64 PASS.</li>
 <li>Flow state machine tests: 82/82 PASS.</li>
 <li>Validation Contracts: 493/493 PASS.</li>
+</ul>
+<h3 id="eam-20260904-options-list-scroll-tracking-and-selection-list-sorting-window-scrolling-and-selection-highlighting-ux-optimization">EAM-20260904-OPTIONS-LIST-SCROLL-TRACKING-AND-SELECTION: List sorting window scrolling and selection highlighting UX optimization</h3>
+<ul>
+<li>Date: 2026-09-04.</li>
+<li>Status: Completed code implementation, Flow testing (84/84) and static contract verification (496/496); waiting for real machine deployment verification.</li>
+<li>Requirements and Design:</li>
+<li>Feedback from the boy: When clicking the up and down arrows <code>▲</code> / <code>▼</code> in the monitoring list to change the order of skills, the scroll window will not scroll to and select the skill each time it is clicked. The window is easily reset to the top, making tracking difficult.</li>
+<li>Effective solution:</li>
+<li><strong>ScrollBox Window smooth following</strong>:<ul>
+<li>Refactor <code>Options.refreshList(selectedAlert, scrollToIdx)</code>, enable <code>retainScrollPosition = true</code> when <code>scrollBox:SetDataProvider</code> The defense window jumps violently back to the top.</li>
+</ul>
+</li>
+<li>Obtain the swapped target index <code>resolvedScrollIdx</code>, and use Blizzard's native <code>scrollBox:ScrollToElementDataIndex(resolvedScrollIdx, alignMode)</code> and <code>ScrollToElementData</code> together with <code>pcall</code> to perform smooth defensive scrolling to ensure that the moved items always remain within the visible window range.</li>
+<li><strong>Selected state memory and highlight rendering</strong>:</li>
+<li>Introduced <code>Options.selectedAlert</code> status and <code>isAlertSelected</code> judgment, rendering a refreshing blue highlight background color <code>(0.18, 0.45, 0.80, 0.28)</code> (slightly rising to <code>(0.22, 0.52, 0.90, 0.38)</code> when hovering) for the selected item, which remains clear and highlighted after the mouse is moved away.</li>
+<li><strong>Comprehensive interactive linkage</strong>:</li>
+<li>Fully synchronize <code>selectedAlert</code> and scroll positioning in <code>moveAlertInCurrentList</code> (up and down arrows), <code>repositionAlertOrder</code> (enter unique natural numbers), <code>swapAlertsInCurrentList</code> (mouse drag), new monitoring (<code>addAlertToCurrentCategory</code>) and click list column (<code>OnMouseDown</code>).<ul>
+<li>When switching category labels (<code>Options.currentCategory</code> changes) or batch deletion, safely clean up <code>selectedAlert = nil</code> to avoid cross-category residues.</li>
+</ul>
+</li>
+<li>Verification:</li>
+<li>Lua syntax check: 76/76 PASS.</li>
+<li>Flow state machine test: 84/84 PASS.</li>
+<li>Validation Contracts: 496/496 PASS.</li>
 </ul>
     </div>
 

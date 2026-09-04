@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent 技能：MinimalAddon - 目錄導覽與檔案說明清單 | EventAlertMod Remake</title>
+  
+  <!-- AI Governance Metadata -->
+  <meta name="ai-governance-role" content="Agent Specialized Skill">
+  <meta name="ai-governance-layer" content="Agent Skill Layer">
+  <meta name="ai-governance-security" content="Agent Knowledge Standard">
+  <meta name="ai-governance-invariants" content="提供標準 SKILL.md 定義，支援 Antigravity 子代理人自主探索調用">
+  <meta name="ai-scan-timestamp" content="2026-09-04T18:02:02.721339+08:00">
+  <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
+
+  <!-- JSON-LD Structured Data for AI Agents / RAG -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DirectoryGovernanceReport",
+  "directoryPath": ".AI/skills/wow-addon-dev/examples/MinimalAddon",
+  "name": "Agent 技能：MinimalAddon",
+  "layer": "Agent Skill Layer",
+  "role": "Agent Specialized Skill",
+  "securityLevel": "Agent Knowledge Standard",
+  "summary": "託管 MinimalAddon 專業代理人技能定義、操作流程、範例與參考知識庫。",
+  "invariants": [
+    "提供標準 SKILL.md 定義，支援 Antigravity 子代理人自主探索調用"
+  ],
+  "timestamp": "2026-09-04T18:02:02.721339+08:00",
+  "fileCount": 2,
+  "subdirectoryCount": 0,
+  "totalSizeBytes": 4090,
+  "files": [
+    {
+      "name": "MinimalAddon.lua",
+      "extension": ".lua",
+      "sizeBytes": 3865,
+      "lineCount": 101,
+      "purpose": "WoW Lua 模組程式碼",
+      "role": "Lua Module",
+      "security": "Protected"
+    },
+    {
+      "name": "MinimalAddon.toc",
+      "extension": ".toc",
+      "sizeBytes": 225,
+      "lineCount": 8,
+      "purpose": "WoW 插件載入清單",
+      "role": "Addon Manifest",
+      "security": "Protected"
+    }
+  ],
+  "subdirectories": []
+}
+  </script>
+
+  <style>
+    :root {
+      --bg-base: #0a0e17;
+      --bg-surface: rgba(17, 24, 39, 0.75);
+      --bg-surface-hover: rgba(30, 41, 59, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #00f0ff;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-cyan: #00f0ff;
+      --accent-gold: #ffd700;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      --font-mono: "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* 頂部導航與麵包屑 */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .breadcrumbs a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .breadcrumbs a:hover {
+      text-decoration: underline;
+      filter: drop-shadow(0 0 6px var(--accent-cyan));
+    }
+
+    .breadcrumbs .separator {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .breadcrumbs .current {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Hero Header */
+    .header-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-gold));
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .header-title-row h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+    }
+
+    .badge-layer {
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-role {
+      background: rgba(0, 240, 255, 0.15);
+      color: #67e8f9;
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+
+    .header-desc {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+
+    /* 統計列 */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    /* AI 治理卡片 */
+    .governance-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .governance-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.15rem;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .governance-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .governance-list li {
+      position: relative;
+      padding-left: 24px;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .governance-list li::before {
+      content: "🛡️";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 0.85rem;
+    }
+
+    /* 搜尋與過濾工具列 */
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      width: 100%;
+      max-width: 360px;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+    }
+
+    /* 子目錄列表 (Cards) */
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 28px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .subdirs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .subdir-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .subdir-card:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.12);
+    }
+
+    .subdir-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .subdir-icon {
+      font-size: 1.3rem;
+    }
+
+    .subdir-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .subdir-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .subdir-meta {
+      font-size: 0.8rem;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 8px;
+    }
+
+    /* 檔案表格 */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .files-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .files-table th {
+      background: rgba(15, 23, 42, 0.9);
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .files-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.92rem;
+      vertical-align: middle;
+    }
+
+    .files-table tr:hover td {
+      background: var(--bg-surface-hover);
+    }
+
+    .file-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .file-name-cell a {
+      color: var(--text-main);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .file-name-cell a:hover {
+      color: var(--accent-cyan);
+    }
+
+    /* 類型徽章 */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+    }
+
+    .badge-lua { background: #002b5c; color: #60a5fa; border: 1px solid #1e40af; }
+    .badge-xml { background: #4a1d96; color: #c084fc; border: 1px solid #6b21a8; }
+    .badge-toc { background: #701a75; color: #f472b6; border: 1px solid #86198f; }
+    .badge-doc { background: #064e3b; color: #34d399; border: 1px solid #047857; }
+    .badge-data { background: #78350f; color: #fbbf24; border: 1px solid #b45309; }
+    .badge-script { background: #1e3a8a; color: #93c5fd; border: 1px solid #2563eb; }
+    .badge-tool { background: #14532d; color: #86efac; border: 1px solid #15803d; }
+    .badge-secret { background: #881337; color: #fda4af; border: 1px solid #be123c; }
+    .badge-media { background: #374151; color: #e5e7eb; border: 1px solid #4b5563; }
+    .badge-svg { background: #831843; color: #f43f5e; border: 1px solid #be185d; }
+    .badge-audio { background: #134e4a; color: #2dd4bf; border: 1px solid #0f766e; }
+    .badge-html { background: #7c2d12; color: #fb923c; border: 1px solid #c2410c; }
+    .badge-text { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
+    .badge-other { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+    /* 安全防護評級標籤 */
+    .sec-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .sec-taint { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .sec-hotpath { background: rgba(0, 240, 255, 0.15); color: #67e8f9; border: 1px solid rgba(0, 240, 255, 0.3); }
+    .sec-vault { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .sec-tool { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .sec-safe { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    /* 頁尾 */
+    .footer {
+      text-align: center;
+      padding: 32px 0 16px 0;
+      font-size: 0.85rem;
+      color: #64748b;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 16px 12px; }
+      .header-card { padding: 20px; }
+      .header-title-row h1 { font-size: 1.4rem; }
+      .files-table th:nth-child(4),
+      .files-table td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 頂部導航列與 Breadcrumbs -->
+    <nav class="nav-bar">
+      <div class="breadcrumbs">
+        <a href="../../../../../FOLDER_INDEX.html">🏠 Root</a><span class="separator">/</span><a href="../../../../FOLDER_INDEX.html">.AI</a><span class="separator">/</span><a href="../../../FOLDER_INDEX.html">skills</a><span class="separator">/</span><a href="../../FOLDER_INDEX.html">wow-addon-dev</a><span class="separator">/</span><a href="../FOLDER_INDEX.html">examples</a><span class="separator">/</span><span class="current">MinimalAddon</span>
+      </div>
+      <div>
+        <a href="../../../../../FOLDER_INDEX.html" style="font-size:0.85rem; color:var(--accent-cyan); text-decoration:none;">🏠 根目錄總覽</a>
+      </div>
+    </nav>
+
+    <!-- 主資訊卡片 (Hero) -->
+    <header class="header-card">
+      <div class="header-title-row">
+        <h1>📁 Agent 技能：MinimalAddon</h1>
+        <div class="header-badges">
+          <span class="badge-pill badge-layer">Agent Skill Layer</span>
+          <span class="badge-pill badge-role">Agent Specialized Skill</span>
+        </div>
+      </div>
+      <p class="header-desc">託管 MinimalAddon 專業代理人技能定義、操作流程、範例與參考知識庫。</p>
+      
+      <!-- 統計數據 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-label">目錄路徑</span>
+          <span class="stat-val" style="font-size: 0.95rem; word-break: break-all;">.AI/skills/wow-addon-dev/examples/MinimalAddon</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">檔案數量</span>
+          <span class="stat-val">2</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">子目錄數量</span>
+          <span class="stat-val">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">總容量</span>
+          <span class="stat-val">4.0 KB</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">安全防護層級</span>
+          <span class="stat-val" style="font-size: 0.95rem;">Agent Knowledge Standard</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- AI 治理規範卡片 -->
+    <section class="governance-card" aria-label="AI Governance Summary">
+      <h3>🤖 AI 治理指引與架構不變量 (Governance Invariants)</h3>
+      <ul class="governance-list">
+        <li>提供標準 SKILL.md 定義，支援 Antigravity 子代理人自主探索調用</li>
+      </ul>
+    </section>
+
+    <!-- 子目錄列表 (若有) -->
+    
+
+    <!-- 檔案清單表格 -->
+    <section>
+      <div class="filter-toolbar">
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (2)</h2>
+        <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
+      </div>
+
+      <div class="table-container">
+        <table class="files-table" id="filesTable">
+          <thead>
+            <tr>
+              <th style="width: 28%;">檔案名稱</th>
+              <th style="width: 10%;">格式</th>
+              <th style="width: 38%;">職責與用途說明</th>
+              <th style="width: 14%;">安全/治理評級</th>
+              <th style="width: 10%; text-align: right;">大小 / 行數</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./MinimalAddon.lua" title="檢視檔案內容">MinimalAddon.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">WoW Lua 模組程式碼</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Lua Module</div>
+          </td>
+          <td><span class="sec-badge sec-vault">🔒 Protected</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            3.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 101 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./MinimalAddon.toc" title="檢視檔案內容">MinimalAddon.toc</a>
+            </div>
+          </td>
+          <td><span class="badge badge-toc">TOC</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">WoW 插件載入清單</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Addon Manifest</div>
+          </td>
+          <td><span class="sec-badge sec-vault">🔒 Protected</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            225 B<span style="font-size: 0.78rem; color: #64748b;"> • 8 行</span>
+          </td>
+        </tr>
+        
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 頁尾宣告 -->
+    <footer class="footer">
+      <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:02:02.721339+08:00</p>
+    </footer>
+  </div>
+
+  <script>
+    function filterFiles() {
+      const query = document.getElementById('fileFilter').value.toLowerCase();
+      const rows = document.querySelectorAll('#filesTable tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

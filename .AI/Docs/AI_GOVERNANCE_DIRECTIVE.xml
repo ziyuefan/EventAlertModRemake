@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EAM_AI_GOVERNANCE_DIRECTIVE: 專供 AI 代理人（Agentic AI / Subagents）執行指導之權威結構化規範 -->
+<eam_ai_governance version="1.0" last_updated="2026-09-04">
+    <!-- 1. 元資料與受眾 (Metadata & Audience) -->
+    <metadata>
+        <title>EventAlertMod AI 代理人核心治理與架構指導規範 (AI Governance Directive)</title>
+        <author>EAM Lead Architect &amp; Expert Council</author>
+        <document_type>AI_AGENT_DIRECTIVE</document_type>
+        <target_audience>AI_AGENTS_AND_SUBAGENTS</target_audience>
+        <user_alias>少年欸</user_alias>
+        <default_language>zh-TW</default_language>
+        <canonical_root>D:\Project_EventAlertMod_AGY</canonical_root>
+        <addon_source_root>D:\Project_EventAlertMod_AGY\EventAlertMod</addon_source_root>
+        <governance_root>D:\Project_EventAlertMod_AGY\.AI</governance_root>
+        <target_game>World of Warcraft: Retail 12.x / Midnight</target_game>
+        <summary>本 XML 為專案專用之結構化 AI 治理指引，專門用於大語言模型零暖機記憶錨定、子代理任務注入、以及跨版本防禦性架構約束。</summary>
+    </metadata>
+
+    <!-- 2. 何時該增設與擴充 AI 治理 XML 的權威決策 (Lifecycle & When to Establish) -->
+    <lifecycle_and_triggers>
+        <establishment_policy>
+            <description>規範何時應在專案中增設、加載、或擴充 AI 治理專用 XML 指導檔。</description>
+            <trigger_conditions>
+                <condition id="C1_CROSS_MODEL_CONTINUITY" priority="CRITICAL">
+                    <trigger>大語言模型版本更換、對話歷程因 Context Window 限制被截斷（Truncation）、或跨平台 Agent 接手專案時。</trigger>
+                    <action>必須第一時間讀取本 XML 指導檔，利用結構化標籤（Tags）達成零暖機（Zero Cold-Start）精確恢復記憶，杜絕自由文本造成的注意力稀釋與架構漂移。</action>
+                </condition>
+                <condition id="C2_SUBAGENT_PROMPT_INJECTION" priority="HIGH">
+                    <trigger>主代理調用 invoke_subagent 派發特定子任務（如 API 調研、Secret / Taint 審核、熱路徑掃描、發布檢查）時。</trigger>
+                    <action>主代理應自本 XML 中提取對應子節點（例如 &lt;secret_values_sentinel&gt; 或 &lt;hot_path_rules&gt;）直接注入子代理之 Prompt，確保約束力達 100%。</action>
+                </condition>
+                <condition id="C3_COMPLEX_MODULE_REFACTOR" priority="HIGH">
+                    <trigger>進行重大模組重構（如光環容器架構改版、技能冷卻預渲染佔位、SharedMedia 素材庫整合、多職業資源拓撲擴展）時。</trigger>
+                    <action>增設或更新本 XML 中對應模組的架構契約與狀態機定義，以結構化標籤鎖定前後置條件與物件池邊界。</action>
+                </condition>
+                <condition id="C4_PROTECTED_API_INCIDENT" priority="CRITICAL">
+                    <trigger>暴雪正式服更新（如 12.1.5、12.2 等）引發新的 Secret Value 報錯、Action Blocked 戰鬥鎖定或 Taint 崩潰時。</trigger>
+                    <action>立即在 &lt;secret_values_sentinel&gt; 節點中追加最新防禦切面與受限操作黑名單，作為全專案代理人不可越過的防火牆。</action>
+                </condition>
+            </trigger_conditions>
+        </establishment_policy>
+    </lifecycle_and_triggers>
+
+    <!-- 3. 不可逾越之五大絕對鐵律 (Absolute Iron Rules) -->
+    <iron_rules>
+        <rule id="R1_NO_AUTO_DEPLOY" severity="CRITICAL">
+            <directive>絕對禁止 AI 自動或主動執行 Deploy-EventAlertMod.ps1 進行任何本機遊戲目錄部署！</directive>
+            <rationale>防止未經實機確認的代碼覆蓋玩家真實遊戲環境或引發檔案鎖死。部署權限 100% 留存給少年欸親自執行。</rationale>
+            <allowed_action>AI 僅可依需求優化部署腳本內容、或執行 -DryRun 進行非侵入式前檢。</allowed_action>
+            <notification_requirement>若因應需求修改 Deploy/ 目錄下任何腳本（Deploy-EventAlertMod.ps1, Build-Package.ps1, Upload-CurseForge.ps1 等），必須主動明確向少年欸報告具體改動內容。</notification_requirement>
+        </rule>
+        <rule id="R2_RETAIL_ONLY" severity="CRITICAL">
+            <directive>專案唯一目標為《魔獸世界：正式服 (Retail 12.x / Midnight)》。</directive>
+            <prohibition>嚴禁引入、相容或修復 Classic（經典服）、MoP、Cata 等舊版分支程式碼。</prohibition>
+        </rule>
+        <rule id="R3_NO_TOUCH_LEGACY_ROOT" severity="CRITICAL">
+            <directive>舊目錄 D:\EventAlertMod 已完全永久停用。</directive>
+            <prohibition>嚴禁任何 Agent 讀取、寫入、比對、同步或作 fallback 參照。</prohibition>
+        </rule>
+        <rule id="R4_TOKEN_AND_SECRET_ISOLATION" severity="CRITICAL">
+            <directive>機密憑證（如 CurseForge API Token）100% 永久留存本機，以 Windows DPAPI (API_TOKEN.SEC) 雙重加密隔離。</directive>
+            <prohibition>絕對禁止寫入程式碼、註解、對話、Git 提交歷史、或任何發布 ZIP 壓縮包。</prohibition>
+        </rule>
+        <rule id="R5_PRE_MODIFICATION_BACKUP" severity="HIGH">
+            <directive>修改、覆寫或刪除專案關鍵檔案前，必須先備份至 .AI/backup/ 目錄。</directive>
+            <naming_convention>原始檔名__yyyyMMddHHmmss（例如 AGENTS.md__20260904130000）。</naming_convention>
+        </rule>
+    </iron_rules>
+
+    <!-- 4. 暴雪 12.0+ SECRET VALUE 與 TAINT 哨兵機制 (Secret Values Sentinel) -->
+    <secret_values_sentinel>
+        <core_inspection_apis>
+            <api signature="issecretvalue(value)">檢定特定值是否為受保護之秘密數值 (Secret Number / Secret String)</api>
+            <api signature="canaccessvalue(value)">檢定當前執行環境是否有權限讀取該數值</api>
+            <api signature="canaccesstable(table)">檢定整個表格物件結構是否為非受保護之安全表</api>
+            <api signature="issecrettable(table)">檢定目標表格本身是否被標記為 Secret Table</api>
+            <api signature="hasanysecretvalues(table)">檢定目標表格內部是否包含任何秘密值</api>
+        </core_inspection_apis>
+
+        <prohibited_lua_operations_on_secrets>
+            <forbidden>嚴禁四則運算：+, -, *, /（引發 attempt to perform arithmetic on a secret value）</forbidden>
+            <forbidden>嚴禁大小與相等比對：&lt;, &gt;, &lt;=, &gt;=, == 0, ~= 0（引發 attempt to compare a secret value）</forbidden>
+            <forbidden>嚴禁直接字串化：tostring(val), string.format("%s", val)</forbidden>
+            <forbidden>嚴禁作為自訂 Table Key 進行索引（引發 attempted to index a table with Key Secrets）</forbidden>
+            <forbidden>嚴禁存入自訂表、序列化或輸出至日誌</forbidden>
+        </prohibited_lua_operations_on_secrets>
+
+        <authorized_native_c_sinks>
+            <sink type="TEXT" method="FontString:SetFormattedText(format, secretVal)">
+                <description>C-Level 原生格式化通道，具備 AllowedWhenTainted=true 切面，零 Lua GC 暫態字串產生。</description>
+                <critical_escaping>傳入之 suffix 若包含百分比符號，必須先以 suffix:gsub("%%", "%%%%") 轉義，防止 C 格式化解析崩潰！</critical_escaping>
+            </sink>
+            <sink type="STATUS_BAR" method="StatusBar:SetValue(secretVal)">
+                <description>原生進度條 Sink，支援 Linear 與 Radial 模式，直接將受保護數值傳入展現視覺進度比例，Lua 零讀回。</description>
+            </sink>
+            <sink type="COOLDOWN_FRAME" method="CooldownFrame:SetCooldownFromDurationObject(durationObj)">
+                <description>原生時間跨度對象 Sink，由暴雪 C++ 引擎自動綁定 SecondsFormatter，驅動轉圈與倒數動畫。</description>
+            </sink>
+        </authorized_native_c_sinks>
+    </secret_values_sentinel>
+
+    <!-- 5. 系統模組架構與契約分層 (System Architecture & Contracts) -->
+    <architecture_contracts>
+        <layer name="Core" path="EventAlertMod/Core/">
+            <module name="Env.lua">全域環境檢驗、WoW 版本常數、客戶端版本適配</module>
+            <module name="Util.lua">零分配字串轉義、表格安全保護、安全數值判定 (isSafeNumber, isSafeBoolean)</module>
+            <module name="Constants.lua">告警類型、主題枚舉、計時器狀態常量</module>
+            <module name="EventRouter.lua">單一孤兒事件框架，杜絕 UIParent 污染，集中派發事件</module>
+            <module name="Scheduler.lua">中央 OnUpdate 調度器，時間片輪詢與節流，消除熱路徑 C_Timer</module>
+            <module name="SavedVariables.lua">資料庫讀寫、架構版本遷移、主題/字型白名單校驗</module>
+            <module name="Performance.lua">記憶體監控、GC 控制、FPS 負載降級策略</module>
+        </layer>
+
+        <layer name="Services" path="EventAlertMod/Services/">
+            <module name="AuraService.lua">自身/目標光環狀態機、增益/減益過濾、層數與吸收盾計算</module>
+            <module name="CooldownService.lua">技能冷卻精確施法過濾 (UNIT_SPELLCAST_SUCCEEDED)、預渲染佔位 (Alpha=0/灰階)</module>
+            <module name="ItemCooldownService.lua">裝備飾品與物品冷卻監控</module>
+            <module name="PlayerResourceService.lua">17 大職業資源拓撲、德魯伊形態切換、DK 六槽符文充能條</module>
+            <module name="PlayerStatService.lua">18 大角色屬性、四合一速度 (滑翔 830%~1400%)、原生 SetFormattedText 渲染</module>
+            <module name="SpellInfoService.lua">法術名稱、圖示快取與雙軌 C_Spell 備援</module>
+            <module name="MediaService.lua">LibSharedMedia-3.0 (SharedMedia) 動態探測 (ensureLSM)、第三方音效/字型雙軌讀取</module>
+        </layer>
+
+        <layer name="UI" path="EventAlertMod/UI/">
+            <module name="Renderer.lua">告警框架佈局 (SpellAlertFrame, CooldownAlertFrame)、預渲染灰階遮罩管理</module>
+            <module name="IconPool.lua">圖示物件池，Frame 預熱與零記憶體分配復用</module>
+            <module name="Theme.lua">11 套魔獸風格調色盤、自訂按鈕與自適應捲動下拉選單 (buildScrollableDropdownMenu)</module>
+            <module name="Options.lua">主設定面板、螢幕邊界鎖定 (SetClampedToScreen)、一鍵居中 (/eam reset)</module>
+            <module name="SidePanels">APPEND 模式無縫吸附側窗 (PlayerStatPanel, PlayerResourcePanel 等)</module>
+        </layer>
+
+        <layer name="Managers" path="EventAlertMod/Managers/">
+            <module name="AlertManager.lua">多模組告警狀態聚集、Scheduler 批量更新節流</module>
+            <module name="LayoutManager.lua">告警框架螢幕座標計算、成長方向 (UP/DOWN/LEFT/RIGHT/RING) 拓撲編譯</module>
+        </layer>
+    </architecture_contracts>
+
+    <!-- 6. 極限效能與熱路徑鐵律 (Performance & Hot-Path Guide) -->
+    <hot_path_guidelines>
+        <identified_hot_paths>
+            <path>UNIT_AURA 事件回呼</path>
+            <path>SPELL_UPDATE_COOLDOWN 事件回呼</path>
+            <path>UNIT_POWER_FREQUENT / UNIT_POWER_UPDATE 事件回呼</path>
+            <path>Scheduler:OnUpdate 每幀循環</path>
+            <path>Renderer.render 渲染器派發</path>
+        </identified_hot_paths>
+
+        <mandatory_rules>
+            <rule>嚴禁在熱路徑中建立匿名閉包 (function() ... end)。</rule>
+            <rule>嚴禁在熱路徑中動態建立臨時 table ({})，所有資料交換必須透過物件池 (StatePool)。</rule>
+            <rule>嚴禁在熱路徑中進行字串拼接 (..)，使用 buffer 與 table.concat。</rule>
+            <rule>避免使用 pairs / ipairs，能用穩定數字索引時一律使用 for i = 1, count 數字循環。</rule>
+            <rule>狀態池 (StatePool) 回收時僅允許 wipe(subTable)，嚴禁設為 nil 導致下次出池遺失結構。</rule>
+        </mandatory_rules>
+    </hot_path_guidelines>
+
+    <!-- 7. 驗證門禁與測試體系 (Verification & Quality Control) -->
+    <verification_gates>
+        <gate id="G1_LUA_SYNTAX" command="pwsh -NoProfile -File .\.AI\Tools\CheckLuaSyntax.ps1">
+            <expectation>76/76 全部通過，零語法錯誤，零未定義全域變數。</expectation>
+        </gate>
+        <gate id="G2_FLOW_VALIDATION" command="pwsh -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1">
+            <expectation>84/84 狀態機場景全部通過，覆蓋戰鬥轉換、形態切換、Secret 注入與生命週期。</expectation>
+        </gate>
+        <gate id="G3_VALIDATION_CONTRACTS" command="pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1">
+            <expectation>496/496 代碼契約全部通過，覆蓋 TOC 順序、多語系詞條、檔案完整性與路徑安全。</expectation>
+        </gate>
+        <gate id="G4_DEPLOY_DRYRUN" command="pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -DryRun">
+            <expectation>三通道 (Retail, PTR, XPTR) 前檢通過，Reparse Point fail-closed 保護正常。</expectation>
+        </gate>
+    </verification_gates>
+
+    <!-- 8. 對話與協同交互指引 (AI Agent Communication Protocol) -->
+    <agent_behavior_protocol>
+        <tone_and_manner>使用預設台灣慣用繁體中文，親切稱呼使用者為「少年欸」，對話專業、技術清晰、直切任務重點。</tone_and_manner>
+        <no_assumptions>遇到需求模糊時主動提出關鍵問題釐清，不隨意猜測實機環境。</no_assumptions>
+        <doc_synchronization>每次代碼重構或修復完成後，必須主動同步更新相關治理文件、連續性記憶（PROJECT_MEMORY.md / 28_PROJECT_CONTINUITY.md）與問題日誌（15_DEVELOPMENT_ISSUE_LOG.md），不得等待指示。</doc_synchronization>
+    </agent_behavior_protocol>
+</eam_ai_governance>

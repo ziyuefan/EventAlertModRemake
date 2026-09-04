@@ -1,3 +1,87 @@
+### 2026-09-04 EAM-20260904-COMBAT-SPEED-RESTRICTION-FALLBACK-GUARD：戰鬥中移動速度受限回傳 1.0 導致 14.3% 跑速問題修復
+
+- 狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。
+- 需求背景與問題分析：
+  1. 少年欸實機測試回報：「人物屬性與吸收量可於戰鬥中更新，但跑速戰鬥中顯示不正確 (顯示為 14.3%)，脫離戰鬥正確，是否暴雪又增加甚麼規則？」。
+  2. 根本原因調研：暴雪在 WoW Retail 12.x / Midnight (12.0.5+) 中對戰鬥中獲取玩家移動速度增加了受保護的戰鬥限制（Combat Speed Restriction）。在戰鬥中，`GetUnitSpeed("player")` 會被保護並固定截斷回傳數值 `1.0`（代表 scaled base speed）。
+  3. 插件若依傳統地面跑步速度基準公式計算 `(speed / 7.0) * 100`，在戰鬥中會算出 `(1.0 / 7.0) * 100 = 14.2857%`，四捨五入後精確呈現為 **14.3%**！
+  4. 脫離戰鬥後暴雪解除保護，`GetUnitSpeed` 恢復回傳真實碼/秒（如 7.0 碼/秒），計算 `(7.0 / 7.0) * 100 = 100%`，因此脫戰完全正常。
+- 重構實作：
+  1. 在 `PlayerStatService.lua` 中對 `runSpeed`、`swimSpeed`、`flightSpeed` 之 `getRawValue` 與 `getValue` 建立戰鬥保護防禦閥門。
+  2. 當檢測到 `speed <= 1.05` 且處於戰鬥狀態（`inCombat()`）時，判定為暴雪 12.x 戰鬥受限數值，杜絕將 1.0 帶入公式除以 7.0，自動回退至脫戰時記錄的最後有效真實記憶快取 `PlayerStatService.lastKnownStats["runSpeed"]`（如 100% 或 130%）。
+  3. 在戰鬥中若數值 `<= 15%` 嚴格禁止覆蓋快取，確保在整場戰鬥期間跑速穩定正確呈現真實玩家移速。
+
+### 2026-09-04 EAM-20260904-COOLDOWN-PRERENDER-COMBAT-VISIBILITY-ZERO-ALPHA：預渲染冷卻隨戰鬥關閉隱藏與純透明度切換
+
+- 狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。
+- 需求背景與問題分析：
+  1. 少年欸提出需求：「另外預渲染部分我希望能根據冷卻是否隨戰鬥關閉而隱藏(應該只能改透明度)」。
+  2. 先前 `CooldownService.lua` 行 473 寫法為 `local visibleNow = behaviorOutside or isInCombat() or isPreRender`，因 `or isPreRender` 導致只要開啟預渲染，`visibleNow` 永遠為 `true`，完全忽略了 `showSCDOutsideCombat == false`，脫戰後圖示依然常駐顯示。
+  3. 隱藏方式鐵律：絕不能直接調用 `icon:Hide()` 或將圖示自 `fState.order` 排版中移除釋放，否則會導致 2D 矩陣跳動、戰鬥中重新 acquire 觸發 Frame 創建限制與 Taint。
+- 重構實作：
+  1. **冷卻服務可見度精確校正 (`CooldownService.lua`)**：
+     - 將 `visibleNow` 改為 `behaviorOutside or isInCombat()`，移除 `or isPreRender`。
+     - 預渲染待命分支區分 `visibleNow`：若 `not visibleNow`（戰鬥外且隨戰鬥關閉），產生 `shown = false` 之 state，自 `states` 卸載並回傳 Renderer。若進入戰鬥（`PLAYER_REGEN_DISABLED`），重新整理評估 `visibleNow = true`，產生 `shown = true, isDesaturated = true` 恢復灰階待命顯示。
+  2. **渲染器純透明度防禦隔離 (`Renderer.lua`)**：
+     - 在 `Renderer.render` 中，冷卻框架若收到 `shown == false` 且未被徹底停用，僅調用 `icon:SetAlpha(0)`，清除文字與冷卻遮罩，保留 Frame 物件於 `fState.icons` 與 `fState.order` 排版槽位常駐。
+     - 若冷卻 Frame 尚未存在且非戰鬥中，防禦性 pre-acquire icon，確保戰鬥前 100% 預熱就緒，進入戰鬥時無須重新創建 Frame，零 GC、零 Taint、零 Deferred。
+  3. **新增 Flow 業務狀態機與代碼契約測試**：
+     - 於 `FlowTestRunner.lua` 註冊 `cooldown.prerender_combat_visibility` 案例（85/85 PASS）。
+     - 於 `Test-ValidationContracts.ps1` 擴充契約斷言（497/497 PASS）。
+
+### 2026-09-04 EAM-20260904-GRID-2D-COLUMNS-LAYOUT-ENGINE：光環與冷卻模組指定換行欄數 (Columns) 與 2D 矩陣排版引擎
+
+- 狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496)。
+- 需求背景與問題分析：
+  1. 少年欸提出需求：「增加光環與冷卻模組若超過指定COLUMN 就跳到下一ROW, 建議在清單視窗設定, 預設COLUMN 為8」。
+  2. 過去渲染器僅支援一維單向延伸排版（如水平向右無限延伸），當自身光環、目標光環、技能冷卻、物品冷卻或地面效果圖示數量較多時，容易超出螢幕邊界或覆蓋其他 UI 元件。
+  3. 需要支援各分類框架獨立的欄數控制（Columns per Row，1~20，預設 8），於監控清單視窗即時調整並支援戰鬥中延遲保護與存檔持久化。
+- 重構實作：
+  1. **2D 矩陣折行排版引擎 (`Renderer.lua`)**：
+     - 升級核心排版演算法 `layout(frameName)`：讀取框架 `columns`（1..32，預設 8）與垂直間距 `vSpacing = cfg.verticalSpacing or spacing`。
+     - 計算已排序圖示之二維網格位置：`col = itemIdx % maxCols`、`row = math.floor(itemIdx / maxCols)`。
+     - 依四大主要成長方向計算精確位移：
+       - `RIGHT (1)`：`offsetX = col * (size + spacing)`，`offsetY = -row * (size + vSpacing)`（往右排列，超過指定欄數自動向下換列）。
+       - `LEFT (2)`：`offsetX = -col * (size + spacing)`，`offsetY = -row * (size + vSpacing)`（往左排列，超過指定欄數自動向下換列）。
+       - `UP (3)`：`offsetX = row * (size + spacing)`，`offsetY = col * (size + vSpacing)`（往上排列，超過指定欄數向右開行）。
+       - `DOWN (4)`：`offsetX = row * (size + spacing)`，`offsetY = -col * (size + vSpacing)`（往下排列，超過指定欄數向右開行）。
+     - 動態計算父框架包覆尺寸 `parent:SetSize(math.max(size, totalSpanX), math.max(size, totalSpanY))`。
+  2. **監控清單視窗控制項整合 (`Options.lua`)**：
+     - 於清單視窗（`listInner`）頂部專精下拉選單旁（`X = 180, Y = -44`）增設「每列欄數 (Columns)」滑桿（範圍 1~20，步進 1，預設 8）。
+     - 實作 `Options.refreshColumnsControl()`：根據當前分類框架（`selfAura`, `targetAura`, `spellCooldown`, `itemCooldown`, `groundEffect`）自動同步呈現當前數值；非圖示框架自動隱藏。
+     - 滑桿變更時即時寫入 `EAM.db.layout.frames[frameName].columns`，標記 revision changed 並立即調用 `Renderer.requestLayout(frameName)` 實現零延遲重繪。
+     - 在 `Options.refreshList()` 與切換分類分頁時自動呼叫 `refreshColumnsControl()` 保持介面同步。
+  3. **資料持久化與設定檔編解碼相容 (`SavedVariables.lua` / `ProfileCodec.lua`)**：
+     - 在 `defaults.layout.frames` 的 8 大框架預設值補齊 `columns = 8`。
+     - 於 `SavedVariables` 升級遷移邏輯中加入 `columns` 防禦校驗，保證舊存檔無痛相容。
+     - 在 `ProfileCodec.lua` 的 `normalizeLayoutRecord` 與 `exportLayout` 中納入 `columns` 欄位驗證（1..32，安全整數）。
+  4. **五大語系字典完整對齊 (`Locale/*.lua`)**：
+     - `zhTW`、`zhCN`、`enUS`、`koKR`、`ruRU` 全數補齊 `EAM_OPT_COLUMNS` 與 `EAM_OPT_COLUMNS_TIP`。
+- 驗證結果：
+  - Lua 語法檢驗：`CheckLuaSyntax.ps1` 通過 76/76。
+  - Flow 業務沙盒：`Run-FlowValidation.ps1` 通過 84/84。
+  - 全專案代碼契約：`Test-ValidationContracts.ps1` 通過 496/496。
+  - `Deploy/` 部署腳本零異動。
+
+### 2026-09-04 EAM-20260904-AI-GOVERNANCE-STRUCTURED-XML-DIRECTIVE：AI 代理人專用結構化 XML 指導規範建置與決策體系確立
+
+- 狀態：已解決 (XML validated, Docs 33 & 33_en created, 00_INDEX updated)。
+- 需求背景與問題分析：
+  1. 在多模型（Pro / Flash / Codex 等）交接或對話歷程截斷（Context Truncation）時，純 Markdown 文本容易產生注意力稀釋（Lost-in-the-Middle）與邊界防線失憶。
+  2. 少年欸明確指示在 `.AI/Docs/` 增設 AI 治理專用 XML 指導檔（非插件前端 FrameXML），並由技術架構師裁定何時增設與擴充。
+- 重構實作：
+  1. **實體結構化治理 XML 建置 (`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`)**：
+     - 包含 8 大核心節點：`<metadata>`、`<lifecycle_and_triggers>`、`<iron_rules>`、`<secret_values_sentinel>`、`<architecture_contracts>`、`<hot_path_guidelines>`、`<verification_gates>`、`<agent_behavior_protocol>`。
+     - 通過 Python `xml.etree.ElementTree` 完整語法檢定。
+  2. **確立何時增設/加載之四大觸發門檻 (C1~C4)**：
+     - `C1_CROSS_MODEL_CONTINUITY`：模型版本切換或截斷失憶時作為第一讀取錨點。
+     - `C2_SUBAGENT_PROMPT_INJECTION`：調用 `invoke_subagent` 派工時動態切片提取標籤注入 Prompt。
+     - `C3_COMPLEX_MODULE_REFACTOR`：重大模組重構時擴充狀態機與物件池契約。
+     - `C4_PROTECTED_API_INCIDENT`：暴雪 API 變更引發 Taint 事故時追加受限操作黑名單。
+  3. **配套雙語指引文件與導航中心整合**：
+     - 建立繁中版 `33_AI_GOVERNANCE_DIRECTIVE.md` 與英文版 `33_AI_GOVERNANCE_DIRECTIVE_en.md`。
+     - 更新 `00_INDEX.md`、`00_INDEX_en.md`、`AGENTS.md`、`AGENTS_en.md`。
+
 ### 2026-09-03 EAM-20260903-DOCS-THREE-TIER-ENGLISH-TRANSLATION-AND-IOPAGE-SYNC：三梯次說明文件原生專業英文版建置與 GitHub Pages (iopage) 全面同步
 
 - 狀態：已解決 (Lua 76/76, Flow 84/84, Contracts 496/496, 40 HTML files converted)。
@@ -1622,7 +1706,22 @@
   - Flow 狀態機測試：82/82 PASS。
   - Validation Contracts：493/493 PASS。
 
+### EAM-20260904-OPTIONS-LIST-SCROLL-TRACKING-AND-SELECTION：清單排序視窗滾動跟隨與選定高亮 UX 優化
 
-
-
-
+- 日期：2026-09-04。
+- 狀態：已完成代碼實作、Flow 測試 (84/84) 與靜態契約檢驗 (496/496)；等待少年欸實機部署驗證。
+- 需求與設計：
+  - 少年欸反饋：在監控清單點擊上下箭頭 `▲` / `▼` 調換技能順位時，每按一次卷軸視窗不會捲動到該技能並選定，視窗容易重置回頂部導致追蹤困難。
+- 有效解法：
+  1. **ScrollBox 視窗平滑跟隨**：
+     - 重構 `Options.refreshList(selectedAlert, scrollToIdx)`，在 `scrollBox:SetDataProvider` 時啟用 `retainScrollPosition = true` 防禦視窗猛烈跳回頂部。
+     - 取得調換後的目標索引 `resolvedScrollIdx`，透過暴雪原生 `scrollBox:ScrollToElementDataIndex(resolvedScrollIdx, alignMode)` 與 `ScrollToElementData` 搭配 `pcall` 進行平滑防禦性滾動，確保移動後的項目始終保持在可見視窗範圍中。
+  2. **選定狀態記憶與高亮渲染**：
+     - 引入 `Options.selectedAlert` 狀態與 `isAlertSelected` 判定，為選定項目渲染清爽的湛藍高亮背景色 `(0.18, 0.45, 0.80, 0.28)`（懸停時微升為 `(0.22, 0.52, 0.90, 0.38)`），滑鼠移開後依舊清晰高亮。
+  3. **全面互動聯動**：
+     - 在 `moveAlertInCurrentList`（上下箭頭）、`repositionAlertOrder`（輸入唯一自然數）、`swapAlertsInCurrentList`（滑鼠拖曳）、新增監控（`addAlertToCurrentCategory`）與單擊清單列（`OnMouseDown`）中全面同步 `selectedAlert` 與滾動定位。
+     - 在切換分類標籤（`Options.currentCategory` 變更）或批次刪除時，安全清理 `selectedAlert = nil`，避免跨分類殘留。
+- 驗證：
+  - Lua 語法檢查：76/76 PASS。
+  - Flow 狀態機測試：84/84 PASS。
+  - Validation Contracts：496/496 PASS。

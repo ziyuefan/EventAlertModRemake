@@ -1069,5 +1069,10 @@ L.EAM_OPT_MOVE_UP = "Move Up"
 L.EAM_OPT_MOVE_DOWN = "Move Down"
 L.EAM_OPT_ORDER_HINT = "Click ▲/▼ or drag to reorder display priority on screen."
 L.EAM_OPT_PRERENDER_PLACEHOLDER = "Pre-render Placeholder"
+L.EAM_OPT_LOCATION_ORDER = "Location Order"
+L.EAM_OPT_LOCATION_ORDER_TIP = "Position slot in the layout (unique natural number 1..N). Adjust with up/down arrows or type a number directly."
+L.EAM_OPT_PRERENDER_PLACEHOLDER_TIP = "Display a desaturated grayed-out placeholder in this slot when inactive. Seamlessly switches to full color on cast, eliminating first-cast layout latency."
+L.EAM_OPT_COLUMNS = "Columns per Row"
+L.EAM_OPT_COLUMNS_TIP = "When the number of icons exceeds this column count, it automatically wraps to the next row. Default is 8."
 
 end)

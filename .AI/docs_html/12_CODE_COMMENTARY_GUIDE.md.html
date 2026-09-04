@@ -580,74 +580,17 @@ Module: Core/EventRouter
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="plan-document-interpretation-and-concept-specification">Plan document interpretation and concept specification</h1>
-<p>This file is a development dependency of EventAlertMod Retail rewrite. All officially loaded project files must contain "File System Annotations", which are used to save the module concept, responsibility boundaries and future measurement standards.</p>
-<h2 id="core-rules">Core Rules</h2>
-<ul>
-<li>Every officially loaded <code>.lua</code> file must have a module comment at the bottom of the file.</li>
-<li>The annotation needs to explain "why this file exists", not just "what this file does".</li>
-<li>Annotate the data to be recorded, the variable state, and the module boundaries that cannot be crossed.</li>
-<li>Restrictions on hot paths, Secret Values, Protected Data, SavedVariables, and UI framework change-related files must be clearly written.</li>
-<li>Comments should be kept concise and maintainable; do not write long declarations that are out of touch with the plan.</li>
-<li>When the module responsibility changes, the file annotation and <code>Docs/04_MODULE_CONTRACTS.md</code> must be updated simultaneously.</li>
-</ul>
-<h2 id="suggested-format">Suggested format</h2>
-<pre class="codehilite"><code class="language-lua">--[[
-EventAlertMod Retail Rewrite
-Module: Core/EventRouter
 
-理念:
-- 集中管理 Blizzard event dispatch，避免各模組自行建立事件 frame。
-- 使用孤兒 frame，降低 UIParent 與戰鬥保護互動風險。
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-責任:
-- 擁有唯一事件 frame。
-- 將 event 分派給已註冊 module handler。
-
-邊界:
-- 不讀取 aura/cooldown API。
-- 不建立 UI icon。
-- 不寫入 SavedVariables。
-
-維護注意:
-- 不在註冊熱路徑配置 closure。
-- 不使用 RegisterAllEvents。
-]]
-</code></pre>
-
-<h2 id="items-that-must-be-recorded">Items that must be recorded</h2>
-<ul>
-<li><code>Module</code>: module name and path.</li>
-<li><code>Concept</code>: design reasons and trade-offs.</li>
-<li><code>Responsibility</code>: what status and actions this file has.</li>
-<li><code>Borders</code>: What this file cannot do.</li>
-<li><code>Complete Note</code>: If it is on the hot path, indicate the assignment, loop, string, and UI writing gate control policy.</li>
-<li><code>Note on Retail server API</code>: If using WoW API, record the version assumptions and actual machine verification requirements.</li>
-<li><code>Secret/Protected data note</code>: If you come into contact with Aura/cooldown/unit data, record the safe reading and downgrade strategies.</li>
-<li><code>Taint note</code>: If you come into contact with UI framework, Blizzard framework, combat blockade, and protected routes, how to record them to avoid contaminating secure/protected paths.</li>
-</ul>
-<h2 id="required-annotations">Required annotations</h2>
-<ul>
-<li>Do not annotate main single-line properties.</li>
-<li>Do not add a lot of description annotations to hot paths.</li>
-<li>Do not use annotations to promise functionality that has not yet been implemented or verified.</li>
-<li>Do not provide real-world verification of the official WoW server unless it has actually been loaded for testing.</li>
-</ul>
-<h2 id="requirements-for-future-development">Requirements for future development</h2>
-<p>When adding or refactoring any loaded formal files, first complete the file system annotations and then implement the logic. If a file is only <code>LegacyReference</code>, <code>ReferenceLibs</code> or external reserved data, the original type can be retained, but it cannot be used as a template for new architectural styles.</p>
-<h2 id="backup-rules-before-modification">Backup rules before modification</h2>
-<p>Any files must be backed up to the <code>backup/</code> folder in the project root directory before being deleted, moved, overwritten, or modified. The backup archive name uses the original archive name plus the <code>__yyyyMMddHHmmss</code> suffix, for example <code>Renderer.lua__20260526122904</code>.
-The purpose of this rule is not to replace version control, but to provide a source of recovery for this project before a complete commit history has been established. When related to batch operations, all file backups should be completed before starting to modify the actual files; if the original files do not exist, you need to return first and do not create a blank backup.</p>
-<h2 id="develop-problem-recording-rules">Develop problem recording rules</h2>
-<p>Bottlenecks, limitations, errors, tool failures, API uncertainties and solutions encountered during the development process must be additionally recorded in <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>. This record is used to reduce repeated trial and error in the future and save context during AI handover/token.
-Sufficient judgment information should be retained when recording: date, symptoms, cause judgment, tried methods, effective solutions and follow-up precautions. Unresolved issues need to be clearly marked as "unresolved" to avoid future agents judging them as completed.</p>
-<h2 id="project-specific-skill-rules">Project-specific skill rules</h2>
-<p>If a process is found to reoccur during the development process, and the process is stable enough to describe trigger conditions, pre-checks, operating steps, risks and verification methods, a special SKILL for the EventAlertMod project should be generated. This type of SKILL is used to reduce repetitive instruction instructions, reduce context /token, and enable future agents to execute projects consistently.
-Processes suitable for conversion to SKILL include budget release, Lua static verification, WoW API query, SavedVariables migration check, secret boundary review, file synchronization and language file synchronization. Processes that have not yet been verified, still require a lot of manual judgment, or involve sensitive information are not suitable for hardware automation SKILL.</p>
-<h2 id="taint-control-annotation-rules">Taint control annotation rules</h2>
-<p>For files involving UI framework, Blizzard framework, Combat Lockdown, and secure/protected routes, the file system annotation must describe the risks and methods of pollution avoidance. Common key points include: whether to use orphan frameworks, whether to contact UIParent, whether anchor/visibility/attribute will be changed during combat, whether there may be secret/protected values, and whether to hook the Blizzard framework.
-If the program code deliberately avoids certain Blizzard API or hook methods, the reason should be retained in the comments so that the pollution can be avoided from being reintroduced during future refactorings.</p>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

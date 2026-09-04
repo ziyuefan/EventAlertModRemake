@@ -236,8 +236,9 @@ local STAT_DEFINITIONS = {
             end
             if GetCombatRatingBonus then
                 local cr = _G.CR_CRIT_MELEE or 9
-                local ok, val = pcall(GetCombatRatingBonus, cr)
-                if ok and val ~= nil then return 5.0 + val end
+                if ok and val ~= nil then
+                    return isSafeNumber(val) and (5.0 + val) or val
+                end
             end
             return PlayerStatService.lastKnownStats["crit"] or 0
         end,
@@ -400,7 +401,7 @@ local STAT_DEFINITIONS = {
         category = "secondary",
         getRawValue = function()
             local cr = _G.CR_VERSATILITY_DAMAGE_DONE or 29
-            local bonus, vers = 0, 0
+            local bonus, vers = nil, nil
             if GetCombatRatingBonus then
                 local ok, b = pcall(GetCombatRatingBonus, cr)
                 if ok and b ~= nil then bonus = b end
@@ -409,7 +410,10 @@ local STAT_DEFINITIONS = {
                 local ok, v = pcall(GetVersatilityBonus, cr)
                 if ok and v ~= nil then vers = v end
             end
-            return bonus + vers
+            if isSafeNumber(bonus) and isSafeNumber(vers) then
+                return bonus + vers
+            end
+            return bonus or vers or PlayerStatService.lastKnownStats["versatility"] or 0
         end,
         getValue = function()
             local cr = _G.CR_VERSATILITY_DAMAGE_DONE or 29
@@ -577,7 +581,13 @@ local STAT_DEFINITIONS = {
                     end
                     local speed = (isMoving and not isOtherMode) and currentSpeed or runSpeed
                     if speed then
-                        return (speed / 7.0) * 100
+                        if isSafeNumber(speed) then
+                            if speed <= 1.05 and inCombat() then
+                                return PlayerStatService.lastKnownStats["runSpeed"] or 100
+                            end
+                            return (speed / 7.0) * 100
+                        end
+                        return speed
                     end
                 end
             end
@@ -599,8 +609,13 @@ local STAT_DEFINITIONS = {
                     if not isSafeNumber(speed) or speed <= 0 then
                         speed = (runSpeed and isSafeNumber(runSpeed) and runSpeed > 0) and runSpeed or 7.0
                     end
+                    if isSafeNumber(speed) and speed <= 1.05 and inCombat() then
+                        return PlayerStatService.lastKnownStats["runSpeed"] or 100
+                    end
                     local pct = (speed / 7.0) * 100
-                    PlayerStatService.lastKnownStats["runSpeed"] = pct
+                    if not inCombat() or pct > 15 then
+                        PlayerStatService.lastKnownStats["runSpeed"] = pct
+                    end
                     return pct
                 end
             end
@@ -622,7 +637,13 @@ local STAT_DEFINITIONS = {
                     local isSwimming = IsSwimming and IsSwimming()
                     local speed = (isSwimming and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or swimSpeed
                     if speed then
-                        return (speed / 7.0) * 100
+                        if isSafeNumber(speed) then
+                            if speed <= 1.05 and inCombat() then
+                                return PlayerStatService.lastKnownStats["swimSpeed"] or 67
+                            end
+                            return (speed / 7.0) * 100
+                        end
+                        return speed
                     end
                 end
             end
@@ -637,8 +658,13 @@ local STAT_DEFINITIONS = {
                     if not isSafeNumber(speed) or speed <= 0 then
                         speed = (swimSpeed and isSafeNumber(swimSpeed) and swimSpeed > 0) and swimSpeed or 4.7
                     end
+                    if isSafeNumber(speed) and speed <= 1.05 and inCombat() then
+                        return PlayerStatService.lastKnownStats["swimSpeed"] or 67
+                    end
                     local pct = (speed / 7.0) * 100
-                    PlayerStatService.lastKnownStats["swimSpeed"] = pct
+                    if not inCombat() or pct > 15 then
+                        PlayerStatService.lastKnownStats["swimSpeed"] = pct
+                    end
                     return pct
                 end
             end
@@ -665,7 +691,13 @@ local STAT_DEFINITIONS = {
                     end
                     local speed = (isFlying and not isGliding and currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
                     if speed then
-                        return (speed / 7.0) * 100
+                        if isSafeNumber(speed) then
+                            if speed <= 1.05 and inCombat() then
+                                return PlayerStatService.lastKnownStats["flightSpeed"] or 100
+                            end
+                            return (speed / 7.0) * 100
+                        end
+                        return speed
                     end
                 end
             end
@@ -685,8 +717,13 @@ local STAT_DEFINITIONS = {
                     if not isSafeNumber(speed) or speed <= 0 then
                         speed = (flightSpeed and isSafeNumber(flightSpeed) and flightSpeed > 0) and flightSpeed or 7.0
                     end
+                    if isSafeNumber(speed) and speed <= 1.05 and inCombat() then
+                        return PlayerStatService.lastKnownStats["flightSpeed"] or 100
+                    end
                     local pct = (speed / 7.0) * 100
-                    PlayerStatService.lastKnownStats["flightSpeed"] = pct
+                    if not inCombat() or pct > 15 then
+                        PlayerStatService.lastKnownStats["flightSpeed"] = pct
+                    end
                     return pct
                 end
             end
@@ -705,7 +742,7 @@ local STAT_DEFINITIONS = {
             if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
                 local ok, isGliding, canGlide, forwardSpeed = pcall(C_PlayerInfo.GetGlidingInfo)
                 if ok and forwardSpeed ~= nil then
-                    return (forwardSpeed / 7.0) * 100
+                    return isSafeNumber(forwardSpeed) and ((forwardSpeed / 7.0) * 100) or forwardSpeed
                 end
             end
             if GetUnitSpeed then
@@ -713,7 +750,7 @@ local STAT_DEFINITIONS = {
                 if ok and (currentSpeed or flightSpeed) ~= nil then
                     local speed = (currentSpeed and isSafeNumber(currentSpeed) and currentSpeed > 0) and currentSpeed or flightSpeed
                     if speed then
-                        return (speed / 7.0) * 100
+                        return isSafeNumber(speed) and ((speed / 7.0) * 100) or speed
                     end
                 end
             end
@@ -869,14 +906,18 @@ PlayerStatService.ORDERED_KEYS = ORDERED_KEYS
 local function renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)
     if not fontString then return end
     decimals = decimals or 1
+    local escapedSuffix = (suffix and suffix ~= "") and suffix:gsub("%%", "%%%%") or ""
     local isSecret = shouldUnitStatsBeSecret("player")
         or (Util and Util.isSecretValue and (Util.isSecretValue(rawVal) or Util.isSecretValue(val)))
         or (issecretvalue and (issecretvalue(rawVal) or issecretvalue(val)))
 
     if isSecret then
-        local targetVal = (rawVal ~= nil and rawVal ~= 0) and rawVal or val
+        local targetVal = rawVal or val
+        if isSafeNumber(rawVal) and rawVal == 0 and val then
+            targetVal = val
+        end
         if formatType == "percent" then
-            local fmt = "%." .. decimals .. "f" .. (suffix or "")
+            local fmt = "%." .. decimals .. "f" .. escapedSuffix
             local ok = pcall(fontString.SetFormattedText, fontString, fmt, targetVal)
             if not ok then pcall(fontString.SetText, fontString, "0.0" .. (suffix or "")) end
         elseif formatType == "number" or formatType == "largeNumber" then
@@ -898,42 +939,48 @@ local function renderStatValueText(fontString, val, rawVal, formatType, decimals
     local numVal = isSafeNumber(val) and val or (isSafeNumber(rawVal) and rawVal or nil)
     if not numVal then
         if formatType == "percent" then
-            fontString:SetFormattedText("%." .. decimals .. "f" .. (suffix or ""), 0)
+            local ok = pcall(fontString.SetFormattedText, fontString, "%." .. decimals .. "f" .. escapedSuffix, 0)
+            if not ok then pcall(fontString.SetText, fontString, "0.0" .. (suffix or "")) end
         else
-            fontString:SetFormattedText("%d", 0)
+            pcall(fontString.SetFormattedText, fontString, "%d", 0)
         end
         return
     end
 
     if numVal == 0 and (formatType == "number" or formatType == "largeNumber") then
-        fontString:SetFormattedText("%d", 0)
+        pcall(fontString.SetFormattedText, fontString, "%d", 0)
         return
     end
 
     if shortNumber and (formatType == "largeNumber" or (numVal >= 10000 and formatType ~= "percent")) then
         if numVal >= 1000000 then
             local fmt = "%." .. decimals .. "fM"
-            fontString:SetFormattedText(fmt, numVal / 1000000)
-            return
+            local ok = pcall(fontString.SetFormattedText, fontString, fmt, numVal / 1000000)
+            if ok then return end
         elseif numVal >= 1000 then
             local fmt = "%." .. decimals .. "fk"
-            fontString:SetFormattedText(fmt, numVal / 1000)
-            return
+            local ok = pcall(fontString.SetFormattedText, fontString, fmt, numVal / 1000)
+            if ok then return end
         end
     end
 
     if formatType == "percent" then
-        local fmt = "%." .. decimals .. "f" .. (suffix or "")
-        fontString:SetFormattedText(fmt, numVal)
+        local fmt = "%." .. decimals .. "f" .. escapedSuffix
+        local ok = pcall(fontString.SetFormattedText, fontString, fmt, numVal)
+        if not ok then
+            pcall(fontString.SetText, fontString, string.format("%." .. decimals .. "f", numVal) .. (suffix or ""))
+        end
     elseif formatType == "number" or formatType == "largeNumber" then
         if decimals == 0 then
-            fontString:SetFormattedText("%d", math.floor(numVal + 0.5))
+            local ok = pcall(fontString.SetFormattedText, fontString, "%d", math.floor(numVal + 0.5))
+            if not ok then pcall(fontString.SetText, fontString, tostring(math.floor(numVal + 0.5))) end
         else
             local fmt = "%." .. decimals .. "f"
-            fontString:SetFormattedText(fmt, numVal)
+            local ok = pcall(fontString.SetFormattedText, fontString, fmt, numVal)
+            if not ok then pcall(fontString.SetText, fontString, string.format(fmt, numVal)) end
         end
     else
-        fontString:SetFormattedText("%s", tostring(numVal))
+        pcall(fontString.SetFormattedText, fontString, "%s", tostring(numVal))
     end
 end
 PlayerStatService.renderStatValueText = renderStatValueText
@@ -1298,7 +1345,9 @@ function PlayerStatService.update()
         end
 
         -- StatusBar 進度條原生 Sink 支援 (當為 Secret 數值或開啟進度條時)
-        local isSecret = Util and Util.isSecretValue and Util.isSecretValue(rawVal)
+        local isSecret = shouldUnitStatsBeSecret("player")
+            or (Util and Util.isSecretValue and Util.isSecretValue(rawVal))
+            or (issecretvalue and issecretvalue(rawVal))
         if cfg.showStatusBar ~= false or isSecret then
             item.statusBar:SetHeight(math.max(3, math.floor(itemH * 0.15)))
             item.statusBar:ClearAllPoints()

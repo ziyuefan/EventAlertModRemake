@@ -1067,5 +1067,10 @@ L.EAM_OPT_MOVE_UP = "上移"
 L.EAM_OPT_MOVE_DOWN = "下移"
 L.EAM_OPT_ORDER_HINT = "點擊 ▲/▼ 或拖曳可調整技能在畫面上的顯示順位。"
 L.EAM_OPT_PRERENDER_PLACEHOLDER = "預渲染佔位顯示"
+L.EAM_OPT_LOCATION_ORDER = "排序位置"
+L.EAM_OPT_LOCATION_ORDER_TIP = "在畫面排版中的順序槽位（唯一自然數 1..N）。可透過上下箭頭調整，或直接輸入數字修改。"
+L.EAM_OPT_PRERENDER_PLACEHOLDER_TIP = "未進入冷卻時在畫面上以暗色灰階圖示佔據此槽位。施法進入冷卻瞬間切換為全彩正常倒數，免除戰鬥中首次排版延遲。"
+L.EAM_OPT_COLUMNS = "每列欄數"
+L.EAM_OPT_COLUMNS_TIP = "當圖示數量超過此指定欄數時，自動折行至下一列繼續排列。預設為 8。"
 
 end)

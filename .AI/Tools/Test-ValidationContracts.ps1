@@ -1396,6 +1396,13 @@ Assert-Contract (
     $flowRunnerSource.Contains('service.onCombatEvent("PLAYER_REGEN_ENABLED")')
 ) "Flow covers exact-cast activation and no bulk render after heal/regen"
 Assert-Contract (
+    $cooldownServiceSource.Contains('local visibleNow = behaviorOutside or isInCombat()') -and
+    $cooldownServiceSource.Contains('state.cooldownPreRender = isPreRender') -and
+    $rendererLua.Contains('isCooldownFrame and not inCombat() and alertState.rawAlert and alertState.rawAlert.enabled ~= false') -and
+    $rendererLua.Contains('if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end') -and
+    $flowRunnerSource.Contains('id = "cooldown.prerender_combat_visibility"')
+) "Cooldown pre-render visibility respects showSCDOutsideCombat via alpha 0 hidden outside combat"
+Assert-Contract (
     $commonLocale.Contains("EAM.L = EAM.L or {}") -and
     $commonLocale.Contains("function Locale.bindText") -and
     $commonLocale.Contains("function Locale.refreshBindings") -and

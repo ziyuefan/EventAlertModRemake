@@ -5,9 +5,49 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-08-24.15 (Alpha 8.2)。
+目前快照版本：2026-09-04.17 (Alpha 8.4 發布儲存點 / 全目錄 HTML 治理清單 / GitHub Pre-Release 與 CurseForge 準備)。
 
-## 2026-08-27 Alpha 8.2 LibSharedMedia-3.0 素材生態全面整合、字型熱套用與捲動選單快照（現行）
+## 2026-09-04 多進度儲存點：Alpha 8.4 Pre-release 與 CurseForge 發布續接狀態（現行儲存點）
+
+- current-of-truth：建立多進度續接儲存點（Checkpoint）；全專案所有檔案變更、語法檢查、業務沙盒與代碼契約檢驗（497/497 PASS）全數完成；全專案 115 個目錄與 1480 個檔案之 `FOLDER_INDEX.html` 已建置完畢；此存檔點用於防範模型配額中斷或重啟時能無縫接續進行 GitHub Pre-release 與 CurseForge 上傳作業。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【Alpha 8.4 版本全要素梳理完成】：整理 GitHub tag `alpha-8.3` (commit 517fb81, 2026.08.28) 之後全部變更（2D Grid 換行排版、冷卻戰鬥透明度常駐、跑速戰鬥限制防護、人物屬性戰鬥更新、滾動選取高亮），更新 4 份 changelog、4 份 README、TOC 與 AI 日誌。
+  2. [x] 【跑速戰鬥中顯示 14.3% 根因排查與修復完成】：暴雪 12.0.5+ 戰鬥中 `GetUnitSpeed("player")` 受限回傳 1.0 導致 `(1.0/7.0)*100 = 14.3%`。於 `PlayerStatService.lua` 實作受限檢測與真實快取 `lastKnownStats` 安全回退，且戰鬥中禁止以受限值覆蓋快取。
+  3. [x] 【全資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完成】：實作 `.AI/Tools/generate_folder_indexes.py`，全離線深色玻璃擬態 UI，內嵌 JSON-LD (`DirectoryGovernanceReport`) 與 meta 標籤，涵蓋 115 個工作目錄、1480 個檔案，附即時檢索篩選器，`--verify` 100% 通過。
+  4. [x] 【自動化質量門禁全綠通過】：Lua 語法 76/76 PASS、Flow 業務狀態機 85/85 PASS、Validation Contracts 497/497 PASS。
+  5. [->] 【進行中：更新 GitHub 文檔與發布 Alpha 8.4 Pre-release】：重新編譯 `batch_convert_docs.py`，執行 Git 提交與分支推送，呼叫 `Deploy/Publish-GitHubRelease.ps1 -Tag "alpha-8.4" -Title "Retail 12.1 Alpha 8.4" -Prerelease`。
+  6. [ ] 【接續項目：發布至 CurseForge】：呼叫 `Deploy/Upload-CurseForge.ps1 -ReleaseType alpha -NonInteractive` 完成 CurseForge 發布。
+
+## 2026-09-04 Retail 12.1.0 Alpha 8.4 2D 矩陣折行排版、預渲染戰鬥透明度切換與跑速防護
+
+- current-of-truth：專案進入 Alpha 8.4 發布階段；全面升級 2D Grid 矩陣折行排版引擎，支援清單頂部每列欄數 (Columns) 控制滑桿（1~20，預設 8）；實作技能冷卻預渲染隨戰鬥隱藏純透明度切換 (Alpha=0/1) 與 Frame 常駐；修復暴雪 12.x 戰鬥中 `GetUnitSpeed` 限制回傳 1.0 導致 14.3% 跑速問題，自動回退真實有效快取；全套自動化測試全綠通過：Lua 76/76、Flow 85/85、Contracts 497/497。
+- 核心實作亮點：
+  1. 2D 矩陣折行排版引擎 (`Renderer.lua`)：支援 4 大主要成長方向折行計算，清單頂部增設滑桿即時自適應父容器尺寸與圖示排列。
+  2. 預渲染冷卻隨戰鬥隱藏純透明度切換 (`CooldownService.lua` / `Renderer.lua`)：尊重 `showSCDOutsideCombat` 設定，非戰鬥隱藏僅調整 `SetAlpha(0)`，保留 Frame 與排版 order 槽位常駐，杜絕戰鬥中 Frame 創建限制與 Taint。
+  3. 戰鬥跑速限制回退防護 (`PlayerStatService.lua`)：防禦暴雪 Retail 12.x 戰鬥中 `GetUnitSpeed` 受限回傳 1.0 被傳統公式算出 14.3% 的問題，戰鬥中自動安全回退至脫戰真實記憶快取 `lastKnownStats["runSpeed"]`。
+  4. 清單視窗平滑滾動跟隨與高亮：點擊 ▲/▼ 或項目時卷軸平滑滾動跟隨選定技能並呈現湛藍選定背景高亮。
+  5. 契約與狀態機測試全面擴充：Flow 業務狀態機增至 85 項，代碼契約擴充至 497 項。
+
+- current-of-truth：渲染器 (`Renderer.lua`) 全面升級 2D Grid 排版引擎，監控清單視窗頂部增設每列欄數控制滑桿（1~20，預設 8），支援多框架獨立折行與動態父容器尺寸自適應。SavedVariables 與 ProfileCodec 完整支援向後相容。全套驗證通過：Lua 76/76、Flow 84/84、Contracts 496/496。
+- 核心實作亮點：
+  1. 2D 矩陣折行引擎：`col = itemIdx % maxCols`、`row = math.floor(itemIdx / maxCols)`，精確支援 4 大成長方向（RIGHT/LEFT 橫向滿欄向下折行、UP/DOWN 縱向滿列向右開行）。
+  2. 清單視窗控制項：`Options.columnsSlider` 位於 `specDropdown` 右側（X = 180, Y = -44），支援 1~20 滑桿與即時數值同步，非圖示框架自動隱藏。
+  3. 零延遲即時重繪：滑桿拖曳即時觸發 `Renderer.requestLayout(frameName)`，父框架尺寸動態適配所有折行圖示包覆區域。
+  4. 多語系完整覆蓋：5 語系字典同步更新 `EAM_OPT_COLUMNS` 與 `EAM_OPT_COLUMNS_TIP`。
+
+## 2026-09-04 AI 代理人專用結構化 XML 指導規範建置與決策體系確立
+
+- current-of-truth：專案正式確立雙軌治理體系（Markdown 人類閱讀軌 + XML AI 代理人結構化軌）。實體結構化指引落盤於 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`，配套指引手冊為 `Docs/33_AI_GOVERNANCE_DIRECTIVE.md`。
+- 專用 XML 核心定位：
+  1. 非插件前端 FrameXML，不參與遊戲 UI 繪製、不進 TOC，專供 LLM / Subagents 提示詞注入與邊界約束。
+  2. 結構化涵蓋 8 大節點：元資料、何時增設決策、5 大鐵律、Secret 哨兵、模組架構、熱路徑指南、測試門禁與對話協議。
+- 裁定何時增設/加載之四大門檻（C1~C4）：
+  1. 模型版本切換 / 歷程截斷時強制加載。
+  2. `invoke_subagent` 派工時動態切片注入。
+  3. 重大核心模組重構時結構化擴充契約。
+  4. 暴雪 API 變更引發 Taint 事故時追加操作黑名單。
+
+## 2026-08-27 Alpha 8.2 LibSharedMedia-3.0 素材生態全面整合、字型熱套用與捲動選單快照
 
 - current-of-truth：專案進入 Alpha 8.2 發布階段；全面接入 LibSharedMedia-3.0 (SharedMedia) 素材生態，支援動態探測與第三方音效/字型讀取，修復字型修改免 `/reload` 即時生效，實作 UI 下拉選單自適應捲動容器，完成 71/71 語法、84/84 Flow 驗證與 493/493 契約測試。
 - LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合：

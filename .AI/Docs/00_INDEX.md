@@ -106,6 +106,8 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
     *   AI 治理、WoW Retail 12.x API 邊界、零 GC 效能架構、多職業資源與發布體系之權威理解基準點。
 *   🧠 **[21 大核心技能體系與 Agentic AI 治理哲學 (Skill Ecosystem & Philosophy)](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
     *   **全面技能化（Everything as a Skill）核心手冊**。涵蓋 5 大領域 21 項技能全景目錄、漸進式揭露（Progressive Disclosure）、確定性交付與永續維護哲學。
+*   📜 **[AI 代理人專用結構化 XML 治理指引 (AI Governance Directive)](33_AI_GOVERNANCE_DIRECTIVE.md.html)**
+    *   **大語言模型與子代理人專用結構化 XML 指導檔**。定義何時增設/加載 XML 準則、5 大不可逾越鐵律、Retail 12.x Secret 哨兵防線、模組分層契約與零暖機記憶錨定。實體 XML 儲存於 `AI_GOVERNANCE_DIRECTIVE.xml`。
 
 ### 🏗️ 系統架構與 API 邊界 (Architecture & API)
 *   📐 **[整體重構系統架構 (Architecture)](01_ARCHITECTURE.md.html)**

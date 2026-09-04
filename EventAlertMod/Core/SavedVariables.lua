@@ -106,14 +106,14 @@ local defaults = {
         iconSize = 40,
         spacing = 6,
         frames = {
-            selfAura = { growDirection = 1, x = 0, y = 120, point = "CENTER" },      -- 1 = RIGHT (向右)
-            targetAura = { growDirection = 1, x = 0, y = 200, point = "CENTER" },
-            spellCooldown = { growDirection = 1, x = -120, y = 0, point = "CENTER" },
-            itemCooldown = { growDirection = 1, x = 120, y = 0, point = "CENTER" },
-            classPower = { growDirection = 1, x = 0, y = -80, point = "CENTER" },
-            groundEffect = { growDirection = 1, x = 0, y = -160, point = "CENTER" },
-            totem = { growDirection = 1, x = 0, y = -240, point = "CENTER" },
-            playerStat = { growDirection = 1, x = 0, y = -220, point = "CENTER" },
+            selfAura = { growDirection = 1, x = 0, y = 120, point = "CENTER", columns = 8 },      -- 1 = RIGHT (向右)
+            targetAura = { growDirection = 1, x = 0, y = 200, point = "CENTER", columns = 8 },
+            spellCooldown = { growDirection = 1, x = -120, y = 0, point = "CENTER", columns = 8 },
+            itemCooldown = { growDirection = 1, x = 120, y = 0, point = "CENTER", columns = 8 },
+            classPower = { growDirection = 1, x = 0, y = -80, point = "CENTER", columns = 8 },
+            groundEffect = { growDirection = 1, x = 0, y = -160, point = "CENTER", columns = 8 },
+            totem = { growDirection = 1, x = 0, y = -240, point = "CENTER", columns = 8 },
+            playerStat = { growDirection = 1, x = 0, y = -220, point = "CENTER", columns = 8 },
         }
     },
     playerStats = {},
@@ -1790,24 +1790,41 @@ function SavedVariables.initialize()
     normalizeProfileAuraSounds(EAM_DB)
 
     -- 多框架升級相容與舊坐標遷移
-    if EAM_DB.layout and type(EAM_DB.layout.frames) ~= "table" then
-        EAM_DB.layout.frames = {}
-        for fName, fDef in pairs(defaults.layout.frames) do
-            EAM_DB.layout.frames[fName] = {
-                growDirection = fDef.growDirection,
-                x = fDef.x,
-                y = fDef.y,
-                point = fDef.point,
-            }
-        end
-        -- 舊的全域坐標映射給自身光環 (selfAura)
-        if EAM_DB.layout.x and EAM_DB.layout.y then
-            EAM_DB.layout.frames.selfAura.x = EAM_DB.layout.x
-            EAM_DB.layout.frames.selfAura.y = EAM_DB.layout.y
-            EAM_DB.layout.frames.selfAura.point = EAM_DB.layout.point or "CENTER"
-            EAM_DB.layout.x = nil
-            EAM_DB.layout.y = nil
-            EAM_DB.layout.point = nil
+    if EAM_DB.layout then
+        if type(EAM_DB.layout.frames) ~= "table" then
+            EAM_DB.layout.frames = {}
+            for fName, fDef in pairs(defaults.layout.frames) do
+                EAM_DB.layout.frames[fName] = {
+                    growDirection = fDef.growDirection,
+                    x = fDef.x,
+                    y = fDef.y,
+                    point = fDef.point,
+                    columns = fDef.columns or 8,
+                }
+            end
+            -- 舊的全域坐標映射給自身光環 (selfAura)
+            if EAM_DB.layout.x and EAM_DB.layout.y then
+                EAM_DB.layout.frames.selfAura.x = EAM_DB.layout.x
+                EAM_DB.layout.frames.selfAura.y = EAM_DB.layout.y
+                EAM_DB.layout.frames.selfAura.point = EAM_DB.layout.point or "CENTER"
+                EAM_DB.layout.x = nil
+                EAM_DB.layout.y = nil
+                EAM_DB.layout.point = nil
+            end
+        else
+            for fName, fDef in pairs(defaults.layout.frames) do
+                if not EAM_DB.layout.frames[fName] then
+                    EAM_DB.layout.frames[fName] = {
+                        growDirection = fDef.growDirection,
+                        x = fDef.x,
+                        y = fDef.y,
+                        point = fDef.point,
+                        columns = fDef.columns or 8,
+                    }
+                elseif type(EAM_DB.layout.frames[fName].columns) ~= "number" or EAM_DB.layout.frames[fName].columns < 1 then
+                    EAM_DB.layout.frames[fName].columns = 8
+                end
+            end
         end
     end
 

@@ -473,13 +473,16 @@ local function layout(frameName)
 
     local size = EAM.db and EAM.db.config and EAM.db.config.iconSize or (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or Renderer.iconSize
     local spacing = EAM.db and EAM.db.config and EAM.db.config.iconSpacing or (EAM.db and EAM.db.layout and EAM.db.layout.spacing) or Renderer.spacing
+    local vSpacing = (EAM.db and EAM.db.layout and EAM.db.layout.verticalSpacing and EAM.db.layout.verticalSpacing > 0) and EAM.db.layout.verticalSpacing or spacing
     local count = fState.orderCount
 
-    -- 讀取目前框架設定的成長方向 (1=RIGHT, 2=LEFT, 3=UP, 4=DOWN)
+    -- 讀取目前框架設定的成長方向 (1=RIGHT, 2=LEFT, 3=UP, 4=DOWN) 與換行欄數 (預設 8)
     local dbFrames = EAM.db and EAM.db.layout and EAM.db.layout.frames
     local frameConfig = dbFrames and dbFrames[frameName]
     local dirIdx = frameConfig and frameConfig.growDirection or 1
     if dirIdx < 1 or dirIdx > 4 then dirIdx = 1 end
+    local maxCols = frameConfig and frameConfig.columns or 8
+    if type(maxCols) ~= "number" or maxCols < 1 then maxCols = 8 end
 
     -- 職業能量框架作為獨立資源容器錨點，不套用單一列表隱藏邏輯
     if frameName == "classPower" then
@@ -488,10 +491,6 @@ local function layout(frameName)
         fState.layoutBlocked = false
         return true, "classPowerAnchor"
     end
-
-    -- 提取凍結好的連續數字索引方向偏量陣列 (Array Part)
-    local offset = EAM.Constants.LAYOUT_OFFSETS[dirIdx]
-    local dx, dy = offset[1], offset[2]
 
     if count > 1 then
         table.sort(fState.order, function(idA, idB)
@@ -514,10 +513,26 @@ local function layout(frameName)
         if icon and not icon.isParasite then
             layoutIndex = layoutIndex + 1
             local rendered = icon.rendered
-            -- 計算此圖示相對於中央點的位移距離
-            local dist = (layoutIndex - 1) * (size + spacing)
-            local offsetX = dx * dist
-            local offsetY = dy * dist
+
+            -- 計算 2D 網格欄列 (col, row)
+            local itemIdx = layoutIndex - 1
+            local col = itemIdx % maxCols
+            local row = math.floor(itemIdx / maxCols)
+
+            local offsetX, offsetY
+            if dirIdx == 1 then -- RIGHT (向右排列，超過 maxCols 欄則向下換列)
+                offsetX = col * (size + spacing)
+                offsetY = -row * (size + vSpacing)
+            elseif dirIdx == 2 then -- LEFT (向左排列，超過 maxCols 欄則向下換列)
+                offsetX = -col * (size + spacing)
+                offsetY = -row * (size + vSpacing)
+            elseif dirIdx == 3 then -- UP (向上排列，超過 maxCols 列則向右開行)
+                offsetX = row * (size + spacing)
+                offsetY = col * (size + vSpacing)
+            elseif dirIdx == 4 then -- DOWN (向下排列，超過 maxCols 列則向右開行)
+                offsetX = row * (size + spacing)
+                offsetY = -col * (size + vSpacing)
+            end
 
             if rendered.layoutX ~= offsetX or rendered.layoutY ~= offsetY or rendered.layoutSize ~= size then
                 icon:ClearAllPoints()
@@ -532,12 +547,17 @@ local function layout(frameName)
 
     -- 根據成長方向與圖示數量重調父框架大小
     if layoutIndex > 0 then
-        local totalSpan = (layoutIndex * size) + ((layoutIndex - 1) * spacing)
-        if dx ~= 0 then
-            parent:SetSize(totalSpan, size)
+        local numCols = math.min(layoutIndex, maxCols)
+        local numRows = math.ceil(layoutIndex / maxCols)
+        local totalSpanX, totalSpanY
+        if dirIdx == 1 or dirIdx == 2 then
+            totalSpanX = (numCols * size) + ((numCols - 1) * spacing)
+            totalSpanY = (numRows * size) + ((numRows - 1) * vSpacing)
         else
-            parent:SetSize(size, totalSpan)
+            totalSpanX = (numRows * size) + ((numRows - 1) * spacing)
+            totalSpanY = (numCols * size) + ((numCols - 1) * vSpacing)
         end
+        parent:SetSize(math.max(size, totalSpanX), math.max(size, totalSpanY))
         parent:Show()
     else
         parent:SetSize(size, size)
@@ -598,6 +618,41 @@ function Renderer.prewarmAlertFrames()
         if list and type(list) == "table" then
             local parent = ensureParent(fName)
             local fState = initFrameState(fName)
+
+            -- 1. 建立當前有效且已啟用的 alert 映射
+            local activeAlerts = {}
+            for _, alert in pairs(list) do
+                if alert and alert.id and alert.enabled ~= false then
+                    activeAlerts[alert.id] = alert
+                end
+            end
+
+            -- 2. 清理已被停用 (enabled == false) 或自清單刪除的舊 Frame
+            local newOrder = {}
+            for i = 1, fState.orderCount do
+                local id = fState.order[i]
+                local alert = activeAlerts[id]
+                if not alert then
+                    local icon = fState.icons[id]
+                    if icon then
+                        if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end
+                        pcall(icon.Hide, icon)
+                        IconPool.release(icon)
+                        fState.icons[id] = nil
+                        fState.layoutDirty = true
+                    end
+                else
+                    newOrder[#newOrder + 1] = id
+                    local icon = fState.icons[id]
+                    if icon then
+                        icon.alertOrder = alert.order
+                    end
+                end
+            end
+            fState.order = newOrder
+            fState.orderCount = #newOrder
+
+            -- 3. 為已啟用且尚未持有 Frame 的項目預熱
             for _, alert in pairs(list) do
                 if alert and alert.id and alert.enabled ~= false and not fState.icons[alert.id] then
                     local icon = IconPool.acquire()
@@ -606,6 +661,7 @@ function Renderer.prewarmAlertFrames()
                         fState.icons[alert.id] = icon
                         fState.orderCount = fState.orderCount + 1
                         fState.order[fState.orderCount] = alert.id
+                        icon.alertOrder = alert.order
                         icon:SetAlpha(0)
                         icon:Show()
                         fState.layoutDirty = true
@@ -686,9 +742,49 @@ function Renderer.render(alertState, frameName)
 
     -- 圖示隱藏/釋放處理 (冷卻類型框架透過透明度 Alpha = 0 隱藏，保持 Frame 結構常駐)
     if not alertState.shown then
+        local isCooldownFrame = (frameName == "spellCooldown" or frameName == "itemCooldown")
+        if not icon and isCooldownFrame and not inCombat() and alertState.rawAlert and alertState.rawAlert.enabled ~= false then
+            icon = IconPool.acquire()
+            if icon then
+                local parent = ensureParent(frameName)
+                icon:SetParent(parent)
+                fState.icons[alertState.id] = icon
+                fState.orderCount = fState.orderCount + 1
+                fState.order[fState.orderCount] = alertState.id
+                icon.alertOrder = alertState.order or alertState.rawAlert.order
+                icon:SetAlpha(0)
+                icon:Show()
+                fState.layoutDirty = true
+                layout(frameName)
+            end
+        end
         if icon then
-            local isCooldownFrame = (frameName == "spellCooldown" or frameName == "itemCooldown")
             if isCooldownFrame then
+                -- 若該冷卻項目已被停用 (enabled == false)，徹底自排版與圖示池清理釋放
+                if alertState.rawAlert and alertState.rawAlert.enabled == false then
+                    if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end
+                    pcall(icon.Hide, icon)
+                    IconPool.release(icon)
+                    fState.icons[alertState.id] = nil
+                    for i = 1, fState.orderCount do
+                        if fState.order[i] == alertState.id then
+                            table.remove(fState.order, i)
+                            fState.orderCount = fState.orderCount - 1
+                            break
+                        end
+                    end
+                    fState.layoutDirty = true
+                    layout(frameName)
+                    return
+                end
+
+                local targetOrder = alertState.order or (alertState.rawAlert and alertState.rawAlert.order)
+                if targetOrder and icon.alertOrder ~= targetOrder then
+                    icon.alertOrder = targetOrder
+                    fState.layoutDirty = true
+                    layout(frameName)
+                end
+
                 if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end
                 if icon.cooldown then
                     local setCooldown = icon.cooldown.SetCooldown
@@ -801,11 +897,21 @@ function Renderer.render(alertState, frameName)
         rendered.parasiteLayoutPending = nil
     end
 
-    icon.alertOrder = alertState.order or (alertState.rawAlert and alertState.rawAlert.order) or nil
+    local newAlertOrder = alertState.order or (alertState.rawAlert and alertState.rawAlert.order) or nil
+    if icon.alertOrder ~= newAlertOrder then
+        icon.alertOrder = newAlertOrder
+        fState.layoutDirty = true
+    end
 
-    if alertState.icon and rendered.icon ~= alertState.icon and icon.texture then
-        icon.texture:SetTexture(alertState.icon)
-        rendered.icon = alertState.icon
+    local iconTex = alertState.icon
+    if not iconTex and alertState.spellID then
+        if C_Spell and C_Spell.GetSpellTexture then
+            iconTex = C_Spell.GetSpellTexture(alertState.spellID)
+        end
+    end
+    if iconTex and rendered.icon ~= iconTex and icon.texture then
+        icon.texture:SetTexture(iconTex)
+        rendered.icon = iconTex
     end
 
     local isPlaceholder = (alertState.isPlaceholder == true) or (alertState.isDesaturated == true)
@@ -821,6 +927,9 @@ function Renderer.render(alertState, frameName)
 
     IconPool.applyTooltipSource(icon, alertState)
     IconPool.applyTypeBorder(icon, alertState, frameName)
+    if isPlaceholder and icon.typeBorder then
+        icon.typeBorder:Hide()
+    end
 
     local config = EAM.db and EAM.db.config or nil
     if inCombat() then

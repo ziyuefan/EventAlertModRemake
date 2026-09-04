@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使用者介面與視圖元件 (UI Presentation) - 目錄導覽與檔案說明清單 | EventAlertMod Remake</title>
+  
+  <!-- AI Governance Metadata -->
+  <meta name="ai-governance-role" content="Presentation, Frame Pools &amp; Options GUI">
+  <meta name="ai-governance-layer" content="Addon Presentation Layer">
+  <meta name="ai-governance-security" content="Theme-Driven / Drag-Interactive / Combat Deferred">
+  <meta name="ai-governance-invariants" content="現代化 UI 互動：支援側窗無縫吸附 (APPEND 模式)、連動拖曳、螢幕邊界鎖定與 /eam reset 復原 | 戰鬥中排版遞延：戰鬥期間使用者若調整 UI，僅記錄設定值，脫離戰鬥後一次性安全套用 | 主題系統：11 組深色主題無縫切換，統一管理按鈕背景、邊框與文字配色">
+  <meta name="ai-scan-timestamp" content="2026-09-04T18:02:03.051094+08:00">
+  <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
+
+  <!-- JSON-LD Structured Data for AI Agents / RAG -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DirectoryGovernanceReport",
+  "directoryPath": "EventAlertMod/UI",
+  "name": "使用者介面與視圖元件 (UI Presentation)",
+  "layer": "Addon Presentation Layer",
+  "role": "Presentation, Frame Pools & Options GUI",
+  "securityLevel": "Theme-Driven / Drag-Interactive / Combat Deferred",
+  "summary": "託管圖示物件池 (IconPool)、設定主視窗 (Options)、主題配色引擎 (Theme)、側窗聯動吸附元件與懸停提示系統。",
+  "invariants": [
+    "現代化 UI 互動：支援側窗無縫吸附 (APPEND 模式)、連動拖曳、螢幕邊界鎖定與 /eam reset 復原",
+    "戰鬥中排版遞延：戰鬥期間使用者若調整 UI，僅記錄設定值，脫離戰鬥後一次性安全套用",
+    "主題系統：11 組深色主題無縫切換，統一管理按鈕背景、邊框與文字配色"
+  ],
+  "timestamp": "2026-09-04T18:02:03.051094+08:00",
+  "fileCount": 20,
+  "subdirectoryCount": 0,
+  "totalSizeBytes": 589269,
+  "files": [
+    {
+      "name": "AboutPanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 8701,
+      "lineCount": 236,
+      "purpose": "關於面板，顯示插件版本資訊、授權條款、開發團隊與官方導航連結",
+      "role": "UI / About View",
+      "security": "Presentation"
+    },
+    {
+      "name": "AlertBorderStyles.lua",
+      "extension": ".lua",
+      "sizeBytes": 4262,
+      "lineCount": 126,
+      "purpose": "告警邊框樣式庫，提供多種厚度、高對比警戒框與發光邊框樣式",
+      "role": "UI / Border Styling",
+      "security": "Presentation"
+    },
+    {
+      "name": "CombatFlash.lua",
+      "extension": ".lua",
+      "sizeBytes": 3896,
+      "lineCount": 135,
+      "purpose": "WoW Lua 模組程式碼",
+      "role": "Lua Module",
+      "security": "Protected"
+    },
+    {
+      "name": "DebugCenterPanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 22779,
+      "lineCount": 557,
+      "purpose": "集中整合所有 EAM 診斷、符文探針、流程測試與提示詞匯出功能於單一視窗。 | 提供 4 大診斷分頁：",
+      "role": "UI/DebugCenterPanel",
+      "security": "Safe"
+    },
+    {
+      "name": "GroupManagerPanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 20978,
+      "lineCount": 570,
+      "purpose": "提供獨立二級側窗面板（APPEND 模式），管理系統內建戰術群組與自訂群組。；支援群組主開關、情境過濾、外觀代表色與法術成員名冊複選。 | 渲染群組清單與選定群組之詳細設定介面。；支援法術在群組中的勾選綁定與即時同步。",
+      "role": "UI/GroupManagerPanel",
+      "security": "Safe"
+    },
+    {
+      "name": "IconPool.lua",
+      "extension": ".lua",
+      "sizeBytes": 29631,
+      "lineCount": 844,
+      "purpose": "告警圖示物件池與視覺容器，支援雙層 Glow、文字自適應貼齊與 2D Grid 自動換行",
+      "role": "UI / Icon Container Pool",
+      "security": "Presentation"
+    },
+    {
+      "name": "ModulePanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 8585,
+      "lineCount": 243,
+      "purpose": "用單一小面板呈現正式功能模組開關，不把服務生命週期混入一般 config checkbox。；使用者設定寫入一律經 SavedVariables.updateModuleToggle。 | 顯示八個 module toggle、目前狀態與套用結果。；戰鬥中不建立或開啟新結構，避免 UIParent 結構變更風險。",
+      "role": "UI/ModulePanel",
+      "security": "Safe"
+    },
+    {
+      "name": "NativeAuraRenderer.lua",
+      "extension": ".lua",
+      "sizeBytes": 12099,
+      "lineCount": 302,
+      "purpose": "為每條 Native Aura rule 建立 initializeFrame callback。；僅在 Blizzard 允許的初始化窗口建立、定位並綁定 AuraButton 子元件。",
+      "role": "UI/NativeAuraRenderer",
+      "security": "Zero-Alloc"
+    },
+    {
+      "name": "Options.lua",
+      "extension": ".lua",
+      "sizeBytes": 199238,
+      "lineCount": 4563,
+      "purpose": "插件核心設定主視窗，提供直觀的圖形化設定、滑桿、多選方塊與側窗吸附切換",
+      "role": "UI / Options Frame",
+      "security": "Presentation"
+    },
+    {
+      "name": "PlayerResourcePanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 35682,
+      "lineCount": 873,
+      "purpose": "顯示目前職業／專精的玩家資源候選集合與安全 capability metadata。；以 draft 編輯 class default 或目前專精 override，再透過 SavedVariables 單次提交。",
+      "role": "UI/PlayerResourcePanel",
+      "security": "Safe"
+    },
+    {
+      "name": "PlayerStatPanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 44854,
+      "lineCount": 920,
+      "purpose": "角色屬性與吸收量監控之獨立二級設定面板。；支援 16 種核心屬性每單項開關、替代圖示、字型大小、替代名稱、小數位數與數值高亮閾值自訂。 | 管理屬性清單與細部設定表單之建立與狀態更新。；支援即時熱預覽與 SavedVariables 雙向保存。",
+      "role": "UI/PlayerStatPanel",
+      "security": "Safe"
+    },
+    {
+      "name": "PowerRenderer.lua",
+      "extension": ".lua",
+      "sizeBytes": 18691,
+      "lineCount": 511,
+      "purpose": "在脫戰初始化期為 17 種玩家資源各自預建獨立 Frame 與 StatusBar。；Secret 百分比只直送對應 StatusBar:SetValue；普通數值才允許產生數字文字。",
+      "role": "UI/PowerRenderer",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "ProfileCodecPanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 18789,
+      "lineCount": 462,
+      "purpose": "以可人工複製的 EditBox 提供 EAMAP1 profile 分享，不依賴聊天框或系統剪貼簿 API。 | 開啟、匯出、預覽、合併套用與取代套用目前職業 profile。；將套用交易交給 Core/ProfileCodec 與 Core/SavedVariables。",
+      "role": "UI/ProfileCodecPanel",
+      "security": "Safe"
+    },
+    {
+      "name": "RadialGauge.lua",
+      "extension": ".lua",
+      "sizeBytes": 3422,
+      "lineCount": 120,
+      "purpose": "利用魔獸 12.1 原生 C++ 向量圓形進度條 (SetRadialProgressBarPercent) 繪製環形光環倒數。；零額外 CPU 負擔，支援平滑邊緣羽化 (Feathering) 與斬殺期 (Pandemic) 變色高亮。 | 封裝 12.1 原生 Radial ProgressBar 的建立、配置與百分比刷新。；支援順逆時針、起始角度、羽化係數與動態色彩。",
+      "role": "UI/RadialGauge",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "Renderer.lua",
+      "extension": ".lua",
+      "sizeBytes": 62012,
+      "lineCount": 1582,
+      "purpose": "Renderer 只把 normalized render state 寫入 UI，資料來源完全在 services。；支援多個完全隔離的 Alert Frame（告警框架），每個框架有各自的坐標與成長方向。 | 管理 7 大獨立告警框架的建立、顯示、隱藏與滑鼠拖曳定位保存。；接收並將 AlertState 渲染到特定的 UI 框架中，使用 Icon 緩衝池 (IconPool)。",
+      "role": "UI/Renderer",
+      "security": "Zero-Alloc"
+    },
+    {
+      "name": "Slash.lua",
+      "extension": ".lua",
+      "sizeBytes": 22814,
+      "lineCount": 546,
+      "purpose": "/eam 是使用者低成本入口，負責協調模組而非承擔業務邏輯。；在 Retail 12.1 安全邊界內恢復經典 EAM 的 list、lookup 與 showcast 使用習慣。 | 註冊 slash command、解析文字、呼叫 Options/Debug/SavedVariables/service API。",
+      "role": "UI/Slash",
+      "security": "Safe"
+    },
+    {
+      "name": "SpellCatalogTreePanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 23024,
+      "lineCount": 619,
+      "purpose": "提供階層式全量法術庫與智慧預設面板（三態勾選樹）。；支援選擇目標模組清單（技能冷卻、自身光環、目標光環、特殊光環、地面效果）。 | 呈現職業、專精、戰術分類（爆發/減傷/控場/地面）與英雄天賦之樹狀結構。；支援法術一鍵批次加入/移除至指定模組清單。",
+      "role": "UI/SpellCatalogTreePanel",
+      "security": "Safe"
+    },
+    {
+      "name": "TextPlacement.lua",
+      "extension": ".lua",
+      "sizeBytes": 7627,
+      "lineCount": 208,
+      "purpose": "倒數與 applications 共用單一白名單錨點契約，確保 12.0.7 與 12.1 顯示一致。；JSON 事實來源為 Data/TextPlacementContract.json；本檔是 WoW 執行期的靜態 Lua 映射。 | 驗證 placement ID、解析 SavedVariables 設定、套用固定 SetPoint 與字級範圍。",
+      "role": "UI/TextPlacement",
+      "security": "Safe"
+    },
+    {
+      "name": "Theme.lua",
+      "extension": ".lua",
+      "sizeBytes": 26755,
+      "lineCount": 677,
+      "purpose": "主題視覺引擎，管理 11 組現代深色主題配色、自適應邊框、按鈕狀態與即時重繪",
+      "role": "UI / Theme Engine",
+      "security": "Presentation"
+    },
+    {
+      "name": "TooltipMonitorMenu.lua",
+      "extension": ".lua",
+      "sizeBytes": 15430,
+      "lineCount": 474,
+      "purpose": "目標光環採集右鍵選單，提供秒加監控、黑名單忽略與分類設定",
+      "role": "UI / Context Menu",
+      "security": "Presentation"
+    }
+  ],
+  "subdirectories": []
+}
+  </script>
+
+  <style>
+    :root {
+      --bg-base: #0a0e17;
+      --bg-surface: rgba(17, 24, 39, 0.75);
+      --bg-surface-hover: rgba(30, 41, 59, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #00f0ff;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-cyan: #00f0ff;
+      --accent-gold: #ffd700;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      --font-mono: "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* 頂部導航與麵包屑 */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .breadcrumbs a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .breadcrumbs a:hover {
+      text-decoration: underline;
+      filter: drop-shadow(0 0 6px var(--accent-cyan));
+    }
+
+    .breadcrumbs .separator {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .breadcrumbs .current {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Hero Header */
+    .header-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-gold));
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .header-title-row h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+    }
+
+    .badge-layer {
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-role {
+      background: rgba(0, 240, 255, 0.15);
+      color: #67e8f9;
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+
+    .header-desc {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+
+    /* 統計列 */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    /* AI 治理卡片 */
+    .governance-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .governance-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.15rem;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .governance-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .governance-list li {
+      position: relative;
+      padding-left: 24px;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .governance-list li::before {
+      content: "🛡️";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 0.85rem;
+    }
+
+    /* 搜尋與過濾工具列 */
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      width: 100%;
+      max-width: 360px;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+    }
+
+    /* 子目錄列表 (Cards) */
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 28px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .subdirs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .subdir-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .subdir-card:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.12);
+    }
+
+    .subdir-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .subdir-icon {
+      font-size: 1.3rem;
+    }
+
+    .subdir-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .subdir-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .subdir-meta {
+      font-size: 0.8rem;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 8px;
+    }
+
+    /* 檔案表格 */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .files-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .files-table th {
+      background: rgba(15, 23, 42, 0.9);
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .files-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.92rem;
+      vertical-align: middle;
+    }
+
+    .files-table tr:hover td {
+      background: var(--bg-surface-hover);
+    }
+
+    .file-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .file-name-cell a {
+      color: var(--text-main);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .file-name-cell a:hover {
+      color: var(--accent-cyan);
+    }
+
+    /* 類型徽章 */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+    }
+
+    .badge-lua { background: #002b5c; color: #60a5fa; border: 1px solid #1e40af; }
+    .badge-xml { background: #4a1d96; color: #c084fc; border: 1px solid #6b21a8; }
+    .badge-toc { background: #701a75; color: #f472b6; border: 1px solid #86198f; }
+    .badge-doc { background: #064e3b; color: #34d399; border: 1px solid #047857; }
+    .badge-data { background: #78350f; color: #fbbf24; border: 1px solid #b45309; }
+    .badge-script { background: #1e3a8a; color: #93c5fd; border: 1px solid #2563eb; }
+    .badge-tool { background: #14532d; color: #86efac; border: 1px solid #15803d; }
+    .badge-secret { background: #881337; color: #fda4af; border: 1px solid #be123c; }
+    .badge-media { background: #374151; color: #e5e7eb; border: 1px solid #4b5563; }
+    .badge-svg { background: #831843; color: #f43f5e; border: 1px solid #be185d; }
+    .badge-audio { background: #134e4a; color: #2dd4bf; border: 1px solid #0f766e; }
+    .badge-html { background: #7c2d12; color: #fb923c; border: 1px solid #c2410c; }
+    .badge-text { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
+    .badge-other { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+    /* 安全防護評級標籤 */
+    .sec-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .sec-taint { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .sec-hotpath { background: rgba(0, 240, 255, 0.15); color: #67e8f9; border: 1px solid rgba(0, 240, 255, 0.3); }
+    .sec-vault { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .sec-tool { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .sec-safe { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    /* 頁尾 */
+    .footer {
+      text-align: center;
+      padding: 32px 0 16px 0;
+      font-size: 0.85rem;
+      color: #64748b;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 16px 12px; }
+      .header-card { padding: 20px; }
+      .header-title-row h1 { font-size: 1.4rem; }
+      .files-table th:nth-child(4),
+      .files-table td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 頂部導航列與 Breadcrumbs -->
+    <nav class="nav-bar">
+      <div class="breadcrumbs">
+        <a href="../../FOLDER_INDEX.html">🏠 Root</a><span class="separator">/</span><a href="../FOLDER_INDEX.html">EventAlertMod</a><span class="separator">/</span><span class="current">UI</span>
+      </div>
+      <div>
+        <a href="../../FOLDER_INDEX.html" style="font-size:0.85rem; color:var(--accent-cyan); text-decoration:none;">🏠 根目錄總覽</a>
+      </div>
+    </nav>
+
+    <!-- 主資訊卡片 (Hero) -->
+    <header class="header-card">
+      <div class="header-title-row">
+        <h1>📁 使用者介面與視圖元件 (UI Presentation)</h1>
+        <div class="header-badges">
+          <span class="badge-pill badge-layer">Addon Presentation Layer</span>
+          <span class="badge-pill badge-role">Presentation, Frame Pools &amp; Options GUI</span>
+        </div>
+      </div>
+      <p class="header-desc">託管圖示物件池 (IconPool)、設定主視窗 (Options)、主題配色引擎 (Theme)、側窗聯動吸附元件與懸停提示系統。</p>
+      
+      <!-- 統計數據 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-label">目錄路徑</span>
+          <span class="stat-val" style="font-size: 0.95rem; word-break: break-all;">EventAlertMod/UI</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">檔案數量</span>
+          <span class="stat-val">20</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">子目錄數量</span>
+          <span class="stat-val">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">總容量</span>
+          <span class="stat-val">575.5 KB</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">安全防護層級</span>
+          <span class="stat-val" style="font-size: 0.95rem;">Theme-Driven / Drag-Interactive / Combat Deferred</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- AI 治理規範卡片 -->
+    <section class="governance-card" aria-label="AI Governance Summary">
+      <h3>🤖 AI 治理指引與架構不變量 (Governance Invariants)</h3>
+      <ul class="governance-list">
+        <li>現代化 UI 互動：支援側窗無縫吸附 (APPEND 模式)、連動拖曳、螢幕邊界鎖定與 /eam reset 復原</li><li>戰鬥中排版遞延：戰鬥期間使用者若調整 UI，僅記錄設定值，脫離戰鬥後一次性安全套用</li><li>主題系統：11 組深色主題無縫切換，統一管理按鈕背景、邊框與文字配色</li>
+      </ul>
+    </section>
+
+    <!-- 子目錄列表 (若有) -->
+    
+
+    <!-- 檔案清單表格 -->
+    <section>
+      <div class="filter-toolbar">
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (20)</h2>
+        <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
+      </div>
+
+      <div class="table-container">
+        <table class="files-table" id="filesTable">
+          <thead>
+            <tr>
+              <th style="width: 28%;">檔案名稱</th>
+              <th style="width: 10%;">格式</th>
+              <th style="width: 38%;">職責與用途說明</th>
+              <th style="width: 14%;">安全/治理評級</th>
+              <th style="width: 10%; text-align: right;">大小 / 行數</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./AboutPanel.lua" title="檢視檔案內容">AboutPanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">關於面板，顯示插件版本資訊、授權條款、開發團隊與官方導航連結</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI / About View</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            8.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 236 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./AlertBorderStyles.lua" title="檢視檔案內容">AlertBorderStyles.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">告警邊框樣式庫，提供多種厚度、高對比警戒框與發光邊框樣式</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI / Border Styling</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            4.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 126 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./CombatFlash.lua" title="檢視檔案內容">CombatFlash.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">WoW Lua 模組程式碼</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Lua Module</div>
+          </td>
+          <td><span class="sec-badge sec-vault">🔒 Protected</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            3.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 135 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./DebugCenterPanel.lua" title="檢視檔案內容">DebugCenterPanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">集中整合所有 EAM 診斷、符文探針、流程測試與提示詞匯出功能於單一視窗。 | 提供 4 大診斷分頁：</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/DebugCenterPanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            22.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 557 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./GroupManagerPanel.lua" title="檢視檔案內容">GroupManagerPanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">提供獨立二級側窗面板（APPEND 模式），管理系統內建戰術群組與自訂群組。；支援群組主開關、情境過濾、外觀代表色與法術成員名冊複選。 | 渲染群組清單與選定群組之詳細設定介面。；支援法術在群組中的勾選綁定與即時同步。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/GroupManagerPanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            20.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 570 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./IconPool.lua" title="檢視檔案內容">IconPool.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">告警圖示物件池與視覺容器，支援雙層 Glow、文字自適應貼齊與 2D Grid 自動換行</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI / Icon Container Pool</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            28.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 844 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./ModulePanel.lua" title="檢視檔案內容">ModulePanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">用單一小面板呈現正式功能模組開關，不把服務生命週期混入一般 config checkbox。；使用者設定寫入一律經 SavedVariables.updateModuleToggle。 | 顯示八個 module toggle、目前狀態與套用結果。；戰鬥中不建立或開啟新結構，避免 UIParent 結構變更風險。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/ModulePanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            8.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 243 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./NativeAuraRenderer.lua" title="檢視檔案內容">NativeAuraRenderer.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">為每條 Native Aura rule 建立 initializeFrame callback。；僅在 Blizzard 允許的初始化窗口建立、定位並綁定 AuraButton 子元件。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/NativeAuraRenderer</div>
+          </td>
+          <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            11.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 302 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./Options.lua" title="檢視檔案內容">Options.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">插件核心設定主視窗，提供直觀的圖形化設定、滑桿、多選方塊與側窗吸附切換</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI / Options Frame</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            194.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 4563 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./PlayerResourcePanel.lua" title="檢視檔案內容">PlayerResourcePanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">顯示目前職業／專精的玩家資源候選集合與安全 capability metadata。；以 draft 編輯 class default 或目前專精 override，再透過 SavedVariables 單次提交。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/PlayerResourcePanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            34.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 873 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./PlayerStatPanel.lua" title="檢視檔案內容">PlayerStatPanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">角色屬性與吸收量監控之獨立二級設定面板。；支援 16 種核心屬性每單項開關、替代圖示、字型大小、替代名稱、小數位數與數值高亮閾值自訂。 | 管理屬性清單與細部設定表單之建立與狀態更新。；支援即時熱預覽與 SavedVariables 雙向保存。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/PlayerStatPanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            43.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 920 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./PowerRenderer.lua" title="檢視檔案內容">PowerRenderer.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">在脫戰初始化期為 17 種玩家資源各自預建獨立 Frame 與 StatusBar。；Secret 百分比只直送對應 StatusBar:SetValue；普通數值才允許產生數字文字。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/PowerRenderer</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            18.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 511 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./ProfileCodecPanel.lua" title="檢視檔案內容">ProfileCodecPanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">以可人工複製的 EditBox 提供 EAMAP1 profile 分享，不依賴聊天框或系統剪貼簿 API。 | 開啟、匯出、預覽、合併套用與取代套用目前職業 profile。；將套用交易交給 Core/ProfileCodec 與 Core/SavedVariables。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/ProfileCodecPanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            18.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 462 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./RadialGauge.lua" title="檢視檔案內容">RadialGauge.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">利用魔獸 12.1 原生 C++ 向量圓形進度條 (SetRadialProgressBarPercent) 繪製環形光環倒數。；零額外 CPU 負擔，支援平滑邊緣羽化 (Feathering) 與斬殺期 (Pandemic) 變色高亮。 | 封裝 12.1 原生 Radial ProgressBar 的建立、配置與百分比刷新。；支援順逆時針、起始角度、羽化係數與動態色彩。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/RadialGauge</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            3.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 120 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./Renderer.lua" title="檢視檔案內容">Renderer.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">Renderer 只把 normalized render state 寫入 UI，資料來源完全在 services。；支援多個完全隔離的 Alert Frame（告警框架），每個框架有各自的坐標與成長方向。 | 管理 7 大獨立告警框架的建立、顯示、隱藏與滑鼠拖曳定位保存。；接收並將 AlertState 渲染到特定的 UI 框架中，使用 Icon 緩衝池 (IconPool)。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/Renderer</div>
+          </td>
+          <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            60.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1582 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./Slash.lua" title="檢視檔案內容">Slash.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">/eam 是使用者低成本入口，負責協調模組而非承擔業務邏輯。；在 Retail 12.1 安全邊界內恢復經典 EAM 的 list、lookup 與 showcast 使用習慣。 | 註冊 slash command、解析文字、呼叫 Options/Debug/SavedVariables/service API。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/Slash</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            22.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 546 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./SpellCatalogTreePanel.lua" title="檢視檔案內容">SpellCatalogTreePanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">提供階層式全量法術庫與智慧預設面板（三態勾選樹）。；支援選擇目標模組清單（技能冷卻、自身光環、目標光環、特殊光環、地面效果）。 | 呈現職業、專精、戰術分類（爆發/減傷/控場/地面）與英雄天賦之樹狀結構。；支援法術一鍵批次加入/移除至指定模組清單。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/SpellCatalogTreePanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            22.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 619 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./TextPlacement.lua" title="檢視檔案內容">TextPlacement.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">倒數與 applications 共用單一白名單錨點契約，確保 12.0.7 與 12.1 顯示一致。；JSON 事實來源為 Data/TextPlacementContract.json；本檔是 WoW 執行期的靜態 Lua 映射。 | 驗證 placement ID、解析 SavedVariables 設定、套用固定 SetPoint 與字級範圍。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/TextPlacement</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            7.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 208 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./Theme.lua" title="檢視檔案內容">Theme.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">主題視覺引擎，管理 11 組現代深色主題配色、自適應邊框、按鈕狀態與即時重繪</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI / Theme Engine</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            26.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 677 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./TooltipMonitorMenu.lua" title="檢視檔案內容">TooltipMonitorMenu.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">目標光環採集右鍵選單，提供秒加監控、黑名單忽略與分類設定</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI / Context Menu</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            15.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 474 行</span>
+          </td>
+        </tr>
+        
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 頁尾宣告 -->
+    <footer class="footer">
+      <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:02:03.051094+08:00</p>
+    </footer>
+  </div>
+
+  <script>
+    function filterFiles() {
+      const query = document.getElementById('fileFilter').value.toLowerCase();
+      const rows = document.querySelectorAll('#filesTable tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

@@ -48,6 +48,8 @@ local Options = {
     chargeBarMenu = nil,
     chargeBarOptions = nil,
     specDropdown = nil,
+    columnsSlider = nil,
+    columnsValText = nil,
     currentSpecFilterName = nil,
     addEditBox = nil,
     batchFrame = nil,
@@ -86,10 +88,18 @@ local COOLDOWN_BEHAVIOR_OPTIONS = {
         field = "cooldownPreRender",
         labelKey = "EAM_OPT_PRERENDER_PLACEHOLDER",
         labelFallback = "預渲染佔位",
+        isBinary = true,
     },
 }
 
-local function cooldownBehaviorStateLabel(value)
+local function cooldownBehaviorStateLabel(value, isBinary)
+    if isBinary then
+        if value == true then
+            return (EAM.L and EAM.L.EAM_OPT_COND_CD_OVERRIDE_ON) or "覆寫：開"
+        else
+            return (EAM.L and EAM.L.EAM_OPT_COND_CD_OVERRIDE_OFF) or "覆寫：關"
+        end
+    end
     if value == true then
         return (EAM.L and EAM.L.EAM_OPT_COND_CD_OVERRIDE_ON) or "覆寫：開"
     elseif value == false then
@@ -469,6 +479,40 @@ function Options.refreshSpecDropdown()
     Options.specDropdown:SetText((EAM.L.EAM_OPT_FILTER_PREFIX or "篩選: ") .. filterName)
 end
 
+function Options.refreshColumnsControl()
+    if not Options.columnsSlider then
+        return
+    end
+    local categoryFrameMap = {
+        [1] = "selfAura",
+        [2] = "selfAura",
+        [3] = "targetAura",
+        [4] = "spellCooldown",
+        [5] = "itemCooldown",
+        [6] = "groundEffect",
+    }
+    local frameName = categoryFrameMap[Options.currentCategory]
+    if not frameName then
+        Options.columnsSlider:Hide()
+        return
+    end
+
+    Options.columnsSlider:Show()
+    local dbFrames = EAM.db and EAM.db.layout and EAM.db.layout.frames
+    local fConfig = dbFrames and dbFrames[frameName]
+    local cols = fConfig and fConfig.columns or 8
+    if type(cols) ~= "number" or cols < 1 then cols = 8 end
+    if cols > 20 then cols = 20 end
+
+    Options.columnsSlider.currentFrameName = frameName
+    Options.columnsSlider.isRefreshing = true
+    Options.columnsSlider:SetValue(cols)
+    if Options.columnsValText then
+        Options.columnsValText:SetText(tostring(mathFloor(cols)))
+    end
+    Options.columnsSlider.isRefreshing = false
+end
+
 function Options.refreshCooldownBehaviorControls()
     local cf = Options.condFrame
     if not cf or type(cf.cooldownBehaviorButtons) ~= "table" then
@@ -479,7 +523,7 @@ function Options.refreshCooldownBehaviorControls()
         local button = cf.cooldownBehaviorButtons[definition.field]
         if button then
             local label = (EAM.L and EAM.L[definition.labelKey]) or definition.labelFallback
-            button:SetText(label .. ": " .. cooldownBehaviorStateLabel(button.eamValue))
+            button:SetText(label .. ": " .. cooldownBehaviorStateLabel(button.eamValue, definition.isBinary))
         end
     end
 end
@@ -767,13 +811,34 @@ local function addAlertToCategory(category, id, deferCommit)
 end
 
 Options.addAlertToCategory = addAlertToCategory
+
+local function isAlertSelected(alert)
+    if not alert or not Options.selectedAlert then return false end
+    if alert == Options.selectedAlert then return true end
+    if alert.id and Options.selectedAlert.id and alert.id == Options.selectedAlert.id then
+        return true
+    end
+    local idA = alert.spellID or alert.itemID
+    local idB = Options.selectedAlert.spellID or Options.selectedAlert.itemID
+    if idA and idB and idA == idB and (not alert.kind or not Options.selectedAlert.kind or alert.kind == Options.selectedAlert.kind) then
+        return true
+    end
+    return false
+end
+
+Options.isAlertSelected = isAlertSelected
+
 -- 刷新滾動列表
-function Options.refreshList()
+function Options.refreshList(selectedAlert, scrollToIdx)
     if not Options.listFrame or not Options.listFrame:IsShown() then return end
     
     local saved = EAM.Modules.SavedVariables
     if not saved then return end
     
+    if selectedAlert ~= nil then
+        Options.selectedAlert = selectedAlert
+    end
+
     local listData = {}
     local rawList = Options.getCurrentCategoryList()
     
@@ -808,18 +873,110 @@ function Options.refreshList()
         return idA < idB
     end)
     
+    local orderChanged = false
+    local resolvedScrollIdx = scrollToIdx
+    for idx = 1, #listData do
+        local item = listData[idx]
+        if item.order ~= idx then
+            item.order = idx
+            orderChanged = true
+        end
+        if isAlertSelected(item) then
+            Options.selectedAlert = item
+            if not resolvedScrollIdx then
+                resolvedScrollIdx = idx
+            end
+        end
+    end
+    if orderChanged and EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+        EAM.Modules.SavedVariables.markRevisionChanged()
+    end
+
     local dataProvider = CreateDataProvider()
     for _, alert in ipairs(listData) do
         dataProvider:Insert(alert)
     end
-    Options.scrollBox:SetDataProvider(dataProvider)
-    
-    -- 強制原生 WowScrollBox 進行重新佈局與可見元件重繪，100% 解決新增刪除不即時更新的官方 BUG！
-    if Options.scrollBox.FullUpdate then
-        Options.scrollBox:FullUpdate()
-    elseif Options.scrollBox.Rebuild then
-        Options.scrollBox:Rebuild()
+
+    if Options.scrollBox then
+        local retainScroll = (ScrollBoxConstants and ScrollBoxConstants.RetainScrollPosition) or true
+        if Options.scrollBox.SetDataProvider then
+            Options.scrollBox:SetDataProvider(dataProvider, retainScroll)
+        end
+        
+        -- 強制原生 WowScrollBox 進行重新佈局與可見元件重繪，100% 解決新增刪除不即時更新的官方 BUG！
+        if Options.scrollBox.FullUpdate then
+            Options.scrollBox:FullUpdate()
+        elseif Options.scrollBox.Rebuild then
+            Options.scrollBox:Rebuild()
+        end
+
+        if resolvedScrollIdx and type(resolvedScrollIdx) == "number" then
+            local alignMode = ScrollBoxConstants and (ScrollBoxConstants.AlignNearest or ScrollBoxConstants.AlignCenter) or 2
+            if Options.scrollBox.ScrollToElementDataIndex then
+                pcall(Options.scrollBox.ScrollToElementDataIndex, Options.scrollBox, resolvedScrollIdx, alignMode)
+            elseif Options.scrollBox.ScrollToElementData and Options.selectedAlert then
+                pcall(Options.scrollBox.ScrollToElementData, Options.scrollBox, Options.selectedAlert, alignMode)
+            end
+        end
     end
+    if Options.refreshColumnsControl then
+        Options.refreshColumnsControl()
+    end
+end
+
+local function repositionAlertOrder(targetAlert, newOrder)
+    if not targetAlert or type(newOrder) ~= "number" then return end
+    local rawList = Options.getCurrentCategoryList()
+    if not rawList then return end
+
+    local listData = {}
+    for _, alert in pairs(rawList) do
+        if alertMatchesCategory(alert, Options.currentCategory) and isAlertDisplayable(alert) then
+            listData[#listData + 1] = alert
+        end
+    end
+    table.sort(listData, function(a, b)
+        local orderA = a.order or 9999
+        local orderB = b.order or 9999
+        if orderA ~= orderB then return orderA < orderB end
+        local idA = a.spellID or a.itemID or 0
+        local idB = b.spellID or b.itemID or 0
+        return idA < idB
+    end)
+
+    local targetIdx = nil
+    for idx = 1, #listData do
+        if listData[idx] == targetAlert or (listData[idx].id and listData[idx].id == targetAlert.id) then
+            targetIdx = idx
+            break
+        end
+    end
+    if not targetIdx then return end
+
+    local destIdx = math.floor(newOrder)
+    if destIdx < 1 then destIdx = 1 end
+    if destIdx > #listData then destIdx = #listData end
+
+    if destIdx == targetIdx then
+        for idx = 1, #listData do
+            listData[idx].order = idx
+        end
+        Options.refreshList(targetAlert, destIdx)
+        return
+    end
+
+    local item = table.remove(listData, targetIdx)
+    table.insert(listData, destIdx, item)
+
+    for idx = 1, #listData do
+        listData[idx].order = idx
+    end
+
+    if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+        EAM.Modules.SavedVariables.markRevisionChanged()
+    end
+    Options.notifyConfigChanged()
+    Options.refreshList(item, destIdx)
 end
 
 local function moveAlertInCurrentList(targetAlert, delta)
@@ -865,7 +1022,7 @@ local function moveAlertInCurrentList(targetAlert, delta)
         EAM.Modules.SavedVariables.markRevisionChanged()
     end
     Options.notifyConfigChanged()
-    Options.refreshList()
+    Options.refreshList(item, destIdx)
 end
 
 local function swapAlertsInCurrentList(alertA, alertB)
@@ -910,7 +1067,7 @@ local function swapAlertsInCurrentList(alertA, alertB)
         EAM.Modules.SavedVariables.markRevisionChanged()
     end
     Options.notifyConfigChanged()
-    Options.refreshList()
+    Options.refreshList(alertA, idxB)
 end
 
 -- 批次操作 (Select All, Deselect All, Delete All)
@@ -929,6 +1086,9 @@ local function batchOperation(action)
                 rawList[id] = nil
             end
         end
+    end
+    if action == "delete" then
+        Options.selectedAlert = nil
     end
     if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
         EAM.Modules.SavedVariables.markRevisionChanged()
@@ -950,7 +1110,8 @@ function Options.addAlertToCurrentCategory(id)
                 notifyGroundEffectConfigChanged()
             end
         end
-        Options.refreshList()
+        local newSel = { id = alertID, spellID = id }
+        Options.refreshList(newSel)
         if reclassified then
             print(string.format(
                 EAM.L.EAM_OPT_ADD_RECLASSIFIED
@@ -1147,6 +1308,13 @@ EAM.UI.closeAllSidePanels = Options.closeAllSidePanels
 function Options.removeAlertFromCurrentCategory(id)
     local saved = EAM.Modules.SavedVariables
     if not saved then return end
+    
+    if Options.selectedAlert then
+        local selID = Options.selectedAlert.spellID or Options.selectedAlert.itemID or Options.selectedAlert.id
+        if selID == id or tostring(selID) == tostring(id) then
+            Options.selectedAlert = nil
+        end
+    end
     
     local ok, alertID, status
     if Options.currentCategory == 1 or Options.currentCategory == 2 then
@@ -1810,8 +1978,7 @@ local function createFrame()
     createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -162, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除光環")
     createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 180, -162, nil, "技能冷卻完畢且可用時，圖示外框發出流光動畫提示", "可用時高亮技能冷卻")
 
-    createCheckbox(inner, localized("EAM_OPT_COOLDOWN_PRERENDER", "冷卻預渲染佔位 (未使用灰色遮罩)"), "cooldownPreRender", 12, -186, nil, localized("EAM_OPT_COOLDOWN_PRERENDER_TIP", "在脫戰狀態下預先建立並排列冷卻圖示槽位。尚未進入冷卻的技能以暗色灰階圖示佔位顯示，徹底解決戰鬥中首次施放因戰鬥鎖定無法排版渲染的問題。"), "冷卻預渲染佔位")
-    createCheckbox(inner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 180, -186, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
+    createCheckbox(inner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 12, -186, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
 
     -- 11 個主要功能大按鈕（職業資源第 7 項、角色屬性第 8 項、群組管理第 9 項、全量法術庫第 10 項、排版第 11 項）
     local categories = {
@@ -1848,6 +2015,7 @@ local function createFrame()
             if idx <= 6 then
                 Options.closeAllSidePanels("list")
                 Options.currentCategory = idx
+                Options.selectedAlert = nil
                 Options.listFrame:Show()
                 if Options.listTitleText then
                     bindText(Options.listTitleText, category.key, category.fallback)
@@ -2534,6 +2702,63 @@ local function createFrame()
     Options.specDropdown = specDropdown
     Options.refreshSpecDropdown()
 
+    -- 每列欄數 (Columns per Row) 滑桿
+    local columnsSlider = api.CreateFrame("Slider", nil, listInner, "OptionsSliderTemplate")
+    columnsSlider:SetSize(168, 16)
+    columnsSlider:SetPoint("TOPLEFT", listInner, "TOPLEFT", 180, -44)
+    columnsSlider:SetMinMaxValues(1, 20)
+    columnsSlider:SetValueStep(1)
+    columnsSlider:SetObeyStepOnDrag(true)
+
+    if columnsSlider.Low then columnsSlider.Low:SetText("") end
+    if columnsSlider.High then columnsSlider.High:SetText("") end
+    if columnsSlider.Text then columnsSlider.Text:SetText("") end
+
+    local colLabel = columnsSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    colLabel:SetPoint("BOTTOMLEFT", columnsSlider, "TOPLEFT", 0, 3)
+    bindText(colLabel, "EAM_OPT_COLUMNS", "每列欄數")
+
+    local colValText = columnsSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colValText:SetPoint("BOTTOMRIGHT", columnsSlider, "TOPRIGHT", 0, 3)
+
+    setTooltip(columnsSlider, "EAM_OPT_COLUMNS_TIP", "EAM_OPT_COLUMNS")
+
+    columnsSlider:SetScript("OnValueChanged", function(self, val)
+        val = mathFloor(val + 0.5)
+        if val < 1 then val = 1 elseif val > 20 then val = 20 end
+        if Options.columnsValText then
+            Options.columnsValText:SetText(tostring(val))
+        end
+        if self.isRefreshing then return end
+
+        local frameName = self.currentFrameName
+        if not frameName then return end
+
+        if EAM.db and EAM.db.layout then
+            if not EAM.db.layout.frames then EAM.db.layout.frames = {} end
+            if not EAM.db.layout.frames[frameName] then EAM.db.layout.frames[frameName] = {} end
+            if EAM.db.layout.frames[frameName].columns ~= val then
+                EAM.db.layout.frames[frameName].columns = val
+                if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+                    EAM.Modules.SavedVariables.markRevisionChanged()
+                end
+                if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
+                    EAM.UI.Renderer.requestLayout(frameName)
+                end
+            end
+        end
+    end)
+
+    columnsSlider:SetScript("OnShow", function()
+        if Options.refreshColumnsControl then
+            Options.refreshColumnsControl()
+        end
+    end)
+
+    Options.columnsSlider = columnsSlider
+    Options.columnsValText = colValText
+    Options.refreshColumnsControl()
+
     local specMenu = api.CreateFrame("Frame", nil, listInner, "BackdropTemplate")
     specMenu:SetFrameStrata("DIALOG")
     specMenu:SetBackdrop({
@@ -2648,7 +2873,26 @@ local function createFrame()
     view:SetElementExtent(32)
     view:SetElementInitializer("Frame", function(itemFrame, data)
         itemFrame:SetSize(340, 32)
+        itemFrame.data = data
         
+        local function updateRowHighlight(isHovered)
+            local isSelected = isAlertSelected(itemFrame.data)
+            if isSelected then
+                if isHovered then
+                    itemFrame.bg:SetColorTexture(0.22, 0.52, 0.90, 0.38)
+                else
+                    itemFrame.bg:SetColorTexture(0.18, 0.45, 0.80, 0.28)
+                end
+            else
+                if isHovered then
+                    itemFrame.bg:SetColorTexture(1, 1, 1, 0.08)
+                else
+                    itemFrame.bg:SetColorTexture(1, 1, 1, 0.02)
+                end
+            end
+        end
+        itemFrame.updateHighlight = updateRowHighlight
+
         if not itemFrame.initialized then
             itemFrame.initialized = true
             
@@ -2670,7 +2914,7 @@ local function createFrame()
             -- Spell Name Text
             itemFrame.nameText = itemFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             itemFrame.nameText:SetPoint("LEFT", itemFrame.checkbox, "RIGHT", 6, 0)
-            itemFrame.nameText:SetWidth(125)
+            itemFrame.nameText:SetWidth(105)
             itemFrame.nameText:SetJustifyH("LEFT")
             
             -- Spell ID Text
@@ -2740,8 +2984,37 @@ local function createFrame()
             itemFrame.upBtn:SetScript("OnLeave", function(self)
                 upText:SetTextColor(0.7, 0.8, 0.9, 1.0)
             end)
+
+            -- Location Order Input Box (自然數排序輸入/顯示框)
+            local orderBox = api.CreateFrame("EditBox", nil, itemFrame)
+            orderBox:SetSize(24, 18)
+            orderBox:SetPoint("RIGHT", itemFrame.upBtn, "LEFT", -4, 0)
+            orderBox:SetAutoFocus(false)
+            orderBox:SetNumeric(true)
+            orderBox:SetMaxLetters(3)
+            orderBox:SetFontObject("GameFontHighlightSmall")
+            orderBox:SetJustifyH("CENTER")
+            
+            local obBg = orderBox:CreateTexture(nil, "BACKGROUND")
+            obBg:SetAllPoints(orderBox)
+            obBg:SetColorTexture(0.12, 0.14, 0.18, 0.7)
+            orderBox.bg = obBg
+
+            orderBox:SetScript("OnEditFocusGained", function(self)
+                obBg:SetColorTexture(0.2, 0.45, 0.7, 0.9)
+                self:HighlightText()
+            end)
+            orderBox:SetScript("OnEditFocusLost", function(self)
+                obBg:SetColorTexture(0.12, 0.14, 0.18, 0.7)
+                self:HighlightText(0, 0)
+            end)
+            
+            setTooltip(orderBox, EAM.L.EAM_OPT_LOCATION_ORDER_TIP or "在畫面排版中的順序槽位（唯一自然數 1..N）。可透過上下箭頭調整，或直接輸入數字修改。", EAM.L.EAM_OPT_LOCATION_ORDER or "排序位置")
+            itemFrame.orderBox = orderBox
         end
         
+        updateRowHighlight(false)
+
         -- 取得圖示
         local texture
         if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
@@ -2756,6 +3029,12 @@ local function createFrame()
         setTooltip(itemFrame.checkbox, "勾選以啟用此項目在畫面上的告警提示", "啟用/停用")
         itemFrame.checkbox:SetScript("OnClick", function(self)
             data.enabled = self:GetChecked()
+            Options.selectedAlert = data
+            if Options.scrollBox and Options.scrollBox.ForEachFrame then
+                Options.scrollBox:ForEachFrame(function(f)
+                    if f.updateHighlight then f:updateHighlight(false) end
+                end)
+            end
             Options.notifyConfigChanged()
             
             local idVal = data.spellID or data.itemID
@@ -2777,6 +3056,22 @@ local function createFrame()
         -- ID
         local showID = data.spellID or data.itemID or 0
         itemFrame.idText:SetText("[" .. showID .. "]")
+
+        -- Location Order
+        itemFrame.orderBox:SetText(tostring(data.order or 1))
+        itemFrame.orderBox:SetScript("OnEnterPressed", function(self)
+            local num = tonumber(self:GetText())
+            if num and num > 0 then
+                repositionAlertOrder(data, num)
+            else
+                self:SetText(tostring(data.order or 1))
+            end
+            self:ClearFocus()
+        end)
+        itemFrame.orderBox:SetScript("OnEscapePressed", function(self)
+            self:SetText(tostring(data.order or 1))
+            self:ClearFocus()
+        end)
         
         -- Del click
         itemFrame.delBtn:SetScript("OnClick", function()
@@ -2788,6 +3083,12 @@ local function createFrame()
 
         -- Gear click
         itemFrame.gearBtn:SetScript("OnClick", function()
+            Options.selectedAlert = data
+            if Options.scrollBox and Options.scrollBox.ForEachFrame then
+                Options.scrollBox:ForEachFrame(function(f)
+                    if f.updateHighlight then f:updateHighlight(false) end
+                end)
+            end
             Options.openConditionsFrame(data)
         end)
 
@@ -2817,8 +3118,14 @@ local function createFrame()
             end
         end)
         
-        -- Click row item to auto-populate Spell ID
+        -- Click row item to auto-populate Spell ID and set selected
         itemFrame:SetScript("OnMouseDown", function()
+            Options.selectedAlert = data
+            if Options.scrollBox and Options.scrollBox.ForEachFrame then
+                Options.scrollBox:ForEachFrame(function(f)
+                    if f.updateHighlight then f:updateHighlight(false) end
+                end)
+            end
             local idVal = data.spellID or data.itemID
             if idVal and Options.addEditBox then
                 Options.addEditBox:SetText(tostring(idVal))
@@ -2827,7 +3134,11 @@ local function createFrame()
 
         -- Tooltip Hover
         itemFrame:SetScript("OnEnter", function(self)
-            itemFrame.bg:SetColorTexture(1, 1, 1, 0.08)
+            if self.updateHighlight then
+                self:updateHighlight(true)
+            else
+                itemFrame.bg:SetColorTexture(1, 1, 1, 0.08)
+            end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
                 GameTooltip:SetItemByID(data.itemID)
@@ -2836,8 +3147,12 @@ local function createFrame()
             end
             GameTooltip:Show()
         end)
-        itemFrame:SetScript("OnLeave", function()
-            itemFrame.bg:SetColorTexture(1, 1, 1, 0.02)
+        itemFrame:SetScript("OnLeave", function(self)
+            if self.updateHighlight then
+                self:updateHighlight(false)
+            else
+                itemFrame.bg:SetColorTexture(1, 1, 1, 0.02)
+            end
             GameTooltip:Hide()
         end)
     end)
@@ -3457,12 +3772,16 @@ local function createFrame()
             160,
             26,
             function(self)
-                if self.eamValue == nil then
-                    self.eamValue = true
-                elseif self.eamValue == true then
-                    self.eamValue = false
+                if definition.isBinary then
+                    self.eamValue = not (self.eamValue == true)
                 else
-                    self.eamValue = nil
+                    if self.eamValue == nil then
+                        self.eamValue = true
+                    elseif self.eamValue == true then
+                        self.eamValue = false
+                    else
+                        self.eamValue = nil
+                    end
                 end
                 Options.refreshCooldownBehaviorControls()
             end,
@@ -4001,7 +4320,11 @@ function Options.openConditionsFrame(data)
             local definition = COOLDOWN_BEHAVIOR_OPTIONS[index]
             local button = cf.cooldownBehaviorButtons[definition.field]
             if isSpellCooldown then
-                button.eamValue = data[definition.field]
+                if definition.isBinary then
+                    button.eamValue = (data[definition.field] == true)
+                else
+                    button.eamValue = data[definition.field]
+                end
                 button:Show()
             else
                 button.eamValue = nil

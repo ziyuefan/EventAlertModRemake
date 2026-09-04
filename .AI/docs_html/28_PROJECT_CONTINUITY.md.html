@@ -513,8 +513,51 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-08-24.15 (Alpha 8.2)。</p>
-<h2 id="2026-08-27-alpha-82-libsharedmedia-30">2026-08-27 Alpha 8.2 LibSharedMedia-3.0 素材生態全面整合、字型熱套用與捲動選單快照（現行）</h2>
+<p>目前快照版本：2026-09-04.17 (Alpha 8.4 發布儲存點 / 全目錄 HTML 治理清單 / GitHub Pre-Release 與 CurseForge 準備)。</p>
+<h2 id="2026-09-04-alpha-84-pre-release-curseforge">2026-09-04 多進度儲存點：Alpha 8.4 Pre-release 與 CurseForge 發布續接狀態（現行儲存點）</h2>
+<ul>
+<li>current-of-truth：建立多進度續接儲存點（Checkpoint）；全專案所有檔案變更、語法檢查、業務沙盒與代碼契約檢驗（497/497 PASS）全數完成；全專案 115 個目錄與 1480 個檔案之 <code>FOLDER_INDEX.html</code> 已建置完畢；此存檔點用於防範模型配額中斷或重啟時能無縫接續進行 GitHub Pre-release 與 CurseForge 上傳作業。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
+<li>[x] 【Alpha 8.4 版本全要素梳理完成】：整理 GitHub tag <code>alpha-8.3</code> (commit 517fb81, 2026.08.28) 之後全部變更（2D Grid 換行排版、冷卻戰鬥透明度常駐、跑速戰鬥限制防護、人物屬性戰鬥更新、滾動選取高亮），更新 4 份 changelog、4 份 README、TOC 與 AI 日誌。</li>
+<li>[x] 【跑速戰鬥中顯示 14.3% 根因排查與修復完成】：暴雪 12.0.5+ 戰鬥中 <code>GetUnitSpeed("player")</code> 受限回傳 1.0 導致 <code>(1.0/7.0)*100 = 14.3%</code>。於 <code>PlayerStatService.lua</code> 實作受限檢測與真實快取 <code>lastKnownStats</code> 安全回退，且戰鬥中禁止以受限值覆蓋快取。</li>
+<li>[x] 【全資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完成】：實作 <code>.AI/Tools/generate_folder_indexes.py</code>，全離線深色玻璃擬態 UI，內嵌 JSON-LD (<code>DirectoryGovernanceReport</code>) 與 meta 標籤，涵蓋 115 個工作目錄、1480 個檔案，附即時檢索篩選器，<code>--verify</code> 100% 通過。</li>
+<li>[x] 【自動化質量門禁全綠通過】：Lua 語法 76/76 PASS、Flow 業務狀態機 85/85 PASS、Validation Contracts 497/497 PASS。</li>
+<li>[-&gt;] 【進行中：更新 GitHub 文檔與發布 Alpha 8.4 Pre-release】：重新編譯 <code>batch_convert_docs.py</code>，執行 Git 提交與分支推送，呼叫 <code>Deploy/Publish-GitHubRelease.ps1 -Tag "alpha-8.4" -Title "Retail 12.1 Alpha 8.4" -Prerelease</code>。</li>
+<li>[ ] 【接續項目：發布至 CurseForge】：呼叫 <code>Deploy/Upload-CurseForge.ps1 -ReleaseType alpha -NonInteractive</code> 完成 CurseForge 發布。</li>
+</ul>
+<h2 id="2026-09-04-retail-1210-alpha-84-2d">2026-09-04 Retail 12.1.0 Alpha 8.4 2D 矩陣折行排版、預渲染戰鬥透明度切換與跑速防護</h2>
+<ul>
+<li>current-of-truth：專案進入 Alpha 8.4 發布階段；全面升級 2D Grid 矩陣折行排版引擎，支援清單頂部每列欄數 (Columns) 控制滑桿（1~20，預設 8）；實作技能冷卻預渲染隨戰鬥隱藏純透明度切換 (Alpha=0/1) 與 Frame 常駐；修復暴雪 12.x 戰鬥中 <code>GetUnitSpeed</code> 限制回傳 1.0 導致 14.3% 跑速問題，自動回退真實有效快取；全套自動化測試全綠通過：Lua 76/76、Flow 85/85、Contracts 497/497。</li>
+<li>核心實作亮點：</li>
+<li>2D 矩陣折行排版引擎 (<code>Renderer.lua</code>)：支援 4 大主要成長方向折行計算，清單頂部增設滑桿即時自適應父容器尺寸與圖示排列。</li>
+<li>預渲染冷卻隨戰鬥隱藏純透明度切換 (<code>CooldownService.lua</code> / <code>Renderer.lua</code>)：尊重 <code>showSCDOutsideCombat</code> 設定，非戰鬥隱藏僅調整 <code>SetAlpha(0)</code>，保留 Frame 與排版 order 槽位常駐，杜絕戰鬥中 Frame 創建限制與 Taint。</li>
+<li>戰鬥跑速限制回退防護 (<code>PlayerStatService.lua</code>)：防禦暴雪 Retail 12.x 戰鬥中 <code>GetUnitSpeed</code> 受限回傳 1.0 被傳統公式算出 14.3% 的問題，戰鬥中自動安全回退至脫戰真實記憶快取 <code>lastKnownStats["runSpeed"]</code>。</li>
+<li>清單視窗平滑滾動跟隨與高亮：點擊 ▲/▼ 或項目時卷軸平滑滾動跟隨選定技能並呈現湛藍選定背景高亮。</li>
+<li>
+<p>契約與狀態機測試全面擴充：Flow 業務狀態機增至 85 項，代碼契約擴充至 497 項。</p>
+</li>
+<li>
+<p>current-of-truth：渲染器 (<code>Renderer.lua</code>) 全面升級 2D Grid 排版引擎，監控清單視窗頂部增設每列欄數控制滑桿（1~20，預設 8），支援多框架獨立折行與動態父容器尺寸自適應。SavedVariables 與 ProfileCodec 完整支援向後相容。全套驗證通過：Lua 76/76、Flow 84/84、Contracts 496/496。</p>
+</li>
+<li>核心實作亮點：</li>
+<li>2D 矩陣折行引擎：<code>col = itemIdx % maxCols</code>、<code>row = math.floor(itemIdx / maxCols)</code>，精確支援 4 大成長方向（RIGHT/LEFT 橫向滿欄向下折行、UP/DOWN 縱向滿列向右開行）。</li>
+<li>清單視窗控制項：<code>Options.columnsSlider</code> 位於 <code>specDropdown</code> 右側（X = 180, Y = -44），支援 1~20 滑桿與即時數值同步，非圖示框架自動隱藏。</li>
+<li>零延遲即時重繪：滑桿拖曳即時觸發 <code>Renderer.requestLayout(frameName)</code>，父框架尺寸動態適配所有折行圖示包覆區域。</li>
+<li>多語系完整覆蓋：5 語系字典同步更新 <code>EAM_OPT_COLUMNS</code> 與 <code>EAM_OPT_COLUMNS_TIP</code>。</li>
+</ul>
+<h2 id="2026-09-04-ai-xml">2026-09-04 AI 代理人專用結構化 XML 指導規範建置與決策體系確立</h2>
+<ul>
+<li>current-of-truth：專案正式確立雙軌治理體系（Markdown 人類閱讀軌 + XML AI 代理人結構化軌）。實體結構化指引落盤於 <code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code>，配套指引手冊為 <code>Docs/33_AI_GOVERNANCE_DIRECTIVE.md</code>。</li>
+<li>專用 XML 核心定位：</li>
+<li>非插件前端 FrameXML，不參與遊戲 UI 繪製、不進 TOC，專供 LLM / Subagents 提示詞注入與邊界約束。</li>
+<li>結構化涵蓋 8 大節點：元資料、何時增設決策、5 大鐵律、Secret 哨兵、模組架構、熱路徑指南、測試門禁與對話協議。</li>
+<li>裁定何時增設/加載之四大門檻（C1~C4）：</li>
+<li>模型版本切換 / 歷程截斷時強制加載。</li>
+<li><code>invoke_subagent</code> 派工時動態切片注入。</li>
+<li>重大核心模組重構時結構化擴充契約。</li>
+<li>暴雪 API 變更引發 Taint 事故時追加操作黑名單。</li>
+</ul>
+<h2 id="2026-08-27-alpha-82-libsharedmedia-30">2026-08-27 Alpha 8.2 LibSharedMedia-3.0 素材生態全面整合、字型熱套用與捲動選單快照</h2>
 <ul>
 <li>current-of-truth：專案進入 Alpha 8.2 發布階段；全面接入 LibSharedMedia-3.0 (SharedMedia) 素材生態，支援動態探測與第三方音效/字型讀取，修復字型修改免 <code>/reload</code> 即時生效，實作 UI 下拉選單自適應捲動容器，完成 71/71 語法、84/84 Flow 驗證與 493/493 契約測試。</li>
 <li>LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合：</li>

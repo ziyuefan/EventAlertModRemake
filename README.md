@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.3-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.4-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -150,6 +150,16 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+
+### 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.30
+- **技能冷卻清單 Location Order 排序與單一法術獨立預佔位 (Cooldown Location Order & Per-Spell Pre-render Placeholders)**：
+  - **技能冷卻排序位置 (Location Order)**：清單每一列新增 Location Order 數字輸入框，顯示在畫面排版中的唯一自然數槽位 (1..N)。支援點擊 `▲`/`▼` 上下調換、拖曳排序或直接輸入數字快速跳轉，順位自動連續校正。
+  - **嚴格禁止未啟用項目預先佔位**：未啟用 (`enabled == false`) 的技能冷卻項目徹底杜絕建立預渲染圖示或佔位顯示，完全不佔用畫面槽位與系統資源。
+  - **單一法術獨立預先佔位開關**：取消全域 Global 級開關，改由各技能在細部條件設定中獨立開啟/關閉預先佔位 (未冷卻時灰階待命，施法冷卻即亮起)，預設為關閉。
+  - **清單視窗滾動緊密跟隨與選定高亮 (Scroll Tracking & Selection Highlight)**：調換順位或點擊項目時，卷軸視窗平滑滾動並緊密跟隨目標技能，並呈現湛藍選定背景高亮，徹底避免操作時視窗重置至頂部或失焦。
+- **角色屬性戰鬥即時更新與 C-Level 零 GC 渲染 (FontString:SetFormattedText & In-Combat Stat Updates)**：
+  - 全面採用暴雪原生 `FontString:SetFormattedText` 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。
+  - 補齊全 18 大屬性之 `getRawValue` 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 `AllowedWhenTainted` 與 `Enum.SecretAspect.Text` 規範，修復戰鬥中屬性凍結問題。
 
 ### 🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27
 - **LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)**：

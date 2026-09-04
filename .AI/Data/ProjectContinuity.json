@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-08-24.15",
-  "updatedAt": "2026-08-24",
+  "snapshotVersion": "2026-09-04.17",
+  "updatedAt": "2026-09-04",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "完成 Retail 12.1 Alpha 7.4 的充能分段環、DK 六槽符文事件更新、地面效果 Base/Override 法術族群觸發、文件、套件與 GitHub prerelease；離線通過不得冒充 Retail／PTR／XPTR 實機簽收，實際部署仍須先通知並由玩家操作。",
+    "objective": "完成 Retail 12.1 Alpha 8.4 的 2D 矩陣折行排版、冷卻預渲染隨戰鬥透明度隱藏、戰鬥中跑速回退防護、全專案 115 個資料夾 HTML 說明清單架構建置；儲存多進度續接點，準備發布 GitHub Alpha 8.4 Pre-Release 與 CurseForge。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 82,
-      "passed": 82,
+      "total": 85,
+      "passed": 85,
       "failed": 0,
       "skipped": 0,
       "pending": 0

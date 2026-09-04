@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>參考架構：Main - 目錄導覽與檔案說明清單 | EventAlertMod Remake</title>
+  
+  <!-- AI Governance Metadata -->
+  <meta name="ai-governance-role" content="Reference Code / Archive">
+  <meta name="ai-governance-layer" content="Reference Layer">
+  <meta name="ai-governance-security" content="Read-Only Archive">
+  <meta name="ai-governance-invariants" content="僅供比對與研讀，禁止直接在現代正式服中引發調用">
+  <meta name="ai-scan-timestamp" content="2026-09-04T18:02:02.677634+08:00">
+  <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
+
+  <!-- JSON-LD Structured Data for AI Agents / RAG -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DirectoryGovernanceReport",
+  "directoryPath": ".AI/LegacyReference/Main",
+  "name": "參考架構：Main",
+  "layer": "Reference Layer",
+  "role": "Reference Code / Archive",
+  "securityLevel": "Read-Only Archive",
+  "summary": "保存 Main 之歷史代碼或外部參考依賴。",
+  "invariants": [
+    "僅供比對與研讀，禁止直接在現代正式服中引發調用"
+  ],
+  "timestamp": "2026-09-04T18:02:02.677634+08:00",
+  "fileCount": 33,
+  "subdirectoryCount": 1,
+  "totalSizeBytes": 1234181,
+  "files": [
+    {
+      "name": "EventAlertMod.xml",
+      "extension": ".xml",
+      "sizeBytes": 4454,
+      "lineCount": 164,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_API.lua",
+      "extension": ".lua",
+      "sizeBytes": 5274,
+      "lineCount": 134,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_Animation.lua",
+      "extension": ".lua",
+      "sizeBytes": 3412,
+      "lineCount": 118,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_Aura.7z",
+      "extension": ".7z",
+      "sizeBytes": 9750,
+      "lineCount": 0,
+      "purpose": "專案輔助檔案 (.7z)",
+      "role": "Auxiliary File",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_Aura_Core.lua",
+      "extension": ".lua",
+      "sizeBytes": 8139,
+      "lineCount": 208,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_Aura_Self.lua",
+      "extension": ".lua",
+      "sizeBytes": 31118,
+      "lineCount": 854,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_Aura_Target.lua",
+      "extension": ".lua",
+      "sizeBytes": 27303,
+      "lineCount": 703,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_ClassAlerts.xml",
+      "extension": ".xml",
+      "sizeBytes": 17662,
+      "lineCount": 613,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_Cooldown.7z",
+      "extension": ".7z",
+      "sizeBytes": 10447,
+      "lineCount": 0,
+      "purpose": "專案輔助檔案 (.7z)",
+      "role": "Auxiliary File",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_Cooldown.lua",
+      "extension": ".lua",
+      "sizeBytes": 24418,
+      "lineCount": 664,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_Core.lua",
+      "extension": ".lua",
+      "sizeBytes": 58464,
+      "lineCount": 1600,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_CreateFrames.lua",
+      "extension": ".lua",
+      "sizeBytes": 74418,
+      "lineCount": 1781,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_EAFun.lua",
+      "extension": ".lua",
+      "sizeBytes": 44389,
+      "lineCount": 1168,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_GroupAlerts.xml",
+      "extension": ".xml",
+      "sizeBytes": 8413,
+      "lineCount": 292,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_GroupEvent.lua",
+      "extension": ".lua",
+      "sizeBytes": 16529,
+      "lineCount": 408,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_IconOptions.lua",
+      "extension": ".lua",
+      "sizeBytes": 26403,
+      "lineCount": 612,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_IconOptions.xml",
+      "extension": ".xml",
+      "sizeBytes": 35458,
+      "lineCount": 1189,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_ImportExport.lua",
+      "extension": ".lua",
+      "sizeBytes": 13887,
+      "lineCount": 389,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_InitVar.lua",
+      "extension": ".lua",
+      "sizeBytes": 5469,
+      "lineCount": 196,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_InitVar_DK.lua",
+      "extension": ".lua",
+      "sizeBytes": 6445,
+      "lineCount": 165,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_ItemSpellCache.lua",
+      "extension": ".lua",
+      "sizeBytes": 10863,
+      "lineCount": 323,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_LoadDefault.lua",
+      "extension": ".lua",
+      "sizeBytes": 2034,
+      "lineCount": 64,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_Options.lua",
+      "extension": ".lua",
+      "sizeBytes": 95343,
+      "lineCount": 1960,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_Options.xml",
+      "extension": ".xml",
+      "sizeBytes": 60411,
+      "lineCount": 2071,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_OtherAlerts.xml",
+      "extension": ".xml",
+      "sizeBytes": 9138,
+      "lineCount": 317,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_SCDAlerts.xml",
+      "extension": ".xml",
+      "sizeBytes": 9140,
+      "lineCount": 317,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_SlashCommand.lua",
+      "extension": ".lua",
+      "sizeBytes": 14864,
+      "lineCount": 464,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_SpecialPower.lua",
+      "extension": ".lua",
+      "sizeBytes": 46889,
+      "lineCount": 1301,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_SpellArray - Ã¯Â¿Â½ÃÂ»s.lua",
+      "extension": ".lua",
+      "sizeBytes": 84284,
+      "lineCount": 2581,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_SpellArray.lua",
+      "extension": ".lua",
+      "sizeBytes": 109089,
+      "lineCount": 3003,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_SpellItem.lua",
+      "extension": ".lua",
+      "sizeBytes": 328598,
+      "lineCount": 15346,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "EventAlert_TargetAlerts.xml",
+      "extension": ".xml",
+      "sizeBytes": 9970,
+      "lineCount": 345,
+      "purpose": "XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。",
+      "role": "Module / Asset",
+      "security": "Safe"
+    },
+    {
+      "name": "EventAlert_Util.lua",
+      "extension": ".lua",
+      "sizeBytes": 21706,
+      "lineCount": 599,
+      "purpose": "保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。",
+      "role": "Module / Asset",
+      "security": "Taint-Sensitive"
+    }
+  ],
+  "subdirectories": [
+    {
+      "name": "EventAlert_SpellArray",
+      "path": "./EventAlert_SpellArray/",
+      "role": "Reference Code / Archive",
+      "summary": "保存 EventAlert_SpellArray 之歷史代碼或外部參考依賴。"
+    }
+  ]
+}
+  </script>
+
+  <style>
+    :root {
+      --bg-base: #0a0e17;
+      --bg-surface: rgba(17, 24, 39, 0.75);
+      --bg-surface-hover: rgba(30, 41, 59, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #00f0ff;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-cyan: #00f0ff;
+      --accent-gold: #ffd700;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      --font-mono: "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* 頂部導航與麵包屑 */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .breadcrumbs a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .breadcrumbs a:hover {
+      text-decoration: underline;
+      filter: drop-shadow(0 0 6px var(--accent-cyan));
+    }
+
+    .breadcrumbs .separator {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .breadcrumbs .current {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Hero Header */
+    .header-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-gold));
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .header-title-row h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+    }
+
+    .badge-layer {
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-role {
+      background: rgba(0, 240, 255, 0.15);
+      color: #67e8f9;
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+
+    .header-desc {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+
+    /* 統計列 */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    /* AI 治理卡片 */
+    .governance-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .governance-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.15rem;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .governance-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .governance-list li {
+      position: relative;
+      padding-left: 24px;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .governance-list li::before {
+      content: "🛡️";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 0.85rem;
+    }
+
+    /* 搜尋與過濾工具列 */
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      width: 100%;
+      max-width: 360px;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+    }
+
+    /* 子目錄列表 (Cards) */
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 28px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .subdirs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .subdir-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .subdir-card:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.12);
+    }
+
+    .subdir-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .subdir-icon {
+      font-size: 1.3rem;
+    }
+
+    .subdir-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .subdir-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .subdir-meta {
+      font-size: 0.8rem;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 8px;
+    }
+
+    /* 檔案表格 */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .files-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .files-table th {
+      background: rgba(15, 23, 42, 0.9);
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .files-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.92rem;
+      vertical-align: middle;
+    }
+
+    .files-table tr:hover td {
+      background: var(--bg-surface-hover);
+    }
+
+    .file-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .file-name-cell a {
+      color: var(--text-main);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .file-name-cell a:hover {
+      color: var(--accent-cyan);
+    }
+
+    /* 類型徽章 */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+    }
+
+    .badge-lua { background: #002b5c; color: #60a5fa; border: 1px solid #1e40af; }
+    .badge-xml { background: #4a1d96; color: #c084fc; border: 1px solid #6b21a8; }
+    .badge-toc { background: #701a75; color: #f472b6; border: 1px solid #86198f; }
+    .badge-doc { background: #064e3b; color: #34d399; border: 1px solid #047857; }
+    .badge-data { background: #78350f; color: #fbbf24; border: 1px solid #b45309; }
+    .badge-script { background: #1e3a8a; color: #93c5fd; border: 1px solid #2563eb; }
+    .badge-tool { background: #14532d; color: #86efac; border: 1px solid #15803d; }
+    .badge-secret { background: #881337; color: #fda4af; border: 1px solid #be123c; }
+    .badge-media { background: #374151; color: #e5e7eb; border: 1px solid #4b5563; }
+    .badge-svg { background: #831843; color: #f43f5e; border: 1px solid #be185d; }
+    .badge-audio { background: #134e4a; color: #2dd4bf; border: 1px solid #0f766e; }
+    .badge-html { background: #7c2d12; color: #fb923c; border: 1px solid #c2410c; }
+    .badge-text { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
+    .badge-other { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+    /* 安全防護評級標籤 */
+    .sec-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .sec-taint { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .sec-hotpath { background: rgba(0, 240, 255, 0.15); color: #67e8f9; border: 1px solid rgba(0, 240, 255, 0.3); }
+    .sec-vault { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .sec-tool { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .sec-safe { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    /* 頁尾 */
+    .footer {
+      text-align: center;
+      padding: 32px 0 16px 0;
+      font-size: 0.85rem;
+      color: #64748b;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 16px 12px; }
+      .header-card { padding: 20px; }
+      .header-title-row h1 { font-size: 1.4rem; }
+      .files-table th:nth-child(4),
+      .files-table td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 頂部導航列與 Breadcrumbs -->
+    <nav class="nav-bar">
+      <div class="breadcrumbs">
+        <a href="../../../FOLDER_INDEX.html">🏠 Root</a><span class="separator">/</span><a href="../../FOLDER_INDEX.html">.AI</a><span class="separator">/</span><a href="../FOLDER_INDEX.html">LegacyReference</a><span class="separator">/</span><span class="current">Main</span>
+      </div>
+      <div>
+        <a href="../../../FOLDER_INDEX.html" style="font-size:0.85rem; color:var(--accent-cyan); text-decoration:none;">🏠 根目錄總覽</a>
+      </div>
+    </nav>
+
+    <!-- 主資訊卡片 (Hero) -->
+    <header class="header-card">
+      <div class="header-title-row">
+        <h1>📁 參考架構：Main</h1>
+        <div class="header-badges">
+          <span class="badge-pill badge-layer">Reference Layer</span>
+          <span class="badge-pill badge-role">Reference Code / Archive</span>
+        </div>
+      </div>
+      <p class="header-desc">保存 Main 之歷史代碼或外部參考依賴。</p>
+      
+      <!-- 統計數據 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-label">目錄路徑</span>
+          <span class="stat-val" style="font-size: 0.95rem; word-break: break-all;">.AI/LegacyReference/Main</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">檔案數量</span>
+          <span class="stat-val">33</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">子目錄數量</span>
+          <span class="stat-val">1</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">總容量</span>
+          <span class="stat-val">1.18 MB</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">安全防護層級</span>
+          <span class="stat-val" style="font-size: 0.95rem;">Read-Only Archive</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- AI 治理規範卡片 -->
+    <section class="governance-card" aria-label="AI Governance Summary">
+      <h3>🤖 AI 治理指引與架構不變量 (Governance Invariants)</h3>
+      <ul class="governance-list">
+        <li>僅供比對與研讀，禁止直接在現代正式服中引發調用</li>
+      </ul>
+    </section>
+
+    <!-- 子目錄列表 (若有) -->
+    
+        <section>
+          <h2 class="section-title">📂 子目錄 (1)</h2>
+          <div class="subdirs-grid">
+            
+        <a href="./EventAlert_SpellArray/FOLDER_INDEX.html" class="subdir-card">
+          <div>
+            <div class="subdir-header">
+              <span class="subdir-icon">📁</span>
+              <span class="subdir-name">EventAlert_SpellArray</span>
+            </div>
+            <p class="subdir-desc">保存 EventAlert_SpellArray 之歷史代碼或外部參考依賴。</p>
+          </div>
+          <div class="subdir-meta">
+            <span>Reference Layer</span>
+            <span>1 個項目 →</span>
+          </div>
+        </a>
+        
+          </div>
+        </section>
+        
+
+    <!-- 檔案清單表格 -->
+    <section>
+      <div class="filter-toolbar">
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (33)</h2>
+        <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
+      </div>
+
+      <div class="table-container">
+        <table class="files-table" id="filesTable">
+          <thead>
+            <tr>
+              <th style="width: 28%;">檔案名稱</th>
+              <th style="width: 10%;">格式</th>
+              <th style="width: 38%;">職責與用途說明</th>
+              <th style="width: 14%;">安全/治理評級</th>
+              <th style="width: 10%; text-align: right;">大小 / 行數</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlertMod.xml" title="檢視檔案內容">EventAlertMod.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            4.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 164 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_API.lua" title="檢視檔案內容">EventAlert_API.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            5.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 134 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Animation.lua" title="檢視檔案內容">EventAlert_Animation.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            3.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 118 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Aura.7z" title="檢視檔案內容">EventAlert_Aura.7z</a>
+            </div>
+          </td>
+          <td><span class="badge badge-other">7Z</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">專案輔助檔案 (.7z)</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Auxiliary File</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            9.5 KB<span style="font-size: 0.78rem; color: #64748b;"></span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Aura_Core.lua" title="檢視檔案內容">EventAlert_Aura_Core.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            7.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 208 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Aura_Self.lua" title="檢視檔案內容">EventAlert_Aura_Self.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            30.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 854 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Aura_Target.lua" title="檢視檔案內容">EventAlert_Aura_Target.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            26.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 703 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_ClassAlerts.xml" title="檢視檔案內容">EventAlert_ClassAlerts.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            17.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 613 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Cooldown.7z" title="檢視檔案內容">EventAlert_Cooldown.7z</a>
+            </div>
+          </td>
+          <td><span class="badge badge-other">7Z</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">專案輔助檔案 (.7z)</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Auxiliary File</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            10.2 KB<span style="font-size: 0.78rem; color: #64748b;"></span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Cooldown.lua" title="檢視檔案內容">EventAlert_Cooldown.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            23.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 664 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Core.lua" title="檢視檔案內容">EventAlert_Core.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            57.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1600 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_CreateFrames.lua" title="檢視檔案內容">EventAlert_CreateFrames.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            72.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1781 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_EAFun.lua" title="檢視檔案內容">EventAlert_EAFun.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            43.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1168 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_GroupAlerts.xml" title="檢視檔案內容">EventAlert_GroupAlerts.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            8.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 292 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_GroupEvent.lua" title="檢視檔案內容">EventAlert_GroupEvent.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            16.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 408 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_IconOptions.lua" title="檢視檔案內容">EventAlert_IconOptions.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            25.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 612 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_IconOptions.xml" title="檢視檔案內容">EventAlert_IconOptions.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            34.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1189 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_ImportExport.lua" title="檢視檔案內容">EventAlert_ImportExport.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            13.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 389 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_InitVar.lua" title="檢視檔案內容">EventAlert_InitVar.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            5.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 196 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_InitVar_DK.lua" title="檢視檔案內容">EventAlert_InitVar_DK.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            6.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 165 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_ItemSpellCache.lua" title="檢視檔案內容">EventAlert_ItemSpellCache.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            10.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 323 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_LoadDefault.lua" title="檢視檔案內容">EventAlert_LoadDefault.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            2.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 64 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Options.lua" title="檢視檔案內容">EventAlert_Options.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            93.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1960 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Options.xml" title="檢視檔案內容">EventAlert_Options.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            59.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2071 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_OtherAlerts.xml" title="檢視檔案內容">EventAlert_OtherAlerts.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            8.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 317 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_SCDAlerts.xml" title="檢視檔案內容">EventAlert_SCDAlerts.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            8.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 317 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_SlashCommand.lua" title="檢視檔案內容">EventAlert_SlashCommand.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            14.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 464 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_SpecialPower.lua" title="檢視檔案內容">EventAlert_SpecialPower.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            45.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1301 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_SpellArray - Ã¯Â¿Â½ÃÂ»s.lua" title="檢視檔案內容">EventAlert_SpellArray - Ã¯Â¿Â½ÃÂ»s.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            82.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2581 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_SpellArray.lua" title="檢視檔案內容">EventAlert_SpellArray.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            106.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 3003 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_SpellItem.lua" title="檢視檔案內容">EventAlert_SpellItem.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            320.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 15346 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_TargetAlerts.xml" title="檢視檔案內容">EventAlert_TargetAlerts.xml</a>
+            </div>
+          </td>
+          <td><span class="badge badge-xml">XML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">XML 檔保留舊版 UI 行為與版面參考，供 Retail rewrite 對照。；新架構 UI 應優先轉入 UI/IconPool、UI/Renderer、UI/Options。 | 記錄舊版 XML template、frame 版面與使用者介面語意。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            9.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 345 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EventAlert_Util.lua" title="檢視檔案內容">EventAlert_Util.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留舊版 EAM 行為參考，供 Retail rewrite migration 對照。；此檔不屬正式載入路徑；重寫時只取行為語意，不沿用舊架構。 | 說明此檔案在目前架構中的責任、資料所有權與維護定位。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Module / Asset</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            21.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 599 行</span>
+          </td>
+        </tr>
+        
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 頁尾宣告 -->
+    <footer class="footer">
+      <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:02:02.677634+08:00</p>
+    </footer>
+  </div>
+
+  <script>
+    function filterFiles() {
+      const query = document.getElementById('fileFilter').value.toLowerCase();
+      const rows = document.querySelectorAll('#filesTable tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

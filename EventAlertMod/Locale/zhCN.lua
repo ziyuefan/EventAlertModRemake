@@ -1026,5 +1026,10 @@ L.EAM_OPT_MOVE_UP = "上移"
 L.EAM_OPT_MOVE_DOWN = "下移"
 L.EAM_OPT_ORDER_HINT = "点击 ▲/▼ 或拖曳可调整技能在画面上的显示顺位。"
 L.EAM_OPT_PRERENDER_PLACEHOLDER = "预渲染占位显示"
+L.EAM_OPT_LOCATION_ORDER = "排序位置"
+L.EAM_OPT_LOCATION_ORDER_TIP = "在画面排版中的顺序槽位（唯一自然数 1..N）。可通过上下箭头调整，或直接输入数字修改。"
+L.EAM_OPT_PRERENDER_PLACEHOLDER_TIP = "未进入冷却时在画面上以暗色灰阶图标占据此槽位。施法进入冷却瞬间切换为全彩正常倒数，免除战斗中首次排版延迟。"
+L.EAM_OPT_COLUMNS = "每列栏数"
+L.EAM_OPT_COLUMNS_TIP = "当图标数量超过此指定栏数时，自动折行至下一列继续排列。默认为 8。"
 
 end)

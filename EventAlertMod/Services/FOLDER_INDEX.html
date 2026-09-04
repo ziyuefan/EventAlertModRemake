@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>狀態追蹤與服務層 (Core Services) - 目錄導覽與檔案說明清單 | EventAlertMod Remake</title>
+  
+  <!-- AI Governance Metadata -->
+  <meta name="ai-governance-role" content="Data Polling, Event Interception &amp; Protected State Tracking">
+  <meta name="ai-governance-layer" content="Addon Service Layer">
+  <meta name="ai-governance-security" content="Taint-Sensitive / Combat Protection Gated">
+  <meta name="ai-governance-invariants" content="戰鬥中數值保護機制：戰鬥中 GetUnitSpeed 等受限 API 自動安全回退至真實脫戰記憶快取 (lastKnownStats) | 目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染 | 零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回">
+  <meta name="ai-scan-timestamp" content="2026-09-04T18:02:03.043129+08:00">
+  <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
+
+  <!-- JSON-LD Structured Data for AI Agents / RAG -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DirectoryGovernanceReport",
+  "directoryPath": "EventAlertMod/Services",
+  "name": "狀態追蹤與服務層 (Core Services)",
+  "layer": "Addon Service Layer",
+  "role": "Data Polling, Event Interception & Protected State Tracking",
+  "securityLevel": "Taint-Sensitive / Combat Protection Gated",
+  "summary": "託管玩家屬性服務 (PlayerStatService)、匿名目標光環探針 (TooltipMonitorService)、冷卻追蹤服務 (CooldownService) 與多媒體服務 (MediaService)。",
+  "invariants": [
+    "戰鬥中數值保護機制：戰鬥中 GetUnitSpeed 等受限 API 自動安全回退至真實脫戰記憶快取 (lastKnownStats)",
+    "目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染",
+    "零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回"
+  ],
+  "timestamp": "2026-09-04T18:02:03.043129+08:00",
+  "fileCount": 19,
+  "subdirectoryCount": 0,
+  "totalSizeBytes": 343916,
+  "files": [
+    {
+      "name": "AuraCapabilityService.lua",
+      "extension": ".lua",
+      "sizeBytes": 9799,
+      "lineCount": 229,
+      "purpose": "將 12.1 AuraContainer 能力探測與後端選擇集中管理。；Interface 只作初篩；真正啟用 Native 前仍需以實體 AuraContainer 驗證公開方法。 | 記錄客戶端 build、AuraContainer、AuraSlot、AuraGroup 與 AuraSound 能力。；12.1 探測失敗時選擇 Unsupported，禁止偷偷回退到 Secret AuraData 舊路徑。",
+      "role": "Services/AuraCapabilityService",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "AuraContainerService.lua",
+      "extension": ".lua",
+      "sizeBytes": 14247,
+      "lineCount": 366,
+      "purpose": "只在非戰鬥建立 player/target AuraContainer，套用 AuraSlot/AuraGroup 規則。；戰鬥中設定變更只記錄 pending，PLAYER_REGEN_ENABLED 後批次重建一次。",
+      "role": "Services/AuraContainerService",
+      "security": "Safe"
+    },
+    {
+      "name": "AuraService.lua",
+      "extension": ".lua",
+      "sizeBytes": 26572,
+      "lineCount": 748,
+      "purpose": "作為 player/target aura facts 的唯一 adapter，隔離 Retail aura API 與 UI 層。；採取極致健壯且低 GC 的直讀策略，避免過度包裝導致普通屬性被誤判定為 restricted。 | 接收 UNIT_AURA/target change 後更新 aura runtime cache。；在 timer 中寫入完整的 startTime、duration、expirationTime，對齊 Renderer 要求。",
+      "role": "Services/AuraService",
+      "security": "Zero-Alloc"
+    },
+    {
+      "name": "AuraSoundService.lua",
+      "extension": ".lua",
+      "sizeBytes": 7397,
+      "lineCount": 217,
+      "purpose": "依編譯後的普通設定值註冊與解除 12.1 C_UnitAuras Aura Sound。；精確管理 Added、ApplicationsIncreased、Removed 的註冊 ID 生命週期。",
+      "role": "Services/AuraSoundService",
+      "security": "Safe"
+    },
+    {
+      "name": "ClassPowerService.lua",
+      "extension": ".lua",
+      "sizeBytes": 644,
+      "lineCount": 20,
+      "purpose": "保留既有 ClassPowerService 名稱，轉接至多資源 PlayerResourceService。；讓 ModuleController、Main、Probe 與舊呼叫點無須同一版全面改名。",
+      "role": "Services/ClassPowerService",
+      "security": "Safe"
+    },
+    {
+      "name": "CooldownService.lua",
+      "extension": ".lua",
+      "sizeBytes": 40992,
+      "lineCount": 1100,
+      "purpose": "技能與物品冷卻追蹤服務，具備玩家精確施法過濾、三態設定與可用發光判定",
+      "role": "Service / Cooldown Tracker",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "GroundEffectService.lua",
+      "extension": ".lua",
+      "sizeBytes": 25607,
+      "lineCount": 675,
+      "purpose": "將 canonical SavedVariables 與安全 Base／Override 法術族群編譯成 event spellID 索引，監聽玩家成功施法並建立地面效果計時。；非戰鬥、低頻解析法術說明；解析失敗時明確降級到使用者設定秒數。",
+      "role": "Services/GroundEffectService",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "GroupService.lua",
+      "extension": ".lua",
+      "sizeBytes": 7214,
+      "lineCount": 241,
+      "purpose": "管理系統內建戰術群組與玩家自訂群組，提供 N:N 多對多法術標籤管理。；提供複合啟用狀態計算（Compound Active State），支援群組主開關與情境過濾。 | 維護群組定義清單（內建 + 自訂）。；提供群組 CRUD API 與 SavedVariables 雙向同步。",
+      "role": "Services/GroupService",
+      "security": "Zero-Alloc"
+    },
+    {
+      "name": "ItemCooldownService.lua",
+      "extension": ".lua",
+      "sizeBytes": 10363,
+      "lineCount": 313,
+      "purpose": "直接 itemID 監控歸此模組，不讓 item cooldown 邏輯散入 renderer。；採取極致健壯且低 GC 的直讀策略，避免過度安全檢查導致普通冷卻數據被誤攔截。 | 管理 item cooldown cache、ItemCooldownState 與 opt-in cache build 狀態。；接收 BAG_UPDATE_COOLDOWN 事件並刷新物品冷卻狀態。",
+      "role": "Services/ItemCooldownService",
+      "security": "Zero-Alloc"
+    },
+    {
+      "name": "LegacyDiscoveryService.lua",
+      "extension": ".lua",
+      "sizeBytes": 7092,
+      "lineCount": 209,
+      "purpose": "安全恢復經典 EAM 的 showcast、list 與 lookup 使用習慣。；只搜尋目前職業的有限候選，不掃描整個 SpellID 空間。 | 記錄本次登入後玩家成功施放且可安全讀取的 SpellID。；彙整目前職業設定、內建候選與 session cast，提供有限查詢。",
+      "role": "Services/LegacyDiscoveryService",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "MediaService.lua",
+      "extension": ".lua",
+      "sizeBytes": 11906,
+      "lineCount": 336,
+      "purpose": "多媒體服務，支援 LibSharedMedia-3.0 音效/字型動態探測與原生雙軌安全播放",
+      "role": "Service / Media Host",
+      "security": "Safe"
+    },
+    {
+      "name": "PlayerResourceCapability.lua",
+      "extension": ".lua",
+      "sizeBytes": 5002,
+      "lineCount": 139,
+      "purpose": "在冷路徑判斷指定 UnitPower 資源為 NUMERIC、SECRET_DISPLAY 或 UNAVAILABLE。；只回傳安全 metadata，不回傳任何即時資源值。",
+      "role": "Services/PlayerResourceCapability",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "PlayerResourceService.lua",
+      "extension": ".lua",
+      "sizeBytes": 53826,
+      "lineCount": 1323,
+      "purpose": "依職業、專精、使用者設定與 12.1 runtime capability 編譯多資源 registry。；以 power token O(1) 分派 UNIT_POWER_UPDATE/FREQUENT/MAXPOWER。",
+      "role": "Services/PlayerResourceService",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "PlayerStatService.lua",
+      "extension": ".lua",
+      "sizeBytes": 64759,
+      "lineCount": 1529,
+      "purpose": "18 大人物屬性與滑翔速度即時監控服務，具備 12.1+ 戰鬥速度受限自動安全回退至快取機制",
+      "role": "Service / Stat Monitor",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "SpellBookScannerService.lua",
+      "extension": ".lua",
+      "sizeBytes": 6496,
+      "lineCount": 170,
+      "purpose": "在非戰鬥中動態探測玩家法術書（C_SpellBook）與天賦節點（C_Traits），快取當前已點出的有效技能。；自動識別無光環地面效果（Ground Effects），為智慧推薦與「一鍵依當前天賦同步」提供資料基礎。 | 監聽 PLAYER_LOGIN、SPELLS_CHANGED、TRAIT_CONFIG_UPDATED。；快取 knownSpells、activeTraitSpells 與 activeGroundEffects。",
+      "role": "Services/SpellBookScannerService",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "SpellInfoService.lua",
+      "extension": ".lua",
+      "sizeBytes": 2516,
+      "lineCount": 86,
+      "purpose": "集中 spell name/icon/link lookup，讓其他服務不重複查詢。；查詢結果只作為 safe facts cache，不承擔 alert 判斷。 | 提供 spellID lookup 與快取入口。",
+      "role": "Services/SpellInfoService",
+      "security": "Safe"
+    },
+    {
+      "name": "TooltipMonitorService.lua",
+      "extension": ".lua",
+      "sizeBytes": 35490,
+      "lineCount": 970,
+      "purpose": "匿名目標光環探針服務，透過 Tooltip 回呼實現無污染光環採集，杜絕遍歷 Nameplate",
+      "role": "Service / Target Aura Probe",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "TotemService.lua",
+      "extension": ".lua",
+      "sizeBytes": 8338,
+      "lineCount": 264,
+      "purpose": "作為圖騰（主要是薩滿的 4 大圖騰插槽）的事實監控層。；使用 12.x 全域 GetTotemInfo 與 GetTotemDuration API 取得圖騰事實與原生時間物件。 | 監聽 PLAYER_TOTEM_UPDATE 與 PLAYER_ENTERING_WORLD 事件。；逐一掃描 4 個圖騰插槽，獲取圖騰圖示、持續時間與開始時間。",
+      "role": "Services/TotemService",
+      "security": "Taint-Sensitive"
+    },
+    {
+      "name": "WeaponEnchantService.lua",
+      "extension": ".lua",
+      "sizeBytes": 5656,
+      "lineCount": 175,
+      "purpose": "將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/影之哀傷等) 作為標準 AuraState 提供給渲染器。；與自身增益光環流式並列，消除傳統獨立輪詢視窗。 | 監聽裝備變更與定時器，解析 GetWeaponEnchantInfo。；生成標準化 AuraState 並派發至 selfAura 告警框架。",
+      "role": "Services/WeaponEnchantService",
+      "security": "Safe"
+    }
+  ],
+  "subdirectories": []
+}
+  </script>
+
+  <style>
+    :root {
+      --bg-base: #0a0e17;
+      --bg-surface: rgba(17, 24, 39, 0.75);
+      --bg-surface-hover: rgba(30, 41, 59, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #00f0ff;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-cyan: #00f0ff;
+      --accent-gold: #ffd700;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      --font-mono: "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* 頂部導航與麵包屑 */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .breadcrumbs a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .breadcrumbs a:hover {
+      text-decoration: underline;
+      filter: drop-shadow(0 0 6px var(--accent-cyan));
+    }
+
+    .breadcrumbs .separator {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .breadcrumbs .current {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Hero Header */
+    .header-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-gold));
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .header-title-row h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+    }
+
+    .badge-layer {
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-role {
+      background: rgba(0, 240, 255, 0.15);
+      color: #67e8f9;
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+
+    .header-desc {
+      font-size: 1.05rem;
+      color: #cbd5e1;
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+
+    /* 統計列 */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    /* AI 治理卡片 */
+    .governance-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .governance-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.15rem;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .governance-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .governance-list li {
+      position: relative;
+      padding-left: 24px;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .governance-list li::before {
+      content: "🛡️";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 0.85rem;
+    }
+
+    /* 搜尋與過濾工具列 */
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .search-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      width: 100%;
+      max-width: 360px;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+    }
+
+    /* 子目錄列表 (Cards) */
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 28px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .subdirs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .subdir-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .subdir-card:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.12);
+    }
+
+    .subdir-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .subdir-icon {
+      font-size: 1.3rem;
+    }
+
+    .subdir-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    .subdir-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .subdir-meta {
+      font-size: 0.8rem;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 8px;
+    }
+
+    /* 檔案表格 */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .files-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .files-table th {
+      background: rgba(15, 23, 42, 0.9);
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .files-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.92rem;
+      vertical-align: middle;
+    }
+
+    .files-table tr:hover td {
+      background: var(--bg-surface-hover);
+    }
+
+    .file-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .file-name-cell a {
+      color: var(--text-main);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .file-name-cell a:hover {
+      color: var(--accent-cyan);
+    }
+
+    /* 類型徽章 */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+    }
+
+    .badge-lua { background: #002b5c; color: #60a5fa; border: 1px solid #1e40af; }
+    .badge-xml { background: #4a1d96; color: #c084fc; border: 1px solid #6b21a8; }
+    .badge-toc { background: #701a75; color: #f472b6; border: 1px solid #86198f; }
+    .badge-doc { background: #064e3b; color: #34d399; border: 1px solid #047857; }
+    .badge-data { background: #78350f; color: #fbbf24; border: 1px solid #b45309; }
+    .badge-script { background: #1e3a8a; color: #93c5fd; border: 1px solid #2563eb; }
+    .badge-tool { background: #14532d; color: #86efac; border: 1px solid #15803d; }
+    .badge-secret { background: #881337; color: #fda4af; border: 1px solid #be123c; }
+    .badge-media { background: #374151; color: #e5e7eb; border: 1px solid #4b5563; }
+    .badge-svg { background: #831843; color: #f43f5e; border: 1px solid #be185d; }
+    .badge-audio { background: #134e4a; color: #2dd4bf; border: 1px solid #0f766e; }
+    .badge-html { background: #7c2d12; color: #fb923c; border: 1px solid #c2410c; }
+    .badge-text { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
+    .badge-other { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+    /* 安全防護評級標籤 */
+    .sec-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .sec-taint { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .sec-hotpath { background: rgba(0, 240, 255, 0.15); color: #67e8f9; border: 1px solid rgba(0, 240, 255, 0.3); }
+    .sec-vault { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .sec-tool { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .sec-safe { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    /* 頁尾 */
+    .footer {
+      text-align: center;
+      padding: 32px 0 16px 0;
+      font-size: 0.85rem;
+      color: #64748b;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 16px 12px; }
+      .header-card { padding: 20px; }
+      .header-title-row h1 { font-size: 1.4rem; }
+      .files-table th:nth-child(4),
+      .files-table td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 頂部導航列與 Breadcrumbs -->
+    <nav class="nav-bar">
+      <div class="breadcrumbs">
+        <a href="../../FOLDER_INDEX.html">🏠 Root</a><span class="separator">/</span><a href="../FOLDER_INDEX.html">EventAlertMod</a><span class="separator">/</span><span class="current">Services</span>
+      </div>
+      <div>
+        <a href="../../FOLDER_INDEX.html" style="font-size:0.85rem; color:var(--accent-cyan); text-decoration:none;">🏠 根目錄總覽</a>
+      </div>
+    </nav>
+
+    <!-- 主資訊卡片 (Hero) -->
+    <header class="header-card">
+      <div class="header-title-row">
+        <h1>📁 狀態追蹤與服務層 (Core Services)</h1>
+        <div class="header-badges">
+          <span class="badge-pill badge-layer">Addon Service Layer</span>
+          <span class="badge-pill badge-role">Data Polling, Event Interception &amp; Protected State Tracking</span>
+        </div>
+      </div>
+      <p class="header-desc">託管玩家屬性服務 (PlayerStatService)、匿名目標光環探針 (TooltipMonitorService)、冷卻追蹤服務 (CooldownService) 與多媒體服務 (MediaService)。</p>
+      
+      <!-- 統計數據 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-label">目錄路徑</span>
+          <span class="stat-val" style="font-size: 0.95rem; word-break: break-all;">EventAlertMod/Services</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">檔案數量</span>
+          <span class="stat-val">19</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">子目錄數量</span>
+          <span class="stat-val">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">總容量</span>
+          <span class="stat-val">335.9 KB</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">安全防護層級</span>
+          <span class="stat-val" style="font-size: 0.95rem;">Taint-Sensitive / Combat Protection Gated</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- AI 治理規範卡片 -->
+    <section class="governance-card" aria-label="AI Governance Summary">
+      <h3>🤖 AI 治理指引與架構不變量 (Governance Invariants)</h3>
+      <ul class="governance-list">
+        <li>戰鬥中數值保護機制：戰鬥中 GetUnitSpeed 等受限 API 自動安全回退至真實脫戰記憶快取 (lastKnownStats)</li><li>目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染</li><li>零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回</li>
+      </ul>
+    </section>
+
+    <!-- 子目錄列表 (若有) -->
+    
+
+    <!-- 檔案清單表格 -->
+    <section>
+      <div class="filter-toolbar">
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (19)</h2>
+        <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
+      </div>
+
+      <div class="table-container">
+        <table class="files-table" id="filesTable">
+          <thead>
+            <tr>
+              <th style="width: 28%;">檔案名稱</th>
+              <th style="width: 10%;">格式</th>
+              <th style="width: 38%;">職責與用途說明</th>
+              <th style="width: 14%;">安全/治理評級</th>
+              <th style="width: 10%; text-align: right;">大小 / 行數</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./AuraCapabilityService.lua" title="檢視檔案內容">AuraCapabilityService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">將 12.1 AuraContainer 能力探測與後端選擇集中管理。；Interface 只作初篩；真正啟用 Native 前仍需以實體 AuraContainer 驗證公開方法。 | 記錄客戶端 build、AuraContainer、AuraSlot、AuraGroup 與 AuraSound 能力。；12.1 探測失敗時選擇 Unsupported，禁止偷偷回退到 Secret AuraData 舊路徑。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/AuraCapabilityService</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            9.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 229 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./AuraContainerService.lua" title="檢視檔案內容">AuraContainerService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">只在非戰鬥建立 player/target AuraContainer，套用 AuraSlot/AuraGroup 規則。；戰鬥中設定變更只記錄 pending，PLAYER_REGEN_ENABLED 後批次重建一次。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/AuraContainerService</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            13.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 366 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./AuraService.lua" title="檢視檔案內容">AuraService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">作為 player/target aura facts 的唯一 adapter，隔離 Retail aura API 與 UI 層。；採取極致健壯且低 GC 的直讀策略，避免過度包裝導致普通屬性被誤判定為 restricted。 | 接收 UNIT_AURA/target change 後更新 aura runtime cache。；在 timer 中寫入完整的 startTime、duration、expirationTime，對齊 Renderer 要求。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/AuraService</div>
+          </td>
+          <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            25.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 748 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./AuraSoundService.lua" title="檢視檔案內容">AuraSoundService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">依編譯後的普通設定值註冊與解除 12.1 C_UnitAuras Aura Sound。；精確管理 Added、ApplicationsIncreased、Removed 的註冊 ID 生命週期。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/AuraSoundService</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            7.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 217 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./ClassPowerService.lua" title="檢視檔案內容">ClassPowerService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">保留既有 ClassPowerService 名稱，轉接至多資源 PlayerResourceService。；讓 ModuleController、Main、Probe 與舊呼叫點無須同一版全面改名。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/ClassPowerService</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            644 B<span style="font-size: 0.78rem; color: #64748b;"> • 20 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./CooldownService.lua" title="檢視檔案內容">CooldownService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">技能與物品冷卻追蹤服務，具備玩家精確施法過濾、三態設定與可用發光判定</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Service / Cooldown Tracker</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            40.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1100 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./GroundEffectService.lua" title="檢視檔案內容">GroundEffectService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">將 canonical SavedVariables 與安全 Base／Override 法術族群編譯成 event spellID 索引，監聽玩家成功施法並建立地面效果計時。；非戰鬥、低頻解析法術說明；解析失敗時明確降級到使用者設定秒數。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/GroundEffectService</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            25.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 675 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./GroupService.lua" title="檢視檔案內容">GroupService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">管理系統內建戰術群組與玩家自訂群組，提供 N:N 多對多法術標籤管理。；提供複合啟用狀態計算（Compound Active State），支援群組主開關與情境過濾。 | 維護群組定義清單（內建 + 自訂）。；提供群組 CRUD API 與 SavedVariables 雙向同步。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/GroupService</div>
+          </td>
+          <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            7.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 241 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./ItemCooldownService.lua" title="檢視檔案內容">ItemCooldownService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">直接 itemID 監控歸此模組，不讓 item cooldown 邏輯散入 renderer。；採取極致健壯且低 GC 的直讀策略，避免過度安全檢查導致普通冷卻數據被誤攔截。 | 管理 item cooldown cache、ItemCooldownState 與 opt-in cache build 狀態。；接收 BAG_UPDATE_COOLDOWN 事件並刷新物品冷卻狀態。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/ItemCooldownService</div>
+          </td>
+          <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            10.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 313 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./LegacyDiscoveryService.lua" title="檢視檔案內容">LegacyDiscoveryService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">安全恢復經典 EAM 的 showcast、list 與 lookup 使用習慣。；只搜尋目前職業的有限候選，不掃描整個 SpellID 空間。 | 記錄本次登入後玩家成功施放且可安全讀取的 SpellID。；彙整目前職業設定、內建候選與 session cast，提供有限查詢。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/LegacyDiscoveryService</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            6.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 209 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./MediaService.lua" title="檢視檔案內容">MediaService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">多媒體服務，支援 LibSharedMedia-3.0 音效/字型動態探測與原生雙軌安全播放</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Service / Media Host</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            11.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 336 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./PlayerResourceCapability.lua" title="檢視檔案內容">PlayerResourceCapability.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">在冷路徑判斷指定 UnitPower 資源為 NUMERIC、SECRET_DISPLAY 或 UNAVAILABLE。；只回傳安全 metadata，不回傳任何即時資源值。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/PlayerResourceCapability</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            4.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 139 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./PlayerResourceService.lua" title="檢視檔案內容">PlayerResourceService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">依職業、專精、使用者設定與 12.1 runtime capability 編譯多資源 registry。；以 power token O(1) 分派 UNIT_POWER_UPDATE/FREQUENT/MAXPOWER。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/PlayerResourceService</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            52.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1323 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./PlayerStatService.lua" title="檢視檔案內容">PlayerStatService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">18 大人物屬性與滑翔速度即時監控服務，具備 12.1+ 戰鬥速度受限自動安全回退至快取機制</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Service / Stat Monitor</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            63.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1529 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./SpellBookScannerService.lua" title="檢視檔案內容">SpellBookScannerService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">在非戰鬥中動態探測玩家法術書（C_SpellBook）與天賦節點（C_Traits），快取當前已點出的有效技能。；自動識別無光環地面效果（Ground Effects），為智慧推薦與「一鍵依當前天賦同步」提供資料基礎。 | 監聽 PLAYER_LOGIN、SPELLS_CHANGED、TRAIT_CONFIG_UPDATED。；快取 knownSpells、activeTraitSpells 與 activeGroundEffects。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/SpellBookScannerService</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            6.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 170 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./SpellInfoService.lua" title="檢視檔案內容">SpellInfoService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">集中 spell name/icon/link lookup，讓其他服務不重複查詢。；查詢結果只作為 safe facts cache，不承擔 alert 判斷。 | 提供 spellID lookup 與快取入口。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/SpellInfoService</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            2.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 86 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./TooltipMonitorService.lua" title="檢視檔案內容">TooltipMonitorService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">匿名目標光環探針服務，透過 Tooltip 回呼實現無污染光環採集，杜絕遍歷 Nameplate</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Service / Target Aura Probe</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            34.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 970 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./TotemService.lua" title="檢視檔案內容">TotemService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">作為圖騰（主要是薩滿的 4 大圖騰插槽）的事實監控層。；使用 12.x 全域 GetTotemInfo 與 GetTotemDuration API 取得圖騰事實與原生時間物件。 | 監聽 PLAYER_TOTEM_UPDATE 與 PLAYER_ENTERING_WORLD 事件。；逐一掃描 4 個圖騰插槽，獲取圖騰圖示、持續時間與開始時間。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/TotemService</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            8.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 264 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./WeaponEnchantService.lua" title="檢視檔案內容">WeaponEnchantService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/影之哀傷等) 作為標準 AuraState 提供給渲染器。；與自身增益光環流式並列，消除傳統獨立輪詢視窗。 | 監聽裝備變更與定時器，解析 GetWeaponEnchantInfo。；生成標準化 AuraState 並派發至 selfAura 告警框架。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/WeaponEnchantService</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            5.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 175 行</span>
+          </td>
+        </tr>
+        
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 頁尾宣告 -->
+    <footer class="footer">
+      <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:02:03.043129+08:00</p>
+    </footer>
+  </div>
+
+  <script>
+    function filterFiles() {
+      const query = document.getElementById('fileFilter').value.toLowerCase();
+      const rows = document.querySelectorAll('#filesTable tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

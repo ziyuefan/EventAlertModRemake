@@ -94,6 +94,8 @@ EAM features 8 decoupled, independently positioned and freely draggable alert mo
     *   Authoritative baseline assessment of AI governance, WoW Retail 12.x API boundaries, zero-GC performance architecture, player resources, and deployment workflow.
 *   🧠 **[21 Core SKILLs Ecosystem & Agentic AI Philosophy](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
     *   **Everything-as-a-Skill Operational Runbook**. Covers all 21 standardized skills across 5 domains, progressive disclosure, deterministic execution, and anti-regression governance.
+*   📜 **[AI Agent Structured XML Governance Directive](33_AI_GOVERNANCE_DIRECTIVE.md.html)**
+    *   **Structured XML directive for LLMs & Subagents**. Defines when to establish/ingest XML directives, 5 absolute iron rules, Retail 12.x Secret sentinel firewalls, architecture layer contracts, and zero cold-start memory anchoring. Physical XML stored at `AI_GOVERNANCE_DIRECTIVE.xml`.
 
 ### 🏗️ Architecture & APIs
 *   📐 **[System Architecture (Decoupled Design)](01_ARCHITECTURE.md.html)**

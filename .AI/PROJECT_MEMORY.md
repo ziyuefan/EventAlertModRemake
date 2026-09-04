@@ -24,6 +24,7 @@
 - 舊專案 `D:\EventAlertMod` 已停用，禁止讀取、寫入、比較、同步或作 fallback。
 - 任一部署目標若是 SymbolicLink、Junction 或其他 Reparse Point，必須 fail-closed；不得追蹤、覆蓋、刪除或重建。
 - 未經使用者要求，不讀取 `WTF\Account` 內帳號或角色資料。
+- 🚨 部署腳本異動通報義務：若因應需求修改 `Deploy/` 目錄下任何腳本（如 `Deploy-EventAlertMod.ps1`、`Build-Package.ps1`、`Upload-CurseForge.ps1` 等），必須主動明確向少年欸報告具體改動內容。
 
 ## 目前目錄契約
 
@@ -39,6 +40,7 @@
 2. Registry／JSON fallback、根目錄確認、自訂 `-WowRoot`、三通道版本選單、PTR／XPTR 是否納入 Retail 與 Reparse Point fail-closed 已完成離線驗證。
 3. 玩家職業資源獨立模組已完成核心重構：17 種資源、13 職業／40 組專精拓撲、獨立 capability／renderer ownership、Druid 五資源形態 Flow、Probe／sampler gate、每資源設定與非戰鬥即時套用均已離線驗證；WoW runtime 仍 pending。
 4. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 已同步；封裝前檢通過並建立 AddOn／source 兩包。Retail／PTR／XPTR 玩家實機簽收仍未完成，且本輪尚未執行 Git commit、push、tag 或 GitHub Release。
+5. 2026-09-04 確立雙軌治理體系，新增專供 AI 代理人讀取約束之結構化 XML 指導規範（`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`）與說明手冊（`33_AI_GOVERNANCE_DIRECTIVE.md`），明確四大增設/加載觸發門檻與跨模型記憶錨定機制。
 
 ## 已完成的結構工作
 

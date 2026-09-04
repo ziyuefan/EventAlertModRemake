@@ -1,3 +1,25 @@
+-- [Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility & Stat Hardening] 2026.09.04
+    -- 2D Grid Layout Engine & Columns per Row Configuration for Aura and Cooldown Modules:
+       -- 2D Grid Layout Engine: The Self Aura (selfAura), Target Aura (targetAura), Spell Cooldown (spellCooldown), Item Cooldown (itemCooldown), and Ground Effect (groundEffect) modules are upgraded to 2D matrix layouts. When icon count exceeds the configured column limit, icons automatically wrap to the next row along the growth direction, preventing single-direction overflow across screen boundaries.
+       -- Columns per Row Slider in List Window: Added a "Columns per Row" slider (range 1-20, default 8) to the top right of the specialization dropdown in the list window, supporting per-category independent configuration.
+       -- Zero-Delay Dynamic Reflow: Dragging the slider dynamically recalculates icon coordinates and container dimensions in real time, fully compatible with combat-lockdown deferral protection.
+       -- Profile Codec & SavedVariables Backward Compatibility: Profile export/import and SavedVariables migration seamlessly persist and normalize the `columns` attribute for all frames.
+    -- Pre-rendered Cooldown Combat Visibility & Zero-Alpha Toggle:
+       -- Honors "Show Cooldown Outside Combat" setting: Pre-rendered cooldown placeholder icons now respect the showSCDOutsideCombat toggle. If configured to hide outside combat, they are automatically hidden via SetAlpha(0) when out of combat.
+       -- Seamless Combat Transition: Pre-rendered icons instantly become visible in desaturated standby mode (SetAlpha(1)) upon entering combat, and smoothly revert to SetAlpha(0) upon exiting combat.
+       -- Zero Frame Mutation: Frame objects and layout order slots remain permanently anchored and allocated, completely eliminating in-combat Frame allocations, taint, and 2D grid reflow jumps.
+    -- Combat Speed Restriction Guard & True Cache Fallback:
+       -- Resolves the Retail 12.x / Midnight issue where Blizzard restricts GetUnitSpeed("player") in combat and forces a clamped return value of 1.0, which incorrectly resulted in 14.3% (1.0 / 7.0 * 100) speed displays.
+       -- Implemented proactive combat speed detection: When speed <= 1.05 during combat, the system seamlessly falls back to the authentic out-of-combat memory cache (lastKnownStats), guaranteeing accurate speed reporting (e.g. 100% or 130%).
+    -- Cooldown Location Order & Per-Spell Pre-render Placeholders:
+       -- Cooldown Location Order: Added Location Order input box to each row, displaying its unique natural number slot (1..N). Supports ▲/▼ shifting, drag-and-drop reordering, and direct numeric input jump with automatic continuous normalization.
+       -- Strict placeholder guard for disabled spells: Alerts that are disabled (enabled == false) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.
+       -- Per-spell independent pre-render toggle: Removed global-level switch in favor of independent per-spell condition toggles (grayed out when inactive, full color on cooldown), default false.
+    -- Smooth Scroll Tracking & Persistent Selection Highlight:
+       -- When reordering or clicking rows, the ScrollBox smoothly scrolls to track the target item and displays a distinct blue selection highlight, preventing viewport resets and loss of focus.
+    -- In-Combat Player Stats Live Updates & C-Level Zero-GC Rendering:
+       -- Full adoption of native FontString:SetFormattedText for all 18 stat displays, achieving 0.00ms C-level formatting with zero Lua GC string allocation.
+       -- Implemented getRawValue routing across 18 attributes, aligning with Retail 12.x / Midnight AllowedWhenTainted and Enum.SecretAspect.Text contracts, fixing stat freezing in combat.
 -- [Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
     -- Next-Gen Master Spell Catalog & Intelligent Presets:
        -- Built-in 5-language offline database: 4,463 core spells & 466 auras covering 13 classes, 40 specs, and 39 Hero Talent trees, with real-time switching across zhTW, zhCN, enUS, koKR, and ruRU.
@@ -15,13 +37,6 @@
        -- Profile Codec export/import: Added uniqueness deduplication in buildPayload, fixing duplicateAlertID errors from legacy imported data.
        -- Font validation fix: Added LSM fallback checks, ensuring invalid or unmapped font names safely fall back to STANDARD.
        -- Fixed condition window dropdown SetText type incompatibility.
-    -- In-Combat Player Stats Live Updates & C-Level Zero-GC Rendering:
-       -- Full adoption of native FontString:SetFormattedText for all 18 stat displays, achieving 0.00ms C-level formatting with zero Lua GC string allocation.
-       -- Implemented getRawValue routing across 18 attributes, aligning with Retail 12.x / Midnight AllowedWhenTainted and Enum.SecretAspect.Text contracts, fixing stat freezing in combat.
-    -- Cooldown Custom Sorting & Pre-render Placeholders:
-       -- Cooldown list custom reordering: Added ▲ (Move Up) and ▼ (Move Down) buttons to each row, plus full Left-Click Drag & Drop support to reorder alert display priority.
-       -- Pre-render placeholder mode (cooldownPreRender): Pre-creates and positions all monitored cooldown slots out of combat. Uncast spells display a desaturated grayscale mask (SetDesaturated) out of combat and instantly transition to full color on cast, 100% eliminating InCombatLockdown layout restrictions.
-       -- Tri-state condition overrides: Supports global pre-render toggle with independent per-spell condition overrides (Global / Override On / Override Off).
 -- [Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
     -- Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration:
        -- Complete integration with LibSharedMedia-3.0, supporting third-party sound, font, and border asset packages.

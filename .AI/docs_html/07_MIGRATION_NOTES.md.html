@@ -639,133 +639,17 @@ EA_Pos
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="migration-considerations">Migration considerations</h1>
-<h2 id="old-behavior-mapping">Old behavior mapping</h2>
-<p>Fee retention:</p>
-<ul>
-<li>Get self/debuff alert icon;</li>
-<li>Target buff/debuff alert icon;</li>
-<li>Move the cooling time alarm icon;</li>
-<li>Workpiece cooling diagram of itemID;</li>
-<li>Simple spellID addition/removal workflow;</li>
-<li><code>/eam opt</code> sets the entry point;</li>
-<li><code>/eam show</code>, <code>/eam showt</code>, <code>/eam showc</code>, <code>/eam showa</code> detection process work;</li>
-<li>Cooling behavior switch:</li>
-<li>Remove after cooling is complete;</li>
-<li>Keep cooldown icons away from combat;</li>
-<li>Glows when in use;</li>
-<li>Icon display switching:</li>
-<li>display frame;</li>
-<li>display name;</li>
-<li>Display timer;</li>
-<li>show flash/glow;</li>
-<li>Tooltip additional auxiliary /item ID;</li>
-<li>Name, timer and font size control;</li>
-<li>Minimap option button semantics;</li>
-<li>Localized strings, especially the presence of zhTW, enUS, koKR, zhCN;</li>
-<li>The default/item table can be used after verification on the Retail server.</li>
-</ul>
-<h2 id="old-savedvariables-migration">OLD SavedVariables Migration</h2>
-<p>Old version input:</p>
-<pre class="codehilite"><code class="language-lua">EA_Config
-EA_Position
-EA_Items
-EA_AltItems
-EA_TarItems
-EA_ScdItems
-EA_GrpItems
-EA_Pos
-</code></pre>
 
-<p>Target migration:</p>
-<pre class="codehilite"><code class="language-js">EventAlertModDB = {
-  schemaVersion: 1,
-  profile: {
-    display: {},
-    behavior: {},
-    alerts: {
-      playerAuras: [],
-      targetAuras: [],
-      spellCooldowns: [],
-      itemCooldowns: [],
-      groupAlerts: []
-    },
-    layout: {}
-  },
-  migration: {
-    fromLegacy: true,
-    sourceKeys: [],
-    warnings: []
-  }
-}
-</code></pre>
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
 
-<p>Make sure the target variable name is determined by overwriting. if old variable name
-For compatibility, they still require schema marking and migration state.</p>
-<p>Migration rules:</p>
-<ul>
-<li>SavedVariables that never freezes migrations;</li>
-<li>The module stores runtime state in SavedVariables;</li>
-<li>Keep unknown genetic fields under migration safety complementation table or
-  warning list;</li>
-<li>Verify spellID/itemID numeric fields;</li>
-<li>Record the only deleted Classic field as a migration warning;</li>
-<li>Do not delete old fields until the backup or migration settings mail policy has taken effect
-  defined.</li>
-</ul>
-<h2 id="remove-old-behavior">Remove old behavior</h2>
-<p>Removed from Active's Retail server architecture:</p>
-<ul>
-<li>Classic, TBC, Wrath, Cata, Mists TOC and load root;</li>
-<li>Classic behavior of <code>G.WOW_VERSION</code> branches;</li>
-<li>The old decompression of the Classic API returns the phase content layer;</li>
-<li>Old hunter pet happiness/focus only exists in the Classic era branch
-behavior;</li>
-<li>A large number of item ID scans during normal operation;</li>
-<li>Per-diagram timer and per-draw timer refresh chain;</li>
-<li>Tooltip scan as normal source of truth;</li>
-<li>External dependency requirements for core operations.</li>
-</ul>
-<h2 id="compatibility-break">Compatibility Break</h2>
-<p>Estimated rest time:</p>
-<ul>
-<li>The old Classic directory is no longer loaded;</li>
-<li>Users relying on legacy specific resources will ignore these warnings;</li>
-<li>Event scripts/configuration may need to be simplified;</li>
-<li>import/export prototype must be redesigned or removed unless it is simply safe
-  path required;</li>
-<li><code>Lib_ZYF</code> helper should be replaced or isolated; do not assume it exists in
-  New core.</li>
-</ul>
-<h2 id="localization-migration">Localization migration</h2>
-<p>Existing locale files:</p>
-<ul>
-<li><code>locale/localization.comm.lua</code></li>
-<li><code>locale/localization.en.lua</code></li>
-<li><code>locale/localization.tw.lua</code></li>
-<li><code>locale/localization.cn.lua</code></li>
-<li><code>locale/localization.kr.lua</code></li>
-<li><code>locale/localization.ru.lua</code>
-Keep localization isolated. Don't mix strings into logic modules. Do not add
-The simplified Chinese character string is zhTW.</li>
-</ul>
-<h2 id="inheritance-source-processing">Inheritance source processing</h2>
-<p>The current old source code is retained for auditing /reference:</p>
-<ul>
-<li><code>Classic/</code></li>
-<li><code>TBC/</code></li>
-<li><code>Wrath/</code></li>
-</ul>
-<p>They should not be loaded by Retail overrides. If retained in the repository,
-Mark them as documented /unsupported.</p>
-<h2 id="2026-07-26aura-schema-v1-v2">2026-07-26：Aura schema v1 -&gt; v2</h2>
-<ul>
-<li>Save player/target Aura pure data of <code>migrationBackups.auraSchemaV1</code> before migration.</li>
-<li>Existing alert adds <code>nativeBackend=AUTO</code> and display preferences, does not remove unknown fields or old <code>EA_*</code> globals.</li>
-<li>If migration fails, the serializable DB before migration will be restored and a static warning code will be recorded.</li>
-<li>12.0.7 uses Legacy backend; 12.1 uses Native or Unsupported, and cannot scan holes with Legacy Secret.</li>
-</ul>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

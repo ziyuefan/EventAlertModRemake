@@ -7291,3 +7291,112 @@ FlowTestRunner.registerCase({
             or ("ground spell family activation contract mismatch: " .. details)
     end,
 })
+
+FlowTestRunner.registerCase({
+    id = "cooldown.prerender_combat_visibility",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.CooldownService
+        local renderer = EAM.UI and EAM.UI.Renderer
+        local cSpell = api.C_Spell
+        if not mock or not service or not cSpell or not renderer then
+            return STATUS_SKIP, "Cooldown prerender visibility test is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalActivatedAlerts = service.activatedAlerts
+        local originalCombat = mock.inCombat
+
+        local ok, result = pcall(function()
+            -- 技能 A: 開啟預渲染，隨戰鬥關閉 (showSCDOutsideCombat = false)
+            local alertA = {
+                id = "spellCooldown:player:63101",
+                enabled = true,
+                spellID = 63101,
+                order = 1,
+                cooldownPreRender = true,
+                showSCDOutsideCombat = false,
+            }
+            -- 技能 B: 開啟預渲染，非戰鬥也顯示 (showSCDOutsideCombat = true)
+            local alertB = {
+                id = "spellCooldown:player:63102",
+                enabled = true,
+                spellID = 63102,
+                order = 2,
+                cooldownPreRender = true,
+                showSCDOutsideCombat = true,
+            }
+
+            EAM.db = {
+                revision = 830001,
+                config = {
+                    cooldownRemoveAura = false,
+                    showSCDOutsideCombat = true,
+                    glowSCDWhenUsable = true,
+                    iconAlpha = 1.0,
+                },
+                alerts = {
+                    spellCooldowns = {
+                        [alertA.id] = alertA,
+                        [alertB.id] = alertB,
+                    },
+                },
+            }
+
+            service.states = {}
+            service.activatedAlerts = {}
+            mock.setCombat(false)
+
+            -- 1. 戰鬥外加載: alertA (隨戰鬥關閉) 應隱藏 (shown=false)，alertB 應顯示待命 (shown=true)
+            service.updateAlertList()
+            service.refreshAll("PLAYER_LOGIN")
+
+            local stateA_out = service.states[alertA.id]
+            local stateB_out = service.states[alertB.id]
+
+            -- stateA_out 應為 nil (因為隱藏時不放在 states 裡)，但 Renderer 應獲取 icon 並將其 Alpha 設為 0
+            local outA_hidden = (stateA_out == nil)
+            local outB_shown = (stateB_out ~= nil and stateB_out.shown == true and stateB_out.isPlaceholder == true and stateB_out.isDesaturated == true)
+
+            -- 2. 進入戰鬥: alertA 應自動切換為待命顯示 (shown=true, isDesaturated=true)
+            mock.setCombat(true)
+            service.onCombatEvent("PLAYER_REGEN_DISABLED")
+
+            local stateA_combat = service.states[alertA.id]
+            local stateB_combat = service.states[alertB.id]
+
+            local combatA_shown = (stateA_combat ~= nil and stateA_combat.shown == true and stateA_combat.isPlaceholder == true and stateA_combat.isDesaturated == true)
+            local combatB_shown = (stateB_combat ~= nil and stateB_combat.shown == true)
+
+            -- 3. 脫離戰鬥: alertA 應再次隱藏 (shown=false)，alertB 保持顯示
+            mock.setCombat(false)
+            service.onCombatEvent("PLAYER_REGEN_ENABLED")
+
+            local stateA_after = service.states[alertA.id]
+            local stateB_after = service.states[alertB.id]
+
+            local afterA_hidden = (stateA_after == nil)
+            local afterB_shown = (stateB_after ~= nil and stateB_after.shown == true)
+
+            return outA_hidden
+                and outB_shown
+                and combatA_shown
+                and combatB_shown
+                and afterA_hidden
+                and afterB_shown
+        end)
+
+        EAM.db = originalDB
+        service.states = originalStates
+        service.activatedAlerts = originalActivatedAlerts
+        mock.setCombat(originalCombat)
+
+        local valid = ok and result == true
+        return valid, valid
+            and "pre-rendered cooldowns respect showSCDOutsideCombat: hidden outside combat, visible in combat"
+            or ("pre-rendered cooldown combat visibility contract mismatch: " .. tostring(result))
+    end,
+})

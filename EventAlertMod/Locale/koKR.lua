@@ -1065,5 +1065,10 @@ L.EAM_OPT_MOVE_UP = "위로 이동"
 L.EAM_OPT_MOVE_DOWN = "아래로 이동"
 L.EAM_OPT_ORDER_HINT = "▲/▼를 클릭하거나 드래그하여 화면 표시 순서를 조정할 수 있습니다."
 L.EAM_OPT_PRERENDER_PLACEHOLDER = "사전 렌더링 자리표시자"
+L.EAM_OPT_LOCATION_ORDER = "배치 순서"
+L.EAM_OPT_LOCATION_ORDER_TIP = "화면 레이아웃에서의 순서 슬롯 (고유 자연수 1..N). 위/아래 화살표로 조정하거나 숫자를 직접 입력할 수 있습니다."
+L.EAM_OPT_PRERENDER_PLACEHOLDER_TIP = "비활성 상태일 때 이 슬롯에 흑백 마스크 아이콘을 자리표시자로 표시합니다. 시전 즉시 전체 색상으로 전환되어 전투 중 레이아웃 지연을 제거합니다."
+L.EAM_OPT_COLUMNS = "행당 열 수"
+L.EAM_OPT_COLUMNS_TIP = "아이콘 수가 이 열 수를 초과하면 자동으로 다음 행으로 줄 바꿈됩니다. 기본값은 8입니다."
 
 end)

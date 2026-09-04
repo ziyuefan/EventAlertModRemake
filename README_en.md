@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.3-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.4-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -152,10 +152,11 @@ In-game, you never need to manually look up Spell IDs:
 <summary><b>🔥 Retail 12.1.0 Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
 
 ### 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.30
-- **Cooldown Custom Reordering (Drag & Drop, Up/Down) & Pre-render Placeholders**:
-  - **Cooldown Reordering Controls**: Each row in the cooldown list now features `▲` (Move Up) and `▼` (Move Down) buttons, plus full Left-Click Drag & Drop support to instantly reorder alert slots.
-  - **Pre-render Placeholder Mode (`cooldownPreRender`)**: Automatically creates and positions cooldown icons out of combat. Spells not yet on cooldown display a desaturated grayscale mask (`SetDesaturated(true)` + `SetVertexColor(0.4, 0.4, 0.4, 0.65)`). Upon casting, the icon seamlessly transitions to full color without in-combat `CreateFrame` or `SetPoint` calls, 100% eliminating combat lockdown layout delays.
-  - **Tri-State Cooldown Behavior Overrides**: Full support for global settings and per-spell condition overrides (Global / Override On / Override Off).
+- **Cooldown Location Order, Strict Inactive Guard & Per-Spell Pre-render Placeholders**:
+  - **Cooldown Location Order**: Each row features a dedicated Location Order numeric input box displaying its unique natural number slot (1..N). Supports `▲`/`▼` shifting, drag-and-drop reordering, and direct numeric jump with automatic normalization.
+  - **Strict Guard for Disabled Spells**: Spells that are disabled (`enabled == false`) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.
+  - **Per-Spell Independent Pre-render Toggle**: Replaced global setting with independent per-spell condition overrides (desaturated placeholder when inactive, full color on cooldown), default false.
+  - **Smooth Scroll Tracking & Selection Highlight**: Reordering or clicking items smoothly scrolls the ScrollBox to follow the target spell and maintains a persistent blue selection highlight.
 - **Player Stats In-Combat Live Updates & C-Level Zero-GC Rendering**:
   - Full adoption of native `FontString:SetFormattedText` for all 18 stats, achieving zero Lua GC string allocations in OnUpdate timer loops.
   - Implemented `getRawValue` routing across all 18 attributes, respecting Retail 12.x / Midnight `AllowedWhenTainted` and `Enum.SecretAspect.Text` contracts.
