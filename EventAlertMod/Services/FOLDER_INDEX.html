@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Service Layer">
   <meta name="ai-governance-security" content="Taint-Sensitive / Combat Protection Gated">
   <meta name="ai-governance-invariants" content="戰鬥中數值保護機制：戰鬥中 GetUnitSpeed 等受限 API 自動安全回退至真實脫戰記憶快取 (lastKnownStats) | 目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染 | 零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回">
-  <meta name="ai-scan-timestamp" content="2026-09-04T18:31:32.122542+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.810739+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染",
     "零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回"
   ],
-  "timestamp": "2026-09-04T18:31:32.122542+08:00",
+  "timestamp": "2026-09-12T20:51:50.810739+08:00",
   "fileCount": 19,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 343922,
+  "totalSizeBytes": 345423,
   "files": [
     {
       "name": "AuraCapabilityService.lua",
@@ -46,8 +46,8 @@
     {
       "name": "AuraContainerService.lua",
       "extension": ".lua",
-      "sizeBytes": 14247,
-      "lineCount": 366,
+      "sizeBytes": 14810,
+      "lineCount": 374,
       "purpose": "只在非戰鬥建立 player/target AuraContainer，套用 AuraSlot/AuraGroup 規則。；戰鬥中設定變更只記錄 pending，PLAYER_REGEN_ENABLED 後批次重建一次。",
       "role": "Services/AuraContainerService",
       "security": "Safe"
@@ -154,8 +154,8 @@
     {
       "name": "PlayerStatService.lua",
       "extension": ".lua",
-      "sizeBytes": 64765,
-      "lineCount": 1529,
+      "sizeBytes": 65501,
+      "lineCount": 1550,
       "purpose": "18 大人物屬性與滑翔速度即時監控服務，具備 12.1+ 戰鬥速度受限自動安全回退至快取機制",
       "role": "Service / Stat Monitor",
       "security": "Taint-Sensitive"
@@ -163,8 +163,8 @@
     {
       "name": "SpellBookScannerService.lua",
       "extension": ".lua",
-      "sizeBytes": 6496,
-      "lineCount": 170,
+      "sizeBytes": 6698,
+      "lineCount": 175,
       "purpose": "在非戰鬥中動態探測玩家法術書（C_SpellBook）與天賦節點（C_Traits），快取當前已點出的有效技能。；自動識別無光環地面效果（Ground Effects），為智慧推薦與「一鍵依當前天賦同步」提供資料基礎。 | 監聽 PLAYER_LOGIN、SPELLS_CHANGED、TRAIT_CONFIG_UPDATED。；快取 knownSpells、activeTraitSpells 與 activeGroundEffects。",
       "role": "Services/SpellBookScannerService",
       "security": "Taint-Sensitive"
@@ -687,7 +687,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">335.9 KB</span>
+          <span class="stat-val">337.3 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -759,7 +759,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            13.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 366 行</span>
+            14.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 374 行</span>
           </td>
         </tr>
         
@@ -975,7 +975,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            63.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1529 行</span>
+            64.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1550 行</span>
           </td>
         </tr>
         
@@ -993,7 +993,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            6.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 170 行</span>
+            6.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 175 行</span>
           </td>
         </tr>
         
@@ -1077,7 +1077,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:31:32.122542+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.810739+08:00</p>
     </footer>
   </div>
 

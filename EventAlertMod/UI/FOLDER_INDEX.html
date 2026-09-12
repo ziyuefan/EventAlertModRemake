@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Presentation Layer">
   <meta name="ai-governance-security" content="Theme-Driven / Drag-Interactive / Combat Deferred">
   <meta name="ai-governance-invariants" content="現代化 UI 互動：支援側窗無縫吸附 (APPEND 模式)、連動拖曳、螢幕邊界鎖定與 /eam reset 復原 | 戰鬥中排版遞延：戰鬥期間使用者若調整 UI，僅記錄設定值，脫離戰鬥後一次性安全套用 | 主題系統：11 組深色主題無縫切換，統一管理按鈕背景、邊框與文字配色">
-  <meta name="ai-scan-timestamp" content="2026-09-04T18:31:32.129367+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.818044+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "戰鬥中排版遞延：戰鬥期間使用者若調整 UI，僅記錄設定值，脫離戰鬥後一次性安全套用",
     "主題系統：11 組深色主題無縫切換，統一管理按鈕背景、邊框與文字配色"
   ],
-  "timestamp": "2026-09-04T18:31:32.129367+08:00",
-  "fileCount": 20,
+  "timestamp": "2026-09-12T20:51:50.818044+08:00",
+  "fileCount": 22,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 589269,
+  "totalSizeBytes": 698484,
   "files": [
     {
       "name": "AboutPanel.lua",
@@ -53,10 +53,19 @@
       "security": "Presentation"
     },
     {
+      "name": "ColorPickerHelper.lua",
+      "extension": ".lua",
+      "sizeBytes": 4404,
+      "lineCount": 134,
+      "purpose": "封裝魔獸世界原生 ColorPickerFrame 調色盤呼叫，相容 12.x/11.x 現代 SetupColorPickerAndShow 與舊版降級。；提供色塊預覽按鈕 (Color Swatch Button) 建立工廠，支援即時顏色更新與懸停高亮。",
+      "role": "UI/ColorPickerHelper",
+      "security": "Taint-Sensitive"
+    },
+    {
       "name": "CombatFlash.lua",
       "extension": ".lua",
-      "sizeBytes": 3896,
-      "lineCount": 135,
+      "sizeBytes": 7605,
+      "lineCount": 242,
       "purpose": "WoW Lua 模組程式碼",
       "role": "Lua Module",
       "security": "Protected"
@@ -64,7 +73,7 @@
     {
       "name": "DebugCenterPanel.lua",
       "extension": ".lua",
-      "sizeBytes": 22779,
+      "sizeBytes": 22781,
       "lineCount": 557,
       "purpose": "集中整合所有 EAM 診斷、符文探針、流程測試與提示詞匯出功能於單一視窗。 | 提供 4 大診斷分頁：",
       "role": "UI/DebugCenterPanel",
@@ -73,7 +82,7 @@
     {
       "name": "GroupManagerPanel.lua",
       "extension": ".lua",
-      "sizeBytes": 20978,
+      "sizeBytes": 20982,
       "lineCount": 570,
       "purpose": "提供獨立二級側窗面板（APPEND 模式），管理系統內建戰術群組與自訂群組。；支援群組主開關、情境過濾、外觀代表色與法術成員名冊複選。 | 渲染群組清單與選定群組之詳細設定介面。；支援法術在群組中的勾選綁定與即時同步。",
       "role": "UI/GroupManagerPanel",
@@ -82,8 +91,8 @@
     {
       "name": "IconPool.lua",
       "extension": ".lua",
-      "sizeBytes": 29631,
-      "lineCount": 844,
+      "sizeBytes": 35931,
+      "lineCount": 1003,
       "purpose": "告警圖示物件池與視覺容器，支援雙層 Glow、文字自適應貼齊與 2D Grid 自動換行",
       "role": "UI / Icon Container Pool",
       "security": "Presentation"
@@ -91,8 +100,8 @@
     {
       "name": "ModulePanel.lua",
       "extension": ".lua",
-      "sizeBytes": 8585,
-      "lineCount": 243,
+      "sizeBytes": 8621,
+      "lineCount": 244,
       "purpose": "用單一小面板呈現正式功能模組開關，不把服務生命週期混入一般 config checkbox。；使用者設定寫入一律經 SavedVariables.updateModuleToggle。 | 顯示八個 module toggle、目前狀態與套用結果。；戰鬥中不建立或開啟新結構，避免 UIParent 結構變更風險。",
       "role": "UI/ModulePanel",
       "security": "Safe"
@@ -100,8 +109,8 @@
     {
       "name": "NativeAuraRenderer.lua",
       "extension": ".lua",
-      "sizeBytes": 12099,
-      "lineCount": 302,
+      "sizeBytes": 12915,
+      "lineCount": 321,
       "purpose": "為每條 Native Aura rule 建立 initializeFrame callback。；僅在 Blizzard 允許的初始化窗口建立、定位並綁定 AuraButton 子元件。",
       "role": "UI/NativeAuraRenderer",
       "security": "Zero-Alloc"
@@ -109,8 +118,8 @@
     {
       "name": "Options.lua",
       "extension": ".lua",
-      "sizeBytes": 199238,
-      "lineCount": 4563,
+      "sizeBytes": 237990,
+      "lineCount": 5359,
       "purpose": "插件核心設定主視窗，提供直觀的圖形化設定、滑桿、多選方塊與側窗吸附切換",
       "role": "UI / Options Frame",
       "security": "Presentation"
@@ -118,8 +127,8 @@
     {
       "name": "PlayerResourcePanel.lua",
       "extension": ".lua",
-      "sizeBytes": 35682,
-      "lineCount": 873,
+      "sizeBytes": 41803,
+      "lineCount": 1022,
       "purpose": "顯示目前職業／專精的玩家資源候選集合與安全 capability metadata。；以 draft 編輯 class default 或目前專精 override，再透過 SavedVariables 單次提交。",
       "role": "UI/PlayerResourcePanel",
       "security": "Safe"
@@ -127,20 +136,29 @@
     {
       "name": "PlayerStatPanel.lua",
       "extension": ".lua",
-      "sizeBytes": 44854,
-      "lineCount": 920,
-      "purpose": "角色屬性與吸收量監控之獨立二級設定面板。；支援 16 種核心屬性每單項開關、替代圖示、字型大小、替代名稱、小數位數與數值高亮閾值自訂。 | 管理屬性清單與細部設定表單之建立與狀態更新。；支援即時熱預覽與 SavedVariables 雙向保存。",
+      "sizeBytes": 50911,
+      "lineCount": 1045,
+      "purpose": "角色屬性與吸收量監控之獨立二級設定面板。；支援 18 種核心屬性每單項開關、替代圖示、字型大小、替代名稱、小數位數與數值高亮閾值自訂。 | 管理屬性清單與細部設定表單之建立與狀態更新。；支援即時熱預覽與 SavedVariables 雙向保存。",
       "role": "UI/PlayerStatPanel",
       "security": "Safe"
     },
     {
       "name": "PowerRenderer.lua",
       "extension": ".lua",
-      "sizeBytes": 18691,
-      "lineCount": 511,
+      "sizeBytes": 22511,
+      "lineCount": 601,
       "purpose": "在脫戰初始化期為 17 種玩家資源各自預建獨立 Frame 與 StatusBar。；Secret 百分比只直送對應 StatusBar:SetValue；普通數值才允許產生數字文字。",
       "role": "UI/PowerRenderer",
       "security": "Taint-Sensitive"
+    },
+    {
+      "name": "PreviewPanel.lua",
+      "extension": ".lua",
+      "sizeBytes": 23190,
+      "lineCount": 572,
+      "purpose": "提供獨立、可自由拖曳的即時效果預覽小視窗 (Live Preview Window)。；支援「告警圖示 (Alert)」、「職業資源 (Resource)」與「角色屬性 (Stat)」三大分頁。",
+      "role": "UI/PreviewPanel",
+      "security": "Safe"
     },
     {
       "name": "ProfileCodecPanel.lua",
@@ -163,8 +181,8 @@
     {
       "name": "Renderer.lua",
       "extension": ".lua",
-      "sizeBytes": 62012,
-      "lineCount": 1582,
+      "sizeBytes": 73169,
+      "lineCount": 1830,
       "purpose": "Renderer 只把 normalized render state 寫入 UI，資料來源完全在 services。；支援多個完全隔離的 Alert Frame（告警框架），每個框架有各自的坐標與成長方向。 | 管理 7 大獨立告警框架的建立、顯示、隱藏與滑鼠拖曳定位保存。；接收並將 AlertState 渲染到特定的 UI 框架中，使用 Icon 緩衝池 (IconPool)。",
       "role": "UI/Renderer",
       "security": "Zero-Alloc"
@@ -181,7 +199,7 @@
     {
       "name": "SpellCatalogTreePanel.lua",
       "extension": ".lua",
-      "sizeBytes": 23024,
+      "sizeBytes": 23029,
       "lineCount": 619,
       "purpose": "提供階層式全量法術庫與智慧預設面板（三態勾選樹）。；支援選擇目標模組清單（技能冷卻、自身光環、目標光環、特殊光環、地面效果）。 | 呈現職業、專精、戰術分類（爆發/減傷/控場/地面）與英雄天賦之樹狀結構。；支援法術一鍵批次加入/移除至指定模組清單。",
       "role": "UI/SpellCatalogTreePanel",
@@ -199,8 +217,8 @@
     {
       "name": "Theme.lua",
       "extension": ".lua",
-      "sizeBytes": 26755,
-      "lineCount": 677,
+      "sizeBytes": 31597,
+      "lineCount": 800,
       "purpose": "主題視覺引擎，管理 11 組現代深色主題配色、自適應邊框、按鈕狀態與即時重繪",
       "role": "UI / Theme Engine",
       "security": "Presentation"
@@ -688,7 +706,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">20</span>
+          <span class="stat-val">22</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">子目錄數量</span>
@@ -696,7 +714,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">575.5 KB</span>
+          <span class="stat-val">682.1 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -719,7 +737,7 @@
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (20)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (22)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -776,6 +794,24 @@
           <td>
             <div class="file-name-cell">
               <span>📄</span>
+              <a href="./ColorPickerHelper.lua" title="檢視檔案內容">ColorPickerHelper.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">封裝魔獸世界原生 ColorPickerFrame 調色盤呼叫，相容 12.x/11.x 現代 SetupColorPickerAndShow 與舊版降級。；提供色塊預覽按鈕 (Color Swatch Button) 建立工廠，支援即時顏色更新與懸停高亮。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/ColorPickerHelper</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            4.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 134 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
               <a href="./CombatFlash.lua" title="檢視檔案內容">CombatFlash.lua</a>
             </div>
           </td>
@@ -786,7 +822,7 @@
           </td>
           <td><span class="sec-badge sec-vault">🔒 Protected</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            3.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 135 行</span>
+            7.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 242 行</span>
           </td>
         </tr>
         
@@ -840,7 +876,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            28.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 844 行</span>
+            35.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1003 行</span>
           </td>
         </tr>
         
@@ -858,7 +894,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            8.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 243 行</span>
+            8.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 244 行</span>
           </td>
         </tr>
         
@@ -876,7 +912,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            11.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 302 行</span>
+            12.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 321 行</span>
           </td>
         </tr>
         
@@ -894,7 +930,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            194.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 4563 行</span>
+            232.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 5359 行</span>
           </td>
         </tr>
         
@@ -912,7 +948,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            34.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 873 行</span>
+            40.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1022 行</span>
           </td>
         </tr>
         
@@ -925,12 +961,12 @@
           </td>
           <td><span class="badge badge-lua">LUA</span></td>
           <td>
-            <div style="font-weight: 500; color: #f1f5f9;">角色屬性與吸收量監控之獨立二級設定面板。；支援 16 種核心屬性每單項開關、替代圖示、字型大小、替代名稱、小數位數與數值高亮閾值自訂。 | 管理屬性清單與細部設定表單之建立與狀態更新。；支援即時熱預覽與 SavedVariables 雙向保存。</div>
+            <div style="font-weight: 500; color: #f1f5f9;">角色屬性與吸收量監控之獨立二級設定面板。；支援 18 種核心屬性每單項開關、替代圖示、字型大小、替代名稱、小數位數與數值高亮閾值自訂。 | 管理屬性清單與細部設定表單之建立與狀態更新。；支援即時熱預覽與 SavedVariables 雙向保存。</div>
             <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/PlayerStatPanel</div>
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            43.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 920 行</span>
+            49.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1045 行</span>
           </td>
         </tr>
         
@@ -948,7 +984,25 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            18.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 511 行</span>
+            22.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 601 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./PreviewPanel.lua" title="檢視檔案內容">PreviewPanel.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">提供獨立、可自由拖曳的即時效果預覽小視窗 (Live Preview Window)。；支援「告警圖示 (Alert)」、「職業資源 (Resource)」與「角色屬性 (Stat)」三大分頁。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">UI/PreviewPanel</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            22.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 572 行</span>
           </td>
         </tr>
         
@@ -1002,7 +1056,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            60.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1582 行</span>
+            71.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1830 行</span>
           </td>
         </tr>
         
@@ -1074,7 +1128,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            26.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 677 行</span>
+            30.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 800 行</span>
           </td>
         </tr>
         
@@ -1104,7 +1158,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:31:32.129367+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.818044+08:00</p>
     </footer>
   </div>
 

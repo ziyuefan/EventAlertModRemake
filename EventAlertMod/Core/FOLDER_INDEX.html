@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Core Layer">
   <meta name="ai-governance-security" content="Zero-Alloc / Taint-Sensitive">
   <meta name="ai-governance-invariants" content="擁有唯一 EventRouter 孤兒 Frame，禁止各模組自行建立事件監聽 Frame 造成資源浪費 | 嚴禁在熱路徑 (OnUpdate / Event Dispatch) 建立臨時 Closure 或垃圾回收負擔 | StatePool 必須嚴格回收所有狀態物件，確保長期戰鬥記憶體零增長 (0 Alloc)">
-  <meta name="ai-scan-timestamp" content="2026-09-04T18:31:32.101810+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.789969+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "嚴禁在熱路徑 (OnUpdate / Event Dispatch) 建立臨時 Closure 或垃圾回收負擔",
     "StatePool 必須嚴格回收所有狀態物件，確保長期戰鬥記憶體零增長 (0 Alloc)"
   ],
-  "timestamp": "2026-09-04T18:31:32.101810+08:00",
+  "timestamp": "2026-09-12T20:51:50.789969+08:00",
   "fileCount": 11,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 217608,
+  "totalSizeBytes": 242971,
   "files": [
     {
       "name": "Constants.lua",
@@ -46,8 +46,8 @@
     {
       "name": "DurationAdapter.lua",
       "extension": ".lua",
-      "sizeBytes": 6877,
-      "lineCount": 197,
+      "sizeBytes": 16207,
+      "lineCount": 432,
       "purpose": "依 12.x 契約建立已設定時間範圍的 DurationObject。；建立、設定與停用 DurationTextBinding，避免服務與 Renderer 重複實作生命週期。",
       "role": "Core/DurationAdapter",
       "security": "Taint-Sensitive"
@@ -55,8 +55,8 @@
     {
       "name": "Env.lua",
       "extension": ".lua",
-      "sizeBytes": 5153,
-      "lineCount": 140,
+      "sizeBytes": 6209,
+      "lineCount": 156,
       "purpose": "作為 Retail rewrite 的 namespace 與 API alias 錨點，讓後續模組只依賴 EAM 命名空間。；將常用 WoW API 集中到 EAM.API，降低全域查找與錯誤覆寫風險。 | 初始化 addon 名稱、版本、Retail-only 旗標與各模組容器。；建立 EAM.API 靜態 API alias table，供 Core/Services/UI/Debug 使用。",
       "role": "Core/Env",
       "security": "Safe"
@@ -100,8 +100,8 @@
     {
       "name": "ProfileCodec.lua",
       "extension": ".lua",
-      "sizeBytes": 59844,
-      "lineCount": 1477,
+      "sizeBytes": 60859,
+      "lineCount": 1493,
       "purpose": "為目前職業 profile 提供可複製的 EAMAP1 JSON/Base64 分享格式。；匯出只包含白名單設定；匯入永遠重算 kind、unit 與 alert ID。 | 嚴格 JSON 編碼/解析、標準 Base64、Adler-32 完整性檢查。；export、previewImport、applyImport 的交易式 API。",
       "role": "Core/ProfileCodec",
       "security": "Taint-Sensitive"
@@ -109,8 +109,8 @@
     {
       "name": "SavedVariables.lua",
       "extension": ".lua",
-      "sizeBytes": 112310,
-      "lineCount": 3006,
+      "sizeBytes": 123109,
+      "lineCount": 3303,
       "purpose": "用版本化 schema 接管舊 EAM SavedVariables，讓重寫可穩定 migration。；SavedVariables 只保存設定，不保存 runtime facts。 | 初始化 EAM_DB、保存 defaults、執行舊 EA_* migration、提供語系與 alert add/remove mutation API。",
       "role": "Core/SavedVariables",
       "security": "Safe"
@@ -127,8 +127,8 @@
     {
       "name": "Util.lua",
       "extension": ".lua",
-      "sizeBytes": 8262,
-      "lineCount": 281,
+      "sizeBytes": 11425,
+      "lineCount": 352,
       "purpose": "集中所有低階 Lua 相容 helper，避免各模組重複建立 table API fallback。；提供低 GC pool helper，讓 hot path 使用可重複物件。 | 提供 table.create/table.freeze/table.isfrozen fallback。；提供 acquireTable/releaseTable，並在 fallback 完成後 freeze EAM.API。",
       "role": "Core/Util",
       "security": "Taint-Sensitive"
@@ -615,7 +615,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">212.5 KB</span>
+          <span class="stat-val">237.3 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -687,7 +687,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            6.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 197 行</span>
+            15.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 432 行</span>
           </td>
         </tr>
         
@@ -705,7 +705,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            5.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 140 行</span>
+            6.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 156 行</span>
           </td>
         </tr>
         
@@ -795,7 +795,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            58.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1477 行</span>
+            59.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1493 行</span>
           </td>
         </tr>
         
@@ -813,7 +813,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            109.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 3006 行</span>
+            120.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 3303 行</span>
           </td>
         </tr>
         
@@ -849,7 +849,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            8.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 281 行</span>
+            11.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 352 行</span>
           </td>
         </tr>
         
@@ -861,7 +861,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:31:32.101810+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.789969+08:00</p>
     </footer>
   </div>
 

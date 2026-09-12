@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Localization Layer">
   <meta name="ai-governance-security" content="Safe String Lookup">
   <meta name="ai-governance-invariants" content="所有語系字典必須鍵值對齊，嚴禁出現 missing labelKey 錯誤 | 支援即時切換語言 (EAM_LOCALE_CHANGED) 動態重繪 UI，免 /reload 即時生效">
-  <meta name="ai-scan-timestamp" content="2026-09-04T18:31:32.112475+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.800533+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -28,15 +28,15 @@
     "所有語系字典必須鍵值對齊，嚴禁出現 missing labelKey 錯誤",
     "支援即時切換語言 (EAM_LOCALE_CHANGED) 動態重繪 UI，免 /reload 即時生效"
   ],
-  "timestamp": "2026-09-04T18:31:32.112475+08:00",
+  "timestamp": "2026-09-12T20:51:50.800533+08:00",
   "fileCount": 6,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 318654,
+  "totalSizeBytes": 338180,
   "files": [
     {
       "name": "Common.lua",
       "extension": ".lua",
-      "sizeBytes": 10340,
+      "sizeBytes": 10377,
       "lineCount": 344,
       "purpose": "建立 locale registry 與 fallback 機制，讓字串不再污染全域。；語系載入採 enUS fallback 加目前或使用者指定語系覆蓋；可選語系包含俄文。 | 建立 EAM.Locale、穩定 identity 的 EAM.L、語系 catalog、Auto Detect/手動選擇、文字綁定與 class/power static helper。",
       "role": "Locale/Common",
@@ -45,8 +45,8 @@
     {
       "name": "enUS.lua",
       "extension": ".lua",
-      "sizeBytes": 57082,
-      "lineCount": 1078,
+      "sizeBytes": 60417,
+      "lineCount": 1139,
       "purpose": "英文 fallback 字串表，任何語系缺字串時以此補底。；只註冊字串，不混入 UI 或設定邏輯。 | 透過 Locale.register(\"enUS\") 寫入 L.* keys。",
       "role": "Locale/enUS",
       "security": "Safe"
@@ -54,8 +54,8 @@
     {
       "name": "koKR.lua",
       "extension": ".lua",
-      "sizeBytes": 61649,
-      "lineCount": 1074,
+      "sizeBytes": 65665,
+      "lineCount": 1135,
       "purpose": "韓文語系字串表，僅作字串覆蓋。；語系與邏輯分離。 | 透過 Locale.register(\"koKR\") 覆蓋 L.* keys。",
       "role": "Locale/koKR",
       "security": "Safe"
@@ -63,8 +63,8 @@
     {
       "name": "ruRU.lua",
       "extension": ".lua",
-      "sizeBytes": 78859,
-      "lineCount": 1076,
+      "sizeBytes": 84024,
+      "lineCount": 1137,
       "purpose": "俄文語系字串表，僅作字串覆蓋。；語系與邏輯分離。 | 透過 Locale.register(\"ruRU\") 覆蓋 L.* keys。",
       "role": "Locale/ruRU",
       "security": "Safe"
@@ -72,8 +72,8 @@
     {
       "name": "zhCN.lua",
       "extension": ".lua",
-      "sizeBytes": 54075,
-      "lineCount": 1035,
+      "sizeBytes": 57572,
+      "lineCount": 1096,
       "purpose": "簡體中文語系字串表，與 zhTW 嚴格分離。；避免簡體字串污染繁體中文檔。 | 透過 Locale.register(\"zhCN\") 覆蓋 L.* keys。",
       "role": "Locale/zhCN",
       "security": "Safe"
@@ -81,8 +81,8 @@
     {
       "name": "zhTW.lua",
       "extension": ".lua",
-      "sizeBytes": 56649,
-      "lineCount": 1076,
+      "sizeBytes": 60125,
+      "lineCount": 1137,
       "purpose": "台灣繁體中文語系字串表，維持 EAM 原本主要使用者語境。；不得混入簡體中文字串。 | 透過 Locale.register(\"zhTW\") 覆蓋 L.* keys。",
       "role": "Locale/zhTW",
       "security": "Safe"
@@ -569,7 +569,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">311.2 KB</span>
+          <span class="stat-val">330.3 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -641,7 +641,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            55.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1078 行</span>
+            59.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1139 行</span>
           </td>
         </tr>
         
@@ -659,7 +659,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            60.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1074 行</span>
+            64.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1135 行</span>
           </td>
         </tr>
         
@@ -677,7 +677,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            77.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1076 行</span>
+            82.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1137 行</span>
           </td>
         </tr>
         
@@ -695,7 +695,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            52.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1035 行</span>
+            56.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1096 行</span>
           </td>
         </tr>
         
@@ -713,7 +713,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            55.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1076 行</span>
+            58.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1137 行</span>
           </td>
         </tr>
         
@@ -725,7 +725,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:31:32.112475+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.800533+08:00</p>
     </footer>
   </div>
 

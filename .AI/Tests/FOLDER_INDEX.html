@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Automated QA Layer">
   <meta name="ai-governance-security" content="Offline Test Fixture">
   <meta name="ai-governance-invariants" content="支援離線自動化回歸測試，隔離遊戲執行期環境">
-  <meta name="ai-scan-timestamp" content="2026-09-04T18:31:32.081884+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.757363+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -27,19 +27,19 @@
   "invariants": [
     "支援離線自動化回歸測試，隔離遊戲執行期環境"
   ],
-  "timestamp": "2026-09-04T18:31:32.081884+08:00",
+  "timestamp": "2026-09-12T20:51:50.757363+08:00",
   "fileCount": 2,
   "subdirectoryCount": 2,
-  "totalSizeBytes": 12358,
+  "totalSizeBytes": 14367,
   "files": [
     {
       "name": "FlowValidationHarness.lua",
       "extension": ".lua",
-      "sizeBytes": 9675,
-      "lineCount": 342,
+      "sizeBytes": 11684,
+      "lineCount": 431,
       "purpose": "在 Lua 5.1 離線環境直接載入正式模組，執行與實機相同的流程案例。；使用最小 WoW API mock 驗證 EventRouter、Scheduler、SavedVariables 與報告閉環。 | 建立 deterministic 時間與 Frame mock。；執行指定 suite、推進 Scheduler、輸出 JSON 並以 exit code 表示結果。",
       "role": ".AI/Tests/FlowValidationHarness",
-      "security": "Taint-Sensitive"
+      "security": "Safe"
     },
     {
       "name": "test_batch_convert_docs.py",
@@ -545,7 +545,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">12.1 KB</span>
+          <span class="stat-val">14.0 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -632,9 +632,9 @@
             <div style="font-weight: 500; color: #f1f5f9;">在 Lua 5.1 離線環境直接載入正式模組，執行與實機相同的流程案例。；使用最小 WoW API mock 驗證 EventRouter、Scheduler、SavedVariables 與報告閉環。 | 建立 deterministic 時間與 Frame mock。；執行指定 suite、推進 Scheduler、輸出 JSON 並以 exit code 表示結果。</div>
             <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">.AI/Tests/FlowValidationHarness</div>
           </td>
-          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            9.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 342 行</span>
+            11.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 431 行</span>
           </td>
         </tr>
         
@@ -664,7 +664,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-04T18:31:32.081884+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.757363+08:00</p>
     </footer>
   </div>
 
