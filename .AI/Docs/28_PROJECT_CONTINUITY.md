@@ -5,9 +5,67 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-09-04.19 (Alpha 8.4 發布完成 / 停用 SRC 打包與上傳 / 治理文檔與 Deploy 腳本同步更新)。
+目前快照版本：2026-09-12.24 (飛龍模式飛速專屬僅滑翔顯示 / 冷卻倒數扇形色彩透明度自訂 / 自身光環非本職業專屬法術防誤加確認對話框 / 499 契約全綠)。
 
-## 2026-09-04 多進度儲存點：Alpha 8.4 Pre-release 與 CurseForge 發布續接狀態（現行儲存點）
+## 2026-09-12 多進度儲存點：飛龍模式飛速專屬「僅滑翔時顯示圖示 (Glide = true)」特殊選項（現行儲存點）
+
+- current-of-truth：在「角色屬性與吸收量監控」中，針對「飛龍模式飛速（`skyridingSpeed`）」新增專屬特殊選項「僅滑翔顯示（`glideOnlyIcon`，預設 `false`）」；啟用後僅當角色處於空中御空術/飛龍滑翔飛行狀態（`C_PlayerInfo.GetGlidingInfo()` 之 `isGliding == true`）時才在畫面上顯示該圖示與即時速度百分比；在地面站立、步行或非滑翔狀態時自動隱藏，避免平時以 0% 佔用畫面；屬性設定面板 Tab 1（顯示與圖示）動態呈現專屬 CheckBox，選取其他 17 項屬性時自動隱藏；具備排版移動保護：開啟「移動屬性框架」（`isMoving == true`）時強制顯示以利拖曳排版；5 國語言完整鏡像對齊；全套門禁 100% 綠燈（78 語法 / 86 Flow / 499 契約）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【核心滑翔過濾與安全判斷】：`Services/PlayerStatService.lua` 新增安全封裝函式 `isPlayerGliding()`（使用 `pcall(C_PlayerInfo.GetGlidingInfo)` 安全判斷 `isGliding == true`），並在 `update()` 迴圈中過濾 `skyridingSpeed` + `cfg.glideOnlyIcon`。
+  2. [x] 【排版移動模式保護】：處於拖曳移動模式（`PlayerStatService.isMoving == true`）時，強制保留顯示該圖示物件，確保排版與定位操作不受影響。
+  3. [x] 【設定面板動態專屬控制項】：`UI/PlayerStatPanel.lua` Tab 1 新增 `glideOnlyIconCb`（x=320, y=-10），僅在選取 `skyridingSpeed` 時顯示並雙向同步設定，其他屬性自動隱藏。
+  4. [x] 【五國語言完整對齊】：`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 字典 100% 鏡像新增 `EAM_STAT_GLIDE_ONLY_ICON` 與 `EAM_STAT_GLIDE_ONLY_ICON_TIP` 詞條。
+  5. [x] 【全套自動化品質門禁全綠通過】：Lua 語法 78/78 PASS、Flow 業務狀態機 86/86 PASS、Validation Contracts 499/499 PASS。
+
+## 2026-09-12 多進度儲存點：冷卻倒數扇形色彩透明度自訂與非本職業法術防誤加確認對話框
+
+- current-of-truth：冷卻扇形倒數 (Cooldown Swipe) 徹底解決純白色遮蔽圖標問題，實裝自訂色彩與透明度支援（預設經典黑 0, 0, 0, 0.8），常規排版新增色塊按鈕與調色盤熱套用，支援 ProfileCodec 與 AuraRuleCompiler 佈局指紋同步；自身光環提醒分頁（Category 1）中輸入非當前職業專屬之 Spell ID 時，取消靜默自動轉移至跨職業清單行為，改為跳出主題化確認對話框（`confirmNonClassFrame`，420x165，顯示圖示、名稱、ID 與詢問提示，提供確定與取消按鈕及 ESC 鍵支援）；點擊確定後強制加入當前所在模組清單（自身光環提醒）中，絕不擅自竄改至跨職業；5 國語言完整對齊；全套門禁 100% 綠燈（78 語法 / 86 Flow / 499 契約）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【冷卻倒數扇形色彩與透明度自訂】：`SavedVariables.lua` 新增 `cooldownSwipeColor` 與 `cooldownSwipeAlpha` 欄位與 API；`IconPool.lua`、`NativeAuraRenderer.lua` 與 `Renderer.lua` 全面動態套用 `cooldown:SetSwipeColor(r, g, b, a)`；消除純白刺眼扇形。
+  2. [x] 【調色盤整合與熱預覽】：`Options.lua` 常規排版新增色彩方塊按鈕，調用暴雪 `ColorPickerFrame` 支援 RGBA 即時熱反饋與效果預覽。
+  3. [x] 【非本職業法術防誤加確認對話框】：`Options.lua` 實裝 `confirmNonClassFrame`（420x165，`FULLSCREEN_DIALOG`，註冊主題與 `UISpecialFrames` ESC 關閉），展示法術圖示、名稱、ID 與詢問文字。
+  4. [x] 【確定與取消互動邏輯】：點擊「確定」調用 `Options.addAlertToCurrentCategory(pendingSpellID, true)`，傳入 `force = true` 強制加入當前所在模組清單（`scope = SELF`）並清空輸入框；點擊「取消」或按 ESC 關閉對話框，不更改任何設定並保留輸入內容供微調。
+  5. [x] 【五國語言完整對齊】：`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 字典 100% 鏡像新增 4 項確認對話框詞條。
+  6. [x] 【全套自動化品質門禁全綠通過】：Lua 語法 78/78 PASS、Flow 業務狀態機 86/86 PASS、Validation Contracts 499/499 PASS。
+
+## 2026-09-12 多進度儲存點：角色屬性 4-Tab 防遮擋重構、職業資源條垂直生長修復與效果預覽視窗
+
+- current-of-truth：角色屬性面板（`PlayerStatPanel.lua`）徹底解決部件擁擠與滑桿文字遮擋問題，擴大至 720x540 並重構成 4 大獨立 Tab（顯示與圖示、字型與格式、警戒門檻、位置與錨點），滑桿垂直留白大幅擴充杜絕文字重疊；修復職業資源狀態條切換為垂直（VERTICAL）模式時無法生長的問題（`PowerRenderer.lua` 正確轉置寬高、旋轉 StatusBar 材質 `SetRotatesTexture(true)`、垂直排版點數分隔線與槽位條）；全新開發獨立自由浮動效果預覽小視窗（`PreviewPanel.lua`，330x420，支援告警圖示、職業資源條、角色屬性 3 大預覽 Tab，即時滑動測試時間文字變色曲線、Proc 金光、Pandemic 綠框與充能條），並於主設定面板、常規設定、資源與屬性面板整合快捷按鈕與變更聯動；5 國語言完整鏡像；全套門禁 100% 綠燈（78 語法 / 86 Flow / 497 契約）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【角色屬性面板 4-Tab 模組化重構】：`PlayerStatPanel.lua` 擴展至 720x540，將細部設定劃分為「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大頁籤，滑桿間距拉開至 50~60px，頂部標題、預覽按鈕與排列方向選單空間寬裕，消除任何重疊遮擋。
+  2. [x] 【職業資源狀態條垂直生長修復】：`PowerRenderer.lua` 當 `orientation == "VERTICAL"` 時動態轉置狀態條寬度與高度、呼叫 `statusBar:SetRotatesTexture(true)` 旋轉暴雪原生 StatusBar 材質，將圖示錨定於底部並向上垂直生長，轉置 POINTS 模式分隔線與槽位條，並修復 `reflowResourceFrames` 垂直動態間距。
+  3. [x] 【獨立即時效果預覽小視窗】：全新實裝 `UI/PreviewPanel.lua`（330x420，`DIALOG` 層級，自由拖曳），內建 3 大 Tab（告警圖示、職業資源、角色屬性），提供模擬剩餘秒數滑桿測試 TimerColorCurve 變色曲線、Proc 金色發光、Pandemic 框、資源充能百分比滑桿即時反映顏色曲線，以及屬性當前項目即時連動。
+  4. [x] 【全設定介面預覽連動】：主設定視窗（`Options.lua`）、位置與常規設定（`posFrame`）、職業資源面板（`PlayerResourcePanel.lua`）、角色屬性面板（`PlayerStatPanel.lua`）均增設 `[效果預覽]` 按鈕，且設定變更時自動通知 `PreviewPanel.refresh()` 熱更新。
+  5. [x] 【五國語言字典同步】：`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 完整對齊 19 個預覽視窗與屬性 Tab 語意鍵值。
+  6. [x] 【自動化品質門禁全綠通過】：Lua 語法 78/78 PASS、Flow 業務狀態機 86/86 PASS、Validation Contracts 497/497 PASS。
+
+## 2026-09-12 多進度儲存點：ESC 鍵無損 Zero-Alpha 抑制與 SavedVariables 時間戳蓋章
+
+- current-of-truth：實裝 ESC 鍵純透明度抑制（`Renderer.suppressAlerts("ESC_KEY")`），透過 `UISpecialFrames` 註冊輕量隱形框架，按 ESC 鍵將圖示 Alpha 設為 0，零物件銷毀、零 `Hide()`、保留 2D 矩陣排版與背景冷卻動畫；新告警觸發（`shown == true`）、進入戰鬥（`PLAYER_REGEN_DISABLED`）、打開設定面板或變更設定時自動無損還原透明度；實裝 `ensureEscCloseFrame` 戰鬥防 Taint 安全守衛；`SavedVariables.lua` 擴充 `meta` 區塊（`lastSavedAt`, `lastSavedEpoch`, `addonVersion`）於登出與變更時自動蓋章；鑑別 3 條 PTR WTF 帳號存檔（`17194784#5` 為唯一現役最新真實存檔）；5 國語言對齊；全套門禁 100% 綠燈（77 語法 / 86 Flow / 497 契約）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【ESC 鍵無損純透明度抑制】：`UI/Renderer.lua` 實裝 `suppressAlerts` 與 `unsuppressAlerts`，透過 `icon:SetAlpha(0)` 取代 `Hide()`，徹底避免破壞 Cooldown 預渲染與排版跳動。
+  2. [x] 【自動解除抑制喚醒】：新提示觸發、進入戰鬥、切換設定、開啟設定面板時自動呼叫 `unsuppressAlerts`，零延遲恢復圖示原貌。
+  3. [x] 【戰鬥中防 Taint 鎖定保護】：`ensureEscCloseFrame` 在戰鬥中嚴禁調用 `CreateFrame`，離戰後自動安全補齊註冊。
+  4. [x] 【SavedVariables 自動蓋章】：`Core/SavedVariables.lua` 實裝 `stampLastSaved`，在 `PLAYER_LOGOUT`、`touchRevision` 與版本遷移時寫入 ISO 8601 與 Unix 秒數時間戳。
+  5. [x] 【PTR WTF 存檔鑑別】：精確辨別 `17194784#5` (371KB, 當天最新實機測試) 為唯一現役真相源，`#3` (2024) 與 `#2` (2019) 為歷史舊存檔。
+  6. [x] 【五國語言字典同步】：`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 完整對齊 `EAM_OPT_ALLOW_ESC` 與 `EAM_OPT_ALLOW_ESC_TIP`。
+  7. [x] 【自動化質量門禁全綠通過】：Lua 語法 77/77 PASS、Flow 業務狀態機 86/86 PASS、Validation Contracts 497/497 PASS。
+
+## 2026-09-08 多進度儲存點：Alpha 8.5 原生曲線架構接入與五大革新實裝
+
+- current-of-truth：全面接入暴雪 Patch 12.0.0 / Midnight 底層 C-Level 曲線架構（`CurveObject` 與 `ColorCurveObject`），五大革新維度（動態色彩曲線資源條、秘密值階梯閥門穿透、自適應精度時間曲線、非線性冷卻衝刺進度、全螢幕瀕死動態呼吸脈動）全數實裝完成；UI 設定與 5 語系完全對齊；Mock 套件同步升級；全套品質門禁 100% 通過（Lua 77/77 PASS, Flow 86/86 PASS, Contracts 497/497 PASS）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【官方百科調研與架構論證】：完整分析 Wiki `ScriptObject_CurveObject` 與 `ScriptObject_ColorCurveObject`，確立底層 0-Taint、0-GC 與 Secret 穿透三大核心價值。
+  2. [x] 【能量/資源條動態色彩曲線 (ColorCurve on StatusBar)】：實作 `DurationAdapter.buildResourceDynamicColorCurve` 與 `PowerRenderer.applyPercent`，相容 `UnitPowerPercent("player", powerType, false, colorCurve)` 原生硬體級動態染色。
+  3. [x] 【受保護秘密值階梯閥門曲線 (Step Gate Curve)】：實作 `Util.createStepGateCurve` 與 `Util.createColorStepGateCurve`，二元階梯函數安全實現斬殺與警戒，杜絕 Lua 比較運算報錯。
+  4. [x] 【SecondsFormatter 自適應精度曲線】：`SecondsFormatter:SetDesiredUnitCountCurve` 階梯精度管理，長秒整數、關鍵 <= 5 秒小數點，零 GC 零耗能。
+  5. [x] 【非線性冷卻進度衝刺曲線】：`DurationAdapter.buildNonLinearProgressCurve` 提供 Linear、Cubic（最後 15% 衝刺加速）、Cosine 三大模式，`Renderer.lua` 與 Cooldown Frame 深度綁定。
+  6. [x] 【全螢幕瀕死動態呼吸警示】：`CombatFlash.lua` 透過 `UnitHealthPercent("player", true, curve)` 驅動血量越低紅框越濃烈的沉浸式動態脈動。
+  7. [x] 【設定面板與 5 語系同步】：`Options.lua` 增設對應控制項；`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 5 大語系字典 100% 完整覆蓋。
+  8. [x] 【自動化質量門禁全綠通過】：Lua 語法 77/77 PASS、Flow 業務狀態機 86/86 PASS、Validation Contracts 497/497 PASS。
+  9. [x] 【全專案文檔與 Changelog 同步】：`README.md`、`README_en.md`、`changelog.txt`、`changelog_en.txt` 雙語 4 份檔案在根目錄與插件目錄中全量同步對齊。
+
+## 2026-09-04 多進度儲存點：Alpha 8.4 Pre-release 與 CurseForge 發布續接狀態
 
 - current-of-truth：建立多進度續接儲存點（Checkpoint）；全專案所有檔案變更、語法檢查、業務沙盒與代碼契約檢驗（497/497 PASS）全數完成；全專案 115 個目錄與 1496 個檔案之 `FOLDER_INDEX.html` 已建置完畢；GitHub Pre-release 與 CurseForge 雙端最新修復套件已全數發布上線；自此全面停用本機與 Release 的 SRC 重複打包流程。
 - 當前多進度各環節達成狀態（Multi-Stage Status）：
@@ -437,3 +495,11 @@
 - 死亡凋零／褻瀆可藉 spell family 對齊；反魔法立場自動說明解析失敗時走該監控項 manual fallback。若反魔法立場因吸收上限提前消失，EAM 的施放時間計時不會自行證明提前結束，屬待實機確認限制。
 - 最終核心離線證據：Lua `64/64`、Flow all `82/82`（`.AI/TestResults/EAM_FlowValidation_all_20260823_174946.json`）、boundary `61/61`（`.AI/TestResults/EAM_FlowValidation_boundary_20260823_174739.json`）、Validation Contracts `493/493`。
 - 本輪修改前備份位於 `.AI/backup/20260823173540` 與 `.AI/backup/20260823175220`。尚未部署、未讀寫 WoW/WTF、未做真人操作；玩家部署後依 Docs/29 的 Alpha 7.4 段落回報。
+
+## 2026-09-12 Alpha 8.5 主題全面考證、漸層渲染修復與全子視窗連動快照
+
+- continuity snapshot 已升至 `2026-09-12.23`；11 大復古與現代主題調色盤深度重構，包含 EAM 9.0.1 經典石板金屬金框與晶石深紅按鈕、FF7 皇家寶石藍至黑海軍藍垂直漸層與純白立體雙框，以及 WinXP、Win7、Win10、Win3.1、Borland、DOS CRT、倚天中文、Red Alert、Aqua。
+- Modern WoW 垂直漸層修復：徹底消除 `SetColorTexture` 衝突，改採 `SetTexture("Interface\\Buttons\\WHITE8X8")` 並設於 `BACKGROUND, 1` 圖層，完美相容 Retail 10.x/11.x/12.x 原生 `Texture:SetGradient("VERTICAL", cMin, cMax)` 漸層著色與正確座標映射。
+- 全子視窗連動：實裝 `Theme.applyContainerBackground(frame, roleOrIsPanel)`，補齊 `posInner`、`listInner`、`GroupManagerPanel`、`SpellCatalogTreePanel`、`PreviewPanel` 與下拉選單主題註冊，新增 `"row"` 輕量列表行角色。
+- 最新離線 gate：Lua 78/78、Flow all 86/86、Validation Contracts 497/497。
+

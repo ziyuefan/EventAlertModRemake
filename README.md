@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.4-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.5-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -48,7 +48,13 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 - 💀 **死亡騎士符文儀表板**：依專精動態切換專屬圖示，內建 6 格微型充能冷卻條（0%..100% 平滑動畫）與 `/eam rune` 槽位診斷視窗。
 - ⚡ **60fps 全方位即時熱預覽**：調整尺寸、間距、透明度、轉圈動畫、文字大小等，畫面上即時動態響應，非戰鬥不需 `/reload`。
 - 💬 **全介面控制項懸停提示 (Hover Tooltips)**：所有按鈕、核取方塊、滑桿、編輯框與選單均附帶直觀指引，使用門檻為零。
-- 🎨 **11 套精美主題風格**：魔獸經典 (預設)、Borland 亮藍黃字、DOS CRT 復古黑綠、曜石黑、賽博龐克等風格自由切換。
+- 🎨 **11 套精美主題風格**：EAM 原版經典（石板金框深紅按鈕）、FF7 戰鬥視窗（皇家藍漸層白框）、Windows XP（Luna 藍）、Windows 7（Aero 玻璃）、Windows 10、Windows 3.1（3D 凸面按鈕）、Borland C++ IDE、DOS CRT（P1 磷光綠）、倚天中文、Red Alert（紅色警戒裝甲）、macOS Aqua（果凍膠囊藍）等自由切換，全面支援 Modern WoW 垂直漸層與所有子視窗無縫連動。
+- 📈 **暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入**：
+  - **能量/資源條動態色彩曲線染色**：消耗型與累積型資源自動以三色階動態染色（警戒深紅 ➜ 預警金黃 ➜ 專職代表色），完美相容 12.0+ `UnitPowerPercent` 原生硬體級渲染。
+  - **階梯閥門曲線 (Step Gate Curve)**：透過二元階梯函數安全穿透受保護秘密值，實現精確斬殺與警戒，零報錯零 Taint。
+  - **SecondsFormatter 自適應精度曲線**：時間倒數文字依剩餘秒數平滑切換精度（長時間整數，關鍵 <= 5 秒小數點），零 GC 負擔。
+  - **非線性冷卻進度曲線**：支援線性均勻 (Linear)、三次加速衝刺 (Cubic) 與餘弦平滑 (Cosine)，營造大招即將就緒的戰鬥衝刺張力。
+  - **全螢幕瀕死動態呼吸警示**：血量危急時全螢幕邊緣動態呼吸脈動，血量越低紅框越濃烈，脫戰自動平滑隱藏。
 - 🚨 **進入戰鬥紅框閃爍**：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。
 - 📦 **Profile 設定檔跨角色分享**：支援 8 大分類自選項目匯出／匯入（EAMAP1 JSON / Base64 編碼），附防禦性白名單校驗。
 - 🌐 **完整多國語系支援**：繁體中文 (zhTW - 嚴格對齊台灣官方術語：致命、加速、臨機應變)、簡體中文 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU)。
@@ -150,6 +156,40 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+
+### 🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12
+- **獨立即時效果預覽視窗 (Independent Live Preview Panel - PreviewPanel)**：
+  - 全新開發可自由拖曳、螢幕鎖定之獨立效果預覽視窗，提供「告警圖示」、「職業資源條」、「角色屬性」3 大頁籤。
+  - 支援倒數變色曲線滑桿、Proc 金光、Pandemic 綠框、充能百分比與屬性項目即時動態測試。
+  - 主設定視窗、常規排版、職業資源與屬性面板全面增設「效果預覽」按鈕與雙向熱更新連動。
+- **角色屬性設定面板 4-Tab 模組化與防遮擋排版 (Player Stats 4-Tab Modular Layout)**：
+  - 屬性面板尺寸擴大至 720x540，重構成「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大獨立頁籤。
+  - 滑桿垂直留白擴充至 50~60px，徹底消除暴雪原生滑桿 Low/High 刻度標籤與下方元件嚴重重疊遮擋問題。
+- **飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display)**：
+  - 為「飛龍模式飛速 (`skyridingSpeed`)」新增專屬特殊選項「僅滑翔顯示 (Glide Only)」。
+  - 角色處於空中御空術/飛龍滑翔飛行 (`isGliding == true`) 時才於畫面呈現圖示與速度百分比；未滑翔（站立/步行）時自動隱藏，避免 0% 佔用畫面。
+  - 支援排版移動模式保護：開啟「移動屬性框架」時強制顯示以便玩家拖曳定位。
+- **冷卻扇形倒數色彩與透明度自訂 (Cooldown Swipe Color & Alpha Customization)**：
+  - 告警圖示與預覽面板之冷卻扇形倒數 (Cooldown Swipe) 支援透明度與色彩自訂，預設經典黑 (`0, 0, 0, 0.8`)，徹底解決純白扇形刺眼與遮擋圖示問題。
+  - 於常規排版設置中提供自訂色塊按鈕與原生調色盤即時熱套用，支援 ProfileCodec 編解碼與佈局指紋同步。
+- **自身光環非本職業專屬法術防誤加確認對話框 (Non-Class Spell Interactive Confirmation)**：
+  - 在自身光環提醒中輸入不屬於當前職業的 Spell ID 時，取消靜默自動轉移至跨職業清單行為，改為彈出互動式主題確認對話框。
+  - 顯示法術圖示、法術名稱、ID 與詢問提示；點擊「確定」強制於當前所在模組清單（自身光環提醒）中正式加入，絕不擅自竄改至跨職業；「取消」按鈕（及 ESC 鍵）安全關閉不變更任何設定。
+- **職業資源狀態條垂直生長修復 (Vertical Resource StatusBar Growth Fix)**：
+  - 修復資源條切換為垂直 (VERTICAL) 模式時無法向上生長問題。
+  - 正確轉置寬高、旋轉暴雪原生 StatusBar 材質 (`SetRotatesTexture(true)`)、將圖示錨定置底向上生長，並轉置點數分隔線與槽位條。
+- **11 大經典復古與現代主題調色盤深度重構 (11 Classic & Modern Themes Visual Overhaul)**：
+  - 深度考證並精確還原 11 款主題：EAM 經典復刻（9.0.1 石板黑金深紅）、FF7 經典戰鬥視窗（皇家寶石藍漸層純白框）、Windows XP (Luna)、Windows 7 (Aero)、Windows 10 (Metro)、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua。
+  - 修復 Modern WoW 垂直漸層著色管線，解決頂點著色器衝突；全子視窗與面板背景無縫主題連動覆蓋。
+- **ESC 鍵無損純透明度抑制與自動喚醒 (Zero-Alpha Suppression on ESC Key)**：
+  - 在遊戲中按 ESC 鍵隱藏畫面圖示全面改採純透明度抑制 (`SetAlpha(0)`)，絕不銷毀 Frame 物件，完整保留 2D 排版矩陣與背景冷卻動畫。
+  - 觸發新提示、進入戰鬥或打開設定面板時自動無損還原顯示；具備戰鬥中防 Taint 安全守衛。
+- **暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入 (Native C-Level Curve Architecture)**：
+  - 全面接入暴雪 Patch 12.0.0 / Midnight 底層 C-Level 曲線系統，杜絕戰鬥鎖定與 Taint 污染。
+  - 支援資源條動態色彩三色平滑過渡、二元階梯閥門曲線突破受保護秘密值防線、SecondsFormatter 自適應精度曲線、非線性冷卻進度衝刺曲線與全螢幕瀕死低血量動態呼吸警示。
+- **五國語言完整對齊與存檔時間戳蓋章**：
+  - 5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 同步新增 20+ 個新功能與專屬選項詞條。
+  - 存檔資料庫新增本地時間與 Unix 秒數雙重時間戳自動標記。
 
 ### 🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04
 - **光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine & Columns per Row Configuration)**：

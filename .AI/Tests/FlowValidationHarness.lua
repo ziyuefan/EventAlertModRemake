@@ -160,7 +160,93 @@ table.isfrozen = table.isfrozen or function()
 end
 
 Enum = {
-    PowerType = {},
+    PowerType = {
+        Mana = 0,
+        Rage = 1,
+        Focus = 2,
+        Energy = 3,
+        ComboPoints = 4,
+        Runes = 5,
+        RunicPower = 6,
+        SoulShards = 7,
+        LunarPower = 8,
+        HolyPower = 9,
+        Maelstrom = 11,
+        Chi = 12,
+        Insanity = 13,
+        ArcaneCharges = 16,
+        Fury = 17,
+        Pain = 18,
+        Essence = 19,
+    },
+    LuaCurveType = {
+        Linear = 0,
+        Step = 1,
+        Cosine = 2,
+        Cubic = 3,
+    },
+    DurationTextBindingProperty = {
+        RemainingDuration = 0,
+        RemainingPercent = 1,
+        ElapsedDuration = 2,
+        ElapsedPercent = 3,
+        TotalDuration = 4,
+    },
+    StatusBarRenderMode = {
+        Linear = 0,
+        Radial = 1,
+    },
+    StatusBarFillStyle = {
+        Standard = 0,
+        Center = 1,
+        Reverse = 2,
+    },
+    UnitAuraSortRule = {
+        Unsorted = 0,
+        Default = 1,
+        BigDefensive = 2,
+        Expiration = 3,
+        ExpirationOnly = 4,
+        Name = 5,
+    },
+    UnitAuraSortDirection = {
+        Normal = 0,
+        Reverse = 1,
+    },
+    CustomAuraButtonDispelTypeStealableFilter = {
+        Stealable = 1,
+        NotStealable = 2,
+    },
+    SpellBookSpellBank = {
+        Player = 0,
+        Pet = 1,
+    },
+    SpellBookItemType = {
+        None = 0,
+        Spell = 1,
+        FutureSpell = 2,
+        PetAction = 3,
+        Flyout = 4,
+    },
+    ItemQuality = {
+        Poor = 0,
+        Common = 1,
+        Uncommon = 2,
+        Rare = 3,
+        Epic = 4,
+        Legendary = 5,
+        Artifact = 6,
+        Heirloom = 7,
+        WowToken = 8,
+    },
+    CooldownViewerCategory = {
+        Essential = 0,
+        Utility = 1,
+        TrackedBuff = 2,
+        TrackedBar = 3,
+        GroupBuff = 4,
+        SpecAgnosticEssential = 5,
+    },
 }
 
 C_Spell = {
@@ -180,6 +266,7 @@ C_DurationUtil = {}
 C_UIFileAsset = {}
 C_AddOns = {}
 C_Secrets = {}
+C_CurveUtil = {}
 UIParent = createFrame()
 UISpecialFrames = {}
 
@@ -232,6 +319,7 @@ EAM.Modules.Main = {
     initialized = true,
 }
 loadModule("EventAlertMod/UI/Theme.lua")
+loadModule("EventAlertMod/UI/ColorPickerHelper.lua")
 loadModule("EventAlertMod/UI/TooltipMonitorMenu.lua")
 loadModule("EventAlertMod/Services/SpellInfoService.lua")
 loadModule("EventAlertMod/Services/LegacyDiscoveryService.lua")
@@ -257,6 +345,7 @@ loadModule("EventAlertMod/Services/TooltipMonitorService.lua")
 loadModule("EventAlertMod/UI/AboutPanel.lua")
 loadModule("EventAlertMod/UI/ModulePanel.lua")
 loadModule("EventAlertMod/UI/PlayerResourcePanel.lua")
+loadModule("EventAlertMod/UI/PreviewPanel.lua")
 loadModule("EventAlertMod/UI/ProfileCodecPanel.lua")
 loadModule("EventAlertMod/UI/Options.lua")
 if flowMock then

@@ -915,6 +915,14 @@ local function copySerializable(value)
     return copy
 end
 
+local function normalizeColorRGB(color, defaultR, defaultG, defaultB)
+    if type(color) ~= "table" then return { r = defaultR or 0, g = defaultG or 0, b = defaultB or 0 } end
+    local r = isSafeFiniteNumber(color.r, 0, 1) and color.r or (defaultR or 0)
+    local g = isSafeFiniteNumber(color.g, 0, 1) and color.g or (defaultG or 0)
+    local b = isSafeFiniteNumber(color.b, 0, 1) and color.b or (defaultB or 0)
+    return { r = r, g = g, b = b }
+end
+
 local function normalizeLayoutRecord(layout)
     if type(layout) ~= "table" or not isSafeValue(layout) then return nil, "layoutInvalid" end
     local normalized = {
@@ -924,7 +932,8 @@ local function normalizeLayoutRecord(layout)
         fontSizeSpellName = isSafeInteger(layout.fontSizeSpellName, 8, 32) and layout.fontSizeSpellName or 12,
         fontSizeTimeVal = isSafeInteger(layout.fontSizeTimeVal, 8, 32) and layout.fontSizeTimeVal or 14,
         fontSizeStack = isSafeInteger(layout.fontSizeStack, 8, 32) and layout.fontSizeStack or 12,
-        cooldownSwipeAlpha = isSafeFiniteNumber(layout.cooldownSwipeAlpha, 0, 1) and layout.cooldownSwipeAlpha or 1,
+        cooldownSwipeAlpha = isSafeFiniteNumber(layout.cooldownSwipeAlpha, 0, 1) and layout.cooldownSwipeAlpha or 0.8,
+        cooldownSwipeColor = normalizeColorRGB(layout.cooldownSwipeColor, 0, 0, 0),
         selfDebuffRed = isSafeFiniteNumber(layout.selfDebuffRed, 0, 1) and layout.selfDebuffRed or 0.5,
         targetDebuffGreen = isSafeFiniteNumber(layout.targetDebuffGreen, 0, 1) and layout.targetDebuffGreen or 0.5,
         bossExecuteThreshold = isSafeFiniteNumber(layout.bossExecuteThreshold, 0, 1) and layout.bossExecuteThreshold or 0.2,
@@ -932,6 +941,9 @@ local function normalizeLayoutRecord(layout)
         chargeBarLayout = (layout.chargeBarLayout == "TOP" or layout.chargeBarLayout == "BOTTOM" or layout.chargeBarLayout == "LEFT" or layout.chargeBarLayout == "RIGHT" or layout.chargeBarLayout == "RING") and layout.chargeBarLayout or "BOTTOM",
         chargeBarLengthPercent = isSafeInteger(layout.chargeBarLengthPercent, 50, 300) and layout.chargeBarLengthPercent or 150,
         chargeBarThickness = isSafeInteger(layout.chargeBarThickness, 1, 50) and layout.chargeBarThickness or 8,
+        auraStackBar = layout.auraStackBar ~= false,
+        minApplications = isSafeInteger(layout.minApplications, 1, 20) and layout.minApplications or 1,
+        overdriveGlow = layout.overdriveGlow ~= false,
         fontFamily = isSafeString(layout.fontFamily, 32) and layout.fontFamily or "STANDARD",
     }
     if type(layout.frames) == "table" then
@@ -1072,7 +1084,8 @@ local function exportLayout()
         fontSizeSpellName = config.fontSizeSpellName or 12,
         fontSizeTimeVal = config.fontSizeTimeVal or 14,
         fontSizeStack = config.fontSizeStack or 12,
-        cooldownSwipeAlpha = config.cooldownSwipeAlpha ~= nil and config.cooldownSwipeAlpha or 1,
+        cooldownSwipeAlpha = config.cooldownSwipeAlpha ~= nil and config.cooldownSwipeAlpha or 0.8,
+        cooldownSwipeColor = config.cooldownSwipeColor or { r = 0, g = 0, b = 0 },
         selfDebuffRed = config.selfDebuffRed or 0.5,
         targetDebuffGreen = config.targetDebuffGreen or 0.5,
         bossExecuteThreshold = config.bossExecuteThreshold or 0.2,
@@ -1081,6 +1094,9 @@ local function exportLayout()
         chargeBarLayout = config.chargeBarLayout or "BOTTOM",
         chargeBarLengthPercent = config.chargeBarLengthPercent or 150,
         chargeBarThickness = config.chargeBarThickness or 8,
+        auraStackBar = config.auraStackBar ~= false,
+        minApplications = config.minApplications or 1,
+        overdriveGlow = config.overdriveGlow ~= false,
         textLayout = textLayout,
         fontFamily = config.fontFamily or "STANDARD",
     })

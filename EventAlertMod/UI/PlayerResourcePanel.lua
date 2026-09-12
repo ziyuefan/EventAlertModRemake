@@ -86,6 +86,12 @@ local SLIDER_SPECS = freeze({
     freeze({ field = "order", key = "EAM_RESOURCE_ORDER", fallback = "顯示順序", min = 1, max = 17, step = 1, integer = true }),
 })
 
+local SLIDER_MAP = {}
+for index = 1, #SLIDER_SPECS do
+    local spec = SLIDER_SPECS[index]
+    SLIDER_MAP[spec.field] = spec
+end
+
 local POINT_OPTIONS = freeze({
     "TOPLEFT",
     "TOP",
@@ -182,6 +188,9 @@ local function autoApplyDraft()
             Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_DEFERRED", "設定已保存，離開戰鬥後套用。"))
         else
             Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_APPLIED_NOW", "資源設定已即時生效。"))
+        end
+        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
+            EAM.UI.PreviewPanel.refresh()
         end
     end
 end
@@ -495,7 +504,8 @@ local function createPanel()
     end
 
     local frame = api.CreateFrame("Frame", "EAM_PlayerResourceOptionsFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(840, 800)
+    frame:SetFrameStrata("DIALOG")
+    frame:SetSize(720, 520)
     frame:SetPoint("CENTER", UIParent, "CENTER", 0, 10)
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -522,6 +532,18 @@ local function createPanel()
     titleClose:SetScript("OnClick", function()
         Panel.hide()
     end)
+
+    local previewBtn = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    previewBtn:SetSize(88, 22)
+    previewBtn:SetPoint("RIGHT", titleClose, "LEFT", -6, 0)
+    previewBtn:SetText(localized("EAM_PREVIEW_BTN", "效果預覽"))
+    if Theme and Theme.registerButton then Theme.registerButton(previewBtn) end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(previewBtn, "開啟或關閉獨立的即時效果預覽小視窗", "效果預覽") end
+    previewBtn:SetScript("OnClick", function()
+        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
+            EAM.UI.PreviewPanel.toggle()
+        end
+    end)
     frame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -537,32 +559,43 @@ local function createPanel()
     end
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOP", frame, "TOP", 0, -18)
+    title:SetPoint("TOP", frame, "TOP", 0, -14)
     Locale.bindText(title, "EAM_RESOURCE_PANEL_TITLE", "玩家職業資源")
     if Theme and Theme.registerText then
         Theme.registerText(title, "title")
     end
 
     local description = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    description:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -48)
-    description:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -24, -48)
+    description:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -38)
+    description:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -16, -38)
     description:SetJustifyH("LEFT")
     Locale.bindText(description, "EAM_RESOURCE_PANEL_DESC", "每種資源獨立設定；Secret 資源只送入原生視覺，不顯示 Lua 數字。")
     if Theme and Theme.registerText then
         Theme.registerText(description, "body")
     end
 
+    -- 左側：資源清單面板
     local listPanel = api.CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    listPanel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -84)
-    listPanel:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 64)
-    listPanel:SetWidth(220)
+    listPanel:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -58)
+    listPanel:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 52)
+    listPanel:SetWidth(190)
+    listPanel:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 16,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 },
+    })
+    listPanel:SetBackdropColor(0.08, 0.05, 0.03, 0.8)
+    listPanel:SetBackdropBorderColor(0.5, 0.35, 0.2, 0.8)
     if Theme and Theme.registerFrame then
         Theme.registerFrame(listPanel, "panel")
     end
 
     local scopeButton = api.CreateFrame("Button", nil, listPanel, "UIPanelButtonTemplate")
-    scopeButton:SetSize(188, 24)
-    scopeButton:SetPoint("TOP", listPanel, "TOP", 0, -14)
+    scopeButton:SetSize(174, 24)
+    scopeButton:SetPoint("TOP", listPanel, "TOP", 0, -10)
     if Theme and Theme.registerButton then
         Theme.registerButton(scopeButton)
     end
@@ -579,8 +612,8 @@ local function createPanel()
 
     for index = 1, 5 do
         local button = api.CreateFrame("Button", nil, listPanel, "UIPanelButtonTemplate")
-        button:SetSize(188, 42)
-        button:SetPoint("TOP", listPanel, "TOP", 0, -52 - (index - 1) * 48)
+        button:SetSize(174, 40)
+        button:SetPoint("TOP", listPanel, "TOP", 0, -40 - (index - 1) * 46)
         if Theme and Theme.registerButton then
             Theme.registerButton(button)
         end
@@ -588,9 +621,9 @@ local function createPanel()
             EAM.UI.setTooltip(button, "點擊選取此項資源進行細部顯示與排版設定", "選擇資源")
         end
         local nameText = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        nameText:SetPoint("TOPLEFT", button, "TOPLEFT", 8, -6)
+        nameText:SetPoint("TOPLEFT", button, "TOPLEFT", 8, -5)
         local capabilityLabel = button:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        capabilityLabel:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", 8, 5)
+        capabilityLabel:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", 8, 4)
         if Theme and Theme.registerText then
             Theme.registerText(nameText, "button")
             Theme.registerText(capabilityLabel, "buttonDisabled")
@@ -609,23 +642,112 @@ local function createPanel()
         Panel.rows[index] = row
     end
 
+    -- 右側頂部：當前選取資源名稱與安全 Capability
     local selectedName = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    selectedName:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -92)
+    selectedName:SetPoint("TOPLEFT", frame, "TOPLEFT", 216, -58)
     if Theme and Theme.registerText then
         Theme.registerText(selectedName, "title")
     end
     Panel.selectedName = selectedName
 
     local capabilityLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    capabilityLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -122)
+    capabilityLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 216, -84)
     if Theme and Theme.registerText then
         Theme.registerText(capabilityLabel, "body")
     end
     Panel.capabilityText = capabilityLabel
 
-    local modeButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    modeButton:SetSize(170, 24)
-    modeButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -148)
+    -- 右側 Tab 分頁系統 (4 大分類)
+    local tabDefs = {
+        { key = "EAM_RESOURCE_TAB_DISPLAY", fallback = "顯示與模式" },
+        { key = "EAM_RESOURCE_TAB_SIZING", fallback = "條形與尺寸" },
+        { key = "EAM_RESOURCE_TAB_POSITION", fallback = "位置與錨點" },
+        { key = "EAM_RESOURCE_TAB_TEXT", fallback = "數值與文字" },
+    }
+
+    local tabButtons = {}
+    local tabPages = {}
+    local currentTab = 1
+
+    local editorInner = api.CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    editorInner:SetPoint("TOPLEFT", frame, "TOPLEFT", 216, -136)
+    editorInner:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 52)
+    editorInner:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 16,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 },
+    })
+    editorInner:SetBackdropColor(0.08, 0.05, 0.03, 0.8)
+    editorInner:SetBackdropBorderColor(0.5, 0.35, 0.2, 0.8)
+    if Theme and Theme.registerFrame then
+        Theme.registerFrame(editorInner, "panel")
+    end
+
+    local function selectTab(tabIdx)
+        currentTab = tabIdx
+        for idx = 1, #tabDefs do
+            local page = tabPages[idx]
+            local btn = tabButtons[idx]
+            if page then
+                if idx == tabIdx then
+                    page:Show()
+                else
+                    page:Hide()
+                end
+            end
+            if btn then
+                if idx == tabIdx then
+                    btn:SetAlpha(1.0)
+                    if btn.tabText then
+                        btn.tabText:SetTextColor(1.0, 0.85, 0.2, 1.0)
+                    end
+                else
+                    btn:SetAlpha(0.65)
+                    if btn.tabText then
+                        btn.tabText:SetTextColor(0.75, 0.75, 0.75, 1.0)
+                    end
+                end
+            end
+        end
+    end
+
+    local tabStartX = 216
+    local tabWidth = 117
+    local tabGap = 6
+    for idx, def in ipairs(tabDefs) do
+        local btn = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+        if Theme and Theme.registerButton then Theme.registerButton(btn) end
+        btn:SetSize(tabWidth, 24)
+        btn:SetPoint("TOPLEFT", frame, "TOPLEFT", tabStartX + (idx - 1) * (tabWidth + tabGap), -108)
+
+        local tabText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        tabText:SetPoint("CENTER", btn, "CENTER", 0, 0)
+        Locale.bindText(tabText, def.key, def.fallback)
+        btn.tabText = tabText
+
+        btn:SetScript("OnClick", function()
+            selectTab(idx)
+        end)
+        tabButtons[idx] = btn
+
+        local page = api.CreateFrame("Frame", nil, editorInner)
+        page:SetAllPoints(editorInner)
+        page:Hide()
+        tabPages[idx] = page
+    end
+
+    -- 【Tab 1: 顯示與模式 (Display & Mode)】
+    local pageDisplay = tabPages[1]
+    createCheckbox(pageDisplay, "enabled", "EAM_RESOURCE_ENABLED", "啟用此資源", 16, -14, "啟用/停用此項職業資源之畫面監控", "啟用此資源")
+    createCheckbox(pageDisplay, "showForeground", "EAM_RESOURCE_SHOW_FOREGROUND", "前景時顯示", 165, -14, "主要資源或前景焦點時顯示", "前景時顯示")
+    createCheckbox(pageDisplay, "showBackground", "EAM_RESOURCE_SHOW_BACKGROUND", "背景時顯示", 315, -14, "非主要焦點或背景資源時顯示", "背景時顯示")
+
+    local modeButton = api.CreateFrame("Button", nil, pageDisplay, "UIPanelButtonTemplate")
+    modeButton:SetSize(210, 24)
+    modeButton:SetPoint("TOPLEFT", pageDisplay, "TOPLEFT", 16, -48)
     if Theme and Theme.registerButton then
         Theme.registerButton(modeButton)
     end
@@ -647,9 +769,39 @@ local function createPanel()
     end)
     Panel.modeButton = modeButton
 
-    local anchorButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    anchorButton:SetSize(185, 24)
-    anchorButton:SetPoint("LEFT", modeButton, "RIGHT", 10, 0)
+    local orientationButton = api.CreateFrame("Button", nil, pageDisplay, "UIPanelButtonTemplate")
+    orientationButton:SetSize(210, 24)
+    orientationButton:SetPoint("TOPLEFT", pageDisplay, "TOPLEFT", 250, -48)
+    if Theme and Theme.registerButton then
+        Theme.registerButton(orientationButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(orientationButton, "切換資源條生長排列方向（水平或垂直）", "排列方向")
+    end
+    orientationButton:SetScript("OnClick", cycleOrientation)
+    Panel.orientationButton = orientationButton
+
+    createCheckbox(pageDisplay, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 16, -88, "當資源達到高亮門檻時觸發閃爍流光特效", "高於門檻時高亮")
+
+    createSlider(pageDisplay, SLIDER_MAP.threshold, 16, -135)
+    createSlider(pageDisplay, SLIDER_MAP.order, 250, -135)
+    createSlider(pageDisplay, SLIDER_MAP.alpha, 16, -185)
+    createSlider(pageDisplay, SLIDER_MAP.foregroundAlpha, 250, -185)
+    createSlider(pageDisplay, SLIDER_MAP.backgroundAlpha, 16, -235)
+
+    -- 【Tab 2: 條形與尺寸 (Bar & Dimensions)】
+    local pageSizing = tabPages[2]
+    createSlider(pageSizing, SLIDER_MAP.barWidth, 16, -25)
+    createSlider(pageSizing, SLIDER_MAP.barHeight, 250, -25)
+    createSlider(pageSizing, SLIDER_MAP.iconSize, 16, -85)
+    createSlider(pageSizing, SLIDER_MAP.spacing, 250, -85)
+    createSlider(pageSizing, SLIDER_MAP.scale, 16, -145)
+
+    -- 【Tab 3: 位置與錨點 (Position & Anchor)】
+    local pagePosition = tabPages[3]
+    local anchorButton = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
+    anchorButton:SetSize(210, 24)
+    anchorButton:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -18)
     if Theme and Theme.registerButton then
         Theme.registerButton(anchorButton)
     end
@@ -661,9 +813,9 @@ local function createPanel()
     end)
     Panel.controls.anchor = anchorButton
 
-    local positionButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    positionButton:SetSize(185, 24)
-    positionButton:SetPoint("LEFT", anchorButton, "RIGHT", 10, 0)
+    local positionButton = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
+    positionButton:SetSize(210, 24)
+    positionButton:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 250, -18)
     if Theme and Theme.registerButton then
         Theme.registerButton(positionButton)
     end
@@ -675,21 +827,23 @@ local function createPanel()
     end)
     Panel.controls.position = positionButton
 
-    local orientationButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    orientationButton:SetSize(270, 24)
-    orientationButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 260, -244)
-    if Theme and Theme.registerButton then
-        Theme.registerButton(orientationButton)
-    end
-    if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(orientationButton, "切換資源條生長排列方向（水平或垂直）", "排列方向")
-    end
-    orientationButton:SetScript("OnClick", cycleOrientation)
-    Panel.orientationButton = orientationButton
+    createSlider(pagePosition, SLIDER_MAP.offsetX, 16, -75)
+    createSlider(pagePosition, SLIDER_MAP.offsetY, 250, -75)
 
-    local fontFamilyButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    fontFamilyButton:SetSize(280, 24)
-    fontFamilyButton:SetPoint("LEFT", orientationButton, "RIGHT", 10, 0)
+    local posDesc = pagePosition:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    posDesc:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -135)
+    posDesc:SetWidth(440)
+    posDesc:SetJustifyH("LEFT")
+    posDesc:SetText("父框架錨點決定參考點，定位點決定資源自身的對齊原點；偏移數值正負代表相對於原點的像素距離。")
+
+    -- 【Tab 4: 數值與文字 (Values & Text)】
+    local pageText = tabPages[4]
+    createCheckbox(pageText, "showValue", "EAM_RESOURCE_SHOW_VALUE", "顯示安全數字", 16, -14, "在資源條旁顯示即時能量數值（僅非秘密資源支援）", "顯示安全數字")
+    createCheckbox(pageText, "showPercent", "EAM_RESOURCE_SHOW_PERCENT", "顯示百分比", 250, -14, "在資源條旁顯示即時能量百分比", "顯示百分比")
+
+    local fontFamilyButton = api.CreateFrame("Button", nil, pageText, "UIPanelButtonTemplate")
+    fontFamilyButton:SetSize(444, 24)
+    fontFamilyButton:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -48)
     if Theme and Theme.registerButton then
         Theme.registerButton(fontFamilyButton)
     end
@@ -699,23 +853,18 @@ local function createPanel()
     fontFamilyButton:SetScript("OnClick", cycleFontFamily)
     Panel.fontFamilyButton = fontFamilyButton
 
-    createCheckbox(frame, "enabled", "EAM_RESOURCE_ENABLED", "啟用此資源", 260, -184, "啟用/停用此項職業資源之畫面監控", "啟用此資源")
-    createCheckbox(frame, "showForeground", "EAM_RESOURCE_SHOW_FOREGROUND", "前景時顯示", 440, -184, "主要資源或前景焦點時顯示", "前景時顯示")
-    createCheckbox(frame, "showBackground", "EAM_RESOURCE_SHOW_BACKGROUND", "背景時顯示", 620, -184, "非主要焦點或背景資源時顯示", "背景時顯示")
-    createCheckbox(frame, "showValue", "EAM_RESOURCE_SHOW_VALUE", "顯示安全數字", 260, -212, "在資源條旁顯示即時能量數值（僅非秘密資源支援）", "顯示安全數字")
-    createCheckbox(frame, "showPercent", "EAM_RESOURCE_SHOW_PERCENT", "顯示百分比", 440, -212, "在資源條旁顯示即時能量百分比", "顯示百分比")
-    createCheckbox(frame, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 620, -212, "當資源達到高亮門檻時觸發閃爍流光特效", "高於門檻時高亮")
+    createSlider(pageText, SLIDER_MAP.fontSize, 16, -100)
+    createSlider(pageText, SLIDER_MAP.valueFontSize, 250, -100)
+    createSlider(pageText, SLIDER_MAP.valueOffsetX, 16, -160)
+    createSlider(pageText, SLIDER_MAP.valueOffsetY, 250, -160)
 
-    for index = 1, #SLIDER_SPECS do
-        local spec = SLIDER_SPECS[index]
-        local column = (index - 1) % 2
-        local row = math.floor((index - 1) / 2)
-        createSlider(frame, spec, 260 + column * 280, -288 - row * 52)
-    end
+    -- 預設選取 Tab 1
+    selectTab(1)
 
+    -- 底部狀態與操作按鈕
     local statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 24, 28)
-    statusText:SetWidth(360)
+    statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 20)
+    statusText:SetWidth(380)
     statusText:SetJustifyH("LEFT")
     Locale.bindText(statusText, "EAM_RESOURCE_STATUS_READY", "玩家資源設定已就緒。")
     if Theme and Theme.registerText then
@@ -723,45 +872,23 @@ local function createPanel()
     end
     Panel.statusText = statusText
 
-    local applyButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    applyButton:SetSize(100, 26)
-    applyButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -232, 20)
-    Locale.bindText(applyButton, "EAM_RESOURCE_APPLY", "套用")
+    local closeButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    closeButton:SetSize(80, 24)
+    closeButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 16)
+    Locale.bindText(closeButton, "EAM_ABOUT_CLOSE", "關閉")
     if Theme and Theme.registerButton then
-        Theme.registerButton(applyButton)
+        Theme.registerButton(closeButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(applyButton, "立即提交並套用當前資源的所有設定", "套用")
+        EAM.UI.setTooltip(closeButton, "關閉玩家職業資源設定面板", "關閉")
     end
-    applyButton:SetScript("OnClick", function()
-        local saved = EAM.Modules and EAM.Modules.SavedVariables
-        if not saved or not Panel.selectedKey or not Panel.draft then
-            return
-        end
-        local ok, status = saved.updatePlayerResourceConfig(
-            Panel.selectedKey,
-            Panel.draft,
-            getScopeSpecializationID()
-        )
-        if ok then
-            local service = EAM.Services and EAM.Services.PlayerResourceService
-            local serviceStatus = service and service.getStatus and service.getStatus() or nil
-            if serviceStatus and serviceStatus.lastConfigResult == "combatRebuildDeferred" then
-                Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_DEFERRED", "設定已保存，離開戰鬥後套用。"))
-            else
-                Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_APPLIED_NOW", "資源設定已立即套用。"))
-            end
-            Panel.refresh()
-        elseif status == "unchanged" then
-            Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_UNCHANGED", "設定沒有變更。"))
-        else
-            Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_FAILED", "套用失敗：") .. (status or "unknown"))
-        end
+    closeButton:SetScript("OnClick", function()
+        frame:Hide()
     end)
 
     local resetButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    resetButton:SetSize(120, 26)
-    resetButton:SetPoint("LEFT", applyButton, "RIGHT", 6, 0)
+    resetButton:SetSize(115, 24)
+    resetButton:SetPoint("RIGHT", closeButton, "LEFT", -6, 0)
     Locale.bindText(resetButton, "EAM_RESOURCE_RESET_SPEC", "清除專精覆寫")
     if Theme and Theme.registerButton then
         Theme.registerButton(resetButton)
@@ -796,18 +923,40 @@ local function createPanel()
     end)
     Panel.resetButton = resetButton
 
-    local closeButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    closeButton:SetSize(90, 26)
-    closeButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -20, 20)
-    Locale.bindText(closeButton, "EAM_ABOUT_CLOSE", "關閉")
+    local applyButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    applyButton:SetSize(85, 24)
+    applyButton:SetPoint("RIGHT", resetButton, "LEFT", -6, 0)
+    Locale.bindText(applyButton, "EAM_RESOURCE_APPLY", "套用")
     if Theme and Theme.registerButton then
-        Theme.registerButton(closeButton)
+        Theme.registerButton(applyButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(closeButton, "關閉玩家職業資源設定面板", "關閉")
+        EAM.UI.setTooltip(applyButton, "立即提交並套用當前資源的所有設定", "套用")
     end
-    closeButton:SetScript("OnClick", function()
-        frame:Hide()
+    applyButton:SetScript("OnClick", function()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if not saved or not Panel.selectedKey or not Panel.draft then
+            return
+        end
+        local ok, status = saved.updatePlayerResourceConfig(
+            Panel.selectedKey,
+            Panel.draft,
+            getScopeSpecializationID()
+        )
+        if ok then
+            local service = EAM.Services and EAM.Services.PlayerResourceService
+            local serviceStatus = service and service.getStatus and service.getStatus() or nil
+            if serviceStatus and serviceStatus.lastConfigResult == "combatRebuildDeferred" then
+                Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_DEFERRED", "設定已保存，離開戰鬥後套用。"))
+            else
+                Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_APPLIED_NOW", "資源設定已立即套用。"))
+            end
+            Panel.refresh()
+        elseif status == "unchanged" then
+            Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_UNCHANGED", "設定沒有變更。"))
+        else
+            Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_FAILED", "套用失敗：") .. (status or "unknown"))
+        end
     end)
 
     if type(UISpecialFrames) == "table" then

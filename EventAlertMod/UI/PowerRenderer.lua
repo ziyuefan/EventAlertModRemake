@@ -21,6 +21,7 @@ local Util = EAM.Util
 local Renderer = EAM.UI.Renderer
 local Catalog = EAM.Data.PlayerResourceCatalog
 local TextPlacement = EAM.UI.TextPlacement
+local DurationAdapter = EAM.DurationAdapter
 
 local PowerRenderer = {
     frames = {},
@@ -146,6 +147,12 @@ local function createResourceFrame(anchor, definition)
     end
 
     container:Hide()
+    local isReverse = (definition.powerType == 1
+        or definition.powerType == 6
+        or definition.powerType == 17
+        or definition.powerType == 18)
+    local colorCurve = DurationAdapter and DurationAdapter.buildResourceDynamicColorCurve
+        and DurationAdapter.buildResourceDynamicColorCurve(definition.color, isReverse)
     return {
         key = definition.key,
         definition = definition,
@@ -160,6 +167,7 @@ local function createResourceFrame(anchor, definition)
         glow = glow,
         markers = markers,
         slotBars = slotBars,
+        colorCurve = colorCurve,
         configured = false,
         visible = false,
         available = false,
@@ -223,6 +231,10 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     local iconSize = Util.isSafePositiveNumber(config and config.iconSize) and config.iconSize or 30
     local spacing = Util.isSafeNonNegativeNumber(config and config.spacing) and config.spacing or 6
 
+    local isVertical = config and config.orientation == "VERTICAL"
+    local actualBarWidth = isVertical and barHeight or barWidth
+    local actualBarHeight = isVertical and barWidth or barHeight
+
     local position = config and VALID_ANCHOR_POINTS[config.position] and config.position or "TOPLEFT"
     local anchorPoint = config and VALID_ANCHOR_POINTS[config.anchor] and config.anchor or "TOPLEFT"
     frame.container:ClearAllPoints()
@@ -231,35 +243,54 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
         frame.anchor,
         anchorPoint,
         x,
-        y - ((orderIndex or 1) - 1) * ROW_HEIGHT
+        y - ((orderIndex or 1) - 1) * (isVertical and (actualBarHeight + iconSize + spacing + 12) or ROW_HEIGHT)
     )
-    frame.container:SetSize(iconSize + spacing + barWidth, math.max(iconSize, barHeight + 18))
+    if isVertical then
+        frame.container:SetSize(math.max(iconSize, actualBarWidth + 24), iconSize + spacing + actualBarHeight + 20)
+    else
+        frame.container:SetSize(iconSize + spacing + barWidth, math.max(iconSize, barHeight + 18))
+    end
     frame.container:SetScale(scale)
 
     frame.icon:ClearAllPoints()
     frame.icon:SetSize(iconSize, iconSize)
-    frame.icon:SetPoint("LEFT", frame.container, "LEFT", 0, 0)
+    if isVertical then
+        frame.icon:SetPoint("BOTTOM", frame.container, "BOTTOM", 0, 0)
+    else
+        frame.icon:SetPoint("LEFT", frame.container, "LEFT", 0, 0)
+    end
     frame.icon:SetTexture(iconTexture)
     frame.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
     frame.statusBar:ClearAllPoints()
-    frame.statusBar:SetSize(barWidth, barHeight)
-    frame.statusBar:SetPoint("LEFT", frame.icon, "RIGHT", spacing, 0)
+    frame.statusBar:SetSize(actualBarWidth, actualBarHeight)
+    if isVertical then
+        frame.statusBar:SetPoint("BOTTOM", frame.icon, "TOP", 0, spacing)
+    else
+        frame.statusBar:SetPoint("LEFT", frame.icon, "RIGHT", spacing, 0)
+    end
     frame.background:SetAllPoints(frame.statusBar)
 
     frame.label:ClearAllPoints()
-    frame.label:SetPoint("BOTTOMLEFT", frame.statusBar, "TOPLEFT", 0, 2)
+    if isVertical then
+        frame.label:SetPoint("BOTTOM", frame.statusBar, "TOP", 0, 2)
+    else
+        frame.label:SetPoint("BOTTOMLEFT", frame.statusBar, "TOPLEFT", 0, 2)
+    end
 
     frame.glow:ClearAllPoints()
     frame.glow:SetAllPoints(frame.icon)
 
     local displayMode = config and config.displayMode or "AUTO"
-    local orientation = config and config.orientation == "VERTICAL"
-        and "VERTICAL"
-        or "HORIZONTAL"
+    local orientation = isVertical and "VERTICAL" or "HORIZONTAL"
     -- StatusBar:SetOrientation 在不同 client/mock 可能不存在，索引與呼叫一併置於 pcall。
     pcall(function()
-        frame.statusBar:SetOrientation(orientation)
+        if frame.statusBar.SetOrientation then
+            frame.statusBar:SetOrientation(orientation)
+        end
+        if frame.statusBar.SetRotatesTexture then
+            frame.statusBar:SetRotatesTexture(isVertical)
+        end
     end)
     if TextPlacement and type(TextPlacement.applyFont) == "function" then
         local fontSize = Util.isSafePositiveNumber(config and config.fontSize)
@@ -284,8 +315,13 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     for index = 1, #frame.markers do
         local marker = frame.markers[index]
         marker:ClearAllPoints()
-        marker:SetSize(1, barHeight)
-        marker:SetPoint("LEFT", frame.statusBar, "LEFT", barWidth * index / maxPoints, 0)
+        if isVertical then
+            marker:SetSize(actualBarWidth, 1)
+            marker:SetPoint("BOTTOM", frame.statusBar, "BOTTOM", 0, actualBarHeight * index / maxPoints)
+        else
+            marker:SetSize(1, barHeight)
+            marker:SetPoint("LEFT", frame.statusBar, "LEFT", barWidth * index / maxPoints, 0)
+        end
         if effectiveKind == "POINTS" then
             marker:Show()
         else
@@ -294,22 +330,43 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
     end
 
     if frame.slotBars then
-        local slotWidth = math.max(1, (barWidth / maxPoints) - 1)
-        for index = 1, #frame.slotBars do
-            local slotBar = frame.slotBars[index]
-            slotBar:ClearAllPoints()
-            slotBar:SetSize(slotWidth, 3)
-            slotBar:SetPoint(
-                "TOPLEFT",
-                frame.statusBar,
-                "BOTTOMLEFT",
-                (index - 1) * (barWidth / maxPoints),
-                -2
-            )
-            if effectiveKind == "POINTS" then
-                slotBar:Show()
-            else
-                slotBar:Hide()
+        if isVertical then
+            local slotHeight = math.max(1, (actualBarHeight / maxPoints) - 1)
+            for index = 1, #frame.slotBars do
+                local slotBar = frame.slotBars[index]
+                slotBar:ClearAllPoints()
+                slotBar:SetSize(3, slotHeight)
+                slotBar:SetPoint(
+                    "BOTTOMRIGHT",
+                    frame.statusBar,
+                    "BOTTOMLEFT",
+                    -2,
+                    (index - 1) * (actualBarHeight / maxPoints)
+                )
+                if effectiveKind == "POINTS" then
+                    slotBar:Show()
+                else
+                    slotBar:Hide()
+                end
+            end
+        else
+            local slotWidth = math.max(1, (barWidth / maxPoints) - 1)
+            for index = 1, #frame.slotBars do
+                local slotBar = frame.slotBars[index]
+                slotBar:ClearAllPoints()
+                slotBar:SetSize(slotWidth, 3)
+                slotBar:SetPoint(
+                    "TOPLEFT",
+                    frame.statusBar,
+                    "BOTTOMLEFT",
+                    (index - 1) * (barWidth / maxPoints),
+                    -2
+                )
+                if effectiveKind == "POINTS" then
+                    slotBar:Show()
+                else
+                    slotBar:Hide()
+                end
             end
         end
     end
@@ -355,14 +412,21 @@ function PowerRenderer.reflowResourceFrames(nodes, count)
             local x = Util.isSafeNumber(config.offsetX) and config.offsetX or 0
             local y = Util.isSafeNumber(config.offsetY) and config.offsetY or 0
             local position = VALID_ANCHOR_POINTS[config.position] and config.position or "TOPLEFT"
-            local anchorPoint = VALID_ANCHOR_POINTS[config.anchor] and config.anchor or "TOPLEFT"
+            local isVertical = (config.orientation == "VERTICAL")
+            local stepY = ROW_HEIGHT
+            if isVertical then
+                local bWidth = Util.isSafePositiveNumber(config.barWidth) and config.barWidth or 126
+                local iSize = Util.isSafePositiveNumber(config.iconSize) and config.iconSize or 30
+                local sp = Util.isSafeNonNegativeNumber(config.spacing) and config.spacing or 6
+                stepY = bWidth + iSize + sp + 12
+            end
             frame.container:ClearAllPoints()
             frame.container:SetPoint(
                 position,
                 frame.anchor,
                 anchorPoint,
                 x,
-                y - (index - 1) * ROW_HEIGHT
+                y - (index - 1) * stepY
             )
         end
     end
@@ -405,6 +469,32 @@ local function applyPercent(frame, powerType, percent)
         PowerRenderer.rejectedWriteCount = PowerRenderer.rejectedWriteCount + 1
         return false, "sinkUnavailable"
     end
+
+    local globalConfig = EAM.db and EAM.db.config
+    local dynamicEnabled = (not globalConfig or globalConfig.resourceDynamicColor ~= false)
+        and (not frame.config or frame.config.dynamicColor ~= false)
+    if dynamicEnabled and frame.colorCurve then
+        local color = nil
+        if type(percent) == "number" then
+            color = frame.colorCurve:Evaluate(percent)
+        elseif _G.UnitPowerPercent then
+            pcall(function()
+                color = _G.UnitPowerPercent("player", powerType, false, frame.colorCurve)
+            end)
+        end
+        if color and color.GetRGB then
+            local r, g, b = color:GetRGB()
+            frame.statusBar:SetStatusBarColor(r, g, b, frame.definition.color[4] or 1)
+        end
+    else
+        frame.statusBar:SetStatusBarColor(
+            frame.definition.color[1],
+            frame.definition.color[2],
+            frame.definition.color[3],
+            frame.definition.color[4] or 1
+        )
+    end
+
     local ok = pcall(frame.statusBar.SetValue, frame.statusBar, percent)
     percent = nil
     if ok then

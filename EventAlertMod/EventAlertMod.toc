@@ -5,7 +5,7 @@
 ## 邊界: 不載入 Classic/MOP/TBC/Wrath 分支，不載入 ReferenceLibs 或 LegacyReference。
 ## 維護: 新增正式模組時同步確認 Docs/04_MODULE_CONTRACTS.md 與 Docs/12_CODE_COMMENTARY_GUIDE.md。
 ## Interface: 120007, 120100
-## Version: EventAlertMod_MN_20260904
+## Version: EventAlertMod_MN_20260912
 ## X-WoWI-ID: 26550
 ## X-Curse-Project-ID: 826042
 
@@ -79,6 +79,7 @@ Managers\AuraRuleCompiler.lua
 Managers\AlertManager.lua
 
 UI\Theme.lua
+UI\ColorPickerHelper.lua
 UI\TextPlacement.lua
 UI\AlertBorderStyles.lua
 UI\RadialGauge.lua
@@ -94,6 +95,7 @@ UI\AboutPanel.lua
 UI\ModulePanel.lua
 UI\PlayerResourcePanel.lua
 UI\PlayerStatPanel.lua
+UI\PreviewPanel.lua
 UI\ProfileCodecPanel.lua
 UI\GroupManagerPanel.lua
 UI\SpellCatalogTreePanel.lua

@@ -318,6 +318,9 @@ function Options.notifyConfigChanged(rebuildNative)
     if EAM.UI.Renderer and EAM.UI.Renderer.applyCooldownStyle then
         EAM.UI.Renderer.applyCooldownStyle()
     end
+    if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
+        EAM.UI.PreviewPanel.refresh()
+    end
 end
 
 function Options.notifyTextLayoutChanged(reapplyNative)
@@ -332,6 +335,9 @@ function Options.notifyTextLayoutChanged(reapplyNative)
     end
     if EAM.Services and EAM.Services.PlayerStatService and EAM.Services.PlayerStatService.updateDisplay then
         EAM.Services.PlayerStatService.updateDisplay()
+    end
+    if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
+        EAM.UI.PreviewPanel.refresh()
     end
     if reapplyNative then
         markAuraSettingsDirty("OPTIONS_NATIVE_TEXT_LAYOUT_CHANGED")
@@ -728,15 +734,14 @@ local function migratePlayerAuraCatalogScopes(rawList)
     local changed = false
     for _, alert in pairs(rawList) do
         if type(alert) == "table" and isExistingSpell(alert.spellID) then
-            local scope = resolveAuraCatalogScope(alert.spellID)
-            if alert.catalogScope ~= scope then
+            if alert.catalogScope == nil then
+                local scope = resolveAuraCatalogScope(alert.spellID)
                 alert.catalogScope = scope
                 changed = true
-            end
-            if scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
-                and alert.fromPlayer ~= nil then
-                alert.fromPlayer = nil
-                changed = true
+                if scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+                    and alert.fromPlayer ~= nil then
+                    alert.fromPlayer = nil
+                end
             end
         end
     end
@@ -750,7 +755,7 @@ local function migratePlayerAuraCatalogScopes(rawList)
     return changed
 end
 
-local function addAlertToCategory(category, id, deferCommit)
+local function addAlertToCategory(category, id, deferCommit, force)
     local saved = EAM.Modules and EAM.Modules.SavedVariables
     if not saved then
         return false, nil, "savedVariablesUnavailable"
@@ -770,10 +775,10 @@ local function addAlertToCategory(category, id, deferCommit)
         if type(saved.addAuraAlert) ~= "function" then
             return false, nil, "savedVariablesMethodUnavailable"
         end
-        local scope = resolveAuraCatalogScope(id)
+        local scope = (force == true) and EAM.Constants.AURA_CATALOG_SCOPE_SELF or resolveAuraCatalogScope(id)
         options.catalogScope = scope
         options.fromPlayer = scope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
-        reclassified = scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS
+        reclassified = (not force) and (scope == EAM.Constants.AURA_CATALOG_SCOPE_CROSS_CLASS)
         ok, alertID, status = saved.addAuraAlert("player", id, options)
     elseif category == 2 then
         if type(saved.addAuraAlert) ~= "function" then
@@ -1101,8 +1106,31 @@ local function batchOperation(action)
 end
 
 -- 新增單個提醒
-function Options.addAlertToCurrentCategory(id)
-    local ok, alertID, status, reclassified = addAlertToCategory(Options.currentCategory, id, false)
+function Options.addAlertToCurrentCategory(id, force)
+    id = tonumber(id)
+    if not id or id <= 0 then
+        print(string.format(EAM.L.EAM_OPT_ADD_FAIL or "|cff00ff96EAM|r 新增監控提醒失敗: %s", "invalidID"))
+        return false, "invalidID"
+    end
+
+    if Options.currentCategory ~= 5 and not isExistingSpell(id) then
+        print(string.format(
+            EAM.L.EAM_OPT_ERR_SPELL_NOT_FOUND
+                or "|cff00ff96EAM|r 找不到 SpellID %s；未加入且不會顯示。",
+            tostring(id)
+        ))
+        return false, "spellNotFound"
+    end
+
+    -- 自身光環若非當前職業專屬法術，彈窗確認防誤加
+    if not force and Options.currentCategory == 1 and not isCurrentClassSpell(id) then
+        if Options.showNonClassSpellConfirmDialog then
+            Options.showNonClassSpellConfirmDialog(id)
+            return false, "awaitingConfirmation"
+        end
+    end
+
+    local ok, alertID, status, reclassified = addAlertToCategory(Options.currentCategory, id, false, force)
     if ok then
         if status ~= "unchanged" then
             Options.notifyConfigChanged()
@@ -1411,6 +1439,9 @@ local function registerDropdownMenu(menu, anchor)
     if type(menu.SetFrameLevel) == "function" then
         menu:SetFrameLevel(math.max(getFrameLevel(parent), getFrameLevel(anchor)) + 10)
     end
+    if type(menu.SetFrameStrata) == "function" then
+        menu:SetFrameStrata("FULLSCREEN_DIALOG")
+    end
     if Theme and Theme.registerFrame then
         Theme.registerFrame(menu, "menu")
     end
@@ -1648,7 +1679,8 @@ local function createFrame()
     -- 1. Main Options Frame (Left Panel, 380x600)
     -- ==========================================
     local frame = api.CreateFrame("Frame", "EAM_MainOptionsFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(380, 600)
+    frame:SetFrameStrata("DIALOG")
+    frame:SetSize(380, 424)
     frame:SetPoint("LEFT", UIParent, "LEFT", 100, 0)
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
@@ -1704,6 +1736,9 @@ local function createFrame()
     end)
     frame:SetScript("OnHide", function()
         Options.closeAllSidePanels()
+        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.hide then
+            EAM.UI.PreviewPanel.hide()
+        end
     end)
 
     -- 內邊框
@@ -1720,267 +1755,7 @@ local function createFrame()
     inner:SetBackdropBorderColor(0.5, 0.35, 0.2, 0.8)
     if Theme and Theme.registerFrame then Theme.registerFrame(inner, "panel") end
 
-    local themeDropdown = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
-    if Theme and Theme.registerButton then Theme.registerButton(themeDropdown) end
-    themeDropdown:SetSize(154, 22)
-    themeDropdown:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -12, -10)
-    setTooltip(themeDropdown, "切換 EAM 設定介面之邊框與按鈕主題外觀風格", "介面佈局主題")
-    Options.themeDropdown = themeDropdown
-
-    local themeMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
-    themeMenu:SetSize(180, (#(Theme and Theme.ThemeOptions or {}) * 22) + 8)
-    themeMenu:SetPoint("TOPRIGHT", themeDropdown, "BOTTOMRIGHT", 0, -2)
-    themeMenu:SetFrameStrata("DIALOG")
-    themeMenu:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 12, edgeSize = 12,
-        insets = { left = 3, right = 3, top = 3, bottom = 3 }
-    })
-    themeMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
-    themeMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
-    registerDropdownMenu(themeMenu, themeDropdown)
-    themeMenu:Hide()
-    Options.themeMenu = themeMenu
-
-    local themeOptions = Theme and Theme.ThemeOptions or {}
-    for index = 1, #themeOptions do
-        local option = themeOptions[index]
-        local menuButton = api.CreateFrame("Button", nil, themeMenu)
-        menuButton:SetSize(174, 20)
-        menuButton:SetPoint("TOPLEFT", themeMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        bindText(menuButtonText, option.labelKey, option.label)
-        finalizeDropdownMenuButton(menuButton, menuButtonText, themeMenu)
-        menuButton:SetScript("OnClick", function()
-            local saved = EAM.Modules and EAM.Modules.SavedVariables
-            if saved and saved.updateTheme then
-                local ok, status = saved.updateTheme(option.value)
-                if ok and Theme and Theme.setSelection then
-                    local applied, applyStatus = Theme.setSelection(option.value)
-                    Theme.flushPending()
-                    Options.refreshThemeDropdown()
-                    if status == "updated" and applied then
-                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_THEME_CHANGED or "Theme applied."))
-                    elseif applyStatus == "combatDeferred" then
-                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_THEME_COMBAT or "Theme will apply after combat."))
-                    end
-                end
-            end
-            themeMenu:Hide()
-        end)
-    end
-    themeDropdown:SetScript("OnClick", function()
-        if themeMenu:IsShown() then
-            themeMenu:Hide()
-        else
-            themeMenu:Show()
-        end
-    end)
-    Options.refreshThemeDropdown()
-
-    -- 自製 Sound Dropdown
-    local soundDropdown = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
-    if Theme and Theme.registerButton then Theme.registerButton(soundDropdown) end
-    soundDropdown:SetSize(130, 22)
-    soundDropdown:SetPoint("TOPLEFT", inner, "TOPLEFT", 12, -10)
-    soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. "ShayBell")
-    setTooltip(soundDropdown, "選擇觸發提醒時播放的預設音效", "音效警告")
-    Options.soundDropdown = soundDropdown
-
-    local playSoundBtn = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
-    if Theme and Theme.registerButton then Theme.registerButton(playSoundBtn) end
-    playSoundBtn:SetSize(44, 22)
-    playSoundBtn:SetPoint("LEFT", soundDropdown, "RIGHT", 6, 0)
-    bindText(playSoundBtn, "EAM_OPT_TEST_BTN", "測試")
-    setTooltip(playSoundBtn, "播放當前選擇的音效檔案進行試聽", "測試音效")
-
-    local soundMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
-    soundMenu:SetSize(220, 228)
-    soundMenu:SetPoint("TOPLEFT", soundDropdown, "BOTTOMLEFT", 0, -2)
-    soundMenu:SetFrameStrata("DIALOG")
-    soundMenu:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 12, edgeSize = 12,
-        insets = { left = 3, right = 3, top = 3, bottom = 3 }
-    })
-    soundMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
-    soundMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
-    registerDropdownMenu(soundMenu, soundDropdown)
-    soundMenu:Hide()
-
-    local function populateSoundMenu()
-        buildScrollableDropdownMenu(
-            soundMenu,
-            soundDropdown,
-            function()
-                local MediaService = EAM.Services and EAM.Services.MediaService
-                if MediaService and MediaService.getMediaList then
-                    return MediaService.getMediaList("sound", true)
-                end
-                local list = {}
-                for _, sName in ipairs(soundNames) do
-                    list[#list + 1] = { value = sName, text = sName }
-                end
-                return list
-            end,
-            function(item)
-                if EAM.db and EAM.db.config then
-                    EAM.db.config.soundName = item.value
-                    if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
-                        EAM.Modules.SavedVariables.markRevisionChanged()
-                    end
-                    Options.refreshSoundDropdown()
-                    notifyAuraSoundChanged()
-                    Options.notifyConfigChanged(false)
-                    local MediaService = EAM.Services and EAM.Services.MediaService
-                    if MediaService and MediaService.playSound then
-                        MediaService.playSound(item.value)
-                    end
-                end
-            end,
-            220,
-            10
-        )
-        for _, btn in ipairs(soundMenu.buttons or {}) do
-            finalizeDropdownMenuButton(btn, btn.text, soundMenu)
-        end
-    end
-
-    soundDropdown:SetScript("OnClick", function()
-        if soundMenu:IsShown() then
-            soundMenu:Hide()
-        else
-            populateSoundMenu()
-            soundMenu:Show()
-        end
-    end)
-
-    playSoundBtn:SetScript("OnClick", function()
-        local sName = (EAM.db and EAM.db.config and EAM.db.config.soundName) or "ShayBell"
-        local MediaService = EAM.Services and EAM.Services.MediaService
-        if MediaService and MediaService.playSound then
-            MediaService.playSound(sName)
-        else
-            local asset = soundAssets[sName] or 568154
-            PlaySoundFile(asset, "Master")
-        end
-    end)
-
-    -- 語系選擇下拉選單
-    local languageDropdown = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
-    if Theme and Theme.registerButton then Theme.registerButton(languageDropdown) end
-    languageDropdown:SetSize(158, 22)
-    languageDropdown:SetPoint("TOPLEFT", inner, "TOPLEFT", 12, -38)
-    setTooltip(languageDropdown, "切換插件顯示之語系（繁體中文/簡體中文/英文/韓文/俄文/自動偵測）", "插件語言")
-    Options.languageDropdown = languageDropdown
-
-    local languageMenu = api.CreateFrame("Frame", nil, inner, "BackdropTemplate")
-    languageMenu:SetSize(158, 138)
-    languageMenu:SetPoint("TOPLEFT", languageDropdown, "BOTTOMLEFT", 0, -2)
-    languageMenu:SetFrameStrata("DIALOG")
-    languageMenu:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 12, edgeSize = 12,
-        insets = { left = 3, right = 3, top = 3, bottom = 3 }
-    })
-    languageMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
-    languageMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
-    registerDropdownMenu(languageMenu, languageDropdown)
-    languageMenu:Hide()
-    Options.languageMenu = languageMenu
-
-    local languageOptions = EAM.Locale and EAM.Locale.LanguageOptions or {}
-    for index = 1, #languageOptions do
-        local option = languageOptions[index]
-        local menuButton = api.CreateFrame("Button", nil, languageMenu)
-        menuButton:SetSize(152, 20)
-        menuButton:SetPoint("TOPLEFT", languageMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-
-        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        menuButtonText:SetText(option.label)
-        finalizeDropdownMenuButton(menuButton, menuButtonText, languageMenu)
-
-        menuButton:SetScript("OnClick", function()
-            local saved = EAM.Modules and EAM.Modules.SavedVariables
-            if saved and saved.updateLanguage then
-                local ok, status = saved.updateLanguage(option.value)
-                if ok then
-                    Options.refreshLanguageDropdown()
-                    if status == "updated" then
-                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_LANGUAGE_RELOAD or "Language applied immediately and saved."))
-                    end
-                end
-            end
-            languageMenu:Hide()
-        end)
-    end
-
-    languageDropdown:SetScript("OnClick", function()
-        if languageMenu:IsShown() then
-            languageMenu:Hide()
-        else
-            languageMenu:Show()
-        end
-    end)
-    Options.refreshLanguageDropdown()
-
-    local nativeAuraStatusLabel = inner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    nativeAuraStatusLabel:SetPoint("TOPLEFT", inner, "TOPLEFT", 180, -42)
-    nativeAuraStatusLabel:SetWidth(108)
-    nativeAuraStatusLabel:SetJustifyH("LEFT")
-    Options.nativeAuraStatusLabel = nativeAuraStatusLabel
-
-    local nativeAuraRebuildButton = api.CreateFrame("Button", nil, inner, "UIPanelButtonTemplate")
-    if Theme and Theme.registerButton then Theme.registerButton(nativeAuraRebuildButton) end
-    nativeAuraRebuildButton:SetSize(54, 20)
-    nativeAuraRebuildButton:SetPoint("TOPRIGHT", inner, "TOPRIGHT", -12, -38)
-    bindText(nativeAuraRebuildButton, "EAM_OPT_AURA_APPLY", "套用")
-    setTooltip(nativeAuraRebuildButton, "立即手動重建暴雪底層 Native Aura 結構以套用最新光環設定", "套用 Native Aura")
-    nativeAuraRebuildButton:SetScript("OnClick", function()
-        local service = EAM.Services.AuraContainerService
-        if service and service.requestRebuild then
-            service.requestRebuild("OPTIONS_MANUAL_REBUILD")
-        end
-        Options.refreshAuraBackendStatus()
-    end)
-    Options.refreshAuraBackendStatus()
-
-    -- 11 個核心設定 Checkboxes（對齊 2 欄 6 行）與獨立測試閃爍按鈕
-    createCheckbox(inner, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 12, -66, nil, "總開關：開啟或暫停所有畫面中央告警框架的顯示", "啟用提醒框架")
-    createCheckbox(inner, localized("EAM_OPT_SHOW_SPELL_NAME", "顯示法術名稱"), "showSpellName", 180, -66, nil, "在告警圖示上方或下方顯示技能與物品名稱", "顯示法術名稱")
-
-    createCheckbox(inner, localized("EAM_OPT_SHOW_TIME_VAL", "顯示倒數秒數"), "showTimeVal", 12, -90, nil, "在告警圖示上即時顯示剩餘持續時間或冷卻秒數", "顯示倒數秒數")
-    createCheckbox(
-        inner,
-        localized("EAM_OPT_SHOW_SOUND", "啟用音效警告"),
-        "showSound",
-        180,
-        -90,
-        function()
-            notifyAuraSoundChanged()
-            return false
-        end,
-        "當新提醒觸發時播放對應警示音效",
-        "啟用音效警告"
-    )
-
-    createCheckbox(inner, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 12, -114, nil, "當特定重大光環觸發或進入戰鬥時，全螢幕邊緣閃爍紅框", "啟用全螢幕閃爍")
-    createCheckbox(inner, localized("EAM_OPT_ALLOW_ESC", "啟用 ESC 鍵關閉"), "allowEscCancel", 180, -114, nil, "按鍵盤 ESC 鍵時自動關閉 EAM 設定視窗", "啟用 ESC 鍵關閉")
-
-    createCheckbox(inner, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 12, -138, nil, "啟用特異光環與特殊職業機制的輔助提示", "顯示額外輔助提醒")
-    createCheckbox(inner, localized("EAM_OPT_SHOW_SCD_OUTSIDE", "非戰鬥顯示技能冷卻"), "showSCDOutsideCombat", 180, -138, nil, "脫離戰鬥後仍持續顯示技能冷卻倒數", "非戰鬥顯示技能冷卻")
-
-    createCheckbox(inner, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 12, -162, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除光環")
-    createCheckbox(inner, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 180, -162, nil, "技能冷卻完畢且可用時，圖示外框發出流光動畫提示", "可用時高亮技能冷卻")
-
-    createCheckbox(inner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 12, -186, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
-
-    -- 11 個主要功能大按鈕（職業資源第 7 項、角色屬性第 8 項、群組管理第 9 項、全量法術庫第 10 項、排版第 11 項）
+    -- 11 個主要功能大按鈕（職業資源第 7 項、角色屬性第 8 項、群組管理第 9 項、全量法術庫第 10 項、設定第 11 項）
     local categories = {
         { key = "EAM_OPT_CAT_SELF", fallback = "自身增益/減益提醒 (Self)", tip = "設定玩家自身身上觸發的 Buff 與 Debuff 告警清單" },
         { key = "EAM_OPT_CAT_CLASS", fallback = "跨職業增益/減益提醒 (Class)", tip = "設定所有其他職業之通用或重要光環監控" },
@@ -1992,7 +1767,7 @@ local function createFrame()
         { key = "EAM_OPT_CAT_STAT", fallback = localized("EAM_STAT_OPEN", "★ 角色屬性與吸收量監控 (Player Stats)"), tip = "設定力量/敏捷/致命/加速/精通/跑速/飛龍騎術/護甲/吸收盾等即時監控" },
         { key = "EAM_OPT_CAT_GROUP", fallback = localized("EAM_GROUP_OPEN", "★ 群組分類與標籤管理 (Group Management)"), tip = "管理戰術分類與自訂標籤群組，支援多對多法術複選與情境過濾" },
         { key = "EAM_OPT_CAT_CATALOG", fallback = localized("EAM_CATALOG_OPEN", "★ 全量法術庫與智慧預設 (Spell Catalog)"), tip = "以階層樹狀檢視全職業核心技能，支援三態勾選與依天賦智慧同步" },
-        { key = "EAM_OPT_CAT_LAYOUT", fallback = "告警框架位置與排版 (Alert Frame Layout)", tip = "調整各告警模組圖示大小、間距、排列方向、字型大小與排版" },
+        { key = "EAM_OPT_CAT_LAYOUT", fallback = "設定 (Settings)", tip = "全域核心開關、排版、字型、冷卻充能與視覺警示設定" },
     }
     Options.categoryDefinitions = categories
 
@@ -2007,11 +1782,11 @@ local function createFrame()
         [8] = "playerStat",
         [9] = nil,
         [10] = nil,
-        [11] = "all",
+        [11] = nil,
     }
 
     for idx, category in ipairs(categories) do
-        createThemedButton(inner, localized(category.key, category.fallback), 12, -214 - (idx - 1) * 24, 332, 22, function()
+        createThemedButton(inner, localized(category.key, category.fallback), 12, -14 - (idx - 1) * 26, 332, 22, function()
             if idx <= 6 then
                 Options.closeAllSidePanels("list")
                 Options.currentCategory = idx
@@ -2056,18 +1831,18 @@ local function createFrame()
                 end
             else
                 Options.closeAllSidePanels("pos")
+                if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+                    EAM.UI.Renderer.setActiveAnchors(nil)
+                end
                 if Options.posFrame then
                     Options.posFrame:Show()
-                end
-                if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
-                    EAM.UI.Renderer.setActiveAnchors("all")
                 end
             end
         end, category.tip, category.fallback)
     end
 
     -- 底部操作按鈕：Profile 匯入/匯出、整合診斷中心與關閉按鈕
-    createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -484, 162, 22, function()
+    createThemedButton(inner, localized("EAM_OPT_PROFILE_BTN", "Profile 匯入／匯出"), 12, -308, 162, 22, function()
         Options.closeAllSidePanels("profile")
         local profilePanel = EAM.UI and EAM.UI.ProfileCodecPanel
         if profilePanel and type(profilePanel.open) == "function" then
@@ -2077,7 +1852,7 @@ local function createFrame()
         end
     end, "將當前職業設定匯出為 JSON/Base64 字串，或從其他玩家字串匯入", "Profile 匯入／匯出")
 
-    createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -484, 162, 22, function()
+    createThemedButton(inner, localized("EAM_OPT_DEBUG_CENTER_BTN", "除錯與測試診斷中心"), 182, -308, 162, 22, function()
         Options.closeAllSidePanels("debug")
         local debugCenter = EAM.UI and EAM.UI.DebugCenterPanel
         if debugCenter and type(debugCenter.open) == "function" then
@@ -2089,25 +1864,32 @@ local function createFrame()
         end
     end, "執行流程自動化驗證、實機回報、運行探針與 AI 診斷報告輸出", "除錯與測試診斷中心")
 
-    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -510, 332, 24, function()
+    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -336, 218, 24, function()
         frame:Hide()
     end, "關閉主設定面板與所有二級子視窗", "關閉設定")
+
+    createThemedButton(inner, localized("EAM_PREVIEW_BTN", "效果預覽"), 236, -336, 108, 24, function()
+        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
+            EAM.UI.PreviewPanel.toggle()
+        end
+    end, "開啟或關閉各設定畫面的即時獨立效果預覽小視窗", "效果預覽")
 
     Options.frame = frame
 
 
     -- ===================================================
-    -- 2. Position & Energy Frame (Right Sliding Panel)
+    -- 2. Position & Energy Frame (Right Sliding Panel with 4 Tabs)
     -- ===================================================
     local posFrame = api.CreateFrame("Frame", "EAM_PositionOptionsFrame", frame, "BackdropTemplate")
-    posFrame:SetSize(620, 560)
+    posFrame:SetFrameStrata("DIALOG")
+    posFrame:SetSize(620, 520)
     posFrame:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, 0)
     posFrame:EnableMouse(true)
     posFrame:RegisterForDrag("LeftButton")
     posFrame:SetScript("OnDragStart", function() frame:StartMoving() end)
     posFrame:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
     posFrame:SetScript("OnHide", function()
-        if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+        if not posFrame.suppressAnchorClear and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
             EAM.UI.Renderer.setActiveAnchors(nil)
         end
     end)
@@ -2123,13 +1905,25 @@ local function createFrame()
     posFrame:Hide()
     makeTitleCloseButton(posFrame, function() posFrame:Hide() end)
 
+    local previewBtn = api.CreateFrame("Button", nil, posFrame, "UIPanelButtonTemplate")
+    previewBtn:SetSize(80, 22)
+    previewBtn:SetPoint("TOPLEFT", posFrame, "TOPLEFT", 16, -10)
+    bindText(previewBtn, "EAM_PREVIEW_BTN", "效果預覽")
+    setTooltip(previewBtn, "開啟或關閉獨立的即時效果預覽小視窗", "效果預覽")
+    previewBtn:SetScript("OnClick", function()
+        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
+            EAM.UI.PreviewPanel.toggle()
+        end
+    end)
+    if Theme and Theme.registerButton then Theme.registerButton(previewBtn) end
+
     local posTitle = posFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    posTitle:SetPoint("TOP", posFrame, "TOP", 0, -14)
+    posTitle:SetPoint("TOP", posFrame, "TOP", 0, -12)
     posTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
-    bindText(posTitle, "EAM_OPT_POS_AND_POWER_BTN", "告警框架位置與排版設定")
+    bindText(posTitle, "EAM_OPT_POS_AND_POWER_BTN", "設定")
 
     local posInner = api.CreateFrame("Frame", nil, posFrame, "BackdropTemplate")
-    posInner:SetPoint("TOPLEFT", posFrame, "TOPLEFT", 12, -40)
+    posInner:SetPoint("TOPLEFT", posFrame, "TOPLEFT", 12, -64)
     posInner:SetPoint("BOTTOMRIGHT", posFrame, "BOTTOMRIGHT", -12, 12)
     posInner:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -2139,32 +1933,410 @@ local function createFrame()
     })
     posInner:SetBackdropColor(0.08, 0.05, 0.03, 0.8)
     posInner:SetBackdropBorderColor(0.5, 0.35, 0.2, 0.8)
+    if Theme and Theme.registerFrame then Theme.registerFrame(posInner, "panel") end
 
-    -- ---------------------------------------------------
-    -- 【左側欄位】：告警圖示尺寸、間距與字型滑桿（寬度 250px）
-    -- ---------------------------------------------------
-    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SIZE", "圖示大小 (Icon Size)"), "iconSize", 20, 100, 1, 16, -20, 250, nil, nil, "調整自身、目標、技能冷卻等所有告警圖示的寬高像素尺寸", "圖示大小")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_ICON_SPACING", "水平間距 (Horizontal Spacing)"), "iconSpacing", -200, 200, 1, 16, -68, 250, nil, nil, "調整相鄰告警圖示之間的水平間距像素距離", "水平間距")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_VERT_SPACING", "垂直間距 (Vertical Spacing)"), "verticalSpacing", -200, 200, 1, 16, -116, 250, nil, nil, "調整圖示換行或垂直成長時的垂直間距像素距離", "垂直間距")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_SPELL", "法術名稱字型 (Spell Font)"), "fontSizeSpellName", 8, 32, 1, 16, -164, 250, nil, nil, "調整顯示在圖示上方之法術與物品名稱的文字大小", "法術名稱字型")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_CD", "秒數倒數字型 (CD Font)"), "fontSizeTimeVal", 8, 32, 1, 16, -212, 250, nil, nil, "調整顯示在圖示上之剩餘秒數倒數計時數字大小", "秒數倒數字型")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_FONT_STACK", "堆疊層數字型 (Stack Font)"), "fontSizeStack", 8, 32, 1, 16, -260, 250, nil, nil, "調整顯示在圖示上之 Buff/Debuff 堆疊層數數字大小", "堆疊層數字型")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_SHADOW_ALPHA", "倒數轉圈透明度 (Swipe Alpha)"), "cooldownSwipeAlpha", 0, 1, 0.05, 16, -308, 250, true, nil, "調整技能冷卻時扇形倒數陰影遮罩的透明度 (0~100%)", "倒數轉圈透明度")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自身減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 16, -356, 250, true, nil, "自身受到減益效果 (Debuff) 時圖示邊框的紅色著色程度", "自身減益色度")
-    createSlider(posInner, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 16, -404, 250, true, nil, "目標身上為減益效果時圖示邊框的綠色著色程度", "目標減益色度")
-    
-    createSlider(posInner, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 16, -452, 130, true, nil, "設定目標斬殺血量比例門檻（例如 20% 或 35%）", "斬殺血量閾值")
-    createCheckbox(posInner, localized("EAM_OPT_ENABLE_EXECUTE", "啟用斬殺線"), "enableBossExecute", 160, -458, nil, "啟用目標進入斬殺血量時之高亮提示與警示外框", "啟用斬殺線")
+    -- Tab System Setup
+    local tabPages = {}
+    local tabButtons = {}
+    local tabMenus = {}
+    local currentTab = 1
 
-    -- ---------------------------------------------------
-    -- 【右側欄位】：框架成長方向、文字錨點、全域字型與充能條
-    -- ---------------------------------------------------
-    local dirTitle = posInner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    dirTitle:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -15)
+    local function registerTabMenu(menu)
+        if menu then
+            tabMenus[#tabMenus + 1] = menu
+        end
+    end
+
+    local function closeTabMenus()
+        for _, menu in ipairs(tabMenus) do
+            if menu and menu.Hide and menu:IsShown() then
+                menu:Hide()
+            end
+        end
+    end
+
+    local function selectTab(tabIdx)
+        currentTab = tabIdx
+        closeTabMenus()
+        for idx = 1, 5 do
+            local page = tabPages[idx]
+            local btn = tabButtons[idx]
+            if page then
+                if idx == tabIdx then
+                    page:Show()
+                else
+                    page:Hide()
+                end
+            end
+            if btn then
+                if idx == tabIdx then
+                    btn:SetAlpha(1.0)
+                    if btn.tabText then
+                        btn.tabText:SetTextColor(1.0, 0.85, 0.2, 1.0)
+                    end
+                else
+                    btn:SetAlpha(0.65)
+                    if btn.tabText then
+                        btn.tabText:SetTextColor(0.75, 0.75, 0.75, 1.0)
+                    end
+                end
+            end
+        end
+    end
+
+    local tabDefs = {
+        { key = "EAM_TAB_GENERAL", fallback = "一般設定" },
+        { key = "EAM_TAB_LAYOUT", fallback = "框架排版" },
+        { key = "EAM_TAB_TEXT", fallback = "字型與文字" },
+        { key = "EAM_TAB_COOLDOWN", fallback = "冷卻與充能" },
+        { key = "EAM_TAB_EFFECTS", fallback = "視覺與警示" },
+    }
+
+    local tabStartX = 13
+    local tabWidth = 114
+    local tabGap = 6
+    for idx, def in ipairs(tabDefs) do
+        local btn = api.CreateFrame("Button", nil, posFrame, "UIPanelButtonTemplate")
+        if Theme and Theme.registerButton then Theme.registerButton(btn) end
+        btn:SetSize(tabWidth, 24)
+        btn:SetPoint("TOPLEFT", posFrame, "TOPLEFT", tabStartX + (idx - 1) * (tabWidth + tabGap), -36)
+
+        local tabText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        tabText:SetPoint("CENTER", btn, "CENTER", 0, 0)
+        bindText(tabText, def.key, def.fallback)
+        btn.tabText = tabText
+
+        btn:SetScript("OnClick", function()
+            selectTab(idx)
+        end)
+        tabButtons[idx] = btn
+
+        local page = api.CreateFrame("Frame", nil, posInner)
+        page:SetAllPoints(posInner)
+        page:Hide()
+        tabPages[idx] = page
+    end
+
+    -- ===================================================
+    -- 【Tab 1：一般設定 (General)】
+    -- ===================================================
+    local pageGeneral = tabPages[1]
+
+    -- 1. 介面佈局主題
+    local themeLabel = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    themeLabel:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 16, -14)
+    themeLabel:SetTextColor(0.85, 0.75, 0.65, 1)
+    bindText(themeLabel, "EAM_OPT_THEME_TITLE", "介面佈局主題：")
+
+    local themeDropdown = api.CreateFrame("Button", nil, pageGeneral, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(themeDropdown) end
+    themeDropdown:SetSize(250, 22)
+    themeDropdown:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 16, -32)
+    setTooltip(themeDropdown, "切換 EAM 設定介面之邊框與按鈕主題外觀風格", "介面佈局主題")
+    Options.themeDropdown = themeDropdown
+
+    local themeMenu = api.CreateFrame("Frame", nil, pageGeneral, "BackdropTemplate")
+    themeMenu:SetSize(250, (#(Theme and Theme.ThemeOptions or {}) * 22) + 8)
+    themeMenu:SetPoint("TOPLEFT", themeDropdown, "BOTTOMLEFT", 0, -2)
+    themeMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    themeMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    themeMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    themeMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(themeMenu, themeDropdown)
+    registerTabMenu(themeMenu)
+    themeMenu:Hide()
+    Options.themeMenu = themeMenu
+
+    local themeOptions = Theme and Theme.ThemeOptions or {}
+    for index = 1, #themeOptions do
+        local option = themeOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, themeMenu)
+        menuButton:SetSize(244, 20)
+        menuButton:SetPoint("TOPLEFT", themeMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        bindText(menuButtonText, option.labelKey, option.label)
+        finalizeDropdownMenuButton(menuButton, menuButtonText, themeMenu)
+        menuButton:SetScript("OnClick", function()
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            if saved and saved.updateTheme then
+                local ok, status = saved.updateTheme(option.value)
+                if ok and Theme and Theme.setSelection then
+                    local applied, applyStatus = Theme.setSelection(option.value)
+                    Theme.flushPending()
+                    Options.refreshThemeDropdown()
+                    if status == "updated" and applied then
+                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_THEME_CHANGED or "Theme applied."))
+                    elseif applyStatus == "combatDeferred" then
+                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_THEME_COMBAT or "Theme will apply after combat."))
+                    end
+                end
+            end
+            themeMenu:Hide()
+        end)
+    end
+    themeDropdown:SetScript("OnClick", function()
+        if themeMenu:IsShown() then
+            themeMenu:Hide()
+        else
+            closeTabMenus()
+            themeMenu:Show()
+        end
+    end)
+    Options.refreshThemeDropdown()
+
+    -- 2. 插件語言 (Language)
+    local langLabel = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    langLabel:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 300, -14)
+    langLabel:SetTextColor(0.85, 0.75, 0.65, 1)
+    bindText(langLabel, "EAM_OPT_LANG_TITLE", "插件語言 (Language)：")
+
+    local languageDropdown = api.CreateFrame("Button", nil, pageGeneral, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(languageDropdown) end
+    languageDropdown:SetSize(275, 22)
+    languageDropdown:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 300, -32)
+    setTooltip(languageDropdown, "切換插件顯示之語系（繁體中文/簡體中文/英文/韓文/俄文/自動偵測）", "插件語言")
+    Options.languageDropdown = languageDropdown
+
+    local languageMenu = api.CreateFrame("Frame", nil, pageGeneral, "BackdropTemplate")
+    languageMenu:SetSize(275, 138)
+    languageMenu:SetPoint("TOPLEFT", languageDropdown, "BOTTOMLEFT", 0, -2)
+    languageMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    languageMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    languageMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    languageMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(languageMenu, languageDropdown)
+    registerTabMenu(languageMenu)
+    languageMenu:Hide()
+    Options.languageMenu = languageMenu
+
+    local languageOptions = EAM.Locale and EAM.Locale.LanguageOptions or {}
+    for index = 1, #languageOptions do
+        local option = languageOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, languageMenu)
+        menuButton:SetSize(269, 20)
+        menuButton:SetPoint("TOPLEFT", languageMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+
+        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        menuButtonText:SetText(option.label)
+        finalizeDropdownMenuButton(menuButton, menuButtonText, languageMenu)
+
+        menuButton:SetScript("OnClick", function()
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            if saved and saved.updateLanguage then
+                local ok, status = saved.updateLanguage(option.value)
+                if ok then
+                    Options.refreshLanguageDropdown()
+                    if status == "updated" then
+                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_LANGUAGE_RELOAD or "Language applied immediately and saved."))
+                    end
+                end
+            end
+            languageMenu:Hide()
+        end)
+    end
+
+    languageDropdown:SetScript("OnClick", function()
+        if languageMenu:IsShown() then
+            languageMenu:Hide()
+        else
+            closeTabMenus()
+            languageMenu:Show()
+        end
+    end)
+    Options.refreshLanguageDropdown()
+
+    -- 3. 預設警告音效
+    createCheckbox(
+        pageGeneral,
+        localized("EAM_OPT_SHOW_SOUND", "啟用音效警告"),
+        "showSound",
+        16,
+        -74,
+        function()
+            notifyAuraSoundChanged()
+            return false
+        end,
+        "當新提醒觸發時播放對應警示音效",
+        "啟用音效警告"
+    )
+
+    local soundDropdown = api.CreateFrame("Button", nil, pageGeneral, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(soundDropdown) end
+    soundDropdown:SetSize(192, 22)
+    soundDropdown:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 16, -104)
+    soundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "音效: ") .. "ShayBell")
+    setTooltip(soundDropdown, "選擇觸發提醒時播放的預設音效", "音效警告")
+    Options.soundDropdown = soundDropdown
+
+    local playSoundBtn = api.CreateFrame("Button", nil, pageGeneral, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(playSoundBtn) end
+    playSoundBtn:SetSize(52, 22)
+    playSoundBtn:SetPoint("LEFT", soundDropdown, "RIGHT", 6, 0)
+    bindText(playSoundBtn, "EAM_OPT_TEST_BTN", "測試")
+    setTooltip(playSoundBtn, "播放當前選擇的音效檔案進行試聽", "測試音效")
+
+    local soundMenu = api.CreateFrame("Frame", nil, pageGeneral, "BackdropTemplate")
+    soundMenu:SetSize(250, 228)
+    soundMenu:SetPoint("TOPLEFT", soundDropdown, "BOTTOMLEFT", 0, -2)
+    soundMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    soundMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    soundMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    soundMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(soundMenu, soundDropdown)
+    registerTabMenu(soundMenu)
+    soundMenu:Hide()
+
+    local function populateSoundMenu()
+        buildScrollableDropdownMenu(
+            soundMenu,
+            soundDropdown,
+            function()
+                local MediaService = EAM.Services and EAM.Services.MediaService
+                if MediaService and MediaService.getMediaList then
+                    return MediaService.getMediaList("sound", true)
+                end
+                local list = {}
+                for _, sName in ipairs(soundNames) do
+                    list[#list + 1] = { value = sName, text = sName }
+                end
+                return list
+            end,
+            function(item)
+                if EAM.db and EAM.db.config then
+                    EAM.db.config.soundName = item.value
+                    if EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+                        EAM.Modules.SavedVariables.markRevisionChanged()
+                    end
+                    Options.refreshSoundDropdown()
+                    notifyAuraSoundChanged()
+                    Options.notifyConfigChanged(false)
+                    local MediaService = EAM.Services and EAM.Services.MediaService
+                    if MediaService and MediaService.playSound then
+                        MediaService.playSound(item.value)
+                    end
+                end
+            end,
+            250,
+            10
+        )
+        for _, btn in ipairs(soundMenu.buttons or {}) do
+            finalizeDropdownMenuButton(btn, btn.text, soundMenu)
+        end
+    end
+
+    soundDropdown:SetScript("OnClick", function()
+        if soundMenu:IsShown() then
+            soundMenu:Hide()
+        else
+            closeTabMenus()
+            populateSoundMenu()
+            soundMenu:Show()
+        end
+    end)
+
+    playSoundBtn:SetScript("OnClick", function()
+        local sName = (EAM.db and EAM.db.config and EAM.db.config.soundName) or "ShayBell"
+        local MediaService = EAM.Services and EAM.Services.MediaService
+        if MediaService and MediaService.playSound then
+            MediaService.playSound(sName)
+        else
+            local asset = soundAssets[sName] or 568154
+            PlaySoundFile(asset, "Master")
+        end
+    end)
+
+    -- 4. 暴雪 12.1 Native Aura 原生引擎
+    local nativeAuraHeader = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    nativeAuraHeader:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 300, -78)
+    nativeAuraHeader:SetTextColor(0.85, 0.75, 0.65, 1)
+    bindText(nativeAuraHeader, "EAM_OPT_AURA_HEADER", "Native Aura 引擎狀態：")
+
+    local nativeAuraStatusLabel = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    nativeAuraStatusLabel:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 300, -104)
+    nativeAuraStatusLabel:SetWidth(200)
+    nativeAuraStatusLabel:SetJustifyH("LEFT")
+    Options.nativeAuraStatusLabel = nativeAuraStatusLabel
+
+    local nativeAuraRebuildButton = api.CreateFrame("Button", nil, pageGeneral, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(nativeAuraRebuildButton) end
+    nativeAuraRebuildButton:SetSize(65, 22)
+    nativeAuraRebuildButton:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 510, -102)
+    bindText(nativeAuraRebuildButton, "EAM_OPT_AURA_APPLY", "套用")
+    setTooltip(nativeAuraRebuildButton, "立即手動重建暴雪底層 Native Aura 結構以套用最新光環設定", "套用 Native Aura")
+    nativeAuraRebuildButton:SetScript("OnClick", function()
+        local service = EAM.Services.AuraContainerService
+        if service and service.requestRebuild then
+            service.requestRebuild("OPTIONS_MANUAL_REBUILD")
+        end
+        Options.refreshAuraBackendStatus()
+    end)
+    Options.refreshAuraBackendStatus()
+
+    -- 5. 核心設定開關 (Core Toggles)
+    local coreTitle = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    coreTitle:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 16, -155)
+    coreTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
+    bindText(coreTitle, "EAM_OPT_CORE_TITLE", "核心功能開關 (Core System)")
+
+    createCheckbox(pageGeneral, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 16, -182, nil, "總開關：開啟或暫停所有畫面中央告警框架的顯示", "啟用提醒框架")
+    local escCb = createCheckbox(pageGeneral, localized("EAM_OPT_ALLOW_ESC", "ESC 關閉提示圖示"), "allowEscCancel", 300, -182, function(checked)
+        if EAM.UI.Renderer and EAM.UI.Renderer.checkEscFrameState then
+            if not checked and EAM.UI.Renderer.unsuppressAlerts then
+                EAM.UI.Renderer.unsuppressAlerts("CONFIG_CHANGED")
+            end
+            EAM.UI.Renderer.checkEscFrameState()
+        end
+    end, localized("EAM_OPT_ALLOW_ESC_TIP", "在遊戲中按 ESC 鍵可快速隱藏畫面中央的所有提醒圖示（採用無損純透明度，不破壞冷卻預渲染，進入戰鬥或觸發新提示時自動恢復）"), localized("EAM_OPT_ALLOW_ESC", "ESC 關閉提示圖示"))
+    bindText(escCb.text, "EAM_OPT_ALLOW_ESC", "ESC 關閉提示圖示")
+
+    createCheckbox(pageGeneral, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 16, -214, nil, "啟用特異光環與特殊職業機制的輔助提示", "顯示額外輔助提醒")
+
+    local generalDesc = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    generalDesc:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 16, -260)
+    generalDesc:SetWidth(560)
+    generalDesc:SetJustifyH("LEFT")
+    generalDesc:SetText("所有設定項即時生效並自動儲存至 SavedVariables。切換主題或語系會自動刷新介面文字與外觀。")
+
+    -- ===================================================
+    -- 【Tab 2：框架排版 (Layout)】
+    -- ===================================================
+    local pageLayout = tabPages[2]
+
+    -- 左側：圖示尺寸與間距滑桿
+    createSlider(pageLayout, localized("EAM_OPT_SLIDER_ICON_SIZE", "圖示大小 (Icon Size)"), "iconSize", 20, 100, 1, 16, -20, 250, nil, nil, "調整自身、目標、技能冷卻等所有告警圖示的寬高像素尺寸", "圖示大小")
+    createSlider(pageLayout, localized("EAM_OPT_SLIDER_ICON_SPACING", "水平間距 (Horizontal Spacing)"), "iconSpacing", -200, 200, 1, 16, -75, 250, nil, nil, "調整相鄰告警圖示之間的水平間距像素距離", "水平間距")
+    createSlider(pageLayout, localized("EAM_OPT_SLIDER_VERT_SPACING", "垂直間距 (Vertical Spacing)"), "verticalSpacing", -200, 200, 1, 16, -130, 250, nil, nil, "調整圖示換行或垂直成長時的垂直間距像素距離", "垂直間距")
+
+    local layoutHint = pageLayout:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    layoutHint:SetPoint("TOPLEFT", pageLayout, "TOPLEFT", 16, -190)
+    layoutHint:SetWidth(250)
+    layoutHint:SetJustifyH("LEFT")
+    layoutHint:SetTextColor(0.8, 0.75, 0.7, 1)
+    layoutHint:SetText("調整所有告警圖示的尺寸與行列間距。點擊下方「移動提醒框架」可直接在遊戲畫面中拖曳位置。")
+
+    -- 右側：7 大告警框架成長方向
+    local dirTitle = pageLayout:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    dirTitle:SetPoint("TOPLEFT", pageLayout, "TOPLEFT", 300, -15)
     dirTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
     bindText(dirTitle, "EAM_OPT_DIR_TITLE", "告警框架圖示成長方向設定")
 
-    -- 輔助下拉選單建立器
     local function createDirectionDropdown(parent, labelText, frameName, x, y)
         local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -2176,7 +2348,7 @@ local function createFrame()
         btn:SetSize(130, 20)
         btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
         setTooltip(btn, "選擇此模組多個告警圖示出現時的排列延伸方向（向右/向左/向上/向下）", labelText)
-        
+
         local directions = {
             localized("EAM_OPT_DIR_RIGHT", "往右 (→)"),
             localized("EAM_OPT_DIR_LEFT", "往左 (←)"),
@@ -2196,7 +2368,7 @@ local function createFrame()
         local menu = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
         menu:SetSize(130, 84)
         menu:SetPoint("TOPLEFT", btn, "BOTTOMLEFT", 0, -2)
-        menu:SetFrameStrata("DIALOG")
+        menu:SetFrameStrata("FULLSCREEN_DIALOG")
         menu:SetBackdrop({
             bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -2206,6 +2378,7 @@ local function createFrame()
         menu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
         menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
         registerDropdownMenu(menu, btn)
+        registerTabMenu(menu)
         menu:Hide()
 
         for idx, direction in ipairs(directions) do
@@ -2237,6 +2410,7 @@ local function createFrame()
             if menu:IsShown() then
                 menu:Hide()
             else
+                closeTabMenus()
                 menu:Show()
             end
         end)
@@ -2244,111 +2418,136 @@ local function createFrame()
         return btn
     end
 
-    -- 建立 7 大框架成長方向選單（2 欄排列）
-    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_SELF_AURA", "自身光環成長"), "selfAura", 300, -38)
-    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_TARGET_AURA", "目標光環成長"), "targetAura", 445, -38)
-    
-    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_SPELL_COOLDOWN", "技能冷卻成長"), "spellCooldown", 300, -78)
-    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_ITEM_COOLDOWN", "物品冷卻成長"), "itemCooldown", 445, -78)
-    
-    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_GROUND_EFFECT", "地面效果成長"), "groundEffect", 300, -118)
-    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_TOTEM", "圖騰監控成長"), "totem", 445, -118)
-    
-    createDirectionDropdown(posInner, localized("EAM_OPT_GROW_CLASS_POWER", "職業能量成長"), "classPower", 300, -158)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_SELF_AURA", "自身光環成長"), "selfAura", 300, -38)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_TARGET_AURA", "目標光環成長"), "targetAura", 445, -38)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_SPELL_COOLDOWN", "技能冷卻成長"), "spellCooldown", 300, -88)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_ITEM_COOLDOWN", "物品冷卻成長"), "itemCooldown", 445, -88)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_GROUND_EFFECT", "地面效果成長"), "groundEffect", 300, -138)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_TOTEM", "圖騰監控成長"), "totem", 445, -138)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_CLASS_POWER", "職業能量成長"), "classPower", 300, -188)
 
-    -- 倒數與 applications 共用 21 點白名單位置
-    local function createTextPlacementDropdown(parent, labelText, kind, x, y)
-        local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-        label:SetTextColor(0.85, 0.75, 0.65, 1)
-        setWidgetText(label, labelText)
-
-        local btn = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-        if Theme and Theme.registerButton then Theme.registerButton(btn) end
-        btn:SetSize(130, 20)
-        btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
-        setTooltip(btn, "選擇文字或數字在圖示上的相對錨點位置（正中央、上方、下方、角落等）", labelText)
-
-        local function updateBtnText()
-            if EAM.db and EAM.db.config then
-                local placement = EAM.UI.TextPlacement.getPlacement(EAM.db.config, kind)
-                bindText(btn, "EAM_PLACEMENT_" .. placement, placement)
-            end
+    -- 底部兩大操作按鈕（對稱排列）
+    createThemedButton(pageLayout, localized("EAM_OPT_MOVE_FRAME_BTN", "移動提醒框架"), 16, -385, 250, 32, function()
+        posFrame.suppressAnchorClear = true
+        posFrame:Hide()
+        posFrame.suppressAnchorClear = false
+        if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
+            EAM.UI.Renderer.setActiveAnchors("all")
+        else
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_MOVE_MODE_ON_PRINT or "移動模式已啟動（請使用 /eam 拖曳）"))
         end
+    end, "在畫面上亮起半透明移動錨點框，方便使用滑鼠直觀拖曳調整在畫面上的定位", "移動提醒框架")
 
-        btn:SetScript("OnShow", updateBtnText)
-
-        local menu = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
-        menu:SetSize(236, 226)
-        menu:SetPoint("BOTTOMLEFT", btn, "TOPLEFT", 0, 2)
-        menu:SetFrameStrata("DIALOG")
-        menu:SetBackdrop({
-            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            tile = true, tileSize = 12, edgeSize = 12,
-            insets = { left = 3, right = 3, top = 3, bottom = 3 }
-        })
-        menu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
-        menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
-        registerDropdownMenu(menu, btn)
-        menu:Hide()
-
-        local options = EAM.UI.TextPlacement.orderedPlacements
-        for index = 1, #options do
-            local placement = options[index]
-            local column = math.floor((index - 1) / 11)
-            local row = (index - 1) % 11
-            local menuButton = api.CreateFrame("Button", nil, menu)
-            menuButton:SetSize(112, 18)
-            menuButton:SetPoint("TOPLEFT", menu, "TOPLEFT", 3 + column * 116, -3 - row * 20)
-
-            local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 5, 0)
-            bindText(menuButtonText, "EAM_PLACEMENT_" .. placement, placement)
-            finalizeDropdownMenuButton(menuButton, menuButtonText, menu)
-
-            menuButton:SetScript("OnClick", function()
-                local savedVariables = EAM.Modules.SavedVariables
-                if savedVariables and savedVariables.updateTextLayout then
-                    local ok, state = savedVariables.updateTextLayout(kind, placement, nil)
-                    if ok and state == "updated" then
-                        updateBtnText()
-                        Options.notifyTextLayoutChanged(true)
-                    end
+    createThemedButton(pageLayout, localized("EAM_OPT_RESET_FRAME_BTN", "重設所有圖示與位置"), 300, -385, 275, 32, function()
+        if EAM.db and EAM.db.layout then
+            EAM.db.layout.iconSize = 40
+            EAM.db.layout.spacing = 6
+            EAM.db.layout.fontSize = 12
+            EAM.db.config.fontSizeSpellName = 12
+            EAM.db.config.fontSizeTimeVal = 12
+            EAM.db.config.fontSizeStack = 12
+            EAM.db.config.selfDebuffRed = 0.5
+            EAM.db.config.targetDebuffGreen = 0.5
+            EAM.db.config.cooldownSwipeAlpha = 0.8
+            EAM.db.config.cooldownSwipeColor = { r = 0.0, g = 0.0, b = 0.0 }
+            EAM.db.config.bossExecuteThreshold = 0.2
+            EAM.db.config.enableBossExecute = false
+            EAM.db.config.lowHealthThreshold = 0.35
+            EAM.db.config.lowHealthFlash = true
+            EAM.db.config.cooldownProgressCurve = "LINEAR"
+            EAM.db.config.chargeBarPosition = "BOTTOM"
+            EAM.db.config.chargeBarLengthPercent = 100
+            EAM.db.config.chargeBarThickness = 8
+            EAM.db.config.auraStackBar = true
+            EAM.db.config.minApplications = 1
+            EAM.db.config.overdriveGlow = true
+            local defaults = EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.defaults
+            if defaults and defaults.config and defaults.config.timerColorCurve then
+                local defTcc = defaults.config.timerColorCurve
+                local s1 = (defTcc.stages and defTcc.stages[1]) or { threshold = 3, color = { 1.0, 0.15, 0.15, 1.0 } }
+                local s2 = (defTcc.stages and defTcc.stages[2]) or { threshold = 5, color = { 1.0, 0.82, 0.0, 1.0 } }
+                local nc = defTcc.normalColor or { 1.0, 1.0, 1.0, 1.0 }
+                EAM.db.config.timerColorCurve = {
+                    enabled = defTcc.enabled == true,
+                    stages = {
+                        { threshold = s1.threshold, color = { s1.color[1], s1.color[2], s1.color[3], s1.color[4] or 1.0 } },
+                        { threshold = s2.threshold, color = { s2.color[1], s2.color[2], s2.color[3], s2.color[4] or 1.0 } },
+                    },
+                    normalColor = { nc[1], nc[2], nc[3], nc[4] or 1.0 },
+                }
+                if EAM.Modules.EventRouter then
+                    EAM.Modules.EventRouter.fire("EAM_TIMER_COLOR_CHANGED", EAM.db.config.timerColorCurve)
                 end
-                menu:Hide()
-            end)
-        end
-
-        btn:SetScript("OnClick", function()
-            if menu:IsShown() then
-                menu:Hide()
-            else
-                menu:Show()
             end
-        end)
-    end
+            if Options.refreshTimerColorControls then
+                Options.refreshTimerColorControls()
+            end
+            if Options.refreshChargeBarDropdown then
+                Options.refreshChargeBarDropdown()
+            end
+            if Options.refreshCurveDropdown then
+                Options.refreshCurveDropdown()
+            end
+            if Options.refreshSwipeColorButton then
+                Options.refreshSwipeColorButton()
+            end
+            
+            local defaults = EAM.Modules.SavedVariables.defaults
+            if defaults and defaults.layout and defaults.layout.frames then
+                EAM.db.layout.frames = {}
+                for fName, fDef in pairs(defaults.layout.frames) do
+                    EAM.db.layout.frames[fName] = {
+                        growDirection = fDef.growDirection,
+                        x = fDef.x,
+                        y = fDef.y,
+                        point = fDef.point,
+                    }
+                end
+            end
+            
+            Options.notifyConfigChanged()
+            
+            -- 重置 7 個告警框架 Layout
+            if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
+                for fName in pairs(EAM.Constants.ALERT_FRAME_TYPES) do
+                    EAM.UI.Renderer.requestLayout(fName)
+                end
+            end
+            if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+                EAM.UI.Renderer.refreshPreviewLayout()
+            end
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_RESET_FRAME_SUCCESS or "已將所有告警框架位置與成長方向重設為預設配置。"))
+        end
+    end, "將所有告警模組之框架位置、成長方向、圖示尺寸與間距全部恢復為系統預設值", "重設所有圖示與位置")
 
-    createTextPlacementDropdown(posInner, localized("EAM_OPT_TIMER_ALIGN", "秒數倒數位置"), "timer", 300, -198)
-    createTextPlacementDropdown(posInner, localized("EAM_OPT_APPLICATIONS_ALIGN", "堆疊層數位置"), "applications", 445, -198)
+    -- ===================================================
+    -- 【Tab 3：字型與文字 (Fonts & Text)】
+    -- ===================================================
+    local pageText = tabPages[3]
 
-    -- 全域字型選擇
-    local fontLabel = posInner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    fontLabel:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -242)
+    createCheckbox(pageText, localized("EAM_OPT_SHOW_SPELL_NAME", "顯示法術名稱"), "showSpellName", 16, -14, nil, "在告警圖示上方或下方顯示技能與物品名稱", "顯示法術名稱")
+    createCheckbox(pageText, localized("EAM_OPT_SHOW_TIME_VAL", "顯示倒數秒數"), "showTimeVal", 16, -42, nil, "在告警圖示上即時顯示剩餘持續時間或冷卻秒數", "顯示倒數秒數")
+
+    createSlider(pageText, localized("EAM_OPT_SLIDER_FONT_SPELL", "法術名稱字型 (Spell Font)"), "fontSizeSpellName", 8, 32, 1, 16, -90, 250, nil, nil, "調整顯示在圖示上方之法術與物品名稱的文字大小", "法術名稱字型")
+    createSlider(pageText, localized("EAM_OPT_SLIDER_FONT_CD", "秒數倒數字型 (CD Font)"), "fontSizeTimeVal", 8, 32, 1, 16, -145, 250, nil, nil, "調整顯示在圖示上之剩餘秒數倒數計時數字大小", "秒數倒數字型")
+    createSlider(pageText, localized("EAM_OPT_SLIDER_FONT_STACK", "堆疊層數字型 (Stack Font)"), "fontSizeStack", 8, 32, 1, 16, -200, 250, nil, nil, "調整顯示在圖示上之 Buff/Debuff 堆疊層數數字大小", "堆疊層數字型")
+
+    local fontLabel = pageText:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    fontLabel:SetPoint("TOPLEFT", pageText, "TOPLEFT", 300, -16)
     fontLabel:SetTextColor(0.85, 0.75, 0.65, 1)
     bindText(fontLabel, "EAM_OPT_FONT_PREFIX", "字型：")
 
-    local fontDropdown = api.CreateFrame("Button", nil, posInner, "UIPanelButtonTemplate")
+    local fontDropdown = api.CreateFrame("Button", nil, pageText, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(fontDropdown) end
-    fontDropdown:SetSize(275, 20)
-    fontDropdown:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -256)
+    fontDropdown:SetSize(275, 22)
+    fontDropdown:SetPoint("TOPLEFT", pageText, "TOPLEFT", 300, -32)
     setTooltip(fontDropdown, "切換所有告警文字與數字所使用的全局字型", "全域字型選擇")
     Options.fontDropdown = fontDropdown
 
-    local fontMenu = api.CreateFrame("Frame", nil, posInner, "BackdropTemplate")
+    local fontMenu = api.CreateFrame("Frame", nil, pageText, "BackdropTemplate")
     fontMenu:SetSize(275, 100)
     fontMenu:SetPoint("TOPLEFT", fontDropdown, "BOTTOMLEFT", 0, -2)
-    fontMenu:SetFrameStrata("DIALOG")
+    fontMenu:SetFrameStrata("FULLSCREEN_DIALOG")
     fontMenu:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -2358,6 +2557,7 @@ local function createFrame()
     fontMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
     fontMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
     registerDropdownMenu(fontMenu, fontDropdown)
+    registerTabMenu(fontMenu)
     fontMenu:Hide()
     Options.fontMenu = fontMenu
     Options.fontMenuItems = {}
@@ -2402,15 +2602,259 @@ local function createFrame()
         if fontMenu:IsShown() then
             fontMenu:Hide()
         else
+            closeTabMenus()
             populateFontMenu()
             fontMenu:Show()
         end
     end)
     Options.refreshFontDropdown()
 
-    -- 充能技能剩餘次數列
-    local chargeBarTitle = posInner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    chargeBarTitle:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -290)
+    local function createTextPlacementDropdown(parent, labelText, kind, x, y)
+        local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+        label:SetTextColor(0.85, 0.75, 0.65, 1)
+        setWidgetText(label, labelText)
+
+        local btn = api.CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+        if Theme and Theme.registerButton then Theme.registerButton(btn) end
+        btn:SetSize(130, 20)
+        btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 14)
+        setTooltip(btn, "選擇文字或數字在圖示上的相對錨點位置（正中央、上方、下方、角落等）", labelText)
+
+        local function updateBtnText()
+            if EAM.db and EAM.db.config then
+                local placement = EAM.UI.TextPlacement.getPlacement(EAM.db.config, kind)
+                bindText(btn, "EAM_PLACEMENT_" .. placement, placement)
+            end
+        end
+
+        btn:SetScript("OnShow", updateBtnText)
+
+        local menu = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
+        menu:SetSize(236, 226)
+        menu:SetPoint("BOTTOMLEFT", btn, "TOPLEFT", 0, 2)
+        menu:SetFrameStrata("FULLSCREEN_DIALOG")
+        menu:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 12, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 }
+        })
+        menu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+        menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+        registerDropdownMenu(menu, btn)
+        registerTabMenu(menu)
+        menu:Hide()
+
+        local options = EAM.UI.TextPlacement.orderedPlacements
+        for index = 1, #options do
+            local placement = options[index]
+            local column = math.floor((index - 1) / 11)
+            local row = (index - 1) % 11
+            local menuButton = api.CreateFrame("Button", nil, menu)
+            menuButton:SetSize(112, 18)
+            menuButton:SetPoint("TOPLEFT", menu, "TOPLEFT", 3 + column * 116, -3 - row * 20)
+
+            local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 5, 0)
+            bindText(menuButtonText, "EAM_PLACEMENT_" .. placement, placement)
+            finalizeDropdownMenuButton(menuButton, menuButtonText, menu)
+
+            menuButton:SetScript("OnClick", function()
+                local savedVariables = EAM.Modules.SavedVariables
+                if savedVariables and savedVariables.updateTextLayout then
+                    local ok, state = savedVariables.updateTextLayout(kind, placement, nil)
+                    if ok and state == "updated" then
+                        updateBtnText()
+                        Options.notifyTextLayoutChanged(true)
+                    end
+                end
+                menu:Hide()
+            end)
+        end
+
+        btn:SetScript("OnClick", function()
+            if menu:IsShown() then
+                menu:Hide()
+            else
+                closeTabMenus()
+                menu:Show()
+            end
+        end)
+    end
+
+    createTextPlacementDropdown(pageText, localized("EAM_OPT_TIMER_ALIGN", "秒數倒數位置"), "timer", 300, -85)
+    createTextPlacementDropdown(pageText, localized("EAM_OPT_APPLICATIONS_ALIGN", "堆疊層數位置"), "applications", 445, -85)
+
+    -- 倒數文字變色曲線 (Color Curve)
+    local colorCurveTitle = pageText:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    colorCurveTitle:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -255)
+    colorCurveTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
+    bindText(colorCurveTitle, "EAM_OPT_TIMER_COLOR_TITLE", "倒數文字變色 (Color Curve)")
+
+    local colorCurveCb = api.CreateFrame("CheckButton", nil, pageText, "UICheckButtonTemplate")
+    colorCurveCb:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -276)
+    colorCurveCb.text = colorCurveCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colorCurveCb.text:SetPoint("LEFT", colorCurveCb, "RIGHT", 4, 1)
+    bindText(colorCurveCb.text, "EAM_OPT_TIMER_COLOR_ENABLE", "啟用剩餘秒數動態變色")
+    setTooltip(colorCurveCb, "啟用依據剩餘秒數自動套用不同顏色的階段變色曲線（支援 12.0.7 原生 SetTextColorCurve 零分配染色）", "倒數動態變色")
+    colorCurveCb:SetScript("OnClick", function(self)
+        local enabled = self:GetChecked()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if saved and saved.setTimerColorCurveEnabled then
+            saved.setTimerColorCurveEnabled(enabled)
+        end
+    end)
+
+    local stage1Slider = api.CreateFrame("Slider", nil, pageText, "OptionsSliderTemplate")
+    stage1Slider:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -330)
+    stage1Slider:SetMinMaxValues(1, 10)
+    stage1Slider:SetValueStep(1)
+    stage1Slider:SetObeyStepOnDrag(true)
+    stage1Slider:SetSize(180, 16)
+    setTooltip(stage1Slider, "剩餘秒數小於等於此數值時顯示第 1 階段顏色（緊急警戒）", "緊急警戒門檻")
+    local stage1Label = stage1Slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    stage1Label:SetPoint("BOTTOMLEFT", stage1Slider, "TOPLEFT", 0, 5)
+    bindText(stage1Label, "EAM_OPT_TIMER_COLOR_STAGE1", "緊急警戒 (<= 秒數)")
+    local stage1Val = stage1Slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    stage1Val:SetPoint("BOTTOMRIGHT", stage1Slider, "TOPRIGHT", 0, 5)
+    stage1Slider:SetScript("OnValueChanged", function(self, val)
+        stage1Val:SetText(mathFloor(val))
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if saved and saved.setTimerColorCurveStage then
+            saved.setTimerColorCurveStage(1, mathFloor(val), nil)
+        end
+    end)
+
+    local stage1ColorBtn = EAM.UI.createColorSwatchButton(pageText, 20, 20, function(btn)
+        local currentColor = btn.currentColor or { 1.0, 0.15, 0.15, 1.0 }
+        EAM.UI.openColorPicker({
+            r = currentColor[1],
+            g = currentColor[2],
+            b = currentColor[3],
+            a = currentColor[4] or 1.0,
+            onColorChanged = function(r, g, b, a)
+                btn:SetColor(r, g, b, a)
+                btn.currentColor = { r, g, b, a }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setTimerColorCurveStage then
+                    saved.setTimerColorCurveStage(1, nil, { r, g, b, a })
+                end
+            end,
+        })
+    end)
+    stage1ColorBtn:SetPoint("LEFT", stage1Slider, "RIGHT", 10, -2)
+    setTooltip(stage1ColorBtn, "點擊開啟調色盤，自訂緊急警戒狀態的文字顏色（預設紅色）", "緊急警戒顏色")
+
+    local stage2Slider = api.CreateFrame("Slider", nil, pageText, "OptionsSliderTemplate")
+    stage2Slider:SetPoint("TOPLEFT", pageText, "TOPLEFT", 300, -330)
+    stage2Slider:SetMinMaxValues(1, 20)
+    stage2Slider:SetValueStep(1)
+    stage2Slider:SetObeyStepOnDrag(true)
+    stage2Slider:SetSize(180, 16)
+    setTooltip(stage2Slider, "剩餘秒數小於等於此數值時顯示第 2 階段顏色（預警提示）", "預警提示門檻")
+    local stage2Label = stage2Slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    stage2Label:SetPoint("BOTTOMLEFT", stage2Slider, "TOPLEFT", 0, 5)
+    bindText(stage2Label, "EAM_OPT_TIMER_COLOR_STAGE2", "預警提示 (<= 秒數)")
+    local stage2Val = stage2Slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    stage2Val:SetPoint("BOTTOMRIGHT", stage2Slider, "TOPRIGHT", 0, 5)
+    stage2Slider:SetScript("OnValueChanged", function(self, val)
+        stage2Val:SetText(mathFloor(val))
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if saved and saved.setTimerColorCurveStage then
+            saved.setTimerColorCurveStage(2, mathFloor(val), nil)
+        end
+    end)
+
+    local stage2ColorBtn = EAM.UI.createColorSwatchButton(pageText, 20, 20, function(btn)
+        local currentColor = btn.currentColor or { 1.0, 0.82, 0.0, 1.0 }
+        EAM.UI.openColorPicker({
+            r = currentColor[1],
+            g = currentColor[2],
+            b = currentColor[3],
+            a = currentColor[4] or 1.0,
+            onColorChanged = function(r, g, b, a)
+                btn:SetColor(r, g, b, a)
+                btn.currentColor = { r, g, b, a }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setTimerColorCurveStage then
+                    saved.setTimerColorCurveStage(2, nil, { r, g, b, a })
+                end
+            end,
+        })
+    end)
+    stage2ColorBtn:SetPoint("LEFT", stage2Slider, "RIGHT", 10, -2)
+    setTooltip(stage2ColorBtn, "點擊開啟調色盤，自訂預警提示狀態的文字顏色（預設黃色）", "預警提示顏色")
+
+    local normalColorLabel = pageText:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    normalColorLabel:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -375)
+    bindText(normalColorLabel, "EAM_OPT_TIMER_COLOR_NORMAL", "正常倒數文字顏色:")
+
+    local normalColorBtn = EAM.UI.createColorSwatchButton(pageText, 20, 20, function(btn)
+        local currentColor = btn.currentColor or { 1.0, 1.0, 1.0, 1.0 }
+        EAM.UI.openColorPicker({
+            r = currentColor[1],
+            g = currentColor[2],
+            b = currentColor[3],
+            a = currentColor[4] or 1.0,
+            onColorChanged = function(r, g, b, a)
+                btn:SetColor(r, g, b, a)
+                btn.currentColor = { r, g, b, a }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setTimerColorCurveNormalColor then
+                    saved.setTimerColorCurveNormalColor({ r, g, b, a })
+                end
+            end,
+        })
+    end)
+    normalColorBtn:SetPoint("LEFT", normalColorLabel, "RIGHT", 8, 0)
+    setTooltip(normalColorBtn, "點擊開啟調色盤，自訂剩餘秒數充足時的正常倒數文字顏色（預設白色）", "正常倒數文字顏色")
+
+    local colorCurveHint = pageText:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    colorCurveHint:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -405)
+    colorCurveHint:SetWidth(560)
+    colorCurveHint:SetJustifyH("LEFT")
+    bindText(colorCurveHint, "EAM_OPT_TIMER_COLOR_DESC", "支援 12.0.7 原生 SetTextColorCurve 零分配硬體染色；超過階段 2 秒數則顯示正常顏色。")
+
+    local function refreshTimerColorControls()
+        local tcc = (EAM.db and EAM.db.config and EAM.db.config.timerColorCurve)
+        if not tcc then return end
+        colorCurveCb:SetChecked(tcc.enabled == true)
+        if tcc.normalColor then
+            normalColorBtn.currentColor = tcc.normalColor
+            normalColorBtn:SetColor(tcc.normalColor[1], tcc.normalColor[2], tcc.normalColor[3], tcc.normalColor[4])
+        end
+        if tcc.stages and tcc.stages[1] then
+            local th1 = tcc.stages[1].threshold or 3
+            stage1Slider:SetValue(th1)
+            stage1Val:SetText(mathFloor(th1))
+            local c1 = tcc.stages[1].color or { 1.0, 0.15, 0.15, 1.0 }
+            stage1ColorBtn.currentColor = c1
+            stage1ColorBtn:SetColor(c1[1], c1[2], c1[3], c1[4])
+        end
+        if tcc.stages and tcc.stages[2] then
+            local th2 = tcc.stages[2].threshold or 5
+            stage2Slider:SetValue(th2)
+            stage2Val:SetText(mathFloor(th2))
+            local c2 = tcc.stages[2].color or { 1.0, 0.82, 0.0, 1.0 }
+            stage2ColorBtn.currentColor = c2
+            stage2ColorBtn:SetColor(c2[1], c2[2], c2[3], c2[4])
+        end
+    end
+    Options.refreshTimerColorControls = refreshTimerColorControls
+
+    -- ===================================================
+    -- 【Tab 4：冷卻與充能 (Cooldown & Charge)】
+    -- ===================================================
+    local pageCooldown = tabPages[4]
+
+    -- 上方：冷卻行為開關
+    createCheckbox(pageCooldown, localized("EAM_OPT_SHOW_SCD_OUTSIDE", "非戰鬥顯示技能冷卻"), "showSCDOutsideCombat", 16, -14, nil, "脫離戰鬥後仍持續顯示技能冷卻倒數", "非戰鬥顯示技能冷卻")
+    createCheckbox(pageCooldown, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 205, -14, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除光環")
+    createCheckbox(pageCooldown, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 395, -14, nil, "技能冷卻完畢且可用時，圖示外框發出流光動畫提示", "可用時高亮技能冷卻")
+
+    local chargeBarTitle = pageCooldown:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    chargeBarTitle:SetPoint("TOPLEFT", pageCooldown, "TOPLEFT", 16, -50)
     bindText(chargeBarTitle, "EAM_CHARGE_BAR_TITLE", "充能技能剩餘次數列")
 
     local chargeBarOptions = {
@@ -2422,17 +2866,17 @@ local function createFrame()
     }
     Options.chargeBarOptions = chargeBarOptions
 
-    local chargeBarDropdown = api.CreateFrame("Button", nil, posInner, "UIPanelButtonTemplate")
+    local chargeBarDropdown = api.CreateFrame("Button", nil, pageCooldown, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(chargeBarDropdown) end
-    chargeBarDropdown:SetSize(275, 22)
-    chargeBarDropdown:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -310)
+    chargeBarDropdown:SetSize(250, 22)
+    chargeBarDropdown:SetPoint("TOPLEFT", pageCooldown, "TOPLEFT", 16, -72)
     setTooltip(chargeBarDropdown, "選擇技能充能次數條的顯示樣式（圖示下方、上方、左側、右側、環形）", "充能技能剩餘次數列")
     Options.chargeBarDropdown = chargeBarDropdown
 
-    local chargeBarMenu = api.CreateFrame("Frame", nil, posInner, "BackdropTemplate")
-    chargeBarMenu:SetSize(275, 112)
+    local chargeBarMenu = api.CreateFrame("Frame", nil, pageCooldown, "BackdropTemplate")
+    chargeBarMenu:SetSize(250, 112)
     chargeBarMenu:SetPoint("TOPLEFT", chargeBarDropdown, "BOTTOMLEFT", 0, -2)
-    chargeBarMenu:SetFrameStrata("DIALOG")
+    chargeBarMenu:SetFrameStrata("FULLSCREEN_DIALOG")
     chargeBarMenu:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -2442,13 +2886,14 @@ local function createFrame()
     chargeBarMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
     chargeBarMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
     registerDropdownMenu(chargeBarMenu, chargeBarDropdown)
+    registerTabMenu(chargeBarMenu)
     chargeBarMenu:Hide()
     Options.chargeBarMenu = chargeBarMenu
 
     for index = 1, #chargeBarOptions do
         local option = chargeBarOptions[index]
         local menuButton = api.CreateFrame("Button", nil, chargeBarMenu)
-        menuButton:SetSize(269, 20)
+        menuButton:SetSize(244, 20)
         menuButton:SetPoint("TOPLEFT", chargeBarMenu, "TOPLEFT", 3, -3 - (index - 1) * 21)
         local menuText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         menuText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
@@ -2472,27 +2917,28 @@ local function createFrame()
         if chargeBarMenu:IsShown() then
             chargeBarMenu:Hide()
         else
+            closeTabMenus()
             chargeBarMenu:Show()
         end
     end)
     Options.refreshChargeBarDropdown()
 
     createSlider(
-        posInner,
+        pageCooldown,
         localized("EAM_CHARGE_BAR_LENGTH", "長度／環徑（圖示 %）"),
         "chargeBarLengthPercent",
-        100, 250, 5, 300, -345, 275, nil, nil, "調整充能條長度佔圖示寬度的百分比", "充能條長度"
+        100, 250, 5, 16, -120, 250, nil, nil, "調整充能條長度佔圖示寬度的百分比", "充能條長度"
     )
     createSlider(
-        posInner,
+        pageCooldown,
         localized("EAM_CHARGE_BAR_THICKNESS", "厚度（px）"),
         "chargeBarThickness",
-        4, 16, 1, 300, -393, 275, nil, nil, "調整充能條本身的粗細像素高度", "充能條粗細"
+        4, 16, 1, 16, -175, 250, nil, nil, "調整充能條本身的粗細像素高度", "充能條粗細"
     )
 
-    local chargeBarHint = posInner:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    chargeBarHint:SetPoint("TOPLEFT", posInner, "TOPLEFT", 300, -433)
-    chargeBarHint:SetWidth(275)
+    local chargeBarHint = pageCooldown:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    chargeBarHint:SetPoint("TOPLEFT", pageCooldown, "TOPLEFT", 16, -230)
+    chargeBarHint:SetWidth(250)
     chargeBarHint:SetJustifyH("LEFT")
     bindText(
         chargeBarHint,
@@ -2500,57 +2946,207 @@ local function createFrame()
         "分段代表剩餘可用次數；恢復時間只顯示於冷卻轉圈。"
     )
 
-    createCheckbox(posInner, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 300, -462, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
+    local curveTitle = pageCooldown:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    curveTitle:SetPoint("TOPLEFT", pageCooldown, "TOPLEFT", 300, -50)
+    bindText(curveTitle, "EAM_OPT_PROGRESS_CURVE_TITLE", "冷卻進度曲線模式")
 
-    -- ---------------------------------------------------
-    -- 【底部按鈕】：對稱分欄，重置 7 個框架的所有狀態
-    -- ---------------------------------------------------
-    createThemedButton(posInner, localized("EAM_OPT_MOVE_FRAME_BTN", "移動提醒框架"), 16, -516, 250, 28, function()
-        if EAM.UI.Renderer and EAM.UI.Renderer.toggleAnchors then
-            EAM.UI.Renderer.toggleAnchors()
+    local curveOptions = {
+        { value = "LINEAR", labelKey = "EAM_OPT_PROGRESS_CURVE_LINEAR", fallback = "線性均勻 (Linear)" },
+        { value = "CUBIC", labelKey = "EAM_OPT_PROGRESS_CURVE_CUBIC", fallback = "三次加速衝刺 (Cubic)" },
+        { value = "COSINE", labelKey = "EAM_OPT_PROGRESS_CURVE_COSINE", fallback = "餘弦平滑過渡 (Cosine)" },
+    }
+
+    local curveDropdown = api.CreateFrame("Button", nil, pageCooldown, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(curveDropdown) end
+    curveDropdown:SetSize(275, 22)
+    curveDropdown:SetPoint("TOPLEFT", pageCooldown, "TOPLEFT", 300, -72)
+    setTooltip(curveDropdown, "調整技能冷卻轉圈動畫之進度插值曲線（線性/三次加速衝刺/餘弦平滑）", "冷卻進度曲線")
+    Options.curveDropdown = curveDropdown
+
+    local curveMenu = api.CreateFrame("Frame", nil, pageCooldown, "BackdropTemplate")
+    curveMenu:SetSize(275, 72)
+    curveMenu:SetPoint("TOPLEFT", curveDropdown, "BOTTOMLEFT", 0, -2)
+    curveMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    curveMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    curveMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    curveMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(curveMenu, curveDropdown)
+    registerTabMenu(curveMenu)
+    curveMenu:Hide()
+    Options.curveMenu = curveMenu
+
+    local function refreshCurveDropdown()
+        local current = EAM.db and EAM.db.config and EAM.db.config.cooldownProgressCurve or "LINEAR"
+        for _, opt in ipairs(curveOptions) do
+            if opt.value == current then
+                setWidgetText(curveDropdown, (EAM.L and EAM.L[opt.labelKey]) or opt.fallback)
+                break
+            end
+        end
+    end
+    Options.refreshCurveDropdown = refreshCurveDropdown
+
+    for index = 1, #curveOptions do
+        local option = curveOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, curveMenu)
+        menuButton:SetSize(269, 20)
+        menuButton:SetPoint("TOPLEFT", curveMenu, "TOPLEFT", 3, -3 - (index - 1) * 21)
+        local menuText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        bindText(menuText, option.labelKey, option.fallback)
+        finalizeDropdownMenuButton(menuButton, menuText, curveMenu)
+        menuButton:SetScript("OnClick", function()
+            if EAM.db and EAM.db.config then
+                EAM.db.config.cooldownProgressCurve = option.value
+                refreshCurveDropdown()
+                Options.notifyConfigChanged(false)
+            end
+            curveMenu:Hide()
+        end)
+    end
+    curveDropdown:SetScript("OnClick", function()
+        if curveMenu:IsShown() then
+            curveMenu:Hide()
         else
-            print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_MOVE_MODE_ON_PRINT or "移動模式已啟動（請使用 /eam 拖曳）"))
+            closeTabMenus()
+            curveMenu:Show()
         end
-    end, "在畫面上亮起半透明移動錨點框，方便使用滑鼠直觀拖曳調整在畫面上的定位", "移動提醒框架")
+    end)
+    refreshCurveDropdown()
 
-    createThemedButton(posInner, localized("EAM_OPT_RESET_FRAME_BTN", "重設所有圖示與位置"), 300, -516, 275, 28, function()
-        if EAM.db and EAM.db.layout then
-            EAM.db.layout.iconSize = 40
-            EAM.db.layout.spacing = 6
-            if EAM.db.config then
-                EAM.db.config.chargeBarLayout = "BOTTOM"
-                EAM.db.config.chargeBarLengthPercent = 150
-                EAM.db.config.chargeBarThickness = 8
-                Options.refreshChargeBarDropdown()
-            end
-            
-            local defaults = EAM.Modules.SavedVariables.defaults
-            if defaults and defaults.layout and defaults.layout.frames then
-                EAM.db.layout.frames = {}
-                for fName, fDef in pairs(defaults.layout.frames) do
-                    EAM.db.layout.frames[fName] = {
-                        growDirection = fDef.growDirection,
-                        x = fDef.x,
-                        y = fDef.y,
-                        point = fDef.point,
-                    }
+    local swipeSlider = createSlider(pageCooldown, localized("EAM_OPT_SLIDER_SHADOW_ALPHA", "倒數陰影透明度 (Shadow Alpha)"), "cooldownSwipeAlpha", 0, 1, 0.05, 300, -120, 205, true, nil, "調整光環與技能冷卻圖示倒數扇形陰影遮罩的透明度 (0~100%)", "倒數陰影透明度")
+
+    local swipeColorBtn = EAM.UI.createColorSwatchButton(pageCooldown, 22, 22, function(btn)
+        local curColor = btn.currentColor or (EAM.db and EAM.db.config and EAM.db.config.cooldownSwipeColor) or { r = 0, g = 0, b = 0 }
+        EAM.UI.openColorPicker({
+            r = curColor.r or 0,
+            g = curColor.g or 0,
+            b = curColor.b or 0,
+            hasOpacity = false,
+            onColorChanged = function(r, g, b)
+                btn:SetColor(r, g, b, 1.0)
+                btn.currentColor = { r = r, g = g, b = b }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setCooldownSwipeColor then
+                    saved.setCooldownSwipeColor({ r = r, g = g, b = b })
+                elseif EAM.db and EAM.db.config then
+                    EAM.db.config.cooldownSwipeColor = { r = r, g = g, b = b }
                 end
-            end
-            
-            Options.notifyConfigChanged()
-            
-            -- 重置 7 個告警框架 Layout
-            if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
-                for fName in pairs(EAM.Constants.ALERT_FRAME_TYPES) do
-                    EAM.UI.Renderer.requestLayout(fName)
+                markAuraSettingsDirty("OPTIONS_NATIVE_STRUCTURE_CHANGED")
+                Options.notifyConfigChanged(false)
+                if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+                    EAM.UI.Renderer.refreshPreviewLayout()
                 end
-            end
-            if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
-                EAM.UI.Renderer.refreshPreviewLayout()
-            end
-            print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_RESET_FRAME_SUCCESS or "已將所有告警框架位置與成長方向重設為預設配置。"))
+            end,
+            onCancel = function(prevR, prevG, prevB)
+                btn:SetColor(prevR, prevG, prevB, 1.0)
+                btn.currentColor = { r = prevR, g = prevG, b = prevB }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setCooldownSwipeColor then
+                    saved.setCooldownSwipeColor({ r = prevR, g = prevG, b = prevB })
+                elseif EAM.db and EAM.db.config then
+                    EAM.db.config.cooldownSwipeColor = { r = prevR, g = prevG, b = prevB }
+                end
+                markAuraSettingsDirty("OPTIONS_NATIVE_STRUCTURE_CHANGED")
+                Options.notifyConfigChanged(false)
+                if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+                    EAM.UI.Renderer.refreshPreviewLayout()
+                end
+            end,
+        })
+    end)
+    swipeColorBtn:SetPoint("LEFT", swipeSlider, "RIGHT", 14, -2)
+    setTooltip(swipeColorBtn, localized("EAM_OPT_SWIPE_COLOR_TIP", "點擊開啟調色盤，自訂光環與冷卻圖示倒數扇形陰影遮罩的顏色（預設經典黑色陰影）"), localized("EAM_OPT_SWIPE_COLOR", "扇形顏色"))
+
+    local swipeColorLabel = pageCooldown:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    swipeColorLabel:SetPoint("BOTTOMLEFT", swipeColorBtn, "TOPLEFT", -2, 5)
+    bindText(swipeColorLabel, "EAM_OPT_SWIPE_COLOR", "扇形顏色")
+
+    local function refreshSwipeColorButton()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local color = (saved and saved.getCooldownSwipeColor and saved.getCooldownSwipeColor())
+            or (EAM.db and EAM.db.config and EAM.db.config.cooldownSwipeColor)
+            or { r = 0, g = 0, b = 0 }
+        swipeColorBtn:SetColor(color.r or 0, color.g or 0, color.b or 0, 1.0)
+        swipeColorBtn.currentColor = color
+    end
+    Options.refreshSwipeColorButton = refreshSwipeColorButton
+    swipeColorBtn:SetScript("OnShow", refreshSwipeColorButton)
+    refreshSwipeColorButton()
+    createCheckbox(pageCooldown, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 300, -175, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
+
+    -- ===================================================
+    -- 【Tab 5：視覺與警示 (Visual Alerts & FX)】
+    -- ===================================================
+    local pageFX = tabPages[5]
+
+    -- 左側：光環分段層數條 (Application Bar) 與斬殺線
+    createCheckbox(pageFX, localized("EAM_OPT_AURA_STACK_BAR", "啟用光環分段層數條"), "auraStackBar", 16, -14, nil, "為具有堆疊層數的光環圖示顯示分段刻度層數條 (Application Bar)", "啟用光環分段層數條")
+    createSlider(pageFX, localized("EAM_OPT_MIN_APPLICATIONS", "最低顯示層數門檻 (minApplications)"), "minApplications", 1, 10, 1, 16, -68, 250, false, nil, "光環層數達到或超過此門檻時才顯示分段條，低於此層數靜默隱藏", "最低顯示層數門檻")
+    createCheckbox(pageFX, localized("EAM_OPT_OVERDRIVE_GLOW", "啟用滿層過曝炫光 (ADD Overdrive)"), "overdriveGlow", 16, -120, nil, "當光環堆疊至滿層或爆發狀態時，啟用純 GPU 加法過曝炫光與 FrameLevel 圖層提權", "滿層過曝炫光")
+
+    createCheckbox(pageFX, localized("EAM_OPT_ENABLE_EXECUTE", "啟用斬殺線"), "enableBossExecute", 16, -165, nil, "啟用目標進入斬殺血量時之高亮提示與警示外框", "啟用斬殺線")
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 16, -220, 250, true, nil, "設定目標斬殺血量比例門檻（例如 20% 或 35%）", "斬殺血量閾值")
+
+    -- 右側：全螢幕閃爍、瀕死動態呼吸紅框與減益著色
+    createCheckbox(pageFX, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 300, -14, nil, "當特定重大光環觸發或進入戰鬥時，全螢幕邊緣閃爍紅框", "啟用全螢幕閃爍")
+
+    local testFlashBtn = api.CreateFrame("Button", nil, pageFX, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(testFlashBtn) end
+    testFlashBtn:SetSize(80, 22)
+    testFlashBtn:SetPoint("TOPLEFT", pageFX, "TOPLEFT", 495, -12)
+    bindText(testFlashBtn, "EAM_OPT_TEST_FLASH", "測試閃爍")
+    setTooltip(testFlashBtn, "立即測試全螢幕邊緣閃爍紅框動畫效果", "測試閃爍")
+    testFlashBtn:SetScript("OnClick", function()
+        if EAM.UI.CombatFlash and EAM.UI.CombatFlash.trigger then
+            EAM.UI.CombatFlash.trigger()
         end
-    end, "將所有告警模組之框架位置、成長方向、圖示尺寸與間距全部恢復為系統預設值", "重設所有圖示與位置")
+    end)
+
+    createCheckbox(pageFX, localized("EAM_OPT_LOW_HEALTH_FLASH", "啟用瀕死動態呼吸紅框"), "lowHealthFlash", 300, -52, nil, "血量危急時全螢幕邊緣動態呼吸閃爍，血量越低越顯著", "啟用瀕死動態呼吸紅框")
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_LOW_HEALTH", "瀕死危急閾值 (Low Health)"), "lowHealthThreshold", 0.1, 0.6, 0.05, 300, -105, 275, true, nil, "瀕死危急狀態之血量比例門檻（例如 35%）", "瀕死危急閾值")
+
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自身減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 300, -165, 275, true, nil, "自身受到減益效果 (Debuff) 時圖示邊框的紅色著色程度", "自身減益色度")
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 300, -225, 275, true, nil, "目標身上為減益效果時圖示邊框的綠色著色程度", "目標減益色度")
+
+    createCheckbox(pageFX, localized("EAM_OPT_RESOURCE_DYNAMIC_COLOR", "資源條動態色彩曲線"), "resourceDynamicColor", 300, -285, nil, "依據目前能量/怒氣百分比，透過暴雪 ColorCurveObject 動態平滑渲染顏色", "資源條動態色彩曲線")
+
+    -- 初始化分頁選取
+    selectTab(1)
+
+    local function onPosFrameShow()
+        selectTab(currentTab or 1)
+        if Options.refreshThemeDropdown then
+            Options.refreshThemeDropdown()
+        end
+        if Options.refreshLanguageDropdown then
+            Options.refreshLanguageDropdown()
+        end
+        if Options.refreshSoundDropdown then
+            Options.refreshSoundDropdown()
+        end
+        if Options.refreshAuraBackendStatus then
+            Options.refreshAuraBackendStatus()
+        end
+        if Options.refreshTimerColorControls then
+            Options.refreshTimerColorControls()
+        end
+        if Options.refreshFontDropdown then
+            Options.refreshFontDropdown()
+        end
+        if Options.refreshChargeBarDropdown then
+            Options.refreshChargeBarDropdown()
+        end
+        if Options.refreshCurveDropdown then
+            Options.refreshCurveDropdown()
+        end
+    end
+    posFrame:HookScript("OnShow", onPosFrameShow)
 
     Options.posFrame = posFrame
 
@@ -2559,6 +3155,7 @@ local function createFrame()
     -- 3. Spell/Item List Frame (Right Scrolling List)
     -- ===================================================
     local listFrame = api.CreateFrame("Frame", "EAM_SpellListOptionsFrame", frame, "BackdropTemplate")
+    listFrame:SetFrameStrata("DIALOG")
     listFrame:SetSize(400, 600)
     listFrame:SetPoint("TOPLEFT", frame, "TOPRIGHT", 2, 0)
     listFrame:EnableMouse(true)
@@ -2601,6 +3198,7 @@ local function createFrame()
     })
     listInner:SetBackdropColor(0.08, 0.05, 0.03, 0.8)
     listInner:SetBackdropBorderColor(0.5, 0.35, 0.2, 0.8)
+    if Theme and Theme.registerFrame then Theme.registerFrame(listInner, "panel") end
 
     -- 頂部批次 Action 按鈕
     local selectAllBtn = api.CreateFrame("Button", nil, listInner, "UIPanelButtonTemplate")
@@ -2760,7 +3358,7 @@ local function createFrame()
     Options.refreshColumnsControl()
 
     local specMenu = api.CreateFrame("Frame", nil, listInner, "BackdropTemplate")
-    specMenu:SetFrameStrata("DIALOG")
+    specMenu:SetFrameStrata("FULLSCREEN_DIALOG")
     specMenu:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -3175,8 +3773,10 @@ local function createFrame()
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_ERR_INVALID_ID or "請輸入正確的 ID！"))
             return
         end
-        Options.addAlertToCurrentCategory(idVal)
-        addEditBox:SetText("")
+        local ok, status = Options.addAlertToCurrentCategory(idVal)
+        if ok or status ~= "awaitingConfirmation" then
+            addEditBox:SetText("")
+        end
     end, "將輸入框中的 ID 加入當前分類之監控清單", "新增監控")
     addBtn:ClearAllPoints()
     addBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 158, 38)
@@ -3204,11 +3804,13 @@ local function createFrame()
     addEditBox:SetScript("OnEnterPressed", function(self)
         local idVal = tonumber(self:GetText())
         if idVal and idVal > 0 then
-            Options.addAlertToCurrentCategory(idVal)
+            local ok, status = Options.addAlertToCurrentCategory(idVal)
+            if ok or status ~= "awaitingConfirmation" then
+                self:SetText("")
+            end
         else
             print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_ERR_INVALID_ID or "請輸入正確的 ID！"))
         end
-        self:SetText("")
         self:ClearFocus()
     end)
 
@@ -3220,7 +3822,7 @@ local function createFrame()
     local batchFrame = api.CreateFrame("Frame", "EAM_AlertBatchFrame", UIParent, "BackdropTemplate")
     batchFrame:SetSize(620, 460)
     batchFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
-    batchFrame:SetFrameStrata("DIALOG")
+    batchFrame:SetFrameStrata("FULLSCREEN_DIALOG")
     batchFrame:SetMovable(true)
     batchFrame:EnableMouse(true)
     batchFrame:RegisterForDrag("LeftButton")
@@ -3465,6 +4067,154 @@ local function createFrame()
     Options.batchStatusText = batchStatusText
     Options.listFrame = listFrame
 
+    -- ===================================================
+    -- 3.5 Non-Class Spell Confirm Dialog (Popup Sub-Window)
+    -- ===================================================
+    local confirmNonClassFrame = api.CreateFrame("Frame", "EAM_ConfirmNonClassSpellFrame", UIParent, "BackdropTemplate")
+    confirmNonClassFrame:SetSize(420, 165)
+    confirmNonClassFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+    confirmNonClassFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    confirmNonClassFrame:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true,
+        tileSize = 32,
+        edgeSize = 32,
+        insets = { left = 8, right = 8, top = 8, bottom = 8 },
+    })
+    confirmNonClassFrame:SetBackdropColor(0.12, 0.08, 0.06, 0.98)
+    confirmNonClassFrame:SetBackdropBorderColor(0.8, 0.6, 0.4, 1)
+    if Theme and Theme.registerFrame then Theme.registerFrame(confirmNonClassFrame, "window") end
+    confirmNonClassFrame:Hide()
+    confirmNonClassFrame:SetMovable(true)
+    confirmNonClassFrame:EnableMouse(true)
+    confirmNonClassFrame:RegisterForDrag("LeftButton")
+    confirmNonClassFrame:SetScript("OnDragStart", function()
+        confirmNonClassFrame:StartMoving()
+    end)
+    confirmNonClassFrame:SetScript("OnDragStop", function()
+        confirmNonClassFrame:StopMovingOrSizing()
+    end)
+    makeTitleCloseButton(confirmNonClassFrame, function()
+        confirmNonClassFrame:Hide()
+    end)
+
+    local confirmTitle = confirmNonClassFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    confirmTitle:SetPoint("TOP", confirmNonClassFrame, "TOP", 0, -16)
+    bindText(confirmTitle, "EAM_OPT_CONFIRM_TITLE", "跨職業法術確認")
+    if Theme and Theme.registerText then Theme.registerText(confirmTitle, "title") end
+
+    local confirmIcon = confirmNonClassFrame:CreateTexture(nil, "ARTWORK")
+    confirmIcon:SetSize(36, 36)
+    confirmIcon:SetPoint("TOPLEFT", confirmNonClassFrame, "TOPLEFT", 24, -46)
+    confirmNonClassFrame.icon = confirmIcon
+
+    local confirmNameText = confirmNonClassFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    confirmNameText:SetPoint("TOPLEFT", confirmIcon, "TOPRIGHT", 12, 0)
+    confirmNameText:SetPoint("RIGHT", confirmNonClassFrame, "RIGHT", -24, 0)
+    confirmNameText:SetJustifyH("LEFT")
+    confirmNonClassFrame.nameText = confirmNameText
+
+    local confirmIDText = confirmNonClassFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    confirmIDText:SetPoint("TOPLEFT", confirmNameText, "BOTTOMLEFT", 0, -4)
+    confirmIDText:SetJustifyH("LEFT")
+    confirmNonClassFrame.idText = confirmIDText
+
+    local confirmPromptText = confirmNonClassFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    confirmPromptText:SetPoint("TOPLEFT", confirmIcon, "BOTTOMLEFT", 0, -14)
+    confirmPromptText:SetPoint("RIGHT", confirmNonClassFrame, "RIGHT", -24, 0)
+    confirmPromptText:SetJustifyH("LEFT")
+    confirmPromptText:SetWordWrap(true)
+    bindText(confirmPromptText, "EAM_OPT_CONFIRM_NON_CLASS_SPELL", "這個 SPELL ID 可能不是你的職業專屬，你仍要加入嗎？")
+    if Theme and Theme.registerText then Theme.registerText(confirmPromptText, "body") end
+    confirmNonClassFrame.promptText = confirmPromptText
+
+    local pendingSpellID = nil
+
+    confirmNonClassFrame:SetScript("OnHide", function()
+        pendingSpellID = nil
+    end)
+
+    local confirmBtn = createThemedButton(
+        confirmNonClassFrame,
+        localized("EAM_OPT_CONFIRM_BTN", "確定"),
+        0,
+        0,
+        100,
+        24,
+        function()
+            if pendingSpellID then
+                local targetID = pendingSpellID
+                pendingSpellID = nil
+                confirmNonClassFrame:Hide()
+                Options.addAlertToCurrentCategory(targetID, true)
+                if Options.addEditBox then
+                    Options.addEditBox:SetText("")
+                end
+            else
+                confirmNonClassFrame:Hide()
+            end
+        end,
+        "確認將此非本職業法術強制加入目前清單",
+        "確認加入"
+    )
+    confirmBtn:ClearAllPoints()
+    confirmBtn:SetPoint("BOTTOMRIGHT", confirmNonClassFrame, "BOTTOM", -15, 18)
+
+    local cancelBtn = createThemedButton(
+        confirmNonClassFrame,
+        localized("EAM_OPT_CANCEL_BTN", "取消"),
+        0,
+        0,
+        100,
+        24,
+        function()
+            pendingSpellID = nil
+            confirmNonClassFrame:Hide()
+        end,
+        "取消加入此法術",
+        "取消"
+    )
+    cancelBtn:ClearAllPoints()
+    cancelBtn:SetPoint("BOTTOMLEFT", confirmNonClassFrame, "BOTTOM", 15, 18)
+
+    function confirmNonClassFrame.showDialog(spellID)
+        spellID = tonumber(spellID)
+        if not spellID or spellID <= 0 then return end
+
+        pendingSpellID = spellID
+
+        local spellInfo = getSafeSpellInfo(spellID)
+        if not spellInfo and api and api.C_Spell and type(api.C_Spell.GetSpellInfo) == "function" then
+            local ok, sInfo = pcall(api.C_Spell.GetSpellInfo, spellID)
+            if ok and type(sInfo) == "table" then
+                spellInfo = sInfo
+            end
+        end
+
+        local icon = (spellInfo and (spellInfo.iconID or spellInfo.originalIconID))
+        if not icon and api and api.C_Spell and type(api.C_Spell.GetSpellTexture) == "function" then
+            local ok, tex = pcall(api.C_Spell.GetSpellTexture, spellID)
+            if ok and tex then
+                icon = tex
+            end
+        end
+        confirmIcon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+
+        local name = (spellInfo and spellInfo.name) or (tostring(spellID))
+        confirmNameText:SetText(name)
+
+        local idStr = string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", spellID)
+        confirmIDText:SetText(idStr)
+
+        confirmNonClassFrame:Show()
+        confirmNonClassFrame:Raise()
+    end
+
+    if type(UISpecialFrames) == "table" then
+        UISpecialFrames[#UISpecialFrames + 1] = "EAM_ConfirmNonClassSpellFrame"
+    end
+    Options.confirmNonClassFrame = confirmNonClassFrame
 
     -- ===================================================
     -- 4. Spell Conditions Frame (Popup Sub-Window)
@@ -3472,7 +4222,7 @@ local function createFrame()
     local condFrame = api.CreateFrame("Frame", "EAM_SpellConditionsFrame", UIParent, "BackdropTemplate")
     condFrame:SetSize(360, 660)
     condFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    condFrame:SetFrameStrata("DIALOG")
+    condFrame:SetFrameStrata("FULLSCREEN_DIALOG")
     condFrame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -3734,6 +4484,23 @@ local function createFrame()
         redLimitVal:SetText(mathFloor(val))
     end)
     condFrame.redLimitSlider = redLimitSlider
+
+    local redColorBtn = EAM.UI.createColorSwatchButton(condFrame, 20, 20, function(btn)
+        local currentColor = btn.currentColor or { 1.0, 0.15, 0.15, 1.0 }
+        EAM.UI.openColorPicker({
+            r = currentColor[1],
+            g = currentColor[2],
+            b = currentColor[3],
+            a = currentColor[4] or 1.0,
+            onColorChanged = function(r, g, b, a)
+                btn:SetColor(r, g, b, a)
+                btn.currentColor = { r, g, b, a }
+            end,
+        })
+    end)
+    redColorBtn:SetPoint("LEFT", redLimitSlider, "RIGHT", 8, -2)
+    setTooltip(redColorBtn, "點擊開啟調色盤，自訂此技能在剩餘秒數低於門檻時的警示字體顏色（預設紅色）", "警戒字體顏色")
+    condFrame.redColorBtn = redColorBtn
 
     local prioritySlider = api.CreateFrame("Slider", nil, condFrame, "OptionsSliderTemplate")
     prioritySlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -300)
@@ -4099,6 +4866,9 @@ local function createFrame()
                 assignDetail("stackThreshold", condFrame.stackSlider:GetValue())
                 assignDetail("stackGlowThreshold", condFrame.glowSlider:GetValue())
                 assignDetail("countdownRedLimit", condFrame.redLimitSlider:GetValue())
+                if condFrame.redColorBtn and condFrame.redColorBtn.currentColor then
+                    assignDetail("countdownRedColor", condFrame.redColorBtn.currentColor)
+                end
                 local priority = condFrame.prioritySlider:GetValue()
                 local priorityUpdated = false
                 if isAura then
@@ -4287,6 +5057,7 @@ function Options.openConditionsFrame(data)
         cf.stackSlider:Hide()
         cf.glowSlider:Hide()
         cf.redLimitSlider:Hide()
+        if cf.redColorBtn then cf.redColorBtn:Hide() end
         cf.prioritySlider:Hide()
         cf.fromPlayerCb:Hide()
         if cf.valTitle then cf.valTitle:Hide() end
@@ -4309,6 +5080,12 @@ function Options.openConditionsFrame(data)
         cf.stackSlider:Show()
         cf.glowSlider:Show()
         cf.redLimitSlider:Show()
+        if cf.redColorBtn then
+            local rColor = data.countdownRedColor or { 1.0, 0.15, 0.15, 1.0 }
+            cf.redColorBtn.currentColor = rColor
+            cf.redColorBtn:SetColor(rColor[1], rColor[2], rColor[3], rColor[4])
+            cf.redColorBtn:Show()
+        end
         cf.prioritySlider:Show()
         if isAura then
             cf.fromPlayerCb:Show()
@@ -4336,6 +5113,11 @@ function Options.openConditionsFrame(data)
         cf.stackSlider:SetValue(data.stackThreshold or 0)
         cf.glowSlider:SetValue(data.stackGlowThreshold or 0)
         cf.redLimitSlider:SetValue(data.countdownRedLimit or 0)
+        if cf.redColorBtn then
+            local rColor = data.countdownRedColor or { 1.0, 0.15, 0.15, 1.0 }
+            cf.redColorBtn.currentColor = rColor
+            cf.redColorBtn:SetColor(rColor[1], rColor[2], rColor[3], rColor[4])
+        end
         cf.prioritySlider:SetValue(data.priority or 10)
         cf.fromPlayerCb:SetChecked(data.fromPlayer == true)
 
@@ -4378,6 +5160,17 @@ function Options.openConditionsFrame(data)
     cf:Raise()
 end
 
+-- 顯示非本職業專屬法術新增防誤加確認對話框
+function Options.showNonClassSpellConfirmDialog(spellID)
+    if not Options.confirmNonClassFrame then
+        createFrame()
+    end
+    if Options.confirmNonClassFrame and Options.confirmNonClassFrame.showDialog then
+        return Options.confirmNonClassFrame.showDialog(spellID)
+    end
+    return false
+end
+
 -- Slash 命令外部唯一呼叫介面
 function Options.open()
     if api.InCombatLockdown and api.InCombatLockdown() then
@@ -4395,6 +5188,9 @@ function Options.open()
         frame:Hide()
     else
         frame:Show()
+        if EAM.UI.Renderer and EAM.UI.Renderer.unsuppressAlerts then
+            EAM.UI.Renderer.unsuppressAlerts("OPTIONS_OPEN")
+        end
         if Options.posFrame then Options.posFrame:Hide() end
         if Options.listFrame then Options.listFrame:Hide() end
         

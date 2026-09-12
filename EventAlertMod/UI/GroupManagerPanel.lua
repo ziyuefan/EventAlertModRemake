@@ -121,7 +121,7 @@ local function createPanel()
 
     local frame = CreateFrame("Frame", "EAM_GroupManagerFrame", UIParent, "BackdropTemplate")
     frame:SetSize(620, 520)
-    frame:SetFrameStrata("HIGH")
+    frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
     frame:EnableMouse(true)
     frame:SetMovable(true)
@@ -350,7 +350,7 @@ function Panel.refresh()
             row = CreateFrame("Button", nil, leftParent, "BackdropTemplate")
             row:SetSize(175, 30)
             if Theme and Theme.applyContainerBackground then
-                Theme.applyContainerBackground(row, true)
+                Theme.applyContainerBackground(row, "row")
             end
 
             local icon = row:CreateTexture(nil, "ARTWORK")
@@ -454,7 +454,7 @@ function Panel.refresh()
                 sRow = CreateFrame("Button", nil, rightParent, "BackdropTemplate")
                 sRow:SetSize(325, 26)
                 if Theme and Theme.applyContainerBackground then
-                    Theme.applyContainerBackground(sRow, true)
+                    Theme.applyContainerBackground(sRow, "row")
                 end
 
                 local sIcon = sRow:CreateTexture(nil, "ARTWORK")

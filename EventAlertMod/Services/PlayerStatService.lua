@@ -69,6 +69,18 @@ end
 
 PlayerStatService.isSafeNumber = isSafeNumber
 
+local function isPlayerGliding()
+    if C_PlayerInfo and C_PlayerInfo.GetGlidingInfo then
+        local ok, isGliding = pcall(C_PlayerInfo.GetGlidingInfo)
+        if ok and isGliding == true then
+            return true
+        end
+    end
+    return false
+end
+
+PlayerStatService.isPlayerGliding = isPlayerGliding
+
 -- 依職業獲取獨立的 playerStats 設定表 (Per-Class Profile Support)
 function PlayerStatService.getPlayerStatsConfig()
     local db = EAM.db
@@ -1159,15 +1171,23 @@ function PlayerStatService.update()
     for _, key in ipairs(ORDERED_KEYS) do
         local cfg = statsConfig[key]
         if cfg and cfg.enabled then
-            activeList[#activeList + 1] = {
-                key = key,
-                cfg = cfg,
-                def = STAT_DEFINITIONS[key],
-                val = PlayerStatService.getStatValue(key),
-                rawVal = PlayerStatService.getRawStatValue(key),
-            }
-            if not cfg.useCustomPos then
-                anyGrouped = true
+            local shouldShow = true
+            if key == "skyridingSpeed" and cfg.glideOnlyIcon then
+                if not isPlayerGliding() and not PlayerStatService.isMoving then
+                    shouldShow = false
+                end
+            end
+            if shouldShow then
+                activeList[#activeList + 1] = {
+                    key = key,
+                    cfg = cfg,
+                    def = STAT_DEFINITIONS[key],
+                    val = PlayerStatService.getStatValue(key),
+                    rawVal = PlayerStatService.getRawStatValue(key),
+                }
+                if not cfg.useCustomPos then
+                    anyGrouped = true
+                end
             end
         end
     end
@@ -1434,7 +1454,7 @@ function PlayerStatService.setActiveAnchors(enable, targetKey)
                 item:Show()
                 item:SetMovable(true)
                 item:EnableMouse(true)
-                item:SetFrameStrata("HIGH")
+                item:SetFrameStrata("FULLSCREEN_DIALOG")
                 item:SetClampedToScreen(true)
                 item:RegisterForDrag("LeftButton")
                 item:SetScript("OnDragStart", item.StartMoving)
@@ -1468,6 +1488,7 @@ function PlayerStatService.setActiveAnchors(enable, targetKey)
         for _, item in pairs(statItemFrames) do
             item:SetMovable(false)
             item:EnableMouse(false)
+            item:SetFrameStrata("MEDIUM")
             if item.dragHint then item.dragHint:Hide() end
         end
         PlayerStatService.update()

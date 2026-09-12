@@ -96,7 +96,7 @@ end
 local function normalizeSwipeAlpha(config)
     local alpha = config and config.cooldownSwipeAlpha
     if not EAM.Util.isSafeNumber(alpha) then
-        return 1
+        return 0.8
     end
     if alpha < 0 then
         return 0
@@ -104,6 +104,23 @@ local function normalizeSwipeAlpha(config)
         return 1
     end
     return alpha
+end
+
+local function normalizeSwipeColor(config)
+    local color = config and config.cooldownSwipeColor
+    if type(color) ~= "table" then
+        return 0, 0, 0
+    end
+    local r = tonumber(color.r)
+    local g = tonumber(color.g)
+    local b = tonumber(color.b)
+    if not EAM.Util.isSafeNumber(r) or not EAM.Util.isSafeNumber(g) or not EAM.Util.isSafeNumber(b) then
+        return 0, 0, 0
+    end
+    r = math.min(1, math.max(0, r))
+    g = math.min(1, math.max(0, g))
+    b = math.min(1, math.max(0, b))
+    return r, g, b
 end
 
 function IconPool.applyCooldownStyle(icon, config)
@@ -125,7 +142,8 @@ function IconPool.applyCooldownStyle(icon, config)
     end
     local setSwipeColor = getMethod(cooldown, "SetSwipeColor")
     if setSwipeColor then
-        pcall(setSwipeColor, cooldown, 1, 1, 1, normalizeSwipeAlpha(config))
+        local r, g, b = normalizeSwipeColor(config)
+        pcall(setSwipeColor, cooldown, r, g, b, normalizeSwipeAlpha(config))
         return true
     end
     return false
@@ -197,7 +215,8 @@ local function createChargeVisual(parent, kind)
     if kind == "RING" then
         local textureAccepted
         textureAccepted, radialTexture = setStatusBarTextureWithFallback(bar)
-        local renderMode = Enum and Enum.StatusBarRenderMode and Enum.StatusBarRenderMode.Radial
+        local renderMode = (api.StatusBarRenderMode and api.StatusBarRenderMode.Radial)
+            or (Enum and Enum.StatusBarRenderMode and Enum.StatusBarRenderMode.Radial)
         local setRenderMode = getMethod(bar, "SetRenderMode")
         local getRenderMode = getMethod(bar, "GetRenderMode")
         if textureAccepted and setRenderMode and getRenderMode and renderMode ~= nil then
@@ -448,6 +467,103 @@ function IconPool.applyChargeProgress(icon, alertState)
         return false, sinkReason
     end
     return true, layoutReason == "radialFallback" and layoutReason or sinkReason
+end
+
+function IconPool.applyAuraApplicationProgress(icon, alertState)
+    if not icon or not alertState then
+        return false, "invalidArguments"
+    end
+    local config = EAM.db and EAM.db.config or nil
+    local overdriveOverlay = readField(icon, "overdriveOverlay")
+    local anim = readField(icon, "overdriveAnimation")
+    if not config or config.auraStackBar == false then
+        hideChargeVisuals(icon)
+        if overdriveOverlay and overdriveOverlay.Hide then overdriveOverlay:Hide() end
+        return true, "disabled"
+    end
+
+    local stacks = alertState.stacks or alertState.displayValue
+    if not Util.isSafePositiveNumber(stacks) or stacks <= 0 then
+        hideChargeVisuals(icon)
+        if overdriveOverlay and overdriveOverlay.Hide then overdriveOverlay:Hide() end
+        return true, "noStacks"
+    end
+
+    local minApps = (config and config.minApplications) or 1
+    if stacks < minApps then
+        hideChargeVisuals(icon)
+        if overdriveOverlay and overdriveOverlay.Hide then overdriveOverlay:Hide() end
+        return true, "belowMinApplications"
+    end
+
+    local maxApps = alertState.maxStacks
+    if not Util.isSafePositiveNumber(maxApps) or maxApps < stacks then
+        maxApps = math.max(5, stacks)
+    end
+
+    local proxyState = {
+        maxCharges = maxApps,
+        currentCharges = stacks,
+        spellID = alertState.spellID,
+    }
+    local statusBar, mode, layoutReason = configureChargeVisual(icon, proxyState)
+    if not statusBar then
+        return false, layoutReason
+    end
+
+    local setMinMaxValues = getMethod(statusBar, "SetMinMaxValues")
+    local setValue = getMethod(statusBar, "SetValue")
+    if setMinMaxValues then
+        pcall(setMinMaxValues, statusBar, 0, maxApps)
+    end
+    if setValue then
+        pcall(setValue, statusBar, stacks)
+    end
+
+    local isMaxStacks = stacks >= maxApps
+    local setStatusBarColor = getMethod(statusBar, "SetStatusBarColor")
+    if setStatusBarColor then
+        if isMaxStacks then
+            pcall(setStatusBarColor, statusBar, 1.0, 0.85, 0.1, 0.95)
+        else
+            pcall(setStatusBarColor, statusBar, 0.2, 0.75, 1.0, 0.95)
+        end
+    end
+
+    -- FrameLevel 物理圖層狀態機：滿層時提權覆蓋
+    local baseLevel = (icon.GetFrameLevel and icon:GetFrameLevel()) or 1
+    if icon.overlay and icon.overlay.SetFrameLevel then
+        if isMaxStacks then
+            pcall(icon.overlay.SetFrameLevel, icon.overlay, baseLevel + 10)
+        else
+            pcall(icon.overlay.SetFrameLevel, icon.overlay, baseLevel + 2)
+        end
+    end
+
+    -- BlendMode = "ADD" 爆發過曝加法炫光
+    if config.overdriveGlow ~= false and overdriveOverlay then
+        if isMaxStacks then
+            if overdriveOverlay.Show then overdriveOverlay:Show() end
+            local isPlaying = getMethod(anim, "IsPlaying")
+            local play = getMethod(anim, "Play")
+            if isPlaying and play then
+                local ok, playing = pcall(isPlaying, anim)
+                if ok and not playing then
+                    pcall(play, anim)
+                end
+            elseif play then
+                pcall(play, anim)
+            end
+        else
+            if overdriveOverlay.Hide then overdriveOverlay:Hide() end
+            local stop = getMethod(anim, "Stop")
+            if stop then
+                pcall(stop, anim)
+            end
+        end
+    end
+
+    return true, "shown"
 end
 
 local function tryLibraryGlow(icon, enabled)
@@ -743,6 +859,38 @@ local function createIcon()
     end
     button.glowAnimation = glowAnimation
 
+    -- ⚡ 滿層/爆發加法過曝炫光 (Overdrive Additive Glow)
+    local overdriveOverlay = button:CreateTexture(nil, "OVERLAY")
+    overdriveOverlay:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    overdriveOverlay:SetBlendMode("ADD")
+    overdriveOverlay:SetAllPoints(button)
+    overdriveOverlay:SetVertexColor(1, 0.95, 0.65, 0.95)
+    overdriveOverlay:Hide()
+    button.overdriveOverlay = overdriveOverlay or false
+    local overdriveAnimation
+    local createOverdriveAnim = getMethod(overdriveOverlay, "CreateAnimationGroup")
+    if createOverdriveAnim then
+        local ok, group = pcall(createOverdriveAnim, overdriveOverlay)
+        local createAnimation = getMethod(group, "CreateAnimation")
+        if ok and createAnimation then
+            local animationOK, pulse = pcall(createAnimation, group, "Alpha")
+            if animationOK and pulse then
+                local setFromAlpha = getMethod(pulse, "SetFromAlpha")
+                if setFromAlpha then pcall(setFromAlpha, pulse, 0.2) end
+                local setToAlpha = getMethod(pulse, "SetToAlpha")
+                if setToAlpha then pcall(setToAlpha, pulse, 1) end
+                local setDuration = getMethod(pulse, "SetDuration")
+                if setDuration then pcall(setDuration, pulse, 0.45) end
+                local setOrder = getMethod(pulse, "SetOrder")
+                if setOrder then pcall(setOrder, pulse, 1) end
+                local setLooping = getMethod(group, "SetLooping")
+                if setLooping then pcall(setLooping, group, "BOUNCE") end
+                overdriveAnimation = group
+            end
+        end
+    end
+    button.overdriveAnimation = overdriveAnimation or false
+
     local RadialGauge = EAM.UI.RadialGauge
     if RadialGauge and RadialGauge.create then
         button.radialGauge = RadialGauge.create(overlay, 40, {
@@ -824,6 +972,17 @@ function IconPool.release(icon)
         end
     end
     IconPool.setGlow(icon, false)
+    local overdriveOverlay = readField(icon, "overdriveOverlay")
+    if overdriveOverlay then
+        if overdriveOverlay.Hide then
+            overdriveOverlay:Hide()
+        end
+        local anim = readField(icon, "overdriveAnimation")
+        local stop = getMethod(anim, "Stop")
+        if stop then
+            pcall(stop, anim)
+        end
+    end
 
     local count = IconPool.inactiveCount + 1
     IconPool.inactive[count] = icon

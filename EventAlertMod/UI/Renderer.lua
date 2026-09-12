@@ -53,6 +53,8 @@ local Renderer = {
     textLayoutPending = false,
     prewarmPending = false,
     anchorTogglePending = false,
+    isAlertsSuppressed = false,
+    escCloseFrame = nil,
 }
 
 local function readField(object, name)
@@ -148,6 +150,25 @@ local function onLegacyTimerUpdate()
         if timeLeft > 0 then
             hasTimer = true
             if icon.timerText then
+                local colorToApply = { 1, 1, 1, 1 }
+                local tcc = EAM.db and EAM.db.config and EAM.db.config.timerColorCurve
+                if tcc and tcc.normalColor then
+                    colorToApply = tcc.normalColor
+                end
+                if icon.countdownRedLimit and icon.countdownRedLimit > 0 and timeLeft <= icon.countdownRedLimit then
+                    colorToApply = icon.countdownRedColor or { 1.0, 0.15, 0.15, 1.0 }
+                elseif tcc and tcc.enabled and type(tcc.stages) == "table" then
+                    for i = 1, #tcc.stages do
+                        local stage = tcc.stages[i]
+                        if stage and stage.threshold and timeLeft <= stage.threshold then
+                            colorToApply = stage.color or colorToApply
+                            break
+                        end
+                    end
+                end
+                if icon.timerText.SetTextColor then
+                    icon.timerText:SetTextColor(colorToApply[1] or 1, colorToApply[2] or 1, colorToApply[3] or 1, colorToApply[4] or 1)
+                end
                 if icon.timerText.SetFormattedText then
                     if timeLeft < 3.05 then
                         icon.timerText:SetFormattedText("%.1f", timeLeft)
@@ -566,6 +587,7 @@ local function layout(frameName)
 
     fState.layoutDirty = false
     fState.layoutBlocked = false
+    Renderer.checkEscFrameState()
     return true, "updated"
 end
 
@@ -675,6 +697,165 @@ function Renderer.prewarmAlertFrames()
     end
 end
 
+function Renderer.suppressAlerts(reason)
+    Renderer.isAlertsSuppressed = true
+    for fName, fState in pairs(Renderer.frames) do
+        if fState and fState.icons then
+            for _, icon in pairs(fState.icons) do
+                if icon and icon.GetAlpha and icon.SetAlpha then
+                    local currentAlpha = icon:GetAlpha()
+                    if currentAlpha > 0 then
+                        icon._eamPreSuppressAlpha = currentAlpha
+                        pcall(icon.SetAlpha, icon, 0)
+                    end
+                end
+            end
+        end
+    end
+    local nativeService = EAM.Services and EAM.Services.AuraContainerService
+    if nativeService and nativeService.current then
+        if nativeService.current.player and nativeService.current.player.SetAlpha then
+            pcall(nativeService.current.player.SetAlpha, nativeService.current.player, 0)
+        end
+        if nativeService.current.target and nativeService.current.target.SetAlpha then
+            pcall(nativeService.current.target.SetAlpha, nativeService.current.target, 0)
+        end
+    end
+    if Renderer.escCloseFrame and Renderer.escCloseFrame.Hide then
+        Renderer.escCloseFrame.suppressOnHide = true
+        pcall(Renderer.escCloseFrame.Hide, Renderer.escCloseFrame)
+        Renderer.escCloseFrame.suppressOnHide = nil
+    end
+end
+
+function Renderer.unsuppressAlerts(reason)
+    if not Renderer.isAlertsSuppressed then
+        return
+    end
+    Renderer.isAlertsSuppressed = false
+    for fName, fState in pairs(Renderer.frames) do
+        if fState and fState.icons then
+            for _, icon in pairs(fState.icons) do
+                if icon and icon.SetAlpha and icon._eamPreSuppressAlpha then
+                    pcall(icon.SetAlpha, icon, icon._eamPreSuppressAlpha)
+                    icon._eamPreSuppressAlpha = nil
+                end
+            end
+        end
+    end
+    local nativeService = EAM.Services and EAM.Services.AuraContainerService
+    if nativeService and nativeService.current then
+        if nativeService.current.player and nativeService.current.player.SetAlpha then
+            pcall(nativeService.current.player.SetAlpha, nativeService.current.player, 1)
+        end
+        if nativeService.current.target and nativeService.current.target.SetAlpha then
+            pcall(nativeService.current.target.SetAlpha, nativeService.current.target, 1)
+        end
+    end
+    Renderer.checkEscFrameState()
+end
+
+local function ensureEscCloseFrame()
+    if Renderer.escCloseFrame then
+        return Renderer.escCloseFrame
+    end
+    if inCombat() then
+        return nil
+    end
+    if api.CreateFrame then
+        local escFrame = api.CreateFrame("Frame", "EAM_EscAlertCloseFrame", UIParent)
+        if escFrame then
+            if escFrame.SetSize then escFrame:SetSize(1, 1) end
+            if escFrame.SetPoint then escFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0) end
+            if escFrame.Hide then escFrame:Hide() end
+            if escFrame.SetScript then
+                escFrame:SetScript("OnHide", function(self)
+                    if self.suppressOnHide then return end
+                    Renderer.suppressAlerts("ESC_KEY")
+                end)
+            end
+            _G["EAM_EscAlertCloseFrame"] = escFrame
+            if type(UISpecialFrames) == "table" then
+                table.insert(UISpecialFrames, "EAM_EscAlertCloseFrame")
+            end
+            Renderer.escCloseFrame = escFrame
+        end
+    end
+    return Renderer.escCloseFrame
+end
+
+function Renderer.checkEscFrameState()
+    local config = EAM.db and EAM.db.config
+    if not config or config.allowEscCancel ~= true then
+        if Renderer.escCloseFrame and Renderer.escCloseFrame.IsShown and Renderer.escCloseFrame:IsShown() then
+            Renderer.escCloseFrame.suppressOnHide = true
+            pcall(Renderer.escCloseFrame.Hide, Renderer.escCloseFrame)
+            Renderer.escCloseFrame.suppressOnHide = nil
+        end
+        return
+    end
+
+    if Renderer.isAlertsSuppressed then
+        if Renderer.escCloseFrame and Renderer.escCloseFrame.IsShown and Renderer.escCloseFrame:IsShown() then
+            Renderer.escCloseFrame.suppressOnHide = true
+            pcall(Renderer.escCloseFrame.Hide, Renderer.escCloseFrame)
+            Renderer.escCloseFrame.suppressOnHide = nil
+        end
+        return
+    end
+
+    local hasVisibleAlerts = false
+    for fName, fState in pairs(Renderer.frames) do
+        if fState and fState.icons then
+            for _, icon in pairs(fState.icons) do
+                if icon and icon.GetAlpha and icon:GetAlpha() > 0 then
+                    hasVisibleAlerts = true
+                    break
+                end
+            end
+        end
+        if hasVisibleAlerts then break end
+    end
+
+    if not hasVisibleAlerts then
+        local nativeService = EAM.Services and EAM.Services.AuraContainerService
+        if nativeService and nativeService.current and (nativeService.current.player or nativeService.current.target) then
+            hasVisibleAlerts = true
+        end
+    end
+
+    local escFrame = ensureEscCloseFrame()
+    if escFrame then
+        if hasVisibleAlerts then
+            if not escFrame:IsShown() then
+                pcall(escFrame.Show, escFrame)
+            end
+        else
+            if escFrame:IsShown() then
+                escFrame.suppressOnHide = true
+                pcall(escFrame.Hide, escFrame)
+                escFrame.suppressOnHide = nil
+            end
+        end
+    end
+end
+
+function Renderer.applyTimerColorChanged()
+    local tcc = EAM.db and EAM.db.config and EAM.db.config.timerColorCurve
+    local normalColor = (tcc and tcc.normalColor) or { 1, 1, 1, 1 }
+    for _, fState in pairs(Renderer.frames) do
+        if fState and fState.icons then
+            for _, icon in pairs(fState.icons) do
+                if icon and icon.timerText and not icon.timerBinding then
+                    if icon.timerText.SetTextColor then
+                        icon.timerText:SetTextColor(normalColor[1] or 1, normalColor[2] or 1, normalColor[3] or 1, normalColor[4] or 1)
+                    end
+                end
+            end
+        end
+    end
+end
+
 function Renderer.initialize()
     -- 在初始化時嘗試為所有預設框架預熱，若在戰鬥中則會自動在 onCombatEnd 執行
     for fName in pairs(EAM.Constants.ALERT_FRAME_TYPES) do
@@ -693,11 +874,22 @@ function Renderer.initialize()
 
     Renderer.prewarmAlertFrames()
 
+    -- 建立 ESC 關閉提示監聽 Frame 並註冊至 UISpecialFrames
+    if not inCombat() then
+        ensureEscCloseFrame()
+    end
+
     local router = EAM.Modules.EventRouter
     if router then
         router.register("PLAYER_REGEN_ENABLED", Renderer.onCombatEnd)
+        router.register("PLAYER_REGEN_DISABLED", function()
+            Renderer.unsuppressAlerts("COMBAT_START")
+        end)
         router.register("EAM_FONT_FAMILY_CHANGED", function()
             Renderer.applyTextLayout()
+        end)
+        router.register("EAM_TIMER_COLOR_CHANGED", function()
+            Renderer.applyTimerColorChanged()
         end)
     end
 end
@@ -713,6 +905,10 @@ function Renderer.render(alertState, frameName)
 
     if not alertState or not alertState.id then
         return
+    end
+
+    if alertState.shown == true and Renderer.isAlertsSuppressed then
+        Renderer.unsuppressAlerts("NEW_ALERT")
     end
 
     -- 戰鬥中防 Taint 鎖定：若在戰鬥中且該框架的 parent 尚未建立，延後渲染
@@ -806,6 +1002,7 @@ function Renderer.render(alertState, frameName)
                     if icon.stackText.ClearText then icon.stackText:ClearText() else icon.stackText:SetText("") end
                 end
                 IconPool.setGlow(icon, false)
+                Renderer.checkEscFrameState()
                 return
             end
 
@@ -840,6 +1037,7 @@ function Renderer.render(alertState, frameName)
             end
             IconPool.release(icon)
             Renderer.requestLayout(frameName)
+            Renderer.checkEscFrameState()
         end
         return
     end
@@ -1007,15 +1205,39 @@ function Renderer.render(alertState, frameName)
     local timer = alertState.timer
     local useNativeBinding = timer and timer.durationObject and DurationAdapter ~= nil
 
+    local raw = alertState.rawAlert
+    local spellRedLimit = alertState.countdownRedLimit or (raw and raw.countdownRedLimit)
+    local spellRedColor = alertState.countdownRedColor or (raw and raw.countdownRedColor)
+    local hasSpellRedLimit = Util.isSafeNumber(spellRedLimit) and spellRedLimit > 0
+
     if useNativeBinding then
         if icon.cooldown and type(icon.cooldown.Show) == "function" then
             icon.cooldown:Show()
         end
-        if rendered.durationObject ~= timer.durationObject then
+        local curveToApply = nil
+        if hasSpellRedLimit and DurationAdapter.buildSpellColorCurve then
+            curveToApply = DurationAdapter.buildSpellColorCurve(spellRedLimit, spellRedColor)
+        end
+
+        if rendered.durationObject ~= timer.durationObject
+            or rendered.countdownRedLimit ~= spellRedLimit
+            or rendered.countdownRedColor ~= spellRedColor
+        then
             releaseTimerBinding(icon)
-            icon.timerBinding = DurationAdapter.createTextBinding(timer.durationObject, icon.timerText)
+            icon.timerBinding = DurationAdapter.createTextBinding(timer.durationObject, icon.timerText, curveToApply)
             
-            if icon.cooldown.SetCooldownFromDurationObject then
+            local curveMode = EAM.db and EAM.db.config and EAM.db.config.cooldownProgressCurve
+            local progressCurve = DurationAdapter.buildNonLinearProgressCurve and DurationAdapter.buildNonLinearProgressCurve(curveMode)
+            if icon.cooldown.SetProgressCurve and progressCurve then
+                pcall(icon.cooldown.SetProgressCurve, icon.cooldown, progressCurve)
+            end
+
+            if icon.cooldown.SetCooldownDuration and progressCurve then
+                local ok = pcall(icon.cooldown.SetCooldownDuration, icon.cooldown, timer.durationObject, progressCurve)
+                if not ok and icon.cooldown.SetCooldownFromDurationObject then
+                    icon.cooldown:SetCooldownFromDurationObject(timer.durationObject)
+                end
+            elseif icon.cooldown.SetCooldownFromDurationObject then
                 icon.cooldown:SetCooldownFromDurationObject(timer.durationObject)
             elseif timer.startTime and timer.duration then
                 icon.cooldown:SetCooldown(timer.startTime, timer.duration)
@@ -1025,12 +1247,16 @@ function Renderer.render(alertState, frameName)
 
             rendered.durationObject = timer.durationObject
             rendered.durationBindingAvailable = icon.timerBinding ~= nil
+            rendered.countdownRedLimit = spellRedLimit
+            rendered.countdownRedColor = spellRedColor
             rendered.cooldownStart = nil
             rendered.cooldownDuration = nil
         end
         if icon.timerBinding then
             Renderer.unregisterLegacyTimer(icon)
         elseif Util.isSafeNumber(timer.expirationTime) then
+            icon.countdownRedLimit = hasSpellRedLimit and spellRedLimit or nil
+            icon.countdownRedColor = hasSpellRedLimit and spellRedColor or nil
             Renderer.registerLegacyTimer(icon, timer.expirationTime)
         else
             Renderer.unregisterLegacyTimer(icon)
@@ -1049,6 +1275,8 @@ function Renderer.render(alertState, frameName)
         
         -- 走降級定時 OnUpdate 字串倒數通道
         if Util.isSafeNumber(timer.expirationTime) then
+            icon.countdownRedLimit = hasSpellRedLimit and spellRedLimit or nil
+            icon.countdownRedColor = hasSpellRedLimit and spellRedColor or nil
             Renderer.registerLegacyTimer(icon, timer.expirationTime)
         else
             Renderer.unregisterLegacyTimer(icon)
@@ -1092,8 +1320,14 @@ function Renderer.render(alertState, frameName)
         end
     end
 
-    if IconPool and type(IconPool.applyChargeProgress) == "function" then
-        IconPool.applyChargeProgress(icon, alertState)
+    if alertState.isChargeBased == true then
+        if IconPool and type(IconPool.applyChargeProgress) == "function" then
+            IconPool.applyChargeProgress(icon, alertState)
+        end
+    else
+        if IconPool and type(IconPool.applyAuraApplicationProgress) == "function" then
+            IconPool.applyAuraApplicationProgress(icon, alertState)
+        end
     end
 
     -- 🌡️ Pandemic (傳染累加)、重要法術與 Action Bar Glow 亮框顯示控制
@@ -1165,6 +1399,7 @@ function Renderer.render(alertState, frameName)
             Renderer.requestLayout(frameName)
         end
     end
+    Renderer.checkEscFrameState()
 end
 
 function Renderer.clearFrame(frameName)
@@ -1196,6 +1431,7 @@ function Renderer.onCombatEnd()
     for fName in pairs(EAM.Constants.ALERT_FRAME_TYPES) do
         ensureParent(fName)
     end
+    ensureEscCloseFrame()
 
     if Renderer.prewarmPending and IconPool.prewarm then
         local prewarmed = IconPool.prewarm()
@@ -1303,7 +1539,7 @@ local function getOrCreatePreviewIcon(parent, index)
     end
 
     local icon = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    icon:SetFrameStrata("HIGH")
+    icon:SetFrameStrata("FULLSCREEN_DIALOG")
 
     -- 經典奶牛頭貼圖
     local tex = icon:CreateTexture(nil, "BACKGROUND")
@@ -1366,6 +1602,10 @@ function Renderer.refreshPreviewLayout()
     local vertSpacing = cfg.verticalSpacing or spacing
     local alpha = cfg.iconAlpha or 1.0
     local swipeAlpha = cfg.cooldownSwipeAlpha or 0.8
+    local swipeColor = cfg.cooldownSwipeColor or {}
+    local swipeR = tonumber(swipeColor.r) or 0
+    local swipeG = tonumber(swipeColor.g) or 0
+    local swipeB = tonumber(swipeColor.b) or 0
     local selfDebuffRed = cfg.selfDebuffRed or 0.5
     local targetDebuffGreen = cfg.targetDebuffGreen or 0.5
 
@@ -1419,7 +1659,7 @@ function Renderer.refreshPreviewLayout()
 
                     -- 扇形倒數轉圈與透明度即時預覽
                     if pIcon.cooldown then
-                        pIcon.cooldown:SetSwipeColor(0, 0, 0, swipeAlpha)
+                        pIcon.cooldown:SetSwipeColor(swipeR, swipeG, swipeB, swipeAlpha)
                         if slot.sampleCD then
                             pIcon.cooldown:SetCooldown(now - 2, slot.sampleCD)
                             pIcon.cooldown:Show()
@@ -1522,11 +1762,17 @@ function Renderer.setActiveAnchors(targetFrames)
                     local fLabel = (nameLabels and nameLabels[self.frameName]) or self.frameName
                     print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
                 end)
+                parent:SetScript("OnMouseUp", function(self, button)
+                    if button == "RightButton" and Renderer.isMoving then
+                        Renderer.setActiveAnchors(nil)
+                        print("|cff00ff96EAM|r " .. (EAM.L.EAM_MOVE_MODE_OFF or "已關閉「多框架移動模式」並成功套用新排版。"))
+                    end
+                end)
 
                 local hint = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
                 hint:SetPoint("TOP", parent, "BOTTOM", 0, -26)
                 hint:SetTextColor(0.4, 0.9, 1.0, 1.0)
-                hint:SetText((nameLabels[fName] or fName) .. " (按住左鍵拖曳)")
+                hint:SetText((nameLabels[fName] or fName) .. " (左鍵拖曳 / 右鍵完成)")
                 parent.dragHint = hint
             end
 
@@ -1534,11 +1780,13 @@ function Renderer.setActiveAnchors(targetFrames)
                 anyActive = true
                 parent:SetMovable(true)
                 parent:EnableMouse(true)
-                parent:SetFrameStrata("HIGH")
+                parent:SetFrameStrata("FULLSCREEN_DIALOG")
                 parent:SetClampedToScreen(true)
+                if parent.dragHint then parent.dragHint:Show() end
             else
                 parent:SetMovable(false)
                 parent:EnableMouse(false)
+                parent:SetFrameStrata("MEDIUM")
                 if parent.dragHint then parent.dragHint:Hide() end
                 if parent.previewIcons then
                     for _, pIcon in ipairs(parent.previewIcons) do

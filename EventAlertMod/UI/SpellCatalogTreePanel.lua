@@ -185,7 +185,7 @@ local function createPanel()
 
     local frame = CreateFrame("Frame", "EAM_SpellCatalogTreeFrame", UIParent, "BackdropTemplate")
     frame:SetSize(650, 560)
-    frame:SetFrameStrata("HIGH")
+    frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
     frame:EnableMouse(true)
     frame:SetMovable(true)
@@ -243,7 +243,7 @@ local function createPanel()
     modMenu:SetClampedToScreen(true)
     modMenu:Hide()
     if Theme and Theme.applyContainerBackground then
-        Theme.applyContainerBackground(modMenu, true)
+        Theme.applyContainerBackground(modMenu, "menu")
     else
         modMenu:SetBackdrop({
             bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -362,7 +362,7 @@ local function getOrCreateTreeRow(rowIndex, treeParent)
         row = CreateFrame("Button", nil, treeParent, "BackdropTemplate")
         row:SetSize(580, 26)
         if Theme and Theme.applyContainerBackground then
-            Theme.applyContainerBackground(row, true)
+            Theme.applyContainerBackground(row, "row")
         end
 
         local icon = row:CreateTexture(nil, "ARTWORK")

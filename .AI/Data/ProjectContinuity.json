@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-09-04.19",
-  "updatedAt": "2026-09-04",
+  "snapshotVersion": "2026-09-12.23",
+  "updatedAt": "2026-09-12",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1 Alpha 8.4 已成功發布至 GitHub Pre-release (tag: alpha-8.4) 與 CurseForge (ID: 8805983)；根目錄與插件內 README/changelog 全量同步；修復單一屬性圖示拖曳 string.format 報錯並收錄 Ketho 權威庫；全面停用本機與 Release 之 SRC 重複打包流程；全專案 115 個資料夾 HTML 說明清單與 AI 治理結構化中繼資料建置完畢；已建立多進度續接存檔點，隨時可無縫接續後續開發。",
+    "objective": "Retail 12.1 Alpha 8.5 冷卻倒數扇形色彩透明度自訂、自身光環非本職業專屬法術防誤加確認對話框實裝；全套品質門禁 100% 通過（Lua 78/78, Flow 86/86, Contracts 499/499 PASS）。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 85,
-      "passed": 85,
+      "total": 86,
+      "passed": 86,
       "failed": 0,
       "skipped": 0,
       "pending": 0

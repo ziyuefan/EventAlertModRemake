@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.4-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.5-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -150,6 +150,39 @@ In-game, you never need to manually look up Spell IDs:
 
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+
+### 🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12
+- **Independent Live Preview Panel (PreviewPanel)**:
+  - Brand new free-floating, screen-clamped independent Live Preview window with 3 dedicated tabs: Alert Icons, Class Resources, and Player Stats.
+  - Interactive countdown timer curve testing, Proc golden glow, Pandemic border, resource charging progress, and live stat previews.
+  - Main options, general layout, resource panels, and stat panels feature instant "[Live Preview]" shortcuts and bidirectional hot-updates.
+- **Player Stats 4-Tab Modular Layout & Overlap Protection**:
+  - Expanded stat panel dimensions to 720x540, modularized into 4 independent tabs: Display & Icon, Fonts & Format, Thresholds, and Position & Anchor.
+  - Generous 50~60px vertical slider spacing, eliminating Blizzard OptionsSliderTemplate Low/High tick overlap with lower elements.
+- **Skyriding Speed Gliding-Only Display Option**:
+  - Added a dedicated "Glide Only" option for Skyriding Speed (`skyridingSpeed`).
+  - Only displays the icon and speed percentage while actively skyriding/gliding (`isGliding == true`), automatically hiding when grounded to keep the screen clean.
+  - Drag & position mode protection: forces display when adjusting frames so position calibration is always available.
+- **Cooldown Swipe Color & Alpha Customization**:
+  - Full customization for cooldown swipe darkness and color, defaulting to classic black (`0, 0, 0, 0.8`), resolving harsh bright white swipe glare over spell icons.
+  - Interactive color picker button in General Layout with immediate live preview and ProfileCodec synchronization.
+- **Non-Class Spell Add Interactive Confirmation Dialog**:
+  - Adding a non-current class spell ID to Self Aura triggers an interactive themed confirmation popup displaying spell icon, name, ID, and prompt.
+  - Clicking "Confirm" forcibly registers the spell to the current module list (Self Aura) without silent reassignment to Cross-Class; "Cancel" or ESC safely dismisses.
+- **Vertical Resource StatusBar Growth Fix**:
+  - Fixed vertical orientation growth by transposing dimensions, rotating textures with `SetRotatesTexture(true)`, bottom-anchoring icons, and transposing segmented dividers.
+- **11 Classic & Modern Themes Visual Overhaul**:
+  - Meticulously restored 11 themes: EAM Classic (9.0.1 slate/gold/crimson), FF7 Battle Window (royal sapphire blue gradient, pure white border), Windows XP/7/10/3.1, Borland C++, DOS CRT, ETen, Red Alert, and macOS Aqua.
+  - Resolved vertex shader gradient conflicts for modern WoW vertical gradients and added comprehensive subwindow container skinning.
+- **Zero-Alpha Suppression on ESC Key**:
+  - ESC key alert hiding uses non-destructive `SetAlpha(0)` without destroying frame objects or disrupting 2D matrix layouts.
+  - Instant unsuppression on new alert triggers, combat start, or opening options, with strict in-combat taint guards.
+- **Native Blizzard CurveObject / ColorCurveObject C-Level Architecture**:
+  - Full adoption of Patch 12.0.0 / Midnight C-Level curve infrastructure, preventing combat lockouts and script taint.
+  - Smooth three-color resource transitions, binary step-gate curves bypassing secret numbers, adaptive SecondsFormatter curves, non-linear cooldown sprint curves, and dynamic low-health pulse warnings.
+- **Full 5-Locale Mirroring & Auto-Timestamping**:
+  - 100% synchronized dictionaries across zhTW, zhCN, enUS, koKR, and ruRU.
+  - SavedVariables automatic dual ISO 8601 and Unix epoch timestamping on save and migration.
 
 ### 🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04
 - **2D Grid Layout Engine & Columns per Row Configuration**:

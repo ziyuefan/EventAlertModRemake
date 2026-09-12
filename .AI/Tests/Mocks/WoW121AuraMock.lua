@@ -952,6 +952,8 @@ function Mock.install(interfaceVersion)
     Mock.unitPowerToken = "MANA"
     Mock.unitPowerValues = {}
     Mock.unitPowerMaxValues = {}
+    Mock.unitHealthValues = {}
+    Mock.unitHealthMaxValues = {}
     Mock.secretPowerTypes = {}
     Mock.secretPowerMaxTypes = {}
     Mock.runeCounts = { 1, 1, 1, 1, 1, 1 }
@@ -996,16 +998,38 @@ function Mock.install(interfaceVersion)
         end
         return Mock.unitPowerMaxValues[powerType] or 0
     end
-    UnitPowerPercent = function(_, powerType)
+    UnitPowerPercent = function(_, powerType, unmodified, curve)
         Mock.trace.unitPowerPercentReads = Mock.trace.unitPowerPercentReads + 1
         if Mock.secretPowerTypes[powerType] then
+            if curve and curve.Evaluate then
+                return curve:Evaluate(0.5)
+            end
             return Mock.createSecretScalar()
         end
         local maximum = Mock.unitPowerMaxValues[powerType] or 0
-        if maximum <= 0 then
-            return 0
+        local pct = 0
+        if maximum > 0 then
+            pct = (Mock.unitPowerValues[powerType] or 0) / maximum
         end
-        return (Mock.unitPowerValues[powerType] or 0) / maximum
+        if curve and curve.Evaluate then
+            return curve:Evaluate(pct)
+        end
+        return pct
+    end
+    UnitHealthPercent = function(unitToken, predicted, curve)
+        local pct = 1.0
+        if Mock.unitHealthValues and Mock.unitHealthValues[unitToken] and Mock.unitHealthMaxValues and Mock.unitHealthMaxValues[unitToken] then
+            local maxH = Mock.unitHealthMaxValues[unitToken]
+            if maxH > 0 then
+                pct = Mock.unitHealthValues[unitToken] / maxH
+            else
+                pct = 0
+            end
+        end
+        if curve and curve.Evaluate then
+            return curve:Evaluate(pct)
+        end
+        return pct
     end
     Mock.totems = {}
     GetTotemInfo = function(slot)
@@ -1082,6 +1106,74 @@ function Mock.install(interfaceVersion)
     Enum.SecondsFormatterIntervalWhitespace = {
         Strip = 1,
     }
+    Enum.LuaCurveType = {
+        Linear = 0,
+        Step = 1,
+        Cosine = 2,
+        Cubic = 3,
+    }
+    Enum.DurationTextBindingProperty = {
+        RemainingDuration = 0,
+        RemainingPercent = 1,
+        ElapsedDuration = 2,
+        ElapsedPercent = 3,
+        TotalDuration = 4,
+    }
+    Enum.StatusBarFillStyle = {
+        Standard = 0,
+        Center = 1,
+        Reverse = 2,
+    }
+    Enum.UnitAuraSortRule = {
+        Unsorted = 0,
+        Default = 1,
+        BigDefensive = 2,
+        Expiration = 3,
+        ExpirationOnly = 4,
+        Name = 5,
+    }
+    Enum.UnitAuraSortDirection = {
+        Normal = 0,
+        Reverse = 1,
+    }
+    Enum.CustomAuraButtonBorderStyle = {
+        Default = 0,
+        Square = 1,
+    }
+    Enum.SpellBookSpellBank = {
+        Player = 0,
+        Pet = 1,
+    }
+    Enum.SpellBookItemType = {
+        None = 0,
+        Spell = 1,
+        FutureSpell = 2,
+        PetAction = 3,
+        Flyout = 4,
+    }
+    Enum.ItemQuality = {
+        Poor = 0,
+        Common = 1,
+        Uncommon = 2,
+        Rare = 3,
+        Epic = 4,
+        Legendary = 5,
+        Artifact = 6,
+        Heirloom = 7,
+        WowToken = 8,
+    }
+    Enum.CooldownViewerCategory = {
+        Essential = 0,
+        Utility = 1,
+        TrackedBuff = 2,
+        TrackedBar = 3,
+        GroupBuff = 4,
+        SpecAgnosticEssential = 5,
+    }
+    Enum.AuraFrameOrientation = {
+        Horizontal = 0,
+        Vertical = 1,
+    }
     C_DurationUtil = {
         CreateDuration = function()
             Mock.trace.durationCreates = Mock.trace.durationCreates + 1
@@ -1090,6 +1182,13 @@ function Mock.install(interfaceVersion)
                 self.startTime = startTime
                 self.duration = duration
                 Mock.trace.durationSetTimeCalls = Mock.trace.durationSetTimeCalls + 1
+            end
+            function durationObject:EvaluateRemainingPercent(curve)
+                local pct = 0.5
+                if curve and curve.Evaluate then
+                    return curve:Evaluate(pct)
+                end
+                return pct
             end
             return durationObject
         end,
@@ -1124,6 +1223,122 @@ function Mock.install(interfaceVersion)
             return binding
         end,
     }
+    CreateColor = function(r, g, b, a)
+        local color = {
+            r = r or 1,
+            g = g or 1,
+            b = b or 1,
+            a = a or 1,
+        }
+        function color:GetRGB()
+            return self.r, self.g, self.b
+        end
+        function color:GetRGBA()
+            return self.r, self.g, self.b, self.a
+        end
+        function color:SetRGB(nr, ng, nb)
+            self.r, self.g, self.b = nr, ng, nb
+        end
+        function color:SetRGBA(nr, ng, nb, na)
+            self.r, self.g, self.b, self.a = nr, ng, nb, na
+        end
+        return color
+    end
+    C_CurveUtil = {
+        CreateCurve = function()
+            local curve = {
+                points = {},
+                curveType = Enum.LuaCurveType and Enum.LuaCurveType.Linear or 0,
+            }
+            function curve:AddPoint(x, y)
+                table.insert(self.points, { x = x, y = y })
+                table.sort(self.points, function(a, b) return a.x < b.x end)
+            end
+            function curve:Clear()
+                self.points = {}
+            end
+            function curve:SetCurveType(cType)
+                self.curveType = cType
+            end
+            function curve:GetCurveType()
+                return self.curveType
+            end
+            function curve:Evaluate(x)
+                if #self.points == 0 then return x or 0 end
+                if #self.points == 1 then return self.points[1].y end
+                if x <= self.points[1].x then return self.points[1].y end
+                if x >= self.points[#self.points].x then return self.points[#self.points].y end
+                for i = 1, #self.points - 1 do
+                    local p1 = self.points[i]
+                    local p2 = self.points[i + 1]
+                    if x >= p1.x and x <= p2.x then
+                        if self.curveType == (Enum.LuaCurveType and Enum.LuaCurveType.Step or 1) then
+                            return p1.y
+                        end
+                        local span = p2.x - p1.x
+                        local t = (span > 0) and ((x - p1.x) / span) or 0
+                        return p1.y + (p2.y - p1.y) * t
+                    end
+                end
+                return self.points[#self.points].y
+            end
+            return curve
+        end,
+        CreateColorCurve = function()
+            local curve = {
+                points = {},
+                curveType = Enum.LuaCurveType and Enum.LuaCurveType.Linear or 0,
+            }
+            function curve:AddPoint(x, color)
+                table.insert(self.points, { x = x, color = color })
+                table.sort(self.points, function(a, b) return a.x < b.x end)
+            end
+            function curve:Clear()
+                self.points = {}
+            end
+            function curve:SetCurveType(cType)
+                self.curveType = cType
+            end
+            function curve:GetCurveType()
+                return self.curveType
+            end
+            function curve:Evaluate(x)
+                if #self.points == 0 then
+                    return CreateColor(1, 1, 1, 1)
+                end
+                if #self.points == 1 then
+                    return self.points[1].color
+                end
+                if x <= self.points[1].x then
+                    return self.points[1].color
+                end
+                if x >= self.points[#self.points].x then
+                    return self.points[#self.points].color
+                end
+                for i = 1, #self.points - 1 do
+                    local p1 = self.points[i]
+                    local p2 = self.points[i + 1]
+                    if x >= p1.x and x <= p2.x then
+                        if self.curveType == (Enum.LuaCurveType and Enum.LuaCurveType.Step or 1) then
+                            return p1.color
+                        end
+                        local span = p2.x - p1.x
+                        local t = (span > 0) and ((x - p1.x) / span) or 0
+                        local r1, g1, b1, a1 = p1.color:GetRGBA()
+                        local r2, g2, b2, a2 = p2.color:GetRGBA()
+                        return CreateColor(
+                            r1 + (r2 - r1) * t,
+                            g1 + (g2 - g1) * t,
+                            b1 + (b2 - b1) * t,
+                            (a1 or 1) + ((a2 or 1) - (a1 or 1)) * t
+                        )
+                    end
+                end
+                return self.points[#self.points].color
+            end
+            return curve
+        end,
+    }
     C_StringUtil = {
         CreateSecondsFormatter = function()
             local formatter = {}
@@ -1135,6 +1350,9 @@ function Mock.install(interfaceVersion)
             end
             function formatter:SetMillisecondsThreshold(value)
                 self.millisecondsThreshold = value
+            end
+            function formatter:SetDesiredUnitCountCurve(curve)
+                self.unitCountCurve = curve
             end
             return formatter
         end,

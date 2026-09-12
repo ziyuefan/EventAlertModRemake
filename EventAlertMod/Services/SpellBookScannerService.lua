@@ -32,19 +32,24 @@ local function getSpellHeuristics()
     return EAM.Data and EAM.Data.SpellHeuristics
 end
 
+local api = EAM.API or {}
+
 -- 掃描玩家法術書中的主動與被動技能
 local function scanSpellBook()
     local known = {}
 
     -- 現代 Retail 12.x C_SpellBook API 遍歷
     if C_SpellBook and C_SpellBook.GetNumSpellBookSkillLines then
+        local spellBank = (api.SpellBookSpellBank and api.SpellBookSpellBank.Player)
+            or (_G.Enum and _G.Enum.SpellBookSpellBank and _G.Enum.SpellBookSpellBank.Player)
+            or 0
         local numSkillLines = C_SpellBook.GetNumSpellBookSkillLines()
         for skillLineIndex = 1, numSkillLines do
             local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(skillLineIndex)
             if skillLineInfo and skillLineInfo.numSpellBookItems then
                 local offset = skillLineInfo.itemIndexOffset or 0
                 for itemIndex = offset + 1, offset + skillLineInfo.numSpellBookItems do
-                    local itemType, actionID, spellID = C_SpellBook.GetSpellBookItemType(itemIndex, Enum.SpellBookSpellBank.Player)
+                    local itemType, actionID, spellID = C_SpellBook.GetSpellBookItemType(itemIndex, spellBank)
                     if spellID and spellID > 0 then
                         known[spellID] = true
                     elseif actionID and actionID > 0 then

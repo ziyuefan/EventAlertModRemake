@@ -1,3 +1,65 @@
+-- [Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display & Cooldown Swipe Customization] 2026.09.12
+    -- 飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display Option)：
+       -- 在角色屬性與吸收量監控中，為「飛龍模式飛速 (skyridingSpeed)」新增專屬特殊選項「僅滑翔顯示 (Glide Only)」。
+       -- 啟用後僅當角色處於空中御空術/飛龍滑翔飛行狀態 (C_PlayerInfo.GetGlidingInfo() 之 isGliding == true) 時才於畫面呈現該圖示與即時速度百分比；未滑翔（站立/步行）時自動隱藏，避免以 0% 佔用畫面。
+       -- 屬性設定面板「顯示與圖示 (Tab 1)」動態載入專屬控制項，其他 17 項屬性自動隱藏維持介面簡潔。
+       -- 支援排版移動保護：開啟「移動屬性框架」時強制顯示以便玩家拖曳定位。
+       -- 5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 完整對齊。
+    -- 扇形倒數色彩與透明度自訂 (Cooldown Swipe Color & Alpha Customization)：
+       -- 告警圖示、預覽面板之冷卻扇形倒數 (Cooldown Swipe) 支援透明度與色彩自訂，預設經典黑 (0, 0, 0, 0.8)，徹底解決純白扇形刺眼與遮擋圖示問題。
+       -- 於常規排版設置中提供自訂色塊按鈕與原生調色盤即時熱套用，支援 ProfileCodec 編解碼匯入匯出白名單與 AuraRuleCompiler 佈局指紋同步。
+    -- 非本職業專屬法術新增防誤加確認對話框 (Non-Class Spell Add Interactive Confirmation)：
+       -- 在自身光環提醒中輸入不屬於當前職業的 Spell ID 時，取消靜默直接寫入跨職業清單行為，改為彈出互動式主題確認對話框。
+       -- 顯示法術圖示、法術名稱、ID 與詢問提示（「這個 SPELL ID 可能不是你的職業專屬，你仍要加入嗎？」）。
+       -- 提供「確定」按鈕：確認後仍強制於當前所在模組清單（自身光環提醒）中正式加入，絕不擅自竄改至跨職業清單；「取消」按鈕（及 ESC 鍵）安全關閉且不更改任何設定。
+       -- 5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 完整對齊。
+-- [Retail 12.1.0 Alpha 8.5 Full Theme Visual Overhaul, Modern WoW Gradient Fix & Subwindow Theme Sync] 2026.09.12
+    -- 11 大經典復古與現代主題調色盤深度重構與考證 (11 Classic & Modern Themes Deep Visual Overhaul)：
+       -- EAM 經典復刻：精確還原 9.0.1 經典石板黑褐底 (0.08, 0.06, 0.05)、金屬金框 (0.65, 0.50, 0.25) 與晶石深紅立體按鈕 (0.55, 0.10, 0.08)。
+       -- FF7 經典戰鬥視窗：還原頂部鮮豔皇家寶石藍至底部黑海軍藍垂直漸層、純白立體邊框 (1.0, 1.0, 1.0) 與深藍晶透按鈕純白字。
+       -- Windows XP (Luna 藍)、Windows 7 (Aero 玻璃漸層)、Windows 10 (Metro 磁貼平整)、Windows 3.1 (灰白 3D 凸面按鈕)、Borland C++ IDE (DOS 經典藍底黃字)、DOS CRT (P1 磷光綠純黑底)、倚天中文 (ETen 藍底明黃字)、Red Alert (裝甲灰黑深紅警戒框)、macOS Aqua (果凍膠囊藍漸層)。
+    -- Modern WoW 垂直漸層渲染管線修復 (Vertical Gradient Rendering Pipeline Fix)：
+       -- 徹底移除 SetColorTexture 頂點著色器衝突，改採 SetTexture("Interface\\Buttons\\WHITE8X8") 並設置於 BACKGROUND, 1 圖層，完美相容 Retail 10.x/11.x/12.x 原生 Texture:SetGradient("VERTICAL", cMin, cMax) 漸層著色。
+       -- 修正垂直方向漸層座標映射，確保頂部與底部色彩方向精確無誤。
+    -- 全子視窗與面板主題無縫連動覆蓋 (Unified Subwindow Theme Registration)：
+       -- 實裝 Theme.applyContainerBackground，修復群組管理面板 (GroupManagerPanel)、全量法術庫 (SpellCatalogTreePanel) 與條件選單未套用主題問題。
+       -- 補齊圖示位置與能量設定內框 (posInner)、清單設定內框 (listInner) 之面板主題註冊，徹底消除子視窗與主視窗脫節之暗棕色色塊。
+       -- 新增 "row" 輕量列表行角色，保留文字與圖標清晰度同時杜絕過度漸層。
+       -- 補齊各面板之效果預覽按鈕、下拉選單與操作按鈕之 registerButton 關聯。
+-- [Retail 12.1.0 Alpha 8.5 ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power & Live Preview] 2026.09.12
+    -- ESC 鍵無損純透明度抑制與冷卻預渲染保護 (Zero-Alpha Suppression on ESC Key)：
+       -- 在遊戲中按 ESC 鍵可隱藏畫面上的提醒圖示。全面改採純透明度抑制 (SetAlpha(0))，絕不銷毀 Frame 物件，保留 2D 排版矩陣與背景冷卻動畫。
+       -- 觸發新提示、進入戰鬥或打開設定面板時自動無損還原顯示；具備戰鬥中防 Taint 安全守衛。
+    -- 角色屬性面板 4-Tab 模組化與防遮擋排版 (Player Stats 4-Tab Modular Layout)：
+       -- 屬性面板尺寸擴大至 720x540，重構成「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大獨立頁籤。
+       -- 滑桿間隔大幅拉開至 50~60px，徹底解決暴雪 OptionsSliderTemplate 之 Low/High 標籤與下方元件嚴重重疊遮擋問題。
+    -- 職業資源狀態條垂直生長修復 (Vertical Resource StatusBar Growth Fix)：
+       -- 修復資源條切換為垂直 (VERTICAL) 模式時無法向上生長問題。
+       -- 正確轉置寬高、調用 SetRotatesTexture(true) 旋轉暴雪原生 StatusBar 材質，將圖示置底向上生長，並轉置點數分隔線與槽位條。
+    -- 獨立即時效果預覽小視窗 (Independent Live Preview Panel)：
+       -- 全新實裝可自由拖曳、螢幕鎖定之獨立效果預覽視窗 (PreviewPanel)。
+       -- 提供「告警圖示」、「職業資源」、「角色屬性」3 大預覽頁籤，支援倒數變色曲線滑桿、Proc 金光、Pandemic 綠框、充能百分比與屬性項目即時測試。
+       -- 主設定視窗、常規排版、職業資源與屬性面板全面增設 [效果預覽] 按鈕與熱更新連動。
+    -- 五國語言完整對齊與存檔自動蓋章：
+       -- 5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 同步新增 19 個預覽與頁籤詞條。
+       -- 存檔資料庫新增 meta 時間戳蓋章，自動標記本地時間與 Unix 秒數。
+-- [Retail 12.1.0 Alpha 8.5 Native Curve Architecture & Dynamic Visual Immersion] 2026.09.08
+    -- 暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入 (Native C-Level Curve Architecture)：
+       -- 深入對齊暴雪 Patch 12.0.0 / Midnight 引入之底層 C-Level 曲線系統，全面接入 ScriptObject_CurveObject 與 ScriptObject_ColorCurveObject，杜絕戰鬥鎖定與 Taint 污染。
+    -- 能量/資源條動態色彩曲線平滑染色 (Resource Dynamic Color Curve)：
+       -- 消耗型資源（法力/能量/真氣等）與累積型資源（怒氣/符文能量/狂怒等）全面支援透過 ColorCurveObject 進行平滑三色差值過渡（警戒深紅 ➜ 預警金黃 ➜ 專職代表色）。
+       -- 完美相容 12.0+ UnitPowerPercent("player", powerType, false, colorCurve) 原生硬體級渲染，能量耗竭或充盈時色彩平滑流動。
+    -- 階梯閥門曲線突破受保護秘密值防線 (Step Gate Curve for Protected Values)：
+       -- 封裝 Util.createStepGateCurve 與 Util.createColorStepGateCurve，透過原生二元階梯函數安全穿透 Secret Number。
+       -- 實現精確斬殺線（20% / 35%）與能量警戒門檻，完全規避在 Lua 層進行受保護數值比對，零報錯零 Taint。
+    -- SecondsFormatter 自適應精度曲線 (Adaptive Seconds Formatter Curve)：
+       -- 透過 SecondsFormatter:SetDesiredUnitCountCurve 設定時間文字精度階梯曲線。長時間整數顯示，關鍵 <= 5 秒自動平滑切換小數點，零 GC 零更新負擔。
+    -- 非線性冷卻進度曲線與衝刺張力 (Non-Linear Cooldown Progress Curves)：
+       -- 支援線性均勻 (Linear)、三次方加速衝刺 (Cubic) 與餘弦平滑 (Cosine) 三大進度曲線。長冷卻大招在即將轉好最後 15% 顯著加速衝刺，營造技能即將就緒的戰鬥張力。
+    -- 全螢幕瀕死低血量動態呼吸警示 (Dynamic Low Health Warning Pulse)：
+       -- 透過 UnitHealthPercent("player", true, healthCurve) 驅動全螢幕邊緣深紅動態呼吸脈動。血量越低紅框越濃烈，脫戰自動平滑隱藏，提供沉浸式瀕死預警。
+    -- 排版設定面板現代化升級與五大語系對齊：
+       -- 於排版設定視窗中增設資源動態變色勾選框、冷卻進度曲線下拉選單、瀕死動態呼吸紅框開關與危急血量門檻滑桿，五大語系（繁中/簡中/英文/韓文/俄文）100% 完整對齊。
 -- [Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility & Stat Hardening] 2026.09.04
     -- 光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine & Columns per Row Configuration)：
        -- 2D 網格折行排版引擎 (2D Grid Layout Engine)：自身光環 (selfAura)、目標光環 (targetAura)、技能冷卻 (spellCooldown)、物品冷卻 (itemCooldown) 與地面效果 (groundEffect) 等模組全面升級為二維矩陣排版。圖示數量超過指定欄數 (Columns) 時，依成長方向自動向下一列 (Row) 折行，杜絕圖示單向無限延伸遮擋或超出螢幕。

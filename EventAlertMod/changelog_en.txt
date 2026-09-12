@@ -1,3 +1,65 @@
+-- [Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display & Cooldown Swipe Customization] 2026.09.12
+    -- Skyriding Speed Gliding-Only Display Option:
+       -- Added a dedicated "Glide Only" option for Skyriding Speed (skyridingSpeed) in Player Stats & Absorbs.
+       -- When enabled, the icon and live speed percentage only appear while actively skyriding/gliding (C_PlayerInfo.GetGlidingInfo() isGliding == true); automatically hidden while grounded to prevent 0% screen clutter.
+       -- Tab 1 (Display & Icon) dynamically loads this dedicated control, auto-hidden for other 17 stats to maintain clean UI.
+       -- Frame drag mode protection: forces display when adjusting layout frames for easy positioning.
+       -- 100% mirrored across all 5 languages (zhTW, zhCN, enUS, koKR, ruRU).
+    -- Cooldown Swipe Color & Alpha Customization:
+       -- Cooldown swipe texture on alert icons and preview panels now supports custom color and alpha, defaulting to classic black (0, 0, 0, 0.8) to eliminate blinding white washouts.
+       -- Added color swatch button and native ColorPickerFrame integration with immediate hot-reload in General Layout, fully serialized in ProfileCodec and fingerprinted in AuraRuleCompiler.
+    -- Non-Class Spell Add Interactive Confirmation Dialog:
+       -- Adding a non-class Spell ID in Self Buffs/Debuffs tab now intercepts silent reclassification and presents an interactive themed confirmation dialog.
+       -- Displays spell icon, name, ID, and prompt ("This SPELL ID may not belong to your class. Do you still want to add it?").
+       -- Provides "Confirm" button: forcibly adds to the current module's list (Self Buffs/Debuffs) upon confirmation rather than redirecting to Cross-Class; "Cancel" button (plus ESC key support) dismisses safely without modifying any configuration.
+       -- Fully localized across 5 languages (zhTW, zhCN, enUS, koKR, ruRU).
+-- [Retail 12.1.0 Alpha 8.5 Full Theme Visual Overhaul, Modern WoW Gradient Fix & Subwindow Theme Sync] 2026.09.12
+    -- 11 Classic & Modern Themes Deep Visual Overhaul:
+       -- EAM Classic: Restored 9.0.1 slate dark brown background (0.08, 0.06, 0.05), metallic gold border (0.65, 0.50, 0.25), and ruby red 3D buttons (0.55, 0.10, 0.08).
+       -- FF7 Battle Window: Restored top royal blue (0.00, 0.12, 0.85) to bottom dark navy (0.00, 0.01, 0.10) vertical gradient, pure white double border (1.0, 1.0, 1.0), and dark blue crystal buttons with pure white text.
+       -- Windows XP (Luna blue), Windows 7 (Aero glass), Windows 10 (Metro dark flat), Windows 3.1 (3D convex gray buttons), Borland C++ IDE (DOS blue screen yellow text), DOS CRT (P1 phosphor green), ETen Chinese (bright yellow on pure blue), Red Alert (armored dark gray red warning border), and macOS Aqua (jelly blue capsule gradient).
+    -- Modern WoW Vertical Gradient Rendering Pipeline Fix:
+       -- Eliminated SetColorTexture shader conflicts by standardizing on SetTexture("Interface\\Buttons\\WHITE8X8") placed at BACKGROUND layer sublevel 1, perfectly compatible with Retail 10.x/11.x/12.x native Texture:SetGradient("VERTICAL", cMin, cMax).
+       -- Corrected vertical gradient coordinate mapping ensuring vivid top-to-bottom contrast.
+    -- Unified Subwindow & Panel Theme Registration:
+       -- Implemented Theme.applyContainerBackground, resolving un-themed dark gray fallbacks across GroupManagerPanel, SpellCatalogTreePanel, and condition menus.
+       -- Wired Theme.registerFrame on position settings inner container (posInner) and spell list inner container (listInner), eliminating disconnected dark brown blocks.
+       -- Introduced lightweight "row" role for tree and group list items, preventing heavy redundant gradient creation across large lists.
+       -- Connected all preview buttons, dropdowns, and action buttons to Theme.registerButton.
+-- [Retail 12.1.0 Alpha 8.5 ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power & Live Preview] 2026.09.12
+    -- ESC Key Zero-Alpha Suppression & Pre-render Protection:
+       -- Pressing ESC in game hides alert icons via Zero-Alpha (SetAlpha(0)) without destroying frames or resetting cooldown layouts and timers.
+       -- Automatically unsuppresses on new alerts, combat entry, or opening options. Protected by in-combat taint guards.
+    -- Player Stats 4-Tab Modular Layout:
+       -- Widened stat panel to 720x540 and modularized into 4 tabs: "Display & Icon", "Font & Format", "Thresholds", and "Position & Anchor".
+       -- Generous 50-60px slider vertical spacing eliminates Low/High label collisions with adjacent controls.
+    -- Vertical Resource StatusBar Growth Fix:
+       -- Fixed vertical resource bars failing to grow upwards.
+       -- Transposes dimensions, calls SetRotatesTexture(true) to rotate Blizzard StatusBar textures, anchors icon at bottom growing up, and aligns dividers and slot bars.
+    -- Independent Live Preview Panel:
+       -- Introduced draggable, screen-clamped floating preview window (PreviewPanel).
+       -- Features 3 tabs: "Alert Icon", "Resource Bar", and "Player Stat" with real-time sliders for timer color curve testing, Proc glow, Pandemic border, power percentage, and stat reflections.
+       -- Wired preview toggle buttons and live refresh across main options, pos frame, resource, and stat panels.
+    -- 5-Locale Mirroring & SavedVariables Timestamping:
+       -- Fully mirrored 19 new preview and tab keys across zhTW, zhCN, enUS, koKR, and ruRU.
+       -- Added meta timestamp stamping to SavedVariables recording local datetime and Unix epoch.
+-- [Retail 12.1.0 Alpha 8.5 Native Curve Architecture & Dynamic Visual Immersion] 2026.09.08
+    -- Native C-Level Curve Architecture Integration (CurveObject & ColorCurveObject):
+       -- Fully integrated Blizzard's Patch 12.0.0 / Midnight C-Level ScriptObject_CurveObject and ScriptObject_ColorCurveObject architectures, eliminating taint and combat lockdown limitations.
+    -- Dynamic Color Curve Tinting for Power and Resource Bars (Resource Dynamic Color Curve):
+       -- Expending and accumulating resources are smoothly interpolated across a 3-stage dynamic color palette (Critical Red -> Warning Yellow -> Signature Class Color) via ColorCurveObject.
+       -- Seamlessly compatible with 12.0+ UnitPowerPercent("player", powerType, false, colorCurve) native hardware-level rendering, flowing colors dynamically with current power percentages.
+    -- Step Gate Curves for Protected / Secret Numerical Values:
+       -- Implemented Util.createStepGateCurve and Util.createColorStepGateCurve, utilizing binary step functions to penetrate protected Secret Numbers.
+       -- Delivers exact execute phase (<20% / <35%) and power threshold alarms without Lua-side comparison operators, preventing taint failures.
+    -- Adaptive SecondsFormatter Unit Count Curve:
+       -- Configured SecondsFormatter:SetDesiredUnitCountCurve to dynamically format timer countdowns. Displays whole integers for long durations and smoothly switches to single-digit decimals for <= 5 seconds with zero GC allocations.
+    -- Non-Linear Cooldown Progress Sprint Curves:
+       -- Added support for Linear, Cubic (late acceleration sprint), and Cosine (smooth ease) progress curves. Critical cooldowns noticeably accelerate during their final 15% phase to build combat anticipation.
+    -- Full-Screen Dynamic Low Health Breathing Pulse:
+       -- Powered by UnitHealthPercent("player", true, healthCurve) to drive a dynamic full-screen red pulsating vignette. Intensity deepens as player health drops, automatically hiding out of combat.
+    -- Options UI Modernization & 5-Locale Full Synchronization:
+       -- Added resource dynamic color checkbox, cooldown progress curve dropdown, low health breathing pulse toggle, and critical health threshold slider, fully localized across all 5 languages (zhTW, zhCN, enUS, koKR, ruRU).
 -- [Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility & Stat Hardening] 2026.09.04
     -- 2D Grid Layout Engine & Columns per Row Configuration for Aura and Cooldown Modules:
        -- 2D Grid Layout Engine: The Self Aura (selfAura), Target Aura (targetAura), Spell Cooldown (spellCooldown), Item Cooldown (itemCooldown), and Ground Effect (groundEffect) modules are upgraded to 2D matrix layouts. When icon count exceeds the configured column limit, icons automatically wrap to the next row along the growth direction, preventing single-direction overflow across screen boundaries.

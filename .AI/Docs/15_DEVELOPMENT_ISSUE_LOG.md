@@ -1,3 +1,159 @@
+### 2026-09-12 EAM-20260912-SKYRIDING-GLIDING-ONLY-OPTION：飛龍模式飛速 (skyridingSpeed) 專屬「僅滑翔時顯示圖示 (Glide Only)」選項實裝
+
+- 狀態：已解決 (Lua 78/78, Flow 86/86, Contracts 499/499)。
+- 需求背景與問題分析：
+  1. 少年欸提出需求：「飛龍速度增加一個特殊選項, 只有Glide = true 才顯示ICON」。
+  2. 機制與操作痛點：
+     - 在「角色屬性與吸收量監控」中，飛龍模式飛速 (`skyridingSpeed`) 平時在地面步行、站立或普通坐騎上數值均為 0%（或普通速度），若常駐顯示在畫面上會無謂遮擋視線且不具參考價值。
+     - 玩家希望唯有在空中進行御空術/飛龍騎術滑翔（`C_PlayerInfo.GetGlidingInfo()` 之 `isGliding == true`）時，才在畫面上呈現此飛龍速度圖示與即時速度百分比；落地或未滑翔時自動隱藏。
+- 重構實作：
+  1. **核心滑翔過濾與安全判斷 (`Services/PlayerStatService.lua`)**：
+     - 新增 `PlayerStatService.isPlayerGliding()` 輔助函式，使用防禦性 `pcall(C_PlayerInfo.GetGlidingInfo)` 安全判斷 `isGliding == true`，杜絕不同客戶端版本或受保護環境之拋錯。
+     - 在 `PlayerStatService.update()` 的 `activeList` 收集迴圈中增加專屬過濾：當 `key == "skyridingSpeed"` 且 `cfg.glideOnlyIcon == true` 時，若 `not isPlayerGliding()` 且 `not PlayerStatService.isMoving`，則跳過加入 `activeList`。
+     - 當未滑翔時，該圖示框架自動進入 `item:Hide()`，若屬分組排版則其他屬性自動緊密排齊，不留空隙。
+     - 具備排版移動模式保護：當玩家在設定面板開啟「移動屬性框架」（`isMoving == true`）時，強制顯示圖示框以便拖曳與自訂排版定位。
+  2. **設定介面專屬動態控制項 (`UI/PlayerStatPanel.lua`)**：
+     - 在 Tab 1（顯示與圖示，`pageDisplay`）頂部新增專屬勾選框 `glideOnlyIconCb`（位置 `TOPLEFT`, x=320, y=-10）。
+     - 在 `loadStatToDetail(statKey)` 中：若 `statKey == "skyridingSpeed"` 則 `glideOnlyIconCb:Show()` 並同步其 Checked 狀態；選中其他 17 項屬性時自動 `Hide()`，維持介面簡潔。
+     - 在 `applyLiveChange()` 中：即時儲存 `cfg.glideOnlyIcon`，並調用 `PlayerStatService.update()` 即時反應。
+     - 綁定點擊事件 `glideOnlyIconCb:SetScript("OnClick", applyLiveChange)`。
+  3. **五國語系鏡像對齊 (`Locale/zhTW.lua`, `zhCN.lua`, `enUS.lua`, `koKR.lua`, `ruRU.lua`)**：
+     - 5 國語言字典 100% 同步新增 `EAM_STAT_GLIDE_ONLY_ICON` 與 `EAM_STAT_GLIDE_ONLY_ICON_TIP` 詞條。
+- 驗證結果：Lua 78/78、Flow all 86/86、Validation Contracts 499/499 全部通過，零退化。
+
+### 2026-09-12 EAM-20260912-SWIPE-COLOR-NON-CLASS-CONFIRM-DIALOG：扇形倒數色彩透明度自訂與非本職業專屬法術新增防誤加確認對話框實裝
+
+- 狀態：已解決 (Lua 78/78, Flow 86/86, Contracts 499/499)。
+- 需求背景與問題分析：
+  1. 少年欸提出兩項重要反饋：
+     a. 「白色扇形倒數是怎回事? 這不好看, 扇形倒數應該能調整透明度,並且可以指定顏色」：告警圖示與效果預覽面板之冷卻倒數扇形 (Cooldown Swipe) 原本寫死為純白色 (1, 1, 1)，在明亮或高對比圖示上產生刺眼白光且過度遮蔽技能圖標。
+     b. 「這個管制請改成詢問:"這個SPELL ID 可能不是你的職業專屬, 你仍要加入嗎?" 提供"確定"按鈕加入, "取消" 按鈕不加入」：在「自身光環提醒」中輸入非當前職業的法術 ID 時，系統過去會靜默自動將其轉為「跨職業增減益」並直接寫入清單，缺乏互動確認機制與防誤加保護。
+  2. 機制分析與解決方案：
+     - **扇形倒數色彩自訂**：WoW 原生 `Cooldown:SetSwipeColor(r, g, b, a)` 支援動態指定 RGBA。在 `SavedVariables` 中新增 `cooldownSwipeColor`（預設 `{ r = 0, g = 0, b = 0 }`）與 `cooldownSwipeAlpha`（預設 `0.8`），並於常規排版設置中提供自訂色塊按鈕與原生調色盤即時熱套用，支援 ProfileCodec 編解碼匯入匯出白名單與 AuraRuleCompiler 佈局指紋同步。
+     - **非本職業法術確認對話框**：在 `Options.addAlertToCurrentCategory(id, force)` 中加入攔截：若 `not force and Options.currentCategory == 1 and not isCurrentClassSpell(id)`，中斷自動寫入流程，彈出主題化 `confirmNonClassFrame` 對話框。對話框呈現法術圖示、名稱、ID 與詢問標題；點擊「確定」調用 `Options.addAlertToCurrentCategory(pendingSpellID, true)`，在 `addAlertToCategory` 中傳入 `force = true`，強制於當前所在模組清單（自身光環提醒）中正式寫入 `catalogScope = SELF`，絕不擅自竄改至跨職業清單，並輸出成功反饋與清空輸入框；點擊「取消」或按 ESC 鍵則安全關閉對話框，不更改任何設定。
+- 重構實作：
+  1. **扇形倒數配置與渲染連動 (`Core/SavedVariables.lua`, `Core/ProfileCodec.lua`, `Managers/AuraRuleCompiler.lua`, `UI/IconPool.lua`, `UI/NativeAuraRenderer.lua`, `UI/Renderer.lua`, `UI/Options.lua`)**：
+     - `SavedVariables.lua`：加入 `cooldownSwipeColor`、`cooldownSwipeAlpha` 欄位與 getters/setters、版本遷移、重置邏輯。
+     - `ProfileCodec.lua`：納入版面配置匯入匯出白名單與防呆校驗。
+     - `AuraRuleCompiler.lua`：佈局指紋納入 `cooldownSwipeColor` 特徵字串。
+     - `IconPool.lua`、`NativeAuraRenderer.lua`、`Renderer.lua`：即時讀取色彩並調用 `cooldown:SetSwipeColor(r, g, b, a)`。
+     - `Options.lua`：於常規排版加入色塊按鈕，開啟原生 `ColorPickerFrame` 支援 RGBA 即時熱套用與預覽更新。
+  2. **非本職業法術防誤加確認對話框與強制所在模組加入 (`UI/Options.lua`)**：
+     - 建立 `confirmNonClassFrame`（420x165，`FULLSCREEN_DIALOG`，註冊 `Theme.registerFrame(confirmNonClassFrame, "window")` 與 `UISpecialFrames` ESC 自動關閉）。
+     - 包含 36x36 法術圖標、法術名稱與 ID 標籤、確認提示文字（`EAM_OPT_CONFIRM_NON_CLASS_SPELL`）。
+     - 提供「確定」(`confirmBtn`) 與「取消」(`cancelBtn`) 主題按鈕，點擊確定時調用 `Options.addAlertToCurrentCategory(targetID, true)`，傳遞 `force = true` 強制加入目前清單（`scope = SELF`），取消時清空暫存並隱藏。
+     - 修復 `migratePlayerAuraCatalogScopes`：僅在 `alert.catalogScope == nil` 時才進行補齊遷移，徹底杜絕刷新列表時擅自將使用者手動加入自身光環的非本職業法術覆蓋為跨職業。
+     - 匯出 `Options.showNonClassSpellConfirmDialog(spellID)`，具備安全法術資訊查詢與防禦式動態建立保護。
+  3. **多國語系完整對齊 (`Locale/zhTW.lua`, `zhCN.lua`, `enUS.lua`, `koKR.lua`, `ruRU.lua`)**：
+     - 5 國語言字典 100% 同步新增 `EAM_OPT_CONFIRM_NON_CLASS_SPELL`、`EAM_OPT_CONFIRM_TITLE`、`EAM_OPT_CONFIRM_BTN`、`EAM_OPT_CANCEL_BTN` 4 項詞條。
+  4. **全量代碼契約斷言強化 (`.AI/Tools/Test-ValidationContracts.ps1`, `EventAlertMod/Debug/FlowTestRunner.lua`)**：
+     - 新增 `Five locales cover all non-class spell confirmation dialog keys`（5 國語言確認視窗詞條全覆蓋契約）。
+     - 新增 `Non-class spell add triggers interactive confirmation dialog and force-adds to current category`（非本職業專屬法術新增互動確認對話框與強制加入當前模組清單邏輯契約）。
+     - `FlowTestRunner.lua` 增補端到端狀態機測試，核驗攔截、確認彈窗、強制寫入 SELF 與 revision 一致性。
+- 驗證結果：Lua 78/78、Flow all 86/86、Validation Contracts 499/499 全部通過，零退化。
+
+### 2026-09-12 EAM-20260912-STAT-PANEL-TAB-PREVIEW-VERTICAL-POWER：角色屬性面板 4-Tab 防遮擋重構、職業資源條垂直生長修復與獨立即時效果預覽小視窗實裝
+
+- 狀態：已解決 (Lua 78/78, Flow 86/86, Contracts 497/497)。
+- 需求背景與問題分析：
+  1. 少年欸提出三項重點指示：
+     a. 「屬性也是有點占版面,可能可以在規劃TAB FRAME , 另外部件之間盡量不要遮擋」：角色屬性設定面板（`PlayerStatPanel.lua`）右側滑桿密集堆疊，導致低/高標籤與滑桿軌道重疊，且頂部標題與整體排列方向下拉選單緊湊擠壓。
+     b. 「另外職業資源如果是狀態條,垂直生長無法作用」：當職業資源設定為「垂直 (VERTICAL)」時，StatusBar 無法正常向上充能生長，且寬高與圖示排版未轉置。
+     c. 「還有,可以做出各設定畫面的效果預覽嗎? 另外開一個小視窗專門預覽」：希望能有一個獨立的預覽小視窗，在調整各項數值與開關時能即時預覽效果，無需進入戰鬥或手動施法測試。
+  2. 根因分析與機制解讀：
+     - **StatusBar 垂直生長失敗**：WoW 原生 `StatusBar` 切換 `SetOrientation("VERTICAL")` 時，若未調用 `SetRotatesTexture(true)`，其內部預設材質不會旋轉，且寬高維持橫向比例（寬 140 高 16）時，視覺上只在 16px 內垂直填充，導致使用者感覺「完全沒作用」；此外，POINTS 模式的分隔線（markers）與槽位條（slotBars）亦需相應轉置為水平切分線。
+     - **屬性面板元件重疊**：`OptionsSliderTemplate` 預設在滑桿下方約 -10px 處渲染 Low 與 High 文字標籤，當垂直堆疊間距小於 35px 時，下方控制項文字會與上方滑桿之 Low/High 標籤完全碰撞重疊。
+- 重構實作：
+  1. **職業資源狀態條垂直生長修復 (`UI/PowerRenderer.lua`)**：
+     - 判定 `isVertical = (config.orientation == "VERTICAL")`，動態轉置狀態條尺寸：`actualBarWidth = isVertical and barHeight or barWidth`、`actualBarHeight = isVertical and barWidth or barHeight`。
+     - 原生安全旋轉：安全調用 `statusBar:SetOrientation(orientation)` 與 `statusBar:SetRotatesTexture(isVertical)`。
+     - 排版轉置：圖示置於底部，狀態條向上生長；數值與標籤置中對齊；轉置 POINTS 模式分隔線（高度 1、寬度滿格）與槽位條（垂直堆疊）；修復 `reflowResourceFrames` 垂直模式動態行距計算。
+  2. **角色屬性面板 4-Tab 模組化重構 (`UI/PlayerStatPanel.lua`)**：
+     - 面板寬度由 660 擴充至 720x540，大幅釋放水平與垂直留白。
+     - 模組化拆分為 4 大獨立 Tab：
+       - Tab 1: **顯示與圖示 (Display & Icon)**：啟用開關、顯示文字、自訂標籤、圖示大小、框架層級。
+       - Tab 2: **字型與格式 (Font & Format)**：小數位數、字型家族（LSM 整合）、數值字級、標籤字級。
+       - Tab 3: **警戒門檻 (Thresholds)**：數值下限警戒、數值上限警戒（超出時觸發深紅高亮邊框閃爍）。
+       - Tab 4: **位置與錨點 (Position & Anchor)**：自訂獨立座標開關、X/Y 偏移滑桿、單項移動/全部移動錨點框按鈕。
+     - 滑桿垂直間距拉開至 50~60px，徹底杜絕文字與控制項重疊。
+  3. **全新獨立自由浮動效果預覽小視窗 (`UI/PreviewPanel.lua`)**：
+     - 建立 `EAM_PreviewOptionsFrame`（330x420，`DIALOG` 層級，支援滑鼠任意拖曳與螢幕邊界鎖定）。
+     - 具備 3 大預覽 Tab：
+       - **Tab 1: 告警圖示 (Alert)**：支援模擬剩餘秒數滑桿 (0~15s)、Proc 金色發光勾選框、Pandemic 綠框勾選框；拖動滑桿即時測試 12.0.7+ 原生 `TimerColorCurve` 紅/黃/白硬體動態變色。
+       - **Tab 2: 職業資源 (Resource)**：支援模擬充能百分比滑桿 (0~100%)，即時反映水平/垂直方向、動態色彩曲線染色（紅 ➜ 黃 ➜ 代表色）與數值百分比文字。
+       - **Tab 3: 角色屬性 (Stat)**：即時連動屬性面板所選屬性之圖示、字型大小、格式化文字與警戒紅框。
+  4. **全設定介面整合與即時連動**：
+     - 主設定視窗（`Options.lua`）底部加入 `[效果預覽]` 按鈕；常規與位置設定（`posFrame`）、職業資源面板（`PlayerResourcePanel.lua`）、角色屬性面板（`PlayerStatPanel.lua`）頂部均加入 `[效果預覽]` 按鈕。
+     - 在 `notifyConfigChanged`、`notifyTextLayoutChanged`、`autoApplyDraft` 時自動調用 `PreviewPanel.refresh()` 熱更新。
+  5. **5 國語言字典同步**：
+     - `zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 完整對齊 19 個預覽視窗與屬性 Tab 語意詞條。
+- 驗證結果：Lua 78/78、Flow all 86/86、Validation Contracts 497/497 全部通過，零退化。
+
+### 2026-09-08 EAM-20260908-NATIVE-CURVE-ARCHITECTURE：暴雪 Patch 12.0.0 / Midnight 原生 CurveObject 與 ColorCurveObject 曲線架構全面接入
+
+- 狀態：已解決 (Lua 77/77, Flow 86/86, Contracts 497/497)。
+- 需求背景與問題分析：
+  1. 少年欸提出指示：「https://warcraft.wiki.gg/wiki/ScriptObject_CurveObject 這是你之前參考的資訊嗎？在你理解後能為EAM帶來甚麼更好更新的改善或功能？」，助理提出五大維度革新方案後，少年欸發出決策指令：「全上」。
+  2. 官方底層機制分析：
+     - `CurveObject` 與 `ColorCurveObject` 為暴雪在 Patch 12.0.0 / Midnight 引入之全新底層 C-Level 數值與色彩插值物件。
+     - 具備三大核心優勢：
+       a. **穿透受保護秘密值 (Secret Penetration)**：`UnitHealthPercent(unit, predicted, curve)` 與 `UnitPowerPercent(unit, powerType, unmodified, curve)` 允許在不解開 Secret 數值的情況下，由底層安全評估出普通數值或 `ColorMixin`。
+       b. **C-Level 零 GC 零耗能運算**：文字染色與進度過渡完全在暴雪 C 核心執行，免除 Lua 每幀計算與垃圾回收。
+       c. **非線性動力學美學**：支援 Linear、Step、Cosine、Cubic 四大曲線，實現流暢的動態回饋。
+- 重構實作五大革新維度：
+  1. **【資源條】能量/資源條動態色彩曲線染色 (Resource Dynamic Color Curve)**：
+     - `DurationAdapter.buildResourceDynamicColorCurve`：自動為消耗型資源（警戒紅 ➜ 預警黃 ➜ 代表色）與累積型資源（暗色 ➜ 預警黃 ➜ 高亮色）建構三色階曲線。
+     - `PowerRenderer.applyPercent`：在更新資源條時呼叫色彩曲線，相容 12.0+ `UnitPowerPercent` 原生硬體級染色。
+  2. **【秘密值突破】階梯閥門曲線 (Step Gate Curve for Protected Values)**：
+     - `Util.createStepGateCurve` 與 `Util.createColorStepGateCurve`：以二元階梯函數安全穿透 Secret 數值，實現斬殺線（20%/35%）與能量警戒門檻，零 Taint。
+  3. **【時間文字】SecondsFormatter 自適應精度曲線 (Adaptive Seconds Formatter Curve)**：
+     - `SecondsFormatter:SetDesiredUnitCountCurve`：長秒數整數、<= 5 秒小數點，零 GC 零延遲。
+  4. **【冷卻張力】非線性冷卻進度曲線 (Non-Linear Cooldown Progress Curves)**：
+     - `DurationAdapter.buildNonLinearProgressCurve`：支援 LINEAR、CUBIC（最後 15% 衝刺加速）、COSINE 三種模式，並在 `Renderer.lua` 中與 Cooldown Frame 深度綁定。
+  5. **【動態危機】全螢幕低血量危急動態呼吸 (Dynamic Low Health Warning Pulse)**：
+     - `CombatFlash.lua`：建構血量 Alpha 曲線，由 `UnitHealthPercent("player", true, curve)` 驅動全螢幕邊緣動態呼吸脈動。
+  6. **UI 設定與 5 語系完整對齊**：
+     - `Options.lua` 新增資源動態變色勾選框、冷卻進度曲線下拉選單、瀕死呼吸紅框開關與危急血量門檻滑桿，5 語系（zhTW, zhCN, enUS, koKR, ruRU）100% 同步。
+  7. **離線驗證同構化升級**：
+     - `WoW121AuraMock.lua` 與 `FlowValidationHarness.lua` 完整補齊 `CreateColor`、`C_CurveUtil`、`UnitHealthPercent`、`UnitPowerPercent(curve)` 與 `SecondsFormatter:SetDesiredUnitCountCurve` Mock。
+- 驗證結果：Lua 77/77、Flow all 86/86、Validation Contracts 497/497 全部通過，零退化。
+
+### 2026-09-06 EAM-20260906-WOW-OFFICIAL-ENUMS-STANDARDIZATION：Warcraft Wiki 官方 888 個 Enum 全量遍歷與專案現代化枚舉重構
+
+- 狀態：已解決 (Lua 77/77, Flow 86/86, Contracts 497/497)。
+- 需求背景與問題分析：
+  1. 少年欸提出指示：吸收並遍歷 `https://warcraft.wiki.gg/wiki/Category:Enums` 全部官方 Enum（包含翻頁爬取），並遍歷專案所有可用上官方 Enum 之處，配合官方枚舉取代寫死數字（Magic Numbers）、私有常數與舊式全域變數。
+  2. 調研與掃描結果：
+     - 完成官方 5 頁共 888 個獨立 Enum 全量爬取收錄（落盤不可變清單 `scratch/all_wow_enums.json`）。
+     - 篩選專案領域核心相關 235 個 Enum，清查出專案 156 處潛在對應點。
+     - 鎖定核心重構領域：`PowerType`（17 大能量常數）、`LuaCurveType` & `DurationTextBindingProperty`（倒數變色曲線）、`StatusBarRenderMode` & `StatusBarFillStyle`（進度條與冷卻光圈）、`UnitAuraSortRule` & `UnitAuraSortDirection`（原生光環容器排序）、`CustomAuraButtonDispelTypeStealableFilter`（驅散過濾）、`SpellBookSpellBank` & `SpellBookItemType`（法術書掃描）。
+- 重構實作：
+  1. **核心環境層統一封裝 (`Core/Env.lua`)**：
+     - 在 `EAM.API` 中擴充暴露 `PowerType`, `LuaCurveType`, `DurationTextBindingProperty`, `StatusBarRenderMode`, `StatusBarFillStyle`, `UnitAuraSortRule`, `UnitAuraSortDirection`, `UnitAuraSoundTrigger`, `CustomAuraButtonDispelTypeStealableFilter`, `CustomAuraButtonDispelTypeTextureStyle`, `CustomAuraButtonBorderStyle`, `ItemQuality`, `CooldownViewerCategory`, `SpellBookSpellBank`, `SpellBookItemType`, `AuraFrameOrientation`，全數遵循安全防禦封裝。
+  2. **玩家資源不可變目錄 (`Data/PlayerResourceCatalog.lua`)**：
+     - 透過 `POWER_TYPE_MAP` 自動將 17 種能量型別（MANA, RAGE, FOCUS, ENERGY, COMBO_POINTS, RUNES, RUNIC_POWER, SOUL_SHARDS, LUNAR_POWER, HOLY_POWER, MAELSTROM, CHI, INSANITY, ARCANE_CHARGES, FURY, PAIN, ESSENCE）映射至官方 `Enum.PowerType`，消除 Magic Numbers，並保持 fallback 與契約相容。
+  3. **服務層與渲染層全面對齊**：
+     - `Services/AuraContainerService.lua`：將舊全域變數 `AuraContainerSortMethod` 與 `AuraContainerSortDirection` 升級為優先使用官方標準 `api.UnitAuraSortRule` 與 `api.UnitAuraSortDirection`。
+     - `Core/DurationAdapter.lua`：倒數曲線屬性統一採用 `api.DurationTextBindingProperty` 與 `api.LuaCurveType`。
+     - `UI/IconPool.lua`：冷卻光圈渲染優先讀取 `api.StatusBarRenderMode.Radial`。
+     - `UI/NativeAuraRenderer.lua`：驅散樣式與偷取過濾優先讀取 `api.CustomAuraButtonDispelTypeStealableFilter` 與 `api.CustomAuraButtonDispelTypeTextureStyle`。
+     - `Services/SpellBookScannerService.lua`：法術書分頁判定採用 `api.SpellBookSpellBank.Player` 防禦性封裝。
+  4. **離線測試沙盒與 Mock 套件升級**：
+     - `WoW121AuraMock.lua` 與 `FlowValidationHarness.lua` 完整補齊所有官方 Enum Mock 表，確保離線驗證完全同構。
+- 驗證結果：Lua 77/77、Flow all 86/86、Validation Contracts 497/497 全部通過，零退化。
+
+### 2026-09-06 EAM-20260906-DURATION-TEXT-BINDING：Warcraft Wiki 官方正式收錄 DurationTextBinding 規範對齊
+
+- 狀態：已對齊官方文檔；EAM 現行實作完全合規 (Lua 76/76, Flow 85/85, Contracts 497/497)。
+- 需求背景與問題分析：
+  1. Warcraft Wiki 官方正式釋出 Patch 12.0.7 / Midnight 新增之 ScriptObject `DurationTextBinding` (API systems/DurationTextBindingObjectAPI) 完整百科條目。
+  2. 先前 2026-05-29 實測時因社群尚未建立完整 Wiki 條目，部分釋放與擴展方法依賴 PTR 實測；需確認官方 30 個 API 簽名與 EAM 現行實作相容性。
+  3. 官方正式確認包含 30 個 C-Level ScriptObject API，無 `Unbind` 方法，標準釋放流程為 `Disable()` / `SetToDefaults()`。EAM `Core/DurationAdapter.lua` 完全命中官方標準。
+- 架構對齊與實施總結：
+  1. 文檔回填更新 `10_WARCRAFT_WIKI_12X_API_NOTES.md`，建立官方文檔連結。
+  2. 確認 EAM 現有 `DurationAdapter.lua` 與 `Renderer.lua` 雙軌倒數完全合規，以無參數 factory 建立並使用 `SetToDefaults` 安全回收。
+  3. 盤點未來可導入之官方能力：`SetTextColorCurve`（C-Level 零 GC 原生時間漸層變色）與 `binding:HasSecretValues()`（高精度秘密值識別）。
+
 ### 2026-09-04 EAM-20260904-PLAYERSTAT-DRAG-FORMAT-ARG4-NIL：拖曳移動單一屬性圖示報錯 bad argument #4 to 'format' 修復
 
 - 狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。
@@ -1742,3 +1898,112 @@
   - Lua 語法檢查：76/76 PASS。
   - Flow 狀態機測試：84/84 PASS。
   - Validation Contracts：496/496 PASS。
+
+### EAM-20260906-TIMER-COLOR-CURVE-AND-PALETTE：Retail 12.0.7 原生 SetTextColorCurve 剩餘秒數多階變色與調色盤自訂
+
+- 日期：2026-09-06。
+- 狀態：已完成代碼實作、Flow 狀態機測試 (86/86 PASS) 與全專案代碼契約檢驗 (497/497 PASS)；等待實機簽收。
+- 需求與設計：
+  - 少年欸反饋與指示：利用 Retail 12.0.7 / Midnight 新增的 `DurationTextBinding:SetTextColorCurve(curve, property)` 與 `C_CurveUtil.CreateColorCurve()`，完成過去無法完成的「指定剩餘秒數紅字」，並支援「多重條件在不同剩餘秒數顯示不同顏色」，顏色可透過遊戲內原生調色盤（Color Picker）自訂。
+- 官方 API 機制與調研：
+  1. `C_CurveUtil.CreateColorCurve()`：建立 `LuaColorCurve` 物件。
+  2. `curve:SetType(Enum.LuaCurveType.Step)`：階梯躍變型曲線（Step=1, Linear=0）。
+  3. `curve:AddPoint(seconds, CreateColor(r, g, b, a))`：依據剩餘秒數添加顏色節點，採「雙點防衛邊界（Two-Point Boundary Guard）」演算法（切換點微距 0.001s），消除曲線在步進與線性內插時的平滑模糊，確保數字精確銳利變色。
+  4. `binding:SetTextColorCurve(curve, Enum.DurationTextBindingProperty.RemainingDuration)`：將曲線單向注入 C 核心 TextBinding。
+- 有效解法：
+  1. **調色盤與色塊按鈕工廠（`UI/ColorPickerHelper.lua`）**：
+     - 提供 `EAM.UI.openColorPicker`，完美相容 12.x `SetupColorPickerAndShow` 與舊版 `ColorPickerFrame` 降級；
+     - 提供 `EAM.UI.createColorSwatchButton`，一鍵生成具備即時色塊渲染、外框陰影與點擊開啟調色盤的按鈕。
+  2. **資料層與 SavedVariables 規範化（`Core/SavedVariables.lua`）**：
+     - 新增 `timerColorCurve` 預設架構（`enabled=true`, 階段 1: 3s 紅色, 階段 2: 5s 黃色, normalColor: 白色）；
+     - 提供 `setTimerColorCurveEnabled`、`setTimerColorCurveStage`、`setTimerColorCurveNormalColor`，支援觸發 `EAM_TIMER_COLOR_CHANGED` 事件廣播。
+  3. **DurationAdapter 核心適配與弱引用動態熱更新（`Core/DurationAdapter.lua`）**：
+     - 實作 `buildColorCurve`、`buildSpellColorCurve`、`getActiveColorCurve`、`markColorCurveDirty`；
+     - 使用弱引用表 `activeBindings` 與 `bindingCustomCurves` 追蹤活動中的 TextBinding，當設定變更時立即熱更新至所有現存圖示；
+     - 在 `createTextBinding` 支援傳入 `customCurve`，若技能有獨立紅字秒數與顏色優先套用專屬曲線。
+  4. **雙軌渲染與降級支援（`UI/Renderer.lua`）**：
+     - 原生 12.x C 核心管道：自動套用專屬或全域 `ColorCurve`；
+     - 傳統 Numeric 管道：在 `onLegacyTimerUpdate` 中支援優先套用 `icon.countdownRedLimit` / `icon.countdownRedColor`，並降級支援 `timerColorCurve` 多階變色與 `normalColor`。
+  5. **設定介面與 5 語系字典完整對齊（`UI/Options.lua` & `Locale/*.lua`）**：
+     - 單一法術細節視窗（`condFrame`）：為 `redLimitSlider` 增設 `redColorBtn` 色塊按鈕，可自訂單一技能紅字門檻與專屬顏色；
+     - 外觀與位置設定面板（`posFrame`）：高度適度擴充為 710px，底部新增「倒數文字變色 (Color Curve)」控制區塊，包含總開關、正常顏色色塊、緊急警戒 (<= 秒數) 滑桿與色塊、預警提示 (<= 秒數) 滑桿與色塊、說明文字標籤與重置預設值連動；
+     - 5 大語系（zhTW, zhCN, enUS, koKR, ruRU）同步新增 6 個鍵值，契約斷言 100% 綠燈。
+- 驗證：
+  - Lua 語法檢查：77/77 PASS。
+  - Flow 狀態機測試：86/86 PASS（新增 `ui.timer_color_curve.roundtrip_and_build`）。
+  - Validation Contracts：497/497 PASS。
+
+### ISSUE-084: ESC 鍵無損純透明度 (Zero-Alpha) 告警抑制、預渲染保護與 SavedVariables 自動時間戳蓋章
+- 日期：2026-09-12
+- 現象與挑戰：
+  1. 玩家在遊戲中按 ESC 鍵若調用傳統 `Hide()`，會中斷底層冷卻動畫、摧毀或重置 Frame 物件與排版佇列，並破壞預渲染佔位。
+  2. 若改為「進戰鬥瞬間預渲染」，因戰鬥中暴雪安全沙盒限制，呼叫 `CreateFrame` 可能引發 Taint 或失敗，破壞戰鬥流暢度。
+  3. 多個 PTR WTF 帳號存檔路徑（如 `17194784#5`, `#3`, `#2`）需要建立精確的時間戳鑑別機制。
+- 有效解法：
+  1. **ESC 鍵無損純透明度抑制（`UI/Renderer.lua`）**：
+     - 透過 `UISpecialFrames` 註冊 1x1 隱形框架 `EAM_EscAlertCloseFrame`，在所有設定視窗關閉時響應 ESC 鍵；
+     - 觸發時執行 `Renderer.suppressAlerts("ESC_KEY")`，將所有現存告警圖示設為 `icon:SetAlpha(0)`（包含 Native Aura 容器），**絕不銷毀 Frame、絕不調用 `Hide()`、絕不重置 2D 矩陣**；
+     - 戰鬥中安全守衛：實裝 `ensureEscCloseFrame()`，戰鬥中嚴禁調用 `CreateFrame`，離戰時自動安全補齊。
+  2. **自動解除抑制（Unsuppress）**：
+     - 當新告警觸發（`alertState.shown == true`）、進入戰鬥（`PLAYER_REGEN_DISABLED`）、打開設定面板（`/eam opt`）或修改設定時，自動呼叫 `Renderer.unsuppressAlerts()` 還原所有圖示透明度。
+  3. **SavedVariables 存檔自動蓋章（`Core/SavedVariables.lua`）**：
+     - 在 `EAM_DB.meta` 擴充 `lastSavedAt`（ISO 8601 本地時間字串）、`lastSavedEpoch`（Unix 時間戳）、`addonVersion`；
+     - 於 `PLAYER_LOGOUT`、`touchRevision` 與版本遷移時自動更新，精確可視化存檔時間。
+  4. **五國語言字典（`Locale/*.lua`）**：
+     - `zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 同步對齊 `EAM_OPT_ALLOW_ESC` 與 `EAM_OPT_ALLOW_ESC_TIP`。
+- 驗證：
+  - Lua 語法檢查：77/77 PASS。
+  - Flow 狀態機測試：86/86 PASS（含戰鬥延遲創建安全斷言 `ui.renderer.combat_initialize_prewarm_deferred`）。
+  - Validation Contracts：497/497 PASS。
+
+### ISSUE-085: 角色屬性面板 4-Tab 模組化防遮擋排版、職業資源垂直狀態條向上生長與獨立效果預覽視窗實裝
+- 日期：2026-09-12
+- 現象與挑戰：
+  1. 角色屬性面板（`PlayerStatPanel`）垂直堆疊過多滑桿，暴雪原生 `OptionsSliderTemplate` 的 Low/High 標籤與下方元件嚴重重疊遮擋。
+  2. 職業資源狀態條在設定為垂直（`VERTICAL`）模式時無法向上正常生長，點數分隔線與槽位條方向未適配。
+  3. 各設定畫面缺乏專屬預覽視窗，玩家無法即時觀察倒數變色曲線、金光 Proc、Pandemic 綠框與屬性數值效果。
+- 有效解法：
+  1. **屬性面板 4-Tab 模組化（`UI/PlayerStatPanel.lua`）**：
+     - 面板擴大為 720x540，重構為「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大分頁；
+     - 滑桿間距拉開至 50~60px，徹底消除遮擋；保留無縫側窗吸附與聯動拖曳。
+  2. **垂直資源狀態條向上生長修復（`UI/PowerRenderer.lua`）**：
+     - 轉置寬高，調用 `SetRotatesTexture(true)` 旋轉暴雪原生 StatusBar 材質；
+     - 將圖示錨定於底部，狀態條向上生長，並轉置點數分隔線與槽位條。
+  3. **獨立即時效果預覽小視窗（`UI/PreviewPanel.lua`）**：
+     - 實裝獨立可拖曳視窗 `PreviewPanel`，提供「告警圖示」、「職業資源」、「角色屬性」3 大頁籤；
+     - 支援倒數變色曲線滑桿、Proc 金光、Pandemic 綠框、充能百分比與屬性項目即時測試；
+     - 主設定、常規排版、職業資源與屬性面板全面增設 `[效果預覽]` 按鈕。
+  4. **五國語言字典（`Locale/*.lua`）**：
+     - 100% 同步新增 19 個預覽與頁籤詞條。
+- 驗證：
+  - Lua 語法檢查：78/78 PASS。
+  - Flow 狀態機測試：86/86 PASS。
+  - Validation Contracts：497/497 PASS。
+
+### ISSUE-086: 11 大復古與現代主題調色盤深度考證、Modern WoW 垂直漸層渲染修復與全子視窗主題統一
+- 日期：2026-09-12
+- 現象與挑戰：
+  1. FF7 主題的經典皇家寶石藍至黑海軍藍垂直漸層在 Retail 10.x/11.x/12.x 中失效不見。
+  2. EAM 預設主題需精準還原 9.0.1 經典石板金屬金框與晶石深紅立體按鈕。
+  3. 其他 9 大主題（WinXP, Win7, Win10, Win3.1, Borland, DOS CRT, 倚天, Red Alert, Aqua）需深度考證還原其經典特色。
+  4. 諸多子視窗（位置與能量設定 `posInner`、法術清單設定 `listInner`、群組管理 `GroupManagerPanel`、全量法術庫 `SpellCatalogTreePanel`、屬性面板下拉選單）未套用主題，存在脫節的暗棕色/灰黑方塊。
+- 有效解法：
+  1. **11 大主題調色盤深度考證（`UI/Theme.lua`）**：
+     - EAM：經典石板黑褐底 `(0.08, 0.06, 0.05)`、金屬金框 `(0.65, 0.50, 0.25)` 與晶石深紅按鈕 `(0.55, 0.10, 0.08)`；
+     - FF7：純白立體邊框 `(1.0, 1.0, 1.0)`、頂部皇家寶石藍 `(0.00, 0.12, 0.85)` 至底部黑海軍藍 `(0.00, 0.01, 0.10)` 垂直漸層、深藍晶透按鈕純白字；
+     - WinXP (Luna 藍)、Win7 (Aero 玻璃漸層)、Win10 (Metro 磁貼平整)、Win3.1 (灰白 3D 凸面按鈕)、Borland (DOS 藍底黃字)、DOS CRT (P1 磷光綠純黑底)、倚天中文 (ETen 藍底明黃字)、Red Alert (裝甲灰黑深紅框)、Aqua (果凍膠囊藍漸層)。
+  2. **Modern WoW 垂直漸層渲染管線修復（`UI/Theme.lua`）**：
+     - 徹底移除 `SetColorTexture(1, 1, 1, 1)` 頂點著色器衝突，改採 `SetTexture("Interface\\Buttons\\WHITE8X8")` 並設於 `BACKGROUND, 1` 圖層，完美相容原生 `Texture:SetGradient("VERTICAL", cMin, cMax)`；
+     - 修正垂直漸層方向映射，確保頂部皇家藍與底部黑海軍藍對比鮮明。
+  3. **實裝 `Theme.applyContainerBackground` 與全子視窗主題註冊**：
+     - 在 `UI/Theme.lua` 新增 `Theme.applyContainerBackground(frame, roleOrIsPanel)`，支援 `"window"`、`"panel"`、`"row"`、`"menu"` 等角色；
+     - 支援 `"row"` 輕量列表行角色，保留清晰文字同時避免過度漸層；
+     - `Options.lua`：`posInner` 與 `listInner` 註冊為 `"panel"`，`previewBtn` 改為 `registerButton`；
+     - `GroupManagerPanel.lua`：主視窗與左右容器註冊主題，列表行使用 `"row"`；
+     - `SpellCatalogTreePanel.lua`：主視窗與樹狀容器註冊主題，`modMenu` 註冊為 `"menu"`，列表行使用 `"row"`；
+     - `PlayerStatPanel.lua`：`growDirMenu` 註冊為 `"menu"`。
+- 驗證：
+  - Lua 語法檢查：78/78 PASS。
+  - Flow 狀態機測試：86/86 PASS。
+  - Validation Contracts：497/497 PASS。
+

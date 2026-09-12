@@ -98,6 +98,11 @@ EAM.Modules.SavedVariables = SavedVariables
 local defaults = {
     schemaVersion = EAM.Constants.SCHEMA_VERSION,
     revision = 0,
+    meta = {
+        lastSavedAt = "",
+        lastSavedEpoch = 0,
+        addonVersion = "12.1.0",
+    },
     debug = false,
     profiles = {
         classes = {},
@@ -174,12 +179,28 @@ local defaults = {
                 fontSize = 12,
             },
         },
+        timerColorCurve = {
+            enabled = true,
+            stages = {
+                { threshold = 3, color = { 1.0, 0.15, 0.15, 1.0 } },
+                { threshold = 5, color = { 1.0, 0.82, 0.0, 1.0 } },
+            },
+            normalColor = { 1.0, 1.0, 1.0, 1.0 },
+        },
         cooldownShadow = true,
-        cooldownSwipeAlpha = 1,
+        cooldownSwipeAlpha = 0.8,
+        cooldownSwipeColor = { r = 0.0, g = 0.0, b = 0.0 },
+        cooldownProgressCurve = "LINEAR",
         chargeBarLayout = "BOTTOM",
         chargeBarLengthPercent = 150,
         chargeBarThickness = 8,
+        auraStackBar = true,
+        minApplications = 1,
+        overdriveGlow = true,
         nativeAuraDualCountdownProbe = false,
+        resourceDynamicColor = true,
+        lowHealthFlash = true,
+        lowHealthThreshold = 0.35,
         
         -- 職業特殊能量 (20種)
         powerHoly = true,
@@ -968,6 +989,46 @@ local function normalizeChargeBarConfig(db)
     config.chargeBarThickness = mathFloor(thickness + 0.5)
 end
 
+local function normalizeCooldownSwipeColor(color)
+    if type(color) ~= "table" then
+        return { r = 0.0, g = 0.0, b = 0.0 }
+    end
+    local r = tonumber(color.r)
+    local g = tonumber(color.g)
+    local b = tonumber(color.b)
+    if not EAM.Util.isSafeNumber(r) or not EAM.Util.isSafeNumber(g) or not EAM.Util.isSafeNumber(b) then
+        return { r = 0.0, g = 0.0, b = 0.0 }
+    end
+    r = math.min(1.0, math.max(0.0, r))
+    g = math.min(1.0, math.max(0.0, g))
+    b = math.min(1.0, math.max(0.0, b))
+    return { r = r, g = g, b = b }
+end
+
+local function normalizeCooldownSwipeConfig(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+
+    local alpha = config.cooldownSwipeAlpha
+    if not EAM.Util.isSafeNumber(alpha) then
+        alpha = 0.8
+    elseif alpha < 0 then
+        alpha = 0
+    elseif alpha > 1 then
+        alpha = 1
+    end
+    if config.cooldownSwipeColor == nil then
+        if config.cooldownSwipeAlpha == 1 then
+            alpha = 0.8
+        end
+        config.cooldownSwipeColor = { r = 0.0, g = 0.0, b = 0.0 }
+    else
+        config.cooldownSwipeColor = normalizeCooldownSwipeColor(config.cooldownSwipeColor)
+    end
+    config.cooldownSwipeAlpha = alpha
+end
+
+
 local function normalizeTextLayout(db, preserveLegacy)
     local config = type(db.config) == "table" and db.config or {}
     db.config = config
@@ -1021,6 +1082,50 @@ local function migrateV2ToV3(db)
     end
     normalizeTextLayout(db, true)
     db.schemaVersion = 3
+end
+
+local function normalizeTimerColorCurve(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+    local tcc = type(config.timerColorCurve) == "table" and config.timerColorCurve or {}
+    config.timerColorCurve = tcc
+
+    if tcc.enabled == nil then
+        tcc.enabled = true
+    else
+        tcc.enabled = tcc.enabled == true
+    end
+
+    if type(tcc.stages) ~= "table" then
+        tcc.stages = {
+            { threshold = 3, color = { 1.0, 0.15, 0.15, 1.0 } },
+            { threshold = 5, color = { 1.0, 0.82, 0.0, 1.0 } },
+        }
+    else
+        for i = 1, #tcc.stages do
+            local stage = tcc.stages[i]
+            if type(stage) == "table" then
+                stage.threshold = tonumber(stage.threshold) or (i * 3)
+                if type(stage.color) ~= "table" then
+                    stage.color = (i == 1) and { 1.0, 0.15, 0.15, 1.0 } or { 1.0, 0.82, 0.0, 1.0 }
+                else
+                    stage.color[1] = tonumber(stage.color[1]) or 1.0
+                    stage.color[2] = tonumber(stage.color[2]) or 1.0
+                    stage.color[3] = tonumber(stage.color[3]) or 1.0
+                    stage.color[4] = tonumber(stage.color[4]) or 1.0
+                end
+            end
+        end
+    end
+
+    if type(tcc.normalColor) ~= "table" then
+        tcc.normalColor = { 1.0, 1.0, 1.0, 1.0 }
+    else
+        tcc.normalColor[1] = tonumber(tcc.normalColor[1]) or 1.0
+        tcc.normalColor[2] = tonumber(tcc.normalColor[2]) or 1.0
+        tcc.normalColor[3] = tonumber(tcc.normalColor[3]) or 1.0
+        tcc.normalColor[4] = tonumber(tcc.normalColor[4]) or 1.0
+    end
 end
 
 local function normalizeGroundDurationMode(value)
@@ -1467,6 +1572,60 @@ local function normalizeProfileAuraSounds(db)
     return changed
 end
 
+local function normalizeTimerColorCurve(db)
+    local config = db and db.config
+    if type(config) ~= "table" then
+        return false
+    end
+    if type(config.timerColorCurve) ~= "table" then
+        config.timerColorCurve = copySerializable(defaults.config.timerColorCurve)
+        return true
+    end
+    local tcc = config.timerColorCurve
+    if tcc.enabled == nil then
+        tcc.enabled = true
+    end
+    if type(tcc.stages) ~= "table" then
+        tcc.stages = copySerializable(defaults.config.timerColorCurve.stages)
+    end
+    if type(tcc.normalColor) ~= "table" then
+        tcc.normalColor = { 1.0, 1.0, 1.0, 1.0 }
+    end
+    return false
+end
+
+local function normalizeCurveFeatures(db)
+    local config = db and db.config
+    if type(config) ~= "table" then
+        return false
+    end
+    if config.cooldownProgressCurve ~= "LINEAR"
+        and config.cooldownProgressCurve ~= "CUBIC"
+        and config.cooldownProgressCurve ~= "COSINE"
+    then
+        config.cooldownProgressCurve = "LINEAR"
+    end
+    if config.resourceDynamicColor == nil then
+        config.resourceDynamicColor = true
+    end
+    if config.lowHealthFlash == nil then
+        config.lowHealthFlash = true
+    end
+    if type(config.lowHealthThreshold) ~= "number" or config.lowHealthThreshold <= 0 or config.lowHealthThreshold >= 1 then
+        config.lowHealthThreshold = 0.35
+    end
+    if config.auraStackBar == nil then
+        config.auraStackBar = true
+    end
+    if type(config.minApplications) ~= "number" or config.minApplications < 1 or config.minApplications > 20 then
+        config.minApplications = 1
+    end
+    if config.overdriveGlow == nil then
+        config.overdriveGlow = true
+    end
+    return false
+end
+
 local function buildAlertID(kind, unit, spellID, itemID)
     if kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
         if not itemID then
@@ -1514,11 +1673,40 @@ local function getAlertList(db, kind, unit, classToken)
     return nil
 end
 
+local function stampLastSaved(db)
+    local target = db or EAM.db or EAM_DB
+    if type(target) ~= "table" then return end
+    target.meta = target.meta or {}
+    if date then
+        local ok, dateStr = pcall(date, "%Y-%m-%d %H:%M:%S")
+        if ok and type(dateStr) == "string" then
+            target.meta.lastSavedAt = dateStr
+        end
+    end
+    if time then
+        local ok, epoch = pcall(time)
+        if ok and type(epoch) == "number" then
+            target.meta.lastSavedEpoch = epoch
+        end
+    end
+    local getBuild = (api and api.GetBuildInfo) or GetBuildInfo
+    if type(getBuild) == "function" then
+        local ok, ver, build, dateStr, iface = pcall(getBuild)
+        if ok then
+            target.meta.clientBuild = build
+            target.meta.clientInterface = iface
+        end
+    end
+    target.meta.addonVersion = "12.1.0"
+end
+SavedVariables.stampLastSaved = stampLastSaved
+
 local function touchRevision(db)
     if not db then
         return
     end
     db.revision = (db.revision or 0) + 1
+    stampLastSaved(db)
 end
 
 local function copyMissingDefaults(target, source)
@@ -1788,6 +1976,9 @@ function SavedVariables.initialize()
     normalizeCooldownBehaviorLists(EAM_DB)
     normalizeAuraPriorities(EAM_DB)
     normalizeProfileAuraSounds(EAM_DB)
+    normalizeTimerColorCurve(EAM_DB)
+    normalizeCurveFeatures(EAM_DB)
+    normalizeCooldownSwipeConfig(EAM_DB)
 
     -- 多框架升級相容與舊坐標遷移
     if EAM_DB.layout then
@@ -1830,6 +2021,14 @@ function SavedVariables.initialize()
 
     importLegacyTables(EAM_DB)
     seedActiveProfileDefaults(activeProfile, activeClassToken)
+    stampLastSaved(EAM_DB)
+
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router and router.register then
+        router.register("PLAYER_LOGOUT", function()
+            stampLastSaved(EAM.db or EAM_DB)
+        end)
+    end
 
     return EAM_DB
 end
@@ -2652,6 +2851,7 @@ function SavedVariables.applyProfileImport(classToken, moduleRecordsOrPayload, m
         if layoutData.fontSizeTimeVal ~= nil then db.config.fontSizeTimeVal = layoutData.fontSizeTimeVal end
         if layoutData.fontSizeStack ~= nil then db.config.fontSizeStack = layoutData.fontSizeStack end
         if layoutData.cooldownSwipeAlpha ~= nil then db.config.cooldownSwipeAlpha = layoutData.cooldownSwipeAlpha end
+        if type(layoutData.cooldownSwipeColor) == "table" then db.config.cooldownSwipeColor = copySerializable(layoutData.cooldownSwipeColor) end
         if layoutData.selfDebuffRed ~= nil then db.config.selfDebuffRed = layoutData.selfDebuffRed end
         if layoutData.targetDebuffGreen ~= nil then db.config.targetDebuffGreen = layoutData.targetDebuffGreen end
         if layoutData.bossExecuteThreshold ~= nil then db.config.bossExecuteThreshold = layoutData.bossExecuteThreshold end
@@ -3003,4 +3203,101 @@ function SavedVariables.updateAlertGroups(kind, unit, spellID, itemID, groups)
     touchRevision(EAM.db)
     return true, "updated", EAM.db.revision
 end
+
+function SavedVariables.getTimerColorCurve()
+    if type(EAM.db) ~= "table" or type(EAM.db.config) ~= "table" then
+        return defaults.config.timerColorCurve
+    end
+    return EAM.db.config.timerColorCurve
+end
+
+function SavedVariables.setTimerColorCurveEnabled(enabled)
+    if type(EAM.db) ~= "table" or type(EAM.db.config) ~= "table" then
+        return false, "databaseUnavailable"
+    end
+    EAM.db.config.timerColorCurve.enabled = enabled == true
+    touchRevision(EAM.db)
+    if EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_TIMER_COLOR_CHANGED", EAM.db.config.timerColorCurve)
+    end
+    return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.setTimerColorCurveStage(index, threshold, color)
+    if type(EAM.db) ~= "table" or type(EAM.db.config) ~= "table" then
+        return false, "databaseUnavailable"
+    end
+    local tcc = EAM.db.config.timerColorCurve
+    if not tcc or not tcc.stages or not tcc.stages[index] then
+        return false, "invalidStageIndex"
+    end
+    if threshold ~= nil then
+        tcc.stages[index].threshold = tonumber(threshold) or tcc.stages[index].threshold
+    end
+    if type(color) == "table" then
+        tcc.stages[index].color = tcc.stages[index].color or {}
+        tcc.stages[index].color[1] = tonumber(color[1]) or tcc.stages[index].color[1] or 1.0
+        tcc.stages[index].color[2] = tonumber(color[2]) or tcc.stages[index].color[2] or 1.0
+        tcc.stages[index].color[3] = tonumber(color[3]) or tcc.stages[index].color[3] or 1.0
+        tcc.stages[index].color[4] = tonumber(color[4]) or tcc.stages[index].color[4] or 1.0
+    end
+    touchRevision(EAM.db)
+    if EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_TIMER_COLOR_CHANGED", tcc)
+    end
+    return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.setTimerColorCurveNormalColor(color)
+    if type(EAM.db) ~= "table" or type(EAM.db.config) ~= "table" then
+        return false, "databaseUnavailable"
+    end
+    local tcc = EAM.db.config.timerColorCurve
+    if not tcc or not tcc.normalColor then
+        return false, "invalidConfig"
+    end
+    if type(color) == "table" then
+        tcc.normalColor[1] = tonumber(color[1]) or tcc.normalColor[1] or 1.0
+        tcc.normalColor[2] = tonumber(color[2]) or tcc.normalColor[2] or 1.0
+        tcc.normalColor[3] = tonumber(color[3]) or tcc.normalColor[3] or 1.0
+        tcc.normalColor[4] = tonumber(color[4]) or tcc.normalColor[4] or 1.0
+    end
+    touchRevision(EAM.db)
+    if EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_TIMER_COLOR_CHANGED", tcc)
+    end
+    return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.getCooldownSwipeColor()
+    local config = EAM.db and EAM.db.config
+    local color = config and config.cooldownSwipeColor
+    if type(color) == "table" then
+        return {
+            r = tonumber(color.r) or 0.0,
+            g = tonumber(color.g) or 0.0,
+            b = tonumber(color.b) or 0.0,
+        }
+    end
+    return { r = 0.0, g = 0.0, b = 0.0 }
+end
+
+function SavedVariables.setCooldownSwipeColor(color)
+    if type(EAM.db) ~= "table" or type(EAM.db.config) ~= "table" then
+        return false, "databaseUnavailable"
+    end
+    local normalized = normalizeCooldownSwipeColor(color)
+    local cur = EAM.db.config.cooldownSwipeColor
+    if cur and cur.r == normalized.r and cur.g == normalized.g and cur.b == normalized.b then
+        return true, "unchanged", EAM.db.revision
+    end
+    EAM.db.config.cooldownSwipeColor = normalized
+    touchRevision(EAM.db)
+    if EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_COOLDOWN_SWIPE_CHANGED", normalized)
+    end
+    return true, "updated", EAM.db.revision
+end
+
+
 

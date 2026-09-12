@@ -82,20 +82,20 @@ local palettes = freeze({
                 { left = 3, right = 3, top = 3, bottom = 3 }
             )),
         }),
-        background = color(0.06, 0.06, 0.08, 0.96),
-        border = color(0.78, 0.61, 0.35, 1),
-        panelBackground = color(0.04, 0.04, 0.05, 0.85),
-        panelBorder = color(0.45, 0.35, 0.25, 0.85),
-        menuBackground = color(0.05, 0.05, 0.06, 0.98),
+        background = color(0.08, 0.06, 0.05, 0.95),
+        border = color(0.82, 0.65, 0.35, 1),
+        panelBackground = color(0.05, 0.04, 0.03, 0.88),
+        panelBorder = color(0.50, 0.38, 0.22, 0.90),
+        menuBackground = color(0.05, 0.04, 0.03, 0.98),
         menuBorder = color(0.65, 0.48, 0.25, 1),
         titleText = color(1.00, 0.82, 0.00, 1),
-        bodyText = color(0.95, 0.95, 0.92, 1),
-        buttonNormal = color(0.70, 0.12, 0.08, 1),
-        buttonHighlight = color(0.95, 0.22, 0.12, 1),
-        buttonPushed = color(0.42, 0.06, 0.04, 1),
+        bodyText = color(0.95, 0.95, 0.90, 1),
+        buttonNormal = color(0.68, 0.10, 0.08, 1),
+        buttonHighlight = color(0.95, 0.22, 0.10, 1),
+        buttonPushed = color(0.38, 0.05, 0.04, 1),
         buttonDisabled = color(0.24, 0.16, 0.16, 1),
-        buttonBorder = color(0.32, 0.46, 0.44, 1),
-        buttonText = color(1.00, 1.00, 1.00, 1),
+        buttonBorder = color(0.60, 0.46, 0.25, 1),
+        buttonText = color(1.00, 0.98, 0.92, 1),
         buttonDisabledText = color(0.55, 0.55, 0.55, 1),
     }),
     ff7 = freeze({
@@ -103,18 +103,18 @@ local palettes = freeze({
         backdrops = freeze({
             window = freeze(backdrop(
                 "Interface\\ChatFrame\\ChatFrameBackground",
-                "Interface\\DialogFrame\\UI-DialogBox-Border",
+                "Interface\\Tooltips\\UI-Tooltip-Border",
                 true,
-                32,
-                32,
-                { left = 8, right = 8, top = 8, bottom = 8 }
+                16,
+                16,
+                { left = 6, right = 6, top = 6, bottom = 6 }
             )),
             panel = freeze(backdrop(
                 "Interface\\ChatFrame\\ChatFrameBackground",
                 "Interface\\Tooltips\\UI-Tooltip-Border",
                 true,
-                16,
-                16,
+                12,
+                12,
                 { left = 4, right = 4, top = 4, bottom = 4 }
             )),
             menu = freeze(backdrop(
@@ -126,19 +126,25 @@ local palettes = freeze({
                 { left = 3, right = 3, top = 3, bottom = 3 }
             )),
         }),
-        background = color(0.008, 0.012, 0.20, 0.98),
-        border = color(0.12, 0.86, 1.00, 1),
-        panelBackground = color(0.025, 0.055, 0.22, 0.96),
-        panelBorder = color(0.28, 0.72, 1.00, 1),
-        menuBackground = color(0.008, 0.018, 0.12, 0.99),
-        menuBorder = color(0.72, 0.88, 1.00, 1),
-        titleText = color(1.00, 0.90, 0.34, 1),
-        bodyText = color(0.88, 0.96, 1.00, 1),
-        buttonNormal = color(0.05, 0.18, 0.48, 1),
-        buttonHighlight = color(0.10, 0.78, 1.00, 1),
-        buttonPushed = color(0.025, 0.08, 0.27, 1),
+        background = color(0.00, 0.02, 0.18, 0.98),
+        border = color(1.00, 1.00, 1.00, 1),
+        panelBackground = color(0.00, 0.02, 0.16, 0.96),
+        panelBorder = color(1.00, 1.00, 1.00, 1),
+        menuBackground = color(0.00, 0.01, 0.12, 0.99),
+        menuBorder = color(1.00, 1.00, 1.00, 1),
+        gradient = freeze({
+            orientation = "VERTICAL",
+            top = color(0.00, 0.12, 0.85, 0.98),
+            bottom = color(0.00, 0.01, 0.10, 0.98),
+        }),
+        titleText = color(1.00, 0.92, 0.40, 1),
+        bodyText = color(1.00, 1.00, 1.00, 1),
+        buttonNormal = color(0.04, 0.14, 0.44, 0.92),
+        buttonHighlight = color(0.15, 0.65, 1.00, 1),
+        buttonPushed = color(0.02, 0.06, 0.22, 1),
         buttonDisabled = color(0.12, 0.16, 0.25, 1),
-        buttonText = color(0.92, 0.98, 1.00, 1),
+        buttonBorder = color(1.00, 1.00, 1.00, 1),
+        buttonText = color(1.00, 1.00, 1.00, 1),
         buttonDisabledText = color(0.48, 0.58, 0.70, 1),
         buttonHighlightBlend = "ADD",
         buttonHighlightAlpha = 1,
@@ -151,7 +157,7 @@ local palettes = freeze({
                 "Interface\\Buttons\\WHITE8X8",
                 false,
                 1,
-                2,
+                3,
                 { left = 5, right = 5, top = 5, bottom = 5 }
             )),
             panel = freeze(backdrop(
@@ -159,7 +165,7 @@ local palettes = freeze({
                 "Interface\\Buttons\\WHITE8X8",
                 false,
                 1,
-                1,
+                2,
                 { left = 3, right = 3, top = 3, bottom = 3 }
             )),
             menu = freeze(backdrop(
@@ -171,36 +177,43 @@ local palettes = freeze({
                 { left = 2, right = 2, top = 2, bottom = 2 }
             )),
         }),
-        background = color(0.74, 0.80, 0.90, 0.98),
-        border = color(0.10, 0.30, 0.70, 1),
-        panelBackground = color(0.86, 0.89, 0.94, 0.98),
-        panelBorder = color(0.30, 0.48, 0.78, 1),
-        menuBackground = color(0.96, 0.97, 0.99, 0.99),
-        menuBorder = color(0.10, 0.30, 0.70, 1),
-        titleText = color(0.03, 0.12, 0.35, 1),
-        bodyText = color(0.05, 0.07, 0.12, 1),
-        buttonNormal = color(0.16, 0.42, 0.82, 1),
-        buttonHighlight = color(0.36, 0.66, 0.98, 1),
-        buttonPushed = color(0.08, 0.24, 0.60, 1),
+        background = color(0.92, 0.91, 0.86, 0.98),
+        border = color(0.00, 0.33, 0.88, 1),
+        panelBackground = color(0.96, 0.95, 0.92, 0.98),
+        panelBorder = color(0.00, 0.33, 0.88, 1),
+        menuBackground = color(0.98, 0.98, 0.98, 0.99),
+        menuBorder = color(0.00, 0.33, 0.88, 1),
+        titleText = color(0.00, 0.22, 0.65, 1),
+        bodyText = color(0.05, 0.05, 0.08, 1),
+        buttonNormal = color(0.88, 0.92, 0.96, 1),
+        buttonHighlight = color(0.75, 0.88, 1.00, 1),
+        buttonPushed = color(0.78, 0.82, 0.88, 1),
         buttonDisabled = color(0.52, 0.56, 0.64, 1),
-        buttonText = color(1.00, 1.00, 1.00, 1),
-        buttonDisabledText = color(0.70, 0.72, 0.78, 1),
+        buttonBorder = color(0.00, 0.24, 0.45, 1),
+        buttonText = color(0.00, 0.00, 0.00, 1),
+        buttonDisabledText = color(0.50, 0.50, 0.50, 1),
     }),
     win7 = freeze({
         label = "Windows 7",
         backdrops = flatBackdrops,
-        background = color(0.10, 0.28, 0.48, 0.96),
-        border = color(0.52, 0.84, 1.00, 1),
-        panelBackground = color(0.18, 0.34, 0.52, 0.95),
-        panelBorder = color(0.60, 0.82, 0.98, 1),
-        menuBackground = color(0.08, 0.20, 0.34, 0.99),
+        background = color(0.08, 0.22, 0.42, 0.80),
+        border = color(0.55, 0.85, 1.00, 0.90),
+        panelBackground = color(0.12, 0.28, 0.48, 0.85),
+        panelBorder = color(0.55, 0.85, 1.00, 0.90),
+        menuBackground = color(0.08, 0.20, 0.34, 0.95),
         menuBorder = color(0.64, 0.88, 1.00, 1),
+        gradient = freeze({
+            orientation = "VERTICAL",
+            top = color(0.18, 0.42, 0.70, 0.85),
+            bottom = color(0.06, 0.16, 0.32, 0.85),
+        }),
         titleText = color(1.00, 1.00, 1.00, 1),
-        bodyText = color(0.92, 0.97, 1.00, 1),
-        buttonNormal = color(0.10, 0.42, 0.72, 1),
-        buttonHighlight = color(0.30, 0.68, 1.00, 1),
-        buttonPushed = color(0.06, 0.24, 0.50, 1),
+        bodyText = color(0.94, 0.97, 1.00, 1),
+        buttonNormal = color(0.12, 0.35, 0.62, 0.85),
+        buttonHighlight = color(0.25, 0.65, 0.95, 0.95),
+        buttonPushed = color(0.08, 0.22, 0.45, 0.90),
         buttonDisabled = color(0.30, 0.38, 0.48, 1),
+        buttonBorder = color(0.50, 0.80, 1.00, 0.90),
         buttonText = color(1.00, 1.00, 1.00, 1),
         buttonDisabledText = color(0.62, 0.70, 0.78, 1),
         buttonHighlightBlend = "ADD",
@@ -209,38 +222,40 @@ local palettes = freeze({
     win10 = freeze({
         label = "Windows 10",
         backdrops = flatBackdrops,
-        background = color(0.06, 0.07, 0.08, 0.99),
+        background = color(0.12, 0.12, 0.12, 0.98),
         border = color(0.00, 0.47, 0.84, 1),
-        panelBackground = color(0.11, 0.12, 0.14, 0.98),
+        panelBackground = color(0.16, 0.16, 0.16, 0.98),
         panelBorder = color(0.00, 0.47, 0.84, 1),
-        menuBackground = color(0.08, 0.09, 0.10, 0.99),
+        menuBackground = color(0.14, 0.14, 0.14, 0.99),
         menuBorder = color(0.00, 0.55, 0.95, 1),
-        titleText = color(0.20, 0.68, 1.00, 1),
+        titleText = color(0.00, 0.55, 0.95, 1),
         bodyText = color(0.94, 0.95, 0.96, 1),
-        buttonNormal = color(0.00, 0.38, 0.68, 1),
-        buttonHighlight = color(0.00, 0.55, 0.95, 1),
-        buttonPushed = color(0.00, 0.22, 0.42, 1),
+        buttonNormal = color(0.20, 0.20, 0.20, 1),
+        buttonHighlight = color(0.00, 0.47, 0.84, 1),
+        buttonPushed = color(0.00, 0.35, 0.62, 1),
         buttonDisabled = color(0.24, 0.25, 0.27, 1),
+        buttonBorder = color(0.00, 0.47, 0.84, 1),
         buttonText = color(1.00, 1.00, 1.00, 1),
         buttonDisabledText = color(0.58, 0.60, 0.62, 1),
     }),
     win31 = freeze({
         label = "Windows 3.1",
         backdrops = flatBackdrops,
-        background = color(0.72, 0.72, 0.72, 0.99),
-        border = color(0.00, 0.00, 0.50, 1),
-        panelBackground = color(0.82, 0.82, 0.82, 0.99),
-        panelBorder = color(0.00, 0.00, 0.50, 1),
-        menuBackground = color(0.88, 0.88, 0.88, 0.99),
-        menuBorder = color(0.00, 0.00, 0.50, 1),
+        background = color(0.75, 0.75, 0.75, 1.0),
+        border = color(0.00, 0.00, 0.00, 1),
+        panelBackground = color(0.75, 0.75, 0.75, 1.0),
+        panelBorder = color(0.00, 0.00, 0.00, 1),
+        menuBackground = color(0.85, 0.85, 0.85, 1.0),
+        menuBorder = color(0.00, 0.00, 0.00, 1),
         titleText = color(0.00, 0.00, 0.50, 1),
         bodyText = color(0.00, 0.00, 0.00, 1),
-        buttonNormal = color(0.00, 0.00, 0.50, 1),
-        buttonHighlight = color(0.00, 0.00, 0.78, 1),
-        buttonPushed = color(0.00, 0.00, 0.30, 1),
+        buttonNormal = color(0.75, 0.75, 0.75, 1),
+        buttonHighlight = color(0.85, 0.85, 0.85, 1),
+        buttonPushed = color(0.60, 0.60, 0.60, 1),
         buttonDisabled = color(0.50, 0.50, 0.50, 1),
-        buttonText = color(1.00, 1.00, 1.00, 1),
-        buttonDisabledText = color(0.75, 0.75, 0.75, 1),
+        buttonBorder = color(0.00, 0.00, 0.00, 1),
+        buttonText = color(0.00, 0.00, 0.00, 1),
+        buttonDisabledText = color(0.45, 0.45, 0.45, 1),
     }),
     borland = freeze({
         label = "Borland C++ IDE",
@@ -249,19 +264,20 @@ local palettes = freeze({
             panel = freeze(backdrop("Interface\\Buttons\\WHITE8X8", "Interface\\Buttons\\WHITE8X8", false, 1, 1, { left = 2, right = 2, top = 2, bottom = 2 })),
             menu = freeze(backdrop("Interface\\Buttons\\WHITE8X8", "Interface\\Buttons\\WHITE8X8", false, 1, 1, { left = 1, right = 1, top = 1, bottom = 1 })),
         }),
-        background = color(0.00, 0.00, 0.95, 0.99),
-        border = color(0.00, 1.00, 1.00, 1),
-        panelBackground = color(0.00, 0.00, 0.78, 0.99),
-        panelBorder = color(0.00, 1.00, 1.00, 1),
-        menuBackground = color(0.00, 0.00, 0.65, 0.99),
-        menuBorder = color(0.00, 1.00, 1.00, 1),
-        titleText = color(1.00, 1.00, 0.00, 1),
-        bodyText = color(1.00, 1.00, 0.00, 1),
-        buttonNormal = color(0.00, 0.00, 0.72, 1),
-        buttonHighlight = color(0.00, 0.70, 1.00, 1),
-        buttonPushed = color(0.00, 0.00, 0.38, 1),
+        background = color(0.00, 0.00, 0.66, 1.0),
+        border = color(0.00, 0.85, 0.85, 1),
+        panelBackground = color(0.00, 0.00, 0.55, 1.0),
+        panelBorder = color(0.00, 0.85, 0.85, 1),
+        menuBackground = color(0.00, 0.00, 0.45, 1.0),
+        menuBorder = color(0.00, 0.85, 0.85, 1),
+        titleText = color(1.00, 1.00, 0.33, 1),
+        bodyText = color(1.00, 1.00, 1.00, 1),
+        buttonNormal = color(0.00, 0.55, 0.55, 1),
+        buttonHighlight = color(0.00, 0.85, 0.85, 1),
+        buttonPushed = color(0.00, 0.35, 0.35, 1),
         buttonDisabled = color(0.12, 0.12, 0.36, 1),
-        buttonText = color(1.00, 1.00, 0.00, 1),
+        buttonBorder = color(0.00, 0.85, 0.85, 1),
+        buttonText = color(1.00, 1.00, 0.33, 1),
         buttonDisabledText = color(0.58, 0.58, 0.18, 1),
         buttonHighlightBlend = "ADD",
         buttonHighlightAlpha = 1,
@@ -273,57 +289,60 @@ local palettes = freeze({
             panel = freeze(backdrop("Interface\\Buttons\\WHITE8X8", "Interface\\Buttons\\WHITE8X8", false, 1, 1, { left = 1, right = 1, top = 1, bottom = 1 })),
             menu = freeze(backdrop("Interface\\Buttons\\WHITE8X8", "Interface\\Buttons\\WHITE8X8", false, 1, 1, { left = 1, right = 1, top = 1, bottom = 1 })),
         }),
-        background = color(0.00, 0.00, 0.00, 0.99),
-        border = color(0.00, 1.00, 0.25, 1),
-        panelBackground = color(0.00, 0.01, 0.00, 0.99),
-        panelBorder = color(0.00, 0.90, 0.20, 1),
-        menuBackground = color(0.00, 0.00, 0.00, 0.99),
-        menuBorder = color(0.00, 1.00, 0.25, 1),
-        titleText = color(0.10, 1.00, 0.35, 1),
-        bodyText = color(0.10, 1.00, 0.35, 1),
-        buttonNormal = color(0.00, 0.08, 0.02, 1),
-        buttonHighlight = color(0.00, 0.42, 0.10, 1),
-        buttonPushed = color(0.00, 0.03, 0.01, 1),
+        background = color(0.00, 0.01, 0.00, 0.99),
+        border = color(0.20, 1.00, 0.20, 1),
+        panelBackground = color(0.00, 0.02, 0.00, 0.99),
+        panelBorder = color(0.15, 0.85, 0.15, 1),
+        menuBackground = color(0.00, 0.01, 0.00, 0.99),
+        menuBorder = color(0.20, 1.00, 0.20, 1),
+        titleText = color(0.20, 1.00, 0.20, 1),
+        bodyText = color(0.20, 1.00, 0.20, 1),
+        buttonNormal = color(0.00, 0.12, 0.02, 1),
+        buttonHighlight = color(0.05, 0.45, 0.10, 1),
+        buttonPushed = color(0.00, 0.06, 0.01, 1),
         buttonDisabled = color(0.04, 0.10, 0.05, 1),
-        buttonText = color(0.10, 1.00, 0.35, 1),
-        buttonDisabledText = color(0.18, 0.48, 0.24, 1),
+        buttonBorder = color(0.20, 1.00, 0.20, 1),
+        buttonText = color(0.20, 1.00, 0.20, 1),
+        buttonDisabledText = color(0.10, 0.50, 0.10, 1),
         buttonHighlightBlend = "ADD",
         buttonHighlightAlpha = 1,
     }),
     eten = freeze({
         label = "倚天中文",
         backdrops = flatBackdrops,
-        background = color(0.00, 0.00, 0.45, 0.99),
+        background = color(0.00, 0.00, 0.50, 1.0),
         border = color(0.00, 1.00, 1.00, 1),
-        panelBackground = color(0.00, 0.00, 0.32, 0.99),
+        panelBackground = color(0.00, 0.00, 0.38, 1.0),
         panelBorder = color(0.00, 1.00, 1.00, 1),
-        menuBackground = color(0.00, 0.00, 0.20, 0.99),
+        menuBackground = color(0.00, 0.00, 0.25, 1.0),
         menuBorder = color(1.00, 1.00, 0.00, 1),
         titleText = color(1.00, 1.00, 0.00, 1),
-        bodyText = color(0.90, 1.00, 1.00, 1),
-        buttonNormal = color(0.00, 0.00, 0.60, 1),
-        buttonHighlight = color(0.00, 0.60, 0.75, 1),
-        buttonPushed = color(0.00, 0.00, 0.30, 1),
+        bodyText = color(1.00, 1.00, 1.00, 1),
+        buttonNormal = color(0.00, 0.00, 0.65, 1),
+        buttonHighlight = color(0.00, 0.60, 0.80, 1),
+        buttonPushed = color(0.00, 0.00, 0.35, 1),
         buttonDisabled = color(0.18, 0.18, 0.30, 1),
+        buttonBorder = color(0.00, 1.00, 1.00, 1),
         buttonText = color(1.00, 1.00, 0.00, 1),
         buttonDisabledText = color(0.60, 0.60, 0.40, 1),
     }),
     redalert = freeze({
         label = "Red Alert",
         backdrops = flatBackdrops,
-        background = color(0.07, 0.02, 0.02, 0.99),
-        border = color(0.90, 0.12, 0.06, 1),
-        panelBackground = color(0.12, 0.04, 0.03, 0.98),
-        panelBorder = color(1.00, 0.30, 0.08, 1),
-        menuBackground = color(0.05, 0.01, 0.01, 0.99),
-        menuBorder = color(0.85, 0.15, 0.05, 1),
-        titleText = color(1.00, 0.78, 0.22, 1),
-        bodyText = color(0.92, 0.80, 0.60, 1),
-        buttonNormal = color(0.38, 0.04, 0.02, 1),
-        buttonHighlight = color(0.85, 0.10, 0.03, 1),
-        buttonPushed = color(0.18, 0.01, 0.01, 1),
+        background = color(0.08, 0.07, 0.07, 0.98),
+        border = color(0.85, 0.10, 0.06, 1),
+        panelBackground = color(0.12, 0.08, 0.08, 0.98),
+        panelBorder = color(0.85, 0.10, 0.06, 1),
+        menuBackground = color(0.06, 0.03, 0.03, 0.99),
+        menuBorder = color(0.85, 0.10, 0.06, 1),
+        titleText = color(1.00, 0.78, 0.15, 1),
+        bodyText = color(0.92, 0.82, 0.65, 1),
+        buttonNormal = color(0.35, 0.05, 0.03, 1),
+        buttonHighlight = color(0.85, 0.12, 0.05, 1),
+        buttonPushed = color(0.18, 0.02, 0.01, 1),
         buttonDisabled = color(0.20, 0.16, 0.14, 1),
-        buttonText = color(1.00, 0.88, 0.52, 1),
+        buttonBorder = color(0.85, 0.10, 0.06, 1),
+        buttonText = color(1.00, 0.85, 0.20, 1),
         buttonDisabledText = color(0.48, 0.42, 0.34, 1),
     }),
     aqua = freeze({
@@ -333,18 +352,24 @@ local palettes = freeze({
             panel = freeze(backdrop("Interface\\Buttons\\WHITE8X8", "Interface\\Buttons\\WHITE8X8", false, 1, 2, { left = 8, right = 8, top = 8, bottom = 8 })),
             menu = freeze(backdrop("Interface\\Buttons\\WHITE8X8", "Interface\\Buttons\\WHITE8X8", false, 1, 1, { left = 5, right = 5, top = 5, bottom = 5 })),
         }),
-        background = color(0.46, 0.54, 0.68, 0.97),
-        border = color(0.18, 0.58, 0.96, 1),
-        panelBackground = color(0.30, 0.38, 0.52, 0.96),
-        panelBorder = color(0.48, 0.66, 0.90, 1),
-        menuBackground = color(0.12, 0.18, 0.30, 0.98),
-        menuBorder = color(0.24, 0.66, 1.00, 1),
-        titleText = color(1.00, 1.00, 1.00, 1),
-        bodyText = color(0.92, 0.96, 1.00, 1),
-        buttonNormal = color(0.16, 0.36, 0.68, 1),
-        buttonHighlight = color(0.20, 0.58, 1.00, 1),
-        buttonPushed = color(0.10, 0.24, 0.50, 1),
-        buttonDisabled = color(0.32, 0.38, 0.48, 1),
+        background = color(0.86, 0.88, 0.91, 0.96),
+        border = color(0.20, 0.55, 0.92, 1),
+        panelBackground = color(0.80, 0.84, 0.88, 0.96),
+        panelBorder = color(0.20, 0.55, 0.92, 1),
+        menuBackground = color(0.88, 0.90, 0.94, 0.98),
+        menuBorder = color(0.20, 0.55, 0.92, 1),
+        gradient = freeze({
+            orientation = "VERTICAL",
+            top = color(0.90, 0.92, 0.95, 0.96),
+            bottom = color(0.72, 0.76, 0.82, 0.96),
+        }),
+        titleText = color(0.10, 0.10, 0.15, 1),
+        bodyText = color(0.15, 0.15, 0.20, 1),
+        buttonNormal = color(0.20, 0.55, 0.92, 0.95),
+        buttonHighlight = color(0.35, 0.70, 1.00, 1),
+        buttonPushed = color(0.12, 0.38, 0.72, 1),
+        buttonDisabled = color(0.55, 0.60, 0.68, 1),
+        buttonBorder = color(0.15, 0.45, 0.80, 1),
         buttonText = color(1.00, 1.00, 1.00, 1),
         buttonDisabledText = color(0.62, 0.68, 0.76, 1),
         buttonHighlightBlend = "ADD",
@@ -432,6 +457,59 @@ function Theme.getOptionLabel(value)
     return "EAM"
 end
 
+local frameGradients = setmetatable({}, { __mode = "k" })
+
+local function applyGradient(frame, role, gradientSpec)
+    if not frame or type(frame.CreateTexture) ~= "function" then
+        return
+    end
+    local bg = frameGradients[frame]
+    if not bg then
+        local ok, tex = pcall(frame.CreateTexture, frame, nil, "BACKGROUND", nil, 1)
+        if not ok or not tex then
+            ok, tex = pcall(frame.CreateTexture, frame, nil, "BACKGROUND")
+        end
+        if ok and tex then
+            bg = tex
+            frameGradients[frame] = bg
+        end
+    end
+    if not bg then
+        return
+    end
+    local insets = (role == "window" and 2) or (role == "panel" and 2) or 1
+    if bg.ClearAllPoints then bg:ClearAllPoints() end
+    if bg.SetPoint then
+        bg:SetPoint("TOPLEFT", frame, "TOPLEFT", insets, -insets)
+        bg:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -insets, insets)
+    end
+    if bg.SetDrawLayer then
+        pcall(bg.SetDrawLayer, bg, "BACKGROUND", 1)
+    end
+    if bg.SetTexture then
+        bg:SetTexture("Interface\\Buttons\\WHITE8X8")
+    end
+
+    local top = gradientSpec.top or { 0.00, 0.12, 0.85, 0.98 }
+    local bottom = gradientSpec.bottom or { 0.00, 0.01, 0.10, 0.98 }
+
+    local cMin, cMax
+    if _G.CreateColor then
+        cMin = _G.CreateColor(bottom[1], bottom[2], bottom[3], bottom[4])
+        cMax = _G.CreateColor(top[1], top[2], top[3], top[4])
+    else
+        cMin = { r = bottom[1], g = bottom[2], b = bottom[3], a = bottom[4], GetRGBA = function() return bottom[1], bottom[2], bottom[3], bottom[4] end }
+        cMax = { r = top[1], g = top[2], b = top[3], a = top[4], GetRGBA = function() return top[1], top[2], top[3], top[4] end }
+    end
+
+    if bg.SetGradient then
+        pcall(bg.SetGradient, bg, "VERTICAL", cMin, cMax)
+    elseif bg.SetGradientAlpha then
+        pcall(bg.SetGradientAlpha, bg, "VERTICAL", bottom[1], bottom[2], bottom[3], bottom[4], top[1], top[2], top[3], top[4])
+    end
+    if bg.Show then bg:Show() end
+end
+
 function Theme.applyFrame(frame, role)
     if not frame then
         return false
@@ -441,19 +519,47 @@ function Theme.applyFrame(frame, role)
     end
     local palette = getPalette(Theme.selection)
     local selectedRole = role or "window"
+    if selectedRole == "row" then
+        if type(frame.SetBackdrop) == "function" then
+            frame:SetBackdrop(copyBackdrop(palette.backdrops.menu or palette.backdrops.panel))
+        end
+        local existingBg = frameGradients[frame]
+        if existingBg and existingBg.Hide then
+            existingBg:Hide()
+        end
+        setColor(frame, "SetBackdropColor", { 0.04, 0.04, 0.06, 0.35 })
+        setColor(frame, "SetBackdropBorderColor", { 0.35, 0.35, 0.40, 0.50 })
+        return true
+    end
     local backdropSet = palette.backdrops[selectedRole] or palette.backdrops.window
     if type(frame.SetBackdrop) == "function" and backdropSet then
         frame:SetBackdrop(copyBackdrop(backdropSet))
     end
-    if selectedRole == "panel" then
-        setColor(frame, "SetBackdropColor", palette.panelBackground)
-        setColor(frame, "SetBackdropBorderColor", palette.panelBorder)
-    elseif selectedRole == "menu" then
-        setColor(frame, "SetBackdropColor", palette.menuBackground)
-        setColor(frame, "SetBackdropBorderColor", palette.menuBorder)
+    if palette.gradient and (selectedRole == "window" or selectedRole == "panel") then
+        applyGradient(frame, selectedRole, palette.gradient)
+        if type(frame.SetBackdropColor) == "function" then
+            frame:SetBackdropColor(0, 0, 0, 0)
+        end
+        if selectedRole == "panel" then
+            setColor(frame, "SetBackdropBorderColor", palette.panelBorder)
+        else
+            setColor(frame, "SetBackdropBorderColor", palette.border)
+        end
     else
-        setColor(frame, "SetBackdropColor", palette.background)
-        setColor(frame, "SetBackdropBorderColor", palette.border)
+        local existingBg = frameGradients[frame]
+        if existingBg and existingBg.Hide then
+            existingBg:Hide()
+        end
+        if selectedRole == "panel" then
+            setColor(frame, "SetBackdropColor", palette.panelBackground)
+            setColor(frame, "SetBackdropBorderColor", palette.panelBorder)
+        elseif selectedRole == "menu" then
+            setColor(frame, "SetBackdropColor", palette.menuBackground)
+            setColor(frame, "SetBackdropBorderColor", palette.menuBorder)
+        else
+            setColor(frame, "SetBackdropColor", palette.background)
+            setColor(frame, "SetBackdropBorderColor", palette.border)
+        end
     end
     return true
 end
@@ -615,6 +721,23 @@ function Theme.registerFrame(frame, role)
     end
     Theme.frames[frame] = role or "window"
     return Theme.applyFrame(frame, role)
+end
+
+function Theme.applyContainerBackground(frame, roleOrIsPanel)
+    if not frame then
+        return false
+    end
+    local role = "window"
+    if roleOrIsPanel == true or roleOrIsPanel == "panel" then
+        role = "panel"
+    elseif roleOrIsPanel == "row" then
+        role = "row"
+    elseif roleOrIsPanel == "menu" then
+        role = "menu"
+    elseif type(roleOrIsPanel) == "string" then
+        role = roleOrIsPanel
+    end
+    return Theme.registerFrame(frame, role)
 end
 
 function Theme.registerText(fontString, role)

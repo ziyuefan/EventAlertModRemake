@@ -54,13 +54,20 @@
 ## 2026-05-29 使用者提供的 12.0.7 PTR / RC 備查摘要
 本節來源為使用者貼上的 12.0.7 PTR / RC 變更內容。此輪公開網路搜尋尚未找到可直接引用的回覆頁面，因此以下先作為「待公開來源複核、待 WoW Retail/PTR 實機驗證」的工作依據點；不得將其視為已驗證事實。
 
-### 2026-05-29 PTR實測更新：DurationTextBinding
+### 2026-05-29 PTR實測更新：DurationTextBinding（官方正式收錄於 Patch 12.0.7）
 
+- 官方百科文檔：[Warcraft Wiki - DurationTextBinding](https://warcraft.wiki.gg/wiki/ScriptObject_DurationTextBinding)
+- 系統分類：`API systems/DurationTextBindingObjectAPI`（ScriptObject / Userdata）
+- 官方範例來源：`DurationTextBindingObjectAPIDocumentation.lua`
 - 使用者已於 WoW 12.0.7 PTR client 執行 `C_DurationUtil.CreateDurationTextBinding` 最小測試範例。
 - 結果：FontString 可正常顯示由 `DurationTextBinding` 驅動的倒數文字。
-- 驗證範圍：僅確認最小範例可顯示；尚未代表 EAM Renderer 已完成整合。
-- 尚未驗證：戰鬥中行為、污染日誌、圖示重用後文字清除、區域設定顯示、過渡文字、零持續時間、與主要 `Cooldown:SetCooldownFromDurationObject()` 的整合策略。
-- EAM 實施規則：可將 `DurationTextBinding` 視為 12.0.7 PTR 已可用候選路徑，但正式整合仍需特徵偵測與回退。
+- EAM 整合狀況：EAM `Core/DurationAdapter.lua` 與 `UI/Renderer.lua` 已完整支援無參數建立、`SetFontString`、`SetDuration`、`SetFormatter` 與 `SetToDefaults` 釋放，並透過 `SetCooldownFromDurationObject` 構成雙軌原生渲染。
+- 完整方法清單 (30 個)：
+  - 生命週期：`Assign`, `Copy`, `Enable`, `Disable`, `SetEnabled`, `IsEnabled`, `SetToDefaults`
+  - 綁定：`SetFontString`, `GetFontString`, `SetDuration`, `GetDuration`, `SetFormatter`
+  - 格式與文字：`SetTextFormat`, `SetExpiredText`, `GetExpiredText`, `SetZeroDurationText`, `GetZeroDurationText`, `SetTimeModifier`, `GetTimeModifier`, `SetUpdateInterval`, `GetUpdateInterval`, `UpdateFontString`, `CanFormatText`, `CanUpdateFontString`, `GetFormattedText`, `GetFormattedTextColor`
+  - 色彩曲線：`SetTextColorCurve`, `GetTextColorCurve`, `ClearTextColorCurve`
+  - 秘密值檢驗：`HasSecretValues`
 
 ### 與 EAM 直接相關
 
@@ -787,3 +794,82 @@ EAM 12.x 架構應用採用：
 - exact configured ID 永遠優先；若兩個設定項讓同一 alias 指向不同 canonical，該 alias 標記 ambiguous 並拒絕觸發，不以名稱、圖示或猜測 ID 選邊。
 - 天賦／專精／法術拓樸事件在非戰鬥重編譯；戰鬥中只設 pending，離戰合併一次。施法熱路徑不查 Tooltip、不做 family API 呼叫。
 - 來源：[SpellIdentifier／Base與Override](https://warcraft.wiki.gg/wiki/API_types/SpellIdentifier)、[C_Spell.GetSpellInfo](https://warcraft.wiki.gg/wiki/API_C_Spell.GetSpellInfo)、[UNIT_SPELLCAST_SUCCEEDED](https://warcraft.wiki.gg/wiki/UNIT_SPELLCAST_SUCCEEDED)。
+
+## 2026-09-06 Warcraft Wiki 全量 Enum 吸收與專案標準化
+
+依據 [Category:Enums](https://warcraft.wiki.gg/wiki/Category:Enums) 完整 5 頁翻頁爬取，總計吸收 **888 個** 官方獨立 Enum。專案全面遵循防禦性封裝原則（Defensive Fallback），消除寫死 Magic Numbers：
+
+### 核心採用清單：
+1. **`Enum.PowerType`**：
+   - 官方標準：Mana=0, Rage=1, Focus=2, Energy=3, ComboPoints=4, Runes=5, RunicPower=6, SoulShards=7, LunarPower=8, HolyPower=9, Maelstrom=11, Chi=12, Insanity=13, ArcaneCharges=16, Fury=17, Pain=18, Essence=19。
+   - 實作：`Data/PlayerResourceCatalog.lua` 透過 `POWER_TYPE_MAP` 自動將 17 大資源對齊官方 Enum，並保持 fallback 與契約字串相容。
+2. **`Enum.LuaCurveType`** 與 **`Enum.DurationTextBindingProperty`**：
+   - 倒數變色曲線採用 `LuaCurveType.Step=1` 與 `DurationTextBindingProperty.RemainingDuration=0`。
+   - 實作：`Core/Env.lua` 暴露並於 `Core/DurationAdapter.lua` 統一調用。
+3. **`Enum.StatusBarRenderMode`** 與 **`Enum.StatusBarFillStyle`**：
+   - 環狀冷卻進度條採用 `StatusBarRenderMode.Radial=1`。
+   - 實作：`UI/IconPool.lua` 統一優先讀取 `api.StatusBarRenderMode.Radial`。
+4. **`Enum.UnitAuraSortRule`** 與 **`Enum.UnitAuraSortDirection`**：
+   - 官方標準光環容器排序規則，全面取代舊式全域變數 `AuraContainerSortMethod` 與 `AuraContainerSortDirection`。
+   - 實作：`Services/AuraContainerService.lua` 優先採用官方 Enum，並保留舊全局降級。
+5. **`Enum.CustomAuraButtonDispelTypeStealableFilter`** 與 **`Enum.CustomAuraButtonDispelTypeTextureStyle`**：
+   - 原生光環驅散邊框與偷取過濾採用官方 Enum。
+   - 實作：`UI/NativeAuraRenderer.lua` 標準化調用。
+6. **`Enum.SpellBookSpellBank`** 與 **`Enum.SpellBookItemType`**：
+   - 法術書掃描採用 `SpellBookSpellBank.Player=0`。
+   - 實作：`Services/SpellBookScannerService.lua` 防禦性封裝。
+
+## 2026-09-11 Patch 12.1.5 PTR Change 1 API 變更調研（技術預研，非現行開發基準）
+
+> **特別聲明**：遵照架構決策指示，**本專案目前正式開發基準嚴格維持為 Retail 12.1.0**（TOC 120100）。本節僅作為 12.1.5（Build 69594，TOC 120105）Change 1 之技術預研與前瞻防禦性情報儲備，**不得作為後續開發或程式碼改造基準**。
+
+- 官方來源：[Patch 12.1.5/API changes](https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes)
+- 目標版本：Patch 12.1.5 (Build 69594), TOC `120105`
+
+### 1. Aura Pandemic Animations (光環 Pandemic 刷新原生動畫支援)
+- `CustomAuraButton` 原生接入 Pandemic 動畫觸發器，支援三大階段：
+  - `Enter`：進入 Pandemic 觸發（用於單次動畫 One-shot）。
+  - `Active`：處於 Pandemic 期間持續觸發（用於循環動畫 Looping，如 Bounce 呼吸）。
+  - `Leave`：離開 Pandemic 觸發。
+  - 專用 API：`AddPandemicActiveAnimation(animGroup)`、`Remove...`、`Clear...`。
+- 新增兩個 Forbidden Aspects（受保護禁止維度），防止插件透過動畫進度窺探受保護數值：
+  - `QueryAnimationProgress`：禁止查詢動畫進度或是否正在播放。
+  - `AddAnimations`：禁止動態添加或重新 reparent。
+
+### 2. Aura Containers (原生光環容器重大行為變更)
+- **破壞性變更 (Breaking Change)**：
+  - `AddDispelTypeTexture` 與 `AddPandemicRegion` **不再回傳 index**！
+  - 對應的 `RemoveDispelTypeTexture` 與 `RemovePandemicRegion` **改傳入 Region 物件參考 (region reference)** 而非 index。
+  - 重複加入同一個 Region 會直接拋出 Lua Error。
+- `CustomAuraButton:SetCasterName`：支援在 FontString 顯示施法者名稱；配合新 CVar `tooltipShowAuraCasterNames`。
+- `CustomAuraContainer` 新增獨立項目停用 API：`SetAuraGroupEnabled`、`SetAuraSlotEnabled`、`SetItemEnchantmentEnabled`。
+- `CustomAuraButton:SetApplicationBar` 新增 `minApplications` 參數。
+
+### 3. AddOn Security (安全隔離與冷卻/施法條防線收緊)
+- **受保護冷卻 Frame 限制**：當冷卻 Frame 本身受保護時，`SetCooldown` 與 `Clear` **禁止在 Tainted 代碼中調用**。
+- **Castbar ID Token 獨立唯一化**：施法條 ID 改為每個 unit token 獨立唯一，防堵插件利用 castbar ID 比對判斷不同 unit token 是否為同一個實體；大小寫敏感（"PLAYER" != "player"）。
+
+### 4. 全新腳本物件與調度原語
+- **`TimedSignalMap`**（`C_Timer.NewTimedSignalMap` / `TimerUtil.CreateTimedSignalCallbackMap`）：
+  - 單一回呼排程器，以使用者自訂鍵在指定時間調度。
+  - **支援動態重新排程（Reschedule）而無須銷毀重建**，大幅優於傳統 Timer 取消再建立之高頻開銷。
+- **`CreateFrameWithOptions(optionsTable)`**：
+  - 以具名 table 參數工廠建立 Frame，原生支援 `hidden = true` 建立即隱藏。
+- **原生像素對齊**：所有 Region 支援 `roundLayoutToNearestPixel` XML 屬性與 `SetRoundLayoutToNearestPixel` API，暴雪在 C-Level 原生取代 Lua `PixelUtil`。
+
+### 5. 工具函式原生化 (Math / String / Table 下沉至 C-Level)
+- 大量實用函式由 FrameXML 移至 C-Level 原生實作，提供極限效能與零 GC：
+  - Math：`math.clamp`, `math.saturate`, `math.round`, `math.lerp`, `math.normalize`, `math.sign`, `math.remap`, `math.wrap`, `math.isfinite`, `math.isnan`, `math.isinf`。
+  - String：`string.contains`, `string.ltrim`, `string.rtrim`, `string.startswith`, `string.endswith`。
+  - Table：`table.isempty`, `table.contains`, `table.indexof`, `table.removeunordered`, `table.removevalue`, `table.keys`, `table.values`。
+  - 保留全域舊函式別名 (`Clamp`, `Lerp`, `TableIsEmpty`, `tContains` 等)。
+
+### 6. 廢棄 API 徹底清理 (Blizzard_Deprecated 移除)
+- 徹底拔除 `Blizzard_DeprecatedItemScript`、`Blizzard_DeprecatedCurrencyScript` 等 10 大相容庫。
+- 全域 `GetItemInfo`, `GetItemCooldown`, `GetCoinIcon`, `GetNumSockets` 彻底失效。
+- **EAM 現狀安全確認**：EAM 已全面實裝現代 API 並具備 CI AST 靜態掃描防護，不受任何衝擊。
+
+### 7. 全新命名空間與輔助系統
+- `C_Weather`：`GetCurrentWeather` 與 `WEATHER_CHANGED` 事件。
+- `C_Intl` 與 `LocaleContext`：Unicode、文字斷行、貨幣/日期/數字格式化。
+- 團隊框架驅散邊框螞蟻線動畫：`MarchingAnts_Create...` 與 CVar `raidFramesDispelIndicatorAnimatedBorder`。

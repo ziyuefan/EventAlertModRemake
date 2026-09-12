@@ -276,6 +276,77 @@ function Util.releaseTable(pool, value)
     pool.count = count
 end
 
+function Util.createStepGateCurve(thresholdPercent)
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateCurve) ~= "function" then
+        return nil
+    end
+    local ok, curve = pcall(cCurveUtil.CreateCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    if curveType and curveType.Step and type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, curveType.Step)
+    end
+    local th = math.max(0.01, math.min(0.99, tonumber(thresholdPercent) or 0.2))
+    pcall(curve.AddPoint, curve, 0.0, 1.0)
+    pcall(curve.AddPoint, curve, th, 1.0)
+    pcall(curve.AddPoint, curve, math.min(1.0, th + 0.0001), 0.0)
+    pcall(curve.AddPoint, curve, 1.0, 0.0)
+    return curve
+end
+
+function Util.createColorStepGateCurve(thresholdPercent, activeColor, inactiveColor)
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateColorCurve) ~= "function" then
+        return nil
+    end
+    local ok, curve = pcall(cCurveUtil.CreateColorCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    if curveType and curveType.Step and type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, curveType.Step)
+    end
+    local act = activeColor or (_G.CreateColor and _G.CreateColor(1, 0, 0, 1)) or { 1, 0, 0, 1 }
+    local inact = inactiveColor or (_G.CreateColor and _G.CreateColor(0, 0, 0, 0)) or { 0, 0, 0, 0 }
+    local th = math.max(0.01, math.min(0.99, tonumber(thresholdPercent) or 0.2))
+    pcall(curve.AddPoint, curve, 0.0, act)
+    pcall(curve.AddPoint, curve, th, act)
+    pcall(curve.AddPoint, curve, 1.0, inact)
+    return curve
+end
+
+function Util.createBandPassCurve(minThreshold, maxThreshold)
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateCurve) ~= "function" then
+        return nil
+    end
+    local ok, curve = pcall(cCurveUtil.CreateCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    if curveType and curveType.Step and type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, curveType.Step)
+    end
+    local minTh = math.max(0.0, math.min(0.99, tonumber(minThreshold) or 0.2))
+    local maxTh = math.max(minTh + 0.01, math.min(1.0, tonumber(maxThreshold) or 0.35))
+    if minTh > 0.0001 then
+        pcall(curve.AddPoint, curve, 0.0, 0.0)
+        pcall(curve.AddPoint, curve, math.max(0.0, minTh - 0.0001), 0.0)
+    end
+    pcall(curve.AddPoint, curve, minTh, 1.0)
+    pcall(curve.AddPoint, curve, maxTh, 1.0)
+    if maxTh < 0.9999 then
+        pcall(curve.AddPoint, curve, math.min(1.0, maxTh + 0.0001), 0.0)
+        pcall(curve.AddPoint, curve, 1.0, 0.0)
+    end
+    return curve
+end
+
 if EAM.API and tableFreeze and not tableIsFrozen(EAM.API) then
     tableFreeze(EAM.API)
 end

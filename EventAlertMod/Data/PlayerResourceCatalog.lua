@@ -23,7 +23,31 @@ local byKey = {}
 local byPowerType = {}
 local byToken = {}
 
-local function define(key, powerType, token, legacyConfigKey, icon, nameKey, fallbackName, rendererKind, maxPoints, color)
+local api = EAM.API or {}
+local PowerType = api.PowerType or (_G.Enum and _G.Enum.PowerType) or {}
+
+local POWER_TYPE_MAP = {
+    MANA = PowerType.Mana,
+    RAGE = PowerType.Rage,
+    FOCUS = PowerType.Focus,
+    ENERGY = PowerType.Energy,
+    COMBO_POINTS = PowerType.ComboPoints,
+    RUNES = PowerType.Runes,
+    RUNIC_POWER = PowerType.RunicPower,
+    SOUL_SHARDS = PowerType.SoulShards,
+    LUNAR_POWER = PowerType.LunarPower,
+    HOLY_POWER = PowerType.HolyPower,
+    MAELSTROM = PowerType.Maelstrom,
+    CHI = PowerType.Chi,
+    INSANITY = PowerType.Insanity,
+    ARCANE_CHARGES = PowerType.ArcaneCharges,
+    FURY = PowerType.Fury,
+    PAIN = PowerType.Pain,
+    ESSENCE = PowerType.Essence,
+}
+
+local function define(key, fallbackPowerType, token, legacyConfigKey, icon, nameKey, fallbackName, rendererKind, maxPoints, color)
+    local powerType = (POWER_TYPE_MAP and POWER_TYPE_MAP[key]) or fallbackPowerType
     local definition = freeze({
         key = key,
         powerType = powerType,

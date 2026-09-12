@@ -37,7 +37,7 @@ end
 
 local function safeAlpha(value)
     if not EAM.Util.isSafeNumber(value) then
-        return 1
+        return 0.8
     end
     if value < 0 then
         return 0
@@ -47,9 +47,26 @@ local function safeAlpha(value)
     return value
 end
 
+local function safeColorRGB(color)
+    if type(color) ~= "table" then
+        return 0, 0, 0
+    end
+    local r = tonumber(color.r)
+    local g = tonumber(color.g)
+    local b = tonumber(color.b)
+    if not EAM.Util.isSafeNumber(r) or not EAM.Util.isSafeNumber(g) or not EAM.Util.isSafeNumber(b) then
+        return 0, 0, 0
+    end
+    r = math.min(1, math.max(0, r))
+    g = math.min(1, math.max(0, g))
+    b = math.min(1, math.max(0, b))
+    return r, g, b
+end
+
 local function snapshotStyle(rule)
     local config = EAM.db and EAM.db.config or nil
     local ruleStyle = rule and rule.style or nil
+    local swipeR, swipeG, swipeB = safeColorRGB(config and config.cooldownSwipeColor)
     return {
         iconSize = safePositive(config and config.iconSize, 40),
         nameFontSize = safePositive(config and config.fontSizeSpellName, 12),
@@ -59,6 +76,7 @@ local function snapshotStyle(rule)
         timerPlacement = TextPlacement.getPlacement(config, "timer"),
         applicationsPlacement = TextPlacement.getPlacement(config, "applications"),
         swipeAlpha = safeAlpha(config and config.cooldownSwipeAlpha),
+        swipeColor = { r = swipeR, g = swipeG, b = swipeB },
         borderStyleKey = AlertBorderStyles.resolveAura(rule and rule.unit or nil, rule and rule.filterString or nil),
         dualCountdownProbe = config and config.nativeAuraDualCountdownProbe == true or false,
         showCountdown = not ruleStyle or ruleStyle.showCountdown ~= false,
@@ -97,7 +115,7 @@ local function getDispelOptions(style)
         end
     end
 
-    local filterEnum = Enum and Enum.CustomAuraButtonDispelTypeStealableFilter or nil
+    local filterEnum = api.CustomAuraButtonDispelTypeStealableFilter or (_G.Enum and _G.Enum.CustomAuraButtonDispelTypeStealableFilter) or nil
     if filterEnum then
         if mode == "STEALABLE" then
             options.stealableFilter = filterEnum.Stealable
@@ -110,7 +128,7 @@ local function getDispelOptions(style)
         end
     end
 
-    local styleEnum = Enum and Enum.CustomAuraButtonDispelTypeTextureStyle or nil
+    local styleEnum = api.CustomAuraButtonDispelTypeTextureStyle or (_G.Enum and _G.Enum.CustomAuraButtonDispelTypeTextureStyle) or nil
     if styleEnum then
         local styleKey = style.dispelStyle
         if styleKey == "BORDER" then
@@ -211,7 +229,8 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
         cooldown:SetHideCountdownNumbers(not style.dualCountdownProbe)
     end
     if type(cooldown.SetSwipeColor) == "function" then
-        cooldown:SetSwipeColor(1, 1, 1, style.swipeAlpha)
+        local sc = style.swipeColor or { r = 0, g = 0, b = 0 }
+        cooldown:SetSwipeColor(sc.r, sc.g, sc.b, style.swipeAlpha)
     end
 
     local timerText = auraButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightOutline")

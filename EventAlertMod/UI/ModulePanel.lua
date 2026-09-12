@@ -60,6 +60,7 @@ local function createPanel()
         UIParent,
         "BackdropTemplate"
     )
+    frame:SetFrameStrata("DIALOG")
     frame:SetSize(430, 320)
     frame:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
     frame:SetMovable(true)

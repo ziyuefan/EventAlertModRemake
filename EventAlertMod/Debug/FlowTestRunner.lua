@@ -492,7 +492,7 @@ FlowTestRunner.registerCase({
                 },
             }
             spellInfo.getSpellInfo = function(spellID)
-                if spellID == 101001 or spellID == 101002 or spellID == 101003 then
+                if spellID == 101001 or spellID == 101002 or spellID == 101003 or spellID == 101004 then
                     return {
                         spellID = spellID,
                         name = "Batch Spell " .. tostring(spellID),
@@ -518,6 +518,19 @@ FlowTestRunner.registerCase({
             local crossAlert = alerts and alerts.playerAuras["aura:player:101002"]
             local targetAlert = alerts and alerts.targetAuras["aura:target:101003"]
             local missingAlert = alerts and alerts.playerAuras["aura:player:999999"]
+
+            options.currentCategory = 1
+            local dialogCalledWith = nil
+            local originalShowDialog = options.showNonClassSpellConfirmDialog
+            options.showNonClassSpellConfirmDialog = function(spID)
+                dialogCalledWith = spID
+            end
+            local unforcedOK, unforcedStatus = options.addAlertToCurrentCategory(101004)
+            local forcedOK, forcedStatus = options.addAlertToCurrentCategory(101004, true)
+            options.showNonClassSpellConfirmDialog = originalShowDialog
+            alerts = saved.getActiveAlerts()
+            local forcedAlert = alerts and alerts.playerAuras["aura:player:101004"]
+
             local valid = #parsed == 2
                 and parsed[1] == 101001
                 and parsed[2] == 101002
@@ -538,7 +551,14 @@ FlowTestRunner.registerCase({
                 and targetAlert
                 and targetAlert.fromPlayer == true
                 and missingAlert == nil
-                and EAM.db.revision == 12
+                and unforcedOK == false
+                and unforcedStatus == "awaitingConfirmation"
+                and dialogCalledWith == 101004
+                and forcedOK == true
+                and forcedAlert ~= nil
+                and forcedAlert.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
+                and forcedAlert.fromPlayer == true
+                and EAM.db.revision == 13
             return valid, valid and "batch IDs preserve class scope, caster defaults, validation, and one revision per batch"
                 or "batch catalog defaults or revision contract mismatch"
         end)
@@ -2526,6 +2546,90 @@ FlowTestRunner.registerCase({
         EAM.db = originalDB
         return valid, valid and "font family selection persists, maps to path, and rejects invalid values"
             or "font family selection contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.timer_color_curve.roundtrip_and_build",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true },
+    run = function()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local durationAdapter = EAM.Modules and EAM.Modules.DurationAdapter
+        if not saved or not durationAdapter then
+            return false, "SavedVariables or DurationAdapter unavailable"
+        end
+
+        local originalDB = EAM.db
+        local testDB = {
+            config = {
+                timerColorCurve = {
+                    enabled = true,
+                    stages = {
+                        { threshold = 3, color = { 1.0, 0.15, 0.15, 1.0 } },
+                        { threshold = 5, color = { 1.0, 0.82, 0.0, 1.0 } },
+                    },
+                    normalColor = { 1.0, 1.0, 1.0, 1.0 },
+                },
+            },
+            revision = 650001,
+        }
+        EAM.db = testDB
+
+        local router = EAM.Modules and EAM.Modules.EventRouter
+        local originalFire = router and router.fire
+        local firedEvent = nil
+        local firedPayload = nil
+        if router then
+            router.fire = function(eventName, payload)
+                firedEvent = eventName
+                firedPayload = payload
+            end
+        end
+
+        local ok, result = pcall(function()
+            -- 1. Get
+            local tcc = saved.getTimerColorCurve()
+            if not tcc or not tcc.enabled or #tcc.stages ~= 2 then
+                return false
+            end
+
+            -- 2. Modify stage threshold and color
+            saved.setTimerColorCurveStage(1, 4, { 0.9, 0.1, 0.1, 1.0 })
+            if tcc.stages[1].threshold ~= 4 or tcc.stages[1].color[1] ~= 0.9 then
+                return false
+            end
+
+            -- 3. Modify normal color
+            saved.setTimerColorCurveNormalColor({ 0.8, 0.8, 0.8, 1.0 })
+            if tcc.normalColor[1] ~= 0.8 then
+                return false
+            end
+
+            -- 4. Toggle enabled and check event fired
+            saved.setTimerColorCurveEnabled(false)
+            if tcc.enabled ~= false or firedEvent ~= "EAM_TIMER_COLOR_CHANGED" then
+                return false
+            end
+
+            -- 5. DurationAdapter helper functions check
+            if type(durationAdapter.buildColorCurve) ~= "function"
+                or type(durationAdapter.buildSpellColorCurve) ~= "function"
+                or type(durationAdapter.markColorCurveDirty) ~= "function"
+            then
+                return false
+            end
+
+            return true
+        end)
+
+        if router then
+            router.fire = originalFire
+        end
+        EAM.db = originalDB
+        local valid = ok and result == true
+        return valid, valid and "TimerColorCurve SavedVariables mutations, event notifications and DurationAdapter helpers are verified"
+            or "TimerColorCurve test failure"
     end,
 })
 
@@ -5393,9 +5497,17 @@ FlowTestRunner.registerCase({
         local minimum = cooldown.swipeAlpha
         iconPool.applyCooldownStyle(icon, { cooldownSwipeAlpha = 2 })
         local maximum = cooldown.swipeAlpha
-        local valid = applied == true and middle == 0.4 and minimum == 0 and maximum == 1
-        return valid, valid and "cooldown swipe alpha applies and clamps to 0..1"
-            or "cooldown swipe alpha contract mismatch"
+        local colorApplied = iconPool.applyCooldownStyle(icon, {
+            cooldownSwipeAlpha = 0.5,
+            cooldownSwipeColor = { r = 0.2, g = 0.4, b = 0.6 },
+        })
+        local colorMatch = cooldown.swipeColor
+            and cooldown.swipeColor[1] == 0.2
+            and cooldown.swipeColor[2] == 0.4
+            and cooldown.swipeColor[3] == 0.6
+        local valid = applied == true and middle == 0.4 and minimum == 0 and maximum == 1 and colorApplied == true and colorMatch == true
+        return valid, valid and "cooldown swipe alpha and color apply and clamp correctly"
+            or "cooldown swipe alpha/color contract mismatch"
     end,
 })
 

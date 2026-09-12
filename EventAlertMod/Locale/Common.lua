@@ -284,7 +284,7 @@ Locale.ClassFile = freeze({
 
 Locale.ClassName = freeze(classNames)
 
-local powerType = Enum and Enum.PowerType or {}
+local powerType = (EAM.API and EAM.API.PowerType) or (Enum and Enum.PowerType) or {}
 Locale.PowerType = freeze({
     MANA = powerType.Mana,
     RAGE = powerType.Rage,

@@ -36,6 +36,178 @@ local function recordFailure(reason)
     return nil, reason
 end
 
+local activeBindings = setmetatable({}, { __mode = "k" })
+local bindingCustomCurves = setmetatable({}, { __mode = "k" })
+local cachedColorCurve = nil
+local colorCurveDirty = true
+
+local function createColorWrapper(colorTable, defaultR, defaultG, defaultB, defaultA)
+    local r = (colorTable and tonumber(colorTable[1])) or defaultR or 1
+    local g = (colorTable and tonumber(colorTable[2])) or defaultG or 1
+    local b = (colorTable and tonumber(colorTable[3])) or defaultB or 1
+    local a = (colorTable and tonumber(colorTable[4])) or defaultA or 1
+    if _G.CreateColor then
+        return _G.CreateColor(r, g, b, a)
+    end
+    return { r = r, g = g, b = b, a = a, GetRGBA = function() return r, g, b, a end }
+end
+
+function DurationAdapter.buildColorCurve(config)
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateColorCurve) ~= "function" then
+        return nil
+    end
+
+    local ok, curve = pcall(cCurveUtil.CreateColorCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    if curveType and curveType.Step and type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, curveType.Step)
+    end
+
+    local tcc = config and config.timerColorCurve
+    if not tcc or tcc.enabled == false then
+        return nil
+    end
+
+    local stages = tcc.stages or {
+        { threshold = 3, color = { 1.0, 0.15, 0.15, 1.0 } },
+        { threshold = 5, color = { 1.0, 0.82, 0.0, 1.0 } },
+    }
+    local normalColor = createColorWrapper(tcc.normalColor, 1.0, 1.0, 1.0, 1.0)
+
+    -- 依照 threshold 排序
+    local sortedStages = {}
+    for i = 1, #stages do
+        local s = stages[i]
+        if s and s.threshold then
+            table.insert(sortedStages, {
+                threshold = tonumber(s.threshold) or 0,
+                color = createColorWrapper(s.color, 1.0, 0.2, 0.2, 1.0),
+            })
+        end
+    end
+    table.sort(sortedStages, function(a, b) return a.threshold < b.threshold end)
+
+    -- 加入關鍵點（雙點防衛邊界）
+    local lastX = 0
+    for i = 1, #sortedStages do
+        local st = sortedStages[i]
+        local th = math.max(st.threshold, 0.1)
+        pcall(curve.AddPoint, curve, lastX, st.color)
+        pcall(curve.AddPoint, curve, th, st.color)
+        lastX = th + 0.001
+    end
+
+    -- 正常階段（超過所有階段閾值）
+    pcall(curve.AddPoint, curve, lastX, normalColor)
+    pcall(curve.AddPoint, curve, 99999, normalColor)
+
+    return curve
+end
+
+function DurationAdapter.buildSpellColorCurve(redLimit, redColor, normalColor)
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateColorCurve) ~= "function" then
+        return nil
+    end
+
+    local ok, curve = pcall(cCurveUtil.CreateColorCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    if curveType and curveType.Step and type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, curveType.Step)
+    end
+
+    local alertColor = createColorWrapper(redColor, 1.0, 0.15, 0.15, 1.0)
+    local normColor = createColorWrapper(normalColor, 1.0, 1.0, 1.0, 1.0)
+    local th = math.max(tonumber(redLimit) or 0, 0.1)
+
+    pcall(curve.AddPoint, curve, 0, alertColor)
+    pcall(curve.AddPoint, curve, th, alertColor)
+    pcall(curve.AddPoint, curve, th + 0.001, normColor)
+    pcall(curve.AddPoint, curve, 99999, normColor)
+
+    return curve
+end
+
+function DurationAdapter.buildResourceDynamicColorCurve(baseColor, isReverse)
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateColorCurve) ~= "function" then
+        return nil
+    end
+
+    local ok, curve = pcall(cCurveUtil.CreateColorCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    if curveType and curveType.Linear and type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, curveType.Linear)
+    end
+
+    local normColor = createColorWrapper(baseColor, 0.2, 0.8, 0.2, 1.0)
+    local warnColor = createColorWrapper({ 1.0, 0.82, 0.15, 1.0 }, 1.0, 0.82, 0.15, 1.0)
+    local alertColor = createColorWrapper({ 1.0, 0.2, 0.2, 1.0 }, 1.0, 0.2, 0.2, 1.0)
+    local dimColor = createColorWrapper({ 0.35, 0.35, 0.35, 0.8 }, 0.35, 0.35, 0.35, 0.8)
+
+    if isReverse then
+        pcall(curve.AddPoint, curve, 0.0, dimColor)
+        pcall(curve.AddPoint, curve, 0.5, warnColor)
+        pcall(curve.AddPoint, curve, 1.0, normColor)
+    else
+        pcall(curve.AddPoint, curve, 0.0, alertColor)
+        pcall(curve.AddPoint, curve, 0.3, alertColor)
+        pcall(curve.AddPoint, curve, 0.6, warnColor)
+        pcall(curve.AddPoint, curve, 1.0, normColor)
+    end
+
+    return curve
+end
+
+function DurationAdapter.getActiveColorCurve()
+    if not colorCurveDirty and cachedColorCurve ~= nil then
+        return cachedColorCurve
+    end
+    local cfg = EAM.db and EAM.db.config
+    cachedColorCurve = DurationAdapter.buildColorCurve(cfg)
+    colorCurveDirty = false
+    return cachedColorCurve
+end
+
+function DurationAdapter.markColorCurveDirty()
+    colorCurveDirty = true
+    cachedColorCurve = nil
+end
+
+function DurationAdapter.refreshActiveBindingsColorCurve()
+    DurationAdapter.markColorCurveDirty()
+    local globalCurve = DurationAdapter.getActiveColorCurve()
+    local bindingPropEnum = api.DurationTextBindingProperty or (_G.Enum and _G.Enum.DurationTextBindingProperty)
+    local prop = (bindingPropEnum and bindingPropEnum.RemainingDuration) or 0
+
+    for binding in pairs(activeBindings) do
+        if binding then
+            local curve = bindingCustomCurves[binding] or globalCurve
+            if curve then
+                pcall(binding.SetTextColorCurve, binding, curve, prop)
+            elseif type(binding.ClearTextColorCurve) == "function" then
+                pcall(binding.ClearTextColorCurve, binding)
+            end
+            if type(binding.UpdateFontString) == "function" then
+                pcall(binding.UpdateFontString, binding)
+            end
+        end
+    end
+end
+
 local function getSecondsFormatter()
     if secondsFormatter then
         return secondsFormatter
@@ -76,8 +248,46 @@ local function getSecondsFormatter()
         pcall(formatter.SetMillisecondsThreshold, formatter, 3)
     end
 
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if cCurveUtil and type(cCurveUtil.CreateCurve) == "function" and type(formatter.SetDesiredUnitCountCurve) == "function" then
+        local unitCurve = cCurveUtil.CreateCurve()
+        local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+        if curveType and curveType.Step and type(unitCurve.SetType) == "function" then
+            pcall(unitCurve.SetType, unitCurve, curveType.Step)
+        end
+        pcall(unitCurve.AddPoint, unitCurve, 0.0, 2.0)
+        pcall(unitCurve.AddPoint, unitCurve, 5.0, 2.0)
+        pcall(unitCurve.AddPoint, unitCurve, 5.001, 1.0)
+        pcall(unitCurve.AddPoint, unitCurve, 99999, 1.0)
+        pcall(formatter.SetDesiredUnitCountCurve, formatter, unitCurve)
+    end
+
     secondsFormatter = formatter
     return formatter
+end
+
+function DurationAdapter.buildNonLinearProgressCurve(mode)
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateCurve) ~= "function" then
+        return nil
+    end
+    local ok, curve = pcall(cCurveUtil.CreateCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    local targetType = (curveType and curveType.Linear) or 0
+    if mode == "CUBIC" and curveType and curveType.Cubic then
+        targetType = curveType.Cubic
+    elseif mode == "COSINE" and curveType and curveType.Cosine then
+        targetType = curveType.Cosine
+    end
+    if type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, targetType)
+    end
+    pcall(curve.AddPoint, curve, 0.0, 0.0)
+    pcall(curve.AddPoint, curve, 1.0, 1.0)
+    return curve
 end
 
 function DurationAdapter.createFromStart(startTime, duration)
@@ -109,7 +319,7 @@ function DurationAdapter.createFromStart(startTime, duration)
     return durationObject
 end
 
-function DurationAdapter.createTextBinding(durationObject, fontString)
+function DurationAdapter.createTextBinding(durationObject, fontString, customCurve)
     DurationAdapter.bindingAttempts = DurationAdapter.bindingAttempts + 1
     local durationUtil = api.C_DurationUtil
     if not durationObject or not fontString
@@ -164,6 +374,18 @@ function DurationAdapter.createTextBinding(durationObject, fontString)
         return recordFailure("durationTextBindingEnableFailed")
     end
 
+    activeBindings[binding] = true
+    if customCurve then
+        bindingCustomCurves[binding] = customCurve
+    end
+
+    local curve = customCurve or DurationAdapter.getActiveColorCurve()
+    if curve and type(binding.SetTextColorCurve) == "function" then
+        local bindingPropEnum = api.DurationTextBindingProperty or (_G.Enum and _G.Enum.DurationTextBindingProperty)
+        local prop = (bindingPropEnum and bindingPropEnum.RemainingDuration) or 0
+        pcall(binding.SetTextColorCurve, binding, curve, prop)
+    end
+
     DurationAdapter.bindingSuccesses = DurationAdapter.bindingSuccesses + 1
     DurationAdapter.lastFailure = nil
     return binding
@@ -173,10 +395,15 @@ function DurationAdapter.releaseTextBinding(binding)
     if not binding then
         return false
     end
+    activeBindings[binding] = nil
+    bindingCustomCurves[binding] = nil
     if type(binding.Disable) == "function" then
         pcall(binding.Disable, binding)
     elseif type(binding.SetEnabled) == "function" then
         pcall(binding.SetEnabled, binding, false)
+    end
+    if type(binding.ClearTextColorCurve) == "function" then
+        pcall(binding.ClearTextColorCurve, binding)
     end
     if type(binding.SetToDefaults) == "function" then
         pcall(binding.SetToDefaults, binding)
@@ -193,5 +420,13 @@ function DurationAdapter.getStatus()
         bindingFailures = DurationAdapter.bindingFailures,
         formatterAvailable = getSecondsFormatter() ~= nil,
         lastFailure = DurationAdapter.lastFailure,
+        colorCurveAvailable = cachedColorCurve ~= nil,
     }
 end
+
+if EAM.Modules.EventRouter and type(EAM.Modules.EventRouter.register) == "function" then
+    EAM.Modules.EventRouter.register("EAM_TIMER_COLOR_CHANGED", function()
+        DurationAdapter.refreshActiveBindingsColorCurve()
+    end)
+end
+

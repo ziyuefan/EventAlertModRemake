@@ -79,10 +79,18 @@ local function buildCommonOptions(rule, container, slotIndex)
         initializeFrame = EAM.UI.NativeAuraRenderer.createInitializer(rule, container, slotIndex),
         candidateFilters = rule.candidateFilters,
     }
-    if AuraContainerSortMethod and AuraContainerSortMethod.Default ~= nil then
+    local sortRuleEnum = api.UnitAuraSortRule or (_G.Enum and _G.Enum.UnitAuraSortRule) or AuraContainerSortMethod
+    if sortRuleEnum and (sortRuleEnum.Default ~= nil or sortRuleEnum.Unsorted ~= nil) then
+        options.sortMethod = sortRuleEnum.Default or 0
+        options.sortRule = sortRuleEnum.Default or 0
+    elseif AuraContainerSortMethod and AuraContainerSortMethod.Default ~= nil then
         options.sortMethod = AuraContainerSortMethod.Default
     end
-    if AuraContainerSortDirection and AuraContainerSortDirection.Normal ~= nil then
+
+    local sortDirEnum = api.UnitAuraSortDirection or (_G.Enum and _G.Enum.UnitAuraSortDirection) or AuraContainerSortDirection
+    if sortDirEnum and sortDirEnum.Normal ~= nil then
+        options.sortDirection = sortDirEnum.Normal
+    elseif AuraContainerSortDirection and AuraContainerSortDirection.Normal ~= nil then
         options.sortDirection = AuraContainerSortDirection.Normal
     end
     return options

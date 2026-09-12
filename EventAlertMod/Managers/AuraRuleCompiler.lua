@@ -341,6 +341,8 @@ local function buildVisualFingerprint(db)
     local textLayout = config and config.textLayout or nil
     local timer = textLayout and textLayout.timer or nil
     local applications = textLayout and textLayout.applications or nil
+    local swipeColor = config and config.cooldownSwipeColor or nil
+    local colorStr = (swipeColor and string.format("%.2f:%.2f:%.2f", swipeColor.r or 0, swipeColor.g or 0, swipeColor.b or 0)) or "0:0:0"
     return table.concat({
         tostring(config and config.fontSizeSpellName or 12),
         tostring(config and config.fontFamily or "STANDARD"),
@@ -348,7 +350,8 @@ local function buildVisualFingerprint(db)
         tostring(timer and timer.fontSize or 14),
         tostring(applications and applications.placement or Constants.TEXT_PLACEMENT_APPLICATIONS_DEFAULT),
         tostring(applications and applications.fontSize or 12),
-        tostring(config and config.cooldownSwipeAlpha or 1),
+        tostring(config and config.cooldownSwipeAlpha or 0.8),
+        colorStr,
         tostring(config and config.nativeAuraDualCountdownProbe == true),
     }, ":")
 end

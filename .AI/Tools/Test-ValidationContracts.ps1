@@ -1139,6 +1139,24 @@ foreach ($localeName in $localeNames) {
 }
 Assert-Contract ($missingThemeLocaleKeys.Count -eq 0) "Five locales cover all eleven theme labels" ($missingThemeLocaleKeys -join ", ")
 
+$confirmLocaleKeys = @(
+    "EAM_OPT_CONFIRM_NON_CLASS_SPELL",
+    "EAM_OPT_CONFIRM_TITLE",
+    "EAM_OPT_CONFIRM_BTN",
+    "EAM_OPT_CANCEL_BTN"
+)
+$missingConfirmLocaleKeys = @()
+foreach ($localeName in $localeNames) {
+    $localePath = Join-Path $root ("Locale\" + $localeName + ".lua")
+    $localeContent = [System.IO.File]::ReadAllText($localePath)
+    foreach ($confirmLocaleKey in $confirmLocaleKeys) {
+        if (-not $localeContent.Contains("L.$confirmLocaleKey")) {
+            $missingConfirmLocaleKeys += ($localeName + ":" + $confirmLocaleKey)
+        }
+    }
+}
+Assert-Contract ($missingConfirmLocaleKeys.Count -eq 0) "Five locales cover all non-class spell confirmation dialog keys" ($missingConfirmLocaleKeys -join ", ")
+
 $resourceLocaleReference = [System.IO.File]::ReadAllText((Join-Path $root "Locale\enUS.lua"))
 $resourceLocaleKeys = @(
     [regex]::Matches($resourceLocaleReference, '(?m)^L\.(EAM_RESOURCE_[A-Z0-9_]+)\s*=')
@@ -1231,6 +1249,18 @@ Assert-Contract (
         '(?s)if category ~= 5 and not isExistingSpell\(id\) then\s*return false, nil, "spellNotFound"'
     )
 ) "Missing SpellIDs are rejected through isExistingSpell"
+
+Assert-Contract (
+    $optionsSource.Contains('Options.showNonClassSpellConfirmDialog') -and
+    $optionsSource.Contains('"EAM_ConfirmNonClassSpellFrame"') -and
+    $optionsSource.Contains('EAM_OPT_CONFIRM_NON_CLASS_SPELL') -and
+    $optionsSource.Contains('Options.addAlertToCurrentCategory(targetID, true)') -and
+    $optionsSource.Contains('(force == true) and EAM.Constants.AURA_CATALOG_SCOPE_SELF or resolveAuraCatalogScope(id)') -and
+    [regex]::IsMatch(
+        $optionsSource,
+        '(?s)if not force and Options\.currentCategory == 1 and not isCurrentClassSpell\(id\) then'
+    )
+) "Non-class spell add triggers interactive confirmation dialog and force-adds to current category"
 
 $profilePanelSource = [System.IO.File]::ReadAllText((Join-Path $root "UI\ProfileCodecPanel.lua"))
 Assert-Contract (
