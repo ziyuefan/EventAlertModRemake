@@ -560,13 +560,20 @@
 <p>注意：以上是文件與索引索引交叉整理，尚未在 WoW Retail 12.x 用戶端內實機驗證。</p>
 <h2 id="2026-05-29-1207-ptr-rc">2026-05-29 使用者提供的 12.0.7 PTR / RC 備查摘要</h2>
 <p>本節來源為使用者貼上的 12.0.7 PTR / RC 變更內容。此輪公開網路搜尋尚未找到可直接引用的回覆頁面，因此以下先作為「待公開來源複核、待 WoW Retail/PTR 實機驗證」的工作依據點；不得將其視為已驗證事實。</p>
-<h3 id="2026-05-29-ptrdurationtextbinding">2026-05-29 PTR實測更新：DurationTextBinding</h3>
+<h3 id="2026-05-29-ptrdurationtextbinding-patch-1207">2026-05-29 PTR實測更新：DurationTextBinding（官方正式收錄於 Patch 12.0.7）</h3>
 <ul>
+<li>官方百科文檔：<a href="https://warcraft.wiki.gg/wiki/ScriptObject_DurationTextBinding">Warcraft Wiki - DurationTextBinding</a></li>
+<li>系統分類：<code>API systems/DurationTextBindingObjectAPI</code>（ScriptObject / Userdata）</li>
+<li>官方範例來源：<code>DurationTextBindingObjectAPIDocumentation.lua</code></li>
 <li>使用者已於 WoW 12.0.7 PTR client 執行 <code>C_DurationUtil.CreateDurationTextBinding</code> 最小測試範例。</li>
 <li>結果：FontString 可正常顯示由 <code>DurationTextBinding</code> 驅動的倒數文字。</li>
-<li>驗證範圍：僅確認最小範例可顯示；尚未代表 EAM Renderer 已完成整合。</li>
-<li>尚未驗證：戰鬥中行為、污染日誌、圖示重用後文字清除、區域設定顯示、過渡文字、零持續時間、與主要 <code>Cooldown:SetCooldownFromDurationObject()</code> 的整合策略。</li>
-<li>EAM 實施規則：可將 <code>DurationTextBinding</code> 視為 12.0.7 PTR 已可用候選路徑，但正式整合仍需特徵偵測與回退。</li>
+<li>EAM 整合狀況：EAM <code>Core/DurationAdapter.lua</code> 與 <code>UI/Renderer.lua</code> 已完整支援無參數建立、<code>SetFontString</code>、<code>SetDuration</code>、<code>SetFormatter</code> 與 <code>SetToDefaults</code> 釋放，並透過 <code>SetCooldownFromDurationObject</code> 構成雙軌原生渲染。</li>
+<li>完整方法清單 (30 個)：</li>
+<li>生命週期：<code>Assign</code>, <code>Copy</code>, <code>Enable</code>, <code>Disable</code>, <code>SetEnabled</code>, <code>IsEnabled</code>, <code>SetToDefaults</code></li>
+<li>綁定：<code>SetFontString</code>, <code>GetFontString</code>, <code>SetDuration</code>, <code>GetDuration</code>, <code>SetFormatter</code></li>
+<li>格式與文字：<code>SetTextFormat</code>, <code>SetExpiredText</code>, <code>GetExpiredText</code>, <code>SetZeroDurationText</code>, <code>GetZeroDurationText</code>, <code>SetTimeModifier</code>, <code>GetTimeModifier</code>, <code>SetUpdateInterval</code>, <code>GetUpdateInterval</code>, <code>UpdateFontString</code>, <code>CanFormatText</code>, <code>CanUpdateFontString</code>, <code>GetFormattedText</code>, <code>GetFormattedTextColor</code></li>
+<li>色彩曲線：<code>SetTextColorCurve</code>, <code>GetTextColorCurve</code>, <code>ClearTextColorCurve</code></li>
+<li>秘密值檢驗：<code>HasSecretValues</code></li>
 </ul>
 <h3 id="eam">與 EAM 直接相關</h3>
 <ul>
@@ -1233,6 +1240,92 @@ ADDON_RESTRICTION_STATE_CHANGED
 <li>天賦／專精／法術拓樸事件在非戰鬥重編譯；戰鬥中只設 pending，離戰合併一次。施法熱路徑不查 Tooltip、不做 family API 呼叫。</li>
 <li>來源：<a href="https://warcraft.wiki.gg/wiki/API_types/SpellIdentifier">SpellIdentifier／Base與Override</a>、<a href="https://warcraft.wiki.gg/wiki/API_C_Spell.GetSpellInfo">C_Spell.GetSpellInfo</a>、<a href="https://warcraft.wiki.gg/wiki/UNIT_SPELLCAST_SUCCEEDED">UNIT_SPELLCAST_SUCCEEDED</a>。</li>
 </ul>
+<h2 id="2026-09-06-warcraft-wiki-enum">2026-09-06 Warcraft Wiki 全量 Enum 吸收與專案標準化</h2>
+<p>依據 <a href="https://warcraft.wiki.gg/wiki/Category:Enums">Category:Enums</a> 完整 5 頁翻頁爬取，總計吸收 <strong>888 個</strong> 官方獨立 Enum。專案全面遵循防禦性封裝原則（Defensive Fallback），消除寫死 Magic Numbers：</p>
+<h3 id="_9">核心採用清單：</h3>
+<ol>
+<li><strong><code>Enum.PowerType</code></strong>：</li>
+<li>官方標準：Mana=0, Rage=1, Focus=2, Energy=3, ComboPoints=4, Runes=5, RunicPower=6, SoulShards=7, LunarPower=8, HolyPower=9, Maelstrom=11, Chi=12, Insanity=13, ArcaneCharges=16, Fury=17, Pain=18, Essence=19。</li>
+<li>實作：<code>Data/PlayerResourceCatalog.lua</code> 透過 <code>POWER_TYPE_MAP</code> 自動將 17 大資源對齊官方 Enum，並保持 fallback 與契約字串相容。</li>
+<li><strong><code>Enum.LuaCurveType</code></strong> 與 <strong><code>Enum.DurationTextBindingProperty</code></strong>：</li>
+<li>倒數變色曲線採用 <code>LuaCurveType.Step=1</code> 與 <code>DurationTextBindingProperty.RemainingDuration=0</code>。</li>
+<li>實作：<code>Core/Env.lua</code> 暴露並於 <code>Core/DurationAdapter.lua</code> 統一調用。</li>
+<li><strong><code>Enum.StatusBarRenderMode</code></strong> 與 <strong><code>Enum.StatusBarFillStyle</code></strong>：</li>
+<li>環狀冷卻進度條採用 <code>StatusBarRenderMode.Radial=1</code>。</li>
+<li>實作：<code>UI/IconPool.lua</code> 統一優先讀取 <code>api.StatusBarRenderMode.Radial</code>。</li>
+<li><strong><code>Enum.UnitAuraSortRule</code></strong> 與 <strong><code>Enum.UnitAuraSortDirection</code></strong>：</li>
+<li>官方標準光環容器排序規則，全面取代舊式全域變數 <code>AuraContainerSortMethod</code> 與 <code>AuraContainerSortDirection</code>。</li>
+<li>實作：<code>Services/AuraContainerService.lua</code> 優先採用官方 Enum，並保留舊全局降級。</li>
+<li><strong><code>Enum.CustomAuraButtonDispelTypeStealableFilter</code></strong> 與 <strong><code>Enum.CustomAuraButtonDispelTypeTextureStyle</code></strong>：</li>
+<li>原生光環驅散邊框與偷取過濾採用官方 Enum。</li>
+<li>實作：<code>UI/NativeAuraRenderer.lua</code> 標準化調用。</li>
+<li><strong><code>Enum.SpellBookSpellBank</code></strong> 與 <strong><code>Enum.SpellBookItemType</code></strong>：</li>
+<li>法術書掃描採用 <code>SpellBookSpellBank.Player=0</code>。</li>
+<li>實作：<code>Services/SpellBookScannerService.lua</code> 防禦性封裝。</li>
+</ol>
+<h2 id="2026-09-11-patch-1215-ptr-change-1-api">2026-09-11 Patch 12.1.5 PTR Change 1 API 變更調研（技術預研，非現行開發基準）</h2>
+<blockquote>
+<p><strong>特別聲明</strong>：遵照架構決策指示，<strong>本專案目前正式開發基準嚴格維持為 Retail 12.1.0</strong>（TOC 120100）。本節僅作為 12.1.5（Build 69594，TOC 120105）Change 1 之技術預研與前瞻防禦性情報儲備，<strong>不得作為後續開發或程式碼改造基準</strong>。</p>
+</blockquote>
+<ul>
+<li>官方來源：<a href="https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes">Patch 12.1.5/API changes</a></li>
+<li>目標版本：Patch 12.1.5 (Build 69594), TOC <code>120105</code></li>
+</ul>
+<h3 id="1-aura-pandemic-animations-pandemic">1. Aura Pandemic Animations (光環 Pandemic 刷新原生動畫支援)</h3>
+<ul>
+<li><code>CustomAuraButton</code> 原生接入 Pandemic 動畫觸發器，支援三大階段：</li>
+<li><code>Enter</code>：進入 Pandemic 觸發（用於單次動畫 One-shot）。</li>
+<li><code>Active</code>：處於 Pandemic 期間持續觸發（用於循環動畫 Looping，如 Bounce 呼吸）。</li>
+<li><code>Leave</code>：離開 Pandemic 觸發。</li>
+<li>專用 API：<code>AddPandemicActiveAnimation(animGroup)</code>、<code>Remove...</code>、<code>Clear...</code>。</li>
+<li>新增兩個 Forbidden Aspects（受保護禁止維度），防止插件透過動畫進度窺探受保護數值：</li>
+<li><code>QueryAnimationProgress</code>：禁止查詢動畫進度或是否正在播放。</li>
+<li><code>AddAnimations</code>：禁止動態添加或重新 reparent。</li>
+</ul>
+<h3 id="2-aura-containers">2. Aura Containers (原生光環容器重大行為變更)</h3>
+<ul>
+<li><strong>破壞性變更 (Breaking Change)</strong>：</li>
+<li><code>AddDispelTypeTexture</code> 與 <code>AddPandemicRegion</code> <strong>不再回傳 index</strong>！</li>
+<li>對應的 <code>RemoveDispelTypeTexture</code> 與 <code>RemovePandemicRegion</code> <strong>改傳入 Region 物件參考 (region reference)</strong> 而非 index。</li>
+<li>重複加入同一個 Region 會直接拋出 Lua Error。</li>
+<li><code>CustomAuraButton:SetCasterName</code>：支援在 FontString 顯示施法者名稱；配合新 CVar <code>tooltipShowAuraCasterNames</code>。</li>
+<li><code>CustomAuraContainer</code> 新增獨立項目停用 API：<code>SetAuraGroupEnabled</code>、<code>SetAuraSlotEnabled</code>、<code>SetItemEnchantmentEnabled</code>。</li>
+<li><code>CustomAuraButton:SetApplicationBar</code> 新增 <code>minApplications</code> 參數。</li>
+</ul>
+<h3 id="3-addon-security">3. AddOn Security (安全隔離與冷卻/施法條防線收緊)</h3>
+<ul>
+<li><strong>受保護冷卻 Frame 限制</strong>：當冷卻 Frame 本身受保護時，<code>SetCooldown</code> 與 <code>Clear</code> <strong>禁止在 Tainted 代碼中調用</strong>。</li>
+<li><strong>Castbar ID Token 獨立唯一化</strong>：施法條 ID 改為每個 unit token 獨立唯一，防堵插件利用 castbar ID 比對判斷不同 unit token 是否為同一個實體；大小寫敏感（"PLAYER" != "player"）。</li>
+</ul>
+<h3 id="4">4. 全新腳本物件與調度原語</h3>
+<ul>
+<li><strong><code>TimedSignalMap</code></strong>（<code>C_Timer.NewTimedSignalMap</code> / <code>TimerUtil.CreateTimedSignalCallbackMap</code>）：</li>
+<li>單一回呼排程器，以使用者自訂鍵在指定時間調度。</li>
+<li><strong>支援動態重新排程（Reschedule）而無須銷毀重建</strong>，大幅優於傳統 Timer 取消再建立之高頻開銷。</li>
+<li><strong><code>CreateFrameWithOptions(optionsTable)</code></strong>：</li>
+<li>以具名 table 參數工廠建立 Frame，原生支援 <code>hidden = true</code> 建立即隱藏。</li>
+<li><strong>原生像素對齊</strong>：所有 Region 支援 <code>roundLayoutToNearestPixel</code> XML 屬性與 <code>SetRoundLayoutToNearestPixel</code> API，暴雪在 C-Level 原生取代 Lua <code>PixelUtil</code>。</li>
+</ul>
+<h3 id="5-math-string-table-c-level">5. 工具函式原生化 (Math / String / Table 下沉至 C-Level)</h3>
+<ul>
+<li>大量實用函式由 FrameXML 移至 C-Level 原生實作，提供極限效能與零 GC：</li>
+<li>Math：<code>math.clamp</code>, <code>math.saturate</code>, <code>math.round</code>, <code>math.lerp</code>, <code>math.normalize</code>, <code>math.sign</code>, <code>math.remap</code>, <code>math.wrap</code>, <code>math.isfinite</code>, <code>math.isnan</code>, <code>math.isinf</code>。</li>
+<li>String：<code>string.contains</code>, <code>string.ltrim</code>, <code>string.rtrim</code>, <code>string.startswith</code>, <code>string.endswith</code>。</li>
+<li>Table：<code>table.isempty</code>, <code>table.contains</code>, <code>table.indexof</code>, <code>table.removeunordered</code>, <code>table.removevalue</code>, <code>table.keys</code>, <code>table.values</code>。</li>
+<li>保留全域舊函式別名 (<code>Clamp</code>, <code>Lerp</code>, <code>TableIsEmpty</code>, <code>tContains</code> 等)。</li>
+</ul>
+<h3 id="6-api-blizzard_deprecated">6. 廢棄 API 徹底清理 (Blizzard_Deprecated 移除)</h3>
+<ul>
+<li>徹底拔除 <code>Blizzard_DeprecatedItemScript</code>、<code>Blizzard_DeprecatedCurrencyScript</code> 等 10 大相容庫。</li>
+<li>全域 <code>GetItemInfo</code>, <code>GetItemCooldown</code>, <code>GetCoinIcon</code>, <code>GetNumSockets</code> 彻底失效。</li>
+<li><strong>EAM 現狀安全確認</strong>：EAM 已全面實裝現代 API 並具備 CI AST 靜態掃描防護，不受任何衝擊。</li>
+</ul>
+<h3 id="7">7. 全新命名空間與輔助系統</h3>
+<ul>
+<li><code>C_Weather</code>：<code>GetCurrentWeather</code> 與 <code>WEATHER_CHANGED</code> 事件。</li>
+<li><code>C_Intl</code> 與 <code>LocaleContext</code>：Unicode、文字斷行、貨幣/日期/數字格式化。</li>
+<li>團隊框架驅散邊框螞蟻線動畫：<code>MarchingAnts_Create...</code> 與 CVar <code>raidFramesDispelIndicatorAnimatedBorder</code>。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
@@ -1284,18 +1377,25 @@ Relevant emphasis.</p>
 - Public API change summary for 12.0.7 currently shows no direct impact EAM Aura/cooldown/item Large API changes to Cooldown core logic, but new __EAM__CODE_4__6, EA DurationObject/timers show tracking matters.
 Note: The above is a cross-collation of files and indexes, which has not been verified in the WoW Retail 12.x client.</p>
 <h2 id="2026-05-29-user-provided-1207-ptr-rc-review-summary">2026-05-29 User provided 12.0.7 PTR / RC review summary</h2>
-<p>The source of this section is the 12.0.7 PTR / RC changes posted by users. This round of public Internet searches has not yet found a reply page that can be directly quoted, so the following is first used as a basis for "pending review by public sources and pending WoW Retail/PTR actual machine verification"; it should not be regarded as a verified fact.</p>
-<h3 id="2026-05-29-ptr-actual-measurement-update-durationtextbinding">2026-05-29 PTR actual measurement update: DurationTextBinding</h3>
+<p>The source of this section is the 12.0.7 PTR / RC changes posted by users. This round of public Internet searches has not yet found a reply page that can be directly cited, so the following is first used as a basis for "pending review by public sources and pending WoW Retail/PTR actual machine verification"; it should not be regarded as a verified fact.</p>
+<h3 id="2026-05-29-ptr-actual-measurement-update-durationtextbinding-officially-included-in-patch-1207">2026-05-29 PTR actual measurement update: DurationTextBinding (officially included in Patch 12.0.7)</h3>
 <ul>
+<li>Official encyclopedia document: <a href="https://warcraft.wiki.gg/wiki/ScriptObject_DurationTextBinding">Warcraft Wiki - DurationTextBinding</a></li>
+<li>System classification: <code>API systems/DurationTextBindingObjectAPI</code> (ScriptObject/Userdata)
+-Official example source: <code>DurationTextBindingObjectAPIDocumentation.lua</code></li>
 <li>The user has executed the <code>C_DurationUtil.CreateDurationTextBinding</code> minimal test example on the WoW 12.0.7 PTR client.</li>
 <li>Result: FontString can display the countdown text driven by <code>DurationTextBinding</code> normally.</li>
-<li>Verification scope: Only the minimum sample is confirmed to be displayed; it does not yet mean that EAM Renderer has been integrated.</li>
-<li>Not yet verified: In-combat behavior, taint logs, text cleanup after icon reuse, locale display, transition text, zero duration, integration strategy with main <code>Cooldown:SetCooldownFromDurationObject()</code>.</li>
-<li>EAM Implementation rules: <code>DurationTextBinding</code> can be considered an available candidate path for 12.0.7 PTR, but formal integration still requires feature detection and rollback.</li>
+<li>EAM integration status: EAM <code>Core/DurationAdapter.lua</code> and <code>UI/Renderer.lua</code> have fully supported parameterless creation, <code>SetFontString</code>, <code>SetDuration</code>, <code>SetFormatter</code> and <code>SetToDefaults</code> release, and formed dual-track native rendering through <code>SetCooldownFromDurationObject</code>.</li>
+<li>Complete list of methods (30):</li>
+<li>Lifecycle: <code>Assign</code>, <code>Copy</code>, <code>Enable</code>, <code>Disable</code>, <code>SetEnabled</code>, <code>IsEnabled</code>, <code>SetToDefaults</code></li>
+<li>Bindings: <code>SetFontString</code>, <code>GetFontString</code>, <code>SetDuration</code>, <code>GetDuration</code>, <code>SetFormatter</code></li>
+<li>Format and text: <code>SetTextFormat</code>, <code>SetExpiredText</code>, <code>GetExpiredText</code>, <code>SetZeroDurationText</code>, <code>GetZeroDurationText</code>, <code>SetTimeModifier</code>, <code>GetTimeModifier</code>, <code>SetUpdateInterval</code>, <code>GetUpdateInterval</code>, <code>UpdateFontString</code>, <code>CanFormatText</code>, <code>CanUpdateFontString</code>, <code>GetFormattedText</code>, <code>GetFormattedTextColor</code></li>
+<li>Color curves: <code>SetTextColorCurve</code>, <code>GetTextColorCurve</code>, <code>ClearTextColorCurve</code></li>
+<li>Secret value check: <code>HasSecretValues</code></li>
 </ul>
 <h3 id="directly-related-to-eam">Directly related to EAM</h3>
 <ul>
-<li>Tool tip money: Added <code>GameTooltip_AddMoneyLine</code>, use atlas/<code>MoneyFormatter</code> to display money instead; it is recommended that AddOn avoid the old <code>SetTooltipMoney</code> to reduce the problem of tool tip secret value.</li>
+<li>Tool tip money: Added <code>GameTooltip_AddMoneyLine</code> and use atlas/<code>MoneyFormatter</code> to display money instead; it is recommended that AddOn avoid the old <code>SetTooltipMoney</code> to reduce the problem of tool tip secret values.</li>
 <li>Unit identification: API of locally limited unit tokens, such as <code>UnitGUID</code>, <code>UnitAura</code>, health/power category API. When encountering unsupported tokens, <code>nil</code> or the default value is returned instead. When encountering unsupported tokens, <code>nil</code> or the default value is no longer directly returned. It is no longer directly lost. EAM Still must not rely on errors as a control flow.</li>
 <li>File resources: Added <code>C_UIFileAsset</code>, you can use <code>GetFileID</code>, <code>IsKnownFile</code>, <code>IsLooseFile</code> to verify whether the resource exists before using fonts and materials. EAM can be used at low frequency during Options/Renderer initialization and must not release heat paths.</li>
 <li>Profiling: <code>GetEventCPUUsage</code>, <code>GetFunctionCPUUsage</code>, <code>GetScriptCPUUsage</code> are reopened to AddOn. EAM can only be used to debug on demand/profiling, and it cannot run normally.</li>
@@ -1955,6 +2055,92 @@ ADDON_RESTRICTION_STATE_CHANGED
 <li>The exact configured ID always takes precedence; if two settings allow the same alias to point to different canonicals, the alias will be marked ambiguous and refuse to trigger, and will not choose sides with names, icons or guessed IDs.</li>
 <li>Talent/Specialization/Spell topology events are recompiled outside of combat; only pending in combat and merged once out of combat. The casting hot path does not check the Tooltip and does not make the family API call.</li>
 <li>Source: <a href="https://warcraft.wiki.gg/wiki/API_types/SpellIdentifier">SpellIdentifier／Base and Override</a>, <a href="https:/__EAM CODE_2__.wiki.gg/wiki/API_C_Spell.GetSpellInfo">C_Spell.GetSpellInfo</a>, <a href="https://warcraft.wiki.gg/wiki/UNIT_SPELLCAST_SUCCEEDED">UNIT_SPELLCAST_SUCCEEDED</a>.</li>
+</ul>
+<h2 id="2026-09-06-warcraft-wiki-full-enum-absorption-and-project-standardization">2026-09-06 Warcraft Wiki full Enum absorption and project standardization</h2>
+<p>Based on <a href="https://warcraft.wiki.gg/wiki/Category:Enums">Category:Enums</a> complete 5-page page-turning crawl, absorbing a total of <strong>888</strong> official independent Enum. The project fully follows the defensive encapsulation principle (Defensive Fallback) and eliminates hard-coded Magic Numbers:</p>
+<h3 id="core-adoption-checklist">Core Adoption Checklist:</h3>
+<ol>
+<li><strong><code>Enum.PowerType</code></strong>:</li>
+<li>Official standard: Mana=0, Rage=1, Focus=2, Energy=3, ComboPoints=4, Runes=5, RunicPower=6, SoulShards=7, LunarPower=8, HolyPower=9, Maelstrom=11, Chi=12, Insanity=13, ArcaneCharges=16, Fury=17, Pain=18, Essence=19.</li>
+<li>Implementation: <code>Data/PlayerResourceCatalog.lua</code> automatically aligns the 17 major resources with the official Enum through <code>POWER_TYPE_MAP</code>, and maintains fallback and contract string compatibility.</li>
+<li><strong><code>Enum.LuaCurveType</code></strong> and <strong><code>Enum.DurationTextBindingProperty</code></strong>:</li>
+<li>Reciprocal discoloration curves use <code>LuaCurveType.Step=1</code> and <code>DurationTextBindingProperty.RemainingDuration=0</code>.</li>
+<li>Implementation: <code>Core/Env.lua</code> is exposed and uniformly called in <code>Core/DurationAdapter.lua</code>.</li>
+<li><strong><code>Enum.StatusBarRenderMode</code></strong> and <strong><code>Enum.StatusBarFillStyle</code></strong>:</li>
+<li>The circular cooling progress bar uses <code>StatusBarRenderMode.Radial=1</code>.</li>
+<li>Implementation: <code>UI/IconPool.lua</code> uniformly reads <code>api.StatusBarRenderMode.Radial</code> first.</li>
+<li><strong><code>Enum.UnitAuraSortRule</code></strong> and <strong><code>Enum.UnitAuraSortDirection</code></strong>:</li>
+<li>Official standard Aura container sorting rules, completely replacing the old global variables <code>AuraContainerSortMethod</code> and <code>AuraContainerSortDirection</code>.</li>
+<li>Implementation: <code>Services/AuraContainerService.lua</code> Prefer official Enum and keep old global downgrades.</li>
+<li><strong><code>Enum.CustomAuraButtonDispelTypeStealableFilter</code></strong> and <strong><code>Enum.CustomAuraButtonDispelTypeTextureStyle</code></strong>:</li>
+<li>Native Aura dispersion border and steal filtering use official Enum.</li>
+<li>Implementation: <code>UI/NativeAuraRenderer.lua</code> standardized call.</li>
+<li><strong><code>Enum.SpellBookSpellBank</code></strong> and <strong><code>Enum.SpellBookItemType</code></strong>:</li>
+<li>Spellbook scanning uses <code>SpellBookSpellBank.Player=0</code>.</li>
+<li>Implementation: <code>Services/SpellBookScannerService.lua</code> defensive encapsulation.</li>
+</ol>
+<h2 id="2026-09-11-patch-1215-ptr-change-1-api-change-research-technical-pre-research-not-current-development-baseline">2026-09-11 Patch 12.1.5 PTR Change 1 API Change research (technical pre-research, not current development baseline)</h2>
+<blockquote>
+<p><strong>Special statement</strong>: In compliance with the architectural decision instructions, <strong>the current official development baseline of this project is strictly maintained as Retail 12.1.0</strong> (TOC 120100). This section is only used as a technical pre-research and forward-looking defensive intelligence reserve for 12.1.5 (Build 69594, TOC 120105) Change 1, and shall not be used as a baseline for subsequent development or code modification**.</p>
+</blockquote>
+<ul>
+<li>Official source: <a href="https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes">Patch 12.1.5/API changes</a></li>
+<li>Target versions: Patch 12.1.5 (Build 69594), TOC <code>120105</code></li>
+</ul>
+<h3 id="1-aura-pandemic-animations-aura-pandemic-refresh-native-animation-support">1. Aura Pandemic Animations (Aura Pandemic refresh native animation support)</h3>
+<ul>
+<li><code>CustomAuraButton</code> natively accesses Pandemic animation triggers and supports three major stages:</li>
+<li><code>Enter</code>: Enter Pandemic trigger (for single animation One-shot).</li>
+<li><code>Active</code>: Continuously triggered during Pandemic (used for looping animations, such as Bounce breathing).</li>
+<li><code>Leave</code>: Leave Pandemic trigger.</li>
+<li>Exclusive API: <code>AddPandemicActiveAnimation(animGroup)</code>, <code>Remove...</code>, <code>Clear...</code>.</li>
+<li>Added two Forbidden Aspects (protected forbidden dimensions) to prevent plug-ins from snooping on protected values through animation progress:</li>
+<li><code>QueryAnimationProgress</code>: It is forbidden to query the animation progress or whether it is playing.</li>
+<li><code>AddAnimations</code>: Disable dynamic addition or reparent.</li>
+</ul>
+<h3 id="2-aura-containers-major-behavioral-changes-to-native-aura-containers">2. Aura Containers (Major behavioral changes to native Aura containers)</h3>
+<ul>
+<li><strong>Breaking Change</strong>:</li>
+<li><code>AddDispelTypeTexture</code> and <code>AddPandemicRegion</code> <strong>no longer return index</strong>!</li>
+<li>The corresponding <code>RemoveDispelTypeTexture</code> and <code>RemovePandemicRegion</code> <strong>change the Region object reference (region reference)</strong> instead of the index.</li>
+<li>Repeatedly adding the same Region will directly throw a Lua Error.</li>
+<li><code>CustomAuraButton:SetCasterName</code>: supports displaying the caster name in FontString; cooperates with the new CVar <code>tooltipShowAuraCasterNames</code>.</li>
+<li><code>CustomAuraContainer</code> Added independent project deactivation API: <code>SetAuraGroupEnabled</code>, <code>SetAuraSlotEnabled</code>, <code>SetItemEnchantmentEnabled</code>.</li>
+<li><code>CustomAuraButton:SetApplicationBar</code> Added <code>minApplications</code> parameter.</li>
+</ul>
+<h3 id="3-addon-security-safety-isolation-and-coolingtightening-of-the-casting-defense-line">3. AddOn Security (safety isolation and cooling/tightening of the casting defense line)</h3>
+<ul>
+<li><strong>Protected Cooling Frame Limitation</strong>: When the cooling Frame itself is protected, <code>SetCooldown</code> and <code>Clear</code> are <strong>disallowed from being called in Taint code</strong>.</li>
+<li><strong>Castbar ID Token independent uniqueization</strong>: The cast bar ID is changed to be independent and unique for each unit token. The anti-blocking plug-in uses castbar ID comparison to determine whether different unit tokens are the same entity; case sensitive ("PLAYER" != "player").</li>
+</ul>
+<h3 id="4-new-script-objects-and-dispatch-primitives">4. New script objects and dispatch primitives</h3>
+<ul>
+<li><strong><code>TimedSignalMap</code></strong> (<code>C_Timer.NewTimedSignalMap</code> / <code>TimerUtil.CreateTimedSignalCallbackMap</code>):</li>
+<li>Single callback scheduler, scheduled at specified time with user-defined keys.</li>
+<li><strong>Supports dynamic rescheduling (Reschedule) without destroying and rebuilding</strong>, which is significantly better than the high-frequency overhead of traditional Timer cancellation and re-creation.</li>
+<li><strong><code>CreateFrameWithOptions(optionsTable)</code></strong>:</li>
+<li>Create Frame with named table parameter factory, natively supports <code>hidden = true</code> to be hidden after creation.</li>
+<li><strong>Native Pixel Alignment</strong>: All Regions support <code>roundLayoutToNearestPixel</code> XML attributes and <code>SetRoundLayoutToNearestPixel</code> API, Blizzard natively replaces Lua <code>PixelUtil</code> at C-Level.</li>
+</ul>
+<h3 id="5-nativeization-of-tool-functions-math-string-table-down-to-c-level">5. Nativeization of tool functions (Math / String / Table down to C-Level)</h3>
+<ul>
+<li>A large number of utility functions have been moved from FrameXML to C-Level native implementation, providing ultimate performance and zero GC:</li>
+<li>Math: <code>math.clamp</code>, <code>math.saturate</code>, <code>math.round</code>, <code>math.lerp</code>, <code>math.normalize</code>, <code>math.sign</code>, <code>math.remap</code>, <code>math.wrap</code>, <code>math.isfinite</code>, <code>math.isnan</code>, <code>math.isinf</code>.</li>
+<li>String: <code>string.contains</code>, <code>string.ltrim</code>, <code>string.rtrim</code>, <code>string.startswith</code>, <code>string.endswith</code>.</li>
+<li>Table: <code>table.isempty</code>, <code>table.contains</code>, <code>table.indexof</code>, <code>table.removeunordered</code>, <code>table.removevalue</code>, <code>table.keys</code>, <code>table.values</code>.</li>
+<li>Preserve global legacy function aliases (<code>Clamp</code>, <code>Lerp</code>, <code>TableIsEmpty</code>, <code>tContains</code>, etc.).</li>
+</ul>
+<h3 id="6-deprecated-api-thoroughly-cleaned-blizzard_deprecated-removed">6. Deprecated API Thoroughly Cleaned (Blizzard_Deprecated Removed)</h3>
+<ul>
+<li>Completely remove <code>Blizzard_DeprecatedItemScript</code>, <code>Blizzard_DeprecatedCurrencyScript</code> and other 10 major compatible libraries.</li>
+<li>Global <code>GetItemInfo</code>, <code>GetItemCooldown</code>, <code>GetCoinIcon</code>, <code>GetNumSockets</code> completely disabled.</li>
+<li><strong>EAM Current Security Confirmation</strong>: EAM has fully implemented modern API and has CI AST static scan protection, free from any impact.</li>
+</ul>
+<h3 id="7-new-namespace-and-auxiliary-system">7. New namespace and auxiliary system</h3>
+<ul>
+<li><code>C_Weather</code>: <code>GetCurrentWeather</code> and <code>WEATHER_CHANGED</code> events.</li>
+<li><code>C_Intl</code> and <code>LocaleContext</code>: Unicode, text line breaking, currency/date/number formatting.</li>
+<li>Team frame scatter border ant line animation: <code>MarchingAnts_Create...</code> and CVar <code>raidFramesDispelIndicatorAnimatedBorder</code>.</li>
 </ul>
     </div>
 

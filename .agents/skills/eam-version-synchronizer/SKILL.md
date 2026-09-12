@@ -23,6 +23,7 @@ description: >-
 | **7** | `changelog.txt` (專案根目錄) | 必須與 `EventAlertMod/changelog.txt` 維持 100% 完全相同內容。 |
 | **8** | `EventAlertMod/changelog_en.txt` | 記錄英文更新日誌，頂端新增英文版本區塊。 |
 | **9** | `changelog_en.txt` (專案根目錄) | 必須與 `EventAlertMod/changelog_en.txt` 維持 100% 完全相同內容。 |
+| **10** | `Deploy/CURSEFORGE-DESCRIPTION.md` | 以 `README.md` 為來源基準，將截圖網址全數映射至 CurseForge CDN 附件空間（`https://media.forgecdn.net/attachments/...`），產出全專案首頁說明檔，每次發布主動向少年欸回報完整檔案路徑。 |
 
 ## 2. 存檔與資料庫版本蓋章 (SavedVariables Timestamping)
 

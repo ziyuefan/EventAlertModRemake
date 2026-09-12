@@ -379,6 +379,136 @@
         <div class="changelog-container">
 <div class="changelog-card">
     <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization</span>
+        <span class="changelog-date">📅 2026.09.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display Option)：</strong></li>
+<ul class="changelog-sublist">
+<li>在角色屬性與吸收量監控中，為「飛龍模式飛速 (skyridingSpeed)」新增專屬特殊選項「僅滑翔顯示 (Glide Only)」。</li>
+<li>啟用後僅當角色處於空中御空術/飛龍滑翔飛行狀態 (C_PlayerInfo.GetGlidingInfo() 之 isGliding == true) 時才於畫面呈現該圖示與即時速度百分比；未滑翔（站立/步行）時自動隱藏，避免以 0% 佔用畫面。</li>
+<li>屬性設定面板「顯示與圖示 (Tab 1)」動態載入專屬控制項，其他 17 項屬性自動隱藏維持介面簡潔。</li>
+<li>支援排版移動保護：開啟「移動屬性框架」時強制顯示以便玩家拖曳定位。</li>
+<li>5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 完整對齊。</li>
+</ul>
+<li><strong>扇形倒數色彩與透明度自訂 (Cooldown Swipe Color &amp; Alpha Customization)：</strong></li>
+<ul class="changelog-sublist">
+<li>告警圖示、預覽面板之冷卻扇形倒數 (Cooldown Swipe) 支援透明度與色彩自訂，預設經典黑 (0, 0, 0, 0.8)，徹底解決純白扇形刺眼與遮擋圖示問題。</li>
+<li>於常規排版設置中提供自訂色塊按鈕與原生調色盤即時熱套用，支援 ProfileCodec 編解碼匯入匯出白名單與 AuraRuleCompiler 佈局指紋同步。</li>
+</ul>
+<li><strong>非本職業專屬法術新增防誤加確認對話框 (Non-Class Spell Add Interactive Confirmation)：</strong></li>
+<ul class="changelog-sublist">
+<li>在自身光環提醒中輸入不屬於當前職業的 Spell ID 時，取消靜默直接寫入跨職業清單行為，改為彈出互動式主題確認對話框。</li>
+<li>顯示法術圖示、法術名稱、ID 與詢問提示（「這個 SPELL ID 可能不是你的職業專屬，你仍要加入嗎？」）。</li>
+<li>提供「確定」按鈕：確認後仍強制於當前所在模組清單（自身光環提醒）中正式加入，絕不擅自竄改至跨職業清單；「取消」按鈕（及 ESC 鍵）安全關閉且不更改任何設定。</li>
+<li>5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 完整對齊。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Full Theme Visual Overhaul, Modern WoW Gradient Fix &amp; Subwindow Theme Sync</span>
+        <span class="changelog-date">📅 2026.09.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>11 大經典復古與現代主題調色盤深度重構與考證 (11 Classic &amp; Modern Themes Deep Visual Overhaul)：</strong></li>
+<ul class="changelog-sublist">
+<li>EAM 經典復刻：精確還原 9.0.1 經典石板黑褐底 (0.08, 0.06, 0.05)、金屬金框 (0.65, 0.50, 0.25) 與晶石深紅立體按鈕 (0.55, 0.10, 0.08)。</li>
+<li>FF7 經典戰鬥視窗：還原頂部鮮豔皇家寶石藍至底部黑海軍藍垂直漸層、純白立體邊框 (1.0, 1.0, 1.0) 與深藍晶透按鈕純白字。</li>
+<li>Windows XP (Luna 藍)、Windows 7 (Aero 玻璃漸層)、Windows 10 (Metro 磁貼平整)、Windows 3.1 (灰白 3D 凸面按鈕)、Borland C++ IDE (DOS 經典藍底黃字)、DOS CRT (P1 磷光綠純黑底)、倚天中文 (ETen 藍底明黃字)、Red Alert (裝甲灰黑深紅警戒框)、macOS Aqua (果凍膠囊藍漸層)。</li>
+</ul>
+<li><strong>Modern WoW 垂直漸層渲染管線修復 (Vertical Gradient Rendering Pipeline Fix)：</strong></li>
+<ul class="changelog-sublist">
+<li>徹底移除 SetColorTexture 頂點著色器衝突，改採 SetTexture(&quot;Interface\\Buttons\\WHITE8X8&quot;) 並設置於 BACKGROUND, 1 圖層，完美相容 Retail 10.x/11.x/12.x 原生 Texture:SetGradient(&quot;VERTICAL&quot;, cMin, cMax) 漸層著色。</li>
+<li>修正垂直方向漸層座標映射，確保頂部與底部色彩方向精確無誤。</li>
+</ul>
+<li><strong>全子視窗與面板主題無縫連動覆蓋 (Unified Subwindow Theme Registration)：</strong></li>
+<ul class="changelog-sublist">
+<li>實裝 Theme.applyContainerBackground，修復群組管理面板 (GroupManagerPanel)、全量法術庫 (SpellCatalogTreePanel) 與條件選單未套用主題問題。</li>
+<li>補齊圖示位置與能量設定內框 (posInner)、清單設定內框 (listInner) 之面板主題註冊，徹底消除子視窗與主視窗脫節之暗棕色色塊。</li>
+<li>新增 &quot;row&quot; 輕量列表行角色，保留文字與圖標清晰度同時杜絕過度漸層。</li>
+<li>補齊各面板之效果預覽按鈕、下拉選單與操作按鈕之 registerButton 關聯。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power &amp; Live Preview</span>
+        <span class="changelog-date">📅 2026.09.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>ESC 鍵無損純透明度抑制與冷卻預渲染保護 (Zero-Alpha Suppression on ESC Key)：</strong></li>
+<ul class="changelog-sublist">
+<li>在遊戲中按 ESC 鍵可隱藏畫面上的提醒圖示。全面改採純透明度抑制 (SetAlpha(0))，絕不銷毀 Frame 物件，保留 2D 排版矩陣與背景冷卻動畫。</li>
+<li>觸發新提示、進入戰鬥或打開設定面板時自動無損還原顯示；具備戰鬥中防 Taint 安全守衛。</li>
+</ul>
+<li><strong>角色屬性面板 4-Tab 模組化與防遮擋排版 (Player Stats 4-Tab Modular Layout)：</strong></li>
+<ul class="changelog-sublist">
+<li>屬性面板尺寸擴大至 720x540，重構成「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大獨立頁籤。</li>
+<li>滑桿間隔大幅拉開至 50~60px，徹底解決暴雪 OptionsSliderTemplate 之 Low/High 標籤與下方元件嚴重重疊遮擋問題。</li>
+</ul>
+<li><strong>職業資源狀態條垂直生長修復 (Vertical Resource StatusBar Growth Fix)：</strong></li>
+<ul class="changelog-sublist">
+<li>修復資源條切換為垂直 (VERTICAL) 模式時無法向上生長問題。</li>
+<li>正確轉置寬高、調用 SetRotatesTexture(true) 旋轉暴雪原生 StatusBar 材質，將圖示置底向上生長，並轉置點數分隔線與槽位條。</li>
+</ul>
+<li><strong>獨立即時效果預覽小視窗 (Independent Live Preview Panel)：</strong></li>
+<ul class="changelog-sublist">
+<li>全新實裝可自由拖曳、螢幕鎖定之獨立效果預覽視窗 (PreviewPanel)。</li>
+<li>提供「告警圖示」、「職業資源」、「角色屬性」3 大預覽頁籤，支援倒數變色曲線滑桿、Proc 金光、Pandemic 綠框、充能百分比與屬性項目即時測試。</li>
+<li>主設定視窗、常規排版、職業資源與屬性面板全面增設 [效果預覽] 按鈕與熱更新連動。</li>
+</ul>
+<li><strong>五國語言完整對齊與存檔自動蓋章：</strong></li>
+<ul class="changelog-sublist">
+<li>5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 同步新增 19 個預覽與頁籤詞條。</li>
+<li>存檔資料庫新增 meta 時間戳蓋章，自動標記本地時間與 Unix 秒數。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Native Curve Architecture &amp; Dynamic Visual Immersion</span>
+        <span class="changelog-date">📅 2026.09.08</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入 (Native C-Level Curve Architecture)：</strong></li>
+<ul class="changelog-sublist">
+<li>深入對齊暴雪 Patch 12.0.0 / Midnight 引入之底層 C-Level 曲線系統，全面接入 ScriptObject_CurveObject 與 ScriptObject_ColorCurveObject，杜絕戰鬥鎖定與 Taint 污染。</li>
+</ul>
+<li><strong>能量/資源條動態色彩曲線平滑染色 (Resource Dynamic Color Curve)：</strong></li>
+<ul class="changelog-sublist">
+<li>消耗型資源（法力/能量/真氣等）與累積型資源（怒氣/符文能量/狂怒等）全面支援透過 ColorCurveObject 進行平滑三色差值過渡（警戒深紅 ➜ 預警金黃 ➜ 專職代表色）。</li>
+<li>完美相容 12.0+ UnitPowerPercent(&quot;player&quot;, powerType, false, colorCurve) 原生硬體級渲染，能量耗竭或充盈時色彩平滑流動。</li>
+</ul>
+<li><strong>階梯閥門曲線突破受保護秘密值防線 (Step Gate Curve for Protected Values)：</strong></li>
+<ul class="changelog-sublist">
+<li>封裝 Util.createStepGateCurve 與 Util.createColorStepGateCurve，透過原生二元階梯函數安全穿透 Secret Number。</li>
+<li>實現精確斬殺線（20% / 35%）與能量警戒門檻，完全規避在 Lua 層進行受保護數值比對，零報錯零 Taint。</li>
+</ul>
+<li><strong>SecondsFormatter 自適應精度曲線 (Adaptive Seconds Formatter Curve)：</strong></li>
+<ul class="changelog-sublist">
+<li>透過 SecondsFormatter:SetDesiredUnitCountCurve 設定時間文字精度階梯曲線。長時間整數顯示，關鍵 &lt;= 5 秒自動平滑切換小數點，零 GC 零更新負擔。</li>
+</ul>
+<li><strong>非線性冷卻進度曲線與衝刺張力 (Non-Linear Cooldown Progress Curves)：</strong></li>
+<ul class="changelog-sublist">
+<li>支援線性均勻 (Linear)、三次方加速衝刺 (Cubic) 與餘弦平滑 (Cosine) 三大進度曲線。長冷卻大招在即將轉好最後 15% 顯著加速衝刺，營造技能即將就緒的戰鬥張力。</li>
+</ul>
+<li><strong>全螢幕瀕死低血量動態呼吸警示 (Dynamic Low Health Warning Pulse)：</strong></li>
+<ul class="changelog-sublist">
+<li>透過 UnitHealthPercent(&quot;player&quot;, true, healthCurve) 驅動全螢幕邊緣深紅動態呼吸脈動。血量越低紅框越濃烈，脫戰自動平滑隱藏，提供沉浸式瀕死預警。</li>
+</ul>
+<li><strong>排版設定面板現代化升級與五大語系對齊：</strong></li>
+<ul class="changelog-sublist">
+<li>於排版設定視窗中增設資源動態變色勾選框、冷卻進度曲線下拉選單、瀕死動態呼吸紅框開關與危急血量門檻滑桿，五大語系（繁中/簡中/英文/韓文/俄文）100% 完整對齊。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
         <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility &amp; Stat Hardening</span>
         <span class="changelog-date">📅 2026.09.04</span>
     </div>
@@ -2250,6 +2380,136 @@
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
         <h1>📜 EventAlertMod Complete Version History (Changelog)</h1>
         <div class="changelog-container">
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization</span>
+        <span class="changelog-date">📅 2026.09.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>Skyriding Speed Gliding-Only Display Option:</strong></li>
+<ul class="changelog-sublist">
+<li>Added a dedicated &quot;Glide Only&quot; option for Skyriding Speed (skyridingSpeed) in Player Stats &amp; Absorbs.</li>
+<li>When enabled, the icon and live speed percentage only appear while actively skyriding/gliding (C_PlayerInfo.GetGlidingInfo() isGliding == true); automatically hidden while grounded to prevent 0% screen clutter.</li>
+<li>Tab 1 (Display &amp; Icon) dynamically loads this dedicated control, auto-hidden for other 17 stats to maintain clean UI.</li>
+<li>Frame drag mode protection: forces display when adjusting layout frames for easy positioning.</li>
+<li>100% mirrored across all 5 languages (zhTW, zhCN, enUS, koKR, ruRU).</li>
+</ul>
+<li><strong>Cooldown Swipe Color &amp; Alpha Customization:</strong></li>
+<ul class="changelog-sublist">
+<li>Cooldown swipe texture on alert icons and preview panels now supports custom color and alpha, defaulting to classic black (0, 0, 0, 0.8) to eliminate blinding white washouts.</li>
+<li>Added color swatch button and native ColorPickerFrame integration with immediate hot-reload in General Layout, fully serialized in ProfileCodec and fingerprinted in AuraRuleCompiler.</li>
+</ul>
+<li><strong>Non-Class Spell Add Interactive Confirmation Dialog:</strong></li>
+<ul class="changelog-sublist">
+<li>Adding a non-class Spell ID in Self Buffs/Debuffs tab now intercepts silent reclassification and presents an interactive themed confirmation dialog.</li>
+<li>Displays spell icon, name, ID, and prompt (&quot;This SPELL ID may not belong to your class. Do you still want to add it?&quot;).</li>
+<li>Provides &quot;Confirm&quot; button: forcibly adds to the current module&#x27;s list (Self Buffs/Debuffs) upon confirmation rather than redirecting to Cross-Class; &quot;Cancel&quot; button (plus ESC key support) dismisses safely without modifying any configuration.</li>
+<li>Fully localized across 5 languages (zhTW, zhCN, enUS, koKR, ruRU).</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Full Theme Visual Overhaul, Modern WoW Gradient Fix &amp; Subwindow Theme Sync</span>
+        <span class="changelog-date">📅 2026.09.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>11 Classic &amp; Modern Themes Deep Visual Overhaul:</strong></li>
+<ul class="changelog-sublist">
+<li>EAM Classic: Restored 9.0.1 slate dark brown background (0.08, 0.06, 0.05), metallic gold border (0.65, 0.50, 0.25), and ruby red 3D buttons (0.55, 0.10, 0.08).</li>
+<li>FF7 Battle Window: Restored top royal blue (0.00, 0.12, 0.85) to bottom dark navy (0.00, 0.01, 0.10) vertical gradient, pure white double border (1.0, 1.0, 1.0), and dark blue crystal buttons with pure white text.</li>
+<li>Windows XP (Luna blue), Windows 7 (Aero glass), Windows 10 (Metro dark flat), Windows 3.1 (3D convex gray buttons), Borland C++ IDE (DOS blue screen yellow text), DOS CRT (P1 phosphor green), ETen Chinese (bright yellow on pure blue), Red Alert (armored dark gray red warning border), and macOS Aqua (jelly blue capsule gradient).</li>
+</ul>
+<li><strong>Modern WoW Vertical Gradient Rendering Pipeline Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Eliminated SetColorTexture shader conflicts by standardizing on SetTexture(&quot;Interface\\Buttons\\WHITE8X8&quot;) placed at BACKGROUND layer sublevel 1, perfectly compatible with Retail 10.x/11.x/12.x native Texture:SetGradient(&quot;VERTICAL&quot;, cMin, cMax).</li>
+<li>Corrected vertical gradient coordinate mapping ensuring vivid top-to-bottom contrast.</li>
+</ul>
+<li><strong>Unified Subwindow &amp; Panel Theme Registration:</strong></li>
+<ul class="changelog-sublist">
+<li>Implemented Theme.applyContainerBackground, resolving un-themed dark gray fallbacks across GroupManagerPanel, SpellCatalogTreePanel, and condition menus.</li>
+<li>Wired Theme.registerFrame on position settings inner container (posInner) and spell list inner container (listInner), eliminating disconnected dark brown blocks.</li>
+<li>Introduced lightweight &quot;row&quot; role for tree and group list items, preventing heavy redundant gradient creation across large lists.</li>
+<li>Connected all preview buttons, dropdowns, and action buttons to Theme.registerButton.</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power &amp; Live Preview</span>
+        <span class="changelog-date">📅 2026.09.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>ESC Key Zero-Alpha Suppression &amp; Pre-render Protection:</strong></li>
+<ul class="changelog-sublist">
+<li>Pressing ESC in game hides alert icons via Zero-Alpha (SetAlpha(0)) without destroying frames or resetting cooldown layouts and timers.</li>
+<li>Automatically unsuppresses on new alerts, combat entry, or opening options. Protected by in-combat taint guards.</li>
+</ul>
+<li><strong>Player Stats 4-Tab Modular Layout:</strong></li>
+<ul class="changelog-sublist">
+<li>Widened stat panel to 720x540 and modularized into 4 tabs: &quot;Display &amp; Icon&quot;, &quot;Font &amp; Format&quot;, &quot;Thresholds&quot;, and &quot;Position &amp; Anchor&quot;.</li>
+<li>Generous 50-60px slider vertical spacing eliminates Low/High label collisions with adjacent controls.</li>
+</ul>
+<li><strong>Vertical Resource StatusBar Growth Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Fixed vertical resource bars failing to grow upwards.</li>
+<li>Transposes dimensions, calls SetRotatesTexture(true) to rotate Blizzard StatusBar textures, anchors icon at bottom growing up, and aligns dividers and slot bars.</li>
+</ul>
+<li><strong>Independent Live Preview Panel:</strong></li>
+<ul class="changelog-sublist">
+<li>Introduced draggable, screen-clamped floating preview window (PreviewPanel).</li>
+<li>Features 3 tabs: &quot;Alert Icon&quot;, &quot;Resource Bar&quot;, and &quot;Player Stat&quot; with real-time sliders for timer color curve testing, Proc glow, Pandemic border, power percentage, and stat reflections.</li>
+<li>Wired preview toggle buttons and live refresh across main options, pos frame, resource, and stat panels.</li>
+</ul>
+<li><strong>5-Locale Mirroring &amp; SavedVariables Timestamping:</strong></li>
+<ul class="changelog-sublist">
+<li>Fully mirrored 19 new preview and tab keys across zhTW, zhCN, enUS, koKR, and ruRU.</li>
+<li>Added meta timestamp stamping to SavedVariables recording local datetime and Unix epoch.</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Native Curve Architecture &amp; Dynamic Visual Immersion</span>
+        <span class="changelog-date">📅 2026.09.08</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>Native C-Level Curve Architecture Integration (CurveObject &amp; ColorCurveObject):</strong></li>
+<ul class="changelog-sublist">
+<li>Fully integrated Blizzard&#x27;s Patch 12.0.0 / Midnight C-Level ScriptObject_CurveObject and ScriptObject_ColorCurveObject architectures, eliminating taint and combat lockdown limitations.</li>
+</ul>
+<li><strong>Dynamic Color Curve Tinting for Power and Resource Bars (Resource Dynamic Color Curve):</strong></li>
+<ul class="changelog-sublist">
+<li>Expending and accumulating resources are smoothly interpolated across a 3-stage dynamic color palette (Critical Red -&gt; Warning Yellow -&gt; Signature Class Color) via ColorCurveObject.</li>
+<li>Seamlessly compatible with 12.0+ UnitPowerPercent(&quot;player&quot;, powerType, false, colorCurve) native hardware-level rendering, flowing colors dynamically with current power percentages.</li>
+</ul>
+<li><strong>Step Gate Curves for Protected / Secret Numerical Values:</strong></li>
+<ul class="changelog-sublist">
+<li>Implemented Util.createStepGateCurve and Util.createColorStepGateCurve, utilizing binary step functions to penetrate protected Secret Numbers.</li>
+<li>Delivers exact execute phase (&lt;20% / &lt;35%) and power threshold alarms without Lua-side comparison operators, preventing taint failures.</li>
+</ul>
+<li><strong>Adaptive SecondsFormatter Unit Count Curve:</strong></li>
+<ul class="changelog-sublist">
+<li>Configured SecondsFormatter:SetDesiredUnitCountCurve to dynamically format timer countdowns. Displays whole integers for long durations and smoothly switches to single-digit decimals for &lt;= 5 seconds with zero GC allocations.</li>
+</ul>
+<li><strong>Non-Linear Cooldown Progress Sprint Curves:</strong></li>
+<ul class="changelog-sublist">
+<li>Added support for Linear, Cubic (late acceleration sprint), and Cosine (smooth ease) progress curves. Critical cooldowns noticeably accelerate during their final 15% phase to build combat anticipation.</li>
+</ul>
+<li><strong>Full-Screen Dynamic Low Health Breathing Pulse:</strong></li>
+<ul class="changelog-sublist">
+<li>Powered by UnitHealthPercent(&quot;player&quot;, true, healthCurve) to drive a dynamic full-screen red pulsating vignette. Intensity deepens as player health drops, automatically hiding out of combat.</li>
+</ul>
+<li><strong>Options UI Modernization &amp; 5-Locale Full Synchronization:</strong></li>
+<ul class="changelog-sublist">
+<li>Added resource dynamic color checkbox, cooldown progress curve dropdown, low health breathing pulse toggle, and critical health threshold slider, fully localized across all 5 languages (zhTW, zhCN, enUS, koKR, ruRU).</li>
+</ul>
+</ul>
+</div></div>
 <div class="changelog-card">
     <div class="changelog-header">
         <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility &amp; Stat Hardening</span>

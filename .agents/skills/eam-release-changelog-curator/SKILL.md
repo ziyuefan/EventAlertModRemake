@@ -39,3 +39,13 @@ description: >-
 4. **雙語對照標準**：
    - 大小標題一律採「中文名稱 (English Name)」雙語結構。
    - 繁體中文說明精確專業，若有英文 README / Changelog 需求則對等翻譯。
+
+## 3. 發布雙物料分離治理 (Dual Deliverables Separation)
+
+在每一次版本發布或整理時，必須明確區分並產出以下兩種不同維度的物料：
+
+| 物料分類 | 目標檔案路徑 | 用途與發布管道 | 內容範疇與排版特色 |
+| :--- | :--- | :--- | :--- |
+| **物料 A：單版本更新日誌**<br>(Single-Version Release Notes) | `Dist/RELEASE_NOTES_*.md`<br>`Dist/GITHUB_RELEASE_NOTES_*.md` | 1. GitHub Release 內文<br>2. CurseForge API 上傳 (`Upload-CurseForge.ps1 -ReleaseNotesPath`) | 僅專注於**本次版本**之新增功能、介面優化、Bug 修復與安裝指引。<br>杜絕全專案介紹以保持日誌緊湊。 |
+| **物料 B：全專案首頁說明**<br>(Full Project Description) | `Deploy/CURSEFORGE-DESCRIPTION.md` | 供少年欸複製貼上至 **CurseForge 專案後台首頁 Description**（CF 無首頁更新 API） | **以 `README.md` 為基準之全方位專案介紹**。<br>包含徽章、四大優勢對比表、八大模組、現代化特性、14 張 CurseForge CDN 截圖展示、常用斜線命令表（含 `/eam preview`）、完整歷史日誌折疊區塊。<br>每次發布必須主動向少年欸回報檔案絕對路徑。 |
+

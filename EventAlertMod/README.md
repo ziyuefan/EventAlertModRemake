@@ -112,6 +112,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 | 指令 | 縮寫 / 別名 | 說明 |
 | :--- | :--- | :--- |
 | `/eam` 或 `/eam opt` | `/eam option`, `/eam options` | 開啟 EAM 主設定選單 |
+| `/eam preview` | 無 | 開啟獨立即時效果預覽小視窗（免進戰鬥測試變色、光效、扇形倒數與屬性） |
 | `/eam reset` | `/eam resetpos`, `/eam center` | **將 EAM 主視窗重置回螢幕正中央**（解決視窗被拖出畫面找不到的問題） |
 | `/eam list` | 無 | 顯示目前職業已啟用的監控清單（自身、目標、冷卻、物品、地面效果） |
 | `/eam add <spellID>` | `/eam add player <spellID>` | 新增指定法術 ID 至「自身光環」監控清單 |

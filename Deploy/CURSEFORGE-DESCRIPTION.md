@@ -67,12 +67,12 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 
 | 主設定面板 (Main Options) | 功能模組開關 (Module Options) | 關於插件資訊 (About Panel) |
 | :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/01_%E4%B8%BB%E8%A8%AD%E5%AE%9A%E9%9D%A2%E6%9D%BF_MainOptions.jpg" width="100%" alt="EAM 主設定面板" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/02_%E5%8A%9F%E8%83%BD%E6%A8%A1%E7%B5%84%E9%96%8B%E9%97%9C_ModuleOptions.jpg" width="100%" alt="功能模組開關" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/03_%E9%97%9C%E6%96%BC%E6%8F%92%E4%BB%B6%E8%B3%87%E8%A8%8A_AboutPanel.jpg" width="100%" alt="關於插件資訊" /> |
+| <img src="https://media.forgecdn.net/attachments/description/826042/description_04ac0707-5adb-4e9f-a51c-876fb3e1bc84.jpg" width="100%" alt="EAM 主設定面板" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_e2998c73-1a7b-4cee-ada8-5a98d40888ac.jpg" width="100%" alt="功能模組開關" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_2b46c72f-8515-493e-a3a2-5d5271fd2b90.jpg" width="100%" alt="關於插件資訊" /> |
 | 整合主題/音效/語系選單、光環後端切換與全域開關 | 8 大功能模組獨立事件監聽與資源開關 | 插件版本、作者資訊、API 基準 (12.1.0 PTR) 與專案連結 |
 
 | 11 套主題樣式 (Theme Dropdown) | 12 種經典音效 (Sound Dropdown) | 6 大多國語系 (Locale Dropdown) |
 | :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/04_%E4%B8%BB%E9%A1%8C%E6%A8%A3%E5%BC%8F%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_ThemeDropdown.jpg" width="100%" alt="主題樣式下拉選單" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/05_%E6%8F%90%E7%A4%BA%E9%9F%B3%E6%95%88%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_SoundDropdown.jpg" width="100%" alt="提示音效下拉選單" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/06_%E5%A4%9A%E5%9C%8B%E8%AA%9E%E7%B3%BB%E4%B8%8B%E6%8B%89%E9%81%B8%E5%96%AE_LocaleDropdown.jpg" width="100%" alt="多國語系下拉選單" /> |
+| <img src="https://media.forgecdn.net/attachments/description/826042/description_8fb2f296-64fd-4fdd-9881-876e63a748d9.jpg" width="100%" alt="主題樣式下拉選單" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_4961ea26-688a-4c99-bc3c-404101ab6fe9.jpg" width="100%" alt="提示音效下拉選單" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_1a8c7c49-0ce4-4c0d-ae21-1aa64dc7f25b.jpg" width="100%" alt="多國語系下拉選單" /> |
 | 內建魔獸經典、FF7、WinXP、Borland 等 11 套風格 | 內建 ShayBell、Netherwind、PolyMorphCow 等音效 | 自動偵測、繁體中文 (台灣官方術語)、簡中、英文、韓文、俄文 |
 
 ---
@@ -81,12 +81,12 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 
 | 自身光環與奶牛頭預覽 (Self Aura & Preview) | 技能冷卻與行為覆寫 (Spell Cooldown Overrides) |
 | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/07_%E8%87%AA%E8%BA%AB%E5%85%89%E7%92%B0%E6%B8%85%E5%96%AE%E8%88%87%E7%B4%B0%E9%83%A8%E6%A2%9D%E4%BB%B6%E8%A8%AD%E5%AE%9A_SelfAuraConditions.jpg" width="100%" alt="自身光環清單與細部條件設定" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/08_%E6%8A%80%E8%83%BD%E5%86%B7%E5%8D%BB%E7%9B%A3%E6%8E%A7%E8%88%87%E8%A1%8C%E7%82%BA%E8%A6%86%E5%AF%AB%E8%A8%AD%E5%AE%9A_SpellCooldownOptions.jpg" width="100%" alt="技能冷卻監控與行為覆寫設定" /> |
+| <img src="https://media.forgecdn.net/attachments/1891/207/07_eaeoacae-aec-e-aeae-a_selfauraconditions-jpg.jpg" width="100%" alt="自身光環清單與細部條件設定" /> | <img src="https://media.forgecdn.net/attachments/1891/208/08_aee12aacaeeecoea-e-a_spellcooldownoptions-jpg.jpg" width="100%" alt="技能冷卻監控與行為覆寫設定" /> |
 | 自身法術清單、奶牛頭排版預覽、層數/高亮/紅字限制、12.1 光環事件音效與自訂圖示 | 技能冷卻清單、完成後移除/非戰鬥顯示/可用時高亮三態覆寫與自訂替代圖示 |
 
 | 物品冷卻設定 (Item Cooldown) | 三級階層吸附與地面效果 (Ground Effect Docking) |
 | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/09_%E7%89%A9%E5%93%81%E5%86%B7%E5%8D%BB%E7%9B%A3%E6%8E%A7%E8%88%87%E7%B4%B0%E9%83%A8%E6%A2%9D%E4%BB%B6%E8%A8%AD%E5%AE%9A_ItemCooldownOptions.jpg" width="100%" alt="物品冷卻監控設定" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/10_%E5%9C%B0%E9%9D%A2%E6%95%88%E6%9E%9C%E7%93%A3%E6%8E%A7%E8%88%87%E4%B8%89%E7%B4%9A%E9%9A%8E%E5%B1%A4%E5%90%B8%E9%99%84_GroundEffectDocking.jpg" width="100%" alt="地面效果監控與三級階層吸附" /> |
+| <img src="https://media.forgecdn.net/attachments/1891/209/09_c-c-aaacaee-a_itemcooldownoptions-jpg.jpg" width="100%" alt="物品冷卻監控設定" /> | <img src="https://media.forgecdn.net/attachments/1891/210/10_aeaeaecaeea-c-eaa-e_groundeffectdocking-jpg.jpg" width="100%" alt="地面效果監控與三級階層吸附" /> |
 | 裝備與飾品冷卻清單、層數閾值、優先級與自訂圖示 | 主選單 ➔ 清單 ➔ 細部條件無縫平滑貼合 (APPEND Docking) 與動態 Tooltip 擷取 |
 
 ---
@@ -95,12 +95,12 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 
 | 玩家職業資源設定 (Player Resource Panel) | 角色屬性與吸收量監控 (Player Stats & Absorbs) |
 | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/11_%E7%8E%A9%E5%AE%B6%E8%81%B7%E6%A5%AD%E8%B3%87%E6%BA%90%E8%A8%AD%E5%AE%9A%E9%9D%A2%E6%9D%BF_PlayerResourcePanel.jpg" width="100%" alt="玩家職業資源設定面板" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/12_%E8%A7%92%E8%89%B2%E5%B1%AC%E6%80%A7%E8%88%87%E5%90%B8%E6%94%B6%E9%87%8F%E7%9B%A3%E6%8E%A7%E9%9D%A2%E6%9D%BF_PlayerStatsPanel.jpg" width="100%" alt="角色屬性與吸收量監控面板" /> |
+| <img src="https://media.forgecdn.net/attachments/1891/211/11_c-c-aeaee3aeoe-aeae_playerresourcepanel-jpg.jpg" width="100%" alt="玩家職業資源設定面板" /> | <img src="https://media.forgecdn.net/attachments/1891/212/12_ee2aaeea-aeecaeeae_playerstatspanel-jpg.jpg" width="100%" alt="角色屬性與吸收量監控面板" /> |
 | 符文/符能與各專精能量條、顯示模式、錨點定位、16 項細部滑桿與 Secret 原生保護 | 18 項核心屬性取值、跑速/泳速/飛速/飛龍速度、圖示/進度條開關與警戒值設定 |
 
 | 告警框架排版與懸停提示 (Layout & Tooltips) | 職業 Profile 分享與匯入匯出 (Profile Codec) |
 | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/13_%E5%91%8A%E8%AD%A6%E6%A1%86%E6%9E%B6%E4%BD%8D%E7%BD%AE%E6%8E%92%E7%89%88%E8%88%87%E6%87%B8%E5%81%9C%E6%8F%90%E7%A4%BA_LayoutPositionOptions.jpg" width="100%" alt="告警框架位置排版與懸停提示" /> | <img src="https://raw.githubusercontent.com/ziyuefan/EventAlertModRemake/main/.AI/ScreenShot/14_%E8%81%B7%E6%A5%ADProfile%E5%88%86%E4%BA%AB%E8%88%87%E5%8C%AF%E5%85%A5%E5%8C%AF%E5%87%BA%E9%9D%A2%E6%9D%BF_ProfileCodecPanel.jpg" width="100%" alt="職業Profile分享與匯入匯出面板" /> |
+| <img src="https://media.forgecdn.net/attachments/1891/213/13_aeaeaea12c12aeceae-aaeco_layoutpositionoptions.jpg" width="100%" alt="告警框架位置排版與懸停提示" /> | <img src="https://media.forgecdn.net/attachments/1891/214/14_eaeprofileaaoea-aa-aoeae_profilecodecpanel-jpg.jpg" width="100%" alt="職業Profile分享與匯入匯出面板" /> |
 | 尺寸/間距/字型/透明度滑桿、7 大框架成長方向、充能列設定與控制項懸停 Tooltip 指引 | 8 大自選項勾選、快捷按鈕與 EAMAP1 Base64 字串匯出/預覽/合併套用/取代套用 |
 
 ---

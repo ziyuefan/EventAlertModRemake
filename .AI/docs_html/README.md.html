@@ -512,7 +512,7 @@
 <h1 id="eventalertmod-retail-121-eam">EventAlertMod Retail 12.1 (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.4-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.5-orange" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
 <blockquote>
@@ -571,7 +571,13 @@
 <li>💀 <strong>死亡騎士符文儀表板</strong>：依專精動態切換專屬圖示，內建 6 格微型充能冷卻條（0%..100% 平滑動畫）與 <code>/eam rune</code> 槽位診斷視窗。</li>
 <li>⚡ <strong>60fps 全方位即時熱預覽</strong>：調整尺寸、間距、透明度、轉圈動畫、文字大小等，畫面上即時動態響應，非戰鬥不需 <code>/reload</code>。</li>
 <li>💬 <strong>全介面控制項懸停提示 (Hover Tooltips)</strong>：所有按鈕、核取方塊、滑桿、編輯框與選單均附帶直觀指引，使用門檻為零。</li>
-<li>🎨 <strong>11 套精美主題風格</strong>：魔獸經典 (預設)、Borland 亮藍黃字、DOS CRT 復古黑綠、曜石黑、賽博龐克等風格自由切換。</li>
+<li>🎨 <strong>11 套精美主題風格</strong>：EAM 原版經典（石板金框深紅按鈕）、FF7 戰鬥視窗（皇家藍漸層白框）、Windows XP（Luna 藍）、Windows 7（Aero 玻璃）、Windows 10、Windows 3.1（3D 凸面按鈕）、Borland C++ IDE、DOS CRT（P1 磷光綠）、倚天中文、Red Alert（紅色警戒裝甲）、macOS Aqua（果凍膠囊藍）等自由切換，全面支援 Modern WoW 垂直漸層與所有子視窗無縫連動。</li>
+<li>📈 <strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入</strong>：</li>
+<li><strong>能量/資源條動態色彩曲線染色</strong>：消耗型與累積型資源自動以三色階動態染色（警戒深紅 ➜ 預警金黃 ➜ 專職代表色），完美相容 12.0+ <code>UnitPowerPercent</code> 原生硬體級渲染。</li>
+<li><strong>階梯閥門曲線 (Step Gate Curve)</strong>：透過二元階梯函數安全穿透受保護秘密值，實現精確斬殺與警戒，零報錯零 Taint。</li>
+<li><strong>SecondsFormatter 自適應精度曲線</strong>：時間倒數文字依剩餘秒數平滑切換精度（長時間整數，關鍵 &lt;= 5 秒小數點），零 GC 負擔。</li>
+<li><strong>非線性冷卻進度曲線</strong>：支援線性均勻 (Linear)、三次加速衝刺 (Cubic) 與餘弦平滑 (Cosine)，營造大招即將就緒的戰鬥衝刺張力。</li>
+<li><strong>全螢幕瀕死動態呼吸警示</strong>：血量危急時全螢幕邊緣動態呼吸脈動，血量越低紅框越濃烈，脫戰自動平滑隱藏。</li>
 <li>🚨 <strong>進入戰鬥紅框閃爍</strong>：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。</li>
 <li>📦 <strong>Profile 設定檔跨角色分享</strong>：支援 8 大分類自選項目匯出／匯入（EAMAP1 JSON / Base64 編碼），附防禦性白名單校驗。</li>
 <li>🌐 <strong>完整多國語系支援</strong>：繁體中文 (zhTW - 嚴格對齊台灣官方術語：致命、加速、臨機應變)、簡體中文 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU)。</li>
@@ -715,6 +721,11 @@
 <td style="text-align: left;">開啟 EAM 主設定選單</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>/eam preview</code></td>
+<td style="text-align: left;">無</td>
+<td style="text-align: left;">開啟獨立即時效果預覽小視窗（免進戰鬥測試變色、光效、扇形倒數與屬性）</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>/eam reset</code></td>
 <td style="text-align: left;"><code>/eam resetpos</code>, <code>/eam center</code></td>
 <td style="text-align: left;"><strong>將 EAM 主視窗重置回螢幕正中央</strong>（解決視窗被拖出畫面找不到的問題）</td>
@@ -829,6 +840,41 @@
 <h2 id="beautified-changelogtxt">📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+<h3 id="retail-1210-alpha-85-20260912">🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12</h3>
+<ul>
+<li><strong>獨立即時效果預覽視窗 (Independent Live Preview Panel - PreviewPanel)</strong>：</li>
+<li>全新開發可自由拖曳、螢幕鎖定之獨立效果預覽視窗，提供「告警圖示」、「職業資源條」、「角色屬性」3 大頁籤。</li>
+<li>支援倒數變色曲線滑桿、Proc 金光、Pandemic 綠框、充能百分比與屬性項目即時動態測試。</li>
+<li>主設定視窗、常規排版、職業資源與屬性面板全面增設「效果預覽」按鈕與雙向熱更新連動。</li>
+<li><strong>角色屬性設定面板 4-Tab 模組化與防遮擋排版 (Player Stats 4-Tab Modular Layout)</strong>：</li>
+<li>屬性面板尺寸擴大至 720x540，重構成「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大獨立頁籤。</li>
+<li>滑桿垂直留白擴充至 50~60px，徹底消除暴雪原生滑桿 Low/High 刻度標籤與下方元件嚴重重疊遮擋問題。</li>
+<li><strong>飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display)</strong>：</li>
+<li>為「飛龍模式飛速 (<code>skyridingSpeed</code>)」新增專屬特殊選項「僅滑翔顯示 (Glide Only)」。</li>
+<li>角色處於空中御空術/飛龍滑翔飛行 (<code>isGliding == true</code>) 時才於畫面呈現圖示與速度百分比；未滑翔（站立/步行）時自動隱藏，避免 0% 佔用畫面。</li>
+<li>支援排版移動模式保護：開啟「移動屬性框架」時強制顯示以便玩家拖曳定位。</li>
+<li><strong>冷卻扇形倒數色彩與透明度自訂 (Cooldown Swipe Color &amp; Alpha Customization)</strong>：</li>
+<li>告警圖示與預覽面板之冷卻扇形倒數 (Cooldown Swipe) 支援透明度與色彩自訂，預設經典黑 (<code>0, 0, 0, 0.8</code>)，徹底解決純白扇形刺眼與遮擋圖示問題。</li>
+<li>於常規排版設置中提供自訂色塊按鈕與原生調色盤即時熱套用，支援 ProfileCodec 編解碼與佈局指紋同步。</li>
+<li><strong>自身光環非本職業專屬法術防誤加確認對話框 (Non-Class Spell Interactive Confirmation)</strong>：</li>
+<li>在自身光環提醒中輸入不屬於當前職業的 Spell ID 時，取消靜默自動轉移至跨職業清單行為，改為彈出互動式主題確認對話框。</li>
+<li>顯示法術圖示、法術名稱、ID 與詢問提示；點擊「確定」強制於當前所在模組清單（自身光環提醒）中正式加入，絕不擅自竄改至跨職業；「取消」按鈕（及 ESC 鍵）安全關閉不變更任何設定。</li>
+<li><strong>職業資源狀態條垂直生長修復 (Vertical Resource StatusBar Growth Fix)</strong>：</li>
+<li>修復資源條切換為垂直 (VERTICAL) 模式時無法向上生長問題。</li>
+<li>正確轉置寬高、旋轉暴雪原生 StatusBar 材質 (<code>SetRotatesTexture(true)</code>)、將圖示錨定置底向上生長，並轉置點數分隔線與槽位條。</li>
+<li><strong>11 大經典復古與現代主題調色盤深度重構 (11 Classic &amp; Modern Themes Visual Overhaul)</strong>：</li>
+<li>深度考證並精確還原 11 款主題：EAM 經典復刻（9.0.1 石板黑金深紅）、FF7 經典戰鬥視窗（皇家寶石藍漸層純白框）、Windows XP (Luna)、Windows 7 (Aero)、Windows 10 (Metro)、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua。</li>
+<li>修復 Modern WoW 垂直漸層著色管線，解決頂點著色器衝突；全子視窗與面板背景無縫主題連動覆蓋。</li>
+<li><strong>ESC 鍵無損純透明度抑制與自動喚醒 (Zero-Alpha Suppression on ESC Key)</strong>：</li>
+<li>在遊戲中按 ESC 鍵隱藏畫面圖示全面改採純透明度抑制 (<code>SetAlpha(0)</code>)，絕不銷毀 Frame 物件，完整保留 2D 排版矩陣與背景冷卻動畫。</li>
+<li>觸發新提示、進入戰鬥或打開設定面板時自動無損還原顯示；具備戰鬥中防 Taint 安全守衛。</li>
+<li><strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入 (Native C-Level Curve Architecture)</strong>：</li>
+<li>全面接入暴雪 Patch 12.0.0 / Midnight 底層 C-Level 曲線系統，杜絕戰鬥鎖定與 Taint 污染。</li>
+<li>支援資源條動態色彩三色平滑過渡、二元階梯閥門曲線突破受保護秘密值防線、SecondsFormatter 自適應精度曲線、非線性冷卻進度衝刺曲線與全螢幕瀕死低血量動態呼吸警示。</li>
+<li><strong>五國語言完整對齊與存檔時間戳蓋章</strong>：</li>
+<li>5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 同步新增 20+ 個新功能與專屬選項詞條。</li>
+<li>存檔資料庫新增本地時間與 Unix 秒數雙重時間戳自動標記。</li>
+</ul>
 <h3 id="retail-1210-alpha-84-20260904">🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04</h3>
 <ul>
 <li><strong>光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine &amp; Columns per Row Configuration)</strong>：</li>
@@ -1061,7 +1107,7 @@
 <h1 id="eventalertmod-retail-121-eam">EventAlertMod Retail 12.1 (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.4-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.5-orange" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
 <blockquote>
@@ -1378,6 +1424,40 @@
 <h2 id="version-history-changelogtxt">📜 Version History (CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+<h3 id="retail-1210-alpha-85-20260912">🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12</h3>
+<ul>
+<li><strong>Independent Live Preview Panel (PreviewPanel)</strong>:</li>
+<li>Brand new free-floating, screen-clamped independent Live Preview window with 3 dedicated tabs: Alert Icons, Class Resources, and Player Stats.</li>
+<li>Interactive countdown timer curve testing, Proc golden glow, Pandemic border, resource charging progress, and live stat previews.</li>
+<li>Main options, general layout, resource panels, and stat panels feature instant "[Live Preview]" shortcuts and bidirectional hot-updates.</li>
+<li><strong>Player Stats 4-Tab Modular Layout &amp; Overlap Protection</strong>:</li>
+<li>Expanded stat panel dimensions to 720x540, modularized into 4 independent tabs: Display &amp; Icon, Fonts &amp; Format, Thresholds, and Position &amp; Anchor.</li>
+<li>Generous 50~60px vertical slider spacing, eliminating Blizzard OptionsSliderTemplate Low/High tick overlap with lower elements.</li>
+<li><strong>Skyriding Speed Gliding-Only Display Option</strong>:</li>
+<li>Added a dedicated "Glide Only" option for Skyriding Speed (<code>skyridingSpeed</code>).</li>
+<li>Only displays the icon and speed percentage while actively skyriding/gliding (<code>isGliding == true</code>), automatically hiding when grounded to keep the screen clean.</li>
+<li>Drag &amp; position mode protection: forces display when adjusting frames so position calibration is always available.</li>
+<li><strong>Cooldown Swipe Color &amp; Alpha Customization</strong>:</li>
+<li>Full customization for cooldown swipe darkness and color, defaulting to classic black (<code>0, 0, 0, 0.8</code>), resolving harsh bright white swipe glare over spell icons.</li>
+<li>Interactive color picker button in General Layout with immediate live preview and ProfileCodec synchronization.</li>
+<li><strong>Non-Class Spell Add Interactive Confirmation Dialog</strong>:</li>
+<li>Adding a non-current class spell ID to Self Aura triggers an interactive themed confirmation popup displaying spell icon, name, ID, and prompt.</li>
+<li>Clicking "Confirm" forcibly registers the spell to the current module list (Self Aura) without silent reassignment to Cross-Class; "Cancel" or ESC safely dismisses.</li>
+<li><strong>Vertical Resource StatusBar Growth Fix</strong>:</li>
+<li>Fixed vertical orientation growth by transposing dimensions, rotating textures with <code>SetRotatesTexture(true)</code>, bottom-anchoring icons, and transposing segmented dividers.</li>
+<li><strong>11 Classic &amp; Modern Themes Visual Overhaul</strong>:</li>
+<li>Meticulously restored 11 themes: EAM Classic (9.0.1 slate/gold/crimson), FF7 Battle Window (royal sapphire blue gradient, pure white border), Windows XP/7/10/3.1, Borland C++, DOS CRT, ETen, Red Alert, and macOS Aqua.</li>
+<li>Resolved vertex shader gradient conflicts for modern WoW vertical gradients and added comprehensive subwindow container skinning.</li>
+<li><strong>Zero-Alpha Suppression on ESC Key</strong>:</li>
+<li>ESC key alert hiding uses non-destructive <code>SetAlpha(0)</code> without destroying frame objects or disrupting 2D matrix layouts.</li>
+<li>Instant unsuppression on new alert triggers, combat start, or opening options, with strict in-combat taint guards.</li>
+<li><strong>Native Blizzard CurveObject / ColorCurveObject C-Level Architecture</strong>:</li>
+<li>Full adoption of Patch 12.0.0 / Midnight C-Level curve infrastructure, preventing combat lockouts and script taint.</li>
+<li>Smooth three-color resource transitions, binary step-gate curves bypassing secret numbers, adaptive SecondsFormatter curves, non-linear cooldown sprint curves, and dynamic low-health pulse warnings.</li>
+<li><strong>Full 5-Locale Mirroring &amp; Auto-Timestamping</strong>:</li>
+<li>100% synchronized dictionaries across zhTW, zhCN, enUS, koKR, and ruRU.</li>
+<li>SavedVariables automatic dual ISO 8601 and Unix epoch timestamping on save and migration.</li>
+</ul>
 <h3 id="retail-1210-alpha-84-20260904">🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04</h3>
 <ul>
 <li><strong>2D Grid Layout Engine &amp; Columns per Row Configuration</strong>:</li>

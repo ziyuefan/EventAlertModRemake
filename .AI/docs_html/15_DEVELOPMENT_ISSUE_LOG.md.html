@@ -509,6 +509,218 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-09-12-eam-20260912-skyriding-gliding-only-option-skyridingspeed-glide-only">2026-09-12 EAM-20260912-SKYRIDING-GLIDING-ONLY-OPTION：飛龍模式飛速 (skyridingSpeed) 專屬「僅滑翔時顯示圖示 (Glide Only)」選項實裝</h3>
+<ul>
+<li>狀態：已解決 (Lua 78/78, Flow 86/86, Contracts 499/499)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸提出需求：「飛龍速度增加一個特殊選項, 只有Glide = true 才顯示ICON」。</li>
+<li>機制與操作痛點：<ul>
+<li>在「角色屬性與吸收量監控」中，飛龍模式飛速 (<code>skyridingSpeed</code>) 平時在地面步行、站立或普通坐騎上數值均為 0%（或普通速度），若常駐顯示在畫面上會無謂遮擋視線且不具參考價值。</li>
+<li>玩家希望唯有在空中進行御空術/飛龍騎術滑翔（<code>C_PlayerInfo.GetGlidingInfo()</code> 之 <code>isGliding == true</code>）時，才在畫面上呈現此飛龍速度圖示與即時速度百分比；落地或未滑翔時自動隱藏。</li>
+</ul>
+</li>
+<li>重構實作：</li>
+<li><strong>核心滑翔過濾與安全判斷 (<code>Services/PlayerStatService.lua</code>)</strong>：<ul>
+<li>新增 <code>PlayerStatService.isPlayerGliding()</code> 輔助函式，使用防禦性 <code>pcall(C_PlayerInfo.GetGlidingInfo)</code> 安全判斷 <code>isGliding == true</code>，杜絕不同客戶端版本或受保護環境之拋錯。</li>
+<li>在 <code>PlayerStatService.update()</code> 的 <code>activeList</code> 收集迴圈中增加專屬過濾：當 <code>key == "skyridingSpeed"</code> 且 <code>cfg.glideOnlyIcon == true</code> 時，若 <code>not isPlayerGliding()</code> 且 <code>not PlayerStatService.isMoving</code>，則跳過加入 <code>activeList</code>。</li>
+<li>當未滑翔時，該圖示框架自動進入 <code>item:Hide()</code>，若屬分組排版則其他屬性自動緊密排齊，不留空隙。</li>
+<li>具備排版移動模式保護：當玩家在設定面板開啟「移動屬性框架」（<code>isMoving == true</code>）時，強制顯示圖示框以便拖曳與自訂排版定位。</li>
+</ul>
+</li>
+<li><strong>設定介面專屬動態控制項 (<code>UI/PlayerStatPanel.lua</code>)</strong>：<ul>
+<li>在 Tab 1（顯示與圖示，<code>pageDisplay</code>）頂部新增專屬勾選框 <code>glideOnlyIconCb</code>（位置 <code>TOPLEFT</code>, x=320, y=-10）。</li>
+<li>在 <code>loadStatToDetail(statKey)</code> 中：若 <code>statKey == "skyridingSpeed"</code> 則 <code>glideOnlyIconCb:Show()</code> 並同步其 Checked 狀態；選中其他 17 項屬性時自動 <code>Hide()</code>，維持介面簡潔。</li>
+<li>在 <code>applyLiveChange()</code> 中：即時儲存 <code>cfg.glideOnlyIcon</code>，並調用 <code>PlayerStatService.update()</code> 即時反應。</li>
+<li>綁定點擊事件 <code>glideOnlyIconCb:SetScript("OnClick", applyLiveChange)</code>。</li>
+</ul>
+</li>
+<li><strong>五國語系鏡像對齊 (<code>Locale/zhTW.lua</code>, <code>zhCN.lua</code>, <code>enUS.lua</code>, <code>koKR.lua</code>, <code>ruRU.lua</code>)</strong>：<ul>
+<li>5 國語言字典 100% 同步新增 <code>EAM_STAT_GLIDE_ONLY_ICON</code> 與 <code>EAM_STAT_GLIDE_ONLY_ICON_TIP</code> 詞條。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 78/78、Flow all 86/86、Validation Contracts 499/499 全部通過，零退化。</li>
+</ul>
+<h3 id="2026-09-12-eam-20260912-swipe-color-non-class-confirm-dialog">2026-09-12 EAM-20260912-SWIPE-COLOR-NON-CLASS-CONFIRM-DIALOG：扇形倒數色彩透明度自訂與非本職業專屬法術新增防誤加確認對話框實裝</h3>
+<ul>
+<li>狀態：已解決 (Lua 78/78, Flow 86/86, Contracts 499/499)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸提出兩項重要反饋：
+     a. 「白色扇形倒數是怎回事? 這不好看, 扇形倒數應該能調整透明度,並且可以指定顏色」：告警圖示與效果預覽面板之冷卻倒數扇形 (Cooldown Swipe) 原本寫死為純白色 (1, 1, 1)，在明亮或高對比圖示上產生刺眼白光且過度遮蔽技能圖標。
+     b. 「這個管制請改成詢問:"這個SPELL ID 可能不是你的職業專屬, 你仍要加入嗎?" 提供"確定"按鈕加入, "取消" 按鈕不加入」：在「自身光環提醒」中輸入非當前職業的法術 ID 時，系統過去會靜默自動將其轉為「跨職業增減益」並直接寫入清單，缺乏互動確認機制與防誤加保護。</li>
+<li>機制分析與解決方案：<ul>
+<li><strong>扇形倒數色彩自訂</strong>：WoW 原生 <code>Cooldown:SetSwipeColor(r, g, b, a)</code> 支援動態指定 RGBA。在 <code>SavedVariables</code> 中新增 <code>cooldownSwipeColor</code>（預設 <code>{ r = 0, g = 0, b = 0 }</code>）與 <code>cooldownSwipeAlpha</code>（預設 <code>0.8</code>），並於常規排版設置中提供自訂色塊按鈕與原生調色盤即時熱套用，支援 ProfileCodec 編解碼匯入匯出白名單與 AuraRuleCompiler 佈局指紋同步。</li>
+<li><strong>非本職業法術確認對話框</strong>：在 <code>Options.addAlertToCurrentCategory(id, force)</code> 中加入攔截：若 <code>not force and Options.currentCategory == 1 and not isCurrentClassSpell(id)</code>，中斷自動寫入流程，彈出主題化 <code>confirmNonClassFrame</code> 對話框。對話框呈現法術圖示、名稱、ID 與詢問標題；點擊「確定」調用 <code>Options.addAlertToCurrentCategory(pendingSpellID, true)</code>，在 <code>addAlertToCategory</code> 中傳入 <code>force = true</code>，強制於當前所在模組清單（自身光環提醒）中正式寫入 <code>catalogScope = SELF</code>，絕不擅自竄改至跨職業清單，並輸出成功反饋與清空輸入框；點擊「取消」或按 ESC 鍵則安全關閉對話框，不更改任何設定。</li>
+</ul>
+</li>
+<li>重構實作：</li>
+<li><strong>扇形倒數配置與渲染連動 (<code>Core/SavedVariables.lua</code>, <code>Core/ProfileCodec.lua</code>, <code>Managers/AuraRuleCompiler.lua</code>, <code>UI/IconPool.lua</code>, <code>UI/NativeAuraRenderer.lua</code>, <code>UI/Renderer.lua</code>, <code>UI/Options.lua</code>)</strong>：<ul>
+<li><code>SavedVariables.lua</code>：加入 <code>cooldownSwipeColor</code>、<code>cooldownSwipeAlpha</code> 欄位與 getters/setters、版本遷移、重置邏輯。</li>
+<li><code>ProfileCodec.lua</code>：納入版面配置匯入匯出白名單與防呆校驗。</li>
+<li><code>AuraRuleCompiler.lua</code>：佈局指紋納入 <code>cooldownSwipeColor</code> 特徵字串。</li>
+<li><code>IconPool.lua</code>、<code>NativeAuraRenderer.lua</code>、<code>Renderer.lua</code>：即時讀取色彩並調用 <code>cooldown:SetSwipeColor(r, g, b, a)</code>。</li>
+<li><code>Options.lua</code>：於常規排版加入色塊按鈕，開啟原生 <code>ColorPickerFrame</code> 支援 RGBA 即時熱套用與預覽更新。</li>
+</ul>
+</li>
+<li><strong>非本職業法術防誤加確認對話框與強制所在模組加入 (<code>UI/Options.lua</code>)</strong>：<ul>
+<li>建立 <code>confirmNonClassFrame</code>（420x165，<code>FULLSCREEN_DIALOG</code>，註冊 <code>Theme.registerFrame(confirmNonClassFrame, "window")</code> 與 <code>UISpecialFrames</code> ESC 自動關閉）。</li>
+<li>包含 36x36 法術圖標、法術名稱與 ID 標籤、確認提示文字（<code>EAM_OPT_CONFIRM_NON_CLASS_SPELL</code>）。</li>
+<li>提供「確定」(<code>confirmBtn</code>) 與「取消」(<code>cancelBtn</code>) 主題按鈕，點擊確定時調用 <code>Options.addAlertToCurrentCategory(targetID, true)</code>，傳遞 <code>force = true</code> 強制加入目前清單（<code>scope = SELF</code>），取消時清空暫存並隱藏。</li>
+<li>修復 <code>migratePlayerAuraCatalogScopes</code>：僅在 <code>alert.catalogScope == nil</code> 時才進行補齊遷移，徹底杜絕刷新列表時擅自將使用者手動加入自身光環的非本職業法術覆蓋為跨職業。</li>
+<li>匯出 <code>Options.showNonClassSpellConfirmDialog(spellID)</code>，具備安全法術資訊查詢與防禦式動態建立保護。</li>
+</ul>
+</li>
+<li><strong>多國語系完整對齊 (<code>Locale/zhTW.lua</code>, <code>zhCN.lua</code>, <code>enUS.lua</code>, <code>koKR.lua</code>, <code>ruRU.lua</code>)</strong>：<ul>
+<li>5 國語言字典 100% 同步新增 <code>EAM_OPT_CONFIRM_NON_CLASS_SPELL</code>、<code>EAM_OPT_CONFIRM_TITLE</code>、<code>EAM_OPT_CONFIRM_BTN</code>、<code>EAM_OPT_CANCEL_BTN</code> 4 項詞條。</li>
+</ul>
+</li>
+<li><strong>全量代碼契約斷言強化 (<code>.AI/Tools/Test-ValidationContracts.ps1</code>, <code>EventAlertMod/Debug/FlowTestRunner.lua</code>)</strong>：<ul>
+<li>新增 <code>Five locales cover all non-class spell confirmation dialog keys</code>（5 國語言確認視窗詞條全覆蓋契約）。</li>
+<li>新增 <code>Non-class spell add triggers interactive confirmation dialog and force-adds to current category</code>（非本職業專屬法術新增互動確認對話框與強制加入當前模組清單邏輯契約）。</li>
+<li><code>FlowTestRunner.lua</code> 增補端到端狀態機測試，核驗攔截、確認彈窗、強制寫入 SELF 與 revision 一致性。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 78/78、Flow all 86/86、Validation Contracts 499/499 全部通過，零退化。</li>
+</ul>
+<h3 id="2026-09-12-eam-20260912-stat-panel-tab-preview-vertical-power-4-tab">2026-09-12 EAM-20260912-STAT-PANEL-TAB-PREVIEW-VERTICAL-POWER：角色屬性面板 4-Tab 防遮擋重構、職業資源條垂直生長修復與獨立即時效果預覽小視窗實裝</h3>
+<ul>
+<li>狀態：已解決 (Lua 78/78, Flow 86/86, Contracts 497/497)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸提出三項重點指示：
+     a. 「屬性也是有點占版面,可能可以在規劃TAB FRAME , 另外部件之間盡量不要遮擋」：角色屬性設定面板（<code>PlayerStatPanel.lua</code>）右側滑桿密集堆疊，導致低/高標籤與滑桿軌道重疊，且頂部標題與整體排列方向下拉選單緊湊擠壓。
+     b. 「另外職業資源如果是狀態條,垂直生長無法作用」：當職業資源設定為「垂直 (VERTICAL)」時，StatusBar 無法正常向上充能生長，且寬高與圖示排版未轉置。
+     c. 「還有,可以做出各設定畫面的效果預覽嗎? 另外開一個小視窗專門預覽」：希望能有一個獨立的預覽小視窗，在調整各項數值與開關時能即時預覽效果，無需進入戰鬥或手動施法測試。</li>
+<li>根因分析與機制解讀：<ul>
+<li><strong>StatusBar 垂直生長失敗</strong>：WoW 原生 <code>StatusBar</code> 切換 <code>SetOrientation("VERTICAL")</code> 時，若未調用 <code>SetRotatesTexture(true)</code>，其內部預設材質不會旋轉，且寬高維持橫向比例（寬 140 高 16）時，視覺上只在 16px 內垂直填充，導致使用者感覺「完全沒作用」；此外，POINTS 模式的分隔線（markers）與槽位條（slotBars）亦需相應轉置為水平切分線。</li>
+<li><strong>屬性面板元件重疊</strong>：<code>OptionsSliderTemplate</code> 預設在滑桿下方約 -10px 處渲染 Low 與 High 文字標籤，當垂直堆疊間距小於 35px 時，下方控制項文字會與上方滑桿之 Low/High 標籤完全碰撞重疊。</li>
+</ul>
+</li>
+<li>重構實作：</li>
+<li><strong>職業資源狀態條垂直生長修復 (<code>UI/PowerRenderer.lua</code>)</strong>：<ul>
+<li>判定 <code>isVertical = (config.orientation == "VERTICAL")</code>，動態轉置狀態條尺寸：<code>actualBarWidth = isVertical and barHeight or barWidth</code>、<code>actualBarHeight = isVertical and barWidth or barHeight</code>。</li>
+<li>原生安全旋轉：安全調用 <code>statusBar:SetOrientation(orientation)</code> 與 <code>statusBar:SetRotatesTexture(isVertical)</code>。</li>
+<li>排版轉置：圖示置於底部，狀態條向上生長；數值與標籤置中對齊；轉置 POINTS 模式分隔線（高度 1、寬度滿格）與槽位條（垂直堆疊）；修復 <code>reflowResourceFrames</code> 垂直模式動態行距計算。</li>
+</ul>
+</li>
+<li><strong>角色屬性面板 4-Tab 模組化重構 (<code>UI/PlayerStatPanel.lua</code>)</strong>：<ul>
+<li>面板寬度由 660 擴充至 720x540，大幅釋放水平與垂直留白。</li>
+<li>模組化拆分為 4 大獨立 Tab：</li>
+<li>Tab 1: <strong>顯示與圖示 (Display &amp; Icon)</strong>：啟用開關、顯示文字、自訂標籤、圖示大小、框架層級。</li>
+<li>Tab 2: <strong>字型與格式 (Font &amp; Format)</strong>：小數位數、字型家族（LSM 整合）、數值字級、標籤字級。</li>
+<li>Tab 3: <strong>警戒門檻 (Thresholds)</strong>：數值下限警戒、數值上限警戒（超出時觸發深紅高亮邊框閃爍）。</li>
+<li>Tab 4: <strong>位置與錨點 (Position &amp; Anchor)</strong>：自訂獨立座標開關、X/Y 偏移滑桿、單項移動/全部移動錨點框按鈕。</li>
+<li>滑桿垂直間距拉開至 50~60px，徹底杜絕文字與控制項重疊。</li>
+</ul>
+</li>
+<li><strong>全新獨立自由浮動效果預覽小視窗 (<code>UI/PreviewPanel.lua</code>)</strong>：<ul>
+<li>建立 <code>EAM_PreviewOptionsFrame</code>（330x420，<code>DIALOG</code> 層級，支援滑鼠任意拖曳與螢幕邊界鎖定）。</li>
+<li>具備 3 大預覽 Tab：</li>
+<li><strong>Tab 1: 告警圖示 (Alert)</strong>：支援模擬剩餘秒數滑桿 (0~15s)、Proc 金色發光勾選框、Pandemic 綠框勾選框；拖動滑桿即時測試 12.0.7+ 原生 <code>TimerColorCurve</code> 紅/黃/白硬體動態變色。</li>
+<li><strong>Tab 2: 職業資源 (Resource)</strong>：支援模擬充能百分比滑桿 (0~100%)，即時反映水平/垂直方向、動態色彩曲線染色（紅 ➜ 黃 ➜ 代表色）與數值百分比文字。</li>
+<li><strong>Tab 3: 角色屬性 (Stat)</strong>：即時連動屬性面板所選屬性之圖示、字型大小、格式化文字與警戒紅框。</li>
+</ul>
+</li>
+<li><strong>全設定介面整合與即時連動</strong>：<ul>
+<li>主設定視窗（<code>Options.lua</code>）底部加入 <code>[效果預覽]</code> 按鈕；常規與位置設定（<code>posFrame</code>）、職業資源面板（<code>PlayerResourcePanel.lua</code>）、角色屬性面板（<code>PlayerStatPanel.lua</code>）頂部均加入 <code>[效果預覽]</code> 按鈕。</li>
+<li>在 <code>notifyConfigChanged</code>、<code>notifyTextLayoutChanged</code>、<code>autoApplyDraft</code> 時自動調用 <code>PreviewPanel.refresh()</code> 熱更新。</li>
+</ul>
+</li>
+<li><strong>5 國語言字典同步</strong>：<ul>
+<li><code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 完整對齊 19 個預覽視窗與屬性 Tab 語意詞條。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 78/78、Flow all 86/86、Validation Contracts 497/497 全部通過，零退化。</li>
+</ul>
+<h3 id="2026-09-08-eam-20260908-native-curve-architecture-patch-1200-midnight-curveobject-colorcurveobject">2026-09-08 EAM-20260908-NATIVE-CURVE-ARCHITECTURE：暴雪 Patch 12.0.0 / Midnight 原生 CurveObject 與 ColorCurveObject 曲線架構全面接入</h3>
+<ul>
+<li>狀態：已解決 (Lua 77/77, Flow 86/86, Contracts 497/497)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸提出指示：「https://warcraft.wiki.gg/wiki/ScriptObject_CurveObject 這是你之前參考的資訊嗎？在你理解後能為EAM帶來甚麼更好更新的改善或功能？」，助理提出五大維度革新方案後，少年欸發出決策指令：「全上」。</li>
+<li>官方底層機制分析：<ul>
+<li><code>CurveObject</code> 與 <code>ColorCurveObject</code> 為暴雪在 Patch 12.0.0 / Midnight 引入之全新底層 C-Level 數值與色彩插值物件。</li>
+<li>具備三大核心優勢：
+   a. <strong>穿透受保護秘密值 (Secret Penetration)</strong>：<code>UnitHealthPercent(unit, predicted, curve)</code> 與 <code>UnitPowerPercent(unit, powerType, unmodified, curve)</code> 允許在不解開 Secret 數值的情況下，由底層安全評估出普通數值或 <code>ColorMixin</code>。
+   b. <strong>C-Level 零 GC 零耗能運算</strong>：文字染色與進度過渡完全在暴雪 C 核心執行，免除 Lua 每幀計算與垃圾回收。
+   c. <strong>非線性動力學美學</strong>：支援 Linear、Step、Cosine、Cubic 四大曲線，實現流暢的動態回饋。</li>
+</ul>
+</li>
+<li>重構實作五大革新維度：</li>
+<li><strong>【資源條】能量/資源條動態色彩曲線染色 (Resource Dynamic Color Curve)</strong>：<ul>
+<li><code>DurationAdapter.buildResourceDynamicColorCurve</code>：自動為消耗型資源（警戒紅 ➜ 預警黃 ➜ 代表色）與累積型資源（暗色 ➜ 預警黃 ➜ 高亮色）建構三色階曲線。</li>
+<li><code>PowerRenderer.applyPercent</code>：在更新資源條時呼叫色彩曲線，相容 12.0+ <code>UnitPowerPercent</code> 原生硬體級染色。</li>
+</ul>
+</li>
+<li><strong>【秘密值突破】階梯閥門曲線 (Step Gate Curve for Protected Values)</strong>：<ul>
+<li><code>Util.createStepGateCurve</code> 與 <code>Util.createColorStepGateCurve</code>：以二元階梯函數安全穿透 Secret 數值，實現斬殺線（20%/35%）與能量警戒門檻，零 Taint。</li>
+</ul>
+</li>
+<li><strong>【時間文字】SecondsFormatter 自適應精度曲線 (Adaptive Seconds Formatter Curve)</strong>：<ul>
+<li><code>SecondsFormatter:SetDesiredUnitCountCurve</code>：長秒數整數、&lt;= 5 秒小數點，零 GC 零延遲。</li>
+</ul>
+</li>
+<li><strong>【冷卻張力】非線性冷卻進度曲線 (Non-Linear Cooldown Progress Curves)</strong>：<ul>
+<li><code>DurationAdapter.buildNonLinearProgressCurve</code>：支援 LINEAR、CUBIC（最後 15% 衝刺加速）、COSINE 三種模式，並在 <code>Renderer.lua</code> 中與 Cooldown Frame 深度綁定。</li>
+</ul>
+</li>
+<li><strong>【動態危機】全螢幕低血量危急動態呼吸 (Dynamic Low Health Warning Pulse)</strong>：<ul>
+<li><code>CombatFlash.lua</code>：建構血量 Alpha 曲線，由 <code>UnitHealthPercent("player", true, curve)</code> 驅動全螢幕邊緣動態呼吸脈動。</li>
+</ul>
+</li>
+<li><strong>UI 設定與 5 語系完整對齊</strong>：<ul>
+<li><code>Options.lua</code> 新增資源動態變色勾選框、冷卻進度曲線下拉選單、瀕死呼吸紅框開關與危急血量門檻滑桿，5 語系（zhTW, zhCN, enUS, koKR, ruRU）100% 同步。</li>
+</ul>
+</li>
+<li><strong>離線驗證同構化升級</strong>：<ul>
+<li><code>WoW121AuraMock.lua</code> 與 <code>FlowValidationHarness.lua</code> 完整補齊 <code>CreateColor</code>、<code>C_CurveUtil</code>、<code>UnitHealthPercent</code>、<code>UnitPowerPercent(curve)</code> 與 <code>SecondsFormatter:SetDesiredUnitCountCurve</code> Mock。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 77/77、Flow all 86/86、Validation Contracts 497/497 全部通過，零退化。</li>
+</ul>
+<h3 id="2026-09-06-eam-20260906-wow-official-enums-standardizationwarcraft-wiki-888-enum">2026-09-06 EAM-20260906-WOW-OFFICIAL-ENUMS-STANDARDIZATION：Warcraft Wiki 官方 888 個 Enum 全量遍歷與專案現代化枚舉重構</h3>
+<ul>
+<li>狀態：已解決 (Lua 77/77, Flow 86/86, Contracts 497/497)。</li>
+<li>需求背景與問題分析：</li>
+<li>少年欸提出指示：吸收並遍歷 <code>https://warcraft.wiki.gg/wiki/Category:Enums</code> 全部官方 Enum（包含翻頁爬取），並遍歷專案所有可用上官方 Enum 之處，配合官方枚舉取代寫死數字（Magic Numbers）、私有常數與舊式全域變數。</li>
+<li>調研與掃描結果：<ul>
+<li>完成官方 5 頁共 888 個獨立 Enum 全量爬取收錄（落盤不可變清單 <code>scratch/all_wow_enums.json</code>）。</li>
+<li>篩選專案領域核心相關 235 個 Enum，清查出專案 156 處潛在對應點。</li>
+<li>鎖定核心重構領域：<code>PowerType</code>（17 大能量常數）、<code>LuaCurveType</code> &amp; <code>DurationTextBindingProperty</code>（倒數變色曲線）、<code>StatusBarRenderMode</code> &amp; <code>StatusBarFillStyle</code>（進度條與冷卻光圈）、<code>UnitAuraSortRule</code> &amp; <code>UnitAuraSortDirection</code>（原生光環容器排序）、<code>CustomAuraButtonDispelTypeStealableFilter</code>（驅散過濾）、<code>SpellBookSpellBank</code> &amp; <code>SpellBookItemType</code>（法術書掃描）。</li>
+</ul>
+</li>
+<li>重構實作：</li>
+<li><strong>核心環境層統一封裝 (<code>Core/Env.lua</code>)</strong>：<ul>
+<li>在 <code>EAM.API</code> 中擴充暴露 <code>PowerType</code>, <code>LuaCurveType</code>, <code>DurationTextBindingProperty</code>, <code>StatusBarRenderMode</code>, <code>StatusBarFillStyle</code>, <code>UnitAuraSortRule</code>, <code>UnitAuraSortDirection</code>, <code>UnitAuraSoundTrigger</code>, <code>CustomAuraButtonDispelTypeStealableFilter</code>, <code>CustomAuraButtonDispelTypeTextureStyle</code>, <code>CustomAuraButtonBorderStyle</code>, <code>ItemQuality</code>, <code>CooldownViewerCategory</code>, <code>SpellBookSpellBank</code>, <code>SpellBookItemType</code>, <code>AuraFrameOrientation</code>，全數遵循安全防禦封裝。</li>
+</ul>
+</li>
+<li><strong>玩家資源不可變目錄 (<code>Data/PlayerResourceCatalog.lua</code>)</strong>：<ul>
+<li>透過 <code>POWER_TYPE_MAP</code> 自動將 17 種能量型別（MANA, RAGE, FOCUS, ENERGY, COMBO_POINTS, RUNES, RUNIC_POWER, SOUL_SHARDS, LUNAR_POWER, HOLY_POWER, MAELSTROM, CHI, INSANITY, ARCANE_CHARGES, FURY, PAIN, ESSENCE）映射至官方 <code>Enum.PowerType</code>，消除 Magic Numbers，並保持 fallback 與契約相容。</li>
+</ul>
+</li>
+<li><strong>服務層與渲染層全面對齊</strong>：<ul>
+<li><code>Services/AuraContainerService.lua</code>：將舊全域變數 <code>AuraContainerSortMethod</code> 與 <code>AuraContainerSortDirection</code> 升級為優先使用官方標準 <code>api.UnitAuraSortRule</code> 與 <code>api.UnitAuraSortDirection</code>。</li>
+<li><code>Core/DurationAdapter.lua</code>：倒數曲線屬性統一採用 <code>api.DurationTextBindingProperty</code> 與 <code>api.LuaCurveType</code>。</li>
+<li><code>UI/IconPool.lua</code>：冷卻光圈渲染優先讀取 <code>api.StatusBarRenderMode.Radial</code>。</li>
+<li><code>UI/NativeAuraRenderer.lua</code>：驅散樣式與偷取過濾優先讀取 <code>api.CustomAuraButtonDispelTypeStealableFilter</code> 與 <code>api.CustomAuraButtonDispelTypeTextureStyle</code>。</li>
+<li><code>Services/SpellBookScannerService.lua</code>：法術書分頁判定採用 <code>api.SpellBookSpellBank.Player</code> 防禦性封裝。</li>
+</ul>
+</li>
+<li><strong>離線測試沙盒與 Mock 套件升級</strong>：<ul>
+<li><code>WoW121AuraMock.lua</code> 與 <code>FlowValidationHarness.lua</code> 完整補齊所有官方 Enum Mock 表，確保離線驗證完全同構。</li>
+</ul>
+</li>
+<li>驗證結果：Lua 77/77、Flow all 86/86、Validation Contracts 497/497 全部通過，零退化。</li>
+</ul>
+<h3 id="2026-09-06-eam-20260906-duration-text-bindingwarcraft-wiki-durationtextbinding">2026-09-06 EAM-20260906-DURATION-TEXT-BINDING：Warcraft Wiki 官方正式收錄 DurationTextBinding 規範對齊</h3>
+<ul>
+<li>狀態：已對齊官方文檔；EAM 現行實作完全合規 (Lua 76/76, Flow 85/85, Contracts 497/497)。</li>
+<li>需求背景與問題分析：</li>
+<li>Warcraft Wiki 官方正式釋出 Patch 12.0.7 / Midnight 新增之 ScriptObject <code>DurationTextBinding</code> (API systems/DurationTextBindingObjectAPI) 完整百科條目。</li>
+<li>先前 2026-05-29 實測時因社群尚未建立完整 Wiki 條目，部分釋放與擴展方法依賴 PTR 實測；需確認官方 30 個 API 簽名與 EAM 現行實作相容性。</li>
+<li>官方正式確認包含 30 個 C-Level ScriptObject API，無 <code>Unbind</code> 方法，標準釋放流程為 <code>Disable()</code> / <code>SetToDefaults()</code>。EAM <code>Core/DurationAdapter.lua</code> 完全命中官方標準。</li>
+<li>架構對齊與實施總結：</li>
+<li>文檔回填更新 <code>10_WARCRAFT_WIKI_12X_API_NOTES.md</code>，建立官方文檔連結。</li>
+<li>確認 EAM 現有 <code>DurationAdapter.lua</code> 與 <code>Renderer.lua</code> 雙軌倒數完全合規，以無參數 factory 建立並使用 <code>SetToDefaults</code> 安全回收。</li>
+<li>盤點未來可導入之官方能力：<code>SetTextColorCurve</code>（C-Level 零 GC 原生時間漸層變色）與 <code>binding:HasSecretValues()</code>（高精度秘密值識別）。</li>
+</ul>
 <h3 id="2026-09-04-eam-20260904-playerstat-drag-format-arg4-nil-bad-argument-4-to-format">2026-09-04 EAM-20260904-PLAYERSTAT-DRAG-FORMAT-ARG4-NIL：拖曳移動單一屬性圖示報錯 bad argument #4 to 'format' 修復</h3>
 <ul>
 <li>狀態：已解決 (Lua 76/76, Flow 85/85, Contracts 497/497)。</li>
@@ -2342,19 +2554,374 @@
 <li>Flow 狀態機測試：84/84 PASS。</li>
 <li>Validation Contracts：496/496 PASS。</li>
 </ul>
+<h3 id="eam-20260906-timer-color-curve-and-paletteretail-1207-settextcolorcurve">EAM-20260906-TIMER-COLOR-CURVE-AND-PALETTE：Retail 12.0.7 原生 SetTextColorCurve 剩餘秒數多階變色與調色盤自訂</h3>
+<ul>
+<li>日期：2026-09-06。</li>
+<li>狀態：已完成代碼實作、Flow 狀態機測試 (86/86 PASS) 與全專案代碼契約檢驗 (497/497 PASS)；等待實機簽收。</li>
+<li>需求與設計：</li>
+<li>少年欸反饋與指示：利用 Retail 12.0.7 / Midnight 新增的 <code>DurationTextBinding:SetTextColorCurve(curve, property)</code> 與 <code>C_CurveUtil.CreateColorCurve()</code>，完成過去無法完成的「指定剩餘秒數紅字」，並支援「多重條件在不同剩餘秒數顯示不同顏色」，顏色可透過遊戲內原生調色盤（Color Picker）自訂。</li>
+<li>官方 API 機制與調研：</li>
+<li><code>C_CurveUtil.CreateColorCurve()</code>：建立 <code>LuaColorCurve</code> 物件。</li>
+<li><code>curve:SetType(Enum.LuaCurveType.Step)</code>：階梯躍變型曲線（Step=1, Linear=0）。</li>
+<li><code>curve:AddPoint(seconds, CreateColor(r, g, b, a))</code>：依據剩餘秒數添加顏色節點，採「雙點防衛邊界（Two-Point Boundary Guard）」演算法（切換點微距 0.001s），消除曲線在步進與線性內插時的平滑模糊，確保數字精確銳利變色。</li>
+<li><code>binding:SetTextColorCurve(curve, Enum.DurationTextBindingProperty.RemainingDuration)</code>：將曲線單向注入 C 核心 TextBinding。</li>
+<li>有效解法：</li>
+<li><strong>調色盤與色塊按鈕工廠（<code>UI/ColorPickerHelper.lua</code>）</strong>：<ul>
+<li>提供 <code>EAM.UI.openColorPicker</code>，完美相容 12.x <code>SetupColorPickerAndShow</code> 與舊版 <code>ColorPickerFrame</code> 降級；</li>
+<li>提供 <code>EAM.UI.createColorSwatchButton</code>，一鍵生成具備即時色塊渲染、外框陰影與點擊開啟調色盤的按鈕。</li>
+</ul>
+</li>
+<li><strong>資料層與 SavedVariables 規範化（<code>Core/SavedVariables.lua</code>）</strong>：<ul>
+<li>新增 <code>timerColorCurve</code> 預設架構（<code>enabled=true</code>, 階段 1: 3s 紅色, 階段 2: 5s 黃色, normalColor: 白色）；</li>
+<li>提供 <code>setTimerColorCurveEnabled</code>、<code>setTimerColorCurveStage</code>、<code>setTimerColorCurveNormalColor</code>，支援觸發 <code>EAM_TIMER_COLOR_CHANGED</code> 事件廣播。</li>
+</ul>
+</li>
+<li><strong>DurationAdapter 核心適配與弱引用動態熱更新（<code>Core/DurationAdapter.lua</code>）</strong>：<ul>
+<li>實作 <code>buildColorCurve</code>、<code>buildSpellColorCurve</code>、<code>getActiveColorCurve</code>、<code>markColorCurveDirty</code>；</li>
+<li>使用弱引用表 <code>activeBindings</code> 與 <code>bindingCustomCurves</code> 追蹤活動中的 TextBinding，當設定變更時立即熱更新至所有現存圖示；</li>
+<li>在 <code>createTextBinding</code> 支援傳入 <code>customCurve</code>，若技能有獨立紅字秒數與顏色優先套用專屬曲線。</li>
+</ul>
+</li>
+<li><strong>雙軌渲染與降級支援（<code>UI/Renderer.lua</code>）</strong>：<ul>
+<li>原生 12.x C 核心管道：自動套用專屬或全域 <code>ColorCurve</code>；</li>
+<li>傳統 Numeric 管道：在 <code>onLegacyTimerUpdate</code> 中支援優先套用 <code>icon.countdownRedLimit</code> / <code>icon.countdownRedColor</code>，並降級支援 <code>timerColorCurve</code> 多階變色與 <code>normalColor</code>。</li>
+</ul>
+</li>
+<li><strong>設定介面與 5 語系字典完整對齊（<code>UI/Options.lua</code> &amp; <code>Locale/*.lua</code>）</strong>：<ul>
+<li>單一法術細節視窗（<code>condFrame</code>）：為 <code>redLimitSlider</code> 增設 <code>redColorBtn</code> 色塊按鈕，可自訂單一技能紅字門檻與專屬顏色；</li>
+<li>外觀與位置設定面板（<code>posFrame</code>）：高度適度擴充為 710px，底部新增「倒數文字變色 (Color Curve)」控制區塊，包含總開關、正常顏色色塊、緊急警戒 (&lt;= 秒數) 滑桿與色塊、預警提示 (&lt;= 秒數) 滑桿與色塊、說明文字標籤與重置預設值連動；</li>
+<li>5 大語系（zhTW, zhCN, enUS, koKR, ruRU）同步新增 6 個鍵值，契約斷言 100% 綠燈。</li>
+</ul>
+</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：77/77 PASS。</li>
+<li>Flow 狀態機測試：86/86 PASS（新增 <code>ui.timer_color_curve.roundtrip_and_build</code>）。</li>
+<li>Validation Contracts：497/497 PASS。</li>
+</ul>
+<h3 id="issue-084-esc-zero-alpha-savedvariables">ISSUE-084: ESC 鍵無損純透明度 (Zero-Alpha) 告警抑制、預渲染保護與 SavedVariables 自動時間戳蓋章</h3>
+<ul>
+<li>日期：2026-09-12</li>
+<li>現象與挑戰：</li>
+<li>玩家在遊戲中按 ESC 鍵若調用傳統 <code>Hide()</code>，會中斷底層冷卻動畫、摧毀或重置 Frame 物件與排版佇列，並破壞預渲染佔位。</li>
+<li>若改為「進戰鬥瞬間預渲染」，因戰鬥中暴雪安全沙盒限制，呼叫 <code>CreateFrame</code> 可能引發 Taint 或失敗，破壞戰鬥流暢度。</li>
+<li>多個 PTR WTF 帳號存檔路徑（如 <code>17194784#5</code>, <code>#3</code>, <code>#2</code>）需要建立精確的時間戳鑑別機制。</li>
+<li>有效解法：</li>
+<li><strong>ESC 鍵無損純透明度抑制（<code>UI/Renderer.lua</code>）</strong>：<ul>
+<li>透過 <code>UISpecialFrames</code> 註冊 1x1 隱形框架 <code>EAM_EscAlertCloseFrame</code>，在所有設定視窗關閉時響應 ESC 鍵；</li>
+<li>觸發時執行 <code>Renderer.suppressAlerts("ESC_KEY")</code>，將所有現存告警圖示設為 <code>icon:SetAlpha(0)</code>（包含 Native Aura 容器），<strong>絕不銷毀 Frame、絕不調用 <code>Hide()</code>、絕不重置 2D 矩陣</strong>；</li>
+<li>戰鬥中安全守衛：實裝 <code>ensureEscCloseFrame()</code>，戰鬥中嚴禁調用 <code>CreateFrame</code>，離戰時自動安全補齊。</li>
+</ul>
+</li>
+<li><strong>自動解除抑制（Unsuppress）</strong>：<ul>
+<li>當新告警觸發（<code>alertState.shown == true</code>）、進入戰鬥（<code>PLAYER_REGEN_DISABLED</code>）、打開設定面板（<code>/eam opt</code>）或修改設定時，自動呼叫 <code>Renderer.unsuppressAlerts()</code> 還原所有圖示透明度。</li>
+</ul>
+</li>
+<li><strong>SavedVariables 存檔自動蓋章（<code>Core/SavedVariables.lua</code>）</strong>：<ul>
+<li>在 <code>EAM_DB.meta</code> 擴充 <code>lastSavedAt</code>（ISO 8601 本地時間字串）、<code>lastSavedEpoch</code>（Unix 時間戳）、<code>addonVersion</code>；</li>
+<li>於 <code>PLAYER_LOGOUT</code>、<code>touchRevision</code> 與版本遷移時自動更新，精確可視化存檔時間。</li>
+</ul>
+</li>
+<li><strong>五國語言字典（<code>Locale/*.lua</code>）</strong>：<ul>
+<li><code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 同步對齊 <code>EAM_OPT_ALLOW_ESC</code> 與 <code>EAM_OPT_ALLOW_ESC_TIP</code>。</li>
+</ul>
+</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：77/77 PASS。</li>
+<li>Flow 狀態機測試：86/86 PASS（含戰鬥延遲創建安全斷言 <code>ui.renderer.combat_initialize_prewarm_deferred</code>）。</li>
+<li>Validation Contracts：497/497 PASS。</li>
+</ul>
+<h3 id="issue-085-4-tab">ISSUE-085: 角色屬性面板 4-Tab 模組化防遮擋排版、職業資源垂直狀態條向上生長與獨立效果預覽視窗實裝</h3>
+<ul>
+<li>日期：2026-09-12</li>
+<li>現象與挑戰：</li>
+<li>角色屬性面板（<code>PlayerStatPanel</code>）垂直堆疊過多滑桿，暴雪原生 <code>OptionsSliderTemplate</code> 的 Low/High 標籤與下方元件嚴重重疊遮擋。</li>
+<li>職業資源狀態條在設定為垂直（<code>VERTICAL</code>）模式時無法向上正常生長，點數分隔線與槽位條方向未適配。</li>
+<li>各設定畫面缺乏專屬預覽視窗，玩家無法即時觀察倒數變色曲線、金光 Proc、Pandemic 綠框與屬性數值效果。</li>
+<li>有效解法：</li>
+<li><strong>屬性面板 4-Tab 模組化（<code>UI/PlayerStatPanel.lua</code>）</strong>：<ul>
+<li>面板擴大為 720x540，重構為「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大分頁；</li>
+<li>滑桿間距拉開至 50~60px，徹底消除遮擋；保留無縫側窗吸附與聯動拖曳。</li>
+</ul>
+</li>
+<li><strong>垂直資源狀態條向上生長修復（<code>UI/PowerRenderer.lua</code>）</strong>：<ul>
+<li>轉置寬高，調用 <code>SetRotatesTexture(true)</code> 旋轉暴雪原生 StatusBar 材質；</li>
+<li>將圖示錨定於底部，狀態條向上生長，並轉置點數分隔線與槽位條。</li>
+</ul>
+</li>
+<li><strong>獨立即時效果預覽小視窗（<code>UI/PreviewPanel.lua</code>）</strong>：<ul>
+<li>實裝獨立可拖曳視窗 <code>PreviewPanel</code>，提供「告警圖示」、「職業資源」、「角色屬性」3 大頁籤；</li>
+<li>支援倒數變色曲線滑桿、Proc 金光、Pandemic 綠框、充能百分比與屬性項目即時測試；</li>
+<li>主設定、常規排版、職業資源與屬性面板全面增設 <code>[效果預覽]</code> 按鈕。</li>
+</ul>
+</li>
+<li><strong>五國語言字典（<code>Locale/*.lua</code>）</strong>：<ul>
+<li>100% 同步新增 19 個預覽與頁籤詞條。</li>
+</ul>
+</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：78/78 PASS。</li>
+<li>Flow 狀態機測試：86/86 PASS。</li>
+<li>Validation Contracts：497/497 PASS。</li>
+</ul>
+<h3 id="issue-086-11-modern-wow">ISSUE-086: 11 大復古與現代主題調色盤深度考證、Modern WoW 垂直漸層渲染修復與全子視窗主題統一</h3>
+<ul>
+<li>日期：2026-09-12</li>
+<li>現象與挑戰：</li>
+<li>FF7 主題的經典皇家寶石藍至黑海軍藍垂直漸層在 Retail 10.x/11.x/12.x 中失效不見。</li>
+<li>EAM 預設主題需精準還原 9.0.1 經典石板金屬金框與晶石深紅立體按鈕。</li>
+<li>其他 9 大主題（WinXP, Win7, Win10, Win3.1, Borland, DOS CRT, 倚天, Red Alert, Aqua）需深度考證還原其經典特色。</li>
+<li>諸多子視窗（位置與能量設定 <code>posInner</code>、法術清單設定 <code>listInner</code>、群組管理 <code>GroupManagerPanel</code>、全量法術庫 <code>SpellCatalogTreePanel</code>、屬性面板下拉選單）未套用主題，存在脫節的暗棕色/灰黑方塊。</li>
+<li>有效解法：</li>
+<li><strong>11 大主題調色盤深度考證（<code>UI/Theme.lua</code>）</strong>：<ul>
+<li>EAM：經典石板黑褐底 <code>(0.08, 0.06, 0.05)</code>、金屬金框 <code>(0.65, 0.50, 0.25)</code> 與晶石深紅按鈕 <code>(0.55, 0.10, 0.08)</code>；</li>
+<li>FF7：純白立體邊框 <code>(1.0, 1.0, 1.0)</code>、頂部皇家寶石藍 <code>(0.00, 0.12, 0.85)</code> 至底部黑海軍藍 <code>(0.00, 0.01, 0.10)</code> 垂直漸層、深藍晶透按鈕純白字；</li>
+<li>WinXP (Luna 藍)、Win7 (Aero 玻璃漸層)、Win10 (Metro 磁貼平整)、Win3.1 (灰白 3D 凸面按鈕)、Borland (DOS 藍底黃字)、DOS CRT (P1 磷光綠純黑底)、倚天中文 (ETen 藍底明黃字)、Red Alert (裝甲灰黑深紅框)、Aqua (果凍膠囊藍漸層)。</li>
+</ul>
+</li>
+<li><strong>Modern WoW 垂直漸層渲染管線修復（<code>UI/Theme.lua</code>）</strong>：<ul>
+<li>徹底移除 <code>SetColorTexture(1, 1, 1, 1)</code> 頂點著色器衝突，改採 <code>SetTexture("Interface\\Buttons\\WHITE8X8")</code> 並設於 <code>BACKGROUND, 1</code> 圖層，完美相容原生 <code>Texture:SetGradient("VERTICAL", cMin, cMax)</code>；</li>
+<li>修正垂直漸層方向映射，確保頂部皇家藍與底部黑海軍藍對比鮮明。</li>
+</ul>
+</li>
+<li><strong>實裝 <code>Theme.applyContainerBackground</code> 與全子視窗主題註冊</strong>：<ul>
+<li>在 <code>UI/Theme.lua</code> 新增 <code>Theme.applyContainerBackground(frame, roleOrIsPanel)</code>，支援 <code>"window"</code>、<code>"panel"</code>、<code>"row"</code>、<code>"menu"</code> 等角色；</li>
+<li>支援 <code>"row"</code> 輕量列表行角色，保留清晰文字同時避免過度漸層；</li>
+<li><code>Options.lua</code>：<code>posInner</code> 與 <code>listInner</code> 註冊為 <code>"panel"</code>，<code>previewBtn</code> 改為 <code>registerButton</code>；</li>
+<li><code>GroupManagerPanel.lua</code>：主視窗與左右容器註冊主題，列表行使用 <code>"row"</code>；</li>
+<li><code>SpellCatalogTreePanel.lua</code>：主視窗與樹狀容器註冊主題，<code>modMenu</code> 註冊為 <code>"menu"</code>，列表行使用 <code>"row"</code>；</li>
+<li><code>PlayerStatPanel.lua</code>：<code>growDirMenu</code> 註冊為 <code>"menu"</code>。</li>
+</ul>
+</li>
+<li>驗證：</li>
+<li>Lua 語法檢查：78/78 PASS。</li>
+<li>Flow 狀態機測試：86/86 PASS。</li>
+<li>Validation Contracts：497/497 PASS。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<h3 id="2026-09-04-eam-20260904-playerstat-drag-format-arg4-nil-error-reporting-when-dragging-and-moving-a-single-attribute-icon-bad-argument-4-to-format-fixed">2026-09-04 EAM-20260904-PLAYERSTAT-DRAG-FORMAT-ARG4-NIL: error reporting when dragging and moving a single attribute icon bad argument #4 to 'format' Fixed</h3>
+<h3 id="2026-09-12-eam-20260912-skyriding-gliding-only-option-the-exclusive-glide-only-option-for-flying-dragon-mode-skyridingspeed-is-implemented">2026-09-12 EAM-20260912-SKYRIDING-GLIDING-ONLY-OPTION: The exclusive "Glide Only" option for flying dragon mode (skyridingSpeed) is implemented</h3>
+<ul>
+<li>Status: Resolved (Lua 78/78, Flow 86/86, Contracts 499/499).</li>
+<li>Demand background and problem analysis:</li>
+<li>A young man made a request: "A special option is added to the speed of the flying dragon. The ICON will be displayed only if Glide = true."</li>
+<li>Mechanism and operation pain points:</li>
+<li>In "Character Attributes and Absorption Amount Monitoring", the speed of flying dragon mode (<code>skyridingSpeed</code>) is usually 0% (or normal speed) when walking, standing on the ground or on an ordinary mount. If it is permanently displayed on the screen, it will block the line of sight unnecessarily and has no reference value.</li>
+<li>The player hopes that the dragon speed icon and real-time speed percentage will be displayed on the screen only when performing air control/dragon riding gliding (<code>C_PlayerInfo.GetGlidingInfo()</code> to <code>isGliding == true</code>) in the air; it will be automatically hidden when landing or not gliding.</li>
+<li>Refactoring implementation:</li>
+<li><strong>Core gliding filtering and safety judgment (<code>Services/PlayerStatService.lua</code>)</strong>:</li>
+<li>Added <code>PlayerStatService.isPlayerGliding()</code> auxiliary function, using defensive <code>pcall(C_PlayerInfo.GetGlidingInfo)</code> security judgment <code>isGliding == true</code> to prevent errors from different client versions or protected environments.<ul>
+<li>Add exclusive filtering in the <code>activeList</code> collection loop of <code>PlayerStatService.update()</code>: when <code>key == "skyridingSpeed"</code> and <code>cfg.glideOnlyIcon == true</code>, if <code>not isPlayerGliding()</code> and <code>not PlayerStatService.isMoving</code>, skip adding <code>activeList</code>.</li>
+</ul>
+</li>
+<li>When not gliding, the icon frame automatically enters <code>item:Hide()</code>. If it is a group layout, other attributes are automatically arranged tightly without leaving any gaps.<ul>
+<li>With typesetting mobile mode protection: when the player turns on the "Mobile Attribute Framework" (<code>isMoving == true</code>) in the settings panel, the icon box is forced to be displayed for dragging and customizing typesetting positioning.</li>
+</ul>
+</li>
+<li><strong>Setting interface exclusive dynamic control items (<code>UI/PlayerStatPanel.lua</code>)</strong>:</li>
+<li>Added a dedicated checkbox <code>glideOnlyIconCb</code> (position <code>TOPLEFT</code>, x=320, y=-10) at the top of Tab 1 (Display and Illustrations, <code>pageDisplay</code>).<ul>
+<li>In <code>loadStatToDetail(statKey)</code>: If <code>statKey == "skyridingSpeed"</code>, then <code>glideOnlyIconCb:Show()</code> and synchronize its Checked status; automatically <code>Hide()</code> when the other 17 attributes are selected, keeping the interface simple.</li>
+<li>In <code>applyLiveChange()</code>: store <code>cfg.glideOnlyIcon</code> on the fly, and call <code>PlayerStatService.update()</code> on the fly.</li>
+</ul>
+</li>
+<li>Bind click event <code>glideOnlyIconCb:SetScript("OnClick", applyLiveChange)</code>.</li>
+<li><strong>Mirror alignment of five national languages (<code>Locale/zhTW.lua</code>, <code>zhCN.lua</code>, <code>enUS.lua</code>, <code>koKR.lua</code>, <code>ruRU.lua</code>)</strong>:<ul>
+<li>5 Chinese language dictionaries 100% added <code>EAM_STAT_GLIDE_ONLY_ICON</code> and <code>EAM_STAT_GLIDE_ONLY_ICON_TIP</code> entries simultaneously.</li>
+</ul>
+</li>
+<li>Verification results: Lua 78/78, Flow all 86/86, Validation Contracts 499/499 all passed, with zero degradation.</li>
+</ul>
+<h3 id="2026-09-12-eam-20260912-swipe-color-non-class-confirm-dialog-fan-countdown-color-transparency-customization-and-non-occupation-specific-spells-new-anti-accidental-addition-confirmation-dialog-box-implementation">2026-09-12 EAM-20260912-SWIPE-COLOR-NON-CLASS-CONFIRM-DIALOG: Fan countdown color transparency customization and non-occupation-specific spells new anti-accidental addition confirmation dialog box implementation</h3>
+<ul>
+<li>Status: Resolved (Lua 78/78, Flow 86/86, Contracts 499/499).</li>
+<li>Demand background and problem analysis:</li>
+<li>The boy gave two important feedbacks:
+a. "What's going on with the white fan-shaped countdown? This doesn't look good. The transparency of the fan-shaped countdown should be adjustable and the color can be specified.": The Cooldown Swipe in the warning icon and effect preview panel was originally written as pure white (1, 1, 1), which produced glaring white light on bright or high-contrast icons and excessively obscured skill icons.
+b. "Please change this control to ask: "This SPELL ID may not be exclusive to your profession, do you still want to join?" Provide an "OK" button to join, and a "Cancel" button not to join.": When entering a spell ID for a non-current profession in the "Self Aura Reminder", the system used to silently and automatically convert it to "cross-professional gain and debuff" and write it directly into the list, lacking an interactive confirmation mechanism and protection against accidental additions.</li>
+<li>Mechanism analysis and solutions:</li>
+<li><strong>Sector reciprocal color customization</strong>: WoW native <code>Cooldown:SetSwipeColor(r, g, b, a)</code> supports dynamically specified RGBA. Added <code>cooldownSwipeColor</code> (default <code>{ r = 0, g = 0, b = 0 }</code>) and <code>cooldownSwipeAlpha</code> (default <code>0.8</code>) to <code>SavedVariables</code>, and provided custom color block buttons and native color palette instant hot-apply in the general layout settings, and supported ProfileCodec codec import and export whitelist and AuraRuleCompiler layout fingerprint synchronization.</li>
+<li><strong>Non-professional spell confirmation dialog</strong>: Add interception to <code>Options.addAlertToCurrentCategory(id, force)</code>: If <code>not force and Options.currentCategory == 1 and not isCurrentClassSpell(id)</code>, interrupt the automatic writing process and pop up the themed <code>confirmNonClassFrame</code> dialog box. The dialog box displays the spell icon, name, ID and query title; click "OK" to call <code>Options.addAlertToCurrentCategory(pendingSpellID, true)</code>, pass in <code>force = true</code> in <code>addAlertToCategory</code>, and force <code>catalogScope = SELF</code> to be officially written in the current module list (self-Aura reminder). Never change to the cross-class list without authorization, and output success feedback and clear the input box; click "Cancel" or press ESC key to safely close the dialog box without changing any settings.</li>
+<li>Refactoring implementation:</li>
+<li><strong>Sector reciprocal configuration and rendering linkage (<code>Core/SavedVariables.lua</code>, <code>Core/ProfileCodec.lua</code>, <code>Managers/AuraRuleCompiler.lua</code>, <code>UI/IconPool.lua</code>, <code>UI/NativeAuraRenderer.lua</code>, <code>UI/Renderer.lua</code>, <code>UI/Options.lua</code>)</strong>:<ul>
+<li><code>SavedVariables.lua</code>: Added <code>cooldownSwipeColor</code>, <code>cooldownSwipeAlpha</code> fields and getters/setters, version migration, and reset logic.</li>
+<li><code>ProfileCodec.lua</code>: Included in layout configuration import and export whitelist and anti-fool check.</li>
+<li><code>AuraRuleCompiler.lua</code>: The layout fingerprint incorporates the <code>cooldownSwipeColor</code> feature string.</li>
+</ul>
+</li>
+<li><code>IconPool.lua</code>, <code>NativeAuraRenderer.lua</code>, <code>Renderer.lua</code>: Read colors on the fly and call <code>cooldown:SetSwipeColor(r, g, b, a)</code>.<ul>
+<li><code>Options.lua</code>: Add color block button to regular layout, enable native <code>ColorPickerFrame</code> support RGBA real-time hot application and preview update.</li>
+</ul>
+</li>
+<li><strong>Add confirmation dialog box and forced module for non-professional spell prevention (<code>UI/Options.lua</code>)</strong>:<ul>
+<li>Build <code>confirmNonClassFrame</code> (420x165, <code>FULLSCREEN_DIALOG</code>, register <code>Theme.registerFrame(confirmNonClassFrame, "window")</code> with <code>UISpecialFrames</code> ESC automatically closed).</li>
+</ul>
+</li>
+<li>Contains 36x36 spell icon, spell name and ID label, confirmation prompt text (<code>EAM_OPT_CONFIRM_NON_CLASS_SPELL</code>).<ul>
+<li>Provide "OK" (<code>confirmBtn</code>) and "Cancel" (<code>cancelBtn</code>) theme buttons, call <code>Options.addAlertToCurrentCategory(targetID, true)</code> when OK is clicked, pass <code>force = true</code> to force addition to the current list (<code>scope = SELF</code>), clear the temporary cache and hide it when canceling.</li>
+</ul>
+</li>
+<li>Fixed <code>migratePlayerAuraCatalogScopes</code>: Complementary migration is only performed when <code>alert.catalogScope == nil</code> is reached, completely preventing non-professional spells that the user has manually added to his or her Aura from being overwritten as cross-professional spells when refreshing the list.<ul>
+<li>Export <code>Options.showNonClassSpellConfirmDialog(spellID)</code>, with secure spell information query and defensive dynamic creation protection.</li>
+</ul>
+</li>
+<li><strong>Complete alignment of multiple languages ​​(<code>Locale/zhTW.lua</code>, <code>zhCN.lua</code>, <code>enUS.lua</code>, <code>koKR.lua</code>, <code>ruRU.lua</code>)</strong>:</li>
+<li>5 Chinese language dictionaries 100% added 4 new entries simultaneously: <code>EAM_OPT_CONFIRM_NON_CLASS_SPELL</code>, <code>EAM_OPT_CONFIRM_TITLE</code>, <code>EAM_OPT_CONFIRM_BTN</code>, <code>EAM_OPT_CANCEL_BTN</code>.</li>
+<li><strong>Full code contract assertion enhancement (<code>.AI/Tools/Test-ValidationContracts.ps1</code>, <code>EventAlertMod/Debug/FlowTestRunner.lua</code>)</strong>:<ul>
+<li>Added <code>Five locales cover all non-class spell confirmation dialog keys</code> (confirmation window entry in 5 languages fully covers the contract).</li>
+</ul>
+</li>
+<li>Added <code>Non-class spell add triggers interactive confirmation dialog and force-adds to current category</code> (new interactive confirmation dialog box for non-occupation-specific spells and forced addition to the current module list logical contract).<ul>
+<li><code>FlowTestRunner.lua</code> adds end-to-end state machine testing to verify the consistency of interception, confirmation pop-up windows, and forced writing of SELF with revision.</li>
+</ul>
+</li>
+<li>Verification results: Lua 78/78, Flow all 86/86, Validation Contracts 499/499 all passed, with zero degradation.</li>
+</ul>
+<h3 id="2026-09-12-eam-20260912-stat-panel-tab-preview-vertical-power-character-attribute-panel-4-tab-anti-occlusion-reconstruction-professional-resource-bar-vertical-growth-repair-and-independent-real-time-effect-preview-small-window-implementation">2026-09-12 EAM-20260912-STAT-PANEL-TAB-PREVIEW-VERTICAL-POWER: Character attribute panel 4-Tab anti-occlusion reconstruction, professional resource bar vertical growth repair and independent real-time effect preview small window implementation</h3>
+<ul>
+<li>Status: Resolved (Lua 78/78, Flow 86/86, Contracts 497/497).</li>
+<li>Demand background and problem analysis:</li>
+<li>The young man put forward three key instructions:
+a. "Attributes also take up a bit of space. You may want to plan TAB FRAME and try not to block the parts.": The sliders on the right side of the character attribute setting panel (<code>PlayerStatPanel.lua</code>) are densely stacked, causing the low/high labels to overlap with the slider tracks, and the top title and the overall arrangement direction drop-down menu are tightly squeezed.
+b. "If the other professional resource is a status bar, vertical growth will not work": When the professional resource is set to "Vertical (VERTICAL)", StatusBar cannot charge upwards and grow normally, and the width, height and icon layout are not transposed.
+c. "Also, is it possible to preview the effects of each setting screen? Open a small window specifically for previewing": I hope to have a small independent preview window, so that when adjusting various values ​​​​and switches, the effects can be previewed in real time without entering combat or manually casting spells.</li>
+<li>Root cause analysis and mechanism interpretation:</li>
+<li><strong>StatusBar Vertical growth failed</strong>: WoW When native <code>StatusBar</code> is switched to <code>SetOrientation("VERTICAL")</code>, if <code>SetRotatesTexture(true)</code> is not called, its internal default material will not rotate, and when the width and height maintain the horizontal ratio (width 140 height 16), the visual effect is only 16px Vertical filling inside makes the user feel "completely useless"; in addition, the divider lines (markers) and slot bars (slotBars) of the POINTS mode also need to be transposed into horizontal dividing lines accordingly.</li>
+<li><strong>Attribute Panel Component Overlap</strong>: <code>OptionsSliderTemplate</code> is preset to render the Low and High text labels at about -10px below the slider. When the vertical stacking spacing is less than 35px, the text of the lower control item will completely collide with the Low/High label of the upper slider.</li>
+<li>Refactoring implementation:</li>
+<li><strong>Career resource status bar vertical growth repair (<code>UI/PowerRenderer.lua</code>)</strong>:</li>
+<li>Determine <code>isVertical = (config.orientation == "VERTICAL")</code>, dynamically transpose the status bar size: <code>actualBarWidth = isVertical and barHeight or barWidth</code>, <code>actualBarHeight = isVertical and barWidth or barHeight</code>.<ul>
+<li>Native safe rotation: safe calls to <code>statusBar:SetOrientation(orientation)</code> and <code>statusBar:SetRotatesTexture(isVertical)</code>.</li>
+</ul>
+</li>
+<li>Typesetting transposition: the icon is placed at the bottom, and the status bar grows upward; the value and the label are centered and aligned; the POINTS mode divider (height 1, width full grid) and slot bar (vertically stacked) are transposed; the <code>reflowResourceFrames</code> vertical mode dynamic line spacing calculation is fixed.</li>
+<li><strong>Character attribute panel 4-Tab modular reconstruction (<code>UI/PlayerStatPanel.lua</code>)</strong>:<ul>
+<li>The panel width is expanded from 660 to 720x540, greatly releasing horizontal and vertical white space.</li>
+</ul>
+</li>
+<li>Modular split into 4 independent Tabs:<ul>
+<li>Tab 1: <strong>Display &amp; Icon</strong>: Enable switches, display text, customize labels, icon size, and frame level.</li>
+<li>Tab 2: <strong>Font &amp; Format</strong>: number of decimal places, font family (LSM integration), numeric font level, label font level.</li>
+</ul>
+</li>
+<li>Tab 3: <strong>Thresholds</strong>: numerical lower limit warning, numerical upper limit warning (when exceeded, the dark red highlighted border will flash).<ul>
+<li>Tab 4: <strong>Position &amp; Anchor</strong>: Customized independent coordinate switch, X/Y offset slider, single move/all move anchor point box buttons.</li>
+<li>The vertical spacing of the slider is increased to 50~60px, completely eliminating the overlap of text and control items.</li>
+</ul>
+</li>
+<li><strong>New independent free-floating effect preview small window (<code>UI/PreviewPanel.lua</code>)</strong>:<ul>
+<li>Create <code>EAM_PreviewOptionsFrame</code> (330x420, <code>DIALOG</code> level, support mouse dragging and screen border locking).</li>
+<li>Equipped with 3 large preview tabs:</li>
+<li><strong>Tab 1: Alert</strong>: Supports simulation remaining seconds slider (0~15s), Proc golden glow check box, Pandemic green check box; drag the slider to test 12.0.7+ native <code>TimerColorCurve</code> red/yellow/white hardware dynamic color change.</li>
+</ul>
+</li>
+<li><strong>Tab 2: Career Resources</strong>: Supports the simulated charge percentage slider (0~100%), which instantly reflects the horizontal/vertical direction, dynamic color curve dyeing (red ➜ yellow ➜ representative color) and numerical percentage text.<ul>
+<li><strong>Tab 3: Character Attribute (Stat)</strong>: Instantly link the icon, font size, formatted text and warning red frame of the selected attribute in the attribute panel.</li>
+</ul>
+</li>
+<li><strong>Full setting interface integration and real-time linkage</strong>:</li>
+<li>The <code>[效果預覽]</code> button is added to the bottom of the main settings window (<code>Options.lua</code>); the <code>[效果預覽]</code> button is added to the top of the general and position settings (<code>posFrame</code>), career resource panel (<code>PlayerResourcePanel.lua</code>), and character attribute panel (<code>PlayerStatPanel.lua</code>).<ul>
+<li>Automatically call <code>PreviewPanel.refresh()</code> hot update when <code>notifyConfigChanged</code>, <code>notifyTextLayoutChanged</code>, <code>autoApplyDraft</code>.</li>
+</ul>
+</li>
+<li><strong>5 Chinese language dictionary synchronization</strong>:</li>
+<li><code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> fully align 19 preview windows and attribute Tab semantic entries.</li>
+<li>Verification results: Lua 78/78, Flow all 86/86, Validation Contracts 497/497 all passed, with zero degradation.</li>
+</ul>
+<h3 id="2026-09-08-eam-20260908-native-curve-architecture-blizzard-patch-1200-midnight-native-curveobject-and-colorcurveobject-curve-architecture-fully-integrated">2026-09-08 EAM-20260908-NATIVE-CURVE-ARCHITECTURE: Blizzard Patch 12.0.0 / Midnight native CurveObject and ColorCurveObject curve architecture fully integrated</h3>
+<ul>
+<li>Status: Resolved (Lua 77/77, Flow 86/86, Contracts 497/497).</li>
+<li>Demand background and problem analysis:</li>
+<li>The young man gave an instruction: "https://EAMCODE_0__.wiki.gg/wiki/ScriptObject_CurveObject Is this the information you referred to before? After you understand it, what better and newer improvements or functions can you bring to EAM?" After the assistant proposed the five-dimensional innovation plan, the young man issued a decision-making instruction: "All in."</li>
+<li>Analysis of the official underlying mechanism:<ul>
+<li><code>CurveObject</code> and <code>ColorCurveObject</code> are new underlying C-Level numerical and color interpolation objects introduced by Blizzard in Patch 12.0.0 / Midnight.</li>
+</ul>
+</li>
+<li>Has three core advantages:
+       a. <strong>Penetrating Protected Secret Values (Secret Penetration)</strong>: <code>UnitHealthPercent(unit, predicted, curve)</code> and <code>UnitPowerPercent(unit, powerType, unmodified, curve)</code> allow the underlying security to evaluate ordinary values or <code>ColorMixin</code> without unlocking the Secret value.
+       b. <strong>C-Level zero GC, zero energy consumption operation</strong>: text coloring and progress transition are completely executed in the Blizzard C core, eliminating Lua calculation and garbage collection per frame.
+c. <strong>Nonlinear dynamics aesthetics</strong>: Supports four major curves: Linear, Step, Cosine, and Cubic to achieve smooth dynamic feedback.</li>
+<li>Reconstruction and implementation of five major innovation dimensions:</li>
+<li><strong>[Resource Bar] Energy/Resource Bar Dynamic Color Curve Dyeing (Resource Dynamic Color Curve)</strong>:<ul>
+<li><code>DurationAdapter.buildResourceDynamicColorCurve</code>: Automatically construct a three-color gradient curve for consumptive resources (alert red ➜ early warning yellow ➜ representative color) and cumulative resources (dark color ➜ early warning yellow ➜ highlight color).</li>
+</ul>
+</li>
+<li><code>PowerRenderer.applyPercent</code>: Call the color curve when updating the resource bar, compatible with 12.0+ <code>UnitPowerPercent</code> native hardware-level coloring.</li>
+<li><strong>【Secret Value Breakthrough】Step Gate Curve for Protected Values</strong>:<ul>
+<li><code>Util.createStepGateCurve</code> and <code>Util.createColorStepGateCurve</code>: use binary step function to safely penetrate the Secret value and achieve the kill line (20%/35%) and energy alert threshold, zero Taint.</li>
+</ul>
+</li>
+<li><strong>[Time Text]SecondsFormatter Adaptive Seconds Formatter Curve</strong>:</li>
+<li><code>SecondsFormatter:SetDesiredUnitCountCurve</code>: Long second integer, &lt;= 5 seconds fractional, zero GC zero delay.</li>
+<li><strong>【Cooling Tension】Non-Linear Cooldown Progress Curves</strong>:<ul>
+<li><code>DurationAdapter.buildNonLinearProgressCurve</code>: Supports LINEAR, CUBIC (last 15% sprint acceleration), COSINE three modes, and is deeply bound to Cooldown Frame in <code>Renderer.lua</code>.</li>
+</ul>
+</li>
+<li><strong>[Dynamic Crisis] Full-screen Low Health Warning Pulse (Dynamic Low Health Warning Pulse)</strong>:</li>
+<li><code>CombatFlash.lua</code>: Construct the blood volume Alpha curve, and use <code>UnitHealthPercent("player", true, curve)</code> to drive the dynamic respiratory pulsation at the edge of the full screen.</li>
+<li><strong>UI settings are fully aligned with 5 languages</strong>:<ul>
+<li><code>Options.lua</code> adds dynamic color change check box for resources, cooling progress curve drop-down menu, dying breath red frame switch and critical blood volume threshold slider, 100% synchronization among 5 languages (zhTW, zhCN, enUS, koKR, ruRU).</li>
+</ul>
+</li>
+<li><strong>Offline verification of isomorphic upgrade</strong>:</li>
+<li><code>WoW121AuraMock.lua</code> and <code>FlowValidationHarness.lua</code> complete the <code>CreateColor</code>, <code>C_CurveUtil</code>, <code>UnitHealthPercent</code>, <code>UnitPowerPercent(curve)</code> and <code>SecondsFormatter:SetDesiredUnitCountCurve</code> mocks.</li>
+<li>Verification results: Lua 77/77, Flow all 86/86, Validation Contracts 497/497 all passed, with zero degradation.</li>
+</ul>
+<h3 id="2026-09-06-eam-20260906-wow-official-enums-standardization-warcraft-wiki-official-888-enum-full-traversal-and-project-modernization-enumeration-reconstruction">2026-09-06 EAM-20260906-WOW-OFFICIAL-ENUMS-STANDARDIZATION: Warcraft Wiki official 888 Enum full traversal and project modernization enumeration reconstruction</h3>
+<ul>
+<li>Status: Resolved (Lua 77/77, Flow 86/86, Contracts 497/497).</li>
+<li>Demand background and problem analysis:</li>
+<li>The boy gave instructions: absorb and traverse all official Enums in <code>https://warcraft.wiki.gg/wiki/Category:Enums</code> (including page-turning crawling), and traverse all places where official Enums are available in the project, and use official enumerations to replace hard-coded numbers (Magic Numbers), private constants and old-style global variables.</li>
+<li>Research and scanning results:<ul>
+<li>Completed the official crawling and inclusion of a total of 888 independent Enums in 5 pages (immutable list of placement <code>scratch/all_wow_enums.json</code>).</li>
+</ul>
+</li>
+<li>Screened 235 Enums related to the core of the project field and identified 156 potential corresponding points in the project.<ul>
+<li>Locked core reconstruction areas: <code>PowerType</code> (17 large energy constants), <code>LuaCurveType</code> &amp; <code>DurationTextBindingProperty</code> (reciprocal color curve), <code>StatusBarRenderMode</code> &amp; <code>StatusBarFillStyle</code> (progress bar and cooling aperture), <code>UnitAuraSortRule</code> &amp; <code>UnitAuraSortDirection</code> (native Aura container sorting), <code>CustomAuraButtonDispelTypeStealableFilter</code> (dispel filtering), <code>SpellBookSpellBank</code> &amp; <code>SpellBookItemType</code> (spellbook scanning).</li>
+</ul>
+</li>
+<li>Refactoring implementation:</li>
+<li><strong>Core environment layer unified encapsulation (<code>Core/Env.lua</code>)</strong>:<ul>
+<li>Extensions in <code>EAM.API</code> expose <code>PowerType</code>, <code>LuaCurveType</code>, <code>DurationTextBindingProperty</code>, <code>StatusBarRenderMode</code>, <code>StatusBarFillStyle</code>, <code>UnitAuraSortRule</code>, <code>UnitAuraSortDirection</code>, <code>UnitAuraSoundTrigger</code>, <code>CustomAuraButtonDispelTypeStealableFilter</code>, <code>CustomAuraButtonDispelTypeTextureStyle</code>, <code>CustomAuraButtonBorderStyle</code>, <code>ItemQuality</code>, <code>CooldownViewerCategory</code>, <code>SpellBookSpellBank</code>, <code>SpellBookItemType</code>, <code>AuraFrameOrientation</code>, all follow security protection packaging.</li>
+</ul>
+</li>
+<li><strong>Immutable directory of player resources (<code>Data/PlayerResourceCatalog.lua</code>)</strong>:</li>
+<li>Automatically convert 17 energy types (MANA, RAGE, FOCUS, ENERGY, COMBO_POINTS, RUNES, RUNIC_POWER, SOUL_SHARDS, LUNAR_POWER, HOLY_POWER, MAELSTROM, CHI, INSANITY, ARCANE_CHARGES, FURY, PAIN, ESSENCE) are mapped to the official <code>Enum.PowerType</code>, eliminating Magic Numbers and keeping fallbacks compatible with contracts.</li>
+<li><strong>Comprehensive alignment of service layer and rendering layer</strong>:<ul>
+<li><code>Services/AuraContainerService.lua</code>: Upgrade the old global variables <code>AuraContainerSortMethod</code> and <code>AuraContainerSortDirection</code> to use the official standard <code>api.UnitAuraSortRule</code> and <code>api.UnitAuraSortDirection</code> in preference.</li>
+</ul>
+</li>
+<li><code>Core/DurationAdapter.lua</code>: The reciprocal curve attributes use <code>api.DurationTextBindingProperty</code> and <code>api.LuaCurveType</code> uniformly.<ul>
+<li><code>UI/IconPool.lua</code>: Cooling aperture rendering reads <code>api.StatusBarRenderMode.Radial</code> first.</li>
+<li><code>UI/NativeAuraRenderer.lua</code>: Dispel style and steal filters preferentially read <code>api.CustomAuraButtonDispelTypeStealableFilter</code> and <code>api.CustomAuraButtonDispelTypeTextureStyle</code>.</li>
+<li><code>Services/SpellBookScannerService.lua</code>: The spellbook paging determination uses <code>api.SpellBookSpellBank.Player</code> defensive encapsulation.</li>
+</ul>
+</li>
+<li><strong>Offline testing sandbox and Mock suite upgrade</strong>:</li>
+<li><code>WoW121AuraMock.lua</code> and <code>FlowValidationHarness.lua</code> completely complete all official Enum Mock tables to ensure complete isomorphism for offline verification.</li>
+<li>Verification results: Lua 77/77, Flow all 86/86, Validation Contracts 497/497 all passed, with zero degradation.</li>
+</ul>
+<h3 id="2026-09-06-eam-20260906-duration-text-binding-warcraft-wiki-officially-includes-durationtextbinding-specification-alignment">2026-09-06 EAM-20260906-DURATION-TEXT-BINDING: Warcraft Wiki officially includes DurationTextBinding specification alignment</h3>
+<ul>
+<li>Status: Aligned to official documentation; current implementation of EAM is fully compliant (Lua 76/76, Flow 85/85, Contracts 497/497).</li>
+<li>Demand background and problem analysis:</li>
+<li>Warcraft Wiki officially released Patch 12.0.7 / Midnight, adding ScriptObject <code>DurationTextBinding</code> (API systems/DurationTextBindingObjectAPI) complete encyclopedia entries.</li>
+<li>During the previous actual test on 2026-05-29, because the community had not yet established a complete Wiki entry, some releases and extension methods depended on the actual test of PTR; it is necessary to confirm the compatibility of the official 30 API signatures with the current implementation of EAM.</li>
+<li>Officially confirmed to contain 30 C-Level ScriptObject API, no <code>Unbind</code> method, and the standard release process is <code>Disable()</code> / <code>SetToDefaults()</code>. EAM <code>Core/DurationAdapter.lua</code> completely hits the official standard.</li>
+<li>Architecture alignment and implementation summary:</li>
+<li>Document backfill update <code>10_WARCRAFT_WIKI_12X_API_NOTES.md</code>, establish official document link.</li>
+<li>Confirm that EAM’s existing <code>DurationAdapter.lua</code> and <code>Renderer.lua</code> dual-track reciprocals are fully compliant, create a parameterless factory and use <code>SetToDefaults</code> for safe recycling.</li>
+<li>Take Ticker of the official capabilities that can be imported in the future: <code>SetTextColorCurve</code> (C-Level zero GC native time gradient color change) and <code>binding:HasSecretValues()</code> (high-precision secret value identification).</li>
+</ul>
+<h3 id="2026-09-04-eam-20260904-playerstat-drag-format-arg4-nil-error-reporting-when-dragging-and-moving-a-single-attribute-icon-bad-argument-4-to-format-fixed">2026-09-04 EAM-20260904-PLAYERSTAT-DRAG-FORMAT-ARG4-NIL: error reporting when dragging and moving a single attribute icon bad argument #4 to 'format' fixed</h3>
 <ul>
 <li>Status: Resolved (Lua 76/76, Flow 85/85, Contracts 497/497).</li>
-<li>Requirement background and problem analysis:</li>
-<li>Young Boy's actual machine test report: "This error occurred when moving a single attribute icon: 9x EventAlertMod/Services/PlayerStatService.lua:1452: bad argument #4 to 'format' (number expected, got no value)".</li>
-<li>Root cause troubleshooting:</li>
+<li>Demand background and problem analysis:</li>
+<li>Boy's real machine test report: "This error occurred when moving a single attribute icon: 9x EventAlertMod/Services/PlayerStatService.lua:1452: bad argument #4 to 'format' (number expected, got no value)".</li>
+<li>Root cause troubleshooting:<ul>
 <li>When <code>PlayerStatService.lua:1452</code> handles the icon drag stop event, the code calls:
-       <code>print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_STAT_POS_SAVED or "...", x or 0, y or 0))</code><ul>
+   <code>print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_STAT_POS_SAVED or "...", x or 0, y or 0))</code></li>
 <li><code>EAM_STAT_POS_SAVED</code> (such as <code>zhTW.lua</code>) in each language dictionary is defined as:
-   <code>L.EAM_STAT_POS_SAVED = "[%s] 獨立位置已儲存: X: %.1f, Y: %.1f"</code>, the format contains 3 placeholders (<code>%s</code>, <code>%.1f</code>, <code>%.1f</code>).</li>
+<code>L.EAM_STAT_POS_SAVED = "[%s] 獨立位置已儲存: X: %.1f, Y: %.1f"</code>, the format contains 3 placeholders (<code>%s</code>, <code>%.1f</code>, <code>%.1f</code>).</li>
 </ul>
 </li>
 <li>But the caller has manually spliced <code>[" .. fLabel .. "] "</code> outside <code>string.format</code>, and only passed in 2 parameters <code>x or 0, y or 0</code> in <code>string.format</code>, causing Lua to use <code>x</code> as the argument of <code>%s</code> and <code>y</code> as the first <code>%.1f</code> argument, and the second <code>%.1f</code> (the 4th argument) did not pass a value at all (got no value), and then spewed out the <code>bad argument #4 to 'format'</code> fatal error.</li>
@@ -4161,6 +4728,155 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura time 
 <li>Lua syntax check: 76/76 PASS.</li>
 <li>Flow state machine test: 84/84 PASS.</li>
 <li>Validation Contracts: 496/496 PASS.</li>
+</ul>
+<h3 id="eam-20260906-timer-color-curve-and-palette-retail-1207-native-settextcolorcurve-remaining-seconds-multi-level-color-change-and-color-palette-customization">EAM-20260906-TIMER-COLOR-CURVE-AND-PALETTE: Retail 12.0.7 native SetTextColorCurve Remaining seconds multi-level color change and color palette customization</h3>
+<ul>
+<li>Date: 2026-09-06.</li>
+<li>Status: Completed code implementation, Flow state machine testing (86/86 PASS) and full project code contract verification (497/497 PASS); waiting for actual machine sign-in.</li>
+<li>Requirements and Design:</li>
+<li>Teenager feedback and instructions: Use the newly added <code>DurationTextBinding:SetTextColorCurve(curve, property)</code> and <code>C_CurveUtil.CreateColorCurve()</code> in Retail 12.0.7/Midnight to complete the "specify red text of remaining seconds" that could not be completed in the past, and support "multiple conditions to display different colors for different remaining seconds". The color can be customized through the native color palette (Color Picker) in the game.</li>
+<li>Official API mechanism and research:</li>
+<li><code>C_CurveUtil.CreateColorCurve()</code>: Create <code>LuaColorCurve</code> object.</li>
+<li><code>curve:SetType(Enum.LuaCurveType.Step)</code>: Step transition curve (Step=1, Linear=0).</li>
+<li><code>curve:AddPoint(seconds, CreateColor(r, g, b, a))</code>: Add color nodes based on the remaining seconds and adopt the "Two-Point Boundary Guard" algorithm (switch point macro 0.001s) to eliminate the smooth blur of the curve during step and linear interpolation, ensuring accurate and sharp discoloration of the numbers.</li>
+<li><code>binding:SetTextColorCurve(curve, Enum.DurationTextBindingProperty.RemainingDuration)</code>: One-way injection of curves into the C core TextBinding.</li>
+<li>Effective solution:</li>
+<li><strong>Color Palette and Color Block Button Factory (<code>UI/ColorPickerHelper.lua</code>)</strong>:<ul>
+<li>Provide <code>EAM.UI.openColorPicker</code>, perfectly compatible with 12.x <code>SetupColorPickerAndShow</code> and downgrade from older version <code>ColorPickerFrame</code>;</li>
+<li>Provide <code>EAM.UI.createColorSwatchButton</code>, one-click generation with real-time color block rendering, frame shadow and click-to-open color palette button.</li>
+</ul>
+</li>
+<li><strong>Data layer normalized with SavedVariables (<code>Core/SavedVariables.lua</code>)</strong>:</li>
+<li>Added <code>timerColorCurve</code> default architecture (<code>enabled=true</code>, stage 1: 3s red, stage 2: 5s yellow, normalColor: white);<ul>
+<li>Provides <code>setTimerColorCurveEnabled</code>, <code>setTimerColorCurveStage</code>, <code>setTimerColorCurveNormalColor</code>, and supports triggering <code>EAM_TIMER_COLOR_CHANGED</code> event broadcast.</li>
+</ul>
+</li>
+<li><strong>DurationAdapter Core adaptation and weak reference dynamic hot update (<code>Core/DurationAdapter.lua</code>)</strong>:<ul>
+<li>Implementation <code>buildColorCurve</code>, <code>buildSpellColorCurve</code>, <code>getActiveColorCurve</code>, <code>markColorCurveDirty</code>;</li>
+</ul>
+</li>
+<li>Use weak reference tables <code>activeBindings</code> and <code>bindingCustomCurves</code> to track active TextBinding, and hot update all existing icons immediately when settings are changed;<ul>
+<li>In <code>createTextBinding</code>, it is supported to pass in <code>customCurve</code>. If the skill has independent red text seconds and color, the exclusive curve will be applied first.</li>
+</ul>
+</li>
+<li><strong>Dual-track rendering and downgrade support (<code>UI/Renderer.lua</code>)</strong>:<ul>
+<li>Native 12.x C core pipeline: automatically apply exclusive or global <code>ColorCurve</code>;</li>
+</ul>
+</li>
+<li>Traditional Numeric pipeline: Support priority application of <code>icon.countdownRedLimit</code> / <code>icon.countdownRedColor</code> in <code>onLegacyTimerUpdate</code>, and downgrade support for <code>timerColorCurve</code> multi-level color change and <code>normalColor</code>.</li>
+<li><strong>The setting interface is fully aligned with the 5 language dictionaries (<code>UI/Options.lua</code> &amp; <code>Locale/*.lua</code>)</strong>:<ul>
+<li>Single spell details window (<code>condFrame</code>): Add <code>redColorBtn</code> color block button to <code>redLimitSlider</code>, which can customize the red text threshold and exclusive color of a skill;</li>
+</ul>
+</li>
+<li>Appearance and position setting panel (<code>posFrame</code>): The height is moderately expanded to 710px, and a "Color Curve" control block is added at the bottom, including the main switch, normal color color block, emergency alert (&lt;= seconds) slider and color block, early warning prompt (&lt;= seconds) slider and color block, explanatory text label and reset default value;<ul>
+<li>Five major language families (zhTW, zhCN, enUS, koKR, ruRU) have 6 new key values simultaneously, and the contract assertion is 100% green.</li>
+</ul>
+</li>
+<li>Verification:</li>
+<li>Lua syntax check: 77/77 PASS.</li>
+<li>Flow state machine tests: 86/86 PASS (new <code>ui.timer_color_curve.roundtrip_and_build</code>).</li>
+<li>Validation Contracts: 497/497 PASS.</li>
+</ul>
+<h3 id="issue-084-esc-key-lossless-pure-transparency-zero-alpha-alarm-suppression-pre-render-protection-and-savedvariables-automatic-timestamp-stamping">ISSUE-084: ESC key lossless pure transparency (Zero-Alpha) alarm suppression, pre-render protection and SavedVariables automatic timestamp stamping</h3>
+<ul>
+<li>Date: 2026-09-12</li>
+<li>Phenomenon and challenges:</li>
+<li>If the player presses the ESC key in the game to call the traditional <code>Hide()</code>, the underlying cooling animation will be interrupted, the Frame object and layout queue will be destroyed or reset, and the pre-rendering placeholder will be destroyed.</li>
+<li>If it is changed to "pre-render immediately after entering combat", due to Blizzard's security sandbox restrictions during combat, calling <code>CreateFrame</code> may cause Taint or failure, destroying the smoothness of combat.</li>
+<li>Multiple PTR WTF account archive paths (such as <code>17194784#5</code>, <code>#3</code>, <code>#2</code>) need to establish an accurate timestamp identification mechanism.</li>
+<li>Effective solution:</li>
+<li><strong>ESC key lossless pure transparency suppression (<code>UI/Renderer.lua</code>)</strong>:<ul>
+<li>Register the 1x1 invisible frame <code>EAM_EscAlertCloseFrame</code> via <code>UISpecialFrames</code>, and respond to the ESC key when all configuration windows are closed;</li>
+</ul>
+</li>
+<li>Execute <code>Renderer.suppressAlerts("ESC_KEY")</code> when triggered, set all existing alarm icons to <code>icon:SetAlpha(0)</code> (including Native Aura containers), <strong>never destroy Frame, never call <code>Hide()</code>, and never reset 2D matrix</strong>;<ul>
+<li>Security guard during battle: <code>ensureEscCloseFrame()</code> is installed. It is strictly prohibited to call <code>CreateFrame</code> during battle. The safety guard will be automatically completed when leaving the battle.</li>
+</ul>
+</li>
+<li><strong>Automatically unsuppress (Unsuppress)</strong>:</li>
+<li>When a new alarm is triggered (<code>alertState.shown == true</code>), entering combat (<code>PLAYER_REGEN_DISABLED</code>), opening the settings panel (<code>/eam opt</code>), or modifying settings, automatically call <code>Renderer.unsuppressAlerts()</code> to restore the transparency of all icons.</li>
+<li><strong>SavedVariables Archives are automatically stamped (<code>Core/SavedVariables.lua</code>)</strong>:<ul>
+<li>extended <code>lastSavedAt</code> (ISO 8601 local time string), <code>lastSavedEpoch</code> (Unix timestamp), <code>addonVersion</code> in <code>EAM_DB.meta</code>;</li>
+</ul>
+</li>
+<li>Automatically update <code>PLAYER_LOGOUT</code>, <code>touchRevision</code> and version migration to accurately visualize the archive time.</li>
+<li><strong>Five Language Dictionary (<code>Locale/*.lua</code>)</strong>:<ul>
+<li><code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> are synchronized with <code>EAM_OPT_ALLOW_ESC</code> and <code>EAM_OPT_ALLOW_ESC_TIP</code>.</li>
+</ul>
+</li>
+<li>Verification:</li>
+<li>Lua syntax check: 77/77 PASS.</li>
+<li>Flow state machine test: 86/86 PASS (with combat delay creation safety assertion <code>ui.renderer.combat_initialize_prewarm_deferred</code>).</li>
+<li>Validation Contracts: 497/497 PASS.</li>
+</ul>
+<h3 id="issue-085-character-attribute-panel-4-tab-modular-anti-occlusion-layout-upward-growth-of-professional-resource-vertical-status-bar-and-independent-effect-preview-window-implementation">ISSUE-085: Character attribute panel 4-Tab modular anti-occlusion layout, upward growth of professional resource vertical status bar and independent effect preview window implementation</h3>
+<ul>
+<li>Date: 2026-09-12</li>
+<li>Phenomenon and challenges:</li>
+<li>There are too many sliders stacked vertically in the character attribute panel (<code>PlayerStatPanel</code>), and the Low/High label of Blizzard’s native <code>OptionsSliderTemplate</code> is severely overlapped and obscured by the components below.</li>
+<li>The career resource status bar cannot grow upward normally when set to vertical (<code>VERTICAL</code>) mode, and the direction of the point dividing line and the slot bar do not match.</li>
+<li>Each setting screen lacks a dedicated preview window, and players cannot observe the reciprocal discoloration curve, golden light Proc, Pandemic green frame and attribute value effects in real time.</li>
+<li>Effective solution:</li>
+<li><strong>Property Panel 4-Tab Modularization (<code>UI/PlayerStatPanel.lua</code>)</strong>:</li>
+<li>The panel is expanded to 720x540 and restructured into four major pages: "Display and Illustrations", "Fonts and Format", "Warning Threshold", and "Position and Anchor Point";<ul>
+<li>The slider spacing is increased to 50~60px to completely eliminate occlusion; seamless side window adsorption and linked dragging are retained.</li>
+</ul>
+</li>
+<li><strong>Vertical resource status bar grows upward repair (<code>UI/PowerRenderer.lua</code>)</strong>:<ul>
+<li>Transpose the width and height, call <code>SetRotatesTexture(true)</code> to rotate Blizzard's native StatusBar material;</li>
+</ul>
+</li>
+<li>Anchor the icon at the bottom, make the status bar grow upward, and transpose the point divider and slot bar.</li>
+<li><strong>Independent real-time effect preview small window (<code>UI/PreviewPanel.lua</code>)</strong>:<ul>
+<li>Implemented an independent draggable window <code>PreviewPanel</code>, providing three major tabs: "Alarm Icon", "Career Resources", and "Character Attributes";</li>
+<li>Supports reciprocal color curve slider, Proc golden light, Pandemic green frame, charging percentage and real-time testing of attribute items;</li>
+</ul>
+</li>
+<li>The <code>[效果預覽]</code> button has been added to the main settings, general layout, career resources and attribute panels.</li>
+<li><strong>Five Language Dictionary (<code>Locale/*.lua</code>)</strong>:<ul>
+<li>19 new preview and tab entries added 100% synchronously.</li>
+</ul>
+</li>
+<li>Verification:</li>
+<li>Lua syntax check: 78/78 PASS.</li>
+<li>Flow state machine tests: 86/86 PASS.</li>
+<li>Validation Contracts: 497/497 PASS.</li>
+</ul>
+<h3 id="issue-086-in-depth-review-of-11-retro-and-modern-theme-color-palettes-modern-wow-vertical-gradient-rendering-repair-and-full-sub-window-theme-unification">ISSUE-086: In-depth review of 11 retro and modern theme color palettes, Modern WoW vertical gradient rendering repair and full sub-window theme unification</h3>
+<ul>
+<li>Date: 2026-09-12</li>
+<li>Phenomenon and challenges:</li>
+<li>The Classic royal sapphire blue to black navy vertical gradient of the FF7 theme is invalid and missing in Retail 10.x/11.x/12.x.</li>
+<li>EAM The default theme needs to accurately restore the 9.0.1 Classic slate metal gold frame and crystal deep red three-dimensional buttons.</li>
+<li>The other 9 major themes (WinXP, Win7, Win10, Win3.1, Borland, DOS CRT, Yitian, Red Alert, Aqua) need in-depth research to restore their Classic features.</li>
+<li>Many sub-windows (position and energy settings <code>posInner</code>, spell list settings <code>listInner</code>, group management <code>GroupManagerPanel</code>, full spell library <code>SpellCatalogTreePanel</code>, attribute panel drop-down menu) do not have themes applied, and there are disjointed dark brown/gray-black squares.</li>
+<li>Effective solution:</li>
+<li><strong>In-depth examination of 11 major theme color palettes (<code>UI/Theme.lua</code>)</strong>:</li>
+<li>EAM: Classic slate black and brown base <code>(0.08, 0.06, 0.05)</code>, metal gold frame <code>(0.65, 0.50, 0.25)</code> and crystal deep red button <code>(0.55, 0.10, 0.08)</code>;<ul>
+<li>FF7: pure white three-dimensional frame <code>(1.0, 1.0, 1.0)</code>, royal sapphire blue at the top <code>(0.00, 0.12, 0.85)</code> to black navy blue at the bottom <code>(0.00, 0.01, 0.10)</code> vertical gradient, dark blue crystal transparent button pure white text;</li>
+</ul>
+</li>
+<li>WinXP (Luna blue), Win7 (Aero glass gradient), Win10 (Metro tile flat), Win3.1 (gray white 3D convex button), Borland (DOS yellow text on blue background), DOS CRT (P1 phosphorescent green pure black background), Eten Chinese (ETen Bright yellow characters on blue background), Red Alert (armor gray black dark red frame), Aqua (jelly capsule blue gradient).</li>
+<li><strong>Modern WoW vertical gradient rendering pipeline repair (<code>UI/Theme.lua</code>)</strong>:</li>
+<li>Completely remove the <code>SetColorTexture(1, 1, 1, 1)</code> vertex shader conflict, use <code>SetTexture("Interface\\Buttons\\WHITE8X8")</code> instead and set it on the <code>BACKGROUND, 1</code> layer, which is perfectly compatible with the native <code>Texture:SetGradient("VERTICAL", cMin, cMax)</code>;<ul>
+<li>Corrected vertical gradient direction mapping to ensure that the royal blue on top contrasts well with the dark navy blue on the bottom.</li>
+</ul>
+</li>
+<li><strong>Implementation of <code>Theme.applyContainerBackground</code> and full child window theme registration</strong>:</li>
+<li>Added <code>Theme.applyContainerBackground(frame, roleOrIsPanel)</code> in <code>UI/Theme.lua</code>, supporting <code>"window"</code>, <code>"panel"</code>, <code>"row"</code>, <code>"menu"</code> and other characters;<ul>
+<li>Supports <code>"row"</code> lightweight list line role, retaining clear text while avoiding excessive gradients;</li>
+<li><code>Options.lua</code>: <code>posInner</code> and <code>listInner</code> are registered as <code>"panel"</code>, <code>previewBtn</code> is changed to <code>registerButton</code>;</li>
+<li><code>GroupManagerPanel.lua</code>: Register themes for the main window and left and right containers, use <code>"row"</code> for list lines;</li>
+</ul>
+</li>
+<li><code>SpellCatalogTreePanel.lua</code>: The main window and tree container register the theme, <code>modMenu</code> is registered as <code>"menu"</code>, and the list line uses <code>"row"</code>;<ul>
+<li><code>PlayerStatPanel.lua</code>: <code>growDirMenu</code> is registered as <code>"menu"</code>.</li>
+</ul>
+</li>
+<li>Verification:</li>
+<li>Lua syntax check: 78/78 PASS.</li>
+<li>Flow state machine tests: 86/86 PASS.</li>
+<li>Validation Contracts: 497/497 PASS.</li>
 </ul>
     </div>
 
