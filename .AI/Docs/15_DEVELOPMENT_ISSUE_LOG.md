@@ -742,7 +742,7 @@
 - 已嘗試方法：無。
 - 有效解法：
 1. **主代理代行職責**：根據[Docs/17_SUBAGENT_WORKFLOW.md](file:///d:/EventAlertMod/Docs/17_SUBAGENT_WORKFLOW.md)的關鍵路徑降級原則，主代理（反重力）立即代為承擔並整合UI渲染、安全防衛與控制進展的評估，確保專案不會被阻礙。
-2. **整合已取得的專家報告**：利用已成功取得的 `EAM_Addon_Architect` (ARCH) 與 `EAM_Lua_VM_Expert` (LUA) 重點報告（包含了對 JIT Trace Compiler 致命 __EAMCODE_5 以及 Abort 的要因分析`releaseFunc` 的重大 Bug診斷），擬定最新的JIT優化實施計畫。
+2. **整合已取得的專家報告**：利用已成功取得的 `EAM_Addon_Architect` (ARCH) 與 `EAM_Lua_VM_Expert` (LUA) 重點報告（包含了對 JIT Trace Compiler 發生 Abort 的要因分析`releaseFunc` 的重大 Bug診斷），擬定最新的JIT優化實施計畫。
 3. **分批派工原則**：在後續開發中，應避免同時呼叫大於3個子代理。在損耗相關恢復前，的旁路任務一律由主代理本地直接執行。
 - 後續注意事項：派工前須精確計量WIP（在製品）數量，優先僅派發給A級核定者及R級執行者，降低平台損耗耗竭之風險。
 ### 2026-06-07 設定頁面滑桿圖示大小/尺寸調整無法回應到 7 大框架排版版本 Bug（已解決）
@@ -768,7 +768,7 @@
 
 - 狀態：已解決
 - 脅：
-在戰鬥中，如果一個光環或技能冷卻由 Brake UI 的 `DurationObject` 進行渲染，當我們在 OnUpdate (例如 Renderer.lua 的 `onLegacyTimerUpdate`) 中調用 `durationObj:__EAMCODE_5 工件/ a Secret boolean value (execution tainted by) 'EventAlertMod')` 致命錯誤，首先導致 Taint 崩潰並阻塞 UI 的 OnUpdate 執行鏈。
+在戰鬥中，如果一個光環或技能冷卻由 Blizzard UI 的 `DurationObject` 進行渲染，當我們在 OnUpdate (例如 Renderer.lua 的 `onLegacyTimerUpdate`) 中調用 `durationObj:IsZero()` 時拋出 'attempt to test a secret boolean value (execution tainted by EventAlertMod)' 致命錯誤，導致 Taint 崩潰並阻塞 UI 的 OnUpdate 執行鏈。
 - 症狀與原因判斷：
 1. 在戰鬥中，`DurationObject:IsZero()`的傳回值是Secret Boolean，在Lua中直接做`if val then`條件判斷會直接觸發Metamethod崩潰崩潰。
   2.這是因為暴雪的保密保護機制限制了對Secret Boolean做布林值判斷。
@@ -853,7 +853,7 @@
 
 - 狀態：已解決
 - 脅：
-在`/reload`載入外掛程式時，魔獸世界直接推送大紅字錯誤：`EAM Init Error on [AlertManager]: Frame:RegisterEvent(): Attempt to registerknown event __EAMCODE_411，導致__EAUI
+在`/reload`載入外掛程式時，魔獸世界直接推送大紅字錯誤：`EAM Init Error on [AlertManager]: Frame:RegisterEvent(): Attempt to register unknown event 'EAM_AURA_STATE_CHANGED'`，導致插件初始化中斷
 - 症狀與原因判斷：
   1. `AlertManager` 初始化時，會呼叫 `EventRouter.register` 註冊多個內部自訂事件（如 `EAM_AURA_STATE_CHANGED`）。
 2. 譯`EventRouter.register`的實踐是無論任何事件均調用 `frame:RegisterEvent(event)` 往前暴雪框架註冊。
@@ -909,7 +909,7 @@
   備份 `Services/ShadowHostService.lua`, `UI/Renderer.lua` 和 `Core/SavedVariables.lua` 至 `backup/` 目錄。
 - 有效解法：
 1. **停用ShadowHostService初始化與Hook**：在`ShadowHostService.lua`中註解底部的`initShadowHost()`調用，不進行任何Hook，也不隱形官方UI；同時簡化`ShadowHostService.GetHostIcon`產生直接回傳`nil`。
-  2. **強制關閉渲染器吸附通道**：在`UI/Renderer.lua`的`Renderer.render`中，將`useCDM`寫死為`false`，徹底斷開與CDM掛勾的判斷路徑。所有圖示100%走EAM將手機排版路線（`dx`, `dy`方向定位）。
+  2. **強制關閉渲染器吸附通道**：在`UI/Renderer.lua`的`Renderer.render`中，將`useCDM`寫死為`false`，徹底斷開與CDM掛勾的判斷路徑。所有圖示100%走EAM原生常規排版路線（`dx`, `dy`方向定位）。
 3. **將 enableCDM 預設值設為 false**：在 `Core/SavedVariables.lua` 中，將預設值的 `enableCDM` 設為 `false`。
   4.靜態 `luac -p` 全案語法檢查編譯通過。
 - 後續注意事項：實機驗證時需注意，觀察圖示排版是否完全回歸EAM常規定位（4向成長方向），且進入戰鬥時是否會有任何排版疙瘩。
@@ -917,7 +917,7 @@
 ### 2026-06-07 12.x / Midnight-era: DurationObject 核心 API 與時間管理機制調查 (已解決)
 - 狀態：已解決
 - 脅：
-  魔法世界 Retail 12.x / Midnight 世代對時間管理（冷卻、光環、充能）實施了黑盒化（Pointer-Pass Pattern）。 EAM 必須全面掌握所有能產生或交付 `DurationObject` 的 API 以進行高可用性、0-GC 和 Secret-Safe 的時間渲染。
+  魔獸世界 Retail 12.x / Midnight 世代對時間管理（冷卻、光環、充能）實施了黑盒化（Pointer-Pass Pattern）。 EAM 必須全面掌握所有能產生或交付 `DurationObject` 的 API 以進行高可用性、0-GC 和 Secret-Safe 的時間渲染。
 - 症狀與原因判斷：
 傳統的 OnUpdate 數值倒數在戰鬥基礎（秘密）下發生字符串拼接與表索引崩潰。為此，我們需要將原生的 API 的 `DurationObject` 扭轉指標傳遞（Pointer-Pass）輕鬆地重構 Widget，同時需要完整的磁碟點所有可用的 API 以便模組化重構。
 - 已嘗試方法：
@@ -929,7 +929,7 @@
      * **工具/手動時鐘**：`C_DurationUtil.CreateDuration`、`C_DurationUtil.CreateManualClock`。
      * **小部件關聯**：`self:GetTimerDuration()`。
 2. **掌握ScriptObject成員方法**：`IsZero()`、`GetRemainingDuration()`、`GetClockTime()`、`EvaluateTotalDuration()`、` FormatRemainingDuration(formatter)`、`FormatElapsedDuration(formatter)`、`FormatTotalDuration(formatter)`等成員函數，並完成其操作Secrecy安全性屬性（如 `IsZero` 為 NeverSecret 可安全做為較檢測）。
-3. **落地改寫應用(GroundEffectService)**：在`Services/GroundEffectService.lua`中補齊`state.timer.durationObject = api.C_DurationUtil.CreateDuration(duration)`，使地面效果完美對接雙軌原生綁定倒數通道，消除最後的__EAMCODE_44__與時間對接444__4442__444。
+3. **落地改寫應用(GroundEffectService)**：在`Services/GroundEffectService.lua`中補齊`state.timer.durationObject = api.C_DurationUtil.CreateDuration(duration)`，使地面效果完美對接雙軌原生綁定倒數通道，消除地面效果手動倒數的缺口，使地面法術時間完美對接原生 DurationObject 系統。
   4. 將結果儲存於 [duration_object_api_investigation.md](file:///C:/Users/ZYF/.gemini/antigravity/brain/b7690ead-b096-4f45-88f1-19a3c18d55f0/duration_object_api_investigation.md)。
 - 後續注意事項：在未來的 AuraService 及 CooldownService 開發中，應將上述 API 設定第一優先取得時間的方式，並在 Renderer 中優先呼叫 Text Binding。
 
@@ -960,13 +960,13 @@
 1. 當冷卻更新觸發並呼叫 `refreshAlert` 時，拋出 `attempt to call a nil value`。
   2. 錯誤被 `EventRouter` 或系統錯誤機制捕獲，中斷了冷卻警報更新流程。
 - 原因判斷：
-1. 在 `Core/Util.lua` 裡面，第 152 行直接呼叫了本地變數 `isSecretValue(value)`，然而在魔獸世界客戶端載入 `Util.lua` 時，若全域變數 `issecretvalue` 是 `Util.lua` 時，若全域變數 `issecretvalue` 是 __EAMCODE_4（62311212121131111113）。可能是`nil`。執行到這裡即發送嘗試呼叫nil值！
+1. 在 `Core/Util.lua` 裡面，第 152 行直接呼叫了本地變數 `isSecretValue(value)`，然而在魔獸世界客戶端載入 `Util.lua` 時，若全域變數 `issecretvalue` 為 `nil`，執行到這裡即會拋出 attempt to call a nil value 錯誤。
 2.同樣地，若 `issecretvalue` 及其他保密計算 API 為空，`EAM.API`中表格的 API 參考亦為 `nil`，導致如 `ShadowHostService.lua` 呼叫崩潰。
 - 已嘗試方法：
   備份 `Core/Env.lua`, `Core/Util.lua`, `Services/CooldownService.lua` 到 `backup/` 目錄。
 - 有效解法：
 1. ** seceret/secrecy 全域 API 容錯**：在 `Core/Env.lua` 中，為 `EAM.API` 的所有保密檢查方法（`issecretvalue`, `canaccesstable` 等。 false end`），確保`api.issecretvalue` 永遠不會為 `nil`。
-2. **Util 本地本機變數回退**：在 `Core/Util.lua` 中，為所有的本地變數回退**：在 `Core/Util.lua` 中，為所有的本地變數回退**：在 `Core/Util.lua` 中，為所有的本地變數回退**：在 `Core/Util.lua` 中，為所有的本地變數回退**：在 `Core/Util.lua` 中，為所有的本地變數回退（`isSecretValue`, `canAccessTable` 等）補上回退定義，且將 `readSafeScalar` 內部的直接呼叫 `__EAMCODE_4才調用`Util.isSecretValue(value)`。
+2. **Util 本地變數安全回退**：在 `Core/Util.lua` 中，為所有本地防護函式（`isSecretValue`, `canAccessTable` 等）補齊安全回退定義，確保在任何環境下皆能安全呼叫。
   3. **CooldownService 呼叫保護**：在 `CooldownService.lua` 中對 `cSpell.GetSpellCooldown` 的呼叫加上 `cSpell.GetSpellCooldown 和 ...` 防護，避免 API 不存在時發生 nil 值呼叫。
 4. 透過靜態 `luac -p` 個完整案例審查，32 個活躍 TOC 檔案全部通過。
 - 後續注意事項：實機驗證時需注意，在任何環境下登入或觸發CD時是否還會拋出此類錯誤。
@@ -1014,7 +1014,7 @@
   2. `GroundEffectService.lua:78` 解析工具提示描述時，因為 `string.match` 確定了秘密字串，拋出`嘗試對秘密字串值執行字串轉換（被 'EventAlertMod' 污染的執行）`致命錯誤。
   3.戰鬥中警報框架完全隱形不彈出。
 - 症狀與原因判斷：
-1. **秘密密鑰表索引限制**：WoW 12.x引入了強大的秘密保護。在戰鬥中，從`GetAuraDataByIndex`回傳的`spellId`或是`leftText`都會被標記為`秘密值`。一旦AddOn程式碼直接使用這個`spellId`作為密鑰去對任何非安全的自訂表進行索引操作（例如 `db[spellId]` 或 `SavedVariables[spellId]`），__EAMCODE Key__ __ 引擎會直接爆發並拋出錯誤！
+1. **秘密密鑰表索引限制**：WoW 12.x引入了強大的秘密保護。在戰鬥中，從`GetAuraDataByIndex`回傳的`spellId`或是`leftText`都會被標記為`秘密值`。一旦AddOn程式碼直接使用這個`spellId`作為密鑰去對任何非安全的自訂表進行索引操作（例如 `db[spellId]` 或 `SavedVariables[spellId]`），WoW 引擎會直接拋出 'attempted to index a table that cannot be indexed with Key Secrets' 錯誤！
 2. **Secret String Taint限制與參數傳遞**：當工具提示描述在中被標記為Secret時，我們不能在自訂本身的不安全的是函數中進行字符串化（`tostring`）、字符串拼接戰鬥（`..`）或正則匹配（`string.match`）。最關鍵：**所有的秘密值都不能在自訂參數傳遞給任何Lua時被使用函數**！只要確定，函數就會被判定為污染，並在執行涉及秘密的動作時崩潰。
 3. **不安全的UI戰鬥鎖定防衛過度**：先前的代碼為了安全，在 `Renderer.lua` 和 `IconPool.lua` 中只要遇到 `InCombatLockdown()` 為 true，則所有 `CreateFrame`, `SetPoint`, `SetPoint`5__ `Hide`渲染作業全部延後到戰鬥結束後（PLAYER_REGEN_ENABLED）。然而，我們的警報圖示是純顯示框架，不承擔任何安全動作（如點擊、施法、定位等），也沒有繼承任何安全模板。 WoW引擎完全允許在戰鬥中對不安全框架進行定位與顯隱。過度防護反而導致了戰鬥中警報完全消失，失去了AddOn的價值。
 - 已嘗試方法：備份 `Services/AuraService.lua`, `Services/GroundEffectService.lua`, `UI/Renderer.lua`, `UI/Options.lua` 至 `backup/` 目錄。
@@ -1252,7 +1252,7 @@
 - 症狀：包括 `Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md` 仍記錄 12.0.7 尚未找到 API 摘要。
 - 原因判斷：魔獸爭霸Wiki近期已新增12.0.7 API更改頁，先前記錄已過時。
 - 已嘗試方法：重新查詢魔獸爭霸維基API變更摘要、12.0.5、12.0.7與AddOn社群討論。
-- 有效解法：更新 `Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md`，將 12.0.7 標記為已存在，並記錄與 EAM 相關的 `C_DurationUtil`、CPU 用法 API 與 __EAMCODE_61 追蹤事項。
+- 有效解法：更新 `Docs/10_WARCRAFT_WIKI_12X_API_NOTES.md`，將 12.0.7 標記為已存在，並記錄與 EAM 相關的 `C_DurationUtil`、CPU 用法 API 與 DurationObject 追蹤事項。
 - 後續注意事項：精確做 WoW Retail/PTR 實機驗證；若目標正式版本從 12.0.5 升到 12.0.7，需同步調整 TOC、備份版本與 CurseForge 遊戲版本 ID。
 
 ### 2026-05-26 加入污染控制規則
@@ -1260,7 +1260,7 @@
 - 狀態：已解決
 - 感染：使用者要求開發過程中必須避免污染污染。
 - 規則症狀：除規範已涵蓋秘密值、受保護資料與戰鬥安全降級，但缺少獨立的污染控制。
-- 原因判斷：WoW AddOn 屬於不受信任來源；若污染安全/protected執行路徑，戰鬥中可能導致暴雪UI動作被削弱。 EAM 的渲染器、EventRouter、UI框架與API適配器都必須避免把污染帶進動作條、單元框架、銘牌、施法、目標或物品路徑使用。
+- 原因判斷：WoW AddOn 屬於不受信任來源；若污染安全/protected執行路徑，戰鬥中可能導致暴雪UI動作被阻擋 (Action Blocked)。 EAM 的渲染器、EventRouter、UI框架與API適配器都必須避免把污染帶進動作按鈕、單位框架、姓名板（Nameplate）、施法、目標或物品使用路徑。
 - 已嘗試方法：查證魔獸爭霸Wiki安全執行/污染相關資料，並更新`AGENTS.md`、`Docs/02_RETAIL_API_BOUNDARIES.md`、`Docs/12_CODE_COMMENTARY_GUIDE.md`。
 - 有效解法：將 taint 視為邊界架構；禁止鉤/覆寫 protected 路徑、戰鬥中修改 protected 框架、使用 `forceinsecure` 或將不安全值傳遞到安全鏈。
 - 後續注意事項：發現污染、被阻止的操作或戰鬥鎖定錯誤時，需在本檔案觸發路徑、戰鬥狀態、相關框架/API 與可追加步驟。
@@ -1301,7 +1301,7 @@
 ### 2026-06-09 EAM 12.1.0 零分配 StatePool 恢復與基於 Pool-Token 延遲排程之 JIT 優化實行
 
 - 狀態：已解決、待實機驗證
-- 困：解決AuraService在大流量戰鬥中80個AuraState預作業作業後落入GC Churn的記憶體洩漏P0 Bug，並消除OnUpdate輪詢`IsZero()`導致LuaJIT __EAMCODE_終止。
+- 困：解決AuraService在大流量戰鬥中80個AuraState預作業作業後落入GC Churn的記憶體洩漏P0 Bug，並消除OnUpdate輪詢`IsZero()`導致 LuaJIT Trace Abort 終止。
 - 症狀：
   1. 戰鬥中 `/eam debug` 顯示的 runtimeStats 記憶體會隨著 Buff/Debuff 刷新持續攀升，物品池恢復功能完全失效，引發 GC 攪拌並與 FPS 結束。
 2. legacyTimerFrame 的 OnUpdate 迴圈遍歷輪詢 C++ 函數 `durationObj:IsZero()`，觸發了 LuaJIT 2.1 Trace Abort，導致降流路徑無法被 JIT負載率過高時造成微卡頓。

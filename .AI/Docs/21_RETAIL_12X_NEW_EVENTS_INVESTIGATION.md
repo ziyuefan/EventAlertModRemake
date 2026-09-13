@@ -17,7 +17,7 @@ EventAlertMod 正式服重寫
 ## 1. 第一批事件詳細調查與有效負載說明
 
 ### 📌活動 1：`COMBAT_LOG_MESSAGE`
-* **初步作用**：補丁12.0.0後新引進的事件。由於官方將傳統的 `COMBAT_LOG_EVENT_UNFILTERED` (CLEU) 移出 AddOn 插件存取權限，且將 `CombatLogGetCurrentEventInfo()` 設定為確定（被污染的方案碼無法讀取），官方提供了該事件作為浮動戰鬥文字（__EAMCODE_4）浮動文字的替代方案。
+* **初步作用**：補丁12.0.0後新引進的事件。由於官方將傳統的 `COMBAT_LOG_EVENT_UNFILTERED` (CLEU) 移出 AddOn 插件存取權限，且將 `CombatLogGetCurrentEventInfo()` 設定為確定（被污染的方案碼無法讀取），官方提供了該事件作為浮動戰鬥文字（Floating Combat Text）的替代方案。
 * **引數有效負載**：
 * `Arg 1 (messageText)`: string - 已整理好且在地化的戰鬥文字字符串（例如：「你的點燃順劈斬訓練目標262點火焰。」）。
     * `Arg 2 (r)`: number - 文字顯示的紅色顏色值通道。
@@ -32,7 +32,7 @@ EventAlertMod 正式服重寫
 ### 📌活動 2：`COMBAT_TEXT_UPDATE`
 * **最初作用**：魔獸世界傳統的浮動戰鬥文字（浮動戰鬥文本）更新事件。當被監控的單位（預設需用 `CombatTextSetActiveUnit` 設定，通常是`"player"`、`"target"`、`"pet"`）發生戰鬥狀態更新時觸發。
 * **引數有效負載**：
-    * `Arg 1 (combatTextType)`: string - 戰鬥文字類型（例如：`"SPELL_AURA_START"`, `"DAMAGE"`, `"HEAL"`, `"ENERGY"`, `__EAMCODE___10`110EAMCODE_9__110EAMCO
+    * `Arg 1 (combatTextType)`: string - 戰鬥文字類型（例如：`"SPELL_AURA_START"`, `"DAMAGE"`, `"HEAL"`, `"ENERGY"`, `"PERIODIC_HEAL"` 等）。
 * **EAM 整合策略**：
 *主要用於`EventRouter`除錯追蹤監控，在`AuraService`因安全限制突然失效時，可作為取得`"SPELL_AURA_START"`狀態的防禦性輔助日誌。
 

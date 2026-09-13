@@ -47,7 +47,7 @@
 - 12.x引入了強大的C語言底層Blocked Aura引擎`C_UnitAuras.AddBlockedAura(unit, auraInstanceID)`與時間黑盒`C_UnitAuras.GetAuraDuration(unit, auraInstanceID)`，提供0-GC和100%安全的防污染執行鏈。
 - 12.x 引進了資料驅動型 Tooltip 系統，以 `C_TooltipInfo.GetUnitBuffByAuraInstanceID(unit, auraInstanceID)` 與 `GetUnitDebuffByAuraInstanceID` 取代了舊式的 `SetUnitBuff` 模擬渲染，將資料與 UI 徹底分離，並取代了舊式的 `SetUnitBuff` 模擬渲染，將資料與 UI 徹底分離，並完美接了一個橋接橋。
 - `Secret_Values`、`ScriptObject_DurationObject`、`C_Spell.GetSpellCooldown`、`C_TooltipInfo.GetUnitBuffByAuraInstanceID` 這些單頁檔案已論證支撐 EAM 的架構決策：資料來源層必須處理秘密邊界，渲染器應盡量遷移暴雪小工具顯示持續時間。
-- 12.0.7 的公開 API 變更摘要目前未顯示直接影響 EAM aura/cooldown/item Cooldown 核心邏輯的大型 API 變更，但新增 __EAM__CODE_4__6、EA DurationObject / 定時器顯示追蹤事項。
+- 12.0.7 的公開 API 變更摘要目前未顯示直接影響 EAM aura/cooldown/item Cooldown 核心邏輯的大型 API 變更，但新增 DurationObject 與計時器顯示追蹤事項。
 
 注意：以上是文件與索引索引交叉整理，尚未在 WoW Retail 12.x 用戶端內實機驗證。
 
@@ -213,7 +213,7 @@ EAM AuraService 規則：
 
 - `UnitName` 不再接受秘密單位代幣。
 - `UnitSpellTargetName` 只回傳玩家單位名稱。
-- `UnitTokenFromGUID` 在身分秘密時不回傳競技場、銘牌、boss、隊伍、raid、目標目標令牌。
+- `UnitTokenFromGUID` 在身分秘密時不回傳競技場、姓名板（Nameplate）、boss、隊伍、raid、目標目標令牌。
 - `UnitIsUnit` 對 `targettarget` / `focustarget` 可能回傳秘密，禁止比較時回傳 nil。
 
 EAM 規則：

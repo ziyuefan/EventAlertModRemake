@@ -18,11 +18,11 @@
 除非有明確、嚴格且已文件化的正式服安全後備，不保留舊式解壓縮返回相內容層。
 
 ## 污染控制政策
-Warcraft Wiki 的安全執行 / taint 文件指出，AddOn 與 `/script` 屬於不受信任來源；一旦 taint 進入 protected/secure 路徑，戰鬥中可能會導致 Blizzard UI 動作被匱乏。 EAM 必須把避免污染修改視為架構邊界，而不只視為 bug。
+Warcraft Wiki 的安全執行 / taint 文件指出，AddOn 與 `/script` 屬於不受信任來源；一旦 taint 進入 protected/secure 路徑，戰鬥中可能會導致 Blizzard UI 動作被阻擋 (Action Blocked)。 EAM 必須把避免污染修改視為架構邊界，而不只視為 bug。
 
 實行規則：
 
-- 不鉤、覆寫、重新定義或猴子補丁 Blizzard secure/protected 函數、FrameXML 核心函數、動作按鈕、單位框架、銘牌、法術施法、瞄準、物品使用相關路徑。
+- 不鉤、覆寫、重新定義或猴子補丁 Blizzard secure/protected 函數、FrameXML 核心函數、動作按鈕、單位框架、姓名板（Nameplate）、法術施法、瞄準、物品使用相關路徑。
 - 不在戰鬥中修改受保護框架的屬性、父級、錨點、大小、可見性、模板或點擊行為。
 - 不把secret/protected值、運行時快取、偵錯物件或addon回呼確定可能污染安全鏈的暴雪框架。
 - EventRouter 使用孤兒框架；渲染框架僅作顯示，不承擔安全操作或受保護的互動。

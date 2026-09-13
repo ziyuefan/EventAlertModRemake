@@ -27,7 +27,7 @@
 - 多個插件改為逐值 `issecretvalue` 檢查，不再只根據上下文標誌判斷是否受限。
 - 一些光環正常運行時間類插件放棄戰鬥光環spellID比較，改用cast事件與安全窗口提示，但必須標記為派生，不可冒充光環事實。
 - Cooldown類外掛明顯往Blizzard Cooldown Manager整合、DurationObject、cursor/HUD顯示與CDM設定檔輔助發展。
-- 銘牌、單位框架、PvP計分板、單位名稱 / GUID / UnitIsUnit、移動速度、生命值/power類資料在午夜中風險高，EAM 不應將它們納入核心警報匹配。
+- 姓名板（Nameplate）、單位框架、PvP計分板、單位名稱 / GUID / UnitIsUnit、移動速度、生命值/power類資料在午夜中風險高，EAM 不應將它們納入核心警報匹配。
 - 工具提示文字也可能包含秘密值；工具提示解析必須低頻、逐行檢查、失敗安靜降級。
 - 污染/受阻動作仍然是常見的痛點；避免污染受保護的框架比事後壓制錯誤更重要。
 
@@ -51,7 +51,7 @@
 ## 優先權 P1：核心功能穩定化
 
 - 玩家光環：首先支援安全絕對的自身buff/debuff；不安全時顯示圖示/name或受保護的計時器。
-- 目標光環：只追蹤`target`，避免目標目標/焦點目標/銘牌延伸。
+- 目標光環：只追蹤`target`，避免目標目標/焦點目標/姓名板延伸。
 - 法術冷卻：使用`C_Spell`結構化回報；優先`DurationObject`；支持`ignoreGCD`。
 - 物品冷卻：直接itemID監控；不做大規模物品掃描。
 - 狀態模型：每個警報都明確標示`factsSafe`、`timer.mode`、`source.api`、`boundaryWarnings`。
