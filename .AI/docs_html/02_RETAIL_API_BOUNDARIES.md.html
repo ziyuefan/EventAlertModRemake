@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -623,18 +629,24 @@
 <h2 id="_2">秘密/受保護價值政策</h2>
 <p>當數據不安全或不可用時：</p>
 <ul>
-<li><strong>四個安全性檢查 API</strong>：</li>
+<li><strong>四個安全性檢查 API</strong>：<ul>
 <li><code>issecretvalue(value)</code>：檢查某個值是否被分類為秘密。</li>
 <li><code>canaccessvalue(value)</code>：確定目前上下文是否有權讀取某個值。</li>
 <li><code>canaccesstable(table)</code>：評估表的鍵和值是否可讀。</li>
 <li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>：檢查表格結構是否受限或包含機密。</li>
+</ul>
+</li>
 <li><strong>表格索引保護（嚴重）</strong>：</li>
-<li>AddOns 絕對不能使用可能是「秘密值」的未經驗證的鍵來索引標準 Lua 表（例如，在戰鬥限制期間傳回 <code>spellId</code> 或 <code>text</code>）。</li>
+<li>AddOns 絕對不能使用可能是「秘密值」的未經驗證的鍵來索引標準 Lua 表（例如，在戰鬥限制期間傳回 <code>spellId</code> 或 <code>text</code>）。<ul>
 <li>嘗試使用金鑰對資料表進行索引會產生致命錯誤：「嘗試對無法使用金鑰進行索引的表進行索引」。</li>
 <li>總是使用「if not issecretvalue(key) and canaccesstable(tbl) then ... end」來保護表格查找。</li>
-<li><strong>資料驅動的工具提示與保密防禦</strong>：</li>
+</ul>
+</li>
+<li><strong>資料驅動的工具提示與保密防禦</strong>：<ul>
 <li>戰鬥返回結構 <code>TooltipData</code> 中的直接 <code>C_TooltipInfo</code> 查詢 (<code>GetUnitBuffByAuraInstanceID</code>) 可能被標記為「秘密表」。</li>
 <li>從 <code>line.leftText</code> 解析靜態值時，請務必使用「if text and not issecretvalue(text) and canaccessvalue(text) then ... end」來防止秘密傳播。</li>
+</ul>
+</li>
 <li><strong>無 <code>TooltipUtil.SurfaceArgs</code></strong>：在 12.x / Midnight 中，工具提示表是原生顯示的。 <code>TooltipUtil.SurfaceArgs</code> 幫助器被<strong>完全刪除</strong>；嘗試呼叫它會拋出致命的「nil value」Lua 錯誤。</li>
 <li>繼續渲染安全狀態，例如 icon/name（如果可用）。</li>
 <li>使用計時器模式 <code>protected</code>、<code>displayOnly</code> 或 <code>unknown</code>。</li>

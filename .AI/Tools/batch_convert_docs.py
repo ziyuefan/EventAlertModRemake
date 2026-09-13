@@ -851,6 +851,16 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
         # 3. Ensure blank line after </summary> and before </details>
         text = re.sub(r'(</summary>)(\s*\n*)([^\n])', r'\1\n\n\3', text, flags=re.IGNORECASE)
         text = re.sub(r'([^\n])(\s*\n*)(</details>)', r'\1\n\n\3', text, flags=re.IGNORECASE)
+        # 4. Normalize 2-space list indentation for python-markdown compatibility
+        lines = text.split('\n')
+        normalized_lines = []
+        for line in lines:
+            m = re.match(r'^( {2})([\-\*\+]|\d+\.)\s+(.*)$', line)
+            if m:
+                normalized_lines.append('    ' + m.group(2) + ' ' + m.group(3))
+            else:
+                normalized_lines.append(line)
+        text = '\n'.join(normalized_lines)
         return text
     
     if content_zh:
@@ -963,6 +973,12 @@ def convert_to_html(md_path, dest_dir, force_convert=False):
     
     li {
         margin-bottom: 6px;
+    }
+
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
     }
     
     hr {

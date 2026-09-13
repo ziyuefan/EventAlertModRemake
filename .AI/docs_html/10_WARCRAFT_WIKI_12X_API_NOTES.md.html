@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -568,12 +574,14 @@
 <li>使用者已於 WoW 12.0.7 PTR client 執行 <code>C_DurationUtil.CreateDurationTextBinding</code> 最小測試範例。</li>
 <li>結果：FontString 可正常顯示由 <code>DurationTextBinding</code> 驅動的倒數文字。</li>
 <li>EAM 整合狀況：EAM <code>Core/DurationAdapter.lua</code> 與 <code>UI/Renderer.lua</code> 已完整支援無參數建立、<code>SetFontString</code>、<code>SetDuration</code>、<code>SetFormatter</code> 與 <code>SetToDefaults</code> 釋放，並透過 <code>SetCooldownFromDurationObject</code> 構成雙軌原生渲染。</li>
-<li>完整方法清單 (30 個)：</li>
+<li>完整方法清單 (30 個)：<ul>
 <li>生命週期：<code>Assign</code>, <code>Copy</code>, <code>Enable</code>, <code>Disable</code>, <code>SetEnabled</code>, <code>IsEnabled</code>, <code>SetToDefaults</code></li>
 <li>綁定：<code>SetFontString</code>, <code>GetFontString</code>, <code>SetDuration</code>, <code>GetDuration</code>, <code>SetFormatter</code></li>
 <li>格式與文字：<code>SetTextFormat</code>, <code>SetExpiredText</code>, <code>GetExpiredText</code>, <code>SetZeroDurationText</code>, <code>GetZeroDurationText</code>, <code>SetTimeModifier</code>, <code>GetTimeModifier</code>, <code>SetUpdateInterval</code>, <code>GetUpdateInterval</code>, <code>UpdateFontString</code>, <code>CanFormatText</code>, <code>CanUpdateFontString</code>, <code>GetFormattedText</code>, <code>GetFormattedTextColor</code></li>
 <li>色彩曲線：<code>SetTextColorCurve</code>, <code>GetTextColorCurve</code>, <code>ClearTextColorCurve</code></li>
 <li>秘密值檢驗：<code>HasSecretValues</code></li>
+</ul>
+</li>
 </ul>
 <h3 id="eam">與 EAM 直接相關</h3>
 <ul>
@@ -884,15 +892,23 @@ C_TooltipInfo.GetUnitAuraByAuraInstanceID
 <p>EAM實施規則：</p>
 <ul>
 <li><code>auraInstanceID</code> 可作為運行時錨點，但不可儲存至 SavedVariables。</li>
-<li>四大核心安全檢查防禦：</li>
+<li>四大核心安全檢查防禦：<ul>
 <li><code>canaccesstable(table)</code>：必須在存取任何回傳表欄位前進行安全判定。</li>
 <li><code>canaccessvalue(value)</code>：在讀取欄位內容前進行存取許可判定。</li>
-<li><code>issecretvalue(value)</code>：確認欄位（如 <code>spellId</code> 或 <code>duration</code>）是否已加密為機密值。</li>
+</ul>
+</li>
+<li><code>issecretvalue(value)</code>：確認欄位（如 <code>spellId</code> 或 <code>duration</code>）是否已加密為機密值。<ul>
 <li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>：檢查表格結構本身是否已被限製或包含秘密。</li>
-<li><strong>表格索引防護規範（關鍵）</strong>：</li>
+</ul>
+</li>
+<li><strong>表格索引防護規範（關鍵）</strong>：<ul>
 <li>嚴禁直接以可能為秘密值（如受限狀態下的 <code>spellId</code>）的鍵對任何自修改 Lua 表（如 <code>EAM.SavedVariables</code>、<code>EAM.db</code>）進行 <code>tbl[spellId]</code> 查詢表。</li>
-<li>此操作將引發致命錯誤：「嘗試索引無法使用密鑰索引的表」。</li>
+</ul>
+</li>
+<li>此操作將引發致命錯誤：「嘗試索引無法使用密鑰索引的表」。<ul>
 <li>在查表前，必須以 <code>if not issecretvalue(key) and canaccesstable(tbl) then ... end</code> 的本地就地模式進行預防性檢查，拒絕使用金鑰。</li>
+</ul>
+</li>
 <li>可安全讀取的欄位才進<code>facts</code>；其餘只進<code>boundaryWarnings</code>。</li>
 <li>光環配對不可只依賴不安全<code>spellID</code>；必要時用設定、事件、安全錨與顯示降級共同處理。</li>
 </ul>
@@ -936,15 +952,23 @@ isOnGCD
 <p>12.0.0 新增 <code>DurationObject</code>，12.0.1 加入 <code>DurationObject:GetClockTime</code>，在 12.0.7 則補強了邊框文字與曲線綁定。</p>
 <h3 id="durationobject">🔑 DurationObject 核心內建方法與安全陷阱</h3>
 <ul>
-<li><strong><code>durationObj:IsZero()</code></strong>：</li>
+<li><strong><code>durationObj:IsZero()</code></strong>：<ul>
 <li><em>用途</em>：檢測持續時間是否已為0（已過期）。</li>
-<li><em>致命陷阱</em>：在戰鬥或受限（設定）狀態下，此方法會回傳 <strong><code>SecretBoolean</code></strong>。若在 Lua 中直接執行 <code>if durationObj:IsZero() then</code>，會立即引發致命崩潰：<code>attempt to Perform boolean test on a Secret value</code>！</li>
+</ul>
+</li>
+<li><em>致命陷阱</em>：在戰鬥或受限（設定）狀態下，此方法會回傳 <strong><code>SecretBoolean</code></strong>。若在 Lua 中直接執行 <code>if durationObj:IsZero() then</code>，會立即引發致命崩潰：<code>attempt to Perform boolean test on a Secret value</code>！<ul>
 <li><em>安全防禦</em>：必須使用 <code>issecretvalue(val)</code> 或 <code>pcall</code> 進行預防性保護，或完全取代 C++ 的 <code>clearIfZero</code> 參數（例如在 <code>SetCooldownFromDurationObject</code> 中設定）。</li>
+</ul>
+</li>
 <li><strong><code>durationObj:GetRemainingDuration()</code></strong>：</li>
-<li><em>用途</em>：取得剩餘秒數。</li>
+<li><em>用途</em>：取得剩餘秒數。<ul>
 <li><em>限制</em>：在限制（戰鬥限制）狀態下，會回傳被加密的<strong><code>SecretValue</code></strong>。直接對其進行Lua算術攻擊（如<code>+ - * / &lt; &gt; ==</code>）會直接致命觸發紅字錯誤。</li>
-<li><strong><code>durationObj:GetClockTime()</code></strong>：</li>
+</ul>
+</li>
+<li><strong><code>durationObj:GetClockTime()</code></strong>：<ul>
 <li><em>用途</em>：用於初步的時脈同步，杜絕與 UI 產生的污染。但在戰鬥中這也是 <code>SecretValue</code>。</li>
+</ul>
+</li>
 </ul>
 <h3 id="c_curveutil">🎨 C_CurveUtil (曲線化工具) 戰鬥防污染機制</h3>
 <p>為了解決在戰鬥中無法直接解決「如果剩餘 &lt; 5 那麼」的時間比以改變圖標顏色或引發（因為會觸發 <code>SecretValue</code> 比較崩潰）的問題，暴雪引入了 <strong><code>C_CurveUtil</code></strong>：
@@ -953,15 +977,21 @@ isOnGCD
 * <strong>優勢</strong>：所有的數學比較與顏色轉換都發生在 C++ 語法層，<strong>100% 避免了 Lua 完全恢復了的 Taint，且免去了每幀 OnUpdate 垃圾恢復壓力</strong>！</p>
 <h3 id="1207-fontstring-cooldown">12.0.7 FontString 與 Cooldown 顯示綁定</h3>
 <ul>
-<li><strong><code>C_DurationUtil.CreateDurationTextBinding()</code></strong>：</li>
+<li><strong><code>C_DurationUtil.CreateDurationTextBinding()</code></strong>：<ul>
 <li>Factory 不接受 <code>DurationObject</code> 或 <code>FontString</code> 參數。先無參數建立 binding，再依序呼叫 <code>SetFontString()</code>、<code>SetDuration()</code>、<code>SetFormatter()</code>，最後使用 <code>SetEnabled(true)</code> 或 <code>Enable()</code>。</li>
 <li>倒數文字由原生端更新，不需要為每個圖示建立 Lua <code>OnUpdate</code>。</li>
 <li>公開契約不保證存在 <code>Unbind()</code>。釋放時應先 <code>Disable()</code> 或 <code>SetEnabled(false)</code>，再於能力存在時呼叫 <code>SetToDefaults()</code>；不得呼叫猜測的方法。</li>
-<li><strong><code>C_DurationUtil.CreateDuration()</code></strong>：</li>
+</ul>
+</li>
+<li><strong><code>C_DurationUtil.CreateDuration()</code></strong>：<ul>
 <li>Factory 不接受 start／duration 參數。只有已確認安全的普通數字，才可在建立後呼叫 <code>DurationObject:SetTimeFromStart(startTime, duration)</code>。</li>
 <li>API 提供的 Secret <code>DurationObject</code> 只可原樣交給 Blizzard 支援的 widget／binding，不讀回、不比較、不序列化。</li>
-<li><strong><code>Cooldown:SetCooldownFromDurationObject(durationObject [, clearIfZero])</code></strong>：</li>
+</ul>
+</li>
+<li><strong><code>Cooldown:SetCooldownFromDurationObject(durationObject [, clearIfZero])</code></strong>：<ul>
 <li>Cooldown swipe 專用的原生綁定；零區間可由 <code>clearIfZero = true</code> 交給原生端處理。</li>
+</ul>
+</li>
 </ul>
 <p><code>DurationObject</code> 用來讓原生端處理可能為 Secret 的時間資料。它可由 <code>C_DurationUtil.CreateDuration()</code> 建立，也可能由光環、施法或冷卻 API 提供，並可傳給 <code>Cooldown:SetCooldownFromDurationObject()</code> 或其他明確接受 DurationObject 的 widget。
 12.x規劃方向是刪除剩餘時間API，改用duration物件：</p>
@@ -1273,21 +1303,27 @@ ADDON_RESTRICTION_STATE_CHANGED
 </ul>
 <h3 id="1-aura-pandemic-animations-pandemic">1. Aura Pandemic Animations (光環 Pandemic 刷新原生動畫支援)</h3>
 <ul>
-<li><code>CustomAuraButton</code> 原生接入 Pandemic 動畫觸發器，支援三大階段：</li>
+<li><code>CustomAuraButton</code> 原生接入 Pandemic 動畫觸發器，支援三大階段：<ul>
 <li><code>Enter</code>：進入 Pandemic 觸發（用於單次動畫 One-shot）。</li>
 <li><code>Active</code>：處於 Pandemic 期間持續觸發（用於循環動畫 Looping，如 Bounce 呼吸）。</li>
 <li><code>Leave</code>：離開 Pandemic 觸發。</li>
 <li>專用 API：<code>AddPandemicActiveAnimation(animGroup)</code>、<code>Remove...</code>、<code>Clear...</code>。</li>
-<li>新增兩個 Forbidden Aspects（受保護禁止維度），防止插件透過動畫進度窺探受保護數值：</li>
+</ul>
+</li>
+<li>新增兩個 Forbidden Aspects（受保護禁止維度），防止插件透過動畫進度窺探受保護數值：<ul>
 <li><code>QueryAnimationProgress</code>：禁止查詢動畫進度或是否正在播放。</li>
 <li><code>AddAnimations</code>：禁止動態添加或重新 reparent。</li>
 </ul>
+</li>
+</ul>
 <h3 id="2-aura-containers">2. Aura Containers (原生光環容器重大行為變更)</h3>
 <ul>
-<li><strong>破壞性變更 (Breaking Change)</strong>：</li>
+<li><strong>破壞性變更 (Breaking Change)</strong>：<ul>
 <li><code>AddDispelTypeTexture</code> 與 <code>AddPandemicRegion</code> <strong>不再回傳 index</strong>！</li>
 <li>對應的 <code>RemoveDispelTypeTexture</code> 與 <code>RemovePandemicRegion</code> <strong>改傳入 Region 物件參考 (region reference)</strong> 而非 index。</li>
 <li>重複加入同一個 Region 會直接拋出 Lua Error。</li>
+</ul>
+</li>
 <li><code>CustomAuraButton:SetCasterName</code>：支援在 FontString 顯示施法者名稱；配合新 CVar <code>tooltipShowAuraCasterNames</code>。</li>
 <li><code>CustomAuraContainer</code> 新增獨立項目停用 API：<code>SetAuraGroupEnabled</code>、<code>SetAuraSlotEnabled</code>、<code>SetItemEnchantmentEnabled</code>。</li>
 <li><code>CustomAuraButton:SetApplicationBar</code> 新增 <code>minApplications</code> 參數。</li>
@@ -1299,20 +1335,26 @@ ADDON_RESTRICTION_STATE_CHANGED
 </ul>
 <h3 id="4">4. 全新腳本物件與調度原語</h3>
 <ul>
-<li><strong><code>TimedSignalMap</code></strong>（<code>C_Timer.NewTimedSignalMap</code> / <code>TimerUtil.CreateTimedSignalCallbackMap</code>）：</li>
+<li><strong><code>TimedSignalMap</code></strong>（<code>C_Timer.NewTimedSignalMap</code> / <code>TimerUtil.CreateTimedSignalCallbackMap</code>）：<ul>
 <li>單一回呼排程器，以使用者自訂鍵在指定時間調度。</li>
 <li><strong>支援動態重新排程（Reschedule）而無須銷毀重建</strong>，大幅優於傳統 Timer 取消再建立之高頻開銷。</li>
-<li><strong><code>CreateFrameWithOptions(optionsTable)</code></strong>：</li>
+</ul>
+</li>
+<li><strong><code>CreateFrameWithOptions(optionsTable)</code></strong>：<ul>
 <li>以具名 table 參數工廠建立 Frame，原生支援 <code>hidden = true</code> 建立即隱藏。</li>
+</ul>
+</li>
 <li><strong>原生像素對齊</strong>：所有 Region 支援 <code>roundLayoutToNearestPixel</code> XML 屬性與 <code>SetRoundLayoutToNearestPixel</code> API，暴雪在 C-Level 原生取代 Lua <code>PixelUtil</code>。</li>
 </ul>
 <h3 id="5-math-string-table-c-level">5. 工具函式原生化 (Math / String / Table 下沉至 C-Level)</h3>
 <ul>
-<li>大量實用函式由 FrameXML 移至 C-Level 原生實作，提供極限效能與零 GC：</li>
+<li>大量實用函式由 FrameXML 移至 C-Level 原生實作，提供極限效能與零 GC：<ul>
 <li>Math：<code>math.clamp</code>, <code>math.saturate</code>, <code>math.round</code>, <code>math.lerp</code>, <code>math.normalize</code>, <code>math.sign</code>, <code>math.remap</code>, <code>math.wrap</code>, <code>math.isfinite</code>, <code>math.isnan</code>, <code>math.isinf</code>。</li>
 <li>String：<code>string.contains</code>, <code>string.ltrim</code>, <code>string.rtrim</code>, <code>string.startswith</code>, <code>string.endswith</code>。</li>
 <li>Table：<code>table.isempty</code>, <code>table.contains</code>, <code>table.indexof</code>, <code>table.removeunordered</code>, <code>table.removevalue</code>, <code>table.keys</code>, <code>table.values</code>。</li>
 <li>保留全域舊函式別名 (<code>Clamp</code>, <code>Lerp</code>, <code>TableIsEmpty</code>, <code>tContains</code> 等)。</li>
+</ul>
+</li>
 </ul>
 <h3 id="6-api-blizzard_deprecated">6. 廢棄 API 徹底清理 (Blizzard_Deprecated 移除)</h3>
 <ul>
@@ -1386,12 +1428,14 @@ Note: The above is a cross-collation of files and indexes, which has not been ve
 <li>The user has executed the <code>C_DurationUtil.CreateDurationTextBinding</code> minimal test example on the WoW 12.0.7 PTR client.</li>
 <li>Result: FontString can display the countdown text driven by <code>DurationTextBinding</code> normally.</li>
 <li>EAM integration status: EAM <code>Core/DurationAdapter.lua</code> and <code>UI/Renderer.lua</code> have fully supported parameterless creation, <code>SetFontString</code>, <code>SetDuration</code>, <code>SetFormatter</code> and <code>SetToDefaults</code> release, and formed dual-track native rendering through <code>SetCooldownFromDurationObject</code>.</li>
-<li>Complete list of methods (30):</li>
+<li>Complete list of methods (30):<ul>
 <li>Lifecycle: <code>Assign</code>, <code>Copy</code>, <code>Enable</code>, <code>Disable</code>, <code>SetEnabled</code>, <code>IsEnabled</code>, <code>SetToDefaults</code></li>
 <li>Bindings: <code>SetFontString</code>, <code>GetFontString</code>, <code>SetDuration</code>, <code>GetDuration</code>, <code>SetFormatter</code></li>
 <li>Format and text: <code>SetTextFormat</code>, <code>SetExpiredText</code>, <code>GetExpiredText</code>, <code>SetZeroDurationText</code>, <code>GetZeroDurationText</code>, <code>SetTimeModifier</code>, <code>GetTimeModifier</code>, <code>SetUpdateInterval</code>, <code>GetUpdateInterval</code>, <code>UpdateFontString</code>, <code>CanFormatText</code>, <code>CanUpdateFontString</code>, <code>GetFormattedText</code>, <code>GetFormattedTextColor</code></li>
 <li>Color curves: <code>SetTextColorCurve</code>, <code>GetTextColorCurve</code>, <code>ClearTextColorCurve</code></li>
 <li>Secret value check: <code>HasSecretValues</code></li>
+</ul>
+</li>
 </ul>
 <h3 id="directly-related-to-eam">Directly related to EAM</h3>
 <ul>
@@ -1702,15 +1746,23 @@ C_TooltipInfo.GetUnitAuraByAuraInstanceID
 <p>EAM implementation rules:</p>
 <ul>
 <li><code>auraInstanceID</code> can be used as a runtime anchor, but cannot be saved to SavedVariables.</li>
-<li>Four core security check defenses:</li>
+<li>Four core security check defenses:<ul>
 <li><code>canaccesstable(table)</code>: A security check must be made before accessing any postback table fields.</li>
 <li><code>canaccessvalue(value)</code>: Perform access permission determination before reading the field content.</li>
-<li><code>issecretvalue(value)</code>: Confirms whether a field (such as <code>spellId</code> or <code>duration</code>) is encrypted as a confidential value.</li>
+</ul>
+</li>
+<li><code>issecretvalue(value)</code>: Confirms whether a field (such as <code>spellId</code> or <code>duration</code>) is encrypted as a confidential value.<ul>
 <li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Check whether the table structure itself has been restricted or contains secrets.</li>
-<li><strong>Table index protection specifications (key)</strong>:</li>
+</ul>
+</li>
+<li><strong>Table index protection specifications (key)</strong>:<ul>
 <li>Direct <code>tbl[spellId]</code> lookups of any self-modifying Lua table (e.g. <code>EAM.SavedVariables</code>, <code>EAM.db</code>) with keys that may be secret values (e.g. <code>spellId</code> in the restricted state) are strictly prohibited.</li>
-<li>This operation will cause a fatal error: "Attempting to index a table that cannot be indexed using a key".</li>
+</ul>
+</li>
+<li>This operation will cause a fatal error: "Attempting to index a table that cannot be indexed using a key".<ul>
 <li>Before looking up the table, a preventive check must be performed in the local in-place mode of <code>if not issecretvalue(key) and canaccesstable(tbl) then ... end</code> to refuse to use the key.</li>
+</ul>
+</li>
 <li>Only fields that can be safely read are entered in <code>facts</code>; the rest are only entered in <code>boundaryWarnings</code>.</li>
 <li>Aura pairing cannot rely solely on unsafe <code>spellID</code>; use settings, events, security anchors and display degradation to handle it together when necessary.</li>
 </ul>
@@ -1754,15 +1806,23 @@ isOnGCD
 <p>12.0.0 added <code>DurationObject</code>, 12.0.1 added <code>DurationObject:GetClockTime</code>, and 12.0.7 enhanced the binding of border text and curves.</p>
 <h3 id="durationobject-core-built-in-methods-and-security-traps">🔑 DurationObject Core built-in methods and security traps</h3>
 <ul>
-<li><strong><code>durationObj:IsZero()</code></strong>:</li>
+<li><strong><code>durationObj:IsZero()</code></strong>:<ul>
 <li><em>Purpose</em>: Detect whether the duration has reached 0 (expired).</li>
-<li><em>Fatal Trap</em>: In combat or restricted (set) state, this method returns <strong><code>SecretBoolean</code></strong>. If <code>if durationObj:IsZero() then</code> is executed directly in Lua, a fatal crash will immediately occur: <code>attempt to Perform boolean test on a Secret value</code>!</li>
+</ul>
+</li>
+<li><em>Fatal Trap</em>: In combat or restricted (set) state, this method returns <strong><code>SecretBoolean</code></strong>. If <code>if durationObj:IsZero() then</code> is executed directly in Lua, a fatal crash will immediately occur: <code>attempt to Perform boolean test on a Secret value</code>!<ul>
 <li><em>Security Defense</em>: Must use <code>issecretvalue(val)</code> or <code>pcall</code> for preventive protection, or completely replace C++'s <code>clearIfZero</code> parameter (e.g. set in <code>SetCooldownFromDurationObject</code>).</li>
+</ul>
+</li>
 <li><strong><code>durationObj:GetRemainingDuration()</code></strong>:</li>
-<li><em>Use</em>: Get the remaining seconds.</li>
+<li><em>Use</em>: Get the remaining seconds.<ul>
 <li><em>Restrictions</em>: In the restricted (combat restricted) state, the encrypted <strong><code>SecretValue</code></strong> will be returned. Directly performing a Lua arithmetic attack on it (such as <code>+ - * / &lt; &gt; ==</code>) will directly and fatally trigger a red letter error.</li>
-<li><strong><code>durationObj:GetClockTime()</code></strong>:</li>
+</ul>
+</li>
+<li><strong><code>durationObj:GetClockTime()</code></strong>:<ul>
 <li><em>Purpose</em>: Used for preliminary clock synchronization to prevent contamination with the UI. But in combat this is also <code>SecretValue</code>.</li>
+</ul>
+</li>
 </ul>
 <h3 id="c_curveutil-curve-tool-combat-anti-pollution-mechanism">🎨 C_CurveUtil (curve tool) combat anti-pollution mechanism</h3>
 <p>In order to solve the problem that the "if remaining &lt; 5 then" time ratio cannot be directly resolved in combat to change the icon color or trigger (because it will trigger the <code>SecretValue</code> comparison crash), Blizzard introduced <strong><code>C_CurveUtil</code></strong>:
@@ -1772,16 +1832,22 @@ isOnGCD
 <h3 id="1207-fontstring-and-cooldown-display-binding">12.0.7 FontString and Cooldown display binding</h3>
 <ul>
 <li><strong><code>C_DurationUtil.CreateDurationTextBinding()</code></strong>：</li>
-<li>Factory does not accept <code>DurationObject</code> or <code>FontString</code> parameters. First create the binding without parameters, then call <code>SetFontString()</code>, <code>SetDuration()</code>, <code>SetFormatter()</code> in sequence, and finally use <code>SetEnabled(true)</code> or <code>Enable()</code>.</li>
+<li>Factory does not accept <code>DurationObject</code> or <code>FontString</code> parameters. First create the binding without parameters, then call <code>SetFontString()</code>, <code>SetDuration()</code>, <code>SetFormatter()</code> in sequence, and finally use <code>SetEnabled(true)</code> or <code>Enable()</code>.<ul>
 <li>The countdown text is updated by the native side, there is no need to create Lua <code>OnUpdate</code> for each icon.</li>
 <li>Public contracts do not guarantee the existence of <code>Unbind()</code>. When releasing, <code>Disable()</code> or <code>SetEnabled(false)</code> should be called first, and then <code>SetToDefaults()</code> should be called when the ability exists; guessing methods must not be called.</li>
-<li><strong><code>C_DurationUtil.CreateDuration()</code></strong>:</li>
+</ul>
+</li>
+<li><strong><code>C_DurationUtil.CreateDuration()</code></strong>:<ul>
 <li>Factory does not accept start/duration parameters. Only common numbers that have been confirmed to be safe can be called to <code>DurationObject:SetTimeFromStart(startTime, duration)</code> after establishment.</li>
 <li>The Secret <code>DurationObject</code> provided by API can only be handed over to the widget/binding supported by Blizzard as it is, and will not be read back, compared, or serialized.</li>
-<li><strong><code>Cooldown:SetCooldownFromDurationObject(durationObject [, clearIfZero])</code></strong>:</li>
+</ul>
+</li>
+<li><strong><code>Cooldown:SetCooldownFromDurationObject(durationObject [, clearIfZero])</code></strong>:<ul>
 <li>Cooldown swipe-specific native binding; the zero interval can be handed over to the native side for processing by <code>clearIfZero = true</code>.
 <code>DurationObject</code> is used to allow the native side to process time data that may be Secret. It can be created by <code>C_DurationUtil.CreateDuration()</code>, may be provided by an Aura, spellcasting, or cooldown API, and can be passed to <code>Cooldown:SetCooldownFromDurationObject()</code> or other widgets that explicitly accept DurationObject.
 The planning direction for 12.x is to delete the remaining time API and use the duration object instead:</li>
+</ul>
+</li>
 </ul>
 <pre class="codehilite"><code class="language-lua">C_ActionBar.GetActionCooldownRemaining
 C_ActionBar.GetActionCooldownRemainingPercent
@@ -2089,21 +2155,29 @@ ADDON_RESTRICTION_STATE_CHANGED
 </ul>
 <h3 id="1-aura-pandemic-animations-aura-pandemic-refresh-native-animation-support">1. Aura Pandemic Animations (Aura Pandemic refresh native animation support)</h3>
 <ul>
-<li><code>CustomAuraButton</code> natively accesses Pandemic animation triggers and supports three major stages:</li>
+<li><code>CustomAuraButton</code> natively accesses Pandemic animation triggers and supports three major stages:<ul>
 <li><code>Enter</code>: Enter Pandemic trigger (for single animation One-shot).</li>
 <li><code>Active</code>: Continuously triggered during Pandemic (used for looping animations, such as Bounce breathing).</li>
 <li><code>Leave</code>: Leave Pandemic trigger.</li>
 <li>Exclusive API: <code>AddPandemicActiveAnimation(animGroup)</code>, <code>Remove...</code>, <code>Clear...</code>.</li>
-<li>Added two Forbidden Aspects (protected forbidden dimensions) to prevent plug-ins from snooping on protected values through animation progress:</li>
+</ul>
+</li>
+<li>Added two Forbidden Aspects (protected forbidden dimensions) to prevent plug-ins from snooping on protected values through animation progress:<ul>
 <li><code>QueryAnimationProgress</code>: It is forbidden to query the animation progress or whether it is playing.</li>
 <li><code>AddAnimations</code>: Disable dynamic addition or reparent.</li>
 </ul>
+</li>
+</ul>
 <h3 id="2-aura-containers-major-behavioral-changes-to-native-aura-containers">2. Aura Containers (Major behavioral changes to native Aura containers)</h3>
 <ul>
-<li><strong>Breaking Change</strong>:</li>
+<li><strong>Breaking Change</strong>:<ul>
 <li><code>AddDispelTypeTexture</code> and <code>AddPandemicRegion</code> <strong>no longer return index</strong>!</li>
-<li>The corresponding <code>RemoveDispelTypeTexture</code> and <code>RemovePandemicRegion</code> <strong>change the Region object reference (region reference)</strong> instead of the index.</li>
+</ul>
+</li>
+<li>The corresponding <code>RemoveDispelTypeTexture</code> and <code>RemovePandemicRegion</code> <strong>change the Region object reference (region reference)</strong> instead of the index.<ul>
 <li>Repeatedly adding the same Region will directly throw a Lua Error.</li>
+</ul>
+</li>
 <li><code>CustomAuraButton:SetCasterName</code>: supports displaying the caster name in FontString; cooperates with the new CVar <code>tooltipShowAuraCasterNames</code>.</li>
 <li><code>CustomAuraContainer</code> Added independent project deactivation API: <code>SetAuraGroupEnabled</code>, <code>SetAuraSlotEnabled</code>, <code>SetItemEnchantmentEnabled</code>.</li>
 <li><code>CustomAuraButton:SetApplicationBar</code> Added <code>minApplications</code> parameter.</li>
@@ -2116,19 +2190,27 @@ ADDON_RESTRICTION_STATE_CHANGED
 <h3 id="4-new-script-objects-and-dispatch-primitives">4. New script objects and dispatch primitives</h3>
 <ul>
 <li><strong><code>TimedSignalMap</code></strong> (<code>C_Timer.NewTimedSignalMap</code> / <code>TimerUtil.CreateTimedSignalCallbackMap</code>):</li>
-<li>Single callback scheduler, scheduled at specified time with user-defined keys.</li>
+<li>Single callback scheduler, scheduled at specified time with user-defined keys.<ul>
 <li><strong>Supports dynamic rescheduling (Reschedule) without destroying and rebuilding</strong>, which is significantly better than the high-frequency overhead of traditional Timer cancellation and re-creation.</li>
-<li><strong><code>CreateFrameWithOptions(optionsTable)</code></strong>:</li>
+</ul>
+</li>
+<li><strong><code>CreateFrameWithOptions(optionsTable)</code></strong>:<ul>
 <li>Create Frame with named table parameter factory, natively supports <code>hidden = true</code> to be hidden after creation.</li>
+</ul>
+</li>
 <li><strong>Native Pixel Alignment</strong>: All Regions support <code>roundLayoutToNearestPixel</code> XML attributes and <code>SetRoundLayoutToNearestPixel</code> API, Blizzard natively replaces Lua <code>PixelUtil</code> at C-Level.</li>
 </ul>
 <h3 id="5-nativeization-of-tool-functions-math-string-table-down-to-c-level">5. Nativeization of tool functions (Math / String / Table down to C-Level)</h3>
 <ul>
-<li>A large number of utility functions have been moved from FrameXML to C-Level native implementation, providing ultimate performance and zero GC:</li>
+<li>A large number of utility functions have been moved from FrameXML to C-Level native implementation, providing ultimate performance and zero GC:<ul>
 <li>Math: <code>math.clamp</code>, <code>math.saturate</code>, <code>math.round</code>, <code>math.lerp</code>, <code>math.normalize</code>, <code>math.sign</code>, <code>math.remap</code>, <code>math.wrap</code>, <code>math.isfinite</code>, <code>math.isnan</code>, <code>math.isinf</code>.</li>
-<li>String: <code>string.contains</code>, <code>string.ltrim</code>, <code>string.rtrim</code>, <code>string.startswith</code>, <code>string.endswith</code>.</li>
+</ul>
+</li>
+<li>String: <code>string.contains</code>, <code>string.ltrim</code>, <code>string.rtrim</code>, <code>string.startswith</code>, <code>string.endswith</code>.<ul>
 <li>Table: <code>table.isempty</code>, <code>table.contains</code>, <code>table.indexof</code>, <code>table.removeunordered</code>, <code>table.removevalue</code>, <code>table.keys</code>, <code>table.values</code>.</li>
 <li>Preserve global legacy function aliases (<code>Clamp</code>, <code>Lerp</code>, <code>TableIsEmpty</code>, <code>tContains</code>, etc.).</li>
+</ul>
+</li>
 </ul>
 <h3 id="6-deprecated-api-thoroughly-cleaned-blizzard_deprecated-removed">6. Deprecated API Thoroughly Cleaned (Blizzard_Deprecated Removed)</h3>
 <ul>

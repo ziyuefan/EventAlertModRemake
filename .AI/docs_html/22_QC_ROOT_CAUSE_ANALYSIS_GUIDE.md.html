@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -540,15 +546,15 @@
 <h2 id="2-ishikawa-diagram">2. 魚骨圖 (Ishikawa Diagram) 要因分析模板</h2>
 <p>在遇到複雜的系統性問題時（例如「一個 ICON 都沒有出現」或「戰鬥高層中 UI 嚴重卡頓」），必須使用魚骨圖從以下五個維度進行分析：</p>
 <pre class="codehilite"><code class="language-text">  【人 (Agent)】                   【機 (Client/WoW API)】         【料 (SavedVariables/Data)】
-  - 載入順序快取 nil 漏配           - 12.x Secrecy 加密與限制       - 舊 SavedVariables 資料遷移失效
-  - 靜態變數被提早快取             - 事件節流與 CLEU 事件停用       - 預設 Alerts 表為空 (WTF遺失)
+    - 載入順序快取 nil 漏配           - 12.x Secrecy 加密與限制       - 舊 SavedVariables 資料遷移失效
+    - 靜態變數被提早快取             - 事件節流與 CLEU 事件停用       - 預設 Alerts 表為空 (WTF遺失)
           \                             \                               \
            \                             \                               \
             --------------------------------------------------------------------&gt; [ 系統異常/Bug ]
            /                             /                               /
           /                             /                               /
-  - 戰鬥中 layout 頻繁重排         - 戰鬥中 InCombatLockdown 限制
-  - 輪詢 pcall 產生 Heap 垃圾       - 脫戰後 defer 釋放機制
+    - 戰鬥中 layout 頻繁重排         - 戰鬥中 InCombatLockdown 限制
+    - 輪詢 pcall 產生 Heap 垃圾       - 脫戰後 defer 釋放機制
   【法 (Algorithm/邏輯)】          【環 (Environment/戰鬥狀態)】
 </code></pre>
 
@@ -671,15 +677,15 @@ All subsequent sub-agents must follow this QC guideline when conducting problem 
 <h2 id="2-fishbone-diagram-ishikawa-diagram-factor-analysis-template">2. Fishbone Diagram (Ishikawa Diagram) factor analysis template</h2>
 <p>When encountering complex systemic problems (such as "not a single ICON appears" or "the UI is severely stuck in the high-level combat"), a fishbone diagram must be used to analyze from the following five dimensions:</p>
 <pre class="codehilite"><code class="language-text">  【人 (Agent)】                   【機 (Client/WoW API)】         【料 (SavedVariables/Data)】
-  - 載入順序快取 nil 漏配           - 12.x Secrecy 加密與限制       - 舊 SavedVariables 資料遷移失效
-  - 靜態變數被提早快取             - 事件節流與 CLEU 事件停用       - 預設 Alerts 表為空 (WTF遺失)
+    - 載入順序快取 nil 漏配           - 12.x Secrecy 加密與限制       - 舊 SavedVariables 資料遷移失效
+    - 靜態變數被提早快取             - 事件節流與 CLEU 事件停用       - 預設 Alerts 表為空 (WTF遺失)
           \                             \                               \
            \                             \                               \
             --------------------------------------------------------------------&gt; [ 系統異常/Bug ]
            /                             /                               /
           /                             /                               /
-  - 戰鬥中 layout 頻繁重排         - 戰鬥中 InCombatLockdown 限制
-  - 輪詢 pcall 產生 Heap 垃圾       - 脫戰後 defer 釋放機制
+    - 戰鬥中 layout 頻繁重排         - 戰鬥中 InCombatLockdown 限制
+    - 輪詢 pcall 產生 Heap 垃圾       - 脫戰後 defer 釋放機制
   【法 (Algorithm/邏輯)】          【環 (Environment/戰鬥狀態)】
 </code></pre>
 

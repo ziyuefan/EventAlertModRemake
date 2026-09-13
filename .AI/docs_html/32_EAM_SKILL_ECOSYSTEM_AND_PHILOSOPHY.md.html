@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -751,10 +757,10 @@
 <h2 id="3-deployment-usage">🛠️ 3. 技能部署架構與調用方式 (Deployment &amp; Usage)</h2>
 <p>專案中所有 21 項技能皆採用雙軌實體部署，確保版本控制與全域可達性：
 - <strong>專案內部版本控制（VCS Tracked）</strong>：
-  - <code>D:\Project_EventAlertMod_AGY\.agents\skills\&lt;skill-name&gt;\SKILL.md</code>
-  - <code>D:\Project_EventAlertMod_AGY\.AI\skills\&lt;skill-name&gt;\SKILL.md</code>
+    - <code>D:\Project_EventAlertMod_AGY\.agents\skills\&lt;skill-name&gt;\SKILL.md</code>
+    - <code>D:\Project_EventAlertMod_AGY\.AI\skills\&lt;skill-name&gt;\SKILL.md</code>
 - <strong>本機 Antigravity 全域目錄（Global Discovery）</strong>：
-  - <code>C:\Users\ZYF\.gemini\config\skills\&lt;skill-name&gt;\SKILL.md</code></p>
+    - <code>C:\Users\ZYF\.gemini\config\skills\&lt;skill-name&gt;\SKILL.md</code></p>
 <h3 id="_2">💬 自然語言與意圖調用範例：</h3>
 <pre class="codehilite"><code class="language-markdown">使用者輸入：「幫我發布目前的開發版至 CurseForge」
 ➔ Agent 自動觸發：[eam-curseforge-publisher] + [eam-secret-vault-manager]

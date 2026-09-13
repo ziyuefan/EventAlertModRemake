@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -585,11 +591,13 @@
 <h2 id="p4">優先 P4：文件、測試與發布</h2>
 <ul>
 <li>更新<code>Docs/06_TEST_PLAN_RETAIL.md</code>：新增12.0.7、DurationObject、秘密工具提示、污染日誌、戰鬥鎖定測試。</li>
-<li>建立專案專用 SKILL 候選：</li>
+<li>建立專案專用 SKILL 候選：<ul>
 <li>EAM 資料夾與版本同步。</li>
 <li>EAM WoW API 驗證與檔案回寫。</li>
 <li>EAM Secret / Taint 審查。</li>
 <li>EAM Lua靜態驗證與熱路徑掃描。</li>
+</ul>
+</li>
 <li>遇到工具限製或 API 陷阱，追加到 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
 </ul>
 <h2 id="_3">不納入目標</h2>

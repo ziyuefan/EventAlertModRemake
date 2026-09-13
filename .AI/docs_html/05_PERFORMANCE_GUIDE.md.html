@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -514,7 +520,7 @@
 <h2 id="_2">熱路徑候選者</h2>
 <p>目前主線熱路徑候選人：</p>
 <ul>
-<li><code>Main/EventAlert_Core.lua</code></li>
+<li><code>Main/EventAlert_Core.lua</code><ul>
 <li>事件調度和處理程序</li>
 <li><code>COMBAT_LOG_EVENT_UNFILTERED</code></li>
 <li><code>UNIT_AURA</code></li>
@@ -524,52 +530,80 @@
 <li><code>SPELL_UPDATE_USABLE</code></li>
 <li><code>ACTIONBAR_UPDATE_COOLDOWN</code></li>
 <li>使用代碼/coroutine 進行查找掃描</li>
-<li><code>Main/EventAlert_Aura_Self.lua</code></li>
+</ul>
+</li>
+<li><code>Main/EventAlert_Aura_Self.lua</code><ul>
 <li><code>Buffs_Update</code></li>
 <li><code>OnUpdate</code></li>
 <li><code>PositionFrames</code></li>
-<li><code>Main/EventAlert_Aura_Target.lua</code></li>
+</ul>
+</li>
+<li><code>Main/EventAlert_Aura_Target.lua</code><ul>
 <li><code>TarBuffs_Update</code></li>
 <li><code>OnTarUpdate</code></li>
 <li><code>TarPositionFrames</code></li>
-<li><code>Main/EventAlert_Cooldown.lua</code></li>
+</ul>
+</li>
+<li><code>Main/EventAlert_Cooldown.lua</code><ul>
 <li><code>OnSCDUpdate</code></li>
 <li><code>ScdBuffs_Update</code></li>
 <li><code>UpdateScdFrame</code></li>
 <li><code>ScdPositionFrames</code></li>
-<li><code>Main/EventAlert_ItemSpellCache.lua</code></li>
+</ul>
+</li>
+<li><code>Main/EventAlert_ItemSpellCache.lua</code><ul>
 <li>物品範圍掃描建構器</li>
+</ul>
+</li>
 <li><code>Main/EventAlert_SpecialPower.lua</code></li>
-<li>資源/power 更新</li>
+<li>資源/power 更新<ul>
 <li>符文 OnUpdate 腳本</li>
-<li><code>Main/EventAlert_CreateFrames.lua</code></li>
+</ul>
+</li>
+<li><code>Main/EventAlert_CreateFrames.lua</code><ul>
 <li>框架創建和滾動列表生成</li>
-<li><code>Main/EventAlert_EAFun.lua</code></li>
+</ul>
+</li>
+<li><code>Main/EventAlert_EAFun.lua</code><ul>
 <li>版面配置、工具提示、計時器文字、偵錯標籤助手</li>
+</ul>
+</li>
 </ul>
 <h2 id="onupdate-c_timer">目前 OnUpdate / C_Timer 用法</h2>
 <p>觀察到的主線使用情況：</p>
 <ul>
-<li><code>EventAlert_Core.lua</code></li>
+<li><code>EventAlert_Core.lua</code><ul>
 <li>遞迴 <code>C_Timer.After(tempInterval, RecurringFrameUpdate)</code></li>
 <li>FPS-調整了位置 /special 幀更新的節奏</li>
 <li><code>C_Timer.NewTicker(1 / GetFramerate(), function() ...)</code> 用來查找</li>
-<li><code>EventAlert_Aura_Self.lua</code></li>
+</ul>
+</li>
+<li><code>EventAlert_Aura_Self.lua</code><ul>
 <li><code>G:OnUpdate(spellId)</code> 用於光環計時器刷新</li>
 <li>在先前指派 <code>tempFunc = function() G.OnUpdate(spellId) end</code>
-    <code>C_Timer.After(delay, tempFunc)</code></li>
-<li><code>EventAlert_Aura_Target.lua</code></li>
+<code>C_Timer.After(delay, tempFunc)</code></li>
+</ul>
+</li>
+<li><code>EventAlert_Aura_Target.lua</code><ul>
 <li><code>C_Timer.After(delay, G.OnTarUpdate, G, spellId)</code></li>
+</ul>
+</li>
 <li><code>EventAlert_Cooldown.lua</code></li>
 <li><code>C_Timer.After(nextInterval, G.OnSCDUpdate, G, sid)</code></li>
-<li><code>EventAlert_ItemSpellCache.lua</code></li>
+<li><code>EventAlert_ItemSpellCache.lua</code><ul>
 <li><code>C_Timer.NewTicker(0.01, function() ...)</code></li>
 <li><code>C_Timer.After(1, ProcessBatch)</code> 用於批次掃描繼續</li>
-<li><code>EventAlert_SpecialPower.lua</code></li>
+</ul>
+</li>
+<li><code>EventAlert_SpecialPower.lua</code><ul>
 <li>每個符文 <code>SetScript("OnUpdate", function(self, elapsedTime) ...)</code></li>
 <li><code>C_Timer.After</code> 用於生命綻放刷新</li>
-<li><code>EventAlert_Util.lua</code></li>
+</ul>
+</li>
+<li><code>EventAlert_Util.lua</code><ul>
 <li>幀清理中呼叫 <code>Lib_ZYF:StopOnUpdate(eaf)</code></li>
+</ul>
+</li>
 </ul>
 <p>重寫規則：</p>
 <ul>

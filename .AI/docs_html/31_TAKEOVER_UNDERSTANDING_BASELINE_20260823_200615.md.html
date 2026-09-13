@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -555,10 +561,12 @@
 <ul>
 <li><strong>不可讀原則</strong>：戰鬥中的保護值（如 <code>UnitPowerPercent</code>、Aura 持續時間、冷卻時間）屬於 Secret/Protected。</li>
 <li><strong>操作禁忌</strong>：嚴禁在 Lua 中對 Secret 值進行 <code>&gt; 0</code> 比較、<code>string.format</code> 格式化、<code>..</code> 字串拼接、算術運算、序列化或作為 Table Key。</li>
-<li><strong>Write-Only Sink 通道</strong>：</li>
+<li><strong>Write-Only Sink 通道</strong>：<ul>
 <li>資源百分比：直接透過 <code>pcall(StatusBar.SetValue, bar, percent)</code> 注入 Blizzard 原生 C 層控制項。</li>
 <li>充能資訊：以 <code>readChargeField</code> 進行欄位級安全檢查，安全保留 <code>isActive</code> / <code>maxCharges</code>，受保護的目前充能數直送 StatusBar。</li>
 <li>持續時間：透過 <code>Core/DurationAdapter.lua</code> 建立原生 <code>DurationObject</code> 與 <code>DurationTextBinding</code>，由 C 層驅動計時文字與 Swipe 動畫。</li>
+</ul>
+</li>
 </ul>
 <h3 id="32-taint">3.2 Taint (污染) 物理隔離</h3>
 <ul>
@@ -569,10 +577,12 @@
 <h3 id="33-onupdate-gc">3.3 零 OnUpdate 與極致 GC 控制</h3>
 <ul>
 <li><strong>0 Frame OnUpdate</strong>：全插件杜絕任何分散式的 <code>SetScript("OnUpdate")</code> 或 per-icon ticker，統一由 <code>Core/Scheduler.lua</code> 中央低頻排程。</li>
-<li><strong>預分配物件池 (Object Pooling)</strong>：</li>
+<li><strong>預分配物件池 (Object Pooling)</strong>：<ul>
 <li><code>AuraService.AuraStatePool</code>：預先分配 80 個狀態物件，戰鬥中零 Table 建立。</li>
 <li><code>Renderer.timerTokenPool</code>：重用計時 Token，杜絕閉包 (Closure) 建立。</li>
 <li><code>Util.warningStringCache</code>：快取邊界警報字串，杜絕動態字串拼接垃圾。</li>
+</ul>
+</li>
 <li><strong>Table Freeze 策略</strong>：所有列舉、靜態契約、別名表（<code>EAM.API</code>）、字體樣式表、預設值在載入完成後一律使用 <code>table.freeze</code> 固化，防止意外污染並提升 JIT 執行效率。</li>
 </ul>
 <hr />
@@ -628,11 +638,13 @@ flowchart TD
 </ul>
 <h3 id="52">5.2 自動化指令</h3>
 <ul>
-<li><strong>一鍵發布器</strong>：<code>pwsh -NoProfile -File .\Deploy\Publish-GitHubRelease.ps1</code></li>
+<li><strong>一鍵發布器</strong>：<code>pwsh -NoProfile -File .\Deploy\Publish-GitHubRelease.ps1</code><ul>
 <li>自動執行離線門禁檢驗 (Syntax + Flow + Contracts)。</li>
 <li>自動產生帶 <code>_AGY</code> 後綴之 AddOn / Source 雙套件及 SHA-256。</li>
 <li>自動組裝結構化 Release Notes (附帶離線成績單、責任歸屬與一鍵回退 Codex 指引)。</li>
 <li>自動呼叫 <code>gh release create --prerelease</code> 完成發布。</li>
+</ul>
+</li>
 <li><strong>一鍵分支同步與 PR</strong>：<code>pwsh -NoProfile -File .\Deploy\Sync-GitHubBranch.ps1 [-CreatePR]</code></li>
 </ul>
 <hr />
@@ -736,10 +748,14 @@ Core engineering goal sequence:</p>
 <ul>
 <li><strong>Unreadable Principle</strong>: Protection values ​​in combat (such as <code>UnitPowerPercent</code>, Aura duration, cooldown) belong to Secret/Protected.</li>
 <li><strong>Operation Taboos</strong>: <code>&gt; 0</code> comparison, <code>string.format</code> formatting, <code>..</code> string concatenation, arithmetic operations, serialization or use as Table Key on Secret values ​​is strictly prohibited in Lua.</li>
-<li><strong>Write-Only Sink Channel</strong>:</li>
+<li><strong>Write-Only Sink Channel</strong>:<ul>
 <li>Resource percentage: Inject Blizzard native C-layer controls directly through <code>pcall(StatusBar.SetValue, bar, percent)</code>.</li>
-<li>Charging information: Use <code>readChargeField</code> to perform a field-level security check, safely retain <code>isActive</code> / <code>maxCharges</code>, and the protected current charging number is directly sent to StatusBar.</li>
+</ul>
+</li>
+<li>Charging information: Use <code>readChargeField</code> to perform a field-level security check, safely retain <code>isActive</code> / <code>maxCharges</code>, and the protected current charging number is directly sent to StatusBar.<ul>
 <li>Duration: Create native <code>DurationObject</code> and <code>DurationTextBinding</code> through <code>Core/DurationAdapter.lua</code>, and the C layer drives the timing text and Swipe animation.</li>
+</ul>
+</li>
 </ul>
 <h3 id="32-taint-pollution-physical-isolation">3.2 Taint (Pollution) Physical isolation</h3>
 <ul>
@@ -750,10 +766,12 @@ Core engineering goal sequence:</p>
 <h3 id="33-zero-onupdate-and-extreme-gc-control">3.3 Zero OnUpdate and extreme GC control</h3>
 <ul>
 <li><strong>0 Frame OnUpdate</strong>: Full plug-in eliminates any distributed <code>SetScript("OnUpdate")</code> or per-icon ticker, unified by <code>Core/Scheduler.lua</code> central low-frequency scheduling.</li>
-<li><strong>Preallocated Object Pooling</strong>:</li>
+<li><strong>Preallocated Object Pooling</strong>:<ul>
 <li><code>AuraService.AuraStatePool</code>: 80 state objects pre-allocated, zero Table created during combat.</li>
 <li><code>Renderer.timerTokenPool</code>: Reuse timing token to prevent closure (Closure) from being established.</li>
 <li><code>Util.warningStringCache</code>: Cache boundary alert strings to prevent dynamic string splicing garbage.</li>
+</ul>
+</li>
 <li><strong>Table Freeze Strategy</strong>: All enumerations, static contracts, alias tables (<code>EAM.API</code>), font style tables, and default values ​​will be solidified using <code>table.freeze</code> after loading is completed to prevent accidental contamination and improve JIT execution efficiency.</li>
 </ul>
 <hr />
@@ -809,11 +827,15 @@ flowchart TD
 </ul>
 <h3 id="52-automation-instructions">5.2 Automation instructions</h3>
 <ul>
-<li><strong>One-click publisher</strong>: <code>pwsh -NoProfile -File .\Deploy\Publish-GitHubRelease.ps1</code></li>
+<li><strong>One-click publisher</strong>: <code>pwsh -NoProfile -File .\Deploy\Publish-GitHubRelease.ps1</code><ul>
 <li>Automate offline access inspections (Syntax + Flow + Contracts).</li>
 <li>Automatically generate AddOn / Source dual package with <code>_AGY</code> suffix and SHA-256.</li>
-<li>Automatically assemble structured Release Notes (with offline transcripts, responsibility attribution, and one-click rollback Codex guidance).</li>
+</ul>
+</li>
+<li>Automatically assemble structured Release Notes (with offline transcripts, responsibility attribution, and one-click rollback Codex guidance).<ul>
 <li>Automatically call <code>gh release create --prerelease</code> to complete publishing.</li>
+</ul>
+</li>
 <li><strong>One-click branch synchronization and PR</strong>: <code>pwsh -NoProfile -File .\Deploy\Sync-GitHubBranch.ps1 [-CreatePR]</code></li>
 </ul>
 <hr />

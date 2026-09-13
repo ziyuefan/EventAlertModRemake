@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -572,12 +578,14 @@
 <li>⚡ <strong>60fps 全方位即時熱預覽</strong>：調整尺寸、間距、透明度、轉圈動畫、文字大小等，畫面上即時動態響應，非戰鬥不需 <code>/reload</code>。</li>
 <li>💬 <strong>全介面控制項懸停提示 (Hover Tooltips)</strong>：所有按鈕、核取方塊、滑桿、編輯框與選單均附帶直觀指引，使用門檻為零。</li>
 <li>🎨 <strong>11 套精美主題風格</strong>：EAM 原版經典（石板金框深紅按鈕）、FF7 戰鬥視窗（皇家藍漸層白框）、Windows XP（Luna 藍）、Windows 7（Aero 玻璃）、Windows 10、Windows 3.1（3D 凸面按鈕）、Borland C++ IDE、DOS CRT（P1 磷光綠）、倚天中文、Red Alert（紅色警戒裝甲）、macOS Aqua（果凍膠囊藍）等自由切換，全面支援 Modern WoW 垂直漸層與所有子視窗無縫連動。</li>
-<li>📈 <strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入</strong>：</li>
+<li>📈 <strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入</strong>：<ul>
 <li><strong>能量/資源條動態色彩曲線染色</strong>：消耗型與累積型資源自動以三色階動態染色（警戒深紅 ➜ 預警金黃 ➜ 專職代表色），完美相容 12.0+ <code>UnitPowerPercent</code> 原生硬體級渲染。</li>
 <li><strong>階梯閥門曲線 (Step Gate Curve)</strong>：透過二元階梯函數安全穿透受保護秘密值，實現精確斬殺與警戒，零報錯零 Taint。</li>
 <li><strong>SecondsFormatter 自適應精度曲線</strong>：時間倒數文字依剩餘秒數平滑切換精度（長時間整數，關鍵 &lt;= 5 秒小數點），零 GC 負擔。</li>
 <li><strong>非線性冷卻進度曲線</strong>：支援線性均勻 (Linear)、三次加速衝刺 (Cubic) 與餘弦平滑 (Cosine)，營造大招即將就緒的戰鬥衝刺張力。</li>
 <li><strong>全螢幕瀕死動態呼吸警示</strong>：血量危急時全螢幕邊緣動態呼吸脈動，血量越低紅框越濃烈，脫戰自動平滑隱藏。</li>
+</ul>
+</li>
 <li>🚨 <strong>進入戰鬥紅框閃爍</strong>：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。</li>
 <li>📦 <strong>Profile 設定檔跨角色分享</strong>：支援 8 大分類自選項目匯出／匯入（EAMAP1 JSON / Base64 編碼），附防禦性白名單校驗。</li>
 <li>🌐 <strong>完整多國語系支援</strong>：繁體中文 (zhTW - 嚴格對齊台灣官方術語：致命、加速、臨機應變)、簡體中文 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU)。</li>
@@ -842,125 +850,179 @@
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
 <h3 id="retail-1210-alpha-85-20260912">🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12</h3>
 <ul>
-<li><strong>獨立即時效果預覽視窗 (Independent Live Preview Panel - PreviewPanel)</strong>：</li>
+<li><strong>獨立即時效果預覽視窗 (Independent Live Preview Panel - PreviewPanel)</strong>：<ul>
 <li>全新開發可自由拖曳、螢幕鎖定之獨立效果預覽視窗，提供「告警圖示」、「職業資源條」、「角色屬性」3 大頁籤。</li>
 <li>支援倒數變色曲線滑桿、Proc 金光、Pandemic 綠框、充能百分比與屬性項目即時動態測試。</li>
 <li>主設定視窗、常規排版、職業資源與屬性面板全面增設「效果預覽」按鈕與雙向熱更新連動。</li>
-<li><strong>角色屬性設定面板 4-Tab 模組化與防遮擋排版 (Player Stats 4-Tab Modular Layout)</strong>：</li>
+</ul>
+</li>
+<li><strong>角色屬性設定面板 4-Tab 模組化與防遮擋排版 (Player Stats 4-Tab Modular Layout)</strong>：<ul>
 <li>屬性面板尺寸擴大至 720x540，重構成「顯示與圖示」、「字型與格式」、「警戒門檻」、「位置與錨點」4 大獨立頁籤。</li>
 <li>滑桿垂直留白擴充至 50~60px，徹底消除暴雪原生滑桿 Low/High 刻度標籤與下方元件嚴重重疊遮擋問題。</li>
-<li><strong>飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display)</strong>：</li>
+</ul>
+</li>
+<li><strong>飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display)</strong>：<ul>
 <li>為「飛龍模式飛速 (<code>skyridingSpeed</code>)」新增專屬特殊選項「僅滑翔顯示 (Glide Only)」。</li>
 <li>角色處於空中御空術/飛龍滑翔飛行 (<code>isGliding == true</code>) 時才於畫面呈現圖示與速度百分比；未滑翔（站立/步行）時自動隱藏，避免 0% 佔用畫面。</li>
 <li>支援排版移動模式保護：開啟「移動屬性框架」時強制顯示以便玩家拖曳定位。</li>
-<li><strong>冷卻扇形倒數色彩與透明度自訂 (Cooldown Swipe Color &amp; Alpha Customization)</strong>：</li>
+</ul>
+</li>
+<li><strong>冷卻扇形倒數色彩與透明度自訂 (Cooldown Swipe Color &amp; Alpha Customization)</strong>：<ul>
 <li>告警圖示與預覽面板之冷卻扇形倒數 (Cooldown Swipe) 支援透明度與色彩自訂，預設經典黑 (<code>0, 0, 0, 0.8</code>)，徹底解決純白扇形刺眼與遮擋圖示問題。</li>
 <li>於常規排版設置中提供自訂色塊按鈕與原生調色盤即時熱套用，支援 ProfileCodec 編解碼與佈局指紋同步。</li>
-<li><strong>自身光環非本職業專屬法術防誤加確認對話框 (Non-Class Spell Interactive Confirmation)</strong>：</li>
+</ul>
+</li>
+<li><strong>自身光環非本職業專屬法術防誤加確認對話框 (Non-Class Spell Interactive Confirmation)</strong>：<ul>
 <li>在自身光環提醒中輸入不屬於當前職業的 Spell ID 時，取消靜默自動轉移至跨職業清單行為，改為彈出互動式主題確認對話框。</li>
 <li>顯示法術圖示、法術名稱、ID 與詢問提示；點擊「確定」強制於當前所在模組清單（自身光環提醒）中正式加入，絕不擅自竄改至跨職業；「取消」按鈕（及 ESC 鍵）安全關閉不變更任何設定。</li>
-<li><strong>職業資源狀態條垂直生長修復 (Vertical Resource StatusBar Growth Fix)</strong>：</li>
+</ul>
+</li>
+<li><strong>職業資源狀態條垂直生長修復 (Vertical Resource StatusBar Growth Fix)</strong>：<ul>
 <li>修復資源條切換為垂直 (VERTICAL) 模式時無法向上生長問題。</li>
 <li>正確轉置寬高、旋轉暴雪原生 StatusBar 材質 (<code>SetRotatesTexture(true)</code>)、將圖示錨定置底向上生長，並轉置點數分隔線與槽位條。</li>
-<li><strong>11 大經典復古與現代主題調色盤深度重構 (11 Classic &amp; Modern Themes Visual Overhaul)</strong>：</li>
+</ul>
+</li>
+<li><strong>11 大經典復古與現代主題調色盤深度重構 (11 Classic &amp; Modern Themes Visual Overhaul)</strong>：<ul>
 <li>深度考證並精確還原 11 款主題：EAM 經典復刻（9.0.1 石板黑金深紅）、FF7 經典戰鬥視窗（皇家寶石藍漸層純白框）、Windows XP (Luna)、Windows 7 (Aero)、Windows 10 (Metro)、Windows 3.1、Borland C++ IDE、DOS CRT、倚天中文、Red Alert、macOS Aqua。</li>
 <li>修復 Modern WoW 垂直漸層著色管線，解決頂點著色器衝突；全子視窗與面板背景無縫主題連動覆蓋。</li>
-<li><strong>ESC 鍵無損純透明度抑制與自動喚醒 (Zero-Alpha Suppression on ESC Key)</strong>：</li>
+</ul>
+</li>
+<li><strong>ESC 鍵無損純透明度抑制與自動喚醒 (Zero-Alpha Suppression on ESC Key)</strong>：<ul>
 <li>在遊戲中按 ESC 鍵隱藏畫面圖示全面改採純透明度抑制 (<code>SetAlpha(0)</code>)，絕不銷毀 Frame 物件，完整保留 2D 排版矩陣與背景冷卻動畫。</li>
 <li>觸發新提示、進入戰鬥或打開設定面板時自動無損還原顯示；具備戰鬥中防 Taint 安全守衛。</li>
-<li><strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入 (Native C-Level Curve Architecture)</strong>：</li>
+</ul>
+</li>
+<li><strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入 (Native C-Level Curve Architecture)</strong>：<ul>
 <li>全面接入暴雪 Patch 12.0.0 / Midnight 底層 C-Level 曲線系統，杜絕戰鬥鎖定與 Taint 污染。</li>
 <li>支援資源條動態色彩三色平滑過渡、二元階梯閥門曲線突破受保護秘密值防線、SecondsFormatter 自適應精度曲線、非線性冷卻進度衝刺曲線與全螢幕瀕死低血量動態呼吸警示。</li>
-<li><strong>五國語言完整對齊與存檔時間戳蓋章</strong>：</li>
+</ul>
+</li>
+<li><strong>五國語言完整對齊與存檔時間戳蓋章</strong>：<ul>
 <li>5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 同步新增 20+ 個新功能與專屬選項詞條。</li>
 <li>存檔資料庫新增本地時間與 Unix 秒數雙重時間戳自動標記。</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-84-20260904">🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04</h3>
 <ul>
-<li><strong>光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine &amp; Columns per Row Configuration)</strong>：</li>
+<li><strong>光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine &amp; Columns per Row Configuration)</strong>：<ul>
 <li><strong>2D 網格折行排版引擎 (2D Grid Layout Engine)</strong>：自身光環 (<code>selfAura</code>)、目標光環 (<code>targetAura</code>)、技能冷卻 (<code>spellCooldown</code>)、物品冷卻 (<code>itemCooldown</code>) 與地面效果 (<code>groundEffect</code>) 等模組全面升級為二維矩陣排版。圖示數量超過指定欄數 (Columns) 時，依成長方向自動向下一列 (Row) 折行，杜絕圖示單向無限延伸遮擋或超出螢幕。</li>
 <li><strong>清單視窗頂部每列欄數控制滑桿 (Columns per Row Slider)</strong>：於監控清單視窗 (<code>listFrame</code>) 頂部專精下拉選單右側增設「每列欄數 (Columns)」滑桿 (範圍 1~20，預設 8)，支援即時調整與多分類獨立設定保存。</li>
 <li><strong>零延遲即時重新排版</strong>：滑桿拖曳或切換時，畫面圖示與父容器尺寸零延遲即時重新折行計算，且完全相容非戰鬥/戰鬥中延遲套用防護。</li>
 <li><strong>設定檔匯出匯入與存檔向後相容</strong>：<code>ProfileCodec</code> 匯出/匯入與 <code>SavedVariables</code> 自動遷移補齊各框架 <code>columns</code> 欄位，升級無痛無縫相容。</li>
-<li><strong>預渲染冷卻隨戰鬥隱藏與純透明度切換 (Pre-rendered Cooldown Combat Visibility &amp; Zero-Alpha Toggle)</strong>：</li>
+</ul>
+</li>
+<li><strong>預渲染冷卻隨戰鬥隱藏與純透明度切換 (Pre-rendered Cooldown Combat Visibility &amp; Zero-Alpha Toggle)</strong>：<ul>
 <li><strong>尊重「非戰鬥顯示技能冷卻」設定</strong>：開啟預渲染 (<code>cooldownPreRender</code>) 佔位的技能冷卻圖示，若設定為隨戰鬥關閉 (<code>showSCDOutsideCombat == false</code>)，在戰鬥外 (<code>not inCombat</code>) 自動透過 <code>SetAlpha(0)</code> 隱藏。</li>
 <li><strong>戰鬥狀態自動切換</strong>：進入戰鬥時圖示瞬間以灰階待命顯現 (<code>SetAlpha(1)</code>)，施法進入冷卻正常彩色計時；脫離戰鬥時再次平滑隱藏 (<code>SetAlpha(0)</code>)。</li>
 <li><strong>槽位完全常駐</strong>：隱藏過程僅變更透明度，絕不釋放 Frame 物件或更動排版 order 槽位，杜絕戰鬥中 Frame 創建限制、Taint 污染與 2D 矩陣跳動。</li>
-<li><strong>戰鬥中移動速度防護與回退機制 (Combat Speed Restriction Guard &amp; True Cache Fallback)</strong>：</li>
+</ul>
+</li>
+<li><strong>戰鬥中移動速度防護與回退機制 (Combat Speed Restriction Guard &amp; True Cache Fallback)</strong>：<ul>
 <li><strong>解決 14.3% 戰鬥跑速異常</strong>：解決 Retail 12.x / Midnight 進入戰鬥後，暴雪將 <code>GetUnitSpeed("player")</code> 限制並固定回傳 1.0 導致插件依照傳統公式除以 7.0 計算出荒謬的 14.3% (1.0 / 7.0 * 100) 跑速問題。</li>
 <li><strong>安全快取回退機制</strong>：當檢測到數值 <code>&lt;= 1.05</code> 且處於戰鬥狀態時，自動回退至脫戰真實有效記憶快取 (<code>lastKnownStats</code>)，確保在戰鬥中依然穩定顯示 100% 或 130% 等真實移動速度。</li>
-<li><strong>技能冷卻清單 Location Order 排序與單一法術獨立預佔位 (Cooldown Location Order &amp; Per-Spell Pre-render Placeholders)</strong>：</li>
+</ul>
+</li>
+<li><strong>技能冷卻清單 Location Order 排序與單一法術獨立預佔位 (Cooldown Location Order &amp; Per-Spell Pre-render Placeholders)</strong>：<ul>
 <li><strong>技能冷卻排序位置 (Location Order)</strong>：清單每一列新增 Location Order 數字輸入框，顯示在畫面排版中的唯一自然數槽位 (1..N)。支援點擊 <code>▲</code>/<code>▼</code> 上下調換、拖曳排序或直接輸入數字快速跳轉，順位自動連續校正。</li>
 <li><strong>嚴格禁止未啟用項目預先佔位</strong>：未啟用 (<code>enabled == false</code>) 的技能冷卻項目徹底杜絕建立預渲染圖示或佔位顯示，完全不佔用畫面槽位與系統資源。</li>
 <li><strong>單一法術獨立預先佔位開關</strong>：取消全域 Global 級開關，改由各技能在細部條件設定中獨立開啟/關閉預先佔位 (未冷卻時灰階待命，施法冷卻即亮起)，預設為關閉。</li>
 <li><strong>清單視窗滾動緊密跟隨與選定高亮 (Scroll Tracking &amp; Selection Highlight)</strong>：調換順位或點擊項目時，卷軸視窗平滑滾動並緊密跟隨目標技能，並呈現湛藍選定背景高亮，徹底避免操作時視窗重置至頂部或失焦。</li>
-<li><strong>角色屬性戰鬥即時更新與 C-Level 零 GC 渲染 (FontString:SetFormattedText &amp; In-Combat Stat Updates)</strong>：</li>
+</ul>
+</li>
+<li><strong>角色屬性戰鬥即時更新與 C-Level 零 GC 渲染 (FontString:SetFormattedText &amp; In-Combat Stat Updates)</strong>：<ul>
 <li>全面採用暴雪原生 <code>FontString:SetFormattedText</code> 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。</li>
 <li>補齊全 18 大屬性之 <code>getRawValue</code> 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 <code>AllowedWhenTainted</code> 與 <code>Enum.SecretAspect.Text</code> 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。</li>
 <li><strong>單一屬性圖示自訂拖曳報錯修復</strong>：修復 <code>PlayerStatService</code> 於拖曳移動單一屬性圖示放開後，在地化格式字串參數個數不足導致的 <code>bad argument #4 (format)</code> Lua 報錯。</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-83-20260828">🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28</h3>
 <ul>
-<li><strong>次世代全量法術庫與智慧預設系統 (Next-Gen Master Spell Catalog &amp; Intelligent Presets)</strong>：</li>
+<li><strong>次世代全量法術庫與智慧預設系統 (Next-Gen Master Spell Catalog &amp; Intelligent Presets)</strong>：<ul>
 <li><strong>5 語系離線先驗資料庫</strong>：收錄全 13 職業、40 專精與 39 英雄天賦樹共 4,463 個核心法術與 466 個光環，支援繁中/簡中/英文/韓文/俄文即時切換。</li>
 <li><strong>階層式樹狀法術庫面板 (<code>SpellCatalogTreePanel</code>)</strong>：支援專精展開/收合、三態勾選、名稱與 ID 即時搜尋。</li>
 <li><strong>目標模組自由切換</strong>：頂部下拉選單可自選將勾選技能指派至技能冷卻、自身光環、目標光環、特殊光環或地面效果模組清單。</li>
 <li><strong>一鍵天賦智慧同步</strong>：整合 <code>SpellBookScannerService</code> 動態探測玩家當前天賦樹與法術書，一鍵自動同步核心技能至所選模組。</li>
 <li><strong>全法術懸停原生技能說明提示 (<code>GameTooltip:SetSpellByID</code>)</strong>：滑鼠懸停於法術項目時完整顯示原生法術說明、射程、施法時間與 ID。</li>
-<li><strong>多維戰術群組與標籤管理模組 (Multidimensional Group Management Module)</strong>：</li>
+</ul>
+</li>
+<li><strong>多維戰術群組與標籤管理模組 (Multidimensional Group Management Module)</strong>：<ul>
 <li><strong>群組管理核心服務 (<code>GroupService</code>)</strong>：內建 4 大系統戰術群組（主要爆發、關鍵減傷、控場打斷、地面效果）並支援玩家自訂標籤群組。</li>
 <li>支援法術與群組多對多歸屬、群組獨立全域開關與「僅戰鬥中顯示」情境過濾。</li>
 <li><strong>獨立群組管理側窗 (<code>GroupManagerPanel</code>)</strong>：支援群組名稱編輯、獨立儲存按鈕、戰鬥情境切換、所屬法術多選與全介面 <code>GameTooltip</code> 懸停說明。</li>
 <li><strong>技能細節視窗整合群組下拉複選器 (<code>Options.lua</code>)</strong>：所有技能條件設定視窗頂部增設「所屬群組 (可複選)」下拉按鈕與即時摘要。</li>
-<li><strong>穩定性與相容性強化 (Hardening &amp; Bug Fixes)</strong>：</li>
+</ul>
+</li>
+<li><strong>穩定性與相容性強化 (Hardening &amp; Bug Fixes)</strong>：<ul>
 <li><strong>嚴格禁止過時 API</strong>：全面替換 <code>GetSpellInfo</code>, <code>GetItemInfo</code>, <code>GetSpellCooldown</code> 為現代 <code>C_Spell</code> / <code>C_Item</code> API，並於 CI 加入靜態 AST 審查。</li>
 <li><strong>Profile Codec 匯出/解碼修復</strong>：在 <code>buildPayload</code> 加入唯一性過濾，徹底修復實機歷史重複 ID 導致的 <code>duplicateAlertID</code> 報錯。</li>
 <li><strong>字型驗證修復</strong>：修正 LSM 載入時的旁路判斷，確保非法字型一律安全回退為 STANDARD。</li>
 <li>修正條件設定視窗下拉文字 <code>SetText</code> 型別不相容問題。</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-82-20260827">🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27</h3>
 <ul>
-<li><strong>LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration &amp; Dynamic Discovery)</strong>：</li>
+<li><strong>LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration &amp; Dynamic Discovery)</strong>：<ul>
 <li>全面接入社群廣泛使用的 LibSharedMedia-3.0 素材生態，完整支援所有第三方 SharedMedia 音效包、字型包與材質包。</li>
 <li>實作 <code>MediaService.ensureLSM()</code> 動態探測機制與 <code>PLAYER_LOGIN</code> 延遲同步刷新，徹底解決 EAM 早於其他 SharedMedia 擴充插件載入時音效清單被凍結在初始 12 種內建音效的問題。</li>
 <li>同時查詢 <code>lsm:List("sound")</code> 與 <code>lsm:HashTable("sound")</code> 雙軌資料來源並自動去重，保證 100% 完整抓取所有第三方 SharedMedia 註冊音效。</li>
 <li>支援安全雙軌音效播放 (<code>MediaService.playSound</code>)：無縫相容數字 <code>FileDataID</code>、原生 <code>SoundKitID</code> 與自訂字串 <code>FilePath</code> (.ogg / .mp3) 檔案。</li>
 <li>12.1 Native Aura 原生光環規則編譯器 (<code>AuraRuleCompiler</code>) 接入 <code>MediaService</code>，光環觸發時亦可播放 LSM 自訂音效。</li>
-<li><strong>全域字型熱套用與存檔修復（免 /reload 即時生效）(Zero-Delay Font Application &amp; SavedVariables Whitelist)</strong>：</li>
+</ul>
+</li>
+<li><strong>全域字型熱套用與存檔修復（免 /reload 即時生效）(Zero-Delay Font Application &amp; SavedVariables Whitelist)</strong>：<ul>
 <li>解除字型存檔白名單限制：<code>SavedVariables.lua</code> 放行所有通過 LSM 註冊的自訂字型名稱，防止重登、重載或切換專精後被強制還原為預設字型。</li>
 <li>畫面預覽圖示即時聯動：更換字型時，畫面上的奶牛頭與位置預覽圖示 (Preview Icons) 立即同步重繪新字型。</li>
 <li>12.1 Native Aura 規則指紋補齊：將 <code>fontFamily</code> 納入 Native 佈局指紋 (<code>buildLayoutFingerprint</code>)，修復過去因指紋相同而略過原生容器重建的問題。</li>
 <li>全子系統文字廣播聯動：透過 <code>EAM_FONT_FAMILY_CHANGED</code> 事件，同步即時刷新一般告警圖示 (<code>Renderer</code>)、能量條文字 (<code>PowerRenderer</code> / <code>PlayerResourceService</code>) 與人物屬性文字 (<code>PlayerStatService</code>)，選取字型後畫面上所有文字零延遲即時套用。</li>
 <li>職業資源文字面板 (<code>PlayerResourcePanel</code>) 之字型切換按鈕全面支援循環切換所有 SharedMedia 字型。</li>
-<li><strong>UI 下拉選單長清單自適應捲動容器 (Scrollable Dropdown Menus with MouseWheel)</strong>：</li>
+</ul>
+</li>
+<li><strong>UI 下拉選單長清單自適應捲動容器 (Scrollable Dropdown Menus with MouseWheel)</strong>：<ul>
 <li>實作通用自適應捲動選單 <code>buildScrollableDropdownMenu</code>：當 SharedMedia 包含數十或數百種字型／音效時，選單自動限制高度為 10 筆並啟用 <code>UIPanelScrollFrameTemplate</code> 捲軸與滑鼠滾輪支援，版面整潔不破圖。</li>
 <li>展開音效與字型選單時自動以 <code>forceRefresh</code> 模式向 LSM 抓取最新註冊素材清單。</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-81-20260826">📌 [Retail 12.1.0 Alpha 8.1] - 2026.08.26</h3>
 <ul>
-<li><strong>技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (Persistent Pre-anchoring &amp; Zero-Alpha Cooldown Mode)</strong>：</li>
+<li><strong>技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (Persistent Pre-anchoring &amp; Zero-Alpha Cooldown Mode)</strong>：<ul>
 <li>徹底解決技能冷卻在戰鬥中首次施放無法建立框架或延遲至脫戰後才出現的架構問題。</li>
 <li>進入世界、切換天賦或載入設定時，非戰鬥狀態下自動預先建立所有已監控之技能冷卻與物品冷卻 Frame，並完成精確座標計算。</li>
 <li>冷卻完成時透過 <code>SetAlpha(0)</code> 隱藏圖示，保留 Frame 結構與座標常駐，避免戰鬥中動態釋放與排版重算；冷卻觸發時瞬間恢復 <code>SetAlpha(targetAlpha)</code>，實現 0.00ms 零 GC 零排版延遲且 100% 免疫戰鬥鎖定。</li>
-<li><strong>角色屬性與副屬性戰鬥中防歸零修復 (Combat Stat Cache &amp; Multi-Tier API Fallback)</strong>：</li>
+</ul>
+</li>
+<li><strong>角色屬性與副屬性戰鬥中防歸零修復 (Combat Stat Cache &amp; Multi-Tier API Fallback)</strong>：<ul>
 <li>解決 Retail 12.0+/12.1+ 進入戰鬥後呼叫原生 Unit / Stat API 受限回傳 Secret Number 導致力量、敏捷、智力、耐力、致命、加速、精通、臨機應變等數值歸零問題。</li>
 <li>建立全 18 項屬性 <code>lastKnownStats</code> 記憶體快取表，並在登入、切換專精、更換裝備及脫離戰鬥時自動執行預熱 (<code>prewarmStats</code>)，戰鬥中若遇受限環境自動無縫回退至最後有效真實數值。</li>
 <li>副屬性全面補齊系別 API (<code>GetCritChance</code> / <code>GetSpellCritChance</code> 等) 與等級評級轉換公式容錯。</li>
-<li><strong>角色屬性依職業獨立設定 (Per-Class Player Stat Profiles)</strong>：</li>
+</ul>
+</li>
+<li><strong>角色屬性依職業獨立設定 (Per-Class Player Stat Profiles)</strong>：<ul>
 <li>角色屬性監控全面升級為「依職業獨立配置設定」：每種職業（例如聖騎士、法師、戰士、牧師等）擁有專屬獨立的屬性監控項目開關、圖示大小、字型、閾值與獨立位置座標。</li>
 <li>切換不同職業角色時自動無縫載入該職業設定，設定面板標題即時標註當前職業名稱（例如「★ 角色屬性與吸收量監控 [聖騎士]」）。</li>
-<li><strong>吸收盾與治療吸收量雙軌偵測強化 (Dual-Channel Shield &amp; Heal Absorb Detection)</strong>：</li>
+</ul>
+</li>
+<li><strong>吸收盾與治療吸收量雙軌偵測強化 (Dual-Channel Shield &amp; Heal Absorb Detection)</strong>：<ul>
 <li>強化總吸收盾量 (<code>totalAbsorb</code>) 與治療吸收量 (<code>healAbsorb</code>) 取值核心：支援原生 Unit API 與 <code>C_UnitAuras</code> 增益/減益點數 (<code>aura.points</code>) 雙軌即時累加運算，徹底解決吸收盾無法顯示問題。</li>
 <li>補齊 <code>UNIT_HEAL_ABSORB_AMOUNT_CHANGED</code>、<code>UNIT_HEALTH</code>、<code>UNIT_MAXHEALTH</code> 與 <code>PLAYER_SPECIALIZATION_CHANGED</code> 事件監聽。</li>
-<li><strong>光環模組支援護盾吸收量即時顯示 (Aura Shield Absorb Amount Display)</strong>：</li>
+</ul>
+</li>
+<li><strong>光環模組支援護盾吸收量即時顯示 (Aura Shield Absorb Amount Display)</strong>：<ul>
 <li>光環監控核心 (<code>AuraService</code>) 自動從 <code>C_UnitAuras</code> 提取護盾類光環（如真言術:盾、冰甲護盾、靈魂汲取等）的即時剩餘吸收盾數值 (<code>state.absorbAmount</code>)。</li>
 <li>渲染器 (<code>Renderer</code>) 於光環圖示右下角疊加層精確格式化顯示剩餘吸收盾量（如 45.2k、1.2M），若同時具備多層數則自動並列顯示（如 3(45k)）。</li>
-<li><strong>圖示物件池 (IconPool) 擴容與安全放行</strong>：</li>
+</ul>
+</li>
+<li><strong>圖示物件池 (IconPool) 擴容與安全放行</strong>：<ul>
 <li>預熱池容量由 16 擴增至 64，並在池耗盡時直接安全呼叫 <code>createIcon</code> 建立，杜絕戰鬥中回傳 nil。</li>
+</ul>
+</li>
 </ul>
 <h3 id="retail-1210-alpha-80-20260825">📌 [Retail 12.1.0 Alpha 8.0] - 2026.08.25</h3>
 <ul>
-<li><strong>角色屬性與吸收量監控升級 (Independent Positioning &amp; Grow Direction)</strong>：</li>
+<li><strong>角色屬性與吸收量監控升級 (Independent Positioning &amp; Grow Direction)</strong>：<ul>
 <li>新增「整體排列方向」下拉選單（向右、向左、向上、向下），支援整組屬性即時方向重構。</li>
 <li>支援各單項「獨立自訂位置與獨立拖曳」：每項屬性可勾選啟用獨立位置，具備專屬 X/Y 軸像素滑桿，並提供「移動此單項」與「移動所有屬性」按鈕，在畫面上直接以滑鼠拖曳定位並即時雙向同步座標。</li>
 <li>取消圖示純文字自適應排版與指定位置 (Iconless Adaptive Layout &amp; Positioning)：即使取消顯示圖示，純文字標籤與數值依然完整支援指定「獨立自訂位置」或依設定「整體方向」自動延伸排版。</li>
@@ -968,45 +1030,69 @@
 <li>移動模式保護機制：開啟拖曳錨點時自動顯示高亮外框與拖曳提示，防止高頻計時器重設位置。</li>
 <li>修復飛龍模式飛速圖示黑框問題：改用數值型 FileDataID 4667307 與動態 API 獲取原生圖示。</li>
 <li>重構左右列表與細部表單雙向同步，增加選中條目金框高亮，新增「全選監控」與「全部停用」批次按鈕。</li>
-<li><strong>主選單排版精確對齊與控制項優化</strong>：</li>
+</ul>
+</li>
+<li><strong>主選單排版精確對齊與控制項優化</strong>：<ul>
 <li>修復「測試閃爍」按鈕覆蓋文字問題，獨立配置於專屬按鈕列。</li>
 <li>將「啟用 12.1 原生圓形光環倒數光圈」完整回歸主設定選單核心控制區。</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-79-20260824">🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24</h3>
 <ul>
-<li><strong>全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)</strong>：</li>
+<li><strong>全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)</strong>：<ul>
 <li>在全部按鈕、核取方塊、滑桿、下拉選單、輸入編輯框與清單操作列加入直觀的懸停說明提示 (Hover Tooltips)，清晰標註控制項用途、設定範圍與操作指引。</li>
 <li>實作通用工具函式 <code>EAM.UI.setTooltip</code>，支援純文字、多語系字串與表格綁定，徹底消除介面操作門檻。</li>
 <li>覆蓋主設定面板、告警框架排版、法術清單、細部條件、批次輸入、角色屬性、職業資源、功能模組、Profile 分享與除錯中心共 10 大視窗。</li>
-<li><strong>主視窗螢幕邊界鎖定與一鍵居中重置 (ClampedToScreen &amp; Center Reset Command)</strong>：</li>
+</ul>
+</li>
+<li><strong>主視窗螢幕邊界鎖定與一鍵居中重置 (ClampedToScreen &amp; Center Reset Command)</strong>：<ul>
 <li>主視窗增加 <code>SetClampedToScreen</code> 螢幕邊界鎖定，防止拖出畫面無法找回。</li>
 <li>新增 <code>/eam reset</code> (或 <code>/eam center</code> / <code>resetpos</code>) 斜線命令、小地圖按鈕中鍵點擊與 Shift+點擊，一鍵將主視窗拉回螢幕正中央。</li>
 <li>修正關閉主視窗時在 <code>closeAllSidePanels</code> 缺少 <code>close()</code> 引發的 nil call 錯誤，實作防禦性 <code>safeClosePanel</code> 機制。</li>
-<li><strong>官方 README 圖文導覽與 GitHub 直連展示 (Visual Showcase)</strong>：</li>
+</ul>
+</li>
+<li><strong>官方 README 圖文導覽與 GitHub 直連展示 (Visual Showcase)</strong>：<ul>
 <li>整理 14 張全功能高畫質介面截圖，分類涵蓋系統選單、法術條件與階層吸附、職業資源與屬性排版。</li>
+</ul>
+</li>
 </ul>
 <h3 id="retail-1210-alpha-78-20260824">📌 [Retail 12.1.0 Alpha 7.8] - 2026.08.24</h3>
 <ul>
-<li><strong>「★ 角色屬性與吸收量監控」全新模組</strong>：</li>
+<li><strong>「★ 角色屬性與吸收量監控」全新模組</strong>：<ul>
 <li>支援 18 種核心屬性取值監控（主屬性：力量、敏捷、耐力、智力；副屬性：致命、加速、精通、臨機應變；輔助與生存：閃避、汲取、速度屬性評級、跑速、泳速、飛速、飛龍模式飛速、總吸收盾量、治療吸收量、護甲值）。</li>
 <li>速度類別全面淬鍊：跑速 (<code>GetUnitSpeed</code> 地面即時與上限跑速)、泳速 (水下速度)、飛速 (穩定飛行 310%~420%)、飛龍模式飛速 (調用 <code>C_PlayerInfo.GetGlidingInfo</code> 專屬 API 取得 830%~1400% 動能滑翔速度)，並以 0.1s 高頻計時器平滑刷新。</li>
 <li>繁體中文術語嚴格對齊台灣官方用語（致命、加速、臨機應變）。</li>
 <li>獨立二級設定面板：無縫依附主視窗右側並支援同步平滑拖曳；支援個別自訂開關、是否顯示圖示、替代圖示路徑/代碼、圖示大小、數值字型大小、代表名稱字型大小、名稱替代文字、小數位數 (0~2)、大數值簡寫 (k/M)、警戒值上下限紅框警示、進度條開關與獨立框架定位排版。</li>
-<li><strong>Secret Value 防護與原生 StatusBar Sink 整合</strong>：</li>
+</ul>
+</li>
+<li><strong>Secret Value 防護與原生 StatusBar Sink 整合</strong>：<ul>
 <li>針對 Retail 12.0+ / 12.1+ 部分 Unit API 在戰鬥/受污染環境下回傳受保護之 Secret Number，全面加入安全數值檢查，防止 Lua 層運算或格式化報錯。</li>
 <li>為屬性框架預建原生 C-Level <code>StatusBar</code>，遭遇 Secret 數值時直接將原始數值單向傳入 <code>StatusBar:SetValue</code> 展現視覺進度比例。</li>
 <li>支援依屬性類別專屬著色（吸收盾天藍、治療吸收紫紅、移速青綠、副屬性金黃、主屬性橙紅、護甲鋼藍）。</li>
-<li><strong>全模組自訂替代圖示支援 (Custom Icon Override)</strong>：</li>
+</ul>
+</li>
+<li><strong>全模組自訂替代圖示支援 (Custom Icon Override)</strong>：<ul>
 <li>在自身光環、目標光環、技能冷卻、物品冷卻、地面效果等所有模組細部設定中，新增「自訂替代圖示（代碼或材質路徑）」輸入框、即時動態預覽方塊與 Wago.tools 查詢網址框。</li>
 <li>服務層發布告警狀態時優先採用自訂圖示覆蓋原生預設圖示。</li>
-<li><strong>經典奶牛頭位置預覽 (Classic Cow Head Anchor Preview)</strong>：</li>
+</ul>
+</li>
+<li><strong>經典奶牛頭位置預覽 (Classic Cow Head Anchor Preview)</strong>：<ul>
 <li>拖曳排版位置時改用經典奶牛頭圖示 (<code>Spell_Nature_Polymorph_Cow</code>) 作為畫面預覽，並支援 8 大告警框架即時標籤名稱與紅/綠框高亮區分。</li>
-<li><strong>全方位即時熱預覽 (Live Real-time Config Preview)</strong>：</li>
+</ul>
+</li>
+<li><strong>全方位即時熱預覽 (Live Real-time Config Preview)</strong>：<ul>
 <li>調整圖示尺寸、水平/垂直間距、透明度、扇形倒數轉圈動畫、轉圈透明度、自身/目標減益色度、法術/倒數/堆疊字型大小、成長方向時，畫面上告警框架與圖示即時 60fps 熱更新響應，無需重啟。</li>
-<li><strong>進入戰鬥全螢幕紅框閃爍 (In-Combat Fullscreen Red Edge Flash)</strong>：</li>
+</ul>
+</li>
+<li><strong>進入戰鬥全螢幕紅框閃爍 (In-Combat Fullscreen Red Edge Flash)</strong>：<ul>
 <li>實作 <code>UI/CombatFlash.lua</code> 全螢幕低血/戰鬥紅框閃爍動畫，監聽 <code>PLAYER_REGEN_DISABLED</code> 事件觸發戰鬥進入警示，並在主選單提供即時測試按鈕。</li>
-<li><strong>主題樣式與預設回歸</strong>：</li>
+</ul>
+</li>
+<li><strong>主題樣式與預設回歸</strong>：<ul>
 <li>EAM 預設主題改回經典魔獸紅色選單按鈕與仿石框邊緣。</li>
+</ul>
+</li>
 </ul>
 <h3 id="retail-1210-alpha-77-20260824">📌 [Retail 12.1.0 Alpha 7.7] - 2026.08.24</h3>
 <ul>
@@ -1087,11 +1173,15 @@
 <hr />
 <h2 id="compatibility">📌 相容性與支援邊界 (Compatibility)</h2>
 <ul>
-<li><strong>支援環境</strong>：</li>
+<li><strong>支援環境</strong>：<ul>
 <li>《魔獸世界：正式服》World of Warcraft: Retail 12.1.0+ (Interface 120100)</li>
 <li>相容通道 Retail 12.0.7+ (Interface 120007)</li>
-<li><strong>不支援環境</strong>：</li>
+</ul>
+</li>
+<li><strong>不支援環境</strong>：<ul>
 <li>經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等不在本專案支援範圍）。</li>
+</ul>
+</li>
 </ul>
 <hr />
 <h2 id="documentation-links">🌐 說明文件與相關連結 (Documentation &amp; Links)</h2>
@@ -1426,107 +1516,161 @@
 <summary><b>🔥 Retail 12.1.0 Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
 <h3 id="retail-1210-alpha-85-20260912">🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12</h3>
 <ul>
-<li><strong>Independent Live Preview Panel (PreviewPanel)</strong>:</li>
+<li><strong>Independent Live Preview Panel (PreviewPanel)</strong>:<ul>
 <li>Brand new free-floating, screen-clamped independent Live Preview window with 3 dedicated tabs: Alert Icons, Class Resources, and Player Stats.</li>
 <li>Interactive countdown timer curve testing, Proc golden glow, Pandemic border, resource charging progress, and live stat previews.</li>
 <li>Main options, general layout, resource panels, and stat panels feature instant "[Live Preview]" shortcuts and bidirectional hot-updates.</li>
-<li><strong>Player Stats 4-Tab Modular Layout &amp; Overlap Protection</strong>:</li>
+</ul>
+</li>
+<li><strong>Player Stats 4-Tab Modular Layout &amp; Overlap Protection</strong>:<ul>
 <li>Expanded stat panel dimensions to 720x540, modularized into 4 independent tabs: Display &amp; Icon, Fonts &amp; Format, Thresholds, and Position &amp; Anchor.</li>
 <li>Generous 50~60px vertical slider spacing, eliminating Blizzard OptionsSliderTemplate Low/High tick overlap with lower elements.</li>
-<li><strong>Skyriding Speed Gliding-Only Display Option</strong>:</li>
+</ul>
+</li>
+<li><strong>Skyriding Speed Gliding-Only Display Option</strong>:<ul>
 <li>Added a dedicated "Glide Only" option for Skyriding Speed (<code>skyridingSpeed</code>).</li>
 <li>Only displays the icon and speed percentage while actively skyriding/gliding (<code>isGliding == true</code>), automatically hiding when grounded to keep the screen clean.</li>
 <li>Drag &amp; position mode protection: forces display when adjusting frames so position calibration is always available.</li>
-<li><strong>Cooldown Swipe Color &amp; Alpha Customization</strong>:</li>
+</ul>
+</li>
+<li><strong>Cooldown Swipe Color &amp; Alpha Customization</strong>:<ul>
 <li>Full customization for cooldown swipe darkness and color, defaulting to classic black (<code>0, 0, 0, 0.8</code>), resolving harsh bright white swipe glare over spell icons.</li>
 <li>Interactive color picker button in General Layout with immediate live preview and ProfileCodec synchronization.</li>
-<li><strong>Non-Class Spell Add Interactive Confirmation Dialog</strong>:</li>
+</ul>
+</li>
+<li><strong>Non-Class Spell Add Interactive Confirmation Dialog</strong>:<ul>
 <li>Adding a non-current class spell ID to Self Aura triggers an interactive themed confirmation popup displaying spell icon, name, ID, and prompt.</li>
 <li>Clicking "Confirm" forcibly registers the spell to the current module list (Self Aura) without silent reassignment to Cross-Class; "Cancel" or ESC safely dismisses.</li>
-<li><strong>Vertical Resource StatusBar Growth Fix</strong>:</li>
+</ul>
+</li>
+<li><strong>Vertical Resource StatusBar Growth Fix</strong>:<ul>
 <li>Fixed vertical orientation growth by transposing dimensions, rotating textures with <code>SetRotatesTexture(true)</code>, bottom-anchoring icons, and transposing segmented dividers.</li>
-<li><strong>11 Classic &amp; Modern Themes Visual Overhaul</strong>:</li>
+</ul>
+</li>
+<li><strong>11 Classic &amp; Modern Themes Visual Overhaul</strong>:<ul>
 <li>Meticulously restored 11 themes: EAM Classic (9.0.1 slate/gold/crimson), FF7 Battle Window (royal sapphire blue gradient, pure white border), Windows XP/7/10/3.1, Borland C++, DOS CRT, ETen, Red Alert, and macOS Aqua.</li>
 <li>Resolved vertex shader gradient conflicts for modern WoW vertical gradients and added comprehensive subwindow container skinning.</li>
-<li><strong>Zero-Alpha Suppression on ESC Key</strong>:</li>
+</ul>
+</li>
+<li><strong>Zero-Alpha Suppression on ESC Key</strong>:<ul>
 <li>ESC key alert hiding uses non-destructive <code>SetAlpha(0)</code> without destroying frame objects or disrupting 2D matrix layouts.</li>
 <li>Instant unsuppression on new alert triggers, combat start, or opening options, with strict in-combat taint guards.</li>
-<li><strong>Native Blizzard CurveObject / ColorCurveObject C-Level Architecture</strong>:</li>
+</ul>
+</li>
+<li><strong>Native Blizzard CurveObject / ColorCurveObject C-Level Architecture</strong>:<ul>
 <li>Full adoption of Patch 12.0.0 / Midnight C-Level curve infrastructure, preventing combat lockouts and script taint.</li>
 <li>Smooth three-color resource transitions, binary step-gate curves bypassing secret numbers, adaptive SecondsFormatter curves, non-linear cooldown sprint curves, and dynamic low-health pulse warnings.</li>
-<li><strong>Full 5-Locale Mirroring &amp; Auto-Timestamping</strong>:</li>
+</ul>
+</li>
+<li><strong>Full 5-Locale Mirroring &amp; Auto-Timestamping</strong>:<ul>
 <li>100% synchronized dictionaries across zhTW, zhCN, enUS, koKR, and ruRU.</li>
 <li>SavedVariables automatic dual ISO 8601 and Unix epoch timestamping on save and migration.</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-84-20260904">🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04</h3>
 <ul>
-<li><strong>2D Grid Layout Engine &amp; Columns per Row Configuration</strong>:</li>
+<li><strong>2D Grid Layout Engine &amp; Columns per Row Configuration</strong>:<ul>
 <li><strong>2D Grid Layout Engine</strong>: Upgraded <code>selfAura</code>, <code>targetAura</code>, <code>spellCooldown</code>, <code>itemCooldown</code>, and <code>groundEffect</code> to a 2-dimensional grid layout. Excess icons automatically wrap to the next row when exceeding the configured column count, preventing infinite horizontal or vertical screen spillover.</li>
 <li><strong>Header Columns Slider</strong>: Added a dedicated Columns per Row slider (range 1~20, default 8) to the top of the monitor list frame right next to the specialization dropdown, supporting instant adjustments and per-category persistence.</li>
 <li><strong>Zero-Latency Dynamic Relayout</strong>: Immediate relayout upon slider drag with automatic container bounding box recalculation and combat-deferred safety.</li>
 <li><strong>ProfileCodec &amp; SavedVariables Backward Compatibility</strong>: Automatic schema migration and profile export/import with safe integer normalization for <code>columns</code>.</li>
-<li><strong>Pre-rendered Cooldown Combat Visibility &amp; Zero-Alpha Toggle</strong>:</li>
+</ul>
+</li>
+<li><strong>Pre-rendered Cooldown Combat Visibility &amp; Zero-Alpha Toggle</strong>:<ul>
 <li><strong>Combat Visibility Respect</strong>: Cooldown pre-render placeholder icons respect the <code>showSCDOutsideCombat</code> setting, automatically hiding via <code>SetAlpha(0)</code> outside of combat when configured.</li>
 <li><strong>Smooth Combat State Transitions</strong>: Instantly reveals desaturated placeholder icons (<code>SetAlpha(1)</code>) on entering combat, running normal color countdowns on trigger, and smoothly hiding on combat drop (<code>SetAlpha(0)</code>).</li>
 <li><strong>Persistent Anchor Slots</strong>: Maintains persistent frame instances and layout order slots without frame recreation or taint in combat.</li>
-<li><strong>Combat Speed Restriction Guard &amp; True Cache Fallback</strong>:</li>
+</ul>
+</li>
+<li><strong>Combat Speed Restriction Guard &amp; True Cache Fallback</strong>:<ul>
 <li><strong>Combat 14.3% Speed Fix</strong>: Defends against Retail 12.x / Midnight returning a restricted fixed 1.0 from <code>GetUnitSpeed("player")</code> in combat which resulted in an erroneous 14.3% speed calculation.</li>
 <li><strong>Safe Memory Cache Fallback</strong>: Seamlessly falls back to the last valid out-of-combat memory cache (<code>lastKnownStats["runSpeed"]</code>) when values &lt;= 1.05 are detected during combat.</li>
-<li><strong>Cooldown Location Order, Strict Inactive Guard &amp; Per-Spell Pre-render Placeholders</strong>:</li>
+</ul>
+</li>
+<li><strong>Cooldown Location Order, Strict Inactive Guard &amp; Per-Spell Pre-render Placeholders</strong>:<ul>
 <li><strong>Location Order Input</strong>: Each row features a dedicated numeric input box displaying its natural number slot (1..N). Supports <code>▲</code>/<code>▼</code> shifting, drag-and-drop reordering, and direct numeric jump with automatic normalization.</li>
 <li><strong>Strict Guard for Disabled Spells</strong>: Disabled spells (<code>enabled == false</code>) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.</li>
 <li><strong>Per-Spell Pre-render Toggle</strong>: Replaced global toggle with independent per-spell condition toggles (desaturated placeholder when inactive, full color on cooldown), default false.</li>
 <li><strong>Smooth Scroll Tracking &amp; Selection Highlight</strong>: Reordering or clicking items smoothly scrolls the ScrollBox to track the target spell with a distinct blue highlight.</li>
-<li><strong>Player Stats In-Combat Live Updates &amp; C-Level Zero-GC Rendering</strong>:</li>
+</ul>
+</li>
+<li><strong>Player Stats In-Combat Live Updates &amp; C-Level Zero-GC Rendering</strong>:<ul>
 <li>Full adoption of native <code>FontString:SetFormattedText</code> for all 18 stats, achieving 0.00ms C-level formatting with zero Lua GC string allocations in timer loops.</li>
 <li>Implemented <code>getRawValue</code> routing across all 18 attributes, respecting Retail 12.x / Midnight <code>AllowedWhenTainted</code> and <code>Enum.SecretAspect.Text</code> contracts.</li>
 <li><strong>Single Stat Icon Drag-and-Drop Fix</strong>: Fixed a <code>bad argument #4 (format)</code> Lua error in <code>PlayerStatService</code> caused by argument mismatch with localized string templates upon releasing dragged stat icons.</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-83-20260828">🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28</h3>
 <ul>
-<li><strong>Next-Gen Master Spell Catalog &amp; Intelligent Presets</strong>:</li>
+<li><strong>Next-Gen Master Spell Catalog &amp; Intelligent Presets</strong>:<ul>
 <li><strong>5-Language Offline Database</strong>: 4,463 core spells &amp; 466 auras covering 13 classes, 40 specs, and 39 Hero Talent trees, with real-time switching across zhTW, zhCN, enUS, koKR, and ruRU.</li>
 <li><strong>Hierarchical Spell Catalog Tree Panel (<code>SpellCatalogTreePanel</code>)</strong>: Spec tree expand/collapse, tri-state toggles, instant search by spell name or ID.</li>
 <li><strong>Target Module Redirection</strong>: Header dropdown assigns selected spells directly to Spell Cooldown, Player Buff, Target Buff, Special Aura, or Ground Effect.</li>
 <li><strong>One-Click Talent Auto-Sync</strong>: Integrated <code>SpellBookScannerService</code> scans current talent loadouts and spellbook, synchronizing active spells to target modules.</li>
 <li><strong>Native Spell Tooltips (<code>GameTooltip:SetSpellByID</code>)</strong>: Full spell description, cast time, range, and ID shown on hover.</li>
-<li><strong>Multidimensional Tactical Group Management Module</strong>:</li>
+</ul>
+</li>
+<li><strong>Multidimensional Tactical Group Management Module</strong>:<ul>
 <li><strong>Core Group Service (<code>GroupService</code>)</strong>: 4 built-in system tactical groups (Major Burst, Critical Mitigation, CC/Interrupt, Ground AoE) + custom tag groups.</li>
 <li>Many-to-many spell and group associations, independent global group toggles, and combat-only filters.</li>
 <li><strong>Dedicated Group Manager Panel (<code>GroupManagerPanel</code>)</strong>: Group name editing, independent save button, combat context filters, multi-select spell associations, and comprehensive hover tooltips.</li>
 <li><strong>Spell Detail Window Group Multi-Select (<code>Options.lua</code>)</strong>: Integrated multi-select dropdown button with live summaries in all spell condition windows.</li>
-<li><strong>Hardening &amp; Bug Fixes</strong>:</li>
+</ul>
+</li>
+<li><strong>Hardening &amp; Bug Fixes</strong>:<ul>
 <li><strong>Deprecated API Ban</strong>: Replaced all <code>GetSpellInfo</code>, <code>GetItemInfo</code>, <code>GetSpellCooldown</code> with modern <code>C_Spell</code> / <code>C_Item</code> APIs, guarded by CI static AST assertions.</li>
 <li><strong>Profile Codec Export/Import</strong>: Added uniqueness deduplication in <code>buildPayload</code>, fixing duplicateAlertID errors from legacy imported data.</li>
 <li><strong>Font Validation Fix</strong>: Added LSM fallback checks, ensuring invalid or unmapped font names safely fall back to STANDARD.</li>
 <li>Fixed condition window dropdown <code>SetText</code> type incompatibility.</li>
 </ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-82-20260827">🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27</h3>
 <ul>
-<li><strong>Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration</strong>:</li>
+<li><strong>Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration</strong>:<ul>
 <li>Dynamic discovery (<code>MediaService.ensureLSM()</code>), <code>PLAYER_LOGIN</code> deferred sync, third-party sound/font package support, dual-channel safe playback (<code>MediaService.playSound</code>), and 12.1 Native Aura sound routing.</li>
-<li><strong>Zero-Delay Live Font Application (No <code>/reload</code> Needed)</strong>:</li>
+</ul>
+</li>
+<li><strong>Zero-Delay Live Font Application (No <code>/reload</code> Needed)</strong>:<ul>
 <li>SavedVariables whitelist unlock, live refresh of preview icons, general alert icons, player resources, and player stats text.</li>
-<li><strong>Scrollable Dropdown Menus</strong>:</li>
+</ul>
+</li>
+<li><strong>Scrollable Dropdown Menus</strong>:<ul>
 <li>Adaptive <code>UIPanelScrollFrameTemplate</code> with smooth mouse wheel scrolling for long lists of media assets.</li>
+</ul>
+</li>
 </ul>
 <h3 id="retail-1210-alpha-81-20260826">📌 [Retail 12.1.0 Alpha 8.1] - 2026.08.26</h3>
 <ul>
-<li><strong>Persistent Pre-anchoring &amp; Zero-Alpha Cooldown Mode</strong>:</li>
+<li><strong>Persistent Pre-anchoring &amp; Zero-Alpha Cooldown Mode</strong>:<ul>
 <li>Pre-created frame structures and pre-calculated layout coordinates; <code>SetAlpha(0)</code> hiding on cooldown completion for 0.00ms latency and 100% combat lockdown immunity.</li>
-<li><strong>Combat Stat Memory Cache &amp; Multi-Tier Fallback</strong>:</li>
+</ul>
+</li>
+<li><strong>Combat Stat Memory Cache &amp; Multi-Tier Fallback</strong>:<ul>
 <li>Memory cache table (<code>lastKnownStats</code>) across 18 stats for seamless non-zero combat displays under restricted APIs.</li>
-<li><strong>Dual-Channel Shield &amp; Heal Absorb Detection</strong>:</li>
+</ul>
+</li>
+<li><strong>Dual-Channel Shield &amp; Heal Absorb Detection</strong>:<ul>
 <li>Native Unit APIs + <code>C_UnitAuras.points</code> accumulation.</li>
-<li><strong>Aura Shield Absorb Amount Display</strong>:</li>
+</ul>
+</li>
+<li><strong>Aura Shield Absorb Amount Display</strong>:<ul>
 <li>Overlay formatted shield amounts (e.g. <code>45.2k</code>, <code>1.2M</code>, <code>3(45k)</code>).</li>
+</ul>
+</li>
 </ul>
 <h3 id="retail-1210-alpha-80-20260825">📌 [Retail 12.1.0 Alpha 8.0] - 2026.08.25</h3>
 <ul>
-<li><strong>Per-Class Player Stat Profiles</strong>:</li>
+<li><strong>Per-Class Player Stat Profiles</strong>:<ul>
 <li>Completely isolated stat monitoring profiles, thresholds, and positions per class.</li>
-<li><strong>Iconless Adaptive Layout</strong>:</li>
+</ul>
+</li>
+<li><strong>Iconless Adaptive Layout</strong>:<ul>
 <li>Perfect equal spacing and zero text overlapping when icons are hidden.</li>
+</ul>
+</li>
 </ul>
 <h3 id="retail-1210-alpha-79-20260824">🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24</h3>
 <ul>
@@ -1543,11 +1687,15 @@
 <hr />
 <h2 id="compatibility">📌 Compatibility</h2>
 <ul>
-<li><strong>Supported Client Environments</strong>:</li>
+<li><strong>Supported Client Environments</strong>:<ul>
 <li>World of Warcraft: Retail 12.1.0+ (Interface <code>120100</code>)</li>
 <li>Retail Compatibility Channel 12.0.7+ (Interface <code>120007</code>)</li>
-<li><strong>Unsupported Environments</strong>:</li>
+</ul>
+</li>
+<li><strong>Unsupported Environments</strong>:<ul>
 <li>Classic Era, MoP Classic, TBC Classic, Wrath Classic (Out of scope for this Retail remake project).</li>
+</ul>
+</li>
 </ul>
 <hr />
 <h2 id="documentation-links">🌐 Documentation &amp; Links</h2>

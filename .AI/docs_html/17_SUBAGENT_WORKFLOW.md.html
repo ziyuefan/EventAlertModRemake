@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -523,20 +529,26 @@
 </ul>
 <h2 id="_3">適合使用子代理人的姿勢</h2>
 <ul>
-<li>大型重寫頻道中，可精密互不重疊模組：</li>
+<li>大型重寫頻道中，可精密互不重疊模組：<ul>
 <li><code>Services/AuraService.lua</code></li>
 <li><code>Services/CooldownService.lua</code></li>
 <li><code>UI/Renderer.lua</code></li>
 <li><code>Debug/PromptExport.lua</code></li>
+</ul>
+</li>
 <li>API 查詢與文件整理可和本地實作家具，例如：</li>
-<li>12.x API 更改來源複核。</li>
+<li>12.x API 更改來源複核。<ul>
 <li>秘密價值/污染討論整理。</li>
 <li>DurationObject / DurationTextBinding 實踐方式比較。</li>
-<li>驗證與掃描可與修復零件，例如：</li>
+</ul>
+</li>
+<li>驗證與掃描可與修復零件，例如：<ul>
 <li>搜尋舊API直接呼叫。</li>
 <li>檢查<code>table.freeze</code>錯誤用。</li>
 <li>檢查 <code>C_Timer.After(function() ...)</code> 熱路徑。</li>
 <li>對 Docs 與 AGENTS 進行一致性檢查。</li>
+</ul>
+</li>
 <li>大量文件中文化、術語統一、測試清單補齊。</li>
 <li>Package / CurseForge 發布流程的旁路檢查，例如排除清單、TOC 版本、zip 命名規則。</li>
 </ul>
@@ -582,15 +594,19 @@
 <ul>
 <li>分代理完成後，主代理需快速審查結果與文件差異。</li>
 <li>若子代理程式修改方案代碼，主代理程式仍需執行專案靜態驗證。</li>
-<li>若子代理提供 API 資訊，主代理人需標明來源系統：</li>
+<li>若子代理提供 API 資訊，主代理人需標明來源系統：<ul>
 <li>官方文件或魔獸爭霸Wiki。</li>
 <li>用戶提供。</li>
 <li>搜尋索引。</li>
 <li>實機驗證。</li>
+</ul>
+</li>
 <li>若子代理程式遇到工具限制、API不確定性或錯誤，需追加至<code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
-<li><strong>Markdown 絕對事實與 HTML 轉換守則</strong>：</li>
+<li><strong>Markdown 絕對事實與 HTML 轉換守則</strong>：<ul>
 <li>本專案與子代理程式開發協作的絕對指導文件，一律以 <code>AGENTS.md</code> 及其內文指名之 <code>.md</code> 檔案為唯一事實與 Facts-of-Truth 參考。</li>
 <li>HTML 版本人類好讀與預覽使用。子代理執行開發、唯讀分析與回寫時，必須一律以 <code>.md</code> 原檔為唯一事實基準，不得以 HTML 文件作為事實參考。</li>
+</ul>
+</li>
 <li>任務若修改了文件下的 <code>.md</code> 檔案或 <code>AGENTS.md</code>，必須於修改後執行轉換工具，更新 <code>docs_html/</code> 下對應的 <code>.html</code> 檔案以確保一致性。</li>
 </ul>
 <h2 id="raci-pr">RACI 專家分工與PR審查原則</h2>
@@ -679,20 +695,26 @@
 </ul>
 <h2 id="suitable-posture-for-using-subagents">Suitable posture for using subagents</h2>
 <ul>
-<li>In large rewrite channels, modules can be precisely non-overlapping:</li>
+<li>In large rewrite channels, modules can be precisely non-overlapping:<ul>
 <li><code>Services/AuraService.lua</code></li>
 <li><code>Services/CooldownService.lua</code></li>
 <li><code>UI/Renderer.lua</code></li>
 <li><code>Debug/PromptExport.lua</code></li>
+</ul>
+</li>
 <li>API Query and file organization can be implemented with local furniture, for example:</li>
-<li>12.x API Change source review.</li>
+<li>12.x API Change source review.<ul>
 <li>Secret value/contamination discussion organized.</li>
 <li>DurationObject / DurationTextBinding Comparison of practical methods.</li>
-<li>Verify and scan parts that can be repaired, such as:</li>
+</ul>
+</li>
+<li>Verify and scan parts that can be repaired, such as:<ul>
 <li>Search for old API calls directly.</li>
 <li>Check for <code>table.freeze</code> errors.</li>
 <li>Check <code>C_Timer.After(function() ...)</code> hot path.</li>
 <li>Conformance check between Docs and AGENTS.</li>
+</ul>
+</li>
 <li>Unified culture and terminology in a large number of documents, and completed test lists.</li>
 <li>Package/CurseForge Bypass checks for the release process, such as exclusion lists, TOC versions, zip naming rules.</li>
 </ul>
@@ -738,14 +760,18 @@ Unless there is a clear reason for the task, subagents use the default inheritan
 <ul>
 <li>After the sub-agent is completed, the main agent needs to quickly review the results and document differences.</li>
 <li>If the subagent modifies the project code, the main agent still needs to perform static verification of the project.</li>
-<li>If the sub-agent provides API information, the main agent needs to indicate the source system:</li>
+<li>If the sub-agent provides API information, the main agent needs to indicate the source system:<ul>
 <li>Official documentation or the Warcraft Wiki.</li>
 <li>User provided.</li>
 <li>Search index.</li>
 <li>Real machine verification.</li>
+</ul>
+</li>
 <li>If the subagent encounters tool limitations, API uncertainties, or errors, it needs to be appended to <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.</li>
-<li><strong>Markdown absolute facts and HTML conversion code</strong>:</li>
+<li><strong>Markdown absolute facts and HTML conversion code</strong>:<ul>
 <li>The absolute guidance document for this project and subagent development collaboration will always use <code>AGENTS.md</code> and the <code>.md</code> file named in its content as the only fact and Facts-of-Truth reference.</li>
+</ul>
+</li>
 <li>HTML version for human readability and preview use. When the subagent performs development, read-only analysis, and writeback, it must always use the <code>.md</code> original file as the only factual basis, and must not use the HTML file as the factual reference.</li>
 <li>If the task modifies the <code>.md</code> file or <code>AGENTS.md</code> under the file, the conversion tool must be executed after the modification and the corresponding <code>.html</code> file under <code>docs_html/</code> is updated to ensure consistency.</li>
 </ul>

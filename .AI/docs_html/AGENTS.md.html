@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -521,11 +527,15 @@
 <li>涉及 12.x API、Secret Values、C_* 命名空間或 Widget 行為時，需優先參考 <code>Docs</code> 與最新魔獸爭霸 Wiki API 變更資訊。</li>
 <li>尚未完成WoW正式實用機驗證，除非確實在WoW Retail中加載並測試過。</li>
 <li>消耗開發時，文件/內相關文件必須主動一併同步更新，保持文件與程式碼的一致性，不得等待使用者指示（不要一動才一動）。</li>
-<li><strong>檔案與HTML轉換規則</strong>：</li>
+<li><strong>檔案與HTML轉換規則</strong>：<ul>
 <li>後續開發與 AI 協作的絕對指導文件，一律以 <code>.AI/AGENTS.md</code> 以及其內文指名之 <code>.md</code> 文件為唯一事實與 Facts-of-Truth 參考。</li>
-<li>HTML版本成人人類（少年欸）在瀏覽器中觀看易讀使用，AI在讀寫器與參考時，必須一律以<code>.md</code>原檔為唯一基準，不得以HTML作為開發事實參考。</li>
+</ul>
+</li>
+<li>HTML版本成人人類（少年欸）在瀏覽器中觀看易讀使用，AI在讀寫器與參考時，必須一律以<code>.md</code>原檔為唯一基準，不得以HTML作為開發事實參考。<ul>
 <li>當<code>.AI/Docs/*.md</code>或<code>.AI/AGENTS.md</code>修改時包含心智圖（Mermaid）、表格、流程圖、映像時，必須執行轉換工具（<code>batch_convert_docs.py</code>），在<code>.AI/docs_html</code>內多產生一個同名的__EAMCODE___檔（例如檔案）。</li>
 <li>文件轉換預設使用 <code>$env:EAM_DOCS_OFFLINE='1'; python .\.AI\Tools\batch_convert_docs.py</code>，禁止未經少年欸明確授權就把 Markdown 全文送往外部翻譯服務。</li>
+</ul>
+</li>
 </ul>
 <h2 id="skillssh">Skills.sh 候選規則</h2>
 <ul>
@@ -603,11 +613,15 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 </li>
 <li>
 <p><strong>四大核心檢查功能</strong>：</p>
-</li>
+<ul>
 <li><code>issecretvalue(value)</code>：判斷特定值是否受保護之秘密值（Secret Value）。</li>
+</ul>
+</li>
 <li><code>canaccessvalue(value)</code>：判斷目前是否有權限存取與讀取該值。</li>
-<li><code>canaccesstable(table)</code>：判斷整個表格物件可是否被安全讀取（非架構）。</li>
+<li><code>canaccesstable(table)</code>：判斷整個表格物件可是否被安全讀取（非架構）。<ul>
 <li><code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>：檢查表格物件結構本身是否被限製或包含秘密值已。</li>
+</ul>
+</li>
 <li><strong>表格索引防護（關鍵）</strong>：嚴禁使用為秘密值（如保證驗證的 <code>spellId</code> 或 <code>text</code> 等）的密鑰去對任何非安全的嚴重自訂表進行索引操作，否則會立即觸發<code>attempted to index a table that cannot beindexed with Key Secrets</code>錯誤。在自訂表索引進行之前，必須先<code>issecretvalue(key)</code>確認該金鑰匙不是受保護的秘密值，並以<code>canaccesstable(targetTable)</code>檢查表安全性。</li>
 <li>先確認來源表是否為秘密（<code>canaccesstable</code>），再讀取欄位，再確認欄位值是否為秘密（<code>issecretvalue</code>）。</li>
 <li>未確認安全前，不得對duration、expirationTime、spellID、timeLeft等值做算術、比較、字串化、表鍵、序列化或任何函數輸入。</li>
@@ -620,13 +634,19 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 </li>
 <li>
 <p><strong>三大核心檢查功能</strong>：</p>
-</li>
+<ul>
 <li><code>issecretvalue(value)</code>：判斷特定值是否受保護之秘密值（Secret Value）。</li>
-<li><code>canaccessvalue(value)</code>：判斷目前是否有權限存取與讀取該值。</li>
+</ul>
+</li>
+<li><code>canaccessvalue(value)</code>：判斷目前是否有權限存取與讀取該值。<ul>
 <li><code>canaccesstable(table)</code>：判斷整個表格物件可是否被安全讀取（非架構）。</li>
-<li><strong>表格特殊檢查與索引防禦</strong>：</li>
+</ul>
+</li>
+<li><strong>表格特殊檢查與索引防禦</strong>：<ul>
 <li><code>issecrettable(table)</code>：檢查目標表本身是否已被標記為 Secret Table。</li>
 <li><code>hasanysecretvalues(table)</code>：檢查表中是否包含任何秘密值（Secret Values）。</li>
+</ul>
+</li>
 <li><strong>表格索引防護（關鍵）</strong>：嚴禁使用為秘密值（如保證驗證的 <code>spellId</code> 或 <code>text</code> 等）的密鑰去對任何非安全的嚴重自訂表進行索引操作，否則會立即觸發<code>attempted to index a table that cannot beindexed with Key Secrets</code>錯誤。在自訂表索引進行之前，必須先<code>issecretvalue(key)</code>確認該金鑰匙不是受保護的秘密值，並以<code>canaccesstable(targetTable)</code>檢查表安全性。</li>
 <li>先確認來源表是否為秘密（<code>canaccesstable</code>），再讀取欄位，再確認欄位值是否為秘密（<code>issecretvalue</code>）。</li>
 <li>未確認安全前，不得對duration、expirationTime、spellID、timeLeft等值做算術、比較、字串化、表鍵、序列化或任何函數輸入。</li>
@@ -713,12 +733,14 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 <ul>
 <li>除錯預設關閉。</li>
 <li>除錯 偵錯必須達到。</li>
-<li>快照需分割：</li>
+<li>快照需分割：<ul>
 <li>事實</li>
 <li>派生
   ——人類筆記</li>
 <li>boundaryWarnings</li>
 <li>環境</li>
+</ul>
+</li>
 <li>不輸出巨大的日誌。</li>
 <li>匯出字符串僅在使用者明確要求時建立。</li>
 </ul>
@@ -781,18 +803,24 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 <h2 id="token-secret-token-security-governance">機密憑證與 Token 安全防護規範 (Secret &amp; Token Security Governance)</h2>
 <p>為防止創作者 API Token、私鑰與敏感金鑰意外洩漏，實施以下絕對安全與隔離邊界：</p>
 <ul>
-<li><strong>100% 本機隔離原則</strong>：</li>
+<li><strong>100% 本機隔離原則</strong>：<ul>
 <li>任何平台發布 Token（包括 CurseForge API Token、WoWInterface Token、個人 Access Token 等）<strong>永遠只留存在本機</strong>。</li>
 <li>絕對禁止將任何 Token 寫入程式碼、註解、測試檔案、Git 提交歷史或公開對話中。</li>
 <li>絕對禁止將含有 Token 的檔案納入任何發布 ZIP 壓縮包（無論是 AddOn 插件包還是 Source 原始碼包）。</li>
-<li><strong>本機雙重加密防護 (Windows DPAPI)</strong>：</li>
+</ul>
+</li>
+<li><strong>本機雙重加密防護 (Windows DPAPI)</strong>：<ul>
 <li>本機 Token 統一透過微軟 Windows DPAPI (Data Protection API) 加密成二進位密文保存於 <code>.AI/API_TOKEN.SEC</code>。</li>
 <li>該密文嚴格綁定當前 Windows 使用者登入帳號與本機硬體金鑰，即使檔案外流他人也無法解密。</li>
 <li>專案 <code>.gitignore</code> 與 <code>Build-SourcePackage.ps1</code>、<code>Build-Package.ps1</code> 必須強制排除 <code>*.SEC</code>、<code>*.sec</code>、<code>API_TOKEN.SEC</code>、<code>*secret*</code>、<code>*token*</code>、<code>.env*</code>。</li>
-<li><strong>CurseForge 發布邊界</strong>：</li>
+</ul>
+</li>
+<li><strong>CurseForge 發布邊界</strong>：<ul>
 <li>本機發布統一調用 <code>Deploy/Upload-CurseForge.ps1</code> 工具，支援 CLI 傳參與對話式詢問模式，並提供 <code>-DryRun</code> 模擬模式供發布前全真驗證。</li>
 <li>執行上傳時，腳本僅在記憶體中瞬時解密 Token，並在終端機顯示時自動遮蔽（Masking），執行完畢即自記憶體釋放。</li>
 <li>GitHub Actions 自動發布目前維持停用狀態 (<code>if: false</code>)，未經少年欸授權不得建立或啟用任何包含 Token 的雲端發布腳本。</li>
+</ul>
+</li>
 </ul>
 <h2 id="_14">快速指令</h2>
 <ul>
@@ -926,12 +954,14 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 <ul>
 <li>除錯預設關閉。</li>
 <li>除錯 偵錯必須達到。</li>
-<li>快照需分割：</li>
+<li>快照需分割：<ul>
 <li>事實</li>
 <li>派生
   ——人類筆記</li>
 <li>boundaryWarnings</li>
 <li>環境</li>
+</ul>
+</li>
 <li>不輸出巨大的日誌。</li>
 <li>匯出字符串僅在使用者明確要求時建立。</li>
 </ul>
@@ -1115,10 +1145,12 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 <li>For 12.x APIs, Secret Values, <code>C_*</code> namespaces, or Widget behavior, always prioritize <code>Docs/</code> and latest Warcraft Wiki / Blizzard API intelligence.</li>
 <li>Never claim in-game verification unless loaded and tested within a live WoW Retail client.</li>
 <li>When code is modified, documentation under <code>.AI/Docs/</code> must be proactively kept in sync without waiting for user prompting.</li>
-<li><strong>Markdown &amp; HTML Conversion Rules</strong>:</li>
+<li><strong>Markdown &amp; HTML Conversion Rules</strong>:<ul>
 <li>The absolute Fact-of-Truth for development and AI collaboration is <code>.AI/AGENTS.md</code> and related <code>.md</code> files under <code>.AI/Docs/</code>.</li>
 <li>The HTML site under <code>.AI/docs_html/</code> is strictly for human browser reading; AI tools and agents must always read original <code>.md</code> files.</li>
 <li>When <code>.AI/Docs/*.md</code> or <code>AGENTS.md</code> are updated with Mermaid charts, tables, or images, run <code>python .AI/Tools/batch_convert_docs.py</code> to regenerate the HTML documentation.</li>
+</ul>
+</li>
 </ul>
 <hr />
 <h2 id="required-reading-list">Required Reading List</h2>
@@ -1173,17 +1205,17 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 <h3 id="1-secret-protected-values-defense-retail-12x-midnight">1. Secret / Protected Values Defense (Retail 12.x / Midnight)</h3>
 <p>Retail 12.x may mark auras, cooldowns, timers, points, or unit values as Secret / Protected. To prevent fatal Lua errors or Taint crashes in combat:
 - <strong>Four Core Verification APIs</strong>:
-  - <code>issecretvalue(value)</code>: Checks if a value is a protected Secret Value.
-  - <code>canaccessvalue(value)</code>: Checks if current execution context has permission to read the value.
-  - <code>canaccesstable(table)</code>: Checks if a table structure can be safely accessed.
-  - <code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Checks if table contains secret properties.
+    - <code>issecretvalue(value)</code>: Checks if a value is a protected Secret Value.
+    - <code>canaccessvalue(value)</code>: Checks if current execution context has permission to read the value.
+    - <code>canaccesstable(table)</code>: Checks if a table structure can be safely accessed.
+    - <code>issecrettable(table)</code> / <code>hasanysecretvalues(table)</code>: Checks if table contains secret properties.
 - <strong>Table Indexing Protection (CRITICAL)</strong>:
-  - NEVER use a Secret Value (e.g. protected <code>spellID</code> or <code>text</code>) as a key to index any non-secret Lua table:
+    - NEVER use a Secret Value (e.g. protected <code>spellID</code> or <code>text</code>) as a key to index any non-secret Lua table:
     <code>attempted to index a table that cannot be indexed with Key Secrets</code>.
-  - Always verify <code>not issecretvalue(key)</code> before indexing.
+    - Always verify <code>not issecretvalue(key)</code> before indexing.
 - <strong>Never Arithmetic or Concatenate Secrets</strong>:
-  - Do NOT perform arithmetic (<code>+</code>, <code>-</code>, <code>*</code>), string concatenation (<code>..</code>), or comparisons (<code>&lt;</code>, <code>&gt;</code>) on Secret Numbers.
-  - Route secret numbers directly to native C-Level sinks:
+    - Do NOT perform arithmetic (<code>+</code>, <code>-</code>, <code>*</code>), string concatenation (<code>..</code>), or comparisons (<code>&lt;</code>, <code>&gt;</code>) on Secret Numbers.
+    - Route secret numbers directly to native C-Level sinks:
     - <code>FontString:SetFormattedText("%d", secretNum)</code> (AllowedWhenTainted = true, SecretAspect.Text).
     - <code>StatusBar:SetValue(secretNum)</code> (Write-only sink).
     - <code>DurationObject</code> pointer passing for CooldownFrame widgets.</p>

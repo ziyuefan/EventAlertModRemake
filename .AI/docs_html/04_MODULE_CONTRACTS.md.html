@@ -92,6 +92,12 @@
         margin-bottom: 6px;
     }
 
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
     hr {
         border: 0;
         height: 1px;
@@ -571,12 +577,14 @@
 <ul>
 <li><code>CreateTable</code>、<code>FreezeTable</code>、<code>IsFrozen</code>、泳池助手、安全擦除/release、
   穩定的枚舉助手，除錯斷言</li>
-<li>Secret/protected 值安全讀取助手：</li>
+<li>Secret/protected 值安全讀取助手：<ul>
 <li><code>readSafeField</code></li>
 <li><code>readSafeScalar</code></li>
 <li><code>markBoundary</code></li>
 <li><code>appendBoundaryWarning</code></li>
 <li><code>clearTimer</code></li>
+</ul>
+</li>
 </ul>
 <p>狀態變更：</p>
 <ul>
@@ -880,11 +888,13 @@
 <ul>
 <li>透過 <code>SavedVariables</code> 配置變更</li>
 <li>使用本機「GetSpecializationInfoForClassID(classID, specIndex)」和強大的靜態後備表進行動態、本地化專業化下拉過濾，確保 100% 本地化類別 /spec UI 文本，無需硬編碼</li>
-<li>用於明確 add/remove 操作的最小遊戲內面板：</li>
+<li>用於明確 add/remove 操作的最小遊戲內面板：<ul>
 <li>玩家光環spellID</li>
 <li>目標光環spellID</li>
 <li>法術冷卻時間spellID</li>
 <li>物品冷卻時間itemID</li>
+</ul>
+</li>
 <li>用戶觸發變更成功後立即刷新服務</li>
 </ul>
 <p>狀態變更：</p>
