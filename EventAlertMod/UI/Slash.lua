@@ -55,31 +55,38 @@ local function refreshAfterChange(kind, unit, numericID)
         EAM.Services.CooldownService.refreshSpell(numericID, "SLASH_CONFIG")
     elseif kind == "item" and EAM.Services.ItemCooldownService then
         EAM.Services.ItemCooldownService.refreshItem(numericID, "SLASH_CONFIG")
+    elseif kind == "ground" and EAM.Services.GroundEffectService then
+        if EAM.Services.GroundEffectService.onConfigChanged then
+            EAM.Services.GroundEffectService.onConfigChanged()
+        end
     end
 end
 
 local function printHelp()
-    printLine(EAM.L.EAM_SLASH_HELP_OPT or "/eam opt - 開啟設定")
-    printLine(EAM.L.EAM_SLASH_HELP_RESET or "/eam reset (或 /eam center / resetpos) - 將主視窗重置回螢幕中央")
-    printLine(EAM.L.EAM_SLASH_HELP_LIST or "/eam list - 顯示目前職業監控清單")
-    printLine(EAM.L.EAM_SLASH_HELP_LOOKUP or "/eam lookup <名稱> - 查詢目前職業候選")
-    printLine(EAM.L.EAM_SLASH_HELP_LOOKUPFULL or "/eam lookupfull <完整名稱> - 精確查詢目前職業候選")
-    printLine(EAM.L.EAM_SLASH_HELP_SHOWCAST or "/eam showcast - 開始或停止本次登入施法記錄")
-    printLine(EAM.L.EAM_SLASH_HELP_SHOW or "/eam show/showtarget - 顯示 12.1 安全替代說明")
-    printLine(EAM.L.EAM_SLASH_HELP_DOCTOR or "/eam doctor - 顯示 Retail/PTR API 邊界診斷")
+    printLine(EAM.L.EAM_SLASH_HELP_OPT or "/eam opt - 開啟或關閉設定視窗")
+    printLine(EAM.L.EAM_SLASH_HELP_RESET or "/eam reset (或 /eam center / resetpos) - 將主視窗與圖示重置回螢幕中央")
+    printLine(EAM.L.EAM_SLASH_HELP_PREVIEW or "/eam preview (或 /eam p) - 開啟或關閉即時效果預覽浮動視窗")
+    printLine(EAM.L.EAM_SLASH_HELP_LIST or "/eam list - 顯示目前職業已啟用的監控清單")
+    printLine(EAM.L.EAM_SLASH_HELP_LOOKUP or "/eam lookup <名稱> - 模糊搜尋目前職業可監控的法術")
+    printLine(EAM.L.EAM_SLASH_HELP_LOOKUPFULL or "/eam lookupfull <完整名稱> - 精確搜尋目前職業可監控的法術")
+    printLine(EAM.L.EAM_SLASH_HELP_SHOWCAST or "/eam showcast - 開始或停止本次登入的玩家成功施法記錄")
+    printLine(EAM.L.EAM_SLASH_HELP_SHOW or "/eam show/showtarget - 顯示 Retail 12.1 安全監控替代說明")
+    printLine(EAM.L.EAM_SLASH_HELP_DOCTOR or "/eam doctor (或 /eam validate) - 執行 Retail/PTR API 邊界與相容性診斷")
     printLine(EAM.L.EAM_SLASH_HELP_VALIDATE or "/eam validate - 同 /eam doctor")
-    printLine(EAM.L.EAM_SLASH_HELP_DIAG or "/eam diag (或 /eam report) - 開啟外掛即時診斷報告並支援一鍵複製")
-    printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示除錯摘要")
-    printLine(EAM.L.EAM_SLASH_HELP_RUNE or "/eam rune - 顯示並複製 DK 符文即時槽位診斷 JSON")
-    printLine(EAM.L.EAM_SLASH_HELP_EXPORT or "/eam export - 輸出精簡 AI debug 狀態")
-    printLine(EAM.L.EAM_SLASH_HELP_PROFILE or "/eam profile [export|import] - 開啟職業 profile JSON/Base64 分享")
-    printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick|core|boundary|aura121|all|live] - 流程驗證或真人實機回報")
-    printLine(EAM.L.EAM_SLASH_HELP_ADD or "/eam add <spellID> - 新增 player aura")
-    printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam addt (或 /eam add target) [spellID] - 新增 target aura；無 ID 開啟手動視窗")
-    printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER or "/eam unitpower background <RESOURCE_KEY> - 標記背景資源缺少事件，啟用共用 sampler")
-    printLine(EAM.L.EAM_SLASH_HELP_ADD_CD or "/eam addc (或 /eam add cd) <spellID> - 新增 spell cooldown")
-    printLine(EAM.L.EAM_SLASH_HELP_ADD_ITEM or "/eam addi (或 /eam add item) <itemID> - 新增 item cooldown")
-    printLine(EAM.L.EAM_SLASH_HELP_REMOVE or "/eam remove (或 rem/del) <spellID|target|cd|item> <id> - 移除 alert")
+    printLine(EAM.L.EAM_SLASH_HELP_DIAG or "/eam diag (或 /eam report) - 開啟外掛即時診斷報告視窗並支援一鍵複製")
+    printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示內部模組運作除錯摘要")
+    printLine(EAM.L.EAM_SLASH_HELP_RUNE or "/eam rune - 顯示並複製死亡騎士符文即時槽位診斷 JSON")
+    printLine(EAM.L.EAM_SLASH_HELP_EXPORT or "/eam export - 輸出精簡 AI 除錯與診斷狀態")
+    printLine(EAM.L.EAM_SLASH_HELP_PROFILE or "/eam profile [export/import] - 開啟職業設定字串匯出/匯入視窗")
+    printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick/core/boundary/aura121/all/live] - 執行流程驗證或開啟測試面版")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD or "/eam add <法術ID> - 新增自身光環提示")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD_TARGET or "/eam add target [法術ID] (或 /eam addt) - 新增目標光環提示；無 ID 開啟手動視窗")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD_CD or "/eam add cd <法術ID> (或 /eam addc) - 新增技能冷卻提示")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD_ITEM or "/eam add item <物品ID> (或 /eam addi) - 新增物品冷卻提示")
+    printLine(EAM.L.EAM_SLASH_HELP_ADD_GROUND or "/eam add ground <法術ID> (或 /eam addg) - 新增地面效果提示")
+    printLine(EAM.L.EAM_SLASH_HELP_REMOVE or "/eam remove <spell/target/cd/item/ground> <ID> (或 /eam rem) - 移除指定監控提示")
+    printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER or "/eam unitpower background <資源類型> - 標記背景資源缺少事件，啟用共用採樣器")
+    printLine(EAM.L.EAM_SLASH_HELP_LANG or "/eam lang <auto/zhTW/zhCN/enUS/koKR/ruRU> - 即時切換外掛介面語系")
 end
 
 local function parseKindAndID(iterator)
@@ -91,7 +98,7 @@ local function parseKindAndID(iterator)
     end
 
     token = string.lower(token)
-    if token == "player" or token == "self" then
+    if token == "player" or token == "self" or token == "spell" then
         unit = "player"
         token = iterator()
     elseif token == "target" then
@@ -103,6 +110,10 @@ local function parseKindAndID(iterator)
         token = iterator()
     elseif token == "item" or token == "itemcooldown" then
         kind = "item"
+        unit = nil
+        token = iterator()
+    elseif token == "ground" or token == "groundeffect" or token == "ge" then
+        kind = "ground"
         unit = nil
         token = iterator()
     end
@@ -166,6 +177,14 @@ local function mutateAlert(action, input, command)
         if num and num > 0 then
             numericID = mathFloor(num)
         end
+    elseif command == "addg" or command == "remg" or command == "delg" then
+        kind = "ground"
+        unit = nil
+        local token = iterator()
+        local num = tonumber(token)
+        if num and num > 0 then
+            numericID = mathFloor(num)
+        end
     else
         kind, unit, numericID = parseKindAndID(iterator)
     end
@@ -193,6 +212,12 @@ local function mutateAlert(action, input, command)
             ok, id, status = savedVariables.addItemCooldownAlert(numericID)
         else
             ok, id, status = savedVariables.removeItemCooldownAlert(numericID)
+        end
+    elseif kind == "ground" then
+        if action == "add" then
+            ok, id, status = savedVariables.addGroundEffectAlert(numericID, { enabled = true, durationMode = "AUTO" })
+        else
+            ok, id, status = savedVariables.removeGroundEffectAlert(numericID)
         end
     end
 
@@ -509,10 +534,10 @@ local function handleSlash(input)
         handleUnitPower(input)
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()
-    elseif command == "add" or command == "addt" or command == "addc" or command == "addi" then
+    elseif command == "add" or command == "addt" or command == "addc" or command == "addi" or command == "addg" then
         mutateAlert("add", input, command)
-    elseif command == "remove" or command == "rem" or command == "remt" or command == "remc" or command == "remi"
-        or command == "del" or command == "delt" or command == "delc" or command == "deli"
+    elseif command == "remove" or command == "rem" or command == "remt" or command == "remc" or command == "remi" or command == "remg"
+        or command == "del" or command == "delt" or command == "delc" or command == "deli" or command == "delg"
     then
         mutateAlert("remove", input, command)
     elseif command == "list" then
@@ -531,6 +556,34 @@ local function handleSlash(input)
         or command == "showenvadd" or command == "showe"
     then
         printAutoAddGuidance()
+    elseif command == "preview" or command == "p" then
+        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
+            EAM.UI.PreviewPanel.toggle()
+        else
+            printLine("EAM: PreviewPanel 模組尚未載入。")
+        end
+    elseif command == "lang" or command == "language" or command == "locale" then
+        local iterator = nextToken(input)
+        iterator() -- 跳過 command
+        local targetLang = iterator()
+        if not targetLang or targetLang == "" then
+            printLine(EAM.L.EAM_SLASH_LANG_USAGE or "語系指令用法：/eam lang <auto|zhTW|zhCN|enUS|koKR|ruRU>")
+        else
+            local savedVariables = EAM.Modules.SavedVariables
+            local ok, status
+            if savedVariables and savedVariables.updateLanguage then
+                ok, status = savedVariables.updateLanguage(targetLang)
+            elseif EAM.Locale and EAM.Locale.apply then
+                ok, status = EAM.Locale.apply(targetLang)
+            end
+            if ok then
+                local label = (EAM.Locale and EAM.Locale.getOptionLabel and EAM.Locale.getOptionLabel(targetLang)) or targetLang
+                local template = EAM.L.EAM_SLASH_LANG_CHANGED or "已切換 EAM 介面語系為：%s"
+                printLine(stringFormat(template, label))
+            else
+                printLine((EAM.L.EAM_SLASH_OP_FAIL or "操作失敗: ") .. tostring(status))
+            end
+        end
     elseif command == "help" then
         printHelp()
     elseif command == "reset" or command == "resetpos" or command == "center" then
