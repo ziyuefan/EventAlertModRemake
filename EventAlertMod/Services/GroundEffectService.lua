@@ -283,8 +283,8 @@ local function compileAlerts()
     GroundEffectService.compiledEventSpellCount = 0
     GroundEffectService.familyCollisionCount = 0
     local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
-    local alerts = savedVariables and savedVariables.getActiveAlerts
-        and savedVariables.getActiveAlerts() or nil
+    local alerts = (savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts(EAM.db))
+        or (EAM.db and EAM.db.alerts)
     local list = alerts and alerts.groundEffects
     if type(list) == "table" and Util.canAccessTable(list) then
         for _, alert in pairs(list) do
@@ -305,12 +305,12 @@ end
 local function verifyCompiledAlerts()
     local revision = EAM.db and EAM.db.revision or 0
     if revision ~= GroundEffectService.lastDbRevision then
-        if inCombat() then
-            GroundEffectService.pendingCompile = true
-            GroundEffectService.pendingResolve = true
-            return false, "combatCompileDeferred"
-        end
         compileAlerts()
+        if inCombat() then
+            GroundEffectService.pendingResolve = true
+        else
+            GroundEffectService.refreshDurationCache()
+        end
     end
     return true, "compiled"
 end
@@ -473,7 +473,7 @@ local function triggerGroundEffect(canonicalSpellID, activationSpellID)
             icon = tonumber(alert.customIcon) or alert.customIcon
         end
         state = GroundEffectStatePool.acquire()
-        state.id = "groundEffect_" .. canonicalSpellID
+        state.id = (alert and alert.id) or ("groundEffect:player:" .. canonicalSpellID)
         state.kind = EAM.Constants.ALERT_KIND_GROUND_EFFECT
         state.spellID = canonicalSpellID
         state.name = name
@@ -483,6 +483,9 @@ local function triggerGroundEffect(canonicalSpellID, activationSpellID)
         GroundEffectService.activeStates[canonicalSpellID] = state
     end
 
+    state.rawAlert = alert
+    state.order = alert and alert.order or nil
+    state.active = true
     state.shown = true
     state.timer.mode = EAM.Constants.TIMER_NUMERIC
     state.timer.startTime = now
@@ -550,6 +553,31 @@ function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spe
         canonicalSpellID = GroundEffectService.configuredSpellIDByEventID[spellID]
     end
     if not safeSpellID(canonicalSpellID) then
+        -- 動態反向法術家族解析：當靜態查表未命中時，比對 baseSpellID 與 overrideSpellID
+        local cSpell = api.C_Spell
+        if cSpell then
+            local baseSpellID = resolveSpellIdentifier(cSpell.GetBaseSpell, spellID)
+            local overrideSpellID = resolveSpellIdentifier(cSpell.GetOverrideSpell, spellID)
+            if baseSpellID and GroundEffectService.alertsBySpellID[baseSpellID] then
+                canonicalSpellID = baseSpellID
+            elseif overrideSpellID and GroundEffectService.alertsBySpellID[overrideSpellID] then
+                canonicalSpellID = overrideSpellID
+            else
+                for cID in pairs(GroundEffectService.alertsBySpellID) do
+                    local cBase = resolveSpellIdentifier(cSpell.GetBaseSpell, cID)
+                    local cOver = resolveSpellIdentifier(cSpell.GetOverrideSpell, cID)
+                    if (cBase and cBase == spellID) or (cOver and cOver == spellID) then
+                        canonicalSpellID = cID
+                        break
+                    end
+                end
+            end
+            if safeSpellID(canonicalSpellID) then
+                GroundEffectService.configuredSpellIDByEventID[spellID] = canonicalSpellID
+            end
+        end
+    end
+    if not safeSpellID(canonicalSpellID) then
         GroundEffectService.lastTriggerResult = "notMonitored"
         return false, "notMonitored"
     end
@@ -567,7 +595,11 @@ function GroundEffectService.onConfigChanged()
         return false, "combatCompileDeferred"
     end
     compileAlerts()
-    return GroundEffectService.refreshDurationCache()
+    local ok, count = GroundEffectService.refreshDurationCache()
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
+        pcall(EAM.UI.Renderer.prewarmAlertFrames)
+    end
+    return ok, count
 end
 
 function GroundEffectService.onSpellTopologyChanged(eventName, unit)
@@ -583,7 +615,11 @@ function GroundEffectService.onSpellTopologyChanged(eventName, unit)
         return false, "combatCompileDeferred"
     end
     compileAlerts()
-    return GroundEffectService.refreshDurationCache()
+    local ok, count = GroundEffectService.refreshDurationCache()
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
+        pcall(EAM.UI.Renderer.prewarmAlertFrames)
+    end
+    return ok, count
 end
 
 function GroundEffectService.onCombatEnd()
@@ -594,18 +630,23 @@ function GroundEffectService.onCombatEnd()
         compileAlerts()
         GroundEffectService.pendingResolve = true
     end
+    local result = true
+    local reason = "unchanged"
     if GroundEffectService.pendingResolve then
-        return GroundEffectService.refreshDurationCache()
+        result, reason = GroundEffectService.refreshDurationCache()
     end
-    return true, "unchanged"
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
+        pcall(EAM.UI.Renderer.prewarmAlertFrames)
+    end
+    return result, reason
 end
 
 function GroundEffectService.initialize()
     Scheduler = EAM.Modules.Scheduler
     GroundEffectStatePool.initialize()
     local savedVariables = EAM.Modules.SavedVariables
-    local alerts = savedVariables and savedVariables.getActiveAlerts
-        and savedVariables.getActiveAlerts() or nil
+    local alerts = (savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts(EAM.db))
+        or (EAM.db and EAM.db.alerts)
     local list = alerts and alerts.groundEffects
     if savedVariables and list then
         for spellID, definition in pairs(GroundEffectService.defaults) do
@@ -618,6 +659,9 @@ function GroundEffectService.initialize()
     compileAlerts()
     if moduleEnabled() then
         GroundEffectService.refreshDurationCache()
+    end
+    if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
+        pcall(EAM.UI.Renderer.prewarmAlertFrames)
     end
 
     local router = EAM.Modules.EventRouter

@@ -189,8 +189,17 @@ local function autoApplyDraft()
         else
             Panel.statusText:SetText(localized("EAM_RESOURCE_STATUS_APPLIED_NOW", "資源設定已即時生效。"))
         end
-        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
-            EAM.UI.PreviewPanel.refresh()
+        if service and service.updateAll then
+            service.updateAll()
+        end
+    end
+    local PreviewPanel = EAM.UI.PreviewPanel
+    if PreviewPanel then
+        if PreviewPanel.refreshResourcePreview then
+            PreviewPanel.refreshResourcePreview()
+        end
+        if PreviewPanel.refresh then
+            PreviewPanel.refresh()
         end
     end
 end
@@ -239,8 +248,19 @@ local function createSlider(parent, spec, x, y)
     slider.eamPercent = spec.percent == true
     slider.eamInteger = spec.integer == true
 
+    local valueText = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    valueText:SetPoint("BOTTOMRIGHT", slider, "TOPRIGHT", 0, 5)
+    valueText:SetJustifyH("RIGHT")
+    if Theme and Theme.registerText then
+        Theme.registerText(valueText, "body")
+    end
+    slider.valueText = valueText
+
     local label = slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     label:SetPoint("BOTTOMLEFT", slider, "TOPLEFT", 0, 5)
+    label:SetPoint("RIGHT", valueText, "LEFT", -4, 0)
+    label:SetJustifyH("LEFT")
+    label:SetWordWrap(false)
     Locale.bindText(label, spec.key, spec.fallback)
     if Theme and Theme.registerText then
         Theme.registerText(label, "body")
@@ -249,13 +269,6 @@ local function createSlider(parent, spec, x, y)
     if EAM.UI.setTooltip then
         EAM.UI.setTooltip(slider, "調整此項資源之" .. (spec.fallback or "數值"), spec.fallback)
     end
-
-    local valueText = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    valueText:SetPoint("BOTTOMRIGHT", slider, "TOPRIGHT", 0, 5)
-    if Theme and Theme.registerText then
-        Theme.registerText(valueText, "body")
-    end
-    slider.valueText = valueText
     slider:SetScript("OnValueChanged", function(self, value)
         updateSliderValueText(self, value)
         if not Panel.refreshing and Panel.draft then
@@ -354,6 +367,311 @@ local function cycleFontFamily()
     autoApplyDraft()
 end
 
+local function buildFontDropdownMenu()
+    local btn = Panel.fontFamilyButton
+    if not btn then return end
+
+    if not Panel.fontMenu then
+        local parentFrame = btn:GetParent() or Panel.frame or _G.UIParent
+        local menu = api.CreateFrame("Frame", "EAM_PlayerResourceFontMenu", parentFrame, "BackdropTemplate")
+        menu:SetFrameStrata("FULLSCREEN_DIALOG")
+        menu:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 12, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 }
+        })
+        menu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+        menu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+        menu:EnableMouse(true)
+        menu:Hide()
+        Panel.fontMenu = menu
+    end
+
+    local menu = Panel.fontMenu
+    local menuWidth = 444
+    local maxVisibleItems = 10
+    local itemHeight = 22
+
+    local scrollFrame = menu.scrollFrame
+    local scrollChild = menu.scrollChild
+    local buttons = menu.buttons or {}
+    menu.buttons = buttons
+
+    if not scrollFrame then
+        scrollFrame = api.CreateFrame("ScrollFrame", nil, menu, "UIPanelScrollFrameTemplate")
+        scrollFrame:SetPoint("TOPLEFT", menu, "TOPLEFT", 4, -4)
+        scrollFrame:SetPoint("BOTTOMRIGHT", menu, "BOTTOMRIGHT", -24, 4)
+        scrollFrame:EnableMouseWheel(true)
+        scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+            local current = self:GetVerticalScroll() or 0
+            local maxScroll = self:GetVerticalScrollRange() or 0
+            local step = itemHeight * 2
+            local target = math.max(0, math.min(maxScroll, current - delta * step))
+            self:SetVerticalScroll(target)
+        end)
+        scrollChild = api.CreateFrame("Frame", nil, scrollFrame)
+        scrollChild:SetPoint("TOPLEFT", scrollFrame, "TOPLEFT", 0, 0)
+        scrollFrame:SetScrollChild(scrollChild)
+        menu.scrollFrame = scrollFrame
+        menu.scrollChild = scrollChild
+    end
+
+    local list = getFontOptionsList() or {}
+    local total = #list
+    local visibleCount = math.min(total, maxVisibleItems)
+    local menuHeight = math.max(30, (visibleCount * itemHeight) + 8)
+
+    local buttonWidth = total > maxVisibleItems and (menuWidth - 30) or (menuWidth - 8)
+    menu:SetSize(menuWidth, menuHeight)
+    menu:ClearAllPoints()
+    menu:SetPoint("TOPLEFT", btn, "BOTTOMLEFT", 0, -2)
+
+    scrollChild:SetSize(buttonWidth, math.max(1, total * itemHeight))
+    if total <= maxVisibleItems then
+        scrollFrame:SetPoint("BOTTOMRIGHT", menu, "BOTTOMRIGHT", -4, 4)
+        local scrollBar = scrollFrame.ScrollBar or (scrollFrame.GetName and _G[scrollFrame:GetName() .. "ScrollBar"])
+        if scrollBar then scrollBar:Hide() end
+    else
+        scrollFrame:SetPoint("BOTTOMRIGHT", menu, "BOTTOMRIGHT", -24, 4)
+        local scrollBar = scrollFrame.ScrollBar or (scrollFrame.GetName and _G[scrollFrame:GetName() .. "ScrollBar"])
+        if scrollBar then scrollBar:Show() end
+    end
+    scrollFrame:SetVerticalScroll(0)
+
+    for i = 1, #buttons do
+        buttons[i]:Hide()
+    end
+
+    local curVal = Panel.draft and Panel.draft.fontFamily
+    for index = 1, total do
+        local item = list[index]
+        local b = buttons[index]
+        if not b then
+            b = api.CreateFrame("Button", nil, scrollChild)
+            b:SetSize(buttonWidth, itemHeight)
+            local bText = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            bText:SetPoint("LEFT", b, "LEFT", 6, 0)
+            b.text = bText
+            b:SetScript("OnEnter", function(self)
+                if self.text then self.text:SetTextColor(1, 0.85, 0.2, 1) end
+            end)
+            b:SetScript("OnLeave", function(self)
+                if self.text then
+                    if self.isSelected then
+                        self.text:SetTextColor(0.2, 1, 0.2, 1)
+                    else
+                        self.text:SetTextColor(0.85, 0.85, 0.85, 1)
+                    end
+                end
+            end)
+            if Theme and Theme.registerButton then Theme.registerButton(b) end
+            buttons[index] = b
+        end
+        b:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 2, -2 - (index - 1) * itemHeight)
+        local label = item.text or fontFamilyLabel(item.value)
+        local isSelected = (curVal == item.value)
+        b.isSelected = isSelected
+        if isSelected then
+            b.text:SetText("|cff00ff00[V] " .. label .. "|r")
+            b.text:SetTextColor(0.2, 1, 0.2, 1)
+        else
+            b.text:SetText("    " .. label)
+            b.text:SetTextColor(0.85, 0.85, 0.85, 1)
+        end
+        b:SetScript("OnClick", function()
+            if Panel.draft then
+                Panel.draft.fontFamily = item.value
+                Panel.fontFamilyButton:SetText(
+                    localized("EAM_RESOURCE_FONT_FAMILY", "字型") .. "："
+                        .. fontFamilyLabel(item.value)
+                )
+                autoApplyDraft()
+            end
+            menu:Hide()
+        end)
+        b:Show()
+    end
+end
+
+local function toggleFontMenu()
+    if not Panel.fontMenu then
+        buildFontDropdownMenu()
+        Panel.fontMenu:Show()
+    elseif Panel.fontMenu:IsShown() then
+        Panel.fontMenu:Hide()
+    else
+        buildFontDropdownMenu()
+        Panel.fontMenu:Show()
+    end
+end
+
+local activeDropdownMenu = nil
+local function closeActiveDropdown()
+    if activeDropdownMenu and activeDropdownMenu:IsShown() then
+        activeDropdownMenu:Hide()
+    end
+end
+
+local function toggleGenericDropdown(btn, options, onSelect, currentVal, customWidth)
+    if not btn then return end
+    if Panel.fontMenu and Panel.fontMenu:IsShown() then
+        Panel.fontMenu:Hide()
+    end
+    if activeDropdownMenu and activeDropdownMenu:IsShown() and activeDropdownMenu.ownerBtn == btn then
+        activeDropdownMenu:Hide()
+        return
+    end
+    closeActiveDropdown()
+
+    local parentFrame = btn:GetParent() or Panel.frame or _G.UIParent
+    if not Panel.genericDropdownMenu then
+        local menu = api.CreateFrame("Frame", "EAM_ResourceGenericDropdown", parentFrame, "BackdropTemplate")
+        menu:SetFrameStrata("FULLSCREEN_DIALOG")
+        menu:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 12, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 }
+        })
+        menu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
+        menu:SetBackdropBorderColor(0.7, 0.5, 0.25, 1)
+        menu:EnableMouse(true)
+        menu.buttons = {}
+        Panel.genericDropdownMenu = menu
+    end
+
+    local menu = Panel.genericDropdownMenu
+    menu.ownerBtn = btn
+    local width = customWidth or btn:GetWidth() or 210
+    local itemHeight = 22
+    local total = #options
+    local height = (total * itemHeight) + 8
+
+    menu:SetSize(width, height)
+    menu:ClearAllPoints()
+    menu:SetPoint("TOPLEFT", btn, "BOTTOMLEFT", 0, -2)
+
+    for i = 1, #menu.buttons do
+        menu.buttons[i]:Hide()
+    end
+
+    for idx = 1, total do
+        local opt = options[idx]
+        local b = menu.buttons[idx]
+        if not b then
+            b = api.CreateFrame("Button", nil, menu)
+            b:SetSize(width - 8, itemHeight)
+            local bText = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            bText:SetPoint("LEFT", b, "LEFT", 8, 0)
+            b.text = bText
+            b:SetScript("OnEnter", function(self)
+                if self.text then self.text:SetTextColor(1, 0.85, 0.2, 1) end
+            end)
+            b:SetScript("OnLeave", function(self)
+                if self.text then
+                    if self.isSelected then
+                        self.text:SetTextColor(0.2, 1, 0.2, 1)
+                    else
+                        self.text:SetTextColor(0.85, 0.85, 0.85, 1)
+                    end
+                end
+            end)
+            if Theme and Theme.registerButton then Theme.registerButton(b) end
+            menu.buttons[idx] = b
+        end
+        b:SetPoint("TOPLEFT", menu, "TOPLEFT", 4, -4 - (idx - 1) * itemHeight)
+        b:SetSize(width - 8, itemHeight)
+        local isSelected = (currentVal == opt.value)
+        b.isSelected = isSelected
+        local prefix = isSelected and "|cff00ff00[V] |r" or "    "
+        b.text:SetText(prefix .. opt.label)
+        if isSelected then
+            b.text:SetTextColor(0.2, 1, 0.2, 1)
+        else
+            b.text:SetTextColor(0.85, 0.85, 0.85, 1)
+        end
+        b:SetScript("OnClick", function()
+            menu:Hide()
+            if onSelect then onSelect(opt.value) end
+        end)
+        b:Show()
+    end
+
+    menu:Show()
+    activeDropdownMenu = menu
+end
+
+local function getModeOptions()
+    return {
+        { value = "AUTO", label = localized("EAM_RESOURCE_MODE_AUTO", "自動判斷 (Auto)") },
+        { value = "BAR", label = localized("EAM_RESOURCE_MODE_BAR", "長條條形 (Bar)") },
+        { value = "POINTS", label = localized("EAM_RESOURCE_MODE_POINTS", "離散點數 (Points)") },
+    }
+end
+
+local function selectDisplayMode(val)
+    if not Panel.draft then return end
+    Panel.draft.displayMode = val
+    if Panel.modeButton then
+        Panel.modeButton:SetText(
+            localized("EAM_RESOURCE_DISPLAY_MODE", "顯示模式") .. "："
+                .. localized("EAM_RESOURCE_MODE_" .. val, val)
+        )
+    end
+    autoApplyDraft()
+end
+
+local function getOrientationOptions()
+    return {
+        { value = "HORIZONTAL", label = localized("EAM_RESOURCE_ORIENTATION_HORIZONTAL", "水平排列 (Horizontal)") },
+        { value = "VERTICAL", label = localized("EAM_RESOURCE_ORIENTATION_VERTICAL", "垂直排列 (Vertical)") },
+    }
+end
+
+local function selectOrientation(val)
+    if not Panel.draft then return end
+    Panel.draft.orientation = val
+    if Panel.orientationButton then
+        Panel.orientationButton:SetText(
+            localized("EAM_RESOURCE_ORIENTATION", "方向") .. "："
+                .. localized("EAM_RESOURCE_ORIENTATION_" .. val, val)
+        )
+    end
+    autoApplyDraft()
+end
+
+local function getPointOptionsList()
+    local list = {}
+    for idx = 1, #POINT_OPTIONS do
+        local p = POINT_OPTIONS[idx]
+        table.insert(list, { value = p, label = p })
+    end
+    return list
+end
+
+local function selectPoint(field, val)
+    if not Panel.draft then return end
+    Panel.draft[field] = val
+    if Panel.controls and Panel.controls[field] then
+        Panel.controls[field]:SetText(pointLabel(field, val))
+    end
+    autoApplyDraft()
+end
+
+local function getScopeOptions()
+    return {
+        { value = "spec", label = localized("EAM_RESOURCE_SCOPE_SPEC", "目前專精覆寫") },
+        { value = "class", label = localized("EAM_RESOURCE_SCOPE_CLASS", "全職業通用預設") },
+    }
+end
+
+local function selectScope(val)
+    if not Panel.specializationID and val == "spec" then return end
+    Panel.scope = val
+    refreshEditor()
+end
+
 local function refreshScopeButton()
     if not Panel.scopeButton then
         return
@@ -450,6 +768,17 @@ local function selectResource(resourceKey)
         end
     end
     refreshEditor()
+    local PreviewPanel = EAM.UI.PreviewPanel
+    if PreviewPanel then
+        if PreviewPanel.frame and PreviewPanel.frame:IsShown() and PreviewPanel.selectTab then
+            PreviewPanel.selectTab(2)
+        elseif PreviewPanel.refreshResourcePreview then
+            PreviewPanel.refreshResourcePreview()
+        end
+        if PreviewPanel.refresh then
+            PreviewPanel.refresh()
+        end
+    end
 end
 
 function Panel.refresh()
@@ -541,7 +870,7 @@ local function createPanel()
     if EAM.UI.setTooltip then EAM.UI.setTooltip(previewBtn, "開啟或關閉獨立的即時效果預覽小視窗", "效果預覽") end
     previewBtn:SetScript("OnClick", function()
         if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
-            EAM.UI.PreviewPanel.toggle()
+            EAM.UI.PreviewPanel.toggle(2)
         end
     end)
     frame:SetBackdrop({
@@ -600,13 +929,10 @@ local function createPanel()
         Theme.registerButton(scopeButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(scopeButton, "切換目前專精專屬設定或全職業通用預設配置", "設定範圍")
+        EAM.UI.setTooltip(scopeButton, "點擊展開選單切換目前專精專屬設定或全職業通用預設配置", "設定範圍")
     end
     scopeButton:SetScript("OnClick", function()
-        if Panel.specializationID then
-            Panel.scope = Panel.scope == "spec" and "class" or "spec"
-            refreshEditor()
-        end
+        toggleGenericDropdown(scopeButton, getScopeOptions(), selectScope, Panel.scope, 174)
     end)
     Panel.scopeButton = scopeButton
 
@@ -752,20 +1078,11 @@ local function createPanel()
         Theme.registerButton(modeButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(modeButton, "切換資源條顯示風格（自動/長條條形/離散點數）", "顯示模式")
+        EAM.UI.setTooltip(modeButton, "點擊展開下拉選單切換資源條顯示風格（自動/長條條形/離散點數）", "顯示模式")
     end
     modeButton:SetScript("OnClick", function()
-        if not Panel.draft then
-            return
-        end
-        local current = Panel.draft.displayMode
-        Panel.draft.displayMode = current == "AUTO" and "BAR" or current == "BAR" and "POINTS" or "AUTO"
-        modeButton:SetText(
-            localized("EAM_RESOURCE_DISPLAY_MODE", "顯示模式")
-                .. "："
-                .. localized("EAM_RESOURCE_MODE_" .. Panel.draft.displayMode, Panel.draft.displayMode)
-        )
-        autoApplyDraft()
+        local cur = Panel.draft and Panel.draft.displayMode or "AUTO"
+        toggleGenericDropdown(modeButton, getModeOptions(), selectDisplayMode, cur, 210)
     end)
     Panel.modeButton = modeButton
 
@@ -776,9 +1093,12 @@ local function createPanel()
         Theme.registerButton(orientationButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(orientationButton, "切換資源條生長排列方向（水平或垂直）", "排列方向")
+        EAM.UI.setTooltip(orientationButton, "點擊展開下拉選單切換資源條排列方向（水平或垂直）", "排列方向")
     end
-    orientationButton:SetScript("OnClick", cycleOrientation)
+    orientationButton:SetScript("OnClick", function()
+        local cur = Panel.draft and Panel.draft.orientation or "HORIZONTAL"
+        toggleGenericDropdown(orientationButton, getOrientationOptions(), selectOrientation, cur, 210)
+    end)
     Panel.orientationButton = orientationButton
 
     createCheckbox(pageDisplay, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 16, -88, "當資源達到高亮門檻時觸發閃爍流光特效", "高於門檻時高亮")
@@ -806,10 +1126,16 @@ local function createPanel()
         Theme.registerButton(anchorButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(anchorButton, "循環切換資源框架相對於父錨點的位置", "父框架錨點")
+        EAM.UI.setTooltip(anchorButton, "點擊展開下拉選單選擇資源框架相對於父錨點的位置", "父框架錨點")
     end
-    anchorButton:SetScript("OnClick", function()
-        cyclePoint("anchor")
+    anchorButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    anchorButton:SetScript("OnClick", function(self, mouseBtn)
+        if mouseBtn == "RightButton" then
+            cyclePoint("anchor")
+        else
+            local cur = Panel.draft and Panel.draft.anchor or "TOPLEFT"
+            toggleGenericDropdown(anchorButton, getPointOptionsList(), function(v) selectPoint("anchor", v) end, cur, 210)
+        end
     end)
     Panel.controls.anchor = anchorButton
 
@@ -820,10 +1146,16 @@ local function createPanel()
         Theme.registerButton(positionButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(positionButton, "循環切換自身定位錨點", "資源框架定位點")
+        EAM.UI.setTooltip(positionButton, "點擊展開下拉選單選擇自身定位錨點", "資源框架定位點")
     end
-    positionButton:SetScript("OnClick", function()
-        cyclePoint("position")
+    positionButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    positionButton:SetScript("OnClick", function(self, mouseBtn)
+        if mouseBtn == "RightButton" then
+            cyclePoint("position")
+        else
+            local cur = Panel.draft and Panel.draft.position or "TOPLEFT"
+            toggleGenericDropdown(positionButton, getPointOptionsList(), function(v) selectPoint("position", v) end, cur, 210)
+        end
     end)
     Panel.controls.position = positionButton
 
@@ -848,9 +1180,9 @@ local function createPanel()
         Theme.registerButton(fontFamilyButton)
     end
     if EAM.UI.setTooltip then
-        EAM.UI.setTooltip(fontFamilyButton, "切換資源文字所使用的字型", "字型選擇")
+        EAM.UI.setTooltip(fontFamilyButton, "點擊開啟完整字型清單下拉選單（支援 LSM 與系統字型）", "字型選擇")
     end
-    fontFamilyButton:SetScript("OnClick", cycleFontFamily)
+    fontFamilyButton:SetScript("OnClick", toggleFontMenu)
     Panel.fontFamilyButton = fontFamilyButton
 
     createSlider(pageText, SLIDER_MAP.fontSize, 16, -100)
@@ -996,6 +1328,9 @@ function Panel.open()
     end
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
         EAM.UI.Renderer.setActiveAnchors("classPower")
+    end
+    if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.frame and EAM.UI.PreviewPanel.frame:IsShown() and EAM.UI.PreviewPanel.selectTab then
+        EAM.UI.PreviewPanel.selectTab(2)
     end
     return true, "opened"
 end

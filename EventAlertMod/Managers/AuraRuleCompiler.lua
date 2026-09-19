@@ -163,8 +163,23 @@ local function resolveFilter(record, rule)
     return filter, filter
 end
 
-local function buildBaseRule(record, capability, defaultSound, soundEnabled)
+local function buildBaseRule(record, capability, defaultSound, soundEnabled, db)
     local stableID = sanitizeKey(record.alertID)
+    local config = db and db.config
+    local globalShowName = not config or config.showSpellName ~= false
+    local globalShowCountdown = not config or config.showTimeVal ~= false
+    local showName = globalShowName
+    if record.showName ~= nil then
+        showName = record.showName == true
+    end
+    local showCountdown = globalShowCountdown
+    if record.showCountdown ~= nil then
+        showCountdown = record.showCountdown == true
+    end
+    local showStacks = true
+    if record.showStacks ~= nil then
+        showStacks = record.showStacks == true
+    end
     local rule = {
         alertID = record.alertID,
         priority = record.priority,
@@ -179,9 +194,9 @@ local function buildBaseRule(record, capability, defaultSound, soundEnabled)
             },
         },
         style = {
-            showStacks = record.showStacks,
-            showName = record.showName,
-            showCountdown = record.showCountdown,
+            showStacks = showStacks,
+            showName = showName,
+            showCountdown = showCountdown,
             showPandemic = record.showPandemic,
             dispelMode = record.dispelMode,
             dispelShowAlways = record.dispelShowAlways,
@@ -265,6 +280,9 @@ local function buildLayout(db)
     if not Util.isSafeNonNegativeNumber(spacing) then
         spacing = 6
     end
+    local frames = db and db.layout and db.layout.frames
+    local selfAura = frames and frames.selfAura
+    local targetAura = frames and frames.targetAura
     return {
         elementWidth = iconSize,
         elementHeight = iconSize,
@@ -272,6 +290,12 @@ local function buildLayout(db)
         lineSpacing = spacing,
         groupSpacing = spacing,
         groupLineSpacing = spacing,
+        selfPoint = selfAura and selfAura.point or "CENTER",
+        selfX = selfAura and selfAura.x or 0,
+        selfY = selfAura and selfAura.y or 120,
+        targetPoint = targetAura and targetAura.point or "CENTER",
+        targetX = targetAura and targetAura.x or 0,
+        targetY = targetAura and targetAura.y or 200,
     }
 end
 
@@ -286,6 +310,12 @@ local function buildContainerFingerprint(plan)
         tostring(plan.layout.lineSpacing),
         tostring(plan.layout.groupSpacing),
         tostring(plan.layout.groupLineSpacing),
+        tostring(plan.layout.selfPoint or "CENTER"),
+        tostring(plan.layout.selfX or 0),
+        tostring(plan.layout.selfY or 120),
+        tostring(plan.layout.targetPoint or "CENTER"),
+        tostring(plan.layout.targetX or 0),
+        tostring(plan.layout.targetY or 200),
     }
     for index = 1, #plan.rules do
         local rule = plan.rules[index]
@@ -337,21 +367,42 @@ local function buildSoundFingerprint(plan)
 end
 
 local function buildVisualFingerprint(db)
+    local TextPlacement = EAM.UI and EAM.UI.TextPlacement
     local config = db and db.config or nil
     local textLayout = config and config.textLayout or nil
     local timer = textLayout and textLayout.timer or nil
     local applications = textLayout and textLayout.applications or nil
+    local spellName = textLayout and textLayout.spellName or nil
+    local spellNamePlacement = (spellName and spellName.placement)
+        or (TextPlacement and TextPlacement.getPlacement and TextPlacement.getPlacement(config, "spellName"))
+        or Constants.TEXT_PLACEMENT_SPELL_NAME_DEFAULT
+        or "OUTSIDE_BOTTOM"
+    local timerColor = TextPlacement and TextPlacement.getColor and TextPlacement.getColor(config, "timer") or { 1, 1, 1, 1 }
+    local timerColorStr = string.format("%.2f:%.2f:%.2f:%.2f", timerColor[1] or 1, timerColor[2] or 1, timerColor[3] or 1, timerColor[4] or 1)
+    local appColor = TextPlacement and TextPlacement.getColor and TextPlacement.getColor(config, "applications") or { 1, 1, 1, 1 }
+    local appColorStr = string.format("%.2f:%.2f:%.2f:%.2f", appColor[1] or 1, appColor[2] or 1, appColor[3] or 1, appColor[4] or 1)
+    local spellNameColor = TextPlacement and TextPlacement.getColor and TextPlacement.getColor(config, "spellName") or { 1, 0.95, 0.5, 1 }
+    local spellNameColorStr = string.format("%.2f:%.2f:%.2f:%.2f", spellNameColor[1] or 1, spellNameColor[2] or 1, spellNameColor[3] or 1, spellNameColor[4] or 1)
     local swipeColor = config and config.cooldownSwipeColor or nil
     local colorStr = (swipeColor and string.format("%.2f:%.2f:%.2f", swipeColor.r or 0, swipeColor.g or 0, swipeColor.b or 0)) or "0:0:0"
+    local timerFontSize = timer and timer.fontSize or (config and config.fontSizeTimeVal) or 14
+    local appFontSize = applications and applications.fontSize or (config and config.fontSizeStack) or 12
     return table.concat({
         tostring(config and config.fontSizeSpellName or 12),
         tostring(config and config.fontFamily or "STANDARD"),
         tostring(timer and timer.placement or Constants.TEXT_PLACEMENT_TIMER_DEFAULT),
-        tostring(timer and timer.fontSize or 14),
+        tostring(timerFontSize),
+        timerColorStr,
         tostring(applications and applications.placement or Constants.TEXT_PLACEMENT_APPLICATIONS_DEFAULT),
-        tostring(applications and applications.fontSize or 12),
+        tostring(appFontSize),
+        appColorStr,
+        tostring(spellNamePlacement),
+        spellNameColorStr,
+        tostring(config and config.showSpellName ~= false),
+        tostring(config and config.showTimeVal ~= false),
         tostring(config and config.cooldownSwipeAlpha or 0.8),
         colorStr,
+        tostring(config and config.iconAlpha or 1.0),
         tostring(config and config.nativeAuraDualCountdownProbe == true),
     }, ":")
 end
@@ -403,7 +454,7 @@ function AuraRuleCompiler.compile(db, capability)
     local soundEnabled = db and db.config and db.config.showSound == true
     local nativeRules = {}
     for index = 1, #records do
-        local rule = buildBaseRule(records[index], capability, defaultSound, soundEnabled)
+        local rule = buildBaseRule(records[index], capability, defaultSound, soundEnabled, db)
         if rule.sound then
             append(plan.soundRules, rule)
         end

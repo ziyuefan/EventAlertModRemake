@@ -84,3 +84,17 @@ function SpellInfoService.getSpellInfo(spellID)
     SpellInfoService.cache[spellID] = record
     return record
 end
+
+function SpellInfoService.getOverrideSpell(spellID)
+    if not Util.isSafePositiveNumber(spellID) then
+        return spellID
+    end
+    local api = EAM.API
+    if api.C_Spell and api.C_Spell.GetOverrideSpell then
+        local ok, overrideID = pcall(api.C_Spell.GetOverrideSpell, spellID)
+        if ok and Util.isSafePositiveNumber(overrideID) and overrideID > 0 then
+            return overrideID
+        end
+    end
+    return spellID
+end

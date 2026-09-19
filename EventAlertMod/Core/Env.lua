@@ -134,6 +134,10 @@ EAM.API = {
     C_AddOns = C_AddOns,
     C_CVar = C_CVar,
     C_Secrets = C_Secrets,
+    GetInventoryItemID = GetInventoryItemID or function() return nil end,
+    GetInventoryItemCooldown = GetInventoryItemCooldown or function() return 0, 0, 0 end,
+    GetInventoryItemTexture = GetInventoryItemTexture or function() return nil end,
+    GetInventoryItemLink = GetInventoryItemLink or function() return nil end,
 }
 
 EAM.DebugLog = {}

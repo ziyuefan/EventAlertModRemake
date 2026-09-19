@@ -38,6 +38,7 @@ EAM.Constants = freeze({
     TEXT_LAYOUT_SCHEMA_VERSION = 1,
     TEXT_PLACEMENT_TIMER_DEFAULT = "OUTSIDE_TOP",
     TEXT_PLACEMENT_APPLICATIONS_DEFAULT = "INSIDE_BOTTOM_RIGHT",
+    TEXT_PLACEMENT_SPELL_NAME_DEFAULT = "OUTSIDE_BOTTOM",
     TEXT_FONT_SIZE_MIN = 8,
     TEXT_FONT_SIZE_MAX = 32,
     ADDON_FLAVOR = "Retail",
@@ -104,9 +105,10 @@ EAM.Constants = freeze({
         totem = "totem",
         playerStat = "playerStat",
         tooltipMonitor = "tooltipMonitor",
+        petAlert = "petAlert",
     }),
 
-    -- 8 大獨立告警框架名稱
+    -- 9 大獨立告警框架名稱
     ALERT_FRAME_TYPES = freeze({
         selfAura = "selfAura",
         targetAura = "targetAura",
@@ -116,6 +118,7 @@ EAM.Constants = freeze({
         groundEffect = "groundEffect",
         totem = "totem",
         playerStat = "playerStat",
+        petAlert = "petAlert",
     }),
 
     ALERT_BORDER_STYLE_KEYS = freeze({
@@ -126,6 +129,7 @@ EAM.Constants = freeze({
         spellCooldown = "spellCooldown",
         itemCooldown = "itemCooldown",
         groundEffect = "groundEffect",
+        petAlert = "petAlert",
     }),
 
     FONT_FAMILY_DEFAULT = "STANDARD",
@@ -143,6 +147,7 @@ EAM.Constants = freeze({
         spellCooldown = freeze({ 1.00, 0.85, 0.05, 1.00 }),
         itemCooldown = freeze({ 0.15, 0.95, 0.25, 1.00 }),
         groundEffect = freeze({ 0.72, 0.25, 1.00, 1.00 }),
+        petAlert = freeze({ 0.35, 0.95, 0.55, 1.00 }),
     }),
     -- 1 = RIGHT, 2 = LEFT, 3 = UP, 4 = DOWN
     -- 凍結為連續數字索引陣列 (Array Part)，以空間換時間，消除雜湊衝突與查詢消耗

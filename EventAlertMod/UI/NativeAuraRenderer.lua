@@ -66,6 +66,20 @@ end
 local function snapshotStyle(rule)
     local config = EAM.db and EAM.db.config or nil
     local ruleStyle = rule and rule.style or nil
+    local globalShowName = not config or config.showSpellName ~= false
+    local globalShowCountdown = not config or config.showTimeVal ~= false
+    local showCountdown = globalShowCountdown
+    if ruleStyle and ruleStyle.showCountdown ~= nil then
+        showCountdown = ruleStyle.showCountdown == true
+    end
+    local showName = globalShowName
+    if ruleStyle and ruleStyle.showName ~= nil then
+        showName = ruleStyle.showName == true
+    end
+    local showStacks = true
+    if ruleStyle and ruleStyle.showStacks ~= nil then
+        showStacks = ruleStyle.showStacks == true
+    end
     local swipeR, swipeG, swipeB = safeColorRGB(config and config.cooldownSwipeColor)
     return {
         iconSize = safePositive(config and config.iconSize, 40),
@@ -75,13 +89,17 @@ local function snapshotStyle(rule)
         applicationsFontSize = TextPlacement.getFontSize(config, "applications"),
         timerPlacement = TextPlacement.getPlacement(config, "timer"),
         applicationsPlacement = TextPlacement.getPlacement(config, "applications"),
+        namePlacement = TextPlacement.getPlacement(config, "spellName") or "OUTSIDE_BOTTOM",
+        timerColor = TextPlacement.getColor(config, "timer"),
+        applicationsColor = TextPlacement.getColor(config, "applications"),
+        nameColor = TextPlacement.getColor(config, "spellName"),
         swipeAlpha = safeAlpha(config and config.cooldownSwipeAlpha),
         swipeColor = { r = swipeR, g = swipeG, b = swipeB },
         borderStyleKey = AlertBorderStyles.resolveAura(rule and rule.unit or nil, rule and rule.filterString or nil),
         dualCountdownProbe = config and config.nativeAuraDualCountdownProbe == true or false,
-        showCountdown = not ruleStyle or ruleStyle.showCountdown ~= false,
-        showStacks = not ruleStyle or ruleStyle.showStacks ~= false,
-        showName = not ruleStyle or ruleStyle.showName ~= false,
+        showCountdown = showCountdown,
+        showStacks = showStacks,
+        showName = showName,
         showPandemic = ruleStyle and ruleStyle.showPandemic == true or false,
         dispelMode = ruleStyle and ruleStyle.dispelMode or nil,
         dispelShowAlways = ruleStyle and ruleStyle.dispelShowAlways == true or false,
@@ -236,13 +254,16 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     local timerText = auraButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightOutline")
     local stackText = auraButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightOutline")
     local nameText = auraButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
-    nameText:SetPoint("TOP", auraButton, "BOTTOM", 0, -2)
+    TextPlacement.apply(nameText, auraButton, style.namePlacement or "OUTSIDE_BOTTOM")
 
     TextPlacement.apply(timerText, auraButton, style.timerPlacement)
     TextPlacement.applyFont(timerText, style.timerFontSize, style.fontFamily)
+    TextPlacement.applyColor(timerText, style.timerColor)
     TextPlacement.apply(stackText, auraButton, style.applicationsPlacement)
     TextPlacement.applyFont(stackText, style.applicationsFontSize, style.fontFamily)
+    TextPlacement.applyColor(stackText, style.applicationsColor)
     TextPlacement.applyFont(nameText, style.nameFontSize, style.fontFamily)
+    TextPlacement.applyColor(nameText, style.nameColor)
 
     auraButton:SetIcon(icon)
     auraButton:SetDurationCooldown(cooldown)

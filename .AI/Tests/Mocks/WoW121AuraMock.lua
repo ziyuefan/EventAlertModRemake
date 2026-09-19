@@ -206,6 +206,11 @@ function regionMethods:SetFont(font, size, flags)
     Mock.trace.regionSetFonts = Mock.trace.regionSetFonts + 1
 end
 
+function regionMethods:SetTextColor(r, g, b, a)
+    assertInitializationOpen(self)
+    self.textColor = { r, g, b, a or 1.0 }
+end
+
 function regionMethods:SetHideCountdownNumbers(value)
     assertInitializationOpen(self)
     self.hideCountdownNumbers = value == true
@@ -764,12 +769,25 @@ local function createGenericFrame(frameType, frameName)
         end
     end
 
+    frame.frameLevel = 1
+    function frame:GetFrameLevel()
+        return self.frameLevel or 1
+    end
+
+    function frame:SetFrameLevel(value)
+        self.frameLevel = value or 1
+    end
+
+    function frame:EnableMouseWheel(value)
+        self.mouseWheelEnabled = (value == true)
+    end
+
     local noOperationMethods = {
         "SetAllPoints", "SetTexCoord", "SetPoint", "ClearAllPoints", "SetSize", "SetFont",
         "SetEnabled", "SetMouseMotionEnabled", "SetFrameStrata", "SetToplevel",
         "SetClampedToScreen", "EnableMouse", "SetBackdrop", "SetJustifyH", "SetJustifyV",
         "SetHeight", "SetAutoFocus", "SetNumeric", "SetMaxLetters", "SetBackdropColor", "SetBackdropBorderColor", "SetTextColor",
-        "SetStatusBarColor",
+        "SetStatusBarColor", "RegisterForDrag",
     }
     for index = 1, #noOperationMethods do
         frame[noOperationMethods[index]] = noOperation

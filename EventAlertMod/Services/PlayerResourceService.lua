@@ -1305,6 +1305,7 @@ end
 
 PlayerResourceService.detectClassPower = PlayerResourceService.rebuildTopology
 PlayerResourceService.updatePower = PlayerResourceService.updateAll
+PlayerResourceService.refreshActiveResources = PlayerResourceService.refreshVisualState
 
 function PlayerResourceService.initialize()
     if PlayerResourceService.initialized then

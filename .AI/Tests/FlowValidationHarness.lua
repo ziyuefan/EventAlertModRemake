@@ -257,6 +257,10 @@ C_Spell = {
 C_Item = {
     GetItemCooldown = noOperation,
 }
+GetInventoryItemCooldown = GetInventoryItemCooldown or function(unit, slot) return 0, 0, 1 end
+GetInventoryItemID = GetInventoryItemID or function(unit, slot) return nil end
+GetInventoryItemTexture = GetInventoryItemTexture or function(unit, slot) return nil end
+GetInventoryItemLink = GetInventoryItemLink or function(unit, slot) return nil end
 C_UnitAuras = {
     GetAuraDataByIndex = noOperation,
     GetAuraDataByAuraInstanceID = noOperation,

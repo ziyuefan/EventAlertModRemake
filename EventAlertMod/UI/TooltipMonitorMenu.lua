@@ -157,10 +157,9 @@ local function configureForCandidate(source)
     if not service then
         return false
     end
-    local actionOne = Menu.actionButtons[1]
-    local actionTwo = Menu.actionButtons[2]
-    hideButton(actionOne)
-    hideButton(actionTwo)
+    for i = 1, #Menu.actionButtons do
+        hideButton(Menu.actionButtons[i])
+    end
     Menu.idEditBox:Hide()
     Menu.idLabel:Hide()
     Menu.idEditBox:SetText("")
@@ -171,9 +170,24 @@ local function configureForCandidate(source)
             safeIDText(source.spellID)
         ))
         showButton(
-            actionOne,
+            Menu.actionButtons[1],
             EAM.L.EAM_POPUP_ADD_SPELL or "加入技能冷卻監控",
             service.ACTION_SPELL_COOLDOWN
+        )
+        showButton(
+            Menu.actionButtons[2],
+            EAM.L.EAM_POPUP_ADD_GROUND or "加入地面效果模組",
+            service.ACTION_GROUND_EFFECT
+        )
+        showButton(
+            Menu.actionButtons[3],
+            EAM.L.EAM_POPUP_ADD_AURA_PLAYER or "加入玩家光環監控",
+            service.ACTION_AURA_PLAYER
+        )
+        showButton(
+            Menu.actionButtons[4],
+            EAM.L.EAM_POPUP_ADD_AURA_TARGET or "加入目標光環監控",
+            service.ACTION_AURA_TARGET
         )
         return true
     end
@@ -184,9 +198,14 @@ local function configureForCandidate(source)
             safeIDText(source.itemID)
         ))
         showButton(
-            actionOne,
+            Menu.actionButtons[1],
             EAM.L.EAM_POPUP_ADD_ITEM or "加入物品冷卻監控",
             service.ACTION_ITEM_COOLDOWN
+        )
+        showButton(
+            Menu.actionButtons[2],
+            EAM.L.EAM_POPUP_ADD_GROUND or "加入地面效果模組",
+            service.ACTION_GROUND_EFFECT
         )
         return true
     end
@@ -210,14 +229,19 @@ local function configureForCandidate(source)
             Menu.idEditBox:Show()
         end
         showButton(
-            actionOne,
+            Menu.actionButtons[1],
             EAM.L.EAM_POPUP_ADD_AURA_PLAYER or "加入玩家光環監控",
             service.ACTION_AURA_PLAYER
         )
         showButton(
-            actionTwo,
+            Menu.actionButtons[2],
             EAM.L.EAM_POPUP_ADD_AURA_TARGET or "加入目標光環監控",
             service.ACTION_AURA_TARGET
+        )
+        showButton(
+            Menu.actionButtons[3],
+            EAM.L.EAM_POPUP_ADD_GROUND or "加入地面效果模組",
+            service.ACTION_GROUND_EFFECT
         )
         return true
     end
@@ -246,18 +270,30 @@ local function configureForCandidate(source)
                 service.ACTION_ITEM_COOLDOWN
             )
         end
-        if actionCount == 0 then
+        if source.spellID or source.itemID then
+            actionCount = actionCount + 1
+            showButton(
+                Menu.actionButtons[actionCount],
+                EAM.L.EAM_POPUP_ADD_GROUND or "加入地面效果模組",
+                service.ACTION_GROUND_EFFECT
+            )
+        else
             Menu.idLabel:Show()
             Menu.idEditBox:Show()
             showButton(
-                actionOne,
+                Menu.actionButtons[1],
                 EAM.L.EAM_POPUP_ADD_SPELL or "加入技能冷卻監控",
                 service.ACTION_SPELL_COOLDOWN
             )
             showButton(
-                actionTwo,
+                Menu.actionButtons[2],
                 EAM.L.EAM_POPUP_ADD_ITEM or "加入物品冷卻監控",
                 service.ACTION_ITEM_COOLDOWN
+            )
+            showButton(
+                Menu.actionButtons[3],
+                EAM.L.EAM_POPUP_ADD_GROUND or "加入地面效果模組",
+                service.ACTION_GROUND_EFFECT
             )
         end
         return true
@@ -294,7 +330,7 @@ end
 
 local function createFrame()
     local frame = CreateFrame("Frame", "EAMTooltipMonitorMenu", UIParent, "BackdropTemplate")
-    frame:SetSize(380, 250)
+    frame:SetSize(380, 280)
     frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
     frame:SetClampedToScreen(true)
@@ -346,13 +382,15 @@ local function createFrame()
     Menu.idEditBox = idEditBox
 
     Menu.actionButtons = {}
-    createActionButton(frame, 1, "TOPLEFT", frame, "TOPLEFT", 24, -158)
-    createActionButton(frame, 2, "TOPRIGHT", frame, "TOPRIGHT", -24, -158)
+    createActionButton(frame, 1, "TOPLEFT", frame, "TOPLEFT", 24, -150)
+    createActionButton(frame, 2, "TOPRIGHT", frame, "TOPRIGHT", -24, -150)
+    createActionButton(frame, 3, "TOPLEFT", frame, "TOPLEFT", 24, -182)
+    createActionButton(frame, 4, "TOPRIGHT", frame, "TOPRIGHT", -24, -182)
 
     local cancelButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(cancelButton) end
     cancelButton:SetSize(158, 24)
-    cancelButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -24, 22)
+    cancelButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -24, 18)
     Locale.bindText(cancelButton, "EAM_POPUP_CANCEL", "取消")
     cancelButton:SetScript("OnClick", function()
         Menu.hide()

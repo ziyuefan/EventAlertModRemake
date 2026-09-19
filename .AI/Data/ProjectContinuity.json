@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-09-12.23",
-  "updatedAt": "2026-09-12",
+  "snapshotVersion": "2026-09-19.01",
+  "updatedAt": "2026-09-19",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1 Alpha 8.5 冷卻倒數扇形色彩透明度自訂、自身光環非本職業專屬法術防誤加確認對話框實裝；全套品質門禁 100% 通過（Lua 78/78, Flow 86/86, Contracts 499/499 PASS）。",
+    "objective": "Retail 12.1 Alpha 8.6 冷卻可用發光金框幾何比例修復（根除小金框缺陷）、目標光環原生容器幾何解耦修復、光環框架坐標動態連動與重載記憶；全套品質門禁 100% 通過（Lua 78/78, Flow 88/88, Contracts 499/499 PASS, DEV Package PASS）。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 86,
-      "passed": 86,
+      "total": 88,
+      "passed": 88,
       "failed": 0,
       "skipped": 0,
       "pending": 0

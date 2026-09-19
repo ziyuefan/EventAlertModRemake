@@ -46,6 +46,9 @@ local CooldownService = {
     activationSpellIDs = {},
     -- 完成移除前，必須先安全觀察到本輪至少消耗一層充能。
     chargeSpentObserved = {},
+    -- 英雄天賦與法術覆蓋雙向對齊映射表
+    baseToOverrideMap = {},
+    overrideToBaseMap = {},
 }
 
 EAM.Services.CooldownService = CooldownService
@@ -99,6 +102,17 @@ local function resolveSpellFamily(spellID)
     if not Util.isSafePositiveNumber(spellID) then
         return nil, nil
     end
+
+    -- 優先從動態覆蓋快取表快速對齊
+    local cachedOverride = CooldownService.baseToOverrideMap[spellID]
+    local cachedBase = CooldownService.overrideToBaseMap[spellID]
+    if cachedOverride then
+        return spellID, cachedOverride
+    end
+    if cachedBase then
+        return cachedBase, spellID
+    end
+
     local cSpell = api.C_Spell
     local baseSpellID = cSpell
         and resolveSpellIdentifier(cSpell.GetBaseSpell, spellID)
@@ -111,7 +125,15 @@ local function resolveSpellFamily(spellID)
     if not overrideSpellID and baseSpellID ~= spellID and cSpell then
         overrideSpellID = resolveSpellIdentifier(cSpell.GetOverrideSpell, spellID)
     end
-    return baseSpellID, overrideSpellID or baseSpellID
+    overrideSpellID = overrideSpellID or baseSpellID
+
+    -- 寫入快取加速熱路徑
+    if baseSpellID and overrideSpellID and baseSpellID ~= overrideSpellID then
+        CooldownService.baseToOverrideMap[baseSpellID] = overrideSpellID
+        CooldownService.overrideToBaseMap[overrideSpellID] = baseSpellID
+    end
+
+    return baseSpellID, overrideSpellID
 end
 
 local function readChargeCandidate(cSpell, spellID)
@@ -258,8 +280,18 @@ end
 
 local function resolveBehavior(alert, key)
     if key == "cooldownPreRender" then
-        if type(alert) == "table" and alert.enabled ~= false and alert.cooldownPreRender == true then
-            return true
+        if type(alert) == "table" then
+            if type(alert.cooldownPreRender) == "boolean" then
+                return alert.cooldownPreRender
+            end
+            if alert.cooldownRemoveAura == true then
+                return false
+            end
+        end
+        local config = EAM.db and EAM.db.config
+        local globalValue = type(config) == "table" and config[key] or nil
+        if type(globalValue) == "boolean" then
+            return globalValue
         end
         return false
     end
@@ -281,10 +313,13 @@ end
 local function fireStateChanged(state)
     local router = EAM.Modules and EAM.Modules.EventRouter
     if router and state then
+        local frameName = (state.unit == "pet" or (state.rawAlert and (state.rawAlert.unit == "pet" or state.rawAlert.isPet)))
+            and EAM.Constants.ALERT_FRAME_TYPES.petAlert
+            or EAM.Constants.ALERT_FRAME_TYPES.spellCooldown
         router.fire(
             "EAM_COOLDOWN_STATE_CHANGED",
             state,
-            EAM.Constants.ALERT_FRAME_TYPES.spellCooldown
+            frameName
         )
     end
 end
@@ -737,6 +772,7 @@ local function refreshAlert(alert, eventName)
     state.spellID = alert.spellID
     state.order = alert.order
     state.rawAlert = alert
+    state.unit = alert.unit or (alert.isPet and "pet") or "player"
     state.name = nil
     state.icon = nil
     state.charges = isChargeBased and currentCharges or nil
@@ -933,19 +969,28 @@ function CooldownService.initialize()
         router.register("UNIT_SPELLCAST_SUCCEEDED", CooldownService.onSpellcastSucceeded)
         router.register("PLAYER_REGEN_ENABLED", CooldownService.onCombatEvent)
         router.register("PLAYER_REGEN_DISABLED", CooldownService.onCombatEvent)
-        router.register("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", function(eventName, overriddenSpellID, originalSpellID)
+        router.register("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", function(eventName, baseSpellID, overrideSpellID)
+            if Util.isSafePositiveNumber(baseSpellID) and Util.isSafePositiveNumber(overrideSpellID) then
+                CooldownService.baseToOverrideMap[baseSpellID] = overrideSpellID
+                CooldownService.overrideToBaseMap[overrideSpellID] = baseSpellID
+            end
+
             CooldownService.updateAlertList()
             if EAM.db then
                 lastDbRevision = EAM.db.revision or 0
             end
-            local targetSpellID
-            if Util.isSafePositiveNumber(overriddenSpellID) then
-                targetSpellID = overriddenSpellID
-            elseif Util.isSafePositiveNumber(originalSpellID) then
-                targetSpellID = originalSpellID
+
+            -- 若當前有活躍警報正處於舊的 baseSpellID 或已被覆蓋，動態遷移活躍狀態
+            if Util.isSafePositiveNumber(baseSpellID) or Util.isSafePositiveNumber(overrideSpellID) then
+                local targetSpellID = Util.isSafePositiveNumber(overrideSpellID) and overrideSpellID or baseSpellID
+                CooldownService.refreshSpell(targetSpellID, eventName, baseSpellID)
+                if Util.isSafePositiveNumber(baseSpellID) and baseSpellID ~= targetSpellID then
+                    CooldownService.refreshSpell(baseSpellID, eventName, baseSpellID)
+                end
             end
-            if targetSpellID then
-                CooldownService.refreshSpell(targetSpellID, eventName, originalSpellID)
+
+            if router and router.fire then
+                router.fire("EAM_SPELL_OVERRIDE_UPDATED", baseSpellID, overrideSpellID)
             end
         end)
     end

@@ -83,6 +83,8 @@ EAM.UI.TextPlacement = TextPlacement
 local function fallbackFor(kind)
     if kind == "applications" then
         return EAM.Constants.TEXT_PLACEMENT_APPLICATIONS_DEFAULT
+    elseif kind == "spellName" then
+        return EAM.Constants.TEXT_PLACEMENT_SPELL_NAME_DEFAULT or "OUTSIDE_BOTTOM"
     end
     return EAM.Constants.TEXT_PLACEMENT_TIMER_DEFAULT
 end
@@ -104,12 +106,20 @@ function TextPlacement.getPlacement(config, kind)
 end
 
 function TextPlacement.getFontSize(config, kind)
-    local fallback = kind == "applications" and 12 or 14
+    local fallback = (kind == "applications" and 12) or (kind == "spellName" and 12) or 14
     local textLayout = config and config.textLayout
     local section = textLayout and textLayout[kind]
     local value = section and section.fontSize
     if type(value) ~= "number" then
-        value = fallback
+        if kind == "spellName" and config and type(config.fontSizeSpellName) == "number" then
+            value = config.fontSizeSpellName
+        elseif kind == "timer" and config and type(config.fontSizeTimeVal) == "number" then
+            value = config.fontSizeTimeVal
+        elseif kind == "applications" and config and type(config.fontSizeStack) == "number" then
+            value = config.fontSizeStack
+        else
+            value = fallback
+        end
     end
     if value < EAM.Constants.TEXT_FONT_SIZE_MIN then
         return EAM.Constants.TEXT_FONT_SIZE_MIN
@@ -128,6 +138,45 @@ function TextPlacement.apply(fontString, relativeFrame, placement)
     fontString:ClearAllPoints()
     fontString:SetPoint(definition[1], relativeFrame, definition[2], definition[3], definition[4])
     return true, definition[1], definition[2], definition[3], definition[4]
+end
+
+local DEFAULT_COLORS = freeze({
+    timer = freeze({ 1.0, 1.0, 1.0, 1.0 }),
+    applications = freeze({ 1.0, 1.0, 1.0, 1.0 }),
+    spellName = freeze({ 1.0, 0.95, 0.5, 1.0 }),
+})
+
+function TextPlacement.getColor(config, kind)
+    local fallback = DEFAULT_COLORS[kind] or DEFAULT_COLORS.timer
+    local textLayout = config and config.textLayout
+    local section = textLayout and textLayout[kind]
+    local color = section and section.color
+    if type(color) == "table" then
+        local r = tonumber(color[1] or color.r)
+        local g = tonumber(color[2] or color.g)
+        local b = tonumber(color[3] or color.b)
+        local a = tonumber(color[4] or color.a) or 1.0
+        if r and g and b then
+            return { math.min(1, math.max(0, r)), math.min(1, math.max(0, g)), math.min(1, math.max(0, b)), math.min(1, math.max(0, a)) }
+        end
+    end
+    return { fallback[1], fallback[2], fallback[3], fallback[4] }
+end
+
+function TextPlacement.applyColor(fontString, color)
+    if not fontString or type(color) ~= "table" then
+        return false
+    end
+    local r = color[1] or color.r or 1.0
+    local g = color[2] or color.g or 1.0
+    local b = color[3] or color.b or 1.0
+    local a = color[4] or color.a or 1.0
+    local ok, setter = pcall(function() return fontString.SetTextColor end)
+    if ok and type(setter) == "function" then
+        pcall(setter, fontString, r, g, b, a)
+        return true
+    end
+    return false
 end
 
 function TextPlacement.normalizeFontFamily(value)

@@ -119,6 +119,7 @@ local defaults = {
             groundEffect = { growDirection = 1, x = 0, y = -160, point = "CENTER", columns = 8 },
             totem = { growDirection = 1, x = 0, y = -240, point = "CENTER", columns = 8 },
             playerStat = { growDirection = 1, x = 0, y = -220, point = "CENTER", columns = 8 },
+            petAlert = { growDirection = 1, x = -120, y = 120, point = "CENTER", columns = 8 },
         }
     },
     playerStats = {},
@@ -138,6 +139,7 @@ local defaults = {
             totem = true,
             playerStat = true,
             tooltipMonitor = true,
+            petAlert = true,
         },
         showFrame = true,
         showSpellName = true,
@@ -151,7 +153,7 @@ local defaults = {
         cooldownRemoveAura = false,
         showSCDOutsideCombat = true,
         glowSCDWhenUsable = true,
-        cooldownPreRender = false,
+        cooldownPreRender = true,
         showDKRune = true,
         enableItemCooldown = true,
         enableWeaponEnchant = true,
@@ -161,6 +163,7 @@ local defaults = {
         iconSize = 40,
         iconSpacing = 6,
         verticalSpacing = 0,
+        iconAlpha = 1.0,
         selfDebuffRed = 0.5,
         targetDebuffGreen = 0.5,
         bossExecuteThreshold = 0.2,
@@ -173,10 +176,17 @@ local defaults = {
             timer = {
                 placement = "OUTSIDE_TOP",
                 fontSize = 14,
+                color = { 1.0, 1.0, 1.0, 1.0 },
             },
             applications = {
                 placement = "INSIDE_BOTTOM_RIGHT",
                 fontSize = 12,
+                color = { 1.0, 1.0, 1.0, 1.0 },
+            },
+            spellName = {
+                placement = "OUTSIDE_BOTTOM",
+                fontSize = 12,
+                color = { 1.0, 0.95, 0.5, 1.0 },
             },
         },
         timerColorCurve = {
@@ -846,6 +856,24 @@ local function normalizeTextPlacement(value, fallback)
     return fallback
 end
 
+local function normalizeTextColor(color, defaultR, defaultG, defaultB, defaultA)
+    if type(color) == "table" then
+        local r = tonumber(color[1] or color.r)
+        local g = tonumber(color[2] or color.g)
+        local b = tonumber(color[3] or color.b)
+        local a = tonumber(color[4] or color.a) or (defaultA or 1.0)
+        if r and g and b then
+            return {
+                math.min(1.0, math.max(0.0, r)),
+                math.min(1.0, math.max(0.0, g)),
+                math.min(1.0, math.max(0.0, b)),
+                math.min(1.0, math.max(0.0, a)),
+            }
+        end
+    end
+    return { defaultR or 1.0, defaultG or 1.0, defaultB or 1.0, defaultA or 1.0 }
+end
+
 local function migrateLegacyPlacement(isInside, position, fallback)
     if isInside == true then
         return LEGACY_INSIDE_PLACEMENTS[position] or fallback
@@ -1037,12 +1065,15 @@ local function normalizeTextLayout(db, preserveLegacy)
 
     local timer = type(textLayout.timer) == "table" and textLayout.timer or {}
     local applications = type(textLayout.applications) == "table" and textLayout.applications or {}
+    local spellName = type(textLayout.spellName) == "table" and textLayout.spellName or {}
     textLayout.timer = timer
     textLayout.applications = applications
+    textLayout.spellName = spellName
     textLayout.schema = EAM.Constants.TEXT_LAYOUT_SCHEMA_VERSION
 
     local timerFallback = EAM.Constants.TEXT_PLACEMENT_TIMER_DEFAULT
     local applicationsFallback = EAM.Constants.TEXT_PLACEMENT_APPLICATIONS_DEFAULT
+    local spellNameFallback = EAM.Constants.TEXT_PLACEMENT_SPELL_NAME_DEFAULT or "OUTSIDE_BOTTOM"
     if preserveLegacy then
         timerFallback = migrateLegacyPlacement(config.timerInside, config.timerPosition, timerFallback)
         applicationsFallback = migrateLegacyPlacement(config.stackInside, config.stackPosition, applicationsFallback)
@@ -1050,19 +1081,29 @@ local function normalizeTextLayout(db, preserveLegacy)
 
     local normalizedTimerPlacement = normalizeTextPlacement(timer.placement, timerFallback)
     local normalizedApplicationsPlacement = normalizeTextPlacement(applications.placement, applicationsFallback)
+    local normalizedSpellNamePlacement = normalizeTextPlacement(spellName.placement, spellNameFallback)
     if timer.placement ~= nil and timer.placement ~= normalizedTimerPlacement then
         appendMigrationWarning(db, "invalidTimerPlacementDefaulted")
     end
     if applications.placement ~= nil and applications.placement ~= normalizedApplicationsPlacement then
         appendMigrationWarning(db, "invalidApplicationsPlacementDefaulted")
     end
+    if spellName.placement ~= nil and spellName.placement ~= normalizedSpellNamePlacement then
+        appendMigrationWarning(db, "invalidSpellNamePlacementDefaulted")
+    end
 
     timer.placement = normalizedTimerPlacement
     timer.fontSize = normalizeTextFontSize(timer.fontSize or config.fontSizeTimeVal, 14)
+    timer.color = normalizeTextColor(timer.color, 1.0, 1.0, 1.0, 1.0)
     applications.placement = normalizedApplicationsPlacement
     applications.fontSize = normalizeTextFontSize(applications.fontSize or config.fontSizeStack, 12)
+    applications.color = normalizeTextColor(applications.color, 1.0, 1.0, 1.0, 1.0)
+    spellName.placement = normalizedSpellNamePlacement
+    spellName.fontSize = normalizeTextFontSize(spellName.fontSize or config.fontSizeSpellName, 12)
+    spellName.color = normalizeTextColor(spellName.color, 1.0, 0.95, 0.5, 1.0)
     config.fontSizeTimeVal = timer.fontSize
     config.fontSizeStack = applications.fontSize
+    config.fontSizeSpellName = spellName.fontSize
 end
 
 local function migrateV2ToV3(db)
@@ -1626,8 +1667,11 @@ local function normalizeCurveFeatures(db)
     return false
 end
 
-local function buildAlertID(kind, unit, spellID, itemID)
+local function buildAlertID(kind, unit, spellID, itemID, slotID)
     if kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
+        if slotID then
+            return kind .. ":slot:" .. slotID
+        end
         if not itemID then
             return nil
         end
@@ -2223,8 +2267,8 @@ function SavedVariables.updatePlayerResourceConfig(resourceKey, patch, specializ
     return true, "updated", db.revision, newEffective
 end
 
-function SavedVariables.buildAlertID(kind, unit, spellID, itemID)
-    return buildAlertID(kind, unit, spellID, itemID)
+function SavedVariables.buildAlertID(kind, unit, spellID, itemID, slotID)
+    return buildAlertID(kind, unit, spellID, itemID, slotID)
 end
 
 function SavedVariables.getActiveClassToken()
@@ -2348,12 +2392,12 @@ function SavedVariables.updateModuleToggle(key, enabled)
     return true, "updated", db.revision
 end
 
-function SavedVariables.updateTextLayout(kind, placement, fontSize)
+function SavedVariables.updateTextLayout(kind, placement, fontSize, color)
     local db = EAM.db
     if type(db) ~= "table" or type(db.config) ~= "table" then
         return false, "dbUnavailable"
     end
-    if kind ~= "timer" and kind ~= "applications" then
+    if kind ~= "timer" and kind ~= "applications" and kind ~= "spellName" then
         return false, "invalidTextLayoutKind"
     end
 
@@ -2371,7 +2415,7 @@ function SavedVariables.updateTextLayout(kind, placement, fontSize)
         end
     end
     if fontSize ~= nil then
-        local fallback = kind == "timer" and 14 or 12
+        local fallback = (kind == "timer" and 14) or (kind == "applications" and 12) or 12
         local normalizedFontSize = normalizeTextFontSize(fontSize, fallback)
         if section.fontSize ~= normalizedFontSize then
             section.fontSize = normalizedFontSize
@@ -2379,8 +2423,24 @@ function SavedVariables.updateTextLayout(kind, placement, fontSize)
         end
         if kind == "timer" then
             db.config.fontSizeTimeVal = normalizedFontSize
-        else
+        elseif kind == "applications" then
             db.config.fontSizeStack = normalizedFontSize
+        elseif kind == "spellName" then
+            db.config.fontSizeSpellName = normalizedFontSize
+        end
+    end
+    if color ~= nil then
+        local defaultColor = (kind == "spellName") and { 1.0, 0.95, 0.5, 1.0 } or { 1.0, 1.0, 1.0, 1.0 }
+        local normalizedColor = normalizeTextColor(color, defaultColor[1], defaultColor[2], defaultColor[3], defaultColor[4])
+        local curColor = section.color
+        if type(curColor) ~= "table"
+            or curColor[1] ~= normalizedColor[1]
+            or curColor[2] ~= normalizedColor[2]
+            or curColor[3] ~= normalizedColor[3]
+            or curColor[4] ~= normalizedColor[4]
+        then
+            section.color = normalizedColor
+            changed = true
         end
     end
 
@@ -2388,7 +2448,15 @@ function SavedVariables.updateTextLayout(kind, placement, fontSize)
         return true, "unchanged"
     end
     touchRevision(db)
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router and router.fire then
+        router.fire("EAM_TEXT_LAYOUT_CHANGED", kind, db.revision)
+    end
     return true, "updated", db.revision
+end
+
+function SavedVariables.updateTextColor(kind, color)
+    return SavedVariables.updateTextLayout(kind, nil, nil, color)
 end
 
 function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
@@ -2399,12 +2467,17 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
 
     spellID = spellID and normalizePositiveInteger(spellID) or nil
     itemID = itemID and normalizePositiveInteger(itemID) or nil
+    local slotID = options and options.slotID and normalizePositiveInteger(options.slotID) or nil
+    if not slotID and kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and options and options.itemType == "SLOT" and itemID then
+        slotID = normalizePositiveInteger(itemID)
+        itemID = nil
+    end
     local list = getAlertList(db, kind, unit)
     if not list then
         return false, "invalidKind"
     end
 
-    local id = buildAlertID(kind, unit, spellID, itemID)
+    local id = buildAlertID(kind, unit, spellID, itemID, slotID)
     if not id then
         return false, "invalidID"
     end
@@ -2472,7 +2545,7 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
                 changed = true
             end
         end
-        if kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN and options then
+        if (kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) and options then
             for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
                 local field = COOLDOWN_BEHAVIOR_FIELDS[index]
                 if options[field] ~= nil then
@@ -2492,6 +2565,8 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
                 touchRevision(db)
                 if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
                     EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+                elseif kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT and EAM.Modules.EventRouter then
+                    EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", db.revision)
                 end
             end
             return true, id, "updated"
@@ -2504,6 +2579,8 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         kind = kind,
         spellID = spellID,
         itemID = itemID,
+        slotID = slotID,
+        itemType = slotID and "SLOT" or (itemID and "ITEM" or nil),
         unit = unit,
         enabled = true,
         fromPlayer = options and options.fromPlayer == true or nil,
@@ -2525,7 +2602,7 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         manualDuration = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
             and normalizeGroundDuration(options and options.manualDuration, 8) or nil,
     }
-    if kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN and options then
+    if (kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) and options then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
             local field = COOLDOWN_BEHAVIOR_FIELDS[index]
             if type(options[field]) == "boolean" then
@@ -2538,6 +2615,8 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         touchRevision(db)
         if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
             EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+        elseif kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT and EAM.Modules.EventRouter then
+            EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", db.revision)
         end
     end
     return true, id, "added"
@@ -2555,19 +2634,22 @@ function SavedVariables.commitAlertBatch(kind, changed)
     touchRevision(db)
     if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
         EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    elseif kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", db.revision)
     end
     return true, "updated", db.revision
 end
 
-function SavedVariables.updateAlertPriority(kind, unit, spellID, itemID, value)
+function SavedVariables.updateAlertPriority(kind, unit, spellID, itemID, value, slotID)
     local db = EAM.db
     if type(db) ~= "table" then
         return false, "dbUnavailable"
     end
     local numericSpellID = spellID and normalizePositiveInteger(spellID) or nil
     local numericItemID = itemID and normalizePositiveInteger(itemID) or nil
+    local numericSlotID = slotID and normalizePositiveInteger(slotID) or nil
     local list = getAlertList(db, kind, unit)
-    local id = buildAlertID(kind, unit, numericSpellID, numericItemID)
+    local id = buildAlertID(kind, unit, numericSpellID, numericItemID, numericSlotID)
     if not list or not id then
         return false, "invalidID"
     end
@@ -2664,7 +2746,7 @@ local function buildImportedAlert(moduleName, record)
     elseif definition.kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT then
         alert.durationMode = normalizeGroundDurationMode(record.durationMode)
         alert.manualDuration = normalizeGroundDuration(record.manualDuration, 8)
-    elseif definition.kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN then
+    elseif definition.kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
             local field = COOLDOWN_BEHAVIOR_FIELDS[index]
             if record[field] ~= nil then
@@ -2674,6 +2756,10 @@ local function buildImportedAlert(moduleName, record)
                 end
                 alert[field] = override
             end
+        end
+        if definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and record.slotID then
+            alert.slotID = normalizePositiveInteger(record.slotID)
+            alert.itemType = "SLOT"
         end
     end
     return alert
@@ -2700,12 +2786,16 @@ local function exportComparableImportedAlert(moduleName, alert)
     elseif definition.kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT then
         record.durationMode = normalizeGroundDurationMode(alert.durationMode)
         record.manualDuration = normalizeGroundDuration(alert.manualDuration, 8)
-    elseif definition.kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN then
+    elseif definition.kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
             local field = COOLDOWN_BEHAVIOR_FIELDS[index]
             if type(alert[field]) == "boolean" then
                 record[field] = alert[field]
             end
+        end
+        if definition.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and alert.slotID then
+            record.slotID = alert.slotID
+            record.itemType = "SLOT"
         end
     end
     return record
@@ -2947,7 +3037,7 @@ function SavedVariables.applyProfileImport(classToken, moduleRecordsOrPayload, m
     end
     return true, "updated", report
 end
-function SavedVariables.removeAlert(kind, unit, spellID, itemID)
+function SavedVariables.removeAlert(kind, unit, spellID, itemID, slotID)
     local db = EAM.db
     if type(db) ~= "table" then
         return false, "dbUnavailable"
@@ -2955,24 +3045,32 @@ function SavedVariables.removeAlert(kind, unit, spellID, itemID)
 
     spellID = spellID and normalizePositiveInteger(spellID) or nil
     itemID = itemID and normalizePositiveInteger(itemID) or nil
+    slotID = slotID and normalizePositiveInteger(slotID) or nil
     local list = getAlertList(db, kind, unit)
     if not list then
         return false, "invalidKind"
     end
 
-    local id = buildAlertID(kind, unit, spellID, itemID)
-    if not id then
-        return false, "invalidID"
-    end
-
-    if not list[id] then
-        return false, "notFound"
+    local id = buildAlertID(kind, unit, spellID, itemID, slotID)
+    if not id or not list[id] then
+        -- 容錯：若直接傳入 ID 但實際可能為 slot 形式，或以 slotID 傳入 itemID 欄位
+        if kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and itemID then
+            local altID = buildAlertID(kind, unit, nil, nil, itemID)
+            if altID and list[altID] then
+                id = altID
+            end
+        end
+        if not id or not list[id] then
+            return false, "notFound"
+        end
     end
 
     list[id] = nil
     touchRevision(db)
     if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
         EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    elseif kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", db.revision)
     end
     return true, id, "removed"
 end
@@ -2999,6 +3097,17 @@ end
 
 function SavedVariables.removeItemCooldownAlert(itemID)
     return SavedVariables.removeAlert(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, itemID)
+end
+
+function SavedVariables.addInventorySlotCooldownAlert(slotID, options)
+    options = options or {}
+    options.slotID = slotID
+    options.itemType = "SLOT"
+    return SavedVariables.addAlert(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, nil, options)
+end
+
+function SavedVariables.removeInventorySlotCooldownAlert(slotID)
+    return SavedVariables.removeAlert(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, nil, slotID)
 end
 
 function SavedVariables.addGroundEffectAlert(spellID, options)
@@ -3042,6 +3151,54 @@ function SavedVariables.updateCooldownBehavior(spellID, field, value)
     local router = EAM.Modules and EAM.Modules.EventRouter
     if router then
         router.fire("EAM_COOLDOWN_CONFIG_CHANGED", numericSpellID, field, value, db.revision)
+    end
+    return true, "updated", db.revision
+end
+
+function SavedVariables.updateItemCooldownBehavior(identifier, field, value)
+    local db = EAM.db
+    if type(db) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    local validField = false
+    for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
+        if COOLDOWN_BEHAVIOR_FIELDS[index] == field then
+            validField = true
+            break
+        end
+    end
+    if not validField then
+        return false, "invalidCooldownBehavior"
+    end
+    if value ~= nil and type(value) ~= "boolean" then
+        return false, "invalidCooldownBehavior"
+    end
+    local list = getAlertList(db, EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil)
+    if not list then
+        return false, "listUnavailable"
+    end
+    local alert = nil
+    if type(identifier) == "string" and list[identifier] then
+        alert = list[identifier]
+    else
+        local num = normalizePositiveInteger(identifier)
+        if num then
+            local itemAlertID = buildAlertID(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, num, nil)
+            local slotAlertID = buildAlertID(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, nil, num)
+            alert = (itemAlertID and list[itemAlertID]) or (slotAlertID and list[slotAlertID])
+        end
+    end
+    if type(alert) ~= "table" then
+        return false, "notFound"
+    end
+    if alert[field] == value then
+        return true, "unchanged", db.revision
+    end
+    alert[field] = value
+    touchRevision(db)
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router then
+        router.fire("EAM_ITEM_COOLDOWN_CONFIG_CHANGED", alert.id, field, value, db.revision)
     end
     return true, "updated", db.revision
 end
@@ -3090,6 +3247,9 @@ function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDur
     alert.durationMode = normalizedMode
     alert.manualDuration = normalizedDuration
     touchRevision(EAM.db)
+    if EAM.Modules and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", EAM.db.revision)
+    end
     return true, "updated", EAM.db.revision
 end
 
@@ -3100,6 +3260,8 @@ function SavedVariables.updateConfigNumber(key, value)
     local minimum, maximum, integerValue
     if key == "cooldownSwipeAlpha" then
         minimum, maximum, integerValue = 0, 1, false
+    elseif key == "iconAlpha" then
+        minimum, maximum, integerValue = 0.1, 1.0, false
     elseif key == "chargeBarLengthPercent" then
         minimum, maximum, integerValue = 100, 250, true
     elseif key == "chargeBarThickness" then

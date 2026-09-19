@@ -151,6 +151,18 @@ function AlertManager.onAlertStateChanged(_, state, frameName)
         return false, "moduleDisabled"
     end
 
+    -- 原生雙重保險守衛：若 Native Aura 後端接管且警報類型屬於光環，攔截渲染流，避免 Legacy 衝突
+    local capability = EAM.Services and EAM.Services.AuraCapabilityService
+    if capability and capability.isNative and capability.isNative() then
+        if frameName == EAM.Constants.ALERT_FRAME_TYPES.selfAura 
+            or frameName == EAM.Constants.ALERT_FRAME_TYPES.targetAura then
+            if not state.shown and state.releaseFunc then
+                state.releaseFunc(state)
+            end
+            return false, "nativeAuraHandled"
+        end
+    end
+
     -- 被動裝飾：若此 spellID 當前正處於發光狀態，自動套用發光屬性
     if Util.isSafeTableKey(state.spellID) and glowSpells[state.spellID] then
         state.overlayGlow = true

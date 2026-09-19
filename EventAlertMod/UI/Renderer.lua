@@ -70,6 +70,14 @@ local function readField(object, name)
     return nil
 end
 
+local function safeCall(object, name, ...)
+    local method = readField(object, name)
+    if type(method) == "function" then
+        return pcall(method, object, ...)
+    end
+    return false
+end
+
 local function releaseTimerBinding(icon)
     if not icon or not icon.timerBinding then
         return
@@ -126,11 +134,15 @@ local function onDurationTimerExpired(token)
     then
         icon.rendered.activeToken = nil
         icon.rendered.scheduledExpirationTime = nil
-        token.active = false
-        local cooldownService = EAM.Services and EAM.Services.CooldownService
-        if cooldownService and type(cooldownService.onVisualTimerExpired) == "function" then
-            cooldownService.onVisualTimerExpired(token.alertID)
-        else
+        local isCooldownFrame = (token.frameName == EAM.Constants.ALERT_FRAME_TYPES.spellCooldown)
+        local handled = false
+        if isCooldownFrame then
+            local cooldownService = EAM.Services and EAM.Services.CooldownService
+            if cooldownService and type(cooldownService.onVisualTimerExpired) == "function" then
+                handled = cooldownService.onVisualTimerExpired(token.alertID)
+            end
+        end
+        if not handled then
             Renderer.render({ id = token.alertID, shown = false }, token.frameName)
         end
     end
@@ -315,6 +327,23 @@ function Renderer.getFrameParent(frameName)
     return ensureParent(frameName)
 end
 
+function Renderer.applyFramePositions()
+    if not EAM.db or not EAM.db.layout or not EAM.db.layout.frames then return end
+    for frameName, frameConfig in pairs(EAM.db.layout.frames) do
+        local fState = Renderer.frames and Renderer.frames[frameName]
+        if fState and fState.parent then
+            local point = frameConfig.point or "CENTER"
+            local x = frameConfig.x or 0
+            local y = frameConfig.y or 0
+            fState.parent:ClearAllPoints()
+            fState.parent:SetPoint(point, UIParent, point, x, y)
+        end
+    end
+    if EAM.Services and EAM.Services.AuraContainerService and EAM.Services.AuraContainerService.applyContainerPositions then
+        EAM.Services.AuraContainerService.applyContainerPositions()
+    end
+end
+
 local function setTextIfChanged(fontString, rendered, key, value)
     value = value or ""
     if rendered[key] ~= value then
@@ -340,7 +369,7 @@ local function formatChargeText(alertState)
     then
         return ""
     end
-    return tostring(currentCharges) .. "/" .. tostring(maximumCharges)
+    return tostring(currentCharges)
 end
 
 local function formatAbsorbAmount(val)
@@ -362,7 +391,8 @@ local function applyNameLayoutToIcon(icon, nameInside)
     end
 
     local rendered = icon.rendered
-    if rendered.nameInside == nameInside then
+    local spellNamePlacement = TextPlacement.getPlacement(EAM.db and EAM.db.config, "spellName") or "OUTSIDE_BOTTOM"
+    if rendered.nameInside == nameInside and (nameInside or rendered.spellNamePlacement == spellNamePlacement) then
         rendered.nameLayoutPending = nil
         rendered.pendingNameInside = nil
         return false
@@ -375,17 +405,23 @@ local function applyNameLayoutToIcon(icon, nameInside)
     end
 
     local refFrame = icon.overlay or icon
-    icon.nameText:ClearAllPoints()
     if nameInside then
+        icon.nameText:ClearAllPoints()
         icon.nameText:SetPoint("BOTTOM", refFrame, "BOTTOM", 0, 2)
         icon.nameText:SetFontObject("GameFontHighlightSmall")
         TextPlacement.applyFont(icon.nameText, icon.rendered.nameFontSize or 12, EAM.db and EAM.db.config or nil)
     else
-        icon.nameText:SetPoint("TOP", refFrame, "BOTTOM", 0, -2)
+        if TextPlacement and TextPlacement.apply then
+            TextPlacement.apply(icon.nameText, refFrame, spellNamePlacement)
+        else
+            icon.nameText:ClearAllPoints()
+            icon.nameText:SetPoint("TOP", refFrame, "BOTTOM", 0, -2)
+        end
         icon.nameText:SetFontObject("GameFontNormalSmall")
         TextPlacement.applyFont(icon.nameText, icon.rendered.nameFontSize or 12, EAM.db and EAM.db.config or nil)
     end
     rendered.nameInside = nameInside
+    rendered.spellNamePlacement = spellNamePlacement
     rendered.nameLayoutPending = nil
     rendered.pendingNameInside = nil
     return true
@@ -405,9 +441,10 @@ local function applyTextLayoutToIcon(icon, config)
     local fontFamily = TextPlacement.getFontFamily(config)
     local timerPlacement = TextPlacement.getPlacement(config, "timer")
     local applicationsPlacement = TextPlacement.getPlacement(config, "applications")
+    local spellNamePlacement = TextPlacement.getPlacement(config, "spellName") or "OUTSIDE_BOTTOM"
     local timerFontSize = TextPlacement.getFontSize(config, "timer")
     local applicationsFontSize = TextPlacement.getFontSize(config, "applications")
-    local nameFontSize = config and config.fontSizeSpellName or 12
+    local nameFontSize = TextPlacement.getFontSize(config, "spellName") or 12
     if not Util.isSafePositiveNumber(nameFontSize) then
         nameFontSize = 12
     end
@@ -419,6 +456,12 @@ local function applyTextLayoutToIcon(icon, config)
     if rendered.applicationsPlacement ~= applicationsPlacement then
         TextPlacement.apply(icon.stackText, refFrame, applicationsPlacement)
         rendered.applicationsPlacement = applicationsPlacement
+    end
+    if icon.nameText and not rendered.nameInside then
+        if rendered.spellNamePlacement ~= spellNamePlacement then
+            TextPlacement.apply(icon.nameText, refFrame, spellNamePlacement)
+            rendered.spellNamePlacement = spellNamePlacement
+        end
     end
     if rendered.timerFontSize ~= timerFontSize or rendered.fontFamily ~= fontFamily then
         TextPlacement.applyFont(icon.timerText, timerFontSize, config)
@@ -433,6 +476,42 @@ local function applyTextLayoutToIcon(icon, config)
         rendered.nameFontSize = nameFontSize
     end
     rendered.fontFamily = fontFamily
+
+    if TextPlacement and TextPlacement.applyColor and TextPlacement.getColor then
+        local timerColor = TextPlacement.getColor(config, "timer")
+        local applicationsColor = TextPlacement.getColor(config, "applications")
+        local spellNameColor = TextPlacement.getColor(config, "spellName")
+        TextPlacement.applyColor(icon.timerText, timerColor)
+        TextPlacement.applyColor(icon.stackText, applicationsColor)
+        if icon.nameText then
+            TextPlacement.applyColor(icon.nameText, spellNameColor)
+        end
+    end
+
+    -- 顯隱控制即時反應
+    local showSpellName = not config or config.showSpellName ~= false
+    local showTimeVal = not config or config.showTimeVal ~= false
+    if icon.nameText and type(icon.nameText.Hide) == "function" and type(icon.nameText.Show) == "function" then
+        if not showSpellName then
+            icon.nameText:Hide()
+        else
+            if rendered.name and rendered.name ~= "" then
+                icon.nameText:Show()
+            end
+        end
+    end
+    if icon.timerText and type(icon.timerText.Hide) == "function" and type(icon.timerText.Show) == "function" then
+        if not showTimeVal then
+            icon.timerText:Hide()
+        else
+            local hasBinding = rawget(icon, "timerBinding") ~= nil
+            local expTime = rawget(icon, "expirationTime")
+            if hasBinding or (rendered.cooldownDuration and rendered.cooldownDuration > 0) or (expTime and expTime > 0) then
+                icon.timerText:Show()
+            end
+        end
+    end
+
     return true
 end
 
@@ -493,6 +572,7 @@ local function layout(frameName)
     end
 
     local size = EAM.db and EAM.db.config and EAM.db.config.iconSize or (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or Renderer.iconSize
+    local alpha = EAM.db and EAM.db.config and EAM.db.config.iconAlpha or 1.0
     local spacing = EAM.db and EAM.db.config and EAM.db.config.iconSpacing or (EAM.db and EAM.db.layout and EAM.db.layout.spacing) or Renderer.spacing
     local vSpacing = (EAM.db and EAM.db.layout and EAM.db.layout.verticalSpacing and EAM.db.layout.verticalSpacing > 0) and EAM.db.layout.verticalSpacing or spacing
     local count = fState.orderCount
@@ -563,6 +643,12 @@ local function layout(frameName)
                 rendered.layoutY = offsetY
                 rendered.layoutSize = size
             end
+            if rendered.layoutAlpha ~= alpha then
+                if type(icon.SetAlpha) == "function" then
+                    icon:SetAlpha(alpha)
+                end
+                rendered.layoutAlpha = alpha
+            end
         end
     end
 
@@ -626,13 +712,15 @@ end
 
 function Renderer.prewarmAlertFrames()
     if inCombat() then return end
-    local db = EAM.db
-    local alerts = db and db.alerts
+    local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
+    local alerts = (savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts(EAM.db))
+        or (EAM.db and EAM.db.alerts)
     if not alerts then return end
 
     local frameTypes = {
         spellCooldowns = EAM.Constants.ALERT_FRAME_TYPES.spellCooldown or "spellCooldown",
         itemCooldowns = EAM.Constants.ALERT_FRAME_TYPES.itemCooldown or "itemCooldown",
+        groundEffects = EAM.Constants.ALERT_FRAME_TYPES.groundEffect or "groundEffect",
     }
 
     for alertType, fName in pairs(frameTypes) do
@@ -936,9 +1024,9 @@ function Renderer.render(alertState, frameName)
         return false, "combatDeferred"
     end
 
-    -- 圖示隱藏/釋放處理 (冷卻類型框架透過透明度 Alpha = 0 隱藏，保持 Frame 結構常駐)
+    -- 圖示隱藏/釋放處理 (冷卻與地面效果類型框架透過透明度 Alpha = 0 隱藏，保持 Frame 結構常駐)
     if not alertState.shown then
-        local isCooldownFrame = (frameName == "spellCooldown" or frameName == "itemCooldown")
+        local isCooldownFrame = (frameName == "spellCooldown" or frameName == "itemCooldown" or frameName == "groundEffect")
         if not icon and isCooldownFrame and not inCombat() and alertState.rawAlert and alertState.rawAlert.enabled ~= false then
             icon = IconPool.acquire()
             if icon then
@@ -1002,6 +1090,9 @@ function Renderer.render(alertState, frameName)
                     if icon.stackText.ClearText then icon.stackText:ClearText() else icon.stackText:SetText("") end
                 end
                 IconPool.setGlow(icon, false)
+                if icon.rendered then icon.rendered.isShown = false end
+                if icon.popAnimation and icon.popAnimation.Stop then pcall(icon.popAnimation.Stop, icon.popAnimation) end
+                if icon.pandemicAnimation and icon.pandemicAnimation.Stop then pcall(icon.pandemicAnimation.Stop, icon.pandemicAnimation) end
                 Renderer.checkEscFrameState()
                 return
             end
@@ -1183,8 +1274,20 @@ function Renderer.render(alertState, frameName)
         end
     end
 
+    local raw = alertState.rawAlert
+    local showStacks = true
+    if raw and raw.showStacks ~= nil then
+        showStacks = raw.showStacks ~= false
+    end
+    if not showStacks and icon.stackText and type(icon.stackText.Hide) == "function" then
+        icon.stackText:Hide()
+    elseif showStacks and icon.stackText and type(icon.stackText.Show) == "function" and rendered.stacks and rendered.stacks ~= "" then
+        icon.stackText:Show()
+    end
+
     local nameInside = shouldBeParasite
-    if rendered.nameInside ~= nameInside then
+    local currentPlacement = TextPlacement.getPlacement(config, "spellName") or "OUTSIDE_BOTTOM"
+    if rendered.nameInside ~= nameInside or (not nameInside and rendered.spellNamePlacement ~= currentPlacement) then
         if inCombat() then
             rendered.nameLayoutPending = true
             rendered.pendingNameInside = nameInside
@@ -1199,13 +1302,26 @@ function Renderer.render(alertState, frameName)
     end
 
     local name = alertState.name or ""
-    setTextIfChanged(icon.nameText, rendered, "name", name)
+    local showSpellName = not config or config.showSpellName ~= false
+    if raw and raw.showName ~= nil then
+        showSpellName = raw.showName ~= false
+    end
+    if showSpellName and name ~= "" then
+        setTextIfChanged(icon.nameText, rendered, "name", name)
+        if icon.nameText and type(icon.nameText.Show) == "function" and (type(icon.nameText.IsShown) ~= "function" or not icon.nameText:IsShown()) then
+            icon.nameText:Show()
+        end
+    else
+        setTextIfChanged(icon.nameText, rendered, "name", "")
+        if icon.nameText and type(icon.nameText.Hide) == "function" and (type(icon.nameText.IsShown) ~= "function" or icon.nameText:IsShown()) then
+            icon.nameText:Hide()
+        end
+    end
 
     -- Cooldown 與 DurationObject 倒數雙軌管道渲染
     local timer = alertState.timer
     local useNativeBinding = timer and timer.durationObject and DurationAdapter ~= nil
 
-    local raw = alertState.rawAlert
     local spellRedLimit = alertState.countdownRedLimit or (raw and raw.countdownRedLimit)
     local spellRedColor = alertState.countdownRedColor or (raw and raw.countdownRedColor)
     local hasSpellRedLimit = Util.isSafeNumber(spellRedLimit) and spellRedLimit > 0
@@ -1308,6 +1424,24 @@ function Renderer.render(alertState, frameName)
         end
     end
 
+    local showTimeVal = not config or config.showTimeVal ~= false
+    if raw and raw.showCountdown ~= nil then
+        showTimeVal = raw.showCountdown ~= false
+    end
+    if icon.timerText then
+        if not showTimeVal then
+            if type(icon.timerText.Hide) == "function" then
+                icon.timerText:Hide()
+            end
+        else
+            local hasBinding = rawget(icon, "timerBinding") ~= nil
+            local expTime = timer and Util.isSafeNumber(timer.expirationTime) and timer.expirationTime > 0
+            if (hasBinding or expTime) and type(icon.timerText.Show) == "function" then
+                icon.timerText:Show()
+            end
+        end
+    end
+
     rendered.duration = timer and timer.duration
     rendered.isPandemic = alertState.pandemicReady or alertState.isImportant
     local radialGauge = readField(icon, "radialGauge")
@@ -1338,6 +1472,20 @@ function Renderer.render(alertState, frameName)
         if icon.glowBorder then icon.glowBorder:Show() end
     elseif icon.glowBorder then
         icon.glowBorder:Hide()
+    end
+
+    -- 🌡️ GPU 原生硬體加速動畫：Pandemic 呼吸動態控制
+    if icon.pandemicAnimation then
+        local isPlaying = icon.pandemicAnimation.IsPlaying and icon.pandemicAnimation:IsPlaying()
+        if alertState.pandemicReady then
+            if not isPlaying and icon.pandemicAnimation.Play then
+                pcall(icon.pandemicAnimation.Play, icon.pandemicAnimation)
+            end
+        else
+            if isPlaying and icon.pandemicAnimation.Stop then
+                pcall(icon.pandemicAnimation.Stop, icon.pandemicAnimation)
+            end
+        end
     end
 
     if icon.overlay and icon.cooldown and icon.cooldown.GetFrameLevel then
@@ -1392,6 +1540,13 @@ function Renderer.render(alertState, frameName)
     local targetAlpha = config and config.iconAlpha or 1.0
     if icon.SetAlpha then pcall(icon.SetAlpha, icon, targetAlpha) end
     if icon.Show then icon:Show() end
+
+    -- 🚀 GPU 原生硬體加速動畫：圖示觸發 Pop 彈跳
+    local wasShown = rendered.isShown
+    rendered.isShown = true
+    if not wasShown and icon.popAnimation and icon.popAnimation.Play then
+        pcall(icon.popAnimation.Play, icon.popAnimation)
+    end
     if fState.layoutDirty then
         if isBatching then
             batchDirtyFrames[frameName] = true
@@ -1530,61 +1685,284 @@ local PREVIEW_CONFIG = {
             { text = "★ 屬性/吸收量", step = 0, isStat = true, sampleStack = nil, sampleCD = nil },
         }
     },
+    petAlert = {
+        title = "EAM - 寵物監控框架",
+        slots = {
+            { text = "寵物Buff/CD(1)", step = 0, isPet = true, sampleStack = 3, sampleCD = 8 },
+            { text = "寵物Debuff(2)", step = 1, isPet = true, isDebuff = true, sampleStack = nil, sampleCD = 12 },
+        }
+    },
 }
 
+local function getFrameDisplayName(fName)
+    local labels = {
+        selfAura = EAM.L.EAM_FRAME_SELF_AURA or "EAM - 自身光環框架",
+        targetAura = EAM.L.EAM_FRAME_TARGET_AURA or "EAM - 目標光環框架",
+        spellCooldown = EAM.L.EAM_FRAME_SPELL_COOLDOWN or "EAM - 技能冷卻框架",
+        itemCooldown = EAM.L.EAM_FRAME_ITEM_COOLDOWN or "EAM - 物品冷卻框架",
+        classPower = EAM.L.EAM_FRAME_CLASS_POWER or "EAM - 職業能量框架",
+        groundEffect = EAM.L.EAM_FRAME_GROUND_EFFECT or "EAM - 地面效果框架",
+        totem = EAM.L.EAM_FRAME_TOTEM or "EAM - 圖騰監控框架",
+        playerStat = EAM.L.EAM_FRAME_PLAYER_STAT or "EAM - 角色屬性與吸收量框架",
+        petAlert = EAM.L.EAM_FRAME_PET_ALERT or "EAM - 寵物監控框架",
+    }
+    return labels[fName] or fName
+end
+
+local function showMoverHUD(moverFrame, text)
+    if not moverFrame then return end
+    local hud = rawget(moverFrame, "hudFrame")
+    if not hud then
+        hud = api.CreateFrame("Frame", nil, moverFrame, "BackdropTemplate")
+        hud:SetFrameStrata("TOOLTIP")
+        hud:SetSize(240, 36)
+        hud:SetPoint("CENTER", moverFrame, "CENTER", 0, 0)
+        hud:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 12, edgeSize = 10,
+            insets = { left = 2, right = 2, top = 2, bottom = 2 }
+        })
+        hud:SetBackdropColor(0.04, 0.08, 0.05, 0.92)
+        hud:SetBackdropBorderColor(0.2, 1.0, 0.4, 0.95)
+        local str = hud:CreateFontString(nil, "OVERLAY", "GameFontHighlightMedium")
+        str:SetPoint("CENTER", hud, "CENTER", 0, 0)
+        str:SetTextColor(1, 0.88, 0.25, 1)
+        rawset(hud, "text", str)
+        rawset(moverFrame, "hudFrame", hud)
+    end
+    local hudText = rawget(hud, "text")
+    if hudText then hudText:SetText(text) end
+    hud:Show()
+    hud.hideTimer = 1.6
+    hud:SetScript("OnUpdate", function(self, elapsed)
+        self.hideTimer = (self.hideTimer or 1.6) - elapsed
+        if self.hideTimer <= 0 then
+            self:Hide()
+            self:SetScript("OnUpdate", nil)
+        end
+    end)
+end
+
+local function safeCall(obj, method, ...)
+    if not obj then return nil end
+    local success, fn = pcall(function() return obj[method] end)
+    if success and type(fn) == "function" then
+        local ok, ret = pcall(fn, obj, ...)
+        if ok then return ret end
+    end
+    return nil
+end
+
+local function getOrCreateMoverFrame(parent, fName, fLabel)
+    local existing = rawget(parent, "moverFrame")
+    if existing then
+        return existing
+    end
+
+    local mover = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    mover:SetFrameStrata("FULLSCREEN_DIALOG")
+    local parentLevel = safeCall(parent, "GetFrameLevel") or 1
+    safeCall(mover, "SetFrameLevel", parentLevel + 5)
+    mover:EnableMouse(true)
+    safeCall(mover, "EnableMouseWheel", true)
+    mover:RegisterForDrag("LeftButton")
+    mover:SetClampedToScreen(true)
+
+    mover:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    -- 半透明綠色背景與鮮明綠色邊框
+    mover:SetBackdropColor(0.02, 0.28, 0.12, 0.35)
+    mover:SetBackdropBorderColor(0.20, 1.00, 0.45, 0.95)
+
+    -- 頂部標題與操作指南
+    local title = mover:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    title:SetPoint("BOTTOM", mover, "TOP", 0, 4)
+    title:SetTextColor(0.3, 1.0, 0.5, 1.0)
+    title:SetText(string.format("[%s] (左鍵拖曳 / 右鍵完成)", fLabel or fName))
+    rawset(mover, "titleText", title)
+
+    -- 底部快捷提示
+    local subHint = mover:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    subHint:SetPoint("TOP", mover, "BOTTOM", 0, -4)
+    subHint:SetTextColor(0.8, 0.9, 0.8, 0.9)
+    subHint:SetText("[Ctrl+滾輪]水平間距  [Alt+滾輪]垂直間距  [Shift+滾輪]大小")
+    rawset(mover, "subHint", subHint)
+
+    -- 拖曳邏輯：委派至 parent 進行移動與座標儲存
+    mover:SetScript("OnDragStart", function()
+        parent:StartMoving()
+    end)
+    mover:SetScript("OnDragStop", function()
+        parent:StopMovingOrSizing()
+        local point, relativeTo, relativePoint, xOffset, yOffset = parent:GetPoint()
+        local pName = rawget(parent, "frameName") or fName
+        if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[pName] then
+            local cfg = EAM.db.layout.frames[pName]
+            cfg.point = point or "CENTER"
+            cfg.x = xOffset or 0
+            cfg.y = yOffset or 0
+            if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+                EAM.Modules.SavedVariables.markRevisionChanged()
+            end
+        end
+        if EAM.Services and EAM.Services.AuraContainerService and EAM.Services.AuraContainerService.applyContainerPositions then
+            EAM.Services.AuraContainerService.applyContainerPositions()
+        end
+        local fLabelStr = (nameLabels and nameLabels[pName]) or (fLabel or pName)
+        print("|cff00ff96EAM|r [" .. fLabelStr .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
+    end)
+    mover:SetScript("OnMouseUp", function(self, button)
+        if button == "RightButton" and Renderer.isMoving then
+            Renderer.setActiveAnchors(nil)
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_MOVE_MODE_OFF or "已關閉「多框架移動模式」並成功套用新排版。"))
+        end
+    end)
+
+    -- 滾輪事件：Ctrl 調整水平間距、Alt 調整垂直間距、Shift 調整圖示大小
+    mover:SetScript("OnMouseWheel", function(self, delta)
+        local isCtrl = api.IsControlKeyDown and api.IsControlKeyDown()
+        local isAlt = api.IsAltKeyDown and api.IsAltKeyDown()
+        local isShift = api.IsShiftKeyDown and api.IsShiftKeyDown()
+
+        if isCtrl then
+            local cfg = EAM.db and EAM.db.config
+            local cur = (cfg and cfg.iconSpacing) or (EAM.db and EAM.db.layout and EAM.db.layout.spacing) or 6
+            local step = delta > 0 and 1 or -1
+            local nextVal = math.max(0, math.min(100, cur + step))
+            if cfg then cfg.iconSpacing = nextVal end
+            if EAM.db and EAM.db.layout then EAM.db.layout.spacing = nextVal end
+            showMoverHUD(self, string.format(EAM.L.EAM_MOVER_HUD_H_SPACING or "水平間距: %d px", nextVal))
+        elseif isAlt then
+            local cfg = EAM.db and EAM.db.config
+            local cur = (cfg and cfg.verticalSpacing) or (EAM.db and EAM.db.layout and EAM.db.layout.verticalSpacing) or 0
+            local step = delta > 0 and 1 or -1
+            local nextVal = math.max(0, math.min(100, cur + step))
+            if cfg then cfg.verticalSpacing = nextVal end
+            if EAM.db and EAM.db.layout then EAM.db.layout.verticalSpacing = nextVal end
+            showMoverHUD(self, string.format(EAM.L.EAM_MOVER_HUD_V_SPACING or "垂直間距: %d px", nextVal))
+        elseif isShift then
+            local cfg = EAM.db and EAM.db.config
+            local cur = (cfg and cfg.iconSize) or (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or 40
+            local step = delta > 0 and 2 or -2
+            local nextVal = math.max(20, math.min(120, cur + step))
+            if cfg then cfg.iconSize = nextVal end
+            if EAM.db and EAM.db.layout then EAM.db.layout.iconSize = nextVal end
+            showMoverHUD(self, string.format(EAM.L.EAM_MOVER_HUD_SIZE or "圖示大小: %d px", nextVal))
+        else
+            showMoverHUD(self, EAM.L.EAM_MOVER_HINT_WHEEL or "[Ctrl+滾輪] 水平間距 | [Alt+滾輪] 垂直間距 | [Shift+滾輪] 大小")
+            return
+        end
+
+        if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+            EAM.Modules.SavedVariables.markRevisionChanged()
+        end
+        if Options and Options.notifyConfigChanged then
+            Options.notifyConfigChanged()
+        end
+        Renderer.refreshPreviewLayout()
+    end)
+
+    rawset(parent, "moverFrame", mover)
+    return mover
+end
+
 local function getOrCreatePreviewIcon(parent, index)
-    parent.previewIcons = parent.previewIcons or {}
-    if parent.previewIcons[index] then
-        return parent.previewIcons[index]
+    local previewIcons = rawget(parent, "previewIcons")
+    if not previewIcons then
+        previewIcons = {}
+        rawset(parent, "previewIcons", previewIcons)
+    end
+    if previewIcons[index] then
+        return previewIcons[index]
     end
 
     local icon = api.CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    icon:SetFrameStrata("FULLSCREEN_DIALOG")
+    safeCall(icon, "SetFrameStrata", "FULLSCREEN_DIALOG")
 
     -- 經典奶牛頭貼圖
     local tex = icon:CreateTexture(nil, "BACKGROUND")
-    tex:SetPoint("TOPLEFT", icon, "TOPLEFT", 2, -2)
-    tex:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", -2, 2)
-    tex:SetTexture(COW_ICON)
-    tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    safeCall(tex, "SetPoint", "TOPLEFT", icon, "TOPLEFT", 2, -2)
+    safeCall(tex, "SetPoint", "BOTTOMRIGHT", icon, "BOTTOMRIGHT", -2, 2)
+    safeCall(tex, "SetTexture", COW_ICON)
+    safeCall(tex, "SetTexCoord", 0.08, 0.92, 0.08, 0.92)
     icon.texture = tex
 
     -- 倒數扇形轉圈 Cooldown 框架 (即時預覽扇形倒數轉圈)
     local cd = api.CreateFrame("Cooldown", nil, icon, "CooldownFrameTemplate")
-    cd:SetAllPoints(icon)
-    cd:SetDrawEdge(true)
-    cd:SetDrawBling(false)
-    cd:SetDrawSwipe(true)
-    cd:SetReverse(true)
+    if cd then
+        safeCall(cd, "SetAllPoints", icon)
+        safeCall(cd, "SetDrawEdge", true)
+        safeCall(cd, "SetDrawBling", false)
+        safeCall(cd, "SetDrawSwipe", true)
+        safeCall(cd, "SetReverse", true)
+    end
     icon.cooldown = cd
 
     -- TIME LEFT / 倒數文字
     local timerText = icon:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    timerText:SetPoint("BOTTOM", icon, "TOP", 0, 3)
-    timerText:SetText("TIME LEFT")
-    timerText:SetTextColor(1, 1, 1, 1)
+    safeCall(timerText, "SetPoint", "BOTTOM", icon, "TOP", 0, 3)
+    safeCall(timerText, "SetText", "TIME LEFT")
+    safeCall(timerText, "SetTextColor", 1, 1, 1, 1)
     icon.timerText = timerText
 
     -- 槽位說明文字 (名稱)
     local nameText = icon:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    nameText:SetPoint("TOP", icon, "BOTTOM", 0, -3)
-    nameText:SetTextColor(1, 0.95, 0.5, 1)
+    safeCall(nameText, "SetPoint", "TOP", icon, "BOTTOM", 0, -3)
+    safeCall(nameText, "SetTextColor", 1, 0.95, 0.5, 1)
     icon.nameText = nameText
 
     -- 堆疊層數文字
     local stackText = icon:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    stackText:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", -2, 2)
-    stackText:SetTextColor(1, 1, 1, 1)
+    safeCall(stackText, "SetPoint", "BOTTOMRIGHT", icon, "BOTTOMRIGHT", -2, 2)
+    safeCall(stackText, "SetTextColor", 1, 1, 1, 1)
     icon.stackText = stackText
 
-    icon:SetBackdrop({
+    safeCall(icon, "SetBackdrop", {
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         tile = false, tileSize = 0, edgeSize = 10,
         insets = { left = 2, right = 2, top = 2, bottom = 2 }
     })
 
-    parent.previewIcons[index] = icon
+    -- 預覽圖示滑鼠拖曳、滾輪調節與右鍵完成支援：委派至父框架以確保點擊圖示時能正常拖曳與滾輪調節
+    safeCall(icon, "EnableMouse", true)
+    safeCall(icon, "EnableMouseWheel", true)
+    safeCall(icon, "RegisterForDrag", "LeftButton")
+    safeCall(icon, "SetScript", "OnDragStart", function(self)
+        local p = self:GetParent()
+        if p and p.StartMoving then
+            p:StartMoving()
+        end
+    end)
+    safeCall(icon, "SetScript", "OnDragStop", function(self)
+        local p = self:GetParent()
+        local mover = p and rawget(p, "moverFrame")
+        if mover and mover:GetScript("OnDragStop") then
+            mover:GetScript("OnDragStop")(mover)
+        elseif p and p.StopMovingOrSizing then
+            p:StopMovingOrSizing()
+        end
+    end)
+    safeCall(icon, "SetScript", "OnMouseWheel", function(self, delta)
+        local p = self:GetParent()
+        local mover = p and rawget(p, "moverFrame")
+        if mover and mover:GetScript("OnMouseWheel") then
+            mover:GetScript("OnMouseWheel")(mover, delta)
+        end
+    end)
+    icon:SetScript("OnMouseUp", function(self, button)
+        if button == "RightButton" and Renderer.isMoving then
+            Renderer.setActiveAnchors(nil)
+            print("|cff00ff96EAM|r " .. (EAM.L.EAM_MOVE_MODE_OFF or "已關閉「多框架移動模式」並成功套用新排版。"))
+        end
+    end)
+
+    previewIcons[index] = icon
     return icon
 end
 
@@ -1623,12 +2001,62 @@ function Renderer.refreshPreviewLayout()
             local growDir = fLayout.growDirection or 1
 
             if parent and pCfg and pCfg.slots then
+                local minX, maxX = 0, 0
+                local minY, maxY = 0, 0
+                local first = true
+                for _, slot in ipairs(pCfg.slots) do
+                    local step = slot.step or 0
+                    local dx, dy = 0, 0
+                    if growDir == 1 then
+                        dx = step * (size + spacing)
+                    elseif growDir == 2 then
+                        dx = -step * (size + spacing)
+                    elseif growDir == 3 then
+                        dy = step * (size + vertSpacing)
+                    elseif growDir == 4 then
+                        dy = -step * (size + vertSpacing)
+                    end
+                    local left = dx - size / 2
+                    local right = dx + size / 2
+                    local bottom = dy - size / 2
+                    local top = dy + size / 2
+                    if first then
+                        minX, maxX, minY, maxY = left, right, bottom, top
+                        first = false
+                    else
+                        if left < minX then minX = left end
+                        if right > maxX then maxX = right end
+                        if bottom < minY then minY = bottom end
+                        if top > maxY then maxY = top end
+                    end
+                end
+
+                local padX = 8
+                local padYTop = 14
+                local padYBottom = 22
+                local boxW = math.max(size + padX * 2, (maxX - minX) + padX * 2)
+                local boxH = math.max(size + padYTop + padYBottom, (maxY - minY) + padYTop + padYBottom)
+                local centerOffsetX = (minX + maxX) / 2
+                local centerOffsetY = (minY + maxY) / 2 - (padYBottom - padYTop) / 2
+
                 parent:SetSize(size, size)
+
+                local mover = getOrCreateMoverFrame(parent, fName, getFrameDisplayName(fName))
+                mover:ClearAllPoints()
+                mover:SetPoint("CENTER", parent, "CENTER", centerOffsetX, centerOffsetY)
+                mover:SetSize(boxW, boxH)
+                local titleText = rawget(mover, "titleText")
+                if titleText then
+                    titleText:SetText(string.format("[%s] (左鍵拖曳 / 右鍵完成)", getFrameDisplayName(fName)))
+                end
+                mover:Show()
 
                 for sIdx, slot in ipairs(pCfg.slots) do
                     local pIcon = getOrCreatePreviewIcon(parent, sIdx)
                     pIcon:SetSize(size, size)
                     pIcon:SetAlpha(alpha)
+                    local mLevel = safeCall(mover, "GetFrameLevel") or 6
+                    safeCall(pIcon, "SetFrameLevel", mLevel + 2)
 
                     -- 依照成長方向 (1:右, 2:左, 3:上, 4:下) 計算偏移
                     local dx = 0
@@ -1655,61 +2083,130 @@ function Renderer.refreshPreviewLayout()
                         TextPlacement.applyFont(pIcon.stackText, fontStack, cfg)
                     end
 
-                    pIcon.stackText:SetText(slot.sampleStack and tostring(slot.sampleStack) or "")
-
-                    -- 扇形倒數轉圈與透明度即時預覽
-                    if pIcon.cooldown then
-                        pIcon.cooldown:SetSwipeColor(swipeR, swipeG, swipeB, swipeAlpha)
-                        if slot.sampleCD then
-                            pIcon.cooldown:SetCooldown(now - 2, slot.sampleCD)
-                            pIcon.cooldown:Show()
-                            pIcon.timerText:SetText(string.format("%.1f", math.max(0.1, slot.sampleCD - 2)))
+                    -- 文字錨點位置 (21 種排版)
+                    if TextPlacement and TextPlacement.apply and TextPlacement.getPlacement then
+                        local timerPlacement = TextPlacement.getPlacement(cfg, "timer")
+                        TextPlacement.apply(pIcon.timerText, pIcon, timerPlacement)
+                        local appPlacement = TextPlacement.getPlacement(cfg, "applications")
+                        TextPlacement.apply(pIcon.stackText, pIcon, appPlacement)
+                        local namePlacement = TextPlacement.getPlacement(cfg, "spellName") or "OUTSIDE_BOTTOM"
+                        TextPlacement.apply(pIcon.nameText, pIcon, namePlacement)
+                    else
+                        -- 法術名稱位置 (Fallback)
+                        pIcon.nameText:ClearAllPoints()
+                        if cfg.nameInside then
+                            pIcon.nameText:SetPoint("BOTTOM", pIcon, "BOTTOM", 0, 2)
                         else
-                            pIcon.cooldown:Hide()
-                            pIcon.timerText:SetText("TIME LEFT")
+                            pIcon.nameText:SetPoint("TOP", pIcon, "BOTTOM", 0, -2)
                         end
                     end
 
+                    if TextPlacement and TextPlacement.applyColor and TextPlacement.getColor then
+                        local timerColor = TextPlacement.getColor(cfg, "timer")
+                        local appColor = TextPlacement.getColor(cfg, "applications")
+                        local nameColor = TextPlacement.getColor(cfg, "spellName")
+                        TextPlacement.applyColor(pIcon.timerText, timerColor)
+                        TextPlacement.applyColor(pIcon.stackText, appColor)
+                        TextPlacement.applyColor(pIcon.nameText, nameColor)
+                    end
+
+                    -- 顯隱控制
+                    if cfg.showSpellName == false then
+                        pIcon.nameText:Hide()
+                    else
+                        pIcon.nameText:Show()
+                    end
+
+                    if cfg.showTimeVal == false then
+                        pIcon.timerText:Hide()
+                    else
+                        pIcon.timerText:Show()
+                    end
+
+                    pIcon.stackText:SetText(slot.sampleStack and tostring(slot.sampleStack) or "")
+
+                    -- 扇形倒數轉圈與透明度即時預覽
+                    local cd = rawget(pIcon, "cooldown")
+                    if cd then
+                        if cfg.cooldownShadow == false then
+                            safeCall(cd, "Hide")
+                        else
+                            safeCall(cd, "SetSwipeColor", swipeR, swipeG, swipeB, swipeAlpha)
+                            if slot.sampleCD then
+                                safeCall(cd, "SetCooldown", now - 2, slot.sampleCD)
+                                safeCall(cd, "Show")
+                                pIcon.timerText:SetText(string.format("%.1f", math.max(0.1, slot.sampleCD - 2)))
+                            else
+                                safeCall(cd, "Hide")
+                                pIcon.timerText:SetText("TIME LEFT")
+                            end
+                        end
+                    end
+
+                    -- 倒數文字變色曲線套用
+                    local timerSampleTime = slot.sampleCD and math.max(0.1, slot.sampleCD - 2) or 5.0
+                    local timerColor = { 1, 1, 1, 1 }
+                    local tcc = cfg.timerColorCurve
+                    if tcc and tcc.normalColor then
+                        timerColor = tcc.normalColor
+                    end
+                    if tcc and tcc.enabled and type(tcc.stages) == "table" then
+                        for i = 1, #tcc.stages do
+                            local stage = tcc.stages[i]
+                            if stage and stage.threshold and timerSampleTime <= stage.threshold then
+                                timerColor = stage.color or timerColor
+                                break
+                            end
+                        end
+                    end
+                    pIcon.timerText:SetTextColor(timerColor[1] or 1, timerColor[2] or 1, timerColor[3] or 1, timerColor[4] or 1)
+
                     -- 顏色即時預覽 (紅/綠色度與常規邊框)
+                    local tex = rawget(pIcon, "texture")
                     if slot.isSelfDebuff then
                         local r = 1.0
                         local g = math.max(0, 1.0 - selfDebuffRed * 0.7)
                         local b = math.max(0, 1.0 - selfDebuffRed * 0.7)
-                        pIcon:SetBackdropBorderColor(r, g, b, 1.0)
-                        pIcon.texture:SetVertexColor(r, math.max(0.2, 1.0 - selfDebuffRed * 0.35), math.max(0.2, 1.0 - selfDebuffRed * 0.35), 1.0)
+                        safeCall(pIcon, "SetBackdropBorderColor", r, g, b, 1.0)
+                        if tex then safeCall(tex, "SetVertexColor", r, math.max(0.2, 1.0 - selfDebuffRed * 0.35), math.max(0.2, 1.0 - selfDebuffRed * 0.35), 1.0) end
                     elseif slot.isTargetDebuff then
                         local r = math.max(0, 1.0 - targetDebuffGreen * 0.7)
                         local g = 1.0
                         local b = math.max(0, 1.0 - targetDebuffGreen * 0.7)
-                        pIcon:SetBackdropBorderColor(r, g, b, 1.0)
-                        pIcon.texture:SetVertexColor(math.max(0.2, 1.0 - targetDebuffGreen * 0.35), g, math.max(0.2, 1.0 - targetDebuffGreen * 0.35), 1.0)
+                        safeCall(pIcon, "SetBackdropBorderColor", r, g, b, 1.0)
+                        if tex then safeCall(tex, "SetVertexColor", math.max(0.2, 1.0 - targetDebuffGreen * 0.35), g, math.max(0.2, 1.0 - targetDebuffGreen * 0.35), 1.0) end
                     elseif slot.isPower then
-                        pIcon:SetBackdropBorderColor(0.4, 0.8, 1.0, 1.0)
-                        pIcon.texture:SetVertexColor(0.8, 0.95, 1.0, 1.0)
+                        safeCall(pIcon, "SetBackdropBorderColor", 0.4, 0.8, 1.0, 1.0)
+                        if tex then safeCall(tex, "SetVertexColor", 0.8, 0.95, 1.0, 1.0) end
+                    elseif slot.isPet then
+                        safeCall(pIcon, "SetBackdropBorderColor", 0.35, 0.95, 0.55, 1.0)
+                        if tex then safeCall(tex, "SetVertexColor", 0.85, 1.0, 0.85, 1.0) end
                     else
-                        pIcon:SetBackdropBorderColor(0.85, 0.85, 0.85, 1.0)
-                        pIcon.texture:SetVertexColor(1.0, 1.0, 1.0, 1.0)
+                        safeCall(pIcon, "SetBackdropBorderColor", 0.85, 0.85, 0.85, 1.0)
+                        if tex then safeCall(tex, "SetVertexColor", 1.0, 1.0, 1.0, 1.0) end
                     end
-                    pIcon:SetBackdropColor(0.08, 0.08, 0.08, 0.8)
-                    pIcon:Show()
+                    safeCall(pIcon, "SetBackdropColor", 0.08, 0.08, 0.08, 0.8)
+                    safeCall(pIcon, "Show")
                 end
 
-                if parent.previewIcons then
-                    for sIdx = #pCfg.slots + 1, #parent.previewIcons do
-                        parent.previewIcons[sIdx]:Hide()
+                local previewIcons = rawget(parent, "previewIcons")
+                if previewIcons then
+                    for sIdx = #pCfg.slots + 1, #previewIcons do
+                        safeCall(previewIcons[sIdx], "Hide")
                     end
                 end
 
-                if parent.dragHint then
-                    parent.dragHint:Show()
+                local dHint = rawget(parent, "dragHint")
+                if dHint then
+                    safeCall(dHint, "Hide")
                 end
-                parent:Show()
+                safeCall(parent, "Show")
             end
         end
     end
 end
 
--- 7 大告警框架特定/全部移動模式控制
+-- 9 大告警框架特定/全部移動模式控制
 function Renderer.setActiveAnchors(targetFrames)
     if inCombat() then
         return false, "combatDeferred"
@@ -1724,6 +2221,7 @@ function Renderer.setActiveAnchors(targetFrames)
         groundEffect = EAM.L.EAM_FRAME_GROUND_EFFECT or "EAM - 地面效果框架",
         totem = EAM.L.EAM_FRAME_TOTEM or "EAM - 圖騰監控框架",
         playerStat = EAM.L.EAM_FRAME_PLAYER_STAT or "EAM - 角色屬性與吸收量框架",
+        petAlert = EAM.L.EAM_FRAME_PET_ALERT or "EAM - 寵物監控框架",
     }
 
     local activeMap = {}
@@ -1746,20 +2244,21 @@ function Renderer.setActiveAnchors(targetFrames)
         local parent = ensureParent(fName)
         local fState = initFrameState(fName)
         if parent then
-            if not parent.dragSetupDone then
-                parent.dragSetupDone = true
+            if not rawget(parent, "dragSetupDone") then
+                rawset(parent, "dragSetupDone", true)
                 parent:RegisterForDrag("LeftButton")
                 parent:SetScript("OnDragStart", parent.StartMoving)
                 parent:SetScript("OnDragStop", function(self)
                     self:StopMovingOrSizing()
                     local point, relativeTo, relativePoint, xOffset, yOffset = self:GetPoint()
-                    if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[self.frameName] then
-                        local cfg = EAM.db.layout.frames[self.frameName]
+                    local pName = rawget(self, "frameName") or fName
+                    if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[pName] then
+                        local cfg = EAM.db.layout.frames[pName]
                         cfg.point = point or "CENTER"
                         cfg.x = xOffset or 0
                         cfg.y = yOffset or 0
                     end
-                    local fLabel = (nameLabels and nameLabels[self.frameName]) or self.frameName
+                    local fLabel = (nameLabels and nameLabels[pName]) or pName
                     print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
                 end)
                 parent:SetScript("OnMouseUp", function(self, button)
@@ -1768,29 +2267,46 @@ function Renderer.setActiveAnchors(targetFrames)
                         print("|cff00ff96EAM|r " .. (EAM.L.EAM_MOVE_MODE_OFF or "已關閉「多框架移動模式」並成功套用新排版。"))
                     end
                 end)
-
-                local hint = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                hint:SetPoint("TOP", parent, "BOTTOM", 0, -26)
-                hint:SetTextColor(0.4, 0.9, 1.0, 1.0)
-                hint:SetText((nameLabels[fName] or fName) .. " (左鍵拖曳 / 右鍵完成)")
-                parent.dragHint = hint
             end
 
             if activeMap[fName] then
                 anyActive = true
                 parent:SetMovable(true)
-                parent:EnableMouse(true)
+                parent:EnableMouse(false)
                 parent:SetFrameStrata("FULLSCREEN_DIALOG")
                 parent:SetClampedToScreen(true)
-                if parent.dragHint then parent.dragHint:Show() end
+
+                -- 暫時禁用此框架內真實告警圖示的滑鼠攔截，避免透明或靜態冷卻圖示吃掉點擊
+                if fState and fState.icons then
+                    for _, realIcon in pairs(fState.icons) do
+                        if realIcon and realIcon.EnableMouse then
+                            pcall(realIcon.EnableMouse, realIcon, false)
+                        end
+                    end
+                end
             else
                 parent:SetMovable(false)
                 parent:EnableMouse(false)
                 parent:SetFrameStrata("MEDIUM")
-                if parent.dragHint then parent.dragHint:Hide() end
-                if parent.previewIcons then
-                    for _, pIcon in ipairs(parent.previewIcons) do
-                        pIcon:Hide()
+                safeCall(parent, "SetBackdrop", nil)
+                local mover = rawget(parent, "moverFrame")
+                if mover then
+                    mover:Hide()
+                end
+                local dHint = rawget(parent, "dragHint")
+                if dHint then safeCall(dHint, "Hide") end
+                local previewIcons = rawget(parent, "previewIcons")
+                if previewIcons then
+                    for _, pIcon in ipairs(previewIcons) do
+                        safeCall(pIcon, "Hide")
+                    end
+                end
+                -- 還原真實圖示的滑鼠響應
+                if fState and fState.icons then
+                    for _, realIcon in pairs(fState.icons) do
+                        if realIcon and realIcon.EnableMouse then
+                            pcall(realIcon.EnableMouse, realIcon, true)
+                        end
                     end
                 end
                 if fState then

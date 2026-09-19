@@ -1,3 +1,66 @@
+-- [Retail 12.1.0 Alpha 8.6 Spell Name Placement, Live Preview & Resource Dropdown] 2026.09.14
+     -- Ground Effect Cooldown-Architecture Alignment & Zero In-Combat Interruption:
+        -- Completely resolved the issue where ground effects failed to display during combat: fixed Renderer.prewarmAlertFrames to fetch class profile alerts via SavedVariables.getActiveAlerts(), ensuring frames are 100% prewarmed out of combat.
+        -- Fully aligned with CooldownService mature architecture: eliminated in-combat compile blocking from verifyCompiledAlerts, adopting instant in-memory indexing to prevent combatCompileDeferred interruptions.
+        -- triggerGroundEffect accurately binds rawAlert and order; expired effects retain persistent frames at Alpha = 0, instantly illuminating via SetAlpha during combat with zero taint, zero GC, and zero lag.
+     -- Condition Frame Lifecycle & Item Control Isolation Fix:
+        -- Completely resolved UI element leaks where item cooldown controls persisted across spell and ground effect condition panels.
+        -- Strictly enforced default condFrame Hide state, category-specific control isolation, and OnHide lifecycle cleanup.
+     -- Spell Charges Show Available Charges Only:
+        -- Refined spell charge counter text to display available charges only (e.g. 2) rather than appending max charges (e.g. 2/2), resulting in a cleaner and clearer UI.
+     -- Native Aura Prominent /reload Reminder & One-Click UI Reload:
+        -- Added prominent golden-yellow warning notices and a quick [/reload] button in the general settings panel for Blizzard 12.1 Native Aura sandbox containers.
+        -- Displayed contextual warning notices in self buff/debuff and target debuff list panels informing users to /reload if aura changes do not take effect immediately.
+        -- Enhanced chat feedback when manually reapplying Native Aura, advising users to execute /reload if in-game timer or stack updates remain desynchronized.
+     -- Aura Frame Position Sync & Reload Persistence Fix:
+        -- Completely fixed the issue where native aura container coordinates remained static, dynamically anchoring Retail 12.1 native aura containers to their parent alert frames (self and target), ensuring 100% accurate position persistence both during mover dragging and across UI reloads (/reload).
+        -- Fixed mover frame dragging termination saving incorrect (0, 0) offsets to SavedVariables, instantly recording true parent frame coordinates and updating revision state upon mouse release.
+     -- Aura Text, Timer & Stack Live Refresh Fix:
+        -- Resolved the issue where toggling "Show Spell Name", "Show Timer", or altering any of the 21 text placement anchors in conditions detail failed to update active aura icons on screen immediately.
+        -- Implemented global active aura refresh (AuraService.refreshAll), immediately re-rendering active auras for player, target, and pet upon checkbox or text placement changes.
+        -- Corrected native aura compiler visual fingerprinting to incorporate spell name placement and toggle states with strict boolean parsing, ensuring instant visual style updates upon configuration changes.
+     -- Frame Position Reset Immediate Apply Fix:
+        -- Clicking "Reset All Icons & Positions" now immediately invokes Renderer.applyFramePositions(), restoring all alert frame coordinates and anchors in real-time without requiring a /reload.
+     -- Mover Frame with Translucent Green Highlight:
+        -- Upgraded frame mover mode: renders a translucent green background (0.02, 0.28, 0.12, 0.35) with bright emerald borders (0.20, 1.00, 0.45, 0.95) enclosing all preview icons, labels, and spacings.
+        -- Clicks anywhere on the bounding box allow smooth dragging of the entire alert group, resolving single-icon drag limitations across multiple preview cows.
+        -- Displays group title at top and hotkey guides at bottom for intuitive multi-frame positioning.
+     -- Realtime Spacing & Size Wheel Adjustment with Floating HUD:
+        -- Inside the mover frame: [Ctrl + Mouse Wheel] tunes horizontal spacing (±1px), [Alt + Mouse Wheel] tunes vertical spacing (±1px), [Shift + Mouse Wheel] scales icon size (±2px).
+        -- Floating HUD appears at the mover center displaying instant parameter updates (e.g. "Horizontal Spacing: 8 px") with smooth fadeout, automatically saving to SavedVariables.
+     -- Default Cooldown Pre-Render & Quick Toggle in List View:
+        -- Default value for cooldownPreRender in both Spell Cooldown and Item Cooldown modules is now ON (true) by default.
+        -- Added a dedicated quick toggle button ("Pre") next to the gear icon in list view rows, showing bright green when active and dark gray when inactive, toggling pre-rendering with a single click.
+     -- Spell Cooldown Alert Frame Drag & Move Fix:
+        -- Completely fixed the issue where pre-rendered placeholder icons intercepted mouse clicks out of combat, preventing the preview frame from being dragged.
+        -- Real icons are temporarily set to EnableMouse(false) during mover mode, while preview icons delegate OnDragStart/Stop to the parent frame, restoring interaction seamlessly upon locking.
+      -- Equipment Slot Cooldown Support (19 Slots) & 3-Tier Fallback Fix:
+         -- Added "Add to Equipment" button and a quick popup menu for 19 standard equipment slots (Trinket 1/2, Hands, Waist, etc.), supporting slot IDs 1~19.
+         -- Item alert list rows annotate slot name, slot ID, and equipped item name, with mouse hover directly routing to native SetInventoryItem tooltip with SetItemByID fallback.
+         -- Fixed a critical state-machine bug where native GetInventoryItemCooldown returning number 1 for enable was misjudged by boolean validation, ensuring trinkets and gear reliably trigger cooldown sweeps and timers.
+         -- Implemented 3-tier robust cooldown fallback: Tier 1 standard GetInventoryItemCooldown -> Tier 2 modern ItemLocation:CreateFromEquipmentSlot -> Tier 3 direct C_Item.GetItemCooldown, preventing missing cache or zero-duration response.
+         -- Added equipment slot resolution to SPELL_UPDATE_COOLDOWN and ACTIONBAR_UPDATE_COOLDOWN events, wired with UNIT_INVENTORY_CHANGED for real-time gear swap synchronization.
+      -- Item vs Equip Slot Mode Selector & Cooldown Overrides in Conditions Frame:
+        -- Added "Cooldown Target" toggle group to detail conditions frame, supporting free switching between Item ID mode and Equipment Slot mode.
+        -- Opened 4 cooldown behavior overrides (remove on complete, show out of combat, usable glow, pre-render placeholder) for item/equip cooldowns with dual-track SavedVariables persistence and ProfileCodec roundtrip support.
+     -- Spell Name Text Placement & Default Outside Bottom:
+       -- Spell and aura names now default to outside bottom (OUTSIDE_BOTTOM) for cleaner and more balanced icon aesthetics.
+       -- Added "Spell Name Placement" dropdown offering 21 anchor placement positions under Font & Text settings, granting full 21-point alignment freedom matching countdown timers and stack counters with live feedback.
+    -- Player Stat Real-Time Preview Synchronization:
+       -- Resolved preview update delays across stat switching, resizing, font sizing, decimal precision, custom icons/labels, and threshold adjustments.
+       -- Unified threshold field naming compatibility (thresholdMin / minThreshold), enabling red warning borders to trigger accurately in real time.
+       -- Automatically switches preview panel to the Player Stat tab when opening or selecting stats if preview window is active.
+    -- Player Resource Scale & Scrollable Font Dropdown:
+       -- Replaced single-button font cycling with a 10-row scrollable dropdown (ScrollableDropdown), fully supporting LibSharedMedia-3.0 (LSM) and built-in system fonts.
+       -- Added real-time scale synchronization for resource bars in the preview panel, synchronizing bar width, height, icon size, spacing, font sizes, and value offsets with zero latency.
+    -- Real-Time Live Preview Synchronization:
+       -- Fully resolved synchronization delays between the independent preview panel (PreviewPanel) and the frame mover preview cow-heads (Renderer), achieving true zero-latency "what you see is what you get".
+       -- Added an Icon Alpha slider to the Layout tab, immediately applying opacity changes (0.1 to 1.0) to active previews and live alert frames on drag.
+       -- Real-time updates for all 21 text layout placements (TextPlacement), font sizes for timer/name/stacks, and global font family switches.
+       -- Immediate synchronization for spell name toggle, countdown timer toggle, cooldown swipe shadow toggle, and timer color curve thresholds/palettes.
+    -- Preview Panel Defensive Architecture:
+       -- Upgraded preview icons with native CooldownFrameTemplate and high-strata text overlay containers, supporting custom swipe colors and alphas.
+       -- Implemented safeCall method wrappers against uninitialized frames or strict mock environments, guaranteeing crash-proof stability across all clients.
 -- [Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display & Cooldown Swipe Customization] 2026.09.12
     -- Skyriding Speed Gliding-Only Display Option:
        -- Added a dedicated "Glide Only" option for Skyriding Speed (skyridingSpeed) in Player Stats & Absorbs.

@@ -534,13 +534,29 @@
 <li>文件轉換預設使用 <code>$env:EAM_DOCS_OFFLINE='1'; python .\.AI\Tools\batch_convert_docs.py</code>，禁止未經少年欸明確授權就把 Markdown 全文送往外部翻譯服務。</li>
 </ul>
 </li>
+<li><strong>XML 結構化抗記憶漂移備援（Anti-Memory-Drift XML Directive）</strong>：<ul>
+<li>除了 Markdown（.md）人機協同文件外，<a href=".AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a> 為專案對抗大語言模型長對話截斷、跨模型交接與自由文本語意漂移（Memory Drift）之<strong>最高結構化確定性備援保險箱</strong>。</li>
+<li>當遭遇上下文壓縮、更換模型、或對 Markdown 規範產生理解歧義時，Agent 必須第一時間讀取該 XML 檔進行硬性記憶校準（Hard Semantic Recalibration），以 XML 標籤鎖定之邊界與鐵律為唯一硬性約束基準。</li>
 </ul>
-<h2 id="skillssh">Skills.sh 候選規則</h2>
+</li>
+</ul>
+<h2 id="skillssh-lobehubcom">社群技能庫（skills.sh 與 lobehub.com）檢索與候選規則</h2>
 <ul>
-<li>開發中發現穩定且重複的能力缺口時，可至 <code>https://skills.sh/</code> 搜尋並主動推薦最多三個候選。</li>
+<li>開發中發現穩定且重複的能力缺口時，可至雙軌官方社群技能倉庫檢索並主動推薦最多三個候選：<ol>
+<li><strong>skills.sh</strong>（<code>https://skills.sh/</code>）：通用工程規範、CLI 工具與開源生態庫。</li>
+<li><strong>LobeHub Skills 市集</strong>（<code>https://lobehub.com/zh-TW/skills</code>）：特化領域深度知識庫（如 WoW API 系列手冊、架構模組與專家級 Agent Skills）。</li>
+</ol>
+</li>
 <li>搜尋前先建立專案需求卡，審查來源、內容、依賴、權限、維護狀態、授權與供應鏈風險；排行榜與安裝數只作參考。</li>
 <li>預設只讀搜尋與比較，必須保留「都不安裝／改建專案自訂 Skill」選項。</li>
-<li>未經使用者明確選定候選、安裝範圍並授權，不得執行安裝命令或修改全域／專案 Skill。</li>
+<li>未經使用者（少年欸）明確選定候選、安裝範圍並授權，不得執行安裝命令或修改全域／專案 Skill。</li>
+<li>一旦獲得授權安裝，必須同步部署至全域（<code>~/.gemini/config/skills/</code>）與本專案（<code>.agents/skills/</code> 及 <code>.AI/skills/</code>），確保各環境一體適用。</li>
+<li><strong>最高仲裁原則（Precedence &amp; Fact-of-Truth Hierarchy）</strong>：<ul>
+<li>外部社群技能（如 <code>wow-api-*</code>、<code>wow-lua-api</code>）僅屬於 <strong>靜態規格基線（以 Patch 12.0.0 為主）</strong>。</li>
+<li>任何時效性更迭、API 簽名變更、受保護/秘密屬性（Secret Values）、Taint 阻斷、或與現有架構的衝突，<strong>一律以本專案最新《.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md》、專屬技能 <code>eam-api-change-intel</code> 以及暴雪最新 PTR/XPTR 實機證據為唯一最高裁決依據（Strict Precedence）！</strong></li>
+<li>嚴禁盲從外部 Skill 中的無保護或舊版寫法；凡涉及 12.0.7 / 12.1.0 變更者，必須嚴格通過 <code>eam-secret-taint-sentinel</code> 審查與專案防禦性封裝（Fallback Wrappers / Capability Gate）。</li>
+</ul>
+</li>
 </ul>
 <h2 id="_2">必讀文件</h2>
 <p>在更改程式碼之前，請先閱讀以下文件：</p>
@@ -860,6 +876,7 @@
 <h2 id="changelog">Changelog 分類規則</h2>
 <ul>
 <li>根層 <code>changelog.txt</code> 與 <code>EventAlertMod/changelog.txt</code> 是公開發布紀錄，只記錄 WoW 插件功能、遊戲內行為、版本相容性、玩家可感知修正，以及會實際改變發布插件包內容的素材或封裝修正。</li>
+<li><strong>版本斷點與自動遞增規則</strong>：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。</li>
 <li>公開 changelog 不記錄 AI 治理、代理分工、文件同步、上下文接續、測試通過數、離線驗證數字、GitHub／CI／workflow 發布流程、備份位置或內部工作進度。</li>
 <li>AI 治理問題、失敗嘗試、根因分析與後續決策，記錄於 <code>.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；跨工作階段的路由、狀態與未完成事項，記錄於 <code>.AI/Docs/28_PROJECT_CONTINUITY.md</code>。</li>
 <li>兩份公開 changelog 必須使用同一份內容來源，完成後以 SHA-256 確認 <code>changelog.txt</code> 與 <code>EventAlertMod/changelog.txt</code> 完全一致。</li>

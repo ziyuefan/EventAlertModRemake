@@ -839,16 +839,24 @@ local function normalizeModuleRecord(moduleName, record)
     if moduleName == "groundEffect" then
         allowed.durationMode = true
         allowed.manualDuration = true
-    elseif moduleName == "spellCooldown" then
+    elseif moduleName == "spellCooldown" or moduleName == "itemCooldown" then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
             allowed[COOLDOWN_BEHAVIOR_FIELDS[index]] = true
+        end
+        if moduleName == "itemCooldown" then
+            allowed.slotID = true
+            allowed.itemType = true
         end
     end
     local ok, reason = hasOnlyKeys(record, allowed)
     if not ok then return nil, reason end
     local id = record[definition.idField]
     if not isSafeInteger(id, 1, 2147483647) then
-        return nil, definition.idField .. "Invalid"
+        if moduleName == "itemCooldown" and record.slotID and isSafeInteger(record.slotID, 1, 32) then
+            id = record.slotID
+        else
+            return nil, definition.idField .. "Invalid"
+        end
     end
     if record.enabled ~= nil and type(record.enabled) ~= "boolean" then return nil, "enabledInvalid" end
     local normalized = { [definition.idField] = id, enabled = record.enabled ~= false }
@@ -859,7 +867,7 @@ local function normalizeModuleRecord(moduleName, record)
         if type(normalized.manualDuration) ~= "number" or normalized.manualDuration ~= normalized.manualDuration or normalized.manualDuration < 0.1 or normalized.manualDuration > 3600 then
             return nil, "manualDurationInvalid"
         end
-    elseif moduleName == "spellCooldown" then
+    elseif moduleName == "spellCooldown" or moduleName == "itemCooldown" then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
             local field = COOLDOWN_BEHAVIOR_FIELDS[index]
             if record[field] ~= nil then
@@ -868,6 +876,10 @@ local function normalizeModuleRecord(moduleName, record)
                 end
                 normalized[field] = record[field]
             end
+        end
+        if moduleName == "itemCooldown" and record.slotID then
+            normalized.slotID = record.slotID
+            normalized.itemType = "SLOT"
         end
     end
     return normalized
@@ -923,6 +935,17 @@ local function normalizeColorRGB(color, defaultR, defaultG, defaultB)
     return { r = r, g = g, b = b }
 end
 
+local function normalizeColorRGBA(color, defaultR, defaultG, defaultB, defaultA)
+    if type(color) ~= "table" then
+        return { defaultR or 1, defaultG or 1, defaultB or 1, defaultA or 1 }
+    end
+    local r = isSafeFiniteNumber(color[1] or color.r, 0, 1) and (color[1] or color.r) or (defaultR or 1)
+    local g = isSafeFiniteNumber(color[2] or color.g, 0, 1) and (color[2] or color.g) or (defaultG or 1)
+    local b = isSafeFiniteNumber(color[3] or color.b, 0, 1) and (color[3] or color.b) or (defaultB or 1)
+    local a = isSafeFiniteNumber(color[4] or color.a, 0, 1) and (color[4] or color.a) or (defaultA or 1)
+    return { r, g, b, a }
+end
+
 local function normalizeLayoutRecord(layout)
     if type(layout) ~= "table" or not isSafeValue(layout) then return nil, "layoutInvalid" end
     local normalized = {
@@ -966,12 +989,21 @@ local function normalizeLayoutRecord(layout)
             normalized.textLayout.timer = {
                 placement = isSafeString(layout.textLayout.timer.placement, 32) and layout.textLayout.timer.placement or "OUTSIDE_TOP",
                 fontSize = isSafeInteger(layout.textLayout.timer.fontSize, 8, 32) and layout.textLayout.timer.fontSize or 14,
+                color = normalizeColorRGBA(layout.textLayout.timer.color, 1, 1, 1, 1),
             }
         end
         if type(layout.textLayout.applications) == "table" then
             normalized.textLayout.applications = {
                 placement = isSafeString(layout.textLayout.applications.placement, 32) and layout.textLayout.applications.placement or "INSIDE_BOTTOM_RIGHT",
                 fontSize = isSafeInteger(layout.textLayout.applications.fontSize, 8, 32) and layout.textLayout.applications.fontSize or 12,
+                color = normalizeColorRGBA(layout.textLayout.applications.color, 1, 1, 1, 1),
+            }
+        end
+        if type(layout.textLayout.spellName) == "table" then
+            normalized.textLayout.spellName = {
+                placement = isSafeString(layout.textLayout.spellName.placement, 32) and layout.textLayout.spellName.placement or "OUTSIDE_BOTTOM",
+                fontSize = isSafeInteger(layout.textLayout.spellName.fontSize, 8, 32) and layout.textLayout.spellName.fontSize or 12,
+                color = normalizeColorRGBA(layout.textLayout.spellName.color, 1, 0.95, 0.5, 1),
             }
         end
     end
@@ -1068,12 +1100,21 @@ local function exportLayout()
             textLayout.timer = {
                 placement = config.textLayout.timer.placement or "OUTSIDE_TOP",
                 fontSize = config.textLayout.timer.fontSize or 14,
+                color = normalizeColorRGBA(config.textLayout.timer.color, 1, 1, 1, 1),
             }
         end
         if type(config.textLayout.applications) == "table" then
             textLayout.applications = {
                 placement = config.textLayout.applications.placement or "INSIDE_BOTTOM_RIGHT",
                 fontSize = config.textLayout.applications.fontSize or 12,
+                color = normalizeColorRGBA(config.textLayout.applications.color, 1, 1, 1, 1),
+            }
+        end
+        if type(config.textLayout.spellName) == "table" then
+            textLayout.spellName = {
+                placement = config.textLayout.spellName.placement or "OUTSIDE_BOTTOM",
+                fontSize = config.textLayout.spellName.fontSize or 12,
+                color = normalizeColorRGBA(config.textLayout.spellName.color, 1, 0.95, 0.5, 1),
             }
         end
     end
@@ -1120,7 +1161,13 @@ local function exportRecord(moduleName, alert)
     if type(alert) ~= "table" or not isSafeValue(alert) then return nil, "alertRestricted" end
     local definition = MODULE_DEFINITIONS[moduleName]
     local id = alert[definition.idField]
-    if not isSafeInteger(id, 1, 2147483647) then return nil, "alertIDInvalid" end
+    if not isSafeInteger(id, 1, 2147483647) then
+        if moduleName == "itemCooldown" and alert.slotID and isSafeInteger(alert.slotID, 1, 32) then
+            id = alert.slotID
+        else
+            return nil, "alertIDInvalid"
+        end
+    end
     if moduleName == "playerAura" or moduleName == "targetAura" then
         local record = normalizeAuraRecord({
             spellID = id,
@@ -1142,11 +1189,15 @@ local function exportRecord(moduleName, alert)
             durationMode = alert.durationMode,
             manualDuration = alert.manualDuration,
         })
-    elseif moduleName == "spellCooldown" then
+    elseif moduleName == "spellCooldown" or moduleName == "itemCooldown" then
         local record = {
-            spellID = id,
+            [definition.idField] = id,
             enabled = alert.enabled ~= false,
         }
+        if moduleName == "itemCooldown" and alert.slotID then
+            record.slotID = alert.slotID
+            record.itemType = "SLOT"
+        end
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
             local field = COOLDOWN_BEHAVIOR_FIELDS[index]
             if type(alert[field]) == "boolean" then
@@ -1352,8 +1403,12 @@ end
 local function compareRecord(moduleName, record, classToken)
     local definition = MODULE_DEFINITIONS[moduleName]
     local list = getList(definition, classToken)
-    local id = record[definition.idField]
-    local key = EAM.Modules.SavedVariables.buildAlertID(definition.kind, definition.unit, definition.kind == "itemCooldown" and nil or id, definition.kind == "itemCooldown" and id or nil)
+    local key
+    if definition.kind == "itemCooldown" then
+        key = EAM.Modules.SavedVariables.buildAlertID(definition.kind, definition.unit, nil, record.slotID and nil or id, record.slotID)
+    else
+        key = EAM.Modules.SavedVariables.buildAlertID(definition.kind, definition.unit, id)
+    end
     local existing = list and list[key]
     if not existing then return "add" end
     local exported = exportRecord(moduleName, existing)

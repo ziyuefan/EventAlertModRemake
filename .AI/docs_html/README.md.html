@@ -1032,13 +1032,35 @@
 <li>重構左右列表與細部表單雙向同步，增加選中條目金框高亮，新增「全選監控」與「全部停用」批次按鈕。</li>
 </ul>
 </li>
-<li><strong>主選單排版精確對齊與控制項優化</strong>：<ul>
-<li>修復「測試閃爍」按鈕覆蓋文字問題，獨立配置於專屬按鈕列。</li>
-<li>將「啟用 12.1 原生圓形光環倒數光圈」完整回歸主設定選單核心控制區。</li>
+</ul>
+<h3 id="retail-1210-alpha-86-20260914">🚀 [Retail 12.1.0 Alpha 8.6] - 2026.09.14</h3>
+<ul>
+<li><strong>獨立效果預覽深度修復與智慧分頁連動 (Live Preview Deep Fix &amp; Smart Tab Auto-Switch)</strong>：<ul>
+<li>徹底解決預覽視窗焦點錯位問題：從職業資源或角色屬性面板點擊「效果預覽」時，預覽視窗自動精確切換至對應分頁（職業資源/角色屬性/告警圖示），不再停留在技能圖示造成「未即時更新」錯覺。</li>
+<li>加固預覽視窗之資料庫讀取鏈路：優先讀取即時 Draft，若無 Draft 則平滑降級至 SavedVariables 權威設定並提供大小寫容錯，徹底告別空表回退預設問題。</li>
+<li>解除 autoApplyDraft 的刷新阻斷：無論配置是否判定為 unchanged，滑桿拖曳、勾選框切換或下拉選單變更時 100% 即時熱刷新預覽畫面。</li>
+</ul>
+</li>
+<li><strong>全面改建單擊循環選項為現代化下拉選單 (Comprehensive Click-to-Cycle to Dropdown Overhaul)</strong>：<ul>
+<li>職業資源面板：顯示模式（自動/長條條形/離散點數）、排列方向（水平/垂直）、父框架錨點（9 點）、自身定位點（9 點）、設定範圍（專精覆寫/全職業預設）全面改建為直觀且具備綠色核取勾號提示的現代化下拉選單 (Dropdown Menu)，徹底告別盲按循環。</li>
+<li>角色屬性面板：位置與錨點 (Tab 4) 新增「基準錨點 (Anchor Point)」9 點下拉選單，讓玩家精確自訂螢幕定位原點。</li>
+<li>內部契約無損相容：保留所有內部循環函式（cyclePoint, cycleOrientation 等）與按鈕定義，支援右鍵快速循環且 100% 通過靜態合約檢查。</li>
+</ul>
+</li>
+<li><strong>內建系統即時診斷報告與一鍵全選複製 (Built-in System Diagnostics &amp; One-Click Copy Report)</strong>：<ul>
+<li>實裝全新系統即時診斷系統：新增斜線指令 <code>/eam diag</code>、<code>/eam report</code> 與 <code>/eam debug</code>。</li>
+<li>在即時效果預覽視窗標題列右上角與主設定面板底部新增「系統診斷」按鈕，彈出 680x520 獨立滾動文字對話框。</li>
+<li>即時自動採集：插件版本、WoW 客戶端版本與 TOC、當前語系、角色職業專精與戰鬥狀態、AlertManager/Resource/Stat 核心模組活躍數、CDM 影子載體狀態、SharedMedia 字型數、Lua 記憶體用量 (MB/KB)、即時 FPS 與網路延遲、當前選定資源/屬性之 Draft 完整參數。</li>
+<li>提供「一鍵全選複製」按鈕：點擊自動反白選取整段診斷內容並給予複製提示，方便玩家一鍵貼給開發團隊進行秒級精確排查。</li>
+</ul>
+</li>
+<li><strong>法術名稱位置自訂與下方預設排版 (Spell Name Text Placement)</strong>：<ul>
+<li>技能/光環名稱預設全面改為置於圖示下方 (OUTSIDE_BOTTOM)，排版更加和諧美觀。</li>
+<li>在設定面板「字型與文字」新增「法術名稱位置」21 種排版下拉選單，與秒數倒數、堆疊層數一樣享有完整 21 種錨點自訂能力，所調即所見。</li>
 </ul>
 </li>
 </ul>
-<h3 id="retail-1210-alpha-79-20260824">🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24</h3>
+<h3 id="retail-1210-alpha-80-alpha-85-20260912">🌟 [Retail 12.1.0 Alpha 8.0 ~ Alpha 8.5] - 2026.09.12</h3>
 <ul>
 <li><strong>全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)</strong>：<ul>
 <li>在全部按鈕、核取方塊、滑桿、下拉選單、輸入編輯框與清單操作列加入直觀的懸停說明提示 (Hover Tooltips)，清晰標註控制項用途、設定範圍與操作指引。</li>

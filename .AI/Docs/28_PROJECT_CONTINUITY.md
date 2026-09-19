@@ -5,9 +5,106 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-09-12.24 (飛龍模式飛速專屬僅滑翔顯示 / 冷卻倒數扇形色彩透明度自訂 / 自身光環非本職業專屬法術防誤加確認對話框 / 499 契約全綠)。
+目前快照版本：2026-09-19.01 (Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱 / 條件設定視窗元件隔離 / 88 Flow / 499 契約全綠)。
 
-## 2026-09-12 多進度儲存點：飛龍模式飛速專屬「僅滑翔時顯示圖示 (Glide = true)」特殊選項（現行儲存點）
+- **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
+
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱（現行儲存點）
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「地面技能不需要關聯物品或裝備」、「戰鬥施放還是不顯示地面效果,你乾脆把技能冷卻與物品冷卻那套搬過去可行嗎」。
+  1. 根因剖析：
+     - **UI 元件洩漏**：自訂警示條件設定視窗（`condFrame`）建立時未預設 Hide，且切換地面技能時未隔離隱藏物品冷卻控制元件，造成裝備欄位輸入框殘留於地面技能設定介面。
+     - **死穴一：`Renderer.prewarmAlertFrames` 存檔讀取錯誤**：舊版直接從 `EAM.db.alerts` 讀取，而在多專精 Profile 存檔下，各職業地面技能儲存於 `SavedVariables.getActiveAlerts()`，導致非戰鬥期間根本沒有為地面效果建立任何 Frame。
+     - **死穴二：戰鬥中施法因無 Frame 被強制扣押進 `deferRender`**：戰鬥施放暴風雪（19306）時，`Renderer.render()` 發現無 Frame，觸發保護被扣押至脫戰才彈出。
+     - **死穴三：`GroundEffectService.verifyCompiledAlerts` 戰鬥中阻斷施法**：舊版在戰鬥中偵測到版本變更時直接 `return false, "combatCompileDeferred"`，直接拒絕施法觸發。
+  2. 根治架構（全面對齊冷卻架構與非戰鬥預熱）：
+     - **UI 隔離**：`Options.lua` 實裝 `condFrame` 建立預設 Hide、條件專屬開關隔離與 `OnHide` 生命週期徹底清理。
+     - **預熱對齊**：`Renderer.prewarmAlertFrames()` 改為直讀 `SavedVariables.getActiveAlerts(EAM.db)`，確保 100% 覆蓋當前職業專精 Profile 下的地面技能，非戰鬥期間預先建立 Frame、完成排版並設 `SetAlpha(0)`。
+     - **解除戰鬥阻斷**：`GroundEffectService.verifyCompiledAlerts()` 移除戰鬥延遲，直接進行純記憶體編譯（`compileAlerts()`），純 Lua table 零 Taint、零延遲，戰鬥施法絕不中斷。
+     - **健全狀態機與常駐 Frame 點亮**：`triggerGroundEffect` 完整綁定 `state.rawAlert` 與 `state.order`，戰鬥中施法時因 Frame 預先存在，直接以 `icon:SetAlpha(1.0)` 點亮；到期時設 `Alpha = 0` 常駐保留，零 GC、零延遲。
+     - **生命週期預熱聯動**：在 `initialize()`、`onConfigChanged()` 與 `onCombatEnd()` 中均主動呼叫 `Renderer.prewarmAlertFrames()`。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【條件設定視窗生命週期隔離】：`Options.lua` 徹底隔離物品冷卻控制項，地面效果面板乾淨俐落。
+  2. [x] 【Renderer 預熱 Profile 來源修復】：`Renderer.lua` 直讀 `SavedVariables.getActiveAlerts()`，非戰鬥預先建立地面 Frame。
+  3. [x] 【GroundEffectService 戰鬥阻斷移除】：移除 `verifyCompiledAlerts` 戰鬥延遲拒絕，戰鬥施法 100% 即時響應。
+  4. [x] 【狀態機綁定與常駐 Frame 點亮】：施法點亮、到期 Alpha 0 常駐，完全對齊 CooldownService 成熟模式。
+  5. [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。
+
+## 2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 冷卻可用發光金框幾何比例修復（根除小金框缺陷）
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並解決少年欸回報之「冷卻怎會有個低於圖示大小的小金框」視覺缺陷。
+  1. 根因剖析（貼圖透明邊距幾何縮水）：當技能或物品冷卻可用（`glowSCDWhenUsable`）或觸發 Proc（`overlayGlow`）時，渲染器啟用金色發光效果。EAM 的 fallback 發光貼圖採用暴雪原廠 `Interface\Buttons\UI-ActionButton-Border`，該 64x64 貼圖的實際框體僅佔中央 36x36 像素，四周自帶 43.75% 透明 Padding。舊版使用 `SetAllPoints(button)` 導致貼圖被壓縮，框體實際寬高僅為圖示的 56.25%，直接懸浮縮小在圖示正中間形成「小金框」。
+  2. 根治架構（等比擴展精準包覆）：在 `IconPool.lua`（`createIcon`、`setGlow`、`setOverdrive`）與 `PreviewPanel.lua` 中，移除 `SetAllPoints`，改為置中錨定並依原廠邊框有效比例動態放大：`glow:SetPoint("CENTER", icon, "CENTER", 0, 0)`、`glow:SetSize(w * (64 / 36), h * (64 / 36))`（放大 1.778 倍），使金框 100.0% 精確貼齊按鈕邊緣，透明羽化柔和溢出為標準金色流光！
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【發光金框比例幾何修復】：`IconPool.lua` 的 `setGlow` 與 `setOverdrive` 改為動態置中並以 `64/36` 等比擴展，徹底消除小金框縮水。
+  2. [x] 【預覽視窗視覺同步】：`PreviewPanel.lua` 採用相同置中比例計算，確保設定面板與實機 100% 一致。
+  3. [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。
+
+## 2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 目標光環原生容器幾何解耦修復（根除目標光環消失問題）
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸緊急回報之「幹,目標光環不顯示了」致命缺陷。
+  1. 根因診斷（暴雪 FrameXML 幾何隱藏陷阱）：在 Retail 12.1 Native Aura 模式下，所有光環圖示均由暴雪 `CustomAuraContainer` 動態生成，EAM 舊版渲染器（`Renderer.lua`）不會產生舊版圖示。因此 `Renderer.layout("targetAura")` 判定圖示數量為 0 時，對父框架 `EAM_AlertFrame_targetAura` 執行了 `parent:Hide()`！先前修改將容器錨定至 `parentFrame`，而依據 WoW FrameXML 引擎特性，當依賴框架錨定在一個被 `Hide()` 的父框架上時，其世界幾何坐標計算失效（GetLeft/GetTop 回傳 nil），導致暴雪原生容器在繪製管線中直接被隱藏或剔除，致使目標光環在實機中徹底消失不顯示！
+  2. 根治架構（直連 UIParent 徹底解耦）：原生光環容器由 `CreateFrame("AuraContainer", nil, UIParent)` 建立，其物理錨點必須且直接錨定至 `UIParent`：`container:SetPoint(point, UIParent, point, x, y)`，物理坐標直接讀取 `EAM.db.layout.frames[frameKey]`（預設 `(0, 120)` 與 `(0, 200)`）。完全切斷與 `parentFrame` 的 Show/Hide 狀態耦合，徹底根除幾何失效。
+  3. 多框架移動模式雙向聯動完備：玩家拖曳 MoverFrame 放開時，`OnDragStop` 寫入新坐標並調用 `applyContainerPositions()`，容器立即相對於 `UIParent` 動態更新位置；重載介面（`/reload`）時，`configureContainer` 直讀 SavedVariables 坐標並錨定 `UIParent`，位置完美記憶且絕不遺失。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【原生容器直連 UIParent 徹底解耦】：`AuraContainerService.lua` 中 `configureContainer` 與 `applyContainerPositions` 徹底移除對 `parentFrame` 的錨定，改由直接錨定至 `UIParent` 並讀取 `frameConfig`。
+  2. [x] 【目標光環實機顯示恢復】：徹底消除 `parentFrame:Hide()` 對原生容器的幾何破壞，選取目標上 DoT 立即正常顯示。
+  3. [x] 【多框架移動模式與重載記憶完備】：拖曳放開即時更新容器物理位置，`/reload` 完美讀取儲存坐標。
+  4. [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「光環的名稱、秒數、堆疊數量無法在調整設定後即時反應」與「光環框架位置沒有跟著設定位置更新(/RL後也一樣)」兩大重大缺陷。
+  1. 框架坐標解鎖與重載記憶修復：排查出 `AuraContainerService.lua` 原生光環容器坐標被硬編碼寫死為 `(0, 120)` 與 `(0, 200)`，重載介面時原生容器未讀取 SavedVariables 設定；且 `Renderer.lua` 的 `getOrCreateMoverFrame` 在 `OnDragStop` 讀取了未宣告之區域變數，導致放開拖曳時將 `(0, 0)` 寫入存檔！全面重構：將原生容器動態 SetPoint 錨定至對應光環主框架（`EAM_AlertFrame_selfAura` / `targetAura`），實裝 `AuraContainerService.applyContainerPositions()`，並在 MoverFrame 拖曳放開時正確透過 `parent:GetPoint()` 記錄真實坐標並標記版本變更，實現拖曳與重載介面 (/reload) 100% 精準跟隨自訂位置。
+  2. 光環文字、倒數與堆疊即時熱反應修復：在 `AuraService.lua` 實裝 `AuraService.refreshAll(eventName)` 全局熱掃描機制；在 `Options.lua` 的 `createCheckbox` 與 `notifyTextLayoutChanged` 接入光環、冷卻與物品全模組即時重繪；在 `NativeAuraRenderer.lua` 與 `AuraRuleCompiler.lua` 修復 Lua 三元運算短路（`(cond) and false or fallback` 導致 false 被覆蓋為 true）的重大語義陷阱，並將 `spellNamePlacement`、`showSpellName`、`showTimeVal` 納入視覺指紋；加固 `TextPlacement.lua` 與 `Renderer.lua` 文字與倒數之 Show/Hide 控制與 strict metatable 安全讀取；全套品質門禁 100% 綠燈（78 語法 / 88 Flow / 499 契約 / DEV 打包成功）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【原生容器坐標動態錨定與解綁寫死】：`AuraContainerService.lua` 徹底移除寫死之 `(0, 120)` 與 `(0, 200)`，原生容器動態錨定至父級光環框架，並實裝導出 `applyContainerPositions()`。
+  2. [x] 【MoverFrame 拖曳放開坐標記憶修復】：`Renderer.lua` 修復 `OnDragStop` 遺漏變數宣告致使存入 `(0, 0)` 之重大缺陷，改由 `parent:GetPoint()` 精確採集並標記存檔變更與容器同步。
+  3. [x] 【AuraService.refreshAll 全局熱重繪】：`AuraService.lua` 實裝 `refreshAll`，逐一熱重繪玩家、目標與寵物活躍光環之名稱、秒數與堆疊。
+  4. [x] 【原生光環指紋與布林解析修復】：`AuraRuleCompiler.lua` 與 `NativeAuraRenderer.lua` 修復 Lua `and false or fallback` 短路陷阱，納入 `spellNamePlacement` 與顯示開關。
+  5. [x] 【文字層級與 metatable 防禦加固】：`Renderer.lua` 與 `TextPlacement.lua` 加固 `showSpellName`、`showTimeVal` 與 `showStacks` 之顯隱控制，並防禦 mock 與實機 strict metatable 阻擋。
+  6. [x] 【離線單元測試與全套門禁通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。
+
+## 2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 裝備部位冷卻監控修復、三軌備援機制與深度裝備解析
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並根治「物品冷卻模組以物品 ID 正常但以裝備部位代號（如飾品 13/14）監控時無法偵測到冷卻狀態（不顯示冷卻漩渦與倒數）」的重大缺陷；核心修復 `ItemCooldownService.lua` 狀態機因原生 API `GetInventoryItemCooldown` 回傳 `enable` 為數值 1 (number) 被 `Util.isSafeBoolean` 誤殺判定為無效冷卻的致命問題；實裝穿戴裝備三軌冷卻備援機制（軌道 1 暴雪標準 API `GetInventoryItemCooldown` -> 軌道 2 現代 API `ItemLocation:CreateFromEquipmentSlot` -> 軌道 3 同軌直讀 `C_Item.GetItemCooldown`），徹底杜絕快取缺失或特定飾品無響應問題；修復 `SPELL_UPDATE_COOLDOWN` 帶入飾品 itemID 時因短路 return 導致裝備槽事件丟失問題，並新增 `ACTIONBAR_UPDATE_COOLDOWN` 與 `UNIT_INVENTORY_CHANGED` 換裝事件聯動；在 `Options.lua` 實裝 `getEquippedSlotInfo` 整合 `GetInventoryItemLink` 與 `ItemLocation` 深度提取裝備名稱與圖示，Tooltip 增設 `SetItemByID` 備援防禦；在 `FlowTestRunner.lua` 新增專屬測試案例 `cooldown.item.slot_121`；全套門禁 100% 綠燈（78 語法 / 88 Flow / 499 契約 / DEV 打包成功）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【狀態機 Boolean/Number 雙相容修復】：`ItemCooldownService.lua` 中 `hasSafeEnabled` 與 `hasActiveCooldown` 擴展支援 number 1 / boolean / nil，徹底解決原生 enable 數值 1 造成的冷卻誤判。
+  2. [x] 【穿戴裝備三軌冷卻備援機制】：`getCooldownData` 實裝「官方標準 GetInventoryItemCooldown -> ItemLocation 現代 API -> C_Item.GetItemCooldown 物品 ID 同軌直讀」三級聯防，確保 100% 偵測到飾品冷卻。
+  3. [x] 【事件過濾修復與換裝事件監聽】：`refreshItem` 支援比對 `alert.slotID` 之穿戴物品 ID，消除 itemID 短路丟失；`initialize` 註冊 `ACTIONBAR_UPDATE_COOLDOWN` 與 `UNIT_INVENTORY_CHANGED`，換裝即時刷新。
+  4. [x] 【設定面板深度裝備解析與 Tooltip 加固】：`Options.lua` 實裝 `getEquippedSlotInfo`，主面板、列表行與細部條件視窗統一使用 ItemLink/ItemLocation 深度解析；Tooltip 增設 `SetItemByID` 備援。
+  5. [x] 【離線單元測試與全套門禁通過】：`FlowTestRunner.lua` 新增 `cooldown.item.slot_121` 案例；Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。
+
+## 2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 框架重設即時生效、全局綠框拖曳移動、滾輪間距微調 HUD 與冷卻預渲染快捷切換
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並解決「重設框架無法即時反應(需RL)」問題，點擊主設定「重設所有圖示與位置」後立即調用 `Renderer.applyFramePositions()` 即時遍歷並還原所有 9 大框架物理坐標與錨點；升級「多框架移動模式」，在預覽群組周圍建立綠底半透明背景 `(0.02, 0.28, 0.12, 0.35)` 與鮮明亮綠邊框 `(0.20, 1.00, 0.45, 0.95)`，動態外接矩形包含所有 slots 預覽圖示、文字與 8px padding，外框全域空白處皆可點擊拖曳移動整個群組（解決多奶牛只有一個圖示可拖問題）；外框支援滾輪即時微調與中央浮動 HUD 提示（`Ctrl + 滾輪` 水平間距 ±1px、`Alt + 滾輪` 垂直間距 ±1px、`Shift + 滾輪` 圖示大小 ±2px），調整結果即時重新計算外框尺寸並持久化至 SavedVariables；技能冷卻與物品冷卻之「預渲染 (cooldownPreRender)」開關全域預設值全面改為開啟 (true)，服務層冷卻狀態機遵循三態繼承原則；在清單模式列表行新增專屬「預」快捷切換按鈕，亮綠高亮為開、暗灰為關，點擊即可一鍵熱切換；5 國語言字典完全鏡像對齊；全套門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約 / DEV 打包成功）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【框架重設即時生效】：`Renderer.lua` 實裝 `Renderer.applyFramePositions()`；`Options.lua` 重設按鈕回呼中立即執行物理坐標還原，無需 `/reload`。
+  2. [x] 【全局綠底亮綠外框拖曳模式】：`Renderer.lua` 實裝 `getOrCreateMoverFrame` 與外接矩形演算法，覆蓋群組內所有 slots 奶牛圖示與文字，全域皆可點擊拖曳。
+  3. [x] 【滾輪即時微調間距與大小 HUD】：外框註冊 `OnMouseWheel`，支援 `Ctrl/Alt/Shift` 微調水平間距/垂直間距/圖示大小，中央動態顯示 HUD 浮動提示（1.6 秒淡出）並自動儲存。
+  4. [x] 【冷卻預渲染預設開與清單快捷開關】：`SavedVariables.defaults.config.cooldownPreRender = true`，狀態機支援三態繼承；清單行齒輪左側新增「預」開關，一鍵即時切換。
+  5. [x] 【5 國語系鏡像與全套門禁通過】：`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 5 大語系字典 100% 完整鏡像；Lua 78/78 PASS、Flow 87/87 PASS、Contracts 499/499 PASS、DEV Package PASS。
+
+## 2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 技能冷卻框架拖曳修復、物品冷卻裝備代號支援與 4 大冷卻選項覆寫
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並修復技能冷卻預覽框架於非戰鬥中預渲染圖示攔截滑鼠點擊導致無法拖曳移動問題，進入移動模式時批次關閉真實圖示滑鼠響應並由預覽圖示向上委派拖曳；物品冷卻模組全面支援 19 個標準裝備欄位代號（`INVSLOT_*`），清單底部新增「新增到裝備」專屬按鈕與 19 部位快速選單，支援輸入 1~19 代號一鍵新增；清單行標註裝備欄位名稱、部位代號與當前穿戴物品名稱，滑鼠懸停直通原生 `SetInventoryItem` 完整 Tooltip；物品冷卻服務層無縫對接 `GetInventoryItemCooldown`、`GetInventoryItemTexture` 與 `GetInventoryItemID`，監聽 `PLAYER_EQUIPMENT_CHANGED` 換裝事件即時切換冷卻與圖示；細部設定視窗全面開放 4 大冷卻行為覆寫（完成後移除、非戰鬥中顯示、可用時金色發光、預渲染佔位顯示），並新增「冷卻目標類型」切換控制項（物品代碼 / 裝備欄位）與 19 部位即時選單，支援自由切換與儲存；5 國語言字典完全鏡像對齊；全套品質門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【技能冷卻框架拖曳修復】：`Renderer.lua` 中 `getOrCreatePreviewIcon` 註冊拖曳委派至父框架，進入移動模式時批次設置 `EnableMouse(false)` 消除預渲染圖示點擊攔截，解鎖後完美還原。
+  2. [x] 【物品冷卻裝備代號支援】：`SavedVariables.lua` 與 `ProfileCodec.lua` 擴充 `slotID` 與 `itemType="SLOT"` 雙軌儲存與編解碼；`ItemCooldownService.lua` 對接原生 `GetInventoryItemCooldown` 系列 API 並監聽 `PLAYER_EQUIPMENT_CHANGED`。
+  3. [x] 【清單操作與 19 部位選單】：`Options.lua` 新增 `addEquipBtn`「新增到裝備」與 19 個部位快速彈出選單；清單行標註部位代號與當前穿戴物品名稱，Tooltip 直通 `SetInventoryItem`。
+  4. [x] 【細部設定目標切換與 4 大冷卻選項】：`condFrame` 開放 4 大冷卻行為按鈕覆寫，增設「冷卻目標類型」切換控制項（物品代碼 / 裝備欄位）與即時部位選單，支援雙向轉換與儲存。
+  5. [x] 【5 國語系鏡像與全套門禁通過】：`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 5 大語系字典 100% 完整鏡像；Lua 78/78 PASS、Flow 87/87 PASS、Contracts 499/499 PASS。
+
+## 2026-09-14 多進度儲存點：Retail 12.1.0 Alpha 8.6 預覽系統即時連動、全單擊升級下拉選單與系統診斷報告
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決預覽系統焦點錯位問題，`PreviewPanel.show(targetTab)` 與 `PreviewPanel.toggle(targetTab)` 支援智慧分頁切換（職業資源直達 Tab 2、角色屬性直達 Tab 3、告警圖示直達 Tab 1），加固 Draft 與 SavedVariables 權威解析與大小寫容錯，解除 autoApplyDraft 刷新阻斷；職業資源面板之顯示模式（自動/長條條形/離散點數）、排列方向（水平/垂直）、父框架錨點（9 點）、自身定位點（9 點）、設定範圍（目前專精覆寫/全職業預設）以及屬性面板基準錨點全數改建為具核取勾號提示的現代化下拉選單（Dropdown Menu），徹底告別盲按循環；保留內部契約函式（cyclePoint, cycleOrientation 等）確保向後相容；實裝內建系統即時診斷報告（`/eam diag`、`/eam report` 與 UI 診斷按鈕），提供 680x520 獨立視窗與「一鍵全選複製」按鈕便於精確回報；5 國語言完全鏡像；全套門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約 / Build-Package DryRun PASS）。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【預覽系統智慧分頁與即時熱連動】：`PreviewPanel.lua` 的 `show` 與 `toggle` 接收目標分頁參數，若已開啟則直接就地切換分頁；`refreshResourcePreview` 優先讀取 Draft 並平滑降級至 SavedVariables；解除 `autoApplyDraft` 阻斷，數值變更 100% 同步預覽。
+  2. [x] 【全單擊選項升級現代化下拉選單】：`PlayerResourcePanel.lua` 實裝 `toggleGenericDropdown`，全面升級模式、方向、錨點、定位點、設定範圍等按鈕為下拉選單；保留所有 `cycle*` 契約函式與按鈕識別；`PlayerStatPanel.lua` Tab 4 增設「基準錨點 (Anchor Point)」9 點下拉選單。
+  3. [x] 【內建系統即時診斷報告 (One-Click Copy)】：實裝 `PreviewPanel.generateDiagnosticReport()` 與 `PreviewPanel.showDiagnosticDialog()`（680x520 滾動文字對話框），即時採集版本、環境、各模組狀態、記憶體用量與效能；提供「一鍵全選複製」按鈕；在 Slash 指令（`/eam diag`、`/eam report`）、預覽視窗標題列與主設定面板增設入口。
+  4. [x] 【技能名稱排版自訂與下方預設】：`Constants.lua` 設置預設為 `OUTSIDE_BOTTOM`；`TextPlacement.lua` 與 `SavedVariables.lua` 全面放行 `spellName` 文字排版並納入規範化；`Options.lua` 新增 21 種排版下拉選單；`Renderer.lua` 與 `PreviewPanel.lua` 即時熱套用。
+  5. [x] 【版本斷點治理與 5 國語言對齊】：確立發布斷點與自動 +0.1 規則；`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 5 語系完整對齊診斷與選單詞條；雙語 changelog 100% 同步。
+  6. [x] 【全套自動化品質門禁全綠通過】：Lua 語法 78/78 PASS、Flow 業務狀態機 87/87 PASS、Validation Contracts 499/499 PASS、Build-Package DryRun PASS。
+
+## 2026-09-12 多進度儲存點：飛龍模式飛速專屬「僅滑翔時顯示圖示 (Glide = true)」特殊選項
 
 - current-of-truth：在「角色屬性與吸收量監控」中，針對「飛龍模式飛速（`skyridingSpeed`）」新增專屬特殊選項「僅滑翔顯示（`glideOnlyIcon`，預設 `false`）」；啟用後僅當角色處於空中御空術/飛龍滑翔飛行狀態（`C_PlayerInfo.GetGlidingInfo()` 之 `isGliding == true`）時才在畫面上顯示該圖示與即時速度百分比；在地面站立、步行或非滑翔狀態時自動隱藏，避免平時以 0% 佔用畫面；屬性設定面板 Tab 1（顯示與圖示）動態呈現專屬 CheckBox，選取其他 17 項屬性時自動隱藏；具備排版移動保護：開啟「移動屬性框架」（`isMoving == true`）時強制顯示以利拖曳排版；5 國語言完整鏡像對齊；全套門禁 100% 綠燈（78 語法 / 86 Flow / 499 契約）。
 - 當前多進度各環節達成狀態（Multi-Stage Status）：
@@ -502,4 +599,14 @@
 - Modern WoW 垂直漸層修復：徹底消除 `SetColorTexture` 衝突，改採 `SetTexture("Interface\\Buttons\\WHITE8X8")` 並設於 `BACKGROUND, 1` 圖層，完美相容 Retail 10.x/11.x/12.x 原生 `Texture:SetGradient("VERTICAL", cMin, cMax)` 漸層著色與正確座標映射。
 - 全子視窗連動：實裝 `Theme.applyContainerBackground(frame, roleOrIsPanel)`，補齊 `posInner`、`listInner`、`GroupManagerPanel`、`SpellCatalogTreePanel`、`PreviewPanel` 與下拉選單主題註冊，新增 `"row"` 輕量列表行角色。
 - 最新離線 gate：Lua 78/78、Flow all 86/86、Validation Contracts 497/497。
+
+## 2026-09-13 Alpha 8.6 P0+P1 核心架構重構快照
+
+- continuity snapshot 已升至 `2026-09-13.23`；完成 P0（12.1 AuraContainer 雙模適配器平滑切換）與 P1（英雄天賦動態法術覆蓋狀態機 + GPU 原生硬體加速動畫升級）。
+- 技能倉庫雙軌與 20 套 WoW 技能庫落地：納入 skills.sh 與 lobehub.com 雙軌倉庫，安裝並三端同步 20 套 WoW Patch 12.0.0 官方技能手冊，升級 XML 抗記憶漂移硬性備援機制（`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` v1.1）。
+- P0 (Aura 雙模切換邊界)：`AuraContainerService` 廣播 `EAM_AURA_BACKEND_SWITCHED`；`AuraService` 動態清空與狀態避讓；`AlertManager` 原生雙重保險守衛攔截原生模式光環渲染流，徹底杜絕戰鬥 Taint。
+- P1-1 (英雄天賦法術覆蓋狀態機)：`SpellInfoService` 提供安全 `getOverrideSpell`；`CooldownService` 維護 `baseToOverrideMap` 與 `overrideToBaseMap` 雙向快取，對齊 `COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED` 動態遷移活躍冷卻狀態，廣播 `EAM_SPELL_OVERRIDE_UPDATED`。
+- P1-2 (GPU 原生硬體加速動畫)：`IconPool` 建立原生 `popAnimation`（Scale 彈跳 1.2 -> 1.0，0.15s，OUT 平滑）與 `pandemicAnimation`（Scale 呼吸 1.0 <-> 1.08，0.5s，IN_OUT 平滑，BOUNCE 循環），在 `Renderer` 接管動態觸發與停止，0% 額外 Lua CPU 負擔。
+- 最終核心離線證據：Lua `78/78`、Flow all `86/86`（`.AI/TestResults/EAM_FlowValidation_all_20260913_234114.json`）、Validation Contracts `499/499`（`.AI/Tools/Test-ValidationContracts.ps1`）。41 份 HTML 文件無瑕疵重新編譯。
+- 本輪修改前備份位於 `.AI/backup/*__20260913233659`。尚未部署、未讀寫 WoW/WTF、未做真人操作（嚴守鐵律 R1 零自動部署）。
 

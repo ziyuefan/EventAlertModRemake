@@ -92,6 +92,99 @@ local COOLDOWN_BEHAVIOR_OPTIONS = {
     },
 }
 
+local INVENTORY_SLOTS = {
+    { id = 1, token = "HEAD", labelKey = "INVTYPE_HEAD", defaultName = "頭部 (Head)" },
+    { id = 2, token = "NECK", labelKey = "INVTYPE_NECK", defaultName = "頸部 (Neck)" },
+    { id = 3, token = "SHOULDER", labelKey = "INVTYPE_SHOULDER", defaultName = "肩部 (Shoulders)" },
+    { id = 4, token = "BODY", labelKey = "INVTYPE_BODY", defaultName = "襯衣 (Shirt)" },
+    { id = 5, token = "CHEST", labelKey = "INVTYPE_CHEST", defaultName = "胸部 (Chest)" },
+    { id = 6, token = "WAIST", labelKey = "INVTYPE_WAIST", defaultName = "腰帶 (Waist)" },
+    { id = 7, token = "LEGS", labelKey = "INVTYPE_LEGS", defaultName = "腿部 (Legs)" },
+    { id = 8, token = "FEET", labelKey = "INVTYPE_FEET", defaultName = "腳部 (Feet)" },
+    { id = 9, token = "WRIST", labelKey = "INVTYPE_WRIST", defaultName = "手腕 (Wrist)" },
+    { id = 10, token = "HAND", labelKey = "INVTYPE_HAND", defaultName = "手套 (Hands)" },
+    { id = 11, token = "FINGER1", labelKey = "INVTYPE_FINGER", defaultName = "手指 1 (Finger 1)" },
+    { id = 12, token = "FINGER2", labelKey = "INVTYPE_FINGER", defaultName = "手指 2 (Finger 2)" },
+    { id = 13, token = "TRINKET1", labelKey = "INVTYPE_TRINKET", defaultName = "飾品 1 (Trinket 1)" },
+    { id = 14, token = "TRINKET2", labelKey = "INVTYPE_TRINKET", defaultName = "飾品 2 (Trinket 2)" },
+    { id = 15, token = "BACK", labelKey = "INVTYPE_CLOAK", defaultName = "背部/披風 (Back)" },
+    { id = 16, token = "MAINHAND", labelKey = "INVTYPE_WEAPONMAINHAND", defaultName = "主手武器 (Main Hand)" },
+    { id = 17, token = "OFFHAND", labelKey = "INVTYPE_WEAPONOFFHAND", defaultName = "副手裝備 (Off Hand)" },
+    { id = 18, token = "RANGED", labelKey = "INVTYPE_RANGED", defaultName = "遠程 (Ranged)" },
+    { id = 19, token = "TABARD", labelKey = "INVTYPE_TABARD", defaultName = "公會外袍 (Tabard)" },
+}
+
+local function getInventorySlotDef(slotID)
+    slotID = tonumber(slotID)
+    if not slotID then return nil end
+    for index = 1, #INVENTORY_SLOTS do
+        if INVENTORY_SLOTS[index].id == slotID then
+            return INVENTORY_SLOTS[index]
+        end
+    end
+    return nil
+end
+
+local function getInventorySlotDisplayName(slotID)
+    local def = getInventorySlotDef(slotID)
+    if not def then return string.format((EAM.L and EAM.L.EAM_SLOT_FORMAT) or "裝備欄位 %d", slotID) end
+    local locName = def.labelKey and _G[def.labelKey]
+    if not locName and EAM.L then
+        locName = EAM.L[def.labelKey]
+    end
+    if locName then
+        if def.id == 11 then return locName .. " 1" end
+        if def.id == 12 then return locName .. " 2" end
+        if def.id == 13 then return locName .. " 1" end
+        if def.id == 14 then return locName .. " 2" end
+        return locName
+    end
+    return def.defaultName
+end
+
+local function getEquippedSlotInfo(slotID)
+    slotID = tonumber(slotID)
+    if not slotID then return nil, nil, "Interface\\Icons\\INV_Misc_QuestionMark" end
+    local getInvID = api.GetInventoryItemID or _G.GetInventoryItemID
+    local getInvTex = api.GetInventoryItemTexture or _G.GetInventoryItemTexture
+    local getInvLink = api.GetInventoryItemLink or _G.GetInventoryItemLink
+
+    local eqID = getInvID and getInvID("player", slotID)
+    local itemLink = getInvLink and getInvLink("player", slotID)
+    if (not eqID or eqID == 0) and itemLink and api.C_Item and api.C_Item.GetItemInfoInstant then
+        local instantID = api.C_Item.GetItemInfoInstant(itemLink)
+        if instantID and instantID > 0 then
+            eqID = instantID
+        end
+    end
+    if (not eqID or eqID == 0) and _G.ItemLocation and _G.ItemLocation.CreateFromEquipmentSlot and api.C_Item and api.C_Item.GetItemID then
+        local itemLoc = _G.ItemLocation:CreateFromEquipmentSlot(slotID)
+        if itemLoc and api.C_Item.DoesItemExist and api.C_Item.DoesItemExist(itemLoc) then
+            eqID = api.C_Item.GetItemID(itemLoc)
+        end
+    end
+
+    local eqName = nil
+    if eqID and eqID > 0 and api.C_Item then
+        if api.C_Item.GetItemNameByID then
+            eqName = api.C_Item.GetItemNameByID(eqID)
+        end
+        if not eqName and api.C_Item.GetItemInfo then
+            eqName = api.C_Item.GetItemInfo(eqID)
+        end
+    end
+
+    local eqTex = getInvTex and getInvTex("player", slotID)
+    if not eqTex and eqID and eqID > 0 and api.C_Item and api.C_Item.GetItemIconByID then
+        eqTex = api.C_Item.GetItemIconByID(eqID)
+    end
+    if not eqTex then
+        eqTex = "Interface\\Icons\\INV_Misc_QuestionMark"
+    end
+
+    return eqID, eqName, eqTex
+end
+
 local function cooldownBehaviorStateLabel(value, isBinary)
     if isBinary then
         if value == true then
@@ -318,9 +411,23 @@ function Options.notifyConfigChanged(rebuildNative)
     if EAM.UI.Renderer and EAM.UI.Renderer.applyCooldownStyle then
         EAM.UI.Renderer.applyCooldownStyle()
     end
+    if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+        EAM.UI.Renderer.refreshPreviewLayout()
+    end
     if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
         EAM.UI.PreviewPanel.refresh()
     end
+end
+
+local function triggerSafeRebuild(reason)
+    local inCombat = EAM.API and EAM.API.InCombatLockdown and EAM.API.InCombatLockdown()
+    if not inCombat then
+        local containerService = EAM.Services and EAM.Services.AuraContainerService
+        if containerService and containerService.requestRebuild then
+            containerService.requestRebuild(reason or "OPTIONS_UI_MUTATION")
+        end
+    end
+    Options.refreshAuraBackendStatus()
 end
 
 function Options.notifyTextLayoutChanged(reapplyNative)
@@ -330,11 +437,30 @@ function Options.notifyTextLayoutChanged(reapplyNative)
     if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
         EAM.UI.Renderer.refreshPreviewLayout()
     end
-    if EAM.Services and EAM.Services.PlayerResourceService and EAM.Services.PlayerResourceService.refreshActiveResources then
-        EAM.Services.PlayerResourceService.refreshActiveResources("OPTIONS_TEXT_LAYOUT_CHANGED")
+    if EAM.Services and EAM.Services.AuraService and EAM.Services.AuraService.refreshAll then
+        EAM.Services.AuraService.refreshAll("OPTIONS_TEXT_LAYOUT_CHANGED")
     end
-    if EAM.Services and EAM.Services.PlayerStatService and EAM.Services.PlayerStatService.updateDisplay then
-        EAM.Services.PlayerStatService.updateDisplay()
+    if EAM.Services and EAM.Services.CooldownService and EAM.Services.CooldownService.refreshAll then
+        EAM.Services.CooldownService.refreshAll("OPTIONS_TEXT_LAYOUT_CHANGED")
+    end
+    if EAM.Services and EAM.Services.ItemCooldownService and EAM.Services.ItemCooldownService.refreshAll then
+        EAM.Services.ItemCooldownService.refreshAll("OPTIONS_TEXT_LAYOUT_CHANGED")
+    end
+    if EAM.Services and EAM.Services.PlayerResourceService then
+        local prs = EAM.Services.PlayerResourceService
+        if prs.refreshVisualState then
+            prs.refreshVisualState("OPTIONS_TEXT_LAYOUT_CHANGED")
+        elseif prs.refreshActiveResources then
+            prs.refreshActiveResources("OPTIONS_TEXT_LAYOUT_CHANGED")
+        end
+    end
+    if EAM.Services and EAM.Services.PlayerStatService then
+        local pss = EAM.Services.PlayerStatService
+        if pss.update then
+            pss.update()
+        elseif pss.updateDisplay then
+            pss.updateDisplay()
+        end
     end
     if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
         EAM.UI.PreviewPanel.refresh()
@@ -534,6 +660,54 @@ function Options.refreshCooldownBehaviorControls()
     end
 end
 
+function Options.refreshItemTypeControls()
+    local cf = Options.condFrame
+    local data = Options.currentEditingAlert
+    if not cf or not data then return end
+
+    local isSlot = cf.selectedItemType == "SLOT"
+    if isSlot then
+        if cf.itemTypeSlotBtn and Theme and Theme.applyAccentToButton then
+            Theme.applyAccentToButton(cf.itemTypeSlotBtn, true)
+        end
+        if cf.itemTypeItemBtn and Theme and Theme.applyAccentToButton then
+            Theme.applyAccentToButton(cf.itemTypeItemBtn, false)
+        end
+        local slotID = cf.selectedSlotID or 13
+        local slotName = getInventorySlotDisplayName(slotID)
+        local equippedID, equippedName, equippedTex = getEquippedSlotInfo(slotID)
+
+        cf.itemSlotDropdown:SetText(string.format("%d: %s", slotID, slotName))
+        cf.itemSlotDropdown:Enable()
+        cf.itemSlotDropdown:SetAlpha(1.0)
+
+        cf.icon:SetTexture(cf.customIcon and (tonumber(cf.customIcon) or cf.customIcon) or equippedTex)
+        if equippedName then
+            cf.nameText:SetText(string.format("%s (%s)", slotName, equippedName))
+        else
+            cf.nameText:SetText(string.format("%s (%s)", slotName, (EAM.L and EAM.L.EAM_SLOT_EMPTY) or "未穿戴"))
+        end
+        cf.idText:SetText(string.format((EAM.L and EAM.L.EAM_SLOT_FORMAT) or "裝備欄位: %d (%s)", slotID, slotName))
+    else
+        if cf.itemTypeSlotBtn and Theme and Theme.applyAccentToButton then
+            Theme.applyAccentToButton(cf.itemTypeSlotBtn, false)
+        end
+        if cf.itemTypeItemBtn and Theme and Theme.applyAccentToButton then
+            Theme.applyAccentToButton(cf.itemTypeItemBtn, true)
+        end
+        cf.itemSlotDropdown:SetText((EAM.L and EAM.L.EAM_OPT_COND_TYPE_ITEM_SELECT) or "(物品模式)")
+        cf.itemSlotDropdown:Disable()
+        cf.itemSlotDropdown:SetAlpha(0.5)
+
+        local itemID = data.itemID or 0
+        local itemTex = C_Item.GetItemIconByID(itemID) or "Interface\\Icons\\INV_Misc_QuestionMark"
+        local itemName = C_Item.GetItemNameByID(itemID) or (((EAM.L and EAM.L.EAM_ITEM_PREFIX) or "物品 ") .. itemID)
+        cf.icon:SetTexture(cf.customIcon and (tonumber(cf.customIcon) or cf.customIcon) or itemTex)
+        cf.nameText:SetText(itemName)
+        cf.idText:SetText(string.format((EAM.L and EAM.L.EAM_OPT_COND_ITEM_ID_FORMAT) or "Item ID: %d", itemID))
+    end
+end
+
 function Options.refreshConditionsLocalizedText()
     local cf = Options.condFrame
     local data = Options.currentEditingAlert
@@ -542,10 +716,14 @@ function Options.refreshConditionsLocalizedText()
     end
 
     local id = data.itemID or data.spellID
-    if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
-        cf.idText:SetText(id and string.format(EAM.L.EAM_OPT_COND_ITEM_ID_FORMAT or "Item ID: %d", id) or "")
+    if data.slotID or (cf.selectedItemType == "SLOT") then
+        local slotID = cf.selectedSlotID or data.slotID or 13
+        local slotName = getInventorySlotDisplayName(slotID)
+        cf.idText:SetText(string.format((EAM.L and EAM.L.EAM_SLOT_FORMAT) or "裝備欄位: %d (%s)", slotID, slotName))
+    elseif data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
+        cf.idText:SetText(id and string.format((EAM.L and EAM.L.EAM_OPT_COND_ITEM_ID_FORMAT) or "Item ID: %d", id) or "")
     elseif data.spellID then
-        cf.idText:SetText(string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", data.spellID))
+        cf.idText:SetText(string.format((EAM.L and EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT) or "Spell ID: %d", data.spellID))
     else
         cf.idText:SetText("")
     end
@@ -554,9 +732,12 @@ function Options.refreshConditionsLocalizedText()
         or (EAM.db and EAM.db.config and EAM.db.config.soundName)
         or "ShayBell"
     if cf.auraSoundDropdown then
-        cf.auraSoundDropdown:SetText((EAM.L.EAM_OPT_SOUND_PREFIX or "Sound: ") .. auraSoundName)
+        cf.auraSoundDropdown:SetText(((EAM.L and EAM.L.EAM_OPT_SOUND_PREFIX) or "Sound: ") .. auraSoundName)
     end
     Options.refreshCooldownBehaviorControls()
+    if cf.selectedItemType then
+        Options.refreshItemTypeControls()
+    end
 end
 
 
@@ -720,6 +901,9 @@ end
 local function isAlertDisplayable(alert)
     if type(alert) ~= "table" then
         return false
+    end
+    if alert.slotID ~= nil then
+        return type(alert.slotID) == "number" and alert.slotID % 1 == 0 and alert.slotID > 0 and alert.slotID <= 32
     end
     if alert.itemID ~= nil then
         return type(alert.itemID) == "number" and alert.itemID % 1 == 0 and alert.itemID > 0
@@ -926,6 +1110,9 @@ function Options.refreshList(selectedAlert, scrollToIdx)
     end
     if Options.refreshColumnsControl then
         Options.refreshColumnsControl()
+    end
+    if Options.refreshBottomControls then
+        Options.refreshBottomControls()
     end
 end
 
@@ -1163,6 +1350,30 @@ function Options.addAlertToCurrentCategory(id, force)
     end
     return false, status
 end
+
+function Options.addInventorySlotAlert(slotID)
+    slotID = tonumber(slotID)
+    if not slotID or slotID < 1 or slotID > 32 then
+        print("|cff00ff96EAM|r " .. ((EAM.L and EAM.L.EAM_OPT_ERR_INVALID_SLOT) or "請輸入有效的裝備欄位代號 (1~19)！"))
+        return false, "invalidSlotID"
+    end
+    local saved = EAM.Modules and EAM.Modules.SavedVariables
+    if not saved or type(saved.addInventorySlotCooldownAlert) ~= "function" then
+        return false, "savedVariablesMethodUnavailable"
+    end
+    local ok, alertID, status = saved.addInventorySlotCooldownAlert(slotID)
+    if ok then
+        Options.notifyConfigChanged()
+        local newSel = { id = alertID, slotID = slotID, kind = EAM.Constants.ALERT_KIND_ITEM_COOLDOWN }
+        Options.refreshList(newSel)
+        local slotName = getInventorySlotDisplayName(slotID)
+        print(string.format((EAM.L and EAM.L.EAM_OPT_ADD_SLOT_SUCCESS) or "|cff00ff96EAM|r 成功新增裝備欄位監控 [%s, 代號: %d]", slotName, slotID))
+        return true, status
+    else
+        print(string.format(EAM.L.EAM_OPT_ADD_FAIL or "|cff00ff96EAM|r 新增監控提醒失敗: %s", tostring(status or alertID)))
+        return false, status
+    end
+end
 local function getCategoryAlertKind(category)
     if category == 1 or category == 2 or category == 3 then
         return EAM.Constants.ALERT_KIND_AURA
@@ -1352,7 +1563,18 @@ function Options.removeAlertFromCurrentCategory(id)
     elseif Options.currentCategory == 4 then
         ok, alertID, status = saved.removeSpellCooldownAlert(id)
     elseif Options.currentCategory == 5 then
-        ok, alertID, status = saved.removeItemCooldownAlert(id)
+        local numID = tonumber(id)
+        if numID and numID <= 32 and type(saved.removeInventorySlotCooldownAlert) == "function" then
+            local slotAlertID = saved.buildAlertID and saved.buildAlertID(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, nil, numID)
+            local list = saved.getAlertList and saved.getAlertList(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil)
+            if list and slotAlertID and list[slotAlertID] then
+                ok, alertID, status = saved.removeInventorySlotCooldownAlert(numID)
+            else
+                ok, alertID, status = saved.removeItemCooldownAlert(id)
+            end
+        else
+            ok, alertID, status = saved.removeItemCooldownAlert(id)
+        end
     elseif Options.currentCategory == 6 then
         ok, alertID, status = saved.removeGroundEffectAlert(id)
     end
@@ -1393,7 +1615,11 @@ local function createCheckbox(parent, text, key, x, y, onChange, tooltipText, to
             if onChange and onChange(self:GetChecked()) == false then
                 rebuildNative = false
             end
-            Options.notifyConfigChanged(rebuildNative)
+            if key == "showSpellName" or key == "showTimeVal" then
+                Options.notifyTextLayoutChanged(rebuildNative)
+            else
+                Options.notifyConfigChanged(rebuildNative)
+            end
         end
     end)
     if tooltipText then
@@ -1550,12 +1776,16 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
     slider:SetObeyStepOnDrag(true)
     slider:SetSize(width or 160, 16)
 
-    local sliderText = slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    sliderText:SetPoint("BOTTOMLEFT", slider, "TOPLEFT", 0, 5)
-    setWidgetText(sliderText, text)
-
     local valText = slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     valText:SetPoint("BOTTOMRIGHT", slider, "TOPRIGHT", 0, 5)
+    valText:SetJustifyH("RIGHT")
+
+    local sliderText = slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    sliderText:SetPoint("BOTTOMLEFT", slider, "TOPLEFT", 0, 5)
+    sliderText:SetPoint("RIGHT", valText, "LEFT", -4, 0)
+    sliderText:SetJustifyH("LEFT")
+    sliderText:SetWordWrap(false)
+    setWidgetText(sliderText, text)
 
     local function updateText(val)
         if isPercent then
@@ -1571,7 +1801,7 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
         or key == "fontSizeTimeVal"
         or key == "fontSizeStack"
     local isNativeStructureSlider = key == "iconSize" or key == "iconSpacing"
-    local isNativeVisualSlider = key == "cooldownSwipeAlpha"
+    local isNativeVisualSlider = key == "cooldownSwipeAlpha" or key == "iconAlpha"
     local isChargeBarSlider = key == "chargeBarLengthPercent" or key == "chargeBarThickness"
     local function commitNativeChange()
         if not slider.eamNativeChangeDirty then
@@ -1580,11 +1810,13 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
         slider.eamNativeChangeDirty = false
         if isTextLayoutSlider then
             Options.notifyTextLayoutChanged(true)
+            triggerSafeRebuild("OPTIONS_TEXT_LAYOUT_SLIDER_COMMITTED")
         elseif isChargeBarSlider then
             Options.notifyConfigChanged(false)
         elseif isNativeStructureSlider or isNativeVisualSlider then
             markAuraSettingsDirty("OPTIONS_NATIVE_STRUCTURE_CHANGED")
             Options.refreshAuraBackendStatus()
+            triggerSafeRebuild("OPTIONS_NATIVE_SLIDER_COMMITTED")
         end
     end
 
@@ -1612,14 +1844,18 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
 
         updateText(val)
         local changed = false
-        local savedVariables = EAM.Modules.SavedVariables
+        local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
         if key == "fontSizeTimeVal" and savedVariables and savedVariables.updateTextLayout then
             local ok, state = savedVariables.updateTextLayout("timer", nil, val)
             changed = ok == true and state == "updated"
         elseif key == "fontSizeStack" and savedVariables and savedVariables.updateTextLayout then
             local ok, state = savedVariables.updateTextLayout("applications", nil, val)
             changed = ok == true and state == "updated"
+        elseif key == "fontSizeSpellName" and savedVariables and savedVariables.updateTextLayout then
+            local ok, state = savedVariables.updateTextLayout("spellName", nil, val)
+            changed = ok == true and state == "updated"
         elseif (key == "cooldownSwipeAlpha"
+            or key == "iconAlpha"
             or key == "chargeBarLengthPercent"
             or key == "chargeBarThickness")
             and savedVariables and savedVariables.updateConfigNumber
@@ -1646,6 +1882,9 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
             end
             if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
                 EAM.UI.Renderer.refreshPreviewLayout()
+            end
+            if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
+                EAM.UI.PreviewPanel.refresh()
             end
         end
     end)
@@ -1739,6 +1978,7 @@ local function createFrame()
         if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.hide then
             EAM.UI.PreviewPanel.hide()
         end
+        triggerSafeRebuild("OPTIONS_CLOSED")
     end)
 
     -- 內邊框
@@ -1794,6 +2034,9 @@ local function createFrame()
                 Options.listFrame:Show()
                 if Options.listTitleText then
                     bindText(Options.listTitleText, category.key, category.fallback)
+                end
+                if Options.refreshBottomControls then
+                    Options.refreshBottomControls()
                 end
                 Options.refreshList()
                 if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
@@ -1864,13 +2107,21 @@ local function createFrame()
         end
     end, "執行流程自動化驗證、實機回報、運行探針與 AI 診斷報告輸出", "除錯與測試診斷中心")
 
-    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -336, 218, 24, function()
+    createThemedButton(inner, localized("EAM_OPT_CLOSE_BTN", "關閉設定 (Close)"), 12, -336, 108, 24, function()
         frame:Hide()
     end, "關閉主設定面板與所有二級子視窗", "關閉設定")
 
+    createThemedButton(inner, localized("EAM_DIAG_BTN_SHORT", "系統診斷"), 124, -336, 108, 24, function()
+        if EAM.Diagnostics and EAM.Diagnostics.showReportDialog then
+            EAM.Diagnostics.showReportDialog()
+        elseif EAM.UI and EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.showDiagnosticDialog then
+            EAM.UI.PreviewPanel.showDiagnosticDialog()
+        end
+    end, "採集並開啟外掛目前運行狀態之診斷報告，方便一鍵複製回報", "系統診斷報告")
+
     createThemedButton(inner, localized("EAM_PREVIEW_BTN", "效果預覽"), 236, -336, 108, 24, function()
         if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
-            EAM.UI.PreviewPanel.toggle()
+            EAM.UI.PreviewPanel.toggle(1)
         end
     end, "開啟或關閉各設定畫面的即時獨立效果預覽小視窗", "效果預覽")
 
@@ -1912,7 +2163,7 @@ local function createFrame()
     setTooltip(previewBtn, "開啟或關閉獨立的即時效果預覽小視窗", "效果預覽")
     previewBtn:SetScript("OnClick", function()
         if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
-            EAM.UI.PreviewPanel.toggle()
+            EAM.UI.PreviewPanel.toggle(1)
         end
     end)
     if Theme and Theme.registerButton then Theme.registerButton(previewBtn) end
@@ -2269,24 +2520,65 @@ local function createFrame()
     bindText(nativeAuraHeader, "EAM_OPT_AURA_HEADER", "Native Aura 引擎狀態：")
 
     local nativeAuraStatusLabel = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    nativeAuraStatusLabel:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 300, -104)
-    nativeAuraStatusLabel:SetWidth(200)
+    nativeAuraStatusLabel:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 300, -102)
+    nativeAuraStatusLabel:SetWidth(150)
     nativeAuraStatusLabel:SetJustifyH("LEFT")
     Options.nativeAuraStatusLabel = nativeAuraStatusLabel
 
     local nativeAuraRebuildButton = api.CreateFrame("Button", nil, pageGeneral, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(nativeAuraRebuildButton) end
-    nativeAuraRebuildButton:SetSize(65, 22)
-    nativeAuraRebuildButton:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 510, -102)
+    nativeAuraRebuildButton:SetSize(56, 22)
+    nativeAuraRebuildButton:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 452, -100)
     bindText(nativeAuraRebuildButton, "EAM_OPT_AURA_APPLY", "套用")
     setTooltip(nativeAuraRebuildButton, "立即手動重建暴雪底層 Native Aura 結構以套用最新光環設定", "套用 Native Aura")
     nativeAuraRebuildButton:SetScript("OnClick", function()
         local service = EAM.Services.AuraContainerService
+        local ok, reason = false, "unavailable"
         if service and service.requestRebuild then
-            service.requestRebuild("OPTIONS_MANUAL_REBUILD")
+            ok, reason = service.requestRebuild("OPTIONS_MANUAL_REBUILD")
+        end
+        if service and service.applyContainerPositions then
+            service.applyContainerPositions()
         end
         Options.refreshAuraBackendStatus()
+        if ok then
+            if print then
+                print("|cff00ff00[EAM]|r " .. tostring(localized("EAM_OPT_AURA_APPLIED_SUCCESS", "已成功套用最新 Native Aura 光環結構與位置。")) .. " |cffffcc00(若未即時反應請點擊 [/reload])|r")
+            end
+        else
+            local reasonText = reason or "failed"
+            if reason == "combatDeferred" then
+                reasonText = (EAM.L and EAM.L.EAM_OPT_AURA_PENDING) or "（等待脫戰）"
+            elseif reason == "nativeReloadRequired" then
+                reasonText = "(/reload)"
+            end
+            if print then
+                print("|cffff8000[EAM]|r " .. tostring(localized("EAM_OPT_AURA_APPLY_FAILED", "Native Aura 套用結果：")) .. tostring(reasonText) .. " |cffffcc00(請點擊 [/reload] 重新載入介面)|r")
+            end
+        end
     end)
+
+    local nativeAuraReloadButton = api.CreateFrame("Button", nil, pageGeneral, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(nativeAuraReloadButton) end
+    nativeAuraReloadButton:SetSize(60, 22)
+    nativeAuraReloadButton:SetPoint("LEFT", nativeAuraRebuildButton, "RIGHT", 4, 0)
+    nativeAuraReloadButton:SetText("/reload")
+    setTooltip(nativeAuraReloadButton, "重新載入遊戲介面 (Reload UI)，確保暴雪 Native Aura 光環容器徹底重建生效", "重新載入介面")
+    nativeAuraReloadButton:SetScript("OnClick", function()
+        if ReloadUI then
+            ReloadUI()
+        elseif SlashCmdList and SlashCmdList["RELOAD"] then
+            SlashCmdList["RELOAD"]("")
+        end
+    end)
+
+    local nativeAuraNotice = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    nativeAuraNotice:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 300, -127)
+    nativeAuraNotice:SetWidth(275)
+    nativeAuraNotice:SetJustifyH("LEFT")
+    nativeAuraNotice:SetTextColor(1.0, 0.82, 0.2, 1.0)
+    nativeAuraNotice:SetText("※ 提醒：光環類若未即時反應，請點套用或 /reload。")
+
     Options.refreshAuraBackendStatus()
 
     -- 5. 核心設定開關 (Core Toggles)
@@ -2295,7 +2587,19 @@ local function createFrame()
     coreTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
     bindText(coreTitle, "EAM_OPT_CORE_TITLE", "核心功能開關 (Core System)")
 
-    createCheckbox(pageGeneral, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 16, -182, nil, "總開關：開啟或暫停所有畫面中央告警框架的顯示", "啟用提醒框架")
+    createCheckbox(pageGeneral, localized("EAM_OPT_ENABLE_FRAME", "啟用提醒框架"), "showFrame", 16, -182, function(checked)
+        if EAM.UI.Renderer then
+            if checked then
+                if EAM.UI.Renderer.unsuppressAlerts then
+                    EAM.UI.Renderer.unsuppressAlerts("SHOW_FRAME_ENABLED")
+                end
+            else
+                if EAM.UI.Renderer.suppressAlerts then
+                    EAM.UI.Renderer.suppressAlerts("SHOW_FRAME_DISABLED")
+                end
+            end
+        end
+    end, "總開關：開啟或暫停所有畫面中央告警框架的顯示", "啟用提醒框架")
     local escCb = createCheckbox(pageGeneral, localized("EAM_OPT_ALLOW_ESC", "ESC 關閉提示圖示"), "allowEscCancel", 300, -182, function(checked)
         if EAM.UI.Renderer and EAM.UI.Renderer.checkEscFrameState then
             if not checked and EAM.UI.Renderer.unsuppressAlerts then
@@ -2319,17 +2623,18 @@ local function createFrame()
     -- ===================================================
     local pageLayout = tabPages[2]
 
-    -- 左側：圖示尺寸與間距滑桿
+    -- 左側：圖示尺寸、間距與透明度滑桿
     createSlider(pageLayout, localized("EAM_OPT_SLIDER_ICON_SIZE", "圖示大小 (Icon Size)"), "iconSize", 20, 100, 1, 16, -20, 250, nil, nil, "調整自身、目標、技能冷卻等所有告警圖示的寬高像素尺寸", "圖示大小")
     createSlider(pageLayout, localized("EAM_OPT_SLIDER_ICON_SPACING", "水平間距 (Horizontal Spacing)"), "iconSpacing", -200, 200, 1, 16, -75, 250, nil, nil, "調整相鄰告警圖示之間的水平間距像素距離", "水平間距")
     createSlider(pageLayout, localized("EAM_OPT_SLIDER_VERT_SPACING", "垂直間距 (Vertical Spacing)"), "verticalSpacing", -200, 200, 1, 16, -130, 250, nil, nil, "調整圖示換行或垂直成長時的垂直間距像素距離", "垂直間距")
+    createSlider(pageLayout, localized("EA_XGRPALERT_ICONALPHA", "圖示透明度 (Icon Alpha)"), "iconAlpha", 0.1, 1.0, 0.05, 16, -185, 250, true, nil, "調整自身、目標、冷卻等所有告警圖示的整體透明度 (10%~100%)", "圖示透明度")
 
     local layoutHint = pageLayout:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    layoutHint:SetPoint("TOPLEFT", pageLayout, "TOPLEFT", 16, -190)
+    layoutHint:SetPoint("TOPLEFT", pageLayout, "TOPLEFT", 16, -245)
     layoutHint:SetWidth(250)
     layoutHint:SetJustifyH("LEFT")
     layoutHint:SetTextColor(0.8, 0.75, 0.7, 1)
-    layoutHint:SetText("調整所有告警圖示的尺寸與行列間距。點擊下方「移動提醒框架」可直接在遊戲畫面中拖曳位置。")
+    layoutHint:SetText("調整所有告警圖示的尺寸、透明度與行列間距。點擊下方「移動提醒框架」可直接在遊戲畫面中拖曳位置。")
 
     -- 右側：7 大告警框架成長方向
     local dirTitle = pageLayout:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2425,6 +2730,7 @@ local function createFrame()
     createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_GROUND_EFFECT", "地面效果成長"), "groundEffect", 300, -138)
     createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_TOTEM", "圖騰監控成長"), "totem", 445, -138)
     createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_CLASS_POWER", "職業能量成長"), "classPower", 300, -188)
+    createDirectionDropdown(pageLayout, localized("EAM_OPT_GROW_PET_ALERT", "寵物監控成長"), "petAlert", 445, -188)
 
     -- 底部兩大操作按鈕（對稱排列）
     createThemedButton(pageLayout, localized("EAM_OPT_MOVE_FRAME_BTN", "移動提醒框架"), 16, -385, 250, 32, function()
@@ -2507,6 +2813,14 @@ local function createFrame()
             
             Options.notifyConfigChanged()
             
+            -- 即時將畫面上的所有框架物理坐標還原至預設位置
+            if EAM.UI.Renderer and EAM.UI.Renderer.applyFramePositions then
+                EAM.UI.Renderer.applyFramePositions()
+            end
+            if EAM.Services and EAM.Services.PlayerStatService and EAM.Services.PlayerStatService.applyFramePositions then
+                EAM.Services.PlayerStatService.applyFramePositions()
+            end
+
             -- 重置 7 個告警框架 Layout
             if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
                 for fName in pairs(EAM.Constants.ALERT_FRAME_TYPES) do
@@ -2585,6 +2899,7 @@ local function createFrame()
                     if ok and status == "updated" then
                         Options.refreshFontDropdown()
                         Options.notifyTextLayoutChanged(true)
+                        triggerSafeRebuild("OPTIONS_FONT_FAMILY_CHANGED")
                     elseif ok then
                         Options.refreshFontDropdown()
                     end
@@ -2667,6 +2982,7 @@ local function createFrame()
                     if ok and state == "updated" then
                         updateBtnText()
                         Options.notifyTextLayoutChanged(true)
+                        triggerSafeRebuild("OPTIONS_TEXT_PLACEMENT_CHANGED")
                     end
                 end
                 menu:Hide()
@@ -2685,12 +3001,75 @@ local function createFrame()
 
     createTextPlacementDropdown(pageText, localized("EAM_OPT_TIMER_ALIGN", "秒數倒數位置"), "timer", 300, -85)
     createTextPlacementDropdown(pageText, localized("EAM_OPT_APPLICATIONS_ALIGN", "堆疊層數位置"), "applications", 445, -85)
+    createTextPlacementDropdown(pageText, localized("EAM_OPT_NAME_ALIGN", "法術名稱位置"), "spellName", 300, -145)
+
+    local function createTextColorButton(parent, labelKey, fallbackLabel, kind, x, y, defaultColor, tooltipText)
+        local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+        label:SetTextColor(0.85, 0.75, 0.65, 1)
+        bindText(label, labelKey, fallbackLabel)
+
+        local colorBtn = EAM.UI.createColorSwatchButton(parent, 20, 20, function(btn)
+            local cur = btn.currentColor or defaultColor
+            EAM.UI.openColorPicker({
+                r = cur[1],
+                g = cur[2],
+                b = cur[3],
+                a = cur[4] or 1.0,
+                onColorChanged = function(r, g, b, a)
+                    btn:SetColor(r, g, b, a)
+                    btn.currentColor = { r, g, b, a }
+                    local saved = EAM.Modules and EAM.Modules.SavedVariables
+                    if saved and saved.updateTextColor then
+                        saved.updateTextColor(kind, { r, g, b, a })
+                    end
+                    Options.notifyTextLayoutChanged(true)
+                    triggerSafeRebuild("OPTIONS_TEXT_COLOR_CHANGED")
+                end,
+                onCancel = function(prevR, prevG, prevB, prevA)
+                    btn:SetColor(prevR, prevG, prevB, prevA or 1.0)
+                    btn.currentColor = { prevR, prevG, prevB, prevA or 1.0 }
+                    local saved = EAM.Modules and EAM.Modules.SavedVariables
+                    if saved and saved.updateTextColor then
+                        saved.updateTextColor(kind, { prevR, prevG, prevB, prevA or 1.0 })
+                    end
+                    Options.notifyTextLayoutChanged(true)
+                    triggerSafeRebuild("OPTIONS_TEXT_COLOR_CHANGED")
+                end,
+            })
+        end)
+        colorBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 16)
+        setTooltip(colorBtn, tooltipText or ("自訂" .. fallbackLabel), fallbackLabel)
+
+        local function refreshColor()
+            local TextPlacement = EAM.UI and EAM.UI.TextPlacement
+            local color = TextPlacement and TextPlacement.getColor and TextPlacement.getColor(EAM.db and EAM.db.config, kind) or defaultColor
+            colorBtn:SetColor(color[1], color[2], color[3], color[4] or 1.0)
+            colorBtn.currentColor = { color[1], color[2], color[3], color[4] or 1.0 }
+        end
+        colorBtn:SetScript("OnShow", refreshColor)
+        refreshColor()
+        return colorBtn
+    end
+
+    createTextColorButton(pageText, "EAM_OPT_TIMER_COLOR", "倒數文字顏色", "timer", 300, -195, { 1.0, 1.0, 1.0, 1.0 }, "自訂倒數計時文字的基準顏色（未進入變色警戒時顯示）")
+    createTextColorButton(pageText, "EAM_OPT_APPLICATIONS_COLOR", "堆疊層數顏色", "applications", 410, -195, { 1.0, 1.0, 1.0, 1.0 }, "自訂 Buff / Debuff 堆疊層數數字的顏色")
+    createTextColorButton(pageText, "EAM_OPT_NAME_COLOR", "法術名稱顏色", "spellName", 520, -195, { 1.0, 0.95, 0.5, 1.0 }, "自訂技能與物品名稱文字的顏色")
 
     -- 倒數文字變色曲線 (Color Curve)
     local colorCurveTitle = pageText:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     colorCurveTitle:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -255)
     colorCurveTitle:SetTextColor(0.95, 0.85, 0.4, 1.0)
     bindText(colorCurveTitle, "EAM_OPT_TIMER_COLOR_TITLE", "倒數文字變色 (Color Curve)")
+
+    local function notifyTimerColorLivePreview()
+        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
+            EAM.UI.PreviewPanel.refresh()
+        end
+        if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
+            EAM.UI.Renderer.refreshPreviewLayout()
+        end
+    end
 
     local colorCurveCb = api.CreateFrame("CheckButton", nil, pageText, "UICheckButtonTemplate")
     colorCurveCb:SetPoint("TOPLEFT", pageText, "TOPLEFT", 16, -276)
@@ -2704,6 +3083,7 @@ local function createFrame()
         if saved and saved.setTimerColorCurveEnabled then
             saved.setTimerColorCurveEnabled(enabled)
         end
+        notifyTimerColorLivePreview()
     end)
 
     local stage1Slider = api.CreateFrame("Slider", nil, pageText, "OptionsSliderTemplate")
@@ -2711,19 +3091,24 @@ local function createFrame()
     stage1Slider:SetMinMaxValues(1, 10)
     stage1Slider:SetValueStep(1)
     stage1Slider:SetObeyStepOnDrag(true)
-    stage1Slider:SetSize(180, 16)
+    stage1Slider:SetSize(200, 16)
     setTooltip(stage1Slider, "剩餘秒數小於等於此數值時顯示第 1 階段顏色（緊急警戒）", "緊急警戒門檻")
-    local stage1Label = stage1Slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    stage1Label:SetPoint("BOTTOMLEFT", stage1Slider, "TOPLEFT", 0, 5)
-    bindText(stage1Label, "EAM_OPT_TIMER_COLOR_STAGE1", "緊急警戒 (<= 秒數)")
     local stage1Val = stage1Slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     stage1Val:SetPoint("BOTTOMRIGHT", stage1Slider, "TOPRIGHT", 0, 5)
+    stage1Val:SetJustifyH("RIGHT")
+    local stage1Label = stage1Slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    stage1Label:SetPoint("BOTTOMLEFT", stage1Slider, "TOPLEFT", 0, 5)
+    stage1Label:SetPoint("RIGHT", stage1Val, "LEFT", -4, 0)
+    stage1Label:SetJustifyH("LEFT")
+    stage1Label:SetWordWrap(false)
+    bindText(stage1Label, "EAM_OPT_TIMER_COLOR_STAGE1", "緊急警戒 (<= 秒數)")
     stage1Slider:SetScript("OnValueChanged", function(self, val)
         stage1Val:SetText(mathFloor(val))
         local saved = EAM.Modules and EAM.Modules.SavedVariables
         if saved and saved.setTimerColorCurveStage then
             saved.setTimerColorCurveStage(1, mathFloor(val), nil)
         end
+        notifyTimerColorLivePreview()
     end)
 
     local stage1ColorBtn = EAM.UI.createColorSwatchButton(pageText, 20, 20, function(btn)
@@ -2740,6 +3125,16 @@ local function createFrame()
                 if saved and saved.setTimerColorCurveStage then
                     saved.setTimerColorCurveStage(1, nil, { r, g, b, a })
                 end
+                notifyTimerColorLivePreview()
+            end,
+            onCancel = function(prevR, prevG, prevB, prevA)
+                btn:SetColor(prevR, prevG, prevB, prevA or 1.0)
+                btn.currentColor = { prevR, prevG, prevB, prevA or 1.0 }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setTimerColorCurveStage then
+                    saved.setTimerColorCurveStage(1, nil, { prevR, prevG, prevB, prevA or 1.0 })
+                end
+                notifyTimerColorLivePreview()
             end,
         })
     end)
@@ -2751,19 +3146,24 @@ local function createFrame()
     stage2Slider:SetMinMaxValues(1, 20)
     stage2Slider:SetValueStep(1)
     stage2Slider:SetObeyStepOnDrag(true)
-    stage2Slider:SetSize(180, 16)
+    stage2Slider:SetSize(200, 16)
     setTooltip(stage2Slider, "剩餘秒數小於等於此數值時顯示第 2 階段顏色（預警提示）", "預警提示門檻")
-    local stage2Label = stage2Slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    stage2Label:SetPoint("BOTTOMLEFT", stage2Slider, "TOPLEFT", 0, 5)
-    bindText(stage2Label, "EAM_OPT_TIMER_COLOR_STAGE2", "預警提示 (<= 秒數)")
     local stage2Val = stage2Slider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     stage2Val:SetPoint("BOTTOMRIGHT", stage2Slider, "TOPRIGHT", 0, 5)
+    stage2Val:SetJustifyH("RIGHT")
+    local stage2Label = stage2Slider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    stage2Label:SetPoint("BOTTOMLEFT", stage2Slider, "TOPLEFT", 0, 5)
+    stage2Label:SetPoint("RIGHT", stage2Val, "LEFT", -4, 0)
+    stage2Label:SetJustifyH("LEFT")
+    stage2Label:SetWordWrap(false)
+    bindText(stage2Label, "EAM_OPT_TIMER_COLOR_STAGE2", "預警提示 (<= 秒數)")
     stage2Slider:SetScript("OnValueChanged", function(self, val)
         stage2Val:SetText(mathFloor(val))
         local saved = EAM.Modules and EAM.Modules.SavedVariables
         if saved and saved.setTimerColorCurveStage then
             saved.setTimerColorCurveStage(2, mathFloor(val), nil)
         end
+        notifyTimerColorLivePreview()
     end)
 
     local stage2ColorBtn = EAM.UI.createColorSwatchButton(pageText, 20, 20, function(btn)
@@ -2780,6 +3180,16 @@ local function createFrame()
                 if saved and saved.setTimerColorCurveStage then
                     saved.setTimerColorCurveStage(2, nil, { r, g, b, a })
                 end
+                notifyTimerColorLivePreview()
+            end,
+            onCancel = function(prevR, prevG, prevB, prevA)
+                btn:SetColor(prevR, prevG, prevB, prevA or 1.0)
+                btn.currentColor = { prevR, prevG, prevB, prevA or 1.0 }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setTimerColorCurveStage then
+                    saved.setTimerColorCurveStage(2, nil, { prevR, prevG, prevB, prevA or 1.0 })
+                end
+                notifyTimerColorLivePreview()
             end,
         })
     end)
@@ -2804,6 +3214,16 @@ local function createFrame()
                 if saved and saved.setTimerColorCurveNormalColor then
                     saved.setTimerColorCurveNormalColor({ r, g, b, a })
                 end
+                notifyTimerColorLivePreview()
+            end,
+            onCancel = function(prevR, prevG, prevB, prevA)
+                btn:SetColor(prevR, prevG, prevB, prevA or 1.0)
+                btn.currentColor = { prevR, prevG, prevB, prevA or 1.0 }
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if saved and saved.setTimerColorCurveNormalColor then
+                    saved.setTimerColorCurveNormalColor({ prevR, prevG, prevB, prevA or 1.0 })
+                end
+                notifyTimerColorLivePreview()
             end,
         })
     end)
@@ -3019,9 +3439,13 @@ local function createFrame()
     end)
     refreshCurveDropdown()
 
-    local swipeSlider = createSlider(pageCooldown, localized("EAM_OPT_SLIDER_SHADOW_ALPHA", "倒數陰影透明度 (Shadow Alpha)"), "cooldownSwipeAlpha", 0, 1, 0.05, 300, -120, 205, true, nil, "調整光環與技能冷卻圖示倒數扇形陰影遮罩的透明度 (0~100%)", "倒數陰影透明度")
+    local swipeSlider = createSlider(pageCooldown, localized("EAM_OPT_SLIDER_SHADOW_ALPHA", "倒數陰影透明度 (Shadow Alpha)"), "cooldownSwipeAlpha", 0, 1, 0.05, 300, -120, 275, true, nil, "調整光環與技能冷卻圖示倒數扇形陰影遮罩的透明度 (0~100%)", "倒數陰影透明度")
 
-    local swipeColorBtn = EAM.UI.createColorSwatchButton(pageCooldown, 22, 22, function(btn)
+    local swipeColorLabel = pageCooldown:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    swipeColorLabel:SetPoint("TOPLEFT", pageCooldown, "TOPLEFT", 300, -162)
+    bindText(swipeColorLabel, "EAM_OPT_SWIPE_COLOR", "扇形顏色")
+
+    local swipeColorBtn = EAM.UI.createColorSwatchButton(pageCooldown, 20, 20, function(btn)
         local curColor = btn.currentColor or (EAM.db and EAM.db.config and EAM.db.config.cooldownSwipeColor) or { r = 0, g = 0, b = 0 }
         EAM.UI.openColorPicker({
             r = curColor.r or 0,
@@ -3039,6 +3463,7 @@ local function createFrame()
                 end
                 markAuraSettingsDirty("OPTIONS_NATIVE_STRUCTURE_CHANGED")
                 Options.notifyConfigChanged(false)
+                triggerSafeRebuild("OPTIONS_SWIPE_COLOR_CHANGED")
                 if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
                     EAM.UI.Renderer.refreshPreviewLayout()
                 end
@@ -3054,18 +3479,15 @@ local function createFrame()
                 end
                 markAuraSettingsDirty("OPTIONS_NATIVE_STRUCTURE_CHANGED")
                 Options.notifyConfigChanged(false)
+                triggerSafeRebuild("OPTIONS_SWIPE_COLOR_CHANGED")
                 if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
                     EAM.UI.Renderer.refreshPreviewLayout()
                 end
             end,
         })
     end)
-    swipeColorBtn:SetPoint("LEFT", swipeSlider, "RIGHT", 14, -2)
+    swipeColorBtn:SetPoint("LEFT", swipeColorLabel, "RIGHT", 8, 0)
     setTooltip(swipeColorBtn, localized("EAM_OPT_SWIPE_COLOR_TIP", "點擊開啟調色盤，自訂光環與冷卻圖示倒數扇形陰影遮罩的顏色（預設經典黑色陰影）"), localized("EAM_OPT_SWIPE_COLOR", "扇形顏色"))
-
-    local swipeColorLabel = pageCooldown:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    swipeColorLabel:SetPoint("BOTTOMLEFT", swipeColorBtn, "TOPLEFT", -2, 5)
-    bindText(swipeColorLabel, "EAM_OPT_SWIPE_COLOR", "扇形顏色")
 
     local function refreshSwipeColorButton()
         local saved = EAM.Modules and EAM.Modules.SavedVariables
@@ -3078,7 +3500,7 @@ local function createFrame()
     Options.refreshSwipeColorButton = refreshSwipeColorButton
     swipeColorBtn:SetScript("OnShow", refreshSwipeColorButton)
     refreshSwipeColorButton()
-    createCheckbox(pageCooldown, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 300, -175, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
+    createCheckbox(pageCooldown, localized("EAM_OPT_RADIAL_GAUGE", "啟用 12.1 原生圓形光環倒數光圈"), "showRadialGauge", 300, -195, nil, "在光環與冷卻圖示周圍繪製 12.1 原生向量平滑消退光圈與斬殺期高亮", "原生圓形進度光圈")
 
     -- ===================================================
     -- 【Tab 5：視覺與警示 (Visual Alerts & FX)】
@@ -3312,12 +3734,16 @@ local function createFrame()
     if columnsSlider.High then columnsSlider.High:SetText("") end
     if columnsSlider.Text then columnsSlider.Text:SetText("") end
 
-    local colLabel = columnsSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    colLabel:SetPoint("BOTTOMLEFT", columnsSlider, "TOPLEFT", 0, 3)
-    bindText(colLabel, "EAM_OPT_COLUMNS", "每列欄數")
-
     local colValText = columnsSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     colValText:SetPoint("BOTTOMRIGHT", columnsSlider, "TOPRIGHT", 0, 3)
+    colValText:SetJustifyH("RIGHT")
+
+    local colLabel = columnsSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    colLabel:SetPoint("BOTTOMLEFT", columnsSlider, "TOPLEFT", 0, 3)
+    colLabel:SetPoint("RIGHT", colValText, "LEFT", -4, 0)
+    colLabel:SetJustifyH("LEFT")
+    colLabel:SetWordWrap(false)
+    bindText(colLabel, "EAM_OPT_COLUMNS", "每列欄數")
 
     setTooltip(columnsSlider, "EAM_OPT_COLUMNS_TIP", "EAM_OPT_COLUMNS")
 
@@ -3549,6 +3975,20 @@ local function createFrame()
                 gTex:SetVertexColor(1, 1, 1, 0.95)
             end
 
+            -- PreRender Quick Toggle Button (預渲染快速開關按鈕)
+            local prerenderBtn = api.CreateFrame("Button", nil, itemFrame, "BackdropTemplate")
+            prerenderBtn:SetSize(22, 18)
+            prerenderBtn:SetBackdrop({
+                bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile = false, tileSize = 0, edgeSize = 8,
+                insets = { left = 1, right = 1, top = 1, bottom = 1 }
+            })
+            local preText = prerenderBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            preText:SetPoint("CENTER", prerenderBtn, "CENTER", 0, 0)
+            prerenderBtn.text = preText
+            itemFrame.prerenderBtn = prerenderBtn
+
             -- Down Button (▼)
             itemFrame.downBtn = api.CreateFrame("Button", nil, itemFrame)
             itemFrame.downBtn:SetSize(16, 16)
@@ -3613,12 +4053,28 @@ local function createFrame()
         
         updateRowHighlight(false)
 
-        -- 取得圖示
+        -- 取得圖示與名稱
         local texture
-        if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
+        local name = EAM.L.EAM_OPT_UNKNOWN or "Unknown"
+        local isSlotAlert = (data.slotID ~= nil) or (data.itemType == "SLOT")
+
+        if isSlotAlert then
+            local slotID = data.slotID
+            local slotName = getInventorySlotDisplayName(slotID)
+            local eqItemID, eqName, eqTex = getEquippedSlotInfo(slotID)
+            texture = eqTex
+            if eqName then
+                name = slotName .. ": " .. eqName
+            else
+                name = slotName .. " (" .. ((EAM.L and EAM.L.EAM_SLOT_EMPTY) or "未穿戴") .. ")"
+            end
+        elseif data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
             texture = C_Item.GetItemIconByID(data.itemID)
+            name = C_Item.GetItemNameByID(data.itemID) or ((EAM.L.EAM_ITEM_PREFIX or "物品 ") .. data.itemID)
         elseif data.spellID then
             texture = C_Spell.GetSpellTexture(data.spellID)
+            local spellInfo = C_Spell.GetSpellInfo(data.spellID)
+            name = spellInfo and spellInfo.name or ((EAM.L.EAM_OPT_COND_SPELL_NAME or "法術 ") .. data.spellID)
         end
         itemFrame.icon:SetTexture(texture or "Interface\\Icons\\INV_Misc_QuestionMark")
         
@@ -3635,25 +4091,21 @@ local function createFrame()
             end
             Options.notifyConfigChanged()
             
-            local idVal = data.spellID or data.itemID
+            local idVal = data.slotID or data.spellID or data.itemID
             if idVal and Options.addEditBox then
                 Options.addEditBox:SetText(tostring(idVal))
             end
         end)
         
-        -- Name
-        local name = EAM.L.EAM_OPT_UNKNOWN or "Unknown"
-        if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
-            name = C_Item.GetItemNameByID(data.itemID) or ((EAM.L.EAM_ITEM_PREFIX or "物品 ") .. data.itemID)
-        elseif data.spellID then
-            local spellInfo = C_Spell.GetSpellInfo(data.spellID)
-            name = spellInfo and spellInfo.name or ((EAM.L.EAM_OPT_COND_SPELL_NAME or "法術 ") .. data.spellID)
-        end
         itemFrame.nameText:SetText(name)
         
         -- ID
-        local showID = data.spellID or data.itemID or 0
-        itemFrame.idText:SetText("[" .. showID .. "]")
+        if isSlotAlert then
+            itemFrame.idText:SetText("[" .. ((EAM.L and EAM.L.EAM_SLOT_LABEL_SHORT) or "裝備:") .. " " .. data.slotID .. "]")
+        else
+            local showID = data.spellID or data.itemID or 0
+            itemFrame.idText:SetText("[" .. showID .. "]")
+        end
 
         -- Location Order
         itemFrame.orderBox:SetText(tostring(data.order or 1))
@@ -3673,7 +4125,7 @@ local function createFrame()
         
         -- Del click
         itemFrame.delBtn:SetScript("OnClick", function()
-            local idVal = data.spellID or data.itemID
+            local idVal = data.slotID or data.spellID or data.itemID
             if idVal then
                 Options.removeAlertFromCurrentCategory(idVal)
             end
@@ -3689,6 +4141,66 @@ local function createFrame()
             end
             Options.openConditionsFrame(data)
         end)
+
+        -- 預渲染快速開關 (僅冷卻模組顯示)
+        local isCooldownCategory = (Options.currentCategory == 4 or Options.currentCategory == 5)
+        if isCooldownCategory and itemFrame.prerenderBtn then
+            itemFrame.prerenderBtn:Show()
+            itemFrame.prerenderBtn:ClearAllPoints()
+            itemFrame.prerenderBtn:SetPoint("RIGHT", itemFrame.gearBtn, "LEFT", -4, 0)
+
+            itemFrame.downBtn:ClearAllPoints()
+            itemFrame.downBtn:SetPoint("RIGHT", itemFrame.prerenderBtn, "LEFT", -4, 0)
+
+            local function isPreRenderActive()
+                if type(data.cooldownPreRender) == "boolean" then
+                    return data.cooldownPreRender
+                end
+                local cfg = EAM.db and EAM.db.config
+                if cfg and type(cfg.cooldownPreRender) == "boolean" then
+                    return cfg.cooldownPreRender
+                end
+                return true
+            end
+
+            local function updatePrerenderVisual(isActive)
+                if isActive then
+                    itemFrame.prerenderBtn:SetBackdropColor(0.08, 0.42, 0.16, 0.85)
+                    itemFrame.prerenderBtn:SetBackdropBorderColor(0.25, 1.0, 0.45, 0.95)
+                    itemFrame.prerenderBtn.text:SetText("|cff33ff66預|r")
+                    setTooltip(itemFrame.prerenderBtn, EAM.L.EAM_OPT_PRERENDER_QUICK_TIP_ON or "預渲染佔位：已開啟（點擊切換為關閉）\n在技能或物品就緒/無冷卻時，依然在畫面上保持圖示佔位預覽。", EAM.L.EAM_OPT_PRERENDER_QUICK_TITLE or "預渲染快速開關")
+                else
+                    itemFrame.prerenderBtn:SetBackdropColor(0.12, 0.12, 0.12, 0.65)
+                    itemFrame.prerenderBtn:SetBackdropBorderColor(0.4, 0.4, 0.4, 0.6)
+                    itemFrame.prerenderBtn.text:SetText("|cff888888預|r")
+                    setTooltip(itemFrame.prerenderBtn, EAM.L.EAM_OPT_PRERENDER_QUICK_TIP_OFF or "預渲染佔位：已關閉（點擊切換為開啟）\n僅在技能或物品進入冷卻倒數時，才在畫面上顯示圖示。", EAM.L.EAM_OPT_PRERENDER_QUICK_TITLE or "預渲染快速開關")
+                end
+            end
+
+            updatePrerenderVisual(isPreRenderActive())
+
+            itemFrame.prerenderBtn:SetScript("OnClick", function()
+                local nextVal = not isPreRenderActive()
+                data.cooldownPreRender = nextVal
+                local saved = EAM.Modules and EAM.Modules.SavedVariables
+                if data.kind == "spellCooldown" or Options.currentCategory == 4 then
+                    if saved and saved.updateCooldownBehavior then
+                        saved.updateCooldownBehavior(data.spellID, "cooldownPreRender", nextVal)
+                    end
+                elseif data.kind == "itemCooldown" or Options.currentCategory == 5 then
+                    if saved and saved.updateItemCooldownBehavior then
+                        local identifier = data.slotID or data.itemID or data.id
+                        saved.updateItemCooldownBehavior(identifier, "cooldownPreRender", nextVal)
+                    end
+                end
+                Options.notifyConfigChanged()
+                updatePrerenderVisual(nextVal)
+            end)
+        elseif itemFrame.prerenderBtn then
+            itemFrame.prerenderBtn:Hide()
+            itemFrame.downBtn:ClearAllPoints()
+            itemFrame.downBtn:SetPoint("RIGHT", itemFrame.gearBtn, "LEFT", -4, 0)
+        end
 
         -- Up / Down click
         itemFrame.upBtn:SetScript("OnClick", function()
@@ -3724,7 +4236,7 @@ local function createFrame()
                     if f.updateHighlight then f:updateHighlight(false) end
                 end)
             end
-            local idVal = data.spellID or data.itemID
+            local idVal = data.slotID or data.spellID or data.itemID
             if idVal and Options.addEditBox then
                 Options.addEditBox:SetText(tostring(idVal))
             end
@@ -3738,7 +4250,20 @@ local function createFrame()
                 itemFrame.bg:SetColorTexture(1, 1, 1, 0.08)
             end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
+            if isSlotAlert then
+                local eqID = getEquippedSlotInfo(data.slotID)
+                if eqID and eqID > 0 then
+                    local ok = pcall(function() GameTooltip:SetInventoryItem("player", data.slotID) end)
+                    if not ok then
+                        GameTooltip:SetItemByID(eqID)
+                    end
+                else
+                    local slotName = getInventorySlotDisplayName(data.slotID)
+                    GameTooltip:SetText(slotName, 1, 0.82, 0)
+                    local tipFmt = (EAM.L and EAM.L.EAM_SLOT_TIP_DESC) or "裝備欄位代碼: %d\n目前該部位未穿戴裝備。"
+                    GameTooltip:AddLine(string.format(tipFmt, data.slotID), 0.8, 0.8, 0.8, true)
+                end
+            elseif data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
                 GameTooltip:SetItemByID(data.itemID)
             elseif data.spellID then
                 GameTooltip:SetSpellByID(data.spellID)
@@ -3767,6 +4292,20 @@ local function createFrame()
     setTooltip(addEditBox, "輸入要加入或刪除的法術 ID (Spell ID) 或物品 ID (Item ID)", "輸入法術/物品 ID")
     Options.addEditBox = addEditBox
 
+    local equipSlotMenu = api.CreateFrame("Frame", "EAM_EquipSlotDropdownMenu", listInner, "BackdropTemplate")
+    equipSlotMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    equipSlotMenu:SetSize(240, 260)
+    equipSlotMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    equipSlotMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
+    equipSlotMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(equipSlotMenu, nil)
+    equipSlotMenu:Hide()
+
     local addBtn = createThemedButton(listInner, localized("EAM_OPT_ADD_BTN", "新增"), 158, 0, 60, 24, function()
         local idVal = tonumber(addEditBox:GetText())
         if not idVal or idVal <= 0 then
@@ -3780,6 +4319,68 @@ local function createFrame()
     end, "將輸入框中的 ID 加入當前分類之監控清單", "新增監控")
     addBtn:ClearAllPoints()
     addBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 158, 38)
+
+    local addEquipBtn
+    local function populateEquipSlotMenu()
+        buildScrollableDropdownMenu(
+            equipSlotMenu,
+            addEquipBtn,
+            function()
+                local list = {}
+                for index = 1, #INVENTORY_SLOTS do
+                    local slot = INVENTORY_SLOTS[index]
+                    local slotName = getInventorySlotDisplayName(slot.id)
+                    local getInvID = api.GetInventoryItemID or _G.GetInventoryItemID
+                    local eqID = getInvID and getInvID("player", slot.id)
+                    local eqName = nil
+                    if eqID and eqID > 0 and api.C_Item and api.C_Item.GetItemInfo then
+                        eqName = api.C_Item.GetItemInfo(eqID)
+                    end
+                    local label = string.format("[%d] %s", slot.id, slotName)
+                    if eqName then
+                        label = label .. " - " .. eqName
+                    end
+                    list[#list + 1] = {
+                        value = slot.id,
+                        text = label,
+                    }
+                end
+                return list
+            end,
+            function(item)
+                Options.addInventorySlotAlert(item.value)
+                if addEditBox then addEditBox:SetText("") end
+                equipSlotMenu:Hide()
+            end,
+            240,
+            12
+        )
+        for _, btn in ipairs(equipSlotMenu.buttons or {}) do
+            finalizeDropdownMenuButton(btn, btn.text, equipSlotMenu)
+        end
+    end
+
+    addEquipBtn = createThemedButton(listInner, localized("EAM_OPT_ADD_EQUIP_BTN", "新增到裝備"), 166, 0, 82, 24, function(self)
+        local idVal = tonumber(addEditBox:GetText())
+        if idVal and idVal >= 1 and idVal <= 19 then
+            Options.addInventorySlotAlert(idVal)
+            addEditBox:SetText("")
+            if equipSlotMenu:IsShown() then equipSlotMenu:Hide() end
+        else
+            if equipSlotMenu:IsShown() then
+                equipSlotMenu:Hide()
+            else
+                populateEquipSlotMenu()
+                equipSlotMenu:ClearAllPoints()
+                equipSlotMenu:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 4)
+                equipSlotMenu:Show()
+                equipSlotMenu:Raise()
+            end
+        end
+    end, "輸入 1~19 裝備欄位代號或點擊選擇部位，新增為動態穿戴物品冷卻監控", "新增到裝備")
+    addEquipBtn:ClearAllPoints()
+    addEquipBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 166, 38)
+    Options.addEquipBtn = addEquipBtn
 
     local delBtn = createThemedButton(listInner, localized("EAM_OPT_DEL_BTN", "刪除"), 224, 0, 60, 24, function()
         local idVal = tonumber(addEditBox:GetText())
@@ -3818,6 +4419,63 @@ local function createFrame()
     descText:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 12, 12)
     descText:SetTextColor(0.8, 0.8, 0.8, 1)
     bindText(descText, "EAM_OPT_ADD_DEL_DESC", "請輸入 SpellID 或 ItemID 並點擊新增 / 刪除。")
+
+    function Options.refreshBottomControls()
+        local isItemCategory = (Options.currentCategory == 5)
+        if isItemCategory then
+            addEditBox:SetSize(100, 24)
+            addEditBox:ClearAllPoints()
+            addEditBox:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 10, 38)
+
+            addBtn:SetSize(48, 24)
+            addBtn:ClearAllPoints()
+            addBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 114, 38)
+
+            addEquipBtn:Show()
+            addEquipBtn:SetSize(82, 24)
+            addEquipBtn:ClearAllPoints()
+            addEquipBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 166, 38)
+
+            delBtn:SetSize(48, 24)
+            delBtn:ClearAllPoints()
+            delBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 252, 38)
+
+            batchBtn:SetSize(66, 24)
+            batchBtn:ClearAllPoints()
+            batchBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 304, 38)
+
+            bindText(descText, "EAM_OPT_ADD_DEL_DESC_ITEM", "輸入 ItemID 按新增；或輸入部位代號 1~19 按新增到裝備。")
+        else
+            if addEquipBtn then addEquipBtn:Hide() end
+            if equipSlotMenu then equipSlotMenu:Hide() end
+
+            addEditBox:SetSize(140, 24)
+            addEditBox:ClearAllPoints()
+            addEditBox:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 12, 38)
+
+            addBtn:SetSize(60, 24)
+            addBtn:ClearAllPoints()
+            addBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 158, 38)
+
+            delBtn:SetSize(60, 24)
+            delBtn:ClearAllPoints()
+            delBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 224, 38)
+
+            batchBtn:SetSize(72, 24)
+            batchBtn:ClearAllPoints()
+            batchBtn:SetPoint("BOTTOMLEFT", listInner, "BOTTOMLEFT", 290, 38)
+
+            local isAuraCategory = (Options.currentCategory <= 3)
+            if isAuraCategory then
+                descText:SetTextColor(1.0, 0.82, 0.2, 1.0)
+                descText:SetText("※ 提醒：光環若未即時生效，請至主設定點「套用」或輸入 /reload")
+            else
+                descText:SetTextColor(0.8, 0.8, 0.8, 1)
+                bindText(descText, "EAM_OPT_ADD_DEL_DESC", "請輸入 SpellID 或 ItemID 並點擊新增 / 刪除。")
+            end
+        end
+    end
+    Options.refreshBottomControls()
 
     local batchFrame = api.CreateFrame("Frame", "EAM_AlertBatchFrame", UIParent, "BackdropTemplate")
     batchFrame:SetSize(620, 460)
@@ -4252,6 +4910,7 @@ local function createFrame()
     end)
     makeTitleCloseButton(condFrame, function()
         if condFrame.groupMenu then condFrame.groupMenu:Hide() end
+        if condFrame.itemSlotMenu then condFrame.itemSlotMenu:Hide() end
         if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
         condFrame:Hide()
     end)
@@ -4433,7 +5092,7 @@ local function createFrame()
         end
     end)
 
-    -- Sliders (左側排版，Label 偏上 5px 防重疊)
+    -- Sliders (左側排版，Label 偏上 5px 防重疊，雙錨點拘束)
     local stackSlider = api.CreateFrame("Slider", nil, condFrame, "OptionsSliderTemplate")
     stackSlider:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -135)
     stackSlider:SetMinMaxValues(0, 10)
@@ -4441,11 +5100,15 @@ local function createFrame()
     stackSlider:SetObeyStepOnDrag(true)
     stackSlider:SetSize(130, 16)
     setTooltip(stackSlider, "當光環堆疊層數達到或超過此數值時才顯示提醒（0 表示無限制）", "堆疊層數閾值")
-    local stackLabel = stackSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    stackLabel:SetPoint("BOTTOMLEFT", stackSlider, "TOPLEFT", 0, 5)
-    bindText(stackLabel, "EAM_OPT_COND_STACK", "堆疊層數閾值")
     local stackVal = stackSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     stackVal:SetPoint("BOTTOMRIGHT", stackSlider, "TOPRIGHT", 0, 5)
+    stackVal:SetJustifyH("RIGHT")
+    local stackLabel = stackSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    stackLabel:SetPoint("BOTTOMLEFT", stackSlider, "TOPLEFT", 0, 5)
+    stackLabel:SetPoint("RIGHT", stackVal, "LEFT", -4, 0)
+    stackLabel:SetJustifyH("LEFT")
+    stackLabel:SetWordWrap(false)
+    bindText(stackLabel, "EAM_OPT_COND_STACK", "堆疊層數閾值")
     stackSlider:SetScript("OnValueChanged", function(self, val)
         stackVal:SetText(mathFloor(val))
     end)
@@ -4458,13 +5121,17 @@ local function createFrame()
     glowSlider:SetObeyStepOnDrag(true)
     glowSlider:SetSize(130, 16)
     setTooltip(glowSlider, "當光環堆疊層數達到此數值時觸發外框高亮流光動畫", "堆疊高亮閾值")
-    local glowLabel = glowSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    glowLabel:SetPoint("BOTTOMLEFT", glowSlider, "TOPLEFT", 0, 5)
-    bindText(glowLabel, "EAM_OPT_COND_GLOW", "堆疊高亮閾值")
     local glowVal = glowSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     glowVal:SetPoint("BOTTOMRIGHT", glowSlider, "TOPRIGHT", 0, 5)
+    glowVal:SetJustifyH("RIGHT")
+    local glowLabel = glowSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    glowLabel:SetPoint("BOTTOMLEFT", glowSlider, "TOPLEFT", 0, 5)
+    glowLabel:SetPoint("RIGHT", glowVal, "LEFT", -4, 0)
+    glowLabel:SetJustifyH("LEFT")
+    glowLabel:SetWordWrap(false)
+    bindText(glowLabel, "EAM_OPT_COND_GLOW", "堆疊高亮閾值")
     glowSlider:SetScript("OnValueChanged", function(self, val)
-        stackVal:SetText(mathFloor(val))
+        glowVal:SetText(mathFloor(val))
     end)
     condFrame.glowSlider = glowSlider
 
@@ -4475,11 +5142,15 @@ local function createFrame()
     redLimitSlider:SetObeyStepOnDrag(true)
     redLimitSlider:SetSize(130, 16)
     setTooltip(redLimitSlider, "剩餘秒數低於此數值時倒數數字變為紅色警戒顯示", "倒數紅字限制")
-    local redLimitLabel = redLimitSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    redLimitLabel:SetPoint("BOTTOMLEFT", redLimitSlider, "TOPLEFT", 0, 5)
-    bindText(redLimitLabel, "EAM_OPT_COND_RED_LIMIT", "倒數紅字限制 (秒)")
     local redLimitVal = redLimitSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     redLimitVal:SetPoint("BOTTOMRIGHT", redLimitSlider, "TOPRIGHT", 0, 5)
+    redLimitVal:SetJustifyH("RIGHT")
+    local redLimitLabel = redLimitSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    redLimitLabel:SetPoint("BOTTOMLEFT", redLimitSlider, "TOPLEFT", 0, 5)
+    redLimitLabel:SetPoint("RIGHT", redLimitVal, "LEFT", -4, 0)
+    redLimitLabel:SetJustifyH("LEFT")
+    redLimitLabel:SetWordWrap(false)
+    bindText(redLimitLabel, "EAM_OPT_COND_RED_LIMIT", "倒數紅字限制 (秒)")
     redLimitSlider:SetScript("OnValueChanged", function(self, val)
         redLimitVal:SetText(mathFloor(val))
     end)
@@ -4509,11 +5180,15 @@ local function createFrame()
     prioritySlider:SetObeyStepOnDrag(true)
     prioritySlider:SetSize(130, 16)
     setTooltip(prioritySlider, "決定多個告警圖示並存時的排序優先權重（數值越大越靠前）", "排序優先級")
-    local priorityLabel = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    priorityLabel:SetPoint("BOTTOMLEFT", prioritySlider, "TOPLEFT", 0, 5)
-    bindText(priorityLabel, "EAM_OPT_COND_PRIORITY", "排序優先級 (Priority)")
     local priorityVal = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     priorityVal:SetPoint("BOTTOMRIGHT", prioritySlider, "TOPRIGHT", 0, 5)
+    priorityVal:SetJustifyH("RIGHT")
+    local priorityLabel = prioritySlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    priorityLabel:SetPoint("BOTTOMLEFT", prioritySlider, "TOPLEFT", 0, 5)
+    priorityLabel:SetPoint("RIGHT", priorityVal, "LEFT", -4, 0)
+    priorityLabel:SetJustifyH("LEFT")
+    priorityLabel:SetWordWrap(false)
+    bindText(priorityLabel, "EAM_OPT_COND_PRIORITY", "排序優先級 (Priority)")
     prioritySlider:SetScript("OnValueChanged", function(self, val)
         priorityVal:SetText(mathFloor(val))
     end)
@@ -4597,6 +5272,126 @@ local function createFrame()
     bindText(val4Cb.text, "EAM_OPT_COND_VAL4", "顯示數值 4 (Value 4)")
     setTooltip(val4Cb, "在圖示旁顯示暴雪光環數據中的第 4 個附加數值", "顯示數值 4")
     condFrame.val4Cb = val4Cb
+
+    -- 物品冷卻：冷卻目標類型 (物品 ID 或 裝備欄位)
+    local itemTargetLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    itemTargetLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -272)
+    bindText(itemTargetLabel, "EAM_OPT_COND_TARGET_TYPE", "冷卻目標類型:")
+    itemTargetLabel:Hide()
+    condFrame.itemTargetLabel = itemTargetLabel
+
+    local itemTypeItemBtn = createThemedButton(condFrame, localized("EAM_OPT_COND_TYPE_ITEM", "物品 (Item)"), 175, -292, 78, 24, function()
+        condFrame.selectedItemType = "ITEM"
+        Options.refreshItemTypeControls()
+    end, "設定為依據物品 ID 監控背包或消耗品冷卻", "物品冷卻")
+    itemTypeItemBtn:Hide()
+    condFrame.itemTypeItemBtn = itemTypeItemBtn
+
+    local itemTypeSlotBtn = createThemedButton(condFrame, localized("EAM_OPT_COND_TYPE_SLOT", "裝備 (Equip)"), 257, -292, 78, 24, function()
+        condFrame.selectedItemType = "SLOT"
+        if not condFrame.selectedSlotID then
+            condFrame.selectedSlotID = 13
+        end
+        Options.refreshItemTypeControls()
+    end, "設定為依據角色裝備欄位代號監控裝備冷卻（如飾品、手套等，換裝自動適配）", "裝備欄位冷卻")
+    itemTypeSlotBtn:Hide()
+    condFrame.itemTypeSlotBtn = itemTypeSlotBtn
+
+    local itemSlotDropdown = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(itemSlotDropdown) end
+    itemSlotDropdown:SetSize(160, 24)
+    itemSlotDropdown:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -322)
+    setTooltip(itemSlotDropdown, "點擊選擇要監控的裝備部位欄位（1~19）", "裝備部位選擇")
+    itemSlotDropdown:Hide()
+    condFrame.itemSlotDropdown = itemSlotDropdown
+
+    local itemSlotMenu = api.CreateFrame("Frame", "EAM_CondSlotDropdownMenu", condFrame, "BackdropTemplate")
+    itemSlotMenu:SetPoint("TOPLEFT", itemSlotDropdown, "BOTTOMLEFT", 0, -2)
+    itemSlotMenu:SetSize(220, 220)
+    itemSlotMenu:SetFrameStrata("TOOLTIP")
+    itemSlotMenu:SetClampedToScreen(true)
+    itemSlotMenu:Hide()
+    if Theme and Theme.applyContainerBackground then
+        Theme.applyContainerBackground(itemSlotMenu, true)
+    else
+        itemSlotMenu:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 12, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 }
+        })
+        itemSlotMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
+        itemSlotMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    end
+    registerDropdownMenu(itemSlotMenu, itemSlotDropdown)
+    condFrame.itemSlotMenu = itemSlotMenu
+
+    local slotScroll = api.CreateFrame("ScrollFrame", "EAM_CondSlotMenuScroll", itemSlotMenu, "UIPanelScrollFrameTemplate")
+    slotScroll:SetPoint("TOPLEFT", itemSlotMenu, "TOPLEFT", 4, -4)
+    slotScroll:SetPoint("BOTTOMRIGHT", itemSlotMenu, "BOTTOMRIGHT", -22, 4)
+    local slotContent = api.CreateFrame("Frame", nil, slotScroll)
+    slotContent:SetSize(190, #INVENTORY_SLOTS * 22)
+    slotScroll:SetScrollChild(slotContent)
+
+    local condSlotButtons = {}
+    for i = 1, #INVENTORY_SLOTS do
+        local slotDef = INVENTORY_SLOTS[i]
+        local btn = api.CreateFrame("Button", nil, slotContent)
+        btn:SetSize(185, 20)
+        btn:SetPoint("TOPLEFT", slotContent, "TOPLEFT", 2, -((i - 1) * 22))
+
+        local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetAllPoints()
+        highlight:SetColorTexture(0.3, 0.3, 0.5, 0.4)
+
+        local icon = btn:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(16, 16)
+        icon:SetPoint("LEFT", btn, "LEFT", 2, 0)
+        btn.icon = icon
+
+        local label = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        label:SetPoint("LEFT", icon, "RIGHT", 4, 0)
+        label:SetPoint("RIGHT", btn, "RIGHT", -2, 0)
+        label:SetJustifyH("LEFT")
+        btn.label = label
+
+        btn:SetScript("OnClick", function()
+            condFrame.selectedSlotID = slotDef.id
+            condFrame.selectedItemType = "SLOT"
+            itemSlotMenu:Hide()
+            Options.refreshItemTypeControls()
+        end)
+        condSlotButtons[i] = btn
+    end
+    condFrame.slotButtons = condSlotButtons
+
+    itemSlotDropdown:SetScript("OnClick", function()
+        if itemSlotMenu:IsShown() then
+            itemSlotMenu:Hide()
+        else
+            if condFrame.groupMenu then condFrame.groupMenu:Hide() end
+            if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
+            for i = 1, #INVENTORY_SLOTS do
+                local slotDef = INVENTORY_SLOTS[i]
+                local btn = condSlotButtons[i]
+                if btn then
+                    local equippedID = GetInventoryItemID and GetInventoryItemID("player", slotDef.id)
+                    local equippedTex = GetInventoryItemTexture and GetInventoryItemTexture("player", slotDef.id)
+                        or (equippedID and C_Item.GetItemIconByID(equippedID))
+                        or "Interface\\Icons\\INV_Misc_QuestionMark"
+                    local slotName = getInventorySlotDisplayName(slotDef.id)
+                    local equippedName = equippedID and C_Item.GetItemNameByID(equippedID)
+                    btn.icon:SetTexture(equippedTex)
+                    if equippedName then
+                        btn.label:SetText(string.format("%d. %s (|cff80ff80%s|r)", slotDef.id, slotName, equippedName))
+                    else
+                        btn.label:SetText(string.format("%d. %s (%s)", slotDef.id, slotName, (EAM.L and EAM.L.EAM_SLOT_EMPTY) or "未穿戴"))
+                    end
+                end
+            end
+            itemSlotMenu:Show()
+        end
+    end)
 
     -- 地面技能專屬控制項
     local durationModeCb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
@@ -4852,6 +5647,84 @@ local function createFrame()
                         d[definition.field] = value
                     end
                 end
+                local priority = condFrame.prioritySlider:GetValue()
+                if savedVariables and savedVariables.updateAlertPriority then
+                    savedVariables.updateAlertPriority(d.kind, "player", d.spellID, nil, priority)
+                end
+                d.priority = priority
+                d.countdownRedLimit = condFrame.redLimitSlider:GetValue()
+                if condFrame.redColorBtn and condFrame.redColorBtn.currentColor then
+                    d.countdownRedColor = condFrame.redColorBtn.currentColor
+                end
+            elseif d.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
+                local savedVariables = EAM.Modules.SavedVariables
+                local targetSlotID = (condFrame.selectedItemType == "SLOT") and condFrame.selectedSlotID or nil
+                local targetItemType = targetSlotID and "SLOT" or "ITEM"
+                local oldSlotID = d.slotID
+                local oldItemID = d.itemID
+                local typeOrSlotChanged = (d.itemType ~= targetItemType) or (targetSlotID and oldSlotID ~= targetSlotID)
+
+                for index = 1, #COOLDOWN_BEHAVIOR_OPTIONS do
+                    local definition = COOLDOWN_BEHAVIOR_OPTIONS[index]
+                    local button = condFrame.cooldownBehaviorButtons[definition.field]
+                    local value
+                    if button then
+                        value = button.eamValue
+                    end
+                    d[definition.field] = value
+                end
+
+                if typeOrSlotChanged and savedVariables then
+                    savedVariables.removeAlert(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, oldItemID, oldSlotID)
+                    local opts = {
+                        customIcon = d.customIcon,
+                        priority = condFrame.prioritySlider:GetValue(),
+                        countdownRedLimit = condFrame.redLimitSlider:GetValue(),
+                        countdownRedColor = condFrame.redColorBtn and condFrame.redColorBtn.currentColor,
+                        cooldownRemoveAura = d.cooldownRemoveAura,
+                        showSCDOutsideCombat = d.showSCDOutsideCombat,
+                        glowSCDWhenUsable = d.glowSCDWhenUsable,
+                        cooldownPreRender = d.cooldownPreRender,
+                    }
+                    if targetItemType == "SLOT" and targetSlotID then
+                        savedVariables.addInventorySlotCooldownAlert(targetSlotID, opts)
+                        d.slotID = targetSlotID
+                        d.itemType = "SLOT"
+                        d.itemID = nil
+                        d.id = "itemCooldown:slot:" .. targetSlotID
+                    else
+                        local fallbackItemID = oldItemID or 5512
+                        savedVariables.addAlert(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, fallbackItemID, opts)
+                        d.slotID = nil
+                        d.itemType = "ITEM"
+                        d.itemID = fallbackItemID
+                        d.id = "itemCooldown:item:" .. fallbackItemID
+                    end
+                else
+                    local identifier = d.slotID or d.itemID or d.id
+                    if savedVariables and savedVariables.updateItemCooldownBehavior then
+                        for index = 1, #COOLDOWN_BEHAVIOR_OPTIONS do
+                            local definition = COOLDOWN_BEHAVIOR_OPTIONS[index]
+                            savedVariables.updateItemCooldownBehavior(identifier, definition.field, d[definition.field])
+                        end
+                    end
+                    local priority = condFrame.prioritySlider:GetValue()
+                    if savedVariables and savedVariables.updateAlertPriority then
+                        savedVariables.updateAlertPriority(
+                            d.kind,
+                            nil,
+                            nil,
+                            d.itemID,
+                            priority,
+                            d.slotID
+                        )
+                    end
+                    d.priority = priority
+                    d.countdownRedLimit = condFrame.redLimitSlider:GetValue()
+                    if condFrame.redColorBtn and condFrame.redColorBtn.currentColor then
+                        d.countdownRedColor = condFrame.redColorBtn.currentColor
+                    end
+                end
             else
                 local savedVariables = EAM.Modules.SavedVariables
                 local isAura = d.kind == EAM.Constants.ALERT_KIND_AURA
@@ -4937,6 +5810,7 @@ local function createFrame()
                 notifyGroundEffectConfigChanged()
             end
             if condFrame.groupMenu then condFrame.groupMenu:Hide() end
+            if condFrame.itemSlotMenu then condFrame.itemSlotMenu:Hide() end
             condFrame.auraSoundMenu:Hide()
             condFrame:Hide()
             Options.refreshList()
@@ -4951,11 +5825,14 @@ local function createFrame()
     bindText(cancelBtn, "EAM_OPT_COND_CANCEL_BTN", "取消關閉 (Cancel)")
     setTooltip(cancelBtn, "放棄變更並關閉條件設定視窗", "取消關閉")
     cancelBtn:SetScript("OnClick", function()
-        if condFrame.groupMenu then condFrame.groupMenu:Hide() end
-        condFrame.auraSoundMenu:Hide()
         condFrame:Hide()
     end)
 
+    condFrame:SetScript("OnHide", function()
+        if condFrame.groupMenu then condFrame.groupMenu:Hide() end
+        if condFrame.itemSlotMenu then condFrame.itemSlotMenu:Hide() end
+        if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
+    end)
 
     Options.condFrame = condFrame
 
@@ -4976,9 +5853,21 @@ function Options.openConditionsFrame(data)
     local texture
     local name = EAM.L.EAM_OPT_UNKNOWN or "Unknown"
     local idStr = ""
-    if data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
+    local isSlotAlert = (data.kind == "itemCooldown" or data.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) and (data.slotID ~= nil or data.itemType == "SLOT")
+    if isSlotAlert then
+        local slotID = data.slotID or 13
+        local slotName = getInventorySlotDisplayName(slotID)
+        local equippedItemID, equippedName, equippedTex = getEquippedSlotInfo(slotID)
+        texture = equippedTex
+        if equippedName then
+            name = string.format("%s (%s)", slotName, equippedName)
+        else
+            name = string.format("%s (%s)", slotName, (EAM.L and EAM.L.EAM_SLOT_EMPTY) or "未穿戴")
+        end
+        idStr = string.format((EAM.L and EAM.L.EAM_SLOT_FORMAT) or "裝備欄位: %d (%s)", slotID, slotName)
+    elseif data.kind == "itemCooldown" or (data.itemID and not data.spellID) then
         texture = C_Item.GetItemIconByID(data.itemID)
-        name = C_Item.GetItemNameByID(data.itemID) or ((EAM.L.EAM_ITEM_PREFIX or "物品 ") .. data.itemID)
+        name = C_Item.GetItemNameByID(data.itemID) or (((EAM.L and EAM.L.EAM_ITEM_PREFIX) or "物品 ") .. data.itemID)
         idStr = string.format(EAM.L.EAM_OPT_COND_ITEM_ID_FORMAT or "Item ID: %d", data.itemID)
     elseif data.spellID then
         texture = C_Spell.GetSpellTexture(data.spellID)
@@ -5069,6 +5958,15 @@ function Options.openConditionsFrame(data)
             local definition = COOLDOWN_BEHAVIOR_OPTIONS[index]
             cf.cooldownBehaviorButtons[definition.field]:Hide()
         end
+
+        -- 隱藏物品冷卻專屬控制項 (地面效果絕不關聯物品或裝備)
+        cf.selectedItemType = nil
+        cf.selectedSlotID = nil
+        if cf.itemTargetLabel then cf.itemTargetLabel:Hide() end
+        if cf.itemTypeItemBtn then cf.itemTypeItemBtn:Hide() end
+        if cf.itemTypeSlotBtn then cf.itemTypeSlotBtn:Hide() end
+        if cf.itemSlotDropdown then cf.itemSlotDropdown:Hide() end
+        if cf.itemSlotMenu then cf.itemSlotMenu:Hide() end
     else
         -- 隱藏地面效果專屬控制項
         cf.durationModeCb:Hide()
@@ -5077,8 +5975,13 @@ function Options.openConditionsFrame(data)
         cf.scrapeBtn:Hide()
 
         -- 顯示一般的 sliders
-        cf.stackSlider:Show()
-        cf.glowSlider:Show()
+        if isCooldown then
+            cf.stackSlider:Hide()
+            cf.glowSlider:Hide()
+        else
+            cf.stackSlider:Show()
+            cf.glowSlider:Show()
+        end
         cf.redLimitSlider:Show()
         if cf.redColorBtn then
             local rColor = data.countdownRedColor or { 1.0, 0.15, 0.15, 1.0 }
@@ -5096,7 +5999,7 @@ function Options.openConditionsFrame(data)
         for index = 1, #COOLDOWN_BEHAVIOR_OPTIONS do
             local definition = COOLDOWN_BEHAVIOR_OPTIONS[index]
             local button = cf.cooldownBehaviorButtons[definition.field]
-            if isSpellCooldown then
+            if isCooldown then
                 if definition.isBinary then
                     button.eamValue = (data[definition.field] == true)
                 else
@@ -5109,6 +6012,25 @@ function Options.openConditionsFrame(data)
             end
         end
         Options.refreshCooldownBehaviorControls()
+
+        local isItemCooldown = (data.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN or data.kind == "itemCooldown")
+        if isItemCooldown then
+            cf.selectedItemType = isSlotAlert and "SLOT" or "ITEM"
+            cf.selectedSlotID = data.slotID or 13
+            if cf.itemTargetLabel then cf.itemTargetLabel:Show() end
+            if cf.itemTypeItemBtn then cf.itemTypeItemBtn:Show() end
+            if cf.itemTypeSlotBtn then cf.itemTypeSlotBtn:Show() end
+            if cf.itemSlotDropdown then cf.itemSlotDropdown:Show() end
+            Options.refreshItemTypeControls()
+        else
+            cf.selectedItemType = nil
+            cf.selectedSlotID = nil
+            if cf.itemTargetLabel then cf.itemTargetLabel:Hide() end
+            if cf.itemTypeItemBtn then cf.itemTypeItemBtn:Hide() end
+            if cf.itemTypeSlotBtn then cf.itemTypeSlotBtn:Hide() end
+            if cf.itemSlotDropdown then cf.itemSlotDropdown:Hide() end
+            if cf.itemSlotMenu then cf.itemSlotMenu:Hide() end
+        end
 
         cf.stackSlider:SetValue(data.stackThreshold or 0)
         cf.glowSlider:SetValue(data.stackGlowThreshold or 0)

@@ -17,6 +17,7 @@
 
 - 根目錄與插件內的 `README.md`、`changelog.txt` 必須維持同步。
 - `changelog.txt` 只記 WoW 插件功能、玩家可感知修正、遊戲版本／API 相容性及實際套件內容變更。
+- 版本斷點規則：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 - AI 治理、代理分工、文件同步、測試進度與 CI／GitHub 操作改記 `.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md` 或 `.AI/Docs/28_PROJECT_CONTINUITY.md`。
 - `Dist/` 不提交 Git；Release 使用 `Deploy/Build-Package.ps1` 建立插件包；GitHub Release 由 GitHub 自動打包 Source 原始碼（zip / tar.gz），本機與 Release 上傳皆無須且不再打包專案 `src` 包。
 - 機密憑證與 Token（如 CurseForge API Token）100% 永久留存本機，透過 Windows DPAPI（`API_TOKEN.SEC`）雙重加密隔離；絕對禁止提交至 Git、禁止納入任何發布 ZIP 壓縮包。

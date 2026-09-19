@@ -140,9 +140,19 @@ local function clearUnitCache(unit)
     wipe(cache.spellCounts)
 end
 
+local function resolveAuraFrameName(unit)
+    if unit == "target" then
+        return EAM.Constants.ALERT_FRAME_TYPES.targetAura
+    elseif unit == "pet" then
+        return EAM.Constants.ALERT_FRAME_TYPES.petAlert
+    else
+        return EAM.Constants.ALERT_FRAME_TYPES.selfAura
+    end
+end
+
 local function moduleEnabled(unit)
     if unit == "pet" then
-        return not ModuleController or ModuleController.isAuraUnitEnabled("player")
+        return not ModuleController or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.petAlert)
     end
     return not ModuleController or ModuleController.isAuraUnitEnabled(unit)
 end
@@ -155,9 +165,7 @@ function AuraService.clearUnit(unit, eventName)
             state.shown = false
             AuraService.states[alertID] = nil
             if router then
-                local frameName = unit == "target"
-                    and EAM.Constants.ALERT_FRAME_TYPES.targetAura
-                    or EAM.Constants.ALERT_FRAME_TYPES.selfAura
+                local frameName = resolveAuraFrameName(unit)
                 router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
             end
         end
@@ -204,6 +212,8 @@ local function ensureAlertIndex()
     if alerts then
         if moduleEnabled("player") then
             indexAlert(alerts.playerAuras, "player")
+        end
+        if moduleEnabled("pet") then
             indexAlert(alerts.playerAuras, "pet")
         end
         if moduleEnabled("target") then
@@ -446,7 +456,7 @@ local function renderInactiveAlert(alert, eventName)
 
     local router = EAM.Modules.EventRouter
     if router then
-        local frameName = alert.unit == "target" and EAM.Constants.ALERT_FRAME_TYPES.targetAura or EAM.Constants.ALERT_FRAME_TYPES.selfAura
+        local frameName = resolveAuraFrameName(alert.unit)
         router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
     end
 end
@@ -472,7 +482,7 @@ local function renderAuraForAlerts(unit, spellID, auraData, eventName, apiName)
         if readAuraIntoState(unit, state, auraData, eventName, apiName) then
             local router = EAM.Modules.EventRouter
             if router then
-                local frameName = alert.unit == "target" and EAM.Constants.ALERT_FRAME_TYPES.targetAura or EAM.Constants.ALERT_FRAME_TYPES.selfAura
+                local frameName = resolveAuraFrameName(alert.unit)
                 router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
                 fired = true
             end
@@ -607,6 +617,11 @@ local function fullScanUnit(unit, eventName)
 end
 
 function AuraService.onRegenEnabled()
+    local capability = EAM.Services.AuraCapabilityService
+    if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
+        return
+    end
+
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "onRegenEnabled", "Player out of combat, clearing native blocked lists and caches.")
     end
@@ -631,11 +646,37 @@ function AuraService.onRegenEnabled()
     end
 end
 
+function AuraService.onBackendSwitched(backend)
+    local isLegacy = backend == EAM.Constants.AURA_BACKEND_LEGACY
+    if not isLegacy then
+        AuraService.backendDisabled = true
+        AuraService.clearUnit("player", "BACKEND_SWITCH")
+        AuraService.clearUnit("target", "BACKEND_SWITCH")
+        AuraService.clearUnit("pet", "BACKEND_SWITCH")
+    else
+        AuraService.backendDisabled = false
+        if moduleEnabled("player") then
+            AuraService.refreshUnit("player", "BACKEND_SWITCH")
+        end
+        if moduleEnabled("target") then
+            AuraService.refreshUnit("target", "BACKEND_SWITCH")
+        end
+    end
+end
+
 function AuraService.initialize()
     local capability = EAM.Services.AuraCapabilityService
     if capability and not capability.initialized then
         capability.initialize()
     end
+
+    local router = EAM.Modules.EventRouter
+    if router then
+        router.register("EAM_AURA_BACKEND_SWITCHED", function(_, backend)
+            AuraService.onBackendSwitched(backend)
+        end)
+    end
+
     if capability and not capability.isLegacy() then
         AuraService.backendDisabled = true
         return false, "nativeOrUnsupportedBackend"
@@ -645,7 +686,6 @@ function AuraService.initialize()
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "initialize", "AuraService initialized with AuraStatePool.")
     end
-    local router = EAM.Modules.EventRouter
     if router then
         router.register("UNIT_AURA", AuraService.onUnitAura)
         router.register("PLAYER_TARGET_CHANGED", AuraService.onTargetChanged)
@@ -664,7 +704,7 @@ function AuraService.refreshUnit(unit, eventName)
         return false, "moduleDisabled"
     end
     local capability = EAM.Services.AuraCapabilityService
-    if capability and not capability.isLegacy() then
+    if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
         return false, "legacyBackendDisabled"
     end
     local savedVariables = EAM.Modules and EAM.Modules.SavedVariables
@@ -672,6 +712,18 @@ function AuraService.refreshUnit(unit, eventName)
         return
     end
     fullScanUnit(unit, eventName or "manual")
+end
+
+function AuraService.refreshAll(eventName)
+    if moduleEnabled("player") then
+        AuraService.refreshUnit("player", eventName or "refreshAll")
+    end
+    if moduleEnabled("target") then
+        AuraService.refreshUnit("target", eventName or "refreshAll")
+    end
+    if moduleEnabled("pet") then
+        AuraService.refreshUnit("pet", eventName or "refreshAll")
+    end
 end
 
 function AuraService.onUnitAura(_, unit, updateInfo)
@@ -730,6 +782,10 @@ function AuraService.onUnitAura(_, unit, updateInfo)
 end
 
 function AuraService.onTargetChanged()
+    local capability = EAM.Services.AuraCapabilityService
+    if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
+        return
+    end
     if not moduleEnabled("target") then
         AuraService.clearUnit("target", "MODULE_DISABLED")
         return false, "moduleDisabled"
@@ -740,6 +796,10 @@ end
 
 function AuraService.onModuleToggle(enabled, unit, reason)
     AuraService.indexedRevision = nil
+    local capability = EAM.Services.AuraCapabilityService
+    if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
+        return false, "legacyBackendDisabled"
+    end
     if enabled == false then
         AuraService.clearUnit(unit, "MODULE_DISABLED")
         return true, "disabled"

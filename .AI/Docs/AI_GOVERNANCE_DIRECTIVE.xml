@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- EAM_AI_GOVERNANCE_DIRECTIVE: 專供 AI 代理人（Agentic AI / Subagents）執行指導之權威結構化規範 -->
-<eam_ai_governance version="1.0" last_updated="2026-09-04">
+<eam_ai_governance version="1.1" last_updated="2026-09-13">
     <!-- 1. 元資料與受眾 (Metadata & Audience) -->
     <metadata>
         <title>EventAlertMod AI 代理人核心治理與架構指導規範 (AI Governance Directive)</title>
@@ -13,7 +13,7 @@
         <addon_source_root>D:\Project_EventAlertMod_AGY\EventAlertMod</addon_source_root>
         <governance_root>D:\Project_EventAlertMod_AGY\.AI</governance_root>
         <target_game>World of Warcraft: Retail 12.x / Midnight</target_game>
-        <summary>本 XML 為專案專用之結構化 AI 治理指引，專門用於大語言模型零暖機記憶錨定、子代理任務注入、以及跨版本防禦性架構約束。</summary>
+        <summary>本 XML 為專案專用之結構化 AI 治理指引，作為對抗大語言模型長對話截斷與跨模型語意記憶漂移（Memory Drift）之最高結構化確定性備援錨點、子代理任務切片注入、以及跨版本防禦性架構約束。</summary>
     </metadata>
 
     <!-- 2. 何時該增設與擴充 AI 治理 XML 的權威決策 (Lifecycle & When to Establish) -->
@@ -36,6 +36,10 @@
                 <condition id="C4_PROTECTED_API_INCIDENT" priority="CRITICAL">
                     <trigger>暴雪正式服更新（如 12.1.5、12.2 等）引發新的 Secret Value 報錯、Action Blocked 戰鬥鎖定或 Taint 崩潰時。</trigger>
                     <action>立即在 &lt;secret_values_sentinel&gt; 節點中追加最新防禦切面與受限操作黑名單，作為全專案代理人不可越過的防火牆。</action>
+                </condition>
+                <condition id="C5_MEMORY_DRIFT_DETECTION" priority="CRITICAL">
+                    <trigger>發現 Agent 對 Markdown 規範產生自由推論偏差、遺漏核心鐵律或在外部靜態手冊與專案現況間產生衝突時。</trigger>
+                    <action>立即以本 XML 結構化規範進行硬性記憶校準（Hard Semantic Recalibration），重設事實階梯與行為邊界。</action>
                 </condition>
             </trigger_conditions>
         </establishment_policy>
@@ -67,7 +71,62 @@
         </rule>
     </iron_rules>
 
-    <!-- 4. 暴雪 12.0+ SECRET VALUE 與 TAINT 哨兵機制 (Secret Values Sentinel) -->
+    <!-- 4. 專案最高事實裁決階梯與時效性仲裁 (Fact-of-Truth Hierarchy & Precedence) -->
+    <fact_of_truth_hierarchy>
+        <description>當外部社群資料、靜態文檔與專案最新實機/變更情報發生衝突時，必須無條件遵循以下三層絕對優先序階梯。</description>
+        <level rank="1" name="LIVE_INTELLIGENCE" authority="HIGHEST">
+            <definition>動態最新變更情報、官方原始碼 Diff 與本機實機驗證。具有對全專案任何技術規範之最高覆蓋權（Strict Precedence）。</definition>
+            <sources>
+                <source path=".AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md">Retail 12.x 最新變更情報庫與 APICHG 專家章程</source>
+                <source skill="eam-api-change-intel">WoW 最新 API 變更調研與防禦性封裝技能</source>
+                <source repo="BlizzardInterfaceCode">暴雪官方 UI 最新 Diff（PTR / XPTR / Retail）</source>
+                <source matrix="LiveValidationMatrix.json">本機真人多客戶端實機驗證數據</source>
+            </sources>
+        </level>
+        <level rank="2" name="DEFENSIVE_GATEWAYS" authority="HIGH">
+            <definition>安全防禦門禁與防污染架構守則。約束所有執行期代碼寫法。</definition>
+            <sources>
+                <source skill="eam-secret-taint-sentinel">四道安全門禁、單向 Sink 綁定、零讀回原則</source>
+                <source pattern="FallbackWrappers">跨版本安全降級封裝層（Polyfill / Capability Gate）</source>
+                <source doc=".AI/Docs/02_RETAIL_API_BOUNDARIES.md">正式服 API 邊界與受限操作規範</source>
+            </sources>
+        </level>
+        <level rank="3" name="STATIC_REFERENCE_BASELINE" authority="BASELINE">
+            <definition>外部社群技能庫。僅作為語法簽名、命名空間結構與組件樹之靜態參考基線（Patch 12.0.0）。</definition>
+            <sources>
+                <source suite="wow-api-*">外部 20 套 Patch 12.0.0 官方 API 技能手冊</source>
+                <source suite="wow-lua-api">WoW 特化 Lua 5.1 語法與工具庫手冊</source>
+            </sources>
+            <conflict_resolution_rule>
+                🚨 嚴禁以 Level 3 否定 Level 1 或繞過 Level 2！凡遇版本變動、Secret 屬性收緊或行為衝突，100% 以 Level 1/2 裁決為準。
+            </conflict_resolution_rule>
+        </level>
+    </fact_of_truth_hierarchy>
+
+    <!-- 5. 社群技能庫雙軌收錄與部署生態 (Skills Warehouse Ecosystem) -->
+    <skills_warehouse_ecosystem>
+        <warehouses>
+            <warehouse name="skills.sh" url="https://skills.sh/" focus="通用工程流程、CLI 工具、前端/後端框架、通用自動化" />
+            <warehouse name="lobehub.com" url="https://lobehub.com/zh-TW/skills" focus="特化領域深度知識庫（如 WoW 12.x 原生系統）、結構化多文件 Agent Skills" />
+        </warehouses>
+        <governance_rules>
+            <rule id="SK_CANDIDATE_LIMIT">發現穩定且重複的能力缺口時，至雙軌倉庫檢索並最多推薦 3 個候選。</rule>
+            <rule id="SK_HUMAN_AUTHORIZATION">嚴格實施人工審查門禁，未經少年欸明確授權，絕對禁止擅自安裝或變更 Skill。</rule>
+            <rule id="SK_TRIPLE_DEPLOYMENT">一旦獲得授權安裝，必須 100% 同步部署至全域 (~/.gemini/config/skills/)、專案 Agents (.agents/skills/) 與專案內部 (.AI/skills/)。</rule>
+        </governance_rules>
+    </skills_warehouse_ecosystem>
+
+    <!-- 6. 抗記憶漂移結構化備援協議 (Anti-Memory-Drift Protocol) -->
+    <anti_memory_drift_protocol>
+        <purpose>為對話歷程截斷、上下文窗口壓縮、或跨模型/跨代理接手提供高保真度確定性記憶備援。</purpose>
+        <anchor_rules>
+            <rule id="AMD_1_MANDATORY_ANCHOR">當發生跨對話接手、記憶壓縮或對 Markdown 規範產生理解歧義時，Agent 必須以本 XML 結構化標籤為第一道硬性校準錨點。</rule>
+            <rule id="AMD_2_ZERO_HALLUCINATION">XML 標籤定義之約束（如 iron_rules, secret_values_sentinel, fact_of_truth_hierarchy）具備最高優先權，嚴禁以自由文本之推論漂移覆蓋標籤規定。</rule>
+            <rule id="AMD_3_SUBAGENT_SLICE">派發子代理任務時，優先自本 XML 切出對應子節點注入 Prompt，達成 100% 約束力與零語意衰減。</rule>
+        </anchor_rules>
+    </anti_memory_drift_protocol>
+
+    <!-- 7. 暴雪 12.0+ SECRET VALUE 與 TAINT 哨兵機制 (Secret Values Sentinel) -->
     <secret_values_sentinel>
         <core_inspection_apis>
             <api signature="issecretvalue(value)">檢定特定值是否為受保護之秘密數值 (Secret Number / Secret String)</api>
@@ -99,7 +158,7 @@
         </authorized_native_c_sinks>
     </secret_values_sentinel>
 
-    <!-- 5. 系統模組架構與契約分層 (System Architecture & Contracts) -->
+    <!-- 8. 系統模組架構與契約分層 (System Architecture & Contracts) -->
     <architecture_contracts>
         <layer name="Core" path="EventAlertMod/Core/">
             <module name="Env.lua">全域環境檢驗、WoW 版本常數、客戶端版本適配</module>
@@ -135,7 +194,7 @@
         </layer>
     </architecture_contracts>
 
-    <!-- 6. 極限效能與熱路徑鐵律 (Performance & Hot-Path Guide) -->
+    <!-- 9. 極限效能與熱路徑鐵律 (Performance & Hot-Path Guide) -->
     <hot_path_guidelines>
         <identified_hot_paths>
             <path>UNIT_AURA 事件回呼</path>
@@ -154,7 +213,7 @@
         </mandatory_rules>
     </hot_path_guidelines>
 
-    <!-- 7. 驗證門禁與測試體系 (Verification & Quality Control) -->
+    <!-- 10. 驗證門禁與測試體系 (Verification & Quality Control) -->
     <verification_gates>
         <gate id="G1_LUA_SYNTAX" command="pwsh -NoProfile -File .\.AI\Tools\CheckLuaSyntax.ps1">
             <expectation>76/76 全部通過，零語法錯誤，零未定義全域變數。</expectation>
@@ -170,7 +229,7 @@
         </gate>
     </verification_gates>
 
-    <!-- 8. 對話與協同交互指引 (AI Agent Communication Protocol) -->
+    <!-- 11. 對話與協同交互指引 (AI Agent Communication Protocol) -->
     <agent_behavior_protocol>
         <tone_and_manner>使用預設台灣慣用繁體中文，親切稱呼使用者為「少年欸」，對話專業、技術清晰、直切任務重點。</tone_and_manner>
         <no_assumptions>遇到需求模糊時主動提出關鍵問題釐清，不隨意猜測實機環境。</no_assumptions>

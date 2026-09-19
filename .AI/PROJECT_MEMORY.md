@@ -1,7 +1,7 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 # EventAlertMod 專案接續記憶
 
-> 最後更新：2026-08-23（Asia/Taipei）
+> 最後更新：2026-09-13（Asia/Taipei）
 > 用途：提供 Codex／AI Agent 在對話中斷、內容壓縮或工作轉交後的最短接續路徑。
 > 證據界線：本檔只做索引與工作狀態摘要，不可取代程式碼、測試報告、實機報告或結構化事實檔。
 
@@ -33,15 +33,20 @@
 - `Dist/`：僅存放本機生成的 ZIP／摘要；不再保留 `Dist/EventAlertMod` 中介副本。
 - `.AI/`：AGENTS、PROJECT_MEMORY、Docs、Tools、Tests、Schemas、TestResults、候選資料、歷史參考、備份與專案 Skills。
 - 根目錄與 `EventAlertMod/` 的 `README.md`、`changelog.txt` 必須保持同步。
+- 版本斷點與自動遞增：往後版本斷點以發佈到 GitHub Release 及 CurseForge 為斷點；正式發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
 ## 目前主要工作
 
 1. 新根目錄、`EventAlertMod/` 唯一插件來源、`.AI/` 治理、`Deploy/` 工具與 `Dist/` ignored 契約已完成。
-2. Registry／JSON fallback、根目錄確認、自訂 `-WowRoot`、三通道版本選單、PTR／XPTR 是否納入 Retail 與 Reparse Point fail-closed 已完成離線驗證。
-3. 玩家職業資源獨立模組已完成核心重構：17 種資源、13 職業／40 組專精拓撲、獨立 capability／renderer ownership、Druid 五資源形態 Flow、Probe／sampler gate、每資源設定與非戰鬥即時套用均已離線驗證；WoW runtime 仍 pending。
-4. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 已同步；封裝前檢通過並建立 AddOn 插件包。Retail／PTR／XPTR 玩家實機簽收仍未完成，且本輪尚未執行 Git commit、push、tag 或 GitHub Release。
-5. 2026-09-04 確立雙軌治理體系，新增專供 AI 代理人讀取約束之結構化 XML 指導規範（`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`）與說明手冊（`33_AI_GOVERNANCE_DIRECTIVE.md`），明確四大增設/加載觸發門檻與跨模型記憶錨定機制。
-6. 2026-09-04 停用 SRC 打包發布：GitHub Release 於發布 Tag 時原生自動生成完整 Source code（zip / tar.gz），本機全面停用 SRC 打包，GitHub Release 亦不再上傳 SRC 附件，避免重疊產物與資源浪費。
+2. 2026-09-13 完成技能庫倉庫雙軌制（skills.sh + lobehub.com）確立與 20 套 WoW Patch 12.0.0 官方技能手冊安裝與治理三端同步（Global、.agents、.AI）。
+3. 2026-09-13 升級 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`（v1.1）與說明手冊，建立事實階梯與 XML 機器抗記憶漂移硬性備援機制。
+4. 2026-09-14 實裝 **Retail 12.1.0 Alpha 8.6** 四大核心功能：
+   - **技能名稱自訂排版**：預設全面改為置於圖示下方（`OUTSIDE_BOTTOM`），提供 21 種錨點位置下拉選單，所調即所見。
+   - **角色屬性預覽即時更新**：修復切換屬性、調整尺寸、字級、小數點、替代圖示與警戒門檻時未即時反映之問題；統一門檻欄位命名相容（`thresholdMin` / `minThreshold`），紅框即時亮起。
+   - **職業資源縮放與可捲動字型清單**：改建為 10 行可捲動下拉選單（`ScrollableDropdown`），相容 LSM 與內建字型；補齊資源縮放（`scale`）於預覽視窗之即時等比縮放連動。
+   - **獨立效果預覽連動加固**：修復預覽視窗與主設定面板連動中斷缺陷，增設透明度滑桿、安全呼叫守衛（`safeCall`）。
+5. 最新離線證據：Lua syntax 78/78 通過、Flow all 87/87 通過、Validation Contracts 499/499 通過、Build-Package DryRun 通過。
+6. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 同步。依規範嚴格限制零自動部署（鐵律 R1）。
 
 ## 已完成的結構工作
 
@@ -56,8 +61,8 @@
 ## 最近離線證據
 
 - PowerShell AST：`.AI/Tools` 與 `Deploy` 合計 13/13。
-- Python：三個檔案 `py_compile` 通過；文件轉換測試 4/4。
-- Lua syntax：62/62（62 AddOn）；Flow all 77/77、Flow boundary 56/56、Validation Contracts 459/459；最新報告為 .AI/TestResults/EAM_FlowValidation_all_20260823_063557.json 與 .AI/TestResults/EAM_FlowValidation_boundary_20260823_063609.json。這些是 offline/static evidence，不是三客戶端實機簽收。
+- Python：三個檔案 `py_compile` 通過；文件轉換測試 4/4；41 份 HTML 離線編譯完成。
+- Lua syntax：78/78（包含所有 AddOn 與離線測試檔案）；Flow all 86/86；Validation Contracts 499/499。這些是 offline/static evidence，不是三客戶端實機簽收。
 - `.AI/Tools/Test-WowheadCandidateData.ps1`：23 pass、0 fail、4 warnings；warnings 是候選資料風險，不是實機簽收。
 - AddOn 包：Dist/EventAlertMod_MN_20260821_20260821_050105.zip，93 個檔案（ZIP 中另有目錄 entry），SHA-256 c4cd66f91563e608049a2af73f559390808dba2e1299106103a987d4e66be1e5，Managers 與排除清單獨立稽核通過。
 - Source 包是包含本檔的衍生產物，為避免自我參照，不在 PROJECT_MEMORY 內固定自身檔名或 SHA-256；每次以 `Deploy/Build-SourcePackage.ps1` 最後輸出的 Dist `.inventory.json` 與 `.sha256` 為權威，且必須通過 Dist／Git metadata／backup／TestResults 排除稽核。
@@ -189,3 +194,27 @@
 - ProjectContinuity snapshot 為 `2026-08-23.11`；下一步是 docs_html、package/source ZIP、Git diff／commit／push 與人工 `gh release` 建立 `alpha-7.4` prerelease，不啟用 Release Action／CurseForge。
 - 玩家部署後優先測：DK 符文與符能並存、符文消耗／恢復、死亡凋零／褻瀆、反魔法立場、冰霜之球、充能 RING／滿充完成。回報通道、build、Interface、剛部署與 `/reload` 狀態。
 - Alpha 7.4 首份 source ZIP 稽核發現巢狀 `.AI/.AI/TestResults`，提交前亦發現 `.AI/skills/wow-addon-dev/.git` 上游 metadata；後者已移入 ignored trash。發布只能使用修正 leaf 排除器後重新產生且 inventory 證明無任意深度 `.git`／backup／TestResults／patch-temp 的新 ZIP。
+
+## 2026-09-13 社群技能庫擴充與 15 套 WoW API 技能導入
+
+- **技能倉庫雙軌確立**：正式收錄 **LobeHub Skills 市集**（`https://lobehub.com/zh-TW/skills`）與既有 **skills.sh**（`https://skills.sh/`）並列為 Antigravity 全專案雙軌官方社群技能庫。
+  - 新增並部署雙軌技能發現工具：`lobehub-skills-discover` 與更新後的 `skills-sh-discover`。
+  - 檢索與候選規則已固化於 `.AI/AGENTS.md`：發現能力缺口時主動推薦最多 3 個候選，建立需求卡審查依賴、授權與安全性；經少年欸授權後同步部署至全域與專案。
+- **19 套 Patch 12.0.0 官方 WoW API 技能完整落地**：
+  - 首批導入 15 套：`wow-lua-api`、`wow-api-spells-abilities`、`wow-api-combat`、`wow-api-encounters`、`wow-api-quests`、`wow-api-achievements`、`wow-api-calendar-events`、`wow-api-group-lfg`、`wow-api-map-navigation`、`wow-api-misc-systems`、`wow-api-pvp`、`wow-api-reputation`、`wow-api-settings-system`、`wow-api-social-chat`、`wow-api-transmog`。
+  - 追加收錄 4 套核心底層技能：
+    1. `wow-api-events`（全遊戲事件監聽手冊，含 5 份分類事件清單與參數解析）
+    2. `wow-api-unit-player`（玩家與單位狀態/屬性核心，含 6 份生命、能量、光環與戰鬥狀態文件）
+    3. `wow-api-widget`（UI 框架組件指南，含 10 份控制項、動畫、字型、模型與腳本回呼手冊）
+    4. `wow-api-items-inventory`（物品、背包、銀行與戰利品系統，Patch 12.x 完整 API）
+  - 全數通過 YAML frontmatter 語法清洗（去除外層代碼塊防護）與實體檔案三端同步部署（`~/.gemini/config/skills/`、`.agents/skills/` 與 `.AI/skills/`）。
+- **時效性與衝突裁決最高原則（API Change Precedence）**：
+  - 確立外部技能僅為 12.0.0 靜態基線參考；一旦與暴雪後續 12.0.7 / 12.1.0 變更產生衝突，**100% 依據專案 `.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`、`eam-api-change-intel` 與最新實機矩陣為最高事實仲裁（Level 0/1 Strict Precedence）**。
+  - 涉及 Secret Values、AuraContainer 重構或 Taint 阻斷者，強制通過 `eam-secret-taint-sentinel` 審查與專案防禦性封裝（Fallback Wrappers / Capability Gate），杜絕盲從外部靜態手冊。
+- **XML 結構化抗記憶漂移備援體系升級（v1.1）**：
+  - 遵循少年欸指示，升級 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`（v1.1）與說明手冊（`33_AI_GOVERNANCE_DIRECTIVE.md`）。
+  - 將「雙軌社群技能庫生態（`<skills_warehouse_ecosystem>`）」、「最高事實裁決階梯（`<fact_of_truth_hierarchy>`）」與「抗記憶漂移備援協議（`<anti_memory_drift_protocol>`）」正式固化為 XML 結構化標籤。
+  - 確立法規邊界：當大語言模型遭遇對話截斷、上下文壓縮或跨模型交接產生語意漂移時，本 XML 為專案最高確定性抗漂移備援保險箱，優先於自然語言推論。
+
+
+

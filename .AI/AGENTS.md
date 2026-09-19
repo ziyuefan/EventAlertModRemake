@@ -17,13 +17,24 @@
   - HTML 版本供人類（少年欸）在瀏覽器中觀看易讀使用，AI 在讀取、檢索與參考時，必須一律以 `.md` 原始檔為唯一基準，嚴禁以 HTML 作為開發事實參考。
   - 當 `.AI/Docs/*.md` 或 `.AI/AGENTS.md` 修改包含心智圖（Mermaid）、表格、流程圖、圖片時，必須執行轉換工具（`batch_convert_docs.py`），在 `.AI/docs_html/` 內產出同名的 HTML 檔。
   - 文件轉換預設使用 `$env:EAM_DOCS_OFFLINE='1'; python .\.AI\Tools\batch_convert_docs.py`，禁止未經少年欸明確授權就把 Markdown 全文送往外部翻譯服務。
+- **XML 結構化抗記憶漂移備援（Anti-Memory-Drift XML Directive）**：
+  - 除了 Markdown（.md）人機協同文件外，[`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml) 為專案對抗大語言模型長對話截斷、跨模型交接與自由文本語意漂移（Memory Drift）之**最高結構化確定性備援保險箱**。
+  - 當遭遇上下文壓縮、更換模型、或對 Markdown 規範產生理解歧義時，Agent 必須第一時間讀取該 XML 檔進行硬性記憶校準（Hard Semantic Recalibration），以 XML 標籤鎖定之邊界與鐵律為唯一硬性約束基準。
 
-## Skills.sh 候選規則
+## 社群技能庫（skills.sh 與 lobehub.com）檢索與候選規則
 
-- 開發中發現穩定且重複的能力缺口時，可至 `https://skills.sh/` 搜尋並主動推薦最多三個候選。
+- 開發中發現穩定且重複的能力缺口時，可至雙軌官方社群技能倉庫檢索並主動推薦最多三個候選：
+  1. **skills.sh**（`https://skills.sh/`）：通用工程規範、CLI 工具與開源生態庫。
+  2. **LobeHub Skills 市集**（`https://lobehub.com/zh-TW/skills`）：特化領域深度知識庫（如 WoW API 系列手冊、架構模組與專家級 Agent Skills）。
 - 搜尋前先建立專案需求卡，審查來源、內容、依賴、權限、維護狀態、授權與供應鏈風險；排行榜與安裝數只作參考。
 - 預設只讀搜尋與比較，必須保留「都不安裝／改建專案自訂 Skill」選項。
-- 未經使用者明確選定候選、安裝範圍並授權，不得執行安裝命令或修改全域／專案 Skill。
+- 未經使用者（少年欸）明確選定候選、安裝範圍並授權，不得執行安裝命令或修改全域／專案 Skill。
+- 一旦獲得授權安裝，必須同步部署至全域（`~/.gemini/config/skills/`）與本專案（`.agents/skills/` 及 `.AI/skills/`），確保各環境一體適用。
+- **最高仲裁原則（Precedence & Fact-of-Truth Hierarchy）**：
+  - 外部社群技能（如 `wow-api-*`、`wow-lua-api`）僅屬於 **靜態規格基線（以 Patch 12.0.0 為主）**。
+  - 任何時效性更迭、API 簽名變更、受保護/秘密屬性（Secret Values）、Taint 阻斷、或與現有架構的衝突，**一律以本專案最新《.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md》、專屬技能 `eam-api-change-intel` 以及暴雪最新 PTR/XPTR 實機證據為唯一最高裁決依據（Strict Precedence）！**
+  - 嚴禁盲從外部 Skill 中的無保護或舊版寫法；凡涉及 12.0.7 / 12.1.0 變更者，必須嚴格通過 `eam-secret-taint-sentinel` 審查與專案防禦性封裝（Fallback Wrappers / Capability Gate）。
+
 
 ## 必讀文件
 在更改程式碼之前，請先閱讀以下文件：
@@ -321,6 +332,7 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 ## Changelog 分類規則
 
 - 根層 `changelog.txt` 與 `EventAlertMod/changelog.txt` 是公開發布紀錄，只記錄 WoW 插件功能、遊戲內行為、版本相容性、玩家可感知修正，以及會實際改變發布插件包內容的素材或封裝修正。
+- **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 - 公開 changelog 不記錄 AI 治理、代理分工、文件同步、上下文接續、測試通過數、離線驗證數字、GitHub／CI／workflow 發布流程、備份位置或內部工作進度。
 - AI 治理問題、失敗嘗試、根因分析與後續決策，記錄於 `.AI/Docs/15_DEVELOPMENT_ISSUE_LOG.md`；跨工作階段的路由、狀態與未完成事項，記錄於 `.AI/Docs/28_PROJECT_CONTINUITY.md`。
 - 兩份公開 changelog 必須使用同一份內容來源，完成後以 SHA-256 確認 `changelog.txt` 與 `EventAlertMod/changelog.txt` 完全一致。

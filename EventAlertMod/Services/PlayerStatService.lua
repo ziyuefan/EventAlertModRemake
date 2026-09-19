@@ -1545,6 +1545,7 @@ function PlayerStatService.initialize()
 end
 
 PlayerStatService.init = PlayerStatService.initialize
+PlayerStatService.updateDisplay = PlayerStatService.update
 
 -- 載入時立即啟動計時器與事件監聽防護
 pcall(PlayerStatService.initialize)

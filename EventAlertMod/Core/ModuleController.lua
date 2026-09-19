@@ -41,6 +41,7 @@ local validKeys = freeze({
     totem = true,
     playerStat = true,
     tooltipMonitor = true,
+    petAlert = true,
 })
 
 local moduleOptions = {
@@ -53,6 +54,7 @@ local moduleOptions = {
     freeze({ key = Keys.totem, labelKey = "EAM_MODULE_TOTEM" }),
     freeze({ key = Keys.playerStat, labelKey = "EAM_MODULE_PLAYER_STAT" }),
     freeze({ key = Keys.tooltipMonitor, labelKey = "EAM_MODULE_TOOLTIP_MONITOR" }),
+    freeze({ key = Keys.petAlert, labelKey = "EAM_MODULE_PET_ALERT" }),
 }
 ModuleController.ModuleOptions = freeze(moduleOptions)
 
@@ -65,6 +67,7 @@ local frameModules = freeze({
     groundEffect = Keys.groundEffect,
     totem = Keys.totem,
     playerStat = Keys.playerStat,
+    petAlert = Keys.petAlert,
 })
 
 local serviceNames = freeze({
@@ -100,6 +103,9 @@ function ModuleController.isAuraUnitEnabled(unit)
     if unit == "player" then
         return ModuleController.isEnabled(Keys.playerAura)
     end
+    if unit == "pet" then
+        return ModuleController.isEnabled(Keys.petAlert)
+    end
     return false
 end
 
@@ -128,8 +134,8 @@ function ModuleController.applyToggle(key, enabled, reason)
         return false, "invalidModuleValue"
     end
 
-    if key == Keys.playerAura or key == Keys.targetAura then
-        local unit = key == Keys.targetAura and "target" or "player"
+    if key == Keys.playerAura or key == Keys.targetAura or key == Keys.petAlert then
+        local unit = key == Keys.targetAura and "target" or (key == Keys.petAlert and "pet" or "player")
         local auraService = EAM.Services and EAM.Services.AuraService
         if auraService and type(auraService.onModuleToggle) == "function" then
             auraService.onModuleToggle(enabled, unit, reason)

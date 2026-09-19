@@ -68,6 +68,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_SHOW or "/eam show/showtarget - 顯示 12.1 安全替代說明")
     printLine(EAM.L.EAM_SLASH_HELP_DOCTOR or "/eam doctor - 顯示 Retail/PTR API 邊界診斷")
     printLine(EAM.L.EAM_SLASH_HELP_VALIDATE or "/eam validate - 同 /eam doctor")
+    printLine(EAM.L.EAM_SLASH_HELP_DIAG or "/eam diag (或 /eam report) - 開啟外掛即時診斷報告並支援一鍵複製")
     printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示除錯摘要")
     printLine(EAM.L.EAM_SLASH_HELP_RUNE or "/eam rune - 顯示並複製 DK 符文即時槽位診斷 JSON")
     printLine(EAM.L.EAM_SLASH_HELP_EXPORT or "/eam export - 輸出精簡 AI debug 狀態")
@@ -447,6 +448,14 @@ local function handleSlash(input)
             end
         elseif EAM.Debug.PromptExport then
             EAM.Debug.PromptExport.openWindow()
+        end
+    elseif command == "diag" or command == "report" or command == "diagnostic" then
+        if EAM.Diagnostics and EAM.Diagnostics.showReportDialog then
+            EAM.Diagnostics.showReportDialog()
+        elseif EAM.UI and EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.showDiagnosticDialog then
+            EAM.UI.PreviewPanel.showDiagnosticDialog()
+        else
+            printLine("診斷模組尚未載入。")
         end
     elseif (command == "doctor" or command == "validate") and EAM.Debug.RuntimeProbe then
         EAM.Debug.RuntimeProbe.printReport()

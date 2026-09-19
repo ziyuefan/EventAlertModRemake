@@ -134,7 +134,7 @@ local function createFrame()
     if EAM.UI.setTooltip then EAM.UI.setTooltip(previewBtn, "開啟或關閉獨立的即時效果預覽小視窗", "效果預覽") end
     previewBtn:SetScript("OnClick", function()
         if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.toggle then
-            EAM.UI.PreviewPanel.toggle()
+            EAM.UI.PreviewPanel.toggle(3)
         end
     end)
 
@@ -441,11 +441,15 @@ local function createFrame()
     sizeSlider:SetObeyStepOnDrag(true)
     sizeSlider:SetSize(260, 14)
     if EAM.UI.setTooltip then EAM.UI.setTooltip(sizeSlider, "調整此屬性圖示的像素大小 (16~80px)", "圖示大小") end
-    local sizeLabel = sizeSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    sizeLabel:SetPoint("BOTTOMLEFT", sizeSlider, "TOPLEFT", 0, 4)
-    sizeLabel:SetText(localized("EAM_STAT_ICON_SIZE", "圖示大小 (Icon Size)"))
     local sizeVal = sizeSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     sizeVal:SetPoint("BOTTOMRIGHT", sizeSlider, "TOPRIGHT", 0, 4)
+    sizeVal:SetJustifyH("RIGHT")
+    local sizeLabel = sizeSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    sizeLabel:SetPoint("BOTTOMLEFT", sizeSlider, "TOPLEFT", 0, 4)
+    sizeLabel:SetPoint("RIGHT", sizeVal, "LEFT", -4, 0)
+    sizeLabel:SetJustifyH("LEFT")
+    sizeLabel:SetWordWrap(false)
+    sizeLabel:SetText(localized("EAM_STAT_ICON_SIZE", "圖示大小 (Icon Size)"))
 
     -- 自訂替代圖示
     local iconLabel = pageDisplay:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -487,11 +491,15 @@ local function createFrame()
     fontValSlider:SetObeyStepOnDrag(true)
     fontValSlider:SetSize(280, 14)
     if EAM.UI.setTooltip then EAM.UI.setTooltip(fontValSlider, "調整屬性數值數字的文字大小 (8~32px)", "數值字型大小") end
-    local fontValLabel = fontValSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    fontValLabel:SetPoint("BOTTOMLEFT", fontValSlider, "TOPLEFT", 0, 4)
-    fontValLabel:SetText(localized("EAM_STAT_FONT_VALUE", "數值字型大小 (Value Font Size)"))
     local fontValVal = fontValSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fontValVal:SetPoint("BOTTOMRIGHT", fontValSlider, "TOPRIGHT", 0, 4)
+    fontValVal:SetJustifyH("RIGHT")
+    local fontValLabel = fontValSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    fontValLabel:SetPoint("BOTTOMLEFT", fontValSlider, "TOPLEFT", 0, 4)
+    fontValLabel:SetPoint("RIGHT", fontValVal, "LEFT", -4, 0)
+    fontValLabel:SetJustifyH("LEFT")
+    fontValLabel:SetWordWrap(false)
+    fontValLabel:SetText(localized("EAM_STAT_FONT_VALUE", "數值字型大小 (Value Font Size)"))
 
     local fontLabelSlider = api.CreateFrame("Slider", nil, pageFonts, "OptionsSliderTemplate")
     fontLabelSlider:SetPoint("TOPLEFT", pageFonts, "TOPLEFT", 12, -85)
@@ -500,11 +508,15 @@ local function createFrame()
     fontLabelSlider:SetObeyStepOnDrag(true)
     fontLabelSlider:SetSize(280, 14)
     if EAM.UI.setTooltip then EAM.UI.setTooltip(fontLabelSlider, "調整屬性名稱標籤的文字大小 (8~24px)", "名稱字型大小") end
-    local fontLabelLabel = fontLabelSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    fontLabelLabel:SetPoint("BOTTOMLEFT", fontLabelSlider, "TOPLEFT", 0, 4)
-    fontLabelLabel:SetText(localized("EAM_STAT_FONT_LABEL", "名稱字型大小 (Label Font Size)"))
     local fontLabelVal = fontLabelSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fontLabelVal:SetPoint("BOTTOMRIGHT", fontLabelSlider, "TOPRIGHT", 0, 4)
+    fontLabelVal:SetJustifyH("RIGHT")
+    local fontLabelLabel = fontLabelSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    fontLabelLabel:SetPoint("BOTTOMLEFT", fontLabelSlider, "TOPLEFT", 0, 4)
+    fontLabelLabel:SetPoint("RIGHT", fontLabelVal, "LEFT", -4, 0)
+    fontLabelLabel:SetJustifyH("LEFT")
+    fontLabelLabel:SetWordWrap(false)
+    fontLabelLabel:SetText(localized("EAM_STAT_FONT_LABEL", "名稱字型大小 (Label Font Size)"))
 
     local customLabelLabel = pageFonts:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     customLabelLabel:SetPoint("TOPLEFT", pageFonts, "TOPLEFT", 12, -145)
@@ -583,36 +595,93 @@ local function createFrame()
     useCustomPosCb.text:SetText(localized("EAM_STAT_USE_CUSTOM_POS", "啟用此項獨立位置 (可自由拖曳)"))
     if EAM.UI.setTooltip then EAM.UI.setTooltip(useCustomPosCb, "開啟後此屬性不再隨整組排列，可獨立隨意放置於螢幕任意位置", "獨立位置") end
 
+    local statPointLabel = pagePos:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    statPointLabel:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -45)
+    statPointLabel:SetText(localized("EAM_STAT_POINT_LABEL", "基準錨點 (Anchor Point):"))
+
+    local statPointOptions = {
+        { value = "TOPLEFT", label = "左上 (TOPLEFT)" },
+        { value = "TOP", label = "正上 (TOP)" },
+        { value = "TOPRIGHT", label = "右上 (TOPRIGHT)" },
+        { value = "LEFT", label = "正左 (LEFT)" },
+        { value = "CENTER", label = "中央 (CENTER)" },
+        { value = "RIGHT", label = "正右 (RIGHT)" },
+        { value = "BOTTOMLEFT", label = "左下 (BOTTOMLEFT)" },
+        { value = "BOTTOM", label = "正下 (BOTTOM)" },
+        { value = "BOTTOMRIGHT", label = "右下 (BOTTOMRIGHT)" },
+    }
+
+    local statPointDropdown = api.CreateFrame("Button", nil, pagePos, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(statPointDropdown) end
+    statPointDropdown:SetSize(160, 20)
+    statPointDropdown:SetPoint("LEFT", statPointLabel, "RIGHT", 8, 0)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(statPointDropdown, "設定此獨立屬性在螢幕上的定位錨點", "基準錨點") end
+
+    local statPointMenu = api.CreateFrame("Frame", nil, pagePos, "BackdropTemplate")
+    statPointMenu:SetSize(160, (#statPointOptions * 22) + 8)
+    statPointMenu:SetPoint("TOPLEFT", statPointDropdown, "BOTTOMLEFT", 0, -2)
+    statPointMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    statPointMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    statPointMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    statPointMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    statPointMenu:Hide()
+
+    local function refreshStatPointDropdown(val)
+        val = val or (getStatConfig(Panel.selectedKey).point or "CENTER")
+        statPointDropdown.pointValue = val
+        local text = val
+        for _, opt in ipairs(statPointOptions) do
+            if opt.value == val then
+                text = opt.label
+                break
+            end
+        end
+        statPointDropdown:SetText(text)
+    end
+
     local offsetXSlider = api.CreateFrame("Slider", nil, pagePos, "OptionsSliderTemplate")
-    offsetXSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -60)
+    offsetXSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -85)
     offsetXSlider:SetMinMaxValues(-1200, 1200)
     offsetXSlider:SetValueStep(1)
     offsetXSlider:SetObeyStepOnDrag(true)
     offsetXSlider:SetSize(320, 14)
     if EAM.UI.setTooltip then EAM.UI.setTooltip(offsetXSlider, "調整此屬性的螢幕水平 X 軸像素位置", "水平位置") end
-    local offsetXLabel = offsetXSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    offsetXLabel:SetPoint("BOTTOMLEFT", offsetXSlider, "TOPLEFT", 0, 4)
-    offsetXLabel:SetText(localized("EAM_STAT_OFFSET_X", "水平位置 (X 偏移)"))
     local offsetXVal = offsetXSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     offsetXVal:SetPoint("BOTTOMRIGHT", offsetXSlider, "TOPRIGHT", 0, 4)
+    offsetXVal:SetJustifyH("RIGHT")
+    local offsetXLabel = offsetXSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    offsetXLabel:SetPoint("BOTTOMLEFT", offsetXSlider, "TOPLEFT", 0, 4)
+    offsetXLabel:SetPoint("RIGHT", offsetXVal, "LEFT", -4, 0)
+    offsetXLabel:SetJustifyH("LEFT")
+    offsetXLabel:SetWordWrap(false)
+    offsetXLabel:SetText(localized("EAM_STAT_OFFSET_X", "水平位置 (X 偏移)"))
 
     local offsetYSlider = api.CreateFrame("Slider", nil, pagePos, "OptionsSliderTemplate")
-    offsetYSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -120)
+    offsetYSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -140)
     offsetYSlider:SetMinMaxValues(-900, 900)
     offsetYSlider:SetValueStep(1)
     offsetYSlider:SetObeyStepOnDrag(true)
     offsetYSlider:SetSize(320, 14)
     if EAM.UI.setTooltip then EAM.UI.setTooltip(offsetYSlider, "調整此屬性的螢幕垂直 Y 軸像素位置", "垂直位置") end
-    local offsetYLabel = offsetYSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    offsetYLabel:SetPoint("BOTTOMLEFT", offsetYSlider, "TOPLEFT", 0, 4)
-    offsetYLabel:SetText(localized("EAM_STAT_OFFSET_Y", "垂直位置 (Y 偏移)"))
     local offsetYVal = offsetYSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     offsetYVal:SetPoint("BOTTOMRIGHT", offsetYSlider, "TOPRIGHT", 0, 4)
+    offsetYVal:SetJustifyH("RIGHT")
+    local offsetYLabel = offsetYSlider:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    offsetYLabel:SetPoint("BOTTOMLEFT", offsetYSlider, "TOPLEFT", 0, 4)
+    offsetYLabel:SetPoint("RIGHT", offsetYVal, "LEFT", -4, 0)
+    offsetYLabel:SetJustifyH("LEFT")
+    offsetYLabel:SetWordWrap(false)
+    offsetYLabel:SetText(localized("EAM_STAT_OFFSET_Y", "垂直位置 (Y 偏移)"))
 
     local moveSingleBtn = api.CreateFrame("Button", nil, pagePos, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(moveSingleBtn) end
     moveSingleBtn:SetSize(140, 24)
-    moveSingleBtn:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 16, -170)
+    moveSingleBtn:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 16, -185)
     moveSingleBtn:SetText(localized("EAM_STAT_MOVE_SINGLE_BTN", "移動此單項"))
     if EAM.UI.setTooltip then EAM.UI.setTooltip(moveSingleBtn, "僅在畫面上亮起當前選中屬性的移動錨點以供滑鼠單獨拖曳", "移動此單項") end
     moveSingleBtn:SetScript("OnClick", function()
@@ -665,8 +734,11 @@ local function createFrame()
         cfg.decimals = tonumber(decimalsEditBox:GetText()) or 1
         cfg.shortNumber = shortNumberCb:GetChecked() and true or false
         cfg.thresholdMin = tonumber(minThreshEditBox:GetText())
+        cfg.minThreshold = cfg.thresholdMin
         cfg.thresholdMax = tonumber(maxThreshEditBox:GetText())
+        cfg.maxThreshold = cfg.thresholdMax
         cfg.useCustomPos = useCustomPosCb:GetChecked() and true or false
+        cfg.point = statPointDropdown.pointValue or "CENTER"
         cfg.offsetX = offsetXSlider:GetValue()
         cfg.offsetY = offsetYSlider:GetValue()
 
@@ -681,9 +753,18 @@ local function createFrame()
         if PlayerStatService and PlayerStatService.update then
             PlayerStatService.update()
         end
+        if PlayerStatService and PlayerStatService.refreshAll then
+            PlayerStatService.refreshAll()
+        end
 
-        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
-            EAM.UI.PreviewPanel.refresh()
+        local PreviewPanel = EAM.UI.PreviewPanel
+        if PreviewPanel then
+            if PreviewPanel.refreshStatPreview then
+                PreviewPanel.refreshStatPreview()
+            end
+            if PreviewPanel.refresh then
+                PreviewPanel.refresh()
+            end
         end
     end
     Panel.applyLiveChange = applyLiveChange
@@ -765,6 +846,32 @@ local function createFrame()
         end
     end)
 
+    for index = 1, #statPointOptions do
+        local option = statPointOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, statPointMenu)
+        menuButton:SetSize(154, 20)
+        menuButton:SetPoint("TOPLEFT", statPointMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        menuButtonText:SetText(option.label)
+        if Theme and Theme.registerButton then Theme.registerButton(menuButton) end
+        menuButton:SetScript("OnClick", function()
+            local cfg = getStatConfig(Panel.selectedKey)
+            cfg.point = option.value
+            refreshStatPointDropdown(option.value)
+            statPointMenu:Hide()
+            applyLiveChange()
+        end)
+    end
+
+    statPointDropdown:SetScript("OnClick", function()
+        if statPointMenu:IsShown() then
+            statPointMenu:Hide()
+        else
+            statPointMenu:Show()
+        end
+    end)
+
     -- 底部儲存按鈕
     local function saveSelectedStat()
         applyLiveChange()
@@ -823,6 +930,7 @@ local function createFrame()
         maxThreshEditBox:SetText(cfg.thresholdMax and tostring(cfg.thresholdMax) or "")
 
         useCustomPosCb:SetChecked(cfg.useCustomPos == true)
+        refreshStatPointDropdown(cfg.point or "CENTER")
         offsetXSlider:SetValue(cfg.offsetX or 0)
         offsetXVal:SetText(math.floor(cfg.offsetX or 0))
         offsetYSlider:SetValue(cfg.offsetY or 0)
@@ -847,8 +955,16 @@ local function createFrame()
             end
         end
 
-        if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.refresh then
-            EAM.UI.PreviewPanel.refresh()
+        local PreviewPanel = EAM.UI.PreviewPanel
+        if PreviewPanel then
+            if PreviewPanel.frame and PreviewPanel.frame:IsShown() and PreviewPanel.selectTab then
+                PreviewPanel.selectTab(3)
+            elseif PreviewPanel.refreshStatPreview then
+                PreviewPanel.refreshStatPreview()
+            end
+            if PreviewPanel.refresh then
+                PreviewPanel.refresh()
+            end
         end
     end
     Panel.loadStatToDetail = loadStatToDetail
@@ -1027,6 +1143,9 @@ function Panel.open()
     frame:Show()
     frame:Raise()
     Panel.refreshList()
+    if EAM.UI.PreviewPanel and EAM.UI.PreviewPanel.frame and EAM.UI.PreviewPanel.frame:IsShown() and EAM.UI.PreviewPanel.selectTab then
+        EAM.UI.PreviewPanel.selectTab(3)
+    end
     return true
 end
 

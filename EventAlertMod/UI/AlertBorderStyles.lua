@@ -39,6 +39,9 @@ local function normalizePolarity(unit, auraFilter)
 end
 
 function AlertBorderStyles.resolveAura(unit, auraFilter)
+    if unit == "pet" then
+        return keys.petAlert
+    end
     if unit ~= "player" and unit ~= "target" then
         return nil
     end
@@ -66,6 +69,9 @@ function AlertBorderStyles.resolve(frameName, alertState)
     if frameName == frameTypes.groundEffect then
         return keys.groundEffect
     end
+    if frameName == frameTypes.petAlert then
+        return keys.petAlert
+    end
     return nil
 end
 
@@ -77,6 +83,7 @@ function AlertBorderStyles.getColor(styleKey)
     if styleKey == keys.spellCooldown then return colors.spellCooldown end
     if styleKey == keys.itemCooldown then return colors.itemCooldown end
     if styleKey == keys.groundEffect then return colors.groundEffect end
+    if styleKey == keys.petAlert then return colors.petAlert end
     return nil
 end
 

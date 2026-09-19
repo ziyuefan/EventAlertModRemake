@@ -145,13 +145,18 @@ local function configureContainer(container, unit, plan)
         elementSpacing = EAM.db and EAM.db.config and EAM.db.config.iconSpacing or 6,
     }
     container:SetSize((layout.elementWidth + layout.elementSpacing) * 10, layout.elementHeight * 2)
+    local frameKey = unit == "player" and "selfAura" or "targetAura"
+    local dbFrames = EAM.db and EAM.db.layout and EAM.db.layout.frames
+    local frameConfig = dbFrames and dbFrames[frameKey]
+    local point = frameConfig and frameConfig.point or "CENTER"
+    local x = frameConfig and frameConfig.x or 0
+    local y = frameConfig and frameConfig.y or (unit == "player" and 120 or 200)
     container:ClearAllPoints()
-    if unit == "player" then
-        container:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
-    else
-        container:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
-    end
+    container:SetPoint(point, UIParent, point, x, y)
     container:SetEnabled(true)
+    if container.SetUnit then
+        container:SetUnit(unit)
+    end
     container:Show()
 end
 
@@ -240,6 +245,21 @@ function AuraContainerService.requestRebuild(reason)
         AuraContainerService.reloadRequired = false
         AuraContainerService.settingsDirty = false
         AuraContainerService.lastPlan = plan
+        if AuraContainerService.applyContainerPositions then
+            AuraContainerService.applyContainerPositions()
+        end
+        if AuraContainerService.current then
+            if AuraContainerService.current.player then
+                if AuraContainerService.current.player.SetEnabled then AuraContainerService.current.player:SetEnabled(true) end
+                if AuraContainerService.current.player.SetUnit then AuraContainerService.current.player:SetUnit("player") end
+                if AuraContainerService.current.player.Show then AuraContainerService.current.player:Show() end
+            end
+            if AuraContainerService.current.target then
+                if AuraContainerService.current.target.SetEnabled then AuraContainerService.current.target:SetEnabled(true) end
+                if AuraContainerService.current.target.SetUnit then AuraContainerService.current.target:SetUnit("target") end
+                if AuraContainerService.current.target.Show then AuraContainerService.current.target:Show() end
+            end
+        end
         local soundService = EAM.Services.AuraSoundService
         if soundService then
             local soundOK, soundReason = soundService.sync(plan, capabilitySnapshot)
@@ -251,6 +271,14 @@ function AuraContainerService.requestRebuild(reason)
                 AuraContainerService.lastReason = soundReason
                 return true, soundReason
             end
+        end
+        if reason == "OPTIONS_MANUAL_REBUILD" then
+            local router = EAM.Modules and EAM.Modules.EventRouter
+            if router and router.fire then
+                router.fire("EAM_AURA_BACKEND_SWITCHED", capabilitySnapshot.selectedBackend, true)
+            end
+            AuraContainerService.lastReason = "reapplied"
+            return true, "reapplied"
         end
         AuraContainerService.lastReason = "unchanged"
         return true, "unchanged"
@@ -294,6 +322,12 @@ function AuraContainerService.requestRebuild(reason)
             return false, AuraContainerService.lastReason
         end
     end
+
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router and router.fire then
+        router.fire("EAM_AURA_BACKEND_SWITCHED", capabilitySnapshot.selectedBackend, true)
+    end
+
     return true, "rebuilt"
 end
 
@@ -313,7 +347,7 @@ function AuraContainerService.markSettingsDirty(reason)
 end
 
 function AuraContainerService.onCombatEnd()
-    if AuraContainerService.pending then
+    if AuraContainerService.pending or AuraContainerService.settingsDirty then
         AuraContainerService.requestRebuild("PLAYER_REGEN_ENABLED")
     end
     local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
@@ -371,4 +405,21 @@ function AuraContainerService.getStatus()
         nativeSlotCount = AuraContainerService.lastPlan and AuraContainerService.lastPlan.nativeSlotCount or 0,
         nativeGroupCount = AuraContainerService.lastPlan and AuraContainerService.lastPlan.nativeGroupCount or 0,
     }
+end
+
+function AuraContainerService.applyContainerPositions()
+    if not AuraContainerService.current then return end
+    local units = { player = "selfAura", target = "targetAura" }
+    for unit, frameKey in pairs(units) do
+        local container = AuraContainerService.current[unit]
+        if container then
+            local dbFrames = EAM.db and EAM.db.layout and EAM.db.layout.frames
+            local frameConfig = dbFrames and dbFrames[frameKey]
+            local point = frameConfig and frameConfig.point or "CENTER"
+            local x = frameConfig and frameConfig.x or 0
+            local y = frameConfig and frameConfig.y or (unit == "player" and 120 or 200)
+            container:ClearAllPoints()
+            container:SetPoint(point, UIParent, point, x, y)
+        end
+    end
 end

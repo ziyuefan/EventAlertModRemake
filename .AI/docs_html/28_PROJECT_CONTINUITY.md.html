@@ -519,8 +519,24 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-09-12.24 (飛龍模式飛速專屬僅滑翔顯示 / 冷卻倒數扇形色彩透明度自訂 / 自身光環非本職業專屬法術防誤加確認對話框 / 499 契約全綠)。</p>
-<h2 id="2026-09-12-glide-true">2026-09-12 多進度儲存點：飛龍模式飛速專屬「僅滑翔時顯示圖示 (Glide = true)」特殊選項（現行儲存點）</h2>
+<p>目前快照版本：2026-09-14.25 (Retail 12.1.0 Alpha 8.6 技能名稱下方預設排版與自訂 / 角色屬性預覽即時連動 / 職業資源縮放與可捲動字型下拉清單 / 版本斷點規則確立 / 499 契約全綠)。</p>
+<ul>
+<li><strong>版本斷點與自動遞增規則</strong>：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。</li>
+</ul>
+<h2 id="2026-09-14-retail-1210-alpha-86">2026-09-14 多進度儲存點：Retail 12.1.0 Alpha 8.6 技能名稱下方排版、屬性預覽即時更新與職業資源可捲動字型清單（現行儲存點）</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。技能/光環名稱預設改為置於圖示下方（<code>OUTSIDE_BOTTOM</code>），排版更和諧美觀，並於「字型與文字」提供 21 種排版錨點下拉選單；角色屬性面板調整尺寸、字級、小數點、圖示標籤與警戒門檻時預覽視窗零延遲即時更新，統一 <code>thresholdMin</code> / <code>minThreshold</code> 欄位相容性使門檻紅框精確亮起；職業資源字型選擇全面升級為 10 行可捲動下拉選單（<code>ScrollableDropdown</code>），相容 LSM 與內建字型，並補齊資源縮放（<code>scale</code>）於預覽視窗之等比縮放連動；預覽視窗加入透明度滑桿與 <code>safeCall</code> 防禦；全套門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約 / Build-Package DryRun PASS）。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【技能名稱排版自訂與下方預設】：<code>Constants.lua</code> 設置預設為 <code>OUTSIDE_BOTTOM</code>；<code>TextPlacement.lua</code> 與 <code>SavedVariables.lua</code> 全面放行 <code>spellName</code> 文字排版並納入規範化；<code>Options.lua</code> 新增 21 種排版下拉選單；<code>Renderer.lua</code> 與 <code>PreviewPanel.lua</code> 即時熱套用。</li>
+<li>[x] 【角色屬性預覽即時更新】：<code>PlayerStatPanel.lua</code> 的 <code>applyLiveChange</code> 統一門檻命名相容性，即時調用 <code>PreviewPanel.refreshStatPreview()</code> 與 <code>PlayerStatService.update()</code>；開啟與切換屬性時自動切換預覽視窗至 Tab 3。</li>
+<li>[x] 【職業資源縮放與可捲動字型選單】：<code>PlayerResourcePanel.lua</code> 改建為可捲動 10 行選單（<code>ScrollableDropdown</code>），支援 LSM 與系統字型，同時保留 <code>cycleFontFamily</code> 滿足契約相容性；<code>autoApplyDraft</code> 即時觸發預覽與服務刷新；<code>PreviewPanel.lua</code> 補齊 <code>SetScale(dbRes.scale)</code> 等比縮放。</li>
+<li>[x] 【獨立效果預覽連動加固】：修復預覽視窗與主面板連動中斷缺陷，增設透明度滑桿（0.1~1.0），實裝 <code>safeCall</code> 守衛保護未初始化方法。</li>
+<li>[x] 【版本斷點治理與 5 國語言對齊】：確立發布斷點與自動 +0.1 規則；<code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 5 語系完整對齊 <code>EAM_OPT_NAME_ALIGN</code>；雙語 changelog 100% 同步。</li>
+<li>[x] 【全套自動化品質門禁全綠通過】：Lua 語法 78/78 PASS、Flow 業務狀態機 87/87 PASS、Validation Contracts 499/499 PASS、Build-Package DryRun PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-12-glide-true">2026-09-12 多進度儲存點：飛龍模式飛速專屬「僅滑翔時顯示圖示 (Glide = true)」特殊選項</h2>
 <ul>
 <li>current-of-truth：在「角色屬性與吸收量監控」中，針對「飛龍模式飛速（<code>skyridingSpeed</code>）」新增專屬特殊選項「僅滑翔顯示（<code>glideOnlyIcon</code>，預設 <code>false</code>）」；啟用後僅當角色處於空中御空術/飛龍滑翔飛行狀態（<code>C_PlayerInfo.GetGlidingInfo()</code> 之 <code>isGliding == true</code>）時才在畫面上顯示該圖示與即時速度百分比；在地面站立、步行或非滑翔狀態時自動隱藏，避免平時以 0% 佔用畫面；屬性設定面板 Tab 1（顯示與圖示）動態呈現專屬 CheckBox，選取其他 17 項屬性時自動隱藏；具備排版移動保護：開啟「移動屬性框架」（<code>isMoving == true</code>）時強制顯示以利拖曳排版；5 國語言完整鏡像對齊；全套門禁 100% 綠燈（78 語法 / 86 Flow / 499 契約）。</li>
 <li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
@@ -1108,6 +1124,16 @@
 <li>Modern WoW 垂直漸層修復：徹底消除 <code>SetColorTexture</code> 衝突，改採 <code>SetTexture("Interface\\Buttons\\WHITE8X8")</code> 並設於 <code>BACKGROUND, 1</code> 圖層，完美相容 Retail 10.x/11.x/12.x 原生 <code>Texture:SetGradient("VERTICAL", cMin, cMax)</code> 漸層著色與正確座標映射。</li>
 <li>全子視窗連動：實裝 <code>Theme.applyContainerBackground(frame, roleOrIsPanel)</code>，補齊 <code>posInner</code>、<code>listInner</code>、<code>GroupManagerPanel</code>、<code>SpellCatalogTreePanel</code>、<code>PreviewPanel</code> 與下拉選單主題註冊，新增 <code>"row"</code> 輕量列表行角色。</li>
 <li>最新離線 gate：Lua 78/78、Flow all 86/86、Validation Contracts 497/497。</li>
+</ul>
+<h2 id="2026-09-13-alpha-86-p0p1">2026-09-13 Alpha 8.6 P0+P1 核心架構重構快照</h2>
+<ul>
+<li>continuity snapshot 已升至 <code>2026-09-13.23</code>；完成 P0（12.1 AuraContainer 雙模適配器平滑切換）與 P1（英雄天賦動態法術覆蓋狀態機 + GPU 原生硬體加速動畫升級）。</li>
+<li>技能倉庫雙軌與 20 套 WoW 技能庫落地：納入 skills.sh 與 lobehub.com 雙軌倉庫，安裝並三端同步 20 套 WoW Patch 12.0.0 官方技能手冊，升級 XML 抗記憶漂移硬性備援機制（<code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code> v1.1）。</li>
+<li>P0 (Aura 雙模切換邊界)：<code>AuraContainerService</code> 廣播 <code>EAM_AURA_BACKEND_SWITCHED</code>；<code>AuraService</code> 動態清空與狀態避讓；<code>AlertManager</code> 原生雙重保險守衛攔截原生模式光環渲染流，徹底杜絕戰鬥 Taint。</li>
+<li>P1-1 (英雄天賦法術覆蓋狀態機)：<code>SpellInfoService</code> 提供安全 <code>getOverrideSpell</code>；<code>CooldownService</code> 維護 <code>baseToOverrideMap</code> 與 <code>overrideToBaseMap</code> 雙向快取，對齊 <code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code> 動態遷移活躍冷卻狀態，廣播 <code>EAM_SPELL_OVERRIDE_UPDATED</code>。</li>
+<li>P1-2 (GPU 原生硬體加速動畫)：<code>IconPool</code> 建立原生 <code>popAnimation</code>（Scale 彈跳 1.2 -&gt; 1.0，0.15s，OUT 平滑）與 <code>pandemicAnimation</code>（Scale 呼吸 1.0 &lt;-&gt; 1.08，0.5s，IN_OUT 平滑，BOUNCE 循環），在 <code>Renderer</code> 接管動態觸發與停止，0% 額外 Lua CPU 負擔。</li>
+<li>最終核心離線證據：Lua <code>78/78</code>、Flow all <code>86/86</code>（<code>.AI/TestResults/EAM_FlowValidation_all_20260913_234114.json</code>）、Validation Contracts <code>499/499</code>（<code>.AI/Tools/Test-ValidationContracts.ps1</code>）。41 份 HTML 文件無瑕疵重新編譯。</li>
+<li>本輪修改前備份位於 <code>.AI/backup/*__20260913233659</code>。尚未部署、未讀寫 WoW/WTF、未做真人操作（嚴守鐵律 R1 零自動部署）。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

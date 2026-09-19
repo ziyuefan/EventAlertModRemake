@@ -50,37 +50,47 @@
 | **C2_SUBAGENT_PROMPT_INJECTION** | **子代理派工與背景任務** | **動態提取注入**。主代理調用 `invoke_subagent` 時，根據子代理角色自 XML 切割對應標籤注入其 Prompt。 |
 | **C3_COMPLEX_MODULE_REFACTOR** | **核心模組重大重構** | **結構化擴充**。當重構光環、冷卻、資源或屬性模組時，於 XML 的 `<architecture_contracts>` 追加狀態機邊界。 |
 | **C4_PROTECTED_API_INCIDENT** | **暴雪版本更新引發 Taint 事故** | **即時封鎖**。當 Retail 12.1+ 出現新 Secret 報錯時，立即在 XML 的 `<secret_values_sentinel>` 登錄禁止操作黑名單。 |
+| **C5_MEMORY_DRIFT_DETECTION** | **大模型產生語意漂移 / 對 Markdown 理解歧義** | **硬性校準**。當上下文截斷、更換模型或發現 Agent 對規範理解有偏差時，強制讀取 XML 結構化節點進行記憶硬性重設（Hard Semantic Reset）。 |
 
 ---
 
 ## 🛡️ 4. 核心治理節點架構一覽 (XML Directives Overview)
 
-實體 XML 檔案包含 8 大核心模組節點：
+實體 XML 檔案包含 11 大核心模組節點（v1.1 最新版次）：
 
 ```xml
-<eam_ai_governance version="1.0" last_updated="2026-09-04">
+<eam_ai_governance version="1.1" last_updated="2026-09-13">
     <!-- 1. 元資料與受眾：界定專案路徑、台灣繁中與「少年欸」稱呼習慣 -->
     <metadata> ... </metadata>
 
-    <!-- 2. 生命週期與何時增設決策：定義四大觸發場景 (C1~C4) -->
+    <!-- 2. 生命週期與何時增設決策：定義五大觸發場景 (C1~C5 記憶漂移防禦) -->
     <lifecycle_and_triggers> ... </lifecycle_and_triggers>
 
     <!-- 3. 五大絕對鐵律：禁止自動部署、正式服限定、舊目錄廢棄、TokenDPAPI加密、修改前備份 -->
     <iron_rules> ... </iron_rules>
 
-    <!-- 4. Secret Values 與 Taint 哨兵：五大檢定 API、禁止四則運算/比對、原生 C-Level Sink -->
+    <!-- 4. 最高事實裁決階梯：Level 1 動態情報 > Level 2 安全門禁 > Level 3 靜態社群基線 -->
+    <fact_of_truth_hierarchy> ... </fact_of_truth_hierarchy>
+
+    <!-- 5. 社群技能庫雙軌收錄：skills.sh 與 lobehub.com、3 個候選上限、授權門禁與三端部署 -->
+    <skills_warehouse_ecosystem> ... </skills_warehouse_ecosystem>
+
+    <!-- 6. 抗記憶漂移結構化備援協議：強制錨定、零幻覺推論、子代理任務切片注入 -->
+    <anti_memory_drift_protocol> ... </anti_memory_drift_protocol>
+
+    <!-- 7. Secret Values 與 Taint 哨兵：五大檢定 API、禁止四則運算/比對、原生 C-Level Sink -->
     <secret_values_sentinel> ... </secret_values_sentinel>
 
-    <!-- 5. 系統架構契約：Core, Services, UI, Managers 四層邊界職責 -->
+    <!-- 8. 系統架構契約：Core, Services, UI, Managers 四層邊界職責 -->
     <architecture_contracts> ... </architecture_contracts>
 
-    <!-- 6. 極限效能與熱路徑鐵律：零匿名閉包、零臨時 Table、數字循環、物件池規範 -->
+    <!-- 9. 極限效能與熱路徑鐵律：零匿名閉包、零臨時 Table、數字循環、物件池規範 -->
     <hot_path_guidelines> ... </hot_path_guidelines>
 
-    <!-- 7. 驗證門禁體系：語法 76/76、Flow 84/84、契約 496/496、Deploy DryRun -->
+    <!-- 10. 驗證門禁體系：語法 76/76、Flow 84/84、契約 496/496、Deploy DryRun -->
     <verification_gates> ... </verification_gates>
 
-    <!-- 8. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核 -->
+    <!-- 11. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核 -->
     <agent_behavior_protocol> ... </agent_behavior_protocol>
 </eam_ai_governance>
 ```
@@ -90,4 +100,5 @@
 ## 📌 5. 權威實體檔案位置 (Physical File Reference)
 
 - **AI 治理專用 XML 實體檔**：[`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml)
-- **語法合規驗證**：已通過 Python `xml.etree.ElementTree` 完整語法與結構檢定（8 大核心子節點完整就位）。
+- **語法合規驗證**：已通過 Python `xml.etree.ElementTree` 完整語法與結構檢定（11 大核心子節點完整就位，v1.1 版次）。
+- **抗漂移備援機制**：當 Markdown 文本在多輪對話或上下文截斷中出現記憶漂移時，本 XML 作為最高結構化備援保險箱，所有 Agent 必須無條件回溯並以 XML 標籤為唯一硬性約束基準。

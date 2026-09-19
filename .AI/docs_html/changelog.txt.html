@@ -379,6 +379,43 @@
         <div class="changelog-container">
 <div class="changelog-card">
     <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.6 Live Preview Overhaul, Modern Dropdowns &amp; System Diagnostics</span>
+        <span class="changelog-date">📅 2026.09.14</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>即時效果預覽深度修復與智慧分頁連動 (Live Preview Deep Fix &amp; Smart Tab Auto-Switch):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底解決預覽視窗焦點錯位問題：從職業資源或角色屬性面板點擊「效果預覽」時，預覽視窗自動切換至對應分頁（職業資源/角色屬性/告警圖示），不再停留在技能圖示造成「未即時更新」錯覺。</li>
+<li>加固預覽視窗之資料庫讀取鏈路：優先讀取即時 Draft，若無 Draft 則平滑降級至 SavedVariables 權威設定並提供大小寫容錯，徹底告別空表回退預設問題。</li>
+<li>解除 autoApplyDraft 的刷新阻斷：無論配置是否判定為 unchanged，滑桿拖曳、勾選框切換或下拉選單變更時 100% 即時熱刷新預覽畫面。</li>
+</ul>
+<li><strong>全面改建單擊循環選項為現代化下拉選單 (Comprehensive Click-to-Cycle to Dropdown Overhaul):</strong></li>
+<ul class="changelog-sublist">
+<li>職業資源面板：顯示模式（自動/長條條形/離散點數）、排列方向（水平/垂直）、父框架錨點（9 點）、自身定位點（9 點）、設定範圍（專精覆寫/全職業預設）全面改建為直觀且具備綠色核取勾號提示的現代化下拉選單 (Dropdown Menu)，徹底告別盲按循環。</li>
+<li>角色屬性面板：位置與錨點 (Tab 4) 新增「基準錨點 (Anchor Point)」9 點下拉選單，讓玩家精確自訂螢幕定位原點。</li>
+<li>內部契約無損相容：保留所有內部循環函式（cyclePoint, cycleOrientation 等）與按鈕定義，支援右鍵快速循環且 100% 通過靜態合約檢查。</li>
+</ul>
+<li><strong>內建系統即時診斷報告與一鍵全選複製 (Built-in System Diagnostics &amp; One-Click Copy Report):</strong></li>
+<ul class="changelog-sublist">
+<li>實裝全新系統即時診斷系統：新增斜線指令 /eam diag、/eam report 與 /eam debug。</li>
+<li>在即時效果預覽視窗標題列右上角與主設定面板底部新增「系統診斷」按鈕，彈出 680x520 獨立滾動文字對話框。</li>
+<li>即時自動採集：插件版本、WoW 客戶端版本與 TOC、當前語系、角色職業專精與戰鬥狀態、AlertManager/Resource/Stat 核心模組活躍數、CDM 影子載體狀態、SharedMedia 字型數、Lua 記憶體用量 (MB/KB)、即時 FPS 與網路延遲、當前選定資源/屬性之 Draft 完整參數。</li>
+<li>提供「一鍵全選複製」按鈕：點擊自動反白選取整段診斷內容並給予複製提示，方便玩家一鍵貼給開發團隊進行秒級精確排查。</li>
+</ul>
+<li><strong>技能名稱位置自訂與下方預設排版 (Spell Name Text Placement &amp; Default Outside Bottom):</strong></li>
+<ul class="changelog-sublist">
+<li>技能/光環名稱預設全面改為置於圖示下方 (OUTSIDE_BOTTOM)，排版更加和諧美觀。</li>
+<li>在設定面板「字型與文字」新增「法術名稱位置」21 種排版下拉選單，與秒數倒數、堆疊層數一樣享有完整 21 種錨點自訂能力，所調即所見。</li>
+</ul>
+<li><strong>多語系（5 國語言）支援 (Multi-language Localization):</strong></li>
+<ul class="changelog-sublist">
+<li>繁體中文、簡體中文、英文、韓文、俄文 5 大語系字典 100% 完整對齊診斷系統與下拉選單所有詞條。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
         <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization</span>
         <span class="changelog-date">📅 2026.09.12</span>
     </div>
@@ -2380,6 +2417,43 @@
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
         <h1>📜 EventAlertMod Complete Version History (Changelog)</h1>
         <div class="changelog-container">
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.6 Spell Name Placement, Live Preview &amp; Resource Dropdown</span>
+        <span class="changelog-date">📅 2026.09.14</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>Spell Name Text Placement &amp; Default Outside Bottom:</strong></li>
+<ul class="changelog-sublist">
+<li>Spell and aura names now default to outside bottom (OUTSIDE_BOTTOM) for cleaner and more balanced icon aesthetics.</li>
+<li>Added &quot;Spell Name Placement&quot; dropdown offering 21 anchor placement positions under Font &amp; Text settings, granting full 21-point alignment freedom matching countdown timers and stack counters with live feedback.</li>
+</ul>
+<li><strong>Player Stat Real-Time Preview Synchronization:</strong></li>
+<ul class="changelog-sublist">
+<li>Resolved preview update delays across stat switching, resizing, font sizing, decimal precision, custom icons/labels, and threshold adjustments.</li>
+<li>Unified threshold field naming compatibility (thresholdMin / minThreshold), enabling red warning borders to trigger accurately in real time.</li>
+<li>Automatically switches preview panel to the Player Stat tab when opening or selecting stats if preview window is active.</li>
+</ul>
+<li><strong>Player Resource Scale &amp; Scrollable Font Dropdown:</strong></li>
+<ul class="changelog-sublist">
+<li>Replaced single-button font cycling with a 10-row scrollable dropdown (ScrollableDropdown), fully supporting LibSharedMedia-3.0 (LSM) and built-in system fonts.</li>
+<li>Added real-time scale synchronization for resource bars in the preview panel, synchronizing bar width, height, icon size, spacing, font sizes, and value offsets with zero latency.</li>
+</ul>
+<li><strong>Real-Time Live Preview Synchronization:</strong></li>
+<ul class="changelog-sublist">
+<li>Fully resolved synchronization delays between the independent preview panel (PreviewPanel) and the frame mover preview cow-heads (Renderer), achieving true zero-latency &quot;what you see is what you get&quot;.</li>
+<li>Added an Icon Alpha slider to the Layout tab, immediately applying opacity changes (0.1 to 1.0) to active previews and live alert frames on drag.</li>
+<li>Real-time updates for all 21 text layout placements (TextPlacement), font sizes for timer/name/stacks, and global font family switches.</li>
+<li>Immediate synchronization for spell name toggle, countdown timer toggle, cooldown swipe shadow toggle, and timer color curve thresholds/palettes.</li>
+</ul>
+<li><strong>Preview Panel Defensive Architecture:</strong></li>
+<ul class="changelog-sublist">
+<li>Upgraded preview icons with native CooldownFrameTemplate and high-strata text overlay containers, supporting custom swipe colors and alphas.</li>
+<li>Implemented safeCall method wrappers against uninitialized frames or strict mock environments, guaranteeing crash-proof stability across all clients.</li>
+</ul>
+</ul>
+</div></div>
 <div class="changelog-card">
     <div class="changelog-header">
         <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization</span>

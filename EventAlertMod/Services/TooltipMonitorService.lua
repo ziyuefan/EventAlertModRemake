@@ -75,6 +75,7 @@ Service.ACTION_SPELL_COOLDOWN = "spellCooldown"
 Service.ACTION_ITEM_COOLDOWN = "itemCooldown"
 Service.ACTION_AURA_PLAYER = "auraPlayer"
 Service.ACTION_AURA_TARGET = "auraTarget"
+Service.ACTION_GROUND_EFFECT = "groundEffect"
 
 local function isKnownAction(action)
     if not Util.isSafeString or not Util.isSafeString(action) then
@@ -84,6 +85,7 @@ local function isKnownAction(action)
         or action == Service.ACTION_ITEM_COOLDOWN
         or action == Service.ACTION_AURA_PLAYER
         or action == Service.ACTION_AURA_TARGET
+        or action == Service.ACTION_GROUND_EFFECT
 end
 
 local candidate = {
@@ -799,14 +801,37 @@ function Service.commitCandidate(source, action, manualID)
     local identifier
     local operation
     local unit
-    if source.kind == "spell" and action == Service.ACTION_SPELL_COOLDOWN then
-        identifier = safePositiveInteger(source.spellID)
-        operation = saved.addSpellCooldownAlert
+    if action == Service.ACTION_GROUND_EFFECT then
+        if source.kind == "item" then
+            local cItem = api.C_Item or C_Item
+            local spellID
+            if cItem and cItem.GetItemSpell then
+                local ok, spellName, sID = pcall(cItem.GetItemSpell, source.itemID)
+                if ok then
+                    spellID = sID or (type(spellName) == "number" and spellName)
+                end
+            end
+            identifier = safePositiveInteger(spellID) or safePositiveInteger(manualID)
+        else
+            identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
+        end
+        operation = saved.addGroundEffectAlert
+    elseif source.kind == "spell" then
+        identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
+        if action == Service.ACTION_SPELL_COOLDOWN then
+            operation = saved.addSpellCooldownAlert
+        elseif action == Service.ACTION_AURA_PLAYER then
+            unit = "player"
+            operation = saved.addAuraAlert
+        elseif action == Service.ACTION_AURA_TARGET then
+            unit = "target"
+            operation = saved.addAuraAlert
+        end
     elseif source.kind == "item" and action == Service.ACTION_ITEM_COOLDOWN then
-        identifier = safePositiveInteger(source.itemID)
+        identifier = safePositiveInteger(source.itemID) or safePositiveInteger(manualID)
         operation = saved.addItemCooldownAlert
     elseif source.kind == "aura" then
-        identifier = safePositiveInteger(manualID)
+        identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
         operation = saved.addAuraAlert
         if action == Service.ACTION_AURA_PLAYER then
             unit = "player"
@@ -815,12 +840,22 @@ function Service.commitCandidate(source, action, manualID)
         else
             operation = nil
         end
-    elseif source.kind == "macro" and action == Service.ACTION_SPELL_COOLDOWN then
-        identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
-        operation = saved.addSpellCooldownAlert
-    elseif source.kind == "macro" and action == Service.ACTION_ITEM_COOLDOWN then
-        identifier = safePositiveInteger(source.itemID) or safePositiveInteger(manualID)
-        operation = saved.addItemCooldownAlert
+    elseif source.kind == "macro" then
+        if action == Service.ACTION_SPELL_COOLDOWN then
+            identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
+            operation = saved.addSpellCooldownAlert
+        elseif action == Service.ACTION_ITEM_COOLDOWN then
+            identifier = safePositiveInteger(source.itemID) or safePositiveInteger(manualID)
+            operation = saved.addItemCooldownAlert
+        elseif action == Service.ACTION_AURA_PLAYER then
+            identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
+            unit = "player"
+            operation = saved.addAuraAlert
+        elseif action == Service.ACTION_AURA_TARGET then
+            identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
+            unit = "target"
+            operation = saved.addAuraAlert
+        end
     end
 
     if not identifier or type(operation) ~= "function" then

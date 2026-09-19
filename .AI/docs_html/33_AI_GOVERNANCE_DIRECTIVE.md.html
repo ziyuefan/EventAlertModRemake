@@ -581,34 +581,48 @@
 <td style="text-align: left;"><strong>暴雪版本更新引發 Taint 事故</strong></td>
 <td style="text-align: left;"><strong>即時封鎖</strong>。當 Retail 12.1+ 出現新 Secret 報錯時，立即在 XML 的 <code>&lt;secret_values_sentinel&gt;</code> 登錄禁止操作黑名單。</td>
 </tr>
+<tr>
+<td style="text-align: left;"><strong>C5_MEMORY_DRIFT_DETECTION</strong></td>
+<td style="text-align: left;"><strong>大模型產生語意漂移 / 對 Markdown 理解歧義</strong></td>
+<td style="text-align: left;"><strong>硬性校準</strong>。當上下文截斷、更換模型或發現 Agent 對規範理解有偏差時，強制讀取 XML 結構化節點進行記憶硬性重設（Hard Semantic Reset）。</td>
+</tr>
 </tbody>
 </table>
 <hr />
 <h2 id="4-xml-directives-overview">🛡️ 4. 核心治理節點架構一覽 (XML Directives Overview)</h2>
-<p>實體 XML 檔案包含 8 大核心模組節點：</p>
-<pre class="codehilite"><code class="language-xml">&lt;eam_ai_governance version=&quot;1.0&quot; last_updated=&quot;2026-09-04&quot;&gt;
+<p>實體 XML 檔案包含 11 大核心模組節點（v1.1 最新版次）：</p>
+<pre class="codehilite"><code class="language-xml">&lt;eam_ai_governance version=&quot;1.1&quot; last_updated=&quot;2026-09-13&quot;&gt;
     &lt;!-- 1. 元資料與受眾：界定專案路徑、台灣繁中與「少年欸」稱呼習慣 --&gt;
     &lt;metadata&gt; ... &lt;/metadata&gt;
 
-    &lt;!-- 2. 生命週期與何時增設決策：定義四大觸發場景 (C1~C4) --&gt;
+    &lt;!-- 2. 生命週期與何時增設決策：定義五大觸發場景 (C1~C5 記憶漂移防禦) --&gt;
     &lt;lifecycle_and_triggers&gt; ... &lt;/lifecycle_and_triggers&gt;
 
     &lt;!-- 3. 五大絕對鐵律：禁止自動部署、正式服限定、舊目錄廢棄、TokenDPAPI加密、修改前備份 --&gt;
     &lt;iron_rules&gt; ... &lt;/iron_rules&gt;
 
-    &lt;!-- 4. Secret Values 與 Taint 哨兵：五大檢定 API、禁止四則運算/比對、原生 C-Level Sink --&gt;
+    &lt;!-- 4. 最高事實裁決階梯：Level 1 動態情報 &gt; Level 2 安全門禁 &gt; Level 3 靜態社群基線 --&gt;
+    &lt;fact_of_truth_hierarchy&gt; ... &lt;/fact_of_truth_hierarchy&gt;
+
+    &lt;!-- 5. 社群技能庫雙軌收錄：skills.sh 與 lobehub.com、3 個候選上限、授權門禁與三端部署 --&gt;
+    &lt;skills_warehouse_ecosystem&gt; ... &lt;/skills_warehouse_ecosystem&gt;
+
+    &lt;!-- 6. 抗記憶漂移結構化備援協議：強制錨定、零幻覺推論、子代理任務切片注入 --&gt;
+    &lt;anti_memory_drift_protocol&gt; ... &lt;/anti_memory_drift_protocol&gt;
+
+    &lt;!-- 7. Secret Values 與 Taint 哨兵：五大檢定 API、禁止四則運算/比對、原生 C-Level Sink --&gt;
     &lt;secret_values_sentinel&gt; ... &lt;/secret_values_sentinel&gt;
 
-    &lt;!-- 5. 系統架構契約：Core, Services, UI, Managers 四層邊界職責 --&gt;
+    &lt;!-- 8. 系統架構契約：Core, Services, UI, Managers 四層邊界職責 --&gt;
     &lt;architecture_contracts&gt; ... &lt;/architecture_contracts&gt;
 
-    &lt;!-- 6. 極限效能與熱路徑鐵律：零匿名閉包、零臨時 Table、數字循環、物件池規範 --&gt;
+    &lt;!-- 9. 極限效能與熱路徑鐵律：零匿名閉包、零臨時 Table、數字循環、物件池規範 --&gt;
     &lt;hot_path_guidelines&gt; ... &lt;/hot_path_guidelines&gt;
 
-    &lt;!-- 7. 驗證門禁體系：語法 76/76、Flow 84/84、契約 496/496、Deploy DryRun --&gt;
+    &lt;!-- 10. 驗證門禁體系：語法 76/76、Flow 84/84、契約 496/496、Deploy DryRun --&gt;
     &lt;verification_gates&gt; ... &lt;/verification_gates&gt;
 
-    &lt;!-- 8. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核 --&gt;
+    &lt;!-- 11. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核 --&gt;
     &lt;agent_behavior_protocol&gt; ... &lt;/agent_behavior_protocol&gt;
 &lt;/eam_ai_governance&gt;
 </code></pre>
@@ -617,7 +631,8 @@
 <h2 id="5-physical-file-reference">📌 5. 權威實體檔案位置 (Physical File Reference)</h2>
 <ul>
 <li><strong>AI 治理專用 XML 實體檔</strong>：<a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a></li>
-<li><strong>語法合規驗證</strong>：已通過 Python <code>xml.etree.ElementTree</code> 完整語法與結構檢定（8 大核心子節點完整就位）。</li>
+<li><strong>語法合規驗證</strong>：已通過 Python <code>xml.etree.ElementTree</code> 完整語法與結構檢定（11 大核心子節點完整就位，v1.1 版次）。</li>
+<li><strong>抗漂移備援機制</strong>：當 Markdown 文本在多輪對話或上下文截斷中出現記憶漂移時，本 XML 作為最高結構化備援保險箱，所有 Agent 必須無條件回溯並以 XML 標籤為唯一硬性約束基準。</li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">

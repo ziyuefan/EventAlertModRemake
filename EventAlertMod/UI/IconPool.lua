@@ -543,6 +543,12 @@ function IconPool.applyAuraApplicationProgress(icon, alertState)
     -- BlendMode = "ADD" 爆發過曝加法炫光
     if config.overdriveGlow ~= false and overdriveOverlay then
         if isMaxStacks then
+            local w, h = icon:GetSize()
+            w = (w and w > 0) and w or 40
+            h = (h and h > 0) and h or 40
+            overdriveOverlay:ClearAllPoints()
+            overdriveOverlay:SetPoint("CENTER", icon, "CENTER", 0, 0)
+            overdriveOverlay:SetSize(w * (64 / 36), h * (64 / 36))
             if overdriveOverlay.Show then overdriveOverlay:Show() end
             local isPlaying = getMethod(anim, "IsPlaying")
             local play = getMethod(anim, "Play")
@@ -630,6 +636,12 @@ function IconPool.setGlow(icon, enabled, r, g, b, a)
     end
 
     if enabled == true then
+        local w, h = icon:GetSize()
+        w = (w and w > 0) and w or 40
+        h = (h and h > 0) and h or 40
+        glow:ClearAllPoints()
+        glow:SetPoint("CENTER", icon, "CENTER", 0, 0)
+        glow:SetSize(w * (64 / 36), h * (64 / 36))
         if customColor then
             glow:SetVertexColor(
                 r,
@@ -637,6 +649,8 @@ function IconPool.setGlow(icon, enabled, r, g, b, a)
                 b,
                 Util.isSafeNumber(a) and a or 1
             )
+        else
+            glow:SetVertexColor(1, 0.85, 0.4, 1)
         end
         glow:Show()
         local animation = readField(icon, "glowAnimation")
@@ -821,7 +835,8 @@ local function createIcon()
     local glowBorder = button:CreateTexture(nil, "OVERLAY")
     glowBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
     glowBorder:SetBlendMode("ADD")
-    glowBorder:SetAllPoints(button)
+    glowBorder:SetPoint("CENTER", button, "CENTER", 0, 0)
+    glowBorder:SetSize(40 * (64 / 36), 40 * (64 / 36))
     glowBorder:SetVertexColor(1, 0.85, 0.4, 1) -- 亮金色
     glowBorder:Hide()
     button.glowBorder = glowBorder
@@ -863,7 +878,8 @@ local function createIcon()
     local overdriveOverlay = button:CreateTexture(nil, "OVERLAY")
     overdriveOverlay:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
     overdriveOverlay:SetBlendMode("ADD")
-    overdriveOverlay:SetAllPoints(button)
+    overdriveOverlay:SetPoint("CENTER", button, "CENTER", 0, 0)
+    overdriveOverlay:SetSize(40 * (64 / 36), 40 * (64 / 36))
     overdriveOverlay:SetVertexColor(1, 0.95, 0.65, 0.95)
     overdriveOverlay:Hide()
     button.overdriveOverlay = overdriveOverlay or false
@@ -890,6 +906,63 @@ local function createIcon()
         end
     end
     button.overdriveAnimation = overdriveAnimation or false
+
+    -- 🚀 GPU 原生硬體加速動畫：圖示觸發彈跳 (Pop Animation)
+    local popAnimation
+    local createPopAnim = getMethod(button, "CreateAnimationGroup")
+    if createPopAnim then
+        local ok, group = pcall(createPopAnim, button)
+        local createAnimation = getMethod(group, "CreateAnimation")
+        if ok and createAnimation then
+            local animationOK, scale = pcall(createAnimation, group, "Scale")
+            if animationOK and scale then
+                local setScaleFrom = getMethod(scale, "SetScaleFrom")
+                local setScaleTo = getMethod(scale, "SetScaleTo")
+                if setScaleFrom and setScaleTo then
+                    pcall(setScaleFrom, scale, 1.2, 1.2)
+                    pcall(setScaleTo, scale, 1.0, 1.0)
+                else
+                    local setScale = getMethod(scale, "SetScale")
+                    if setScale then pcall(setScale, scale, 1.2, 1.2) end
+                end
+                local setDuration = getMethod(scale, "SetDuration")
+                if setDuration then pcall(setDuration, scale, 0.15) end
+                local setSmoothing = getMethod(scale, "SetSmoothing")
+                if setSmoothing then pcall(setSmoothing, scale, "OUT") end
+                popAnimation = group
+            end
+        end
+    end
+    button.popAnimation = popAnimation or false
+
+    -- 🌡️ GPU 原生硬體加速動畫：Pandemic 呼吸 (Pandemic Animation)
+    local pandemicAnimation
+    if createPopAnim then
+        local ok, group = pcall(createPopAnim, button)
+        local createAnimation = getMethod(group, "CreateAnimation")
+        if ok and createAnimation then
+            local animationOK, scale = pcall(createAnimation, group, "Scale")
+            if animationOK and scale then
+                local setScaleFrom = getMethod(scale, "SetScaleFrom")
+                local setScaleTo = getMethod(scale, "SetScaleTo")
+                if setScaleFrom and setScaleTo then
+                    pcall(setScaleFrom, scale, 1.0, 1.0)
+                    pcall(setScaleTo, scale, 1.08, 1.08)
+                else
+                    local setScale = getMethod(scale, "SetScale")
+                    if setScale then pcall(setScale, scale, 1.08, 1.08) end
+                end
+                local setDuration = getMethod(scale, "SetDuration")
+                if setDuration then pcall(setDuration, scale, 0.5) end
+                local setSmoothing = getMethod(scale, "SetSmoothing")
+                if setSmoothing then pcall(setSmoothing, scale, "IN_OUT") end
+                local setLooping = getMethod(group, "SetLooping")
+                if setLooping then pcall(setLooping, group, "BOUNCE") end
+                pandemicAnimation = group
+            end
+        end
+    end
+    button.pandemicAnimation = pandemicAnimation or false
 
     local RadialGauge = EAM.UI.RadialGauge
     if RadialGauge and RadialGauge.create then
@@ -982,6 +1055,17 @@ function IconPool.release(icon)
         if stop then
             pcall(stop, anim)
         end
+    end
+
+    local popAnim = readField(icon, "popAnimation")
+    if popAnim then
+        local stop = getMethod(popAnim, "Stop")
+        if stop then pcall(stop, popAnim) end
+    end
+    local panAnim = readField(icon, "pandemicAnimation")
+    if panAnim then
+        local stop = getMethod(panAnim, "Stop")
+        if stop then pcall(stop, panAnim) end
     end
 
     local count = IconPool.inactiveCount + 1

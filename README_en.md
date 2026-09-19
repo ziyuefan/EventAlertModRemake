@@ -31,7 +31,7 @@ EAM features 8 completely decoupled, independently positioned, and freely dragga
 2. 🎯 **Target Buff / Debuff**: Precise tracking of target auras, CC, and debuff states.
 3. ⚔️ **Cross-Class / Target Cast**: Key enemy burst cooldowns and crucial friendly buffs.
 4. ⏳ **Spell Cooldown**: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode & outer linear bars (`TOP/BOTTOM/LEFT/RIGHT`), custom reordering (drag & drop, up/down), and desaturated placeholder masks.
-5. 🎒 **Item Cooldown**: Trinkets, on-use equipment, and consumables monitoring.
+5. 🎒 **Item Cooldown**: Trinkets, on-use equipment, and consumables monitoring; fully supports dual-track monitoring (19 equipment slots & item IDs), 3-tier robust cooldown fallback, and real-time gear swap synchronization.
 6. 🌋 **Ground Effect**: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.
 7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types (Mana, Rage, Energy, Combo Points, Chi, Insanity, Runic Power, Arcane Charges, Soul Shards, Holy Power, Essence, etc.).
 8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles with 18 core stats (Primary, Secondary, 4-in-1 Speeds, Armor, Total Shield Absorbs, and Heal Absorbs).

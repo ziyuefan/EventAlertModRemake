@@ -397,8 +397,8 @@ EAM.Data.SpellArray = {
         general = {
             { id = 104773, type = "spellCooldown" }, -- 不滅決心
             { id = 20707, type = "spellCooldown" }, -- 靈魂石
-            { id = 89808, type = "spellCooldown" }, -- 燒灼驅魔 (小鬼驅散)
-            { id = 19647, type = "spellCooldown" } -- 法術封鎖 (惡魔斷法)
+            { id = 89808, type = "spellCooldown", unit = "pet" }, -- 燒灼驅魔 (小鬼驅散)
+            { id = 19647, type = "spellCooldown", unit = "pet" } -- 法術封鎖 (惡魔斷法)
         }
     },
     DEMONHUNTER = {

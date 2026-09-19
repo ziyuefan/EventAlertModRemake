@@ -2316,6 +2316,7 @@ FlowTestRunner.registerCase({
                 { frameTypes.spellCooldown, {}, keys.spellCooldown },
                 { frameTypes.itemCooldown, {}, keys.itemCooldown },
                 { frameTypes.groundEffect, {}, keys.groundEffect },
+                { frameTypes.petAlert, {}, keys.petAlert },
             }
             for index = 1, #cases do
                 local borderCase = cases[index]
@@ -2919,6 +2920,7 @@ FlowTestRunner.registerCase({
                     classPower = true,
                     totem = true,
                     tooltipMonitor = true,
+                    petAlert = true,
                 },
                 enableItemCooldown = true,
                 powerMana = true,
@@ -2961,10 +2963,11 @@ FlowTestRunner.registerCase({
                 EAM.Constants.MODULE_KEYS.classPower,
                 true
             )
-            local catalogValid = #controller.ModuleOptions == 9
+            local catalogValid = #controller.ModuleOptions == 10
                 and controller.isValidKey(EAM.Constants.MODULE_KEYS.playerAura)
                 and controller.isValidKey(EAM.Constants.MODULE_KEYS.playerStat)
                 and controller.isValidKey(EAM.Constants.MODULE_KEYS.tooltipMonitor)
+                and controller.isValidKey(EAM.Constants.MODULE_KEYS.petAlert)
                 and not controller.isValidKey("notAModule")
 
             local result = catalogValid
@@ -3517,7 +3520,7 @@ FlowTestRunner.registerCase({
                 and spellCandidate.kind == "spell"
                 and spellCandidate.spellID == 910001
                 and spellCandidate.actionOne == service.ACTION_SPELL_COOLDOWN
-                and spellCandidate.actionTwo == nil
+                and (spellCandidate.actionTwo == nil or spellCandidate.actionTwo == service.ACTION_GROUND_EFFECT)
                 and #spellLines == 2
                 and spellLines[1].kind == "double"
                 and spellLines[1].rightText == "910001"
@@ -3534,7 +3537,7 @@ FlowTestRunner.registerCase({
                 and itemCandidate.kind == "item"
                 and itemCandidate.itemID == 910002
                 and itemCandidate.actionOne == service.ACTION_ITEM_COOLDOWN
-                and itemCandidate.actionTwo == nil
+                and (itemCandidate.actionTwo == nil or itemCandidate.actionTwo == service.ACTION_GROUND_EFFECT)
                 and #itemLines == 2
                 and itemLines[1].kind == "double"
                 and itemLines[1].rightText == "910002"
@@ -5380,6 +5383,111 @@ FlowTestRunner.registerCase({
         local valid = ok and result == true
         return valid, valid and "12.1 itemID targets one item and missing itemID safely falls back to merged refresh"
             or "12.1 targeted item cooldown refresh mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.item.slot_121",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.ItemCooldownService
+        if not mock or not service then
+            return STATUS_SKIP, "item cooldown strict mock is offline only"
+        end
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local origGetInvCD = api.GetInventoryItemCooldown
+        local origGetInvID = api.GetInventoryItemID
+        local origGetInvTex = api.GetInventoryItemTexture
+        local origGetItemCD = api.C_Item and api.C_Item.GetItemCooldown
+
+        local ok, result = pcall(function()
+            EAM.db = {
+                revision = 820003,
+                alerts = {
+                    itemCooldowns = {
+                        ["itemCooldown:player:slot:13"] = {
+                            id = "itemCooldown:player:slot:13",
+                            enabled = true,
+                            slotID = 13,
+                        },
+                    },
+                },
+            }
+            service.states = {}
+
+            api.GetInventoryItemID = function(unit, slot)
+                if slot == 13 then return 193757 end
+                return nil
+            end
+            api.GetInventoryItemTexture = function(unit, slot)
+                if slot == 13 then return 134400 end
+                return nil
+            end
+            api.GetInventoryItemCooldown = function(unit, slot)
+                if slot == 13 then
+                    return 50, 120, 1
+                end
+                return 0, 0, 1
+            end
+
+            service.updateAlertList()
+            service.refreshAll("TEST_SLOT_INIT")
+
+            local state = service.states["itemCooldown:player:slot:13"]
+            if not state or not state.shown or state.completed ~= false then
+                return false
+            end
+            if state.timer.mode ~= EAM.Constants.TIMER_NUMERIC or state.timer.startTime ~= 50 or state.timer.duration ~= 120 then
+                return false
+            end
+
+            api.GetInventoryItemCooldown = function(unit, slot)
+                if slot == 13 then
+                    return 60, 120, 1
+                end
+                return 0, 0, 1
+            end
+            service.onCooldownEvent("SPELL_UPDATE_COOLDOWN", nil, nil, nil, nil, 193757)
+            state = service.states["itemCooldown:player:slot:13"]
+            if not state or state.timer.startTime ~= 60 then
+                return false
+            end
+
+            api.GetInventoryItemCooldown = function(unit, slot)
+                return 0, 0, 1
+            end
+            if api.C_Item then
+                api.C_Item.GetItemCooldown = function(id)
+                    if id == 193757 then
+                        return 70, 90, true
+                    end
+                    return 0, 0, true
+                end
+            end
+            service.refreshSlot(13, "TEST_FALLBACK")
+            state = service.states["itemCooldown:player:slot:13"]
+            if not state or state.timer.startTime ~= 70 or state.timer.duration ~= 90 then
+                return false
+            end
+
+            return true
+        end)
+
+        EAM.db = originalDB
+        service.states = originalStates
+        api.GetInventoryItemCooldown = origGetInvCD
+        api.GetInventoryItemID = origGetInvID
+        api.GetInventoryItemTexture = origGetInvTex
+        if api.C_Item then
+            api.C_Item.GetItemCooldown = origGetItemCD
+        end
+
+        local valid = ok and result == true
+        return valid, valid and "12.1 slot cooldown supports number enable 1, itemID matching, and 3-tier fallback"
+            or "12.1 slot cooldown verification failed"
     end,
 })
 
@@ -7511,4 +7619,167 @@ FlowTestRunner.registerCase({
             and "pre-rendered cooldowns respect showSCDOutsideCombat: hidden outside combat, visible in combat"
             or ("pre-rendered cooldown combat visibility contract mismatch: " .. tostring(result))
     end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ui.live_preview_realtime_sync",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+            local originalDB = EAM.db
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            local defaults = saved and saved.defaults
+
+            -- 1. 驗證 defaults.config.iconAlpha 為 1.0
+            local defaultAlpha = defaults and defaults.config and defaults.config.iconAlpha
+            if defaultAlpha ~= 1.0 then
+                return false, "defaults.config.iconAlpha expected 1.0, got: " .. tostring(defaultAlpha)
+            end
+
+            -- 2. 驗證 updateConfigNumber 支援 iconAlpha
+            EAM.db = {
+                revision = 870001,
+                config = {
+                    iconSize = 56,
+                    iconAlpha = 1.0,
+                    fontSizeSpellName = 12,
+                    fontSizeTimeVal = 14,
+                    fontSizeStack = 12,
+                    showSpellName = true,
+                    showTimeVal = true,
+                    cooldownShadow = true,
+                    cooldownSwipeAlpha = 0.8,
+                    cooldownSwipeColor = { r = 0, g = 0, b = 0 },
+                    textLayout = {
+                        timer = { placement = "OUTSIDE_TOP", fontSize = 14 },
+                        applications = { placement = "INSIDE_BOTTOM_RIGHT", fontSize = 12 },
+                    },
+                    timerColorCurve = {
+                        enabled = true,
+                        stages = {
+                            { threshold = 3, color = { 1.0, 0.15, 0.15, 1.0 } },
+                            { threshold = 5, color = { 1.0, 0.82, 0.0, 1.0 } },
+                        },
+                        normalColor = { 1.0, 1.0, 1.0, 1.0 },
+                    },
+                },
+                layout = {
+                    frames = {
+                        selfAura = { growDirection = 1 },
+                    },
+                },
+            }
+
+            local okUpdate, statusUpdate = saved.updateConfigNumber("iconAlpha", 0.65)
+            if not okUpdate or statusUpdate ~= "updated" or EAM.db.config.iconAlpha ~= 0.65 then
+                EAM.db = originalDB
+                return false, "updateConfigNumber iconAlpha failed"
+            end
+
+            -- 3. 驗證 PreviewPanel.refreshAlertPreview 邏輯
+            local preview = EAM.UI.PreviewPanel
+            if preview and preview.refreshAlertPreview then
+                local originalAlertIcon = preview.alertIcon
+                local originalSimTime = preview.simulatedTime
+
+                local dummyRegion = function()
+                    local r = { shown = true }
+                    function r:Show() self.shown = true end
+                    function r:Hide() self.shown = false end
+                    function r:IsShown() return self.shown end
+                    function r:SetText(t) self.text = t end
+                    function r:SetTextColor(...) self.color = { ... } end
+                    function r:SetFont(...) end
+                    function r:ClearAllPoints() end
+                    function r:SetPoint(...) end
+                    return r
+                end
+
+                local mockAI = {
+                    alpha = 1.0,
+                    width = 56,
+                    height = 56,
+                    shown = true,
+                    timerText = dummyRegion(),
+                    nameText = dummyRegion(),
+                    stackText = dummyRegion(),
+                    glow = dummyRegion(),
+                    pandemic = dummyRegion(),
+                    cooldown = {
+                        shown = true,
+                        Show = function(self) self.shown = true end,
+                        Hide = function(self) self.shown = false end,
+                        IsShown = function(self) return self.shown end,
+                        SetSwipeColor = function(self, ...) self.swipeColor = { ... } end,
+                        SetCooldown = function(self, s, d) self.start = s; self.dur = d end,
+                    },
+                }
+                function mockAI:SetSize(w, h) self.width = w; self.height = h end
+                function mockAI:SetAlpha(a) self.alpha = a end
+                function mockAI:GetAlpha() return self.alpha end
+                function mockAI:ClearAllPoints() end
+                function mockAI:SetPoint(...) end
+
+                preview.alertIcon = mockAI
+
+                -- 檢查自定義字型、隱藏控制項與透明度套用
+                EAM.db.config.fontSizeTimeVal = 26
+                EAM.db.config.fontSizeSpellName = 18
+                EAM.db.config.fontSizeStack = 16
+                EAM.db.config.showSpellName = false
+                EAM.db.config.showTimeVal = false
+                EAM.db.config.cooldownShadow = false
+                preview.simulatedTime = 2.0
+
+                preview.refreshAlertPreview()
+
+                local alphaMatch = math.abs((mockAI:GetAlpha() or 1) - 0.65) < 0.01
+                local nameHidden = mockAI.nameText:IsShown() == false
+                local timerHidden = mockAI.timerText:IsShown() == false
+                local cdHidden = mockAI.cooldown:IsShown() == false
+                local timerColorLow = mockAI.timerText.color and mockAI.timerText.color[1] == 1.0
+
+                if not (alphaMatch and nameHidden and timerHidden and cdHidden and timerColorLow) then
+                    preview.alertIcon = originalAlertIcon
+                    preview.simulatedTime = originalSimTime
+                    EAM.db = originalDB
+                    return false, "PreviewPanel.refreshAlertPreview visual state mismatch"
+                end
+
+                -- 測試切換回顯示與高於閾值秒數
+                EAM.db.config.showSpellName = true
+                EAM.db.config.showTimeVal = true
+                EAM.db.config.cooldownShadow = true
+                preview.simulatedTime = 10.0
+                preview.refreshAlertPreview()
+
+                local nameShown = mockAI.nameText:IsShown() == true
+                local timerShown = mockAI.timerText:IsShown() == true
+                local cdShown = mockAI.cooldown:IsShown() == true
+                local timerColorNorm = mockAI.timerText.color and mockAI.timerText.color[1] == 1.0 and mockAI.timerText.color[2] == 1.0
+
+                preview.alertIcon = originalAlertIcon
+                preview.simulatedTime = originalSimTime
+
+                if not (nameShown and timerShown and cdShown and timerColorNorm) then
+                    EAM.db = originalDB
+                    return false, "PreviewPanel.refreshAlertPreview re-enable mismatch"
+                end
+            end
+
+            -- 4. 驗證 Renderer.refreshPreviewLayout 呼叫不報錯且正確套用
+            local renderer = EAM.UI.Renderer
+            if renderer and renderer.refreshPreviewLayout then
+                renderer.activeAnchorMap = { selfAura = true }
+                local okLayout, errLayout = pcall(renderer.refreshPreviewLayout)
+                renderer.activeAnchorMap = nil
+                if not okLayout then
+                    EAM.db = originalDB
+                    return false, "Renderer.refreshPreviewLayout error: " .. tostring(errLayout)
+                end
+            end
+
+            EAM.db = originalDB
+            return true, "Live Preview and preview layout contract verified successfully"
+        end,
 })

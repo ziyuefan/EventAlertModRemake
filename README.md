@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.5-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.6-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -31,7 +31,7 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態。
 3. ⚔️ **跨職業光環 (Cross-Class / Target Cast)**：監控敵方關鍵爆發或隊友重要增益。
 4. ⏳ **技能冷卻 (Spell Cooldown)**：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (`Radial Mode`) 與框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)。
-5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控。
+5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控；全面支援 19 部位裝備欄位代號與具體物品 ID 雙軌監控、穿戴裝備三軌冷卻備援機制與即時換裝響應。
 6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。
 7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。
 8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。
@@ -158,6 +158,36 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
 
+### 🌟 [Retail 12.1.0 Alpha 8.6] - 2026.09.19
+- **地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment & Zero In-Combat Interruption)**：
+  - 徹底解決地面效果在戰鬥中施放不顯示的痛點：校正預熱機制從當前職業專精 Profile 取得地面技能，非戰鬥期間預先建立 Frame、完成定位排版並將透明度設為 0 常駐於記憶體中。
+  - 移除服務層戰鬥中阻斷施法的延遲拒絕邏輯，改為純記憶體即時編譯法術快取（耗時 < 0.05ms）。戰鬥中施放暴風雪、寒冰寶珠等地面技能時直接瞬間以 `SetAlpha(1.0)` 點亮並觸發 Pop 動畫，零 Taint、零 GC、零延遲！
+  - 持續時間結束後以 `Alpha = 0` 常駐保留槽位，不再銷毀，下次施法即時再次點亮。
+- **自訂警示條件視窗元件洩漏隔離修復 (Condition Panel Lifecycle & Item Control Isolation Fix)**：
+  - 徹底修復自訂條件視窗開啟時，物品裝備欄位輸入框與說明文字殘留於地面效果面板上的缺陷。
+  - 實裝條件視窗建立預設隱藏 (`:Hide()`)、分類專屬隔離與 `OnHide` 生命週期清理，確保各類技能面板乾淨俐落。
+- **冷卻可用發光金框比例幾何修復 (Cooldown ActionButton Glow Geometric Ratio Fix)**：
+  - 徹底根除冷卻可用或 Proc 時「低於圖示大小的小金框」視覺缺陷。
+  - 拋棄舊版 `SetAllPoints` 強制壓縮做法，改為動態置中並依原廠材質有效邊框比例放大 1.778 倍 (`64/36`)，金屬邊框 100.0% 精確貼齊按鈕邊緣，四周透明羽化柔和溢出為標準金色流光！預覽視窗 (`PreviewPanel`) 同步支援置中縮放。
+- **Retail 12.1 原生光環容器幾何錨點解耦 (Native Aura Container Direct Anchor to UIParent)**：
+  - 解決 Retail 12.1 原生光環容器因依賴框架被 `Hide()` 導致世界幾何坐標失效、致使目標 DoT 光環在實機中徹底消失的暴雪 FrameXML 幾何陷阱。
+  - 原生容器直接物理錨定至 `UIParent`，坐標直讀設定檔；排版移動拖曳放開即時更新物理位置，重載介面 (`/reload`) 100% 準確記憶自訂位置。
+- **技能充能次數僅顯示當前可用次數 (Spell Charges Show Available Charges Only)**：
+  - 充能次數文字顯示精準優化，僅顯示當前可用充能數（例如 2），不再冗餘顯示最大次數（如 2/2），介面更加清新簡潔。
+- **Native Aura 光環後端設定變更醒目提醒與一鍵重載 (Native Aura Prominent /reload Reminder & One-Click UI Reload)**：
+  - 針對 12.1 底層 Native Aura 安全容器沙盒機制，於一般設定頁提供醒目金黃色警告提示與快捷 `[/reload]` 重新載入按鈕。
+  - 自身增益/減益、目標減益光環清單底部操作欄位即時提示光環變更若未即時生效，請執行 `/reload` 重新載入介面；手動套用時於聊天視窗輸出明確引導。
+- **地面效果動態反向法術家族解析 (Ground Effect Reverse Spell Family Resolution)**：
+  - 支援天賦替換技能、巨集施放與子法術觸發時透過 `C_Spell.GetBaseSpell` 與 `GetOverrideSpell` 雙向反查並動態建立快取，覆蓋技能 100% 穩定捕獲。
+  - 外部新增或快捷加入地面效果時即時廣播更新，免 `/reload` 即時生效。
+- **快捷加入彈窗 (CTRL+ALT) 支援地面效果模組與多向自選 (Ctrl+Alt Quick-Add Ground Effect & Multi-Route Support)**：
+  - 游標懸停技能、物品或巨集時按下 Ctrl+Alt，彈窗升級為 2x2 現代化四按鈕佈局。
+  - 法術支援四分流（技能冷卻、地面效果、自身光環、目標光環）；物品自動解析關聯法術一鍵加入地面效果。
+  - 繁中 (zhTW)、簡中 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU) 5 大語系詞條全數對齊。
+- **多框架移動模式綠色高亮外框與滾輪即時微調 (Green Mover Frame & Realtime Wheel Spacing Adjustment)**：
+  - 移動模式以半透明翡翠綠外框包覆整個警示群組，點擊外框任意區域即可平滑拖曳。
+  - 支援滑鼠滾輪即時微調圖示大小與間距，附帶半透明浮動 HUD 即時呈現當前數值反饋。
+
 ### 🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12
 - **獨立即時效果預覽視窗 (Independent Live Preview Panel - PreviewPanel)**：
   - 全新開發可自由拖曳、螢幕鎖定之獨立效果預覽視窗，提供「告警圖示」、「職業資源條」、「角色屬性」3 大頁籤。
@@ -280,11 +310,25 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - 移動模式保護機制：開啟拖曳錨點時自動顯示高亮外框與拖曳提示，防止高頻計時器重設位置。
   - 修復飛龍模式飛速圖示黑框問題：改用數值型 FileDataID 4667307 與動態 API 獲取原生圖示。
   - 重構左右列表與細部表單雙向同步，增加選中條目金框高亮，新增「全選監控」與「全部停用」批次按鈕。
-- **主選單排版精確對齊與控制項優化**：
-  - 修復「測試閃爍」按鈕覆蓋文字問題，獨立配置於專屬按鈕列。
-  - 將「啟用 12.1 原生圓形光環倒數光圈」完整回歸主設定選單核心控制區。
+### 🚀 [Retail 12.1.0 Alpha 8.6] - 2026.09.14
+- **獨立效果預覽深度修復與智慧分頁連動 (Live Preview Deep Fix & Smart Tab Auto-Switch)**：
+  - 徹底解決預覽視窗焦點錯位問題：從職業資源或角色屬性面板點擊「效果預覽」時，預覽視窗自動精確切換至對應分頁（職業資源/角色屬性/告警圖示），不再停留在技能圖示造成「未即時更新」錯覺。
+  - 加固預覽視窗之資料庫讀取鏈路：優先讀取即時 Draft，若無 Draft 則平滑降級至 SavedVariables 權威設定並提供大小寫容錯，徹底告別空表回退預設問題。
+  - 解除 autoApplyDraft 的刷新阻斷：無論配置是否判定為 unchanged，滑桿拖曳、勾選框切換或下拉選單變更時 100% 即時熱刷新預覽畫面。
+- **全面改建單擊循環選項為現代化下拉選單 (Comprehensive Click-to-Cycle to Dropdown Overhaul)**：
+  - 職業資源面板：顯示模式（自動/長條條形/離散點數）、排列方向（水平/垂直）、父框架錨點（9 點）、自身定位點（9 點）、設定範圍（專精覆寫/全職業預設）全面改建為直觀且具備綠色核取勾號提示的現代化下拉選單 (Dropdown Menu)，徹底告別盲按循環。
+  - 角色屬性面板：位置與錨點 (Tab 4) 新增「基準錨點 (Anchor Point)」9 點下拉選單，讓玩家精確自訂螢幕定位原點。
+  - 內部契約無損相容：保留所有內部循環函式（cyclePoint, cycleOrientation 等）與按鈕定義，支援右鍵快速循環且 100% 通過靜態合約檢查。
+- **內建系統即時診斷報告與一鍵全選複製 (Built-in System Diagnostics & One-Click Copy Report)**：
+  - 實裝全新系統即時診斷系統：新增斜線指令 `/eam diag`、`/eam report` 與 `/eam debug`。
+  - 在即時效果預覽視窗標題列右上角與主設定面板底部新增「系統診斷」按鈕，彈出 680x520 獨立滾動文字對話框。
+  - 即時自動採集：插件版本、WoW 客戶端版本與 TOC、當前語系、角色職業專精與戰鬥狀態、AlertManager/Resource/Stat 核心模組活躍數、CDM 影子載體狀態、SharedMedia 字型數、Lua 記憶體用量 (MB/KB)、即時 FPS 與網路延遲、當前選定資源/屬性之 Draft 完整參數。
+  - 提供「一鍵全選複製」按鈕：點擊自動反白選取整段診斷內容並給予複製提示，方便玩家一鍵貼給開發團隊進行秒級精確排查。
+- **法術名稱位置自訂與下方預設排版 (Spell Name Text Placement)**：
+  - 技能/光環名稱預設全面改為置於圖示下方 (OUTSIDE_BOTTOM)，排版更加和諧美觀。
+  - 在設定面板「字型與文字」新增「法術名稱位置」21 種排版下拉選單，與秒數倒數、堆疊層數一樣享有完整 21 種錨點自訂能力，所調即所見。
 
-### 🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24
+### 🌟 [Retail 12.1.0 Alpha 8.0 ~ Alpha 8.5] - 2026.09.12
 - **全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)**：
   - 在全部按鈕、核取方塊、滑桿、下拉選單、輸入編輯框與清單操作列加入直觀的懸停說明提示 (Hover Tooltips)，清晰標註控制項用途、設定範圍與操作指引。
   - 實作通用工具函式 `EAM.UI.setTooltip`，支援純文字、多語系字串與表格綁定，徹底消除介面操作門檻。
