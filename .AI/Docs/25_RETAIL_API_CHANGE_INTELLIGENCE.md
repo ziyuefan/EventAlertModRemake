@@ -240,3 +240,30 @@ P0 邊界：不得從 AuraData 讀取／推導 sound trigger，不得保存 regi
 - [12.1.0.69273 UnitAura API](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua)
 - [12.1.0.69273 Trigger enum](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua)
 - [12.1.0.69273 UnitAuraSoundInfo](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua)
+
+## 2026-09-19：12.1.5 INTRINSIC_AuraButton 前瞻技術備存（R&D Staged / 非 12.1.0 發布基準）
+
+### 1. 開發邊界與發布準則（鐵律）
+
+- **測試環境現狀**：因暴雪關閉 12.1 PTR，本機開發與測試暫於 12.1.5 PTR 進行。
+- **發布基準鎖定**：對外正式發布之目標環境為 **Retail 12.1.0（TOC: 120100）**。
+- **實作紅線**：代碼實作 **100% 嚴格以 12.1.0 為主**，維持以 `AuraContainerService.lua` 與 `NativeAuraRenderer.lua` 為核心之 12.1.0 相容架構；**絕對禁止在 12.1.0 發布分支中提前使用 12.1.5 專屬 API（如 `CreateFrame("AuraButton")`）**，以防廣大 12.1.0 玩家客戶端因 API 缺失而報錯崩潰。本段落僅作為技術備存。
+
+### 2. 12.1.5 INTRINSIC_AuraButton 規格摘要
+
+- **固有類型**：`CreateFrame("AuraButton", nil, UIParent, "CustomAuraButtonTemplate")`（由 Button 繼承之 Intrinsic Frame）。
+- **關鍵能力**：
+  1. **獨立一級公民**：脫離 12.1.0 必須寄生於 `AuraContainer` 的被動依賴，允許插件直接以 `Button` 級別建立單顆獨立光環。
+  2. **原生單向 Sinks**：`SetDurationBar`、`SetDurationCooldown`、`SetDurationText`、`SetApplicationCount`、`SetSpellName`、`SetCasterName`、`SetIcon`。
+  3. **解綁與熱替換方法群**：提供 `ClearDurationText()`、`ClearApplicationCount()`、`ClearSpellName()`、`ClearDurationBar()`、`ClearDurationCooldown()`、`ClearIcon()`。
+  4. **原生 Pandemic 狀態機**：`AddPandemicActiveAnimation`、`AddPandemicEnterAnimation`、`AddPandemicLeaveAnimation`、`AddPandemicRegion`，徹底由 C++ 引擎接管 30% 臨界值判定。
+  5. **原生驅散著色**：`AddDispelTypeTexture`、`SetDispelTypeText`。
+  6. **安全右鍵取消**：`SetCancelAuraButtons`。
+
+### 3. 未來架構潛力（待 12.1.5 正式推進時之 R&D 藍圖）
+
+- **解除「18 次重建必須 /reload」限制**：12.1.0 因無解綁 API 且 Container 重建上限為 18 次（`maxCreatedContainerCount = 18`），導致頻繁變更字型或技能時被迫要求玩家重載介面。12.1.5 單元化獨立後，可改為單顆按鈕建立/釋放，徹底告別 Container 配額壓力。
+- **光環字型大小免 /reload 即時熱套用**：未來在 12.1.5 可利用 `ClearDurationText()` 先解綁文字 Sink，重新 `SetFont` 後再 `SetDurationText()`，實現字型大小、樣式調整的 100% 平滑即時熱套用。
+
+固定來源：
+- [Warcraft Wiki：INTRINSIC_AuraButton](https://warcraft.wiki.gg/wiki/INTRINSIC_AuraButton)（Revision `6878724`，2026-09-19 00:19:09 UTC）

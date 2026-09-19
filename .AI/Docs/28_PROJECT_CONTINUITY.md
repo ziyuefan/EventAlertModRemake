@@ -9,7 +9,24 @@
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱（現行儲存點）
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存（現行儲存點）
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 **12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線**。
+  1. **全語系 CLI 命令列重構與跳脫碼修復**：
+     - 5 大語系（`zhTW`、`zhCN`、`enUS`、`koKR`、`ruRU`）功能說明在地化，徹底剔除生硬英文。
+     - 修復魔獸聊天框 `<spellID|target|...>` 因 `|t` 被當作 Texture 跳脫碼而破裂為 `<spellIDarget>` 的嚴重瑕疵，改為標準斜線 `<spell/target/cd/item/ground>`。
+     - 補齊 `/eam preview`、`/eam rune`、`/eam add ground` 與 `/eam lang` 即時語系切換。
+  2. **重要環境與發布準則（少年欸特別指令）**：
+     - **測試環境現狀**：因暴雪關閉 12.1 PTR，少年欸本機開發與測試環境暫於 12.1.5 PTR 進行。
+     - **發布基準鎖定**：正式發布目標環境為廣大玩家之 **Retail 12.1.0（TOC: 120100）**。
+     - **實作邊界鐵律**：代碼實作 **100% 嚴格以 12.1.0 為主**，維持以 `AuraContainerService.lua` 與 `NativeAuraRenderer.lua` 為核心之 12.1.0 穩定相容架構；**絕對禁止在 12.1.0 發布分支中提前引入 12.1.5 專屬 API（如 `CreateFrame("AuraButton")`）**，防範玩家客戶端噴錯崩潰。
+     - **12.1.5 技術備存**：有關 `INTRINSIC_AuraButton` 獨立一級公民、`Clear*` 解綁方法群與未來字型大小免 `/reload` 即時熱套用等分析，已完整歸檔至 `Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md` 作為前瞻備存。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【全語系 CLI 命令列與跳脫字元修復】：5 語系在地化，聊天框參數語法安全。
+  2. [x] 【12.1.5 前瞻技術備存與發布基準隔離】：情報已入庫，發布代碼嚴格鎖定 12.1.0。
+  3. [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。
+
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱
 
 - current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「地面技能不需要關聯物品或裝備」、「戰鬥施放還是不顯示地面效果,你乾脆把技能冷卻與物品冷卻那套搬過去可行嗎」。
   1. 根因剖析：
