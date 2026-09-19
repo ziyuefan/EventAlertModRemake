@@ -519,11 +519,35 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-09-19.01 (Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱 / 條件設定視窗元件隔離 / 88 Flow / 499 契約全綠)。</p>
+<p>目前快照版本：2026-09-19.02 (Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復 / 89 Flow / 499 契約全綠)。</p>
 <ul>
 <li><strong>版本斷點與自動遞增規則</strong>：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。</li>
 </ul>
-<h2 id="2026-09-19-retail-1210-alpha-86-cli-1215">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存（現行儲存點）</h2>
+<h2 id="2026-09-19-retail-1210-alpha-86">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復（現行儲存點）</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「光環文字大小無法隨設定即時反應，需要 /reload 才能生效」之重大缺陷。<ol>
+<li>根因剖析：</li>
+<li><strong>病根一（按鈕缺乏即時字型熱套用通道）</strong>：舊架構在 <code>NativeAuraRenderer.lua</code> 中未維護按鈕參照，<code>applyTextLayout</code> 寫死 <code>return false, "nativeRebuildRequired"</code>，導致文字樣式無法直接套用於已存在之原生按鈕。</li>
+<li><strong>病根二（Options 聯動盲區）</strong>：<code>Options.lua</code> 的 <code>notifyTextLayoutChanged()</code> 僅通知通用 Legacy 渲染器，完全未打通 Native 原生按鈕通道。</li>
+<li><strong>病根三（容器重建上限死鎖與非同步盲區）</strong>：放開滑桿時試圖呼叫 <code>triggerSafeRebuild</code> 重新建立暴雪 <code>AuraContainer</code>，但暴雪原生容器不會主動為「當前身上已存在的光環」回溯重跑 <code>initializeFrame</code>；且反覆拉動滑桿快速耗盡 18 次配額觸發 <code>nativeReloadRequired</code> 永久死鎖，迫使玩家必須 <code>/reload</code>。</li>
+<li>根治架構（弱引用池 + 零配額原位熱套用）：</li>
+<li><strong>弱引用按鈕註冊池</strong>：<code>NativeAuraRenderer.buttons</code> 使用 <code>setmetatable({}, { __mode = "k" })</code>，於 <code>initializeButton</code> 時記錄按鈕與其 <code>timerText</code>、<code>stackText</code>、<code>nameText</code>，暴雪銷毀按鈕時由 Lua GC 自動釋放，零記憶體洩漏。</li>
+<li><strong>零配額熱套用函式</strong>：新增 <code>NativeAuraRenderer.updateButtonFonts(config)</code>，拉動滑桿時直接調用 <code>FontString:SetFont</code> 與 <code>SetTextColor</code> 原位熱更新，零延遲、無需銷毀容器、不消耗 18 次配額。</li>
+<li><strong>打通 Options 聯動</strong>：在 <code>Options.notifyTextLayoutChanged()</code> 注入 <code>NativeAuraRenderer.updateButtonFonts()</code>，拉動滑桿瞬間螢幕文字大小即時縮放。</li>
+<li><strong>消除配額浪費</strong>：<code>commitNativeChange</code> 針對文字大小滑桿移除多餘的 <code>triggerSafeRebuild</code>，徹底根除 18 次配額死鎖。</li>
+<li><strong>統一法術名稱取值</strong>：規則編譯器 <code>buildVisualFingerprint</code> 與 <code>snapshotStyle</code> 全面統一為 <code>TextPlacement.getFontSize(config, "spellName")</code>。</li>
+</ol>
+</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【NativeAuraRenderer 弱引用按鈕池與熱套用實裝】：<code>updateButtonFonts</code> 原位更新，零配額消耗、零延遲。</li>
+<li>[x] 【Options 滑桿即時聯動打通】：拉動滑桿與切換字型瞬間熱套用，移除多餘 rebuild 防範 18 次配額死鎖。</li>
+<li>[x] 【規則編譯器法術名稱字型統一】：指紋與樣式快照一致性對齊。</li>
+<li>[x] 【Flow 單元測試補充驗證】：新增 <code>ui.text_layout.native_live_hot_apply</code>，驗證原位熱套用成功。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 89/89 PASS、Contracts 499/499 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-19-retail-1210-alpha-86-cli-1215">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存</h2>
 <ul>
 <li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 <strong>12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線</strong>。<ol>
 <li><strong>全語系 CLI 命令列重構與跳脫碼修復</strong>：</li>
@@ -544,7 +568,7 @@
 </ol>
 </li>
 </ul>
-<h2 id="2026-09-19-retail-1210-alpha-86">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱</h2>
+<h2 id="2026-09-19-retail-1210-alpha-86_1">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱</h2>
 <ul>
 <li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「地面技能不需要關聯物品或裝備」、「戰鬥施放還是不顯示地面效果,你乾脆把技能冷卻與物品冷卻那套搬過去可行嗎」。<ol>
 <li>根因剖析：</li>

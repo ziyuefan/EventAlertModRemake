@@ -387,8 +387,9 @@ local function buildVisualFingerprint(db)
     local colorStr = (swipeColor and string.format("%.2f:%.2f:%.2f", swipeColor.r or 0, swipeColor.g or 0, swipeColor.b or 0)) or "0:0:0"
     local timerFontSize = timer and timer.fontSize or (config and config.fontSizeTimeVal) or 14
     local appFontSize = applications and applications.fontSize or (config and config.fontSizeStack) or 12
+    local spellNameFontSize = spellName and spellName.fontSize or (config and config.fontSizeSpellName) or 12
     return table.concat({
-        tostring(config and config.fontSizeSpellName or 12),
+        tostring(spellNameFontSize),
         tostring(config and config.fontFamily or "STANDARD"),
         tostring(timer and timer.placement or Constants.TEXT_PLACEMENT_TIMER_DEFAULT),
         tostring(timerFontSize),

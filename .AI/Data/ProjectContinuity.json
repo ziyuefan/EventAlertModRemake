@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-09-19.01",
+  "snapshotVersion": "2026-09-19.02",
   "updatedAt": "2026-09-19",
   "project": {
     "name": "EventAlertModRemake",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1.0 Alpha 8.6 CLI 全語系命令列自然語言重構完備（修復魔獸聊天框 Texture 跳脫碼破裂問題）；12.1.5 INTRINSIC_AuraButton 前瞻技術備存入庫（因暴雪關閉 12.1 PTR，本機暫以 12.1.5 PTR 測試，但實作 100% 嚴格以 12.1.0 為發布基準，絕不提前引入 12.1.5 API 導致玩家端報錯）；全套品質門禁 100% 通過（Lua 78/78, Flow 88/88, Contracts 499/499 PASS）。",
+    "objective": "Retail 12.1.0 Alpha 8.6 原生光環 (Native Aura) 文字大小即時熱套用徹底修復（導入弱引用按鈕池與 updateButtonFonts 原位熱更新，消除 18 次配額死鎖與 /reload 依賴）；全套品質門禁 100% 通過（Lua 78/78, Flow 89/89, Contracts 499/499 PASS）。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 88,
-      "passed": 88,
+      "total": 89,
+      "passed": 89,
       "failed": 0,
       "skipped": 0,
       "pending": 0

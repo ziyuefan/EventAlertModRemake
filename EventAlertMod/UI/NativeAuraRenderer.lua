@@ -23,6 +23,7 @@ local NativeAuraRenderer = {
     nativePandemicRegionCapabilityCount = 0,
     pandemicRegionBoundCount = 0,
     nativeDispelTextureBoundCount = 0,
+    buttons = setmetatable({}, { __mode = "k" }),
 }
 
 EAM.UI = EAM.UI or {}
@@ -83,7 +84,7 @@ local function snapshotStyle(rule)
     local swipeR, swipeG, swipeB = safeColorRGB(config and config.cooldownSwipeColor)
     return {
         iconSize = safePositive(config and config.iconSize, 40),
-        nameFontSize = safePositive(config and config.fontSizeSpellName, 12),
+        nameFontSize = TextPlacement.getFontSize(config, "spellName"),
         fontFamily = TextPlacement.getFontFamily(config),
         timerFontSize = TextPlacement.getFontSize(config, "timer"),
         applicationsFontSize = TextPlacement.getFontSize(config, "applications"),
@@ -294,6 +295,14 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     end
 
     auraButton.eamNativeInitialized = true
+    auraButton.eamTimerText = timerText
+    auraButton.eamStackText = stackText
+    auraButton.eamNameText = nameText
+    NativeAuraRenderer.buttons[auraButton] = {
+        timer = timerText,
+        stack = stackText,
+        name = nameText,
+    }
     NativeAuraRenderer.initializedButtonCount =
         NativeAuraRenderer.initializedButtonCount + 1
     NativeAuraRenderer.textLayoutApplyCount =
@@ -305,6 +314,46 @@ function NativeAuraRenderer.createInitializer(rule, container, slotIndex)
     return function(auraButton)
         initializeButton(auraButton, rule, container, slotIndex, style)
     end
+end
+
+function NativeAuraRenderer.resetButtons()
+    NativeAuraRenderer.buttons = setmetatable({}, { __mode = "k" })
+end
+
+function NativeAuraRenderer.updateButtonFonts(config)
+    config = config or (EAM.db and EAM.db.config)
+    if not config then
+        return false, "configUnavailable"
+    end
+    local fontFamily = TextPlacement.getFontFamily(config)
+    local timerFontSize = TextPlacement.getFontSize(config, "timer")
+    local stackFontSize = TextPlacement.getFontSize(config, "applications")
+    local nameFontSize = TextPlacement.getFontSize(config, "spellName")
+    local timerColor = TextPlacement.getColor(config, "timer")
+    local stackColor = TextPlacement.getColor(config, "applications")
+    local nameColor = TextPlacement.getColor(config, "spellName")
+
+    local count = 0
+    for button, texts in pairs(NativeAuraRenderer.buttons) do
+        local isLocked = button and rawget(button, "_eamInitializationLocked") == true
+        if not isLocked then
+            if texts.timer then
+                pcall(TextPlacement.applyFont, texts.timer, timerFontSize, fontFamily)
+                pcall(TextPlacement.applyColor, texts.timer, timerColor)
+            end
+            if texts.stack then
+                pcall(TextPlacement.applyFont, texts.stack, stackFontSize, fontFamily)
+                pcall(TextPlacement.applyColor, texts.stack, stackColor)
+            end
+            if texts.name then
+                pcall(TextPlacement.applyFont, texts.name, nameFontSize, fontFamily)
+                pcall(TextPlacement.applyColor, texts.name, nameColor)
+            end
+            count = count + 1
+        end
+    end
+    NativeAuraRenderer.textLayoutApplyCount = NativeAuraRenderer.textLayoutApplyCount + 1
+    return true, count
 end
 
 function NativeAuraRenderer.applyTextLayout()
@@ -319,11 +368,19 @@ function NativeAuraRenderer.anchorSlot()
     return false, "initializeFrameOnly"
 end
 
+local function countTrackedButtons()
+    local count = 0
+    for _ in pairs(NativeAuraRenderer.buttons) do
+        count = count + 1
+    end
+    return count
+end
+
 function NativeAuraRenderer.getStatus()
     local config = EAM.db and EAM.db.config or nil
     return {
         initializedButtonCount = NativeAuraRenderer.initializedButtonCount,
-        trackedButtonCount = 0,
+        trackedButtonCount = countTrackedButtons(),
         textLayoutPending = false,
         textLayoutApplyCount = NativeAuraRenderer.textLayoutApplyCount,
         nativeBorderCapabilityCount = NativeAuraRenderer.nativeBorderCapabilityCount,

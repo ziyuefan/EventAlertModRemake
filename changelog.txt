@@ -1,4 +1,10 @@
 -- [Retail 12.1.0 Alpha 8.6 Live Preview Overhaul, Modern Dropdowns & System Diagnostics] 2026.09.14
+     -- 原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply & Zero Reload):
+        -- 徹底修復 Retail 12.1.0 原生光環 (Native Aura) 在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 /reload 才能生效的重大缺陷。
+        -- 實裝 NativeAuraRenderer 弱引用按鈕註冊池 (Weak Table Buttons Pool)，於光環按鈕初始化時安全保留 FontString 參照，暴雪銷毀按鈕時由 Lua GC 自動釋放，零記憶體洩漏。
+        -- 實裝 updateButtonFonts 零配額熱套用機制，拉動滑桿時直接調用 FontString:SetFont 原位更新畫面上所有活躍光環文字，零延遲、無需銷毀容器、不消耗 18 次配額，徹底擺脫 /reload 泥潭。
+        -- 優化 Options.lua 滑桿提交流程與文字通知路由，字型大小滑桿放開時不再觸發無謂的容器重建，杜絕觸發 18 次配額上限導致系統鎖死的隱患。
+        -- 統一全專案法術名稱字型大小取值邏輯，完善規則編譯器指紋 (buildVisualFingerprint) 與樣式快照 (snapshotStyle)，確保新舊光環按鈕字型大小 100% 一致。
      -- 地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment & Zero In-Combat Interruption):
         -- 徹底修復地面效果在戰鬥中施放不顯示的問題：校正 Renderer.prewarmAlertFrames 從 SavedVariables.getActiveAlerts() 讀取各職業 Profile，確保非戰鬥期間 100% 預熱建立 Frame。
         -- 全面對齊 CooldownService 成熟架構：移除 verifyCompiledAlerts 戰鬥中阻斷施法的延遲拒絕機制，改為純記憶體即時編譯，徹底終結 combatCompileDeferred 頑疾。

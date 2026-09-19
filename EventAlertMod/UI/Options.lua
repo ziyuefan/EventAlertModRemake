@@ -434,6 +434,9 @@ function Options.notifyTextLayoutChanged(reapplyNative)
     if EAM.UI.Renderer and EAM.UI.Renderer.applyTextLayout then
         EAM.UI.Renderer.applyTextLayout()
     end
+    if EAM.UI.NativeAuraRenderer and EAM.UI.NativeAuraRenderer.updateButtonFonts then
+        EAM.UI.NativeAuraRenderer.updateButtonFonts()
+    end
     if EAM.UI.Renderer and EAM.UI.Renderer.refreshPreviewLayout then
         EAM.UI.Renderer.refreshPreviewLayout()
     end
@@ -1810,7 +1813,6 @@ local function createSlider(parent, text, key, minVal, maxVal, step, x, y, width
         slider.eamNativeChangeDirty = false
         if isTextLayoutSlider then
             Options.notifyTextLayoutChanged(true)
-            triggerSafeRebuild("OPTIONS_TEXT_LAYOUT_SLIDER_COMMITTED")
         elseif isChargeBarSlider then
             Options.notifyConfigChanged(false)
         elseif isNativeStructureSlider or isNativeVisualSlider then

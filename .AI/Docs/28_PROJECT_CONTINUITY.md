@@ -5,11 +5,31 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-09-19.01 (Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱 / 條件設定視窗元件隔離 / 88 Flow / 499 契約全綠)。
+目前快照版本：2026-09-19.02 (Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復 / 89 Flow / 499 契約全綠)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存（現行儲存點）
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復（現行儲存點）
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「光環文字大小無法隨設定即時反應，需要 /reload 才能生效」之重大缺陷。
+  1. 根因剖析：
+     - **病根一（按鈕缺乏即時字型熱套用通道）**：舊架構在 `NativeAuraRenderer.lua` 中未維護按鈕參照，`applyTextLayout` 寫死 `return false, "nativeRebuildRequired"`，導致文字樣式無法直接套用於已存在之原生按鈕。
+     - **病根二（Options 聯動盲區）**：`Options.lua` 的 `notifyTextLayoutChanged()` 僅通知通用 Legacy 渲染器，完全未打通 Native 原生按鈕通道。
+     - **病根三（容器重建上限死鎖與非同步盲區）**：放開滑桿時試圖呼叫 `triggerSafeRebuild` 重新建立暴雪 `AuraContainer`，但暴雪原生容器不會主動為「當前身上已存在的光環」回溯重跑 `initializeFrame`；且反覆拉動滑桿快速耗盡 18 次配額觸發 `nativeReloadRequired` 永久死鎖，迫使玩家必須 `/reload`。
+  2. 根治架構（弱引用池 + 零配額原位熱套用）：
+     - **弱引用按鈕註冊池**：`NativeAuraRenderer.buttons` 使用 `setmetatable({}, { __mode = "k" })`，於 `initializeButton` 時記錄按鈕與其 `timerText`、`stackText`、`nameText`，暴雪銷毀按鈕時由 Lua GC 自動釋放，零記憶體洩漏。
+     - **零配額熱套用函式**：新增 `NativeAuraRenderer.updateButtonFonts(config)`，拉動滑桿時直接調用 `FontString:SetFont` 與 `SetTextColor` 原位熱更新，零延遲、無需銷毀容器、不消耗 18 次配額。
+     - **打通 Options 聯動**：在 `Options.notifyTextLayoutChanged()` 注入 `NativeAuraRenderer.updateButtonFonts()`，拉動滑桿瞬間螢幕文字大小即時縮放。
+     - **消除配額浪費**：`commitNativeChange` 針對文字大小滑桿移除多餘的 `triggerSafeRebuild`，徹底根除 18 次配額死鎖。
+     - **統一法術名稱取值**：規則編譯器 `buildVisualFingerprint` 與 `snapshotStyle` 全面統一為 `TextPlacement.getFontSize(config, "spellName")`。
+- 當前多進度各環節達成狀態（Multi-Stage Status）：
+  1. [x] 【NativeAuraRenderer 弱引用按鈕池與熱套用實裝】：`updateButtonFonts` 原位更新，零配額消耗、零延遲。
+  2. [x] 【Options 滑桿即時聯動打通】：拉動滑桿與切換字型瞬間熱套用，移除多餘 rebuild 防範 18 次配額死鎖。
+  3. [x] 【規則編譯器法術名稱字型統一】：指紋與樣式快照一致性對齊。
+  4. [x] 【Flow 單元測試補充驗證】：新增 `ui.text_layout.native_live_hot_apply`，驗證原位熱套用成功。
+  5. [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 89/89 PASS、Contracts 499/499 PASS。
+
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存
 
 - current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 **12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線**。
   1. **全語系 CLI 命令列重構與跳脫碼修復**：

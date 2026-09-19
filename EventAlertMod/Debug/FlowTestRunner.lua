@@ -1704,6 +1704,82 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
+    id = "ui.text_layout.native_live_hot_apply",
+    primarySuite = "boundary",
+    suites = { boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        local textPlacement = EAM.UI and EAM.UI.TextPlacement
+        if not mock or not nativeRenderer or not textPlacement then
+            return STATUS_SKIP, "native live hot apply mock dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        local originalApplyCount = nativeRenderer.textLayoutApplyCount
+        local originalInitializedCount = nativeRenderer.initializedButtonCount
+        local ok, result, message = pcall(function()
+            nativeRenderer.resetButtons()
+            EAM.db = buildAura121TestDB(129)
+            EAM.db.config.textLayout = {
+                schema = 1,
+                timer = { placement = "OUTSIDE_RIGHT_AT_TOP", fontSize = 16 },
+                applications = { placement = "INSIDE_BOTTOM_LEFT", fontSize = 14 },
+                spellName = { placement = "OUTSIDE_BOTTOM", fontSize = 12 },
+            }
+
+            local rule = {
+                unit = "player",
+                slotKey = "SLOT_1",
+                filterString = "HELPFUL",
+                layout = { elementWidth = 40, elementSpacing = 6 },
+                candidateFilters = { includeSpellIDs = { [129] = true } },
+                style = {
+                    showCountdown = true,
+                    showStacks = true,
+                    showName = true,
+                    showPandemic = false,
+                },
+            }
+            local initializer = nativeRenderer.createInitializer(rule, nil, 1)
+            local button = mock.createAuraButtonForTest()
+            initializer(button)
+
+            local initialValid = button.durationText ~= nil
+                and button.applicationCount ~= nil
+                and button.spellName ~= nil
+                and button.durationText.fontSize == 16
+                and button.applicationCount.fontSize == 14
+                and button.spellName.fontSize == 12
+
+            -- 即時更新字型大小
+            EAM.db.config.textLayout.timer.fontSize = 24
+            EAM.db.config.textLayout.applications.fontSize = 20
+            EAM.db.config.textLayout.spellName.fontSize = 18
+            local applied, updatedCount = nativeRenderer.updateButtonFonts()
+
+            local updatedValid = applied == true
+                and updatedCount == 1
+                and button.durationText.fontSize == 24
+                and button.applicationCount.fontSize == 20
+                and button.spellName.fontSize == 18
+
+            local valid = initialValid and updatedValid
+            return valid, valid and "native aura buttons update font sizes live without rebuild"
+                or "native live font hot-apply mismatch"
+        end)
+        nativeRenderer.resetButtons()
+        EAM.db = originalDB
+        nativeRenderer.textLayoutApplyCount = originalApplyCount
+        nativeRenderer.initializedButtonCount = originalInitializedCount
+        if not ok then
+            return false, tostring(result)
+        end
+        return result, message
+    end,
+})
+
+FlowTestRunner.registerCase({
     id = "ui.text_layout.general_reapply_combat_deferred",
     primarySuite = "boundary",
     suites = { boundary = true, aura121 = true },
@@ -2724,7 +2800,10 @@ FlowTestRunner.registerCase({
         nativeRenderer.applyTextLayout = originalNativeApply
         containerService.requestRebuild = originalRequestRebuild
         containerService.markSettingsDirty = originalMarkSettingsDirty
-        local valid = ok and result == true
+        if not ok then
+            return false, tostring(result)
+        end
+        local valid = result == true
         return valid, valid and "Native text/config changes mark settings dirty until manual rebuild"
             or "text layout notification routing mismatch"
     end,
