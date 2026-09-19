@@ -791,7 +791,7 @@ L.EAM_SLASH_LOOKUP_NONE = "当前职业的有限候选中没有符合项目。"
 L.EAM_SLASH_SHOW_UNSUPPORTED = "Retail 12.1 不使用旧式 UnitAura 扫描完整光环；请将鼠标移到光环图标后按 Ctrl+Alt 加入监控。"
 L.EAM_SLASH_AUTOADD_UNSUPPORTED = "Retail 12.1 不自动写入扫描结果；请通过 Tooltip 的 Ctrl+Alt 窗口确认后加入。"
 
-L.EAM_SLASH_HELP_PROFILE = "/eam profile [export|import] - 打开职业 profile JSON/Base64 分享"
+L.EAM_SLASH_HELP_PROFILE = "/eam profile [export/import] - 打开职业配置文件字符串导出/导入窗口"
 L.EAM_PROFILE_CODEC_TITLE = "EAM 职业 Profile 分享"
 L.EAM_PROFILE_CODEC_DESC = "粘贴 EAMAP1: payload，先预览，再选择合并或替换。Base64 不是加密。"
 L.EAM_PROFILE_CODEC_EXPORT = "导出当前职业"
