@@ -19,6 +19,7 @@ param(
     [string]$Tag = "",
     [string]$Title = "",
     [string]$PackageSuffix = "AGY",
+    [string]$ReleaseNotesPath = "",
     [switch]$Prerelease,
     [switch]$Draft,
     [switch]$DryRun,
@@ -149,51 +150,82 @@ foreach ($file in $filesToUpload) {
     Write-Host "  - $($item.Name) ($([math]::Round($item.Length / 1KB, 1)) KB)" -ForegroundColor Gray
 }
 
-# 6. 組裝結構化 Release Notes (僅限魔獸插件開發 CHANGELOG，不含任何 AI 治理描述)
-Write-Host "`n--> [3/4] 組裝結構化 Release Notes..." -ForegroundColor Cyan
-$recentChangelog = ""
-if (Test-Path -LiteralPath $changelogPath) {
-    $lines = Get-Content -LiteralPath $changelogPath -Encoding UTF8
-    $extracted = [System.Collections.Generic.List[string]]::new()
-    $recording = $false
-    foreach ($line in $lines) {
-        if ($line -match '^--\s*\[.+?\]') {
-            if ($recording) { break }
-            $recording = $true
-        }
-        if ($recording) {
-            $extracted.Add($line)
-        }
+# 6. 組裝結構化 Release Notes (優先採用已策展之 GFM Markdown 文件，杜絕任何未排版程式碼塊與 AI 治理描述)
+Write-Host "`n--> [3/4] 準備結構化 Release Notes..." -ForegroundColor Cyan
+
+$finalNotesPath = $null
+if (-not [string]::IsNullOrWhiteSpace($ReleaseNotesPath) -and (Test-Path -LiteralPath $ReleaseNotesPath -PathType Leaf)) {
+    $finalNotesPath = (Resolve-Path -LiteralPath $ReleaseNotesPath).Path
+    Write-Host "✓ 使用指定之 Release Notes：$finalNotesPath" -ForegroundColor Green
+} else {
+    $curatedNotesPath = Join-Path $distRoot "GITHUB_RELEASE_NOTES_${Tag}.md"
+    if (Test-Path -LiteralPath $curatedNotesPath -PathType Leaf) {
+        $finalNotesPath = $curatedNotesPath
+        Write-Host "✓ 自動採用已策展之 Release Notes：$finalNotesPath" -ForegroundColor Green
     }
-    $recentChangelog = $extracted -join "`r`n"
 }
 
-$addonHash = if ($addonZip) { (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash.ToLowerInvariant() } else { "N/A" }
-$addonFileName = if ($addonZip) { [System.IO.Path]::GetFileName($addonZip) } else { "N/A" }
+if (-not $finalNotesPath) {
+    $recentChangelog = ""
+    if (Test-Path -LiteralPath $changelogPath) {
+        $lines = Get-Content -LiteralPath $changelogPath -Encoding UTF8
+        $extracted = [System.Collections.Generic.List[string]]::new()
+        $recording = $false
+        foreach ($line in $lines) {
+            if ($line -match '^--\s*\[.+?\]') {
+                if ($recording) { break }
+                $recording = $true
+            }
+            if ($recording) {
+                # 轉成簡潔 Markdown 項目，去除 Lua 註解符號與多餘空白
+                $cleanLine = $line.Trim()
+                if ($cleanLine -match '^--\s*\[.+?\]') {
+                    continue
+                } elseif ($cleanLine -match '^--\s*(.+)$') {
+                    $extracted.Add("- " + $Matches[1].Trim())
+                } elseif (-not [string]::IsNullOrWhiteSpace($cleanLine)) {
+                    $extracted.Add($cleanLine)
+                }
+            }
+        }
+        $recentChangelog = $extracted -join "`r`n"
+    }
 
-$releaseNotes = @"
+    $addonHash = if ($addonZip) { (Get-FileHash -LiteralPath $addonZip -Algorithm SHA256).Hash.ToLowerInvariant() } else { "N/A" }
+    $addonFileName = if ($addonZip) { [System.IO.Path]::GetFileName($addonZip) } else { "N/A" }
+
+    $releaseNotes = @"
 # $Title
 
-## 📝 更新日誌 (Changelog)
-
-```text
-$recentChangelog
-```
+專為《魔獸世界 (Retail 12.1.0 / 12.0+)》量身打造的超輕量、零污染、純事件驅動法術監控、技能冷卻、地面效果與角色屬性戰鬥告警插件。
 
 ---
 
-## 📦 發布產物與 SHA-256 校驗 (Artifacts)
+## 🌟 本次更新重點 (Release Highlights)
+
+$recentChangelog
+
+---
+
+## 📦 發布產物與校驗資訊 (Artifacts & Checksums)
 
 | 檔案名稱 | 說明 | SHA-256 雜湊值 |
 | :--- | :--- | :--- |
-| **`$addonFileName`** | 遊戲 AddOn 插件安裝包 | `$addonHash` |
+| **$addonFileName** | 遊戲 AddOn 插件安裝包 | `$addonHash` |
 
-> ℹ️ **原始碼取得**：GitHub 已於下方自動提供本版本完整源碼包（`Source code (zip)` 與 `Source code (tar.gz)`），本機不再重複打包上傳 SRC 附件。
+> ℹ️ **原始碼取得**：GitHub 已於下方自動提供本版本完整源碼包（Source code (zip) 與 Source code (tar.gz)），本機不再重複打包上傳 SRC 附件。
+
+## 📥 安裝說明 (Installation)
+
+1. 下載附加的 **`$addonFileName`** 安裝包。
+2. 解壓縮後將 `EventAlertMod` 資料夾複製至魔獸世界安裝目錄下的 `_retail_\Interface\AddOns\` 中。
+3. 啟動遊戲即可享受完整功能，遊戲內輸入 `/eam` 即可開啟主設定面板。
 "@
 
-$notesTempPath = Join-Path $distRoot "RELEASE_NOTES_$Tag.md"
-[System.IO.File]::WriteAllText($notesTempPath, $releaseNotes, $utf8)
-Write-Host "✓ Release Notes 已產出至：$notesTempPath" -ForegroundColor Green
+    $finalNotesPath = Join-Path $distRoot "RELEASE_NOTES_$Tag.md"
+    [System.IO.File]::WriteAllText($finalNotesPath, $releaseNotes, $utf8)
+    Write-Host "✓ 自動生成結構化 Release Notes 至：$finalNotesPath" -ForegroundColor Green
+}
 
 # 7. 呼叫 gh CLI 發布 Release
 Write-Host "`n--> [4/4] 執行 GitHub Release 發布..." -ForegroundColor Cyan
@@ -208,7 +240,7 @@ foreach ($file in $filesToUpload) {
 $ghArgs.Add("--title")
 $ghArgs.Add($Title)
 $ghArgs.Add("--notes-file")
-$ghArgs.Add($notesTempPath)
+$ghArgs.Add($finalNotesPath)
 
 # 預設一律標記為 Prerelease (除非明確覆寫)
 if ($Prerelease.IsPresent -or (-not $PSBoundParameters.ContainsKey("Prerelease"))) {
