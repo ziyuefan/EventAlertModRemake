@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- EAM_AI_GOVERNANCE_DIRECTIVE: 專供 AI 代理人（Agentic AI / Subagents）執行指導之權威結構化規範 -->
-<eam_ai_governance version="1.1" last_updated="2026-09-13">
+<eam_ai_governance version="1.2" last_updated="2026-09-19">
     <!-- 1. 元資料與受眾 (Metadata & Audience) -->
     <metadata>
         <title>EventAlertMod AI 代理人核心治理與架構指導規範 (AI Governance Directive)</title>
@@ -171,25 +171,33 @@
         </layer>
 
         <layer name="Services" path="EventAlertMod/Services/">
-            <module name="AuraService.lua">自身/目標光環狀態機、增益/減益過濾、層數與吸收盾計算</module>
-            <module name="CooldownService.lua">技能冷卻精確施法過濾 (UNIT_SPELLCAST_SUCCEEDED)、預渲染佔位 (Alpha=0/灰階)</module>
-            <module name="ItemCooldownService.lua">裝備飾品與物品冷卻監控</module>
+            <module name="AuraService.lua">自身/目標光環狀態機、增益/減益過濾、層數與吸收盾計算、活躍光環全局熱掃描 (refreshAll)</module>
+            <module name="AuraCapabilityService.lua">Retail 12.1 原生光環容器能力探測、雙軌後端 (Native/Legacy) 智慧決策</module>
+            <module name="AuraContainerService.lua">Retail 12.1 原生光環容器生命週期、UIParent 直連幾何錨定與位置套用</module>
+            <module name="AuraSoundService.lua">暴雪 12.1 C_UnitAuras 音效註冊與生命週期管理</module>
+            <module name="CooldownService.lua">技能冷卻精確施法過濾 (UNIT_SPELLCAST_SUCCEEDED)、預渲染佔位 (Alpha=0/灰階)、三態行為控制</module>
+            <module name="ItemCooldownService.lua">裝備飾品與物品冷卻監控、19 部位裝備代號支援、三軌冷卻備援</module>
+            <module name="GroundEffectService.lua">地面效果精確施法觸發、動態反向法術家族解析 (Reverse Spell Family)、非戰鬥預熱與零 Taint 記憶體快取編譯</module>
             <module name="PlayerResourceService.lua">17 大職業資源拓撲、德魯伊形態切換、DK 六槽符文充能條</module>
             <module name="PlayerStatService.lua">18 大角色屬性、四合一速度 (滑翔 830%~1400%)、原生 SetFormattedText 渲染</module>
             <module name="SpellInfoService.lua">法術名稱、圖示快取與雙軌 C_Spell 備援</module>
+            <module name="TooltipMonitorService.lua">滑鼠懸停技能/物品/巨集 Tooltip 匿名偵測、Ctrl+Alt 快捷加入支援</module>
             <module name="MediaService.lua">LibSharedMedia-3.0 (SharedMedia) 動態探測 (ensureLSM)、第三方音效/字型雙軌讀取</module>
         </layer>
 
         <layer name="UI" path="EventAlertMod/UI/">
-            <module name="Renderer.lua">告警框架佈局 (SpellAlertFrame, CooldownAlertFrame)、預渲染灰階遮罩管理</module>
-            <module name="IconPool.lua">圖示物件池，Frame 預熱與零記憶體分配復用</module>
+            <module name="Renderer.lua">告警框架佈局 (SpellAlertFrame, CooldownAlertFrame, GroundEffectFrame)、非戰鬥預熱、純透明度抑制與綠色移動外框</module>
+            <module name="NativeAuraRenderer.lua">Retail 12.1 原生光環自訂樣式渲染器、按鈕外觀與冷卻動畫設定</module>
+            <module name="PreviewPanel.lua">獨立即時效果預覽面板 (PreviewPanel)，支援告警圖示、職業資源、角色屬性即時動態渲染與等比金框預覽</module>
+            <module name="IconPool.lua">圖示物件池，Frame 預熱、等比金色發光外框 (64/36) 與零記憶體分配復用</module>
             <module name="Theme.lua">11 套魔獸風格調色盤、自訂按鈕與自適應捲動下拉選單 (buildScrollableDropdownMenu)</module>
-            <module name="Options.lua">主設定面板、螢幕邊界鎖定 (SetClampedToScreen)、一鍵居中 (/eam reset)</module>
+            <module name="Options.lua">主設定面板、條件視窗生命週期隔離、螢幕邊界鎖定 (SetClampedToScreen)、一鍵居中 (/eam reset)</module>
             <module name="SidePanels">APPEND 模式無縫吸附側窗 (PlayerStatPanel, PlayerResourcePanel 等)</module>
         </layer>
 
         <layer name="Managers" path="EventAlertMod/Managers/">
             <module name="AlertManager.lua">多模組告警狀態聚集、Scheduler 批量更新節流</module>
+            <module name="AuraRuleCompiler.lua">Retail 12.1 原生光環規則編譯器與佈局指紋 (buildLayoutFingerprint) 計算</module>
             <module name="LayoutManager.lua">告警框架螢幕座標計算、成長方向 (UP/DOWN/LEFT/RIGHT/RING) 拓撲編譯</module>
         </layer>
     </architecture_contracts>
@@ -216,13 +224,13 @@
     <!-- 10. 驗證門禁與測試體系 (Verification & Quality Control) -->
     <verification_gates>
         <gate id="G1_LUA_SYNTAX" command="pwsh -NoProfile -File .\.AI\Tools\CheckLuaSyntax.ps1">
-            <expectation>76/76 全部通過，零語法錯誤，零未定義全域變數。</expectation>
+            <expectation>78/78 全部通過，零語法錯誤，零未定義全域變數。</expectation>
         </gate>
         <gate id="G2_FLOW_VALIDATION" command="pwsh -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1">
-            <expectation>84/84 狀態機場景全部通過，覆蓋戰鬥轉換、形態切換、Secret 注入與生命週期。</expectation>
+            <expectation>88/88 狀態機場景全部通過，覆蓋戰鬥轉換、形態切換、Secret 注入與生命週期。</expectation>
         </gate>
         <gate id="G3_VALIDATION_CONTRACTS" command="pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1">
-            <expectation>496/496 代碼契約全部通過，覆蓋 TOC 順序、多語系詞條、檔案完整性與路徑安全。</expectation>
+            <expectation>499/499 代碼契約全部通過，覆蓋 TOC 順序、多語系詞條、檔案完整性與路徑安全。</expectation>
         </gate>
         <gate id="G4_DEPLOY_DRYRUN" command="pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -DryRun">
             <expectation>三通道 (Retail, PTR, XPTR) 前檢通過，Reparse Point fail-closed 保護正常。</expectation>

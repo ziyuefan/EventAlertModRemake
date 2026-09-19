@@ -22,7 +22,7 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1 Alpha 8.6 冷卻可用發光金框幾何比例修復（根除小金框缺陷）、目標光環原生容器幾何解耦修復、光環框架坐標動態連動與重載記憶；全套品質門禁 100% 通過（Lua 78/78, Flow 88/88, Contracts 499/499 PASS, DEV Package PASS）。",
+    "objective": "Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱（根除戰鬥施法不顯示問題）、自訂條件視窗生命週期與物品元件洩漏隔離修復、GitHub Pre-release (alpha-8.6) 與 CurseForge (File ID: 8916787) 雙平台正式發布；全套品質門禁 100% 通過（Lua 78/78, Flow 88/88, Contracts 499/499 PASS）。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 88,
