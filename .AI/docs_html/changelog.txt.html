@@ -384,6 +384,92 @@
     </div>
     <div class="changelog-body">
 <ul class="changelog-mainlist">
+<li><strong>地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment &amp; Zero In-Combat Interruption):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底修復地面效果在戰鬥中施放不顯示的問題：校正 Renderer.prewarmAlertFrames 從 SavedVariables.getActiveAlerts() 讀取各職業 Profile，確保非戰鬥期間 100% 預熱建立 Frame。</li>
+<li>全面對齊 CooldownService 成熟架構：移除 verifyCompiledAlerts 戰鬥中阻斷施法的延遲拒絕機制，改為純記憶體即時編譯，徹底終結 combatCompileDeferred 頑疾。</li>
+<li>triggerGroundEffect 完整綁定 rawAlert 與 order，倒數到期常駐保留透明度 Alpha = 0 槽位，戰鬥中施放即時以 SetAlpha 點亮，零 Taint、零 GC、零延遲。</li>
+</ul>
+<li><strong>條件設定視窗元件洩漏修復 (Condition Frame Lifecycle &amp; Item Control Isolation Fix):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底修復自訂警示條件設定視窗開啟時，物品冷卻控制元件殘留於其他技能或地面技能設定面板的缺陷。</li>
+<li>嚴格實裝 condFrame 預設 Hide、條件專屬開關隔離與 OnHide 生命週期清理，確保各類型技能面板乾淨俐落。</li>
+</ul>
+<li><strong>技能充能次數僅顯示當前可用次數 (Spell Charges Show Available Charges Only):</strong></li>
+<ul class="changelog-sublist">
+<li>充能次數文字顯示精準優化，僅顯示當前可用充能次數（例如 2），不再附加顯示最大次數（如 2/2），介面更加清晰簡潔。</li>
+</ul>
+<li><strong>Native Aura 光環後端設定變更醒目提醒與一鍵重載 (Native Aura Prominent /reload Reminder &amp; One-Click UI Reload):</strong></li>
+<ul class="changelog-sublist">
+<li>針對暴雪 12.1 底層 Native Aura 安全容器沙盒機制，於一般設定頁提供醒目金黃色警告提示與快捷 [/reload] 重新載入按鈕。</li>
+<li>自身增益/減益、目標減益光環清單底部操作欄位即時提示光環變更若未即時生效，請執行 /reload 重新載入介面。</li>
+<li>手動套用 Native Aura 時於聊天視窗輸出明確引導，若遊戲內倒數或堆疊未即時更新提示點擊 [/reload]。</li>
+</ul>
+<li><strong>地面效果全面修復與動態法術家族支援 (Ground Effect Pipeline Overhaul &amp; Spell Family Matching):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底修復地面效果在法術替換、巨集施放或子法術觸發時無法彈出的問題：實裝動態反向法術家族解析 (Reverse Spell Family Resolution)，當施法事件 ID 與監控清單無直接相符時，即時透過 C_Spell.GetBaseSpell 與 GetOverrideSpell 雙向反查並動態建立快取，確保所有天賦替換與覆蓋技能 100% 穩定捕獲。</li>
+<li>修復 SavedVariables 新增、刪除與更新地面效果時遺漏廣播 EAM_GROUND_EFFECT_CONFIG_CHANGED 事件之缺陷，使外部呼叫或快捷加入能立即觸發 GroundEffectService 重新編譯快取，免 /reload 即時生效。</li>
+<li>修復渲染器 (Renderer) 倒數計時到期回呼被冷卻模組誤攔截之問題：非冷卻框架到期時平滑呼叫 Renderer.render 隱藏圖示並釋放物件池，杜絕地面效果圖示卡在畫面上不消失的隱患。</li>
+</ul>
+<li><strong>快捷加入彈窗 (CTRL+ALT) 支援地面效果模組與多向自選 (Ctrl+Alt Quick-Add Ground Effect &amp; Multi-Route Support):</strong></li>
+<ul class="changelog-sublist">
+<li>游標懸停於技能、物品或巨集並按下 Ctrl+Alt 時，彈窗升級為 2x2 現代化四按鈕網格佈局（高度適度調整至 280px，保持精簡整齊）。</li>
+<li>法術 (Spell) 懸停支援 4 大選項自由分流：【加入技能冷卻監控】、【加入地面效果模組】、【加入玩家光環監控】、【加入目標光環監控】。</li>
+<li>物品 (Item) 懸停支援【加入物品冷卻監控】與【加入地面效果模組】（自動透過 C_Item.GetItemSpell 解析對應法術 ID，若無關聯法術則提示手動輸入）。</li>
+<li>巨集 (Macro) 與光環 (Aura) 懸停同步支援一鍵加入地面效果模組，點擊後即時生效免 /reload。</li>
+<li>繁中 (zhTW)、簡中 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU) 5 大語系詞條 100% 對齊實裝。</li>
+</ul>
+<li><strong>光環框架物理坐標連動與重載記憶修復 (Aura Frame Position Sync &amp; Reload Persistence Fix):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底修復光環原生容器物理坐標固定未動態跟隨主框架移動的缺陷，將 Retail 12.1 原生光環容器動態錨定至自身光環與目標光環之物理主框架，排版拖曳與介面重載 (/reload) 後 100% 準確同步至自訂位置。</li>
+<li>修復移動外框 (Mover Frame) 拖曳結束時因坐標解析問題將位置誤存為 (0, 0) 的缺陷，拖曳放開後即時記錄精準物理坐標並更新存檔版本。</li>
+</ul>
+<li><strong>光環文字、倒數與堆疊即時熱反應修復 (Aura Text, Timer &amp; Stack Live Refresh Fix):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底修復在細部條件視窗中開關「顯示法術名稱」、「顯示秒數倒數」或調整 21 種文字定位時，畫面上活躍光環未即時更新的缺陷。</li>
+<li>實裝活躍光環全局熱更新掃描機制 (AuraService.refreshAll)，勾選切換或文字設定變更時立即重繪玩家、目標與寵物當前所有活躍光環之文字與倒數。</li>
+<li>修正原生光環規則指紋 (Native Aura Rule Fingerprint) 漏納法術名稱開關與 21 種排版定位之問題，並修正布林解析短路，確保設定變動時即時觸發視覺樣式熱重組。</li>
+</ul>
+<li><strong>框架重設即時生效修復 (Frame Position Reset Immediate Apply Fix):</strong></li>
+<ul class="changelog-sublist">
+<li>點擊「重設所有圖示與位置」按鈕後，立即呼叫 Renderer.applyFramePositions() 即時遍歷並還原所有框架的物理坐標與錨點，無需重載介面 (/reload) 即可秒級生效。</li>
+</ul>
+<li><strong>全局半透明綠色外框拖曳模式 (Mover Frame with Translucent Green Highlight):</strong></li>
+<ul class="changelog-sublist">
+<li>移動框架模式全面升級：在預覽框架周圍建立綠底半透明背景 (0.02, 0.28, 0.12, 0.35) 與鮮明亮綠色邊框 (0.20, 1.00, 0.45, 0.95)。</li>
+<li>涵蓋多個預覽圖示、文字與間距之完整外接矩形，點擊外框任何空白區域皆可 100% 順暢拖曳移動整個群組，徹底解決「多個奶牛只有一個圖示可拖」的痛點。</li>
+<li>頂部標註群組名稱與左鍵拖曳/右鍵完成指南，底部即時顯示滑鼠滾輪操作快捷說明。</li>
+</ul>
+<li><strong>滾輪即時調整間距與尺寸 HUD (Ctrl/Alt/Shift + MouseWheel Realtime Spacing &amp; Size with HUD):</strong></li>
+<ul class="changelog-sublist">
+<li>移動外框範圍內支援快捷熱鍵調整：[Ctrl + 滾輪] 調整水平間距（±1px）、[Alt + 滾輪] 調整垂直間距（±1px）、[Shift + 滾輪] 調整圖示大小（±2px）。</li>
+<li>滾動調整時在外框中央即時顯示浮動 HUD 提示（例如「水平間距: 8 px」），1.6 秒後平滑淡出。</li>
+<li>調整結果即時重新計算群組排版外框尺寸並持久化儲存至 SavedVariables。</li>
+</ul>
+<li><strong>冷卻模組預渲染預設開啟與清單快捷開關 (Default Cooldown Pre-Render &amp; Quick Toggle in List View):</strong></li>
+<ul class="changelog-sublist">
+<li>技能冷卻與物品冷卻之「預渲染 (cooldownPreRender)」開關全域預設值全面改為開啟 (true)。</li>
+<li>在清單模式列表行中，於齒輪設定按鈕左側新增專屬「預」快捷切換開關，綠色高亮代表開啟、暗灰代表關閉，一鍵即時切換無需打開細部條件視窗。</li>
+</ul>
+<li><strong>技能冷卻框架拖曳移動修復 (Spell Cooldown Alert Frame Drag &amp; Move Fix):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底修復技能冷卻預覽框架於非戰鬥中預渲染圖示攔截滑鼠點擊導致無法拖曳移動的問題。</li>
+<li>進入移動模式時暫時關閉真實圖示 EnableMouse，預覽圖示一律向上委派 OnDragStart/Stop 至父框架，排版結束後自動還原滑鼠互動。</li>
+</ul>
+<li><strong>物品冷卻模組全面支援 19 部位裝備代號 (Equipment Slot Cooldown Support):</strong></li>
+<ul class="changelog-sublist">
+<li>物品冷卻清單新增「新增到裝備」專屬按鈕與 19 個標準部位（飾品 1/2、手套、腰帶等）快速彈出選單，支援輸入 1~19 代號一鍵新增。</li>
+<li>清單行標註裝備欄位名稱、部位代號與當前穿戴物品名稱，滑鼠懸停直通原生 SetInventoryItem 完整 Tooltip。</li>
+<li>修正原生 API GetInventoryItemCooldown 回傳之 enable 參數為數值 1 (number) 被狀態機布林檢驗誤判為無效冷卻的嚴重問題，飾品等裝備冷卻 100% 正常顯示冷卻漩渦與秒數倒數。</li>
+<li>實裝穿戴裝備三軌冷卻備援機制：軌道 1 標準 API (GetInventoryItemCooldown) -&gt; 軌道 2 現代 API (ItemLocation:CreateFromEquipmentSlot) -&gt; 軌道 3 同軌直讀 (C_Item.GetItemCooldown)，杜絕特定裝備無響應問題。</li>
+<li>補齊主動使用飾品之 SPELL_UPDATE_COOLDOWN 與 ACTIONBAR_UPDATE_COOLDOWN 事件裝備部位解析，並新增 UNIT_INVENTORY_CHANGED 玩家即時換裝事件聯動。</li>
+<li>設定面板全面加固：列表行與條件視窗裝備名稱、圖示支援由 ItemLink 與 ItemLocation 深度解析，Tooltip 增加 SetItemByID 安全防禦。</li>
+</ul>
+<li><strong>細部設定新增物品/裝備類型切換與 4 大冷卻選項 (Item vs Equip Slot Selector &amp; Cooldown Overrides):</strong></li>
+<ul class="changelog-sublist">
+<li>條件設定視窗新增「冷卻目標類型」切換控制項，支援於「物品代碼 (Item ID)」與「裝備欄位 (Inventory Slot)」自由切換與選擇部位。</li>
+<li>物品冷卻細部選項全面開放 4 大冷卻行為覆寫（完成後移除、非戰鬥中顯示、可用時金色發光、預渲染佔位顯示），支援 SavedVariables 雙軌獨立儲存與 ProfileCodec 編解碼匯出匯入。</li>
+</ul>
 <li><strong>即時效果預覽深度修復與智慧分頁連動 (Live Preview Deep Fix &amp; Smart Tab Auto-Switch):</strong></li>
 <ul class="changelog-sublist">
 <li>徹底解決預覽視窗焦點錯位問題：從職業資源或角色屬性面板點擊「效果預覽」時，預覽視窗自動切換至對應分頁（職業資源/角色屬性/告警圖示），不再停留在技能圖示造成「未即時更新」錯覺。</li>
@@ -2424,6 +2510,76 @@
     </div>
     <div class="changelog-body">
 <ul class="changelog-mainlist">
+<li><strong>Ground Effect Cooldown-Architecture Alignment &amp; Zero In-Combat Interruption:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely resolved the issue where ground effects failed to display during combat: fixed Renderer.prewarmAlertFrames to fetch class profile alerts via SavedVariables.getActiveAlerts(), ensuring frames are 100% prewarmed out of combat.</li>
+<li>Fully aligned with CooldownService mature architecture: eliminated in-combat compile blocking from verifyCompiledAlerts, adopting instant in-memory indexing to prevent combatCompileDeferred interruptions.</li>
+<li>triggerGroundEffect accurately binds rawAlert and order; expired effects retain persistent frames at Alpha = 0, instantly illuminating via SetAlpha during combat with zero taint, zero GC, and zero lag.</li>
+</ul>
+<li><strong>Condition Frame Lifecycle &amp; Item Control Isolation Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely resolved UI element leaks where item cooldown controls persisted across spell and ground effect condition panels.</li>
+<li>Strictly enforced default condFrame Hide state, category-specific control isolation, and OnHide lifecycle cleanup.</li>
+</ul>
+<li><strong>Spell Charges Show Available Charges Only:</strong></li>
+<ul class="changelog-sublist">
+<li>Refined spell charge counter text to display available charges only (e.g. 2) rather than appending max charges (e.g. 2/2), resulting in a cleaner and clearer UI.</li>
+</ul>
+<li><strong>Native Aura Prominent /reload Reminder &amp; One-Click UI Reload:</strong></li>
+<ul class="changelog-sublist">
+<li>Added prominent golden-yellow warning notices and a quick [/reload] button in the general settings panel for Blizzard 12.1 Native Aura sandbox containers.</li>
+<li>Displayed contextual warning notices in self buff/debuff and target debuff list panels informing users to /reload if aura changes do not take effect immediately.</li>
+<li>Enhanced chat feedback when manually reapplying Native Aura, advising users to execute /reload if in-game timer or stack updates remain desynchronized.</li>
+</ul>
+<li><strong>Aura Frame Position Sync &amp; Reload Persistence Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely fixed the issue where native aura container coordinates remained static, dynamically anchoring Retail 12.1 native aura containers to their parent alert frames (self and target), ensuring 100% accurate position persistence both during mover dragging and across UI reloads (/reload).</li>
+<li>Fixed mover frame dragging termination saving incorrect (0, 0) offsets to SavedVariables, instantly recording true parent frame coordinates and updating revision state upon mouse release.</li>
+</ul>
+<li><strong>Aura Text, Timer &amp; Stack Live Refresh Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Resolved the issue where toggling &quot;Show Spell Name&quot;, &quot;Show Timer&quot;, or altering any of the 21 text placement anchors in conditions detail failed to update active aura icons on screen immediately.</li>
+<li>Implemented global active aura refresh (AuraService.refreshAll), immediately re-rendering active auras for player, target, and pet upon checkbox or text placement changes.</li>
+<li>Corrected native aura compiler visual fingerprinting to incorporate spell name placement and toggle states with strict boolean parsing, ensuring instant visual style updates upon configuration changes.</li>
+</ul>
+<li><strong>Frame Position Reset Immediate Apply Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Clicking &quot;Reset All Icons &amp; Positions&quot; now immediately invokes Renderer.applyFramePositions(), restoring all alert frame coordinates and anchors in real-time without requiring a /reload.</li>
+</ul>
+<li><strong>Mover Frame with Translucent Green Highlight:</strong></li>
+<ul class="changelog-sublist">
+<li>Upgraded frame mover mode: renders a translucent green background (0.02, 0.28, 0.12, 0.35) with bright emerald borders (0.20, 1.00, 0.45, 0.95) enclosing all preview icons, labels, and spacings.</li>
+<li>Clicks anywhere on the bounding box allow smooth dragging of the entire alert group, resolving single-icon drag limitations across multiple preview cows.</li>
+<li>Displays group title at top and hotkey guides at bottom for intuitive multi-frame positioning.</li>
+</ul>
+<li><strong>Realtime Spacing &amp; Size Wheel Adjustment with Floating HUD:</strong></li>
+<ul class="changelog-sublist">
+<li>Inside the mover frame: [Ctrl + Mouse Wheel] tunes horizontal spacing (±1px), [Alt + Mouse Wheel] tunes vertical spacing (±1px), [Shift + Mouse Wheel] scales icon size (±2px).</li>
+<li>Floating HUD appears at the mover center displaying instant parameter updates (e.g. &quot;Horizontal Spacing: 8 px&quot;) with smooth fadeout, automatically saving to SavedVariables.</li>
+</ul>
+<li><strong>Default Cooldown Pre-Render &amp; Quick Toggle in List View:</strong></li>
+<ul class="changelog-sublist">
+<li>Default value for cooldownPreRender in both Spell Cooldown and Item Cooldown modules is now ON (true) by default.</li>
+<li>Added a dedicated quick toggle button (&quot;Pre&quot;) next to the gear icon in list view rows, showing bright green when active and dark gray when inactive, toggling pre-rendering with a single click.</li>
+</ul>
+<li><strong>Spell Cooldown Alert Frame Drag &amp; Move Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely fixed the issue where pre-rendered placeholder icons intercepted mouse clicks out of combat, preventing the preview frame from being dragged.</li>
+<li>Real icons are temporarily set to EnableMouse(false) during mover mode, while preview icons delegate OnDragStart/Stop to the parent frame, restoring interaction seamlessly upon locking.</li>
+</ul>
+<li><strong>Equipment Slot Cooldown Support (19 Slots) &amp; 3-Tier Fallback Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Added &quot;Add to Equipment&quot; button and a quick popup menu for 19 standard equipment slots (Trinket 1/2, Hands, Waist, etc.), supporting slot IDs 1~19.</li>
+<li>Item alert list rows annotate slot name, slot ID, and equipped item name, with mouse hover directly routing to native SetInventoryItem tooltip with SetItemByID fallback.</li>
+<li>Fixed a critical state-machine bug where native GetInventoryItemCooldown returning number 1 for enable was misjudged by boolean validation, ensuring trinkets and gear reliably trigger cooldown sweeps and timers.</li>
+<li>Implemented 3-tier robust cooldown fallback: Tier 1 standard GetInventoryItemCooldown -&gt; Tier 2 modern ItemLocation:CreateFromEquipmentSlot -&gt; Tier 3 direct C_Item.GetItemCooldown, preventing missing cache or zero-duration response.</li>
+<li>Added equipment slot resolution to SPELL_UPDATE_COOLDOWN and ACTIONBAR_UPDATE_COOLDOWN events, wired with UNIT_INVENTORY_CHANGED for real-time gear swap synchronization.</li>
+</ul>
+<li><strong>Item vs Equip Slot Mode Selector &amp; Cooldown Overrides in Conditions Frame:</strong></li>
+<ul class="changelog-sublist">
+<li>Added &quot;Cooldown Target&quot; toggle group to detail conditions frame, supporting free switching between Item ID mode and Equipment Slot mode.</li>
+<li>Opened 4 cooldown behavior overrides (remove on complete, show out of combat, usable glow, pre-render placeholder) for item/equip cooldowns with dual-track SavedVariables persistence and ProfileCodec roundtrip support.</li>
+</ul>
 <li><strong>Spell Name Text Placement &amp; Default Outside Bottom:</strong></li>
 <ul class="changelog-sublist">
 <li>Spell and aura names now default to outside bottom (OUTSIDE_BOTTOM) for cleaner and more balanced icon aesthetics.</li>

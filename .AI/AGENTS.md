@@ -20,6 +20,8 @@
 - **XML 結構化抗記憶漂移備援（Anti-Memory-Drift XML Directive）**：
   - 除了 Markdown（.md）人機協同文件外，[`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml) 為專案對抗大語言模型長對話截斷、跨模型交接與自由文本語意漂移（Memory Drift）之**最高結構化確定性備援保險箱**。
   - 當遭遇上下文壓縮、更換模型、或對 Markdown 規範產生理解歧義時，Agent 必須第一時間讀取該 XML 檔進行硬性記憶校準（Hard Semantic Recalibration），以 XML 標籤鎖定之邊界與鐵律為唯一硬性約束基準。
+- **12.1.5 前瞻討論邊界警語（強制溝通約束）**：
+  - 實作代碼 100% 嚴格以 Retail 12.1.0 為正式發布基準。凡討論牽涉到 12.1.5 的任何內容，**回覆結尾均必須明確聲明並確認「12.1.5 的部分目前僅為技術備存／研究，尚不可進入代碼實作，一切實作嚴格以 12.1.0 正式服發布為準」**。
 
 ## 社群技能庫（skills.sh 與 lobehub.com）檢索與候選規則
 

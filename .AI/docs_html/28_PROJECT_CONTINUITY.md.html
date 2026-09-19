@@ -519,19 +519,149 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-09-14.25 (Retail 12.1.0 Alpha 8.6 技能名稱下方預設排版與自訂 / 角色屬性預覽即時連動 / 職業資源縮放與可捲動字型下拉清單 / 版本斷點規則確立 / 499 契約全綠)。</p>
+<p>目前快照版本：2026-09-19.01 (Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱 / 條件設定視窗元件隔離 / 88 Flow / 499 契約全綠)。</p>
 <ul>
 <li><strong>版本斷點與自動遞增規則</strong>：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。</li>
 </ul>
-<h2 id="2026-09-14-retail-1210-alpha-86">2026-09-14 多進度儲存點：Retail 12.1.0 Alpha 8.6 技能名稱下方排版、屬性預覽即時更新與職業資源可捲動字型清單（現行儲存點）</h2>
+<h2 id="2026-09-19-retail-1210-alpha-86-cli-1215">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存（現行儲存點）</h2>
 <ul>
-<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。技能/光環名稱預設改為置於圖示下方（<code>OUTSIDE_BOTTOM</code>），排版更和諧美觀，並於「字型與文字」提供 21 種排版錨點下拉選單；角色屬性面板調整尺寸、字級、小數點、圖示標籤與警戒門檻時預覽視窗零延遲即時更新，統一 <code>thresholdMin</code> / <code>minThreshold</code> 欄位相容性使門檻紅框精確亮起；職業資源字型選擇全面升級為 10 行可捲動下拉選單（<code>ScrollableDropdown</code>），相容 LSM 與內建字型，並補齊資源縮放（<code>scale</code>）於預覽視窗之等比縮放連動；預覽視窗加入透明度滑桿與 <code>safeCall</code> 防禦；全套門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約 / Build-Package DryRun PASS）。</li>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 <strong>12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線</strong>。<ol>
+<li><strong>全語系 CLI 命令列重構與跳脫碼修復</strong>：</li>
+<li>5 大語系（<code>zhTW</code>、<code>zhCN</code>、<code>enUS</code>、<code>koKR</code>、<code>ruRU</code>）功能說明在地化，徹底剔除生硬英文。</li>
+<li>修復魔獸聊天框 <code>&lt;spellID|target|...&gt;</code> 因 <code>|t</code> 被當作 Texture 跳脫碼而破裂為 <code>&lt;spellIDarget&gt;</code> 的嚴重瑕疵，改為標準斜線 <code>&lt;spell/target/cd/item/ground&gt;</code>。</li>
+<li>補齊 <code>/eam preview</code>、<code>/eam rune</code>、<code>/eam add ground</code> 與 <code>/eam lang</code> 即時語系切換。</li>
+<li><strong>重要環境與發布準則（少年欸特別指令）</strong>：</li>
+<li><strong>測試環境現狀</strong>：因暴雪關閉 12.1 PTR，少年欸本機開發與測試環境暫於 12.1.5 PTR 進行。</li>
+<li><strong>發布基準鎖定</strong>：正式發布目標環境為廣大玩家之 <strong>Retail 12.1.0（TOC: 120100）</strong>。</li>
+<li><strong>實作邊界鐵律</strong>：代碼實作 <strong>100% 嚴格以 12.1.0 為主</strong>，維持以 <code>AuraContainerService.lua</code> 與 <code>NativeAuraRenderer.lua</code> 為核心之 12.1.0 穩定相容架構；<strong>絕對禁止在 12.1.0 發布分支中提前引入 12.1.5 專屬 API（如 <code>CreateFrame("AuraButton")</code>）</strong>，防範玩家客戶端噴錯崩潰。</li>
+<li><strong>12.1.5 技術備存</strong>：有關 <code>INTRINSIC_AuraButton</code> 獨立一級公民、<code>Clear*</code> 解綁方法群與未來字型大小免 <code>/reload</code> 即時熱套用等分析，已完整歸檔至 <code>Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md</code> 作為前瞻備存。</li>
+</ol>
+</li>
 <li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【全語系 CLI 命令列與跳脫字元修復】：5 語系在地化，聊天框參數語法安全。</li>
+<li>[x] 【12.1.5 前瞻技術備存與發布基準隔離】：情報已入庫，發布代碼嚴格鎖定 12.1.0。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-19-retail-1210-alpha-86">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「地面技能不需要關聯物品或裝備」、「戰鬥施放還是不顯示地面效果,你乾脆把技能冷卻與物品冷卻那套搬過去可行嗎」。<ol>
+<li>根因剖析：</li>
+<li><strong>UI 元件洩漏</strong>：自訂警示條件設定視窗（<code>condFrame</code>）建立時未預設 Hide，且切換地面技能時未隔離隱藏物品冷卻控制元件，造成裝備欄位輸入框殘留於地面技能設定介面。</li>
+<li><strong>死穴一：<code>Renderer.prewarmAlertFrames</code> 存檔讀取錯誤</strong>：舊版直接從 <code>EAM.db.alerts</code> 讀取，而在多專精 Profile 存檔下，各職業地面技能儲存於 <code>SavedVariables.getActiveAlerts()</code>，導致非戰鬥期間根本沒有為地面效果建立任何 Frame。</li>
+<li><strong>死穴二：戰鬥中施法因無 Frame 被強制扣押進 <code>deferRender</code></strong>：戰鬥施放暴風雪（19306）時，<code>Renderer.render()</code> 發現無 Frame，觸發保護被扣押至脫戰才彈出。</li>
+<li><strong>死穴三：<code>GroundEffectService.verifyCompiledAlerts</code> 戰鬥中阻斷施法</strong>：舊版在戰鬥中偵測到版本變更時直接 <code>return false, "combatCompileDeferred"</code>，直接拒絕施法觸發。</li>
+<li>根治架構（全面對齊冷卻架構與非戰鬥預熱）：</li>
+<li><strong>UI 隔離</strong>：<code>Options.lua</code> 實裝 <code>condFrame</code> 建立預設 Hide、條件專屬開關隔離與 <code>OnHide</code> 生命週期徹底清理。</li>
+<li><strong>預熱對齊</strong>：<code>Renderer.prewarmAlertFrames()</code> 改為直讀 <code>SavedVariables.getActiveAlerts(EAM.db)</code>，確保 100% 覆蓋當前職業專精 Profile 下的地面技能，非戰鬥期間預先建立 Frame、完成排版並設 <code>SetAlpha(0)</code>。</li>
+<li><strong>解除戰鬥阻斷</strong>：<code>GroundEffectService.verifyCompiledAlerts()</code> 移除戰鬥延遲，直接進行純記憶體編譯（<code>compileAlerts()</code>），純 Lua table 零 Taint、零延遲，戰鬥施法絕不中斷。</li>
+<li><strong>健全狀態機與常駐 Frame 點亮</strong>：<code>triggerGroundEffect</code> 完整綁定 <code>state.rawAlert</code> 與 <code>state.order</code>，戰鬥中施法時因 Frame 預先存在，直接以 <code>icon:SetAlpha(1.0)</code> 點亮；到期時設 <code>Alpha = 0</code> 常駐保留，零 GC、零延遲。</li>
+<li><strong>生命週期預熱聯動</strong>：在 <code>initialize()</code>、<code>onConfigChanged()</code> 與 <code>onCombatEnd()</code> 中均主動呼叫 <code>Renderer.prewarmAlertFrames()</code>。</li>
+</ol>
+</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【條件設定視窗生命週期隔離】：<code>Options.lua</code> 徹底隔離物品冷卻控制項，地面效果面板乾淨俐落。</li>
+<li>[x] 【Renderer 預熱 Profile 來源修復】：<code>Renderer.lua</code> 直讀 <code>SavedVariables.getActiveAlerts()</code>，非戰鬥預先建立地面 Frame。</li>
+<li>[x] 【GroundEffectService 戰鬥阻斷移除】：移除 <code>verifyCompiledAlerts</code> 戰鬥延遲拒絕，戰鬥施法 100% 即時響應。</li>
+<li>[x] 【狀態機綁定與常駐 Frame 點亮】：施法點亮、到期 Alpha 0 常駐，完全對齊 CooldownService 成熟模式。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-18-retail-1210-alpha-86">2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 冷卻可用發光金框幾何比例修復（根除小金框缺陷）</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並解決少年欸回報之「冷卻怎會有個低於圖示大小的小金框」視覺缺陷。<ol>
+<li>根因剖析（貼圖透明邊距幾何縮水）：當技能或物品冷卻可用（<code>glowSCDWhenUsable</code>）或觸發 Proc（<code>overlayGlow</code>）時，渲染器啟用金色發光效果。EAM 的 fallback 發光貼圖採用暴雪原廠 <code>Interface\Buttons\UI-ActionButton-Border</code>，該 64x64 貼圖的實際框體僅佔中央 36x36 像素，四周自帶 43.75% 透明 Padding。舊版使用 <code>SetAllPoints(button)</code> 導致貼圖被壓縮，框體實際寬高僅為圖示的 56.25%，直接懸浮縮小在圖示正中間形成「小金框」。</li>
+<li>根治架構（等比擴展精準包覆）：在 <code>IconPool.lua</code>（<code>createIcon</code>、<code>setGlow</code>、<code>setOverdrive</code>）與 <code>PreviewPanel.lua</code> 中，移除 <code>SetAllPoints</code>，改為置中錨定並依原廠邊框有效比例動態放大：<code>glow:SetPoint("CENTER", icon, "CENTER", 0, 0)</code>、<code>glow:SetSize(w * (64 / 36), h * (64 / 36))</code>（放大 1.778 倍），使金框 100.0% 精確貼齊按鈕邊緣，透明羽化柔和溢出為標準金色流光！</li>
+</ol>
+</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【發光金框比例幾何修復】：<code>IconPool.lua</code> 的 <code>setGlow</code> 與 <code>setOverdrive</code> 改為動態置中並以 <code>64/36</code> 等比擴展，徹底消除小金框縮水。</li>
+<li>[x] 【預覽視窗視覺同步】：<code>PreviewPanel.lua</code> 採用相同置中比例計算，確保設定面板與實機 100% 一致。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-18-retail-1210-alpha-86_1">2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 目標光環原生容器幾何解耦修復（根除目標光環消失問題）</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸緊急回報之「幹,目標光環不顯示了」致命缺陷。<ol>
+<li>根因診斷（暴雪 FrameXML 幾何隱藏陷阱）：在 Retail 12.1 Native Aura 模式下，所有光環圖示均由暴雪 <code>CustomAuraContainer</code> 動態生成，EAM 舊版渲染器（<code>Renderer.lua</code>）不會產生舊版圖示。因此 <code>Renderer.layout("targetAura")</code> 判定圖示數量為 0 時，對父框架 <code>EAM_AlertFrame_targetAura</code> 執行了 <code>parent:Hide()</code>！先前修改將容器錨定至 <code>parentFrame</code>，而依據 WoW FrameXML 引擎特性，當依賴框架錨定在一個被 <code>Hide()</code> 的父框架上時，其世界幾何坐標計算失效（GetLeft/GetTop 回傳 nil），導致暴雪原生容器在繪製管線中直接被隱藏或剔除，致使目標光環在實機中徹底消失不顯示！</li>
+<li>根治架構（直連 UIParent 徹底解耦）：原生光環容器由 <code>CreateFrame("AuraContainer", nil, UIParent)</code> 建立，其物理錨點必須且直接錨定至 <code>UIParent</code>：<code>container:SetPoint(point, UIParent, point, x, y)</code>，物理坐標直接讀取 <code>EAM.db.layout.frames[frameKey]</code>（預設 <code>(0, 120)</code> 與 <code>(0, 200)</code>）。完全切斷與 <code>parentFrame</code> 的 Show/Hide 狀態耦合，徹底根除幾何失效。</li>
+<li>多框架移動模式雙向聯動完備：玩家拖曳 MoverFrame 放開時，<code>OnDragStop</code> 寫入新坐標並調用 <code>applyContainerPositions()</code>，容器立即相對於 <code>UIParent</code> 動態更新位置；重載介面（<code>/reload</code>）時，<code>configureContainer</code> 直讀 SavedVariables 坐標並錨定 <code>UIParent</code>，位置完美記憶且絕不遺失。</li>
+</ol>
+</li>
+<li>
+<p>當前多進度各環節達成狀態（Multi-Stage Status）：</p>
+<ol>
+<li>[x] 【原生容器直連 UIParent 徹底解耦】：<code>AuraContainerService.lua</code> 中 <code>configureContainer</code> 與 <code>applyContainerPositions</code> 徹底移除對 <code>parentFrame</code> 的錨定，改由直接錨定至 <code>UIParent</code> 並讀取 <code>frameConfig</code>。</li>
+<li>[x] 【目標光環實機顯示恢復】：徹底消除 <code>parentFrame:Hide()</code> 對原生容器的幾何破壞，選取目標上 DoT 立即正常顯示。</li>
+<li>[x] 【多框架移動模式與重載記憶完備】：拖曳放開即時更新容器物理位置，<code>/reload</code> 完美讀取儲存坐標。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。</li>
+</ol>
+</li>
+<li>
+<p>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「光環的名稱、秒數、堆疊數量無法在調整設定後即時反應」與「光環框架位置沒有跟著設定位置更新(/RL後也一樣)」兩大重大缺陷。</p>
+<ol>
+<li>框架坐標解鎖與重載記憶修復：排查出 <code>AuraContainerService.lua</code> 原生光環容器坐標被硬編碼寫死為 <code>(0, 120)</code> 與 <code>(0, 200)</code>，重載介面時原生容器未讀取 SavedVariables 設定；且 <code>Renderer.lua</code> 的 <code>getOrCreateMoverFrame</code> 在 <code>OnDragStop</code> 讀取了未宣告之區域變數，導致放開拖曳時將 <code>(0, 0)</code> 寫入存檔！全面重構：將原生容器動態 SetPoint 錨定至對應光環主框架（<code>EAM_AlertFrame_selfAura</code> / <code>targetAura</code>），實裝 <code>AuraContainerService.applyContainerPositions()</code>，並在 MoverFrame 拖曳放開時正確透過 <code>parent:GetPoint()</code> 記錄真實坐標並標記版本變更，實現拖曳與重載介面 (/reload) 100% 精準跟隨自訂位置。</li>
+<li>光環文字、倒數與堆疊即時熱反應修復：在 <code>AuraService.lua</code> 實裝 <code>AuraService.refreshAll(eventName)</code> 全局熱掃描機制；在 <code>Options.lua</code> 的 <code>createCheckbox</code> 與 <code>notifyTextLayoutChanged</code> 接入光環、冷卻與物品全模組即時重繪；在 <code>NativeAuraRenderer.lua</code> 與 <code>AuraRuleCompiler.lua</code> 修復 Lua 三元運算短路（<code>(cond) and false or fallback</code> 導致 false 被覆蓋為 true）的重大語義陷阱，並將 <code>spellNamePlacement</code>、<code>showSpellName</code>、<code>showTimeVal</code> 納入視覺指紋；加固 <code>TextPlacement.lua</code> 與 <code>Renderer.lua</code> 文字與倒數之 Show/Hide 控制與 strict metatable 安全讀取；全套品質門禁 100% 綠燈（78 語法 / 88 Flow / 499 契約 / DEV 打包成功）。</li>
+</ol>
+</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【原生容器坐標動態錨定與解綁寫死】：<code>AuraContainerService.lua</code> 徹底移除寫死之 <code>(0, 120)</code> 與 <code>(0, 200)</code>，原生容器動態錨定至父級光環框架，並實裝導出 <code>applyContainerPositions()</code>。</li>
+<li>[x] 【MoverFrame 拖曳放開坐標記憶修復】：<code>Renderer.lua</code> 修復 <code>OnDragStop</code> 遺漏變數宣告致使存入 <code>(0, 0)</code> 之重大缺陷，改由 <code>parent:GetPoint()</code> 精確採集並標記存檔變更與容器同步。</li>
+<li>[x] 【AuraService.refreshAll 全局熱重繪】：<code>AuraService.lua</code> 實裝 <code>refreshAll</code>，逐一熱重繪玩家、目標與寵物活躍光環之名稱、秒數與堆疊。</li>
+<li>[x] 【原生光環指紋與布林解析修復】：<code>AuraRuleCompiler.lua</code> 與 <code>NativeAuraRenderer.lua</code> 修復 Lua <code>and false or fallback</code> 短路陷阱，納入 <code>spellNamePlacement</code> 與顯示開關。</li>
+<li>[x] 【文字層級與 metatable 防禦加固】：<code>Renderer.lua</code> 與 <code>TextPlacement.lua</code> 加固 <code>showSpellName</code>、<code>showTimeVal</code> 與 <code>showStacks</code> 之顯隱控制，並防禦 mock 與實機 strict metatable 阻擋。</li>
+<li>[x] 【離線單元測試與全套門禁通過】：Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-18-retail-1210-alpha-86_2">2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 裝備部位冷卻監控修復、三軌備援機制與深度裝備解析</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並根治「物品冷卻模組以物品 ID 正常但以裝備部位代號（如飾品 13/14）監控時無法偵測到冷卻狀態（不顯示冷卻漩渦與倒數）」的重大缺陷；核心修復 <code>ItemCooldownService.lua</code> 狀態機因原生 API <code>GetInventoryItemCooldown</code> 回傳 <code>enable</code> 為數值 1 (number) 被 <code>Util.isSafeBoolean</code> 誤殺判定為無效冷卻的致命問題；實裝穿戴裝備三軌冷卻備援機制（軌道 1 暴雪標準 API <code>GetInventoryItemCooldown</code> -&gt; 軌道 2 現代 API <code>ItemLocation:CreateFromEquipmentSlot</code> -&gt; 軌道 3 同軌直讀 <code>C_Item.GetItemCooldown</code>），徹底杜絕快取缺失或特定飾品無響應問題；修復 <code>SPELL_UPDATE_COOLDOWN</code> 帶入飾品 itemID 時因短路 return 導致裝備槽事件丟失問題，並新增 <code>ACTIONBAR_UPDATE_COOLDOWN</code> 與 <code>UNIT_INVENTORY_CHANGED</code> 換裝事件聯動；在 <code>Options.lua</code> 實裝 <code>getEquippedSlotInfo</code> 整合 <code>GetInventoryItemLink</code> 與 <code>ItemLocation</code> 深度提取裝備名稱與圖示，Tooltip 增設 <code>SetItemByID</code> 備援防禦；在 <code>FlowTestRunner.lua</code> 新增專屬測試案例 <code>cooldown.item.slot_121</code>；全套門禁 100% 綠燈（78 語法 / 88 Flow / 499 契約 / DEV 打包成功）。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【狀態機 Boolean/Number 雙相容修復】：<code>ItemCooldownService.lua</code> 中 <code>hasSafeEnabled</code> 與 <code>hasActiveCooldown</code> 擴展支援 number 1 / boolean / nil，徹底解決原生 enable 數值 1 造成的冷卻誤判。</li>
+<li>[x] 【穿戴裝備三軌冷卻備援機制】：<code>getCooldownData</code> 實裝「官方標準 GetInventoryItemCooldown -&gt; ItemLocation 現代 API -&gt; C_Item.GetItemCooldown 物品 ID 同軌直讀」三級聯防，確保 100% 偵測到飾品冷卻。</li>
+<li>[x] 【事件過濾修復與換裝事件監聽】：<code>refreshItem</code> 支援比對 <code>alert.slotID</code> 之穿戴物品 ID，消除 itemID 短路丟失；<code>initialize</code> 註冊 <code>ACTIONBAR_UPDATE_COOLDOWN</code> 與 <code>UNIT_INVENTORY_CHANGED</code>，換裝即時刷新。</li>
+<li>[x] 【設定面板深度裝備解析與 Tooltip 加固】：<code>Options.lua</code> 實裝 <code>getEquippedSlotInfo</code>，主面板、列表行與細部條件視窗統一使用 ItemLink/ItemLocation 深度解析；Tooltip 增設 <code>SetItemByID</code> 備援。</li>
+<li>[x] 【離線單元測試與全套門禁通過】：<code>FlowTestRunner.lua</code> 新增 <code>cooldown.item.slot_121</code> 案例；Lua 78/78 PASS、Flow 88/88 PASS、Contracts 499/499 PASS、DEV Package 128 檔案 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-18-retail-1210-alpha-86-hud">2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 框架重設即時生效、全局綠框拖曳移動、滾輪間距微調 HUD 與冷卻預渲染快捷切換</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並解決「重設框架無法即時反應(需RL)」問題，點擊主設定「重設所有圖示與位置」後立即調用 <code>Renderer.applyFramePositions()</code> 即時遍歷並還原所有 9 大框架物理坐標與錨點；升級「多框架移動模式」，在預覽群組周圍建立綠底半透明背景 <code>(0.02, 0.28, 0.12, 0.35)</code> 與鮮明亮綠邊框 <code>(0.20, 1.00, 0.45, 0.95)</code>，動態外接矩形包含所有 slots 預覽圖示、文字與 8px padding，外框全域空白處皆可點擊拖曳移動整個群組（解決多奶牛只有一個圖示可拖問題）；外框支援滾輪即時微調與中央浮動 HUD 提示（<code>Ctrl + 滾輪</code> 水平間距 ±1px、<code>Alt + 滾輪</code> 垂直間距 ±1px、<code>Shift + 滾輪</code> 圖示大小 ±2px），調整結果即時重新計算外框尺寸並持久化至 SavedVariables；技能冷卻與物品冷卻之「預渲染 (cooldownPreRender)」開關全域預設值全面改為開啟 (true)，服務層冷卻狀態機遵循三態繼承原則；在清單模式列表行新增專屬「預」快捷切換按鈕，亮綠高亮為開、暗灰為關，點擊即可一鍵熱切換；5 國語言字典完全鏡像對齊；全套門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約 / DEV 打包成功）。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【框架重設即時生效】：<code>Renderer.lua</code> 實裝 <code>Renderer.applyFramePositions()</code>；<code>Options.lua</code> 重設按鈕回呼中立即執行物理坐標還原，無需 <code>/reload</code>。</li>
+<li>[x] 【全局綠底亮綠外框拖曳模式】：<code>Renderer.lua</code> 實裝 <code>getOrCreateMoverFrame</code> 與外接矩形演算法，覆蓋群組內所有 slots 奶牛圖示與文字，全域皆可點擊拖曳。</li>
+<li>[x] 【滾輪即時微調間距與大小 HUD】：外框註冊 <code>OnMouseWheel</code>，支援 <code>Ctrl/Alt/Shift</code> 微調水平間距/垂直間距/圖示大小，中央動態顯示 HUD 浮動提示（1.6 秒淡出）並自動儲存。</li>
+<li>[x] 【冷卻預渲染預設開與清單快捷開關】：<code>SavedVariables.defaults.config.cooldownPreRender = true</code>，狀態機支援三態繼承；清單行齒輪左側新增「預」開關，一鍵即時切換。</li>
+<li>[x] 【5 國語系鏡像與全套門禁通過】：<code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 5 大語系字典 100% 完整鏡像；Lua 78/78 PASS、Flow 87/87 PASS、Contracts 499/499 PASS、DEV Package PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-18-retail-1210-alpha-86-4">2026-09-18 多進度儲存點：Retail 12.1.0 Alpha 8.6 技能冷卻框架拖曳修復、物品冷卻裝備代號支援與 4 大冷卻選項覆寫</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。排查並修復技能冷卻預覽框架於非戰鬥中預渲染圖示攔截滑鼠點擊導致無法拖曳移動問題，進入移動模式時批次關閉真實圖示滑鼠響應並由預覽圖示向上委派拖曳；物品冷卻模組全面支援 19 個標準裝備欄位代號（<code>INVSLOT_*</code>），清單底部新增「新增到裝備」專屬按鈕與 19 部位快速選單，支援輸入 1~19 代號一鍵新增；清單行標註裝備欄位名稱、部位代號與當前穿戴物品名稱，滑鼠懸停直通原生 <code>SetInventoryItem</code> 完整 Tooltip；物品冷卻服務層無縫對接 <code>GetInventoryItemCooldown</code>、<code>GetInventoryItemTexture</code> 與 <code>GetInventoryItemID</code>，監聽 <code>PLAYER_EQUIPMENT_CHANGED</code> 換裝事件即時切換冷卻與圖示；細部設定視窗全面開放 4 大冷卻行為覆寫（完成後移除、非戰鬥中顯示、可用時金色發光、預渲染佔位顯示），並新增「冷卻目標類型」切換控制項（物品代碼 / 裝備欄位）與 19 部位即時選單，支援自由切換與儲存；5 國語言字典完全鏡像對齊；全套品質門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約）。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【技能冷卻框架拖曳修復】：<code>Renderer.lua</code> 中 <code>getOrCreatePreviewIcon</code> 註冊拖曳委派至父框架，進入移動模式時批次設置 <code>EnableMouse(false)</code> 消除預渲染圖示點擊攔截，解鎖後完美還原。</li>
+<li>[x] 【物品冷卻裝備代號支援】：<code>SavedVariables.lua</code> 與 <code>ProfileCodec.lua</code> 擴充 <code>slotID</code> 與 <code>itemType="SLOT"</code> 雙軌儲存與編解碼；<code>ItemCooldownService.lua</code> 對接原生 <code>GetInventoryItemCooldown</code> 系列 API 並監聽 <code>PLAYER_EQUIPMENT_CHANGED</code>。</li>
+<li>[x] 【清單操作與 19 部位選單】：<code>Options.lua</code> 新增 <code>addEquipBtn</code>「新增到裝備」與 19 個部位快速彈出選單；清單行標註部位代號與當前穿戴物品名稱，Tooltip 直通 <code>SetInventoryItem</code>。</li>
+<li>[x] 【細部設定目標切換與 4 大冷卻選項】：<code>condFrame</code> 開放 4 大冷卻行為按鈕覆寫，增設「冷卻目標類型」切換控制項（物品代碼 / 裝備欄位）與即時部位選單，支援雙向轉換與儲存。</li>
+<li>[x] 【5 國語系鏡像與全套門禁通過】：<code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 5 大語系字典 100% 完整鏡像；Lua 78/78 PASS、Flow 87/87 PASS、Contracts 499/499 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-14-retail-1210-alpha-86">2026-09-14 多進度儲存點：Retail 12.1.0 Alpha 8.6 預覽系統即時連動、全單擊升級下拉選單與系統診斷報告</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決預覽系統焦點錯位問題，<code>PreviewPanel.show(targetTab)</code> 與 <code>PreviewPanel.toggle(targetTab)</code> 支援智慧分頁切換（職業資源直達 Tab 2、角色屬性直達 Tab 3、告警圖示直達 Tab 1），加固 Draft 與 SavedVariables 權威解析與大小寫容錯，解除 autoApplyDraft 刷新阻斷；職業資源面板之顯示模式（自動/長條條形/離散點數）、排列方向（水平/垂直）、父框架錨點（9 點）、自身定位點（9 點）、設定範圍（目前專精覆寫/全職業預設）以及屬性面板基準錨點全數改建為具核取勾號提示的現代化下拉選單（Dropdown Menu），徹底告別盲按循環；保留內部契約函式（cyclePoint, cycleOrientation 等）確保向後相容；實裝內建系統即時診斷報告（<code>/eam diag</code>、<code>/eam report</code> 與 UI 診斷按鈕），提供 680x520 獨立視窗與「一鍵全選複製」按鈕便於精確回報；5 國語言完全鏡像；全套門禁 100% 綠燈（78 語法 / 87 Flow / 499 契約 / Build-Package DryRun PASS）。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：<ol>
+<li>[x] 【預覽系統智慧分頁與即時熱連動】：<code>PreviewPanel.lua</code> 的 <code>show</code> 與 <code>toggle</code> 接收目標分頁參數，若已開啟則直接就地切換分頁；<code>refreshResourcePreview</code> 優先讀取 Draft 並平滑降級至 SavedVariables；解除 <code>autoApplyDraft</code> 阻斷，數值變更 100% 同步預覽。</li>
+<li>[x] 【全單擊選項升級現代化下拉選單】：<code>PlayerResourcePanel.lua</code> 實裝 <code>toggleGenericDropdown</code>，全面升級模式、方向、錨點、定位點、設定範圍等按鈕為下拉選單；保留所有 <code>cycle*</code> 契約函式與按鈕識別；<code>PlayerStatPanel.lua</code> Tab 4 增設「基準錨點 (Anchor Point)」9 點下拉選單。</li>
+<li>[x] 【內建系統即時診斷報告 (One-Click Copy)】：實裝 <code>PreviewPanel.generateDiagnosticReport()</code> 與 <code>PreviewPanel.showDiagnosticDialog()</code>（680x520 滾動文字對話框），即時採集版本、環境、各模組狀態、記憶體用量與效能；提供「一鍵全選複製」按鈕；在 Slash 指令（<code>/eam diag</code>、<code>/eam report</code>）、預覽視窗標題列與主設定面板增設入口。</li>
 <li>[x] 【技能名稱排版自訂與下方預設】：<code>Constants.lua</code> 設置預設為 <code>OUTSIDE_BOTTOM</code>；<code>TextPlacement.lua</code> 與 <code>SavedVariables.lua</code> 全面放行 <code>spellName</code> 文字排版並納入規範化；<code>Options.lua</code> 新增 21 種排版下拉選單；<code>Renderer.lua</code> 與 <code>PreviewPanel.lua</code> 即時熱套用。</li>
-<li>[x] 【角色屬性預覽即時更新】：<code>PlayerStatPanel.lua</code> 的 <code>applyLiveChange</code> 統一門檻命名相容性，即時調用 <code>PreviewPanel.refreshStatPreview()</code> 與 <code>PlayerStatService.update()</code>；開啟與切換屬性時自動切換預覽視窗至 Tab 3。</li>
-<li>[x] 【職業資源縮放與可捲動字型選單】：<code>PlayerResourcePanel.lua</code> 改建為可捲動 10 行選單（<code>ScrollableDropdown</code>），支援 LSM 與系統字型，同時保留 <code>cycleFontFamily</code> 滿足契約相容性；<code>autoApplyDraft</code> 即時觸發預覽與服務刷新；<code>PreviewPanel.lua</code> 補齊 <code>SetScale(dbRes.scale)</code> 等比縮放。</li>
-<li>[x] 【獨立效果預覽連動加固】：修復預覽視窗與主面板連動中斷缺陷，增設透明度滑桿（0.1~1.0），實裝 <code>safeCall</code> 守衛保護未初始化方法。</li>
-<li>[x] 【版本斷點治理與 5 國語言對齊】：確立發布斷點與自動 +0.1 規則；<code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 5 語系完整對齊 <code>EAM_OPT_NAME_ALIGN</code>；雙語 changelog 100% 同步。</li>
+<li>[x] 【版本斷點治理與 5 國語言對齊】：確立發布斷點與自動 +0.1 規則；<code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 5 語系完整對齊診斷與選單詞條；雙語 changelog 100% 同步。</li>
 <li>[x] 【全套自動化品質門禁全綠通過】：Lua 語法 78/78 PASS、Flow 業務狀態機 87/87 PASS、Validation Contracts 499/499 PASS、Build-Package DryRun PASS。</li>
 </ol>
 </li>

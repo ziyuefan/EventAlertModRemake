@@ -69,6 +69,11 @@
             <directive>修改、覆寫或刪除專案關鍵檔案前，必須先備份至 .AI/backup/ 目錄。</directive>
             <naming_convention>原始檔名__yyyyMMddHHmmss（例如 AGENTS.md__20260904130000）。</naming_convention>
         </rule>
+        <rule id="R6_STAGED_VERSION_IMPLEMENTATION_BARRIER" severity="CRITICAL">
+            <directive>實作代碼 100% 嚴格以 Retail 12.1.0 為正式發布基準，12.1.5 前瞻技術僅作備存，嚴禁提前進入實作。</directive>
+            <rationale>因暴雪關閉 12.1 PTR，本機暫於 12.1.5 PTR 測試；但玩家正式服客戶端均為 12.1.0。提前引入 12.1.5 專屬 API（如 CreateFrame("AuraButton")）會導致玩家端崩潰。</rationale>
+            <communication_constraint>凡後續對話牽涉到 12.1.5 的任何討論，AI 在回覆結尾均必須明確聲明並確認「12.1.5 的部分目前僅為技術備存／研究，尚不可進入代碼實作，一切實作嚴格以 12.1.0 正式服發布為準」。</communication_constraint>
+        </rule>
     </iron_rules>
 
     <!-- 4. 專案最高事實裁決階梯與時效性仲裁 (Fact-of-Truth Hierarchy & Precedence) -->

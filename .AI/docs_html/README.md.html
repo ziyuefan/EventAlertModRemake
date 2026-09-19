@@ -518,7 +518,7 @@
 <h1 id="eventalertmod-retail-121-eam">EventAlertMod Retail 12.1 (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.5-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.6-orange" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
 <blockquote>
@@ -561,7 +561,7 @@
 <li>🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態。</li>
 <li>⚔️ <strong>跨職業光環 (Cross-Class / Target Cast)</strong>：監控敵方關鍵爆發或隊友重要增益。</li>
 <li>⏳ <strong>技能冷卻 (Spell Cooldown)</strong>：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (<code>Radial Mode</code>) 與框外線性條 (<code>TOP/BOTTOM/LEFT/RIGHT</code>)。</li>
-<li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控。</li>
+<li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控；全面支援 19 部位裝備欄位代號與具體物品 ID 雙軌監控、穿戴裝備三軌冷卻備援機制與即時換裝響應。</li>
 <li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。</li>
 <li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。</li>
 <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。</li>
@@ -848,6 +848,55 @@
 <h2 id="beautified-changelogtxt">📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+<h3 id="retail-1210-alpha-86-20260919">🌟 [Retail 12.1.0 Alpha 8.6] - 2026.09.19</h3>
+<ul>
+<li><strong>地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment &amp; Zero In-Combat Interruption)</strong>：<ul>
+<li>徹底解決地面效果在戰鬥中施放不顯示的痛點：校正預熱機制從當前職業專精 Profile 取得地面技能，非戰鬥期間預先建立 Frame、完成定位排版並將透明度設為 0 常駐於記憶體中。</li>
+<li>移除服務層戰鬥中阻斷施法的延遲拒絕邏輯，改為純記憶體即時編譯法術快取（耗時 &lt; 0.05ms）。戰鬥中施放暴風雪、寒冰寶珠等地面技能時直接瞬間以 <code>SetAlpha(1.0)</code> 點亮並觸發 Pop 動畫，零 Taint、零 GC、零延遲！</li>
+<li>持續時間結束後以 <code>Alpha = 0</code> 常駐保留槽位，不再銷毀，下次施法即時再次點亮。</li>
+</ul>
+</li>
+<li><strong>自訂警示條件視窗元件洩漏隔離修復 (Condition Panel Lifecycle &amp; Item Control Isolation Fix)</strong>：<ul>
+<li>徹底修復自訂條件視窗開啟時，物品裝備欄位輸入框與說明文字殘留於地面效果面板上的缺陷。</li>
+<li>實裝條件視窗建立預設隱藏 (<code>:Hide()</code>)、分類專屬隔離與 <code>OnHide</code> 生命週期清理，確保各類技能面板乾淨俐落。</li>
+</ul>
+</li>
+<li><strong>冷卻可用發光金框比例幾何修復 (Cooldown ActionButton Glow Geometric Ratio Fix)</strong>：<ul>
+<li>徹底根除冷卻可用或 Proc 時「低於圖示大小的小金框」視覺缺陷。</li>
+<li>拋棄舊版 <code>SetAllPoints</code> 強制壓縮做法，改為動態置中並依原廠材質有效邊框比例放大 1.778 倍 (<code>64/36</code>)，金屬邊框 100.0% 精確貼齊按鈕邊緣，四周透明羽化柔和溢出為標準金色流光！預覽視窗 (<code>PreviewPanel</code>) 同步支援置中縮放。</li>
+</ul>
+</li>
+<li><strong>Retail 12.1 原生光環容器幾何錨點解耦 (Native Aura Container Direct Anchor to UIParent)</strong>：<ul>
+<li>解決 Retail 12.1 原生光環容器因依賴框架被 <code>Hide()</code> 導致世界幾何坐標失效、致使目標 DoT 光環在實機中徹底消失的暴雪 FrameXML 幾何陷阱。</li>
+<li>原生容器直接物理錨定至 <code>UIParent</code>，坐標直讀設定檔；排版移動拖曳放開即時更新物理位置，重載介面 (<code>/reload</code>) 100% 準確記憶自訂位置。</li>
+</ul>
+</li>
+<li><strong>技能充能次數僅顯示當前可用次數 (Spell Charges Show Available Charges Only)</strong>：<ul>
+<li>充能次數文字顯示精準優化，僅顯示當前可用充能數（例如 2），不再冗餘顯示最大次數（如 2/2），介面更加清新簡潔。</li>
+</ul>
+</li>
+<li><strong>Native Aura 光環後端設定變更醒目提醒與一鍵重載 (Native Aura Prominent /reload Reminder &amp; One-Click UI Reload)</strong>：<ul>
+<li>針對 12.1 底層 Native Aura 安全容器沙盒機制，於一般設定頁提供醒目金黃色警告提示與快捷 <code>[/reload]</code> 重新載入按鈕。</li>
+<li>自身增益/減益、目標減益光環清單底部操作欄位即時提示光環變更若未即時生效，請執行 <code>/reload</code> 重新載入介面；手動套用時於聊天視窗輸出明確引導。</li>
+</ul>
+</li>
+<li><strong>地面效果動態反向法術家族解析 (Ground Effect Reverse Spell Family Resolution)</strong>：<ul>
+<li>支援天賦替換技能、巨集施放與子法術觸發時透過 <code>C_Spell.GetBaseSpell</code> 與 <code>GetOverrideSpell</code> 雙向反查並動態建立快取，覆蓋技能 100% 穩定捕獲。</li>
+<li>外部新增或快捷加入地面效果時即時廣播更新，免 <code>/reload</code> 即時生效。</li>
+</ul>
+</li>
+<li><strong>快捷加入彈窗 (CTRL+ALT) 支援地面效果模組與多向自選 (Ctrl+Alt Quick-Add Ground Effect &amp; Multi-Route Support)</strong>：<ul>
+<li>游標懸停技能、物品或巨集時按下 Ctrl+Alt，彈窗升級為 2x2 現代化四按鈕佈局。</li>
+<li>法術支援四分流（技能冷卻、地面效果、自身光環、目標光環）；物品自動解析關聯法術一鍵加入地面效果。</li>
+<li>繁中 (zhTW)、簡中 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU) 5 大語系詞條全數對齊。</li>
+</ul>
+</li>
+<li><strong>多框架移動模式綠色高亮外框與滾輪即時微調 (Green Mover Frame &amp; Realtime Wheel Spacing Adjustment)</strong>：<ul>
+<li>移動模式以半透明翡翠綠外框包覆整個警示群組，點擊外框任意區域即可平滑拖曳。</li>
+<li>支援滑鼠滾輪即時微調圖示大小與間距，附帶半透明浮動 HUD 即時呈現當前數值反饋。</li>
+</ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-85-20260912">🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12</h3>
 <ul>
 <li><strong>獨立即時效果預覽視窗 (Independent Live Preview Panel - PreviewPanel)</strong>：<ul>
@@ -1262,7 +1311,7 @@
 <li>🎯 <strong>Target Buff / Debuff</strong>: Precise tracking of target auras, CC, and debuff states.</li>
 <li>⚔️ <strong>Cross-Class / Target Cast</strong>: Key enemy burst cooldowns and crucial friendly buffs.</li>
 <li>⏳ <strong>Spell Cooldown</strong>: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode &amp; outer linear bars (<code>TOP/BOTTOM/LEFT/RIGHT</code>), custom reordering (drag &amp; drop, up/down), and desaturated placeholder masks.</li>
-<li>🎒 <strong>Item Cooldown</strong>: Trinkets, on-use equipment, and consumables monitoring.</li>
+<li>🎒 <strong>Item Cooldown</strong>: Trinkets, on-use equipment, and consumables monitoring; fully supports dual-track monitoring (19 equipment slots &amp; item IDs), 3-tier robust cooldown fallback, and real-time gear swap synchronization.</li>
 <li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.</li>
 <li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types (Mana, Rage, Energy, Combo Points, Chi, Insanity, Runic Power, Arcane Charges, Soul Shards, Holy Power, Essence, etc.).</li>
 <li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18 core stats (Primary, Secondary, 4-in-1 Speeds, Armor, Total Shield Absorbs, and Heal Absorbs).</li>
