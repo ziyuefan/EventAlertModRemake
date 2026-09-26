@@ -164,3 +164,33 @@
 - fingerprint 未變更時不建立新容器、不重註冊 sound。
 - 相容規則合併為 AuraGroup；player/target 各保留第一條 Slot PoC。
 - 舊容器停用後只保留計數，不保存每次重建的 Lua 配對表。
+
+## 組語視角底層效能最佳化規範（ASM-Inspired Low-Level Optimization）
+
+> **⚠️ 核心防禦鐵律（Zero-Side-Effects & Non-Regression Iron Rule）：**
+> 所有底層效能優化僅限於「代碼執行效率、記憶體佈局與 JIT 快取親和性」，**絕對禁止改變任何既有業務邏輯、禁止引發任何副作用、禁止造成任何功能缺失或運行錯誤**。每一次底層調整必須 100% 通過 499+ 項合約與回歸驗證。
+
+### 1. 虛擬暫存器釘定（Local Register Pinning）
+- **組語原理**：Lua 5.1/LuaJIT 是 Register-Based VM。`local` 變數對應虛擬暫存器 `R(A)`，LuaJIT 編譯為直接 CPU 暫存器（如 `RAX`, `RDX`）。全域變數 `_G` 則是雜湊字串查表與多次解引用。
+- **規範**：熱路徑中使用的高頻 API（如 `math.min`, `math.max`, `pcall`, `C_UnitAuras` 等）必須在模組頂部釘定為局部變數。
+
+### 2. 熱路徑暫存器壓力控制（Register Pressure Control）
+- **組語原理**：x86_64 僅有 16 個通用暫存器。若單一熱函式過度臃腫宣告過多區域變數，會引發 Register Spilling（溢出至 Stack 記憶體），產生額外的 `mov [rsp], reg` 開銷。
+- **規範**：戰鬥高頻核心函式（事件分發、光環比對、排版更新）的活躍區域變數數量控制在 8~10 個以內，保持邏輯精純。
+
+### 3. 多層指針追蹤提升（Pointer Chasing Hoisting）
+- **組語原理**：Lua 中 `a.b.c.d` 是連續 3 次獨立的雜湊查詢，在 Heap 記憶體中來回跳躍，極易破壞 CPU L1/L2 快取行（Cache Line）。
+- **規範**：迴圈與高頻函式中，不可在迴圈體內重複存取多層巢狀結構，必須在迴圈外一次性提升為區域指標。
+
+### 4. 連續整數陣列空間局部性（Array Part Spatial Locality）
+- **組語原理**：Table 的 Array Part 底層為純 C 連續陣列，存取對齊 `[base + idx * 16]`，CPU 64-Byte Cache Line 可一次載入 4 個 `TValue`，享受硬體預讀（Hardware Prefetcher）最高吞吐。Hash Part 則離散分佈。
+- **規範**：批次排隊、圖示順序與狀態清單，一律優先使用 `table.create(N, 0)` 配置連續整數陣列（`1..N`）。
+
+### 5. 熱路徑零閉包（Zero Hot-Path Closures）
+- **組語原理**：C/組語中呼叫函式僅為一條 `call` 指令。而在 Lua 中，熱路徑內宣告的匿名函式 `function() ... end` 每次執行都會 `malloc` 一個全新的 Closure 物件與 Upvalue 表。
+- **規範**：熱路徑中嚴禁動態宣告匿名閉包。一律改為靜態具名函式，上下文由參數傳遞。
+
+### 6. 單一型態保護（Monomorphic Types & JIT Guard Stabilization）
+- **組語原理**：LuaJIT Trace Compiler 依賴型態假設生成本機機器碼。若變數型態在 `number`、`nil`、`boolean` 間動態變化，會導致 Guard 檢查失敗並觸發 Trace Abort，強制回退至直譯器。
+- **規範**：狀態物件的欄位型態必須 100% 保持單一（Monomorphic），無值時使用明確的預設值或哨兵值（Sentinel），保護 JIT 熱機器碼穩定常駐。
+

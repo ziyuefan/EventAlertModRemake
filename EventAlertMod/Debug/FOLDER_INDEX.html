@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Diagnostic Layer">
   <meta name="ai-governance-security" content="Non-Combat Gated / Developer Mode">
   <meta name="ai-governance-invariants" content="僅在開發或手動除錯指令下執行，戰鬥中嚴禁高頻 dump 或引發 UI 阻塞 | 杜絕任何可能造成 Secure Execution Path 污染的除錯行為">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.796114+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.765017+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -28,16 +28,16 @@
     "僅在開發或手動除錯指令下執行，戰鬥中嚴禁高頻 dump 或引發 UI 阻塞",
     "杜絕任何可能造成 Secure Execution Path 污染的除錯行為"
   ],
-  "timestamp": "2026-09-12T20:51:50.796114+08:00",
+  "timestamp": "2026-09-27T07:24:55.765017+08:00",
   "fileCount": 11,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 518470,
+  "totalSizeBytes": 604274,
   "files": [
     {
       "name": "DebugState.lua",
       "extension": ".lua",
-      "sizeBytes": 4962,
-      "lineCount": 131,
+      "sizeBytes": 5428,
+      "lineCount": 138,
       "purpose": "Debug snapshot 提供 AI 與人工分析用的最小結構化狀態。；facts/derived/boundaryWarnings 分離，避免把猜測當事實。 | 日後收集各模組 snapshot 並組合 DebugSnapshot。",
       "role": "Debug/DebugState",
       "security": "Safe"
@@ -54,8 +54,8 @@
     {
       "name": "FlowTestRunner.lua",
       "extension": ".lua",
-      "sizeBytes": 334136,
-      "lineCount": 7514,
+      "sizeBytes": 405462,
+      "lineCount": 9132,
       "purpose": "使用同一組案例支援離線 Mock 與 Retail/PTR 實機流程驗證。；將限制檢查、語法檢查以外的事件、排程、初始化、設定與報告流程轉成可重播證據。 | 註冊流程案例、執行 suite、處理同步與非同步結果。；產生不含 Secret 原值的 JSON 報告，保存最近一次使用者觸發結果。",
       "role": "Debug/FlowTestRunner",
       "security": "Taint-Sensitive"
@@ -90,8 +90,8 @@
     {
       "name": "PromptExport.lua",
       "extension": ".lua",
-      "sizeBytes": 25013,
-      "lineCount": 574,
+      "sizeBytes": 38828,
+      "lineCount": 820,
       "purpose": "將 DebugSnapshot、RuntimeProbe 與 EAM.DebugLog 轉成 AI 可讀、compact JSON-like output。；提供可手動複製的 UI 彈出視窗（Debug Export Window），方便玩家全選診斷資訊後回報給 AI。 | 收集環境資訊、EAM 實體框架座標狀態、EventRouter 註冊事件、設定統計、提醒數量、Runtime 狀態、最近 40 條事件運行日誌與邊界警告。；建立並管理診斷 UI 視窗、多行 EditBox、捲軸與「全選診斷資訊」按鈕。",
       "role": "Debug/PromptExport",
       "security": "Taint-Sensitive"
@@ -99,8 +99,8 @@
     {
       "name": "RuntimeProbe.lua",
       "extension": ".lua",
-      "sizeBytes": 17765,
-      "lineCount": 365,
+      "sizeBytes": 17962,
+      "lineCount": 366,
       "purpose": "P3 實機驗證需要一個低風險、on-demand 的環境診斷入口。；診斷只確認 API / widget / template 是否存在，不嘗試繞過 Secret 或 Protected Data。 | 提供 `/eam doctor` 與 `/eam validate` 可使用的 Retail/PTR feature detection。；輸出 build、Interface、combat 狀態、API 可用性與需要實機確認的降級資訊。",
       "role": "Debug/RuntimeProbe",
       "security": "Taint-Sensitive"
@@ -614,7 +614,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">506.3 KB</span>
+          <span class="stat-val">590.1 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -668,7 +668,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            4.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 131 行</span>
+            5.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 138 行</span>
           </td>
         </tr>
         
@@ -704,7 +704,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            326.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 7514 行</span>
+            396.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 9132 行</span>
           </td>
         </tr>
         
@@ -776,7 +776,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            24.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 574 行</span>
+            37.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 820 行</span>
           </td>
         </tr>
         
@@ -794,7 +794,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            17.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 365 行</span>
+            17.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 366 行</span>
           </td>
         </tr>
         
@@ -860,7 +860,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.796114+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.765017+08:00</p>
     </footer>
   </div>
 

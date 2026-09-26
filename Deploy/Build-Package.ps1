@@ -293,10 +293,14 @@ function Get-ChangelogSemanticVersion {
     $changelogFile = Join-Path $addonRoot "changelog.txt"
     if (Test-Path -LiteralPath $changelogFile -PathType Leaf) {
         foreach ($line in Get-Content -LiteralPath $changelogFile -Encoding UTF8) {
-            if ($line -match '^--\s*\[([^\]]+)\]') {
+            if ($line -match '^--\s*\[(.*)\]') {
                 $rawTitle = $Matches[1].Trim()
-                if ($rawTitle -match '^(?:Retail\s+)?([0-9]+\.[0-9]+\.[0-9]+(?:\s+(?:Alpha|Beta)\s+[0-9.]+)?|[0-9]+\.[0-9]+\.[0-9]+|(?:Alpha|Beta)\s+[0-9.]+)') {
-                    $cleanTag = ($Matches[1].Trim() -replace '\s+', '_')
+                if ($rawTitle -match '(?:\bAlpha|\bBeta)\s*([0-9.]+)') {
+                    return "alpha_" + $Matches[1]
+                }
+                if ($rawTitle -match '^(?:Retail\s+)?(?:\[MN\]\s*)?([0-9]+\.[0-9]+\.[0-9]+(?:\s*\[MN\])?(?:\s+(?:Alpha|Beta)\s+[0-9.]+)?|[0-9]+\.[0-9]+\.[0-9]+|(?:Alpha|Beta)\s+[0-9.]+)') {
+                    $cleanTag = (($Matches[1].Trim() -replace '\[|\]', '') -replace '\s+', '_')
+                    $cleanTag = ($cleanTag -replace '_MN_', '_') -replace '_MN$', ''
                     return $cleanTag
                 }
             }

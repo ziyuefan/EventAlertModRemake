@@ -745,6 +745,10 @@ function Invoke-OneDeployment {
         Write-Host "DEPLOY_TARGET=$($State.targetPath)"
         if ($oldMoved) {
             Write-Host "DEPLOY_BACKUP=$backupPath"
+            # 部署成功且清單驗證完全通過，清理暫存部署緩衝區，杜絕 .AI/backup/deploy 殘留膨脹
+            if (Test-Path -LiteralPath $backupParent -PathType Container) {
+                Remove-Item -LiteralPath $backupParent -Recurse -Force
+            }
         }
     }
     catch {

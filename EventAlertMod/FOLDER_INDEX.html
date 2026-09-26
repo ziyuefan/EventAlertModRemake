@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Layer (Retail 12.x Native)">
   <meta name="ai-governance-security" content="Retail 12.1.0 Compatible / Zero Taint">
   <meta name="ai-governance-invariants" content="包含唯一 TOC 清單 (EventAlertMod.toc)，所有 .lua 與 .xml 檔案必須列入 TOC | 不得混入任何治理 (.AI)、部署 (Deploy) 或暫存目錄 | 零污染保證：全面使用暴雪原生效期物件與 SetValue 單向 Sink，不觸發 Lua Secret 比較">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.786794+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.756431+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "不得混入任何治理 (.AI)、部署 (Deploy) 或暫存目錄",
     "零污染保證：全面使用暴雪原生效期物件與 SetValue 單向 Sink，不觸發 Lua Secret 比較"
   ],
-  "timestamp": "2026-09-12T20:51:50.786794+08:00",
-  "fileCount": 5,
+  "timestamp": "2026-09-27T07:24:55.756431+08:00",
+  "fileCount": 6,
   "subdirectoryCount": 9,
-  "totalSizeBytes": 175853,
+  "totalSizeBytes": 449672,
   "files": [
     {
       "name": "EventAlertMod.toc",
@@ -46,8 +46,8 @@
     {
       "name": "README.md",
       "extension": ".md",
-      "sizeBytes": 48124,
-      "lineCount": 403,
+      "sizeBytes": 55248,
+      "lineCount": 448,
       "purpose": "繁體中文專案首頁說明，包含功能特色、介面導覽、快速上手與相容性說明",
       "role": "Project Documentation",
       "security": "Safe"
@@ -55,17 +55,26 @@
     {
       "name": "README_en.md",
       "extension": ".md",
-      "sizeBytes": 26818,
+      "sizeBytes": 26962,
       "lineCount": 279,
       "purpose": "英文專案首頁說明，提供國際玩家與開發者閱讀",
       "role": "Project Documentation",
       "security": "Safe"
     },
     {
+      "name": "changelog.html",
+      "extension": ".html",
+      "sizeBytes": 218270,
+      "lineCount": 3604,
+      "purpose": "HTML 網頁或說明清單",
+      "role": "Web Document",
+      "security": "Safe"
+    },
+    {
       "name": "changelog.txt",
       "extension": ".txt",
-      "sizeBytes": 79624,
-      "lineCount": 1000,
+      "sizeBytes": 107043,
+      "lineCount": 1148,
       "purpose": "繁體中文版本更新日誌，詳載每個版本的玩家可感知功能、修正與 API 對齊",
       "role": "Changelog Manifest",
       "security": "Safe"
@@ -73,8 +82,8 @@
     {
       "name": "changelog_en.txt",
       "extension": ".txt",
-      "sizeBytes": 17418,
-      "lineCount": 140,
+      "sizeBytes": 38280,
+      "lineCount": 266,
       "purpose": "英文版本更新日誌，與中文版嚴格同步記錄所有發布內容",
       "role": "Changelog Manifest",
       "security": "Safe"
@@ -608,7 +617,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">5</span>
+          <span class="stat-val">6</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">子目錄數量</span>
@@ -616,7 +625,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">171.7 KB</span>
+          <span class="stat-val">439.1 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -772,7 +781,7 @@
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (5)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (6)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -821,7 +830,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            47.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 403 行</span>
+            54.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 448 行</span>
           </td>
         </tr>
         
@@ -839,7 +848,25 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            26.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 279 行</span>
+            26.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 279 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./changelog.html" title="檢視檔案內容">changelog.html</a>
+            </div>
+          </td>
+          <td><span class="badge badge-html">HTML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">HTML 網頁或說明清單</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Web Document</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            213.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 3604 行</span>
           </td>
         </tr>
         
@@ -857,7 +884,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            77.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1000 行</span>
+            104.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1148 行</span>
           </td>
         </tr>
         
@@ -875,7 +902,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            17.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 140 行</span>
+            37.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 266 行</span>
           </td>
         </tr>
         
@@ -887,7 +914,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.786794+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.756431+08:00</p>
     </footer>
   </div>
 

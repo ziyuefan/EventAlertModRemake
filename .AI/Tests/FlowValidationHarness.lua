@@ -72,10 +72,112 @@ function frameMethods:IsShown()
     return self.shown == true
 end
 
+function frameMethods:ClearAllPoints()
+    self.points = {}
+end
+
+function frameMethods:SetPoint(point, relativeTo, relativePoint, x, y)
+    self.points = self.points or {}
+    self.points[#self.points + 1] = {
+        point = point or "CENTER",
+        relativeTo = relativeTo,
+        relativePoint = relativePoint or point or "CENTER",
+        x = x or 0,
+        y = y or 0,
+    }
+end
+
+function frameMethods:SetAllPoints(relativeTo)
+    self.points = self.points or {}
+    self.points[1] = {
+        point = "TOPLEFT",
+        relativeTo = relativeTo,
+        relativePoint = "TOPLEFT",
+        x = 0,
+        y = 0,
+    }
+end
+
+function frameMethods:GetNumPoints()
+    return self.points and #self.points or 0
+end
+
+function frameMethods:GetPoint(index)
+    index = index or 1
+    local p = self.points and self.points[index]
+    if p then
+        return p.point, p.relativeTo, p.relativePoint, p.x, p.y
+    end
+    return nil
+end
+
+function frameMethods:GetCenter()
+    if self._customCenterX and self._customCenterY then
+        return self._customCenterX, self._customCenterY
+    end
+    return 500, 400
+end
+
+function frameMethods:StopMovingOrSizing()
+    self.points = {
+        {
+            point = "BOTTOMLEFT",
+            relativeTo = UIParent,
+            relativePoint = "BOTTOMLEFT",
+            x = 100,
+            y = 100,
+        }
+    }
+end
+
+function frameMethods:SetAlpha(value)
+    self.alpha = value
+end
+
+function frameMethods:GetAlpha()
+    return self.alpha or 1.0
+end
+
 function frameMethods:CreateFontString()
-    return {
+    local fontString = {
         ClearText = noOperation,
     }
+    setmetatable(fontString, {
+        __index = function(_, key)
+            return frameMethods[key] or noOperation
+        end,
+    })
+    return fontString
+end
+
+function frameMethods:CreateTexture()
+    local texture = {}
+    setmetatable(texture, {
+        __index = function(_, key)
+            return frameMethods[key] or noOperation
+        end,
+    })
+    return texture
+end
+
+function frameMethods:CreateAnimationGroup()
+    local group = {
+        CreateAnimation = function()
+            local anim = {}
+            setmetatable(anim, {
+                __index = function(_, key)
+                    return frameMethods[key] or noOperation
+                end,
+            })
+            return anim
+        end,
+    }
+    setmetatable(group, {
+        __index = function(_, key)
+            return frameMethods[key] or noOperation
+        end,
+    })
+    return group
 end
 
 local function createFrame()
@@ -310,6 +412,7 @@ loadModule("EventAlertMod/Core/Scheduler.lua")
 loadModule("EventAlertMod/Core/SavedVariables.lua")
 loadModule("EventAlertMod/Core/ModuleController.lua")
 loadModule("EventAlertMod/Core/ProfileCodec.lua")
+loadModule("EventAlertMod/Core/Performance.lua")
 loadModule("EventAlertMod/Locale/Common.lua")
 loadModule("EventAlertMod/Locale/enUS.lua")
 loadModule("EventAlertMod/Locale/zhTW.lua")
@@ -329,6 +432,7 @@ loadModule("EventAlertMod/Services/SpellInfoService.lua")
 loadModule("EventAlertMod/Services/LegacyDiscoveryService.lua")
 loadModule("EventAlertMod/Services/AuraCapabilityService.lua")
 loadModule("EventAlertMod/Managers/AuraRuleCompiler.lua")
+loadModule("EventAlertMod/Managers/AlertManager.lua")
 loadModule("EventAlertMod/UI/TextPlacement.lua")
 loadModule("EventAlertMod/UI/AlertBorderStyles.lua")
 loadModule("EventAlertMod/UI/IconPool.lua")

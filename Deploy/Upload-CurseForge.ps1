@@ -77,8 +77,11 @@ function Get-TocVersionInfo {
 function Get-LatestReleaseTitle {
     if (Test-Path -LiteralPath $changelogPath -PathType Leaf) {
         foreach ($line in Get-Content -LiteralPath $changelogPath -Encoding UTF8) {
-            if ($line -match '^--\s*\[([^\]]+)\]') {
+            if ($line -match '^--\s*\[(.*)\]') {
                 $rawTitle = $Matches[1].Trim()
+                if ($rawTitle -match '(?:\bAlpha|\bBeta)\s*([0-9.]+)') {
+                    return "Alpha " + $Matches[1]
+                }
                 if ($rawTitle -match '^(?:Retail\s+)?([0-9]+\.[0-9]+\.[0-9]+(?:\s+(?:Alpha|Beta|Release)\s+[0-9.]+)?|[0-9]+\.[0-9]+\.[0-9]+|(?:Alpha|Beta)\s+[0-9.]+)') {
                     return $Matches[1].Trim()
                 }

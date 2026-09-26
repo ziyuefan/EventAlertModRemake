@@ -157,6 +157,11 @@ function regionMethods:Show()
     self.shown = true
 end
 
+function regionMethods:SetDesaturated(value)
+    assertInitializationOpen(self)
+    self.desaturated = value == true
+end
+
 function regionMethods:Hide()
     assertInitializationOpen(self)
     self.shown = false
@@ -226,6 +231,31 @@ function regionMethods:SetCooldownFromDurationObject(durationObject)
     assertInitializationOpen(self)
     self.durationObject = durationObject
     Mock.trace.cooldownDurationObjectCalls = Mock.trace.cooldownDurationObjectCalls + 1
+end
+
+function regionMethods:SetProgressCurve(curve)
+    assertInitializationOpen(self)
+    self.progressCurve = curve
+end
+
+function regionMethods:SetCooldownDuration(durationObject, progressCurve)
+    assertInitializationOpen(self)
+    self.durationObject = durationObject
+    self.progressCurve = progressCurve
+    Mock.trace.cooldownDurationObjectCalls = Mock.trace.cooldownDurationObjectCalls + 1
+end
+
+function regionMethods:GetFrameLevel()
+    local owner = rawget(self, "_eamOwner")
+    if owner and type(owner.GetFrameLevel) == "function" then
+        return owner:GetFrameLevel()
+    end
+    return rawget(self, "frameLevel") or 1
+end
+
+function regionMethods:SetFrameLevel(value)
+    assertInitializationOpen(self)
+    self.frameLevel = value or 1
 end
 
 function regionMethods:SetCooldown(startTime, duration)
@@ -782,12 +812,75 @@ local function createGenericFrame(frameType, frameName)
         self.mouseWheelEnabled = (value == true)
     end
 
+    frame.points = {}
+    function frame:ClearAllPoints()
+        self.points = {}
+    end
+
+    function frame:SetPoint(point, relativeTo, relativePoint, x, y)
+        self.points = self.points or {}
+        self.points[#self.points + 1] = {
+            point = point or "CENTER",
+            relativeTo = relativeTo,
+            relativePoint = relativePoint or point or "CENTER",
+            x = x or 0,
+            y = y or 0,
+        }
+    end
+
+    function frame:SetAllPoints(relativeTo)
+        self.points = self.points or {}
+        self.points[1] = {
+            point = "TOPLEFT",
+            relativeTo = relativeTo,
+            relativePoint = "TOPLEFT",
+            x = 0,
+            y = 0,
+        }
+    end
+
+    function frame:GetNumPoints()
+        return self.points and #self.points or 0
+    end
+
+    function frame:GetPoint(index)
+        index = index or 1
+        local p = self.points and self.points[index]
+        if p then
+            return p.point, p.relativeTo, p.relativePoint, p.x, p.y
+        end
+        return nil
+    end
+
+    function frame:GetCenter()
+        if self._customCenterX and self._customCenterY then
+            return self._customCenterX, self._customCenterY
+        end
+        return 500, 400
+    end
+
+    function frame:StopMovingOrSizing()
+        self.points = {
+            {
+                point = "BOTTOMLEFT",
+                relativeTo = UIParent,
+                relativePoint = "BOTTOMLEFT",
+                x = 100,
+                y = 100,
+            }
+        }
+    end
+
+    function frame:GetAlpha()
+        return self.alpha or 1.0
+    end
+
     local noOperationMethods = {
-        "SetAllPoints", "SetTexCoord", "SetPoint", "ClearAllPoints", "SetSize", "SetFont",
+        "SetTexCoord", "SetSize", "SetFont", "SetFontObject",
         "SetEnabled", "SetMouseMotionEnabled", "SetFrameStrata", "SetToplevel",
         "SetClampedToScreen", "EnableMouse", "SetBackdrop", "SetJustifyH", "SetJustifyV",
         "SetHeight", "SetAutoFocus", "SetNumeric", "SetMaxLetters", "SetBackdropColor", "SetBackdropBorderColor", "SetTextColor",
-        "SetStatusBarColor", "RegisterForDrag",
+        "SetStatusBarColor", "RegisterForDrag", "SetParent", "GetParent", "StartMoving",
     }
     for index = 1, #noOperationMethods do
         frame[noOperationMethods[index]] = noOperation
@@ -795,7 +888,11 @@ local function createGenericFrame(frameType, frameName)
 
     return setmetatable(frame, {
         __index = function(_, key)
-            error("Unknown strict generic frame method: " .. tostring(key))
+            local firstChar = type(key) == "string" and string.sub(key, 1, 1) or ""
+            if firstChar >= "A" and firstChar <= "Z" then
+                error("Unknown strict generic frame method: " .. tostring(key))
+            end
+            return nil
         end,
     })
 end

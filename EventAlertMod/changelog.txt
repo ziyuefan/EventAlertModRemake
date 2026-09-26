@@ -1,10 +1,76 @@
--- [Retail 12.1.0 Alpha 8.6 Live Preview Overhaul, Modern Dropdowns & System Diagnostics] 2026.09.14
-     -- 原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply & Zero Reload):
-        -- 徹底修復 Retail 12.1.0 原生光環 (Native Aura) 在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 /reload 才能生效的重大缺陷。
-        -- 實裝 NativeAuraRenderer 弱引用按鈕註冊池 (Weak Table Buttons Pool)，於光環按鈕初始化時安全保留 FontString 參照，暴雪銷毀按鈕時由 Lua GC 自動釋放，零記憶體洩漏。
-        -- 實裝 updateButtonFonts 零配額熱套用機制，拉動滑桿時直接調用 FontString:SetFont 原位更新畫面上所有活躍光環文字，零延遲、無需銷毀容器、不消耗 18 次配額，徹底擺脫 /reload 泥潭。
-        -- 優化 Options.lua 滑桿提交流程與文字通知路由，字型大小滑桿放開時不再觸發無謂的容器重建，杜絕觸發 18 次配額上限導致系統鎖死的隱患。
-        -- 統一全專案法術名稱字型大小取值邏輯，完善規則編譯器指紋 (buildVisualFingerprint) 與樣式快照 (snapshotStyle)，確保新舊光環按鈕字型大小 100% 一致。
+-- [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names & Target Ghost Purge] 2026.09.27
+     -- 【✨ 新增功能 (Features)】:
+        -- 角色屬性與吸收量監控全面升級 (Player Stat & Absorb Monitor Upgrade):
+           -- 模組即時開關與生命週期修復：切換開關即時隱藏框架並停止輪詢；底層 Native Aura 結構變更時提供醒目 /reload 警示與一鍵重載按鈕。
+           -- 移動所有屬性與主錨點 GPU 樹狀零延遲同步聯動：拖曳主錨點時，全組屬性框架即時同步跟隨移動。
+           -- 依附目標框架多選：支援 EAM 主錨點、UIParent、玩家頭像、目標頭像、焦點頭像、寵物頭像與 9 大方位錨點。
+           -- 預設停用圖示：無圖示時自適應緊湊收縮，僅呈現數值文字、名稱標籤與進度條。
+           -- 進度條雙色漸層渲染 (SetGradient API)：支援水平與垂直雙色漸層混色渲染，並相容經典降級。
+           -- 全項自選色彩：進度條主色、次色、數值文字、名稱標籤均提供自選調色盤。
+           -- 屬性堆疊自選排序：清單新增上移、下移、重設控制，即時更新畫面堆疊順序。
+        -- 全模組自訂技能與法術名稱功能實裝 (Custom Display Names Across All Modules):
+           -- 全新支援自訂圖示顯示名稱 (簡稱)：滿足在圖示間距密集、緊湊排版時避免名稱過長互相遮擋的需求（例如可將「聖盾術」簡稱為「盾」、「斬殺」簡稱為「斬」）。
+           -- 條件設定視窗 (EAM_SpellConditionsFrame) 佈局全面升級：新增「自訂顯示名稱 (簡稱)」專屬輸入框，並將視窗高度擴展至 680px，開闊清爽零擁擠。
+           -- 清單列表即時標記：若該項目有設定自訂簡稱，設定清單將即時以「法術名稱 (|cff00ff96簡稱|r)」醒目標註，清單管理一目了然。
+           -- 全模組服務層深度整合：涵蓋自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻（含裝備欄位）與地面效果全流程，優先顯示玩家自訂名稱，留空自動還原預設法術/物品全稱。
+           -- 原生光環防覆蓋機制：針對 Retail 12.1.0 原生光環容器 (Native Aura) 實裝文字守護鉤子 (Text Guard Hook)，鎖定玩家自訂簡稱，防止暴雪底層預設光環名稱回寫覆蓋。
+        -- 全語系 CLI 命令列擴充 (Slash Commands Expansion):
+           -- 補齊「/eam preview」、「/eam rune」、「/eam add ground」與「/eam lang」即時語系切換指令。
+        -- 高頻熱路徑追蹤與存檔持久化 (Hot Path Frequency Profiler & SavedVariables Metrics):
+           -- 依照效能調優指引，於 Core/Performance 模組實裝零開銷（Zero-Alloc）高頻路徑追蹤器，精確統計運行期間各事件分發、服務掃描、渲染繪製與排程器之實際呼叫次數與每秒頻率 (CPS)。
+           -- 存檔深度整合：於 SavedVariables 自動記錄本次連線（lastSession）與跨連線累積（cumulative）呼叫數據及累積運行秒數，於登出 (PLAYER_LOGOUT) 時自動安全合併存檔。
+           -- 偵錯模組全面接入：DebugState 快照與 PromptExport 診斷視窗同步匯出結構化 hotPathMetrics JSON，一鍵掌握系統執行熱點（Top Hot Paths）。
+           -- 全新命令列工具實裝：新增「/eam metrics」（或「/eam hotpaths」），支援即時印出 Top 10 高頻路徑與呼叫頻率、支援「/eam metrics reset」重設計數與「/eam metrics save」即時寫入存檔。
+           -- 暴雪官方引擎 Profiler 深度整合：實裝 C_AddOnProfiler 遙測探針，於「/eam metrics」與診斷匯出中無縫呈現暴雪 C++ 引擎實測之外掛毫秒耗時、近期均值、歷史峰值與幀掉落刺波（>1ms/5ms），完美形成「宏觀 CPU 毫秒 + 微觀呼叫次數」雙軌觀測體系。
+     -- 【⚡ 體驗優化 (Improvements)】:
+         -- 高頻冷卻事件合併排程與警示更新零分配流水線 (Cooldown Event Coalescing & Zero-Allocation Alert Pipeline):
+            -- 警示排隊佇列零記憶體分配 (Zero-Allocation Queue)：AlertManager 採用持久化槽位（persistentSlots），消除高頻警示更新時每秒數千次的臨時 Table 堆疊分配，根除 Lua GC 垃圾回收卡頓隱患。
+            -- 冷卻狀態髒檢查與無效重繪阻斷 (Cooldown Dirty State Diffing & Render Suppression)：CooldownService 與 ItemCooldownService 於狀態刷新前嚴格快照並比對顯示、啟用、佔位、灰階、發光、充能與時間數據，在資料未實質變更時全面抑制狀態廣播與後續繪製，大幅降低戰鬥高頻冷卻事件下的渲染開銷。
+            -- 全域冷卻事件同幀合併排程 (Frame-Level Cooldown Event Coalescing)：針對 SPELL_UPDATE_COOLDOWN、ACTIONBAR_UPDATE_COOLDOWN 與 BAG_UPDATE_COOLDOWN 等無法術 ID 負載之高頻全域事件實裝同幀合併調度，杜絕同一幀/Tick 內多次重複的全清單遍歷，極大平滑團隊副本與大秘境高負載環境下的幀率。
+        -- 原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply & Zero Reload):
+           -- 徹底修復 Retail 12.1.0 原生光環 (Native Aura) 在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 /reload 才能生效的重大缺陷。
+           -- 實裝 NativeAuraRenderer 弱引用按鈕註冊池 (Weak Table Buttons Pool)，於光環按鈕初始化時安全保留 FontString 參照，暴雪銷毀按鈕時由 Lua GC 自動釋放，零記憶體洩漏。
+           -- 實裝 updateButtonFonts 零配額熱套用機制，拉動滑桿時直接調用 FontString:SetFont 原位更新畫面上所有活躍光環文字，零延遲、無需銷毀容器、不消耗 18 次配額，徹底擺脫 /reload 泥潭。
+           -- 優化 Options.lua 滑桿提交流程與文字通知路由，字型大小滑桿放開時不再觸發無謂的容器重建，杜絕觸發 18 次配額上限導致系統鎖死的隱患。
+           -- 統一全專案法術名稱字型大小取值邏輯，完善規則編譯器指紋 (buildVisualFingerprint) 與樣式快照 (snapshotStyle)，確保新舊光環按鈕字型大小 100% 一致。
+        -- 聊天框跳脫字元破裂修復 (Chat Pipe Escape Fix):
+           -- 修復魔獸聊天框「<spellID|target|...>」因「|t」被當作 Texture 貼圖跳脫碼而破裂為「<spellIDarget>」的嚴重瑕疵，改為標準斜線「<spell/target/cd/item/ground>」。
+     -- 【🐛 缺陷修復 (Bug Fixes)】:
+        -- 角色屬性文字與進度條調色盤按鈕回呼修復 (Player Stat Text & Bar Color Swatch Closure Scope Fix):
+           -- 徹底修復在角色屬性面板點擊「數值文字顏色」、「名稱文字顏色」或「進度條主色/漸層色」按鈕開啟調色盤時，引發 attempt to index global 'valColorBtn' (a nil value) 的重大錯誤。
+           -- 將按鈕 OnClick 回呼全面改為以 function(btn) 接收自身元件參照，徹底根治 Lua 區域變數在同一陳述句內閉包宣告時未綁定至 Local Scope 而誤查全域變數 _G 的作用域陷阱。
+        -- 目標光環切換目標即時刷新、殘留圖示清理與倒數鬼影根治 (Target Aura Target-Switching Live Refresh, Ghost Icon Purge & Countdown Ghost Elimination):
+           -- 徹底根除切換目標時原目標光環圖示殘留或秒數仍持續倒數（幽靈圖示殘留與秒數倒數鬼影）的頑疾：
+              1. 雙模 Native 12.1 原生容器生命週期重置：AuraContainerService.onTargetChanged 註冊監聽 PLAYER_TARGET_CHANGED，目標變更時即時重設原生容器 SetEnabled(false) -> SetUnit("target") -> SetEnabled(true) -> Update()，無目標時即時 Hide() 與停用，徹底杜絕 C++ 底層 AuraContainer 在目標改變時遺漏切換而使舊目標光環與原生秒數倒數持續運行的缺陷；
+              2. Legacy 渲染器即時同步清空與秒數計時器解綁：於 AuraService.onTargetChanged、clearUnit("target") 與 renderInactiveUnit("target") 入口直接調用 Renderer.clearFrame(targetAura)，將當前畫面所有目標光環圖示、DurationAdapter 文字綁定與原生計時器立即同步釋放、隱藏並返還圖示池，徹底杜絕異步批次排程延遲導致舊目標光環殘留倒數；
+              3. AlertManager 佇列過期暫存排空：新增 AlertManager.clearPending(targetAura)，於切換目標時同步作廢並釋放所有尚未 Flush 的目標光環狀態變更，杜絕舊目標的過期更新在下一個 Tick 重新喚醒圖示；
+              4. Native 雙重保險守衛邊界校正：修正 AlertManager 誤將 targetAura 當作 Native 光環攔截的邊界缺陷（原生渲染器僅託管自身光環），確保 Legacy 目標光環關閉與釋放事件暢通無阻；
+              5. renderInactiveAlert 補齊兜底事件派發，即使底層狀態已提前回收或為 nil，仍保證向 targetAura 派發 shown = false 關閉通知；
+              6. Renderer.render 重構圖示隱藏與釋放流程，將 shown = false 判定前置於戰鬥阻斷檢查之前，杜絕戰鬥中隱藏圖示被 combatDeferred 擱置而永久洩漏；
+              7. IconPool.release 全面清空 stackText、nameText 與 texture 貼圖並重設錨點與透明度，徹底杜絕舊文字與圖示殘留於畫面上。
+           -- 徹底修復切換目標時目標光環無法即時更新最新光環的缺陷：修正 fullScanUnit、renderInactiveUnit 與 clearUnit 狀態遍歷與全量對齊，確保切換目標時舊目標光環 100% 即時清除，新目標光環立即掃描呈現。
+           -- 修正 readAuraIntoState 將目標有益增益誤判為減益的嚴重問題，並實裝 alertMatchesAura 嚴格過濾有害/有益極性與施法者歸屬 (fromPlayer)，防止同法術 ID 之增益與減益跨極性誤觸發。
+           -- 補齊 Native 與 Legacy 雙模後端事件隔離生命週期 (registerLegacyEvents / unregisterLegacyEvents)，杜絕事件重複綁定或切換遺漏。
+        -- 技能冷卻與地面效果第一格消失及移動模式坐標漂移根治 (Alert Layout Slot 1 Zero-Anchor Guard & Drag Coordinate Normalization Fix):
+           -- 徹底修復技能冷卻與地面效果第一格槽位 (Slot 1) 首次渲染時物理消失的重大缺陷：消除預熱與寄生判斷在原點 (0, 0) 下誤判略過 SetPoint 的雙重死鎖，引入 GetNumPoints() == 0 物理錨點計數守衛與快取重置，確保 Slot 1 必定具有物理錨點並穩定顯示。
+           -- 徹底根治暴雪原生 StopMovingOrSizing 強制改寫 BOTTOMLEFT 導致的幾何大漂移：將 OnDragStop 嚴格換算並重設為相對於 UIParent 之 CENTER 錨點，並修正 Lua 多回傳值截斷導致 Y 坐標被強制重設為 0 的重大缺陷；SavedVariables.normalizeLayout 自動校正歷史存檔中的 BOTTOMLEFT 坐標，徹底終結動態增減圖示時框架位移的問題。
+        -- 原生光環自訂名稱分組繼承修復 (Native Aura Custom Name Group Separation Fix):
+           -- 徹底修復原生光環 (Native Aura) 下多光環合併進動態流動群組 (Flow Group) 時，自訂名稱被第 1 個未設定簡稱的法術暴力覆蓋為 nil 的重大缺陷。
+           -- 規則編譯器 (AuraRuleCompiler) 於 groupID 納入 customName 與 customIcon，凡有設定自訂名稱的光環自動分離出專屬群組，完整保留簡稱樣式。
+           -- 渲染器 (NativeAuraRenderer) 實裝自訂名稱專屬呈現，有自訂名稱時由子元件獨立顯示，不向暴雪註冊 SetSpellName，徹底杜絕暴雪底層 C++ 內核刷回原生法術全名。
+        -- 快捷懸停加入 (CTRL+ALT) 跨職業法術歸類為自身光環修復 (Ctrl+Alt Quick-Add Cross-Class Spell to Self Auras Catalog Fix):
+           -- 徹底修復使用 CTRL+ALT 快捷懸停對非本職業法術/光環點選「加入自身光環監控」時，因遺漏傳遞 catalogScope 導致法術被自動歸入「跨職業清單」、在自身清單第一頁無法看見的缺陷。
+           -- 實裝意圖明確注入：透過快捷選單加入光環時，明確賦予 catalogScope = "SELF" 與 fromPlayer = true，100% 確保條目顯示於自身增益/減益清單（第 1 分頁）。
+           -- 實裝舊項目自動校正：若先前已被誤歸類至跨職業清單之法術，再次透過快捷鍵加入時自動更新分類為自身光環並觸發設定即時重繪。
+        -- 地面效果法術圖示解析、清單排版與順序同步修復 (Ground Effect Spell Presentation, Layout & Order Sync Fix):
+           -- 徹底修復部分地面技能（如暴風雪變體 ID）在登入初期因遊戲底層資訊尚未載入而顯示為齒輪圖示「地面技能」的問題；實裝多層原生降級解析與渲染層兜底保護，確保圖示與名稱 100% 正確顯示。
+           -- 強化自然數排序 (1..N) 保證與批次派發，設定介面調整上下順位或數字時，畫面圖示即時同步零延遲重排。
+           -- 預覽牛頭人避讓與遮蔽根治：徹底修復開啟設定介面或移動模式時，預覽牛頭人 (previewIcons) 覆蓋在真實預渲染圖示之上導致第 1 格（如冰霜之球）被完全遮蔽、第 2 格文字重疊為「地暴風雪」的重大缺陷。實裝智能避讓，當框架有真實圖示時強制隱藏牛頭人，綠色移動框精準包裹真實技能，第 1 格最右側完整清晰展示。
+           -- 歷史幽靈法術自動清理與清單解鎖：於 SavedVariables 存檔自動清除歷史筆誤 19306（暴風雪舊版筆誤）、19036 與 343292（火焰之環舊版筆誤）；並在設定介面清單放寬合法數字 ID 顯示，杜絕未知/舊法術在介面隱形導致無法手動點選 [X] 刪除的問題。殘留項目清除後，清單與畫面圖示順序自動回正為連續自然數 (1..N)。
+     -- 【🌐 在地化支援 (Localization)】:
+        -- 5 大語系（zhTW、zhCN、enUS、koKR、ruRU）說明文字全在地化，徹底剔除生硬英文，詞條 100% 完整收錄與同步。
+
+-- [Retail][MN][12.1][Alpha 8.6][Live Preview Overhaul, Modern Dropdowns & System Diagnostics] 2026.09.14
      -- 地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment & Zero In-Combat Interruption):
         -- 徹底修復地面效果在戰鬥中施放不顯示的問題：校正 Renderer.prewarmAlertFrames 從 SavedVariables.getActiveAlerts() 讀取各職業 Profile，確保非戰鬥期間 100% 預熱建立 Frame。
         -- 全面對齊 CooldownService 成熟架構：移除 verifyCompiledAlerts 戰鬥中阻斷施法的延遲拒絕機制，改為純記憶體即時編譯，徹底終結 combatCompileDeferred 頑疾。
@@ -79,7 +145,7 @@
        -- 在設定面板「字型與文字」新增「法術名稱位置」21 種排版下拉選單，與秒數倒數、堆疊層數一樣享有完整 21 種錨點自訂能力，所調即所見。
     -- 多語系（5 國語言）支援 (Multi-language Localization):
        -- 繁體中文、簡體中文、英文、韓文、俄文 5 大語系字典 100% 完整對齊診斷系統與下拉選單所有詞條。
--- [Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display & Cooldown Swipe Customization] 2026.09.12
+-- [Retail][MN][12.1][Alpha 8.5][Skyriding Gliding-Only Display & Cooldown Swipe Customization] 2026.09.12
     -- 飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display Option)：
        -- 在角色屬性與吸收量監控中，為「飛龍模式飛速 (skyridingSpeed)」新增專屬特殊選項「僅滑翔顯示 (Glide Only)」。
        -- 啟用後僅當角色處於空中御空術/飛龍滑翔飛行狀態 (C_PlayerInfo.GetGlidingInfo() 之 isGliding == true) 時才於畫面呈現該圖示與即時速度百分比；未滑翔（站立/步行）時自動隱藏，避免以 0% 佔用畫面。
@@ -94,7 +160,7 @@
        -- 顯示法術圖示、法術名稱、ID 與詢問提示（「這個 SPELL ID 可能不是你的職業專屬，你仍要加入嗎？」）。
        -- 提供「確定」按鈕：確認後仍強制於當前所在模組清單（自身光環提醒）中正式加入，絕不擅自竄改至跨職業清單；「取消」按鈕（及 ESC 鍵）安全關閉且不更改任何設定。
        -- 5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 完整對齊。
--- [Retail 12.1.0 Alpha 8.5 Full Theme Visual Overhaul, Modern WoW Gradient Fix & Subwindow Theme Sync] 2026.09.12
+-- [Retail][MN][12.1][Alpha 8.5][Full Theme Visual Overhaul, Modern WoW Gradient Fix & Subwindow Theme Sync] 2026.09.12
     -- 11 大經典復古與現代主題調色盤深度重構與考證 (11 Classic & Modern Themes Deep Visual Overhaul)：
        -- EAM 經典復刻：精確還原 9.0.1 經典石板黑褐底 (0.08, 0.06, 0.05)、金屬金框 (0.65, 0.50, 0.25) 與晶石深紅立體按鈕 (0.55, 0.10, 0.08)。
        -- FF7 經典戰鬥視窗：還原頂部鮮豔皇家寶石藍至底部黑海軍藍垂直漸層、純白立體邊框 (1.0, 1.0, 1.0) 與深藍晶透按鈕純白字。
@@ -107,7 +173,7 @@
        -- 補齊圖示位置與能量設定內框 (posInner)、清單設定內框 (listInner) 之面板主題註冊，徹底消除子視窗與主視窗脫節之暗棕色色塊。
        -- 新增 "row" 輕量列表行角色，保留文字與圖標清晰度同時杜絕過度漸層。
        -- 補齊各面板之效果預覽按鈕、下拉選單與操作按鈕之 registerButton 關聯。
--- [Retail 12.1.0 Alpha 8.5 ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power & Live Preview] 2026.09.12
+-- [Retail][MN][12.1][Alpha 8.5][ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power & Live Preview] 2026.09.12
     -- ESC 鍵無損純透明度抑制與冷卻預渲染保護 (Zero-Alpha Suppression on ESC Key)：
        -- 在遊戲中按 ESC 鍵可隱藏畫面上的提醒圖示。全面改採純透明度抑制 (SetAlpha(0))，絕不銷毀 Frame 物件，保留 2D 排版矩陣與背景冷卻動畫。
        -- 觸發新提示、進入戰鬥或打開設定面板時自動無損還原顯示；具備戰鬥中防 Taint 安全守衛。
@@ -124,7 +190,7 @@
     -- 五國語言完整對齊與存檔自動蓋章：
        -- 5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 同步新增 19 個預覽與頁籤詞條。
        -- 存檔資料庫新增 meta 時間戳蓋章，自動標記本地時間與 Unix 秒數。
--- [Retail 12.1.0 Alpha 8.5 Native Curve Architecture & Dynamic Visual Immersion] 2026.09.08
+-- [Retail][MN][12.1][Alpha 8.5][Native Curve Architecture & Dynamic Visual Immersion] 2026.09.08
     -- 暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入 (Native C-Level Curve Architecture)：
        -- 深入對齊暴雪 Patch 12.0.0 / Midnight 引入之底層 C-Level 曲線系統，全面接入 ScriptObject_CurveObject 與 ScriptObject_ColorCurveObject，杜絕戰鬥鎖定與 Taint 污染。
     -- 能量/資源條動態色彩曲線平滑染色 (Resource Dynamic Color Curve)：
@@ -141,7 +207,7 @@
        -- 透過 UnitHealthPercent("player", true, healthCurve) 驅動全螢幕邊緣深紅動態呼吸脈動。血量越低紅框越濃烈，脫戰自動平滑隱藏，提供沉浸式瀕死預警。
     -- 排版設定面板現代化升級與五大語系對齊：
        -- 於排版設定視窗中增設資源動態變色勾選框、冷卻進度曲線下拉選單、瀕死動態呼吸紅框開關與危急血量門檻滑桿，五大語系（繁中/簡中/英文/韓文/俄文）100% 完整對齊。
--- [Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility & Stat Hardening] 2026.09.04
+-- [Retail][MN][12.1][Alpha 8.4][2D Grid Layout, Cooldown Combat Visibility & Stat Hardening] 2026.09.04
     -- 光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine & Columns per Row Configuration)：
        -- 2D 網格折行排版引擎 (2D Grid Layout Engine)：自身光環 (selfAura)、目標光環 (targetAura)、技能冷卻 (spellCooldown)、物品冷卻 (itemCooldown) 與地面效果 (groundEffect) 等模組全面升級為二維矩陣排版。圖示數量超過指定欄數 (Columns) 時，依成長方向自動向下一列 (Row) 折行，杜絕圖示單向無限延伸遮擋或超出螢幕。
        -- 清單視窗頂部每列欄數控制滑桿 (Columns per Row Slider)：於監控清單視窗 (listFrame) 頂部專精下拉選單右側增設「每列欄數 (Columns)」滑桿 (範圍 1~20，預設 8)，支援即時調整與多分類獨立設定保存。
@@ -164,7 +230,7 @@
        -- 全面採用暴雪原生 FontString:SetFormattedText 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。
        -- 補齊全 18 大屬性之 getRawValue 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 AllowedWhenTainted 與 Enum.SecretAspect.Text 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。
        -- 單一屬性圖示自訂拖曳報錯修復：修復 PlayerStatService 於拖曳移動單一屬性圖示放開後，在地化格式字串參數個數不足導致的 bad argument #4 (format) Lua 報錯。
--- [Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
+-- [Retail][MN][12.1][Alpha 8.3][Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
     -- 次世代全量法術庫與智慧預設系統 (Next-Gen Master Spell Catalog & Intelligent Presets)：
        -- 5 語系離線先驗資料庫：收錄全 13 職業、40 專精與 39 英雄天賦樹共 4,463 個核心法術與 466 個光環，支援繁中/簡中/英文/韓文/俄文即時切換。
        -- 階層式樹狀法術庫面板 (SpellCatalogTreePanel)：支援專精展開/收合、三態勾選、名稱與 ID 即時搜尋。
@@ -181,7 +247,7 @@
        -- Profile Codec 匯出/解碼修復：在 buildPayload 加入唯一性過濾，徹底修復實機歷史重複 ID 導致的 duplicateAlertID 報錯。
        -- 字型驗證修復：修正 LSM 載入時的旁路判斷，確保非法字型一律安全回退為 STANDARD。
        -- 修正條件設定視窗下拉文字 SetText 型別不相容問題。
--- [Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
+-- [Retail][MN][12.1][Alpha 8.2][LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
     -- LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)：
        -- 全面接入社群廣泛使用的 LibSharedMedia-3.0 素材生態，完整支援所有第三方 SharedMedia 音效包、字型包與材質包。
        -- 實作 MediaService.ensureLSM() 動態探測機制與 PLAYER_LOGIN 延遲同步刷新，徹底解決 EAM 早於其他 SharedMedia 擴充插件載入時音效清單被凍結在初始 12 種內建音效的問題。
@@ -197,7 +263,7 @@
     -- UI 下拉選單長清單自適應捲動容器 (Scrollable Dropdown Menus with MouseWheel)：
        -- 實作通用自適應捲動選單 buildScrollableDropdownMenu：當 SharedMedia 包含數十或數百種字型／音效時，選單自動限制高度為 10 筆並啟用 UIPanelScrollFrameTemplate 捲軸與滑鼠滾輪支援，版面整潔不破圖。
        -- 展開音效與字型選單時自動以 forceRefresh 模式向 LSM 抓取最新註冊素材清單。
--- [Retail 12.1.0 Alpha 8.1 Cooldown Zero-Alpha Mode & Combat Stat Memory Fallbacks] 2026.08.26
+-- [Retail][MN][12.1][Alpha 8.1][Cooldown Zero-Alpha Mode & Combat Stat Memory Fallbacks] 2026.08.26
     -- 技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (Persistent Pre-anchoring & Zero-Alpha Cooldown Mode)：
        -- 徹底解決技能冷卻在戰鬥中首次施放無法建立框架或延遲至脫戰後才出現的架構問題。
        -- 進入世界、切換天賦或載入設定時，非戰鬥狀態下自動預先建立所有已監控之技能冷卻與物品冷卻 Frame，並完成精確座標計算。
@@ -218,7 +284,7 @@
        -- 渲染器 (Renderer) 於光環圖示右下角疊加層精確格式化顯示剩餘吸收盾量（如 45.2k、1.2M），若同時具備多層數則自動並列顯示（如 3(45k)）。
     -- 圖示物件池 (IconPool) 擴容與安全放行：
        -- 預熱池容量由 16 擴增至 64，並在池耗盡時直接安全呼叫 createIcon 建立，杜絕戰鬥中回傳 nil。
--- [Retail 12.1.0 Alpha 8.0 Independent Stat Positioning & Layout Control] 2026.08.25
+-- [Retail][MN][12.1][Alpha 8.0][Independent Stat Positioning & Layout Control] 2026.08.25
     -- 角色屬性與吸收量監控升級 (Independent Positioning & Grow Direction)：
        -- 新增「整體排列方向」下拉選單（向右、向左、向上、向下），支援整組屬性即時方向重構。
        -- 支援各單項「獨立自訂位置與獨立拖曳」：每項屬性可勾選啟用獨立位置，具備專屬 X/Y 軸像素滑桿，並提供「移動此單項」與「移動所有屬性」按鈕，在畫面上直接以滑鼠拖曳定位並即時雙向同步座標。
@@ -232,7 +298,7 @@
     -- 主選單排版精確對齊 (Main Menu Alignment & Flash Test Fix)：
        -- 修復「測試閃爍」按鈕覆蓋文字問題，獨立配置於專屬按鈕列。
        -- 將「啟用 12.1 原生圓形光環倒數光圈」完整回歸主設定選單核心控制區。
--- [Retail 12.1.0 Alpha 7.9 Full UI Hover Tooltips & Center Reset & Showcase] 2026.08.24
+-- [Retail][MN][12.1][Alpha 7.9][Full UI Hover Tooltips & Center Reset & Showcase] 2026.08.24
     -- 全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)：
        -- 在全部按鈕、核取方塊、滑桿、下拉選單、輸入編輯框與清單操作列加入直觀的懸停說明提示 (Hover Tooltips)，清晰標註控制項用途、設定範圍與操作指引。
        -- 實作通用工具函式 EAM.UI.setTooltip，支援純文字、多語系字串與表格綁定，徹底消除介面操作門檻。
@@ -243,7 +309,7 @@
        -- 修正關閉主視窗時在 closeAllSidePanels 缺少 close() 引發的 nil call 錯誤，實作防禦性 safeClosePanel 機制。
     -- 官方 README 圖文導覽與 GitHub 直連展示 (Visual Showcase)：
        -- 整理 14 張全功能高畫質介面截圖，分類涵蓋系統選單、法術條件與階層吸附、職業資源與屬性排版。
--- [Retail 12.1.0 Alpha 7.8 Player Stats & Custom Icons & Classic Preview] 2026.08.24
+-- [Retail][MN][12.1][Alpha 7.8][Player Stats & Custom Icons & Classic Preview] 2026.08.24
     -- 「★ 角色屬性與吸收量監控」全新模組：
        -- 支援 18 種核心屬性取值監控（主屬性：力量、敏捷、耐力、智力；副屬性：致命、加速、精通、臨機應變；輔助與生存：閃避、汲取、速度屬性評級、跑速、泳速、飛速、飛龍模式飛速、總吸收盾量、治療吸收量、護甲值）。
        -- 速度類別全面淬鍊：跑速 (GetUnitSpeed 地面即時與上限跑速)、泳速 (水下速度)、飛速 (穩定飛行 310%~420%)、飛龍模式飛速 (調用 C_PlayerInfo.GetGlidingInfo 專屬 API 取得 830%~1400% 動能滑翔速度)，並以 0.1s 高頻計時器平滑刷新。
@@ -264,64 +330,64 @@
        -- 實作 UI/CombatFlash.lua 全螢幕低血/戰鬥紅框閃爍動畫，監聽 PLAYER_REGEN_DISABLED 事件觸發戰鬥進入警示，並在主選單提供即時測試按鈕。
     -- 主題樣式與預設回歸：
        -- EAM 預設主題改回經典魔獸紅色選單按鈕與仿石框邊緣。
--- [Retail 12.1.0 Alpha 7.7 Interactive Frame Anchors & Layout Management] 2026.08.24
+-- [Retail][MN][12.1][Alpha 7.7][Interactive Frame Anchors & Layout Management] 2026.08.24
     -- 子視窗聯動移動錨點：點擊各類別監控（自身增益、跨職業、目標增益、技能冷卻、物品冷卻、地面效果、玩家職業資源）子視窗時，自動在畫面上亮起該模組專屬半透明移動錨點框（標記按住左鍵拖曳），方便玩家直觀拖曳調整在畫面上的定位。
     -- 排版位置全開模式：開啟「告警框架位置與排版」視窗時自動亮起全部 7 大框架移動錨點，關閉子視窗或主選單時自動隱藏所有錨點並套用最新座標排版。
     -- 全二級附屬側窗互斥：開啟職業資源、除錯中心、Profile 匯入/匯出、功能模組、關於或清單子視窗時，自動關閉其他側邊面板，徹底消除多個側窗堆疊重疊問題。
     -- 除錯中心與診斷匯出修復：修正流程測試分頁運行非同步回傳布林值導致的 index error，補全格式化輸出；修正系統診斷報告匯出按鈕調用。
--- [Retail 12.1.0 Alpha 7.5 UI & Feature Overhaul] 2026.08.23
+-- [Retail][MN][12.1][Alpha 7.5][UI & Feature Overhaul] 2026.08.23
     -- 介面佈局重構：主選單第 7 項目提升為「★ 玩家職業資源設定」，排版位置微調為第 8 項目，除錯類功能統整至 4-Tab「除錯與測試診斷中心」。
     -- 全視窗快速關閉：所有視窗右上角加入原生 [X] 快速關閉按鈕。
     -- 階層式無縫吸附 (APPEND Docking)：主選單 ➔ 清單/排版/資源 ➔ 細部條件/批次輸入 視窗依序向右緊密貼合，並支援多視窗同步平滑拖曳。
     -- Profile 分享功能升級：支援 8 大自選項目匯出／匯入（自身/目標光環、技能/物品冷卻、地面效果、框架排版位置、職業資源設定、一般偏好設定），並提供快捷選取按鈕與預覽區塊分析。
     -- 職業資源設定即時生效：設定滑桿與下拉選單數值變更時即時驅動原生渲染器更新，非戰鬥不需 /reload。
     -- 死亡騎士符文強化：圖示依血魄 (250)、冰霜 (251)、穢邪 (252) 專精動態切換專屬圖示；下方增設 6 格微型充能冷卻條，由排程器平滑驅動；提供 /eam rune 槽位診斷與複製視窗。
--- [Retail 12.1.0 Alpha 7.4 Rune / Ground Family] 2026.08.23
+-- [Retail][MN][12.1][Alpha 7.4][Rune & Ground Family] 2026.08.23
     -- 充能環形版面改用封裝的透明 TGA ring grid；冷卻完成必須先觀測到已消耗充能，再於 currentCharges 回到 maxCharges 時成立，避免施放後的舊全滿快照提早移除。
     -- 死亡騎士符文改由 GetRuneCount／GetRuneCooldown 六槽初始化與 RUNE_POWER_UPDATE(index, added) 即時驅動；消耗／恢復更新 0..6 分段，符能仍為獨立資源。
     -- 地面效果設定會在非戰鬥中編譯 Base／Override／目前 SpellInfo 法術族群；死亡凋零／褻瀆等替換 ID 可命中同一監控項，設定 ID 完全相符時優先。
     -- 未知、碰撞或 Secret 施放 ID 一律不猜測、不索引；冰霜之球、反魔法立場等自動秒數失敗時沿用單項手動 fallback。
--- [Retail 12.1.0 Alpha 7.3 Charge Count Layout] 2026.08.23
+-- [Retail][MN][12.1][Alpha 7.3][Charge Count Layout] 2026.08.23
     -- 充能 StatusBar 改以目前可用次數／最大次數顯示，不再讓段數跟著單層恢復時間前進；Secret currentCharges 只直送 Blizzard C-level SetValue sink。
     -- 新增框外 TOP／BOTTOM／LEFT／RIGHT 與環形 RING 版面；預設長度／環直徑為圖示 150%、厚度 8px，並依安全 maxCharges 顯示分隔線。
     -- 12.1 環形使用 StatusBar Radial render mode；能力或材質不可用時回退 BOTTOM 線性條。
     -- 充能技能只有回到最大次數才視為冷卻完成，因此「冷卻完成移除」不會在仍缺少充能時提早移除。
--- [Retail 12.1.0 Alpha 7.2 Charge Hotfix] 2026.08.23
+-- [Retail][MN][12.1][Alpha 7.2][Charge Hotfix] 2026.08.23
     -- 充能技能仍只在玩家首次成功施放後進入監控，並可對齊儲存 base ID 與目前 override ID。
     -- SpellChargeInfo 改採欄位級 Secret 判讀；安全 current/max 顯示文字，Secret currentCharges 則以圖示同寬 StatusBar 接收官方 DurationObject。
     -- 冷卻技能細部設定隱藏 Aura 專用「僅監控自己施放」，三項冷卻行為按鈕不再重疊。
--- [Retail 12.1.0 Alpha 7.1] 2026.08.23
+-- [Retail][MN][12.1][Alpha 7.1] 2026.08.23
     -- 充能型技能在安全取得充能資料時顯示 current/max，並保留原生 DurationObject 冷卻倒數。
     -- 無計時時清除並隱藏 CooldownFrame 的 edge／bling，避免技能圖示留下白色空框。
     -- Glow Border 支援內嵌 LibButtonGlow-1.0；自訂顏色、戰鬥首次建框或 library 不可用時回退 EAM 動畫邊框。
     -- 玩家資源設定面板開關後即時重套用視覺狀態，非戰鬥不需 /reload。
--- [Retail 12.1 Alpha 7 Resource Hotfix]2026.08.23
+-- [Retail][MN][12.1][Alpha 7][Resource Hotfix] 2026.08.23
     -- 修正 SavedVariables 對 immutable ResourceCatalog map 的寫入，避免 frozen table 錯誤及後續 Options nil method。
     -- PlayerResourceProbe 增加一次性缺事件檢查與 restart lifecycle gate；形態／顯示資源事件只更新 foreground metadata，不批量開啟或清除背景資源。
     -- 公開 README 與插件副本同步，補足 Retail／PTR／XPTR slash command、部署、WTF 備份還原與安全邊界說明。
--- [Retail 12.1 Alpha 7 Player Resource Module]2026.08.23
+-- [Retail][MN][12.1][Alpha 7][Player Resource Module] 2026.08.23
     -- 玩家職業資源改為 17 資源、13 職業／40 組專精候選拓撲；UNIT_DISPLAYPOWER 只更新前景，不再因形態切換拆除背景追蹤。
     -- 補強 Druid Bear／Cat／Caster／Moonkin／回 Bear、Energy→ComboPoints renderer ownership、PAIN 專用 legacy key 與模組停用清理。
     -- 每項資源新增／補齊字型、數字文字大小與位置、方向、尺寸、透明度、排序、前景／背景與數值能力設定；非戰鬥變更即時套用，戰鬥中離戰後合併一次。
     -- 保留 Secret write-only sink 與安全 ResourceProbe；不保存、比較、字串化或匯出 UnitPower 原值。/eam unitpower background <RESOURCE_KEY> 僅是玩家明確標記事件缺失的診斷入口。
--- [Retail 12.1 Alpha 7]2026.08.23
+-- [Retail][MN][12.1][Alpha 7] 2026.08.23
     -- Target Aura 提供匿名 diagnostics 與明確 /eam add target 手動 popup route；不保存 Secret、AuraData、Frame 或猜測 ID。
     -- 技能冷卻監控改為只在玩家精確成功施放清單技能後首次 render；新增 cooldownRemoveAura、showSCDOutsideCombat、glowSCDWhenUsable 三項 per-spell nil／true／false 覆寫。
     -- 新增戰鬥中非清單治療法術、PLAYER_REGEN_ENABLED、形態刷新不得批量開啟冷卻圖示的回歸防護。
--- [Retail 12.1 Alpha 6 Cooldown Activation]2026.08.23
+-- [Retail][MN][12.1][Alpha 6][Cooldown Activation] 2026.08.23
     -- 技能冷卻監控只在玩家精確成功施放對應清單技能後首次 render；非清單治療法術、脫戰、refresh 或形態事件不會批量開啟。
     -- 冷卻移除光環、脫戰顯示與可用高亮支援全域繼承及單技能 true／false 覆寫，false 可保存；到期顯示由冷卻服務依設定決定。
--- [Retail 12.1 Alpha 6 Target Aura Diagnostics]2026.08.23
+-- [Retail][MN][12.1][Alpha 6][Target Aura Diagnostics] 2026.08.23
     -- TooltipMonitorService now exposes anonymous Target Aura callback/candidate timing, expiry count, Ctrl+Alt modifier state, CVar read/set result, and last open reason; no Secret, AuraData, Frame, or guessed ID is retained.
     -- /eam add target opens the existing manual Target Aura popup; /eam add target <spellID> direct add remains unchanged.
     -- Ctrl+Alt still requires a fresh safe tooltip/heartbeat candidate and remains fail-closed in combat, with keyboard focus, or without an exact modifier chord.
--- [Retail 12.1 Alpha 6 Player Resource Runtime Follow-up]2026.08.21
+-- [Retail][MN][12.1][Alpha 6][Player Resource Runtime Follow-up] 2026.08.21
     -- 每項玩家資源可獨立設定 anchor、position、大小、間距、前景／背景與顯示方式；非戰鬥設定立即套用，戰鬥中的結構變更延後至離戰合併一次。
     -- 德魯伊 Caster／Cat／Bear／Moonkin 依目前形態切換前景資源，同時保留 Mana、Rage、Energy、ComboPoints 與 LunarPower 候選，不再強制單一首格。
     -- 新增安全的 PlayerResourceProbe metadata 與 XPTR 12.0.7 numeric legacy adapter；報告不輸出 UnitPower、UnitPowerMax、percent 或其他 Secret 原值。
     -- 背景事件缺失時只啟用一個 0.5 秒 demand-driven sampler；事件恢復、模組停用或 generation 過期時停止，戰鬥中不做結構性重建。
     -- 資源更新依 capability 預先綁定 NUMERIC／SECRET_DISPLAY 策略；NUMERIC 文字避免每事件格式化配置，Secret 維持 write-only sink。
--- [Retail 12.1 Alpha 6 Resource Follow-up]2026.08.21
+-- [Retail][MN][12.1][Alpha 6][Resource Follow-up] 2026.08.21
     -- 玩家職業資源：
        -- 重構為 17 種資源、13 職業與 40 組職業／專精拓撲；同一專精可同時顯示多個可用資源，不再只保留單一 ClassPower。
        -- 新增每職業／專精的資源設定面板；每項資源可獨立啟用、排序與調整前景、背景、數值、位置、大小、間距及透明度。
@@ -329,7 +395,17 @@
     -- 12.1 安全顯示：
        -- 普通數值可顯示文字；Secret 百分比只單向送入專用狀態列，不保存、不比較、不字串化、不序列化，也不讀回。
        -- 開發報告只輸出資源類型、能力分類與顯示設定，不包含 current、max 或 percent 原值。
--- [Retail 12.1 Alpha 6]2026.08.14
+-- [Retail][MN][12.1][Alpha 6][職業資源設定生命週期] 2026.08.21
+    -- 非戰鬥修改玩家職業資源設定後立即套用，不再以 /reload 作為必要步驟。
+    -- 戰鬥中保存設定並於離開戰鬥後合併套用；新增安全的百分比、字型、方向與門檻高亮套用。
+
+-- [Retail][MN][12.1][Alpha 6][Resource Lifecycle Fix] 2026.08.21
+    -- 玩家職業資源設定：
+       -- 非戰鬥修改設定後立即套用，不再要求每次變更都執行 /reload。
+       -- 戰鬥中設定先保存，離開戰鬥後合併套用一次；避免戰鬥中重建結構造成保護或污染風險。
+       -- 新增數值資源的門檻高亮與前景 metadata；Secret 資源仍只作原生狀態列顯示，不輸出原始數值。
+
+-- [Retail][MN][12.1][Alpha 6] 2026.08.14
     -- Aura、Profile 與正式服通道：
        -- Retail／PTR 12.1 依 Interface 120100 與 Native widget capability 啟用 AuraContainer；XPTR 12.0.7 保留 Legacy backend。
        -- 自身／目標 Aura 新增預設僅玩家施放，跨職業增減益預設取消；批次輸入支援換行與半形／全形分號，不存在的 SpellID 不寫入。
@@ -338,14 +414,14 @@
        -- 修正語系列空白；十一套主題統一控制 EAM 按鈕四態底色、文字與四邊 2px 邊框，不再固定紅色。
        -- Borland 為亮藍底亮黃字，DOS CRT 為黑底綠字；AlertBorderStyles 七種監控語意色維持獨立。
        -- `Trade_Engineering` 齒輪縮入金色小地圖追蹤圈：20px 背景、17px 圖示、5% 裁邊，53px 邊框改採 TOPLEFT 標準錨點。
--- [Retail 12.1 Alpha 5 Follow-up]2026.08.14
+-- [Retail][MN][12.1][Alpha 5][Follow-up] 2026.08.14
     -- 通道與 Aura 清單：
        -- 正式服與 PTR 12.1 使用 Native capability gate；XPTR 12.0.7 保留 Legacy backend。
        -- Aura 批次輸入支援 Enter、半形／全形分號；自身與目標預設僅玩家施放，跨職業預設取消，不存在的 SpellID 不顯示也不寫入。
     -- UI 與設定：
        -- 修正語系 dropdown 因缺少 labelKey 而出現空白列；Profile 捲動與 Options 入口完成，小地圖以內建 Trade_Engineering 齒輪取代不可靠的 Texture SVG。
        -- EAM 文字按鈕移除強制紅色，改由十一套主題控制底色、四態、文字與四邊 2px 邊框；Borland 為亮藍底亮黃字，DOS CRT 為黑底綠字。
--- [Retail 12.1.0 PTR8 Alpha 5]2026.08.14
+-- [Retail][MN][12.1][Alpha 5][PTR8] 2026.08.14
     -- Profile 分享與資料安全：
        -- 新增 EAMAP1 JSON／Base64 profile codec，含白名單欄位、大小／深度／節點限制、Adler-32 checksum、preview、merge／replace 與 combat guard。
        -- 匯入不執行外部 Lua，不信任外部 ID／module scope；replace 會保留 bounded backup，checksum 或 schema 不符即拒絕。
@@ -353,11 +429,28 @@
     -- UI／語系：
        -- 新增 STANDARD、ARIALN、MORPHEUS、SKURRI 字型選擇，保存後套用 EAM 自有計時／堆疊／名稱文字。
        -- 語系變更即時刷新 EAM 自有按鈕、下拉選單、條件與專精選單；Auto Detect 維持固定英文，無需以 /reload 觸發動態刷新。
--- [Retail 12.1.0 PTR8 Alpha 4]2026.08.13
+-- [Retail][MN][12.1][Alpha 4][PTR8] 2026.08.13
     -- 功能模組與清單：
        -- 整合功能模組開關，讓自身／目標光環、技能冷卻、物品冷卻、地面效果、職業資源、圖騰與 Tooltip 監控可獨立停用或啟用；除錯工具與小地圖入口維持既有獨立行為。
        -- 監控清單改以職業 profile 隔離；保留 v4 舊資料備份與安全遷移，不以職業猜測拆分歷史全域清單。
--- [Retail  12.1.0 PTR8 Alpha 3]2026.08.09
+-- [Retail][MN][12.1][Alpha 3][Follow-up AuraSound] 2026.08.13
+    -- Aura 細部設定新增共用素材與 Added、ApplicationsIncreased、Removed 三個 12.1 AuraSound 開關。
+    -- 全域 showSound 作為 master gate；container 與 sound fingerprint 分離，純音效更新不消耗 Native 容器配額。
+    -- AuraSound registry 採 candidate 成功後交換；Add 失敗回滾，Remove 失敗保留 ID 供後續重試。
+
+-- [Retail][MN][12.1][Alpha 3][Follow-up 小地圖 SVG 與主題] 2026.08.12
+    -- 小地圖按鈕改用專案自有 SVG；SetSVG 不可用時回退內建問號圖示，保留左鍵、右鍵與拖曳操作。
+    -- 主設定新增 EAM、FF7、Windows XP 主題選擇，保存於 EAM_DB.config.theme。
+    -- 戰鬥中主題切換延後至 PLAYER_REGEN_ENABLED，不修改 Blizzard secure/protected frame。
+    -- 主題只改 EAM 自有視窗 chrome，七種監控邊框語意色維持獨立。
+
+-- [Retail][MN][12.1][Alpha 3][Follow-up] 2026.08.12
+    -- 本地化：
+       -- 新增完整 ruRU 字串 catalog，並以 enUS key parity 契約防止新功能字串遺漏。
+        -- 主設定面板新增語系下拉清單；Auto Detect 固定英文且為預設，選擇後即時刷新 EAM 自有文字。
+       -- 語系值保存於 EAM_DB.config.language；不在 click handler 自動呼叫 ReloadUI，避免混合語言 UI。
+
+-- [Retail][MN][12.1][Alpha 3][PTR8] 2026.08.09
     -- Tooltip 與加入監控：
        -- TargetFrame／BuffFrame Aura 支援滑鼠停留後只按 Ctrl+Alt 開啟 EAM 視窗，不再要求右鍵，也不攔截 Blizzard 點擊。
        -- Action Bar Macro 優先解析安全的 spell／item subtype 與 ID；無法安全解析時才要求手動輸入。
@@ -370,14 +463,14 @@
        -- 新增玩家操作的 VectorGraphics／Texture SVG A/B 探針；提供 VectorGraphics 與 Texture 兩條 SetSVG 探針路徑。
        -- 非對稱契約：VectorGraphics 驗證 Set/Clear/Has/Get，Texture 只驗證 Set/Clear；addon-local fileID=0 與 Texture introspection unavailable 不再誤判。
         -- SVG 素材列入插件資源；報告不保存 raw file ID，可由 JSON 或遊戲內持久化報告回灌 SVG 能力結果。
--- [Retail  12.1.0 PTR8 Alpha 2]2026.08.08
+-- [Retail][MN][12.1][Alpha 2][PTR8] 2026.08.08
     -- PTR8 Native Aura：
        -- 接入 AuraButton Pandemic region 與 Dispel texture options；showAlways、stealable 與樣式以白名單編譯。
        -- 停用 AuraContainer 時清除按鈕與武器附魔 assignment；設定變更標記 dirty，非戰鬥中手動重建。
     -- UnitPower 安全路徑：
        -- 安全普通數字只在 C_Secrets predicate 明確允許且非戰鬥時讀取；戰鬥中延後至 PLAYER_REGEN_ENABLED。
        -- 可能為 Secret 的百分比只單向送入 StatusBar／radial sink，不讀回、不比較、不序列化。
--- [Retail  12.1.0 Alpha]2026.07.28
+-- [Retail][MN][12.1][Alpha 1] 2026.07.28
 	-- 12.1 Native AuraContainer：
 	   -- 12.1 使用 Blizzard AuraContainer／AuraButton 建立 player、target 與 group 穩定容器。
 	   -- Native backend 不讀取 UNIT_AURA Secret payload，也不建立舊式 AuraState；12.0.7 保留 Legacy backend。
@@ -388,7 +481,7 @@
 	-- 流程診斷：
 	   -- 新增遊戲內流程測試面板與 JSON 報告匯入，方便玩家檢視插件流程狀態。
 
--- [Retail  12.1.0  ]2026.06.09
+-- [Retail][MN][12.1][Zero-Alloc Architecture & Shadow Host] 2026.06.09
 	-- 零分配與事件驅動全模組架構重構（完全數據與視圖解耦）：
 	   -- 徹底重構解耦 AuraService、CooldownService、ItemCooldownService、GroundEffectService 與 TotemService 五大數據服務。
 	   -- 五大服務全面改為事件驅動，不再與 Renderer 渲染引擎直接耦合，而是向 EventRouter 拋出 `EAM_*_STATE_CHANGED` 事件。
@@ -411,7 +504,7 @@
 	-- 素材封裝修正：
 	   -- 修正 allowedExtensions 漏掉 `.blp` 圖檔 Bug，確保自訂 UI 按鈕與貼圖資源不缺失。
 
--- [Retail  12.0.7  ]2026.06.06
+-- [Retail][MN][12.0.7] 2026.06.06
 	-- 專精與職業名稱動態 API 本地化重構：
 	   -- 使用 GetSpecializationInfoForClassID API 動態獲取當前語系客戶端官方的本地化專精文字。
 	   -- 建立 CLASS_TOKEN_TO_ID 對照表，支援全部 13 職業與專精的動態名稱加載，移除專精名稱的硬編碼，提供雙軌 fallback。
@@ -426,7 +519,7 @@
 	   -- 為 OnEvent 循環與 Scheduler 定時任務 callback 追加參數化 pcall 故障隔離。
 	   -- 確保單一模組異常或報錯時，不會引發其他模組崩潰或定時清理中斷。
 
--- [Retail  12.0.7  ]2026.05.30
+-- [Retail][MN][12.0.7] 2026.05.30
 	-- 重構地面效果監控 (GroundEffectService.lua)，實現 5 大客戶端語系多國語言 Tooltip 解析 (Tooltip Scraping) 機制：
 	   -- 支援 enUS/enGB, zhTW, zhCN, koKR, ruRU。
 	   -- 採用 numerically-indexed 陣列配合 Util.tableFreeze 鎖定 regex 匹配模式，消除 Lua 字串雜湊與 table lookup 的 GC 與 CPU 消耗。
@@ -444,7 +537,7 @@
 	-- 在 Popup 法術條件視窗中實作地面效果多態切換面板，整合「啟用動態 Tooltip 擷取 Checkbox」、「手動設定時間 EditBox」與「一鍵擷取 Button」，操作得心應手。
 	-- 升級 /eam doctor (RuntimeProbe) 診斷模組，為少年欸目標性提供實時多框架座標、成長方向、新 Service 載入狀態的詳細測試與除錯資訊。
 
--- [Retail  12.0.7  ]2026.05.29
+-- [Retail][MN][12.0.7] 2026.05.29
 	-- 針對 WoW Retail 12.0.7 正式服進行全面重塑與效能優化！
 	-- 實作 12.0.7 原生 `C_DurationUtil.CreateDurationTextBinding` 時間文字倒數與 `SetCooldownFromDurationObject` 圓環陰影連動。
 	-- CooldownService 服務層極致重構，引進 Service-Layer Write Gating 節流閥與 IsZero 判定，消滅 pairs/ipairs 迭代器，達成 hot path 完全零 GC 記憶體分配。
@@ -1053,29 +1146,3 @@
    若0 則表示完全不會顯示
 
 -- 鳥D 日月能移除，只剩下星能。
-
--- [Retail 12.1.0 Alpha 3 follow-up] 2026.08.12
-    -- 本地化：
-       -- 新增完整 ruRU 字串 catalog，並以 enUS key parity 契約防止新功能字串遺漏。
-        -- 主設定面板新增語系下拉清單；Auto Detect 固定英文且為預設，選擇後即時刷新 EAM 自有文字。
-       -- 語系值保存於 EAM_DB.config.language；不在 click handler 自動呼叫 ReloadUI，避免混合語言 UI。
-
--- [Retail 12.1.0 Alpha 3 follow-up] 2026.08.12 小地圖 SVG 與主題
-    -- 小地圖按鈕改用專案自有 SVG；SetSVG 不可用時回退內建問號圖示，保留左鍵、右鍵與拖曳操作。
-    -- 主設定新增 EAM、FF7、Windows XP 主題選擇，保存於 EAM_DB.config.theme。
-    -- 戰鬥中主題切換延後至 PLAYER_REGEN_ENABLED，不修改 Blizzard secure/protected frame。
-    -- 主題只改 EAM 自有視窗 chrome，七種監控邊框語意色維持獨立。
-
--- [Retail 12.1.0 Alpha 3 follow-up] 2026.08.13 AuraSound
-    -- Aura 細部設定新增共用素材與 Added、ApplicationsIncreased、Removed 三個 12.1 AuraSound 開關。
-    -- 全域 showSound 作為 master gate；container 與 sound fingerprint 分離，純音效更新不消耗 Native 容器配額。
-    -- AuraSound registry 採 candidate 成功後交換；Add 失敗回滾，Remove 失敗保留 ID 供後續重試。
--- [Retail 12.1.0] 2026.08.21 職業資源設定生命週期
-    -- 非戰鬥修改玩家職業資源設定後立即套用，不再以 /reload 作為必要步驟。
-    -- 戰鬥中保存設定並於離開戰鬥後合併套用；新增安全的百分比、字型、方向與門檻高亮套用。
-
--- [Retail 12.1 Alpha 6 Resource Lifecycle Fix]2026.08.21
-    -- 玩家職業資源設定：
-       -- 非戰鬥修改設定後立即套用，不再要求每次變更都執行 /reload。
-       -- 戰鬥中設定先保存，離開戰鬥後合併套用一次；避免戰鬥中重建結構造成保護或污染風險。
-       -- 新增數值資源的門檻高亮與前景 metadata；Secret 資源仍只作原生狀態列顯示，不輸出原始數值。

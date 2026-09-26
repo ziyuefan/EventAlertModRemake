@@ -81,6 +81,46 @@ function SpellInfoService.getSpellInfo(spellID)
         end
     end
 
+    -- 多層防禦性降級解析：當未完成快取或 GetSpellInfo 尚未載入時，直接透過專用 API 取得法術名稱與圖示
+    if not record.name and api.C_Spell and type(api.C_Spell.GetSpellName) == "function" then
+        local ok, sName = pcall(api.C_Spell.GetSpellName, spellID)
+        if ok and Util.isSafeString(sName) and sName ~= "" then
+            record.name = sName
+        end
+    end
+    if not record.icon and api.C_Spell and type(api.C_Spell.GetSpellTexture) == "function" then
+        local ok, sTex = pcall(api.C_Spell.GetSpellTexture, spellID)
+        if ok and Util.isSafePositiveNumber(sTex) then
+            record.icon = sTex
+        end
+    end
+    if (not record.name or not record.icon) and api.C_Spell and type(api.C_Spell.GetBaseSpell) == "function" then
+        local okBase, baseID = pcall(api.C_Spell.GetBaseSpell, spellID)
+        if okBase and Util.isSafePositiveNumber(baseID) and baseID ~= spellID then
+            if not record.name and type(api.C_Spell.GetSpellName) == "function" then
+                local ok, bName = pcall(api.C_Spell.GetSpellName, baseID)
+                if ok and Util.isSafeString(bName) and bName ~= "" then
+                    record.name = bName
+                end
+            end
+            if not record.icon and type(api.C_Spell.GetSpellTexture) == "function" then
+                local ok, bTex = pcall(api.C_Spell.GetSpellTexture, baseID)
+                if ok and Util.isSafePositiveNumber(bTex) then
+                    record.icon = bTex
+                end
+            end
+        end
+    end
+    if not record.name and EAM.Data and EAM.Data.SpellHeuristics and EAM.Data.SpellHeuristics[spellID] then
+        local h = EAM.Data.SpellHeuristics[spellID]
+        if h and h.name and h.name ~= "" then
+            record.name = h.name
+        end
+    end
+    if record.name and record.icon then
+        record.factsSafe = true
+    end
+
     SpellInfoService.cache[spellID] = record
     return record
 end

@@ -914,6 +914,51 @@ local ORDERED_KEYS = {
 }
 PlayerStatService.ORDERED_KEYS = ORDERED_KEYS
 
+-- 取得當前屬性排列順序（優先讀取職業獨立/全域設定，支援使用者自選排序）
+function PlayerStatService.getOrder()
+    local _, classToken = PlayerStatService.getPlayerStatsConfig()
+    local db = EAM.db
+    local profileOrder = nil
+    if classToken and db and db.profiles and db.profiles.classes and db.profiles.classes[classToken] then
+        profileOrder = db.profiles.classes[classToken].playerStatsOrder
+    end
+    local rawOrder = profileOrder or (db and db.playerStatsOrder)
+    if type(rawOrder) == "table" and #rawOrder > 0 then
+        local seen = {}
+        local order = {}
+        for _, k in ipairs(rawOrder) do
+            if STAT_DEFINITIONS[k] and not seen[k] then
+                seen[k] = true
+                order[#order + 1] = k
+            end
+        end
+        for _, k in ipairs(ORDERED_KEYS) do
+            if not seen[k] then
+                seen[k] = true
+                order[#order + 1] = k
+            end
+        end
+        return order
+    end
+    local copy = {}
+    for i, k in ipairs(ORDERED_KEYS) do copy[i] = k end
+    return copy
+end
+
+-- 儲存使用者自選屬性排列順序
+function PlayerStatService.setOrder(newOrder)
+    local _, classToken = PlayerStatService.getPlayerStatsConfig()
+    local db = EAM.db
+    if classToken and db and db.profiles and db.profiles.classes and db.profiles.classes[classToken] then
+        db.profiles.classes[classToken].playerStatsOrder = newOrder
+    elseif db then
+        db.playerStatsOrder = newOrder
+    end
+    if PlayerStatService.update then
+        PlayerStatService.update()
+    end
+end
+
 -- 透過 FontString:SetFormattedText 進行 C-Level 零 GC 分配與 Secret Values 容錯渲染
 local function renderStatValueText(fontString, val, rawVal, formatType, decimals, shortNumber, suffix)
     if not fontString then return end
@@ -1089,6 +1134,94 @@ end
 local parentFrame = nil
 local statItemFrames = {}
 
+-- 解析依附目標框架 (Attach Target Resolver)
+local function resolveAnchorTarget(attachTo)
+    if not attachTo or attachTo == "EAM_ANCHOR" then
+        return parentFrame or UIParent
+    end
+    if attachTo == "UIParent" or attachTo == "Screen" then
+        return UIParent
+    end
+    if attachTo == "PlayerFrame" then
+        return _G.PlayerFrame or UIParent
+    end
+    if attachTo == "TargetFrame" then
+        return _G.TargetFrame or UIParent
+    end
+    if attachTo == "FocusFrame" then
+        return _G.FocusFrame or UIParent
+    end
+    if attachTo == "PetFrame" then
+        return _G.PetFrame or UIParent
+    end
+    if _G[attachTo] then
+        return _G[attachTo]
+    end
+    return parentFrame or UIParent
+end
+PlayerStatService.resolveAnchorTarget = resolveAnchorTarget
+
+-- 進度條自選顏色與雙色漸層渲染 (SetGradient API / Fallback)
+local function applyStatusBarColor(bar, cfg, def)
+    if not bar then return end
+    local tex = bar:GetStatusBarTexture()
+    local c1 = cfg.barColor
+    local r1, g1, b1, a1
+    if c1 and type(c1) == "table" then
+        r1, g1, b1, a1 = c1[1] or 0.2, c1[2] or 0.8, c1[3] or 1.0, c1[4] or 0.95
+    else
+        -- 依類別設定預設 StatusBar 顏色
+        if def.key == "totalAbsorb" then
+            r1, g1, b1, a1 = 0.1, 0.75, 1.0, 0.95
+        elseif def.key == "healAbsorb" then
+            r1, g1, b1, a1 = 0.85, 0.25, 0.85, 0.95
+        elseif def.category == "speed" then
+            r1, g1, b1, a1 = 0.2, 0.9, 0.8, 0.95
+        elseif def.category == "secondary" then
+            r1, g1, b1, a1 = 1.0, 0.82, 0.15, 0.95
+        elseif def.category == "tertiary" then
+            r1, g1, b1, a1 = 0.3, 0.9, 0.4, 0.95
+        elseif def.category == "primary" then
+            r1, g1, b1, a1 = 1.0, 0.5, 0.1, 0.95
+        else
+            r1, g1, b1, a1 = 0.4, 0.6, 0.8, 0.95
+        end
+    end
+
+    if cfg.enableGradient and cfg.barColor2 and tex then
+        local c2 = cfg.barColor2
+        local r2 = (type(c2) == "table" and c2[1]) or 0.1
+        local g2 = (type(c2) == "table" and c2[2]) or 0.5
+        local b2 = (type(c2) == "table" and c2[3]) or 0.9
+        local a2 = (type(c2) == "table" and c2[4]) or 0.95
+        local dir = cfg.barGradientDir or "HORIZONTAL"
+
+        local applied = false
+        local createColor = _G.CreateColor or (api and api.CreateColor)
+        if tex.SetGradient and createColor then
+            local ok, col1 = pcall(createColor, r1, g1, b1, a1)
+            local ok2, col2 = pcall(createColor, r2, g2, b2, a2)
+            if ok and ok2 and col1 and col2 then
+                local gOk = pcall(tex.SetGradient, tex, dir, col1, col2)
+                if gOk then applied = true end
+            end
+        end
+
+        if not applied and tex.SetGradientAlpha then
+            local gOk = pcall(tex.SetGradientAlpha, tex, dir, r1, g1, b1, a1, r2, g2, b2, a2)
+            if gOk then applied = true end
+        end
+
+        if applied then
+            bar:SetStatusBarColor(1, 1, 1, 1)
+            return
+        end
+    end
+
+    bar:SetStatusBarColor(r1, g1, b1, a1)
+end
+PlayerStatService.applyStatusBarColor = applyStatusBarColor
+
 local function ensureParentFrame()
     if parentFrame then return parentFrame end
     if api.InCombatLockdown and api.InCombatLockdown() then return nil end
@@ -1103,19 +1236,24 @@ local function ensureParentFrame()
     if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames.playerStat then
         local cfg = EAM.db.layout.frames.playerStat
         frame:ClearAllPoints()
-        frame:SetPoint(cfg.point or "CENTER", UIParent, cfg.point or "CENTER", cfg.x or 0, cfg.y or -220)
+        local target = resolveAnchorTarget(cfg.attachTo)
+        if target == frame then target = UIParent end
+        frame:SetPoint(cfg.point or "CENTER", target, cfg.attachPoint or cfg.point or "CENTER", cfg.x or 0, cfg.y or -220)
     end
 
     parentFrame = frame
     return frame
 end
+PlayerStatService.ensureParentFrame = ensureParentFrame
 
 local function getOrCreateStatItemFrame(statKey)
     if statItemFrames[statKey] then
         return statItemFrames[statKey]
     end
+    ensureParentFrame()
 
-    local item = api.CreateFrame("Frame", "EAM_AlertFrame_playerStat_" .. tostring(statKey), UIParent, "BackdropTemplate")
+    local parent = parentFrame or UIParent
+    local item = api.CreateFrame("Frame", "EAM_AlertFrame_playerStat_" .. tostring(statKey), parent, "BackdropTemplate")
     item:SetSize(40, 40)
     item:SetFrameStrata("MEDIUM")
     item.statKey = statKey
@@ -1160,6 +1298,15 @@ local function getOrCreateStatItemFrame(statKey)
 end
 
 function PlayerStatService.update()
+    local mc = EAM.Modules and EAM.Modules.ModuleController
+    if mc and type(mc.isEnabled) == "function" and not mc.isEnabled("playerStat") then
+        if parentFrame then parentFrame:Hide() end
+        for _, item in pairs(statItemFrames) do
+            item:Hide()
+        end
+        return
+    end
+
     if not parentFrame and not ensureParentFrame() then return end
 
     local db = EAM.db
@@ -1168,7 +1315,8 @@ function PlayerStatService.update()
 
     local activeList = {}
     local anyGrouped = false
-    for _, key in ipairs(ORDERED_KEYS) do
+    local orderedKeys = PlayerStatService.getOrder()
+    for _, key in ipairs(orderedKeys) do
         local cfg = statsConfig[key]
         if cfg and cfg.enabled then
             local shouldShow = true
@@ -1246,8 +1394,8 @@ function PlayerStatService.update()
         local itemW = size
         local itemH = size
 
-        -- 當取消圖示時，依數值相對方位自適應框架尺寸
-        if cfg.showIcon == false then
+        -- 當取消圖示時（預設），依數值相對方位自適應框架尺寸
+        if cfg.showIcon ~= true then
             local placement = cfg.valuePlacement or "TOP"
             if placement == "LEFT" or placement == "RIGHT" then
                 itemW = math.max(size * 1.8, 80)
@@ -1261,11 +1409,20 @@ function PlayerStatService.update()
 
         item:ClearAllPoints()
         if cfg.useCustomPos then
+            local target = resolveAnchorTarget(cfg.attachTo)
+            if target == parentFrame or target == item then
+                item:SetParent(parentFrame or UIParent)
+                target = parentFrame or UIParent
+            else
+                item:SetParent(UIParent)
+            end
             local pt = cfg.point or "CENTER"
+            local apt = cfg.attachPoint or pt
             local ox = cfg.offsetX or 0
             local oy = cfg.offsetY or 0
-            item:SetPoint(pt, UIParent, pt, ox, oy)
+            item:SetPoint(pt, target, apt, ox, oy)
         else
+            item:SetParent(parentFrame)
             groupedIdx = groupedIdx + 1
             local curDimension = (growDir == 1 or growDir == 2) and itemW or itemH
             if groupedIdx == 1 then
@@ -1288,11 +1445,11 @@ function PlayerStatService.update()
             item:SetPoint("CENTER", parentFrame, "CENTER", dx, dy)
         end
 
-        -- 判斷是否顯示圖示與數值排版
+        -- 判斷是否顯示圖示與數值排版 (預設 showIcon 為 false)
         item.valText:ClearAllPoints()
         item.labelText:ClearAllPoints()
 
-        if cfg.showIcon ~= false then
+        if cfg.showIcon == true then
             local iconTex = PlayerStatService.getStatIcon(data.key, cfg.customIcon)
             item.icon:SetTexture(iconTex)
             item.icon:Show()
@@ -1364,14 +1521,14 @@ function PlayerStatService.update()
             item.labelText:SetTextColor(1, 0.9, 0.5, 1)
         end
 
-        -- StatusBar 進度條原生 Sink 支援 (當為 Secret 數值或開啟進度條時)
+        -- StatusBar 進度條自選顏色與雙色漸層渲染 (當為 Secret 數值或開啟進度條時)
         local isSecret = shouldUnitStatsBeSecret("player")
             or (Util and Util.isSecretValue and Util.isSecretValue(rawVal))
             or (issecretvalue and issecretvalue(rawVal))
         if cfg.showStatusBar ~= false or isSecret then
             item.statusBar:SetHeight(math.max(3, math.floor(itemH * 0.15)))
             item.statusBar:ClearAllPoints()
-            if cfg.showIcon ~= false then
+            if cfg.showIcon == true then
                 item.statusBar:SetPoint("BOTTOMLEFT", item, "BOTTOMLEFT", 2, 2)
                 item.statusBar:SetPoint("BOTTOMRIGHT", item, "BOTTOMRIGHT", -2, 2)
             else
@@ -1391,22 +1548,7 @@ function PlayerStatService.update()
                 maxVal = 30000
             end
 
-            -- 依類別設定 StatusBar 顏色
-            if data.key == "totalAbsorb" then
-                item.statusBar:SetStatusBarColor(0.1, 0.75, 1.0, 0.95)
-            elseif data.key == "healAbsorb" then
-                item.statusBar:SetStatusBarColor(0.85, 0.25, 0.85, 0.95)
-            elseif def.category == "speed" then
-                item.statusBar:SetStatusBarColor(0.2, 0.9, 0.8, 0.95)
-            elseif def.category == "secondary" then
-                item.statusBar:SetStatusBarColor(1.0, 0.82, 0.15, 0.95)
-            elseif def.category == "tertiary" then
-                item.statusBar:SetStatusBarColor(0.3, 0.9, 0.4, 0.95)
-            elseif def.category == "primary" then
-                item.statusBar:SetStatusBarColor(1.0, 0.5, 0.1, 0.95)
-            else
-                item.statusBar:SetStatusBarColor(0.4, 0.6, 0.8, 0.95)
-            end
+            applyStatusBarColor(item.statusBar, cfg, def)
 
             pcall(item.statusBar.SetMinMaxValues, item.statusBar, 0, maxVal)
             pcall(item.statusBar.SetValue, item.statusBar, rawVal)
@@ -1426,12 +1568,12 @@ function PlayerStatService.update()
         end
 
         if isAlert then
-            if cfg.showIcon ~= false then
+            if cfg.showIcon == true then
                 item:SetBackdropBorderColor(1.0, 0.3, 0.3, 1.0)
             end
             item.valText:SetTextColor(1.0, 0.3, 0.3, 1.0)
         else
-            if cfg.showIcon ~= false and not PlayerStatService.isMoving then
+            if cfg.showIcon == true and not PlayerStatService.isMoving then
                 item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
             end
         end
@@ -1440,17 +1582,78 @@ function PlayerStatService.update()
     end
 end
 
--- 屬性框架特定/全部移動模式控制
+-- 屬性框架特定/全部移動模式控制（主錨點拖曳連動所有非獨立屬性）
 function PlayerStatService.setActiveAnchors(enable, targetKey)
     if inCombat() then return false, "combatDeferred" end
     PlayerStatService.isMoving = enable
 
     if enable then
+        ensureParentFrame()
         local statsConfig = PlayerStatService.getPlayerStatsConfig()
+
+        -- 當移動全部或主錨點時，亮起 parentFrame 主錨點供使用者直接拖曳
+        if (targetKey == "all" or targetKey == nil or targetKey == "playerStat") and parentFrame then
+            parentFrame:Show()
+            parentFrame:SetSize(160, 42)
+            parentFrame:SetMovable(true)
+            parentFrame:EnableMouse(true)
+            parentFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+            parentFrame:SetClampedToScreen(true)
+            parentFrame:RegisterForDrag("LeftButton")
+
+            if not parentFrame.moverHUD then
+                local hud = api.CreateFrame("Frame", nil, parentFrame, "BackdropTemplate")
+                hud:SetSize(160, 42)
+                hud:SetPoint("CENTER", parentFrame, "CENTER", 0, 0)
+                hud:SetBackdrop({
+                    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+                    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                    tile = true, tileSize = 16, edgeSize = 12,
+                    insets = { left = 3, right = 3, top = 3, bottom = 3 }
+                })
+                hud:SetBackdropColor(0.02, 0.28, 0.12, 0.55)
+                hud:SetBackdropBorderColor(0.20, 1.00, 0.45, 0.95)
+
+                local title = hud:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                title:SetPoint("TOP", hud, "TOP", 0, -4)
+                title:SetTextColor(0.3, 1.0, 0.5, 1.0)
+                title:SetText("★ 角色屬性主錨點")
+
+                local sub = hud:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+                sub:SetPoint("BOTTOM", hud, "BOTTOM", 0, 4)
+                sub:SetTextColor(0.8, 0.9, 0.8, 0.9)
+                sub:SetText("[左鍵拖曳 / 右鍵完成]")
+
+                parentFrame.moverHUD = hud
+            end
+            parentFrame.moverHUD:Show()
+
+            parentFrame:SetScript("OnDragStart", parentFrame.StartMoving)
+            parentFrame:SetScript("OnDragStop", function(self)
+                self:StopMovingOrSizing()
+                local point, _, _, x, y = self:GetPoint()
+                local db = EAM.db
+                if db and db.layout and db.layout.frames then
+                    db.layout.frames.playerStat = db.layout.frames.playerStat or {}
+                    db.layout.frames.playerStat.point = point or "CENTER"
+                    db.layout.frames.playerStat.x = x or 0
+                    db.layout.frames.playerStat.y = y or -220
+                end
+                print("|cff00ff96EAM|r " .. string.format((EAM.L and EAM.L.EAM_STAT_MAIN_ANCHOR_SAVED) or "角色屬性主錨點已儲存: X: %.1f, Y: %.1f", x or 0, y or -220))
+            end)
+            parentFrame:SetScript("OnMouseUp", function(self, button)
+                if button == "RightButton" and PlayerStatService.isMoving then
+                    PlayerStatService.setActiveAnchors(false)
+                    print("|cff00ff96EAM|r " .. ((EAM.L and EAM.L.EAM_MOVE_MODE_OFF) or "已關閉移動模式。"))
+                end
+            end)
+        end
+
         for k, item in pairs(statItemFrames) do
             local cfg = statsConfig[k] or {}
             local def = STAT_DEFINITIONS[k]
-            if (targetKey == "all" or targetKey == nil or targetKey == "playerStat" or targetKey == k) and cfg.enabled then
+            -- 獨立單項拖曳或全選中獨立位置的屬性
+            if ((targetKey == k) or (targetKey == "all" and cfg.useCustomPos)) and cfg.enabled then
                 item:Show()
                 item:SetMovable(true)
                 item:EnableMouse(true)
@@ -1485,6 +1688,12 @@ function PlayerStatService.setActiveAnchors(enable, targetKey)
             end
         end
     else
+        if parentFrame then
+            parentFrame:SetMovable(false)
+            parentFrame:EnableMouse(false)
+            parentFrame:SetFrameStrata("MEDIUM")
+            if parentFrame.moverHUD then parentFrame.moverHUD:Hide() end
+        end
         for _, item in pairs(statItemFrames) do
             item:SetMovable(false)
             item:EnableMouse(false)
@@ -1494,6 +1703,23 @@ function PlayerStatService.setActiveAnchors(enable, targetKey)
         PlayerStatService.update()
     end
     return true
+end
+
+-- 模組生命週期即時開關回呼 (ModuleController Toggle Hook)
+function PlayerStatService.onModuleToggle(enabled, reason)
+    if enabled == false then
+        if parentFrame then
+            parentFrame:Hide()
+        end
+        for _, item in pairs(statItemFrames) do
+            item:Hide()
+        end
+        if PlayerStatService.isMoving then
+            PlayerStatService.setActiveAnchors(false)
+        end
+    else
+        PlayerStatService.update()
+    end
 end
 
 -- 定期更新計時器 (每 0.1 秒刷新一次，保障移動速度等即時數值流暢呈現)

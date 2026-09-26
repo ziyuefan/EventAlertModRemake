@@ -42,9 +42,8 @@ local GroundEffectService = {
     lastCanonicalSpellID = nil,
     lastTriggerResult = "uninitialized",
     defaults = {
-        [19306] = { enabled = true, durationMode = "AUTO", manualDuration = 8, name = "暴風雪" },
+        [190356] = { enabled = true, durationMode = "AUTO", manualDuration = 8, name = "暴風雪" },
         [84714] = { enabled = true, durationMode = "AUTO", manualDuration = 15, name = "寒冰寶珠" },
-        [343292] = { enabled = true, durationMode = "AUTO", manualDuration = 6, name = "火焰之環" },
     },
 }
 
@@ -82,6 +81,23 @@ local function normalizeManualDuration(value)
         return 3600
     end
     return value
+end
+
+local function resolveBehavior(alert, key)
+    if key == "groundEffectPreRender" or key == "cooldownPreRender" then
+        if type(alert) == "table" and type(alert.groundEffectPreRender) == "boolean" then
+            return alert.groundEffectPreRender
+        end
+        if type(alert) == "table" and type(alert.cooldownPreRender) == "boolean" then
+            return alert.cooldownPreRender
+        end
+        local config = EAM.db and EAM.db.config
+        if type(config) == "table" and type(config.groundEffectPreRender) == "boolean" then
+            return config.groundEffectPreRender
+        end
+        return true
+    end
+    return nil
 end
 
 function GroundEffectStatePool.initialize()
@@ -289,6 +305,9 @@ local function compileAlerts()
     if type(list) == "table" and Util.canAccessTable(list) then
         for _, alert in pairs(list) do
             local spellID = type(alert) == "table" and alert.spellID or nil
+            if spellID == 19306 or spellID == 19036 or spellID == 343292 then
+                spellID = nil
+            end
             if alert.enabled ~= false and safeSpellID(spellID) then
                 GroundEffectService.alertsBySpellID[spellID] = alert
                 GroundEffectService.compiledAlertCount = GroundEffectService.compiledAlertCount + 1
@@ -399,34 +418,97 @@ local function onAlertExpired(spellID)
     end
     local state = GroundEffectService.activeStates[spellID]
     GroundEffectService.activeAlerts[spellID] = nil
-    GroundEffectService.activeStates[spellID] = nil
     if not state then
         return
     end
-    state.shown = false
+    local alert = GroundEffectService.alertsBySpellID[spellID]
+    local isPreRender = resolveBehavior(alert, "groundEffectPreRender")
     local router = EAM.Modules.EventRouter
-    if router then
-        router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+    if isPreRender then
+        state.isPlaceholder = true
+        state.isDesaturated = true
+        state.active = true
+        state.shown = true
+        if state.timer then
+            Util.clearTimer(state.timer, EAM.Constants.TIMER_UNKNOWN)
+        end
+        if router then
+            router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+        end
+    else
+        state.shown = false
+        GroundEffectService.activeStates[spellID] = nil
+        if router then
+            router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+        end
     end
 end
 
 local function readSpellPresentation(spellID, alert)
-    local name = alert and alert.name or EAM.L.EAM_GROUND_SKILL_DEFAULT or "地面技能"
-    local icon = 136243
-    local cSpell = api.C_Spell
-    if cSpell and type(cSpell.GetSpellInfo) == "function" then
-        local ok, spellInfo = pcall(cSpell.GetSpellInfo, spellID)
+    local name = (alert and alert.name and alert.name ~= "") and alert.name or nil
+    local icon = (alert and alert.customIcon and tonumber(alert.customIcon)) or nil
+
+    -- 1. 優先透過 SpellInfoService 查詢（含多層降級快取）
+    local SpellInfoService = EAM.Services and EAM.Services.SpellInfoService
+    if SpellInfoService and type(SpellInfoService.getSpellInfo) == "function" then
+        local ok, spellInfo = pcall(SpellInfoService.getSpellInfo, spellID)
         if ok and Util.isReadableTable(spellInfo) then
-            local spellName, nameSafe = Util.readSafeField(spellInfo, "name")
-            local iconID, iconSafe = Util.readSafeField(spellInfo, "iconID")
-            if nameSafe and Util.isSafeString(spellName) then
+            local spellName = spellInfo.name
+            local iconID = spellInfo.icon or spellInfo.iconID
+            if not name and Util.isSafeString(spellName) and spellName ~= "" then
                 name = spellName
             end
-            if iconSafe and Util.isSafePositiveNumber(iconID) then
+            if not icon and Util.isSafePositiveNumber(iconID) then
                 icon = iconID
             end
         end
     end
+
+    -- 2. 直接透過 Retail 原生專屬 API 查詢
+    local cSpell = api.C_Spell
+    if not name and cSpell and type(cSpell.GetSpellName) == "function" then
+        local ok, sName = pcall(cSpell.GetSpellName, spellID)
+        if ok and Util.isSafeString(sName) and sName ~= "" then
+            name = sName
+        end
+    end
+    if not icon and cSpell and type(cSpell.GetSpellTexture) == "function" then
+        local ok, sTex = pcall(cSpell.GetSpellTexture, spellID)
+        if ok and Util.isSafePositiveNumber(sTex) then
+            icon = sTex
+        end
+    end
+
+    -- 3. 族群 BaseSpell 反向解析（如 1248829 -> 190356 暴風雪）
+    if (not name or not icon) and cSpell and type(cSpell.GetBaseSpell) == "function" then
+        local okBase, baseID = pcall(cSpell.GetBaseSpell, spellID)
+        if okBase and Util.isSafePositiveNumber(baseID) and baseID ~= spellID then
+            if not name and type(cSpell.GetSpellName) == "function" then
+                local ok, bName = pcall(cSpell.GetSpellName, baseID)
+                if ok and Util.isSafeString(bName) and bName ~= "" then
+                    name = bName
+                end
+            end
+            if not icon and type(cSpell.GetSpellTexture) == "function" then
+                local ok, bTex = pcall(cSpell.GetSpellTexture, baseID)
+                if ok and Util.isSafePositiveNumber(bTex) then
+                    icon = bTex
+                end
+            end
+        end
+    end
+
+    -- 4. 靜態情報資料庫 SpellHeuristics 支援
+    if not name and EAM.Data and EAM.Data.SpellHeuristics and EAM.Data.SpellHeuristics[spellID] then
+        local h = EAM.Data.SpellHeuristics[spellID]
+        if h and h.name and h.name ~= "" then
+            name = h.name
+        end
+    end
+
+    -- 5. 終極降級安全保護
+    name = name or (alert and alert.name) or (EAM.L and EAM.L.EAM_GROUND_SKILL_DEFAULT) or "地面技能"
+    icon = icon or 136243
     return name, icon
 end
 
@@ -476,17 +558,23 @@ local function triggerGroundEffect(canonicalSpellID, activationSpellID)
         state.id = (alert and alert.id) or ("groundEffect:player:" .. canonicalSpellID)
         state.kind = EAM.Constants.ALERT_KIND_GROUND_EFFECT
         state.spellID = canonicalSpellID
-        state.name = name
+        state.name = (alert and alert.customName and alert.customName ~= "" and alert.customName) or name
         state.icon = icon
         state.stacks = 0
         state.active = true
         GroundEffectService.activeStates[canonicalSpellID] = state
+    else
+        if alert and alert.customName and alert.customName ~= "" then
+            state.name = alert.customName
+        end
     end
 
     state.rawAlert = alert
     state.order = alert and alert.order or nil
     state.active = true
     state.shown = true
+    state.isPlaceholder = false
+    state.isDesaturated = false
     state.timer.mode = EAM.Constants.TIMER_NUMERIC
     state.timer.startTime = now
     state.timer.duration = duration
@@ -508,6 +596,10 @@ local function triggerGroundEffect(canonicalSpellID, activationSpellID)
     local router = EAM.Modules.EventRouter
     if router then
         router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+    end
+    local renderer = EAM.UI and EAM.UI.Renderer
+    if renderer and type(renderer.requestLayout) == "function" then
+        renderer.requestLayout(EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
     end
     if Scheduler and Scheduler.after then
         Scheduler.after(duration, onAlertExpired, canonicalSpellID)
@@ -553,7 +645,7 @@ function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spe
         canonicalSpellID = GroundEffectService.configuredSpellIDByEventID[spellID]
     end
     if not safeSpellID(canonicalSpellID) then
-        -- 動態反向法術家族解析：當靜態查表未命中時，比對 baseSpellID 與 overrideSpellID
+        -- 動態反向法術家族解析：當靜態查表未命中時，比對 baseSpellID、overrideSpellID 與法術名稱
         local cSpell = api.C_Spell
         if cSpell then
             local baseSpellID = resolveSpellIdentifier(cSpell.GetBaseSpell, spellID)
@@ -572,6 +664,20 @@ function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spe
                     end
                 end
             end
+            if not safeSpellID(canonicalSpellID) and type(cSpell.GetSpellInfo) == "function" then
+                local ok, spellInfo = pcall(cSpell.GetSpellInfo, spellID)
+                local castSpellName = (ok and Util.isReadableTable(spellInfo)) and spellInfo.name or nil
+                if Util.isSafeString(castSpellName) and castSpellName ~= "" then
+                    for cID, alert in pairs(GroundEffectService.alertsBySpellID) do
+                        local ok2, alertInfo = pcall(cSpell.GetSpellInfo, cID)
+                        local alertSpellName = (ok2 and Util.isReadableTable(alertInfo)) and alertInfo.name or (alert and alert.name)
+                        if alertSpellName == castSpellName then
+                            canonicalSpellID = cID
+                            break
+                        end
+                    end
+                end
+            end
             if safeSpellID(canonicalSpellID) then
                 GroundEffectService.configuredSpellIDByEventID[spellID] = canonicalSpellID
             end
@@ -585,6 +691,118 @@ function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spe
     return triggerGroundEffect(canonicalSpellID, spellID)
 end
 
+function GroundEffectService.refreshAll(eventName)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
+    local compiled, compileReason = verifyCompiledAlerts()
+    if not compiled then
+        return false, compileReason
+    end
+    local router = EAM.Modules.EventRouter
+    local now = api.GetTime and api.GetTime() or 0
+
+    -- 1. 先清理已自清單刪除或已停用的活躍/待命狀態
+    for canonicalSpellID, state in pairs(GroundEffectService.activeStates) do
+        local alert = GroundEffectService.alertsBySpellID[canonicalSpellID]
+        if not alert or alert.enabled == false then
+            state.shown = false
+            GroundEffectService.activeStates[canonicalSpellID] = nil
+            GroundEffectService.activeAlerts[canonicalSpellID] = nil
+            if router then
+                router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+            end
+        end
+    end
+
+    local sortedAlerts = {}
+    for canonicalSpellID, alert in pairs(GroundEffectService.alertsBySpellID) do
+        sortedAlerts[#sortedAlerts + 1] = { id = canonicalSpellID, alert = alert }
+    end
+    table.sort(sortedAlerts, function(a, b)
+        local orderA = (a.alert and a.alert.order) or 9999
+        local orderB = (b.alert and b.alert.order) or 9999
+        if orderA ~= orderB then
+            return orderA < orderB
+        end
+        return a.id < b.id
+    end)
+
+    local Renderer = EAM.UI and EAM.UI.Renderer
+    if Renderer and Renderer.BeginBatch then
+        Renderer.BeginBatch()
+    end
+
+    for _, entry in ipairs(sortedAlerts) do
+        local canonicalSpellID = entry.id
+        local alert = entry.alert
+        if alert.enabled == false then
+            local state = GroundEffectService.activeStates[canonicalSpellID]
+            if state then
+                state.shown = false
+                GroundEffectService.activeStates[canonicalSpellID] = nil
+                GroundEffectService.activeAlerts[canonicalSpellID] = nil
+                if router then
+                    router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+                end
+            end
+        else
+            local isPreRender = resolveBehavior(alert, "groundEffectPreRender")
+            local expireAt = GroundEffectService.activeAlerts[canonicalSpellID]
+            local isRunning = expireAt and now < expireAt
+            if not isRunning then
+                local state = GroundEffectService.activeStates[canonicalSpellID]
+                if isPreRender then
+                    if not state then
+                        local name, icon = readSpellPresentation(canonicalSpellID, alert)
+                        if alert.customIcon and alert.customIcon ~= "" then
+                            icon = tonumber(alert.customIcon) or alert.customIcon
+                        end
+                        state = GroundEffectStatePool.acquire()
+                        state.id = (alert and alert.id) or ("groundEffect:player:" .. canonicalSpellID)
+                        state.kind = EAM.Constants.ALERT_KIND_GROUND_EFFECT
+                        state.spellID = canonicalSpellID
+                        state.name = (alert and alert.customName and alert.customName ~= "" and alert.customName) or name
+                        state.icon = icon
+                        state.stacks = 0
+                        GroundEffectService.activeStates[canonicalSpellID] = state
+                    else
+                        if alert and alert.customName and alert.customName ~= "" then
+                            state.name = alert.customName
+                        end
+                    end
+                    state.rawAlert = alert
+                    state.order = alert and alert.order or nil
+                    state.active = true
+                    state.shown = true
+                    state.isPlaceholder = true
+                    state.isDesaturated = true
+                    if not state.timer then
+                        state.timer = Util.tableCreate(0, 8)
+                    end
+                    Util.clearTimer(state.timer, EAM.Constants.TIMER_UNKNOWN)
+                    if router then
+                        router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+                    end
+                else
+                    if state and state.isPlaceholder then
+                        state.shown = false
+                        GroundEffectService.activeStates[canonicalSpellID] = nil
+                        if router then
+                            router.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if Renderer and Renderer.EndBatch then
+        Renderer.EndBatch()
+    end
+    return true
+end
+
 function GroundEffectService.onConfigChanged()
     if not moduleEnabled() then
         return false, "moduleDisabled"
@@ -596,6 +814,7 @@ function GroundEffectService.onConfigChanged()
     end
     compileAlerts()
     local ok, count = GroundEffectService.refreshDurationCache()
+    GroundEffectService.refreshAll("onConfigChanged")
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
         pcall(EAM.UI.Renderer.prewarmAlertFrames)
     end
@@ -616,6 +835,7 @@ function GroundEffectService.onSpellTopologyChanged(eventName, unit)
     end
     compileAlerts()
     local ok, count = GroundEffectService.refreshDurationCache()
+    GroundEffectService.refreshAll(eventName or "onSpellTopologyChanged")
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
         pcall(EAM.UI.Renderer.prewarmAlertFrames)
     end
@@ -635,6 +855,7 @@ function GroundEffectService.onCombatEnd()
     if GroundEffectService.pendingResolve then
         result, reason = GroundEffectService.refreshDurationCache()
     end
+    GroundEffectService.refreshAll("onCombatEnd")
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
         pcall(EAM.UI.Renderer.prewarmAlertFrames)
     end
@@ -648,17 +869,19 @@ function GroundEffectService.initialize()
     local alerts = (savedVariables and savedVariables.getActiveAlerts and savedVariables.getActiveAlerts(EAM.db))
         or (EAM.db and EAM.db.alerts)
     local list = alerts and alerts.groundEffects
-    if savedVariables and list then
+    if savedVariables and list and type(EAM.db) == "table" and not EAM.db.groundEffectsInitialized and next(list) == nil then
         for spellID, definition in pairs(GroundEffectService.defaults) do
             local id = savedVariables.buildAlertID(EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player", spellID)
             if not list[id] then
                 savedVariables.addGroundEffectAlert(spellID, definition)
             end
         end
+        EAM.db.groundEffectsInitialized = true
     end
     compileAlerts()
     if moduleEnabled() then
         GroundEffectService.refreshDurationCache()
+        GroundEffectService.refreshAll("initialize")
     end
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
         pcall(EAM.UI.Renderer.prewarmAlertFrames)
@@ -673,7 +896,9 @@ function GroundEffectService.initialize()
         router.register("ACTIVE_TALENT_GROUP_CHANGED", GroundEffectService.onSpellTopologyChanged)
         router.register("TRAIT_CONFIG_UPDATED", GroundEffectService.onSpellTopologyChanged)
         router.register("PLAYER_REGEN_ENABLED", GroundEffectService.onCombatEnd)
+        router.register("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", GroundEffectService.onSpellTopologyChanged)
         router.register("EAM_GROUND_EFFECT_CONFIG_CHANGED", GroundEffectService.onConfigChanged)
+        router.register("EAM_CONFIG_CHANGED", GroundEffectService.onConfigChanged)
     end
 end
 

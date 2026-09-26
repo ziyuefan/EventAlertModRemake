@@ -157,21 +157,6 @@ local function moduleEnabled(unit)
     return not ModuleController or ModuleController.isAuraUnitEnabled(unit)
 end
 
-function AuraService.clearUnit(unit, eventName)
-    clearUnitCache(unit)
-    local router = EAM.Modules.EventRouter
-    for alertID, state in pairs(AuraService.states) do
-        if state.unit == unit or (unit == "pet" and state.unit == "pet") then
-            state.shown = false
-            AuraService.states[alertID] = nil
-            if router then
-                local frameName = resolveAuraFrameName(unit)
-                router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
-            end
-        end
-    end
-end
-
 local function indexAlert(list, unit)
     if type(list) ~= "table" then
         return
@@ -182,12 +167,16 @@ local function indexAlert(list, unit)
         index = {}
         AuraService.alertIndex[unit] = index
     end
-    for _, alert in pairs(list) do
-        if alert.enabled ~= false and alert.spellID then
-            local spellAlerts = index[alert.spellID]
+    for key, alert in pairs(list) do
+        if type(alert) == "table" and alert.enabled ~= false and alert.spellID then
+            local spellID = tonumber(alert.spellID) or alert.spellID
+            local alertID = alert.id or (type(key) == "string" and key) or ("aura:" .. unit .. ":" .. tostring(spellID))
+            alert.id = alertID
+            alert.unit = alert.unit or unit
+            local spellAlerts = index[spellID]
             if not spellAlerts then
                 spellAlerts = {}
-                index[alert.spellID] = spellAlerts
+                index[spellID] = spellAlerts
             end
             spellAlerts[alert.id] = alert
         end
@@ -245,6 +234,8 @@ local function resetState(state, alert)
     state.name = nil
     state.icon = nil
     state.customIcon = alert.customIcon
+    state.customName = alert.customName
+    state.rawAlert = alert
     state.stacks = nil
     state.fromPlayer = nil
     state.auraInstanceID = nil
@@ -287,6 +278,8 @@ local function cacheAura(unit, auraData)
     local record = previous or {}
     record.spellID = spellID
     record.auraInstanceID = auraInstanceID
+    record.fromPlayer = auraData.isFromPlayerOrPlayerPet == true
+    record.isHarmful = auraData.isHarmful == true
     cache.byInstance[auraInstanceID] = record
     
     if not issecretvalue(spellID) and canaccessvalue(spellID) then
@@ -299,22 +292,38 @@ local function removeCachedAura(unit, auraInstanceID)
     local cache = getUnitCache(unit)
     local record = cache.byInstance[auraInstanceID]
     if not record then
-        return nil, nil
+        return nil, nil, nil, nil
     end
 
     cache.byInstance[auraInstanceID] = nil
     local spellID = record.spellID
+    local fromPlayer = record.fromPlayer
+    local isHarmful = record.isHarmful
+    local count = nil
     if spellID and not issecretvalue(spellID) and canaccessvalue(spellID) then
-        local count = cache.spellCounts[spellID]
+        count = cache.spellCounts[spellID]
         if count and count > 1 then
             count = count - 1
             cache.spellCounts[spellID] = count
         else
             cache.spellCounts[spellID] = nil
+            count = 0
         end
     end
 
-    return spellID, count
+    return spellID, count, fromPlayer, isHarmful
+end
+
+local function hasPlayerAuraInstance(unit, spellID, isHarmful)
+    local cache = getUnitCache(unit)
+    for _, record in pairs(cache.byInstance) do
+        if record.spellID == spellID and record.fromPlayer then
+            if isHarmful == nil or record.isHarmful == isHarmful then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 local function readAuraIntoState(unit, state, auraData, eventName, apiName)
@@ -334,7 +343,7 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
     local expirationTime = auraData.expirationTime
     local fromPlayer = auraData.isFromPlayerOrPlayerPet
     local auraInstanceID = auraData.auraInstanceID
-    local isDebuff = auraData.isHarmful or (state.kind == EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+    local isDebuff = (auraData.isHarmful == true) or (auraData.isHarmful == nil and state.auraFilter == "HARMFUL")
 
     if (not name or not icon) and SpellInfoService then
         local info = SpellInfoService.getSpellInfo(state.spellID)
@@ -348,7 +357,7 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
         icon = tonumber(state.customIcon) or state.customIcon
     end
 
-    state.name = name or tostring(state.spellID)
+    state.name = (state.customName and state.customName ~= "" and state.customName) or name or tostring(state.spellID)
     state.icon = icon
     state.stacks = stacks
     state.auraInstanceID = auraInstanceID
@@ -447,21 +456,85 @@ end
 
 local function renderInactiveAlert(alert, eventName)
     local state = AuraService.states[alert.id]
+    local frameName = resolveAuraFrameName(alert.unit or "target")
     if not state then
-        return -- 若未顯示過，直接返回，省去多餘的渲染和回收開銷
+        local router = EAM.Modules.EventRouter
+        if router then
+            router.fire("EAM_AURA_STATE_CHANGED", { id = alert.id, unit = alert.unit or "target", active = false, shown = false }, frameName)
+        end
+        return
     end
 
+    state.active = false
     state.shown = false
     AuraService.states[alert.id] = nil
 
     local router = EAM.Modules.EventRouter
     if router then
-        local frameName = resolveAuraFrameName(alert.unit)
         router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
     end
 end
 
-local function renderAuraForAlerts(unit, spellID, auraData, eventName, apiName)
+function AuraService.clearUnit(unit, eventName)
+    clearUnitCache(unit)
+    if unit == "target" then
+        local Renderer = EAM.UI and EAM.UI.Renderer
+        if Renderer and Renderer.clearFrame then
+            Renderer.clearFrame(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+        end
+        local AlertManager = EAM.Managers and EAM.Managers.AlertManager
+        if AlertManager and AlertManager.clearPending then
+            AlertManager.clearPending(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+        end
+    end
+    ensureAlertIndex()
+    local unitIndex = AuraService.alertIndex[unit]
+    if type(unitIndex) == "table" then
+        for _, alerts in pairs(unitIndex) do
+            for _, alert in pairs(alerts) do
+                renderInactiveAlert(alert, eventName)
+            end
+        end
+    end
+    local router = EAM.Modules.EventRouter
+    for alertID, state in pairs(AuraService.states) do
+        if state.unit == unit or (unit == "pet" and state.unit == "pet") or string.find(tostring(alertID), "^aura:" .. unit .. ":") then
+            state.active = false
+            state.shown = false
+            AuraService.states[alertID] = nil
+            if router then
+                local frameName = resolveAuraFrameName(unit)
+                router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
+            end
+        end
+    end
+end
+
+local function alertMatchesAura(alert, auraData)
+    local expectedFilter = alert.auraFilter
+    if expectedFilter ~= "HELPFUL" and expectedFilter ~= "HARMFUL" then
+        expectedFilter = (alert.unit == "target") and "HARMFUL" or "HELPFUL"
+    end
+    if expectedFilter == "HARMFUL" then
+        if auraData.isHarmful ~= true then
+            return false
+        end
+    elseif expectedFilter == "HELPFUL" then
+        if auraData.isHarmful == true or (auraData.isHelpful ~= nil and auraData.isHelpful ~= true) then
+            return false
+        end
+    end
+
+    if alert.fromPlayer == true or alert.self == true then
+        if auraData.isFromPlayerOrPlayerPet ~= true then
+            return false
+        end
+    end
+
+    return true
+end
+
+local function renderAuraForAlerts(unit, spellID, auraData, eventName, apiName, matchedAlerts)
     local alerts = getAlertsForSpell(unit, spellID)
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "renderAuraForAlerts", "spellID=" .. tostring(spellID) .. ", matchedAlerts=" .. tostring(alerts ~= nil and "yes" or "no"))
@@ -472,19 +545,24 @@ local function renderAuraForAlerts(unit, spellID, auraData, eventName, apiName)
 
     local fired = false
     for _, alert in pairs(alerts) do
-        local state = AuraService.states[alert.id]
-        if not state then
-            state = AuraStatePool.acquire()
-            AuraService.states[alert.id] = state
-        end
+        if alertMatchesAura(alert, auraData) then
+            local state = AuraService.states[alert.id]
+            if not state then
+                state = AuraStatePool.acquire()
+                AuraService.states[alert.id] = state
+            end
 
-        resetState(state, alert)
-        if readAuraIntoState(unit, state, auraData, eventName, apiName) then
-            local router = EAM.Modules.EventRouter
-            if router then
-                local frameName = resolveAuraFrameName(alert.unit)
-                router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
-                fired = true
+            resetState(state, alert)
+            if readAuraIntoState(unit, state, auraData, eventName, apiName) then
+                local router = EAM.Modules.EventRouter
+                if router then
+                    local frameName = resolveAuraFrameName(alert.unit)
+                    router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
+                    fired = true
+                end
+                if matchedAlerts then
+                    matchedAlerts[alert.id] = true
+                end
             end
         end
     end
@@ -493,15 +571,36 @@ local function renderAuraForAlerts(unit, spellID, auraData, eventName, apiName)
 end
 
 local function renderInactiveUnit(unit, eventName)
+    if unit == "target" then
+        local Renderer = EAM.UI and EAM.UI.Renderer
+        if Renderer and Renderer.clearFrame then
+            Renderer.clearFrame(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+        end
+        local AlertManager = EAM.Managers and EAM.Managers.AlertManager
+        if AlertManager and AlertManager.clearPending then
+            AlertManager.clearPending(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+        end
+    end
     ensureAlertIndex()
     local unitIndex = AuraService.alertIndex[unit]
-    if type(unitIndex) ~= "table" then
-        return
+    if type(unitIndex) == "table" then
+        for _, alerts in pairs(unitIndex) do
+            for _, alert in pairs(alerts) do
+                renderInactiveAlert(alert, eventName)
+            end
+        end
     end
 
-    for _, alerts in pairs(unitIndex) do
-        for _, alert in pairs(alerts) do
-            renderInactiveAlert(alert, eventName)
+    local router = EAM.Modules.EventRouter
+    for alertID, state in pairs(AuraService.states) do
+        if state.unit == unit or (unit == "pet" and state.unit == "pet") or string.find(tostring(alertID), "^aura:" .. unit .. ":") then
+            state.active = false
+            state.shown = false
+            AuraService.states[alertID] = nil
+            if router then
+                local frameName = resolveAuraFrameName(unit)
+                router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
+            end
         end
     end
 end
@@ -586,31 +685,48 @@ local function fullScanUnit(unit, eventName)
         return
     end
 
-    -- 直接掃描不設 filter，避免 HELPFUL/HARMFUL 漏抓，效能與精準度最高！
-    for index = 1, AuraService.scanLimit do
-        local auraData = cUnitAuras.GetAuraDataByIndex(unit, index)
-        if not auraData or not canaccesstable(auraData) then
-            break
-        end
+    local filters = (unit == "target") and targetFilters or playerFilters
+    for fIndex = 1, #filters do
+        local filter = filters[fIndex]
+        for index = 1, AuraService.scanLimit do
+            local auraData = cUnitAuras.GetAuraDataByIndex(unit, index, filter)
+            if not auraData or not canaccesstable(auraData) then
+                break
+            end
 
-        local spellID = auraData.spellId
-        if spellID and not issecretvalue(spellID) and canaccessvalue(spellID) then
-            local returnedSpellID = cacheAura(unit, auraData)
-            if returnedSpellID and renderAuraForAlerts(unit, returnedSpellID, auraData, eventName, "C_UnitAuras.GetAuraDataByIndex") then
-                fullScanMatched[returnedSpellID] = true
+            local spellID = auraData.spellId
+            if spellID and not issecretvalue(spellID) and canaccessvalue(spellID) then
+                local alerts = getAlertsForSpell(unit, spellID)
+                if alerts then
+                    local returnedSpellID = cacheAura(unit, auraData)
+                    if returnedSpellID then
+                        renderAuraForAlerts(unit, returnedSpellID, auraData, eventName, "C_UnitAuras.GetAuraDataByIndex", fullScanMatched)
+                    end
+                end
             end
         end
     end
 
     local unitIndex = AuraService.alertIndex[unit]
-    if type(unitIndex) ~= "table" then
-        return
+    if type(unitIndex) == "table" then
+        for _, alerts in pairs(unitIndex) do
+            for _, alert in pairs(alerts) do
+                if not fullScanMatched[alert.id] then
+                    renderInactiveAlert(alert, eventName)
+                end
+            end
+        end
     end
 
-    for spellID, alerts in pairs(unitIndex) do
-        if not fullScanMatched[spellID] then
-            for _, alert in pairs(alerts) do
-                renderInactiveAlert(alert, eventName)
+    local router = EAM.Modules.EventRouter
+    for alertID, state in pairs(AuraService.states) do
+        if (state.unit == unit or (unit == "pet" and state.unit == "pet") or string.find(tostring(alertID), "^aura:" .. unit .. ":")) and not fullScanMatched[alertID] then
+            state.active = false
+            state.shown = false
+            AuraService.states[alertID] = nil
+            if router then
+                local frameName = resolveAuraFrameName(unit)
+                router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
             end
         end
     end
@@ -646,15 +762,56 @@ function AuraService.onRegenEnabled()
     end
 end
 
+function AuraService.onUnitPet(eventName, unit)
+    if unit == "player" then
+        clearUnitCache("pet")
+        AuraService.refreshUnit("pet", "UNIT_PET")
+    end
+end
+
+local legacyEventsRegistered = false
+
+local function registerLegacyEvents()
+    if legacyEventsRegistered then
+        return
+    end
+    local router = EAM.Modules.EventRouter
+    if not router then
+        return
+    end
+    router.register("UNIT_AURA", AuraService.onUnitAura)
+    router.register("PLAYER_TARGET_CHANGED", AuraService.onTargetChanged)
+    router.register("PLAYER_REGEN_ENABLED", AuraService.onRegenEnabled)
+    router.register("UNIT_PET", AuraService.onUnitPet)
+    legacyEventsRegistered = true
+end
+
+local function unregisterLegacyEvents()
+    if not legacyEventsRegistered then
+        return
+    end
+    local router = EAM.Modules.EventRouter
+    if not router then
+        return
+    end
+    router.unregister("UNIT_AURA", AuraService.onUnitAura)
+    router.unregister("PLAYER_TARGET_CHANGED", AuraService.onTargetChanged)
+    router.unregister("PLAYER_REGEN_ENABLED", AuraService.onRegenEnabled)
+    router.unregister("UNIT_PET", AuraService.onUnitPet)
+    legacyEventsRegistered = false
+end
+
 function AuraService.onBackendSwitched(backend)
     local isLegacy = backend == EAM.Constants.AURA_BACKEND_LEGACY
     if not isLegacy then
         AuraService.backendDisabled = true
+        unregisterLegacyEvents()
         AuraService.clearUnit("player", "BACKEND_SWITCH")
         AuraService.clearUnit("target", "BACKEND_SWITCH")
         AuraService.clearUnit("pet", "BACKEND_SWITCH")
     else
         AuraService.backendDisabled = false
+        registerLegacyEvents()
         if moduleEnabled("player") then
             AuraService.refreshUnit("player", "BACKEND_SWITCH")
         end
@@ -677,29 +834,32 @@ function AuraService.initialize()
         end)
     end
 
+    AuraStatePool.initialize()
+
     if capability and not capability.isLegacy() then
         AuraService.backendDisabled = true
+        unregisterLegacyEvents()
         return false, "nativeOrUnsupportedBackend"
     end
 
-    AuraStatePool.initialize()
+    AuraService.backendDisabled = false
+    registerLegacyEvents()
+
     if EAM.addDebugLog then
         EAM.addDebugLog("AuraService", "initialize", "AuraService initialized with AuraStatePool.")
     end
-    if router then
-        router.register("UNIT_AURA", AuraService.onUnitAura)
-        router.register("PLAYER_TARGET_CHANGED", AuraService.onTargetChanged)
-        router.register("PLAYER_REGEN_ENABLED", AuraService.onRegenEnabled)
-        router.register("UNIT_PET", function(eventName, unit)
-            if unit == "player" then
-                clearUnitCache("pet")
-                AuraService.refreshUnit("pet", "UNIT_PET")
-            end
-        end)
-    end
 end
 
+local unitRefreshKeyCache = {
+    player = "AuraService.refreshUnit:player",
+    target = "AuraService.refreshUnit:target",
+    pet = "AuraService.refreshUnit:pet",
+}
+
 function AuraService.refreshUnit(unit, eventName)
+    if EAM.recordHotPath then
+        EAM.recordHotPath(unitRefreshKeyCache[unit] or "AuraService.refreshUnit:other")
+    end
     if not moduleEnabled(unit) then
         return false, "moduleDisabled"
     end
@@ -726,7 +886,16 @@ function AuraService.refreshAll(eventName)
     end
 end
 
+local unitAuraKeyCache = {
+    player = "AuraService.onUnitAura:player",
+    target = "AuraService.onUnitAura:target",
+    pet = "AuraService.onUnitAura:pet",
+}
+
 function AuraService.onUnitAura(_, unit, updateInfo)
+    if EAM.recordHotPath then
+        EAM.recordHotPath(unitAuraKeyCache[unit] or "AuraService.onUnitAura:other")
+    end
     local capability = EAM.Services.AuraCapabilityService
     if capability and not capability.isLegacy() then
         return
@@ -751,12 +920,22 @@ function AuraService.onUnitAura(_, unit, updateInfo)
     local removed = updateInfo.removedAuraInstanceIDs
     if type(removed) == "table" then
         for index = 1, #removed do
-            local spellID, remaining = removeCachedAura(unit, removed[index])
-            if spellID and remaining == 0 then
+            local spellID, remaining, wasFromPlayer, wasHarmful = removeCachedAura(unit, removed[index])
+            if spellID then
                 local alerts = getAlertsForSpell(unit, spellID)
                 if type(alerts) == "table" then
                     for _, alert in pairs(alerts) do
-                        renderInactiveAlert(alert, "UNIT_AURA_REMOVED")
+                        local alertExpectedHarmful = (alert.auraFilter == "HARMFUL") or (alert.auraFilter ~= "HELPFUL" and alert.unit == "target")
+                        local filterMatches = (wasHarmful == nil) or (alertExpectedHarmful == wasHarmful)
+                        if filterMatches then
+                            if remaining == 0 then
+                                renderInactiveAlert(alert, "UNIT_AURA_REMOVED")
+                            elseif alert.fromPlayer == true or alert.self == true then
+                                if wasFromPlayer and not hasPlayerAuraInstance(unit, spellID, wasHarmful) then
+                                    renderInactiveAlert(alert, "UNIT_AURA_REMOVED")
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -782,16 +961,32 @@ function AuraService.onUnitAura(_, unit, updateInfo)
 end
 
 function AuraService.onTargetChanged()
+    if EAM.recordHotPath then
+        EAM.recordHotPath("AuraService.onTargetChanged")
+    end
     local capability = EAM.Services.AuraCapabilityService
     if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
         return
     end
+
+    -- 🛡️ 立即同步徹底清理當前畫面上的所有目標光環圖示與倒數綁定 (杜絕切換目標後的舊圖示與倒數鬼影殘留)
+    local Renderer = EAM.UI and EAM.UI.Renderer
+    if Renderer and Renderer.clearFrame then
+        Renderer.clearFrame(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+    end
+    local AlertManager = EAM.Managers and EAM.Managers.AlertManager
+    if AlertManager and AlertManager.clearPending then
+        AlertManager.clearPending(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+    end
+
     if not moduleEnabled("target") then
         AuraService.clearUnit("target", "MODULE_DISABLED")
         return false, "moduleDisabled"
     end
-    clearUnitCache("target")
-    AuraService.refreshUnit("target", "PLAYER_TARGET_CHANGED")
+    AuraService.clearUnit("target", "PLAYER_TARGET_CHANGED")
+    if api.UnitExists and api.UnitExists("target") then
+        AuraService.refreshUnit("target", "PLAYER_TARGET_CHANGED")
+    end
 end
 
 function AuraService.onModuleToggle(enabled, unit, reason)

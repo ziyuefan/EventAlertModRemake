@@ -270,7 +270,7 @@ local COOLDOWN_BEHAVIOR_DEFAULTS = {
     cooldownRemoveAura = false,
     showSCDOutsideCombat = true,
     glowSCDWhenUsable = true,
-    cooldownPreRender = false,
+    cooldownPreRender = true,
 }
 
 local function isInCombat()
@@ -280,20 +280,25 @@ end
 
 local function resolveBehavior(alert, key)
     if key == "cooldownPreRender" then
-        if type(alert) == "table" then
-            if type(alert.cooldownPreRender) == "boolean" then
-                return alert.cooldownPreRender
-            end
-            if alert.cooldownRemoveAura == true then
-                return false
-            end
+        if type(alert) == "table" and type(alert.cooldownPreRender) == "boolean" then
+            return alert.cooldownPreRender
+        end
+        if resolveBehavior(alert, "cooldownRemoveAura") == true then
+            return false
         end
         local config = EAM.db and EAM.db.config
-        local globalValue = type(config) == "table" and config[key] or nil
+        local globalValue = nil
+        if type(config) == "table" then
+            globalValue = config[key]
+        end
         if type(globalValue) == "boolean" then
             return globalValue
         end
-        return false
+        local defaultValue = COOLDOWN_BEHAVIOR_DEFAULTS[key]
+        if type(defaultValue) == "boolean" then
+            return defaultValue
+        end
+        return true
     end
     local override
     if type(alert) == "table" then
@@ -303,7 +308,10 @@ local function resolveBehavior(alert, key)
         return override
     end
     local config = EAM.db and EAM.db.config
-    local globalValue = type(config) == "table" and config[key] or nil
+    local globalValue = nil
+    if type(config) == "table" then
+        globalValue = config[key]
+    end
     if type(globalValue) == "boolean" then
         return globalValue
     end
@@ -490,15 +498,29 @@ local function refreshAlert(alert, eventName)
     local alertID = type(alert) == "table" and alert.id or nil
     local oldState = alertID and CooldownService.states[alertID] or nil
     if not Util.isSafeTableKey(alertID) then
-        return nil
+        return nil, false
     end
+
+    local oldShown = oldState and oldState.shown
+    local oldActive = oldState and oldState.active
+    local oldCompleted = oldState and oldState.completed
+    local oldCharges = oldState and oldState.charges
+    local oldChargeActive = oldState and oldState.chargeActive
+    local oldPlaceholder = oldState and oldState.isPlaceholder
+    local oldDesaturated = oldState and oldState.isDesaturated
+    local oldGlow = oldState and oldState.usableGlow
+    local oldIcon = oldState and oldState.icon
+    local oldTimer = oldState and oldState.timer
+    local oldStartTime = oldTimer and oldTimer.startTime
+    local oldDuration = oldTimer and oldTimer.duration
 
     if alert.enabled == false or not Util.isSafePositiveNumber(alert.spellID) then
         local hidden = setStateHidden(alertID, oldState, true)
         if hidden then
             hidden.rawAlert = alert
         end
-        return hidden
+        local isDirty = (hidden ~= nil and oldShown ~= false)
+        return hidden, isDirty
     end
 
     local behaviorRemove = resolveBehavior(alert, "cooldownRemoveAura")
@@ -515,36 +537,26 @@ local function refreshAlert(alert, eventName)
                 if hidden then
                     hidden.rawAlert = alert
                 end
-                return hidden
+                local isDirty = (hidden ~= nil and oldShown ~= false)
+                return hidden, isDirty
             end
-            return nil
+            return nil, false
         else
             -- 預渲染待命佔位（尚未施放過）
             if not visibleNow then
                 -- 戰鬥外且隨戰鬥關閉：圖示隱藏 (透過 Renderer SetAlpha(0) 保持槽位)
-                local state = oldState
-                if not state then
-                    state = CooldownStatePool.acquire()
+                if oldState then
+                    local hidden = setStateHidden(alertID, oldState, false)
+                    if hidden then
+                        hidden.rawAlert = alert
+                        hidden.isPlaceholder = true
+                        hidden.isDesaturated = true
+                        hidden.cooldownPreRender = isPreRender
+                    end
+                    local isDirty = (hidden ~= nil and oldShown ~= false)
+                    return hidden, isDirty
                 end
-                state.id = alertID
-                state.kind = EAM.Constants.ALERT_KIND_SPELL_COOLDOWN
-                state.spellID = alert.spellID
-                state.order = alert.order
-                state.rawAlert = alert
-                state.isPlaceholder = true
-                state.isDesaturated = true
-                state.active = false
-                state.shown = false
-                state.completed = false
-                state.usableGlow = false
-                state.factsSafe = true
-                state.cooldownRemoveAura = behaviorRemove
-                state.showSCDOutsideCombat = behaviorOutside
-                state.glowSCDWhenUsable = behaviorGlow
-                state.cooldownPreRender = isPreRender
-                state.boundaryLimited = false
-                CooldownService.states[alertID] = nil
-                return state
+                return nil, false
             else
                 -- 戰鬥中或非戰鬥允許顯示：以灰階暗色遮罩佔位顯示
                 local state = oldState
@@ -592,6 +604,9 @@ local function refreshAlert(alert, eventName)
                 else
                     state.name = tostring(alert.spellID)
                 end
+                if alert.customName and alert.customName ~= "" then
+                    state.name = alert.customName
+                end
                 if not state.icon and cSpell and cSpell.GetSpellTexture then
                     state.icon = cSpell.GetSpellTexture(alert.spellID)
                 end
@@ -605,14 +620,24 @@ local function refreshAlert(alert, eventName)
                     state.timer = Util.tableCreate(0, 8)
                 end
                 Util.clearTimer(state.timer, EAM.Constants.TIMER_UNKNOWN)
-                return state
+                local isDirty = (oldState == nil)
+                    or (oldShown ~= state.shown)
+                    or (oldActive ~= state.active)
+                    or (oldPlaceholder ~= state.isPlaceholder)
+                    or (oldDesaturated ~= state.isDesaturated)
+                    or (oldGlow ~= state.usableGlow)
+                    or (oldStartTime ~= state.timer.startTime)
+                    or (oldDuration ~= state.timer.duration)
+                return state, isDirty
             end
         end
     end
 
     local cSpell = api.C_Spell
     if not cSpell then
-        return setStateHidden(alertID, oldState, false)
+        local hidden = setStateHidden(alertID, oldState, false)
+        local isDirty = (hidden ~= nil and oldShown ~= false)
+        return hidden, isDirty
     end
 
     -- 1. Check Charges first. A non-nil SpellChargeInfo establishes charge capability;
@@ -748,7 +773,9 @@ local function refreshAlert(alert, eventName)
     end
 
     if not shouldShow then
-        return setStateHidden(alertID, oldState, false)
+        local hidden = setStateHidden(alertID, oldState, false)
+        local isDirty = (hidden ~= nil and oldShown ~= false)
+        return hidden, isDirty
     end
 
     -- 4. Allocate state only after the spell has been activated by the player.
@@ -824,6 +851,10 @@ local function refreshAlert(alert, eventName)
         end
     else
         state.name = tostring(alert.spellID)
+    end
+
+    if alert.customName and alert.customName ~= "" then
+        state.name = alert.customName
     end
 
     if alert.customIcon and alert.customIcon ~= "" then
@@ -912,35 +943,87 @@ local function refreshAlert(alert, eventName)
     state.source.activation = "UNIT_SPELLCAST_SUCCEEDED:player"
     state.source.activationSpellID = CooldownService.activationSpellIDs[alertID]
     state.source.chargeSpellID = chargeSpellID
-    state.source.updatedAt = api.GetTime and api.GetTime() or 0
+    local newTimer = state.timer
+    local newStartTime = newTimer and newTimer.startTime
+    local newDuration = newTimer and newTimer.duration
 
-    return state
+    local isDirty = (oldState == nil)
+        or (oldShown ~= state.shown)
+        or (oldActive ~= state.active)
+        or (oldCompleted ~= state.completed)
+        or (oldCharges ~= state.charges)
+        or (oldChargeActive ~= state.chargeActive)
+        or (oldPlaceholder ~= state.isPlaceholder)
+        or (oldDesaturated ~= state.isDesaturated)
+        or (oldGlow ~= state.usableGlow)
+        or (oldIcon ~= state.icon)
+        or (oldStartTime ~= newStartTime)
+        or (oldDuration ~= newDuration)
+
+    return state, isDirty
 end
+local presentAlerts = {}
 local function cleanupDeletedAlerts()
-    local present = {}
+    wipe(presentAlerts)
     for index = 1, alertCount do
         local alert = alertList[index]
         if alert and Util.isSafeTableKey(alert.id) then
-            present[alert.id] = true
+            presentAlerts[alert.id] = true
         end
     end
 
     for alertID in pairs(CooldownService.activatedAlerts) do
-        if not present[alertID] then
+        if not presentAlerts[alertID] then
             CooldownService.activatedAlerts[alertID] = nil
             CooldownService.activationSpellIDs[alertID] = nil
             CooldownService.chargeSpentObserved[alertID] = nil
         end
     end
     for alertID, state in pairs(CooldownService.states) do
-        if not present[alertID] then
+        if not presentAlerts[alertID] then
             local hidden = setStateHidden(alertID, state, true)
             fireStateChanged(hidden)
         end
     end
 end
 
-local function refreshAll(eventName)
+-- 前置宣告 refreshAll
+local refreshAll
+
+-- 冷卻事件合併排程器（在同一幀/Tick 內多次收到全域事件時合併掃描，防範重複 full-list scan）
+local hasRefreshedThisTick = false
+local needsTrailingRefresh = false
+
+local function resetCoalesce()
+    hasRefreshedThisTick = false
+    if needsTrailingRefresh then
+        needsTrailingRefresh = false
+        refreshAll("COALESCED")
+    end
+end
+
+local function queueCoalescedRefresh(eventName)
+    if EAM.FlowTestEnvironment == "offline-mock" and not CooldownService._testCoalesceEnabled then
+        return refreshAll(eventName)
+    end
+
+    local scheduler = EAM.Modules and EAM.Modules.Scheduler
+    if not scheduler or not scheduler.after then
+        return refreshAll(eventName)
+    end
+
+    if not hasRefreshedThisTick then
+        hasRefreshedThisTick = true
+        needsTrailingRefresh = false
+        scheduler.after(0, resetCoalesce)
+        return refreshAll(eventName)
+    else
+        needsTrailingRefresh = true
+        return true, "coalesced"
+    end
+end
+
+function refreshAll(eventName)
     if not moduleEnabled() then
         return false, "moduleDisabled"
     end
@@ -952,8 +1035,8 @@ local function refreshAll(eventName)
 
     for index = 1, alertCount do
         local alert = alertList[index]
-        local state = refreshAlert(alert, eventName)
-        if state then
+        local state, isDirty = refreshAlert(alert, eventName)
+        if state and isDirty then
             fireStateChanged(state)
         end
     end
@@ -1009,6 +1092,9 @@ local function resolveEventSpellFamily(spellID, suppliedBaseSpellID)
 end
 
 function CooldownService.refreshSpell(spellID, eventName, suppliedBaseSpellID)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("CooldownService.refreshSpell")
+    end
     if not moduleEnabled() then
         return nil, "moduleDisabled"
     end
@@ -1032,9 +1118,11 @@ function CooldownService.refreshSpell(spellID, eventName, suppliedBaseSpellID)
                 or CooldownService.states[alert.id] ~= nil
             )
         then
-            local state = refreshAlert(alert, eventName or "manual")
+            local state, isDirty = refreshAlert(alert, eventName or "manual")
             if state then
-                fireStateChanged(state)
+                if isDirty then
+                    fireStateChanged(state)
+                end
                 result = state
             end
         end
@@ -1062,9 +1150,11 @@ function CooldownService.activateSpell(spellID, eventName)
             CooldownService.activatedAlerts[alert.id] = true
             CooldownService.activationSpellIDs[alert.id] = spellID
             CooldownService.chargeSpentObserved[alert.id] = nil
-            local state = refreshAlert(alert, eventName or "UNIT_SPELLCAST_SUCCEEDED")
+            local state, isDirty = refreshAlert(alert, eventName or "UNIT_SPELLCAST_SUCCEEDED")
             if state then
-                fireStateChanged(state)
+                if isDirty then
+                    fireStateChanged(state)
+                end
                 result = state
             end
         end
@@ -1073,6 +1163,9 @@ function CooldownService.activateSpell(spellID, eventName)
 end
 
 function CooldownService.onSpellcastSucceeded(eventName, unit, castGUID, spellID)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("CooldownService.onSpellcastSucceeded")
+    end
     if eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" then
         if unit ~= "pet" then
             return false, "notPlayerCast"
@@ -1109,6 +1202,9 @@ function CooldownService.refreshAll(eventName)
     return refreshAll(eventName or "manual")
 end
 function CooldownService.onCooldownEvent(eventName, spellID, baseSpellID)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("CooldownService.onCooldownEvent")
+    end
     if not moduleEnabled() then
         return false, "moduleDisabled"
     end
@@ -1124,12 +1220,13 @@ function CooldownService.onCooldownEvent(eventName, spellID, baseSpellID)
             return true, "targeted"
         end
     end
-    return refreshAll(eventName)
+    return queueCoalescedRefresh(eventName)
 end
 function CooldownService.onModuleToggle(enabled, reason)
     lastDbRevision = -1
+    hasRefreshedThisTick = false
+    needsTrailingRefresh = false
     if enabled == false then
-        local router = EAM.Modules.EventRouter
         for alertID, state in pairs(CooldownService.states) do
             state.shown = false
             CooldownService.states[alertID] = nil

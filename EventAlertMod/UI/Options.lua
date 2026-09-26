@@ -88,7 +88,6 @@ local COOLDOWN_BEHAVIOR_OPTIONS = {
         field = "cooldownPreRender",
         labelKey = "EAM_OPT_PRERENDER_PLACEHOLDER",
         labelFallback = "預渲染佔位",
-        isBinary = true,
     },
 }
 
@@ -403,6 +402,9 @@ function Options.notifyConfigChanged(rebuildNative)
     end
     if EAM.Services.ItemCooldownService and EAM.Services.ItemCooldownService.refreshAll then
         EAM.Services.ItemCooldownService.refreshAll("OPTIONS_CONFIG_CHANGED")
+    end
+    if EAM.Services.GroundEffectService and EAM.Services.GroundEffectService.refreshAll then
+        EAM.Services.GroundEffectService.refreshAll("OPTIONS_CONFIG_CHANGED")
     end
     -- 立即更新 UI 版面配置
     if EAM.UI.Renderer and EAM.UI.Renderer.requestLayout then
@@ -911,7 +913,13 @@ local function isAlertDisplayable(alert)
     if alert.itemID ~= nil then
         return type(alert.itemID) == "number" and alert.itemID % 1 == 0 and alert.itemID > 0
     end
-    return isExistingSpell(alert.spellID)
+    if alert.spellID ~= nil then
+        if alert.spellID == 19306 or alert.spellID == 19036 or alert.spellID == 343292 then
+            return false
+        end
+        return type(alert.spellID) == "number" and alert.spellID % 1 == 0 and alert.spellID > 0
+    end
+    return false
 end
 
 local function migratePlayerAuraCatalogScopes(rawList)
@@ -1080,8 +1088,14 @@ function Options.refreshList(selectedAlert, scrollToIdx)
             end
         end
     end
-    if orderChanged and EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
-        EAM.Modules.SavedVariables.markRevisionChanged()
+    if orderChanged then
+        if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+            EAM.Modules.SavedVariables.markRevisionChanged()
+        end
+        Options.notifyConfigChanged()
+        if Options.currentCategory == 6 then
+            notifyGroundEffectConfigChanged()
+        end
     end
 
     local dataProvider = CreateDataProvider()
@@ -1171,6 +1185,9 @@ local function repositionAlertOrder(targetAlert, newOrder)
         EAM.Modules.SavedVariables.markRevisionChanged()
     end
     Options.notifyConfigChanged()
+    if Options.currentCategory == 6 then
+        notifyGroundEffectConfigChanged()
+    end
     Options.refreshList(item, destIdx)
 end
 
@@ -1217,6 +1234,9 @@ local function moveAlertInCurrentList(targetAlert, delta)
         EAM.Modules.SavedVariables.markRevisionChanged()
     end
     Options.notifyConfigChanged()
+    if Options.currentCategory == 6 then
+        notifyGroundEffectConfigChanged()
+    end
     Options.refreshList(item, destIdx)
 end
 
@@ -1262,6 +1282,9 @@ local function swapAlertsInCurrentList(alertA, alertB)
         EAM.Modules.SavedVariables.markRevisionChanged()
     end
     Options.notifyConfigChanged()
+    if Options.currentCategory == 6 then
+        notifyGroundEffectConfigChanged()
+    end
     Options.refreshList(alertA, idxB)
 end
 
@@ -3937,15 +3960,15 @@ local function createFrame()
             itemFrame.checkbox:SetSize(22, 22)
             itemFrame.checkbox:SetPoint("LEFT", itemFrame.icon, "RIGHT", 6, 0)
             
-            -- Spell Name Text
+            -- Spell ID Text (右側緊鄰 orderBox，絕不重疊)
+            itemFrame.idText = itemFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+            itemFrame.idText:SetJustifyH("RIGHT")
+
+            -- Spell Name Text (左起 checkbox，右貼 idText，寬度動態自適應)
             itemFrame.nameText = itemFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             itemFrame.nameText:SetPoint("LEFT", itemFrame.checkbox, "RIGHT", 6, 0)
-            itemFrame.nameText:SetWidth(105)
             itemFrame.nameText:SetJustifyH("LEFT")
-            
-            -- Spell ID Text
-            itemFrame.idText = itemFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-            itemFrame.idText:SetPoint("LEFT", itemFrame.nameText, "RIGHT", 4, 0)
+            itemFrame.nameText:SetWordWrap(false)
 
             -- Red "X" Quick Delete Button
             itemFrame.delBtn = api.CreateFrame("Button", nil, itemFrame)
@@ -4027,7 +4050,7 @@ local function createFrame()
 
             -- Location Order Input Box (自然數排序輸入/顯示框)
             local orderBox = api.CreateFrame("EditBox", nil, itemFrame)
-            orderBox:SetSize(24, 18)
+            orderBox:SetSize(22, 18)
             orderBox:SetPoint("RIGHT", itemFrame.upBtn, "LEFT", -4, 0)
             orderBox:SetAutoFocus(false)
             orderBox:SetNumeric(true)
@@ -4051,6 +4074,10 @@ local function createFrame()
             
             setTooltip(orderBox, EAM.L.EAM_OPT_LOCATION_ORDER_TIP or "在畫面排版中的順序槽位（唯一自然數 1..N）。可透過上下箭頭調整，或直接輸入數字修改。", EAM.L.EAM_OPT_LOCATION_ORDER or "排序位置")
             itemFrame.orderBox = orderBox
+
+            -- 錨定 idText 於 orderBox 左側，nameText 於 idText 左側，徹底杜絕文字與序號重疊
+            itemFrame.idText:SetPoint("RIGHT", orderBox, "LEFT", -4, 0)
+            itemFrame.nameText:SetPoint("RIGHT", itemFrame.idText, "LEFT", -4, 0)
         end
         
         updateRowHighlight(false)
@@ -4099,6 +4126,9 @@ local function createFrame()
             end
         end)
         
+        if data.customName and data.customName ~= "" then
+            name = string.format("%s (|cff00ff96%s|r)", name, data.customName)
+        end
         itemFrame.nameText:SetText(name)
         
         -- ID
@@ -4144,9 +4174,9 @@ local function createFrame()
             Options.openConditionsFrame(data)
         end)
 
-        -- 預渲染快速開關 (僅冷卻模組顯示)
-        local isCooldownCategory = (Options.currentCategory == 4 or Options.currentCategory == 5)
-        if isCooldownCategory and itemFrame.prerenderBtn then
+        -- 預渲染快速開關 (冷卻模組與地面效果顯示)
+        local isPreRenderCategory = (Options.currentCategory == 4 or Options.currentCategory == 5 or Options.currentCategory == 6 or data.kind == "groundEffect")
+        if isPreRenderCategory and itemFrame.prerenderBtn then
             itemFrame.prerenderBtn:Show()
             itemFrame.prerenderBtn:ClearAllPoints()
             itemFrame.prerenderBtn:SetPoint("RIGHT", itemFrame.gearBtn, "LEFT", -4, 0)
@@ -4155,12 +4185,21 @@ local function createFrame()
             itemFrame.downBtn:SetPoint("RIGHT", itemFrame.prerenderBtn, "LEFT", -4, 0)
 
             local function isPreRenderActive()
+                if type(data.groundEffectPreRender) == "boolean" then
+                    return data.groundEffectPreRender
+                end
                 if type(data.cooldownPreRender) == "boolean" then
                     return data.cooldownPreRender
                 end
                 local cfg = EAM.db and EAM.db.config
-                if cfg and type(cfg.cooldownPreRender) == "boolean" then
-                    return cfg.cooldownPreRender
+                if Options.currentCategory == 6 or data.kind == "groundEffect" then
+                    if cfg and type(cfg.groundEffectPreRender) == "boolean" then
+                        return cfg.groundEffectPreRender
+                    end
+                else
+                    if cfg and type(cfg.cooldownPreRender) == "boolean" then
+                        return cfg.cooldownPreRender
+                    end
                 end
                 return true
             end
@@ -4184,8 +4223,13 @@ local function createFrame()
             itemFrame.prerenderBtn:SetScript("OnClick", function()
                 local nextVal = not isPreRenderActive()
                 data.cooldownPreRender = nextVal
+                data.groundEffectPreRender = nextVal
                 local saved = EAM.Modules and EAM.Modules.SavedVariables
-                if data.kind == "spellCooldown" or Options.currentCategory == 4 then
+                if data.kind == "groundEffect" or Options.currentCategory == 6 then
+                    if saved and saved.updateGroundEffectBehavior then
+                        saved.updateGroundEffectBehavior(data.spellID, "groundEffectPreRender", nextVal)
+                    end
+                elseif data.kind == "spellCooldown" or Options.currentCategory == 4 then
                     if saved and saved.updateCooldownBehavior then
                         saved.updateCooldownBehavior(data.spellID, "cooldownPreRender", nextVal)
                     end
@@ -4880,7 +4924,7 @@ local function createFrame()
     -- 4. Spell Conditions Frame (Popup Sub-Window)
     -- ===================================================
     local condFrame = api.CreateFrame("Frame", "EAM_SpellConditionsFrame", UIParent, "BackdropTemplate")
-    condFrame:SetSize(360, 660)
+    condFrame:SetSize(360, 680)
     condFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     condFrame:SetFrameStrata("FULLSCREEN_DIALOG")
     condFrame:SetBackdrop({
@@ -5396,6 +5440,14 @@ local function createFrame()
     end)
 
     -- 地面技能專屬控制項
+    local groundPreRenderCb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
+    groundPreRenderCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -100)
+    groundPreRenderCb.text = groundPreRenderCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    groundPreRenderCb.text:SetPoint("LEFT", groundPreRenderCb, "RIGHT", 4, 1)
+    bindText(groundPreRenderCb.text, "EAM_OPT_GROUND_PRERENDER", "啟用預渲染佔位 (常駐待命)")
+    setTooltip(groundPreRenderCb, "未施放或效果結束時，圖示保持灰階半透明佔位待命；施放時立即點亮，免除動態排版延遲。", "預渲染佔位")
+    condFrame.groundPreRenderCb = groundPreRenderCb
+
     local durationModeCb = api.CreateFrame("CheckButton", nil, condFrame, "UICheckButtonTemplate")
     durationModeCb:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -135)
     durationModeCb.text = durationModeCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -5562,15 +5614,28 @@ local function createFrame()
     bindText(auraSoundHint, "EAM_OPT_AURA_SOUND_INHERIT", "三項皆未勾選時沿用全域音效；實際觸發需 PTR 真人驗證。")
     condFrame.auraSoundHint = auraSoundHint
 
+    -- 自訂顯示名稱 (簡稱)
+    local customNameLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    customNameLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -462)
+    bindText(customNameLabel, "EAM_OPT_CUSTOM_NAME_LABEL", "自訂顯示名稱 (簡稱):")
+    condFrame.customNameLabel = customNameLabel
+
+    local customNameEditBox = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
+    customNameEditBox:SetSize(250, 20)
+    customNameEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -480)
+    customNameEditBox:SetAutoFocus(false)
+    setTooltip(customNameEditBox, localized("EAM_OPT_CUSTOM_NAME_TIP", "自訂此項目的圖示文字名稱（如：盾、斬）。留空使用預設名稱，可防止多個圖示間距緊湊時文字互相遮擋。"), localized("EAM_OPT_CUSTOM_NAME_LABEL", "自訂顯示名稱 (簡稱)"))
+    condFrame.customNameEditBox = customNameEditBox
+
     -- 自訂替代圖示 (代碼或材質路徑)
     local customIconLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    customIconLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -475)
+    customIconLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -508)
     bindText(customIconLabel, "EAM_OPT_CUSTOM_ICON_LABEL", "自訂替代圖示 (代碼或材質路徑):")
     condFrame.customIconLabel = customIconLabel
 
     local customIconEditBox = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
     customIconEditBox:SetSize(250, 20)
-    customIconEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -493)
+    customIconEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -526)
     customIconEditBox:SetAutoFocus(false)
     setTooltip(customIconEditBox, "輸入替代圖示的 FileDataID 數字代碼或材質路徑（留空使用技能預設圖示）", "自訂替代圖示")
     condFrame.customIconEditBox = customIconEditBox
@@ -5593,13 +5658,13 @@ local function createFrame()
     end)
 
     local customIconHint = condFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    customIconHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -518)
+    customIconHint:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -552)
     customIconHint:SetText("可在 WoW.tools / Wago Tools 查詢圖示代碼與路徑:")
     condFrame.customIconHint = customIconHint
 
     local customIconUrl = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
     customIconUrl:SetSize(285, 18)
-    customIconUrl:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -534)
+    customIconUrl:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 24, -568)
     customIconUrl:SetAutoFocus(false)
     customIconUrl:SetText("https://wago.tools/icons")
     setTooltip(customIconUrl, "點擊反白複製網址前往 Wago Tools 查詢圖示代碼", "圖示查詢網站")
@@ -5607,7 +5672,7 @@ local function createFrame()
     condFrame.customIconUrl = customIconUrl
 
     -- 底部按鈕
-    createThemedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -580, 130, 26, function()
+    createThemedButton(condFrame, localized("EAM_OPT_COND_SAVE_BTN", "儲存設定 (Save)"), 20, -606, 130, 26, function()
         local d = Options.currentEditingAlert
         if d then
             local customIconText = condFrame.customIconEditBox:GetText()
@@ -5618,14 +5683,25 @@ local function createFrame()
             end
             d.customIcon = customIconText
 
+            local customNameText = condFrame.customNameEditBox:GetText()
+            if customNameText then
+                customNameText = customNameText:gsub("^%s*(.-)%s*$", "%1")
+                if customNameText == "" then customNameText = nil end
+            end
+            d.customName = customNameText
+
             if d.kind == "groundEffect" then
                 local savedVariables = EAM.Modules.SavedVariables
                 if savedVariables and savedVariables.updateGroundEffectAlert then
                     savedVariables.updateGroundEffectAlert(
                         d.spellID,
                         condFrame.durationModeCb:GetChecked() and "AUTO" or "MANUAL",
-                        condFrame.manualDurationEditBox:GetText()
+                        condFrame.manualDurationEditBox:GetText(),
+                        condFrame.groundPreRenderCb:GetChecked()
                     )
+                end
+                if savedVariables and savedVariables.updateAlertCustomName then
+                    savedVariables.updateAlertCustomName("groundEffect", nil, d.spellID, nil, customNameText)
                 end
             elseif d.kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN then
                 local savedVariables = EAM.Modules.SavedVariables
@@ -5658,6 +5734,9 @@ local function createFrame()
                 if condFrame.redColorBtn and condFrame.redColorBtn.currentColor then
                     d.countdownRedColor = condFrame.redColorBtn.currentColor
                 end
+                if savedVariables and savedVariables.updateAlertCustomName then
+                    savedVariables.updateAlertCustomName(d.kind, "player", d.spellID, nil, customNameText)
+                end
             elseif d.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN then
                 local savedVariables = EAM.Modules.SavedVariables
                 local targetSlotID = (condFrame.selectedItemType == "SLOT") and condFrame.selectedSlotID or nil
@@ -5680,6 +5759,7 @@ local function createFrame()
                     savedVariables.removeAlert(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN, nil, nil, oldItemID, oldSlotID)
                     local opts = {
                         customIcon = d.customIcon,
+                        customName = d.customName,
                         priority = condFrame.prioritySlider:GetValue(),
                         countdownRedLimit = condFrame.redLimitSlider:GetValue(),
                         countdownRedColor = condFrame.redColorBtn and condFrame.redColorBtn.currentColor,
@@ -5726,6 +5806,9 @@ local function createFrame()
                     if condFrame.redColorBtn and condFrame.redColorBtn.currentColor then
                         d.countdownRedColor = condFrame.redColorBtn.currentColor
                     end
+                    if savedVariables and savedVariables.updateAlertCustomName then
+                        savedVariables.updateAlertCustomName(d.kind, nil, nil, d.itemID, customNameText, d.slotID)
+                    end
                 end
             else
                 local savedVariables = EAM.Modules.SavedVariables
@@ -5738,6 +5821,10 @@ local function createFrame()
                     end
                 end
 
+                assignDetail("customName", customNameText)
+                if savedVariables and savedVariables.updateAlertCustomName then
+                    savedVariables.updateAlertCustomName(d.kind, d.unit, d.spellID, d.itemID, customNameText, d.slotID)
+                end
                 assignDetail("stackThreshold", condFrame.stackSlider:GetValue())
                 assignDetail("stackGlowThreshold", condFrame.glowSlider:GetValue())
                 assignDetail("countdownRedLimit", condFrame.redLimitSlider:GetValue())
@@ -5806,8 +5893,7 @@ local function createFrame()
                 savedVariables.markRevisionChanged()
             end
 
-            local isAura = d.kind == EAM.Constants.ALERT_KIND_AURA
-            Options.notifyConfigChanged(not isAura)
+            Options.notifyConfigChanged(true)
             if d.kind == "groundEffect" then
                 notifyGroundEffectConfigChanged()
             end
@@ -5823,7 +5909,7 @@ local function createFrame()
     local cancelBtn = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(cancelBtn) end
     cancelBtn:SetSize(130, 26)
-    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -580)
+    cancelBtn:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 190, -606)
     bindText(cancelBtn, "EAM_OPT_COND_CANCEL_BTN", "取消關閉 (Cancel)")
     setTooltip(cancelBtn, "放棄變更並關閉條件設定視窗", "取消關閉")
     cancelBtn:SetScript("OnClick", function()
@@ -5936,6 +6022,18 @@ function Options.openConditionsFrame(data)
 
     if isGround then
         -- 顯示地面效果專屬控制項
+        if cf.groundPreRenderCb then
+            cf.groundPreRenderCb:Show()
+            local isPreRender = true
+            if type(data.groundEffectPreRender) == "boolean" then
+                isPreRender = data.groundEffectPreRender
+            elseif type(data.cooldownPreRender) == "boolean" then
+                isPreRender = data.cooldownPreRender
+            elseif EAM.db and EAM.db.config and type(EAM.db.config.groundEffectPreRender) == "boolean" then
+                isPreRender = EAM.db.config.groundEffectPreRender
+            end
+            cf.groundPreRenderCb:SetChecked(isPreRender)
+        end
         cf.durationModeCb:Show()
         cf.manualDurationLabel:Show()
         cf.manualDurationEditBox:Show()
@@ -5971,6 +6069,7 @@ function Options.openConditionsFrame(data)
         if cf.itemSlotMenu then cf.itemSlotMenu:Hide() end
     else
         -- 隱藏地面效果專屬控制項
+        if cf.groundPreRenderCb then cf.groundPreRenderCb:Hide() end
         cf.durationModeCb:Hide()
         cf.manualDurationLabel:Hide()
         cf.manualDurationEditBox:Hide()
@@ -6065,6 +6164,10 @@ function Options.openConditionsFrame(data)
             cf.val3Cb:Show()
             cf.val4Cb:Show()
         end
+    end
+
+    if cf.customNameEditBox then
+        cf.customNameEditBox:SetText(data.customName or "")
     end
 
     if cf.customIconEditBox then

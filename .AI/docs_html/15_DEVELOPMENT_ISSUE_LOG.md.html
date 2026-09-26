@@ -515,6 +515,69 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-09-19-eam-20260919-tooltip-quick-add-cross-class-catalog-scope-fix-ctrlalt">2026-09-19 EAM-20260919-TOOLTIP-QUICK-ADD-CROSS-CLASS-CATALOG-SCOPE-FIX：快捷鍵 (CTRL+ALT) 懸停加入非本職法術至自身光環目錄分類遺失修復</h3>
+<ul>
+<li>狀態：已解決 (Lua 78/78, Flow 90/90, Contracts 499/499, Build-Package DEV PASS, 少年欸實機測試已驗證修復)。</li>
+<li>需求背景與問題分析：<ol>
+<li>少年欸回報：「以CTRL+ALT 對ICON進行加入自身光環會出現已加入XXXX 但實際未加入,該法術若手動輸入會出現是否加入地確認詢問,是否與這有關係」。</li>
+<li>根因剖析：
+ a. <strong>分類過濾器邊界檢查</strong>：在 <code>Options.lua</code> 中，第 1 分頁（自身清單）透過 <code>alertMatchesCategory</code> 嚴格要求 <code>catalogScope == AURA_CATALOG_SCOPE_SELF</code>。若手動在第 1 分頁輸入非本職法術 ID，會彈出 <code>showNonClassSpellConfirmDialog</code>，使用者確認後以 <code>force = true</code> 寫入 <code>catalogScope = "SELF"</code> 與 <code>fromPlayer = true</code>。
+ b. <strong>懸停快捷鍵意圖遺失</strong>：在 <code>TooltipMonitorService.lua</code> 的 <code>commitCandidate()</code> 中，當使用者按下 CTRL+ALT 點選「加入玩家光環監控」（<code>ACTION_AURA_PLAYER</code>）或「加入目標光環監控」（<code>ACTION_AURA_TARGET</code>）時，呼叫 <code>saved.addAuraAlert()</code> 未傳入任何 <code>options</code>（<code>options = nil</code>）。
+ c. <strong>自動分流至跨職業清單</strong>：導致該法術在 SavedVariables 儲存時其 <code>catalogScope = nil</code>。當使用者打開設定視窗第 1 分頁時，<code>migratePlayerAuraCatalogScopes()</code> 判定非當前職業法術且缺少 <code>catalogScope</code>，自動將其標記為 <code>CROSS_CLASS</code>，直接分流進第 2 分頁（跨職業增減益清單），造成自身清單中「看似未加入」的假象。少年欸的直覺 100% 命中真因！</li>
+</ol>
+</li>
+<li>重構實作：<ol>
+<li><strong>快捷選單加入意圖明確注入 (<code>Services/TooltipMonitorService.lua</code>)</strong>：</li>
+<li>在 <code>commitCandidate</code> 中，針對 <code>ACTION_AURA_PLAYER</code> 與 <code>ACTION_AURA_TARGET</code> 明確構建 <code>options = { catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF, fromPlayer = true }</code>。</li>
+<li>針對 <code>ACTION_GROUND_EFFECT</code> 提供 <code>{ enabled = true, durationMode = "AUTO" }</code>。</li>
+<li>針對 <code>ACTION_SPELL_COOLDOWN</code> 與 <code>ACTION_ITEM_COOLDOWN</code> 提供 <code>{ enabled = true }</code>。</li>
+<li>呼叫 <code>pcall(operation, ..., options)</code>，確保快捷加入的光環 100% 具備自身光環目錄標記。</li>
+<li><strong>跨職業歷史條目自動矯正</strong>：</li>
+<li>當法術先前已被分類為 <code>CROSS_CLASS</code> 時，再次透過 CTRL+ALT 快捷鍵加入會自動覆蓋更新為 <code>catalogScope = "SELF"</code>，並觸發事件使設定清單立即刷新。</li>
+</ol>
+</li>
+<li>驗證結果：<ul>
+<li>CheckLuaSyntax 78/78 PASS, Run-FlowValidation 90/90 PASS, Test-ValidationContracts 499/499 PASS。</li>
+<li>產包 <code>Dist\EventAlertMod_12.1.0_Alpha_8.7_20260919_224056.zip</code> 經少年欸在 Retail 12.1.0 實機實測，確認徹底修復正常。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2026-09-19-eam-20260919-cooldown-prerender-parent-layout-and-custom-name-fix">2026-09-19 EAM-20260919-COOLDOWN-PRERENDER-PARENT-LAYOUT-AND-CUSTOM-NAME-FIX：冷卻預渲染父框架排版可見性根治、自訂名稱即時熱更新與實機深度診斷採集持久化</h3>
+<ul>
+<li>狀態：已解決 (Lua 78/78, Flow 90/90, Contracts 499/499, Build-Package DEV PASS)。</li>
+<li>需求背景與問題分析：<ol>
+<li>少年欸回報：「沒修好」、「若不得已,請設計一段偵錯回報訊息讓我向你回報, 同時也回存到存檔,讓你可讀取偵錯訊息。存檔路徑: D:\World of Warcraft_xptr_\WTF\Account\17194784#5\SavedVariables\EventAlertMod.lua」。</li>
+<li>根因剖析：
+ a. <strong>冷卻預渲染不可見的真因（父框架隱藏陷阱）</strong>：在 <code>Renderer.prewarmAlertFrames()</code> 建立預渲染冷卻圖示時設定 <code>icon:SetAlpha(0)</code>，但 <code>icon.rendered.layoutAlpha</code> 未被清零；當後續 <code>Renderer.render()</code> 執行佔位渲染時，因 icon 已存在且 order 未變，<code>fState.layoutDirty</code> 保持為 <code>false</code>，導致 <code>layout()</code> 未被呼叫，父框架 <code>fState.parent</code> 停留在 <code>Hide()</code> 狀態！所有預渲染圖示因掛載於隱藏父框架下，在畫面上完全看不見！
+ b. <strong>自訂名稱不生效與熱更新缺陷</strong>：<ul>
+<li><code>ItemCooldownService.lua</code> 在佔位與冷卻分支中遺漏了 <code>state.order = alert.order</code> 與 <code>state.rawAlert = alert</code>。</li>
+<li><code>AuraService.lua</code> 狀態重設時遺漏傳遞 <code>state.rawAlert = alert</code>。</li>
+<li><code>SavedVariables.updateAlertCustomName()</code> 遺漏了冷卻與物品冷卻事件廣播（<code>EAM_COOLDOWN_CONFIG_CHANGED</code>、<code>EAM_ITEM_COOLDOWN_CONFIG_CHANGED</code>）。</li>
+<li><code>Renderer.applyTextLayoutToIcon()</code> 過去僅重置位置與大小，未同步更新 <code>nameText</code> 字串內容；修改名稱後無法即時在畫面上反映。
+ c. <strong>原生 AuraButton Strict Metatable 邊界</strong>：在 <code>applyTextLayoutToIcon()</code> 存取 <code>icon.alertState</code> 時，未透過 <code>rawget()</code>，觸發了 12.1 嚴格按鈕架構的 <code>Unknown strict AuraButton method: alertState</code> 攔截錯誤。</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>重構實作：<ol>
+<li><strong>冷卻預渲染父框架排版與可見性保證 (<code>UI/Renderer.lua</code>)</strong>：</li>
+<li><code>prewarmAlertFrames()</code> 建立隱藏圖示時，同步設定 <code>icon.rendered.layoutAlpha = 0</code>，消除排版快取誤判。</li>
+<li>在 <code>Renderer.render()</code> 結尾新增父框架可見性與未排版偵測：若 <code>not fState.parent:IsShown() or rendered.layoutX == nil</code>，強制標記 <code>fState.layoutDirty = true</code> 並立即觸發 <code>layout()</code>，確保 <code>fState.parent:Show()</code> 執行，預渲染圖示 100% 正確顯示。</li>
+<li><strong>自訂名稱全管道打通與即時熱更新 (<code>UI/Renderer.lua</code>, <code>Core/SavedVariables.lua</code>, <code>Services/ItemCooldownService.lua</code>, <code>Services/AuraService.lua</code>)</strong>：</li>
+<li><code>ItemCooldownService</code> 補齊 <code>state.order</code> 與 <code>state.rawAlert</code>。</li>
+<li><code>AuraService</code> 補齊 <code>state.rawAlert</code>。</li>
+<li><code>SavedVariables</code> 補齊冷卻與物品冷卻事件廣播。</li>
+<li><code>Renderer.applyTextLayoutToIcon</code> 實裝 <code>rawget(icon, "alertState")</code> 安全讀取與 <code>setTextIfChanged(icon.nameText, rendered, "name", resolvedName)</code> 即時熱更新。</li>
+<li><strong>實機深度偵錯採集與 SavedVariables 持久化 (<code>Debug/PromptExport.lua</code>, <code>UI/Slash.lua</code>)</strong>：</li>
+<li>擴充 <code>/eam debug</code> 與 <code>/eam dump</code> 命令。</li>
+<li>採集環境、版本、當前職業各類別 Alerts、冷卻狀態機內部狀態、Renderer 框架與所有圖示/父框架座標與 Alpha。</li>
+<li>生成結構化 JSON 快照，存入 <code>EAM.db.debugDump</code> 並調用 <code>markRevisionChanged()</code>，保證 <code>/reload</code> 時寫入使用者指定之 WTF 存檔路徑。</li>
+<li>自動彈出複製視窗（全選文字），支援少年欸直接按 <code>Ctrl+C</code> 複製回報。</li>
+<li><strong>多語系 5 國語言完整對齊 (<code>Locale/*.lua</code>)</strong>：<code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> 補齊 <code>EAM_SLASH_DEBUG_SNAPSHOT_SAVED</code>。</li>
+</ol>
+</li>
+<li>驗證結果：LuaSyntax 78/78, Flow 90/90, Contracts 499/499 全數綠燈。</li>
+</ul>
 <h3 id="2026-09-19-eam-20260919-ground-effect-cooldown-alignment-and-ui-leak-fix">2026-09-19 EAM-20260919-GROUND-EFFECT-COOLDOWN-ALIGNMENT-AND-UI-LEAK-FIX：地面效果全面對齊冷卻架構與非戰鬥預熱（徹底根治戰鬥中施放不顯示）暨條件設定視窗元件洩漏修復</h3>
 <ul>
 <li>狀態：已解決 (Lua 78/78, Flow 88/88, Contracts 499/499, Build-Package DEV PASS)。</li>
@@ -3123,14 +3186,176 @@
 <li>驗證：<ul>
 <li>Lua 語法檢查：78/78 PASS（<code>CheckLuaSyntax.ps1</code>）。</li>
 <li>Flow 狀態機測試：88/88 PASS（<code>Run-FlowValidation.ps1</code>）。</li>
-<li>Validation Contracts：499/499 PASS（<code>Test-ValidationContracts.ps1</code>）。</li>
-<li>打包測試：128 個檔案 PASS（<code>Build-Package.ps1 -PackageLabel DEV</code>）。</li>
+</ul>
+</li>
+</ul>
+<h3 id="issue-091-cli-alpha-87">ISSUE-091: CLI 命令列全語系重構、聊天框貼圖跳脫碼修復與指令補齊 (Alpha 8.7)</h3>
+<ul>
+<li>日期：2026-09-19</li>
+<li>現象與挑戰：<ol>
+<li>聊天框跳脫字元破裂：斜線指令說明 <code>&lt;spellID|target|...&gt;</code> 因含有字元序列 <code>|t</code>，被魔獸聊天引擎誤判定為材質貼圖標籤（<code>|Tpath...|t</code>）之結束標記，導致字串在聊天框中破裂為 <code>&lt;spellIDarget&gt;</code>，排版嚴重破損。</li>
+<li>多語系說明殘留英文：舊版 <code>/eam help</code> 在各語言環境下多數輸出硬編碼英文，未能依玩家客戶端語系自動切換。</li>
+<li>常用指令缺失：缺少快捷預覽切換 <code>/eam preview</code>、符能框架位置解鎖 <code>/eam rune</code>、地面效果指令增補 <code>/eam add ground &lt;id&gt;</code> 與即時切換語言 <code>/eam lang &lt;locale&gt;</code>。</li>
+</ol>
+</li>
+<li>有效解法：<ol>
+<li><strong>聊天框語法符號替換</strong>：在 <code>Slash.lua</code> 中全面將參數提示的管線符號 <code>|</code> 替換為斜線 <code>/</code>（如 <code>&lt;spell/target/cd/item/ground&gt;</code>），徹底杜絕 <code>|t</code> 被魔獸原生文字引擎誤解析為 Texture 跳脫碼之缺陷。</li>
+<li><strong>5 大語系完整在地化</strong>：在 <code>Locale</code>（zhTW, zhCN, enUS, koKR, ruRU）補齊全套斜線指令鍵值與說明，動態依據 <code>EAM.L</code> 輸出本土化文本。</li>
+<li><strong>補齊關鍵指令與別名</strong>：</li>
+<li><code>/eam preview</code>（別名 <code>/eam p</code>）：直接切換預覽模式。</li>
+<li><code>/eam rune</code>：直接開關死亡騎士符能框架解鎖移動。</li>
+<li><code>/eam add ground &lt;spellID&gt;</code>：支援從指令列直接新增地面效果監控。</li>
+<li><code>/eam lang &lt;locale&gt;</code>：支援指令列直接切換插件語系。</li>
+</ol>
+</li>
+<li>驗證：<ul>
+<li>Lua 語法檢查：78/78 PASS。</li>
+<li>Flow 狀態機測試：88/88 PASS。</li>
+<li>Validation Contracts：499/499 PASS。</li>
+</ul>
+</li>
+</ul>
+<h3 id="issue-092-18-alpha-87">ISSUE-092: 原生光環字型大小即時熱套用徹底修復與 18 次配額死鎖根除 (Alpha 8.7)</h3>
+<ul>
+<li>日期：2026-09-19</li>
+<li>現象與挑戰：<ol>
+<li>玩家回報在 Retail 12.1.0 原生光環模式下，於設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後，畫面上正在顯示的原生光環按鈕完全沒有反應，必須手動執行 <code>/reload</code> 重新載入介面才能看到字型變更。</li>
+<li>根因剖析發現三重病根：</li>
+<li><strong>病根一（按鈕缺乏即時字型熱套用通道）</strong>：舊架構在 <code>NativeAuraRenderer.lua</code> 中未維護按鈕參照，<code>applyTextLayout</code> 寫死 <code>return false, "nativeRebuildRequired"</code>，導致文字樣式無法直接套用於已存在之原生按鈕。</li>
+<li><strong>病根二（Options 聯動盲區）</strong>：<code>Options.lua</code> 的 <code>notifyTextLayoutChanged()</code> 僅通知通用 Legacy 渲染器，完全未打通 Native 原生按鈕通道。</li>
+<li><strong>病根三（容器重建上限死鎖與非同步盲區）</strong>：放開滑桿時試圖呼叫 <code>triggerSafeRebuild</code> 重新建立暴雪 <code>AuraContainer</code>，但暴雪原生容器不會主動為「當前身上已存在的光環」回溯重跑 <code>initializeFrame</code>；且反覆拉動滑桿快速耗盡 18 次配額觸發 <code>nativeReloadRequired</code> 永久死鎖，迫使玩家必須 <code>/reload</code>。</li>
+</ol>
+</li>
+<li>有效解法：<ol>
+<li><strong>弱引用按鈕註冊池</strong>：在 <code>NativeAuraRenderer.lua</code> 引入 <code>buttons = setmetatable({}, { __mode = "k" })</code> 弱引用池，於 <code>initializeButton</code> 時記錄活躍按鈕及其 <code>timerText</code>、<code>stackText</code>、<code>nameText</code> 參照。當暴雪底層銷毀按鈕時由 Lua GC 自動回收，零記憶體洩漏。</li>
+<li><strong>零配額熱套用機制</strong>：實裝 <code>NativeAuraRenderer.updateButtonFonts(config)</code>，直接調用 <code>FontString:SetFont</code> 原位更新畫面上所有活躍光環文字，零延遲、無需銷毀容器、不消耗 18 次配額，徹底擺脫 <code>/reload</code> 依賴。</li>
+<li><strong>打通 Options 聯動與防死鎖過濾</strong>：在 <code>Options.notifyTextLayoutChanged()</code> 注入 <code>NativeAuraRenderer.updateButtonFonts()</code>，拉動滑桿瞬間螢幕文字即時縮放；在 <code>commitNativeChange</code> 針對字型大小滑桿移除多餘的 <code>triggerSafeRebuild</code>，杜絕 18 次配額被反覆拖曳耗盡。</li>
+<li><strong>統一規則編譯器法術名稱字型取值</strong>：在 <code>AuraRuleCompiler.lua</code> 中，將 <code>buildVisualFingerprint</code> 與 <code>snapshotStyle</code> 之法術名稱字型大小取值統一為 <code>TextPlacement.getFontSize(config, "spellName")</code>，確保指紋比對與按鈕樣式一致。</li>
+</ol>
+</li>
+<li>驗證：<ul>
+<li>Flow 測試新增 <code>ui.text_layout.native_live_hot_apply</code> 驗證原位熱更新成功。</li>
+<li>Lua 語法檢查：78/78 PASS。</li>
+<li>Flow 狀態機測試：89/89 PASS。</li>
+<li>Validation Contracts：499/499 PASS。</li>
+</ul>
+</li>
+</ul>
+<h3 id="issue-093-alpha-87">ISSUE-093: 全模組自訂技能與法術名稱功能實裝與原生光環防覆蓋鉤子 (Alpha 8.7)</h3>
+<ul>
+<li>日期：2026-09-19</li>
+<li>現象與挑戰：<ol>
+<li>玩家需求：在圖示間距緊湊、密集排版的戰鬥告警配置下，技能或法術之原始全稱（例如「聖盾術」、「斬殺」、「反魔法護罩」）字元過長，圖示彼此相鄰時文字容易發生嚴重重疊與互相遮擋，需要支援自訂簡短名稱（如簡寫為「盾」、「斬」、「罩」）。</li>
+<li>架構挑戰：</li>
+<li>EAM 擁有 6 大核心警報模組（自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻、地面效果），設定需具備統一持久化與各模組獨立相容性。</li>
+<li>Retail 12.1.0 原生光環（Native Aura）受暴雪底層光環管線託管，其內部事件會不定期重置或呼叫 <code>nameText:SetText(aura.name)</code>，導致玩家自訂的簡短名稱被底層覆蓋還原。</li>
+</ol>
+</li>
+<li>有效解法：<ol>
+<li><strong>UI 條件設定視窗擴展</strong>：</li>
+<li>在 <code>Options.lua</code> 中將 <code>EAM_SpellConditionsFrame</code>（<code>condFrame</code>）面板高度從 630px 擴展至 680px，留出寬裕排版空間。</li>
+<li>增設「自訂顯示名稱 (簡稱)」專屬輸入框（<code>condFrame.customNameInput</code>），支援即時輸入、即時儲存或留空自動還原全稱。</li>
+<li>清單列表即時標記：若該項目有設定自訂名稱，清單列動態標註為 <code>法術名稱 (|cff00ff96簡稱|r)</code>，讓玩家一目了然。</li>
+<li><strong>SavedVariables 資料持久化</strong>：</li>
+<li>在 <code>SavedVariables.lua</code> 的各模組正規化與存檔中全面支援 <code>options.customName</code>（string / nil）。</li>
+<li>實裝 <code>SavedVariables.updateAlertCustomName(category, spellId, customName)</code> 核心 API，並廣播 <code>EAM_SPELL_CONDITIONS_UPDATED</code> 事件通知服務層熱更新。</li>
+<li><strong>全模組服務層深度整合</strong>：</li>
+<li><code>AuraService.lua</code>：自身 Buff、自身 Debuff、目標 Debuff 在註冊與觸發警報時優先採用 <code>alert.customName</code>。</li>
+<li><code>CooldownService.lua</code>：技能冷卻在捕獲施法與充能時優先採用 <code>alert.customName</code>。</li>
+<li><code>ItemCooldownService.lua</code>：物品冷卻與 19 部位裝備欄位冷卻時優先採用 <code>alert.customName</code>。</li>
+<li><code>GroundEffectService.lua</code>：地面範圍效果在施法命中時優先採用 <code>alert.customName</code>。</li>
+<li><strong>原生光環與傳統渲染器守護</strong>：</li>
+<li><code>AuraRuleCompiler.lua</code>：在規則編譯時將 <code>customName</code> 快照至 <code>rule.style.customName</code>。</li>
+<li><code>NativeAuraRenderer.lua</code>：在 <code>initializeButton</code> 為按鈕的 <code>nameText</code> 實裝防禦性 <code>SetText</code> 鉤子（Text Guard Hook），若有自訂名稱且傳入非空新名稱時強制鎖定為自訂名稱，杜絕暴雪底層覆蓋。</li>
+<li><code>Renderer.lua</code>：傳統圖示渲染器優先採用 <code>raw.customName</code> 繪製法術名稱。</li>
+<li><strong>多語系與單元測試</strong>：</li>
+<li>補齊 5 大語系（zhTW, zhCN, enUS, koKR, ruRU）之 <code>EAM_OPT_CUSTOM_NAME_LABEL</code> 與 <code>EAM_OPT_CUSTOM_NAME_TIP</code> 詞條。</li>
+<li>在 <code>FlowTestRunner.lua</code> 新增專屬測試案例 <code>options.custom_name.persistence_and_propagation</code>。</li>
+</ol>
+</li>
+<li>驗證：<ul>
+<li>Lua 語法檢查：78/78 PASS。</li>
+<li>Flow 狀態機測試：90/90 PASS。</li>
+<li>Validation Contracts：499/499 PASS。</li>
 </ul>
 </li>
 </ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<h3 id="2026-09-19-eam-20260919-tooltip-quick-add-cross-class-catalog-scope-fix-shortcut-keys-ctrlalt-fixed-the-problem-of-adding-non-class-spells-to-own-aura-directory-by-hovering">2026-09-19 EAM-20260919-TOOLTIP-QUICK-ADD-CROSS-CLASS-CATALOG-SCOPE-FIX: Shortcut keys (CTRL+ALT) Fixed the problem of adding non-class spells to own Aura directory by hovering.</h3>
+<ul>
+<li>Status: Resolved (Lua 78/78, Flow 90/90, Contracts 499/499, Build-Package DEV PASS, juvenile real machine test has verified the fix).</li>
+<li>Demand background and problem analysis:</li>
+<li>The boy reported: "When using CTRL+ALT to add the ICON to one's own Aura, it will appear that XXXX has been added but it has not actually been added. If the spell is entered manually, a confirmation question about whether to join will appear. Does this have anything to do with it?"<ol>
+<li>Root cause analysis:
+a. <strong>Classification filter bounds checking</strong>: In <code>Options.lua</code>, page 1 (own list) passes <code>alertMatchesCategory</code> and strictly requires <code>catalogScope == AURA_CATALOG_SCOPE_SELF</code>. If the non-class spell ID is manually entered on page 1, <code>showNonClassSpellConfirmDialog</code> will pop up. After confirmation, the user writes <code>catalogScope = "SELF"</code> and <code>fromPlayer = true</code> with <code>force = true</code>.
+b. <strong>Hover shortcut key intent is missing</strong>: In <code>TooltipMonitorService.lua</code>'s <code>commitCandidate()</code>, when the user presses CTRL+ALT to click "Join player Aura monitoring" (<code>ACTION_AURA_PLAYER</code>) or "Join target Aura monitoring" (<code>ACTION_AURA_TARGET</code>), the call to <code>saved.addAuraAlert()</code> does not pass in any <code>options</code> (<code>options = nil</code>).
+c. <strong>Auto-shunt to cross-class list</strong>: Causes the spell to be stored at <code>catalogScope = nil</code> when it is stored at <code>catalogScope = nil</code>. When the user opens the 1st page of the settings window, <code>migratePlayerAuraCatalogScopes()</code> determines that it is not the current professional spell and lacks <code>catalogScope</code>, and automatically marks it as <code>CROSS_CLASS</code>, which is directly diverted to the 2nd page (cross-professional gain and loss list), creating the illusion of "seemingly not added" to the own list. The boy’s intuition hits the true cause 100% of the time!</li>
+</ol>
+</li>
+<li>Refactoring implementation:</li>
+<li><strong>Add clear intent injection (<code>Services/TooltipMonitorService.lua</code>)</strong> to the shortcut menu:<ul>
+<li>In <code>commitCandidate</code>, explicitly build <code>options = { catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF, fromPlayer = true }</code> for <code>ACTION_AURA_PLAYER</code> and <code>ACTION_AURA_TARGET</code>.</li>
+<li>Provides <code>{ enabled = true, durationMode = "AUTO" }</code> for <code>ACTION_GROUND_EFFECT</code>.</li>
+<li>Provides <code>{ enabled = true }</code> for <code>ACTION_SPELL_COOLDOWN</code> and <code>ACTION_ITEM_COOLDOWN</code>.</li>
+<li>Call <code>pcall(operation, ..., options)</code> to ensure 100% of the Aura added quickly have their own Aura catalog tag.</li>
+</ul>
+</li>
+<li><strong>Automatic correction of cross-professional historical entries</strong>:<ul>
+<li>When a spell has been previously classified as <code>CROSS_CLASS</code>, adding it again through the CTRL+ALT shortcut key will automatically overwrite and update it to <code>catalogScope = "SELF"</code>, and trigger an event to refresh the settings list immediately.</li>
+</ul>
+</li>
+<li>Verification results:<ul>
+<li>CheckLuaSyntax 78/78 PASS, Run-FlowValidation 90/90 PASS, Test-ValidationContracts 499/499 PASS.</li>
+<li>The production package <code>Dist\EventAlertMod_12.1.0_Alpha_8.7_20260919_224056.zip</code> has been tested on the Retail 12.1.0 real machine and confirmed to be completely repaired.</li>
+</ul>
+</li>
+</ul>
+<h3 id="2026-09-19-eam-20260919-cooldown-prerender-parent-layout-and-custom-name-fix-cooling-pre-rendering-parent-frame-typesetting-visibility-radical-cure-customized-name-instant-hot-update-and-real-machine-in-depth-diagnostic-collection-persistence">2026-09-19 EAM-20260919-COOLDOWN-PRERENDER-PARENT-LAYOUT-AND-CUSTOM-NAME-FIX: Cooling pre-rendering parent frame typesetting visibility radical cure, customized name instant hot update and real machine in-depth diagnostic collection persistence</h3>
+<ul>
+<li>Status: Resolved (Lua 78/78, Flow 90/90, Contracts 499/499, Build-Package DEV PASS).</li>
+<li>Demand background and problem analysis:</li>
+<li>The boy reported: "It's not fixed", "If you have to, please design a debug report message for me to report to you, and also save it back to the archive so that you can read the debug message. Archive path: D:\World of Warcraft_xptr_\WTF\Account\17194784#5\SavedVariables\EventAlertMod.lua".<ol>
+<li>Root cause analysis:
+a. <strong>The real reason why cooling pre-rendering is invisible (parent frame hidden trap)</strong>: <code>icon:SetAlpha(0)</code> is set when <code>Renderer.prewarmAlertFrames()</code> creates the pre-rendered cooling icon, but <code>icon.rendered.layoutAlpha</code> is not cleared; when subsequent <code>Renderer.render()</code> performs placeholder rendering, because the icon already exists and the order has not changed, <code>fState.layoutDirty</code> remains as <code>false</code>, resulting in <code>layout()</code> has not been called, and the parent frame <code>fState.parent</code> is stuck in the <code>Hide()</code> state! All pre-rendered icons are completely invisible on the screen because they are mounted under the hidden parent frame!
+b. <strong>Customized names do not take effect and hot update defects</strong>:<ul>
+<li><code>ItemCooldownService.lua</code> is missing <code>state.order = alert.order</code> and <code>state.rawAlert = alert</code> in the placeholder and cooling branches.</li>
+<li><code>AuraService.lua</code> Missing delivery of <code>state.rawAlert = alert</code> when resetting state.</li>
+<li><code>SavedVariables.updateAlertCustomName()</code> Missed cooldown and item cooldown event broadcasts (<code>EAM_COOLDOWN_CONFIG_CHANGED</code>, <code>EAM_ITEM_COOLDOWN_CONFIG_CHANGED</code>).</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><code>Renderer.applyTextLayoutToIcon()</code> In the past, only the position and size were reset, and the string content of <code>nameText</code> was not updated synchronously; after the name is modified, it cannot be reflected on the screen immediately.
+     c. <strong>Native AuraButton Strict Metatable boundary</strong>: When <code>applyTextLayoutToIcon()</code> accesses <code>icon.alertState</code>, it does not pass through <code>rawget()</code>, triggering the <code>Unknown strict AuraButton method: alertState</code> interception error of the 12.1 strict button architecture.</li>
+<li>Refactoring implementation:<ol>
+<li><strong>Cool pre-rendered parent frame layout and visibility guarantee (<code>UI/Renderer.lua</code>)</strong>:</li>
+</ol>
+</li>
+<li><code>prewarmAlertFrames()</code> When creating a hidden icon, set <code>icon.rendered.layoutAlpha = 0</code> simultaneously to eliminate typographical cache misjudgments.<ul>
+<li>Added parent frame visibility and untypesetting detection at the end of <code>Renderer.render()</code>: if <code>not fState.parent:IsShown() or rendered.layoutX == nil</code>, force mark <code>fState.layoutDirty = true</code> and trigger <code>layout()</code> immediately to ensure that <code>fState.parent:Show()</code> is executed and the pre-rendered icon is 100% correctly displayed.</li>
+</ul>
+</li>
+<li>** Full pipeline connection and instant hot update of custom names (<code>UI/Renderer.lua</code>, <code>Core/SavedVariables.lua</code>, <code>Services/ItemCooldownService.lua</code>, <code>Services/AuraService.lua</code>)**:<ul>
+<li><code>ItemCooldownService</code> completes <code>state.order</code> and <code>state.rawAlert</code>.</li>
+<li><code>AuraService</code> completes <code>state.rawAlert</code>.</li>
+<li><code>SavedVariables</code> Complete cooling and item cooling event broadcasting.</li>
+<li><code>Renderer.applyTextLayoutToIcon</code> implements <code>rawget(icon, "alertState")</code> safe reading and <code>setTextIfChanged(icon.nameText, rendered, "name", resolvedName)</code> instant hot update.</li>
+</ul>
+</li>
+<li><strong>Real machine in-depth debugging collection and SavedVariables persistence (<code>Debug/PromptExport.lua</code>, <code>UI/Slash.lua</code>)</strong>:<ul>
+<li>Extended <code>/eam debug</code> and <code>/eam dump</code> commands.</li>
+<li>Collect the environment, version, Alerts of each category of the current profession, the internal state of the cooling state machine, the Renderer frame and all icon/parent frame coordinates and Alpha.</li>
+<li>Generate a structured JSON snapshot, store it in <code>EAM.db.debugDump</code> and call <code>markRevisionChanged()</code>, ensuring that <code>/reload</code> is written to the user-specified WTF archive path.</li>
+</ul>
+</li>
+<li>A copy window will pop up automatically (select all text), supporting teenagers to directly press <code>Ctrl+C</code> to copy the report.<ol>
+<li><strong>Complete alignment of 5 languages ​​in multiple languages ​​(<code>Locale/*.lua</code>)</strong>: <code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code> complete <code>EAM_SLASH_DEBUG_SNAPSHOT_SAVED</code>.</li>
+</ol>
+</li>
+<li>Verification results: LuaSyntax 78/78, Flow 90/90, Contracts 499/499 all green lights.</li>
+</ul>
 <h3 id="2026-09-19-eam-20260919-ground-effect-cooldown-alignment-and-ui-leak-fix-the-ground-effect-is-fully-aligned-with-the-cooling-structure-and-non-combat-warm-up-completely-eliminates-the-non-display-of-casts-during-combat-and-condition-setting-window-component-leak-repair">2026-09-19 EAM-20260919-GROUND-EFFECT-COOLDOWN-ALIGNMENT-AND-UI-LEAK-FIX: The ground effect is fully aligned with the cooling structure and non-combat warm-up (completely eliminates the non-display of casts during combat) and condition setting window component leak repair</h3>
 <ul>
 <li>Status: Resolved (Lua 78/78, Flow 88/88, Contracts 499/499, Build-Package DEV PASS).</li>
@@ -5899,8 +6124,109 @@ Magic World 12.x implements secret value restrictions on cooldown and Aura times
 <li>Verification:<ul>
 <li>Lua syntax check: 78/78 PASS (<code>CheckLuaSyntax.ps1</code>).</li>
 <li>Flow state machine test: 88/88 PASS (<code>Run-FlowValidation.ps1</code>).</li>
-<li>Validation Contracts: 499/499 PASS (<code>Test-ValidationContracts.ps1</code>).</li>
-<li>Packed test: 128 archives PASS (<code>Build-Package.ps1 -PackageLabel DEV</code>).</li>
+</ul>
+</li>
+</ul>
+<h3 id="issue-091-cli-full-language-reconstruction-of-command-line-chat-box-texture-escape-code-repair-and-command-completion-alpha-87">ISSUE-091: CLI Full language reconstruction of command line, chat box texture escape code repair and command completion (Alpha 8.7)</h3>
+<ul>
+<li>Date: 2026-09-19</li>
+<li>Phenomenon and challenges:</li>
+<li>The character string is broken when jumping out of the chat box: the slash command description <code>&lt;spellID|target|...&gt;</code> contains the character sequence <code>|t</code>, which is mistakenly determined by the Warcraft chat engine as the end mark of the texture map tag (<code>|Tpath...|t</code>), causing the string to break into <code>&lt;spellIDarget&gt;</code> in the chat box, and the typesetting is seriously damaged.<ol>
+<li>The multi-language description remains in English: the old version <code>/eam help</code> mostly outputs hard-coded English in each language environment, and cannot automatically switch according to the player's client language.</li>
+</ol>
+</li>
+<li>Missing common commands: lack of quick preview switching <code>/eam preview</code>, function frame position unlocking <code>/eam rune</code>, ground effect command supplement <code>/eam add ground &lt;id&gt;</code> and instant language switching <code>/eam lang &lt;locale&gt;</code>.</li>
+<li>Effective solution:</li>
+<li><strong>Chat box syntax symbol replacement</strong>: In <code>Slash.lua</code>, completely replace the pipeline symbol <code>|</code> of the parameter prompt with a slash <code>/</code> (such as <code>&lt;spell/target/cd/item/ground&gt;</code>), completely eliminating the defect of <code>|t</code> being misinterpreted as a Texture escape code by the Warcraft native text engine.<ol>
+<li><strong>Complete localization of 5 major languages</strong>: Complete a complete set of slash command key values ​​and descriptions in <code>Locale</code> (zhTW, zhCN, enUS, koKR, ruRU), and dynamically output localized text based on <code>EAM.L</code>.</li>
+</ol>
+</li>
+<li><strong>Complete key instructions and aliases</strong>:<ul>
+<li><code>/eam preview</code> (alias <code>/eam p</code>): Switch preview mode directly.</li>
+<li><code>/eam rune</code>: Directly switch the Death Knight rune to unlock the movement.</li>
+<li><code>/eam add ground &lt;spellID&gt;</code>: Supports adding ground effect monitoring directly from the command line.</li>
+<li><code>/eam lang &lt;locale&gt;</code>: Support command line to directly switch plug-in language.</li>
+</ul>
+</li>
+<li>Verification:<ul>
+<li>Lua syntax check: 78/78 PASS.</li>
+<li>Flow state machine tests: 88/88 PASS.</li>
+<li>Validation Contracts: 499/499 PASS.</li>
+</ul>
+</li>
+</ul>
+<h3 id="issue-092-native-aura-font-size-instant-hot-apply-overhaul-and-18-quota-deadlock-eradication-alpha-87">ISSUE-092: Native Aura font size instant hot-apply overhaul and 18 quota deadlock eradication (Alpha 8.7)</h3>
+<ul>
+<li>Date: 2026-09-19</li>
+<li>Phenomenon and challenges:</li>
+<li>Players reported that in the native Aura mode of Retail 12.1.0, after adjusting the "seconds countdown font size", "stack layer numeric size" or "spell name font size" in the settings interface, the native Aura button displayed on the screen does not respond at all. You must manually execute <code>/reload</code> to reload the interface to see the font changes.<ol>
+<li>Root cause analysis revealed three root causes:</li>
+</ol>
+</li>
+<li><strong>Root cause 1 (buttons lack real-time font hot application channel)</strong>: The old architecture does not maintain the button reference in <code>NativeAuraRenderer.lua</code>, and <code>applyTextLayout</code> is hard-coded in <code>return false, "nativeRebuildRequired"</code>, resulting in text styles that cannot be directly applied to existing native buttons.<ul>
+<li><strong>Root cause 2 (Options linkage blind area)</strong>: <code>Options.lua</code>'s <code>notifyTextLayoutChanged()</code> only notifies the general Legacy renderer and does not open the Native button channel at all.</li>
+</ul>
+</li>
+<li><strong>Root cause three (container reconstruction upper limit deadlock and non-synchronization dead zone)</strong>: When releasing the slider, you try to call <code>triggerSafeRebuild</code> to re-establish Blizzard <code>AuraContainer</code>, but Blizzard's native container will not actively rerun <code>initializeFrame</code> for the "currently existing Aura"; and repeatedly pulling the slider quickly exhausts the quota 18 times to trigger <code>nativeReloadRequired</code>, forcing the player to have a permanent deadlock. <code>/reload</code>.</li>
+<li>Effective solution:</li>
+<li><strong>Weak reference button registration pool</strong>: The <code>buttons = setmetatable({}, { __mode = "k" })</code> weak reference pool is introduced in <code>NativeAuraRenderer.lua</code>, and the active button and its <code>timerText</code>, <code>stackText</code>, <code>nameText</code> references are recorded at <code>initializeButton</code>. When the bottom layer of Blizzard destroys the button, it is automatically recycled by Lua GC, with zero memory leakage.</li>
+<li><strong>Zero quota hot-apply mechanism</strong>: Install <code>NativeAuraRenderer.updateButtonFonts(config)</code>, directly call <code>FontString:SetFont</code> to update all active Aura text on the screen in situ, with zero delay, no need to destroy the container, no consumption of 18 quotas, and completely get rid of the dependence on <code>/reload</code>.</li>
+<li><strong>Open Options linkage and anti-deadlock filtering</strong>: Inject <code>NativeAuraRenderer.updateButtonFonts()</code> in <code>Options.notifyTextLayoutChanged()</code>, and the screen text will be scaled instantly when the slider is pulled; remove redundant <code>triggerSafeRebuild</code> from the font size slider in <code>commitNativeChange</code> to prevent the 18 quotas from being exhausted by repeated dragging.</li>
+<li><strong>Uniform rule compiler spell name font size</strong>: In <code>AuraRuleCompiler.lua</code>, unify the spell name font sizes of <code>buildVisualFingerprint</code> and <code>snapshotStyle</code> to <code>TextPlacement.getFontSize(config, "spellName")</code> to ensure that the fingerprint comparison is consistent with the button style.</li>
+<li>Verification:<ul>
+<li>Added <code>ui.text_layout.native_live_hot_apply</code> to Flow test to verify successful in-situ hot update.</li>
+<li>Lua syntax check: 78/78 PASS.</li>
+<li>Flow state machine tests: 89/89 PASS.</li>
+<li>Validation Contracts: 499/499 PASS.</li>
+</ul>
+</li>
+</ul>
+<h3 id="issue-093-full-module-custom-skills-and-spell-name-function-implementation-and-native-aura-anti-override-hook-alpha-87">ISSUE-093: Full module custom skills and spell name function implementation and native Aura anti-override hook (Alpha 8.7)</h3>
+<ul>
+<li>Date: 2026-09-19</li>
+<li>Phenomenon and challenges:</li>
+<li>Player needs: In a battle warning configuration with tight icon spacing and dense layout, the original full name of a skill or spell (such as "Sacred Shield", "Behead", "Anti-Magic Shield") is too long. When the icons are adjacent to each other, the text is prone to severe overlap and mutual obstruction. It is necessary to support custom short names (such as "Shield", "Behead", "Shield").<ol>
+<li>Architecture challenges:</li>
+</ol>
+</li>
+<li>EAM has 6 core alarm modules (self Buff, self Debuff, target Debuff, skill cooldown, item cooldown, ground effect). The settings must have unified persistence and independent compatibility of each module.<ul>
+<li>Retail 12.1.0 Native Aura is hosted by Blizzard's underlying Aura pipeline, and its internal events will reset or call <code>nameText:SetText(Aura.name)</code> from time to time, causing the player's customized short name to be overwritten and restored by the underlying layer.</li>
+</ul>
+</li>
+<li>Effective solution:</li>
+<li><strong>UI condition setting window extension</strong>:<ul>
+<li>Expand the <code>EAM_SpellConditionsFrame</code> (<code>condFrame</code>) panel height from 630px to 680px in <code>Options.lua</code> to leave ample space for typesetting.</li>
+<li>Added a dedicated input box for "Custom display name (abbreviation)" (<code>condFrame.customNameInput</code>), which supports real-time input, real-time storage or automatic restoration of the full name when left blank.</li>
+</ul>
+</li>
+<li>Inventory list real-time marking: If the item has a custom name, the list column will be dynamically marked as <code>法術名稱 (|cff00ff96簡稱|r)</code>, allowing players to see it clearly at a glance.<ol>
+<li><strong>SavedVariables Data persistence</strong>:</li>
+<li>Full support for <code>options.customName</code> (string/nil) in the normalization and archiving of each module of <code>SavedVariables.lua</code>.</li>
+<li>Implement <code>SavedVariables.updateAlertCustomName(category, spellId, customName)</code> core API, and broadcast <code>EAM_SPELL_CONDITIONS_UPDATED</code> events to notify the service layer of hot updates.</li>
+</ol>
+</li>
+<li><strong>Full module service layer deep integration</strong>:<ul>
+<li><code>AuraService.lua</code>: <code>alert.customName</code> is preferred when registering and triggering alarms for self Buff, self Debuff, and target Debuff.</li>
+<li><code>CooldownService.lua</code>: Skill cooldown takes precedence over <code>alert.customName</code> when capturing spells and charging.</li>
+<li><code>ItemCooldownService.lua</code>: <code>alert.customName</code> is preferred when cooling down items and 19-part equipment slots.</li>
+<li><code>GroundEffectService.lua</code>: Ground area of ​​effect effects take priority over <code>alert.customName</code> when casting hits.</li>
+</ul>
+</li>
+<li><strong>Native Aura and Traditional Renderer Guard</strong>:<ul>
+<li><code>AuraRuleCompiler.lua</code>: Snapshot <code>customName</code> to <code>rule.style.customName</code> at rule compilation time.</li>
+<li><code>NativeAuraRenderer.lua</code>: Implement the defensive <code>SetText</code> hook (Text Guard Hook) in <code>nameText</code> where <code>initializeButton</code> is the button. If there is a custom name and a non-empty new name is passed in, it is forced to be locked to the custom name to prevent Blizzard from covering the bottom layer.</li>
+<li><code>Renderer.lua</code>: Traditional graphical renderers prefer <code>raw.customName</code> for drawing spell names.</li>
+</ul>
+</li>
+<li><strong>Multi-language and unit testing</strong>:<ul>
+<li>Complete the <code>EAM_OPT_CUSTOM_NAME_LABEL</code> and <code>EAM_OPT_CUSTOM_NAME_TIP</code> entries of the 5 major language families (zhTW, zhCN, enUS, koKR, ruRU).</li>
+<li>Added exclusive test case <code>options.custom_name.persistence_and_propagation</code> in <code>FlowTestRunner.lua</code>.</li>
+</ul>
+</li>
+<li>Verification:<ul>
+<li>Lua syntax check: 78/78 PASS.</li>
+<li>Flow state machine test: 90/90 PASS.</li>
+<li>Validation Contracts: 499/499 PASS.</li>
 </ul>
 </li>
 </ul>

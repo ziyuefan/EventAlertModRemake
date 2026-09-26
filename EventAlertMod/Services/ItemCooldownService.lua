@@ -43,6 +43,17 @@ local function moduleEnabled()
         or ModuleController.isEnabled(EAM.Constants.MODULE_KEYS.itemCooldown)
 end
 
+local function fireStateChanged(state)
+    local router = EAM.Modules and EAM.Modules.EventRouter
+    if router and state then
+        router.fire(
+            "EAM_ITEM_COOLDOWN_STATE_CHANGED",
+            state,
+            EAM.Constants.ALERT_FRAME_TYPES.itemCooldown
+        )
+    end
+end
+
 -- 低 GC 的 ItemCooldownState 物件快取池
 ItemCooldownStatePool = {
     recycleBin = {},
@@ -145,7 +156,7 @@ local COOLDOWN_BEHAVIOR_DEFAULTS = {
     cooldownRemoveAura = false,
     showSCDOutsideCombat = true,
     glowSCDWhenUsable = true,
-    cooldownPreRender = false,
+    cooldownPreRender = true,
 }
 
 local function isInCombat()
@@ -155,20 +166,25 @@ end
 
 local function resolveBehavior(alert, key)
     if key == "cooldownPreRender" then
-        if type(alert) == "table" then
-            if type(alert.cooldownPreRender) == "boolean" then
-                return alert.cooldownPreRender
-            end
-            if alert.cooldownRemoveAura == true then
-                return false
-            end
+        if type(alert) == "table" and type(alert.cooldownPreRender) == "boolean" then
+            return alert.cooldownPreRender
+        end
+        if resolveBehavior(alert, "cooldownRemoveAura") == true then
+            return false
         end
         local config = EAM.db and EAM.db.config
-        local globalValue = type(config) == "table" and config[key] or nil
+        local globalValue = nil
+        if type(config) == "table" then
+            globalValue = config[key]
+        end
         if type(globalValue) == "boolean" then
             return globalValue
         end
-        return false
+        local defaultValue = COOLDOWN_BEHAVIOR_DEFAULTS[key]
+        if type(defaultValue) == "boolean" then
+            return defaultValue
+        end
+        return true
     end
     local override
     if type(alert) == "table" then
@@ -178,7 +194,10 @@ local function resolveBehavior(alert, key)
         return override
     end
     local config = EAM.db and EAM.db.config
-    local globalValue = type(config) == "table" and config[key] or nil
+    local globalValue = nil
+    if type(config) == "table" then
+        globalValue = config[key]
+    end
     if type(globalValue) == "boolean" then
         return globalValue
     end
@@ -299,14 +318,30 @@ end
 local function refreshAlert(alert, eventName)
     local alertID = alert and alert.id
     local oldState = alertID and ItemCooldownService.states[alertID]
+    if not Util.isSafeTableKey(alertID) then
+        return nil, false
+    end
+
+    local oldShown = oldState and oldState.shown
+    local oldActive = oldState and oldState.active
+    local oldCompleted = oldState and oldState.completed
+    local oldPlaceholder = oldState and oldState.isPlaceholder
+    local oldDesaturated = oldState and oldState.isDesaturated
+    local oldGlow = oldState and oldState.usableGlow
+    local oldItemID = oldState and oldState.itemID
+    local oldIcon = oldState and oldState.icon
+    local oldTimer = oldState and oldState.timer
+    local oldStartTime = oldTimer and oldTimer.startTime
+    local oldDuration = oldTimer and oldTimer.duration
     
     if not alert or alert.enabled == false or (not alert.itemID and not alert.slotID) then
         if oldState then
             oldState.shown = false
             ItemCooldownService.states[alertID] = nil
-            return oldState
+            local isDirty = (oldShown ~= false)
+            return oldState, isDirty
         end
-        return nil
+        return nil, false
     end
 
     local behaviorRemove = resolveBehavior(alert, "cooldownRemoveAura")
@@ -330,7 +365,9 @@ local function refreshAlert(alert, eventName)
             state.slotID = alert.slotID
             state.itemType = "SLOT"
             state.itemID = nil
-            state.name = itemName or (alert.slotID and ("Slot " .. alert.slotID))
+            state.order = alert.order
+            state.rawAlert = alert
+            state.name = (alert.customName and alert.customName ~= "" and alert.customName) or itemName or (alert.slotID and ("Slot " .. alert.slotID))
             state.icon = alert.customIcon and (tonumber(alert.customIcon) or alert.customIcon) or "Interface\\Icons\\INV_Misc_QuestionMark"
             state.factsSafe = true
             state.active = true
@@ -350,14 +387,26 @@ local function refreshAlert(alert, eventName)
             state.source.event = eventName
             state.source.api = "InventoryEmptyPlaceholder"
             state.source.updatedAt = api.GetTime and api.GetTime() or 0
-            return state
+            local isDirty = (oldState == nil)
+                or (oldShown ~= state.shown)
+                or (oldActive ~= state.active)
+                or (oldCompleted ~= state.completed)
+                or (oldPlaceholder ~= state.isPlaceholder)
+                or (oldDesaturated ~= state.isDesaturated)
+                or (oldGlow ~= state.usableGlow)
+                or (oldItemID ~= state.itemID)
+                or (oldIcon ~= state.icon)
+                or (oldStartTime ~= state.timer.startTime)
+                or (oldDuration ~= state.timer.duration)
+            return state, isDirty
         else
             if oldState then
                 oldState.shown = false
                 ItemCooldownService.states[alertID] = nil
-                return oldState
+                local isDirty = (oldShown ~= false)
+                return oldState, isDirty
             end
-            return nil
+            return nil, false
         end
     end
 
@@ -378,9 +427,10 @@ local function refreshAlert(alert, eventName)
         if oldState then
             oldState.shown = false
             ItemCooldownService.states[alertID] = nil
-            return oldState
+            local isDirty = (oldShown ~= false)
+            return oldState, isDirty
         end
-        return nil
+        return nil, false
     end
 
     local state = oldState
@@ -394,7 +444,9 @@ local function refreshAlert(alert, eventName)
     state.itemID = resolvedItemID or alert.itemID
     state.slotID = alert.slotID
     state.itemType = alert.slotID and "SLOT" or "ITEM"
-    state.name = itemName
+    state.order = alert.order
+    state.rawAlert = alert
+    state.name = (alert.customName and alert.customName ~= "" and alert.customName) or itemName
     
     local icon = itemIcon or "Interface\\Icons\\INV_Misc_QuestionMark"
     if alert.customIcon and alert.customIcon ~= "" then
@@ -432,28 +484,98 @@ local function refreshAlert(alert, eventName)
     state.source.api = alert.slotID and "GetInventoryItemCooldown" or "C_Item.GetItemCooldown"
     state.source.updatedAt = api.GetTime and api.GetTime() or 0
 
-    return state
+    local newTimer = state.timer
+    local newStartTime = newTimer and newTimer.startTime
+    local newDuration = newTimer and newTimer.duration
+
+    local isDirty = (oldState == nil)
+        or (oldShown ~= state.shown)
+        or (oldActive ~= state.active)
+        or (oldCompleted ~= state.completed)
+        or (oldPlaceholder ~= state.isPlaceholder)
+        or (oldDesaturated ~= state.isDesaturated)
+        or (oldGlow ~= state.usableGlow)
+        or (oldItemID ~= state.itemID)
+        or (oldIcon ~= state.icon)
+        or (oldStartTime ~= newStartTime)
+        or (oldDuration ~= newDuration)
+
+    return state, isDirty
 end
 
-local function refreshAll(eventName)
+local presentAlerts = {}
+local function cleanupDeletedAlerts()
+    wipe(presentAlerts)
+    for index = 1, alertCount do
+        local alert = alertList[index]
+        if alert and Util.isSafeTableKey(alert.id) then
+            presentAlerts[alert.id] = true
+        end
+    end
+
+    for alertID, state in pairs(ItemCooldownService.states) do
+        if not presentAlerts[alertID] then
+            state.shown = false
+            ItemCooldownService.states[alertID] = nil
+            fireStateChanged(state)
+        end
+    end
+end
+
+-- 前置宣告 refreshAll
+local refreshAll
+
+-- 物品冷卻事件合併排程器（在同一幀/Tick 內多次收到全域事件時合併掃描，防範重複 full-list scan）
+local hasRefreshedThisTick = false
+local needsTrailingRefresh = false
+
+local function resetCoalesce()
+    hasRefreshedThisTick = false
+    if needsTrailingRefresh then
+        needsTrailingRefresh = false
+        refreshAll("COALESCED")
+    end
+end
+
+local function queueCoalescedRefresh(eventName)
+    if EAM.FlowTestEnvironment == "offline-mock" and not ItemCooldownService._testCoalesceEnabled then
+        return refreshAll(eventName)
+    end
+
+    local scheduler = EAM.Modules and EAM.Modules.Scheduler
+    if not scheduler or not scheduler.after then
+        return refreshAll(eventName)
+    end
+
+    if not hasRefreshedThisTick then
+        hasRefreshedThisTick = true
+        needsTrailingRefresh = false
+        scheduler.after(0, resetCoalesce)
+        return refreshAll(eventName)
+    else
+        needsTrailingRefresh = true
+        return true, "coalesced"
+    end
+end
+
+function refreshAll(eventName)
     if not moduleEnabled() then
         return false, "moduleDisabled"
     end
     verifyAlertList()
+    cleanupDeletedAlerts()
     if alertCount == 0 then
-        return
+        return true, "empty"
     end
 
     for i = 1, alertCount do
         local alert = alertList[i]
-        local state = refreshAlert(alert, eventName)
-        if state then
-            local router = EAM.Modules.EventRouter
-            if router then
-                router.fire("EAM_ITEM_COOLDOWN_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.itemCooldown)
-            end
+        local state, isDirty = refreshAlert(alert, eventName)
+        if state and isDirty then
+            fireStateChanged(state)
         end
     end
+    return true, "updated"
 end
 
 function ItemCooldownService.initialize()
@@ -505,11 +627,10 @@ function ItemCooldownService.refreshItem(itemID, eventName)
         end
 
         if isMatch then
-            local state = refreshAlert(alert, eventName or "manual")
+            local state, isDirty = refreshAlert(alert, eventName or "manual")
             if state then
-                local router = EAM.Modules.EventRouter
-                if router then
-                    router.fire("EAM_ITEM_COOLDOWN_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.itemCooldown)
+                if isDirty then
+                    fireStateChanged(state)
                 end
                 lastState = state
             end
@@ -530,11 +651,10 @@ function ItemCooldownService.refreshSlot(slotID, eventName)
     for i = 1, alertCount do
         local alert = alertList[i]
         if alert.slotID == slotID then
-            local state = refreshAlert(alert, eventName or "manual")
+            local state, isDirty = refreshAlert(alert, eventName or "manual")
             if state then
-                local router = EAM.Modules.EventRouter
-                if router then
-                    router.fire("EAM_ITEM_COOLDOWN_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.itemCooldown)
+                if isDirty then
+                    fireStateChanged(state)
                 end
                 return state
             end
@@ -585,7 +705,42 @@ function ItemCooldownService.onConfigChanged(eventName, alertID, field, value)
 end
 
 function ItemCooldownService.refreshAll(eventName)
-    refreshAll(eventName or "manual")
+    return refreshAll(eventName or "manual")
+end
+
+function ItemCooldownService.onVisualTimerExpired(alertID)
+    if not Util.isSafeTableKey(alertID) then
+        return false, "invalidAlertID"
+    end
+    verifyAlertList()
+    local state = ItemCooldownService.states[alertID]
+    if not state then
+        return false, "notActive"
+    end
+    if state.slotID then
+        local refreshed = ItemCooldownService.refreshSlot(state.slotID, "ITEM_COOLDOWN_TIMER_EXPIRED")
+        if refreshed ~= nil then
+            return true, "refreshed"
+        end
+    elseif state.itemID then
+        local refreshed = ItemCooldownService.refreshItem(state.itemID, "ITEM_COOLDOWN_TIMER_EXPIRED")
+        if refreshed ~= nil then
+            return true, "refreshed"
+        end
+    end
+    local activeAlerts = EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.getActiveAlerts and EAM.Modules.SavedVariables.getActiveAlerts(EAM.db)
+    local list = activeAlerts and activeAlerts.itemCooldowns
+    local alert = list and list[alertID]
+    if alert then
+        local newState, isDirty = refreshAlert(alert, "ITEM_COOLDOWN_TIMER_EXPIRED")
+        if newState then
+            if isDirty then
+                fireStateChanged(newState)
+            end
+            return true, "refreshed"
+        end
+    end
+    return false, "notFound"
 end
 
 function ItemCooldownService.onCooldownEvent(eventName, spellID, baseSpellID, category, startRecoveryCategory, itemID)
@@ -598,28 +753,23 @@ function ItemCooldownService.onCooldownEvent(eventName, spellID, baseSpellID, ca
     if eventName == "SPELL_UPDATE_COOLDOWN" then
         if Util.isSafePositiveNumber(itemID) then
             ItemCooldownService.refreshItem(itemID, eventName)
+            return true, "targeted"
         else
-            refreshAll(eventName)
+            return queueCoalescedRefresh(eventName)
         end
-        return
     end
-    refreshAll(eventName)
+    return queueCoalescedRefresh(eventName)
 end
 
 function ItemCooldownService.onModuleToggle(enabled, reason)
     lastDbRevision = -1
+    hasRefreshedThisTick = false
+    needsTrailingRefresh = false
     if enabled == false then
-        local router = EAM.Modules.EventRouter
         for alertID, state in pairs(ItemCooldownService.states) do
             state.shown = false
             ItemCooldownService.states[alertID] = nil
-            if router then
-                router.fire(
-                    "EAM_ITEM_COOLDOWN_STATE_CHANGED",
-                    state,
-                    EAM.Constants.ALERT_FRAME_TYPES.itemCooldown
-                )
-            end
+            fireStateChanged(state)
         end
         return true, "disabled"
     end

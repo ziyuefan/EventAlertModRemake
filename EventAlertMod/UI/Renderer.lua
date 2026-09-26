@@ -134,12 +134,16 @@ local function onDurationTimerExpired(token)
     then
         icon.rendered.activeToken = nil
         icon.rendered.scheduledExpirationTime = nil
-        local isCooldownFrame = (token.frameName == EAM.Constants.ALERT_FRAME_TYPES.spellCooldown)
         local handled = false
-        if isCooldownFrame then
+        if token.frameName == EAM.Constants.ALERT_FRAME_TYPES.spellCooldown then
             local cooldownService = EAM.Services and EAM.Services.CooldownService
             if cooldownService and type(cooldownService.onVisualTimerExpired) == "function" then
                 handled = cooldownService.onVisualTimerExpired(token.alertID)
+            end
+        elseif token.frameName == EAM.Constants.ALERT_FRAME_TYPES.itemCooldown then
+            local itemCooldownService = EAM.Services and EAM.Services.ItemCooldownService
+            if itemCooldownService and type(itemCooldownService.onVisualTimerExpired) == "function" then
+                handled = itemCooldownService.onVisualTimerExpired(token.alertID)
             end
         end
         if not handled then
@@ -488,16 +492,24 @@ local function applyTextLayoutToIcon(icon, config)
         end
     end
 
-    -- 顯隱控制即時反應
+    -- 顯隱控制與自訂名稱即時熱更新
+    local st = rawget(icon, "alertState") or (rendered and rendered.alertState)
+    local raw = st and st.rawAlert
+    local customName = raw and raw.customName and raw.customName ~= "" and raw.customName
+    local resolvedName = customName or (st and st.name and st.name ~= "" and st.name) or (rendered and rendered.name)
+    if resolvedName and resolvedName ~= "" then
+        setTextIfChanged(icon.nameText, rendered, "name", resolvedName)
+    end
     local showSpellName = not config or config.showSpellName ~= false
+    if raw and raw.showName ~= nil then
+        showSpellName = raw.showName ~= false
+    end
     local showTimeVal = not config or config.showTimeVal ~= false
     if icon.nameText and type(icon.nameText.Hide) == "function" and type(icon.nameText.Show) == "function" then
-        if not showSpellName then
+        if not showSpellName or not resolvedName or resolvedName == "" then
             icon.nameText:Hide()
         else
-            if rendered.name and rendered.name ~= "" then
-                icon.nameText:Show()
-            end
+            icon.nameText:Show()
         end
     end
     if icon.timerText and type(icon.timerText.Hide) == "function" and type(icon.timerText.Show) == "function" then
@@ -559,6 +571,9 @@ end
 
 -- 核心 Layout 排版演算法 (極致靜態陣列優化版)
 local function layout(frameName)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("Renderer.layout")
+    end
     local fState = initFrameState(frameName)
     if inCombat() then
         fState.layoutDirty = true
@@ -602,6 +617,11 @@ local function layout(frameName)
             if orderA ~= orderB then
                 return orderA < orderB
             end
+            local numA = tonumber(string.match(tostring(idA), "(%d+)")) or 0
+            local numB = tonumber(string.match(tostring(idB), "(%d+)")) or 0
+            if numA ~= numB then
+                return numA < numB
+            end
             return tostring(idA) < tostring(idB)
         end)
     end
@@ -635,7 +655,8 @@ local function layout(frameName)
                 offsetY = -col * (size + vSpacing)
             end
 
-            if rendered.layoutX ~= offsetX or rendered.layoutY ~= offsetY or rendered.layoutSize ~= size then
+            local hasNoPoints = (type(icon.GetNumPoints) == "function" and icon:GetNumPoints() == 0)
+            if hasNoPoints or rendered.layoutX ~= offsetX or rendered.layoutY ~= offsetY or rendered.layoutSize ~= size then
                 icon:ClearAllPoints()
                 icon:SetPoint("CENTER", parent, "CENTER", offsetX, offsetY)
                 icon:SetSize(size, size)
@@ -643,7 +664,11 @@ local function layout(frameName)
                 rendered.layoutY = offsetY
                 rendered.layoutSize = size
             end
-            if rendered.layoutAlpha ~= alpha then
+            if type(icon.IsShown) == "function" and not icon:IsShown() and type(icon.Show) == "function" then
+                icon:Show()
+            end
+            local realAlpha = (type(icon.GetAlpha) == "function" and icon:GetAlpha()) or 0
+            if rendered.layoutAlpha ~= alpha or math.abs(realAlpha - alpha) > 0.01 then
                 if type(icon.SetAlpha) == "function" then
                     icon:SetAlpha(alpha)
                 end
@@ -674,6 +699,9 @@ local function layout(frameName)
     fState.layoutDirty = false
     fState.layoutBlocked = false
     Renderer.checkEscFrameState()
+    if Renderer.activeAnchorMap and Renderer.activeAnchorMap[frameName] then
+        Renderer.refreshPreviewLayout()
+    end
     return true, "updated"
 end
 
@@ -762,19 +790,28 @@ function Renderer.prewarmAlertFrames()
             fState.order = newOrder
             fState.orderCount = #newOrder
 
-            -- 3. 為已啟用且尚未持有 Frame 的項目預熱
+            -- 3. 為已啟用且尚未持有 Frame 的項目預熱 (僅常駐 Frame 備用，不加入排版 order)
             for _, alert in pairs(list) do
                 if alert and alert.id and alert.enabled ~= false and not fState.icons[alert.id] then
                     local icon = IconPool.acquire()
                     if icon then
                         icon:SetParent(parent)
                         fState.icons[alert.id] = icon
-                        fState.orderCount = fState.orderCount + 1
-                        fState.order[fState.orderCount] = alert.id
                         icon.alertOrder = alert.order
                         icon:SetAlpha(0)
-                        icon:Show()
-                        fState.layoutDirty = true
+                        icon.isParasite = false
+                        icon:ClearAllPoints()
+                        icon:SetPoint("CENTER", parent, "CENTER", 0, 0)
+                        local currentSize = EAM.db and EAM.db.config and EAM.db.config.iconSize or Renderer.iconSize or 40
+                        icon:SetSize(currentSize, currentSize)
+                        if not icon.rendered then
+                            icon.rendered = {}
+                        end
+                        icon.rendered.layoutAlpha = 0
+                        icon.rendered.layoutX = nil
+                        icon.rendered.layoutY = nil
+                        icon.rendered.layoutSize = nil
+                        icon:Hide()
                     end
                 end
             end
@@ -984,6 +1021,9 @@ end
 
 -- 主要渲染入口
 function Renderer.render(alertState, frameName)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("Renderer.render")
+    end
     -- 降級守衛：如果沒有指定框架，則預設歸入自身光環
     frameName = frameName or EAM.Constants.ALERT_FRAME_TYPES.selfAura
 
@@ -1017,12 +1057,6 @@ function Renderer.render(alertState, frameName)
     end
 
     local icon = fState.icons[alertState.id]
-    if not icon and inCombat() then
-        fState.layoutDirty = true
-        fState.layoutBlocked = true
-        deferRender(alertState, frameName)
-        return false, "combatDeferred"
-    end
 
     -- 圖示隱藏/釋放處理 (冷卻與地面效果類型框架透過透明度 Alpha = 0 隱藏，保持 Frame 結構常駐)
     if not alertState.shown then
@@ -1033,13 +1067,10 @@ function Renderer.render(alertState, frameName)
                 local parent = ensureParent(frameName)
                 icon:SetParent(parent)
                 fState.icons[alertState.id] = icon
-                fState.orderCount = fState.orderCount + 1
-                fState.order[fState.orderCount] = alertState.id
                 icon.alertOrder = alertState.order or alertState.rawAlert.order
                 icon:SetAlpha(0)
-                icon:Show()
-                fState.layoutDirty = true
-                layout(frameName)
+                if icon.rendered then icon.rendered.layoutAlpha = 0 end
+                icon:Hide()
             end
         end
         if icon then
@@ -1050,26 +1081,44 @@ function Renderer.render(alertState, frameName)
                     pcall(icon.Hide, icon)
                     IconPool.release(icon)
                     fState.icons[alertState.id] = nil
-                    for i = 1, fState.orderCount do
-                        if fState.order[i] == alertState.id then
-                            table.remove(fState.order, i)
+                    local oIdx = 1
+                    while oIdx <= fState.orderCount do
+                        if fState.order[oIdx] == alertState.id then
+                            table.remove(fState.order, oIdx)
                             fState.orderCount = fState.orderCount - 1
-                            break
+                        else
+                            oIdx = oIdx + 1
                         end
                     end
                     fState.layoutDirty = true
-                    layout(frameName)
+                    if not isBatching then
+                        layout(frameName)
+                    else
+                        batchDirtyFrames[frameName] = true
+                    end
                     return
                 end
 
-                local targetOrder = alertState.order or (alertState.rawAlert and alertState.rawAlert.order)
-                if targetOrder and icon.alertOrder ~= targetOrder then
-                    icon.alertOrder = targetOrder
-                    fState.layoutDirty = true
-                    layout(frameName)
+                -- 若該冷卻圖示在排版順序中，將其自 order 移除，保證畫面不留空格
+                local wasInOrder = false
+                local oIdx = 1
+                while oIdx <= fState.orderCount do
+                    if fState.order[oIdx] == alertState.id then
+                        table.remove(fState.order, oIdx)
+                        fState.orderCount = fState.orderCount - 1
+                        fState.layoutDirty = true
+                        wasInOrder = true
+                    else
+                        oIdx = oIdx + 1
+                    end
                 end
 
                 if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end
+                pcall(icon.Hide, icon)
+                if icon.rendered then
+                    icon.rendered.layoutAlpha = 0
+                    icon.rendered.isShown = false
+                end
                 if icon.cooldown then
                     local setCooldown = icon.cooldown.SetCooldown
                     if setCooldown then pcall(setCooldown, icon.cooldown, 0, 0) end
@@ -1090,9 +1139,15 @@ function Renderer.render(alertState, frameName)
                     if icon.stackText.ClearText then icon.stackText:ClearText() else icon.stackText:SetText("") end
                 end
                 IconPool.setGlow(icon, false)
-                if icon.rendered then icon.rendered.isShown = false end
                 if icon.popAnimation and icon.popAnimation.Stop then pcall(icon.popAnimation.Stop, icon.popAnimation) end
                 if icon.pandemicAnimation and icon.pandemicAnimation.Stop then pcall(icon.pandemicAnimation.Stop, icon.pandemicAnimation) end
+                if wasInOrder then
+                    if not isBatching then
+                        layout(frameName)
+                    else
+                        batchDirtyFrames[frameName] = true
+                    end
+                end
                 Renderer.checkEscFrameState()
                 return
             end
@@ -1114,12 +1169,13 @@ function Renderer.render(alertState, frameName)
                 icon.rendered.activeToken = nil
             end
             fState.icons[alertState.id] = nil
-            for index = 1, fState.orderCount do
-                if fState.order[index] == alertState.id then
-                    fState.order[index] = fState.order[fState.orderCount]
-                    fState.order[fState.orderCount] = nil
+            local oIdx = 1
+            while oIdx <= fState.orderCount do
+                if fState.order[oIdx] == alertState.id then
+                    table.remove(fState.order, oIdx)
                     fState.orderCount = fState.orderCount - 1
-                    break
+                else
+                    oIdx = oIdx + 1
                 end
             end
             if icon.isParasite then
@@ -1127,10 +1183,42 @@ function Renderer.render(alertState, frameName)
                 icon.isParasite = nil
             end
             IconPool.release(icon)
-            Renderer.requestLayout(frameName)
+            if not isBatching then
+                Renderer.requestLayout(frameName)
+            else
+                batchDirtyFrames[frameName] = true
+            end
             Renderer.checkEscFrameState()
+        else
+            local wasInOrder = false
+            local oIdx = 1
+            while oIdx <= fState.orderCount do
+                if fState.order[oIdx] == alertState.id then
+                    table.remove(fState.order, oIdx)
+                    fState.orderCount = fState.orderCount - 1
+                    wasInOrder = true
+                else
+                    oIdx = oIdx + 1
+                end
+            end
+            if wasInOrder then
+                fState.layoutDirty = true
+                if not isBatching then
+                    Renderer.requestLayout(frameName)
+                else
+                    batchDirtyFrames[frameName] = true
+                end
+            end
         end
         return
+    end
+
+    -- 圖示獲取前置檢查：若圖示尚未建立且處於戰鬥中，延後渲染以防 Taint
+    if not icon and inCombat() then
+        fState.layoutDirty = true
+        fState.layoutBlocked = true
+        deferRender(alertState, frameName)
+        return false, "combatDeferred"
     end
 
     -- 圖示獲取與初始化
@@ -1143,17 +1231,40 @@ function Renderer.render(alertState, frameName)
             return
         end
         fState.icons[alertState.id] = icon
+        icon.isParasite = false
+    end
+
+    -- 確保 icon 存在於 fState.order 排版清單中
+    local inOrder = false
+    for i = 1, fState.orderCount do
+        if fState.order[i] == alertState.id then
+            inOrder = true
+            break
+        end
+    end
+    if not inOrder then
         fState.orderCount = fState.orderCount + 1
         fState.order[fState.orderCount] = alertState.id
+        icon.alertOrder = alertState.order or (alertState.rawAlert and alertState.rawAlert.order)
         fState.layoutDirty = true
-        icon.isParasite = nil
+    else
+        local targetOrder = alertState.order or (alertState.rawAlert and alertState.rawAlert.order)
+        if targetOrder and icon.alertOrder ~= targetOrder then
+            icon.alertOrder = targetOrder
+            fState.layoutDirty = true
+        end
     end
 
     local hostIcon = nil
     local shouldBeParasite = (hostIcon ~= nil)
     local rendered = icon.rendered
+    if not rendered then
+        icon.rendered = {}
+        rendered = icon.rendered
+    end
 
-    if icon.isParasite ~= shouldBeParasite then
+    local currentIsParasite = (icon.isParasite == true)
+    if currentIsParasite ~= shouldBeParasite then
         if inCombat() then
             rendered.parasiteLayoutPending = true
             fState.layoutDirty = true
@@ -1180,6 +1291,9 @@ function Renderer.render(alertState, frameName)
             end
             icon.isParasite = shouldBeParasite
             rendered.parasiteLayoutPending = nil
+            rendered.layoutX = nil
+            rendered.layoutY = nil
+            rendered.layoutSize = nil
             fState.layoutDirty = true
         end
     else
@@ -1193,9 +1307,22 @@ function Renderer.render(alertState, frameName)
     end
 
     local iconTex = alertState.icon
-    if not iconTex and alertState.spellID then
-        if C_Spell and C_Spell.GetSpellTexture then
-            iconTex = C_Spell.GetSpellTexture(alertState.spellID)
+    if (not iconTex or iconTex == 136243) and alertState.spellID then
+        local cSpell = api.C_Spell or C_Spell
+        if cSpell and type(cSpell.GetSpellTexture) == "function" then
+            local ok, sTex = pcall(cSpell.GetSpellTexture, alertState.spellID)
+            if ok and Util.isSafePositiveNumber(sTex) then
+                iconTex = sTex
+            end
+        end
+        if (not iconTex or iconTex == 136243) and cSpell and type(cSpell.GetBaseSpell) == "function" then
+            local okBase, baseID = pcall(cSpell.GetBaseSpell, alertState.spellID)
+            if okBase and Util.isSafePositiveNumber(baseID) and type(cSpell.GetSpellTexture) == "function" then
+                local ok, bTex = pcall(cSpell.GetSpellTexture, baseID)
+                if ok and Util.isSafePositiveNumber(bTex) then
+                    iconTex = bTex
+                end
+            end
         end
     end
     if iconTex and rendered.icon ~= iconTex and icon.texture then
@@ -1301,7 +1428,25 @@ function Renderer.render(alertState, frameName)
         rendered.pendingNameInside = nil
     end
 
-    local name = alertState.name or ""
+    local name = (raw and raw.customName and raw.customName ~= "" and raw.customName) or alertState.name or ""
+    if (name == "" or name == "地面技能") and alertState.spellID then
+        local cSpell = api.C_Spell or C_Spell
+        if cSpell and type(cSpell.GetSpellName) == "function" then
+            local ok, sName = pcall(cSpell.GetSpellName, alertState.spellID)
+            if ok and Util.isSafeString(sName) and sName ~= "" then
+                name = sName
+            end
+        end
+        if (name == "" or name == "地面技能") and cSpell and type(cSpell.GetBaseSpell) == "function" then
+            local okBase, baseID = pcall(cSpell.GetBaseSpell, alertState.spellID)
+            if okBase and Util.isSafePositiveNumber(baseID) and type(cSpell.GetSpellName) == "function" then
+                local ok, bName = pcall(cSpell.GetSpellName, baseID)
+                if ok and Util.isSafeString(bName) and bName ~= "" then
+                    name = bName
+                end
+            end
+        end
+    end
     local showSpellName = not config or config.showSpellName ~= false
     if raw and raw.showName ~= nil then
         showSpellName = raw.showName ~= false
@@ -1540,12 +1685,20 @@ function Renderer.render(alertState, frameName)
     local targetAlpha = config and config.iconAlpha or 1.0
     if icon.SetAlpha then pcall(icon.SetAlpha, icon, targetAlpha) end
     if icon.Show then icon:Show() end
+    rendered.layoutAlpha = targetAlpha
+    icon.alertState = alertState
 
     -- 🚀 GPU 原生硬體加速動畫：圖示觸發 Pop 彈跳
     local wasShown = rendered.isShown
     rendered.isShown = true
     if not wasShown and icon.popAnimation and icon.popAnimation.Play then
         pcall(icon.popAnimation.Play, icon.popAnimation)
+    end
+    if fState.parent and not fState.parent:IsShown() then
+        fState.parent:Show()
+    end
+    if not inCombat() and fState.parent and (not fState.parent:IsShown() or rendered.layoutX == nil) then
+        fState.layoutDirty = true
     end
     if fState.layoutDirty then
         if isBatching then
@@ -1558,6 +1711,9 @@ function Renderer.render(alertState, frameName)
 end
 
 function Renderer.clearFrame(frameName)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("Renderer.clearFrame")
+    end
     local frameState = Renderer.frames[frameName]
     for id, item in pairs(Renderer.deferred) do
         if item.frameName == frameName then
@@ -1574,9 +1730,35 @@ function Renderer.clearFrame(frameName)
         local before = frameState.orderCount
         Renderer.render({ id = alertID, shown = false }, frameName)
         if frameState.orderCount == before then
-            return false, "combatDeferred"
+            break
         end
     end
+
+    -- 徹底釋放所有殘餘未在 order 中的圖示與狀態 (防範孤兒 Frame 與未釋放 TimerBinding)
+    if frameState.icons then
+        for id, icon in pairs(frameState.icons) do
+            if icon then
+                frameState.icons[id] = nil
+                if icon.isParasite then
+                    icon:SetParent(UIParent)
+                    icon.isParasite = nil
+                end
+                IconPool.release(icon)
+            end
+        end
+        wipe(frameState.icons)
+    end
+    if frameState.order then
+        wipe(frameState.order)
+    end
+    frameState.orderCount = 0
+    frameState.layoutDirty = true
+    if not isBatching then
+        Renderer.requestLayout(frameName)
+    else
+        batchDirtyFrames[frameName] = true
+    end
+    Renderer.checkEscFrameState()
     return true, "cleared"
 end
 
@@ -1754,6 +1936,78 @@ local function safeCall(obj, method, ...)
     return nil
 end
 
+local function saveFrameCenterPosition(parent, pName, fLabel)
+    if not parent then return end
+    if type(parent.StopMovingOrSizing) == "function" then
+        parent:StopMovingOrSizing()
+    end
+    pName = pName or rawget(parent, "frameName")
+    local pCenterX, pCenterY
+    if type(parent.GetCenter) == "function" then
+        pCenterX, pCenterY = parent:GetCenter()
+    end
+    local uCenterX, uCenterY
+    if UIParent and type(UIParent.GetCenter) == "function" then
+        uCenterX, uCenterY = UIParent:GetCenter()
+    elseif type(GetScreenWidth) == "function" and type(GetScreenHeight) == "function" then
+        local sw, sh = GetScreenWidth(), GetScreenHeight()
+        if sw and sh and sw > 0 and sh > 0 then
+            uCenterX = sw / 2
+            uCenterY = sh / 2
+        end
+    end
+    local xOffset = (pCenterX and uCenterX) and (pCenterX - uCenterX) or 0
+    local yOffset = (pCenterY and uCenterY) and (pCenterY - uCenterY) or 0
+    if not (pCenterX and uCenterX and pCenterY and uCenterY) and type(parent.GetPoint) == "function" then
+        local pt, rel, relPt, curX, curY = parent:GetPoint()
+        if pt == "BOTTOMLEFT" and uCenterX and uCenterY then
+            local w, h = 40, 40
+            if type(parent.GetSize) == "function" then
+                local pw, ph = parent:GetSize()
+                w = pw or 40
+                h = ph or 40
+            end
+            xOffset = ((curX or 0) + (w or 40) / 2) - uCenterX
+            yOffset = ((curY or 0) + (h or 40) / 2) - uCenterY
+        else
+            xOffset = curX or 0
+            yOffset = curY or 0
+        end
+    end
+    if type(parent.ClearAllPoints) == "function" then
+        parent:ClearAllPoints()
+    end
+    if type(parent.SetPoint) == "function" then
+        parent:SetPoint("CENTER", UIParent, "CENTER", xOffset, yOffset)
+    end
+
+    if EAM.db and EAM.db.layout and EAM.db.layout.frames and pName and EAM.db.layout.frames[pName] then
+        local cfg = EAM.db.layout.frames[pName]
+        cfg.point = "CENTER"
+        cfg.x = xOffset
+        cfg.y = yOffset
+        if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+            EAM.Modules.SavedVariables.markRevisionChanged()
+        end
+    end
+    if EAM.Services and EAM.Services.AuraContainerService and EAM.Services.AuraContainerService.applyContainerPositions then
+        EAM.Services.AuraContainerService.applyContainerPositions()
+    end
+    local nameLabels = {
+        selfAura = (EAM.L and EAM.L.EAM_FRAME_SELF_AURA) or "EAM - 自身光環框架",
+        targetAura = (EAM.L and EAM.L.EAM_FRAME_TARGET_AURA) or "EAM - 目標光環框架",
+        spellCooldown = (EAM.L and EAM.L.EAM_FRAME_SPELL_COOLDOWN) or "EAM - 技能冷卻框架",
+        itemCooldown = (EAM.L and EAM.L.EAM_FRAME_ITEM_COOLDOWN) or "EAM - 物品冷卻框架",
+        classPower = (EAM.L and EAM.L.EAM_FRAME_CLASS_POWER) or "EAM - 職業能量框架",
+        groundEffect = (EAM.L and EAM.L.EAM_FRAME_GROUND_EFFECT) or "EAM - 地面效果框架",
+        totem = (EAM.L and EAM.L.EAM_FRAME_TOTEM) or "EAM - 圖騰監控框架",
+        playerStat = (EAM.L and EAM.L.EAM_FRAME_PLAYER_STAT) or "EAM - 屬性與能量框架",
+        petAlert = (EAM.L and EAM.L.EAM_FRAME_PET_ALERT) or "EAM - 寵物監控框架",
+    }
+    local fLabelStr = (pName and nameLabels[pName]) or (fLabel or pName or "AlertFrame")
+    print("|cff00ff96EAM|r [" .. fLabelStr .. "] " .. string.format((EAM.L and EAM.L.EAM_FRAME_POS_SAVED) or "位置已保存: %s, X: %.1f, Y: %.1f", "CENTER", xOffset or 0, yOffset or 0))
+end
+
 local function getOrCreateMoverFrame(parent, fName, fLabel)
     local existing = rawget(parent, "moverFrame")
     if existing then
@@ -1798,23 +2052,8 @@ local function getOrCreateMoverFrame(parent, fName, fLabel)
         parent:StartMoving()
     end)
     mover:SetScript("OnDragStop", function()
-        parent:StopMovingOrSizing()
-        local point, relativeTo, relativePoint, xOffset, yOffset = parent:GetPoint()
         local pName = rawget(parent, "frameName") or fName
-        if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[pName] then
-            local cfg = EAM.db.layout.frames[pName]
-            cfg.point = point or "CENTER"
-            cfg.x = xOffset or 0
-            cfg.y = yOffset or 0
-            if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
-                EAM.Modules.SavedVariables.markRevisionChanged()
-            end
-        end
-        if EAM.Services and EAM.Services.AuraContainerService and EAM.Services.AuraContainerService.applyContainerPositions then
-            EAM.Services.AuraContainerService.applyContainerPositions()
-        end
-        local fLabelStr = (nameLabels and nameLabels[pName]) or (fLabel or pName)
-        print("|cff00ff96EAM|r [" .. fLabelStr .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
+        saveFrameCenterPosition(parent, pName, fLabel)
     end)
     mover:SetScript("OnMouseUp", function(self, button)
         if button == "RightButton" and Renderer.isMoving then
@@ -1869,6 +2108,20 @@ local function getOrCreateMoverFrame(parent, fName, fLabel)
 
     rawset(parent, "moverFrame", mover)
     return mover
+end
+
+function Renderer.getOrCreateMoverFrame(parentOrFrameName, fName, fLabel)
+    local parent, actualFName, actualFLabel
+    if type(parentOrFrameName) == "string" then
+        actualFName = parentOrFrameName
+        parent = ensureParent(actualFName)
+        actualFLabel = fName or actualFName
+    else
+        parent = parentOrFrameName
+        actualFName = fName
+        actualFLabel = fLabel
+    end
+    return getOrCreateMoverFrame(parent, actualFName, actualFLabel)
 end
 
 local function getOrCreatePreviewIcon(parent, index)
@@ -2001,33 +2254,72 @@ function Renderer.refreshPreviewLayout()
             local growDir = fLayout.growDirection or 1
 
             if parent and pCfg and pCfg.slots then
+                local fState = Renderer.frames and Renderer.frames[fName]
+                local hasRealIcons = false
+                local realMinX, realMaxX, realMinY, realMaxY = 0, 0, 0, 0
+                local firstReal = true
+
+                if fState and fState.order and fState.orderCount and fState.orderCount > 0 then
+                    for i = 1, fState.orderCount do
+                        local id = fState.order[i]
+                        local icon = fState.icons and fState.icons[id]
+                        if icon and not icon.isParasite then
+                            local isShown = (icon.IsShown and icon:IsShown()) or (icon.rendered and icon.rendered.isShown)
+                            local rAlpha = (icon.rendered and icon.rendered.layoutAlpha) or (icon.GetAlpha and icon:GetAlpha()) or 0
+                            if isShown and rAlpha > 0 then
+                                hasRealIcons = true
+                                local ix = (icon.rendered and icon.rendered.layoutX) or 0
+                                local iy = (icon.rendered and icon.rendered.layoutY) or 0
+                                local isz = (icon.rendered and icon.rendered.layoutSize) or size
+                                local left = ix - isz / 2
+                                local right = ix + isz / 2
+                                local bottom = iy - isz / 2
+                                local top = iy + isz / 2
+                                if firstReal then
+                                    realMinX, realMaxX, realMinY, realMaxY = left, right, bottom, top
+                                    firstReal = false
+                                else
+                                    if left < realMinX then realMinX = left end
+                                    if right > realMaxX then realMaxX = right end
+                                    if bottom < realMinY then realMinY = bottom end
+                                    if top > realMaxY then realMaxY = top end
+                                end
+                            end
+                        end
+                    end
+                end
+
                 local minX, maxX = 0, 0
                 local minY, maxY = 0, 0
-                local first = true
-                for _, slot in ipairs(pCfg.slots) do
-                    local step = slot.step or 0
-                    local dx, dy = 0, 0
-                    if growDir == 1 then
-                        dx = step * (size + spacing)
-                    elseif growDir == 2 then
-                        dx = -step * (size + spacing)
-                    elseif growDir == 3 then
-                        dy = step * (size + vertSpacing)
-                    elseif growDir == 4 then
-                        dy = -step * (size + vertSpacing)
-                    end
-                    local left = dx - size / 2
-                    local right = dx + size / 2
-                    local bottom = dy - size / 2
-                    local top = dy + size / 2
-                    if first then
-                        minX, maxX, minY, maxY = left, right, bottom, top
-                        first = false
-                    else
-                        if left < minX then minX = left end
-                        if right > maxX then maxX = right end
-                        if bottom < minY then minY = bottom end
-                        if top > maxY then maxY = top end
+                if hasRealIcons then
+                    minX, maxX, minY, maxY = realMinX, realMaxX, realMinY, realMaxY
+                else
+                    local first = true
+                    for _, slot in ipairs(pCfg.slots) do
+                        local step = slot.step or 0
+                        local dx, dy = 0, 0
+                        if growDir == 1 then
+                            dx = step * (size + spacing)
+                        elseif growDir == 2 then
+                            dx = -step * (size + spacing)
+                        elseif growDir == 3 then
+                            dy = step * (size + vertSpacing)
+                        elseif growDir == 4 then
+                            dy = -step * (size + vertSpacing)
+                        end
+                        local left = dx - size / 2
+                        local right = dx + size / 2
+                        local bottom = dy - size / 2
+                        local top = dy + size / 2
+                        if first then
+                            minX, maxX, minY, maxY = left, right, bottom, top
+                            first = false
+                        else
+                            if left < minX then minX = left end
+                            if right > maxX then maxX = right end
+                            if bottom < minY then minY = bottom end
+                            if top > maxY then maxY = top end
+                        end
                     end
                 end
 
@@ -2051,148 +2343,157 @@ function Renderer.refreshPreviewLayout()
                 end
                 mover:Show()
 
-                for sIdx, slot in ipairs(pCfg.slots) do
-                    local pIcon = getOrCreatePreviewIcon(parent, sIdx)
-                    pIcon:SetSize(size, size)
-                    pIcon:SetAlpha(alpha)
-                    local mLevel = safeCall(mover, "GetFrameLevel") or 6
-                    safeCall(pIcon, "SetFrameLevel", mLevel + 2)
-
-                    -- 依照成長方向 (1:右, 2:左, 3:上, 4:下) 計算偏移
-                    local dx = 0
-                    local dy = 0
-                    local step = slot.step or 0
-                    if growDir == 1 then
-                        dx = step * (size + spacing)
-                    elseif growDir == 2 then
-                        dx = -step * (size + spacing)
-                    elseif growDir == 3 then
-                        dy = step * (size + vertSpacing)
-                    elseif growDir == 4 then
-                        dy = -step * (size + vertSpacing)
-                    end
-
-                    pIcon:ClearAllPoints()
-                    pIcon:SetPoint("CENTER", parent, "CENTER", dx, dy)
-
-                    -- 文字與字型大小即時更新
-                    pIcon.nameText:SetText(slot.text)
-                    if TextPlacement and TextPlacement.applyFont then
-                        TextPlacement.applyFont(pIcon.nameText, fontSpell, cfg)
-                        TextPlacement.applyFont(pIcon.timerText, fontTime, cfg)
-                        TextPlacement.applyFont(pIcon.stackText, fontStack, cfg)
-                    end
-
-                    -- 文字錨點位置 (21 種排版)
-                    if TextPlacement and TextPlacement.apply and TextPlacement.getPlacement then
-                        local timerPlacement = TextPlacement.getPlacement(cfg, "timer")
-                        TextPlacement.apply(pIcon.timerText, pIcon, timerPlacement)
-                        local appPlacement = TextPlacement.getPlacement(cfg, "applications")
-                        TextPlacement.apply(pIcon.stackText, pIcon, appPlacement)
-                        local namePlacement = TextPlacement.getPlacement(cfg, "spellName") or "OUTSIDE_BOTTOM"
-                        TextPlacement.apply(pIcon.nameText, pIcon, namePlacement)
-                    else
-                        -- 法術名稱位置 (Fallback)
-                        pIcon.nameText:ClearAllPoints()
-                        if cfg.nameInside then
-                            pIcon.nameText:SetPoint("BOTTOM", pIcon, "BOTTOM", 0, 2)
-                        else
-                            pIcon.nameText:SetPoint("TOP", pIcon, "BOTTOM", 0, -2)
-                        end
-                    end
-
-                    if TextPlacement and TextPlacement.applyColor and TextPlacement.getColor then
-                        local timerColor = TextPlacement.getColor(cfg, "timer")
-                        local appColor = TextPlacement.getColor(cfg, "applications")
-                        local nameColor = TextPlacement.getColor(cfg, "spellName")
-                        TextPlacement.applyColor(pIcon.timerText, timerColor)
-                        TextPlacement.applyColor(pIcon.stackText, appColor)
-                        TextPlacement.applyColor(pIcon.nameText, nameColor)
-                    end
-
-                    -- 顯隱控制
-                    if cfg.showSpellName == false then
-                        pIcon.nameText:Hide()
-                    else
-                        pIcon.nameText:Show()
-                    end
-
-                    if cfg.showTimeVal == false then
-                        pIcon.timerText:Hide()
-                    else
-                        pIcon.timerText:Show()
-                    end
-
-                    pIcon.stackText:SetText(slot.sampleStack and tostring(slot.sampleStack) or "")
-
-                    -- 扇形倒數轉圈與透明度即時預覽
-                    local cd = rawget(pIcon, "cooldown")
-                    if cd then
-                        if cfg.cooldownShadow == false then
-                            safeCall(cd, "Hide")
-                        else
-                            safeCall(cd, "SetSwipeColor", swipeR, swipeG, swipeB, swipeAlpha)
-                            if slot.sampleCD then
-                                safeCall(cd, "SetCooldown", now - 2, slot.sampleCD)
-                                safeCall(cd, "Show")
-                                pIcon.timerText:SetText(string.format("%.1f", math.max(0.1, slot.sampleCD - 2)))
-                            else
-                                safeCall(cd, "Hide")
-                                pIcon.timerText:SetText("TIME LEFT")
-                            end
-                        end
-                    end
-
-                    -- 倒數文字變色曲線套用
-                    local timerSampleTime = slot.sampleCD and math.max(0.1, slot.sampleCD - 2) or 5.0
-                    local timerColor = { 1, 1, 1, 1 }
-                    local tcc = cfg.timerColorCurve
-                    if tcc and tcc.normalColor then
-                        timerColor = tcc.normalColor
-                    end
-                    if tcc and tcc.enabled and type(tcc.stages) == "table" then
-                        for i = 1, #tcc.stages do
-                            local stage = tcc.stages[i]
-                            if stage and stage.threshold and timerSampleTime <= stage.threshold then
-                                timerColor = stage.color or timerColor
-                                break
-                            end
-                        end
-                    end
-                    pIcon.timerText:SetTextColor(timerColor[1] or 1, timerColor[2] or 1, timerColor[3] or 1, timerColor[4] or 1)
-
-                    -- 顏色即時預覽 (紅/綠色度與常規邊框)
-                    local tex = rawget(pIcon, "texture")
-                    if slot.isSelfDebuff then
-                        local r = 1.0
-                        local g = math.max(0, 1.0 - selfDebuffRed * 0.7)
-                        local b = math.max(0, 1.0 - selfDebuffRed * 0.7)
-                        safeCall(pIcon, "SetBackdropBorderColor", r, g, b, 1.0)
-                        if tex then safeCall(tex, "SetVertexColor", r, math.max(0.2, 1.0 - selfDebuffRed * 0.35), math.max(0.2, 1.0 - selfDebuffRed * 0.35), 1.0) end
-                    elseif slot.isTargetDebuff then
-                        local r = math.max(0, 1.0 - targetDebuffGreen * 0.7)
-                        local g = 1.0
-                        local b = math.max(0, 1.0 - targetDebuffGreen * 0.7)
-                        safeCall(pIcon, "SetBackdropBorderColor", r, g, b, 1.0)
-                        if tex then safeCall(tex, "SetVertexColor", math.max(0.2, 1.0 - targetDebuffGreen * 0.35), g, math.max(0.2, 1.0 - targetDebuffGreen * 0.35), 1.0) end
-                    elseif slot.isPower then
-                        safeCall(pIcon, "SetBackdropBorderColor", 0.4, 0.8, 1.0, 1.0)
-                        if tex then safeCall(tex, "SetVertexColor", 0.8, 0.95, 1.0, 1.0) end
-                    elseif slot.isPet then
-                        safeCall(pIcon, "SetBackdropBorderColor", 0.35, 0.95, 0.55, 1.0)
-                        if tex then safeCall(tex, "SetVertexColor", 0.85, 1.0, 0.85, 1.0) end
-                    else
-                        safeCall(pIcon, "SetBackdropBorderColor", 0.85, 0.85, 0.85, 1.0)
-                        if tex then safeCall(tex, "SetVertexColor", 1.0, 1.0, 1.0, 1.0) end
-                    end
-                    safeCall(pIcon, "SetBackdropColor", 0.08, 0.08, 0.08, 0.8)
-                    safeCall(pIcon, "Show")
-                end
-
                 local previewIcons = rawget(parent, "previewIcons")
-                if previewIcons then
-                    for sIdx = #pCfg.slots + 1, #previewIcons do
-                        safeCall(previewIcons[sIdx], "Hide")
+                if hasRealIcons then
+                    -- 🛡️ 實體避讓核心：當前框架已有真實圖示（預渲染或運行中），佔位牛頭人全部 Hide，徹底杜絕遮蔽與疊圖
+                    if previewIcons then
+                        for sIdx = 1, #previewIcons do
+                            safeCall(previewIcons[sIdx], "Hide")
+                        end
+                    end
+                else
+                    for sIdx, slot in ipairs(pCfg.slots) do
+                        local pIcon = getOrCreatePreviewIcon(parent, sIdx)
+                        pIcon:SetSize(size, size)
+                        pIcon:SetAlpha(alpha)
+                        local mLevel = safeCall(mover, "GetFrameLevel") or 6
+                        safeCall(pIcon, "SetFrameLevel", mLevel + 2)
+
+                        -- 依照成長方向 (1:右, 2:左, 3:上, 4:下) 計算偏移
+                        local dx = 0
+                        local dy = 0
+                        local step = slot.step or 0
+                        if growDir == 1 then
+                            dx = step * (size + spacing)
+                        elseif growDir == 2 then
+                            dx = -step * (size + spacing)
+                        elseif growDir == 3 then
+                            dy = step * (size + vertSpacing)
+                        elseif growDir == 4 then
+                            dy = -step * (size + vertSpacing)
+                        end
+
+                        pIcon:ClearAllPoints()
+                        pIcon:SetPoint("CENTER", parent, "CENTER", dx, dy)
+
+                        -- 文字與字型大小即時更新
+                        pIcon.nameText:SetText(slot.text)
+                        if TextPlacement and TextPlacement.applyFont then
+                            TextPlacement.applyFont(pIcon.nameText, fontSpell, cfg)
+                            TextPlacement.applyFont(pIcon.timerText, fontTime, cfg)
+                            TextPlacement.applyFont(pIcon.stackText, fontStack, cfg)
+                        end
+
+                        -- 文字錨點位置 (21 種排版)
+                        if TextPlacement and TextPlacement.apply and TextPlacement.getPlacement then
+                            local timerPlacement = TextPlacement.getPlacement(cfg, "timer")
+                            TextPlacement.apply(pIcon.timerText, pIcon, timerPlacement)
+                            local appPlacement = TextPlacement.getPlacement(cfg, "applications")
+                            TextPlacement.apply(pIcon.stackText, pIcon, appPlacement)
+                            local namePlacement = TextPlacement.getPlacement(cfg, "spellName") or "OUTSIDE_BOTTOM"
+                            TextPlacement.apply(pIcon.nameText, pIcon, namePlacement)
+                        else
+                            -- 法術名稱位置 (Fallback)
+                            pIcon.nameText:ClearAllPoints()
+                            if cfg.nameInside then
+                                pIcon.nameText:SetPoint("BOTTOM", pIcon, "BOTTOM", 0, 2)
+                            else
+                                pIcon.nameText:SetPoint("TOP", pIcon, "BOTTOM", 0, -2)
+                            end
+                        end
+
+                        if TextPlacement and TextPlacement.applyColor and TextPlacement.getColor then
+                            local timerColor = TextPlacement.getColor(cfg, "timer")
+                            local appColor = TextPlacement.getColor(cfg, "applications")
+                            local nameColor = TextPlacement.getColor(cfg, "spellName")
+                            TextPlacement.applyColor(pIcon.timerText, timerColor)
+                            TextPlacement.applyColor(pIcon.stackText, appColor)
+                            TextPlacement.applyColor(pIcon.nameText, nameColor)
+                        end
+
+                        -- 顯隱控制
+                        if cfg.showSpellName == false then
+                            pIcon.nameText:Hide()
+                        else
+                            pIcon.nameText:Show()
+                        end
+
+                        if cfg.showTimeVal == false then
+                            pIcon.timerText:Hide()
+                        else
+                            pIcon.timerText:Show()
+                        end
+
+                        pIcon.stackText:SetText(slot.sampleStack and tostring(slot.sampleStack) or "")
+
+                        -- 扇形倒數轉圈與透明度即時預覽
+                        local cd = rawget(pIcon, "cooldown")
+                        if cd then
+                            if cfg.cooldownShadow == false then
+                                safeCall(cd, "Hide")
+                            else
+                                safeCall(cd, "SetSwipeColor", swipeR, swipeG, swipeB, swipeAlpha)
+                                if slot.sampleCD then
+                                    safeCall(cd, "SetCooldown", now - 2, slot.sampleCD)
+                                    safeCall(cd, "Show")
+                                    pIcon.timerText:SetText(string.format("%.1f", math.max(0.1, slot.sampleCD - 2)))
+                                else
+                                    safeCall(cd, "Hide")
+                                    pIcon.timerText:SetText("TIME LEFT")
+                                end
+                            end
+                        end
+
+                        -- 倒數文字變色曲線套用
+                        local timerSampleTime = slot.sampleCD and math.max(0.1, slot.sampleCD - 2) or 5.0
+                        local timerColor = { 1, 1, 1, 1 }
+                        local tcc = cfg.timerColorCurve
+                        if tcc and tcc.normalColor then
+                            timerColor = tcc.normalColor
+                        end
+                        if tcc and tcc.enabled and type(tcc.stages) == "table" then
+                            for i = 1, #tcc.stages do
+                                local stage = tcc.stages[i]
+                                if stage and stage.threshold and timerSampleTime <= stage.threshold then
+                                    timerColor = stage.color or timerColor
+                                    break
+                                end
+                            end
+                        end
+                        pIcon.timerText:SetTextColor(timerColor[1] or 1, timerColor[2] or 1, timerColor[3] or 1, timerColor[4] or 1)
+
+                        -- 顏色即時預覽 (紅/綠色度與常規邊框)
+                        local tex = rawget(pIcon, "texture")
+                        if slot.isSelfDebuff then
+                            local r = 1.0
+                            local g = math.max(0, 1.0 - selfDebuffRed * 0.7)
+                            local b = math.max(0, 1.0 - selfDebuffRed * 0.7)
+                            safeCall(pIcon, "SetBackdropBorderColor", r, g, b, 1.0)
+                            if tex then safeCall(tex, "SetVertexColor", r, math.max(0.2, 1.0 - selfDebuffRed * 0.35), math.max(0.2, 1.0 - selfDebuffRed * 0.35), 1.0) end
+                        elseif slot.isTargetDebuff then
+                            local r = math.max(0, 1.0 - targetDebuffGreen * 0.7)
+                            local g = 1.0
+                            local b = math.max(0, 1.0 - targetDebuffGreen * 0.7)
+                            safeCall(pIcon, "SetBackdropBorderColor", r, g, b, 1.0)
+                            if tex then safeCall(tex, "SetVertexColor", math.max(0.2, 1.0 - targetDebuffGreen * 0.35), g, math.max(0.2, 1.0 - targetDebuffGreen * 0.35), 1.0) end
+                        elseif slot.isPower then
+                            safeCall(pIcon, "SetBackdropBorderColor", 0.4, 0.8, 1.0, 1.0)
+                            if tex then safeCall(tex, "SetVertexColor", 0.8, 0.95, 1.0, 1.0) end
+                        elseif slot.isPet then
+                            safeCall(pIcon, "SetBackdropBorderColor", 0.35, 0.95, 0.55, 1.0)
+                            if tex then safeCall(tex, "SetVertexColor", 0.85, 1.0, 0.85, 1.0) end
+                        else
+                            safeCall(pIcon, "SetBackdropBorderColor", 0.85, 0.85, 0.85, 1.0)
+                            if tex then safeCall(tex, "SetVertexColor", 1.0, 1.0, 1.0, 1.0) end
+                        end
+                        safeCall(pIcon, "SetBackdropColor", 0.08, 0.08, 0.08, 0.8)
+                        safeCall(pIcon, "Show")
+                    end
+
+                    if previewIcons then
+                        for sIdx = #pCfg.slots + 1, #previewIcons do
+                            safeCall(previewIcons[sIdx], "Hide")
+                        end
                     end
                 end
 
@@ -2249,17 +2550,8 @@ function Renderer.setActiveAnchors(targetFrames)
                 parent:RegisterForDrag("LeftButton")
                 parent:SetScript("OnDragStart", parent.StartMoving)
                 parent:SetScript("OnDragStop", function(self)
-                    self:StopMovingOrSizing()
-                    local point, relativeTo, relativePoint, xOffset, yOffset = self:GetPoint()
                     local pName = rawget(self, "frameName") or fName
-                    if EAM.db and EAM.db.layout and EAM.db.layout.frames and EAM.db.layout.frames[pName] then
-                        local cfg = EAM.db.layout.frames[pName]
-                        cfg.point = point or "CENTER"
-                        cfg.x = xOffset or 0
-                        cfg.y = yOffset or 0
-                    end
-                    local fLabel = (nameLabels and nameLabels[pName]) or pName
-                    print("|cff00ff96EAM|r [" .. fLabel .. "] " .. string.format(EAM.L.EAM_FRAME_POS_SAVED or "位置已保存: %s, X: %.1f, Y: %.1f", point or "CENTER", xOffset or 0, yOffset or 0))
+                    saveFrameCenterPosition(self, pName, nameLabels and nameLabels[pName])
                 end)
                 parent:SetScript("OnMouseUp", function(self, button)
                     if button == "RightButton" and Renderer.isMoving then

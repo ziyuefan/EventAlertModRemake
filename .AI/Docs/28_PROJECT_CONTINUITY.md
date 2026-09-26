@@ -5,13 +5,215 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-09-19.02 (Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復 / 89 Flow / 499 契約全綠)。
+目前快照版本：2026-09-27.05 (/boost 高頻冷卻事件同幀合併 / AlertManager 佇列零記憶體分配 / 狀態髒檢查重繪抑制 / 499 契約全綠 / 98 Flow 全過)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復（現行儲存點）
+## 2026-09-27 多進度儲存點：/boost 高頻冷卻事件合併排程、警示佇列零分配 (Zero-Alloc Queue) 暨狀態變更髒檢查抑制 (Dirty Suppression) 極限效能優化（現行儲存點）
 
-- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「光環文字大小無法隨設定即時反應，需要 /reload 才能生效」之重大缺陷。
+- current-of-truth：Retail 12.1.0 Alpha 8.7 高頻冷卻事件與警示狀態更新極限效能優化重構完成。
+  1. 核心判斷與架構決策（依據真實遙測日誌診斷）：
+     - **AlertManager 佇列記憶體分配消除**：在 155 秒內 `onAlertStateChanged` 產生 9,502 次臨時 table 分配（`pendingUpdates[state.id] = { state = state, frameName = frameName }`）。重構改採以 `alertID` 為鍵的 `persistentSlots` 持久化槽位結構，直接原位更新 `slot.state` 與 `slot.frameName`，將暫存佇列之堆疊分配降至 0。
+     - **冷卻狀態髒檢查與重複繪製阻斷 (Dirty State Diffing & Render Suppression)**：針對 `CooldownService` 與 `ItemCooldownService`，於 `refreshAlert` 快照前次狀態（顯示、啟用、佔位、灰階、發光、充能、時間），若無實質變更則自動抑制 `fireStateChanged` 派發，徹底消除戰鬥中大量無效的圖示重繪與 CPU 負擔。
+     - **全域冷卻事件同幀合併排程 (Frame-Level Cooldown Event Coalescing)**：針對 `SPELL_UPDATE_COOLDOWN`、`ACTIONBAR_UPDATE_COOLDOWN` 與 `BAG_UPDATE_COOLDOWN` 等無特定法術/物品 ID 之高頻全域事件實裝同幀合併調度（`queueCoalescedRefresh`），統一接入專案 `Scheduler.after(0)` 排程，嚴格遵循 Scheduler 唯一 OnUpdate 原則，杜絕未託管獨立 Frame，並配合持久化 `presentAlerts` 實現全流程零記憶體配置 (Zero-Allocation)，避免同一幀內觸發多次全清單遍歷，極大平滑團隊副本與大秘境高負載環境下的幀率。
+  2. 具體代碼實裝：
+     - **Managers/AlertManager.lua**：實裝 `persistentSlots` 零分配佇列與解參照清理。
+     - **Services/CooldownService.lua**：實裝 dirty state diffing、isDirty 派發過濾與 `queueCoalescedRefresh`。
+     - **Services/ItemCooldownService.lua**：實裝 dirty state diffing、isDirty 派發過濾與 `queueCoalescedRefresh`。
+     - **Tests/FlowValidationHarness.lua**：補齊 `AlertManager.lua` 模組載入。
+     - **Debug/FlowTestRunner.lua**：新增 `performance.cooldown_dirty_diffing_and_queue_zero_alloc` 自動化驗證案例。
+  3. 當前達成狀態：
+     - [x] 【AlertManager 佇列零記憶體分配】：實裝持久化槽位，消滅 GC 震盪。
+     - [x] 【技能與物品冷卻狀態髒檢查】：無實質變更時抑制狀態廣播與重繪。
+     - [x] 【全域事件同幀合併排程】：同一幀/Tick 內多次全域事件合併執行。
+     - [x] 【單元測試與門禁 100% 通過】：Flow 98/98 PASS、Contracts 499/499 PASS。
+
+## 2026-09-27 多進度儲存點：暴雪官方 C_AddOnProfiler 深度調研與雙軌遙測架構落地（前一儲存點）
+
+- current-of-truth：Retail 12.1.0 Alpha 8.7 暴雪原生 Profiler 遙測接入與雙軌效能體系建立完成。
+  1. 核心判斷與架構決策（底層組語/JIT 視角）：
+     - **絕不可替代內部微觀計數器**：官方 `C_AddOnProfiler` 僅能讀取外掛整體黑盒毫秒耗時，完全無法穿透至單一事件（如 `UNIT_AURA`）或單一函式（如 `Renderer.render`）；且其 `MeasureCall` 底層回傳全新構造之 Lua Table，若放進熱路徑每秒將產生海量 GC 垃圾引發卡頓，與零記憶體配置原則違背。
+     - **非常適合作為按需（On-Demand）宏觀引擎指標**：`C_AddOnProfiler.GetAddOnMetric` 乃暴雪 C++ 遊戲引擎原生硬體時鐘計時，零 Lua 探針耗時，能提供真實 CPU 毫秒（近期均值、歷史峰值、首領戰均值）與超過 1ms/5ms 掉幀刺波幀數。
+     - **雙軌效能監控體系確立**：微觀（內部計數器）精確定位「誰在狂跑、跑了幾次、CPS」（指導重構）；宏觀（官方 Profiler）精確量測「外掛整體耗時幾毫秒、是否有掉幀刺波」（驗證重構成果）。
+  2. 具體代碼實裝與邊界防護：
+     - **Core/Env.lua 與 Core/Performance.lua**：安全綁定 `C_AddOnProfiler` 與 `Enum.AddOnProfilerMetric`；實裝 `Performance.getEngineProfilerMetrics()`，以 `pcall` 嚴密防護，支援客戶端關閉或版本不支援時優雅降級。
+     - **Debug/RuntimeProbe.lua**：於環境探針中新增 `profile.addonProfiler` 能力檢定。
+     - **Debug/PromptExport.lua 與 Debug/DebugState.lua**：於診斷匯出 JSON 之 `hotPathMetrics` 區塊加入 `engineProfiler` 毫秒遙測資料。
+     - **UI/Slash.lua**：`/eam metrics` 指令即時印出官方引擎之近期均值、歷史峰值、首領戰均值與掉幀刺波統計。
+     - **Debug/FlowTestRunner.lua**：新增 `performance.engine_profiler_telemetry` 自動化測試，沙盒驗證優雅降級與數值映射（97/97 PASS）。
+  3. 當前達成狀態：
+     - [x] 【官方 Profiler 深度調研與評判】：產出清晰架構論證與邊界設計。
+     - [x] 【雙軌遙測防禦性接入】：Core、Debug、PromptExport、CLI 全線打通。
+     - [x] 【單元測試與門禁 100% 通過】：Flow 97/97 PASS、Contracts 499/499 PASS。
+
+## 2026-09-27 多進度儲存點：高頻熱路徑追蹤器 (Hot Path Profiler) 實裝、SavedVariables 持久化與偵錯匯出整合（前一儲存點）
+
+- current-of-truth：Retail 12.1.0 Alpha 8.7 高頻熱路徑追蹤器與存檔計數閉環完成。
+  1. 高頻熱路徑追蹤器（Zero-Allocation Profiler）：
+     - **Core/Performance 核心計數器**：依少年欸指示，在 `Core/Performance.lua` 實裝運行期高頻熱路徑監控計數器，提供 `recordHotPath`、`getSnapshot`、`resetMetrics` 等 API，使用預快取字串鍵，達到熱循環零記憶體配置（Zero-Allocation）與極限暫存器加速。
+     - **核心熱點全覆蓋插樁**：涵蓋 `EventRouter.onEvent`（分發事件總數與各事件統計）、`AlertManager`（flushUpdates、clearPending、onAlertStateChanged）、`AuraService`（onUnitAura、refreshUnit、onTargetChanged）、`AuraContainerService`（onTargetChanged）、`CooldownService`（refreshSpell、onSpellcastSucceeded、onCooldownEvent）、`Renderer`（render、layout、clearFrame）、`Scheduler`（onUpdate、after）。
+  2. 存檔持久化與統計閉環：
+     - **SavedVariables 累積整合**：`defaults.hotPathMetrics` 初始化結構；登出（`PLAYER_LOGOUT`）時自動將本次連線（lastSession）呼叫量合併至 `cumulative` 累積池，並記錄累積運行時間（秒數）；提供 `SavedVariables.saveHotPathMetrics` 隨時手動寫入。
+  3. 偵錯與診斷視窗整合：
+     - **DebugState 快照**：`derived.hotPathMetrics` 提供完整呼叫次數、執行秒數、CPS（Calls Per Second）與 Top Hot Paths 排序清單。
+     - **PromptExport JSON 匯出**：於診斷匯出報告中加入 `hotPathMetrics` 結構化區塊，便於 AI 與開發者一眼掌握高頻瓶頸。
+     - **CLI 指令支援**：新增 `/eam metrics`（或 `/eam hotpaths`），即時顯示 Top 10 高頻路徑，支援 `/eam metrics reset` 與 `/eam metrics save`。
+  4. 當前達成狀態：
+     - [x] 【熱路徑追蹤與插樁】：7 大核心模組零配置插樁完畢。
+     - [x] 【存檔持久化與登出寫入】：SavedVariables 自動保存本次與累積數據。
+     - [x] 【除錯報告與 CLI 介面】：PromptExport JSON 與 `/eam metrics` 實裝。
+     - [x] 【5 國語系同步】：100% 對齊 zhTW、zhCN、enUS、koKR、ruRU。
+     - [x] 【單元測試與門禁 100% 通過】：Flow 96/96 PASS、Contracts 499/499 PASS。
+
+## 2026-09-27 多進度儲存點：目標光環切換目標秒數倒數鬼影根治、雙模生命週期閉環與組語視角底層最佳化規範確立
+
+- current-of-truth：Retail 12.1.0 Alpha 8.7 目標光環換目標生命週期閉環與底層效能規範入庫。
+  1. 目標光環切換目標即時清理與倒數鬼影根除：
+     - **Native 12.1 容器生命週期重置**：`AuraContainerService.onTargetChanged` 註冊監聽 `PLAYER_TARGET_CHANGED`，目標變更時即時重設原生容器 `SetEnabled(false)` -> `SetUnit("target")` -> `SetEnabled(true)` -> `Update()`，無目標時即時 `Hide()` 與停用，徹底杜絕 C++ 底層 `AuraContainer` 遺漏切換導致舊目標光環與原生秒數倒數持續運行的缺陷。
+     - **Legacy 渲染器即時同步清空與計時器解綁**：於 `AuraService.onTargetChanged`、`clearUnit("target")` 與 `renderInactiveUnit("target")` 入口直接調用 `Renderer.clearFrame("targetAura")`，將當前畫面所有目標光環圖示、`DurationAdapter` 文字綁定與原生計時器立即同步釋放、隱藏並返還圖示池，杜絕異步批次排程延遲。
+     - **AlertManager 佇列過期暫存排空**：新增 `AlertManager.clearPending("targetAura")`，於切換目標時同步作廢並釋放所有尚未 Flush 的目標光環狀態變更，杜絕舊目標過期更新在下一個 Tick 重新喚醒圖示。
+     - **Native 雙重保險守衛邊界校正**：修正 `AlertManager` 誤將 `targetAura` 當作 Native 光環攔截的邊界缺陷（原生渲染器僅託管自身光環），確保 Legacy 目標光環關閉與釋放事件暢通無阻。
+  2. 組語視角底層效能最佳化方向確立（零副作用鐵律）：
+     - 依少年欸指示，將「以組語（ASM）視角進行底層效能調優」的六大方向（虛擬暫存器釘定、熱路徑暫存器壓力控制、深層指針鏈提升、連續整數陣列空間局部性、熱路徑零閉包、單一型態保護）正式納入 `Docs/05_PERFORMANCE_GUIDE.md` 與 `Docs/16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md`。
+     - 確立核心防禦鐵律：所有底層效能優化嚴禁改變任何業務邏輯、嚴禁產生任何副作用或功能缺失，必須 100% 通過全量契約驗證。
+  3. 當前達成狀態：
+     - [x] 【目標光環雙模切換清場】：實機實測切換目標 100% 即時正常更新，秒數鬼影完全根除。
+     - [x] 【組語視角底層效能規範入庫】：`05_PERFORMANCE_GUIDE.md` 與 `16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md` 完整同步。
+     - [x] 【雙語版本日誌與網頁同步】：`changelog.txt`、`changelog_en.txt`、`changelog.html` 100% 同步。
+     - [x] 【全套門禁 100% 綠燈通過】：Contracts 499/499 PASS、Folder Indexes 125/125 PASS。
+
+## 2026-09-26 多進度儲存點：專案根目錄治理重構（scratch 移入 .AI、.agents 轉址 .AI/skills）與每輪任務推薦規範確立
+
+- current-of-truth：專案根目錄結構與治理架構純淨化完成。
+  1. 根目錄結構整潔與單一真理原則實裝：
+     - **scratch/ 移入 .AI/scratch/**：消除專案根目錄臨時草稿污染，將所有測試與除錯草稿收斂至 `.AI/scratch/`，同步修訂 `.gitignore`。
+     - **.agents/ 轉址協定實裝**：遵循 Antigravity 官方工作區擴充標準，於 `.agents/skills.json` 配置 `{"entries": [{"path": ".AI/skills"}]}` 轉址，將技能唯一定義與實體檔案 100% 收斂至 `.AI/skills/`，徹底消滅跨目錄雙重維護問題，並維持 Antigravity 自動探索 100% 正常。
+     - **全目錄索引更新**：`generate_folder_indexes.py` 增設 `scratch` 排除規則並更新 `.agents` 知識庫，全專案 125 個目錄 FOLDER_INDEX.html 100% 核驗通過。
+  2. 新增每輪任務規範：
+     - 確立「每輪任務結束主動向少年欸推薦 Antigravity 內建斜線指令（如 `/goal`, `/plan`, `/boost`, `/learn` 等）與適用 SKILL」之標準溝通規範，已寫入 `.AI/PROJECT_MEMORY.md`。
+  3. 當前達成狀態：
+     - [x] 【根目錄純淨化與 scratch 搬遷】：`.AI/scratch/` 完成，`.gitignore` 同步。
+     - [x] 【.agents/ 瘦身與 skills.json 轉址】：`.AI/skills/` 單一真理確立，重複目錄移除。
+     - [x] 【全套門禁 100% 綠燈通過】：Contracts 499/499 PASS、Folder Indexes 125/125 PASS。
+
+## 2026-09-24 多進度儲存點：Retail 12.1.0 Alpha 8.7 技能冷卻與地面效果第一格消失 (Slot 1 物理死鎖) 與幾何漂移 (BOTTOMLEFT 錨點) 根治
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。針對玩家回報「技能冷卻也是第一格消失，然後地面效果也是沒修好，掛在莫名其妙的地方」進行雙重根因排查與物理級根治。
+  1. 根因剖析與架構修復：
+     - **Slot 1 物理蒸發（雙重死鎖）**：`prewarmAlertFrames()` 預設 `layoutX = 0, layoutY = 0` 且 `isParasite = nil`。首次渲染時寄生檢查判定 `isParasite ~= false` 呼叫 `ClearAllPoints()` 剝離錨點；隨後 `layout()` 計算 Slot 1 也是 (0, 0)，因 `0 ~= 0` 為 false 跳過 `SetPoint()`，導致 Slot 1 帶有 0 個錨點 (`GetNumPoints() == 0`) 漂浮在遊戲世界外。Slot 2..16 因偏移量不為 0 而成功重新錨定。
+     - **幾何漂移與 Lua 多回傳值截斷**：暴雪原生 `StopMovingOrSizing()` 會將框架錨點強制轉為 `"BOTTOMLEFT"`。當動態增減圖示時父框架執行 `SetSize()`，因以 `"BOTTOMLEFT"` 為原點，導致子元件向反方向整體位移。更甚者，先前修復在 `OnDragStop` 使用了二元運算子包裹函式呼叫，觸發 Lua 截斷陷阱致使 `pCenterY` 恆為 `nil`，Y 坐標被強制重設為 0。
+     - **預熱狀態與哨兵值修正 (`Renderer.lua`)**：`prewarmAlertFrames()` 初始化圖示 `icon.isParasite = false`，並將 `rendered.layoutX/Y/Size` 設為 `nil`（嚴禁使用 0 作為哨兵值）；`IconPool.release()` 於回收圖示時同步重置 `icon.isParasite = false`，杜絕跨生命週期污染。
+     - **物理錨點計數守衛 (`Renderer.lua`)**：`layout()` 增加 `hasNoPoints = (type(icon.GetNumPoints) == "function" and icon:GetNumPoints() == 0)` 計數守衛，只要錨點數為 0 強制執行 `ClearAllPoints()` 與 `SetPoint()`。
+     - **拖曳坐標換算與 CENTER 錨點保證 (`Renderer.lua`, `SavedVariables.lua`)**：統一實作 `saveFrameCenterPosition(parent, pName, fLabel)`，安全接收 X、Y 雙回傳值；拖曳結束後強制執行 `parent:ClearAllPoints()` 與 `parent:SetPoint("CENTER", UIParent, "CENTER", xOffset, yOffset)`，統一將 `cfg.point` 存為 `"CENTER"`；`SavedVariables.normalizeLayout(db)` 針對歷史存檔中所有的 `"BOTTOMLEFT"` 錨點進行全量無縫換算為 `"CENTER"`。
+     - **端到端狀態機測試 (`FlowTestRunner.lua`)**：新增 `cooldown.slot1_prewarm_anchor_integrity` 測試案例，完整覆蓋 Slot 1/2 預熱錨點、零點守衛、`OnDragStop` 2D 幾何坐標換算 (非 0 斷言) 及 `normalizeLayout`。
+  2. 當前多進度各環節達成狀態（Multi-Stage Status）：
+     - [x] 【Slot 1 物理錨點守衛與預熱重置】：`Renderer.lua` 與 `IconPool.lua` 徹底消除 Slot 1 蒸發死鎖。
+     - [x] 【拖曳座標 CENTER 幾何換算】：`saveFrameCenterPosition` 根除 Lua 截斷與幾何漂移。
+     - [x] 【歷史存檔 BOTTOMLEFT 校正】：`SavedVariables.normalizeLayout` 全框架無縫兼容遷移。
+     - [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 94/94 PASS (100%)、Contracts 499/499 PASS。
+     - [x] 【最新插件包打包完成】：發布產包與雙語日誌同步完成。
+
+## 2026-09-20 多進度儲存點：Retail 12.1.0 Alpha 8.7 地面效果預渲染佔位 (Pre-render Placeholder) 機制與全域/單體自選開關實裝
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。落實少年欸指示之「地面效果部分你還是乖乖用預渲染,並讓我可以選擇是否啟用」。
+  1. 根因剖析與架構實裝：
+     - **預渲染佔位需求**：地面效果先前僅在成功施法後才建立渲染狀態，戰鬥中冷卻完畢或待命時無法預知位置。比照 CooldownService 建立待命預渲染機制。
+     - **資料層與設定架構 (`SavedVariables.lua`, `ProfileCodec.lua`)**：
+       - `DEFAULT_CONFIG` 新增 `groundEffectPreRender = true`。
+       - `addAlert` 與 `updateGroundEffectAlert` 支援 `options.groundEffectPreRender`。
+       - 新增 `SavedVariables.updateGroundEffectBehavior(spellID, field, value)` API，支援三態循環切換與廣播 `EAM_GROUND_EFFECT_CONFIG_CHANGED`。
+       - `ProfileCodec.lua` 允許並正規化 `groundEffectPreRender` 之匯出與匯入。
+     - **服務層狀態機深度整合 (`GroundEffectService.lua`)**：
+       - 實裝 `resolveBehavior(alert, "groundEffectPreRender")` 三態優先級解析（單一技能 > 全域設定 > 預設 true）。
+       - 實裝 `GroundEffectService.refreshAll(eventName)`，在啟用、戰鬥結束、設定變更與拓撲刷新時建立灰階佔位 state（`isPlaceholder = true`, `isDesaturated = true`, `shown = true`）。
+       - `triggerGroundEffect` 在施法命中時精準清除佔位與灰階標記（`isPlaceholder = false`, `isDesaturated = false`），正常進入全彩動態倒數。
+       - `onAlertExpired` 到期時依解析結果決定：若啟用預渲染則自動回歸灰階待命佔位；若未啟用則隱藏圖示釋放狀態。
+     - **UI 互動與多語系支援 (`Options.lua`, 5 大語系)**：
+       - ScrollBox 列表將地面效果分類納入 `isPreRenderCategory`，使每行條目均具備綠色「預」快捷按鈕，支援即時三態點擊切換。
+       - 條件設定視窗（`condFrame`）新增 `condFrame.groundPreRenderCb` 核取方塊，打通雙向儲存與載入。
+       - 5 大語系（zhTW, zhCN, enUS, koKR, ruRU）完整收錄 `EAM_OPT_GROUND_PRERENDER` 與 `EAM_OPT_GROUND_PRERENDER_TIP`。
+     - **全量測試與合約驗證 (`FlowTestRunner.lua`)**：
+       - 新增 Flow 測試 `ground_effect.prerender_toggle_and_lifecycle` 完整覆蓋待命佔位、施法點亮、到期回歸與開關切換。
+       - 修正 `ground.spell_family_activation` 斷言相容預渲染佔位狀態。
+  2. 當前多進度各環節達成狀態（Multi-Stage Status）：
+     - [x] 【地面效果預渲染佔位機制】：`GroundEffectService.lua` 完整實裝待命佔位、施法點亮、到期回歸。
+     - [x] 【全域與單體三態開關】：`SavedVariables.lua` 與 `ProfileCodec.lua` 深度整合支援。
+     - [x] 【UI 控制與列表快捷按鈕】：`Options.lua` 綠色「預」按鈕與條件設定核取方塊全通。
+     - [x] 【5 大語系詞條完整收錄】：zhTW, zhCN, enUS, koKR, ruRU 100% 對齊。
+     - [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 93/93 PASS (100%)、Contracts 499/499 PASS。
+     - [x] 【最新插件包打包完成】：產出最新 Alpha 8.7 發布包至 `Dist/`。
+
+## 2026-09-20 多進度儲存點：Retail 12.1.0 Alpha 8.7 地面效果戰鬥喚醒（父框架 Hide 徹底破除）、預熱中心錨點預置與同名法術反向解析修復
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。少年欸回報「地面效果又掛掉了」，進行深度檢修與根治。
+  1. 根因剖析與架構修復：
+     - **父框架隱藏致命陷阱（Parent Hide Trap）**：先前修復「冷卻結束不留空格」時，當 `shown == false` 會將圖示自 order 移除並調用 `layout(frameName)`；當無圖示時，`layout` 執行了 `parent:Hide()`！進入戰鬥後施放地面技能，`Renderer.requestLayout` 內建戰鬥阻斷契約（`layoutBlocked = true`），排版排隊等待脫戰，導致 `parent` 停留在 `Hide()` 狀態，子圖示即使 `SetAlpha(1.0)` 也因掛載在隱藏父框架下而完全不可見！
+     - **預熱圖示懸空無錨點**：在 `prewarmAlertFrames` 建立冷卻與地面效果備用 Frame 時，未預先設定相對父框架的中心錨點與幾何尺寸，戰鬥中點亮瞬間圖示缺乏物理坐標。
+     - **父框架即時喚醒 (`Renderer.lua`)**：在 `Renderer.render()` 中加入強保證：只要 `alertState.shown == true` 且 `not fState.parent:IsShown()`，立即呼叫 `fState.parent:Show()`，徹底終結戰鬥中因 `parent:Hide()` 導致子元件全盲的致命根因。
+     - **預熱物理坐標預置 (`Renderer.lua`)**：在 `prewarmAlertFrames` 建立備用 Frame 時，預先賦予相對父框架的中心錨點與尺寸（`SetPoint("CENTER", parent, "CENTER", 0, 0)`、`layoutX = 0, layoutY = 0`），確保戰鬥中點亮瞬間必定具有物理坐標。
+     - **動態反向法術名稱比對 (`GroundEffectService.lua`)**：實裝法術名稱反查機制：當施法 ID 在靜態索引與 Base/Override 均未命中時，動態讀取 `C_Spell.GetSpellInfo(spellID).name`，只要名稱與監控法術相同立即命中並建立快取，徹底覆蓋巨集與專精變體；並註冊 `COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED` 即時刷新快取。
+     - **全量 Mock 與測試案例擴充**：`WoW121AuraMock` 補齊 `SetDesaturated`、`SetProgressCurve`、`SetCooldownDuration`、`GetFrameLevel` 等；`FlowTestRunner` 新增 `ground_effect.combat_and_name_matching_pipeline`，Flow 測試擴增至 92 項全部通過。
+  2. 當前多進度各環節達成狀態（Multi-Stage Status）：
+     - [x] 【父框架戰鬥強制喚醒】：`Renderer.lua` 消除戰鬥中 parent:Hide 陷阱。
+     - [x] 【預熱 Frame 物理錨點預置】：`Renderer.lua` 消除無排版座標懸空。
+     - [x] 【同名法術動態反向解析】：`GroundEffectService.lua` 支援同名變體法術。
+     - [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 92/92 PASS、Contracts 499/499 PASS。
+     - [x] 【產包構建完成】：最新 Alpha 8.7 套件產出至 `Dist/`。
+
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 快捷懸停 (CTRL+ALT) 跨職業法術加入自身光環目錄分類修復
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。少年欸回報以 CTRL+ALT 對 ICON 點選「加入自身光環監控」後出現已加入提示但自身清單看不到，且直覺指出「該法術若手動輸入會出現是否加入的確認詢問，是否與這有關係」。
+  1. 根因剖析與架構修復：
+     - **分類過濾器邊界（少年欸直覺 100% 命中真因）**：手動在第 1 分頁輸入非本職法術會觸發確認對話框，確認後以 `force = true` 寫入 `catalogScope = "SELF"` 與 `fromPlayer = true`。但過去 `TooltipMonitorService.commitCandidate` 透過快捷鍵加入時未傳入 `options`，導致存入 SavedVariables 時缺少目錄標籤；設定視窗打開時 `migratePlayerAuraCatalogScopes` 將非本職法術自動標記為 `CROSS_CLASS`，直接分流進第 2 分頁「跨職業清單」，使自身清單看不到。
+     - **快捷選單加入意圖明確注入 (`TooltipMonitorService.lua`)**：為 `ACTION_AURA_PLAYER` 與 `ACTION_AURA_TARGET` 明確構建 `options = { catalogScope = "SELF", fromPlayer = true }`，為地面效果提供 `{ enabled = true, durationMode = "AUTO" }`，為冷卻提供 `{ enabled = true }`。
+     - **跨職業歷史條目自動矯正**：若法術先前已被分類為 `CROSS_CLASS`，再次透過 CTRL+ALT 快捷鍵加入時自動更新分類為自身光環並觸發設定即時重繪。
+  2. 當前多進度各環節達成狀態（Multi-Stage Status）：
+     - [x] 【快捷鍵懸停加入意圖注入】：`TooltipMonitorService.lua` 傳遞明確 `options`。
+     - [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 90/90 PASS、Contracts 499/499 PASS。
+     - [x] 【少年欸實機測試驗證完成】：少年欸回報「好,實機測試已修復」，正式確認問題徹底解決。
+
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 實機深度診斷採集、冷卻預渲染排版與自訂名稱熱更新根治
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。針對少年欸回報之「冷卻預渲染不顯示」、「自訂名稱不會生效」進行深度排查與根治，並依指示實裝實機診斷命令 `/eam debug` 與 SavedVariables 存檔回存協定。
+  1. 根因剖析與架構修復：
+     - **冷卻預渲染可見性（父框架隱藏陷阱根治）**：`Renderer.prewarmAlertFrames()` 建立圖示時設定 `icon:SetAlpha(0)`，但 `icon.rendered.layoutAlpha` 未清零；後續 `Renderer.render()` 執行佔位時，因圖示存在且 order 未變，`fState.layoutDirty` 保持 `false` 未觸發 `layout()`，父框架 `fState.parent` 停留在 `Hide()` 狀態，導致所有預渲染圖示在畫面上不可見。已在 `Renderer.render()` 結尾加入可見性與未排版偵測，若父框架未 Show 或未排版則強制觸發 `layout()` 並 `fState.parent:Show()`，100% 確保預渲染圖示正確顯示。
+     - **自訂名稱全通道與熱更新打通**：
+       - `ItemCooldownService.lua` 佔位與冷卻分支補齊 `state.order = alert.order` 與 `state.rawAlert = alert`。
+       - `AuraService.lua` 狀態重設時補齊 `state.rawAlert = alert`。
+       - `SavedVariables.updateAlertCustomName()` 補齊冷卻與物品冷卻變更事件廣播。
+       - `Renderer.applyTextLayoutToIcon()` 實裝即時文字熱更新，修改自訂名稱點擊儲存後圖示文字立刻反映；同時存取 `icon.alertState` 全面改用 `rawget()`，杜絕 12.1 strict AuraButton 錯誤。
+     - **實機深度診斷採集與 SavedVariables 存檔回存**：
+       - 擴充 `/eam debug` 與 `/eam dump` 命令。
+       - 深度採集環境、版本、當前專精 Alerts、冷卻狀態機狀態、Renderer 圖示/父框架座標與 Alpha。
+       - 將診斷快照自動存入 `EAM.db.debugDump` 並調用 `markRevisionChanged()`，少年欸輸入 `/reload` 即寫入指定 WTF 存檔（`D:\World of Warcraft\_xptr_\WTF\Account\17194784#5\SavedVariables\EventAlertMod.lua`）。
+       - 遊戲內同步彈出文字全選之複製對話框，支援 `Ctrl+C` 直接複製回報。
+  2. 當前多進度各環節達成狀態（Multi-Stage Status）：
+     - [x] 【實機深度診斷與存檔回存】：`PromptExport.lua` 採集完整狀態，寫入 `EAM.db.debugDump`，支援 `/reload` 寫盤與彈窗複製。
+     - [x] 【CLI 命令擴充】：`/eam debug` 與 `/eam dump` 支援，5 語系在地化文字對齊。
+     - [x] 【冷卻預渲染父框架排版修正】：`Renderer.lua` 消除快取誤判，確保 `layout()` 執行與 `parent:Show()`。
+     - [x] 【自訂名稱服務層與熱更新修復】：`ItemCooldownService`、`AuraService`、`SavedVariables`、`Renderer` 全面打通。
+     - [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 90/90 PASS、Contracts 499/499 PASS。
+
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 全模組自訂技能與法術名稱功能實裝
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。落實少年欸指示之「在各模組增加可以自訂法術/技能名稱，目標是想在圖示間距不大的情況下，不要被各圖示名稱互相遮擋」。
+  1. 根因與架構設計：
+     - **緊湊排版痛點**：玩家在密集排版告警配置下，技能全稱（如「聖盾術」、「斬殺」）字串過長容易造成圖示間名稱互相遮擋，需支援自訂簡短簡稱（如「盾」、「斬」）。
+     - **UI 設定視窗擴展**：`condFrame` 高度從 630px 擴展至 680px，新增「自訂顯示名稱 (簡稱)」輸入框；列表行支援即時高亮標註 `法術名稱 (|cff00ff96簡稱|r)`。
+     - **資料持久化**：`SavedVariables.lua` 深度整合 `options.customName`，實裝 `updateAlertCustomName` 核心 API。
+     - **全模組服務層覆蓋**：AuraService（自身增減益、目標減益）、CooldownService（技能冷卻）、ItemCooldownService（物品冷卻與裝備欄位）、GroundEffectService（地面效果）全數優先採用自訂名稱。
+     - **原生光環防覆蓋鉤子**：在 `NativeAuraRenderer.lua` 的 `initializeButton` 為按鈕 `nameText` 實裝防禦性 `SetText` 鉤子，杜絕暴雪底層光環事件回寫覆蓋玩家自訂簡稱。
+  2. 當前多進度各環節達成狀態（Multi-Stage Status）：
+     - [x] 【UI 設定面板擴展與自訂名稱輸入框】：`Options.lua` 680px 高度、即時列表標註、輸入儲存與清空還原。
+     - [x] 【SavedVariables 持久化與 API】：`options.customName` 支援與 `updateAlertCustomName` API。
+     - [x] 【6 大模組服務層深度整合】：AuraService、CooldownService、ItemCooldownService、GroundEffectService 優先採用自訂名稱。
+     - [x] 【原生光環防覆蓋鉤子與規則編譯】：`AuraRuleCompiler.lua` 樣式快照與 `NativeAuraRenderer.lua` 文字守護鉤子。
+     - [x] 【5 大語系詞條完整收錄】：zhTW, zhCN, enUS, koKR, ruRU 100% 對齊。
+     - [x] 【單元測試與門禁驗證】：新增 Flow 測試 `options.custom_name.persistence_and_propagation`，總計 90/90 PASS、499/499 契約全綠。
+
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 原生光環字型大小即時熱套用徹底修復
+
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。徹底排查並解決少年欸回報之「光環文字大小無法隨設定即時反應，需要 /reload 才能生效」之重大缺陷。
   1. 根因剖析：
      - **病根一（按鈕缺乏即時字型熱套用通道）**：舊架構在 `NativeAuraRenderer.lua` 中未維護按鈕參照，`applyTextLayout` 寫死 `return false, "nativeRebuildRequired"`，導致文字樣式無法直接套用於已存在之原生按鈕。
      - **病根二（Options 聯動盲區）**：`Options.lua` 的 `notifyTextLayoutChanged()` 僅通知通用 Legacy 渲染器，完全未打通 Native 原生按鈕通道。
@@ -29,9 +231,9 @@
   4. [x] 【Flow 單元測試補充驗證】：新增 `ui.text_layout.native_live_hot_apply`，驗證原位熱套用成功。
   5. [x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 89/89 PASS、Contracts 499/499 PASS。
 
-## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存
+## 2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 全語系 CLI 重構完備與 12.1.5 前瞻技術備存
 
-- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 **12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線**。
+- current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 **12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線**。
   1. **全語系 CLI 命令列重構與跳脫碼修復**：
      - 5 大語系（`zhTW`、`zhCN`、`enUS`、`koKR`、`ruRU`）功能說明在地化，徹底剔除生硬英文。
      - 修復魔獸聊天框 `<spellID|target|...>` 因 `|t` 被當作 Texture 跳脫碼而破裂為 `<spellIDarget>` 的嚴重瑕疵，改為標準斜線 `<spell/target/cd/item/ground>`。

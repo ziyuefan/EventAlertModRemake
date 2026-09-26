@@ -122,6 +122,8 @@ local function collectAlerts(db)
                         dispelStealableFilter = normalizeStealableFilter(alert.dispelStealableFilter),
                         dispelStyle = normalizeDispelStyle(alert.dispelStyle),
                         sound = type(alert.sound) == "table" and alert.sound or nil,
+                        customName = (type(alert.customName) == "string" and alert.customName ~= "") and alert.customName or nil,
+                        customIcon = alert.customIcon ~= "" and alert.customIcon or nil,
                     })
                 end
             end
@@ -202,6 +204,8 @@ local function buildBaseRule(record, capability, defaultSound, soundEnabled, db)
             dispelShowAlways = record.dispelShowAlways,
             dispelStealableFilter = record.dispelStealableFilter,
             dispelStyle = record.dispelStyle,
+            customName = record.customName,
+            customIcon = record.customIcon,
         },
         layout = capability.layout,
         sound = soundEnabled and (record.sound or defaultSound) or nil,
@@ -257,6 +261,7 @@ local function buildGroup(groupID, rules, layout)
         backend = Constants.AURA_RULE_NATIVE_GROUP,
         priority = first.priority,
         unit = first.unit,
+        spellID = #rules == 1 and first.spellID or nil,
         groupKey = "EAM_GROUP_" .. sanitizeKey(groupID),
         filterString = first.filterString,
         candidateFilters = {
@@ -332,6 +337,8 @@ local function buildContainerFingerprint(plan)
         append(parts, tostring(rule.style and rule.style.dispelShowAlways == true))
         append(parts, tostring(rule.style and rule.style.dispelStealableFilter or "-"))
         append(parts, tostring(rule.style and rule.style.dispelStyle or "-"))
+        append(parts, tostring(rule.style and rule.style.customName or "-"))
+        append(parts, tostring(rule.style and rule.style.customIcon or "-"))
         if rule.spellID then
             append(parts, tostring(rule.spellID))
         elseif rule.alertIDs then
@@ -492,6 +499,8 @@ function AuraRuleCompiler.compile(db, capability)
                     .. "_" .. tostring(rule.style.dispelShowAlways)
                     .. "_" .. tostring(rule.style.dispelStealableFilter or "-")
                     .. "_" .. tostring(rule.style.dispelStyle or "-")
+                    .. "_" .. tostring(rule.style.customName or "-")
+                    .. "_" .. tostring(rule.style.customIcon or "-")
                 local group = groups[groupID]
                 if not group then
                     group = {}

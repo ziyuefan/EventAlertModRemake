@@ -71,6 +71,9 @@ local function releaseTask(task)
 end
 
 local function onUpdate()
+    if EAM.recordHotPath then
+        EAM.recordHotPath("Scheduler.onUpdate")
+    end
     local now = api.GetTime and api.GetTime() or 0
     local index = 1
 
@@ -99,6 +102,9 @@ local function onUpdate()
 end
 
 function Scheduler.after(delay, callback, owner)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("Scheduler.after")
+    end
     if not callback then
         return false, "callbackUnavailable"
     end

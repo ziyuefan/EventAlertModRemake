@@ -379,11 +379,24 @@
         <div class="changelog-container">
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.6 Live Preview Overhaul, Modern Dropdowns &amp; System Diagnostics</span>
-        <span class="changelog-date">📅 2026.09.14</span>
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.7 Custom Display Names, Native Aura Hot-Apply &amp; Slash CLI Overhaul</span>
+        <span class="changelog-date">📅 2026.09.19</span>
     </div>
     <div class="changelog-body">
 <ul class="changelog-mainlist">
+<li><strong>全模組自訂技能與法術名稱功能實裝 (Custom Display Names Across All Modules):</strong></li>
+<ul class="changelog-sublist">
+<li>全新支援自訂圖示顯示名稱 (簡稱)：滿足在圖示間距密集、緊湊排版時避免名稱過長互相遮擋的需求（例如可將「聖盾術」簡稱為「盾」、「斬殺」簡稱為「斬」）。</li>
+<li>條件設定視窗 (EAM_SpellConditionsFrame) 佈局全面升級：新增「自訂顯示名稱 (簡稱)」專屬輸入框，並將視窗高度擴展至 680px，開闊清爽零擁擠。</li>
+<li>清單列表即時標記：若該項目有設定自訂簡稱，設定清單將即時以「法術名稱 (|cff00ff96簡稱|r)」醒目標註，清單管理一目了然。</li>
+<li>全模組服務層深度整合：涵蓋自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻（含裝備欄位）與地面效果全流程，優先顯示玩家自訂名稱，留空自動還原預設法術/物品全稱。</li>
+<li>原生光環防覆蓋機制：針對 Retail 12.1.0 原生光環容器 (Native Aura) 實裝文字守護鉤子 (Text Guard Hook)，鎖定玩家自訂簡稱，防止暴雪底層預設光環名稱回寫覆蓋。</li>
+<li>多語系完整支援：繁中 (zhTW)、簡中 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU) 5 大語系詞條 100% 完整收錄與同步。</li>
+<li>原生光環自訂名稱分組繼承修復 (Native Aura Custom Name Group Separation Fix):</li>
+<li>徹底修復原生光環 (Native Aura) 下多光環合併進動態流動群組 (Flow Group) 時，自訂名稱被第 1 個未設定簡稱的法術暴力覆蓋為 nil 的重大缺陷。</li>
+<li>規則編譯器 (AuraRuleCompiler) 於 groupID 納入 customName 與 customIcon，凡有設定自訂名稱的光環自動分離出專屬群組，完整保留簡稱樣式。</li>
+<li>渲染器 (NativeAuraRenderer) 實裝自訂名稱專屬呈現，有自訂名稱時由子元件獨立顯示，不向暴雪註冊 SetSpellName，徹底杜絕暴雪底層 C++ 內核刷回原生法術全名。</li>
+</ul>
 <li><strong>原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply &amp; Zero Reload):</strong></li>
 <ul class="changelog-sublist">
 <li>徹底修復 Retail 12.1.0 原生光環 (Native Aura) 在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 /reload 才能生效的重大缺陷。</li>
@@ -392,6 +405,27 @@
 <li>優化 Options.lua 滑桿提交流程與文字通知路由，字型大小滑桿放開時不再觸發無謂的容器重建，杜絕觸發 18 次配額上限導致系統鎖死的隱患。</li>
 <li>統一全專案法術名稱字型大小取值邏輯，完善規則編譯器指紋 (buildVisualFingerprint) 與樣式快照 (snapshotStyle)，確保新舊光環按鈕字型大小 100% 一致。</li>
 </ul>
+<li><strong>全語系 CLI 命令列重構與跳脫字元破裂修復 (Slash Commands Localization &amp; Pipe Escape Fix):</strong></li>
+<ul class="changelog-sublist">
+<li>5 大語系（zhTW、zhCN、enUS、koKR、ruRU）說明文字全在地化，徹底剔除生硬英文。</li>
+<li>修復魔獸聊天框「&lt;spellID|target|...&gt;」因「|t」被當作 Texture 貼圖跳脫碼而破裂為「&lt;spellIDarget&gt;」的嚴重瑕疵，改為標準斜線「&lt;spell/target/cd/item/ground&gt;」。</li>
+<li>補齊「/eam preview」、「/eam rune」、「/eam add ground」與「/eam lang」即時語系切換指令。</li>
+</ul>
+<li><strong>快捷懸停加入 (CTRL+ALT) 跨職業法術歸類為自身光環修復 (Ctrl+Alt Quick-Add Cross-Class Spell to Self Auras Catalog Fix):</strong></li>
+<ul class="changelog-sublist">
+<li>徹底修復使用 CTRL+ALT 快捷懸停對非本職業法術/光環點選「加入自身光環監控」時，因遺漏傳遞 catalogScope 導致法術被自動歸入「跨職業清單」、在自身清單第一頁無法看見的缺陷。</li>
+<li>實裝意圖明確注入：透過快捷選單加入光環時，明確賦予 catalogScope = &quot;SELF&quot; 與 fromPlayer = true，100% 確保條目顯示於自身增益/減益清單（第 1 分頁）。</li>
+<li>實裝舊項目自動校正：若先前已被誤歸類至跨職業清單之法術，再次透過快捷鍵加入時自動更新分類為自身光環並觸發設定即時重繪。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.6 Live Preview Overhaul, Modern Dropdowns &amp; System Diagnostics</span>
+        <span class="changelog-date">📅 2026.09.14</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
 <li><strong>地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment &amp; Zero In-Combat Interruption):</strong></li>
 <ul class="changelog-sublist">
 <li>徹底修復地面效果在戰鬥中施放不顯示的問題：校正 Renderer.prewarmAlertFrames 從 SavedVariables.getActiveAlerts() 讀取各職業 Profile，確保非戰鬥期間 100% 預熱建立 Frame。</li>
@@ -2511,6 +2545,48 @@
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
         <h1>📜 EventAlertMod Complete Version History (Changelog)</h1>
         <div class="changelog-container">
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.7 Custom Display Names, Native Aura Hot-Apply &amp; Slash CLI Overhaul</span>
+        <span class="changelog-date">📅 2026.09.19</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>Custom Display Names Across All Modules:</strong></li>
+<ul class="changelog-sublist">
+<li>Added full support for custom icon text names (short names) to resolve overlapping text in compact icon layouts (e.g., customize &quot;Divine Shield&quot; to &quot;Shield&quot;, &quot;Execute&quot; to &quot;Exec&quot;).</li>
+<li>Upgraded Condition Frame (EAM_SpellConditionsFrame): added dedicated &quot;Custom Display Name (Short Name)&quot; input box and expanded frame height to 680px for a clean, spacious layout.</li>
+<li>Live List Marking: alerts with custom names configured are immediately marked in the list view as &quot;Spell Name (|cff00ff96ShortName|r)&quot; for easy identification.</li>
+<li>Deep Multi-Service Integration: seamlessly covers Self Buff, Self Debuff, Target Debuff, Spell Cooldown, Item Cooldown (including equipment slots), and Ground Effects, displaying custom names while safely falling back to default names when empty.</li>
+<li>Native Aura Text Guard Hook: implemented a SetText guard hook for Retail 12.1.0 native aura buttons, preventing Blizzard C++ internal updates from overwriting custom short names.</li>
+<li>Comprehensive Multi-Language Localization: 100% synchronized across zhTW, zhCN, enUS, koKR, and ruRU.</li>
+<li>Native Aura Custom Name Group Separation Fix:</li>
+<li>Completely resolved the critical bug where multiple auras grouped into a dynamic Flow Group had their custom names overwritten to nil by the first spell without a custom name.</li>
+<li>Rule compiler (AuraRuleCompiler) now incorporates customName and customIcon into the groupID, cleanly isolating auras with custom names into dedicated groups and preserving custom short names.</li>
+<li>Renderer (NativeAuraRenderer) dedicates child FontString rendering for custom names without registering SetSpellName with Blizzard&#x27;s core, preventing internal C++ updates from forcing default spell full names.</li>
+</ul>
+<li><strong>Native Aura Font Size Live Hot-Apply &amp; Zero Reload:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely fixed the Retail 12.1.0 Native Aura issue where adjusting countdown timer font size, stack font size, or spell name font size failed to update in real-time and required a /reload.</li>
+<li>Implemented a weak table button pool (NativeAuraRenderer.buttons) to safely retain FontString references without memory leaks.</li>
+<li>Implemented updateButtonFonts in-place hot-apply mechanism, directly updating FontString:SetFont on active auras in real-time without consuming the 18-container rebuild quota.</li>
+<li>Eliminated slider change rebuild deadlocks, preventing permanent nativeReloadRequired lockups from repeated slider adjustments.</li>
+<li>Unified spell name font size resolution across rule compiler fingerprints and style snapshots.</li>
+</ul>
+<li><strong>Slash Commands Localization &amp; Pipe Escape Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Fully localized all slash command help descriptions across all 5 languages, eliminating raw English artifacts.</li>
+<li>Fixed chat pipe escape artifact where &quot;&lt;spellID|target|...&gt;&quot; broke into &quot;&lt;spellIDarget&gt;&quot; due to &quot;|t&quot; being treated as texture escape codes, adopting standard slashes &quot;&lt;spell/target/cd/item/ground&gt;&quot;.</li>
+<li>Added missing slash commands: &quot;/eam preview&quot;, &quot;/eam rune&quot;, &quot;/eam add ground&quot;, and &quot;/eam lang&quot;.</li>
+</ul>
+<li><strong>Ctrl+Alt Quick-Add Cross-Class Spell to Self Auras Catalog Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely fixed the issue where quick-adding a cross-class spell/aura to player aura monitoring via Ctrl+Alt omitted catalogScope, causing the spell to be automatically classified into &quot;Cross-Class Auras&quot; and appear missing from the Self Auras panel (Category 1).</li>
+<li>Implemented explicit intent injection: adding an aura via the quick-action popup now explicitly assigns catalogScope = &quot;SELF&quot; and fromPlayer = true, ensuring 100% placement in the Self Buff/Debuff list (Category 1).</li>
+<li>Implemented automatic legacy item migration: spells previously misclassified into cross-class auras will be dynamically upgraded to self auras upon re-adding via Ctrl+Alt, immediately triggering an options panel refresh.</li>
+</ul>
+</ul>
+</div></div>
 <div class="changelog-card">
     <div class="changelog-header">
         <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.6 Spell Name Placement, Live Preview &amp; Resource Dropdown</span>

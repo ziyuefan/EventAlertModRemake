@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Core Layer">
   <meta name="ai-governance-security" content="Zero-Alloc / Taint-Sensitive">
   <meta name="ai-governance-invariants" content="擁有唯一 EventRouter 孤兒 Frame，禁止各模組自行建立事件監聽 Frame 造成資源浪費 | 嚴禁在熱路徑 (OnUpdate / Event Dispatch) 建立臨時 Closure 或垃圾回收負擔 | StatePool 必須嚴格回收所有狀態物件，確保長期戰鬥記憶體零增長 (0 Alloc)">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.789969+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.759447+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,16 +29,16 @@
     "嚴禁在熱路徑 (OnUpdate / Event Dispatch) 建立臨時 Closure 或垃圾回收負擔",
     "StatePool 必須嚴格回收所有狀態物件，確保長期戰鬥記憶體零增長 (0 Alloc)"
   ],
-  "timestamp": "2026-09-12T20:51:50.789969+08:00",
+  "timestamp": "2026-09-27T07:24:55.759447+08:00",
   "fileCount": 11,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 242971,
+  "totalSizeBytes": 270576,
   "files": [
     {
       "name": "Constants.lua",
       "extension": ".lua",
-      "sizeBytes": 5941,
-      "lineCount": 156,
+      "sizeBytes": 6152,
+      "lineCount": 161,
       "purpose": "專案全域常數庫，定義版本號、模組標識、主題色系、支援專精與 API URL",
       "role": "Core Constants",
       "security": "Safe"
@@ -46,7 +46,7 @@
     {
       "name": "DurationAdapter.lua",
       "extension": ".lua",
-      "sizeBytes": 16207,
+      "sizeBytes": 16269,
       "lineCount": 432,
       "purpose": "依 12.x 契約建立已設定時間範圍的 DurationObject。；建立、設定與停用 DurationTextBinding，避免服務與 Renderer 重複實作生命週期。",
       "role": "Core/DurationAdapter",
@@ -55,8 +55,8 @@
     {
       "name": "Env.lua",
       "extension": ".lua",
-      "sizeBytes": 6209,
-      "lineCount": 156,
+      "sizeBytes": 6641,
+      "lineCount": 162,
       "purpose": "作為 Retail rewrite 的 namespace 與 API alias 錨點，讓後續模組只依賴 EAM 命名空間。；將常用 WoW API 集中到 EAM.API，降低全域查找與錯誤覆寫風險。 | 初始化 addon 名稱、版本、Retail-only 旗標與各模組容器。；建立 EAM.API 靜態 API alias table，供 Core/Services/UI/Debug 使用。",
       "role": "Core/Env",
       "security": "Safe"
@@ -64,8 +64,8 @@
     {
       "name": "EventRouter.lua",
       "extension": ".lua",
-      "sizeBytes": 4010,
-      "lineCount": 141,
+      "sizeBytes": 4336,
+      "lineCount": 152,
       "purpose": "集中式孤兒 Frame 事件分發中心，監聽暴雪原生事件並分派至各模組 Handler",
       "role": "Core Event Dispatcher",
       "security": "Zero-Alloc"
@@ -82,8 +82,8 @@
     {
       "name": "ModuleController.lua",
       "extension": ".lua",
-      "sizeBytes": 5721,
-      "lineCount": 169,
+      "sizeBytes": 6001,
+      "lineCount": 175,
       "purpose": "各服務只註冊事件一次，功能開關以事件入口 gate 與明確清理控制生命週期。；避免反覆 RegisterEvent、Tooltip post-call 或匿名 callback 造成重複處理。 | 讀取全域 moduleToggles，將設定變更分派給對應服務。；提供 frameName 到 module key 的顯示 gate，阻止停用後的舊 queue 復活圖示。",
       "role": "Core/ModuleController",
       "security": "Safe"
@@ -91,8 +91,8 @@
     {
       "name": "Performance.lua",
       "extension": ".lua",
-      "sizeBytes": 1552,
-      "lineCount": 60,
+      "sizeBytes": 7591,
+      "lineCount": 259,
       "purpose": "將效能節流與 shared pool 集中，避免各服務自行判斷戰鬥與 FPS。；所有重工作先經過 canDoHeavyWork 之類決策點。 | 提供 shared table pool、combat-aware heavy work gate、日後 profiling counter。",
       "role": "Core/Performance",
       "security": "Safe"
@@ -100,8 +100,8 @@
     {
       "name": "ProfileCodec.lua",
       "extension": ".lua",
-      "sizeBytes": 60859,
-      "lineCount": 1493,
+      "sizeBytes": 64181,
+      "lineCount": 1556,
       "purpose": "為目前職業 profile 提供可複製的 EAMAP1 JSON/Base64 分享格式。；匯出只包含白名單設定；匯入永遠重算 kind、unit 與 alert ID。 | 嚴格 JSON 編碼/解析、標準 Base64、Adler-32 完整性檢查。；export、previewImport、applyImport 的交易式 API。",
       "role": "Core/ProfileCodec",
       "security": "Taint-Sensitive"
@@ -109,8 +109,8 @@
     {
       "name": "SavedVariables.lua",
       "extension": ".lua",
-      "sizeBytes": 123109,
-      "lineCount": 3303,
+      "sizeBytes": 139867,
+      "lineCount": 3660,
       "purpose": "用版本化 schema 接管舊 EAM SavedVariables，讓重寫可穩定 migration。；SavedVariables 只保存設定，不保存 runtime facts。 | 初始化 EAM_DB、保存 defaults、執行舊 EA_* migration、提供語系與 alert add/remove mutation API。",
       "role": "Core/SavedVariables",
       "security": "Safe"
@@ -118,8 +118,8 @@
     {
       "name": "Scheduler.lua",
       "extension": ".lua",
-      "sizeBytes": 3247,
-      "lineCount": 124,
+      "sizeBytes": 3422,
+      "lineCount": 130,
       "purpose": "高效能非同步延遲調度器，負責防抖 (Debounce)、節流 (Throttle) 與戰鬥後遞延執行",
       "role": "Core Scheduler",
       "security": "Zero-Alloc"
@@ -615,7 +615,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">237.3 KB</span>
+          <span class="stat-val">264.2 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -669,7 +669,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            5.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 156 行</span>
+            6.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 161 行</span>
           </td>
         </tr>
         
@@ -687,7 +687,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            15.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 432 行</span>
+            15.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 432 行</span>
           </td>
         </tr>
         
@@ -705,7 +705,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            6.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 156 行</span>
+            6.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 162 行</span>
           </td>
         </tr>
         
@@ -723,7 +723,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            3.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 141 行</span>
+            4.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 152 行</span>
           </td>
         </tr>
         
@@ -759,7 +759,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            5.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 169 行</span>
+            5.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 175 行</span>
           </td>
         </tr>
         
@@ -777,7 +777,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            1.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 60 行</span>
+            7.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 259 行</span>
           </td>
         </tr>
         
@@ -795,7 +795,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            59.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1493 行</span>
+            62.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1556 行</span>
           </td>
         </tr>
         
@@ -813,7 +813,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            120.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 3303 行</span>
+            136.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 3660 行</span>
           </td>
         </tr>
         
@@ -831,7 +831,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            3.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 124 行</span>
+            3.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 130 行</span>
           </td>
         </tr>
         
@@ -861,7 +861,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.789969+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.759447+08:00</p>
     </footer>
   </div>
 

@@ -172,14 +172,14 @@ if (-not $finalNotesPath) {
         $extracted = [System.Collections.Generic.List[string]]::new()
         $recording = $false
         foreach ($line in $lines) {
-            if ($line -match '^--\s*\[.+?\]') {
+            if ($line -match '^--\s*\[.*\]') {
                 if ($recording) { break }
                 $recording = $true
             }
             if ($recording) {
                 # 轉成簡潔 Markdown 項目，去除 Lua 註解符號與多餘空白
                 $cleanLine = $line.Trim()
-                if ($cleanLine -match '^--\s*\[.+?\]') {
+                if ($cleanLine -match '^--\s*\[.*\]') {
                     continue
                 } elseif ($cleanLine -match '^--\s*(.+)$') {
                     $extracted.Add("- " + $Matches[1].Trim())
@@ -203,7 +203,12 @@ if (-not $finalNotesPath) {
 
 ## 🌟 本次更新重點 (Release Highlights)
 
+<details open>
+<summary><b>📋 點擊展開/收合詳細變更清單 (Detailed Changelog)</b></summary>
+
 $recentChangelog
+
+</details>
 
 ---
 
@@ -214,6 +219,19 @@ $recentChangelog
 | **$addonFileName** | 遊戲 AddOn 插件安裝包 | `$addonHash` |
 
 > ℹ️ **原始碼取得**：GitHub 已於下方自動提供本版本完整源碼包（Source code (zip) 與 Source code (tar.gz)），本機不再重複打包上傳 SRC 附件。
+
+---
+
+<details>
+<summary><b>🤖 AI 治理、工程架構與測試驗證 (點擊展開 / Click to Expand Engineering Details)</b></summary>
+
+- **離線狀態機測試 (Flow Validation)**：94/94 測試全數通過（涵蓋 Slot 1 物理死鎖與幾何座標防禦）。
+- **專案代碼契約 (Validation Contracts)**：499/499 條契約 100% 綠燈全數通過。
+- **語法靜態檢查 (Lua AST Syntax)**：78/78 檔案全數通過。
+- **架構純淨化**：根目錄 `.agents/skills.json` 轉址導向 `.AI/skills/`，維持單一真理維護原則。
+</details>
+
+---
 
 ## 📥 安裝說明 (Installation)
 

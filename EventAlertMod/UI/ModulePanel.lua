@@ -44,6 +44,9 @@ function ModulePanel.refresh()
     for key, checkbox in pairs(ModulePanel.checkboxes) do
         checkbox:SetChecked(getToggleValue(key))
     end
+    if ModulePanel.checkReloadRequired then
+        ModulePanel.checkReloadRequired()
+    end
 end
 
 local function createPanel()
@@ -155,6 +158,14 @@ local function createPanel()
                 )
                 return
             end
+            if controller and type(controller.applyToggle) == "function" then
+                controller.applyToggle(self.eamModuleKey, enabled, "ui")
+            end
+            if self.eamModuleKey == "playerStat" and EAM.Services and EAM.Services.PlayerStatService then
+                if type(EAM.Services.PlayerStatService.onModuleToggle) == "function" then
+                    EAM.Services.PlayerStatService.onModuleToggle(enabled, "ui")
+                end
+            end
             local stateText = enabled
                 and (EAM.L.EAM_MODULE_ENABLED or "已啟用")
                 or (EAM.L.EAM_MODULE_DISABLED or "已停用")
@@ -165,6 +176,9 @@ local function createPanel()
                     stateText
                 )
             )
+            if ModulePanel.checkReloadRequired then
+                ModulePanel.checkReloadRequired()
+            end
         end)
 
         if EAM.UI.setTooltip then
@@ -175,8 +189,8 @@ local function createPanel()
     end
 
     local statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 24, 20)
-    statusText:SetWidth(290)
+    statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 20)
+    statusText:SetWidth(185)
     statusText:SetJustifyH("LEFT")
     Locale.bindText(statusText, "EAM_MODULE_STATUS_READY", "模組設定已就緒。")
     if Theme and Theme.registerText then
@@ -185,8 +199,8 @@ local function createPanel()
     ModulePanel.statusText = statusText
 
     local closeButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    closeButton:SetSize(90, 24)
-    closeButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -20, 16)
+    closeButton:SetSize(86, 24)
+    closeButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 16)
     Locale.bindText(closeButton, "EAM_ABOUT_CLOSE", "關閉")
     if EAM.UI.setTooltip then
         EAM.UI.setTooltip(closeButton, "關閉功能模組開關面板", "關閉")
@@ -197,6 +211,42 @@ local function createPanel()
     if Theme and Theme.registerButton then
         Theme.registerButton(closeButton)
     end
+
+    local reloadButton = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    reloadButton:SetSize(130, 24)
+    reloadButton:SetPoint("BOTTOMRIGHT", closeButton, "BOTTOMLEFT", -6, 0)
+    reloadButton:SetText(EAM.L and EAM.L.EAM_MODULE_RELOAD_BTN or "重新載入 (/reload)")
+    if Theme and Theme.registerButton then
+        Theme.registerButton(reloadButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(reloadButton, "立即重新載入插件介面以套用底層原生光環變更", "重新載入")
+    end
+    reloadButton:SetScript("OnClick", function()
+        if type(ReloadUI) == "function" then
+            ReloadUI()
+        elseif type(api.ReloadUI) == "function" then
+            api.ReloadUI()
+        end
+    end)
+    reloadButton:Hide()
+    ModulePanel.reloadButton = reloadButton
+
+    local function checkReloadRequired()
+        local auraService = EAM.Services and EAM.Services.AuraContainerService
+        local req = auraService and auraService.reloadRequired == true
+        if req then
+            reloadButton:Show()
+            if statusText then
+                statusText:SetText(
+                    "|cffff8000" .. (EAM.L and EAM.L.EAM_MODULE_RELOAD_REQUIRED or "底層原生結構變更，需重新載入介面 (/reload)") .. "|r"
+                )
+            end
+        else
+            reloadButton:Hide()
+        end
+    end
+    ModulePanel.checkReloadRequired = checkReloadRequired
 
     if type(UISpecialFrames) == "table" then
         UISpecialFrames[#UISpecialFrames + 1] = "EAM_ModuleOptionsFrame"

@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Business Logic Layer">
   <meta name="ai-governance-security" content="Taint-Sensitive / Rule Compiler">
   <meta name="ai-governance-invariants" content="解耦業務邏輯與視圖層：Managers 負責運算與狀態判定，透過事件驅動通知 UI 更新 | AuraRuleCompiler 實作 buildLayoutFingerprint 佈局指紋，戰鬥中設定變更延遲至脫戰編譯 | 維持 O(1) 查表優先級，避免遍歷比對">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.801322+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.769459+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,16 +29,16 @@
     "AuraRuleCompiler 實作 buildLayoutFingerprint 佈局指紋，戰鬥中設定變更延遲至脫戰編譯",
     "維持 O(1) 查表優先級，避免遍歷比對"
   ],
-  "timestamp": "2026-09-12T20:51:50.801322+08:00",
+  "timestamp": "2026-09-27T07:24:55.769459+08:00",
   "fileCount": 2,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 23802,
+  "totalSizeBytes": 29378,
   "files": [
     {
       "name": "AlertManager.lua",
       "extension": ".lua",
-      "sizeBytes": 6421,
-      "lineCount": 174,
+      "sizeBytes": 8218,
+      "lineCount": 222,
       "purpose": "全域告警管理總控中心 (Controller)，協調 Services 與 UI，排程並合併渲染請求",
       "role": "Manager / Alert Controller",
       "security": "Taint-Sensitive"
@@ -46,8 +46,8 @@
     {
       "name": "AuraRuleCompiler.lua",
       "extension": ".lua",
-      "sizeBytes": 17381,
-      "lineCount": 466,
+      "sizeBytes": 21160,
+      "lineCount": 527,
       "purpose": "Retail 12.1 Native Aura 原生光環規則編譯器，計算佈局指紋並分離固定槽位與動態流群組",
       "role": "Manager / Rule Compiler",
       "security": "Taint-Sensitive"
@@ -534,7 +534,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">23.2 KB</span>
+          <span class="stat-val">28.7 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -588,7 +588,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            6.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 174 行</span>
+            8.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 222 行</span>
           </td>
         </tr>
         
@@ -606,7 +606,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            17.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 466 行</span>
+            20.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 527 行</span>
           </td>
         </tr>
         
@@ -618,7 +618,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.801322+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.769459+08:00</p>
     </footer>
   </div>
 

@@ -104,6 +104,13 @@ local defaults = {
         addonVersion = "12.1.0",
     },
     debug = false,
+    hotPathMetrics = {
+        cumulative = {},
+        lastSession = {},
+        totalRuntimeSeconds = 0,
+        totalSessionCalls = 0,
+        lastSavedAt = "",
+    },
     profiles = {
         classes = {},
     },
@@ -154,6 +161,7 @@ local defaults = {
         showSCDOutsideCombat = true,
         glowSCDWhenUsable = true,
         cooldownPreRender = true,
+        groundEffectPreRender = true,
         showDKRune = true,
         enableItemCooldown = true,
         enableWeaponEnchant = true,
@@ -1215,6 +1223,10 @@ local function normalizeGroundEffectsForAlerts(db, alerts, appendWarnings)
 
     for key, alert in pairs(source) do
         local spellID = extractGroundSpellID(key, alert)
+        -- 🛡️ 歷史殘留筆誤防禦：19306 (舊版暴風雪筆誤)、19036 與 343292 (舊版火焰之環筆誤) 永久自 SavedVariables 中徹底剔除
+        if spellID == 19306 or spellID == 19036 or spellID == 343292 then
+            spellID = nil
+        end
         if spellID and type(alert) == "table" then
             local id = "groundEffect:player:" .. spellID
             local priority = key == id and 2 or 1
@@ -1228,6 +1240,10 @@ local function normalizeGroundEffectsForAlerts(db, alerts, appendWarnings)
                 record.enabled = alert.enabled ~= false
                 record.durationMode = normalizeGroundDurationMode(alert.durationMode)
                 record.manualDuration = normalizeGroundDuration(alert.manualDuration, 8)
+                record.order = (type(alert.order) == "number") and alert.order or nil
+                record.groundEffectPreRender = (type(alert.groundEffectPreRender) == "boolean") and alert.groundEffectPreRender or nil
+                record.customName = (type(alert.customName) == "string" and alert.customName ~= "") and alert.customName or nil
+                record.customIcon = (alert.customIcon and alert.customIcon ~= "") and alert.customIcon or nil
                 normalized[id] = record
                 priorities[id] = priority
             elseif appendWarnings then
@@ -1238,13 +1254,29 @@ local function normalizeGroundEffectsForAlerts(db, alerts, appendWarnings)
         end
     end
 
+    -- 確保所有 groundEffect alerts 具備連續自然數 order 序號 (1..N)
+    local orderedItems = {}
+    for _, item in pairs(normalized) do
+        orderedItems[#orderedItems + 1] = item
+    end
+    table.sort(orderedItems, function(a, b)
+        local orderA = (type(a.order) == "number") and a.order or 9999
+        local orderB = (type(b.order) == "number") and b.order or 9999
+        if orderA ~= orderB then return orderA < orderB end
+        return (a.spellID or 0) < (b.spellID or 0)
+    end)
+    for idx = 1, #orderedItems do
+        orderedItems[idx].order = idx
+    end
+
     alerts.groundEffects = normalized
 end
 
 local function normalizeGroundEffects(db, appendWarnings)
-    local alerts = type(db.alerts) == "table" and db.alerts or createAlertLists()
-    db.alerts = alerts
-    normalizeGroundEffectsForAlerts(db, alerts, appendWarnings)
+    if type(db) ~= "table" or type(db.alerts) ~= "table" then
+        return
+    end
+    normalizeGroundEffectsForAlerts(db, db.alerts, appendWarnings)
 end
 
 local function normalizeProfileGroundEffects(db)
@@ -1990,6 +2022,79 @@ local function seedActiveProfileDefaults(profile, classToken)
     return true, "seeded"
 end
 
+local function normalizeLayout(db)
+    if type(db) ~= "table" then return end
+    db.layout = type(db.layout) == "table" and db.layout or {}
+    local layout = db.layout
+
+    if type(layout.frames) ~= "table" then
+        layout.frames = {}
+        for fName, fDef in pairs(defaults.layout.frames) do
+            layout.frames[fName] = {
+                growDirection = fDef.growDirection,
+                x = fDef.x,
+                y = fDef.y,
+                point = fDef.point,
+                columns = fDef.columns or 8,
+            }
+        end
+        -- 舊的全域坐標映射給自身光環 (selfAura)
+        if layout.x and layout.y then
+            layout.frames.selfAura.x = layout.x
+            layout.frames.selfAura.y = layout.y
+            layout.frames.selfAura.point = layout.point or "CENTER"
+            layout.x = nil
+            layout.y = nil
+            layout.point = nil
+        end
+    else
+        for fName, fDef in pairs(defaults.layout.frames) do
+            if not layout.frames[fName] then
+                layout.frames[fName] = {
+                    growDirection = fDef.growDirection,
+                    x = fDef.x,
+                    y = fDef.y,
+                    point = fDef.point,
+                    columns = fDef.columns or 8,
+                }
+            end
+        end
+    end
+
+    local iconSize = (type(db.config) == "table" and db.config.iconSize) or layout.iconSize or 40
+    local uCenterX, uCenterY
+    if UIParent and type(UIParent.GetCenter) == "function" then
+        uCenterX, uCenterY = UIParent:GetCenter()
+    elseif type(GetScreenWidth) == "function" and type(GetScreenHeight) == "function" then
+        local sw, sh = GetScreenWidth(), GetScreenHeight()
+        if sw and sh and sw > 0 and sh > 0 then
+            uCenterX = sw / 2
+            uCenterY = sh / 2
+        end
+    end
+
+    for fName, cfg in pairs(layout.frames) do
+        if type(cfg) == "table" then
+            if type(cfg.columns) ~= "number" or cfg.columns < 1 then
+                cfg.columns = 8
+            end
+            -- 自動校正或相容舊有存檔的 BOTTOMLEFT 錨點為 CENTER
+            if type(cfg.point) == "string" and string.upper(cfg.point) == "BOTTOMLEFT" then
+                local fDef = defaults.layout.frames[fName]
+                if uCenterX and uCenterY and type(cfg.x) == "number" and type(cfg.y) == "number" then
+                    cfg.x = (cfg.x + iconSize / 2) - uCenterX
+                    cfg.y = (cfg.y + iconSize / 2) - uCenterY
+                else
+                    cfg.x = (fDef and fDef.x) or 0
+                    cfg.y = (fDef and fDef.y) or 0
+                end
+                cfg.point = "CENTER"
+            end
+        end
+    end
+end
+SavedVariables.normalizeLayout = normalizeLayout
+
 function SavedVariables.initialize()
     EAM_DB = EAM_DB or {}
     local migrated, migrationReason, sourceVersion = runMigrations(EAM_DB)
@@ -2016,6 +2121,7 @@ function SavedVariables.initialize()
     normalizeModuleToggles(EAM_DB)
     normalizeChargeBarConfig(EAM_DB)
     normalizeTextLayout(EAM_DB, false)
+    normalizeGroundEffects(EAM_DB, false)
     normalizeProfileGroundEffects(EAM_DB)
     normalizeCooldownBehaviorLists(EAM_DB)
     normalizeAuraPriorities(EAM_DB)
@@ -2025,56 +2131,36 @@ function SavedVariables.initialize()
     normalizeCooldownSwipeConfig(EAM_DB)
 
     -- 多框架升級相容與舊坐標遷移
-    if EAM_DB.layout then
-        if type(EAM_DB.layout.frames) ~= "table" then
-            EAM_DB.layout.frames = {}
-            for fName, fDef in pairs(defaults.layout.frames) do
-                EAM_DB.layout.frames[fName] = {
-                    growDirection = fDef.growDirection,
-                    x = fDef.x,
-                    y = fDef.y,
-                    point = fDef.point,
-                    columns = fDef.columns or 8,
-                }
-            end
-            -- 舊的全域坐標映射給自身光環 (selfAura)
-            if EAM_DB.layout.x and EAM_DB.layout.y then
-                EAM_DB.layout.frames.selfAura.x = EAM_DB.layout.x
-                EAM_DB.layout.frames.selfAura.y = EAM_DB.layout.y
-                EAM_DB.layout.frames.selfAura.point = EAM_DB.layout.point or "CENTER"
-                EAM_DB.layout.x = nil
-                EAM_DB.layout.y = nil
-                EAM_DB.layout.point = nil
-            end
-        else
-            for fName, fDef in pairs(defaults.layout.frames) do
-                if not EAM_DB.layout.frames[fName] then
-                    EAM_DB.layout.frames[fName] = {
-                        growDirection = fDef.growDirection,
-                        x = fDef.x,
-                        y = fDef.y,
-                        point = fDef.point,
-                        columns = fDef.columns or 8,
-                    }
-                elseif type(EAM_DB.layout.frames[fName].columns) ~= "number" or EAM_DB.layout.frames[fName].columns < 1 then
-                    EAM_DB.layout.frames[fName].columns = 8
-                end
-            end
-        end
-    end
+    normalizeLayout(EAM_DB)
 
     importLegacyTables(EAM_DB)
     seedActiveProfileDefaults(activeProfile, activeClassToken)
     stampLastSaved(EAM_DB)
 
+    local Performance = EAM.Modules and EAM.Modules.Performance
+    if Performance and Performance.loadFromDB then
+        Performance.loadFromDB(EAM_DB)
+    end
+
     local router = EAM.Modules and EAM.Modules.EventRouter
     if router and router.register then
         router.register("PLAYER_LOGOUT", function()
+            local perf = EAM.Modules and EAM.Modules.Performance
+            if perf and perf.saveToDB then
+                perf.saveToDB(EAM.db or EAM_DB)
+            end
             stampLastSaved(EAM.db or EAM_DB)
         end)
     end
 
     return EAM_DB
+end
+
+function SavedVariables.saveHotPathMetrics(db)
+    local perf = EAM.Modules and EAM.Modules.Performance
+    if perf and perf.saveToDB then
+        perf.saveToDB(db or EAM.db or EAM_DB)
+    end
 end
 
 function SavedVariables.getPlayerResourceConfig(resourceKey, specializationID)
@@ -2477,6 +2563,12 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         return false, "invalidKind"
     end
 
+    if kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT then
+        if spellID == 19306 or spellID == 19036 or spellID == 343292 then
+            return false, nil, "invalidSpellID"
+        end
+    end
+
     local id = buildAlertID(kind, unit, spellID, itemID, slotID)
     if not id then
         return false, "invalidID"
@@ -2544,6 +2636,10 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
                 existing.manualDuration = manualDuration
                 changed = true
             end
+            if options.groundEffectPreRender ~= nil and existing.groundEffectPreRender ~= options.groundEffectPreRender then
+                existing.groundEffectPreRender = (type(options.groundEffectPreRender) == "boolean") and options.groundEffectPreRender or nil
+                changed = true
+            end
         end
         if (kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) and options then
             for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
@@ -2560,6 +2656,20 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
                 end
             end
         end
+        if options and options.customName ~= nil then
+            local normCustomName = (type(options.customName) == "string" and options.customName ~= "") and options.customName or nil
+            if existing.customName ~= normCustomName then
+                existing.customName = normCustomName
+                changed = true
+            end
+        end
+        if options and options.customIcon ~= nil then
+            local normCustomIcon = (options.customIcon ~= "") and options.customIcon or nil
+            if existing.customIcon ~= normCustomIcon then
+                existing.customIcon = normCustomIcon
+                changed = true
+            end
+        end
         if changed then
             if not (options and options.deferCommit == true) then
                 touchRevision(db)
@@ -2574,6 +2684,17 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         return true, id, "unchanged"
     end
 
+    local newOrder = (options and type(options.order) == "number") and options.order or nil
+    if not newOrder then
+        local maxOrder = 0
+        for _, alert in pairs(list) do
+            if type(alert.order) == "number" and alert.order > maxOrder then
+                maxOrder = alert.order
+            end
+        end
+        newOrder = maxOrder + 1
+    end
+
     local newAlert = {
         id = id,
         kind = kind,
@@ -2583,6 +2704,7 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         itemType = slotID and "SLOT" or (itemID and "ITEM" or nil),
         unit = unit,
         enabled = true,
+        order = newOrder,
         fromPlayer = options and options.fromPlayer == true or nil,
         catalogScope = kind == EAM.Constants.ALERT_KIND_AURA and options
             and (options.catalogScope == EAM.Constants.AURA_CATALOG_SCOPE_SELF
@@ -2601,6 +2723,10 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
             and normalizeGroundDurationMode(options and options.durationMode) or nil,
         manualDuration = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
             and normalizeGroundDuration(options and options.manualDuration, 8) or nil,
+        groundEffectPreRender = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
+            and (type(options and options.groundEffectPreRender) == "boolean" and options.groundEffectPreRender or nil) or nil,
+        customName = options and type(options.customName) == "string" and options.customName ~= "" and options.customName or nil,
+        customIcon = options and options.customIcon ~= "" and options.customIcon or nil,
     }
     if (kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) and options then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
@@ -2665,6 +2791,41 @@ function SavedVariables.updateAlertPriority(kind, unit, spellID, itemID, value, 
     touchRevision(db)
     if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
         EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    end
+    return true, "updated", db.revision
+end
+
+function SavedVariables.updateAlertCustomName(kind, unit, spellID, itemID, value, slotID)
+    local db = EAM.db
+    if type(db) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    local numericSpellID = spellID and normalizePositiveInteger(spellID) or nil
+    local numericItemID = itemID and normalizePositiveInteger(itemID) or nil
+    local numericSlotID = slotID and normalizePositiveInteger(slotID) or nil
+    local list = getAlertList(db, kind, unit)
+    local id = buildAlertID(kind, unit, numericSpellID, numericItemID, numericSlotID)
+    if not list or not id then
+        return false, "invalidID"
+    end
+    local alert = list[id]
+    if type(alert) ~= "table" then
+        return false, "notFound"
+    end
+    local customName = (type(value) == "string" and value ~= "") and value or nil
+    if alert.customName == customName then
+        return true, "unchanged", customName
+    end
+    alert.customName = customName
+    touchRevision(db)
+    if kind == EAM.Constants.ALERT_KIND_AURA and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_AURA_CONFIG_CHANGED", db.revision)
+    elseif kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", db.revision)
+    elseif kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_COOLDOWN_CONFIG_CHANGED", db.revision)
+    elseif kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_ITEM_COOLDOWN_CONFIG_CHANGED", db.revision)
     end
     return true, "updated", db.revision
 end
@@ -2957,6 +3118,7 @@ function SavedVariables.applyProfileImport(classToken, moduleRecordsOrPayload, m
                     db.layout.frames[fName] = copySerializable(fDef)
                 end
             end
+            normalizeLayout(db)
         end
         if type(layoutData.textLayout) == "table" then
             db.config.textLayout = copySerializable(layoutData.textLayout)
@@ -3230,7 +3392,7 @@ function SavedVariables.swapAlertOrder(kind, unit, id1, id2)
     return true, "swapped", db.revision
 end
 
-function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDuration)
+function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDuration, groundEffectPreRender)
     local numericID = normalizePositiveInteger(spellID)
     local list = getAlertList(EAM.db, EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player")
     local id = numericID and buildAlertID(EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player", numericID) or nil
@@ -3241,16 +3403,49 @@ function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDur
 
     local normalizedMode = normalizeGroundDurationMode(durationMode)
     local normalizedDuration = normalizeGroundDuration(manualDuration, 8)
-    if alert.durationMode == normalizedMode and alert.manualDuration == normalizedDuration then
+    local normalizedPreRender = (type(groundEffectPreRender) == "boolean") and groundEffectPreRender or nil
+    if alert.durationMode == normalizedMode and alert.manualDuration == normalizedDuration and alert.groundEffectPreRender == normalizedPreRender then
         return true, "unchanged"
     end
     alert.durationMode = normalizedMode
     alert.manualDuration = normalizedDuration
+    if groundEffectPreRender ~= nil then
+        alert.groundEffectPreRender = normalizedPreRender
+    end
     touchRevision(EAM.db)
     if EAM.Modules and EAM.Modules.EventRouter then
         EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", EAM.db.revision)
     end
     return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.updateGroundEffectBehavior(spellID, field, value)
+    local db = EAM.db
+    if type(db) ~= "table" then
+        return false, "dbUnavailable"
+    end
+    local numericSpellID = normalizePositiveInteger(spellID)
+    if not numericSpellID or (field ~= "groundEffectPreRender" and field ~= "cooldownPreRender") then
+        return false, "invalidGroundEffectBehavior"
+    end
+    if value ~= nil and type(value) ~= "boolean" then
+        return false, "invalidGroundEffectBehavior"
+    end
+    local list = getAlertList(db, EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player")
+    local id = buildAlertID(EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player", numericSpellID, nil)
+    local alert = id and list and list[id] or nil
+    if type(alert) ~= "table" then
+        return false, "notFound"
+    end
+    if alert.groundEffectPreRender == value then
+        return true, "unchanged"
+    end
+    alert.groundEffectPreRender = value
+    touchRevision(db)
+    if EAM.Modules and EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", db.revision)
+    end
+    return true, "updated", db.revision
 end
 
 function SavedVariables.updateConfigNumber(key, value)

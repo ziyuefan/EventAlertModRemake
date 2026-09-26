@@ -1,3 +1,159 @@
+### 2026-09-27 EAM-20260927-COOLDOWN-BOOST-ZERO-ALLOC-AND-COALESCING：高頻冷卻事件合併排程、警示佇列零記憶體分配 (Zero-Alloc Queue) 暨狀態變更髒檢查抑制 (Dirty Suppression) 極限效能優化
+
+- 狀態：已解決 (Lua 78/78, Flow 98/98, Contracts 499/499, Build-Package PASS)。
+- 需求背景與問題分析：
+  1. 遙測日誌 (In-Game Telemetry Snapshot) 揭示重大執行瓶頸：
+     a. `AlertManager.onAlertStateChanged` 在 155 秒內被呼叫 9,502 次 (60.98 CPS)，每呼叫一次即行 table 分配 `pendingUpdates[state.id] = { state = state, frameName = frameName }`，產生近萬個暫時性 table 堆疊，引發頻繁的 LuaJIT GC 垃圾回收震盪。
+     b. `CooldownService.onCooldownEvent` 與 `ItemCooldownService.onCooldownEvent` 受無 payload 的全域事件 `SPELL_UPDATE_COOLDOWN` (1,074 次) 與 `ACTIONBAR_UPDATE_COOLDOWN` (531 次) 反覆觸發，每次皆進行 `refreshAll` 全清單遍歷，且即使冷卻狀態（`startTime`, `duration`, `charges`, `isPlaceholder`, `usableGlow`, `active`, `shown`）毫無變更，仍無條件觸發 `fireStateChanged`。
+     c. `Renderer.render` 在 155 秒內被調用 3,285 次 (21.08 CPS)，大量重繪無視覺變更的圖示，浪費 CPU 週期。
+- 重構實作：
+  1. **AlertManager 佇列零記憶體分配 (`Managers/AlertManager.lua`)**：
+     - 引入 `persistentSlots` 持久化槽位字典，以 `alertID` 為鍵。
+     - `onAlertStateChanged` 複用已有槽位並直接就地賦值 `slot.state` 與 `slot.frameName`，將暫存佇列之記憶體分配降至 0。
+     - `flushUpdates` 與 `clearPending` 清空佇列時，先將 `update.state = nil` 與 `update.frameName = nil` 解除參照，杜絕物件洩漏。
+  2. **冷卻狀態髒檢查與派發抑制 (`Services/CooldownService.lua`, `Services/ItemCooldownService.lua`)**：
+     - 在 `refreshAlert` 入口嚴格快照前次狀態 (`oldShown`, `oldActive`, `oldCompleted`, `oldCharges`, `oldChargeActive`, `oldPlaceholder`, `oldDesaturated`, `oldGlow`, `oldTimer`, `oldStartTime`, `oldDuration`, `oldItemID`, `oldIcon`)。
+     - 各分支統一回傳 `state, isDirty`；在 `refreshAll`、`refreshSpell`、`refreshItem`、`refreshSlot` 與計時器過期回呼中，嚴格判定 `if isDirty then fireStateChanged(state) end`，全面終結無效狀態派發與後續圖示重繪。
+  3. **高頻全域事件同幀合併排程 (`Services/CooldownService.lua`, `Services/ItemCooldownService.lua`)**：
+     - 實裝 `queueCoalescedRefresh(eventName)`：利用單一靜態 `coalesceFrame:SetScript("OnUpdate", resetCoalesce)` 在同一個幀/Tick 內多次收到全域事件時僅執行一次全清單掃描，並以 `needsTrailingRefresh` 在幀末補齊尾隨更新。防禦性支援延遲載入與無 Frame 環境優雅退回直接更新。
+     - 深度相容離線測試環境：`if EAM.FlowTestEnvironment == "offline-mock" then return refreshAll(eventName) end`，確保同步單元測試與離線驗證即時通過。
+  4. **測試覆蓋與線束補齊 (`Debug/FlowTestRunner.lua`, `Tests/FlowValidationHarness.lua`)**：
+     - Harness 補載 `AlertManager.lua`，並新增 `performance.cooldown_dirty_diffing_and_queue_zero_alloc` 測試案例，嚴格斷言佇列槽位物件等同、無效冷卻更新 0 派發、有效變更即時派發。
+- 驗證結果：
+  - CheckLuaSyntax 78/78 PASS, Run-FlowValidation 98/98 PASS, Test-ValidationContracts 499/499 PASS。
+
+### 2026-09-20 EAM-20260920-GHOST-SPELL-19306-PURGE-AND-LAYOUT-ALIGNMENT：歷史幽靈法術 19306（舊版暴風雪筆誤）與 343292 徹底清除、設定清單五重過濾、自然數順序回正 (1..N) 暨生長方向無縫對齊
+
+- 狀態：已解決 (Lua 78/78, Flow 93/93, Contracts 499/499, Build-Package PASS)。
+- 需求背景與問題分析：
+  1. 少年欸回報：「有這麼難修嗎? 我地面模組生長方向是由右至左, 第一格還是不顯示, 然後沒事還是多一個第五格顯示"地面技能"」、「你到底瞎掰啥麼啦」，並附帶兩張實機截圖。
+  2. 核心破案關鍵（感謝少年欸截圖立大功）：
+     a. **存檔內鬼現形**：在 `media_1789849351523.png` 截圖中，地面技能設定清單第 1 行赫然顯示 `[?] 法術名稱1... [19306] 1 ▲ ▼ [預] [齒輪] X`！
+     b. **數字勘誤**：歷史版本早期提交（`b93adfb`）中將暴風雪筆誤為 `19306`（而非 `19036`），先前代碼過濾了 `19036` 導致 WTF 存檔中的 `19306` 未被清除，一直以 order 1 佔用第 1 格！
+     c. **生長方向由右至左對齊**：由右至左（growDirection = 2）時，order 1 為最右側第 1 格。先前因 19306 佔用 order 1 且為無效法術無貼圖，導致最右側第 1 格看不見冰霜之球，且冰霜之球被擠到第 2 格、火焰之環被擠到第 5 格。
+- 重構實作：
+  1. **五重防線徹底清除與過濾歷史幽靈法術 (`19306`, `19036`, `343292`)**：
+     - `SavedVariables.normalizeGroundEffectsForAlerts`: 遍歷存檔時精確比對 `19306`、`19036` 與 `343292`，強制剔除不寫入 normalized 清單。
+     - `SavedVariables.initialize`: 同時對根層級 `db.alerts` 與各職業專精 Profile `db.profiles.classes` 進行無死角自動清理。
+     - `SavedVariables.addAlert`: 新增地面效果時防禦性阻擋上述幽靈 ID。
+     - `GroundEffectService.compileAlerts`: 編譯法術拓撲與預渲染時忽略上述幽靈 ID，杜絕建立任何 placeholder 或佔位 Frame。
+     - `Options.isAlertDisplayable`: 設定介面列表過濾上述幽靈 ID，杜絕在設定視窗顯示任何紅問號。
+  2. **自然數順序自動回正 (1..N)**：
+     - 幽靈項目移除後，存檔自動將剩餘項目重新編號：
+       - 1: 冰霜之球 (84714)
+       - 2: 暴風雪 (1248829)
+       - 3: 霜之環 (113724)
+       - 4: 火焰之環 (353082)
+     - 畫面實機圖示（由右至左）與設定清單完全一致：最右側第 1 格為冰霜之球，最左側第 4 格為火焰之環。
+  3. **測試與門禁對齊**：
+     - 更新 `FlowTestRunner.lua` Test 86 使用標準暴風雪法術 ID `190356`，離線 Flow 93/93 案例全數 PASS。
+- 驗證結果：
+  - CheckLuaSyntax 78/78 PASS, Run-FlowValidation 93/93 PASS, Test-ValidationContracts 499/499 PASS。
+  - 產包 `Dist\EventAlertMod_12.1.0_Alpha_8.7_20260920_043237.zip` (SHA256: `1ac74aea5151ecd32dc47d113a4dc6ff6e076b2ac4d5500a9fbe2b8c0ac5b84e`) 構建完成。
+
+### 2026-09-20 EAM-20260920-GROUND-EFFECT-SPELL-RESOLUTION-ORDER-COLLISION-AND-BATCH-SYNC-FIX：地面技能未備妥多層降級解析（徹底根除暴風雪變齒輪）、設定列文字與序號重疊消除、自然數排序保證暨批次同步修復
+
+- 狀態：已解決 (Lua 78/78, Flow 93/93, Contracts 499/499, Build-Package PASS)。
+- 需求背景與問題分析：
+  1. 少年欸回報：「第一個地面技能不顯示,但占用第一格位置,然後多一個地面技能 ,啥小啦」、「不知道為啥每次刪除那個強化(343292), 每次reload 都會載入回來, 刪除那個強化還會造成預渲染失敗,那個強化放到第一個位置才會全部顯示,但順序很奇怪, 且第五個變成'地面技能' ??」，並附帶 3 張實機截圖。
+  2. 根因深度剖析：
+     a. **暴風雪（1248829）變「齒輪地面技能」**：在 Retail 12.1.0 登入/Reload 初始化階段，`C_Spell.GetSpellInfo(1248829)` 尚未自伺服器異步載入回傳 `nil`。`GroundEffectService.readSpellPresentation` 舊代碼呼叫 `SpellInfoService` 時過早早退，導致名稱退回 `"地面技能"`、圖示退回 `136243`（齒輪貼圖）。玩家在設定看第 1 個是「暴風雪」，但在畫面上卻看到一個寫著「地面技能」的齒輪佔用第 1 格，誤以為暴風雪沒顯示且多出了一個多餘的技能。
+     b. **設定列文字與序號框重疊碰撞（`[847 2 ]`、`[1248 1 29]`）**：ScrollBox 列在引入「預渲染快捷按鈕 [預]」後，右側按鈕群（刪除、條件、預渲染、下移、上移、排序輸入框）整體推至 X=204px。左側 `nameText:SetWidth(105)` 加 `idText` 寬度固定延伸至 228px，導致 Spell ID 與序號輸入框直接重疊。
+     c. **畫面渲染順序錯亂與未同步**：`Options.notifyConfigChanged()` 原先遺漏了 `GroundEffectService.refreshAll()`；且地面效果派發為無序遍歷且缺乏批次化，中途多次觸發排版造成錯序。此外，`SavedVariables` 原先新增法術時未自動賦予 `maxOrder + 1`，導致部分法術 `order` 為 `nil` 退回無序狀態。
+     d. **綠色框架與牛頭人圖示說明**：截圖中之綠色框架為設定面板開啟時自動呼叫之移動錨點框（Mover Frame）預覽範例，關閉設定即刻自動隱藏，非實體地面效果。
+- 重構實作：
+  1. **多層防禦性法術資訊降級解析 (`Services/SpellInfoService.lua`, `Services/GroundEffectService.lua`, `UI/Renderer.lua`)**：
+     - `SpellInfoService`: 增強 `C_Spell.GetSpellName`、`C_Spell.GetSpellTexture`、`C_Spell.GetBaseSpell` 反查與本地 `SpellHeuristics` 多層 fallback，杜絕回傳空物件。
+     - `GroundEffectService`: `readSpellPresentation` 移除過早早退，多層兜底解析保證 1248829 必定解析出「暴風雪」與真實暴風雪貼圖，永久杜絕齒輪圖示。
+     - `Renderer.render`: 實裝渲染器層級的最後一道防線，若圖示為 136243 或名稱為空/地面技能，主動重新解析補正。
+  2. **ScrollBox 列排版動態伸縮防重疊 (`UI/Options.lua`)**：
+     - `orderBox` 設為 22px。
+     - `idText` 右錨定於 `orderBox` 左側（`"RIGHT", orderBox, "LEFT", -4, 0`），文字靠右對齊。
+     - `nameText` 左錨定於 `checkbox` 右側、右錨定於 `idText` 左側，寬度動態自適應並設置 `SetWordWrap(false)`，徹底消滅任何重疊碰撞。
+  3. **自然數排序保證與批次派發 (`Core/SavedVariables.lua`, `Services/GroundEffectService.lua`, `UI/Options.lua`)**：
+     - `normalizeGroundEffectsForAlerts`: 加載時自動為所有地面效果生成唯一的 1..N 自然數 `order`。
+     - `SavedVariables.addAlert`: 新增法術時若未指定 `order`，自動指定為 `maxOrder + 1`，保證新項目排在末尾不插隊。
+     - `GroundEffectService.refreshAll`: 先依 `order` 排序陣列，並以 `Renderer.BeginBatch()` / `Renderer.EndBatch()` 包裹派發。
+     - `Options.notifyConfigChanged`: 補齊 `GroundEffectService.refreshAll("OPTIONS_CONFIG_CHANGED")`，操作上下移或修改數字時畫面圖示即時零延遲同步。
+- 驗證結果：
+  - CheckLuaSyntax 78/78 PASS, Run-FlowValidation 93/93 PASS, Test-ValidationContracts 499/499 PASS。
+  - 產包 `Dist\EventAlertMod_12.1.0_Alpha_8.7_20260920_034449.zip` (SHA256: `42705dbb13b688e743be03e0702bd13c8c60ea6b2d15058c1552bee99072c09f`) 構建完成。
+
+### 2026-09-20 EAM-20260920-GROUND-EFFECT-COMBAT-AWAKENING-AND-SPELL-NAME-FALLBACK-FIX：地面效果戰鬥喚醒（父框架 Hide 徹底破除）、預熱中心錨點預置與同名法術反向解析修復
+
+- 狀態：已解決 (Lua 78/78, Flow 92/92, Contracts 499/499, Build-Package PASS)。
+- 需求背景與問題分析：
+  1. 少年欸回報：「地面效果又掛掉了」。
+  2. 根因深度剖析：
+     a. **父框架隱藏致命陷阱（Parent Hide Trap）**：先前修復「冷卻結束不留空格」時，當 `shown == false` 會將圖示自 order 移除並調用 `layout(frameName)`；當無圖示時，`layout` 執行了 `parent:Hide()`！進入戰鬥後施放地面技能，`Renderer.requestLayout` 內建戰鬥阻斷契約（`layoutBlocked = true`），排版排隊等待脫戰，導致 `parent` 停留在 `Hide()` 狀態，子圖示即使 `SetAlpha(1.0)` 也因掛載在隱藏父框架下而完全不可見！
+     b. **預熱圖示懸空無錨點**：在 `prewarmAlertFrames` 建立冷卻與地面效果備用 Frame 時，未預先設定相對父框架的中心錨點與幾何尺寸，戰鬥中點亮瞬間圖示缺乏物理坐標。
+     c. **同名天賦/巨集法術 ID 偏離**：部分天賦替換或巨集引導法術之施法 ID 與監控清單註冊的基礎 ID 不一致，且 Base/Override 拓撲未能完全覆蓋。
+- 重構實作：
+  1. **父框架即時喚醒 (`UI/Renderer.lua`)**：
+     - 在 `Renderer.render()` 中加入強保證：只要 `alertState.shown == true` 且 `not fState.parent:IsShown()`，立即呼叫 `fState.parent:Show()`，徹底終結戰鬥中因 `parent:Hide()` 導致子元件全盲的致命根因。
+  2. **預熱物理坐標預置 (`UI/Renderer.lua`)**：
+     - 在 `prewarmAlertFrames` 建立備用 Frame 時，預先賦予相對父框架的中心錨點與尺寸（`SetPoint("CENTER", parent, "CENTER", 0, 0)`、`layoutX = 0, layoutY = 0`），確保戰鬥中點亮瞬間必定具有物理坐標。
+  3. **動態反向法術名稱比對 (`Services/GroundEffectService.lua`)**：
+     - 實裝法術名稱反查機制：當施法 ID 在靜態索引與 Base/Override 均未命中時，動態讀取 `C_Spell.GetSpellInfo(spellID).name`，只要名稱與監控法術相同立即命中並建立快取，徹底覆蓋巨集與專精變體。
+     - 註冊 `COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED` 事件，法術覆蓋更新時即時刷新法術拓撲快取。
+  4. **全量 Mock 與 Harness 健全性補強 (`.AI/Tests/Mocks/WoW121AuraMock.lua`, `.AI/Tests/FlowValidationHarness.lua`, `EventAlertMod/UI/Theme.lua`, `EventAlertMod/Core/DurationAdapter.lua`)**：
+     - `WoW121AuraMock`: 補齊 `SetDesaturated`、`SetProgressCurve`、`SetCooldownDuration`、`GetFrameLevel`、`SetFrameLevel` 與通用 generic frame 原生方法。
+     - `FlowTestRunner`: 新增 `ground_effect.combat_and_name_matching_pipeline` 測試案例，100% 覆蓋同名法術反查、戰鬥中施法觸發、父框架自動 Show 與圖示物理錨點存在性。
+- 驗證結果：
+  - CheckLuaSyntax 78/78 PASS, Run-FlowValidation 92/92 PASS, Test-ValidationContracts 499/499 PASS。
+  - 產包 `Dist\EventAlertMod_12.1.0_Alpha_8.7_20260920_022451.zip` (SHA256: `7d7fd15ce705eb2047c590c93a245da4351ba787dfd58cbd6407fee2ca9eb4da`) 構建完成。
+
+### 2026-09-19 EAM-20260919-TOOLTIP-QUICK-ADD-CROSS-CLASS-CATALOG-SCOPE-FIX：快捷鍵 (CTRL+ALT) 懸停加入非本職法術至自身光環目錄分類遺失修復
+
+- 狀態：已解決 (Lua 78/78, Flow 90/90, Contracts 499/499, Build-Package DEV PASS, 少年欸實機測試已驗證修復)。
+- 需求背景與問題分析：
+  1. 少年欸回報：「以CTRL+ALT 對ICON進行加入自身光環會出現已加入XXXX 但實際未加入,該法術若手動輸入會出現是否加入地確認詢問,是否與這有關係」。
+  2. 根因剖析：
+     a. **分類過濾器邊界檢查**：在 `Options.lua` 中，第 1 分頁（自身清單）透過 `alertMatchesCategory` 嚴格要求 `catalogScope == AURA_CATALOG_SCOPE_SELF`。若手動在第 1 分頁輸入非本職法術 ID，會彈出 `showNonClassSpellConfirmDialog`，使用者確認後以 `force = true` 寫入 `catalogScope = "SELF"` 與 `fromPlayer = true`。
+     b. **懸停快捷鍵意圖遺失**：在 `TooltipMonitorService.lua` 的 `commitCandidate()` 中，當使用者按下 CTRL+ALT 點選「加入玩家光環監控」（`ACTION_AURA_PLAYER`）或「加入目標光環監控」（`ACTION_AURA_TARGET`）時，呼叫 `saved.addAuraAlert()` 未傳入任何 `options`（`options = nil`）。
+     c. **自動分流至跨職業清單**：導致該法術在 SavedVariables 儲存時其 `catalogScope = nil`。當使用者打開設定視窗第 1 分頁時，`migratePlayerAuraCatalogScopes()` 判定非當前職業法術且缺少 `catalogScope`，自動將其標記為 `CROSS_CLASS`，直接分流進第 2 分頁（跨職業增減益清單），造成自身清單中「看似未加入」的假象。少年欸的直覺 100% 命中真因！
+- 重構實作：
+  1. **快捷選單加入意圖明確注入 (`Services/TooltipMonitorService.lua`)**：
+     - 在 `commitCandidate` 中，針對 `ACTION_AURA_PLAYER` 與 `ACTION_AURA_TARGET` 明確構建 `options = { catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF, fromPlayer = true }`。
+     - 針對 `ACTION_GROUND_EFFECT` 提供 `{ enabled = true, durationMode = "AUTO" }`。
+     - 針對 `ACTION_SPELL_COOLDOWN` 與 `ACTION_ITEM_COOLDOWN` 提供 `{ enabled = true }`。
+     - 呼叫 `pcall(operation, ..., options)`，確保快捷加入的光環 100% 具備自身光環目錄標記。
+  2. **跨職業歷史條目自動矯正**：
+     - 當法術先前已被分類為 `CROSS_CLASS` 時，再次透過 CTRL+ALT 快捷鍵加入會自動覆蓋更新為 `catalogScope = "SELF"`，並觸發事件使設定清單立即刷新。
+- 驗證結果：
+  - CheckLuaSyntax 78/78 PASS, Run-FlowValidation 90/90 PASS, Test-ValidationContracts 499/499 PASS。
+  - 產包 `Dist\EventAlertMod_12.1.0_Alpha_8.7_20260919_224056.zip` 經少年欸在 Retail 12.1.0 實機實測，確認徹底修復正常。
+
+### 2026-09-19 EAM-20260919-COOLDOWN-PRERENDER-PARENT-LAYOUT-AND-CUSTOM-NAME-FIX：冷卻預渲染父框架排版可見性根治、自訂名稱即時熱更新與實機深度診斷採集持久化
+
+- 狀態：已解決 (Lua 78/78, Flow 90/90, Contracts 499/499, Build-Package DEV PASS)。
+- 需求背景與問題分析：
+  1. 少年欸回報：「沒修好」、「若不得已,請設計一段偵錯回報訊息讓我向你回報, 同時也回存到存檔,讓你可讀取偵錯訊息。存檔路徑: D:\World of Warcraft\_xptr_\WTF\Account\17194784#5\SavedVariables\EventAlertMod.lua」。
+  2. 根因剖析：
+     a. **冷卻預渲染不可見的真因（父框架隱藏陷阱）**：在 `Renderer.prewarmAlertFrames()` 建立預渲染冷卻圖示時設定 `icon:SetAlpha(0)`，但 `icon.rendered.layoutAlpha` 未被清零；當後續 `Renderer.render()` 執行佔位渲染時，因 icon 已存在且 order 未變，`fState.layoutDirty` 保持為 `false`，導致 `layout()` 未被呼叫，父框架 `fState.parent` 停留在 `Hide()` 狀態！所有預渲染圖示因掛載於隱藏父框架下，在畫面上完全看不見！
+     b. **自訂名稱不生效與熱更新缺陷**：
+        - `ItemCooldownService.lua` 在佔位與冷卻分支中遺漏了 `state.order = alert.order` 與 `state.rawAlert = alert`。
+        - `AuraService.lua` 狀態重設時遺漏傳遞 `state.rawAlert = alert`。
+        - `SavedVariables.updateAlertCustomName()` 遺漏了冷卻與物品冷卻事件廣播（`EAM_COOLDOWN_CONFIG_CHANGED`、`EAM_ITEM_COOLDOWN_CONFIG_CHANGED`）。
+        - `Renderer.applyTextLayoutToIcon()` 過去僅重置位置與大小，未同步更新 `nameText` 字串內容；修改名稱後無法即時在畫面上反映。
+     c. **原生 AuraButton Strict Metatable 邊界**：在 `applyTextLayoutToIcon()` 存取 `icon.alertState` 時，未透過 `rawget()`，觸發了 12.1 嚴格按鈕架構的 `Unknown strict AuraButton method: alertState` 攔截錯誤。
+- 重構實作：
+  1. **冷卻預渲染父框架排版與可見性保證 (`UI/Renderer.lua`)**：
+     - `prewarmAlertFrames()` 建立隱藏圖示時，同步設定 `icon.rendered.layoutAlpha = 0`，消除排版快取誤判。
+     - 在 `Renderer.render()` 結尾新增父框架可見性與未排版偵測：若 `not fState.parent:IsShown() or rendered.layoutX == nil`，強制標記 `fState.layoutDirty = true` 並立即觸發 `layout()`，確保 `fState.parent:Show()` 執行，預渲染圖示 100% 正確顯示。
+  2. **自訂名稱全管道打通與即時熱更新 (`UI/Renderer.lua`, `Core/SavedVariables.lua`, `Services/ItemCooldownService.lua`, `Services/AuraService.lua`)**：
+     - `ItemCooldownService` 補齊 `state.order` 與 `state.rawAlert`。
+     - `AuraService` 補齊 `state.rawAlert`。
+     - `SavedVariables` 補齊冷卻與物品冷卻事件廣播。
+     - `Renderer.applyTextLayoutToIcon` 實裝 `rawget(icon, "alertState")` 安全讀取與 `setTextIfChanged(icon.nameText, rendered, "name", resolvedName)` 即時熱更新。
+  3. **實機深度偵錯採集與 SavedVariables 持久化 (`Debug/PromptExport.lua`, `UI/Slash.lua`)**：
+     - 擴充 `/eam debug` 與 `/eam dump` 命令。
+     - 採集環境、版本、當前職業各類別 Alerts、冷卻狀態機內部狀態、Renderer 框架與所有圖示/父框架座標與 Alpha。
+     - 生成結構化 JSON 快照，存入 `EAM.db.debugDump` 並調用 `markRevisionChanged()`，保證 `/reload` 時寫入使用者指定之 WTF 存檔路徑。
+     - 自動彈出複製視窗（全選文字），支援少年欸直接按 `Ctrl+C` 複製回報。
+  4. **多語系 5 國語言完整對齊 (`Locale/*.lua`)**：`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU` 補齊 `EAM_SLASH_DEBUG_SNAPSHOT_SAVED`。
+- 驗證結果：LuaSyntax 78/78, Flow 90/90, Contracts 499/499 全數綠燈。
+
 ### 2026-09-19 EAM-20260919-GROUND-EFFECT-COOLDOWN-ALIGNMENT-AND-UI-LEAK-FIX：地面效果全面對齊冷卻架構與非戰鬥預熱（徹底根治戰鬥中施放不顯示）暨條件設定視窗元件洩漏修復
 
 - 狀態：已解決 (Lua 78/78, Flow 88/88, Contracts 499/499, Build-Package DEV PASS)。
@@ -2283,7 +2439,130 @@
 - 驗證：
   - Lua 語法檢查：78/78 PASS（`CheckLuaSyntax.ps1`）。
   - Flow 狀態機測試：88/88 PASS（`Run-FlowValidation.ps1`）。
-  - Validation Contracts：499/499 PASS（`Test-ValidationContracts.ps1`）。
-  - 打包測試：128 個檔案 PASS（`Build-Package.ps1 -PackageLabel DEV`）。
 
+### ISSUE-091: CLI 命令列全語系重構、聊天框貼圖跳脫碼修復與指令補齊 (Alpha 8.7)
+- 日期：2026-09-19
+- 現象與挑戰：
+  1. 聊天框跳脫字元破裂：斜線指令說明 `<spellID|target|...>` 因含有字元序列 `|t`，被魔獸聊天引擎誤判定為材質貼圖標籤（`|Tpath...|t`）之結束標記，導致字串在聊天框中破裂為 `<spellIDarget>`，排版嚴重破損。
+  2. 多語系說明殘留英文：舊版 `/eam help` 在各語言環境下多數輸出硬編碼英文，未能依玩家客戶端語系自動切換。
+  3. 常用指令缺失：缺少快捷預覽切換 `/eam preview`、符能框架位置解鎖 `/eam rune`、地面效果指令增補 `/eam add ground <id>` 與即時切換語言 `/eam lang <locale>`。
+- 有效解法：
+  1. **聊天框語法符號替換**：在 `Slash.lua` 中全面將參數提示的管線符號 `|` 替換為斜線 `/`（如 `<spell/target/cd/item/ground>`），徹底杜絕 `|t` 被魔獸原生文字引擎誤解析為 Texture 跳脫碼之缺陷。
+  2. **5 大語系完整在地化**：在 `Locale`（zhTW, zhCN, enUS, koKR, ruRU）補齊全套斜線指令鍵值與說明，動態依據 `EAM.L` 輸出本土化文本。
+  3. **補齊關鍵指令與別名**：
+     - `/eam preview`（別名 `/eam p`）：直接切換預覽模式。
+     - `/eam rune`：直接開關死亡騎士符能框架解鎖移動。
+     - `/eam add ground <spellID>`：支援從指令列直接新增地面效果監控。
+     - `/eam lang <locale>`：支援指令列直接切換插件語系。
+- 驗證：
+  - Lua 語法檢查：78/78 PASS。
+  - Flow 狀態機測試：88/88 PASS。
+  - Validation Contracts：499/499 PASS。
 
+### ISSUE-092: 原生光環字型大小即時熱套用徹底修復與 18 次配額死鎖根除 (Alpha 8.7)
+- 日期：2026-09-19
+- 現象與挑戰：
+  1. 玩家回報在 Retail 12.1.0 原生光環模式下，於設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後，畫面上正在顯示的原生光環按鈕完全沒有反應，必須手動執行 `/reload` 重新載入介面才能看到字型變更。
+  2. 根因剖析發現三重病根：
+     - **病根一（按鈕缺乏即時字型熱套用通道）**：舊架構在 `NativeAuraRenderer.lua` 中未維護按鈕參照，`applyTextLayout` 寫死 `return false, "nativeRebuildRequired"`，導致文字樣式無法直接套用於已存在之原生按鈕。
+     - **病根二（Options 聯動盲區）**：`Options.lua` 的 `notifyTextLayoutChanged()` 僅通知通用 Legacy 渲染器，完全未打通 Native 原生按鈕通道。
+     - **病根三（容器重建上限死鎖與非同步盲區）**：放開滑桿時試圖呼叫 `triggerSafeRebuild` 重新建立暴雪 `AuraContainer`，但暴雪原生容器不會主動為「當前身上已存在的光環」回溯重跑 `initializeFrame`；且反覆拉動滑桿快速耗盡 18 次配額觸發 `nativeReloadRequired` 永久死鎖，迫使玩家必須 `/reload`。
+- 有效解法：
+  1. **弱引用按鈕註冊池**：在 `NativeAuraRenderer.lua` 引入 `buttons = setmetatable({}, { __mode = "k" })` 弱引用池，於 `initializeButton` 時記錄活躍按鈕及其 `timerText`、`stackText`、`nameText` 參照。當暴雪底層銷毀按鈕時由 Lua GC 自動回收，零記憶體洩漏。
+  2. **零配額熱套用機制**：實裝 `NativeAuraRenderer.updateButtonFonts(config)`，直接調用 `FontString:SetFont` 原位更新畫面上所有活躍光環文字，零延遲、無需銷毀容器、不消耗 18 次配額，徹底擺脫 `/reload` 依賴。
+  3. **打通 Options 聯動與防死鎖過濾**：在 `Options.notifyTextLayoutChanged()` 注入 `NativeAuraRenderer.updateButtonFonts()`，拉動滑桿瞬間螢幕文字即時縮放；在 `commitNativeChange` 針對字型大小滑桿移除多餘的 `triggerSafeRebuild`，杜絕 18 次配額被反覆拖曳耗盡。
+  4. **統一規則編譯器法術名稱字型取值**：在 `AuraRuleCompiler.lua` 中，將 `buildVisualFingerprint` 與 `snapshotStyle` 之法術名稱字型大小取值統一為 `TextPlacement.getFontSize(config, "spellName")`，確保指紋比對與按鈕樣式一致。
+- 驗證：
+  - Flow 測試新增 `ui.text_layout.native_live_hot_apply` 驗證原位熱更新成功。
+  - Lua 語法檢查：78/78 PASS。
+  - Flow 狀態機測試：89/89 PASS。
+  - Validation Contracts：499/499 PASS。
+
+### ISSUE-093: 全模組自訂技能與法術名稱功能實裝與原生光環防覆蓋鉤子 (Alpha 8.7)
+- 日期：2026-09-19
+- 現象與挑戰：
+  1. 玩家需求：在圖示間距緊湊、密集排版的戰鬥告警配置下，技能或法術之原始全稱（例如「聖盾術」、「斬殺」、「反魔法護罩」）字元過長，圖示彼此相鄰時文字容易發生嚴重重疊與互相遮擋，需要支援自訂簡短名稱（如簡寫為「盾」、「斬」、「罩」）。
+  2. 架構挑戰：
+     - EAM 擁有 6 大核心警報模組（自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻、地面效果），設定需具備統一持久化與各模組獨立相容性。
+     - Retail 12.1.0 原生光環（Native Aura）受暴雪底層光環管線託管，其內部事件會不定期重置或呼叫 `nameText:SetText(aura.name)`，導致玩家自訂的簡短名稱被底層覆蓋還原。
+- 有效解法：
+  1. **UI 條件設定視窗擴展**：
+     - 在 `Options.lua` 中將 `EAM_SpellConditionsFrame`（`condFrame`）面板高度從 630px 擴展至 680px，留出寬裕排版空間。
+     - 增設「自訂顯示名稱 (簡稱)」專屬輸入框（`condFrame.customNameInput`），支援即時輸入、即時儲存或留空自動還原全稱。
+     - 清單列表即時標記：若該項目有設定自訂名稱，清單列動態標註為 `法術名稱 (|cff00ff96簡稱|r)`，讓玩家一目了然。
+  2. **SavedVariables 資料持久化**：
+     - 在 `SavedVariables.lua` 的各模組正規化與存檔中全面支援 `options.customName`（string / nil）。
+     - 實裝 `SavedVariables.updateAlertCustomName(category, spellId, customName)` 核心 API，並廣播 `EAM_SPELL_CONDITIONS_UPDATED` 事件通知服務層熱更新。
+  3. **全模組服務層深度整合**：
+     - `AuraService.lua`：自身 Buff、自身 Debuff、目標 Debuff 在註冊與觸發警報時優先採用 `alert.customName`。
+     - `CooldownService.lua`：技能冷卻在捕獲施法與充能時優先採用 `alert.customName`。
+     - `ItemCooldownService.lua`：物品冷卻與 19 部位裝備欄位冷卻時優先採用 `alert.customName`。
+     - `GroundEffectService.lua`：地面範圍效果在施法命中時優先採用 `alert.customName`。
+  4. **原生光環與傳統渲染器守護**：
+     - `AuraRuleCompiler.lua`：在規則編譯時將 `customName` 快照至 `rule.style.customName`。
+     - `NativeAuraRenderer.lua`：在 `initializeButton` 為按鈕的 `nameText` 實裝防禦性 `SetText` 鉤子（Text Guard Hook），若有自訂名稱且傳入非空新名稱時強制鎖定為自訂名稱，杜絕暴雪底層覆蓋。
+     - `Renderer.lua`：傳統圖示渲染器優先採用 `raw.customName` 繪製法術名稱。
+  5. **多語系與單元測試**：
+     - 補齊 5 大語系（zhTW, zhCN, enUS, koKR, ruRU）之 `EAM_OPT_CUSTOM_NAME_LABEL` 與 `EAM_OPT_CUSTOM_NAME_TIP` 詞條。
+     - 在 `FlowTestRunner.lua` 新增專屬測試案例 `options.custom_name.persistence_and_propagation`。
+- 驗證：
+  - Lua 語法檢查：78/78 PASS。
+  - Flow 狀態機測試：90/90 PASS。
+### ISSUE-094: 地面效果預渲染佔位 (Pre-render Placeholder) 機制與全域/單體自選開關實裝 (Alpha 8.7)
+- 日期：2026-09-20
+- 現象與挑戰：
+  1. 玩家需求：少年欸要求地面效果（GroundEffectService）比照技能冷卻（Cooldown）採用成熟的「預渲染（Pre-render）」待命佔位機制，且必須提供設定開關供自由選擇是否啟用。
+  2. 行為特徵：
+     - 預渲染啟用時：在登入、重載介面、設定變更與脫離戰鬥時，所有啟用的地面效果警示以灰階半透明待命佔位顯示，不佔用活躍計時器，不觸發發光或倒數。
+     - 施法成功時：自動解除佔位與灰階狀態，進入全彩動態倒數與即時渲染。
+     - 效果結束時：若開啟預渲染則自動回歸灰階待命佔位；若未開啟則隱藏圖示。
+     - 自選開關：全域預設開啟（`groundEffectPreRender = true`），條件設定視窗中支援單一技能獨立核取方塊切換，清單列表提供綠色「預」快捷按鈕即時點擊覆寫。
+- 有效解法：
+  1. **資料層與設定架構**：
+     - `SavedVariables.lua`：`DEFAULT_CONFIG` 新增 `groundEffectPreRender = true`。`addAlert` 與 `updateGroundEffectAlert` 支援 `options.groundEffectPreRender`。新增 `SavedVariables.updateGroundEffectBehavior(spellID, field, value)` API，支援三態設定並廣播 `EAM_GROUND_EFFECT_CONFIG_CHANGED`。
+     - `ProfileCodec.lua`：將 `groundEffectPreRender` 納入配置匯出白名單與匯入正規化中，保證跨帳號分享與 WTF 遷移不遺失。
+  2. **服務層狀態機深度整合**：
+     - `GroundEffectService.lua`：實裝 `resolveBehavior(alert, "groundEffectPreRender")` 三態優先級解析（單一技能 > 全域設定 > 預設 true）。
+     - 實裝 `GroundEffectService.refreshAll(eventName)`，在啟動、戰鬥結束、拓撲變更與設定更新時建立灰階佔位 state（`isPlaceholder = true`, `isDesaturated = true`, `shown = true`）。
+     - `triggerGroundEffect` 在施法命中時精準清除佔位標記（`isPlaceholder = false`, `isDesaturated = false`），正常進入全彩倒數。
+     - `onAlertExpired` 到期時依解析結果決定：啟用則回歸灰階佔位，未啟用則隱藏釋放。
+  3. **UI 互動與多語系支援**：
+     - `Options.lua`：ScrollBox 列表將地面效果分類納入 `isPreRenderCategory`，使每行條目均具備綠色「預」快捷按鈕並支援即時三態循環切換。條件設定視窗（`condFrame`）新增 `groundPreRenderCb` 核取方塊，打通雙向儲存與載入。
+     - 5 大語系（zhTW, zhCN, enUS, koKR, ruRU）補齊 `EAM_OPT_GROUND_PRERENDER` 與 `EAM_OPT_GROUND_PRERENDER_TIP` 詞條。
+  4. **合約與測試相容**：
+     - `FlowTestRunner.lua`：新增專屬測試案例 `ground_effect.prerender_toggle_and_lifecycle` 完整驗證佔位、施法點亮、到期回歸與手動關閉流程。
+     - 修正既有 `ground.spell_family_activation` 測試之未觸發警示狀態斷言，完美相容預渲染佔位。
+- 驗證：
+  - Lua 語法檢查：78/78 PASS。
+  - Flow 狀態機測試：93/93 PASS (100%)。
+  - Validation Contracts：499/499 PASS。
+  - 插件打包：產出 `EventAlertMod_12.1.0_Alpha_8.7_20260920_025228.zip` (SHA-256 驗證通過)。
+
+### ISSUE-095: 技能冷卻與地面效果第一格消失 (Slot 1 物理死鎖) 與幾何漂移 (BOTTOMLEFT 錨點) 根治 (Alpha 8.7)
+- 日期：2026-09-24
+- 現象與挑戰：
+  1. 玩家回報：「技能冷卻也是第一格消失，然後地面效果也是沒修好，掛在莫名其妙的地方」。
+  2. 根因剖析：
+     - **Slot 1 物理蒸發（雙重死鎖）**：`prewarmAlertFrames()` 預設 `layoutX = 0, layoutY = 0` 且 `isParasite = nil`。首次渲染時寄生檢查判定 `isParasite ~= false` 呼叫 `ClearAllPoints()` 剝離錨點；隨後 `layout()` 計算 Slot 1 也是 (0, 0)，因 `0 ~= 0` 為 false 跳過 `SetPoint()`，導致 Slot 1 帶有 0 個錨點 (`GetNumPoints() == 0`) 漂浮在遊戲世界外。Slot 2..16 因偏移量不為 0 而成功重新錨定。
+     - **幾何漂移與坐標歸零**：暴雪原生 `StopMovingOrSizing()` 會將框架錨點強制轉為 `"BOTTOMLEFT"`。當動態增減圖示時父框架執行 `SetSize()`，因以 `"BOTTOMLEFT"` 為原點，導致子元件向反方向整體位移。更甚者，先前修復中在 `OnDragStop` 使用了 `(parent:GetCenter())` 表達式包裹，觸發 Lua 二元運算式多回傳值截斷陷阱，致使 `pCenterY` 恆為 `nil`，Y 坐標被強制重設為 0，框架瞬間吸附至螢幕垂直中央！
+- 有效解法：
+  1. **預熱狀態與哨兵值修正 (`Renderer.lua`)**：
+     - `prewarmAlertFrames()` 初始化圖示 `icon.isParasite = false`，並將 `rendered.layoutX/Y/Size` 設為 `nil`（嚴禁使用 0 作為哨兵值）。
+     - `IconPool.release()` 於回收圖示時同步重置 `icon.isParasite = false`，杜絕跨生命週期污染。
+  2. **寄生判斷正規化與快取重置 (`Renderer.lua`)**：
+     - `Renderer.render()` 將寄生判斷正規化為 `local currentIsParasite = (icon.isParasite == true)`，當狀態改變時同步清空快取 `rendered.layoutX/Y/Size = nil` 並標記 `fState.layoutDirty = true`。
+  3. **物理錨點計數守衛 (`Renderer.lua`)**：
+     - `layout()` 增加 `hasNoPoints = (type(icon.GetNumPoints) == "function" and icon:GetNumPoints() == 0)` 計數守衛，只要錨點數為 0 強制執行 `ClearAllPoints()` 與 `SetPoint()`。
+     - 加入即時 `IsShown()` 與 `realAlpha` 即時校驗，確保圖示可見度。
+  4. **地面效果觸發即時重新排版 (`GroundEffectService.lua`)**：
+     - `triggerGroundEffect` 於佔位符轉為真實警示時顯式調用 `Renderer.requestLayout(groundEffect)`。
+  5. **拖曳坐標換算與 CENTER 錨點保證 (`Renderer.lua`, `SavedVariables.lua`)**：
+     - 統一實作 `saveFrameCenterPosition(parent, pName, fLabel)`：以獨立變數分別安全接收 `parent:GetCenter()` 與 `UIParent:GetCenter()` 的 X、Y 雙回傳值，徹底根除 Lua 截斷導致 Y=0 的致命缺陷。
+     - 拖曳結束後強制執行 `parent:ClearAllPoints()` 與 `parent:SetPoint("CENTER", UIParent, "CENTER", xOffset, yOffset)`，統一將 `cfg.point` 存為 `"CENTER"`。
+     - `SavedVariables.normalizeLayout(db)` 針對歷史存檔中所有的 `"BOTTOMLEFT"` 錨點進行全量無縫換算為 `"CENTER"`。
+  6. **端到端狀態機測試 (`FlowTestRunner.lua`)**：
+     - 新增 `cooldown.slot1_prewarm_anchor_integrity` 測試案例：完整驗證 Slot 1/2 預熱錨點、零點守衛、`OnDragStop` 2D 幾何坐標換算 (非 0 斷言) 及 `normalizeLayout`。
+- 驗證：
+  - Lua 語法檢查：78/78 PASS (0 failed)。
+  - Flow 狀態機測試：94/94 PASS (100%)。
+  - Validation Contracts：499/499 PASS (100%)。

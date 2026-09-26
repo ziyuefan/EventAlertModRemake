@@ -801,6 +801,7 @@ function Service.commitCandidate(source, action, manualID)
     local identifier
     local operation
     local unit
+    local options = nil
     if action == Service.ACTION_GROUND_EFFECT then
         if source.kind == "item" then
             local cItem = api.C_Item or C_Item
@@ -816,27 +817,46 @@ function Service.commitCandidate(source, action, manualID)
             identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
         end
         operation = saved.addGroundEffectAlert
+        options = { enabled = true, durationMode = "AUTO" }
     elseif source.kind == "spell" then
         identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
         if action == Service.ACTION_SPELL_COOLDOWN then
             operation = saved.addSpellCooldownAlert
+            options = { enabled = true }
         elseif action == Service.ACTION_AURA_PLAYER then
             unit = "player"
             operation = saved.addAuraAlert
+            options = {
+                catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF,
+                fromPlayer = true,
+            }
         elseif action == Service.ACTION_AURA_TARGET then
             unit = "target"
             operation = saved.addAuraAlert
+            options = {
+                catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF,
+                fromPlayer = true,
+            }
         end
     elseif source.kind == "item" and action == Service.ACTION_ITEM_COOLDOWN then
         identifier = safePositiveInteger(source.itemID) or safePositiveInteger(manualID)
         operation = saved.addItemCooldownAlert
+        options = { enabled = true }
     elseif source.kind == "aura" then
         identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
         operation = saved.addAuraAlert
         if action == Service.ACTION_AURA_PLAYER then
             unit = "player"
+            options = {
+                catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF,
+                fromPlayer = true,
+            }
         elseif action == Service.ACTION_AURA_TARGET then
             unit = "target"
+            options = {
+                catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF,
+                fromPlayer = true,
+            }
         else
             operation = nil
         end
@@ -844,17 +864,27 @@ function Service.commitCandidate(source, action, manualID)
         if action == Service.ACTION_SPELL_COOLDOWN then
             identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
             operation = saved.addSpellCooldownAlert
+            options = { enabled = true }
         elseif action == Service.ACTION_ITEM_COOLDOWN then
             identifier = safePositiveInteger(source.itemID) or safePositiveInteger(manualID)
             operation = saved.addItemCooldownAlert
+            options = { enabled = true }
         elseif action == Service.ACTION_AURA_PLAYER then
             identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
             unit = "player"
             operation = saved.addAuraAlert
+            options = {
+                catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF,
+                fromPlayer = true,
+            }
         elseif action == Service.ACTION_AURA_TARGET then
             identifier = safePositiveInteger(source.spellID) or safePositiveInteger(manualID)
             unit = "target"
             operation = saved.addAuraAlert
+            options = {
+                catalogScope = EAM.Constants.AURA_CATALOG_SCOPE_SELF,
+                fromPlayer = true,
+            }
         end
     end
 
@@ -869,9 +899,9 @@ function Service.commitCandidate(source, action, manualID)
     local alertID
     local change
     if unit then
-        callOK, success, alertID, change = pcall(operation, unit, identifier)
+        callOK, success, alertID, change = pcall(operation, unit, identifier, options)
     else
-        callOK, success, alertID, change = pcall(operation, identifier)
+        callOK, success, alertID, change = pcall(operation, identifier, options)
     end
     if not callOK or success ~= true then
         local reason = callOK and alertID or "luaError"

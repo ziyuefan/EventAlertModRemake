@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Localization Layer">
   <meta name="ai-governance-security" content="Safe String Lookup">
   <meta name="ai-governance-invariants" content="所有語系字典必須鍵值對齊，嚴禁出現 missing labelKey 錯誤 | 支援即時切換語言 (EAM_LOCALE_CHANGED) 動態重繪 UI，免 /reload 即時生效">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.800533+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.768780+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -28,10 +28,10 @@
     "所有語系字典必須鍵值對齊，嚴禁出現 missing labelKey 錯誤",
     "支援即時切換語言 (EAM_LOCALE_CHANGED) 動態重繪 UI，免 /reload 即時生效"
   ],
-  "timestamp": "2026-09-12T20:51:50.800533+08:00",
+  "timestamp": "2026-09-27T07:24:55.768780+08:00",
   "fileCount": 6,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 338180,
+  "totalSizeBytes": 367139,
   "files": [
     {
       "name": "Common.lua",
@@ -45,8 +45,8 @@
     {
       "name": "enUS.lua",
       "extension": ".lua",
-      "sizeBytes": 60417,
-      "lineCount": 1139,
+      "sizeBytes": 65378,
+      "lineCount": 1214,
       "purpose": "英文 fallback 字串表，任何語系缺字串時以此補底。；只註冊字串，不混入 UI 或設定邏輯。 | 透過 Locale.register(\"enUS\") 寫入 L.* keys。",
       "role": "Locale/enUS",
       "security": "Safe"
@@ -54,8 +54,8 @@
     {
       "name": "koKR.lua",
       "extension": ".lua",
-      "sizeBytes": 65665,
-      "lineCount": 1135,
+      "sizeBytes": 71588,
+      "lineCount": 1210,
       "purpose": "韓文語系字串表，僅作字串覆蓋。；語系與邏輯分離。 | 透過 Locale.register(\"koKR\") 覆蓋 L.* keys。",
       "role": "Locale/koKR",
       "security": "Safe"
@@ -63,8 +63,8 @@
     {
       "name": "ruRU.lua",
       "extension": ".lua",
-      "sizeBytes": 84024,
-      "lineCount": 1137,
+      "sizeBytes": 91442,
+      "lineCount": 1212,
       "purpose": "俄文語系字串表，僅作字串覆蓋。；語系與邏輯分離。 | 透過 Locale.register(\"ruRU\") 覆蓋 L.* keys。",
       "role": "Locale/ruRU",
       "security": "Safe"
@@ -72,8 +72,8 @@
     {
       "name": "zhCN.lua",
       "extension": ".lua",
-      "sizeBytes": 57572,
-      "lineCount": 1096,
+      "sizeBytes": 62902,
+      "lineCount": 1171,
       "purpose": "簡體中文語系字串表，與 zhTW 嚴格分離。；避免簡體字串污染繁體中文檔。 | 透過 Locale.register(\"zhCN\") 覆蓋 L.* keys。",
       "role": "Locale/zhCN",
       "security": "Safe"
@@ -81,8 +81,8 @@
     {
       "name": "zhTW.lua",
       "extension": ".lua",
-      "sizeBytes": 60125,
-      "lineCount": 1137,
+      "sizeBytes": 65452,
+      "lineCount": 1212,
       "purpose": "台灣繁體中文語系字串表，維持 EAM 原本主要使用者語境。；不得混入簡體中文字串。 | 透過 Locale.register(\"zhTW\") 覆蓋 L.* keys。",
       "role": "Locale/zhTW",
       "security": "Safe"
@@ -569,7 +569,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">330.3 KB</span>
+          <span class="stat-val">358.5 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -641,7 +641,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            59.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1139 行</span>
+            63.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1214 行</span>
           </td>
         </tr>
         
@@ -659,7 +659,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            64.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1135 行</span>
+            69.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1210 行</span>
           </td>
         </tr>
         
@@ -677,7 +677,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            82.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1137 行</span>
+            89.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1212 行</span>
           </td>
         </tr>
         
@@ -695,7 +695,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            56.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1096 行</span>
+            61.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1171 行</span>
           </td>
         </tr>
         
@@ -713,7 +713,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            58.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1137 行</span>
+            63.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1212 行</span>
           </td>
         </tr>
         
@@ -725,7 +725,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.800533+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.768780+08:00</p>
     </footer>
   </div>
 

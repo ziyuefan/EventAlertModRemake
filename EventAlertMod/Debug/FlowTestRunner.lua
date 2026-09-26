@@ -5138,7 +5138,7 @@ FlowTestRunner.registerCase({
         local originalCharges = cSpell.GetSpellCharges
         local originalCooldown = cSpell.GetSpellCooldown
 
-        local ok, result = pcall(function()
+        local ok, result, extra = pcall(function()
             local alertA = {
                 id = "spellCooldown:player:60101",
                 enabled = true,
@@ -5155,6 +5155,7 @@ FlowTestRunner.registerCase({
                     cooldownRemoveAura = false,
                     showSCDOutsideCombat = true,
                     glowSCDWhenUsable = true,
+                    cooldownPreRender = false,
                 },
                 alerts = {
                     spellCooldowns = {
@@ -5305,18 +5306,28 @@ FlowTestRunner.registerCase({
             local completedGlow = completedState ~= nil
                 and completedState.completed == true
                 and completedState.usableGlow == true
-            return noBulkOnRefresh
-                and noBulkOnHealOrRegen
-                and noOpenForOtherUnit
-                and exactCastOnly
-                and regenKeepsOnlyActivated
-                and toggleDoesNotReactivate
-                and behaviorFieldsPreserveFalse
-                and removedWhenReady
-                and hiddenOutside
-                and shownInCombat
-                and hiddenAfterLeavingCombat
-                and completedGlow
+            local results = {
+                noBulkOnRefresh = noBulkOnRefresh,
+                noBulkOnHealOrRegen = noBulkOnHealOrRegen,
+                noOpenForOtherUnit = noOpenForOtherUnit,
+                exactCastOnly = exactCastOnly,
+                regenKeepsOnlyActivated = regenKeepsOnlyActivated,
+                toggleDoesNotReactivate = toggleDoesNotReactivate,
+                behaviorFieldsPreserveFalse = behaviorFieldsPreserveFalse,
+                removedWhenReady = removedWhenReady,
+                hiddenOutside = hiddenOutside,
+                shownInCombat = shownInCombat,
+                hiddenAfterLeavingCombat = hiddenAfterLeavingCombat,
+                completedGlow = completedGlow,
+            }
+            local allPass = true
+            for _, v in pairs(results) do
+                if v ~= true then
+                    allPass = false
+                    break
+                end
+            end
+            return allPass, results
         end)
         EAM.db = originalDB
         service.states = originalStates
@@ -5325,9 +5336,19 @@ FlowTestRunner.registerCase({
         cSpell.GetSpellCharges = originalCharges
         cSpell.GetSpellCooldown = originalCooldown
         local valid = ok and result == true
+        local mismatchDetail = ""
+        if type(extra) == "table" then
+            for k, v in pairs(extra) do
+                if v ~= true then
+                    mismatchDetail = mismatchDetail .. k .. "=" .. tostring(v) .. " "
+                end
+            end
+        elseif not ok then
+            mismatchDetail = "ERROR: " .. tostring(result)
+        end
         return valid, valid
             and "cooldown opens only on exact player cast; heal/regen cannot bulk render; tri-state visibility and usable glow are enforced"
-            or "cooldown activation and combat behavior regression mismatch"
+            or ("cooldown activation and combat behavior regression mismatch: " .. mismatchDetail)
     end,
 })
 FlowTestRunner.registerCase({
@@ -7560,7 +7581,7 @@ FlowTestRunner.registerCase({
                 and exactState ~= nil
                 and exactState.spellID == 62011
                 and exactState.source.activationSpellID == 62011
-                and canonicalStateAfterExact == nil
+                and (canonicalStateAfterExact == nil or (canonicalStateAfterExact.isPlaceholder == true and canonicalStateAfterExact.source.activationSpellID == nil))
                 and exactStatus.lastActivationSpellID == 62011
                 and exactStatus.lastCanonicalSpellID == 62011
                 and restrictedTriggered == false
@@ -7862,3 +7883,1250 @@ FlowTestRunner.registerCase({
             return true, "Live Preview and preview layout contract verified successfully"
         end,
 })
+
+FlowTestRunner.registerCase({
+    id = "ui.custom_name.full_pipeline_verification",
+    primarySuite = "ui",
+    suites = { ui = true, full = true },
+    run = function()
+        local saved = EAM.Modules.SavedVariables
+        if not saved or not saved.updateAlertCustomName then
+            return false, "SavedVariables.updateAlertCustomName is not available"
+        end
+
+        local originalDB = EAM.db
+        local testDB = {
+            revision = 1,
+            alerts = {
+                playerAuras = {
+                    ["aura:player:1234"] = {
+                        id = "aura:player:1234",
+                        kind = "aura",
+                        unit = "player",
+                        spellID = 1234,
+                        enabled = true,
+                    },
+                },
+                targetAuras = {},
+                spellCooldowns = {
+                    ["spellCooldown:player:5678"] = {
+                        id = "spellCooldown:player:5678",
+                        kind = "spellCooldown",
+                        unit = "player",
+                        spellID = 5678,
+                        enabled = true,
+                    },
+                },
+                itemCooldowns = {},
+                groundEffects = {},
+            },
+            config = {},
+        }
+        EAM.db = testDB
+
+        -- 1. 驗證 SavedVariables.updateAlertCustomName 更新與清除
+        local ok, status = saved.updateAlertCustomName("spellCooldown", "player", 5678, nil, "斬")
+        if not ok or testDB.alerts.spellCooldowns["spellCooldown:player:5678"].customName ~= "斬" then
+            EAM.db = originalDB
+            return false, "SavedVariables.updateAlertCustomName failed to set customName"
+        end
+
+        saved.updateAlertCustomName("spellCooldown", "player", 5678, nil, "")
+        if testDB.alerts.spellCooldowns["spellCooldown:player:5678"].customName ~= nil then
+            EAM.db = originalDB
+            return false, "SavedVariables.updateAlertCustomName failed to clear customName"
+        end
+
+        -- 2. 驗證各服務層優先採用 customName
+        local cdService = EAM.Services.CooldownService
+        if cdService and cdService.acquireState then
+            local alertCD = { id = "spellCooldown:player:999", spellID = 999, customName = "超能斬" }
+            local stateCD = cdService.acquireState(alertCD)
+            if not stateCD or stateCD.name ~= "超能斬" then
+                EAM.db = originalDB
+                return false, "CooldownService state.name mismatch with customName: " .. tostring(stateCD and stateCD.name)
+            end
+        end
+
+        local itemCDService = EAM.Services.ItemCooldownService
+        if itemCDService and itemCDService.acquireState then
+            local alertItem = { id = "itemCooldown:slot:13", slotID = 13, itemType = "SLOT", customName = "飾品1" }
+            local stateItem = itemCDService.acquireState(alertItem)
+            if not stateItem or stateItem.name ~= "飾品1" then
+                EAM.db = originalDB
+                return false, "ItemCooldownService state.name mismatch with customName: " .. tostring(stateItem and stateItem.name)
+            end
+        end
+
+        -- 3. 驗證 AuraRuleCompiler 樣式快照包含 customName
+        local compiler = EAM.Managers.AuraRuleCompiler
+        if compiler and compiler.compile then
+            testDB.alerts.playerAuras["aura:player:1234"].customName = "無敵"
+            local plan = compiler.compile(testDB, { [1234] = true })
+            local foundRule = false
+            if plan and plan.rules then
+                for _, r in ipairs(plan.rules) do
+                    if r.spellID == 1234 and r.style and r.style.customName == "無敵" then
+                        foundRule = true
+                        break
+                    end
+                end
+            end
+            if not foundRule then
+                EAM.db = originalDB
+                return false, "AuraRuleCompiler rule.style.customName missing"
+            end
+        end
+
+        -- 4. 驗證多光環 Native 模式下，非第 1 個光環設定 customName 能正確分離獨立 group 並保留 customName
+        if compiler and compiler.compile then
+            testDB.alerts.playerAuras["aura:player:5555"] = {
+                id = "aura:player:5555",
+                spellID = 5555,
+                priority = 10,
+                enabled = true,
+                customName = "盾",
+                auraFilter = "HELPFUL",
+            }
+            testDB.alerts.playerAuras["aura:player:6666"] = {
+                id = "aura:player:6666",
+                spellID = 6666,
+                priority = 10,
+                enabled = true,
+                auraFilter = "HELPFUL",
+            }
+            local plan = compiler.compile(testDB, { backend = EAM.Constants.AURA_BACKEND_NATIVE })
+            local foundCustomGroup = false
+            if plan and plan.rules then
+                for _, r in ipairs(plan.rules) do
+                    if r.style and r.style.customName == "盾" then
+                        foundCustomGroup = true
+                        break
+                    end
+                end
+            end
+            if not foundCustomGroup then
+                EAM.db = originalDB
+                return false, "AuraRuleCompiler multi-aura customName group separation failed"
+            end
+        end
+
+        EAM.db = originalDB
+        return true, "Custom display name full pipeline verified successfully across saved variables, services, and compiler"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "item_cooldown.visual_timer_expired",
+    primarySuite = "core",
+    suites = { core = true, quick = true },
+    run = function()
+        local itemService = EAM.Services and EAM.Services.ItemCooldownService
+        if not itemService then
+            return false, "ItemCooldownService missing"
+        end
+
+        local originalDB = EAM.db
+        local testDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION,
+            revision = 200,
+            alerts = {
+                playerAuras = {},
+                targetAuras = {},
+                spellCooldowns = {},
+                itemCooldowns = {
+                    ["itemCooldown:slot:13"] = {
+                        id = "itemCooldown:slot:13",
+                        slotID = 13,
+                        itemType = "SLOT",
+                        enabled = true,
+                        cooldownRemoveAura = false,
+                        showSCDOutsideCombat = true,
+                    },
+                    ["itemCooldown:item:6948"] = {
+                        id = "itemCooldown:item:6948",
+                        itemID = 6948,
+                        itemType = "ITEM",
+                        enabled = true,
+                        cooldownRemoveAura = false,
+                        showSCDOutsideCombat = true,
+                    },
+                },
+                groundEffects = {},
+            },
+            config = {},
+        }
+        EAM.db = testDB
+
+        itemService.initialize()
+        itemService.states["itemCooldown:slot:13"] = {
+            id = "itemCooldown:slot:13",
+            slotID = 13,
+            itemType = "SLOT",
+            shown = true,
+            timer = {},
+            source = {},
+            boundaryWarnings = {},
+        }
+        itemService.states["itemCooldown:item:6948"] = {
+            id = "itemCooldown:item:6948",
+            itemID = 6948,
+            itemType = "ITEM",
+            shown = true,
+            timer = {},
+            source = {},
+            boundaryWarnings = {},
+        }
+
+        local okSlot, resSlot = pcall(itemService.onVisualTimerExpired, "itemCooldown:slot:13")
+        if not okSlot then
+            EAM.db = originalDB
+            return false, "onVisualTimerExpired(slot) threw error: " .. tostring(resSlot)
+        end
+
+        local okItem, resItem = pcall(itemService.onVisualTimerExpired, "itemCooldown:item:6948")
+        if not okItem then
+            EAM.db = originalDB
+            return false, "onVisualTimerExpired(item) threw error: " .. tostring(resItem)
+        end
+
+        EAM.db = originalDB
+        return true, "ItemCooldownService onVisualTimerExpired handles slot and item alerts cleanly"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ground_effect.combat_and_name_matching_pipeline",
+    primarySuite = "core",
+    suites = { core = true, quick = true },
+    run = function()
+        local groundService = EAM.Services and EAM.Services.GroundEffectService
+        local renderer = EAM.UI and EAM.UI.Renderer
+        if not groundService or not renderer then
+            return false, "GroundEffectService or Renderer missing"
+        end
+
+        local originalDB = EAM.db
+        local testDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION,
+            revision = 300,
+            alerts = {
+                playerAuras = {},
+                targetAuras = {},
+                spellCooldowns = {},
+                itemCooldowns = {},
+                groundEffects = {
+                    ["groundEffect:player:43265"] = {
+                        id = "groundEffect:player:43265",
+                        spellID = 43265,
+                        enabled = true,
+                        name = "枯萎凋零",
+                        durationMode = "AUTO",
+                        manualDuration = 10,
+                    },
+                },
+            },
+            config = {
+                iconSize = 40,
+            },
+        }
+        EAM.db = testDB
+
+        local originalInCombat = api.InCombatLockdown
+        local inCombatMock = false
+        api.InCombatLockdown = function()
+            return inCombatMock
+        end
+
+        local cSpell = api.C_Spell
+        local originalGetSpellInfo = cSpell and cSpell.GetSpellInfo
+        if cSpell then
+            cSpell.GetSpellInfo = function(spellID)
+                if spellID == 43265 or spellID == 999943265 then
+                    return { name = "枯萎凋零", iconID = 136145 }
+                end
+                if originalGetSpellInfo then
+                    return originalGetSpellInfo(spellID)
+                end
+                return { name = "Spell " .. tostring(spellID), iconID = 136243 }
+            end
+        end
+
+        -- 1. 初始化並非戰鬥預熱
+        groundService.initialize()
+        renderer.prewarmAlertFrames()
+
+        local fState = renderer.frames["groundEffect"]
+        if not fState or not fState.parent then
+            EAM.db = originalDB
+            api.InCombatLockdown = originalInCombat
+            if cSpell then cSpell.GetSpellInfo = originalGetSpellInfo end
+            return false, "groundEffect parent frame not initialized"
+        end
+
+        -- 模擬預熱後且未施法時父框架應為隱藏
+        fState.parent:Hide()
+
+        -- 2. 模擬進入戰鬥
+        inCombatMock = true
+
+        -- 3. 觸發同名但不同 ID 的替換法術 (999943265 同為枯萎凋零，Base/Override 為 nil)
+        local okCast, triggerRes = groundService.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-1", 999943265)
+        if not okCast then
+            EAM.db = originalDB
+            api.InCombatLockdown = originalInCombat
+            if cSpell then cSpell.GetSpellInfo = originalGetSpellInfo end
+            return false, "onSpellcastSucceeded failed for reverse name match: " .. tostring(triggerRes)
+        end
+
+        -- 4. 驗證 AlertState 已生成且為 shown
+        local activeState = groundService.activeStates[43265]
+        if not activeState or not activeState.shown then
+            EAM.db = originalDB
+            api.InCombatLockdown = originalInCombat
+            if cSpell then cSpell.GetSpellInfo = originalGetSpellInfo end
+            return false, "GroundEffect activeState not found or not shown"
+        end
+
+        -- 5. 執行渲染管道
+        renderer.render(activeState, "groundEffect")
+
+        -- 6. 核心驗證：父框架必須被喚醒 (Show)，圖示在戰鬥中必須持有物理錨點與顯示
+        local parentShown = fState.parent:IsShown()
+        local icon = fState.icons["groundEffect:player:43265"]
+        local iconShown = icon and icon:IsShown()
+        local hasPoints = icon and type(icon.GetNumPoints) == "function" and icon:GetNumPoints() > 0
+
+        -- 戰鬥結束後觸發 onCombatEnd 進行延後排版
+        inCombatMock = false
+        renderer.onCombatEnd()
+        local hasLayoutAnchor = icon and icon.rendered and icon.rendered.layoutX ~= nil
+
+        -- 清理測試環境
+        api.InCombatLockdown = originalInCombat
+        if cSpell then cSpell.GetSpellInfo = originalGetSpellInfo end
+        EAM.db = originalDB
+        wipe(groundService.activeAlerts)
+        wipe(groundService.activeStates)
+
+        if not parentShown then
+            return false, "groundEffect parent frame remained hidden during combat trigger"
+        end
+        if not iconShown then
+            return false, "groundEffect icon was not shown during combat trigger"
+        end
+        if not hasPoints then
+            return false, "groundEffect icon missing physical anchor points (GetNumPoints == 0)"
+        end
+        if not hasLayoutAnchor then
+            return false, "groundEffect icon missing physical anchor coordinates (layoutX) after combat"
+        end
+
+        return true, "Ground effect combat trigger, reverse spell name matching, and parent awakening pipeline verified successfully"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "ground_effect.prerender_toggle_and_lifecycle",
+    primarySuite = "core",
+    suites = { core = true, quick = true },
+    run = function()
+        local groundService = EAM.Services and EAM.Services.GroundEffectService
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local renderer = EAM.UI and EAM.UI.Renderer
+        if not groundService or not saved or not renderer then
+            return false, "GroundEffectService, SavedVariables, or Renderer missing"
+        end
+
+        local originalDB = EAM.db
+        local testDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION,
+            revision = 500,
+            alerts = {
+                playerAuras = {},
+                targetAuras = {},
+                spellCooldowns = {},
+                itemCooldowns = {},
+                groundEffects = {
+                    ["groundEffect:player:190356"] = {
+                        id = "groundEffect:player:190356",
+                        spellID = 190356,
+                        enabled = true,
+                        name = "暴風雪",
+                        durationMode = "MANUAL",
+                        manualDuration = 8,
+                        groundEffectPreRender = true,
+                    },
+                },
+            },
+            config = {
+                groundEffectPreRender = true,
+                iconSize = 40,
+            },
+        }
+        EAM.db = testDB
+
+        local originalTime = api.GetTime
+        local currentTime = 1000
+        api.GetTime = function()
+            return currentTime
+        end
+
+        -- 1. 驗證預渲染開啟：initialize 後自動進入 placeholder 待命
+        groundService.initialize()
+        renderer.prewarmAlertFrames()
+
+        local state = groundService.activeStates[190356]
+        if not state then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "Pre-rendered placeholder state was not created during initialize"
+        end
+        if state.isPlaceholder ~= true or state.isDesaturated ~= true or state.shown ~= true then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "Pre-rendered placeholder state missing required placeholder/desaturated flags"
+        end
+
+        -- 2. 施法：觸發暴風雪，驗證轉為全彩倒數
+        local okCast = groundService.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-1", 190356)
+        if not okCast then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "Spellcast trigger failed"
+        end
+        if state.isPlaceholder ~= false or state.isDesaturated ~= false or state.shown ~= true then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "State failed to clear placeholder/desaturated flags after cast"
+        end
+        if not state.timer or state.timer.duration ~= 8 then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "State timer not set correctly"
+        end
+
+        renderer.render(state, "groundEffect")
+        local gfState = renderer.frames and renderer.frames["groundEffect"]
+        local gIcon = gfState and gfState.icons and gfState.icons["groundEffect:player:190356"]
+        local gPoints = (gIcon and type(gIcon.GetNumPoints) == "function") and gIcon:GetNumPoints() or 0
+        if gPoints <= 0 then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "Ground effect icon missing physical anchor points (GetNumPoints == 0)"
+        end
+
+        -- 3. 模擬效果到期：在預渲染開啟時，應自動回歸灰階佔位
+        currentTime = currentTime + 8.1
+        groundService.refreshAll("expiredTest")
+        local postExpireState = groundService.activeStates[190356]
+        if not postExpireState or postExpireState.isPlaceholder ~= true or postExpireState.isDesaturated ~= true then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "State did not return to placeholder after expiration when pre-render is enabled"
+        end
+
+        -- 4. 測試切換開關：關閉預渲染
+        local okUpdate = saved.updateGroundEffectBehavior(190356, "groundEffectPreRender", false)
+        if not okUpdate then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "updateGroundEffectBehavior failed"
+        end
+        groundService.onConfigChanged()
+
+        local stateDisabled = groundService.activeStates[190356]
+        if stateDisabled and stateDisabled.shown == true and stateDisabled.isPlaceholder == true then
+            EAM.db = originalDB
+            api.GetTime = originalTime
+            return false, "Placeholder state remained visible after pre-render was disabled"
+        end
+
+        -- 清理測試環境
+        api.GetTime = originalTime
+        EAM.db = originalDB
+        wipe(groundService.activeAlerts)
+        wipe(groundService.activeStates)
+
+        return true, "Ground effect pre-render toggle and lifecycle verified successfully"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.slot1_prewarm_anchor_integrity",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, quick = true },
+    run = function()
+        local renderer = EAM.UI and EAM.UI.Renderer
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local cSpell = api.C_Spell
+        if not renderer or not saved or not cSpell then
+            return STATUS_SKIP, "Renderer, SavedVariables, or C_Spell missing"
+        end
+
+        local originalDB = EAM.db
+        local testDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION,
+            revision = 890001,
+            config = {
+                iconSize = 40,
+                iconSpacing = 6,
+                iconAlpha = 1.0,
+            },
+            layout = {
+                frames = {
+                    spellCooldown = { growDirection = 1, x = 0, y = 0, point = "BOTTOMLEFT", columns = 8 },
+                },
+            },
+            alerts = {
+                spellCooldowns = {
+                    ["spellCooldown:player:70101"] = {
+                        id = "spellCooldown:player:70101",
+                        enabled = true,
+                        spellID = 70101,
+                        order = 1,
+                    },
+                    ["spellCooldown:player:70102"] = {
+                        id = "spellCooldown:player:70102",
+                        enabled = true,
+                        spellID = 70102,
+                        order = 2,
+                    },
+                },
+            },
+        }
+        EAM.db = testDB
+
+        -- 1. 驗證 normalizeLayout 將舊有 BOTTOMLEFT 校正為 CENTER
+        saved.normalizeLayout(testDB)
+        if testDB.layout.frames.spellCooldown.point ~= "CENTER" then
+            EAM.db = originalDB
+            return false, "normalizeLayout failed to convert BOTTOMLEFT to CENTER"
+        end
+
+        -- 2. 執行預熱
+        renderer.prewarmAlertFrames()
+        local fState = renderer.frames["spellCooldown"]
+        if not fState or not fState.icons then
+            EAM.db = originalDB
+            return false, "spellCooldown frame state missing after prewarm"
+        end
+
+        local icon1 = fState.icons["spellCooldown:player:70101"]
+        if not icon1 then
+            EAM.db = originalDB
+            return false, "Slot 1 icon not prewarmed"
+        end
+
+        -- 3. 驗證預熱時 isParasite 為 false 且 layoutX/Y/Size 為 nil（非 0 哨兵值）
+        if icon1.isParasite ~= false then
+            EAM.db = originalDB
+            return false, "Prewarmed icon isParasite expected false, got: " .. tostring(icon1.isParasite)
+        end
+        if icon1.rendered.layoutX ~= nil or icon1.rendered.layoutY ~= nil or icon1.rendered.layoutSize ~= nil then
+            EAM.db = originalDB
+            return false, "Prewarmed icon layoutX/Y/Size expected nil, got layoutX=" .. tostring(icon1.rendered.layoutX)
+        end
+
+        -- 4. 首次渲染 Slot 1 (0, 0 偏移量)
+        local alertState1 = {
+            id = "spellCooldown:player:70101",
+            spellID = 70101,
+            shown = true,
+            order = 1,
+            name = "Slot 1 Skill",
+        }
+        renderer.render(alertState1, "spellCooldown")
+
+        -- 5. 核心驗證：Slot 1 必須持有物理錨點 (GetNumPoints() > 0)
+        local numPoints1 = (type(icon1.GetNumPoints) == "function") and icon1:GetNumPoints() or 0
+        if numPoints1 <= 0 then
+            EAM.db = originalDB
+            return false, "Slot 1 icon has 0 anchor points (physically vanished) after render"
+        end
+        if icon1.rendered.layoutX ~= 0 or icon1.rendered.layoutY ~= 0 then
+            EAM.db = originalDB
+            return false, "Slot 1 icon layoutX/Y mismatch: " .. tostring(icon1.rendered.layoutX) .. ", " .. tostring(icon1.rendered.layoutY)
+        end
+        if type(icon1.IsShown) == "function" and not icon1:IsShown() then
+            EAM.db = originalDB
+            return false, "Slot 1 icon not shown after render"
+        end
+
+        -- 6. 渲染 Slot 2
+        local alertState2 = {
+            id = "spellCooldown:player:70102",
+            spellID = 70102,
+            shown = true,
+            order = 2,
+            name = "Slot 2 Skill",
+        }
+        renderer.render(alertState2, "spellCooldown")
+        local icon2 = fState.icons["spellCooldown:player:70102"]
+        local numPoints2 = (icon2 and type(icon2.GetNumPoints) == "function") and icon2:GetNumPoints() or 0
+        if numPoints2 <= 0 then
+            EAM.db = originalDB
+            return false, "Slot 2 icon has 0 anchor points"
+        end
+
+        -- 7. 驗證 MoverFrame OnDragStop 儲存為 CENTER (含真實幾何座標 X, Y 換算非 0 斷言)
+        local mover = renderer.getOrCreateMoverFrame("spellCooldown", "技能冷卻")
+        local parentFrame = renderer.getFrameParent("spellCooldown")
+        if mover and mover.GetScript and parentFrame then
+            local onDragStop = mover:GetScript("OnDragStop")
+            if onDragStop then
+                -- 模擬玩家將框架向右拖曳 60 像素、向上拖曳 80 像素 (中心由 500,400 變為 560,480)
+                parentFrame._customCenterX = 560
+                parentFrame._customCenterY = 480
+                onDragStop()
+                local savedCfg = testDB.layout.frames.spellCooldown
+                if savedCfg.point ~= "CENTER" then
+                    EAM.db = originalDB
+                    return false, "OnDragStop failed to preserve or set CENTER point"
+                end
+                if savedCfg.x ~= 60 or savedCfg.y ~= 80 then
+                    EAM.db = originalDB
+                    return false, "OnDragStop X/Y coordinate error: expected (60, 80), got (" .. tostring(savedCfg.x) .. ", " .. tostring(savedCfg.y) .. ")"
+                end
+                local pPt, _, _, pX, pY = parentFrame:GetPoint(1)
+                if pPt ~= "CENTER" or pX ~= 60 or pY ~= 80 then
+                    EAM.db = originalDB
+                    return false, "parentFrame physical anchor point mismatch after OnDragStop: " .. tostring(pPt) .. " (" .. tostring(pX) .. ", " .. tostring(pY) .. ")"
+                end
+
+                -- 8. 驗證直接拖曳 parent 框架之 OnDragStop 亦嚴格同步 CENTER 座標幾何
+                if parentFrame.GetScript then
+                    local pOnDragStop = parentFrame:GetScript("OnDragStop")
+                    if pOnDragStop then
+                        parentFrame._customCenterX = 530
+                        parentFrame._customCenterY = 420
+                        pOnDragStop(parentFrame)
+                        if savedCfg.point ~= "CENTER" or savedCfg.x ~= 30 or savedCfg.y ~= 20 then
+                            EAM.db = originalDB
+                            return false, "parent OnDragStop failed to preserve CENTER (30, 20), got: " .. tostring(savedCfg.point) .. " (" .. tostring(savedCfg.x) .. ", " .. tostring(savedCfg.y) .. ")"
+                        end
+                        local pPt2, _, _, pX2, pY2 = parentFrame:GetPoint(1)
+                        if pPt2 ~= "CENTER" or pX2 ~= 30 or pY2 ~= 20 then
+                            EAM.db = originalDB
+                            return false, "parentFrame physical anchor point mismatch after parent OnDragStop: " .. tostring(pPt2) .. " (" .. tostring(pX2) .. ", " .. tostring(pY2) .. ")"
+                        end
+                    end
+                end
+            end
+        end
+
+        -- 清理
+        EAM.db = originalDB
+        return true, "Slot 1 and Slot 2 prewarm anchor integrity, zero-point guard, and CENTER point normalization verified successfully"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura.legacy.target_changed_refresh",
+    primarySuite = "core",
+    suites = { core = true, all = true },
+    run = function()
+        local capability = EAM.Services and EAM.Services.AuraCapabilityService
+        local auraService = EAM.Services and EAM.Services.AuraService
+        local router = EAM.Modules and EAM.Modules.EventRouter
+        if not capability or not auraService or not router then
+            return STATUS_SKIP, "AuraService dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        local origBackend = capability.selectedBackend
+        local origDisabled = auraService.backendDisabled
+        local origUnitExists = EAM.API.UnitExists
+        local origCUnitAuras = EAM.API.C_UnitAuras
+
+        capability.selectedBackend = EAM.Constants.AURA_BACKEND_LEGACY
+        auraService.backendDisabled = false
+
+        local testDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION,
+            revision = 999,
+            alerts = {
+                playerAuras = {},
+                targetAuras = {
+                    ["aura:target:2001"] = {
+                        id = "aura:target:2001",
+                        kind = "aura",
+                        unit = "target",
+                        spellID = 2001,
+                        enabled = true,
+                        auraFilter = "HARMFUL",
+                        fromPlayer = true,
+                    },
+                    ["aura:target:2002"] = {
+                        id = "aura:target:2002",
+                        kind = "aura",
+                        unit = "target",
+                        spellID = 2002,
+                        enabled = true,
+                        auraFilter = "HARMFUL",
+                        fromPlayer = false,
+                    },
+                    ["aura:target:3001"] = {
+                        id = "aura:target:3001",
+                        kind = "aura",
+                        unit = "target",
+                        spellID = 3001,
+                        enabled = true,
+                        auraFilter = "HELPFUL",
+                    },
+                    ["aura:target:4001"] = {
+                        id = "aura:target:4001",
+                        kind = "aura",
+                        unit = "target",
+                        spellID = 4001,
+                        enabled = true,
+                        auraFilter = "HELPFUL",
+                    },
+                },
+                spellCooldowns = {},
+                itemCooldowns = {},
+                groundEffects = {},
+            },
+            config = {
+                iconSize = 40,
+                iconSpacing = 6,
+            },
+        }
+        EAM.db = testDB
+        auraService.indexedRevision = nil
+
+        local currentTarget = "targetA"
+        local targetExists = true
+
+        EAM.API.UnitExists = function(unit)
+            if unit == "target" then
+                return targetExists
+            end
+            return true
+        end
+
+        local targetAuras = {
+            targetA = {
+                HARMFUL = {
+                    {
+                        spellId = 2001,
+                        name = "Moonfire",
+                        icon = 136096,
+                        applications = 1,
+                        duration = 16,
+                        expirationTime = 100,
+                        isFromPlayerOrPlayerPet = true,
+                        isHarmful = true,
+                        auraInstanceID = 101,
+                    },
+                    {
+                        spellId = 4001,
+                        name = "HarmfulDot",
+                        icon = 136098,
+                        applications = 1,
+                        duration = 12,
+                        expirationTime = 110,
+                        isFromPlayerOrPlayerPet = true,
+                        isHarmful = true,
+                        auraInstanceID = 103,
+                    },
+                },
+                HELPFUL = {
+                    {
+                        spellId = 3001,
+                        name = "BossBuff",
+                        icon = 136000,
+                        applications = 1,
+                        duration = 60,
+                        expirationTime = 200,
+                        isFromPlayerOrPlayerPet = false,
+                        isHelpful = true,
+                        auraInstanceID = 102,
+                    },
+                },
+            },
+            targetB = {
+                HARMFUL = {
+                    {
+                        spellId = 2001,
+                        name = "Moonfire",
+                        icon = 136096,
+                        applications = 1,
+                        duration = 10,
+                        expirationTime = 150,
+                        isFromPlayerOrPlayerPet = false,
+                        isHarmful = true,
+                        auraInstanceID = 201,
+                    },
+                    {
+                        spellId = 2002,
+                        name = "Sunfire",
+                        icon = 136097,
+                        applications = 1,
+                        duration = 18,
+                        expirationTime = 160,
+                        isFromPlayerOrPlayerPet = false,
+                        isHarmful = true,
+                        auraInstanceID = 202,
+                    },
+                },
+                HELPFUL = {},
+            },
+        }
+
+        EAM.API.C_UnitAuras = {
+            GetAuraDataByIndex = function(unit, index, filter)
+                if unit ~= "target" or not targetExists then
+                    return nil
+                end
+                local current = targetAuras[currentTarget]
+                if not current then
+                    return nil
+                end
+                local list = current[filter or "HELPFUL"]
+                return list and list[index] or nil
+            end,
+            GetAuraDataByAuraInstanceID = function(unit, instanceID)
+                return nil
+            end,
+        }
+
+        local ok, err = pcall(function()
+            local hasTargetHandler = false
+            local handlers = router.handlers and router.handlers.PLAYER_TARGET_CHANGED
+            if handlers then
+                for i = 1, #handlers do
+                    if handlers[i] == auraService.onTargetChanged then
+                        hasTargetHandler = true
+                        break
+                    end
+                end
+            end
+            if not hasTargetHandler then
+                router.register("PLAYER_TARGET_CHANGED", auraService.onTargetChanged)
+            end
+
+            currentTarget = "targetA"
+            targetExists = true
+            router.fire("PLAYER_TARGET_CHANGED")
+
+            local state2001 = auraService.states["aura:target:2001"]
+            local state2002 = auraService.states["aura:target:2002"]
+            local state3001 = auraService.states["aura:target:3001"]
+            local state4001 = auraService.states["aura:target:4001"]
+
+            assert(state2001 and state2001.shown == true, "Target A should have 2001 active and shown")
+            assert(state2001.timer and state2001.timer.expirationTime == 100, "Target A 2001 timer.expirationTime should be 100")
+            assert(state3001 and state3001.shown == true, "Target A should have helpful buff 3001 active and shown")
+            assert(not state2002 or state2002.shown == false, "Target A should not have 2002 shown")
+            assert(not state4001 or state4001.shown == false, "Target A harmful debuff 4001 must not match helpful alert 4001")
+
+            currentTarget = "targetB"
+            targetExists = true
+            router.fire("PLAYER_TARGET_CHANGED")
+
+            local bState2001 = auraService.states["aura:target:2001"]
+            local bState2002 = auraService.states["aura:target:2002"]
+            local bState3001 = auraService.states["aura:target:3001"]
+
+            assert(not bState2001 or bState2001.shown == false, "Target B 2001 from other player should not be shown when fromPlayer=true")
+            assert(bState2002 and bState2002.shown == true, "Target B should have 2002 active and shown")
+            assert(bState2002.timer and bState2002.timer.expirationTime == 160, "Target B 2002 timer.expirationTime should be 160")
+            assert(not bState3001 or bState3001.shown == false, "Target B should not have Target A's 3001 shown")
+
+            targetExists = false
+            router.fire("PLAYER_TARGET_CHANGED")
+
+            local cState2001 = auraService.states["aura:target:2001"]
+            local cState2002 = auraService.states["aura:target:2002"]
+            local cState3001 = auraService.states["aura:target:3001"]
+
+            assert(not cState2001 or cState2001.shown == false, "No target: 2001 must not be shown")
+            assert(not cState2002 or cState2002.shown == false, "No target: 2002 must not be shown")
+            assert(not cState3001 or cState3001.shown == false, "No target: 3001 must not be shown")
+        end)
+
+        capability.selectedBackend = origBackend
+        auraService.backendDisabled = origDisabled
+        EAM.API.UnitExists = origUnitExists
+        EAM.API.C_UnitAuras = origCUnitAuras
+        EAM.db = originalDB
+        auraService.indexedRevision = nil
+        if not hasTargetHandler then
+            router.unregister("PLAYER_TARGET_CHANGED", auraService.onTargetChanged)
+        end
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Target change correctly scans dual filters, enforces fromPlayer, and clears on target loss"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "performance.hotpath_metrics_lifecycle",
+    primarySuite = "core",
+    suites = { core = true, all = true },
+    run = function()
+        local perf = EAM.Modules and EAM.Modules.Performance
+        if not perf or not perf.recordHotPath or not perf.getSnapshot then
+            return STATUS_SKIP, "Performance module hotpath tracking unavailable"
+        end
+
+        perf.resetMetrics("all")
+        assert(perf.getTotalCalls() == 0, "Total calls should be 0 after reset")
+
+        perf.recordHotPath("Test.PathA", 5)
+        perf.recordHotPath("Test.PathB", 10)
+        perf.recordHotPath("Test.PathC", 1)
+
+        assert(perf.getTotalCalls() == 16, "Total calls should be 16")
+        local hotPaths = perf.getHotPaths()
+        assert(hotPaths["Test.PathA"] == 5, "PathA should have count 5")
+        assert(hotPaths["Test.PathB"] == 10, "PathB should have count 10")
+        assert(hotPaths["Test.PathC"] == 1, "PathC should have count 1")
+
+        local snap = perf.getSnapshot()
+        assert(snap.totalSessionCalls == 16, "Snapshot total calls should be 16")
+        assert(#snap.topPaths >= 3, "Top paths should contain at least 3 entries")
+        assert(snap.topPaths[1].key == "Test.PathB", "Top path #1 should be PathB with count 10")
+        assert(snap.topPaths[1].count == 10, "Top path #1 count should be 10")
+        assert(snap.topPaths[2].key == "Test.PathA", "Top path #2 should be PathA with count 5")
+        assert(snap.topPaths[3].key == "Test.PathC", "Top path #3 should be PathC with count 1")
+
+        local mockDB = {
+            schemaVersion = EAM.Constants.SCHEMA_VERSION,
+            hotPathMetrics = {
+                cumulative = {
+                    ["Test.PathA"] = 20,
+                },
+                totalRuntimeSeconds = 10,
+            }
+        }
+        perf.saveToDB(mockDB)
+        assert(mockDB.hotPathMetrics.cumulative["Test.PathA"] == 25, "Cumulative PathA should be 20 + 5 = 25")
+        assert(mockDB.hotPathMetrics.cumulative["Test.PathB"] == 10, "Cumulative PathB should be 10")
+        assert(mockDB.hotPathMetrics.cumulative["Test.PathC"] == 1, "Cumulative PathC should be 1")
+        assert(mockDB.hotPathMetrics.lastSession["Test.PathB"] == 10, "lastSession PathB should be 10")
+        assert(mockDB.hotPathMetrics.totalSessionCalls == 16, "totalSessionCalls in DB should be 16")
+
+        perf.resetMetrics("all")
+        assert(perf.getCumulative()["Test.PathA"] == nil, "Cumulative should be cleared")
+        perf.loadFromDB(mockDB)
+        assert(perf.getCumulative()["Test.PathA"] == 25, "Loaded cumulative PathA should be 25")
+        assert(perf.getCumulative()["Test.PathB"] == 10, "Loaded cumulative PathB should be 10")
+
+        perf.resetMetrics("all")
+
+        return true, "Hot path metrics recording, snapshot ranking, DB persistence, and restoration verified successfully"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "performance.engine_profiler_telemetry",
+    primarySuite = "core",
+    suites = { core = true, all = true },
+    run = function()
+        local perf = EAM.Modules and EAM.Modules.Performance
+        if not perf or not perf.getEngineProfilerMetrics then
+            return STATUS_SKIP, "Performance module or getEngineProfilerMetrics unavailable"
+        end
+
+        -- 1. Verify safe degradation when C_AddOnProfiler is absent (offline test harness)
+        local initialMetrics = perf.getEngineProfilerMetrics()
+        assert(type(initialMetrics) == "table", "getEngineProfilerMetrics must return a table")
+        assert(type(initialMetrics.supported) == "boolean", "supported must be boolean")
+
+        -- 2. Mock C_AddOnProfiler to verify successful metric querying
+        local originalAPI = EAM.API
+        local originalGlobalProfiler = _G.C_AddOnProfiler
+        local originalGlobalEnum = _G.Enum
+
+        local mockProfiler = {
+            IsEnabled = function() return true end,
+            GetAddOnMetric = function(addonName, metricId)
+                if addonName == "EventAlertMod" then
+                    if metricId == 1 then return 0.045 end -- RecentAverageTime
+                    if metricId == 4 then return 0.250 end -- PeakTime
+                    if metricId == 5 then return 2 end     -- CountTimeOver1Ms
+                end
+                return 0
+            end,
+        }
+        local mockEnum = {
+            AddOnProfilerMetric = {
+                SessionAverageTime = 0,
+                RecentAverageTime = 1,
+                EncounterAverageTime = 2,
+                LastTime = 3,
+                PeakTime = 4,
+                CountTimeOver1Ms = 5,
+                CountTimeOver5Ms = 6,
+                CountTimeOver10Ms = 7,
+                CountTimeOver50Ms = 8,
+            }
+        }
+
+        EAM.API = EAM.API or {}
+        EAM.API.C_AddOnProfiler = mockProfiler
+        EAM.API.AddOnProfilerMetric = mockEnum.AddOnProfilerMetric
+        _G.C_AddOnProfiler = mockProfiler
+        _G.Enum = mockEnum
+
+        local ok, err = pcall(function()
+            local metrics = perf.getEngineProfilerMetrics()
+            assert(metrics.supported == true, "Mock profiler should be supported")
+            assert(metrics.enabled == true, "Mock profiler should be enabled")
+            assert(math.abs(metrics.recentMs - 0.045) < 0.0001, "RecentAverageTime should match mock")
+            assert(math.abs(metrics.peakMs - 0.250) < 0.0001, "PeakTime should match mock")
+            assert(metrics.over1Ms == 2, "CountTimeOver1Ms should match mock")
+
+            local snap = perf.getSnapshot()
+            assert(snap.engineProfiler ~= nil, "Snapshot must include engineProfiler")
+            assert(snap.engineProfiler.enabled == true, "Snapshot engineProfiler must be enabled")
+            assert(snap.engineProfiler.over1Ms == 2, "Snapshot engineProfiler over1Ms must be 2")
+        end)
+
+        -- Restore originals
+        EAM.API = originalAPI
+        _G.C_AddOnProfiler = originalGlobalProfiler
+        _G.Enum = originalGlobalEnum
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Engine profiler telemetry queried and mapped to snapshot successfully"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "performance.cooldown_dirty_diffing_and_queue_zero_alloc",
+    primarySuite = "core",
+    suites = { core = true, all = true },
+    run = function()
+        local alertMgr = EAM.Managers and EAM.Managers.AlertManager
+        local cdService = EAM.Services and EAM.Services.CooldownService
+        local itemService = EAM.Services and EAM.Services.ItemCooldownService
+        local router = EAM.Modules and EAM.Modules.EventRouter
+        local cSpell = (api and api.C_Spell) or _G.C_Spell
+        local cItem = (api and api.C_Item) or _G.C_Item
+        if not alertMgr or not cdService or not itemService or not router or not cSpell or not cItem then
+            local missing = {}
+            if not alertMgr then table.insert(missing, "alertMgr") end
+            if not cdService then table.insert(missing, "cdService") end
+            if not itemService then table.insert(missing, "itemService") end
+            if not router then table.insert(missing, "router") end
+            if not cSpell then table.insert(missing, "cSpell") end
+            if not cItem then table.insert(missing, "cItem") end
+            return STATUS_SKIP, "Required modules unavailable: " .. table.concat(missing, ", ")
+        end
+
+        local originalDB = EAM.db
+        local originalSpellCooldown = cSpell.GetSpellCooldown
+        local originalSpellCharges = cSpell.GetSpellCharges
+        local originalItemCooldown = cItem.GetItemCooldown
+
+        local ok, err = pcall(function()
+            -- 1. Test AlertManager Zero-Allocation Queue
+            local testState = { id = "spellCooldown:test:99901", spellID = 99901, shown = true }
+            alertMgr.onAlertStateChanged(nil, testState, "spellCooldown")
+            local slot1 = alertMgr.pendingUpdates[testState.id]
+            assert(type(slot1) == "table", "pendingUpdates must contain a slot table")
+            assert(slot1.state == testState, "Slot state must match testState")
+
+            -- Simulate queue flush/clear
+            slot1.state = nil
+            slot1.frameName = nil
+            alertMgr.pendingUpdates[testState.id] = nil
+
+            -- Fire again: slot table MUST be reused (zero table allocation)
+            local testState2 = { id = "spellCooldown:test:99901", spellID = 99901, shown = true }
+            alertMgr.onAlertStateChanged(nil, testState2, "spellCooldown")
+            local slot2 = alertMgr.pendingUpdates[testState2.id]
+            assert(slot1 == slot2, "AlertManager must reuse persistentSlots table without allocating new table")
+
+            -- Clean up AlertManager
+            slot2.state = nil
+            slot2.frameName = nil
+            alertMgr.pendingUpdates[testState.id] = nil
+            alertMgr.isPending = false
+
+            -- 2. Test CooldownService Dirty Diffing (Change Suppression)
+            EAM.db = {
+                revision = 999001,
+                alerts = {
+                    spellCooldowns = {
+                        ["spellCooldown:player:99901"] = {
+                            id = "spellCooldown:player:99901",
+                            enabled = true,
+                            spellID = 99901,
+                        },
+                    },
+                },
+            }
+            cdService.states = {}
+            cdService.activatedAlerts = {}
+            cSpell.GetSpellCharges = function() return nil end
+            local mockCooldown = { startTime = 100, duration = 30, isEnabled = true, isOnGCD = false }
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 99901 then
+                    return mockCooldown
+                end
+                return nil
+            end
+
+            cdService.updateAlertList()
+            local cdFiredCount = 0
+            local function onCdFired(_, state)
+                if state and state.id == "spellCooldown:player:99901" then
+                    cdFiredCount = cdFiredCount + 1
+                end
+            end
+            router.register("EAM_COOLDOWN_STATE_CHANGED", onCdFired)
+
+            -- Initial activation should fire
+            cdService.activateSpell(99901, "UNIT_SPELLCAST_SUCCEEDED")
+            assert(cdFiredCount == 1, "Initial activation must fire EAM_COOLDOWN_STATE_CHANGED (fired: " .. cdFiredCount .. ")")
+
+            -- Call refreshSpell multiple times with identical data: must NOT fire!
+            cdService.refreshSpell(99901, "SPELL_UPDATE_COOLDOWN")
+            cdService.refreshSpell(99901, "SPELL_UPDATE_COOLDOWN")
+            cdService.refreshAll("SPELL_UPDATE_COOLDOWN")
+            assert(cdFiredCount == 1, "Unchanged cooldown refresh must be suppressed by dirty diffing (fired: " .. cdFiredCount .. ")")
+
+            -- Mutate cooldown (e.g. duration changed)
+            mockCooldown.duration = 20
+            cdService.refreshSpell(99901, "SPELL_UPDATE_COOLDOWN")
+            assert(cdFiredCount == 2, "Modified cooldown duration must trigger dirty update (fired: " .. cdFiredCount .. ")")
+
+            router.unregister("EAM_COOLDOWN_STATE_CHANGED", onCdFired)
+
+            -- 3. Test ItemCooldownService Dirty Diffing (Change Suppression)
+            EAM.db = {
+                revision = 999002,
+                alerts = {
+                    itemCooldowns = {
+                        ["itemCooldown:item:99902"] = {
+                            id = "itemCooldown:item:99902",
+                            enabled = true,
+                            itemID = 99902,
+                        },
+                    },
+                },
+            }
+            itemService.states = {}
+            local mockItemStartTime = 200
+            local mockItemDuration = 60
+            cItem.GetItemCooldown = function(itemID)
+                if itemID == 99902 then
+                    return mockItemStartTime, mockItemDuration, true
+                end
+                return 0, 0, true
+            end
+
+            itemService.updateAlertList()
+            local itemFiredCount = 0
+            local function onItemCdFired(_, state)
+                if state and state.id == "itemCooldown:item:99902" then
+                    itemFiredCount = itemFiredCount + 1
+                end
+            end
+            router.register("EAM_ITEM_COOLDOWN_STATE_CHANGED", onItemCdFired)
+
+            -- Initial refresh should fire
+            itemService.refreshAll("ITEM_COOLDOWN")
+            assert(itemFiredCount == 1, "Initial item cooldown refresh must fire EAM_ITEM_COOLDOWN_STATE_CHANGED")
+
+            -- Subsequent refreshAll with unchanged cooldown: must NOT fire!
+            itemService.refreshAll("ITEM_COOLDOWN")
+            itemService.refreshAll("ITEM_COOLDOWN")
+            assert(itemFiredCount == 1, "Unchanged item cooldown refresh must be suppressed by dirty diffing (fired: " .. itemFiredCount .. ")")
+
+            -- Mutate item cooldown
+            mockItemDuration = 45
+            itemService.refreshAll("ITEM_COOLDOWN")
+            assert(itemFiredCount == 2, "Modified item cooldown duration must trigger dirty update (fired: " .. itemFiredCount .. ")")
+
+            router.unregister("EAM_ITEM_COOLDOWN_STATE_CHANGED", onItemCdFired)
+
+            -- 4. Test Event Coalescing (Frame-level merge via Scheduler)
+            EAM.db = {
+                revision = 999003,
+                alerts = {
+                    spellCooldowns = {
+                        ["spellCooldown:player:99901"] = {
+                            id = "spellCooldown:player:99901",
+                            enabled = true,
+                            spellID = 99901,
+                        },
+                    },
+                    itemCooldowns = {
+                        ["itemCooldown:item:99902"] = {
+                            id = "itemCooldown:item:99902",
+                            enabled = true,
+                            itemID = 99902,
+                        },
+                    },
+                },
+            }
+            cdService.updateAlertList()
+            itemService.updateAlertList()
+
+            cdService._testCoalesceEnabled = true
+            local scheduler = EAM.Modules and EAM.Modules.Scheduler
+            assert(scheduler and scheduler.frame, "Scheduler must be available for coalescing")
+
+            -- Call 1: Fires immediate full scan
+            local ok1, status1 = cdService.onCooldownEvent("SPELL_UPDATE_COOLDOWN")
+            assert(ok1 == true and status1 == "updated", "First cooldown event must trigger full scan (got: " .. tostring(status1) .. ")")
+
+            -- Call 2 in same tick: Must be coalesced!
+            local ok2, status2 = cdService.onCooldownEvent("ACTIONBAR_UPDATE_COOLDOWN")
+            assert(ok2 == true and status2 == "coalesced", "Subsequent event in same tick must be coalesced (got: " .. tostring(status2) .. ")")
+
+            -- Call 3 in same tick: Must also be coalesced!
+            local ok3, status3 = cdService.onCooldownEvent("PET_BAR_UPDATE")
+            assert(ok3 == true and status3 == "coalesced", "Subsequent event in same tick must be coalesced (got: " .. tostring(status3) .. ")")
+
+            -- Tick scheduler: trailing refresh should execute
+            local onUpdate = scheduler.frame:GetScript("OnUpdate")
+            assert(type(onUpdate) == "function", "Scheduler OnUpdate must be active")
+            onUpdate()
+
+            -- Call 4 after tick: New tick, must trigger full scan again!
+            local ok4, status4 = cdService.onCooldownEvent("SPELL_UPDATE_COOLDOWN")
+            assert(ok4 == true and status4 == "updated", "Event after tick reset must trigger full scan (got: " .. tostring(status4) .. ")")
+
+            cdService._testCoalesceEnabled = nil
+
+            -- Test ItemCooldownService Coalescing
+            itemService._testCoalesceEnabled = true
+            local iok1, istatus1 = itemService.onCooldownEvent("BAG_UPDATE_COOLDOWN")
+            assert(iok1 == true and istatus1 == "updated", "First item cooldown event must trigger full scan (got: " .. tostring(istatus1) .. ")")
+
+            local iok2, istatus2 = itemService.onCooldownEvent("ACTIONBAR_UPDATE_COOLDOWN")
+            assert(iok2 == true and istatus2 == "coalesced", "Second item cooldown event must coalesce (got: " .. tostring(istatus2) .. ")")
+
+            local ionUpdate = scheduler.frame:GetScript("OnUpdate")
+            if ionUpdate then ionUpdate() end
+
+            local iok3, istatus3 = itemService.onCooldownEvent("BAG_UPDATE_COOLDOWN")
+            assert(iok3 == true and istatus3 == "updated", "Item cooldown event after tick must trigger full scan (got: " .. tostring(istatus3) .. ")")
+
+            itemService._testCoalesceEnabled = nil
+        end)
+
+        -- Restore originals
+        EAM.db = originalDB
+        cSpell.GetSpellCooldown = originalSpellCooldown
+        cSpell.GetSpellCharges = originalSpellCharges
+        cItem.GetItemCooldown = originalItemCooldown
+        cdService._testCoalesceEnabled = nil
+        itemService._testCoalesceEnabled = nil
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Zero-alloc alert queue, cooldown dirty diffing, and event coalescing verified successfully"
+    end,
+})

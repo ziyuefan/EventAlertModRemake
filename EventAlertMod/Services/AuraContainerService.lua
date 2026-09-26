@@ -356,6 +356,63 @@ function AuraContainerService.onCombatEnd()
     end
 end
 
+function AuraContainerService.onTargetChanged()
+    if EAM.recordHotPath then
+        EAM.recordHotPath("AuraContainerService.onTargetChanged")
+    end
+    local Renderer = EAM.UI and EAM.UI.Renderer
+    if Renderer and Renderer.clearFrame then
+        Renderer.clearFrame(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+    end
+    local AlertManager = EAM.Managers and EAM.Managers.AlertManager
+    if AlertManager and AlertManager.clearPending then
+        AlertManager.clearPending(EAM.Constants.ALERT_FRAME_TYPES.targetAura)
+    end
+
+    if not AuraContainerService.current or not AuraContainerService.current.target then
+        return
+    end
+    local container = AuraContainerService.current.target
+    if not container then return end
+
+    local moduleController = EAM.Modules and EAM.Modules.ModuleController
+    if moduleController and not moduleController.isAuraUnitEnabled("target") then
+        if container.Hide then container:Hide() end
+        return
+    end
+
+    if api.UnitExists and not api.UnitExists("target") then
+        if container.Hide then
+            container:Hide()
+        end
+        if container.SetEnabled then
+            container:SetEnabled(false)
+        end
+        return
+    end
+
+    if container.SetEnabled then
+        container:SetEnabled(false)
+        if container.SetUnit then
+            container:SetUnit("target")
+        end
+        container:SetEnabled(true)
+    elseif container.SetUnit then
+        container:SetUnit("target")
+    end
+    local okUpdate, updateFunc = pcall(function() return container.Update end)
+    if okUpdate and type(updateFunc) == "function" then
+        pcall(updateFunc, container)
+    end
+    local okUpdateAuras, updateAurasFunc = pcall(function() return container.UpdateAuras end)
+    if okUpdateAuras and type(updateAurasFunc) == "function" then
+        pcall(updateAurasFunc, container)
+    end
+    if container.Show then
+        container:Show()
+    end
+end
+
 function AuraContainerService.initialize()
     if AuraContainerService.initialized then
         return
@@ -367,6 +424,7 @@ function AuraContainerService.initialize()
     local router = EAM.Modules.EventRouter
     if router then
         router.register("PLAYER_REGEN_ENABLED", AuraContainerService.onCombatEnd)
+        router.register("PLAYER_TARGET_CHANGED", AuraContainerService.onTargetChanged)
         router.register("PLAYER_SPECIALIZATION_CHANGED", AuraContainerService.requestRebuild)
         router.register("EAM_AURA_CONFIG_CHANGED", AuraContainerService.requestRebuild)
         router.register("EAM_AURA_STYLE_CHANGED", AuraContainerService.requestRebuild)

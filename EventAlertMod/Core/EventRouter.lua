@@ -41,7 +41,18 @@ EAM.Modules.EventRouter = EventRouter
 local frame = api.CreateFrame and api.CreateFrame("Frame", nil, nil)
 EventRouter.frame = frame
 
+local eventKeyCache = {}
+
 local function onEvent(_, event, ...)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("EventRouter.totalEvents")
+        local k = eventKeyCache[event]
+        if not k then
+            k = "EventRouter.dispatch:" .. tostring(event)
+            eventKeyCache[event] = k
+        end
+        EAM.recordHotPath(k)
+    end
     if EAM.addDebugLog and event ~= "UNIT_POWER_FREQUENT" and event ~= "UNIT_POWER_UPDATE" then
         EAM.addDebugLog("EventRouter", "onEvent", "WoW event fired: " .. tostring(event))
     end

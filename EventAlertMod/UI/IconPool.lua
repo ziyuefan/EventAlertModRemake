@@ -1004,6 +1004,7 @@ function IconPool.release(icon)
     end
 
     icon:Hide()
+    icon.isParasite = false
     local rendered = icon.rendered
     if rendered then
         wipe(rendered)
@@ -1025,6 +1026,29 @@ function IconPool.release(icon)
         else
             icon.timerText:SetText("")
         end
+    end
+    if icon.stackText then
+        if icon.stackText.ClearText then
+            icon.stackText:ClearText()
+        else
+            icon.stackText:SetText("")
+        end
+    end
+    if icon.nameText then
+        if icon.nameText.ClearText then
+            icon.nameText:ClearText()
+        else
+            icon.nameText:SetText("")
+        end
+    end
+    if icon.texture then
+        icon.texture:SetTexture(nil)
+    end
+    if icon.ClearAllPoints then
+        pcall(icon.ClearAllPoints, icon)
+    end
+    if icon.SetAlpha then
+        pcall(icon.SetAlpha, icon, 1)
     end
     if icon.cooldown then
         local setCooldown = getMethod(icon.cooldown, "SetCooldown")

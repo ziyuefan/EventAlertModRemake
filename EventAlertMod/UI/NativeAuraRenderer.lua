@@ -26,6 +26,9 @@ local NativeAuraRenderer = {
     buttons = setmetatable({}, { __mode = "k" }),
 }
 
+local buttonCustomNames = setmetatable({}, { __mode = "k" })
+local buttonHooked = setmetatable({}, { __mode = "k" })
+
 EAM.UI = EAM.UI or {}
 EAM.UI.NativeAuraRenderer = NativeAuraRenderer
 
@@ -106,6 +109,8 @@ local function snapshotStyle(rule)
         dispelShowAlways = ruleStyle and ruleStyle.dispelShowAlways == true or false,
         dispelStealableFilter = ruleStyle and ruleStyle.dispelStealableFilter or nil,
         dispelStyle = ruleStyle and ruleStyle.dispelStyle or nil,
+        customName = ruleStyle and ruleStyle.customName or nil,
+        customIcon = ruleStyle and ruleStyle.customIcon or nil,
     }
 end
 
@@ -279,7 +284,26 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
         stackText:Hide()
     end
     if style.showName then
-        auraButton:SetSpellName(nameText)
+        local custom = (style.customName and style.customName ~= "") and style.customName or nil
+        buttonCustomNames[nameText] = custom
+        if custom then
+            nameText:SetText(custom)
+        end
+        if not buttonHooked[nameText] then
+            buttonHooked[nameText] = true
+            local origSetText = nameText.SetText
+            nameText.SetText = function(self, text)
+                local currentCustom = buttonCustomNames[self]
+                if currentCustom and currentCustom ~= "" then
+                    origSetText(self, currentCustom)
+                else
+                    origSetText(self, text)
+                end
+            end
+        end
+        if not custom then
+            auraButton:SetSpellName(nameText)
+        end
     else
         nameText:Hide()
     end

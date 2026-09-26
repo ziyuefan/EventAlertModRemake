@@ -519,13 +519,70 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-09-19.02 (Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復 / 89 Flow / 499 契約全綠)。</p>
+<p>目前快照版本：2026-09-19.05 (Retail 12.1.0 Alpha 8.7 快捷懸停 CTRL+ALT 跨職業法術加入自身光環分類修復 / 實機測試驗證完成 / 90 Flow / 499 契約全綠)。</p>
 <ul>
 <li><strong>版本斷點與自動遞增規則</strong>：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。</li>
 </ul>
-<h2 id="2026-09-19-retail-1210-alpha-86">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 原生光環字型大小即時熱套用徹底修復（現行儲存點）</h2>
+<h2 id="2026-09-19-retail-1210-alpha-87-ctrlalt">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 快捷懸停 (CTRL+ALT) 跨職業法術加入自身光環目錄分類修復（現行儲存點）</h2>
 <ul>
-<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「光環文字大小無法隨設定即時反應，需要 /reload 才能生效」之重大缺陷。<ol>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。少年欸回報以 CTRL+ALT 對 ICON 點選「加入自身光環監控」後出現已加入提示但自身清單看不到，且直覺指出「該法術若手動輸入會出現是否加入的確認詢問，是否與這有關係」。<ol>
+<li>根因剖析與架構修復：</li>
+<li><strong>分類過濾器邊界（少年欸直覺 100% 命中真因）</strong>：手動在第 1 分頁輸入非本職法術會觸發確認對話框，確認後以 <code>force = true</code> 寫入 <code>catalogScope = "SELF"</code> 與 <code>fromPlayer = true</code>。但過去 <code>TooltipMonitorService.commitCandidate</code> 透過快捷鍵加入時未傳入 <code>options</code>，導致存入 SavedVariables 時缺少目錄標籤；設定視窗打開時 <code>migratePlayerAuraCatalogScopes</code> 將非本職法術自動標記為 <code>CROSS_CLASS</code>，直接分流進第 2 分頁「跨職業清單」，使自身清單看不到。</li>
+<li><strong>快捷選單加入意圖明確注入 (<code>TooltipMonitorService.lua</code>)</strong>：為 <code>ACTION_AURA_PLAYER</code> 與 <code>ACTION_AURA_TARGET</code> 明確構建 <code>options = { catalogScope = "SELF", fromPlayer = true }</code>，為地面效果提供 <code>{ enabled = true, durationMode = "AUTO" }</code>，為冷卻提供 <code>{ enabled = true }</code>。</li>
+<li><strong>跨職業歷史條目自動矯正</strong>：若法術先前已被分類為 <code>CROSS_CLASS</code>，再次透過 CTRL+ALT 快捷鍵加入時自動更新分類為自身光環並觸發設定即時重繪。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
+<li>[x] 【快捷鍵懸停加入意圖注入】：<code>TooltipMonitorService.lua</code> 傳遞明確 <code>options</code>。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 90/90 PASS、Contracts 499/499 PASS。</li>
+<li>[x] 【少年欸實機測試驗證完成】：少年欸回報「好,實機測試已修復」，正式確認問題徹底解決。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-19-retail-1210-alpha-87">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 實機深度診斷採集、冷卻預渲染排版與自訂名稱熱更新根治</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。針對少年欸回報之「冷卻預渲染不顯示」、「自訂名稱不會生效」進行深度排查與根治，並依指示實裝實機診斷命令 <code>/eam debug</code> 與 SavedVariables 存檔回存協定。<ol>
+<li>根因剖析與架構修復：</li>
+<li><strong>冷卻預渲染可見性（父框架隱藏陷阱根治）</strong>：<code>Renderer.prewarmAlertFrames()</code> 建立圖示時設定 <code>icon:SetAlpha(0)</code>，但 <code>icon.rendered.layoutAlpha</code> 未清零；後續 <code>Renderer.render()</code> 執行佔位時，因圖示存在且 order 未變，<code>fState.layoutDirty</code> 保持 <code>false</code> 未觸發 <code>layout()</code>，父框架 <code>fState.parent</code> 停留在 <code>Hide()</code> 狀態，導致所有預渲染圖示在畫面上不可見。已在 <code>Renderer.render()</code> 結尾加入可見性與未排版偵測，若父框架未 Show 或未排版則強制觸發 <code>layout()</code> 並 <code>fState.parent:Show()</code>，100% 確保預渲染圖示正確顯示。</li>
+<li><strong>自訂名稱全通道與熱更新打通</strong>：</li>
+<li><code>ItemCooldownService.lua</code> 佔位與冷卻分支補齊 <code>state.order = alert.order</code> 與 <code>state.rawAlert = alert</code>。</li>
+<li><code>AuraService.lua</code> 狀態重設時補齊 <code>state.rawAlert = alert</code>。</li>
+<li><code>SavedVariables.updateAlertCustomName()</code> 補齊冷卻與物品冷卻變更事件廣播。</li>
+<li><code>Renderer.applyTextLayoutToIcon()</code> 實裝即時文字熱更新，修改自訂名稱點擊儲存後圖示文字立刻反映；同時存取 <code>icon.alertState</code> 全面改用 <code>rawget()</code>，杜絕 12.1 strict AuraButton 錯誤。</li>
+<li><strong>實機深度診斷採集與 SavedVariables 存檔回存</strong>：</li>
+<li>擴充 <code>/eam debug</code> 與 <code>/eam dump</code> 命令。</li>
+<li>深度採集環境、版本、當前專精 Alerts、冷卻狀態機狀態、Renderer 圖示/父框架座標與 Alpha。</li>
+<li>將診斷快照自動存入 <code>EAM.db.debugDump</code> 並調用 <code>markRevisionChanged()</code>，少年欸輸入 <code>/reload</code> 即寫入指定 WTF 存檔（<code>D:\World of Warcraft\_xptr_\WTF\Account\17194784#5\SavedVariables\EventAlertMod.lua</code>）。</li>
+<li>遊戲內同步彈出文字全選之複製對話框，支援 <code>Ctrl+C</code> 直接複製回報。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
+<li>[x] 【實機深度診斷與存檔回存】：<code>PromptExport.lua</code> 採集完整狀態，寫入 <code>EAM.db.debugDump</code>，支援 <code>/reload</code> 寫盤與彈窗複製。</li>
+<li>[x] 【CLI 命令擴充】：<code>/eam debug</code> 與 <code>/eam dump</code> 支援，5 語系在地化文字對齊。</li>
+<li>[x] 【冷卻預渲染父框架排版修正】：<code>Renderer.lua</code> 消除快取誤判，確保 <code>layout()</code> 執行與 <code>parent:Show()</code>。</li>
+<li>[x] 【自訂名稱服務層與熱更新修復】：<code>ItemCooldownService</code>、<code>AuraService</code>、<code>SavedVariables</code>、<code>Renderer</code> 全面打通。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 90/90 PASS、Contracts 499/499 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-19-retail-1210-alpha-87_1">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 全模組自訂技能與法術名稱功能實裝</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。落實少年欸指示之「在各模組增加可以自訂法術/技能名稱，目標是想在圖示間距不大的情況下，不要被各圖示名稱互相遮擋」。<ol>
+<li>根因與架構設計：</li>
+<li><strong>緊湊排版痛點</strong>：玩家在密集排版告警配置下，技能全稱（如「聖盾術」、「斬殺」）字串過長容易造成圖示間名稱互相遮擋，需支援自訂簡短簡稱（如「盾」、「斬」）。</li>
+<li><strong>UI 設定視窗擴展</strong>：<code>condFrame</code> 高度從 630px 擴展至 680px，新增「自訂顯示名稱 (簡稱)」輸入框；列表行支援即時高亮標註 <code>法術名稱 (|cff00ff96簡稱|r)</code>。</li>
+<li><strong>資料持久化</strong>：<code>SavedVariables.lua</code> 深度整合 <code>options.customName</code>，實裝 <code>updateAlertCustomName</code> 核心 API。</li>
+<li><strong>全模組服務層覆蓋</strong>：AuraService（自身增減益、目標減益）、CooldownService（技能冷卻）、ItemCooldownService（物品冷卻與裝備欄位）、GroundEffectService（地面效果）全數優先採用自訂名稱。</li>
+<li><strong>原生光環防覆蓋鉤子</strong>：在 <code>NativeAuraRenderer.lua</code> 的 <code>initializeButton</code> 為按鈕 <code>nameText</code> 實裝防禦性 <code>SetText</code> 鉤子，杜絕暴雪底層光環事件回寫覆蓋玩家自訂簡稱。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
+<li>[x] 【UI 設定面板擴展與自訂名稱輸入框】：<code>Options.lua</code> 680px 高度、即時列表標註、輸入儲存與清空還原。</li>
+<li>[x] 【SavedVariables 持久化與 API】：<code>options.customName</code> 支援與 <code>updateAlertCustomName</code> API。</li>
+<li>[x] 【6 大模組服務層深度整合】：AuraService、CooldownService、ItemCooldownService、GroundEffectService 優先採用自訂名稱。</li>
+<li>[x] 【原生光環防覆蓋鉤子與規則編譯】：<code>AuraRuleCompiler.lua</code> 樣式快照與 <code>NativeAuraRenderer.lua</code> 文字守護鉤子。</li>
+<li>[x] 【5 大語系詞條完整收錄】：zhTW, zhCN, enUS, koKR, ruRU 100% 對齊。</li>
+<li>[x] 【單元測試與門禁驗證】：新增 Flow 測試 <code>options.custom_name.persistence_and_propagation</code>，總計 90/90 PASS、499/499 契約全綠。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-19-retail-1210-alpha-87_2">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 原生光環字型大小即時熱套用徹底修復</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。徹底排查並解決少年欸回報之「光環文字大小無法隨設定即時反應，需要 /reload 才能生效」之重大缺陷。<ol>
 <li>根因剖析：</li>
 <li><strong>病根一（按鈕缺乏即時字型熱套用通道）</strong>：舊架構在 <code>NativeAuraRenderer.lua</code> 中未維護按鈕參照，<code>applyTextLayout</code> 寫死 <code>return false, "nativeRebuildRequired"</code>，導致文字樣式無法直接套用於已存在之原生按鈕。</li>
 <li><strong>病根二（Options 聯動盲區）</strong>：<code>Options.lua</code> 的 <code>notifyTextLayoutChanged()</code> 僅通知通用 Legacy 渲染器，完全未打通 Native 原生按鈕通道。</li>
@@ -547,9 +604,9 @@
 </ol>
 </li>
 </ul>
-<h2 id="2026-09-19-retail-1210-alpha-86-cli-1215">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 全語系 CLI 重構完備與 12.1.5 前瞻技術備存</h2>
+<h2 id="2026-09-19-retail-1210-alpha-87-cli-1215">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 全語系 CLI 重構完備與 12.1.5 前瞻技術備存</h2>
 <ul>
-<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 <strong>12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線</strong>。<ol>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。完成全語系 CLI 命令列自然語言在地化，並依少年欸最高戰略指示建立 <strong>12.1.5 前瞻技術備存與 12.1.0 發布基準隔離防線</strong>。<ol>
 <li><strong>全語系 CLI 命令列重構與跳脫碼修復</strong>：</li>
 <li>5 大語系（<code>zhTW</code>、<code>zhCN</code>、<code>enUS</code>、<code>koKR</code>、<code>ruRU</code>）功能說明在地化，徹底剔除生硬英文。</li>
 <li>修復魔獸聊天框 <code>&lt;spellID|target|...&gt;</code> 因 <code>|t</code> 被當作 Texture 跳脫碼而破裂為 <code>&lt;spellIDarget&gt;</code> 的嚴重瑕疵，改為標準斜線 <code>&lt;spell/target/cd/item/ground&gt;</code>。</li>
@@ -568,7 +625,7 @@
 </ol>
 </li>
 </ul>
-<h2 id="2026-09-19-retail-1210-alpha-86_1">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱</h2>
+<h2 id="2026-09-19-retail-1210-alpha-86">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.6 地面效果全面對齊冷卻架構與非戰鬥預熱</h2>
 <ul>
 <li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.6。徹底排查並解決少年欸回報之「地面技能不需要關聯物品或裝備」、「戰鬥施放還是不顯示地面效果,你乾脆把技能冷卻與物品冷卻那套搬過去可行嗎」。<ol>
 <li>根因剖析：</li>

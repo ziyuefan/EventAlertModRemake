@@ -392,7 +392,7 @@ function DurationAdapter.createTextBinding(durationObject, fontString, customCur
 end
 
 function DurationAdapter.releaseTextBinding(binding)
-    if not binding then
+    if not binding or (type(binding) ~= "table" and type(binding) ~= "userdata") then
         return false
     end
     activeBindings[binding] = nil

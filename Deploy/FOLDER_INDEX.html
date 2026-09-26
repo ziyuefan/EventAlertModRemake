@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Deployment &amp; Release Tooling Layer">
   <meta name="ai-governance-security" content="Offline PowerShell / DPAPI Protection">
   <meta name="ai-governance-invariants" content="嚴禁未經確認自動執行寫入魔獸遊戲目錄 | 機密隔離：永遠禁止將 API_TOKEN.SEC 包含在打包輸出的 ZIP 壓縮檔內 | 嚴格比對打包檔案清單與來源目錄，確保打包產物 100% 乾淨無暫存檔">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.784478+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.741118+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,16 +29,16 @@
     "機密隔離：永遠禁止將 API_TOKEN.SEC 包含在打包輸出的 ZIP 壓縮檔內",
     "嚴格比對打包檔案清單與來源目錄，確保打包產物 100% 乾淨無暫存檔"
   ],
-  "timestamp": "2026-09-12T20:51:50.784478+08:00",
-  "fileCount": 8,
+  "timestamp": "2026-09-27T07:24:55.741118+08:00",
+  "fileCount": 9,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 116609,
+  "totalSizeBytes": 173516,
   "files": [
     {
       "name": "Build-Package.ps1",
       "extension": ".ps1",
-      "sizeBytes": 15654,
-      "lineCount": 403,
+      "sizeBytes": 15931,
+      "lineCount": 407,
       "purpose": "魔獸世界正式服發布包打包腳本，嚴格驗證 TOC 一致性、清理暫存並生成雜湊清單",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -53,10 +53,19 @@
       "security": "Offline Tool"
     },
     {
+      "name": "CURSEFORGE-DESCRIPTION.md",
+      "extension": ".md",
+      "sizeBytes": 53696,
+      "lineCount": 462,
+      "purpose": "EventAlertMod Retail 12.1 (EAM)",
+      "role": "Documentation",
+      "security": "Safe"
+    },
+    {
       "name": "Deploy-EventAlertMod.ps1",
       "extension": ".ps1",
-      "sizeBytes": 43717,
-      "lineCount": 1017,
+      "sizeBytes": 44006,
+      "lineCount": 1021,
       "purpose": "本機多魔獸客戶端安全部署工具，具備 Windows Registry 根目錄偵測與 WTF 存檔備份",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -73,8 +82,8 @@
     {
       "name": "Publish-GitHubRelease.ps1",
       "extension": ".ps1",
-      "sizeBytes": 9640,
-      "lineCount": 239,
+      "sizeBytes": 12148,
+      "lineCount": 289,
       "purpose": "GitHub 自動發布工具，自動擷取 changelog 最新區塊並建立 Release 標籤",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -100,8 +109,8 @@
     {
       "name": "Upload-CurseForge.ps1",
       "extension": ".ps1",
-      "sizeBytes": 27876,
-      "lineCount": 645,
+      "sizeBytes": 28013,
+      "lineCount": 648,
       "purpose": "CurseForge API 自動發布腳本，具備 DPAPI 雙重解密、Cloudflare WAF 穿透與乾跑模式",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -580,7 +589,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">8</span>
+          <span class="stat-val">9</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">子目錄數量</span>
@@ -588,7 +597,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">113.9 KB</span>
+          <span class="stat-val">169.4 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -611,7 +620,7 @@
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (8)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (9)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -642,7 +651,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            15.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 403 行</span>
+            15.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 407 行</span>
           </td>
         </tr>
         
@@ -668,6 +677,24 @@
           <td>
             <div class="file-name-cell">
               <span>📄</span>
+              <a href="./CURSEFORGE-DESCRIPTION.md" title="檢視檔案內容">CURSEFORGE-DESCRIPTION.md</a>
+            </div>
+          </td>
+          <td><span class="badge badge-doc">DOC</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">EventAlertMod Retail 12.1 (EAM)</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Documentation</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            52.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 462 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
               <a href="./Deploy-EventAlertMod.ps1" title="檢視檔案內容">Deploy-EventAlertMod.ps1</a>
             </div>
           </td>
@@ -678,7 +705,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            42.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1017 行</span>
+            43.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1021 行</span>
           </td>
         </tr>
         
@@ -714,7 +741,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            9.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 239 行</span>
+            11.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 289 行</span>
           </td>
         </tr>
         
@@ -768,7 +795,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            27.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 645 行</span>
+            27.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 648 行</span>
           </td>
         </tr>
         
@@ -780,7 +807,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.784478+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.741118+08:00</p>
     </footer>
   </div>
 

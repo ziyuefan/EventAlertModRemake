@@ -31,6 +31,12 @@ local PromptExport = {
 }
 EAM.Debug.PromptExport = PromptExport
 
+local function safeJsonStr(val)
+    if val == nil then return "null" end
+    local s = tostring(val):gsub("\\", "\\\\"):gsub('"', '\\"'):gsub("\r", ""):gsub("\n", "\\n")
+    return '"' .. s .. '"'
+end
+
 -- 產生精簡版 snapshot
 function PromptExport.build()
     local snapshot = EAM.Debug.DebugState and EAM.Debug.DebugState.snapshot()
@@ -44,6 +50,11 @@ function PromptExport.build()
     local derived = snapshot.derived or {}
     local auraCache = derived.auraCache or {}
     local renderer = derived.renderer or {}
+    local hotPath = derived.hotPathMetrics
+    local hotPathStr = ""
+    if hotPath then
+        hotPathStr = ",hotPaths:{calls:" .. tostring(hotPath.totalSessionCalls or 0) .. ",cps:" .. string.format("%.1f", hotPath.callsPerSecond or 0) .. "}"
+    end
     return "{environment:{interface:" .. tostring(EAM.Constants.INTERFACE)
         .. ",flavor:\"Retail\",initialized:" .. tostring(initialized)
         .. "},migration:{imported:" .. tostring(report and report.imported or 0)
@@ -53,7 +64,8 @@ function PromptExport.build()
         .. ",target:" .. tostring(auraCache.targetInstances or 0)
         .. "},renderer:{visible:" .. tostring(renderer.visibleIcons or 0)
         .. ",deferred:" .. tostring(renderer.deferred or 0)
-        .. "},boundaryWarnings:" .. tostring(warnings) .. "}"
+        .. "}" .. hotPathStr
+        .. ",boundaryWarnings:" .. tostring(warnings) .. "}"
 end
 
 -- 產生詳盡、漂亮的 JSON-like 除錯資訊
@@ -193,6 +205,87 @@ function PromptExport.buildDetailed()
     add('    "spellCd": ' .. spellCdCount .. ',\n')
     add('    "itemCd": ' .. itemCdCount .. '\n')
     add('  },\n')
+
+    -- Configured Cooldown Alerts
+    add('  "configuredCooldowns": [\n')
+    local cfgAlertsBuffer = {}
+    if EAM.db and EAM.Modules and EAM.Modules.SavedVariables then
+        local saved = EAM.Modules.SavedVariables
+        local cdAlerts = saved.getAlertList(EAM.Constants.ALERT_KIND_SPELL_COOLDOWN, "player") or {}
+        for _, alert in pairs(cdAlerts) do
+            if alert and alert.id then
+                table.insert(cfgAlertsBuffer, '    {' ..
+                    '"kind":"spellCooldown",' ..
+                    '"id":' .. safeJsonStr(alert.id) .. ',' ..
+                    '"spellID":' .. tostring(alert.spellID or 0) .. ',' ..
+                    '"enabled":' .. tostring(alert.enabled ~= false) .. ',' ..
+                    '"order":' .. tostring(alert.order or 0) .. ',' ..
+                    '"customName":' .. safeJsonStr(alert.customName) .. ',' ..
+                    '"cooldownPreRender":' .. tostring(alert.cooldownPreRender) .. ',' ..
+                    '"showSCDOutsideCombat":' .. tostring(alert.showSCDOutsideCombat) .. ',' ..
+                    '"glowSCDWhenUsable":' .. tostring(alert.glowSCDWhenUsable) .. ',' ..
+                    '"cooldownRemoveAura":' .. tostring(alert.cooldownRemoveAura) ..
+                    '}')
+            end
+        end
+        local itemAlerts = saved.getAlertList(EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) or {}
+        for _, alert in pairs(itemAlerts) do
+            if alert and alert.id then
+                table.insert(cfgAlertsBuffer, '    {' ..
+                    '"kind":"itemCooldown",' ..
+                    '"id":' .. safeJsonStr(alert.id) .. ',' ..
+                    '"itemID":' .. tostring(alert.itemID or 0) .. ',' ..
+                    '"slotID":' .. tostring(alert.slotID or 0) .. ',' ..
+                    '"enabled":' .. tostring(alert.enabled ~= false) .. ',' ..
+                    '"order":' .. tostring(alert.order or 0) .. ',' ..
+                    '"customName":' .. safeJsonStr(alert.customName) .. ',' ..
+                    '"cooldownPreRender":' .. tostring(alert.cooldownPreRender) .. ',' ..
+                    '"showSCDOutsideCombat":' .. tostring(alert.showSCDOutsideCombat) .. ',' ..
+                    '"glowSCDWhenUsable":' .. tostring(alert.glowSCDWhenUsable) .. ',' ..
+                    '"cooldownRemoveAura":' .. tostring(alert.cooldownRemoveAura) ..
+                    '}')
+            end
+        end
+    end
+    add(table.concat(cfgAlertsBuffer, ",\n"))
+    add('\n  ],\n')
+
+    -- Configured Aura Alerts
+    add('  "configuredAuras": [\n')
+    local cfgAurasBuffer = {}
+    if EAM.db and EAM.Modules and EAM.Modules.SavedVariables then
+        local saved = EAM.Modules.SavedVariables
+        local selfAlerts = saved.getAlertList(EAM.Constants.ALERT_KIND_AURA, "player") or {}
+        for _, alert in pairs(selfAlerts) do
+            if alert and alert.id then
+                table.insert(cfgAurasBuffer, '    {' ..
+                    '"kind":"selfAura",' ..
+                    '"id":' .. safeJsonStr(alert.id) .. ',' ..
+                    '"spellID":' .. tostring(alert.spellID or 0) .. ',' ..
+                    '"enabled":' .. tostring(alert.enabled ~= false) .. ',' ..
+                    '"priority":' .. tostring(alert.priority or 10) .. ',' ..
+                    '"customName":' .. safeJsonStr(alert.customName) .. ',' ..
+                    '"showName":' .. tostring(alert.showName ~= false) ..
+                    '}')
+            end
+        end
+        local targetAlerts = saved.getAlertList(EAM.Constants.ALERT_KIND_AURA, "target") or {}
+        for _, alert in pairs(targetAlerts) do
+            if alert and alert.id then
+                table.insert(cfgAurasBuffer, '    {' ..
+                    '"kind":"targetAura",' ..
+                    '"id":' .. safeJsonStr(alert.id) .. ',' ..
+                    '"spellID":' .. tostring(alert.spellID or 0) .. ',' ..
+                    '"enabled":' .. tostring(alert.enabled ~= false) .. ',' ..
+                    '"priority":' .. tostring(alert.priority or 10) .. ',' ..
+                    '"customName":' .. safeJsonStr(alert.customName) .. ',' ..
+                    '"showName":' .. tostring(alert.showName ~= false) ..
+                    '}')
+            end
+        end
+    end
+    add(table.concat(cfgAurasBuffer, ",\n"))
+    add('\n  ],\n')
 
     -- Runtime States
     local auraService = EAM.Services and EAM.Services.AuraService
@@ -367,6 +460,59 @@ function PromptExport.buildDetailed()
     ) .. ',\n')
     add('      "rawValuesExposed": false\n')
     add('    },\n')
+    local auraContainerService = EAM.Services and EAM.Services.AuraContainerService
+    local nativeAuraRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+    local lastPlan = auraContainerService and auraContainerService.lastPlan
+    add('    "nativeAura": {\n')
+    add('      "initialized": ' .. tostring(auraContainerService and auraContainerService.initialized == true) .. ',\n')
+    add('      "createdContainerCount": ' .. tostring(auraContainerService and auraContainerService.createdContainerCount or 0) .. ',\n')
+    add('      "rebuildCount": ' .. tostring(auraContainerService and auraContainerService.rebuildCount or 0) .. ',\n')
+    add('      "lastReason": ' .. safeJsonStr(auraContainerService and auraContainerService.lastReason) .. ',\n')
+    add('      "nativeSlotCount": ' .. tostring(lastPlan and lastPlan.nativeSlotCount or 0) .. ',\n')
+    add('      "nativeGroupCount": ' .. tostring(lastPlan and lastPlan.nativeGroupCount or 0) .. ',\n')
+    add('      "initializedButtonCount": ' .. tostring(nativeAuraRenderer and nativeAuraRenderer.initializedButtonCount or 0) .. '\n')
+    add('    },\n')
+    -- Cooldown Service Detailed States
+    add('  "cooldownStatesDetail": [\n')
+    local cdStatesDetailBuffer = {}
+    if cooldownService and cooldownService.states then
+        for id, state in pairs(cooldownService.states) do
+            table.insert(cdStatesDetailBuffer, '    {' ..
+                '"id":' .. safeJsonStr(state.id or id) .. ',' ..
+                '"kind":"spellCooldown",' ..
+                '"spellID":' .. tostring(state.spellID or 0) .. ',' ..
+                '"active":' .. tostring(state.active == true) .. ',' ..
+                '"shown":' .. tostring(state.shown == true) .. ',' ..
+                '"isPlaceholder":' .. tostring(state.isPlaceholder == true) .. ',' ..
+                '"isDesaturated":' .. tostring(state.isDesaturated == true) .. ',' ..
+                '"usableGlow":' .. tostring(state.usableGlow == true) .. ',' ..
+                '"order":' .. tostring(state.order or 0) .. ',' ..
+                '"name":' .. safeJsonStr(state.name) .. ',' ..
+                '"icon":' .. safeJsonStr(state.icon) ..
+                '}')
+        end
+    end
+    if itemCooldownService and itemCooldownService.states then
+        for id, state in pairs(itemCooldownService.states) do
+            table.insert(cdStatesDetailBuffer, '    {' ..
+                '"id":' .. safeJsonStr(state.id or id) .. ',' ..
+                '"kind":"itemCooldown",' ..
+                '"itemID":' .. tostring(state.itemID or 0) .. ',' ..
+                '"slotID":' .. tostring(state.slotID or 0) .. ',' ..
+                '"active":' .. tostring(state.active == true) .. ',' ..
+                '"shown":' .. tostring(state.shown == true) .. ',' ..
+                '"isPlaceholder":' .. tostring(state.isPlaceholder == true) .. ',' ..
+                '"isDesaturated":' .. tostring(state.isDesaturated == true) .. ',' ..
+                '"usableGlow":' .. tostring(state.usableGlow == true) .. ',' ..
+                '"order":' .. tostring(state.order or 0) .. ',' ..
+                '"name":' .. safeJsonStr(state.name) .. ',' ..
+                '"icon":' .. safeJsonStr(state.icon) ..
+                '}')
+        end
+    end
+    add(table.concat(cdStatesDetailBuffer, ",\n"))
+    add('\n  ],\n')
+
     add('    "managerGlowSpells": [' .. table.concat(managerGlowList, ",") .. '],\n')
     add('    "renderer": {\n')
     local visibleIconsCount = 0
@@ -383,22 +529,50 @@ function PromptExport.buildDetailed()
     if renderer and renderer.frames then
         for fName, fState in pairs(renderer.frames) do
             local iconList = {}
+            local parentObj = fState.parent or _G["EAM_AlertFrame_" .. fName]
+            local parentShown = parentObj and parentObj.IsShown and parentObj:IsShown() == true or false
+            local parentAlpha = parentObj and parentObj.GetAlpha and parentObj:GetAlpha() or 0
+            local parentW = parentObj and parentObj.GetWidth and math.floor(parentObj:GetWidth()) or 0
+            local parentH = parentObj and parentObj.GetHeight and math.floor(parentObj:GetHeight()) or 0
+            local pPoint, _, _, pX, pY = parentObj and parentObj.GetPoint and parentObj:GetPoint() or nil
+
             for index = 1, fState.orderCount do
                 local id = fState.order[index]
                 local icon = fState.icons[id]
                 if icon then
                     local renderInfo = icon.rendered or {}
+                    local iconShown = icon.IsShown and icon:IsShown() == true or false
+                    local iconAlpha = icon.GetAlpha and icon:GetAlpha() or 0
+                    local texObj = icon.texture
+                    local texVal = texObj and texObj.GetTexture and texObj:GetTexture()
+                    local desat = texObj and texObj.IsDesaturated and texObj:IsDesaturated() == true or false
+                    local nameObj = icon.nameText
+                    local nameVal = nameObj and nameObj.GetText and nameObj:GetText() or ""
+                    local nameShown = nameObj and nameObj.IsShown and nameObj:IsShown() == true or false
+
                     table.insert(iconList, '{' ..
-                        '"id":"' .. tostring(id) .. '",' ..
-                        '"isParasite":' .. tostring(icon.isParasite == true) .. ',' ..
+                        '"id":' .. safeJsonStr(id) .. ',' ..
+                        '"alertOrder":' .. tostring(icon.alertOrder or 0) .. ',' ..
+                        '"isShown":' .. tostring(iconShown) .. ',' ..
+                        '"alpha":' .. tostring(iconAlpha) .. ',' ..
+                        '"layoutAlpha":' .. tostring(renderInfo.layoutAlpha or 0) .. ',' ..
                         '"layoutX":' .. tostring(renderInfo.layoutX or 0) .. ',' ..
                         '"layoutY":' .. tostring(renderInfo.layoutY or 0) .. ',' ..
-                        '"layoutSize":' .. tostring(renderInfo.layoutSize or 0) .. ',' ..
-                        '"isShown":' .. tostring(icon:IsShown() == true) ..
+                        '"texture":' .. safeJsonStr(texVal) .. ',' ..
+                        '"desaturated":' .. tostring(desat) .. ',' ..
+                        '"nameText":' .. safeJsonStr(nameVal) .. ',' ..
+                        '"nameShown":' .. tostring(nameShown) ..
                         '}')
                 end
             end
-            table.insert(frameIconsInfo, '        "' .. fName .. '": [' .. table.concat(iconList, ",") .. ']')
+            table.insert(frameIconsInfo, '        "' .. fName .. '": {\n' ..
+                '          "parentShown": ' .. tostring(parentShown) .. ',\n' ..
+                '          "parentAlpha": ' .. tostring(parentAlpha) .. ',\n' ..
+                '          "parentSize": "' .. tostring(parentW) .. 'x' .. tostring(parentH) .. '",\n' ..
+                '          "parentPoint": "' .. tostring(pPoint or "nil") .. ' (' .. tostring(math.floor(pX or 0)) .. ',' .. tostring(math.floor(pY or 0)) .. ')",\n' ..
+                '          "orderCount": ' .. tostring(fState.orderCount or 0) .. ',\n' ..
+                '          "icons": [' .. table.concat(iconList, ",") .. ']\n' ..
+                '        }')
         end
     end
     add('      "visibleIcons": ' .. tostring(visibleIconsCount) .. ',\n')
@@ -408,6 +582,67 @@ function PromptExport.buildDetailed()
     add(table.concat(frameIconsInfo, ",\n"))
     add('\n      }\n')
     add('    }\n')
+    add('  },\n')
+
+    -- Hot Path Profiling Metrics
+    add('  "hotPathMetrics": {\n')
+    local perf = EAM.Modules and EAM.Modules.Performance
+    local snap = perf and perf.getSnapshot and perf.getSnapshot()
+    if snap then
+        add('    "sessionDurationSeconds": ' .. string.format("%.2f", snap.sessionDuration or 0) .. ',\n')
+        add('    "totalSessionCalls": ' .. tostring(snap.totalSessionCalls or 0) .. ',\n')
+        add('    "callsPerSecond": ' .. string.format("%.2f", snap.callsPerSecond or 0) .. ',\n')
+
+        -- Top Hot Paths
+        add('    "topHotPaths": [\n')
+        local topList = {}
+        local topLimit = math.min(15, #snap.topPaths)
+        for i = 1, topLimit do
+            local item = snap.topPaths[i]
+            table.insert(topList, '      {"rank": ' .. tostring(i) ..
+                ', "key": "' .. tostring(item.key) .. '"' ..
+                ', "sessionCount": ' .. tostring(item.count) ..
+                ', "cps": ' .. string.format("%.2f", item.cps or 0) ..
+                ', "cumulativeCount": ' .. tostring(item.cumulativeCount or item.count) .. '}')
+        end
+        add(table.concat(topList, ",\n"))
+        add('\n    ],\n')
+
+        -- Session dictionary
+        add('    "session": {\n')
+        local sessList = {}
+        for k, v in pairs(snap.hotPaths or {}) do
+            table.insert(sessList, '      "' .. tostring(k) .. '": ' .. tostring(v))
+        end
+        add(table.concat(sessList, ",\n"))
+        add('\n    },\n')
+
+        -- Cumulative dictionary
+        add('    "cumulative": {\n')
+        local cumList = {}
+        for k, v in pairs(snap.cumulative or {}) do
+            table.insert(cumList, '      "' .. tostring(k) .. '": ' .. tostring(v))
+        end
+        add(table.concat(cumList, ",\n"))
+        add('\n    },\n')
+
+        -- Native Engine Profiler
+        local eng = snap.engineProfiler or {}
+        add('    "engineProfiler": {\n')
+        add('      "supported": ' .. tostring(eng.supported == true) .. ',\n')
+        add('      "enabled": ' .. tostring(eng.enabled == true) .. ',\n')
+        add('      "recentMs": ' .. string.format("%.4f", eng.recentMs or 0) .. ',\n')
+        add('      "sessionMs": ' .. string.format("%.4f", eng.sessionMs or 0) .. ',\n')
+        add('      "encounterMs": ' .. string.format("%.4f", eng.encounterMs or 0) .. ',\n')
+        add('      "peakMs": ' .. string.format("%.4f", eng.peakMs or 0) .. ',\n')
+        add('      "lastMs": ' .. string.format("%.4f", eng.lastMs or 0) .. ',\n')
+        add('      "over1Ms": ' .. tostring(eng.over1Ms or 0) .. ',\n')
+        add('      "over5Ms": ' .. tostring(eng.over5Ms or 0) .. ',\n')
+        add('      "reason": ' .. safeJsonStr(eng.reason) .. '\n')
+        add('    }\n')
+    else
+        add('    "status": "unavailable"\n')
+    end
     add('  },\n')
 
     -- Runtime Debug Logs
@@ -423,7 +658,18 @@ function PromptExport.buildDetailed()
     add('\n  ]\n')
 
     add("}")
-    return table.concat(buffer)
+    local result = table.concat(buffer)
+    if EAM.db then
+        local stamp = (date and date("%Y-%m-%d %H:%M:%S")) or "now"
+        EAM.db.debugDump = {
+            timestamp = stamp,
+            report = result,
+        }
+        if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.markRevisionChanged then
+            EAM.Modules.SavedVariables.markRevisionChanged()
+        end
+    end
+    return result
 end
 
 -- Lazy-initialize除錯視窗 UI

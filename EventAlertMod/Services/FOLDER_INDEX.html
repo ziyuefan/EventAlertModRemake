@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Service Layer">
   <meta name="ai-governance-security" content="Taint-Sensitive / Combat Protection Gated">
   <meta name="ai-governance-invariants" content="戰鬥中數值保護機制：戰鬥中 GetUnitSpeed 等受限 API 自動安全回退至真實脫戰記憶快取 (lastKnownStats) | 目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染 | 零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:50.810739+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.778282+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染",
     "零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回"
   ],
-  "timestamp": "2026-09-12T20:51:50.810739+08:00",
+  "timestamp": "2026-09-27T07:24:55.778282+08:00",
   "fileCount": 19,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 345423,
+  "totalSizeBytes": 412130,
   "files": [
     {
       "name": "AuraCapabilityService.lua",
@@ -46,8 +46,8 @@
     {
       "name": "AuraContainerService.lua",
       "extension": ".lua",
-      "sizeBytes": 14810,
-      "lineCount": 374,
+      "sizeBytes": 19758,
+      "lineCount": 483,
       "purpose": "只在非戰鬥建立 player/target AuraContainer，套用 AuraSlot/AuraGroup 規則。；戰鬥中設定變更只記錄 pending，PLAYER_REGEN_ENABLED 後批次重建一次。",
       "role": "Services/AuraContainerService",
       "security": "Safe"
@@ -55,8 +55,8 @@
     {
       "name": "AuraService.lua",
       "extension": ".lua",
-      "sizeBytes": 26572,
-      "lineCount": 748,
+      "sizeBytes": 36492,
+      "lineCount": 1003,
       "purpose": "作為 player/target aura facts 的唯一 adapter，隔離 Retail aura API 與 UI 層。；採取極致健壯且低 GC 的直讀策略，避免過度包裝導致普通屬性被誤判定為 restricted。 | 接收 UNIT_AURA/target change 後更新 aura runtime cache。；在 timer 中寫入完整的 startTime、duration、expirationTime，對齊 Renderer 要求。",
       "role": "Services/AuraService",
       "security": "Zero-Alloc"
@@ -82,8 +82,8 @@
     {
       "name": "CooldownService.lua",
       "extension": ".lua",
-      "sizeBytes": 40992,
-      "lineCount": 1100,
+      "sizeBytes": 46844,
+      "lineCount": 1243,
       "purpose": "技能與物品冷卻追蹤服務，具備玩家精確施法過濾、三態設定與可用發光判定",
       "role": "Service / Cooldown Tracker",
       "security": "Taint-Sensitive"
@@ -91,8 +91,8 @@
     {
       "name": "GroundEffectService.lua",
       "extension": ".lua",
-      "sizeBytes": 25607,
-      "lineCount": 675,
+      "sizeBytes": 38334,
+      "lineCount": 944,
       "purpose": "將 canonical SavedVariables 與安全 Base／Override 法術族群編譯成 event spellID 索引，監聽玩家成功施法並建立地面效果計時。；非戰鬥、低頻解析法術說明；解析失敗時明確降級到使用者設定秒數。",
       "role": "Services/GroundEffectService",
       "security": "Taint-Sensitive"
@@ -109,8 +109,8 @@
     {
       "name": "ItemCooldownService.lua",
       "extension": ".lua",
-      "sizeBytes": 10363,
-      "lineCount": 313,
+      "sizeBytes": 29095,
+      "lineCount": 778,
       "purpose": "直接 itemID 監控歸此模組，不讓 item cooldown 邏輯散入 renderer。；採取極致健壯且低 GC 的直讀策略，避免過度安全檢查導致普通冷卻數據被誤攔截。 | 管理 item cooldown cache、ItemCooldownState 與 opt-in cache build 狀態。；接收 BAG_UPDATE_COOLDOWN 事件並刷新物品冷卻狀態。",
       "role": "Services/ItemCooldownService",
       "security": "Zero-Alloc"
@@ -145,8 +145,8 @@
     {
       "name": "PlayerResourceService.lua",
       "extension": ".lua",
-      "sizeBytes": 53826,
-      "lineCount": 1323,
+      "sizeBytes": 53915,
+      "lineCount": 1324,
       "purpose": "依職業、專精、使用者設定與 12.1 runtime capability 編譯多資源 registry。；以 power token O(1) 分派 UNIT_POWER_UPDATE/FREQUENT/MAXPOWER。",
       "role": "Services/PlayerResourceService",
       "security": "Taint-Sensitive"
@@ -154,8 +154,8 @@
     {
       "name": "PlayerStatService.lua",
       "extension": ".lua",
-      "sizeBytes": 65501,
-      "lineCount": 1550,
+      "sizeBytes": 74688,
+      "lineCount": 1777,
       "purpose": "18 大人物屬性與滑翔速度即時監控服務，具備 12.1+ 戰鬥速度受限自動安全回退至快取機制",
       "role": "Service / Stat Monitor",
       "security": "Taint-Sensitive"
@@ -172,8 +172,8 @@
     {
       "name": "SpellInfoService.lua",
       "extension": ".lua",
-      "sizeBytes": 2516,
-      "lineCount": 86,
+      "sizeBytes": 4941,
+      "lineCount": 140,
       "purpose": "集中 spell name/icon/link lookup，讓其他服務不重複查詢。；查詢結果只作為 safe facts cache，不承擔 alert 判斷。 | 提供 spellID lookup 與快取入口。",
       "role": "Services/SpellInfoService",
       "security": "Safe"
@@ -181,8 +181,8 @@
     {
       "name": "TooltipMonitorService.lua",
       "extension": ".lua",
-      "sizeBytes": 35490,
-      "lineCount": 970,
+      "sizeBytes": 38317,
+      "lineCount": 1035,
       "purpose": "匿名目標光環探針服務，透過 Tooltip 回呼實現無污染光環採集，杜絕遍歷 Nameplate",
       "role": "Service / Target Aura Probe",
       "security": "Taint-Sensitive"
@@ -687,7 +687,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">337.3 KB</span>
+          <span class="stat-val">402.5 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -759,7 +759,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            14.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 374 行</span>
+            19.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 483 行</span>
           </td>
         </tr>
         
@@ -777,7 +777,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            25.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 748 行</span>
+            35.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1003 行</span>
           </td>
         </tr>
         
@@ -831,7 +831,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            40.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1100 行</span>
+            45.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1243 行</span>
           </td>
         </tr>
         
@@ -849,7 +849,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            25.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 675 行</span>
+            37.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 944 行</span>
           </td>
         </tr>
         
@@ -885,7 +885,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            10.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 313 行</span>
+            28.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 778 行</span>
           </td>
         </tr>
         
@@ -957,7 +957,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            52.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1323 行</span>
+            52.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1324 行</span>
           </td>
         </tr>
         
@@ -975,7 +975,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            64.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1550 行</span>
+            72.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1777 行</span>
           </td>
         </tr>
         
@@ -1011,7 +1011,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            2.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 86 行</span>
+            4.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 140 行</span>
           </td>
         </tr>
         
@@ -1029,7 +1029,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            34.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 970 行</span>
+            37.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1035 行</span>
           </td>
         </tr>
         
@@ -1077,7 +1077,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:50.810739+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.778282+08:00</p>
     </footer>
   </div>
 

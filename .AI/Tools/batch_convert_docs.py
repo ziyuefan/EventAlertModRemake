@@ -1238,7 +1238,7 @@ def parse_changelog_to_html(content):
         if not stripped:
             continue
             
-        m_ver = re.match(r'^--\s*\[([^\]]+)\]\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})?', stripped)
+        m_ver = re.match(r'^--\s*(\[.+\])\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})?', stripped)
         if m_ver:
             if in_sub_list:
                 html_out.append('</ul>')

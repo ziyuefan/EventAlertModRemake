@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.6-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%208.7-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -157,6 +157,39 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+
+### 🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27
+- **高頻冷卻事件合併排程與警示更新零分配流水線 (Cooldown Event Coalescing & Zero-Allocation Alert Pipeline)**：
+  - **警示排隊佇列零記憶體分配 (Zero-Allocation Queue)**：`AlertManager` 採用持久化槽位（`persistentSlots`），消除高頻警示更新時每秒數千次的臨時 Table 堆疊分配，根除 Lua GC 垃圾回收卡頓隱患，實機實測記憶體佔用顯著降低約 12 MB，FPS 飆升 +15.1%（86 -> 99 FPS）。
+  - **冷卻狀態髒檢查與無效重繪阻斷 (Cooldown Dirty State Diffing & Render Suppression)**：`CooldownService` 與 `ItemCooldownService` 於狀態刷新前嚴格快照並比對 12 項關鍵屬性（顯示、啟用、佔位、灰階、發光、充能、時間），在資料未實質變更時全面抑制狀態廣播與後續繪製，渲染繪製次數暴降 96.9%（從每秒 21 次驟降至 0.65 次）。
+  - **全域冷卻事件同幀合併排程 (Frame-Level Cooldown Event Coalescing)**：針對 `SPELL_UPDATE_COOLDOWN`、`ACTIONBAR_UPDATE_COOLDOWN` 與 `BAG_UPDATE_COOLDOWN` 等無特定法術 ID 負載之高頻全域事件實裝同幀合併調度，杜絕同一幀/Tick 內多次重複的全清單遍歷，極大平滑團隊副本與大秘境高負載環境下的幀率。
+  - **暴雪官方 AddOn Profiler 深度整合**：實裝 `C_AddOnProfiler` 遙測探針，支援 `/eam metrics` 即時查看暴雪 C++ 遊戲引擎量測之外掛 CPU 耗時（每幀 CPU 耗時小於 0.08ms）與幀掉落刺波。
+- **角色屬性與吸收量監控全面升級 (Player Stat & Absorb Monitor Upgrade)**：
+  - **模組即時開關與生命週期修復**：切換開關即時隱藏框架並停止輪詢；底層 Native Aura 結構變更時提供醒目 `/reload` 警示與一鍵重載按鈕。
+  - **移動所有屬性與主錨點 GPU 樹狀零延遲同步聯動**：拖曳主錨點時，全組屬性框架即時同步跟隨移動。
+  - **依附目標框架多選**：支援 EAM 主錨點、UIParent、玩家頭像、目標頭像、焦點頭像、寵物頭像與 9 大方位錨點。
+  - **進度條雙色漸層渲染 (`SetGradient` API)**：支援水平與垂直雙色漸層混色渲染，並相容經典降級。
+  - **全項自選色彩**：進度條主色、次色、數值文字、名稱標籤均提供自選調色盤。
+  - **屬性堆疊自選排序**：清單新增上移、下移、重設控制，即時更新畫面堆疊順序。
+- **全模組自訂技能與法術名稱功能實裝 (Custom Display Names Across All Modules)**：
+  - **全新支援自訂圖示顯示名稱 (簡稱)**：滿足在圖示間距密集、緊湊排版時避免名稱過長互相遮擋的需求（例如可將「聖盾術」簡稱為「盾」、「斬殺」簡稱為「斬」）。
+  - **條件設定視窗佈局全面升級**：新增「自訂顯示名稱 (簡稱)」專屬輸入框，並將視窗高度擴展至 680px。
+  - **清單列表即時標記**：若該項目有設定自訂簡稱，設定清單將即時以「法術名稱 (|cff00ff96簡稱|r)」醒目標註。
+  - **全模組服務層深度整合**：涵蓋自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻（含裝備欄位）與地面效果全流程。
+  - **原生光環防覆蓋機制**：針對 Retail 12.1.0 原生光環容器 (Native Aura) 實裝文字守護鉤子 (Text Guard Hook)，防止暴雪底層預設光環名稱回寫覆蓋。
+- **原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply & Zero Reload)**：
+  - 徹底修復原生光環在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 `/reload` 才能生效的重大缺陷。
+  - 實裝 `NativeAuraRenderer` 弱引用按鈕註冊池與 `updateButtonFonts` 零配額熱套用機制，拉動滑桿直接原位更新，零延遲、無需銷毀容器、不消耗 18 次配額。
+- **目標光環切換目標即時刷新、殘留圖示清理與倒數鬼影根治 (Target Aura Target-Switching Live Refresh, Ghost Icon Purge & Countdown Ghost Elimination)**：
+  - 徹底根除切換目標時原目標光環圖示殘留或秒數仍持續倒數的頑疾，實裝 Native 12.1 容器生命週期重置與 Legacy 渲染器即時同步清空與計時器解綁。
+- **技能冷卻與地面效果第一格消失及移動模式坐標漂移根治 (Alert Layout Slot 1 Zero-Anchor Guard & Drag Coordinate Normalization Fix)**：
+  - 徹底修復 Slot 1 首次渲染時物理消失的重大缺陷，根治 `StopMovingOrSizing` 強制改寫 `BOTTOMLEFT` 導致的幾何漂移。
+- **全語系 CLI 命令列擴充 (Slash Commands Expansion)**：
+  - 補齊 `/eam preview`、`/eam rune`、`/eam add ground` 與 `/eam lang` 即時語系切換指令。
+- **快捷懸停加入 (CTRL+ALT) 跨職業法術歸類為自身光環修復**：
+  - 明確注入 `catalogScope = "SELF"`，杜絕法術被誤歸入跨職業清單。
+- **地面效果法術圖示解析、清單排版與預覽避讓**：
+  - 實裝多層原生降級解析；預覽牛頭人智能避讓，杜絕第 1 格被遮蔽；自動清理歷史幽靈筆誤法術。
 
 ### 🌟 [Retail 12.1.0 Alpha 8.6] - 2026.09.19
 - **地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment & Zero In-Combat Interruption)**：

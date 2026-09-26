@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Application Layer">
   <meta name="ai-governance-security" content="Safe">
   <meta name="ai-governance-invariants" content="維護模組單一職責原則，嚴格遵守專案架構規範">
-  <meta name="ai-scan-timestamp" content="2026-09-12T20:51:44.231973+08:00">
+  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:46.172843+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -27,19 +27,22 @@
   "invariants": [
     "維護模組單一職責原則，嚴格遵守專案架構規範"
   ],
-  "timestamp": "2026-09-12T20:51:44.231973+08:00",
-  "fileCount": 0,
-  "subdirectoryCount": 1,
-  "totalSizeBytes": 0,
-  "files": [],
-  "subdirectories": [
+  "timestamp": "2026-09-27T07:24:46.172843+08:00",
+  "fileCount": 1,
+  "subdirectoryCount": 0,
+  "totalSizeBytes": 62,
+  "files": [
     {
-      "name": "skills",
-      "path": "./skills/",
-      "role": "Agent Specialized Skill",
-      "summary": "託管 skills 專業代理人技能定義、操作流程、範例與參考知識庫。"
+      "name": "skills.json",
+      "extension": ".json",
+      "sizeBytes": 62,
+      "lineCount": 7,
+      "purpose": "JSON 資料結構 (鍵數: 1)",
+      "role": "Data Schema",
+      "security": "Safe"
     }
-  ]
+  ],
+  "subdirectories": []
 }
   </script>
 
@@ -512,15 +515,15 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">子目錄數量</span>
           <span class="stat-val">1</span>
         </div>
         <div class="stat-item">
+          <span class="stat-label">子目錄數量</span>
+          <span class="stat-val">0</span>
+        </div>
+        <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">0 B</span>
+          <span class="stat-val">62 B</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -539,32 +542,11 @@
 
     <!-- 子目錄列表 (若有) -->
     
-        <section>
-          <h2 class="section-title">📂 子目錄 (1)</h2>
-          <div class="subdirs-grid">
-            
-        <a href="./skills/FOLDER_INDEX.html" class="subdir-card">
-          <div>
-            <div class="subdir-header">
-              <span class="subdir-icon">📁</span>
-              <span class="subdir-name">skills</span>
-            </div>
-            <p class="subdir-desc">託管 skills 專業代理人技能定義、操作流程、範例與參考知識庫。</p>
-          </div>
-          <div class="subdir-meta">
-            <span>Agent Skill Layer</span>
-            <span>24 個項目 →</span>
-          </div>
-        </a>
-        
-          </div>
-        </section>
-        
 
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (0)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (1)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -580,7 +562,25 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:32px;">此目錄下暫無獨立檔案</td></tr>
+            
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./skills.json" title="檢視檔案內容">skills.json</a>
+            </div>
+          </td>
+          <td><span class="badge badge-data">JSON</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">JSON 資料結構 (鍵數: 1)</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Data Schema</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            62 B<span style="font-size: 0.78rem; color: #64748b;"> • 7 行</span>
+          </td>
+        </tr>
+        
           </tbody>
         </table>
       </div>
@@ -589,7 +589,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-12T20:51:44.231973+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:46.172843+08:00</p>
     </footer>
   </div>
 

@@ -187,6 +187,7 @@ local function collectCapabilities(snapshot, runFrameProbe)
     addGlobalCapability(snapshot, "profile.eventCPU", "GetEventCPUUsage", api.GetEventCPUUsage, "on-demand profiling only")
     addGlobalCapability(snapshot, "profile.functionCPU", "GetFunctionCPUUsage", api.GetFunctionCPUUsage, "on-demand profiling only")
     addGlobalCapability(snapshot, "profile.scriptCPU", "GetScriptCPUUsage", api.GetScriptCPUUsage, "on-demand profiling only")
+    addFunctionCapability(snapshot, "profile.addonProfiler", "C_AddOnProfiler.GetAddOnMetric", api.C_AddOnProfiler or _G.C_AddOnProfiler, "GetAddOnMetric", "Modern Retail native engine profiler")
 
     if runFrameProbe then
         probeFrameTemplates(snapshot)

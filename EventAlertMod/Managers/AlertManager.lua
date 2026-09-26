@@ -35,12 +35,22 @@ local AlertManager = {
 EAM.Managers = EAM.Managers or {}
 EAM.Managers.AlertManager = AlertManager
 
+-- 持久化更新佇列槽位（以 alertID 為鍵，消除高頻佇列 table 記憶體分配與 GC 震盪）
+local persistentSlots = {}
+
 -- 批次更新處理
 local function flushUpdates()
+    if EAM.recordHotPath then
+        EAM.recordHotPath("AlertManager.flushUpdates")
+    end
     AlertManager.isPending = false
 
     local Renderer = EAM.UI and EAM.UI.Renderer
     if not Renderer or not Renderer.render then
+        return
+    end
+
+    if next(AlertManager.pendingUpdates) == nil then
         return
     end
 
@@ -53,23 +63,44 @@ local function flushUpdates()
         local state = update.state
         local frameName = update.frameName
         
-        local frameEnabled = not ModuleController
-            or ModuleController.isFrameEnabled(frameName)
-        if not state.shown or frameEnabled then
-            Renderer.render(state, frameName)
+        if state then
+            local frameEnabled = not ModuleController
+                or ModuleController.isFrameEnabled(frameName)
+            if not state.shown or frameEnabled then
+                Renderer.render(state, frameName)
+            end
+            
+            -- 若此告警已隱藏（shown == false），且已完成渲染，多型調用其 releaseFunc 安全回收 state Table
+            if not state.shown and state.releaseFunc then
+                state.releaseFunc(state)
+            end
         end
         
-        -- 若此告警已隱藏（shown == false），且已完成渲染，多型調用其 releaseFunc 安全回收 state Table
-        if not state.shown and state.releaseFunc then
-            state.releaseFunc(state)
-        end
-        
+        update.state = nil
+        update.frameName = nil
         AlertManager.pendingUpdates[id] = nil
     end
 
     -- 結束 Renderer 批次渲染模式，這會一次性重排所有受影響的 Layout 框架
     if Renderer.EndBatch then
         Renderer.EndBatch()
+    end
+end
+
+function AlertManager.clearPending(frameName)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("AlertManager.clearPending")
+    end
+    for id, update in pairs(AlertManager.pendingUpdates) do
+        if not frameName or update.frameName == frameName then
+            local state = update.state
+            if state and state.releaseFunc then
+                state.releaseFunc(state)
+            end
+            update.state = nil
+            update.frameName = nil
+            AlertManager.pendingUpdates[id] = nil
+        end
     end
 end
 
@@ -142,6 +173,9 @@ function AlertManager.initialize()
 end
 
 function AlertManager.onAlertStateChanged(_, state, frameName)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("AlertManager.onAlertStateChanged")
+    end
     if not state or not Util.isSafeTableKey(state.id) then
         return
     end
@@ -151,11 +185,10 @@ function AlertManager.onAlertStateChanged(_, state, frameName)
         return false, "moduleDisabled"
     end
 
-    -- 原生雙重保險守衛：若 Native Aura 後端接管且警報類型屬於光環，攔截渲染流，避免 Legacy 衝突
+    -- 原生雙重保險守衛：若 Native Aura 後端接管且警報類型屬於自身光環，攔截渲染流，避免 Legacy 衝突
     local capability = EAM.Services and EAM.Services.AuraCapabilityService
     if capability and capability.isNative and capability.isNative() then
-        if frameName == EAM.Constants.ALERT_FRAME_TYPES.selfAura 
-            or frameName == EAM.Constants.ALERT_FRAME_TYPES.targetAura then
+        if frameName == EAM.Constants.ALERT_FRAME_TYPES.selfAura then
             if not state.shown and state.releaseFunc then
                 state.releaseFunc(state)
             end
@@ -168,8 +201,15 @@ function AlertManager.onAlertStateChanged(_, state, frameName)
         state.overlayGlow = true
     end
 
-    -- 將變更暫存至更新佇列中
-    AlertManager.pendingUpdates[state.id] = { state = state, frameName = frameName }
+    -- 將變更暫存至更新佇列中（使用持久化 slot 避免高頻 table 分配）
+    local slot = persistentSlots[state.id]
+    if not slot then
+        slot = {}
+        persistentSlots[state.id] = slot
+    end
+    slot.state = state
+    slot.frameName = frameName
+    AlertManager.pendingUpdates[state.id] = slot
 
     -- 若尚未註冊批次更新，則利用 Scheduler 註冊在下一個 Tick 執行
     if not AlertManager.isPending then

@@ -107,6 +107,7 @@ function DebugState.snapshot()
                     layoutDirty = anyLayoutDirty,
                 }
             end)() or nil,
+            hotPathMetrics = EAM.Modules.Performance and EAM.Modules.Performance.getSnapshot and EAM.Modules.Performance.getSnapshot() or nil,
         },
         humanNotes = {},
         boundaryWarnings = boundaryWarnings,
@@ -123,9 +124,15 @@ end
 function DebugState.printSummary()
     local snapshot = DebugState.snapshot()
     local report = snapshot.derived.migrationReport
+    local hotPath = snapshot.derived and snapshot.derived.hotPathMetrics
+    local hotPathInfo = ""
+    if hotPath then
+        hotPathInfo = ", hotPaths " .. tostring(hotPath.totalSessionCalls or 0) .. " (" .. string.format("%.1f", hotPath.callsPerSecond or 0) .. "/s)"
+    end
     if report then
-        print("EventAlertMod Retail rewrite: imported " .. tostring(report.imported) .. " legacy alerts, skipped " .. tostring(report.skipped) .. ", boundary warnings " .. tostring(#snapshot.boundaryWarnings) .. ".")
+        print("EventAlertMod Retail rewrite: imported " .. tostring(report.imported) .. " legacy alerts, skipped " .. tostring(report.skipped) .. ", boundary warnings " .. tostring(#snapshot.boundaryWarnings) .. hotPathInfo .. ".")
     else
-        print("EventAlertMod Retail rewrite: debug snapshot available.")
+        print("EventAlertMod Retail rewrite: debug snapshot available" .. hotPathInfo .. ".")
     end
 end
+

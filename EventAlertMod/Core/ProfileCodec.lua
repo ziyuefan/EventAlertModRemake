@@ -839,6 +839,7 @@ local function normalizeModuleRecord(moduleName, record)
     if moduleName == "groundEffect" then
         allowed.durationMode = true
         allowed.manualDuration = true
+        allowed.groundEffectPreRender = true
     elseif moduleName == "spellCooldown" or moduleName == "itemCooldown" then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
             allowed[COOLDOWN_BEHAVIOR_FIELDS[index]] = true
@@ -866,6 +867,12 @@ local function normalizeModuleRecord(moduleName, record)
         normalized.manualDuration = record.manualDuration or 8
         if type(normalized.manualDuration) ~= "number" or normalized.manualDuration ~= normalized.manualDuration or normalized.manualDuration < 0.1 or normalized.manualDuration > 3600 then
             return nil, "manualDurationInvalid"
+        end
+        if record.groundEffectPreRender ~= nil then
+            if type(record.groundEffectPreRender) ~= "boolean" then
+                return nil, "groundEffectPreRenderInvalid"
+            end
+            normalized.groundEffectPreRender = record.groundEffectPreRender
         end
     elseif moduleName == "spellCooldown" or moduleName == "itemCooldown" then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
@@ -1188,6 +1195,7 @@ local function exportRecord(moduleName, alert)
             enabled = alert.enabled ~= false,
             durationMode = alert.durationMode,
             manualDuration = alert.manualDuration,
+            groundEffectPreRender = alert.groundEffectPreRender,
         })
     elseif moduleName == "spellCooldown" or moduleName == "itemCooldown" then
         local record = {

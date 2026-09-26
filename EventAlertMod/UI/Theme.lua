@@ -653,7 +653,7 @@ local function ensureButtonChrome(button)
     local ok, chrome = pcall(function()
         return button.eamThemeChrome
     end)
-    if ok and chrome then
+    if ok and type(chrome) == "table" then
         return chrome
     end
 
@@ -695,7 +695,7 @@ function Theme.applyButton(button)
     setTextureColor(callButtonMethod(button, "GetPushedTexture"), palette.buttonPushed)
     setTextureColor(callButtonMethod(button, "GetDisabledTexture"), palette.buttonDisabled)
     local borderColor = palette.buttonBorder or palette.border
-    local borders = chrome and chrome.borders or nil
+    local borders = type(chrome) == "table" and chrome.borders or nil
     if borders then
         for index = 1, #borders do
             setTextureColor(borders[index], borderColor)

@@ -107,3 +107,33 @@
 - Phase 3：player/target AuraContainer、Slot/Group、initializeFrame、脫戰 batch rebuild、Aura Sound 已完成 68914 契約 PoC。
 - Phase 4：嚴格離線流程與遊戲內報告入口完成；本輪 `all` suite 為 17/17。
 - 尚未完成：`_ptr_` 實機 RQA、taint/Forbidden、實際 sound、Reload UI 與效能簽收。
+
+## 優先權 P5：組語視角底層極限最佳化（ASM-Inspired Optimization）
+
+> **⚠️ 核心防禦鐵律（Zero-Side-Effects & Non-Regression Iron Rule）：**
+> 所有底層效能優化僅限於「代碼執行效率、記憶體佈局與 JIT 快取親和性」，**絕對禁止改變任何既有業務邏輯、禁止引發任何副作用、禁止造成任何功能缺失或運行錯誤**。每一次底層調整必須 100% 通過 499+ 項合約與回歸驗證。
+
+1. **虛擬暫存器釘定（Local Register Pinning）**：
+   - 將熱路徑（Hot Path）中所有高頻呼叫的暴雪 API、全域輔助函式（如 `math.min`, `math.max`, `pcall`, `C_UnitAuras`）於模組頂部提升為 `local` 變數。
+   - 使其在 Lua 虛擬機器中直接映射至虛擬暫存器（Virtual Registers），在 LuaJIT 編譯為直接 CPU 暫存器呼叫，徹底消除 `_G` 全域雜湊表尋址與記憶體解引用開銷。
+
+2. **熱路徑暫存器壓力控制（Register Pressure & Spilling Guard）**：
+   - 審查高頻事件處理常式（如 `onUnitAura`、`onTargetChanged`、`AlertManager.flushUpdates`、渲染器迴圈），將單一函式活躍的 `local` 變數數量精簡至 8~10 個以內。
+   - 避免超過 x86_64 實體暫存器上限（16 個通用暫存器）而引發 Register Spilling（暫存器溢出至 Stack 記憶體）的額外 `mov [rsp], reg` 懲罰。
+
+3. **深層指針鏈提升（Pointer Chasing Hoisting）**：
+   - 消除熱迴圈內部的多層巢狀結構存取（如 `EAM.db.config.iconSize` 或 `icon.rendered.layoutX`）。
+   - 在進入迴圈或高頻函式前將其提升為單層區域指標，保護 CPU L1/L2 Data Cache 預讀器（Hardware Prefetcher），消除跨堆（Heap）記憶體跳躍。
+
+4. **連續整數陣列空間局部性（Array Part Spatial Locality）**：
+   - 所有批次掃描、優先順序清單與池化容器，一律優先使用 `table.create(N, 0)` 建立連續整數陣列（`1..N`）。
+   - 存取時直接對齊 C 語言連續記憶體指標偏移 `[R_base + R_index * 16]`，完全利用 CPU 64-Byte Cache Line 批次載入 4 個 `TValue`，杜絕雜湊桶離散分佈帶來的 Cache Thrashing。
+
+5. **熱路徑零閉包（Zero Hot-Path Closures）**：
+   - 徹底杜絕在熱路徑（`OnUpdate`、事件回呼、排程迴圈）中宣告匿名閉包函式 `function() ... end`，防止 Lua 每次動態 `malloc` 建立 Closure 物件與 Upvalue 表。
+   - 一律採用靜態具名函式，上下文由參數（`self`, `data`）傳遞，使底層保持為純粹的函式跳躍（`call` 指令）。
+
+6. **單一型態保護（Monomorphic Types & JIT Guard Stabilization）**：
+   - 保持所有狀態物件欄位與函式回傳值型態絕對一致（Monomorphic），數值欄位預設給 `0` 或特定 Sentinel，不隨意在 `number`、`nil`、`boolean` 間震盪。
+   - 防止 LuaJIT Trace Compiler 的型態守衛失敗（Guard Failure）引發 Trace Abort，使高頻代碼 100% 穩定常駐於 JIT 本機機器碼模式。
+

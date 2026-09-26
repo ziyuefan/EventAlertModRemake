@@ -25,14 +25,18 @@
 - 任一部署目標若是 SymbolicLink、Junction 或其他 Reparse Point，必須 fail-closed；不得追蹤、覆蓋、刪除或重建。
 - 未經使用者要求，不讀取 `WTF\Account` 內帳號或角色資料。
 - 🚨 部署腳本異動通報義務：若因應需求修改 `Deploy/` 目錄下任何腳本（如 `Deploy-EventAlertMod.ps1`、`Build-Package.ps1`、`Upload-CurseForge.ps1` 等），必須主動明確向少年欸報告具體改動內容。
+- 🚨 每輪任務結束必做建議：每輪任務完成時，必須主動向少年欸推薦當前情境可使用的 Antigravity 內建斜線指令（如 `/goal`, `/plan`, `/boost`, `/learn` 等）或適用之 Agent SKILL。
 
 ## 目前目錄契約
 
 - `EventAlertMod/`：唯一可打包的插件目錄，必須包含 TOC、Core、Data、Debug、Locale、Managers、Media、Services、UI、README 與 changelog。
 - `Deploy/`：部署與插件包封裝工具（GitHub Release 原生自動打包 Source，本機與發布已停用專案 SRC 打包）。
 - `Dist/`：僅存放本機生成的 ZIP／摘要；不再保留 `Dist/EventAlertMod` 中介副本。
-- `.AI/`：AGENTS、PROJECT_MEMORY、Docs、Tools、Tests、Schemas、TestResults、候選資料、歷史參考、備份與專案 Skills。
+- `.AI/`：AGENTS、PROJECT_MEMORY、Docs、Tools、Tests、Schemas、TestResults、候選資料、歷史參考、備份與專案 Skills（唯一定義真理來源）。
+- `.agents/`：Antigravity 工作區擴充入口，僅存放 `skills.json` 轉址導向 `.AI/skills/`，杜絕技能雙重維護。
+- `scratch/`：專案根目錄禁止放置草稿/暫存夾，臨時腳本一律集中於 `.AI/scratch/`。
 - 根目錄與 `EventAlertMod/` 的 `README.md`、`changelog.txt` 必須保持同步。
+- `changelog.txt` 結構化分類規範：必須依「【✨ 新增功能】、【⚡ 體驗優化】、【🐛 缺陷修復】、【🌐 在地化支援】」四大標準分類組織；正文永遠以魔獸插件本體為核心；若有 AI 治理或工程細節，在 GitHub Release 必須使用 `<details><summary>` 獨立收合，CurseForge 公開發布則維持 100% 玩家純度。發布日誌與歷史清單全面導入 `<details>` 折疊能力，杜絕頁面落落長。
 - 版本斷點與自動遞增：往後版本斷點以發佈到 GitHub Release 及 CurseForge 為斷點；正式發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
 ## 目前主要工作

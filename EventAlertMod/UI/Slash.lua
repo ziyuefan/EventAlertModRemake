@@ -86,6 +86,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_ADD_GROUND or "/eam add ground <法術ID> (或 /eam addg) - 新增地面效果提示")
     printLine(EAM.L.EAM_SLASH_HELP_REMOVE or "/eam remove <spell/target/cd/item/ground> <ID> (或 /eam rem) - 移除指定監控提示")
     printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER or "/eam unitpower background <資源類型> - 標記背景資源缺少事件，啟用共用採樣器")
+    printLine(EAM.L.EAM_SLASH_HELP_METRICS or "/eam metrics (或 /eam hotpaths) [reset/save/export] - 檢視高頻路徑呼叫統計與即時頻率")
     printLine(EAM.L.EAM_SLASH_HELP_LANG or "/eam lang <auto/zhTW/zhCN/enUS/koKR/ruRU> - 即時切換外掛介面語系")
 end
 
@@ -450,7 +451,7 @@ local function handleSlash(input)
     local command = commandIterator() or "opt"
     command = string.lower(command)
 
-    if command == "debug" then
+    if command == "debug" or command == "dump" then
         local nextTokenVal = commandIterator()
         if nextTokenVal and string.lower(nextTokenVal) == "ground" then
             local spellIDToken = commandIterator()
@@ -473,6 +474,7 @@ local function handleSlash(input)
             end
         elseif EAM.Debug.PromptExport then
             EAM.Debug.PromptExport.openWindow()
+            printLine(EAM.L.EAM_SLASH_DEBUG_SNAPSHOT_SAVED or "|cff00ff96實機偵錯快照已生成！|r已同步存入 SavedVariables (輸入 |cffffff00/reload|r 即寫入硬碟存檔)。同時已為少年欸開啟複製視窗，可直接按 |cffffff00Ctrl+C|r 複製回報給 Agent。")
         end
     elseif command == "diag" or command == "report" or command == "diagnostic" then
         if EAM.Diagnostics and EAM.Diagnostics.showReportDialog then
@@ -532,6 +534,62 @@ local function handleSlash(input)
         end
     elseif command == "unitpower" then
         handleUnitPower(input)
+    elseif command == "metrics" or command == "hotpath" or command == "hotpaths" then
+        local subCmd = commandIterator()
+        subCmd = subCmd and string.lower(subCmd)
+        local perf = EAM.Modules and EAM.Modules.Performance
+        if not perf then
+            printLine("Performance 模組未載入。")
+        elseif subCmd == "reset" or subCmd == "clear" then
+            perf.resetMetrics("all")
+            printLine(EAM.L.EAM_METRICS_RESET_CONFIRM or "|cff00ff00[EAM HotPath]|r 已重置高頻路徑統計資料。")
+        elseif subCmd == "save" then
+            if EAM.Modules and EAM.Modules.SavedVariables and EAM.Modules.SavedVariables.saveHotPathMetrics then
+                EAM.Modules.SavedVariables.saveHotPathMetrics()
+                printLine(EAM.L.EAM_METRICS_SAVED_CONFIRM or "|cff00ff00[EAM HotPath]|r 高頻路徑統計資料已即時寫入 SavedVariables。")
+            end
+        elseif subCmd == "export" then
+            if EAM.Debug and EAM.Debug.PromptExport then
+                EAM.Debug.PromptExport.openWindow()
+            end
+        else
+            local snap = perf.getSnapshot()
+            printLine(stringFormat(
+                "|cff00ffff[EAM 高頻路徑統計 (Hot Path Metrics)]|r 連線時間: %.1f 秒 | 總呼叫數: %d 次 | 平均頻率: %.1f 次/秒",
+                snap.sessionDuration or 0,
+                snap.totalSessionCalls or 0,
+                snap.callsPerSecond or 0
+            ))
+            local topList = snap.topPaths or {}
+            local maxDisplay = math.min(10, #topList)
+            if maxDisplay == 0 then
+                printLine("  (尚無記錄之高頻呼叫)")
+            else
+                for i = 1, maxDisplay do
+                    local item = topList[i]
+                    printLine(stringFormat(
+                        "  %d. |cffffff00%s|r: %d 次 (%.1f/s) [累積: %d]",
+                        i,
+                        tostring(item.key),
+                        item.count or 0,
+                        item.cps or 0,
+                        item.cumulativeCount or item.count or 0
+                    ))
+                end
+            end
+            local eng = snap.engineProfiler
+            if eng and eng.supported and eng.enabled then
+                printLine(stringFormat(
+                    "  |cff00ff00[官方引擎計量]|r 近期均值: %.3f ms | 歷史峰值: %.3f ms | 首領戰均值: %.3f ms | 刺波(>1ms/5ms): %d / %d 幀",
+                    eng.recentMs or 0,
+                    eng.peakMs or 0,
+                    eng.encounterMs or 0,
+                    eng.over1Ms or 0,
+                    eng.over5Ms or 0
+                ))
+            end
+            printLine("提示: 輸入 |cffffff00/eam metrics reset|r 可重設計數；輸入 |cffffff00/eam export|r 可開啟完整 JSON 匯出視窗。")
+        end
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()
     elseif command == "add" or command == "addt" or command == "addc" or command == "addi" or command == "addg" then

@@ -46,6 +46,7 @@ EXCLUDE_DIR_PATTERNS = {
     "patch-temp",
     ".trash",
     "nppBackup",
+    "scratch",
 }
 
 # ==============================================================================
@@ -394,18 +395,9 @@ DIRECTORY_KNOWLEDGE_BASE = {
         "role": "Antigravity & Coding Agent Ecosystem",
         "layer": "Agent Ecosystem Layer",
         "security": "Agent Orchestration",
-        "summary": "託管專為 Antigravity 與各種代碼代理人打造的 21 大專業技能包，涵蓋 API 調研、光環編譯、冷卻防禦等領域專長。",
+        "summary": "託管 Antigravity 專案擴充轉址入口 (skills.json)，依官方規範將所有技能中樞統一導向 .AI/skills。",
         "invariants": ["提供 AI 快速載入領域專業知識的標準介面"],
-        "allowed_deps": [".agents/skills"],
-    },
-    ".agents/skills": {
-        "name": "代理人技能包目錄 (Agent Skills Catalog)",
-        "role": "Domain-Specific Agent Skill Packages",
-        "layer": "Agent Ecosystem Layer",
-        "security": "Project Skill Registry",
-        "summary": "包含 21 個專業技能目錄，每個技能配備 SKILL.md、腳本與最佳實踐準則。",
-        "invariants": ["符合 skills 規範，支援即時呼叫與委派子代理執行"],
-        "allowed_deps": [],
+        "allowed_deps": [".AI/skills"],
     },
 }
 

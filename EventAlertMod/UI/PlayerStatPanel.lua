@@ -54,7 +54,7 @@ local function getStatConfig(statKey)
     if not statsTable[statKey] then
         statsTable[statKey] = {
             enabled = false,
-            showIcon = true,
+            showIcon = false,
             showStatusBar = false,
             customIcon = "",
             iconSize = 36,
@@ -64,9 +64,17 @@ local function getStatConfig(statKey)
             decimals = 1,
             shortNumber = true,
             useCustomPos = false,
+            attachTo = "EAM_ANCHOR",
+            attachPoint = "CENTER",
             point = "CENTER",
             offsetX = 0,
             offsetY = 0,
+            barColor = nil,
+            enableGradient = false,
+            barColor2 = nil,
+            barGradientDir = "HORIZONTAL",
+            valueColor = nil,
+            labelColor = nil,
         }
     end
     return statsTable[statKey]
@@ -237,8 +245,72 @@ local function createFrame()
     listContainer:SetBackdropBorderColor(0.45, 0.35, 0.25, 0.85)
     if Theme and Theme.registerFrame then Theme.registerFrame(listContainer, "panel") end
 
+    local sortBar = api.CreateFrame("Frame", nil, listContainer)
+    sortBar:SetSize(225, 22)
+    sortBar:SetPoint("TOPLEFT", listContainer, "TOPLEFT", 4, -4)
+
+    local sortUpBtn = api.CreateFrame("Button", nil, sortBar, "UIPanelButtonTemplate")
+    sortUpBtn:SetSize(66, 20)
+    sortUpBtn:SetPoint("LEFT", sortBar, "LEFT", 0, 0)
+    sortUpBtn:SetText(localized("EAM_STAT_MOVE_UP", "▲ 上移"))
+    if Theme and Theme.registerButton then Theme.registerButton(sortUpBtn) end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(sortUpBtn, "將當前選中屬性在堆疊排列與清單中的順序往前上移", "上移屬性") end
+    sortUpBtn:SetScript("OnClick", function()
+        local order = PlayerStatService and PlayerStatService.getOrder and PlayerStatService.getOrder()
+        if not order or not Panel.selectedKey then return end
+        local idx = nil
+        for i, k in ipairs(order) do
+            if k == Panel.selectedKey then idx = i; break end
+        end
+        if idx and idx > 1 then
+            order[idx], order[idx - 1] = order[idx - 1], order[idx]
+            PlayerStatService.setOrder(order)
+            if Panel.buildList then Panel.buildList() end
+            if Panel.refreshList then Panel.refreshList() end
+        end
+    end)
+
+    local sortDownBtn = api.CreateFrame("Button", nil, sortBar, "UIPanelButtonTemplate")
+    sortDownBtn:SetSize(66, 20)
+    sortDownBtn:SetPoint("LEFT", sortUpBtn, "RIGHT", 4, 0)
+    sortDownBtn:SetText(localized("EAM_STAT_MOVE_DOWN", "▼ 下移"))
+    if Theme and Theme.registerButton then Theme.registerButton(sortDownBtn) end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(sortDownBtn, "將當前選中屬性在堆疊排列與清單中的順序往後下移", "下移屬性") end
+    sortDownBtn:SetScript("OnClick", function()
+        local order = PlayerStatService and PlayerStatService.getOrder and PlayerStatService.getOrder()
+        if not order or not Panel.selectedKey then return end
+        local idx = nil
+        for i, k in ipairs(order) do
+            if k == Panel.selectedKey then idx = i; break end
+        end
+        if idx and idx < #order then
+            order[idx], order[idx + 1] = order[idx + 1], order[idx]
+            PlayerStatService.setOrder(order)
+            if Panel.buildList then Panel.buildList() end
+            if Panel.refreshList then Panel.refreshList() end
+        end
+    end)
+
+    local sortResetBtn = api.CreateFrame("Button", nil, sortBar, "UIPanelButtonTemplate")
+    sortResetBtn:SetSize(66, 20)
+    sortResetBtn:SetPoint("LEFT", sortDownBtn, "RIGHT", 4, 0)
+    sortResetBtn:SetText(localized("EAM_STAT_RESET_ORDER", "↺ 重設"))
+    if Theme and Theme.registerButton then Theme.registerButton(sortResetBtn) end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(sortResetBtn, "將屬性排列順序還原為系統預設", "重設排序") end
+    sortResetBtn:SetScript("OnClick", function()
+        if PlayerStatService and PlayerStatService.ORDERED_KEYS then
+            local defaultOrder = {}
+            for i, k in ipairs(PlayerStatService.ORDERED_KEYS) do
+                defaultOrder[i] = k
+            end
+            PlayerStatService.setOrder(defaultOrder)
+            if Panel.buildList then Panel.buildList() end
+            if Panel.refreshList then Panel.refreshList() end
+        end
+    end)
+
     local scrollFrame = api.CreateFrame("ScrollFrame", "EAM_PlayerStatScrollFrame", listContainer, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", listContainer, "TOPLEFT", 4, -4)
+    scrollFrame:SetPoint("TOPLEFT", listContainer, "TOPLEFT", 4, -28)
     scrollFrame:SetPoint("BOTTOMRIGHT", listContainer, "BOTTOMRIGHT", -24, 34)
 
     local scrollChild = api.CreateFrame("Frame", nil, scrollFrame)
@@ -479,6 +551,127 @@ local function createFrame()
     if EAM.UI.setTooltip then EAM.UI.setTooltip(urlBox, "點擊反白複製網址前往 Wago Tools 查詢圖示代碼", "圖示查詢網站") end
     urlBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
 
+    -- 進度條自選顏色與雙色漸層渲染 (SetGradient API / Fallback)
+    local barColorLabel = pageDisplay:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    barColorLabel:SetPoint("TOPLEFT", pageDisplay, "TOPLEFT", 12, -260)
+    barColorLabel:SetText(localized("EAM_STAT_BAR_COLOR", "進度條主顏色:"))
+
+    local barColorBtn = EAM.UI.createColorSwatchButton(pageDisplay, 24, 20, function(btn)
+        local cfg = getStatConfig(Panel.selectedKey)
+        local curColor = cfg.barColor or { 0.2, 0.8, 1.0, 0.95 }
+        EAM.UI.openColorPicker({
+            r = curColor[1] or 0.2,
+            g = curColor[2] or 0.8,
+            b = curColor[3] or 1.0,
+            a = curColor[4] or 0.95,
+            hasOpacity = true,
+            onColorChanged = function(r, g, b, a)
+                cfg.barColor = { r, g, b, a }
+                btn:SetColor(r, g, b, a)
+                if Panel.applyLiveChange then Panel.applyLiveChange() end
+            end
+        })
+    end)
+    barColorBtn:SetPoint("LEFT", barColorLabel, "RIGHT", 6, 0)
+    Panel.controls.barColorBtn = barColorBtn
+
+    local gradientCb = api.CreateFrame("CheckButton", nil, pageDisplay, "UICheckButtonTemplate")
+    gradientCb:SetPoint("LEFT", barColorBtn, "RIGHT", 14, 0)
+    gradientCb.text = gradientCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    gradientCb.text:SetPoint("LEFT", gradientCb, "RIGHT", 4, 1)
+    gradientCb.text:SetText(localized("EAM_STAT_ENABLE_GRADIENT", "啟用雙色漸層"))
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(gradientCb, "在進度條上啟用雙色漸層混色渲染效果 (SetGradient API)", "雙色漸層") end
+    Panel.controls.gradientCb = gradientCb
+
+    local barColor2Btn = EAM.UI.createColorSwatchButton(pageDisplay, 24, 20, function(btn)
+        local cfg = getStatConfig(Panel.selectedKey)
+        local curColor = cfg.barColor2 or { 0.1, 0.5, 0.9, 0.95 }
+        EAM.UI.openColorPicker({
+            r = curColor[1] or 0.1,
+            g = curColor[2] or 0.5,
+            b = curColor[3] or 0.9,
+            a = curColor[4] or 0.95,
+            hasOpacity = true,
+            onColorChanged = function(r, g, b, a)
+                cfg.barColor2 = { r, g, b, a }
+                btn:SetColor(r, g, b, a)
+                if Panel.applyLiveChange then Panel.applyLiveChange() end
+            end
+        })
+    end)
+    barColor2Btn:SetPoint("LEFT", gradientCb.text, "RIGHT", 8, 0)
+    Panel.controls.barColor2Btn = barColor2Btn
+
+    local gradientDirLabel = pageDisplay:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    gradientDirLabel:SetPoint("TOPLEFT", pageDisplay, "TOPLEFT", 12, -292)
+    gradientDirLabel:SetText(localized("EAM_STAT_GRADIENT_DIR", "漸層方向:"))
+
+    local gradientDirOptions = {
+        { value = "HORIZONTAL", labelKey = "EAM_STAT_GRADIENT_HORIZONTAL", fallback = "水平漸層 (Horizontal)" },
+        { value = "VERTICAL", labelKey = "EAM_STAT_GRADIENT_VERTICAL", fallback = "垂直漸層 (Vertical)" },
+    }
+
+    local gradientDirDropdown = api.CreateFrame("Button", nil, pageDisplay, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(gradientDirDropdown) end
+    gradientDirDropdown:SetSize(160, 20)
+    gradientDirDropdown:SetPoint("LEFT", gradientDirLabel, "RIGHT", 8, 0)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(gradientDirDropdown, "選擇進度條漸層色彩的變化方向", "漸層方向") end
+    Panel.controls.gradientDirDropdown = gradientDirDropdown
+
+    local gradientDirMenu = api.CreateFrame("Frame", nil, pageDisplay, "BackdropTemplate")
+    gradientDirMenu:SetSize(160, (#gradientDirOptions * 22) + 8)
+    gradientDirMenu:SetPoint("TOPLEFT", gradientDirDropdown, "BOTTOMLEFT", 0, -2)
+    gradientDirMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    gradientDirMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    gradientDirMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    gradientDirMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    gradientDirMenu:Hide()
+
+    local function refreshGradientDirDropdown(val)
+        val = val or (getStatConfig(Panel.selectedKey).barGradientDir or "HORIZONTAL")
+        gradientDirDropdown.dirValue = val
+        local text = val
+        for _, opt in ipairs(gradientDirOptions) do
+            if opt.value == val then
+                text = (EAM.L and EAM.L[opt.labelKey]) or opt.fallback
+                break
+            end
+        end
+        gradientDirDropdown:SetText(text)
+    end
+    Panel.refreshGradientDirDropdown = refreshGradientDirDropdown
+
+    for index = 1, #gradientDirOptions do
+        local option = gradientDirOptions[index]
+        local menuBtn = api.CreateFrame("Button", nil, gradientDirMenu)
+        menuBtn:SetSize(154, 20)
+        menuBtn:SetPoint("TOPLEFT", gradientDirMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        local btnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        btnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
+        btnText:SetText((EAM.L and EAM.L[option.labelKey]) or option.fallback)
+        if Theme and Theme.registerButton then Theme.registerButton(menuBtn) end
+        menuBtn:SetScript("OnClick", function()
+            local cfg = getStatConfig(Panel.selectedKey)
+            cfg.barGradientDir = option.value
+            refreshGradientDirDropdown(option.value)
+            gradientDirMenu:Hide()
+            if Panel.applyLiveChange then Panel.applyLiveChange() end
+        end)
+    end
+
+    gradientDirDropdown:SetScript("OnClick", function()
+        if gradientDirMenu:IsShown() then
+            gradientDirMenu:Hide()
+        else
+            gradientDirMenu:Show()
+        end
+    end)
+
     -- =========================================================================
     -- 【Tab 2: 字型與格式 (Fonts & Format)】
     -- =========================================================================
@@ -489,7 +682,7 @@ local function createFrame()
     fontValSlider:SetMinMaxValues(8, 32)
     fontValSlider:SetValueStep(1)
     fontValSlider:SetObeyStepOnDrag(true)
-    fontValSlider:SetSize(280, 14)
+    fontValSlider:SetSize(220, 14)
     if EAM.UI.setTooltip then EAM.UI.setTooltip(fontValSlider, "調整屬性數值數字的文字大小 (8~32px)", "數值字型大小") end
     local fontValVal = fontValSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fontValVal:SetPoint("BOTTOMRIGHT", fontValSlider, "TOPRIGHT", 0, 4)
@@ -499,14 +692,37 @@ local function createFrame()
     fontValLabel:SetPoint("RIGHT", fontValVal, "LEFT", -4, 0)
     fontValLabel:SetJustifyH("LEFT")
     fontValLabel:SetWordWrap(false)
-    fontValLabel:SetText(localized("EAM_STAT_FONT_VALUE", "數值字型大小 (Value Font Size)"))
+    fontValLabel:SetText(localized("EAM_STAT_FONT_VALUE", "數值字型大小"))
+
+    local valColorLabel = pageFonts:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    valColorLabel:SetPoint("LEFT", fontValSlider, "RIGHT", 16, 6)
+    valColorLabel:SetText(localized("EAM_STAT_VALUE_COLOR", "數值文字顏色:"))
+
+    local valColorBtn = EAM.UI.createColorSwatchButton(pageFonts, 24, 20, function(btn)
+        local cfg = getStatConfig(Panel.selectedKey)
+        local curColor = cfg.valueColor or { 1, 1, 1, 1 }
+        EAM.UI.openColorPicker({
+            r = curColor[1] or 1,
+            g = curColor[2] or 1,
+            b = curColor[3] or 1,
+            a = curColor[4] or 1,
+            hasOpacity = true,
+            onColorChanged = function(r, g, b, a)
+                cfg.valueColor = { r, g, b, a }
+                btn:SetColor(r, g, b, a)
+                if Panel.applyLiveChange then Panel.applyLiveChange() end
+            end
+        })
+    end)
+    valColorBtn:SetPoint("LEFT", valColorLabel, "RIGHT", 6, 0)
+    Panel.controls.valColorBtn = valColorBtn
 
     local fontLabelSlider = api.CreateFrame("Slider", nil, pageFonts, "OptionsSliderTemplate")
     fontLabelSlider:SetPoint("TOPLEFT", pageFonts, "TOPLEFT", 12, -85)
     fontLabelSlider:SetMinMaxValues(8, 24)
     fontLabelSlider:SetValueStep(1)
     fontLabelSlider:SetObeyStepOnDrag(true)
-    fontLabelSlider:SetSize(280, 14)
+    fontLabelSlider:SetSize(220, 14)
     if EAM.UI.setTooltip then EAM.UI.setTooltip(fontLabelSlider, "調整屬性名稱標籤的文字大小 (8~24px)", "名稱字型大小") end
     local fontLabelVal = fontLabelSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fontLabelVal:SetPoint("BOTTOMRIGHT", fontLabelSlider, "TOPRIGHT", 0, 4)
@@ -516,7 +732,30 @@ local function createFrame()
     fontLabelLabel:SetPoint("RIGHT", fontLabelVal, "LEFT", -4, 0)
     fontLabelLabel:SetJustifyH("LEFT")
     fontLabelLabel:SetWordWrap(false)
-    fontLabelLabel:SetText(localized("EAM_STAT_FONT_LABEL", "名稱字型大小 (Label Font Size)"))
+    fontLabelLabel:SetText(localized("EAM_STAT_FONT_LABEL", "名稱字型大小"))
+
+    local lblColorLabel = pageFonts:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lblColorLabel:SetPoint("LEFT", fontLabelSlider, "RIGHT", 16, 6)
+    lblColorLabel:SetText(localized("EAM_STAT_LABEL_COLOR", "名稱文字顏色:"))
+
+    local lblColorBtn = EAM.UI.createColorSwatchButton(pageFonts, 24, 20, function(btn)
+        local cfg = getStatConfig(Panel.selectedKey)
+        local curColor = cfg.labelColor or { 1, 0.9, 0.5, 1 }
+        EAM.UI.openColorPicker({
+            r = curColor[1] or 1,
+            g = curColor[2] or 0.9,
+            b = curColor[3] or 0.5,
+            a = curColor[4] or 1,
+            hasOpacity = true,
+            onColorChanged = function(r, g, b, a)
+                cfg.labelColor = { r, g, b, a }
+                btn:SetColor(r, g, b, a)
+                if Panel.applyLiveChange then Panel.applyLiveChange() end
+            end
+        })
+    end)
+    lblColorBtn:SetPoint("LEFT", lblColorLabel, "RIGHT", 6, 0)
+    Panel.controls.lblColorBtn = lblColorBtn
 
     local customLabelLabel = pageFonts:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     customLabelLabel:SetPoint("TOPLEFT", pageFonts, "TOPLEFT", 12, -145)
@@ -595,30 +834,170 @@ local function createFrame()
     useCustomPosCb.text:SetText(localized("EAM_STAT_USE_CUSTOM_POS", "啟用此項獨立位置 (可自由拖曳)"))
     if EAM.UI.setTooltip then EAM.UI.setTooltip(useCustomPosCb, "開啟後此屬性不再隨整組排列，可獨立隨意放置於螢幕任意位置", "獨立位置") end
 
-    local statPointLabel = pagePos:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    statPointLabel:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -45)
-    statPointLabel:SetText(localized("EAM_STAT_POINT_LABEL", "基準錨點 (Anchor Point):"))
+    -- 1. 依附目標框架下拉選單 (Attach Target Frame)
+    local attachTargetLabel = pagePos:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    attachTargetLabel:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -40)
+    attachTargetLabel:SetText(localized("EAM_STAT_ATTACH_TARGET", "依附目標框架:"))
 
-    local statPointOptions = {
-        { value = "TOPLEFT", label = "左上 (TOPLEFT)" },
-        { value = "TOP", label = "正上 (TOP)" },
-        { value = "TOPRIGHT", label = "右上 (TOPRIGHT)" },
-        { value = "LEFT", label = "正左 (LEFT)" },
+    local attachTargetOptions = {
+        { value = "EAM_ANCHOR", labelKey = "EAM_STAT_TARGET_MAIN_ANCHOR", fallback = "EAM 屬性主錨點 (預設)" },
+        { value = "UIParent", labelKey = "EAM_STAT_TARGET_SCREEN", fallback = "螢幕中央 (UIParent)" },
+        { value = "PlayerFrame", labelKey = "EAM_STAT_TARGET_PLAYER", fallback = "玩家頭像 (PlayerFrame)" },
+        { value = "TargetFrame", labelKey = "EAM_STAT_TARGET_TARGET", fallback = "目標頭像 (TargetFrame)" },
+        { value = "FocusFrame", labelKey = "EAM_STAT_TARGET_FOCUS", fallback = "焦點頭像 (FocusFrame)" },
+        { value = "PetFrame", labelKey = "EAM_STAT_TARGET_PET", fallback = "寵物頭像 (PetFrame)" },
+    }
+
+    local attachTargetDropdown = api.CreateFrame("Button", nil, pagePos, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(attachTargetDropdown) end
+    attachTargetDropdown:SetSize(190, 20)
+    attachTargetDropdown:SetPoint("LEFT", attachTargetLabel, "RIGHT", 8, 0)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(attachTargetDropdown, "選擇此屬性定位時所依附的宿主框架", "依附目標框架") end
+
+    local attachTargetMenu = api.CreateFrame("Frame", nil, pagePos, "BackdropTemplate")
+    attachTargetMenu:SetSize(190, (#attachTargetOptions * 22) + 8)
+    attachTargetMenu:SetPoint("TOPLEFT", attachTargetDropdown, "BOTTOMLEFT", 0, -2)
+    attachTargetMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    attachTargetMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    attachTargetMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    attachTargetMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    attachTargetMenu:Hide()
+
+    local function refreshAttachTargetDropdown(val)
+        val = val or (getStatConfig(Panel.selectedKey).attachTo or "EAM_ANCHOR")
+        attachTargetDropdown.targetValue = val
+        local text = val
+        for _, opt in ipairs(attachTargetOptions) do
+            if opt.value == val then
+                text = (EAM.L and EAM.L[opt.labelKey]) or opt.fallback
+                break
+            end
+        end
+        attachTargetDropdown:SetText(text)
+    end
+    Panel.refreshAttachTargetDropdown = refreshAttachTargetDropdown
+
+    for index = 1, #attachTargetOptions do
+        local option = attachTargetOptions[index]
+        local menuBtn = api.CreateFrame("Button", nil, attachTargetMenu)
+        menuBtn:SetSize(184, 20)
+        menuBtn:SetPoint("TOPLEFT", attachTargetMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        local btnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        btnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
+        btnText:SetText((EAM.L and EAM.L[option.labelKey]) or option.fallback)
+        if Theme and Theme.registerButton then Theme.registerButton(menuBtn) end
+        menuBtn:SetScript("OnClick", function()
+            local cfg = getStatConfig(Panel.selectedKey)
+            cfg.attachTo = option.value
+            refreshAttachTargetDropdown(option.value)
+            attachTargetMenu:Hide()
+            if Panel.applyLiveChange then Panel.applyLiveChange() end
+        end)
+    end
+
+    attachTargetDropdown:SetScript("OnClick", function()
+        if attachTargetMenu:IsShown() then
+            attachTargetMenu:Hide()
+        else
+            attachTargetMenu:Show()
+        end
+    end)
+
+    -- 2. 依附目標方位下拉選單 (Attach Point)
+    local attachPointLabel = pagePos:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    attachPointLabel:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -72)
+    attachPointLabel:SetText(localized("EAM_STAT_ATTACH_POINT", "依附目標方位:"))
+
+    local anchorPointOptions = {
         { value = "CENTER", label = "中央 (CENTER)" },
-        { value = "RIGHT", label = "正右 (RIGHT)" },
-        { value = "BOTTOMLEFT", label = "左下 (BOTTOMLEFT)" },
+        { value = "TOP", label = "正上 (TOP)" },
         { value = "BOTTOM", label = "正下 (BOTTOM)" },
+        { value = "LEFT", label = "正左 (LEFT)" },
+        { value = "RIGHT", label = "正右 (RIGHT)" },
+        { value = "TOPLEFT", label = "左上 (TOPLEFT)" },
+        { value = "TOPRIGHT", label = "右上 (TOPRIGHT)" },
+        { value = "BOTTOMLEFT", label = "左下 (BOTTOMLEFT)" },
         { value = "BOTTOMRIGHT", label = "右下 (BOTTOMRIGHT)" },
     }
+
+    local attachPointDropdown = api.CreateFrame("Button", nil, pagePos, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(attachPointDropdown) end
+    attachPointDropdown:SetSize(160, 20)
+    attachPointDropdown:SetPoint("LEFT", attachPointLabel, "RIGHT", 8, 0)
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(attachPointDropdown, "選擇依附宿主目標框架上的對齊錨點", "依附目標方位") end
+
+    local attachPointMenu = api.CreateFrame("Frame", nil, pagePos, "BackdropTemplate")
+    attachPointMenu:SetSize(160, (#anchorPointOptions * 22) + 8)
+    attachPointMenu:SetPoint("TOPLEFT", attachPointDropdown, "BOTTOMLEFT", 0, -2)
+    attachPointMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    attachPointMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    attachPointMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.96)
+    attachPointMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    attachPointMenu:Hide()
+
+    local function refreshAttachPointDropdown(val)
+        val = val or (getStatConfig(Panel.selectedKey).attachPoint or "CENTER")
+        attachPointDropdown.pointValue = val
+        local text = val
+        for _, opt in ipairs(anchorPointOptions) do
+            if opt.value == val then
+                text = opt.label
+                break
+            end
+        end
+        attachPointDropdown:SetText(text)
+    end
+    Panel.refreshAttachPointDropdown = refreshAttachPointDropdown
+
+    for index = 1, #anchorPointOptions do
+        local option = anchorPointOptions[index]
+        local menuBtn = api.CreateFrame("Button", nil, attachPointMenu)
+        menuBtn:SetSize(154, 20)
+        menuBtn:SetPoint("TOPLEFT", attachPointMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        local btnText = menuBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        btnText:SetPoint("LEFT", menuBtn, "LEFT", 6, 0)
+        btnText:SetText(option.label)
+        if Theme and Theme.registerButton then Theme.registerButton(menuBtn) end
+        menuBtn:SetScript("OnClick", function()
+            local cfg = getStatConfig(Panel.selectedKey)
+            cfg.attachPoint = option.value
+            refreshAttachPointDropdown(option.value)
+            attachPointMenu:Hide()
+            if Panel.applyLiveChange then Panel.applyLiveChange() end
+        end)
+    end
+
+    attachPointDropdown:SetScript("OnClick", function()
+        if attachPointMenu:IsShown() then
+            attachPointMenu:Hide()
+        else
+            attachPointMenu:Show()
+        end
+    end)
+
+    -- 3. 自身對齊錨點下拉選單 (Self Point)
+    local statPointLabel = pagePos:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    statPointLabel:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -104)
+    statPointLabel:SetText(localized("EAM_STAT_SELF_POINT", "自身對齊錨點:"))
 
     local statPointDropdown = api.CreateFrame("Button", nil, pagePos, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(statPointDropdown) end
     statPointDropdown:SetSize(160, 20)
     statPointDropdown:SetPoint("LEFT", statPointLabel, "RIGHT", 8, 0)
-    if EAM.UI.setTooltip then EAM.UI.setTooltip(statPointDropdown, "設定此獨立屬性在螢幕上的定位錨點", "基準錨點") end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(statPointDropdown, "設定此屬性自身框架的定位對齊錨點", "自身對齊錨點") end
 
     local statPointMenu = api.CreateFrame("Frame", nil, pagePos, "BackdropTemplate")
-    statPointMenu:SetSize(160, (#statPointOptions * 22) + 8)
+    statPointMenu:SetSize(160, (#anchorPointOptions * 22) + 8)
     statPointMenu:SetPoint("TOPLEFT", statPointDropdown, "BOTTOMLEFT", 0, -2)
     statPointMenu:SetFrameStrata("FULLSCREEN_DIALOG")
     statPointMenu:SetBackdrop({
@@ -635,7 +1014,7 @@ local function createFrame()
         val = val or (getStatConfig(Panel.selectedKey).point or "CENTER")
         statPointDropdown.pointValue = val
         local text = val
-        for _, opt in ipairs(statPointOptions) do
+        for _, opt in ipairs(anchorPointOptions) do
             if opt.value == val then
                 text = opt.label
                 break
@@ -643,14 +1022,41 @@ local function createFrame()
         end
         statPointDropdown:SetText(text)
     end
+    Panel.refreshStatPointDropdown = refreshStatPointDropdown
+
+    for index = 1, #anchorPointOptions do
+        local option = anchorPointOptions[index]
+        local menuButton = api.CreateFrame("Button", nil, statPointMenu)
+        menuButton:SetSize(154, 20)
+        menuButton:SetPoint("TOPLEFT", statPointMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
+        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
+        menuButtonText:SetText(option.label)
+        if Theme and Theme.registerButton then Theme.registerButton(menuButton) end
+        menuButton:SetScript("OnClick", function()
+            local cfg = getStatConfig(Panel.selectedKey)
+            cfg.point = option.value
+            refreshStatPointDropdown(option.value)
+            statPointMenu:Hide()
+            if Panel.applyLiveChange then Panel.applyLiveChange() end
+        end)
+    end
+
+    statPointDropdown:SetScript("OnClick", function()
+        if statPointMenu:IsShown() then
+            statPointMenu:Hide()
+        else
+            statPointMenu:Show()
+        end
+    end)
 
     local offsetXSlider = api.CreateFrame("Slider", nil, pagePos, "OptionsSliderTemplate")
-    offsetXSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -85)
+    offsetXSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -140)
     offsetXSlider:SetMinMaxValues(-1200, 1200)
     offsetXSlider:SetValueStep(1)
     offsetXSlider:SetObeyStepOnDrag(true)
     offsetXSlider:SetSize(320, 14)
-    if EAM.UI.setTooltip then EAM.UI.setTooltip(offsetXSlider, "調整此屬性的螢幕水平 X 軸像素位置", "水平位置") end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(offsetXSlider, "調整此屬性的水平 X 軸像素位置", "水平位置") end
     local offsetXVal = offsetXSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     offsetXVal:SetPoint("BOTTOMRIGHT", offsetXSlider, "TOPRIGHT", 0, 4)
     offsetXVal:SetJustifyH("RIGHT")
@@ -662,12 +1068,12 @@ local function createFrame()
     offsetXLabel:SetText(localized("EAM_STAT_OFFSET_X", "水平位置 (X 偏移)"))
 
     local offsetYSlider = api.CreateFrame("Slider", nil, pagePos, "OptionsSliderTemplate")
-    offsetYSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -140)
+    offsetYSlider:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -195)
     offsetYSlider:SetMinMaxValues(-900, 900)
     offsetYSlider:SetValueStep(1)
     offsetYSlider:SetObeyStepOnDrag(true)
     offsetYSlider:SetSize(320, 14)
-    if EAM.UI.setTooltip then EAM.UI.setTooltip(offsetYSlider, "調整此屬性的螢幕垂直 Y 軸像素位置", "垂直位置") end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(offsetYSlider, "調整此屬性的垂直 Y 軸像素位置", "垂直位置") end
     local offsetYVal = offsetYSlider:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     offsetYVal:SetPoint("BOTTOMRIGHT", offsetYSlider, "TOPRIGHT", 0, 4)
     offsetYVal:SetJustifyH("RIGHT")
@@ -681,7 +1087,7 @@ local function createFrame()
     local moveSingleBtn = api.CreateFrame("Button", nil, pagePos, "UIPanelButtonTemplate")
     if Theme and Theme.registerButton then Theme.registerButton(moveSingleBtn) end
     moveSingleBtn:SetSize(140, 24)
-    moveSingleBtn:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 16, -185)
+    moveSingleBtn:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 16, -240)
     moveSingleBtn:SetText(localized("EAM_STAT_MOVE_SINGLE_BTN", "移動此單項"))
     if EAM.UI.setTooltip then EAM.UI.setTooltip(moveSingleBtn, "僅在畫面上亮起當前選中屬性的移動錨點以供滑鼠單獨拖曳", "移動此單項") end
     moveSingleBtn:SetScript("OnClick", function()
@@ -695,18 +1101,18 @@ local function createFrame()
     moveAllBtn:SetSize(140, 24)
     moveAllBtn:SetPoint("LEFT", moveSingleBtn, "RIGHT", 12, 0)
     moveAllBtn:SetText(localized("EAM_STAT_MOVE_ALL_BTN", "移動所有屬性"))
-    if EAM.UI.setTooltip then EAM.UI.setTooltip(moveAllBtn, "在畫面上亮起群組與所有獨立屬性框架的錨點以供拖曳調整", "移動所有屬性") end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(moveAllBtn, "在畫面上亮起主錨點框，拖曳時所有非獨立屬性框架同步聯動移動", "移動所有屬性") end
     moveAllBtn:SetScript("OnClick", function()
-        if EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
-            EAM.UI.Renderer.setActiveAnchors("playerStat")
+        if PlayerStatService and PlayerStatService.setActiveAnchors then
+            PlayerStatService.setActiveAnchors(not PlayerStatService.isMoving, "all")
         end
     end)
 
     local moveHint = pagePos:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    moveHint:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -210)
+    moveHint:SetPoint("TOPLEFT", pagePos, "TOPLEFT", 12, -270)
     moveHint:SetWidth(380)
     moveHint:SetJustifyH("LEFT")
-    moveHint:SetText("提示：點擊移動按鈕後，畫面中央將顯示移動錨點，按住滑鼠左鍵可拖曳，右鍵點擊完成定位。")
+    moveHint:SetText("提示：點擊「移動所有屬性」後，畫面中央將顯示主錨點，按住滑鼠左鍵拖曳時所有屬性將同步聯動，右鍵點擊完成定位。")
 
     Panel.controls.offsetXSlider = offsetXSlider
     Panel.controls.offsetXVal = offsetXVal
@@ -723,6 +1129,16 @@ local function createFrame()
         cfg.enabled = enableCb:GetChecked() and true or false
         cfg.showIcon = showIconCb:GetChecked() and true or false
         cfg.showStatusBar = showStatusBarCb:GetChecked() and true or false
+        cfg.enableGradient = gradientCb:GetChecked() and true or false
+        if gradientDirDropdown and gradientDirDropdown.dirValue then
+            cfg.barGradientDir = gradientDirDropdown.dirValue
+        end
+        if attachTargetDropdown and attachTargetDropdown.targetValue then
+            cfg.attachTo = attachTargetDropdown.targetValue
+        end
+        if attachPointDropdown and attachPointDropdown.pointValue then
+            cfg.attachPoint = attachPointDropdown.pointValue
+        end
         if Panel.selectedKey == "skyridingSpeed" then
             cfg.glideOnlyIcon = glideOnlyIconCb:GetChecked() and true or false
         end
@@ -773,6 +1189,7 @@ local function createFrame()
     enableCb:SetScript("OnClick", applyLiveChange)
     showIconCb:SetScript("OnClick", applyLiveChange)
     showStatusBarCb:SetScript("OnClick", applyLiveChange)
+    gradientCb:SetScript("OnClick", applyLiveChange)
     glideOnlyIconCb:SetScript("OnClick", applyLiveChange)
     useCustomPosCb:SetScript("OnClick", applyLiveChange)
 
@@ -846,32 +1263,6 @@ local function createFrame()
         end
     end)
 
-    for index = 1, #statPointOptions do
-        local option = statPointOptions[index]
-        local menuButton = api.CreateFrame("Button", nil, statPointMenu)
-        menuButton:SetSize(154, 20)
-        menuButton:SetPoint("TOPLEFT", statPointMenu, "TOPLEFT", 3, -3 - (index - 1) * 22)
-        local menuButtonText = menuButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        menuButtonText:SetPoint("LEFT", menuButton, "LEFT", 6, 0)
-        menuButtonText:SetText(option.label)
-        if Theme and Theme.registerButton then Theme.registerButton(menuButton) end
-        menuButton:SetScript("OnClick", function()
-            local cfg = getStatConfig(Panel.selectedKey)
-            cfg.point = option.value
-            refreshStatPointDropdown(option.value)
-            statPointMenu:Hide()
-            applyLiveChange()
-        end)
-    end
-
-    statPointDropdown:SetScript("OnClick", function()
-        if statPointMenu:IsShown() then
-            statPointMenu:Hide()
-        else
-            statPointMenu:Show()
-        end
-    end)
-
     -- 底部儲存按鈕
     local function saveSelectedStat()
         applyLiveChange()
@@ -905,7 +1296,7 @@ local function createFrame()
         iconPreviewBox:SetTexture(iconTex)
 
         enableCb:SetChecked(cfg.enabled == true)
-        showIconCb:SetChecked(cfg.showIcon ~= false)
+        showIconCb:SetChecked(cfg.showIcon == true)
         showStatusBarCb:SetChecked(cfg.showStatusBar ~= false)
         if statKey == "skyridingSpeed" then
             glideOnlyIconCb:Show()
@@ -915,6 +1306,17 @@ local function createFrame()
         end
         iconEditBox:SetText(cfg.customIcon or "")
 
+        -- 進度條顏色與雙色漸層渲染
+        local defaultBarColor = (def.category == "defense") and { 0.2, 0.8, 1.0, 0.95 } or { 1.0, 0.75, 0.1, 0.95 }
+        local cBar = cfg.barColor or defaultBarColor
+        barColorBtn:SetColor(cBar[1] or 1, cBar[2] or 1, cBar[3] or 1, cBar[4] or 1)
+        gradientCb:SetChecked(cfg.enableGradient == true)
+        local cBar2 = cfg.barColor2 or { 0.1, 0.5, 0.9, 0.95 }
+        barColor2Btn:SetColor(cBar2[1] or 1, cBar2[2] or 1, cBar2[3] or 1, cBar2[4] or 1)
+        if Panel.refreshGradientDirDropdown then
+            Panel.refreshGradientDirDropdown(cfg.barGradientDir or "HORIZONTAL")
+        end
+
         refreshValuePlacementDropdown(cfg.valuePlacement or "TOP")
 
         sizeSlider:SetValue(cfg.iconSize or 36)
@@ -923,6 +1325,13 @@ local function createFrame()
         fontValVal:SetText(math.floor(cfg.fontSizeValue or 14))
         fontLabelSlider:SetValue(cfg.fontSizeLabel or 11)
         fontLabelVal:SetText(math.floor(cfg.fontSizeLabel or 11))
+
+        -- 數值與名稱文字顏色
+        local cVal = cfg.valueColor or { 1, 1, 1, 1 }
+        valColorBtn:SetColor(cVal[1] or 1, cVal[2] or 1, cVal[3] or 1, cVal[4] or 1)
+        local cLbl = cfg.labelColor or { 1, 0.9, 0.5, 1 }
+        lblColorBtn:SetColor(cLbl[1] or 1, cLbl[2] or 1, cLbl[3] or 1, cLbl[4] or 1)
+
         customLabelEditBox:SetText(cfg.customLabel or "")
         decimalsEditBox:SetText(tostring(cfg.decimals or 1))
         shortNumberCb:SetChecked(cfg.shortNumber ~= false)
@@ -930,7 +1339,15 @@ local function createFrame()
         maxThreshEditBox:SetText(cfg.thresholdMax and tostring(cfg.thresholdMax) or "")
 
         useCustomPosCb:SetChecked(cfg.useCustomPos == true)
-        refreshStatPointDropdown(cfg.point or "CENTER")
+        if Panel.refreshAttachTargetDropdown then
+            Panel.refreshAttachTargetDropdown(cfg.attachTo or "EAM_ANCHOR")
+        end
+        if Panel.refreshAttachPointDropdown then
+            Panel.refreshAttachPointDropdown(cfg.attachPoint or "CENTER")
+        end
+        if Panel.refreshStatPointDropdown then
+            Panel.refreshStatPointDropdown(cfg.point or "CENTER")
+        end
         offsetXSlider:SetValue(cfg.offsetX or 0)
         offsetXVal:SetText(math.floor(cfg.offsetX or 0))
         offsetYSlider:SetValue(cfg.offsetY or 0)
@@ -971,7 +1388,7 @@ local function createFrame()
 
     -- 建立左側列表項目
     local function buildList()
-        local keys = PlayerStatService and PlayerStatService.ORDERED_KEYS or {}
+        local keys = (PlayerStatService and PlayerStatService.getOrder and PlayerStatService.getOrder()) or (PlayerStatService and PlayerStatService.ORDERED_KEYS) or {}
         scrollChild:SetSize(210, math.max(440, #keys * 32 + 20))
         for idx, key in ipairs(keys) do
             local def = PlayerStatService.DEFINITIONS[key]
@@ -1040,13 +1457,16 @@ local function createFrame()
     Panel.buildList = buildList
 
     Panel.refreshList = function()
-        local keys = PlayerStatService and PlayerStatService.ORDERED_KEYS or {}
+        local keys = (PlayerStatService and PlayerStatService.getOrder and PlayerStatService.getOrder()) or (PlayerStatService and PlayerStatService.ORDERED_KEYS) or {}
         for idx, key in ipairs(keys) do
             local row = Panel.rows[idx]
             local def = PlayerStatService.DEFINITIONS[key]
             if row and def then
+                row.statKey = key
                 local cfg = getStatConfig(key)
                 local val = PlayerStatService.getStatValue(key)
+                local labelStr = (EAM.L and def.labelKey and EAM.L[def.labelKey]) or def.defaultLabel
+                if row.text then row.text:SetText(labelStr) end
                 row.valText:SetText(PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
                 row.cb:SetChecked(cfg.enabled == true)
                 local iconTex = PlayerStatService and PlayerStatService.getStatIcon and PlayerStatService.getStatIcon(key, cfg.customIcon) or def.defaultIcon
