@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-09-27.05",
+  "snapshotVersion": "2026-09-27.06",
   "updatedAt": "2026-09-27",
   "project": {
     "name": "EventAlertModRemake",
@@ -22,7 +22,7 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "/boost 高頻冷卻事件與警示狀態更新極限效能優化：1. AlertManager 引入 persistentSlots 持久化槽位結構，消除高頻更新期間臨時 table 分配；2. CooldownService 與 ItemCooldownService 實裝狀態髒檢查與派發抑制 (isDirty)，在冷卻數據無實質變更時抑制 fireStateChanged 與圖示重繪；3. 實裝 queueCoalescedRefresh 同幀事件合併調度，杜絕高頻全域冷卻事件重複全清單掃描；4. Flow 98/98 PASS, Contracts 499/499 PASS。",
+    "objective": "Retail 12.1.0 Alpha 8.7 正式發布完成：GitHub Release (Tag: alpha-8.7) 與 CurseForge (檔案 ID: 8985797) 雙平台同步發布；全模組自訂名稱、屬性監控升級、原生光環熱套用、目標光環切換清場、冷卻事件同幀合併、AlertManager 零配置佇列與髒檢查抑制全面落地；499 契約全綠、98 Flow 全過。進入 Alpha 8.8 開發週期。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 98,

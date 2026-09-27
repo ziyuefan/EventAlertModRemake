@@ -1,3 +1,28 @@
+### 2026-09-27 EAM-20260927-ALPHA-8.7-OFFICIAL-RELEASE：Retail 12.1.0 Alpha 8.7 雙平台正式發布（GitHub Release & CurseForge）與 Alpha 8.8 開發週期開啟
+
+- 狀態：已完成 (Contracts 499/499, Flow 98/98, Syntax 78/78, GitHub Release Tag: alpha-8.7, CurseForge File ID: 8985797)。
+- 發布內容與成果：
+  1. **全套文檔與版本一致性同步**：
+     - TOC `EventAlertMod.toc` 版本更新至 `EventAlertMod_MN_20260927`。
+     - 雙語 `README.md` / `README_en.md` 與插件內部副本 100% 同步，標註 Alpha 8.7 亮點。
+     - 雙語 `changelog.txt` / `changelog_en.txt` 與插件內部副本 100% 同步，日期對齊 2026.09.27。
+     - `generate_changelog_html.py` 產出根目錄與插件目錄雙份高質感 `changelog.html`。
+     - 產出 `Deploy/CURSEFORGE-DESCRIPTION.md`，完整映射 14 大 ForgeCDN 截圖附件空間。
+     - 產出單版本發布說明：`Dist/RELEASE_NOTES_Alpha_8.7.md` 與 `Dist/GITHUB_RELEASE_NOTES_alpha-8.7.md`。
+  2. **Git 提交與遠端推送**：
+     - Commit: `feat(release): Release Retail 12.1.0 Alpha 8.7`。
+     - 推送至 `origin/main` (commit hash: `2e58046` 等)。
+  3. **GitHub Release 發布**：
+     - 調用 `Deploy/Publish-GitHubRelease.ps1`，成功建立 Pre-release `alpha-8.7`（標題：`EventAlertMod Retail 12.1.0 Alpha 8.7`）。
+     - 上傳安裝套件 `EventAlertMod_MN_20260927_075916-alpha-8.7_AGY.zip` 與其 SHA-256 校驗文字檔。
+     - 網址：https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.7
+  4. **CurseForge 發布**：
+     - 調用 `Deploy/Upload-CurseForge.ps1`，透過 Windows DPAPI 瞬時安全解密本地 Token，順利穿透 Cloudflare WAF。
+     - 官方檔案 ID：`8985797`，發布類型：`alpha`，對應遊戲版本 Retail 12.1.0 (ID: 16519)。
+     - 網址：https://www.curseforge.com/wow/addons/eventalertmod
+  5. **版本斷點與未來開發規劃**：
+     - 依版本斷點規則，後續新開發週期自動以 Alpha 8.8 紀錄。
+
 ### 2026-09-27 EAM-20260927-COOLDOWN-BOOST-ZERO-ALLOC-AND-COALESCING：高頻冷卻事件合併排程、警示佇列零記憶體分配 (Zero-Alloc Queue) 暨狀態變更髒檢查抑制 (Dirty Suppression) 極限效能優化
 
 - 狀態：已解決 (Lua 78/78, Flow 98/98, Contracts 499/499, Build-Package PASS)。
