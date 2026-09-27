@@ -14,12 +14,32 @@
 
 ## 🌟 為什麼選擇現代版 EventAlertMod (EAM)？（四大差異化核心優勢）
 
-| 傳統法術監控 / 複雜大型插件 | 現代重構版 EventAlertMod (EAM) |
-| :--- | :--- |
-| ⚠️ **沉重且佔用資源**：大量背景 OnUpdate 輪詢、吃記憶體、引發戰鬥掉幀。 | ⚡ **極致輕量與零負擔**：純事件驅動架構，全面引入物件池技術（State Pools），消滅 GC 記憶體垃圾。 |
-| ❌ **容易受污染報錯**：12.0+ 暴雪引入 Secret Values 後，常常在戰鬥中報錯噴黃字或引發 UI 異常。 | 🛡️ **暴雪 12.0+ 終極安全防護**：獨家採用原生 C-Level `StatusBar:SetValue` 直通渲染技術，絕不觸發 Taint 污染。 |
-| 🔄 **設定繁瑣、需匯入字串**：需手動到網站翻找 WA 字串或手寫 Lua 條件判斷。 | 🎯 **直覺易用、秒加監控**：滑鼠停在任何技能、光環或物品上按 **`Ctrl + Alt`** 一秒加入，無需查 ID。 |
-| 🐢 **速度顯示不準確**：傳統插件無法偵測 10.0+ / 11.0+ / 12.0+ 飛龍騎術的真實衝刺速度。 | 🏃 **業界唯一：四合一速度淬鍊**：專屬對接 `C_PlayerInfo.GetGlidingInfo()`，完美支援 **830%~1400%** 動態極速！ |
+<table>
+  <thead>
+    <tr>
+      <th align="left">傳統法術監控 / 複雜大型插件</th>
+      <th align="left">現代重構版 EventAlertMod (EAM)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>⚠️ <strong>沉重且佔用資源</strong>：大量背景 OnUpdate 輪詢、吃記憶體、引發戰鬥掉幀。</td>
+      <td>⚡ <strong>極致輕量與零負擔</strong>：純事件驅動架構，全面引入物件池技術（State Pools），消滅 GC 記憶體垃圾。</td>
+    </tr>
+    <tr>
+      <td>❌ <strong>容易受污染報錯</strong>：12.0+ 暴雪引入 Secret Values 後，常常在戰鬥中報錯噴黃字或引發 UI 異常。</td>
+      <td>🛡️ <strong>暴雪 12.0+ 終極安全防護</strong>：獨家採用原生 C-Level <code>StatusBar:SetValue</code> 直通渲染技術，絕不觸發 Taint 污染。</td>
+    </tr>
+    <tr>
+      <td>🔄 <strong>設定繁瑣、需匯入字串</strong>：需手動到網站翻找 WA 字串或手寫 Lua 條件判斷。</td>
+      <td>🎯 <strong>直覺易用、秒加監控</strong>：滑鼠停在任何技能、光環或物品上按 <strong><code>Ctrl + Alt</code></strong> 一秒加入，無需查 ID。</td>
+    </tr>
+    <tr>
+      <td>🐢 <strong>速度顯示不準確</strong>：傳統插件無法偵測 10.0+ / 11.0+ / 12.0+ 飛龍騎術的真實衝刺速度。</td>
+      <td>🏃 <strong>業界唯一：四合一速度淬鍊</strong>：專屬對接 <code>C_PlayerInfo.GetGlidingInfo()</code>，完美支援 <strong>830%~1400%</strong> 動態極速！</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -65,43 +85,133 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 
 ### 1. 主設定與系統選單 (Main Options & System Preferences)
 
-| 主設定面板 (Main Options) | 功能模組開關 (Module Options) | 關於插件資訊 (About Panel) |
-| :---: | :---: | :---: |
-| <img src="https://media.forgecdn.net/attachments/description/826042/description_04ac0707-5adb-4e9f-a51c-876fb3e1bc84.jpg" width="100%" alt="EAM 主設定面板" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_e2998c73-1a7b-4cee-ada8-5a98d40888ac.jpg" width="100%" alt="功能模組開關" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_2b46c72f-8515-493e-a3a2-5d5271fd2b90.jpg" width="100%" alt="關於插件資訊" /> |
-| 整合主題/音效/語系選單、光環後端切換與全域開關 | 8 大功能模組獨立事件監聽與資源開關 | 插件版本、作者資訊、API 基準 (12.1.0 PTR) 與專案連結 |
+<table>
+  <thead>
+    <tr>
+      <th align="center">主設定面板 (Main Options)</th>
+      <th align="center">功能模組開關 (Module Options)</th>
+      <th align="center">關於插件資訊 (About Panel)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/description/826042/description_04ac0707-5adb-4e9f-a51c-876fb3e1bc84.jpg" width="100%" alt="EAM 主設定面板" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/description/826042/description_e2998c73-1a7b-4cee-ada8-5a98d40888ac.jpg" width="100%" alt="功能模組開關" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/description/826042/description_2b46c72f-8515-493e-a3a2-5d5271fd2b90.jpg" width="100%" alt="關於插件資訊" /></td>
+    </tr>
+    <tr>
+      <td>整合主題/音效/語系選單、光環後端切換與全域開關</td>
+      <td>8 大功能模組獨立事件監聽與資源開關</td>
+      <td>插件版本、作者資訊、API 基準 (12.1.0 PTR) 與專案連結</td>
+    </tr>
+  </tbody>
+</table>
 
-| 11 套主題樣式 (Theme Dropdown) | 12 種經典音效 (Sound Dropdown) | 6 大多國語系 (Locale Dropdown) |
-| :---: | :---: | :---: |
-| <img src="https://media.forgecdn.net/attachments/description/826042/description_8fb2f296-64fd-4fdd-9881-876e63a748d9.jpg" width="100%" alt="主題樣式下拉選單" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_4961ea26-688a-4c99-bc3c-404101ab6fe9.jpg" width="100%" alt="提示音效下拉選單" /> | <img src="https://media.forgecdn.net/attachments/description/826042/description_1a8c7c49-0ce4-4c0d-ae21-1aa64dc7f25b.jpg" width="100%" alt="多國語系下拉選單" /> |
-| 內建魔獸經典、FF7、WinXP、Borland 等 11 套風格 | 內建 ShayBell、Netherwind、PolyMorphCow 等音效 | 自動偵測、繁體中文 (台灣官方術語)、簡中、英文、韓文、俄文 |
+<table>
+  <thead>
+    <tr>
+      <th align="center">11 套主題樣式 (Theme Dropdown)</th>
+      <th align="center">12 種經典音效 (Sound Dropdown)</th>
+      <th align="center">6 大多國語系 (Locale Dropdown)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/description/826042/description_8fb2f296-64fd-4fdd-9881-876e63a748d9.jpg" width="100%" alt="主題樣式下拉選單" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/description/826042/description_4961ea26-688a-4c99-bc3c-404101ab6fe9.jpg" width="100%" alt="提示音效下拉選單" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/description/826042/description_1a8c7c49-0ce4-4c0d-ae21-1aa64dc7f25b.jpg" width="100%" alt="多國語系下拉選單" /></td>
+    </tr>
+    <tr>
+      <td>內建魔獸經典、FF7、WinXP、Borland 等 11 套風格</td>
+      <td>內建 ShayBell、Netherwind、PolyMorphCow 等音效</td>
+      <td>自動偵測、繁體中文 (台灣官方術語)、簡中、英文、韓文、俄文</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ### 2. 法術清單、細部條件與階層吸附 (Alert Lists, Conditions & Docking)
 
-| 自身光環與奶牛頭預覽 (Self Aura & Preview) | 技能冷卻與行為覆寫 (Spell Cooldown Overrides) |
-| :---: | :---: |
-| <img src="https://media.forgecdn.net/attachments/1891/207/07_eaeoacae-aec-e-aeae-a_selfauraconditions-jpg.jpg" width="100%" alt="自身光環清單與細部條件設定" /> | <img src="https://media.forgecdn.net/attachments/1891/208/08_aee12aacaeeecoea-e-a_spellcooldownoptions-jpg.jpg" width="100%" alt="技能冷卻監控與行為覆寫設定" /> |
-| 自身法術清單、奶牛頭排版預覽、層數/高亮/紅字限制、12.1 光環事件音效與自訂圖示 | 技能冷卻清單、完成後移除/非戰鬥顯示/可用時高亮三態覆寫與自訂替代圖示 |
+<table>
+  <thead>
+    <tr>
+      <th align="center">自身光環與奶牛頭預覽 (Self Aura &amp; Preview)</th>
+      <th align="center">技能冷卻與行為覆寫 (Spell Cooldown Overrides)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/207/07_eaeoacae-aec-e-aeae-a_selfauraconditions-jpg.jpg" width="100%" alt="自身光環清單與細部條件設定" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/208/08_aee12aacaeeecoea-e-a_spellcooldownoptions-jpg.jpg" width="100%" alt="技能冷卻監控與行為覆寫設定" /></td>
+    </tr>
+    <tr>
+      <td>自身法術清單、奶牛頭排版預覽、層數/高亮/紅字限制、12.1 光環事件音效與自訂圖示</td>
+      <td>技能冷卻清單、完成後移除/非戰鬥顯示/可用時高亮三態覆寫與自訂替代圖示</td>
+    </tr>
+  </tbody>
+</table>
 
-| 物品冷卻設定 (Item Cooldown) | 三級階層吸附與地面效果 (Ground Effect Docking) |
-| :---: | :---: |
-| <img src="https://media.forgecdn.net/attachments/1891/209/09_c-c-aaacaee-a_itemcooldownoptions-jpg.jpg" width="100%" alt="物品冷卻監控設定" /> | <img src="https://media.forgecdn.net/attachments/1891/210/10_aeaeaecaeea-c-eaa-e_groundeffectdocking-jpg.jpg" width="100%" alt="地面效果監控與三級階層吸附" /> |
-| 裝備與飾品冷卻清單、層數閾值、優先級與自訂圖示 | 主選單 ➔ 清單 ➔ 細部條件無縫平滑貼合 (APPEND Docking) 與動態 Tooltip 擷取 |
+<table>
+  <thead>
+    <tr>
+      <th align="center">物品冷卻設定 (Item Cooldown)</th>
+      <th align="center">三級階層吸附與地面效果 (Ground Effect Docking)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/209/09_c-c-aaacaee-a_itemcooldownoptions-jpg.jpg" width="100%" alt="物品冷卻監控設定" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/210/10_aeaeaecaeea-c-eaa-e_groundeffectdocking-jpg.jpg" width="100%" alt="地面效果監控與三級階層吸附" /></td>
+    </tr>
+    <tr>
+      <td>裝備與飾品冷卻清單、層數閾值、優先級與自訂圖示</td>
+      <td>主選單 ➔ 清單 ➔ 細部條件無縫平滑貼合 (APPEND Docking) 與動態 Tooltip 擷取</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
 ### 3. 職業資源、角色屬性與排版設定 (Resources, Stats & Layout)
 
-| 玩家職業資源設定 (Player Resource Panel) | 角色屬性與吸收量監控 (Player Stats & Absorbs) |
-| :---: | :---: |
-| <img src="https://media.forgecdn.net/attachments/1891/211/11_c-c-aeaee3aeoe-aeae_playerresourcepanel-jpg.jpg" width="100%" alt="玩家職業資源設定面板" /> | <img src="https://media.forgecdn.net/attachments/1891/212/12_ee2aaeea-aeecaeeae_playerstatspanel-jpg.jpg" width="100%" alt="角色屬性與吸收量監控面板" /> |
-| 符文/符能與各專精能量條、顯示模式、錨點定位、16 項細部滑桿與 Secret 原生保護 | 18 項核心屬性取值、跑速/泳速/飛速/飛龍速度、圖示/進度條開關與警戒值設定 |
+<table>
+  <thead>
+    <tr>
+      <th align="center">玩家職業資源設定 (Player Resource Panel)</th>
+      <th align="center">角色屬性與吸收量監控 (Player Stats &amp; Absorbs)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/211/11_c-c-aeaee3aeoe-aeae_playerresourcepanel-jpg.jpg" width="100%" alt="玩家職業資源設定面板" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/212/12_ee2aaeea-aeecaeeae_playerstatspanel-jpg.jpg" width="100%" alt="角色屬性與吸收量監控面板" /></td>
+    </tr>
+    <tr>
+      <td>符文/符能與各專精能量條、顯示模式、錨點定位、16 項細部滑桿與 Secret 原生保護</td>
+      <td>18 項核心屬性取值、跑速/泳速/飛速/飛龍速度、圖示/進度條開關與警戒值設定</td>
+    </tr>
+  </tbody>
+</table>
 
-| 告警框架排版與懸停提示 (Layout & Tooltips) | 職業 Profile 分享與匯入匯出 (Profile Codec) |
-| :---: | :---: |
-| <img src="https://media.forgecdn.net/attachments/1891/213/13_aeaeaea12c12aeceae-aaeco_layoutpositionoptions.jpg" width="100%" alt="告警框架位置排版與懸停提示" /> | <img src="https://media.forgecdn.net/attachments/1891/214/14_eaeprofileaaoea-aa-aoeae_profilecodecpanel-jpg.jpg" width="100%" alt="職業Profile分享與匯入匯出面板" /> |
-| 尺寸/間距/字型/透明度滑桿、7 大框架成長方向、充能列設定與控制項懸停 Tooltip 指引 | 8 大自選項勾選、快捷按鈕與 EAMAP1 Base64 字串匯出/預覽/合併套用/取代套用 |
+<table>
+  <thead>
+    <tr>
+      <th align="center">告警框架排版與懸停提示 (Layout &amp; Tooltips)</th>
+      <th align="center">職業 Profile 分享與匯入匯出 (Profile Codec)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/213/13_aeaeaea12c12aeceae-aaeco_layoutpositionoptions.jpg" width="100%" alt="告警框架位置排版與懸停提示" /></td>
+      <td align="center"><img src="https://media.forgecdn.net/attachments/1891/214/14_eaeprofileaaoea-aa-aoeae_profilecodecpanel-jpg.jpg" width="100%" alt="職業Profile分享與匯入匯出面板" /></td>
+    </tr>
+    <tr>
+      <td>尺寸/間距/字型/透明度滑桿、7 大框架成長方向、充能列設定與控制項懸停 Tooltip 指引</td>
+      <td>8 大自選項勾選、快捷按鈕與 EAMAP1 Base64 字串匯出/預覽/合併套用/取代套用</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
@@ -109,29 +219,122 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 
 EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`（不分大小寫）：
 
-| 指令 | 縮寫 / 別名 | 說明 |
-| :--- | :--- | :--- |
-| `/eam` 或 `/eam opt` | `/eam option`, `/eam options` | 開啟 EAM 主設定選單 |
-| `/eam preview` | 無 | 開啟獨立即時效果預覽小視窗（免進戰鬥測試變色、光效、扇形倒數與屬性） |
-| `/eam reset` | `/eam resetpos`, `/eam center` | **將 EAM 主視窗重置回螢幕正中央**（解決視窗被拖出畫面找不到的問題） |
-| `/eam list` | 無 | 顯示目前職業已啟用的監控清單（自身、目標、冷卻、物品、地面效果） |
-| `/eam add <spellID>` | `/eam add player <spellID>` | 新增指定法術 ID 至「自身光環」監控清單 |
-| `/eam add target [spellID]` | 無 | 新增「目標光環」監控；若不輸入 ID 則開啟手動輸入與候選視窗 |
-| `/eam add cd <spellID>` | `/eam add cooldown <spellID>` | 新增指定法術 ID 至「技能冷卻」監控清單 |
-| `/eam add item <itemID>` | `/eam add itemcooldown <itemID>` | 新增指定物品 ID 至「物品冷卻」監控清單 |
-| `/eam remove <spellID>` | `/eam remove <player\|target\|cd\|item> <ID>` | 從指定監控類別中移除指定法術或物品 ID |
-| `/eam lookup <名稱>` | `/eam l <名稱>` | 依關鍵字模糊查詢目前職業可用法術候選與 Spell ID |
-| `/eam lookupfull <全名>` | `/eam lf <全名>` | 依完整名稱精確查詢目前職業可用法術候選與 Spell ID |
-| `/eam showcast` | `/eam showc` | 開始或停止記錄本次登入成功施放的法術（方便查詢自己剛放的技能 ID） |
-| `/eam profile` | `/eam profile export`, `/eam profile import` | 開啟 Profile 設定檔匯出／匯入與字串分享面板 |
-| `/eam rune` | `/eam runes`, `/eam probe rune` | 開啟死亡騎士 6 格符文槽位即時狀態、充能秒數與診斷 JSON 視窗 |
-| `/eam unitpower background <KEY>` | 無 | 標記指定背景資源缺少事件，啟動 0.5s demand-driven 共用取樣器 |
-| `/eam doctor` | `/eam validate` | 執行客戶端 API 邊界與運行環境診斷報告 |
-| `/eam test [suite]` | `/eam test live` | 開啟遊戲內流程測試面板，或執行指定測試套件 (`quick/core/boundary/aura121/all/live`) |
-| `/eam debug` | `/eam export` | 開啟系統狀態與精簡 AI 除錯報告輸出視窗 |
-| `/eam debug ground <spellID>` | 無 | 測試並除錯特定地面技能之 Tooltip 持續時間解析 |
-| `/eam show` / `/eam showtarget` | `/eam shows`, `/eam showt` | 顯示 Retail 12.1 安全加入光環之操作指引（滑鼠懸停按 Ctrl+Alt） |
-| `/eam help` | `/eam ?` | 列出所有可用斜線命令說明 |
+<table>
+  <thead>
+    <tr>
+      <th align="left">指令</th>
+      <th align="left">縮寫 / 別名</th>
+      <th align="left">說明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>/eam</code> 或 <code>/eam opt</code></td>
+      <td><code>/eam option</code>, <code>/eam options</code></td>
+      <td>開啟 EAM 主設定選單</td>
+    </tr>
+    <tr>
+      <td><code>/eam preview</code></td>
+      <td>無</td>
+      <td>開啟獨立即時效果預覽小視窗（免進戰鬥測試變色、光效、扇形倒數與屬性）</td>
+    </tr>
+    <tr>
+      <td><code>/eam reset</code></td>
+      <td><code>/eam resetpos</code>, <code>/eam center</code></td>
+      <td><strong>將 EAM 主視窗重置回螢幕正中央</strong>（解決視窗被拖出畫面找不到的問題）</td>
+    </tr>
+    <tr>
+      <td><code>/eam list</code></td>
+      <td>無</td>
+      <td>顯示目前職業已啟用的監控清單（自身、目標、冷卻、物品、地面效果）</td>
+    </tr>
+    <tr>
+      <td><code>/eam add &lt;spellID&gt;</code></td>
+      <td><code>/eam add player &lt;spellID&gt;</code></td>
+      <td>新增指定法術 ID 至「自身光環」監控清單</td>
+    </tr>
+    <tr>
+      <td><code>/eam add target [spellID]</code></td>
+      <td>無</td>
+      <td>新增「目標光環」監控；若不輸入 ID 則開啟手動輸入與候選視窗</td>
+    </tr>
+    <tr>
+      <td><code>/eam add cd &lt;spellID&gt;</code></td>
+      <td><code>/eam add cooldown &lt;spellID&gt;</code></td>
+      <td>新增指定法術 ID 至「技能冷卻」監控清單</td>
+    </tr>
+    <tr>
+      <td><code>/eam add item &lt;itemID&gt;</code></td>
+      <td><code>/eam add itemcooldown &lt;itemID&gt;</code></td>
+      <td>新增指定物品 ID 至「物品冷卻」監控清單</td>
+    </tr>
+    <tr>
+      <td><code>/eam remove &lt;spellID&gt;</code></td>
+      <td><code>/eam remove &lt;player|target|cd|item&gt; &lt;ID&gt;</code></td>
+      <td>從指定監控類別中移除指定法術或物品 ID</td>
+    </tr>
+    <tr>
+      <td><code>/eam lookup &lt;名稱&gt;</code></td>
+      <td><code>/eam l &lt;名稱&gt;</code></td>
+      <td>依關鍵字模糊查詢目前職業可用法術候選與 Spell ID</td>
+    </tr>
+    <tr>
+      <td><code>/eam lookupfull &lt;全名&gt;</code></td>
+      <td><code>/eam lf &lt;全名&gt;</code></td>
+      <td>依完整名稱精確查詢目前職業可用法術候選與 Spell ID</td>
+    </tr>
+    <tr>
+      <td><code>/eam showcast</code></td>
+      <td><code>/eam showc</code></td>
+      <td>開始或停止記錄本次登入成功施放的法術（方便查詢自己剛放的技能 ID）</td>
+    </tr>
+    <tr>
+      <td><code>/eam profile</code></td>
+      <td><code>/eam profile export</code>, <code>/eam profile import</code></td>
+      <td>開啟 Profile 設定檔匯出／匯入與字串分享面板</td>
+    </tr>
+    <tr>
+      <td><code>/eam rune</code></td>
+      <td><code>/eam runes</code>, <code>/eam probe rune</code></td>
+      <td>開啟死亡騎士 6 格符文槽位即時狀態、充能秒數與診斷 JSON 視窗</td>
+    </tr>
+    <tr>
+      <td><code>/eam unitpower background &lt;KEY&gt;</code></td>
+      <td>無</td>
+      <td>標記指定背景資源缺少事件，啟動 0.5s demand-driven 共用取樣器</td>
+    </tr>
+    <tr>
+      <td><code>/eam doctor</code></td>
+      <td><code>/eam validate</code></td>
+      <td>執行客戶端 API 邊界與運行環境診斷報告</td>
+    </tr>
+    <tr>
+      <td><code>/eam test [suite]</code></td>
+      <td><code>/eam test live</code></td>
+      <td>開啟遊戲內流程測試面板，或執行指定測試套件 (<code>quick/core/boundary/aura121/all/live</code>)</td>
+    </tr>
+    <tr>
+      <td><code>/eam debug</code></td>
+      <td><code>/eam export</code></td>
+      <td>開啟系統狀態與精簡 AI 除錯報告輸出視窗</td>
+    </tr>
+    <tr>
+      <td><code>/eam debug ground &lt;spellID&gt;</code></td>
+      <td>無</td>
+      <td>測試並除錯特定地面技能之 Tooltip 持續時間解析</td>
+    </tr>
+    <tr>
+      <td><code>/eam show</code> / <code>/eam showtarget</code></td>
+      <td><code>/eam shows</code>, <code>/eam showt</code></td>
+      <td>顯示 Retail 12.1 安全加入光環之操作指引（滑鼠懸停按 Ctrl+Alt）</td>
+    </tr>
+    <tr>
+      <td><code>/eam help</code></td>
+      <td><code>/eam ?</code></td>
+      <td>列出所有可用斜線命令說明</td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
