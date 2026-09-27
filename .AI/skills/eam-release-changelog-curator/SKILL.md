@@ -52,13 +52,23 @@ description: >-
    - 歷史版本更新紀錄與 AI 治理技術細節以 `<details><summary>...</summary></details>` 預設折疊。
    - 讓訪客首屏保持乾淨俐落，僅見核心高光 (Highlights) 與下載按鈕。
 2. **CurseForge Description (CF 專案首頁劇透收合標籤)**：
-   - 採用 CurseForge 官方原生支援之 Spoiler 格式：
-     ```markdown
-     *** 劇透內容或標題
-     <div class="spoiler"> <p> 收合內容 </p> </div>
+   - 採用 CurseForge 官方原生支援之 Spoiler 與語意化 HTML 格式：
+     ```html
+     <h4>🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h4>
+     <div class="spoiler">
+       <ul>
+         <li><strong>模組名稱</strong>：
+           <ul>
+             <li><strong>功能項目</strong>：說明文字與 <code>代碼標籤</code>...</li>
+           </ul>
+         </li>
+       </ul>
+     </div>
      ```
-   - 嚴禁在 CurseForge Description 中使用 HTML5 `<details><summary>`（CF 解析器會剝離或無法展開）；使用官方標準 Spoiler 結構確保網頁版與 App 客戶端完美渲染為折疊區塊。
-   - **支援巢狀收合 (Nested Spoilers Support)**：CurseForge 的 Spoiler 語法支援巢狀嵌套。在外層主版本 Spoiler（如 Retail 12.1.0 重構總覽）內，可將歷史子版本群（如 Alpha 8 系列、Alpha 7 系列、早期重構歷程）進一步嵌套為二級子 Spoiler，確保訪客展開外層時第一時間看見最新版（如 Alpha 8.7）核心亮點，而歷史舊版保持二級折疊，提供極致清爽的閱讀體驗。
+   - **完全 HTML 語意化**：不再依賴 Markdown 粗體、列表或 ` ```markdown ` 代碼塊包裹，直接採用標準 `<h4>`、`<ul>`、`<li>`、`<strong>`、`<code>`。
+   - **斷行與段落**：文字換行直接使用 `<br />`，不刻意使用 `<p>` 標籤；章節分隔統一使用 `<hr />`。
+   - 嚴禁在 CurseForge Description 中使用 HTML5 `<details><summary>`（CF 解析器會剝離或無法展開）；使用官方標準 `<div class="spoiler">` 結構確保網頁版與 App 客戶端完美渲染為折疊區塊。
+   - **支援巢狀收合 (Nested Spoilers Support)**：外層可建立整體歷史更新收合區塊（`<h2>📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2><div class="spoiler">...</div>`），內層再依版次建立獨立 `<h4>` 二級收合，兼顧首屏清爽與歷史完整性。
 
 ## 4. 發布雙物料分離治理 (Dual Deliverables Separation)
 

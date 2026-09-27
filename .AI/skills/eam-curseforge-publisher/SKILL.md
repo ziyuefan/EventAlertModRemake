@@ -61,4 +61,21 @@ pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -NonInteractive -ReleaseTyp
   - 告警框架排版位置: `https://media.forgecdn.net/attachments/1891/213/13_aeaeaea12c12aeceae-aaeco_layoutpositionoptions.jpg`
   - 職業 Profile 分享: `https://media.forgecdn.net/attachments/1891/214/14_eaeprofileaaoea-aa-aoeae_profilecodecpanel-jpg.jpg`
 
+## 4. CurseForge 描述檔 HTML 語意化排版規範 (HTML-First Architecture)
+
+- **全量採用語意化 HTML 標籤 (HTML-First)**：
+  - `CURSEFORGE-DESCRIPTION.md` 一律採用標準 HTML 標籤結構，嚴禁使用易受解析器破壞之 Markdown 表格（`|---|`）或標題符號（`#`, `##`, `***`, `---`）。
+  - 大標題採用 `<h1>`，各章節收合主標題採用 `<h2>`，小節採用 `<h3>`，歷史版次採用 `<h4>`。
+  - 分隔線一律採用 `<hr />`，嚴禁使用 Markdown `--` 或 `---`。
+- **表格全面 HTML 化**：
+  - 所有展示表格採用標準 `<table>`、`<thead>`、`<tbody>`、`<tr>`、`<th>`、`<td>`。
+  - 圖片欄位加上 `width="100%"` 自適應寬度，必要時使用 `<td align="center">` 置中。
+- **收合與斷行規範 (`<div class="spoiler">`)**：
+  - 收合容器統一使用 `<div class="spoiler"> ... </div>`，支援多層巢狀收合。
+  - 收合標題置於容器外側（如 `<h2>標題</h2>` 或 `<h4>版次</h4>`）。
+  - 收合內部文字斷行直接使用 `<br />`，**不需要刻意包裹 `<p>` 標籤**。
+  - 條列項目一律使用標準 `<ol><li>`（有序）或 `<ul><li>`（無序，支援多層嵌套）。
+- **行內樣式實體化**：
+  - 粗體使用 `<strong>`，代碼使用 `<code>`，箭頭與符號使用實體字符（如 `&rarr;`、`&lt;`、`&gt;`、`&amp;`）。
+
 
