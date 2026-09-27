@@ -82,4 +82,17 @@ pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -NonInteractive -ReleaseTyp
 - **行內樣式實體化**：
   - 粗體使用 `<strong>`，代碼使用 `<code>`，箭頭與符號使用實體字符（如 `&rarr;`、`&lt;`、`&gt;`、`&amp;`）。
 
+## 5. CurseForge 後端 Sanitizer 預覽陷阱與標籤剝離生命週期 (The Preview Trap & Server Sanitizer)
+
+- **雙軌生命週期差異（Client Preview vs Server Sanitizer）**：
+  - **編輯與即時預覽（Edit Mode & Preview Tab）**：由瀏覽器端純 JavaScript 富文本引擎渲染，未經伺服器端清洗過濾，因此包含 `<li>` 列表或巢狀結構在預覽時看起來「完全正常」，具有高度欺騙性（**預覽陷阱 Preview Trap**）。
+  - **儲存與前台公開渲染（Save & Public View Pipeline）**：點擊 Save 儲存後，後端伺服器在持久化或前台公開渲染前，會強制通過一套嚴格但殘缺的 **Server-side HTML Sanitizer（安全過濾清洗器）**。
+- **後端 Sanitizer 的兩大破壞行為**：
+  1. **無差別剝離 `<li>` 標籤**：Sanitizer 白名單放行 `<ul>`、`<ol>`，但會全面洗掉 `<li>` 與 `</li>`。導致清單內容失去區塊特性，所有條目被瀏覽器直接拼在同一行，排版瞬間擠壓成一大坨文字。
+  2. **巢狀 `<ul>` 引發跨版本標籤吞噬骨牌效應（Cascading Unclosed Tags）**：當多層 `<ul>` 缺乏合法的 `<li>` 包裹時，後端解析器與瀏覽器容錯機制在處理 closing tag 時會丟失外層 `</ul>` 與 `</div>`。導致該版本的未閉合容器一路「吞噬」後續所有版次與章節，在公開頁面前台形成深度達 15 層以上的俄羅斯套娃收合，造成底部排版嚴重崩塌！
+- **治理鐵則 (Golden Rules)**：
+  - **鐵則一：絕不信任 Preview 預覽**：所有 CurseForge 描述檔驗收，必須以「實際儲存後前台公開頁面的真實 DOM」為唯一事實基準。
+  - **鐵則二：零 `<ul><ol><li>` 策略**：描述檔收合區徹底杜絕使用 `<ul>`、`<ol>`、`<li>`，一律改用 `&bull;&nbsp;`（實體圓點）配合 `<br /><br />` 實體斷行，保證 100% 穿透後端 Sanitizer，零排版破壞、零跨版本吞噬！
+
+
 
