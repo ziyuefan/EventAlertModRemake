@@ -402,7 +402,6 @@
 <hr />
 
 <h2>📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
-<div class="spoiler">
 
 <h3>🌟 Retail 12.1.0 Alpha 8 系列 (最新架構重構)</h3>
 
@@ -936,8 +935,6 @@
     <li><strong>[Retail DF] 2023.02</strong>：支援喚能師 (Evoker) 職業與龍能 (Essence) 顯示；支援飛龍騎術活力 (Vigor) 提示。</li>
     <li><strong>[Retail SL] 2020.10</strong>：支援全職業核心能量高亮（真氣、聖能、碎片、狂亂、暴怒怒氣）；支援 DK 符文列切換。</li>
 </ul>
-
-</div>
 
 </div>
 

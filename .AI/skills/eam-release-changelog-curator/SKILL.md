@@ -68,7 +68,7 @@ description: >-
    - **完全 HTML 語意化**：不再依賴 Markdown 粗體、列表或 ` ```markdown ` 代碼塊包裹，直接採用標準 `<h4>`、`<ul>`、`<li>`、`<strong>`、`<code>`。
    - **斷行與段落**：文字換行直接使用 `<br />`，不刻意使用 `<p>` 標籤；章節分隔統一使用 `<hr />`。
    - 嚴禁在 CurseForge Description 中使用 HTML5 `<details><summary>`（CF 解析器會剝離或無法展開）；使用官方標準 `<div class="spoiler">` 結構確保網頁版與 App 客戶端完美渲染為折疊區塊。
-   - **支援巢狀收合 (Nested Spoilers Support)**：外層可建立整體歷史更新收合區塊（`<h2>📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2><div class="spoiler">...</div>`），內層再依版次建立獨立 `<h4>` 二級收合，兼顧首屏清爽與歷史完整性。
+   - **嚴禁使用巢狀收合 (Avoid Nested Spoilers)**：CurseForge 解析器在處理巢狀 spoiler 時易出現層級混亂或點擊折疊失效。一律採單層一級收合架構：外層「📜 版本更新歷史」常駐顯示為 `<h2>` 章節，內層 21 個版次各自作為獨立的單層 `<div class="spoiler">`，兼顧首屏載入速度與各版次查閱清晰度。
 
 ## 4. 發布雙物料分離治理 (Dual Deliverables Separation)
 

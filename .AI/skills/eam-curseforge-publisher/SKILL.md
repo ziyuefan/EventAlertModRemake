@@ -71,7 +71,8 @@ pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -NonInteractive -ReleaseTyp
   - 所有展示表格採用標準 `<table>`、`<thead>`、`<tbody>`、`<tr>`、`<th>`、`<td>`。
   - 圖片欄位加上 `width="100%"` 自適應寬度，必要時使用 `<td align="center">` 置中。
 - **收合與斷行規範 (`<div class="spoiler">`)**：
-  - 收合容器統一使用 `<div class="spoiler"> ... </div>`，支援多層巢狀收合。
+  - 收合容器統一使用 `<div class="spoiler"> ... </div>`，**嚴禁使用巢狀收合 (Avoid Nested Spoilers)**，一律採單層一級收合架構，以避免 CurseForge WYSIWYG 解析器折疊衝突或樣式崩塌。
+  - 外層主章節（如「📜 版本更新歷史」）常駐顯示為 `<h2>`，其下各歷史版次獨立一級收合。
   - 收合標題置於容器外側（如 `<h2>標題</h2>` 或 `<h4>版次</h4>`）。
   - 收合內部文字斷行直接使用 `<br />`，**不需要刻意包裹 `<p>` 標籤**。
   - 條列項目一律使用標準 `<ol><li>`（有序）或 `<ul><li>`（無序，支援多層嵌套）。
