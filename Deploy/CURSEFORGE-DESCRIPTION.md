@@ -12,7 +12,8 @@
 
 ---
 
-## 🌟 為什麼選擇現代版 EventAlertMod (EAM)？（四大差異化核心優勢）
+*** 🌟 為什麼選擇現代版 EventAlertMod (EAM)？（四大差異化核心優勢）
+<div class="spoiler">
 
 <table>
   <thead>
@@ -41,49 +42,57 @@
   </tbody>
 </table>
 
----
-
-## ✨ 八大獨立告警模組 (8 Independent Alert Modules)
-
-EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：
-
-1. 🔮 **自身光環 (Player Buff / Debuff)**：監控自身增益與減益，支援堆疊層數與高精度倒數。
-2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態。
-3. ⚔️ **跨職業光環 (Cross-Class / Target Cast)**：監控敵方關鍵爆發或隊友重要增益。
-4. ⏳ **技能冷卻 (Spell Cooldown)**：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (`Radial Mode`) 與框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)。
-5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控。
-6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。
-7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。
-8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。
+</div>
 
 ---
 
-## 🎨 現代化視覺與極致操作體驗
+*** ✨ 八大獨立告警模組 (8 Independent Alert Modules)
+<div class="spoiler">
 
-- 📖 **次世代全量法術庫與智慧預設 (Master Spell Catalog)**：內建 5 語系先驗資料庫（收錄 4,463 個技能與 466 個光環），支援專精樹展開/收合、一鍵天賦技能智慧同步、目標模組清單自由指派（冷卻/光環/地面效果）與全法術 GameTooltip 懸停說明。
-- 🏷️ **多維戰術群組與標籤管理 (Group Management)**：支援技能多對多標籤歸屬、內建 4 大系統戰術群組（爆發/減傷/控場/地面）與自訂群組、獨立二級管理側窗、戰鬥情境過濾與技能細節視窗下拉複選器。
-- 🎵 **LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合**：動態探測所有第三方 SharedMedia 音效、字型與材質包，支援自適應長清單滑鼠滾輪選單與字型全域 60fps 熱套用（免 /reload 即時生效）。
-- 🐮 **經典奶牛頭位置預覽**：排版模式下以經典奶牛頭圖示 (`Spell_Nature_Polymorph_Cow`) 清楚標記 8 大告警框架定位。
-- 🖼️ **全模組自訂替代圖示 (Custom Icon Override)**：所有模組均可輸入官方 FileID（例如 `132307`）或材質路徑，自訂取代預設圖示，並附即時動態預覽方塊與 Wago.tools 查詢指引。
-- 💀 **死亡騎士符文儀表板**：依專精動態切換專屬圖示，內建 6 格微型充能冷卻條（0%..100% 平滑動畫）與 `/eam rune` 槽位診斷視窗。
-- ⚡ **60fps 全方位即時熱預覽**：調整尺寸、間距、透明度、轉圈動畫、文字大小等，畫面上即時動態響應，非戰鬥不需 `/reload`。
-- 💬 **全介面控制項懸停提示 (Hover Tooltips)**：所有按鈕、核取方塊、滑桿、編輯框與選單均附帶直觀指引，使用門檻為零。
-- 🎨 **11 套精美主題風格**：EAM 原版經典（石板金框深紅按鈕）、FF7 戰鬥視窗（皇家藍漸層白框）、Windows XP（Luna 藍）、Windows 7（Aero 玻璃）、Windows 10、Windows 3.1（3D 凸面按鈕）、Borland C++ IDE、DOS CRT（P1 磷光綠）、倚天中文、Red Alert（紅色警戒裝甲）、macOS Aqua（果凍膠囊藍）等自由切換，全面支援 Modern WoW 垂直漸層與所有子視窗無縫連動。
-- 📈 **暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入**：
-  - **能量/資源條動態色彩曲線染色**：消耗型與累積型資源自動以三色階動態染色（警戒深紅 ➜ 預警金黃 ➜ 專職代表色），完美相容 12.0+ `UnitPowerPercent` 原生硬體級渲染。
-  - **階梯閥門曲線 (Step Gate Curve)**：透過二元階梯函數安全穿透受保護秘密值，實現精確斬殺與警戒，零報錯零 Taint。
-  - **SecondsFormatter 自適應精度曲線**：時間倒數文字依剩餘秒數平滑切換精度（長時間整數，關鍵 <= 5 秒小數點），零 GC 負擔。
-  - **非線性冷卻進度曲線**：支援線性均勻 (Linear)、三次加速衝刺 (Cubic) 與餘弦平滑 (Cosine)，營造大招即將就緒的戰鬥衝刺張力。
-  - **全螢幕瀕死動態呼吸警示**：血量危急時全螢幕邊緣動態呼吸脈動，血量越低紅框越濃烈，脫戰自動平滑隱藏。
-- 🚨 **進入戰鬥紅框閃爍**：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。
-- 📦 **Profile 設定檔跨角色分享**：支援 8 大分類自選項目匯出／匯入（EAMAP1 JSON / Base64 編碼），附防禦性白名單校驗。
-- 🌐 **完整多國語系支援**：繁體中文 (zhTW - 嚴格對齊台灣官方術語：致命、加速、臨機應變)、簡體中文 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU)。
+EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：<br><br>
+1. 🔮 <strong>自身光環 (Player Buff / Debuff)</strong>：監控自身增益與減益，支援堆疊層數與高精度倒數。<br>
+2. 🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態。<br>
+3. ⚔️ <strong>跨職業光環 (Cross-Class / Target Cast)</strong>：監控敵方關鍵爆發或隊友重要增益。<br>
+4. ⏳ <strong>技能冷卻 (Spell Cooldown)</strong>：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (<code>Radial Mode</code>) 與框外線性條 (<code>TOP/BOTTOM/LEFT/RIGHT</code>)。<br>
+5. 🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控。<br>
+6. 🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。<br>
+7. ⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。<br>
+8. 📊 <strong>角色屬性與吸收量 (Player Stats & Absorbs)</strong>：全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。
+
+</div>
 
 ---
 
-## 📸 介面圖文導覽與功能展示 (Feature & UI Showcase)
+*** 🎨 現代化視覺與極致操作體驗
+<div class="spoiler">
 
-### 1. 主設定與系統選單 (Main Options & System Preferences)
+• 📖 <strong>次世代全量法術庫與智慧預設 (Master Spell Catalog)</strong>：內建 5 語系先驗資料庫（收錄 4,463 個技能與 466 個光環），支援專精樹展開/收合、一鍵天賦技能智慧同步、目標模組清單自由指派（冷卻/光環/地面效果）與全法術 GameTooltip 懸停說明。<br><br>
+• 🏷️ <strong>多維戰術群組與標籤管理 (Group Management)</strong>：支援技能多對多標籤歸屬、內建 4 大系統戰術群組（爆發/減傷/控場/地面）與自訂群組、獨立二級管理側窗、戰鬥情境過濾與技能細節視窗下拉複選器。<br><br>
+• 🎵 <strong>LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合</strong>：動態探測所有第三方 SharedMedia 音效、字型與材質包，支援自適應長清單滑鼠滾輪選單與字型全域 60fps 熱套用（免 /reload 即時生效）。<br><br>
+• 🐮 <strong>經典奶牛頭位置預覽</strong>：排版模式下以經典奶牛頭圖示 (<code>Spell_Nature_Polymorph_Cow</code>) 清楚標記 8 大告警框架定位。<br><br>
+• 🖼️ <strong>全模組自訂替代圖示 (Custom Icon Override)</strong>：所有模組均可輸入官方 FileID（例如 <code>132307</code>）或材質路徑，自訂取代預設圖示，並附即時動態預覽方塊與 Wago.tools 查詢指引。<br><br>
+• 💀 <strong>死亡騎士符文儀表板</strong>：依專精動態切換專屬圖示，內建 6 格微型充能冷卻條（0%..100% 平滑動畫）與 <code>/eam rune</code> 槽位診斷視窗。<br><br>
+• ⚡ <strong>60fps 全方位即時熱預覽</strong>：調整尺寸、間距、透明度、轉圈動畫、文字大小等，畫面上即時動態響應，非戰鬥不需 <code>/reload</code>。<br><br>
+• 💬 <strong>全介面控制項懸停提示 (Hover Tooltips)</strong>：所有按鈕、核取方塊、滑桿、編輯框與選單均附帶直觀指引，使用門檻為零。<br><br>
+• 🎨 <strong>11 套精美主題風格</strong>：EAM 原版經典（石板金框深紅按鈕）、FF7 戰鬥視窗（皇家藍漸層白框）、Windows XP（Luna 藍）、Windows 7（Aero 玻璃）、Windows 10、Windows 3.1（3D 凸面按鈕）、Borland C++ IDE、DOS CRT（P1 磷光綠）、倚天中文、Red Alert（紅色警戒裝甲）、macOS Aqua（果凍膠囊藍）等自由切換，全面支援 Modern WoW 垂直漸層與所有子視窗無縫連動。<br><br>
+• 📈 <strong>暴雪原生 CurveObject / ColorCurveObject 曲線架構全面接入</strong>：<br>
+&nbsp;&nbsp;▫️ <strong>能量/資源條動態色彩曲線染色</strong>：消耗型與累積型資源自動以三色階動態染色（警戒深紅 ➜ 預警金黃 ➜ 專職代表色），完美相容 12.0+ <code>UnitPowerPercent</code> 原生硬體級渲染。<br>
+&nbsp;&nbsp;▫️ <strong>階梯閥門曲線 (Step Gate Curve)</strong>：透過二元階梯函數安全穿透受保護秘密值，實現精確斬殺與警戒，零報錯零 Taint。<br>
+&nbsp;&nbsp;▫️ <strong>SecondsFormatter 自適應精度曲線</strong>：時間倒數文字依剩餘秒數平滑切換精度（長時間整數，關鍵 &lt;= 5 秒小數點），零 GC 負擔。<br>
+&nbsp;&nbsp;▫️ <strong>非線性冷卻進度曲線</strong>：支援線性均勻 (Linear)、三次加速衝刺 (Cubic) 與餘弦平滑 (Cosine)，營造大招即將就緒的戰鬥衝刺張力。<br>
+&nbsp;&nbsp;▫️ <strong>全螢幕瀕死動態呼吸警示</strong>：血量危急時全螢幕邊緣動態呼吸脈動，血量越低紅框越濃烈，脫戰自動平滑隱藏。<br><br>
+• 🚨 <strong>進入戰鬥紅框閃爍</strong>：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。<br><br>
+• 📦 <strong>Profile 設定檔跨角色分享</strong>：支援 8 大分類自選項目匯出／匯入（EAMAP1 JSON / Base64 編碼），附防禦性白名單校驗。<br><br>
+• 🌐 <strong>完整多國語系支援</strong>：繁體中文 (zhTW - 嚴格對齊台灣官方術語：致命、加速、臨機應變)、簡體中文 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU)。
+
+</div>
+
+---
+
+*** 📸 介面圖文導覽與功能展示 (Feature & UI Showcase)
+<div class="spoiler">
+
+<h3>1. 主設定與系統選單 (Main Options & System Preferences)</h3>
 
 <table>
   <thead>
@@ -107,6 +116,8 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
   </tbody>
 </table>
 
+<br>
+
 <table>
   <thead>
     <tr>
@@ -129,9 +140,9 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
   </tbody>
 </table>
 
----
+<br><hr><br>
 
-### 2. 法術清單、細部條件與階層吸附 (Alert Lists, Conditions & Docking)
+<h3>2. 法術清單、細部條件與階層吸附 (Alert Lists, Conditions & Docking)</h3>
 
 <table>
   <thead>
@@ -152,6 +163,8 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
   </tbody>
 </table>
 
+<br>
+
 <table>
   <thead>
     <tr>
@@ -171,9 +184,9 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
   </tbody>
 </table>
 
----
+<br><hr><br>
 
-### 3. 職業資源、角色屬性與排版設定 (Resources, Stats & Layout)
+<h3>3. 職業資源、角色屬性與排版設定 (Resources, Stats & Layout)</h3>
 
 <table>
   <thead>
@@ -194,6 +207,8 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
   </tbody>
 </table>
 
+<br>
+
 <table>
   <thead>
     <tr>
@@ -213,11 +228,14 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
   </tbody>
 </table>
 
+</div>
+
 ---
 
-## ⌨️ 命令列與斜線指令 (Command Line Reference)
+*** ⌨️ 命令列與斜線指令 (Command Line Reference)
+<div class="spoiler">
 
-EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`（不分大小寫）：
+EAM 提供豐富完整的斜線命令，主入口為 <code>/eam</code> 或 <code>/eventalertmod</code>（不分大小寫）：<br><br>
 
 <table>
   <thead>
@@ -336,29 +354,38 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   </tbody>
 </table>
 
+</div>
+
 ---
 
-## 🖱️ 快速操作指引：滑鼠懸停加入監控 (Ctrl+Alt Quick Add)
+*** 🖱️ 快速操作指引：滑鼠懸停加入監控 (Ctrl+Alt Quick Add)
+<div class="spoiler">
 
-在遊戲中，您可以完全不需手動查詢法術 ID：
-1. 將滑鼠懸停於自身頭像、目標頭像的光環圖示，或快捷列上的技能/巨集/物品上。
-2. 同時按下鍵盤上的 **`Ctrl + Alt`** 組合鍵。
+在遊戲中，您可以完全不需手動查詢法術 ID：<br><br>
+1. 將滑鼠懸停於自身頭像、目標頭像的光環圖示，或快捷列上的技能/巨集/物品上。<br>
+2. 同時按下鍵盤上的 <strong><code>Ctrl + Alt</code></strong> 組合鍵。<br>
 3. 畫面即刻彈出 EAM 專屬加入視窗，一鍵將其指派至自身光環、目標光環、技能冷卻或物品冷卻監控清單中！
 
----
-
-## 📦 安裝說明 (Installation)
-
-1. 前往 [GitHub Releases](https://github.com/ziyuefan/EventAlertModRemake/releases) 下載最新版本之 `EventAlertMod_MN_*.zip`。
-2. 解壓縮後將 `EventAlertMod` 資料夾放置於魔獸世界安裝目錄：
-   - 正式服路徑：`World of Warcraft\_retail_\Interface\AddOns\EventAlertMod`
-3. 啟動遊戲，在角色選擇畫面確認「插件」清單中已勾選啟用 `EventAlertMod`。
+</div>
 
 ---
 
-## 📜 版本更新歷史 (Beautified CHANGELOG.TXT)
+*** 📦 安裝說明 (Installation)
+<div class="spoiler">
 
-### 🌟 Retail 12.1.0 Alpha 8 系列 (最新架構重構)
+1. 前往 <a href="https://github.com/ziyuefan/EventAlertModRemake/releases">GitHub Releases</a> 下載最新版本之 <code>EventAlertMod_MN_*.zip</code>。<br>
+2. 解壓縮後將 <code>EventAlertMod</code> 資料夾放置於魔獸世界安裝目錄：<br>
+&nbsp;&nbsp;▫️ 正式服路徑：<code>World of Warcraft\_retail_\Interface\AddOns\EventAlertMod</code><br>
+3. 啟動遊戲，在角色選擇畫面確認「插件」清單中已勾選啟用 <code>EventAlertMod</code>。
+
+</div>
+
+---
+
+*** 📜 版本更新歷史 (Beautified CHANGELOG.TXT)
+<div class="spoiler">
+
+<h3>🌟 Retail 12.1.0 Alpha 8 系列 (最新架構重構)</h3>
 
 *** 🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27
 <div class="spoiler">
@@ -597,7 +624,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ```
 </div>
 
-### ⚡ Retail 12.1.0 Alpha 7 系列 (功能擴充與模組重構)
+<h3>⚡ Retail 12.1.0 Alpha 7 系列 (功能擴充與模組重構)</h3>
 
 *** 🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24
 <div class="spoiler">
@@ -727,7 +754,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ```
 </div>
 
-### 🧱 Retail 12.1.0 Alpha 早期重構歷程 (Alpha 6 ~ Alpha 1)
+<h3>🧱 Retail 12.1.0 Alpha 早期重構歷程 (Alpha 6 ~ Alpha 1)</h3>
 
 *** 📌 [Retail 12.1 Alpha 6] - 2026.08.23
 <div class="spoiler">
@@ -762,7 +789,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ```
 </div>
 
-### 📜 歷史經典版本摘要 (TWW / DF / SL / Classic)
+<h3>📜 歷史經典版本摘要 (TWW / DF / SL / Classic)</h3>
 
 *** 📜 歷史經典版本摘要 (2020 ~ 2026)
 <div class="spoiler">
@@ -776,21 +803,29 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ```
 </div>
 
----
-
-## 📌 相容性與支援邊界 (Compatibility)
-
-- **支援環境**：
-  - 《魔獸世界：正式服》World of Warcraft: Retail 12.1.0+ (Interface 120100)
-  - 相容通道 Retail 12.0.7+ (Interface 120007)
-- **不支援環境**：
-  - 經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等不在本專案支援範圍）。
+</div>
 
 ---
 
-## 🌐 說明文件與相關連結 (Documentation & Links)
+*** 📌 相容性與支援邊界 (Compatibility)
+<div class="spoiler">
 
-- 📖 **GitHub Pages 說明文件導航中心**：[https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
-- 📦 **GitHub 專案原始碼與 Release 發布**：[https://github.com/ziyuefan/EventAlertModRemake](https://github.com/ziyuefan/EventAlertModRemake)
-- 📜 **CurseForge 專案發布頁面**：[https://www.curseforge.com/wow/addons/eventalertmod](https://www.curseforge.com/wow/addons/eventalertmod)
-- 💬 **WoWInterface 專案發布頁面**：[https://www.wowinterface.com/downloads/info26550-EventAlertMod.html](https://www.wowinterface.com/downloads/info26550-EventAlertMod.html)
+• <strong>支援環境</strong>：<br>
+&nbsp;&nbsp;▫️ 《魔獸世界：正式服》World of Warcraft: Retail 12.1.0+ (Interface 120100)<br>
+&nbsp;&nbsp;▫️ 相容通道 Retail 12.0.7+ (Interface 120007)<br><br>
+• <strong>不支援環境</strong>：<br>
+&nbsp;&nbsp;▫️ 經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等不在本專案支援範圍）。
+
+</div>
+
+---
+
+*** 🌐 說明文件與相關連結 (Documentation & Links)
+<div class="spoiler">
+
+• 📖 <strong>GitHub Pages 說明文件導航中心</strong>：<a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a><br><br>
+• 📦 <strong>GitHub 專案原始碼與 Release 發布</strong>：<a href="https://github.com/ziyuefan/EventAlertModRemake">https://github.com/ziyuefan/EventAlertModRemake</a><br><br>
+• 📜 <strong>CurseForge 專案發布頁面</strong>：<a href="https://www.curseforge.com/wow/addons/eventalertmod">https://www.curseforge.com/wow/addons/eventalertmod</a><br><br>
+• 💬 <strong>WoWInterface 專案發布頁面</strong>：<a href="https://www.wowinterface.com/downloads/info26550-EventAlertMod.html">https://www.wowinterface.com/downloads/info26550-EventAlertMod.html</a>
+
+</div>
