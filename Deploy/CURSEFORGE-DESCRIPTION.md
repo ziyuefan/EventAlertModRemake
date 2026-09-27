@@ -155,7 +155,9 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 ## 📜 版本更新歷史 (Beautified CHANGELOG.TXT)
 
-*** 🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)
+### 🌟 Retail 12.1.0 Alpha 8 系列 (最新架構重構)
+
+*** 🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27
 <div class="spoiler">
 
 ```markdown
@@ -192,8 +194,9 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **地面效果法術圖示解析、清單排版與預覽避讓**：
   - 實裝多層原生降級解析；預覽牛頭人智能避讓，杜絕第 1 格被遮蔽；自動清理歷史幽靈筆誤法術。
 ```
+</div>
 
-*** 📜 歷史 Alpha 8 系列詳細更新紀錄 (Alpha 8.6 ~ Alpha 8.0) (點擊展開/收合)
+*** 🌟 [Retail 12.1.0 Alpha 8.6] - 2026.09.19
 <div class="spoiler">
 
 ```markdown
@@ -226,7 +229,13 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **多框架移動模式綠色高亮外框與滾輪即時微調 (Green Mover Frame & Realtime Wheel Spacing Adjustment)**：
   - 移動模式以半透明翡翠綠外框包覆整個警示群組，點擊外框任意區域即可平滑拖曳。
   - 支援滑鼠滾輪即時微調圖示大小與間距，附帶半透明浮動 HUD 即時呈現當前數值反饋。
+```
+</div>
 
+*** 🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12
+<div class="spoiler">
+
+```markdown
 ### 🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12
 - **獨立即時效果預覽視窗 (Independent Live Preview Panel - PreviewPanel)**：
   - 全新開發可自由拖曳、螢幕鎖定之獨立效果預覽視窗，提供「告警圖示」、「職業資源條」、「角色屬性」3 大頁籤。
@@ -260,7 +269,13 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **五國語言完整對齊與存檔時間戳蓋章**：
   - 5 國語言（繁中/簡中/英文/韓文/俄文）字典 100% 同步新增 20+ 個新功能與專屬選項詞條。
   - 存檔資料庫新增本地時間與 Unix 秒數雙重時間戳自動標記。
+```
+</div>
 
+*** 🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04
+<div class="spoiler">
+
+```markdown
 ### 🌟 [Retail 12.1.0 Alpha 8.4] - 2026.09.04
 - **光環與冷卻模組 2D 矩陣折行排版與自訂換行欄數 (2D Grid Layout Engine & Columns per Row Configuration)**：
   - **2D 網格折行排版引擎 (2D Grid Layout Engine)**：自身光環 (`selfAura`)、目標光環 (`targetAura`)、技能冷卻 (`spellCooldown`)、物品冷卻 (`itemCooldown`) 與地面效果 (`groundEffect`) 等模組全面升級為二維矩陣排版。圖示數量超過指定欄數 (Columns) 時，依成長方向自動向下一列 (Row) 折行，杜絕圖示單向無限延伸遮擋或超出螢幕。
@@ -283,7 +298,13 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - 全面採用暴雪原生 `FontString:SetFormattedText` 進行屬性數值文字渲染，達成 0.00ms C-Level 格式化與零 Lua GC 暫態字串記憶體分配。
   - 補齊全 18 大屬性之 `getRawValue` 戰鬥即時取值路由，配合 Retail 12.x / Midnight 的 `AllowedWhenTainted` 與 `Enum.SecretAspect.Text` 規範，徹底修復過去因安全過濾導致戰鬥中屬性數值凍結未更新或文字被清空的缺陷。
   - **單一屬性圖示自訂拖曳報錯修復**：修復 `PlayerStatService` 於拖曳移動單一屬性圖示放開後，在地化格式字串參數個數不足導致的 `bad argument #4 (format)` Lua 報錯。
+```
+</div>
 
+*** 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28
+<div class="spoiler">
+
+```markdown
 ### 🌟 [Retail 12.1.0 Alpha 8.3] - 2026.08.28
 - **次世代全量法術庫與智慧預設系統 (Next-Gen Master Spell Catalog & Intelligent Presets)**：
   - **5 語系離線先驗資料庫**：收錄全 13 職業、40 專精與 39 英雄天賦樹共 4,463 個核心法術與 466 個光環，支援繁中/簡中/英文/韓文/俄文即時切換。
@@ -301,7 +322,13 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - **Profile Codec 匯出/解碼修復**：在 `buildPayload` 加入唯一性過濾，徹底修復實機歷史重複 ID 導致的 `duplicateAlertID` 報錯。
   - **字型驗證修復**：修正 LSM 載入時的旁路判斷，確保非法字型一律安全回退為 STANDARD。
   - 修正條件設定視窗下拉文字 `SetText` 型別不相容問題。
+```
+</div>
 
+*** 🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27
+<div class="spoiler">
+
+```markdown
 ### 🌟 [Retail 12.1.0 Alpha 8.2] - 2026.08.27
 - **LibSharedMedia-3.0 (SharedMedia) 素材庫全面整合與動態探測 (Full LSM Integration & Dynamic Discovery)**：
   - 全面接入社群廣泛使用的 LibSharedMedia-3.0 素材生態，完整支援所有第三方 SharedMedia 音效包、字型包與材質包。
@@ -318,7 +345,13 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **UI 下拉選單長清單自適應捲動容器 (Scrollable Dropdown Menus with MouseWheel)**：
   - 實作通用自適應捲動選單 `buildScrollableDropdownMenu`：當 SharedMedia 包含數十或數百種字型／音效時，選單自動限制高度為 10 筆並啟用 `UIPanelScrollFrameTemplate` 捲軸與滑鼠滾輪支援，版面整潔不破圖。
   - 展開音效與字型選單時自動以 `forceRefresh` 模式向 LSM 抓取最新註冊素材清單。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 8.1] - 2026.08.26
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 8.1] - 2026.08.26
 - **技能冷卻純透明度（Alpha=0）隱藏模式與全監控冷卻預先錨定 (Persistent Pre-anchoring & Zero-Alpha Cooldown Mode)**：
   - 徹底解決技能冷卻在戰鬥中首次施放無法建立框架或延遲至脫戰後才出現的架構問題。
@@ -339,7 +372,13 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - 渲染器 (`Renderer`) 於光環圖示右下角疊加層精確格式化顯示剩餘吸收盾量（如 45.2k、1.2M），若同時具備多層數則自動並列顯示（如 3(45k)）。
 - **圖示物件池 (IconPool) 擴容與安全放行**：
   - 預熱池容量由 16 擴增至 64，並在池耗盡時直接安全呼叫 `createIcon` 建立，杜絕戰鬥中回傳 nil。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 8.0] - 2026.08.25
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 8.0] - 2026.08.25
 - **角色屬性與吸收量監控升級 (Independent Positioning & Grow Direction)**：
   - 新增「整體排列方向」下拉選單（向右、向左、向上、向下），支援整組屬性即時方向重構。
@@ -355,7 +394,9 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ```
 </div>
 
-*** 📜 歷史 Alpha 7 系列詳細更新紀錄 (Alpha 7.9 ~ Alpha 7.0) (點擊展開/收合)
+### ⚡ Retail 12.1.0 Alpha 7 系列 (功能擴充與模組重構)
+
+*** 🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24
 <div class="spoiler">
 
 ```markdown
@@ -370,7 +411,13 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - 修正關閉主視窗時在 `closeAllSidePanels` 缺少 `close()` 引發的 nil call 錯誤，實作防禦性 `safeClosePanel` 機制。
 - **官方 README 圖文導覽與 GitHub 直連展示 (Visual Showcase)**：
   - 整理 14 張全功能高畫質介面截圖，分類涵蓋系統選單、法術條件與階層吸附、職業資源與屬性排版。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 7.8] - 2026.08.24
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 7.8] - 2026.08.24
 - **「★ 角色屬性與吸收量監控」全新模組**：
   - 支援 18 種核心屬性取值監控（主屬性：力量、敏捷、耐力、智力；副屬性：致命、加速、精通、臨機應變；輔助與生存：閃避、汲取、速度屬性評級、跑速、泳速、飛速、飛龍模式飛速、總吸收盾量、治療吸收量、護甲值）。
@@ -392,13 +439,25 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
   - 實作 `UI/CombatFlash.lua` 全螢幕低血/戰鬥紅框閃爍動畫，監聽 `PLAYER_REGEN_DISABLED` 事件觸發戰鬥進入警示，並在主選單提供即時測試按鈕。
 - **主題樣式與預設回歸**：
   - EAM 預設主題改回經典魔獸紅色選單按鈕與仿石框邊緣。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 7.7] - 2026.08.24
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 7.7] - 2026.08.24
 - **子視窗聯動移動錨點**：點擊各類別監控子視窗時，自動在畫面上亮起該模組專屬半透明移動錨點框（標記按住左鍵拖曳），方便玩家直觀拖曳調整在畫面上的定位。
 - **排版位置全開模式**：開啟「告警框架位置與排版」視窗時自動亮起全部 7 大框架移動錨點，關閉子視窗或主選單時自動隱藏所有錨點並套用最新座標排版。
 - **全二級附屬側窗互斥**：開啟職業資源、除錯中心、Profile 匯入/匯出、功能模組、關於或清單子視窗時，自動關閉其他側邊面板，徹底消除多個側窗堆疊重疊問題。
 - **除錯中心與診斷匯出修復**：修正流程測試分頁運行非同步回傳布林值導致的 index error，補全格式化輸出；修正系統診斷報告匯出按鈕調用。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 7.5] - 2026.08.23
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 7.5] - 2026.08.23
 - **介面佈局重構**：主選單第 7 項目提升為「★ 玩家職業資源設定」，排版位置微調為第 8 項目，除錯類功能統整至 4-Tab「除錯與測試診斷中心」。
 - **全視窗快速關閉**：所有視窗右上角加入原生 `[X]` 快速關閉按鈕。
@@ -406,28 +465,58 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **Profile 分享功能升級**：支援 8 大自選項目匯出／匯入（自身/目標光環、技能/物品冷卻、地面效果、框架排版位置、職業資源設定、一般偏好設定），並提供快捷選取按鈕與預覽區塊分析。
 - **職業資源設定即時生效**：設定滑桿與下拉選單數值變更時即時驅動原生渲染器更新，非戰鬥不需 `/reload`。
 - **死亡騎士符文強化**：圖示依血魄 (250)、冰霜 (251)、穢邪 (252) 專精動態切換專屬圖示；下方增設 6 格微型充能冷卻條，由排程器平滑驅動；提供 `/eam rune` 槽位診斷與複製視窗。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 7.4] - 2026.08.23
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 7.4] - 2026.08.23
 - 充能環形版面改用封裝的透明 TGA ring grid；冷卻完成必須先觀測到已消耗充能，再於 `currentCharges` 回到 `maxCharges` 時成立。
 - 死亡騎士符文改由 `GetRuneCount`／`GetRuneCooldown` 六槽初始化與 `RUNE_POWER_UPDATE(index, added)` 即時驅動；消耗／恢復更新 0..6 分段，符能仍為獨立資源。
 - 地面效果設定會在非戰鬥中編譯 Base／Override／目前 SpellInfo 法術族群；死亡凋零／褻瀆等替換 ID 可命中同一監控項，設定 ID 完全相符時優先。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 7.3] - 2026.08.23
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 7.3] - 2026.08.23
 - 充能 StatusBar 改以目前可用次數／最大次數顯示，不再讓段數跟著單層恢復時間前進；Secret `currentCharges` 只直送 Blizzard C-level `SetValue` sink。
 - 新增框外 TOP／BOTTOM／LEFT／RIGHT 與環形 RING 版面；預設長度／環直徑為圖示 150%、厚度 8px，並依安全 `maxCharges` 顯示分隔線。
 - 12.1 環形使用 StatusBar Radial render mode；能力或材質不可用時回退 BOTTOM 線性條。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 7.2] - 2026.08.23
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 7.2] - 2026.08.23
 - 充能技能仍只在玩家首次成功施放後進入監控，並可對齊儲存 base ID 與目前 override ID。
 - `SpellChargeInfo` 改採欄位級 Secret 判讀；安全 current/max 顯示文字，Secret `currentCharges` 則以圖示同寬 StatusBar 接收官方 DurationObject。
 - 冷卻技能細部設定隱藏 Aura 專用「僅監控自己施放」，三項冷卻行為按鈕不再重疊。
+```
+</div>
 
+*** 📌 [Retail 12.1.0 Alpha 7.1] - 2026.08.23
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1.0 Alpha 7.1] - 2026.08.23
 - 充能型技能在安全取得充能資料時顯示 current/max，並保留原生 DurationObject 冷卻倒數。
 - 無計時時清除並隱藏 CooldownFrame 的 edge／bling，避免技能圖示留下白色空框。
 - Glow Border 支援內嵌 `LibButtonGlow-1.0`；自訂顏色、戰鬥首次建框或 library 不可用時回退 EAM 動畫邊框。
 - 玩家資源設定面板開關後即時重套用視覺狀態，非戰鬥不需 `/reload`。
+```
+</div>
 
+*** 📌 [Retail 12.1 Alpha 7] - 2026.08.23
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1 Alpha 7] - 2026.08.23
 - 玩家職業資源改為 17 資源、13 職業／40 組專精候選拓撲；`UNIT_DISPLAYPOWER` 只更新前景，不再因形態切換拆除背景追蹤。
 - 補強德魯伊 Bear／Cat／Caster／Moonkin／回 Bear、Energy→ComboPoints renderer ownership、PAIN 專用 legacy key 與模組停用清理。
@@ -435,18 +524,32 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ```
 </div>
 
-*** 📜 歷史 Alpha 早期重構歷程 (Alpha 6.0 ~ Alpha 1.0) (點擊展開/收合)
+### 🧱 Retail 12.1.0 Alpha 早期重構歷程 (Alpha 6 ~ Alpha 1)
+
+*** 📌 [Retail 12.1 Alpha 6] - 2026.08.23
 <div class="spoiler">
 
 ```markdown
 ### 📌 [Retail 12.1 Alpha 6] - 2026.08.23
 - 技能冷卻監控改為只在玩家精確成功施放清單技能後首次 render；新增 `cooldownRemoveAura`、`showSCDOutsideCombat`、`glowSCDWhenUsable` 三項 per-spell 覆寫。
 - Target Aura 提供匿名 diagnostics 與明確 `/eam add target` 手動 popup route；不保存 Secret、AuraData、Frame 或猜測 ID。
+```
+</div>
 
+*** 📌 [Retail 12.1 Alpha 5] - 2026.08.14
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1 Alpha 5] - 2026.08.14
 - 新增 EAMAP1 JSON／Base64 profile codec，含白名單欄位、大小／深度／節點限制、Adler-32 checksum、preview、merge／replace 與 combat guard。
 - 新增 STANDARD、ARIALN、MORPHEUS、SKURRI 字型選擇；十一套主題統一控制按鈕底色與邊框。
+```
+</div>
 
+*** 📌 [Retail 12.1 Alpha 4 ~ Alpha 1] - 2026.07 ~ 2026.08
+<div class="spoiler">
+
+```markdown
 ### 📌 [Retail 12.1 Alpha 4 ~ Alpha 1] - 2026.07 ~ 2026.08
 - 12.1 現代化重構首版發布，全面接入原生 AuraContainer 與 Tooltip Ctrl+Alt 快捷監控通道。
 - 引入 VectorGraphics / Texture SVG A/B 能力探針與完整流程測試。
@@ -455,9 +558,10 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - 引入 AlertManager 中介控制器與 Scheduler 節流，消除 Layout Churn 與高頻重複計算。
 ```
 </div>
-</div>
 
-*** 📜 歷史經典版本摘要 (TWW / DF / SL / Classic) (點擊展開/收合)
+### 📜 歷史經典版本摘要 (TWW / DF / SL / Classic)
+
+*** 📜 歷史經典版本摘要 (2020 ~ 2026)
 <div class="spoiler">
 
 ```markdown
