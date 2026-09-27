@@ -5,11 +5,30 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-09-27.06 (Retail 12.1.0 Alpha 8.7 正式發布至 GitHub Release 與 CurseForge，檔案 ID: 8985797，新開發週期開啟 Alpha 8.8)。
+目前快照版本：2026-09-28.01 (奇樂 MiliUI 說明文件排版、Sanitizer 表格洗除防禦與 eam-miliui-publisher 專屬技能體系固化)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-09-27 多進度儲存點：Retail 12.1.0 Alpha 8.7 雙平台正式發布（GitHub Release & CurseForge）與 Alpha 8.8 開發週期開啟（現行儲存點）
+## 2026-09-28 多進度儲存點：奇樂 (MiliUI / WoWbox) 說明文件排版、後端 Sanitizer 行為治理與專屬技能體系 (`eam-miliui-publisher`) 固化（現行儲存點）
+
+- current-of-truth：奇樂專用說明文件自動化工具（`Build-MiliUIDoc.py`）落地、雙副本 HTML 產出完成、15 項自動化自檢與 499 條專案契約全數通過、`eam-miliui-publisher` 專屬技能體系正式建立。
+  1. 奇樂平台特性與發布產物：
+     - **產出檔案**：根目錄 [`addons_miliui_eventalertmod.html`](file:///d:/Project_EventAlertMod_AGY/addons_miliui_eventalertmod.html) 與部署目錄 [`Deploy/addons_miliui_eventalertmod.html`](file:///d:/Project_EventAlertMod_AGY/Deploy/addons_miliui_eventalertmod.html)。
+     - **實機驗證網址**：`https://addons.miliui.com/wow/28`。
+     - **後端 Sanitizer 表格洗除防禦**：0 `<table>` 策略，全面改採 `<ul>`、`<ol>`、`<li>` 與 `<code>` 結構化展示，杜絕後端將表格洗成 `<p>` 導致的排版崩潰。
+     - **收合標籤語法**：遵循 `<details><summary>點擊展開</summary><div class="details-content"><p>...</p></div></details>` 規範。
+     - **展示圖片適配**：14 張 UI 截圖全數設為 `width="50%"` 顯示，適配奇樂版面寬度。
+     - **HTML5 空標籤規範**：無 XHTML 閉合斜線，一律採 `<br>`、`<hr>`、`<img>`。
+  2. 技能體系擴充：
+     - 專案內部技能：[`.AI/skills/eam-miliui-publisher/SKILL.md`](file:///d:/Project_EventAlertMod_AGY/.AI/skills/eam-miliui-publisher/SKILL.md)。
+     - 全域技能：`~/.gemini/config/skills/eam-miliui-publisher/SKILL.md`。
+     - 專案核心技能體系自 21 大擴充至 22 大核心技能。
+  3. 當前達成狀態：
+     - [x] 【奇樂專用 HTML 建置腳本】：`Build-MiliUIDoc.py` 15 項指標自檢全過。
+     - [x] 【全專案契約檢查】：499/499 條全部綠燈。
+     - [x] 【專屬技能雙端部署】：專案與全域一體同步。
+
+## 2026-09-27 多進度儲存點：Retail 12.1.0 Alpha 8.7 雙平台正式發布（GitHub Release & CurseForge）與 Alpha 8.8 開發週期開啟（前一儲存點）
 
 - current-of-truth：Retail 12.1.0 Alpha 8.7 正式發布完成，全套契約 499 條綠燈、Flow 測試 98 案全過、雙語日誌與說明文件 100% 同步。
   1. 發布紀錄與雙平台產物：

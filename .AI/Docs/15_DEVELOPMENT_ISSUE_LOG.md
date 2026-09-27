@@ -1,3 +1,27 @@
+### 2026-09-28 EAM-20260928-MILIUI-DOCS-AND-SKILL-SPECIFICATION：奇樂 (MiliUI / WoWbox) 說明文件排版、後端 Sanitizer 行為治理與專屬技能體系 (`eam-miliui-publisher`) 固化
+
+- 狀態：已完成 (15 項自動化驗證 PASS, Contracts 499/499, 雙端技能落地)。
+- 需求背景與問題分析：
+  1. 少年欸指示為繁體中文魔獸插件社群平台「奇樂 (MiliUI / WoWbox)」製作專用說明文件 (`addons_miliui_eventalertmod.html`)，要求支援 HTML5 收合語法 (`<details><summary>點擊展開</summary><div class="details-content"><p></p></div></details>`)，並於實機網址 (`https://addons.miliui.com/wow/28`) 驗證。
+  2. 奇樂平台後端富文本解析器與安全過濾器（Sanitizer）行為特徵分析：
+     a. **0% Markdown 支援**：後端不解析 Markdown，任何 `#`、`**`、`|---|` 皆會原樣輸出為純文字。
+     b. **表格洗除陷阱 (Table Stripping)**：後端過濾器會將 `<table>`、`<thead>`、`<tbody>`、`<tr>`、`<th>`、`<td>` 全數洗除並退化為 `<p>` 標籤，導致 Slash 命令與對照表在前台排版徹底崩潰。
+     c. **清單與代碼支援性**：不同於 CurseForge（會剝離 `<li>`），奇樂完整支援 `<ul>`、`<ol>`、`<li>` 與 `<code>`。因此表格內容必須重構為語意化清單搭配代碼標籤。
+     d. **空元素閉合規範**：遵循現代 HTML5 規範，禁用 XHTML 閉合斜線（如 `<br />`、`<hr />`、`<img ... />`），改採 `<br>`、`<hr>`、`<img>`。
+     e. **展示圖片寬度適配**：實機頁面寬度限制下，100% 寬度截圖過於巨大影響閱讀，全面調整為 `width="50%"` 顯示。
+- 重構實作與產出：
+  1. **自動化轉換腳本 (`.AI/Tools/Build-MiliUIDoc.py`)**：
+     - 自動自專案文件產生純 HTML5 格式說明文件：`Deploy/addons_miliui_eventalertmod.html` 與 `addons_miliui_eventalertmod.html`。
+     - 內建 15 項自動化驗證斷言：0 表格、250+ `<li>`、80+ `<ul>`、220+ `<code>`、14 張截圖全數 `width="50%"`、零 XHTML 自閉合斜線、零巢狀 `<p>`。
+  2. **專屬技能固化 (`eam-miliui-publisher`)**：
+     - 建立 `.AI/skills/eam-miliui-publisher/SKILL.md` 與全域技能 `~/.gemini/config/skills/eam-miliui-publisher/SKILL.md`。
+     - 完整定義指令集、平台語法特性、14 大展示圖片 CDN 映射表、與實機驗收步驟（指向 `https://addons.miliui.com/wow/28`）。
+  3. **技能生態文件同步 (`.AI/Docs/32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md`)**：
+     - 將專案核心技能體系自 21 大擴充至 22 大核心技能體系，納入領域五 (DevOps、發布自動化與本機資安治理)。
+- 驗證結果：
+  - `Build-MiliUIDoc.py` 15 項自檢全數通過。
+  - `Test-ValidationContracts.ps1` 全合約 499 / 499 通過。
+
 ### 2026-09-27 EAM-20260927-ALPHA-8.7-OFFICIAL-RELEASE：Retail 12.1.0 Alpha 8.7 雙平台正式發布（GitHub Release & CurseForge）與 Alpha 8.8 開發週期開啟
 
 - 狀態：已完成 (Contracts 499/499, Flow 98/98, Syntax 78/78, GitHub Release Tag: alpha-8.7, CurseForge File ID: 8985797)。

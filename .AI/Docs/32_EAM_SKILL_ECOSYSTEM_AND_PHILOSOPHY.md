@@ -1,5 +1,5 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-# EventAlertMod 21 大核心技能體系與 Agentic AI 治理哲學 (EAM Skill Ecosystem & Philosophy)
+# EventAlertMod 22 大核心技能體系與 Agentic AI 治理哲學 (EAM Skill Ecosystem & Philosophy)
 
 > 🚀 **以技能為核心（Skill-Driven）、漸進式揭露（Progressive Disclosure）、確定性交付（Deterministic Execution）的現代化魔獸插件 AI 協同體系**
 
@@ -24,7 +24,7 @@
                                       │ (動態漸進式加載 Progressive Loading)
                                       ▼
   ┌────────────────────────────────────────────────────────────────────────┐
-  │                     21 大專案標準化 SKILL 體系 (SOP 規範)                │
+  │                     22 大專案標準化 SKILL 體系 (SOP 規範)                │
   │  ┌──────────────────┐ ┌──────────────────┐ ┌─────────────────────────┐  │
   │  │ 12.x 核心引擎與   │ │ 遊戲資料與監控   │ │ 介面互動與視覺系統      │  │
   │  │ API 防禦體系      │ │ 服務體系         │ │ (UI/UX & Interactivity) │  │
@@ -45,7 +45,7 @@
 
 1. **漸進式揭露（Progressive Disclosure）與極致 Token 節約**：
    - 不再一次性將數萬行技術文檔全部塞入 Prompt。
-   - 平時僅在記憶體保留 21 個技能的精簡元資料（Name + Description，耗費極低 Token）。
+   - 平時僅在記憶體保留 22 個技能的精簡元資料（Name + Description，耗費極低 Token）。
    - 只有當觸發特定任務時，系統才動態將該技能的專屬 `SKILL.md` 注入上下文，以最高專注度完成任務。
 
 2. **「零暖機」跨 Session 與跨 Agent 永續續接（Zero Cold-Start Continuity）**：
@@ -175,11 +175,16 @@
     - **定位**：跨 Session 與多 Agent 協同的單一事實來源維護。
     - **核心規範**：維護 `ProjectContinuity.json`、`28_PROJECT_CONTINUITY.md` 與 `15_DEVELOPMENT_ISSUE_LOG.md`。
 
+22. **`eam-miliui-publisher` (奇樂說明文件排版、語法特性與發布規範)**
+    - **定位**：繁體中文魔獸插件社群平台「奇樂 (MiliUI / WoWbox)」專屬說明文件排版與過濾器防禦。
+    - **核心指令**：`python .\.AI\Tools\Build-MiliUIDoc.py`（15 項指標自檢）。
+    - **核心規範**：實機網址驗證 (`https://addons.miliui.com/wow/28`)、純 HTML5 架構 (0% Markdown)、收合語法 (`<details><summary>點擊展開</summary><div class="details-content"><p>...</p></div></details>`)、後端 Sanitizer 表格洗除防禦 (0 `<table>`、改採 `<ul>`/`<ol>`/`<li>`/`<code>` 結構化)、圖片 50% 寬度排版。
+
 ---
 
 ## 🛠️ 3. 技能部署架構與調用方式 (Deployment & Usage)
 
-專案中所有 21 項技能皆採用雙軌實體部署，確保版本控制與全域可達性：
+專案中所有 22 項技能皆採用雙軌實體部署，確保版本控制與全域可達性：
 - **專案內部版本控制（VCS Tracked）**：
   - `D:\Project_EventAlertMod_AGY\.agents\skills\<skill-name>\SKILL.md`
   - `D:\Project_EventAlertMod_AGY\.AI\skills\<skill-name>\SKILL.md`
