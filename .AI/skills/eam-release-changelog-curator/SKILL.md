@@ -52,22 +52,23 @@ description: >-
    - 歷史版本更新紀錄與 AI 治理技術細節以 `<details><summary>...</summary></details>` 預設折疊。
    - 讓訪客首屏保持乾淨俐落，僅見核心高光 (Highlights) 與下載按鈕。
 2. **CurseForge Description (CF 專案首頁劇透收合標籤)**：
-   - 採用 CurseForge 官方原生支援之 Spoiler 與語意化 HTML 格式（杜絕 `<ul><li>`）：
+   - 採用 CurseForge 官方原生支援之 Spoiler 與語意化 HTML 格式（杜絕 `<ul><li>`，嚴格遵守 HTML5 `<br>` / `<hr>` 空元素規範）：
      ```html
      <h4>🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h4>
      <div class="spoiler">
 
-     <strong>模組名稱</strong>：<br /><br />
-     &bull;&nbsp;<strong>功能項目</strong>：說明文字與 <code>代碼標籤</code>...<br /><br />
-     &bull;&nbsp;<strong>第二項功能</strong>：說明文字與 <code>代碼標籤</code>...<br /><br />
+     <strong>模組名稱</strong>：<br><br>
+     &bull;&nbsp;<strong>功能項目</strong>：說明文字與 <code>代碼標籤</code>...<br><br>
+     &bull;&nbsp;<strong>第二項功能</strong>：說明文字與 <code>代碼標籤</code>...<br><br>
 
      </div>
      ```
+   - **現代 HTML5 空標籤規範**：嚴格遵循 HTML5 規範，所有空標籤一律採用單標籤 `<br>` 與 `<hr>`，**嚴禁使用 XHTML 帶斜線之自閉合簡寫**（如 `<br />`、`<hr />`）。
    - **全面摒棄 `<ul>`、`<ol>` 與 `<li>`（預防後端 Sanitizer 預覽陷阱）**：
      - *預覽陷阱 (Preview Trap)*：CF 編輯器與 Preview 預覽為前端純 JS 渲染，清單看起來正常；但點擊 Save 儲存後，後端 Server-side HTML Sanitizer 會全面強行剝離 `<li>` 與 `</li>`，使所有文字拼在同一行。
      - *吞噬骨牌效應 (Cascading Unclosed Tags)*：多層 `<ul>` 缺乏 `<li>` 包覆時，解析器會丟失外層 `</ul>` 與 `</div>`，引發跨版本收合吞噬（高達 15 層套娃）。
-     - *標準做法*：一律改用 `&bull;&nbsp;`（實體圓點）或 Emoji 配合 `<br /><br />` 斷行，零標籤遺失、100% 免疫後端清洗。
-   - **斷行與段落**：文字換行直接使用 `<br /><br />`，不刻意使用 `<p>` 標籤；章節分隔統一使用 `<hr />`。
+     - *標準做法*：一律改用 `&bull;&nbsp;`（實體圓點）或 Emoji 配合 `<br><br>` 斷行，零標籤遺失、100% 免疫後端清洗。
+   - **斷行與段落**：文字換行直接使用 `<br><br>`，不刻意使用 `<p>` 標籤；章節分隔統一使用 `<hr>`。
    - 嚴禁在 CurseForge Description 中使用 HTML5 `<details><summary>`（CF 解析器會剝離或無法展開）；使用官方標準 `<div class="spoiler">` 結構確保網頁版與 App 客戶端完美渲染為折疊區塊。
    - **嚴禁使用巢狀收合 (Avoid Nested Spoilers)**：CurseForge 解析器在處理巢狀 spoiler 時易出現層級混亂或點擊折疊失效。一律採單層一級收合架構：外層「📜 版本更新歷史」常駐顯示為 `<h2>` 章節，內層 21 個版次各自作為獨立的單層 `<div class="spoiler">`，兼顧首屏載入速度與各版次查閱清晰度。
 

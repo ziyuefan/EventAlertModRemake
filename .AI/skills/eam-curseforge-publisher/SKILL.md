@@ -66,19 +66,21 @@ pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -NonInteractive -ReleaseTyp
 - **全量採用語意化 HTML 標籤 (HTML-First)**：
   - `CURSEFORGE-DESCRIPTION.md` 一律採用標準 HTML 標籤結構，嚴禁使用易受解析器破壞之 Markdown 表格（`|---|`）或標題符號（`#`, `##`, `***`, `---`）。
   - 大標題採用 `<h1>`，各章節收合主標題採用 `<h2>`，小節採用 `<h3>`，歷史版次採用 `<h4>`。
-  - 分隔線一律採用 `<hr />`，嚴禁使用 Markdown `--` 或 `---`。
+  - 分隔線一律採用 `<hr>`，嚴禁使用 Markdown `--` 或 `---`。
+- **現代 HTML5 空標籤規範 (Void Elements Standard)**：
+  - 嚴格遵循現代 HTML5 規範，空元素一律採用標準單標籤 `<br>`、`<hr>`、`<img>`，**絕不再使用帶有斜線之 XHTML 自閉合簡寫**（如 `<br />`、`<hr />`、`<img ... />`）。
 - **表格全面 HTML 化**：
   - 所有展示表格採用標準 `<table>`、`<thead>`、`<tbody>`、`<tr>`、`<th>`、`<td>`。
-  - 圖片欄位加上 `width="100%"` 自適應寬度，必要時使用 `<td align="center">` 置中。
+  - 圖片欄位採用 `<img src="..." width="100%" alt="...">` 自適應寬度，必要時使用 `<td align="center">` 置中。
 - **收合與斷行規範 (`<div class="spoiler">`)**：
   - 收合容器統一使用 `<div class="spoiler"> ... </div>`，**嚴禁使用巢狀收合 (Avoid Nested Spoilers)**，一律採單層一級收合架構，以避免 CurseForge WYSIWYG 解析器折疊衝突或樣式崩塌。
   - 外層主章節（如「📜 版本更新歷史」）常駐顯示為 `<h2>`，其下各歷史版次獨立一級收合。
   - 收合標題置於容器外側（如 `<h2>標題</h2>` 或 `<h4>版次</h4>`）。
   - **嚴禁在收合區內使用 `<ul>`、`<ol>`、`<li>` 清單標籤**：CurseForge 的 HTML Sanitizer 會全面剝離 `<li>`，導致清單文字全部黏在同一行；且未閉合的巢狀 `<ul>` 會在解析器中引發嚴重的跨版本標籤吞噬骨牌效應（Cascading Unclosed Tags）。
-  - **全面採用文字實體符號與 `<br /><br />` 斷行**：
-    - 一級條目直接以專屬 Emoji 或數字配合 `<br /><br />` 斷行。
-    - 二級條目（子項目）一律使用 `&bull;&nbsp;`（實體圓點）配合 `<br /><br />` 斷行。
-    - 大段落與換行直接使用 `<br /><br />`，**不需要刻意包裹 `<p>` 標籤**。
+  - **全面採用文字實體符號與 `<br><br>` 斷行**：
+    - 一級條目直接以專屬 Emoji 或數字配合 `<br><br>` 斷行。
+    - 二級條目（子項目）一律使用 `&bull;&nbsp;`（實體圓點）配合 `<br><br>` 斷行。
+    - 大段落與換行直接使用 `<br><br>`，**不需要刻意包裹 `<p>` 標籤**。
 - **行內樣式實體化**：
   - 粗體使用 `<strong>`，代碼使用 `<code>`，箭頭與符號使用實體字符（如 `&rarr;`、`&lt;`、`&gt;`、`&amp;`）。
 
