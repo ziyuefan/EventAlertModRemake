@@ -52,21 +52,19 @@ description: >-
    - 歷史版本更新紀錄與 AI 治理技術細節以 `<details><summary>...</summary></details>` 預設折疊。
    - 讓訪客首屏保持乾淨俐落，僅見核心高光 (Highlights) 與下載按鈕。
 2. **CurseForge Description (CF 專案首頁劇透收合標籤)**：
-   - 採用 CurseForge 官方原生支援之 Spoiler 與語意化 HTML 格式：
+   - 採用 CurseForge 官方原生支援之 Spoiler 與語意化 HTML 格式（杜絕 `<ul><li>`）：
      ```html
      <h4>🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h4>
      <div class="spoiler">
-       <ul>
-         <li><strong>模組名稱</strong>：
-           <ul>
-             <li><strong>功能項目</strong>：說明文字與 <code>代碼標籤</code>...</li>
-           </ul>
-         </li>
-       </ul>
+
+     <strong>模組名稱</strong>：<br /><br />
+     &bull;&nbsp;<strong>功能項目</strong>：說明文字與 <code>代碼標籤</code>...<br /><br />
+     &bull;&nbsp;<strong>第二項功能</strong>：說明文字與 <code>代碼標籤</code>...<br /><br />
+
      </div>
      ```
-   - **完全 HTML 語意化**：不再依賴 Markdown 粗體、列表或 ` ```markdown ` 代碼塊包裹，直接採用標準 `<h4>`、`<ul>`、`<li>`、`<strong>`、`<code>`。
-   - **斷行與段落**：文字換行直接使用 `<br />`，不刻意使用 `<p>` 標籤；章節分隔統一使用 `<hr />`。
+   - **全面摒棄 `<ul>`、`<ol>` 與 `<li>`**：CurseForge 的 HTML Sanitizer 會全面剝離 `<li>`，導致所有清單項目黏連同一行；且未閉合的 `<ul>` 會在解析器中引發嚴重的跨版本標籤吞噬骨牌效應（Cascading Unclosed Tags）。一律改用 `&bull;&nbsp;`（實體圓點）或 Emoji 配合 `<br /><br />` 斷行。
+   - **斷行與段落**：文字換行直接使用 `<br /><br />`，不刻意使用 `<p>` 標籤；章節分隔統一使用 `<hr />`。
    - 嚴禁在 CurseForge Description 中使用 HTML5 `<details><summary>`（CF 解析器會剝離或無法展開）；使用官方標準 `<div class="spoiler">` 結構確保網頁版與 App 客戶端完美渲染為折疊區塊。
    - **嚴禁使用巢狀收合 (Avoid Nested Spoilers)**：CurseForge 解析器在處理巢狀 spoiler 時易出現層級混亂或點擊折疊失效。一律採單層一級收合架構：外層「📜 版本更新歷史」常駐顯示為 `<h2>` 章節，內層 21 個版次各自作為獨立的單層 `<div class="spoiler">`，兼顧首屏載入速度與各版次查閱清晰度。
 
