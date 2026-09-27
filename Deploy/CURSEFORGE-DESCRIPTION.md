@@ -155,8 +155,8 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 ## 📜 版本更新歷史 (Beautified CHANGELOG.TXT)
 
-<details open markdown="1">
-<summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+*** 🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)
+<div class="spoiler"> <p>
 
 ### 🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27
 - **高頻冷卻事件合併排程與警示更新零分配流水線 (Cooldown Event Coalescing & Zero-Allocation Alert Pipeline)**：
@@ -435,17 +435,17 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - 徹底重構解耦 AuraService、CooldownService、ItemCooldownService、GroundEffectService 五大數據服務。
 - 數據服務引入零分配狀態緩衝池（如 AuraStatePool 等），完全消滅運行期 GC 記憶體垃圾。
 - 引入 AlertManager 中介控制器與 Scheduler 節流，消除 Layout Churn 與高頻重複計算。
-</details>
+</p> </div>
 
-<details markdown="1">
-<summary><b>📜 歷史經典版本摘要 (TWW / DF / SL / Classic) (點擊展開/收合)</b></summary>
+*** 📜 歷史經典版本摘要 (TWW / DF / SL / Classic) (點擊展開/收合)
+<div class="spoiler"> <p>
 
 - **[Retail 12.0.7] 2026.06**：專精名稱動態本地化重構、五大語系字典補齊；重構地面效果多國語言 Tooltip Scraping；拆分 7 大獨立告警框架。
 - **[Classic MOP / Retail TWW] 2025.11**：新增俄語支援；微調顯示秒數小數點進位方式；光環數值依語系支援萬/K/M簡寫。
 - **[Retail TWW] 2025.07**：定時更新改由 C_Timer 驅動；PositionFrame 更新頻率優化，大幅降低 CPU 佔用。
 - **[Retail DF] 2023.02**：支援喚能師 (Evoker) 職業與龍能 (Essence) 顯示；支援飛龍騎術活力 (Vigor) 提示。
 - **[Retail SL] 2020.10**：支援全職業核心能量高亮（真氣、聖能、碎片、狂亂、暴怒怒氣）；支援 DK 符文列切換。
-</details>
+</p> </div>
 
 ---
 

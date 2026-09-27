@@ -51,9 +51,13 @@ description: >-
    - 詳細修復清單或長篇子項目以 `<details open><summary><b>📋 點擊展開/收合詳細變更清單</b></summary>...</details>` 封裝。
    - 歷史版本更新紀錄與 AI 治理技術細節以 `<details><summary>...</summary></details>` 預設折疊。
    - 讓訪客首屏保持乾淨俐落，僅見核心高光 (Highlights) 與下載按鈕。
-2. **CurseForge Description & Release Notes (`<details markdown="1">`)**：
-   - 採用 `<details markdown="1"><summary><b>... (點擊展開/收合)</b></summary>...</details>` 標準格式，CurseForge 網頁版會將其渲染為標準折疊元件。
-   - 頂部保留 3~5 行核心精華摘要，底下長篇細節折疊，兼顧網頁版乾淨度與 App 客戶端可讀性。
+2. **CurseForge Description (CF 專案首頁劇透收合標籤)**：
+   - 採用 CurseForge 官方原生支援之 Spoiler 格式：
+     ```markdown
+     *** 劇透內容或標題
+     <div class="spoiler"> <p> 收合內容 </p> </div>
+     ```
+   - 嚴禁在 CurseForge Description 中使用 HTML5 `<details><summary>`（CF 解析器會剝離或無法展開）；使用官方標準 Spoiler 結構確保網頁版與 App 客戶端完美渲染為折疊區塊。
 
 ## 4. 發布雙物料分離治理 (Dual Deliverables Separation)
 
