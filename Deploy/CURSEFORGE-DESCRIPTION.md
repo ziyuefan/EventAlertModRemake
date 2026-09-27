@@ -191,6 +191,9 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **地面效果法術圖示解析、清單排版與預覽避讓**：
   - 實裝多層原生降級解析；預覽牛頭人智能避讓，杜絕第 1 格被遮蔽；自動清理歷史幽靈筆誤法術。
 
+*** 📜 歷史 Alpha 8 系列詳細更新紀錄 (Alpha 8.6 ~ Alpha 8.0) (點擊展開/收合)
+<div class="spoiler"> <p>
+
 ### 🌟 [Retail 12.1.0 Alpha 8.6] - 2026.09.19
 - **地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment & Zero In-Combat Interruption)**：
   - 徹底解決地面效果在戰鬥中施放不顯示的痛點：校正預熱機制從當前職業專精 Profile 取得地面技能，非戰鬥期間預先建立 Frame、完成定位排版並將透明度設為 0 常駐於記憶體中。
@@ -346,6 +349,10 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **主選單排版精確對齊與控制項優化**：
   - 修復「測試閃爍」按鈕覆蓋文字問題，獨立配置於專屬按鈕列。
   - 將「啟用 12.1 原生圓形光環倒數光圈」完整回歸主設定選單核心控制區。
+</p> </div>
+
+*** 📜 歷史 Alpha 7 系列詳細更新紀錄 (Alpha 7.9 ~ Alpha 7.0) (點擊展開/收合)
+<div class="spoiler"> <p>
 
 ### 🌟 [Retail 12.1.0 Alpha 7.9] - 2026.08.24
 - **全介面控制項懸停提示 (Comprehensive UI Hover Tooltips)**：
@@ -420,6 +427,10 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - 玩家職業資源改為 17 資源、13 職業／40 組專精候選拓撲；`UNIT_DISPLAYPOWER` 只更新前景，不再因形態切換拆除背景追蹤。
 - 補強德魯伊 Bear／Cat／Caster／Moonkin／回 Bear、Energy→ComboPoints renderer ownership、PAIN 專用 legacy key 與模組停用清理。
 - 每項資源新增／補齊字型、數字文字大小與位置、方向、尺寸、透明度、排序、前景／背景與數值能力設定；非戰鬥變更即時套用。
+</p> </div>
+
+*** 📜 歷史 Alpha 早期重構歷程 (Alpha 6.0 ~ Alpha 1.0) (點擊展開/收合)
+<div class="spoiler"> <p>
 
 ### 📌 [Retail 12.1 Alpha 6] - 2026.08.23
 - 技能冷卻監控改為只在玩家精確成功施放清單技能後首次 render；新增 `cooldownRemoveAura`、`showSCDOutsideCombat`、`glowSCDWhenUsable` 三項 per-spell 覆寫。
@@ -435,6 +446,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - 徹底重構解耦 AuraService、CooldownService、ItemCooldownService、GroundEffectService 五大數據服務。
 - 數據服務引入零分配狀態緩衝池（如 AuraStatePool 等），完全消滅運行期 GC 記憶體垃圾。
 - 引入 AlertManager 中介控制器與 Scheduler 節流，消除 Layout Churn 與高頻重複計算。
+</p> </div>
 </p> </div>
 
 *** 📜 歷史經典版本摘要 (TWW / DF / SL / Classic) (點擊展開/收合)

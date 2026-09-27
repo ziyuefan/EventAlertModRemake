@@ -58,6 +58,7 @@ description: >-
      <div class="spoiler"> <p> 收合內容 </p> </div>
      ```
    - 嚴禁在 CurseForge Description 中使用 HTML5 `<details><summary>`（CF 解析器會剝離或無法展開）；使用官方標準 Spoiler 結構確保網頁版與 App 客戶端完美渲染為折疊區塊。
+   - **支援巢狀收合 (Nested Spoilers Support)**：CurseForge 的 Spoiler 語法支援巢狀嵌套。在外層主版本 Spoiler（如 Retail 12.1.0 重構總覽）內，可將歷史子版本群（如 Alpha 8 系列、Alpha 7 系列、早期重構歷程）進一步嵌套為二級子 Spoiler，確保訪客展開外層時第一時間看見最新版（如 Alpha 8.7）核心亮點，而歷史舊版保持二級折疊，提供極致清爽的閱讀體驗。
 
 ## 4. 發布雙物料分離治理 (Dual Deliverables Separation)
 
