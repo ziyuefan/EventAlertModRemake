@@ -1,12 +1,12 @@
-# EventAlertMod Retail 12.1 (EAM)
+# EventAlertMod Retail 12.1.5 (EAM)
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.7-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
-[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Release](https://img.shields.io/badge/release-Alpha%208.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **專為《魔獸世界：正式服 (Retail 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
+> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
 >
 > 🌐 **官方線上說明文件與導航中心**：[https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
 

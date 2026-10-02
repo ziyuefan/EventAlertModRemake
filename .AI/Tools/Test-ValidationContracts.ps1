@@ -2047,6 +2047,28 @@ Assert-Contract ($deprecatedSpellInfoCalls.Count -eq 0) "Zero deprecated GetSpel
 Assert-Contract ($deprecatedItemInfoCalls.Count -eq 0) "Zero deprecated GetItemInfo calls in production Lua" ($deprecatedItemInfoCalls -join ", ")
 Assert-Contract ($deprecatedSpellCooldownCalls.Count -eq 0) "Zero deprecated GetSpellCooldown calls in production Lua" ($deprecatedSpellCooldownCalls -join ", ")
 
+$deprecatedBlizzardCalls = @()
+foreach ($luaFile in $addonLuaFiles) {
+    $relativePath = $luaFile.FullName.Substring($root.Length + 1)
+    if ($relativePath.StartsWith("Debug\") -or $relativePath.StartsWith("Lib\")) {
+        continue
+    }
+    $lines = [System.IO.File]::ReadAllLines($luaFile.FullName, [System.Text.Encoding]::UTF8)
+    for ($i = 0; $i -lt $lines.Length; $i++) {
+        $line = $lines[$i]
+        $trimmed = $line.Trim()
+        if ($trimmed.StartsWith("--")) { continue }
+        if ($line -match 'Blizzard_Deprecated') {
+            $deprecatedBlizzardCalls += ($relativePath + ":" + ($i + 1))
+        }
+    }
+}
+Assert-Contract ($deprecatedBlizzardCalls.Count -eq 0) "Zero Blizzard_Deprecated references in production Lua" ($deprecatedBlizzardCalls -join ", ")
+
+$tocFile = Join-Path $root "EventAlertMod.toc"
+$tocContent = [System.IO.File]::ReadAllText($tocFile, [System.Text.Encoding]::UTF8)
+Assert-Contract ($tocContent -match '##\s*Interface:\s*.*120105') "TOC Interface includes 120105"
+
 $wowheadCandidateScript = Join-Path $PSScriptRoot "Test-WowheadCandidateData.ps1"
 $wowheadCandidateExists = Test-Path -LiteralPath $wowheadCandidateScript -PathType Leaf
 Assert-Contract $wowheadCandidateExists "Wowhead candidate data validator exists"

@@ -36,7 +36,7 @@ Retail API 注意:
 local addonName, EAM = ...
 
 EAM.name = addonName
-EAM.version = "Retail_12.1_Native_Aura"
+EAM.version = "Retail_12.1.5_Alpha_8.8"
 EAM.isRetailOnly = true
 
 EAM.Modules = EAM.Modules or {}
@@ -47,6 +47,7 @@ EAM.Data = EAM.Data or {}
 
 EAM.API = {
     CreateFrame = CreateFrame,
+    CreateFrameWithOptions = CreateFrameWithOptions,
     GetTime = GetTime,
     InCombatLockdown = InCombatLockdown,
     UnitGUID = UnitGUID,
@@ -134,6 +135,7 @@ EAM.API = {
     C_AddOns = C_AddOns,
     C_CVar = C_CVar,
     C_Secrets = C_Secrets,
+    C_Timer = C_Timer,
     C_AddOnProfiler = C_AddOnProfiler,
     AddOnProfilerMetric = Enum and Enum.AddOnProfilerMetric,
     GetInventoryItemID = GetInventoryItemID or function() return nil end,

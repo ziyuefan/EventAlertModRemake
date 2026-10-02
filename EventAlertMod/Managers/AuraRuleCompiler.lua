@@ -367,6 +367,7 @@ local function buildSoundFingerprint(plan)
                 append(parts, soundKeys[keyIndex])
                 append(parts, tostring(config.soundFileID or config.soundFileName or "-"))
                 append(parts, tostring(config.outputChannel or "-"))
+                append(parts, tostring(config.throttleSeconds or "-"))
             end
         end
     end

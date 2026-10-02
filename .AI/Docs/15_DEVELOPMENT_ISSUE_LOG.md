@@ -1,3 +1,43 @@
+### 2026-10-03 EAM-20261003-ALPHA-8.8-RETAIL-1215-ADAPTATION：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地
+
+- 狀態：已完成 (Contracts 501/501, Flow 103/103, Syntax 78/78)。
+- 需求背景與問題分析：
+  1. 暴雪正式服 Retail Patch 12.1.5（TOC 120105，預計 10/15 上線）引入多項底層 C++ 最佳化工具函數庫、C_Timer 原生定時信號映射、C_UnitAuras 結餘時長精確計算、原生光環動畫群組綁定與像素捨入。
+  2. 專案須在維持 Retail 12.1.0 (120100) 與 XPTR 12.0.7 (120007) 向下相容的前提下，全面解鎖 12.1.5 效能加速特性，並杜絕任何 Blizzard_Deprecated 全域調用。
+- 重構實作與產出：
+  1. **TOC 與版本號升級**：
+     - `EventAlertMod.toc`：更新為 `## Interface: 120007, 120100, 120105`、`## Version: EventAlertMod_MN_20261003`。
+     - `Core/Constants.lua`：新增 `TARGET_INTERFACE = 120105` 與 `INTERFACE_120105 = 120105`。
+     - `Core/Env.lua`：版本標記更新為 `Retail_12.1.5_Alpha_8.8`。
+  2. **底層 C++ 數學、字串與表格加速函數庫 (`Core/Util.lua`)**：
+     - 整合 12.1.5 原生底層 C++ 工具：`math.clamp`、`math.saturate`、`math.round`、`math.lerp`、`math.normalize`、`math.sign`、`math.remap`、`math.wrap`、`math.isfinite`、`math.isnan`、`math.isinf`、`string.contains`、`string.ltrim`、`string.rtrim`、`string.startswith`、`string.endswith`、`table.isempty`、`table.contains`、`table.indexof`、`table.removeunordered`、`table.removevalue`、`table.keys`、`table.values`。
+     - 全面實裝防禦性 Polyfills 降級，舊版客戶端自動啟用純 Lua 最佳化實作。
+     - 實裝 `Util.createFrame`（支援 `CreateFrameWithOptions` 隱藏預建立防閃爍）與 `Util.snapToPixels`（支援 `SetRoundLayoutToNearestPixel`）。
+  3. **TimedSignalMap 零分配排程器升級 (`Core/Scheduler.lua`)**：
+     - 整合 `C_Timer.NewTimedSignalMap` 原生鍵值排程機制，支援在支援的客戶端上由 C++ 引擎接管鍵值排程；
+     - 舊版客戶端自動切換至自主維護的精準鍵值排程狀態機，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)。
+  4. **12.1.5 原生 Pandemic 結餘窗口精確判斷 (`Services/AuraService.lua`)**：
+     - 整合 `C_UnitAuras.GetRefreshCarryOverDuration` 進行結餘時間精確計算（結餘時長 <= 30.5% 基礎時間），避免提早補 Dot 浪費剩餘時間；
+     - 舊版客戶端平滑降級至 `GetRefreshExtendedDuration`。
+  5. **原生光環 Pandemic 動態特效動畫 (`UI/NativeAuraRenderer.lua`)**：
+     - 深度適配 12.1.5 原生動畫綁定 API（`AddPandemicActiveAnimation`、`AddPandemicEnterAnimation`、`AddPandemicLeaveAnimation`）。
+  6. **音效警示高頻頻率限制防護 (`Services/AuraSoundService.lua`)**：
+     - 整合 `C_UnitAuras.AddAuraSound` 之 `throttleSeconds` 頻率限制參數（預設 0.3s），杜絕高頻率觸發引發音效轟炸。
+  7. **對抗式代碼審查與深度缺陷修復 (Adversarial Review Audit & Hardening)**：
+     - **`Util.createFrame` 作用域與落地缺陷**：原實作漏宣告 `local api = EAM.API`，導致 `api` 永遠為 `nil` 並退化為全域 `_G`，且未實際應用於生產代碼。已補齊 `local api` 宣告，並將 `Util.createFrame` 與 `Util.snapToPixels` 全面套用至 `IconPool.lua`、`Scheduler.lua`、`EventRouter.lua`。
+     - **`Scheduler.lua` Fallback Signal Map 提早重排程致命缺陷**：原 `createFallbackSignalMap` 在排定遠期計時後將 `isScheduled` 鎖死為 `true`，後續排定更早的計時器時被直接忽略，導致近期任務嚴重延遲。已重構為零分配世代標記 (`activeToken`) 動態重排程機制與重入保護。
+     - **`AuraService.lua` 光環狀態殘留與邊界缺陷**：`readAuraIntoState` 更新既有光環時未重置 `state.pandemicReady`、`state.isImportant`、`state.absorbAmount`，導致刷新後的 DoT 永久殘留 `pandemicReady == true`；同時利用 `Util.isSafeNonNegativeNumber` 修正 `carryOverDur == 0.0` 邊界處理。
+     - **`NativeAuraRenderer.lua` 與 Mock 契約對齊**：12.1.5 `AddPandemicRegion` 與 `AddDispelTypeTexture` 返回 `nil` 且以物件引用管理；加固 `safeRemovePandemicRegion` / `safeRemoveDispelTypeTexture` 並相容舊版客戶端 `ClearPandemicRegions`。同步在 `WoW121AuraMock.lua` 實裝重複添加拋出異常與物件引用移除。
+     - **`AuraRuleCompiler.lua` 音效指紋遺漏**：`buildSoundFingerprint` 補入 `throttleSeconds`，確保音效頻率限制規則變更時正確觸發 `AuraSoundService` 同步。
+  8. **全套測試與契約守衛加固**：
+     - 新增 5 大 Flow 驗證案例（`scheduler.timed_signal_map`、`aura121.native.pandemic_animations`、`aura121.carry_over_duration.exact_window`、`aura.sound.throttle_seconds`、`util.native_1215_math_table_string`），離線 Flow 驗證案例擴充至 103 項。
+     - 新增 Validation Contract 斷言：零 `Blizzard_Deprecated` 引用與 TOC Interface 120105 宣告，契約斷言擴充至 501 項。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 錯誤)。
+  - `Run-FlowValidation.ps1`：103/103 通過 (0 失敗)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+  - `Build-Package.ps1 -PackageLabel DEV`：打包成功 (129 檔案, 0 密鑰外洩, SHA-256 驗證生成)。
+
 ### 2026-09-28 EAM-20260928-MILIUI-DOCS-AND-SKILL-SPECIFICATION：奇樂 (MiliUI / WoWbox) 說明文件排版、後端 Sanitizer 行為治理與專屬技能體系 (`eam-miliui-publisher`) 固化
 
 - 狀態：已完成 (15 項自動化驗證 PASS, Contracts 499/499, 雙端技能落地)。

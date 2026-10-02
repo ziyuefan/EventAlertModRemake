@@ -32,13 +32,14 @@ Retail API 注意:
 local _, EAM = ...
 
 local api = EAM.API
+local Util = EAM.Util
 local EventRouter = {
     handlers = {},
 }
 
 EAM.Modules.EventRouter = EventRouter
 
-local frame = api.CreateFrame and api.CreateFrame("Frame", nil, nil)
+local frame = (Util and Util.createFrame and Util.createFrame("Frame", nil, nil)) or (api.CreateFrame and api.CreateFrame("Frame", nil, nil))
 EventRouter.frame = frame
 
 local eventKeyCache = {}

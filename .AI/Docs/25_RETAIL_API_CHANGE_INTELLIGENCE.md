@@ -40,7 +40,7 @@
 4. 專案 Markdown、活動 TOC 與實際 Lua 命中。
 5. 搜尋摘要只作線索，不得單獨成為架構結論。
 
-## 4. 12.0.0 至 12.1.0 版本演進
+## 4. 12.0.0 至 12.1.5 版本演進
 
 | 版本 | TOC | Wiki revision（UTC） | 與 EAM 直接相關的變更 | 策略判讀 |
 | --- | ---: | --- | --- | --- |
@@ -50,6 +50,7 @@
 | 12.0.5 | `120005` | `6747894`，2026-06-19 08:48:14 | Formatter、DurationObject 零區間行為、Aura 布林值秘密性調整、`table.freeze`／predicate 變更；預告 Aura overhaul | Capability gate 必須檢查能力而非散落 patch 字串；先保留穩定路徑 |
 | 12.0.7 | `120007` | `6747893`，2026-06-19 08:46:57 | `C_DurationUtil.CreateDurationTextBinding`；受限 unit token 改回傳 nil／預設；`debugstack`／`debuglocals` 秘密傳播；Aura refactor 指向 12.1 | 目前活動基線；錯誤與除錯輸出也可能攜帶秘密性，Aura 抽取架構需準備退場 |
 | 12.1.0 | `120100` | `6749767`，2026-06-20 05:57:01 | AuraContainer／AuraButton、Private Script Objects、Forbidden Partition／Aspects；受限 UnitAura 資料可能全為 secret 或 nil | 既有逐 AuraData／spellID 抽取模型屬 P0 相容性風險；PTR 內容仍需持續追 revision 與實機 |
+| 12.1.5 | `120105` | `69952`，2026-10-02 18:00:00 | C_Timer.NewTimedSignalMap、C_UnitAuras.GetRefreshCarryOverDuration、AddPandemicActive/Enter/LeaveAnimation、AddAuraSound throttleSeconds、C++ math/table/string 加速、CreateFrameWithOptions、SetRoundLayoutToNearestPixel；移除 10 大舊時代相容模組 (Blizzard_Deprecated) | 實裝 TimedSignalMap 原生排程、精準 Pandemic 窗口與 C++ 工具 polyfills，全面移除 deprecated 依賴 |
 
 ## 5. 變更脈絡
 

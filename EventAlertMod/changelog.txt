@@ -1,3 +1,30 @@
+-- [Retail][MN][12.1.5][Alpha 8.8][Native C++ Math Acceleration, TimedSignalMap Scheduler & 12.1.5 Pandemic Precision] 2026.10.03
+     -- 【✨ 新增功能 (Features)】:
+        -- 魔獸世界 12.1.5 正式服全面適配 (Retail 12.1.5 Patch Compatibility):
+           -- TOC 介面版本支援正式升級：全面適配魔獸世界正式服 12.1.5 版本號（Interface: 120105），並持續無縫向下相容 12.1.0 及 12.0.7 客戶端。
+        -- 暴雪 12.1.5 原生 C++ 數學、字串與表格加速庫整合 (Native C++ Math, String & Table Acceleration):
+           -- 實裝針對 Retail 12.1.5 暴雪原生底層 C++ 最佳化工具函數庫：
+              -- 數學加速：math.clamp、math.saturate、math.round、math.lerp、math.normalize、math.sign、math.remap、math.wrap、math.isfinite、math.isnan、math.isinf；
+              -- 字串加速：string.contains、string.ltrim、string.rtrim、string.startswith、string.endswith；
+              -- 表格加速：table.isempty、table.contains、table.indexof、table.removeunordered、table.removevalue、table.keys、table.values；
+           -- 防禦性向下相容 (Defensive Polyfills)：在舊版客戶端中自動啟用高效率 Lua 降級實作，兼具極致效能與跨版本無損相容性。
+        -- 原生 TimedSignalMap 零分配排程器升級 (Zero-Alloc TimedSignalMap Scheduler Engine):
+           -- 深度整合 12.1.5 C_Timer.NewTimedSignalMap 原生鍵值排程機制，在支援的客戶端上由暴雪 C++ 引擎直接託管圖示倒數與定時信號；
+           -- 舊版客戶端自動切換至自主維護的精準鍵值排程狀態機，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)，進一步降低垃圾回收 (GC) 開銷。
+        -- 12.1.5 原生 Pandemic 結餘窗口精確判斷 (12.1.5 Native Pandemic Carry-Over Duration Precision):
+           -- 採用 C_UnitAuras.GetRefreshCarryOverDuration 精準結餘時間計算，嚴格於結餘小於等於 30% 基礎持續時間時觸發 Pandemic 傳染補 Dot 提醒，避免提前補 Dot 浪費剩餘時間；
+           -- 舊版客戶端平滑降級至 C_UnitAuras.GetRefreshExtendedDuration 擴展時長評估，確保全版本 DoT 補法時機精準無誤。
+        -- 原生光環 Pandemic 動態特效支援 (Native Aura Active/Enter/Leave Animations):
+           -- 深度適配 12.1.5 Native Aura 容器之 AddPandemicActiveAnimation、AddPandemicEnterAnimation 與 AddPandemicLeaveAnimation 原生動畫 API，帶來更細緻、更流暢的進入與退出補 Dot 視覺反饋。
+        -- 音效警示高頻頻率限制防護 (Aura Sound Alert Throttle Protection):
+           -- 於 C_UnitAuras.AddAuraSound 註冊時加入 throttleSeconds 參數（預設 0.3s），杜絕高頻率觸發或層數暴漲時引發連續音效轟炸的現象。
+        -- 12.1.5 原生像素對齊與初始化防閃爍 (Native Pixel Snapping & Zero-Flicker Frame Initialization):
+           -- 支援 SetRoundLayoutToNearestPixel 原生像素捨入，圖示與文字邊界物理像素對齊更加清晰銳利；
+           -- 引入 CreateFrameWithOptions 隱藏預建立機制，徹底消除圖示首次生成時的瞬間畫面閃爍。
+     -- 【⚡ 體驗優化 (Improvements)】:
+        -- 移除過時暴雪全域函數調用：消除對 Blizzard_Deprecated 的任何引用依賴，提升插件在未來大版本演進時的穩定性與獨立性。
+        -- 原生狀態物件保護加固：防禦性隔離 AuraState 之 timer 與 source 表格，提升極限負載與非標準光環事件下的抗崩潰能力。
+
 -- [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names & Target Ghost Purge] 2026.09.27
      -- 【✨ 新增功能 (Features)】:
         -- 角色屬性與吸收量監控全面升級 (Player Stat & Absorb Monitor Upgrade):

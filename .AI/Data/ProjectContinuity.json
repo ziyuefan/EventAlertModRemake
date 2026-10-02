@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-09-28.01",
-  "updatedAt": "2026-09-28",
+  "snapshotVersion": "2026-10-03.01",
+  "updatedAt": "2026-10-03",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1.0 Alpha 8.7 正式發布完成：GitHub Release (Tag: alpha-8.7) 與 CurseForge (檔案 ID: 8985797) 雙平台同步發布；全模組自訂名稱、屬性監控升級、原生光環熱套用、目標光環切換清場、冷卻事件同幀合併、AlertManager 零配置佇列與髒檢查抑制全面落地；499 契約全綠、98 Flow 全過。進入 Alpha 8.8 開發週期。",
+    "objective": "Retail 12.1.5 Alpha 8.8 開發與驗證完成：全面適配魔獸世界 12.1.5 (TOC 120105)；整合底層 C++ 數學/字串/表格加速庫與防禦性降級；實裝 TimedSignalMap 零分配排程器；精確判定 12.1.5 原生 Pandemic 結餘窗口 (GetRefreshCarryOverDuration)；支援原生光環 Pandemic 動態特效動畫 (AddPandemicActiveAnimation 等)；實裝音效警示 throttleSeconds 頻率限制防護；支援 SetRoundLayoutToNearestPixel 原生像素對齊與 CreateFrameWithOptions 隱藏預建立防閃爍；徹底移除 Blizzard_Deprecated 全域呼叫；501 契約全綠、103 Flow 離線驗證全過。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 98,
-      "passed": 98,
+      "total": 103,
+      "passed": 103,
       "failed": 0,
       "skipped": 0,
       "pending": 0

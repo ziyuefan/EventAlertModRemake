@@ -61,6 +61,13 @@ local function resetTrace()
         initializedButtons = 0,
         pandemicRegionAdds = 0,
         dispelTextureAdds = 0,
+        pandemicActiveAnimAdds = 0,
+        pandemicEnterAnimAdds = 0,
+        pandemicLeaveAnimAdds = 0,
+        timedSignalMapCreates = 0,
+        timedSignalAtCalls = 0,
+        timedSignalCancelCalls = 0,
+        timedSignalClearCalls = 0,
         addAuraSoundCalls = 0,
         removeAuraSoundCalls = 0,
         auraSoundCalls = {},
@@ -245,6 +252,11 @@ function regionMethods:SetCooldownDuration(durationObject, progressCurve)
     Mock.trace.cooldownDurationObjectCalls = Mock.trace.cooldownDurationObjectCalls + 1
 end
 
+function regionMethods:SetRoundLayoutToNearestPixel(enabled)
+    self.roundLayoutToNearestPixel = enabled == true
+    return true
+end
+
 function regionMethods:GetFrameLevel()
     local owner = rawget(self, "_eamOwner")
     if owner and type(owner.GetFrameLevel) == "function" then
@@ -393,14 +405,33 @@ end
 
 function auraButtonMethods:AddPandemicRegion(region)
     assertInitializationOpen(self)
+    if not region then
+        error("Usage: CustomAuraButton:AddPandemicRegion(region)")
+    end
+    for i = 1, #self.pandemicRegions do
+        if self.pandemicRegions[i] == region then
+            error("CustomAuraButton:AddPandemicRegion: Region already added")
+        end
+    end
     self.pandemicRegions[#self.pandemicRegions + 1] = region
     Mock.trace.pandemicRegionAdds = Mock.trace.pandemicRegionAdds + 1
-    return #self.pandemicRegions
+    return nil
 end
 
-function auraButtonMethods:RemovePandemicRegion(index)
+function auraButtonMethods:RemovePandemicRegion(regionOrIndex)
     assertInitializationOpen(self)
-    table.remove(self.pandemicRegions, index)
+    if type(regionOrIndex) == "table" then
+        for i = 1, #self.pandemicRegions do
+            if self.pandemicRegions[i] == regionOrIndex then
+                table.remove(self.pandemicRegions, i)
+                break
+            end
+        end
+    elseif type(regionOrIndex) == "number" then
+        table.remove(self.pandemicRegions, regionOrIndex)
+    else
+        error("Usage: CustomAuraButton:RemovePandemicRegion(region)")
+    end
 end
 
 function auraButtonMethods:ClearPandemicRegions()
@@ -410,17 +441,36 @@ end
 
 function auraButtonMethods:AddDispelTypeTexture(texture, options)
     assertInitializationOpen(self)
+    if not texture then
+        error("Usage: CustomAuraButton:AddDispelTypeTexture(texture, options)")
+    end
+    for i = 1, #self.dispelTypeTextures do
+        if self.dispelTypeTextures[i].texture == texture then
+            error("CustomAuraButton:AddDispelTypeTexture: Texture already added")
+        end
+    end
     self.dispelTypeTextures[#self.dispelTypeTextures + 1] = {
         texture = texture,
         options = options,
     }
     Mock.trace.dispelTextureAdds = Mock.trace.dispelTextureAdds + 1
-    return #self.dispelTypeTextures
+    return nil
 end
 
-function auraButtonMethods:RemoveDispelTypeTexture(index)
+function auraButtonMethods:RemoveDispelTypeTexture(textureOrIndex)
     assertInitializationOpen(self)
-    table.remove(self.dispelTypeTextures, index)
+    if type(textureOrIndex) == "table" then
+        for i = 1, #self.dispelTypeTextures do
+            if self.dispelTypeTextures[i].texture == textureOrIndex then
+                table.remove(self.dispelTypeTextures, i)
+                break
+            end
+        end
+    elseif type(textureOrIndex) == "number" then
+        table.remove(self.dispelTypeTextures, textureOrIndex)
+    else
+        error("Usage: CustomAuraButton:RemoveDispelTypeTexture(texture)")
+    end
 end
 
 function auraButtonMethods:ClearDispelTypeTextures()
@@ -436,6 +486,55 @@ function auraButtonMethods:GetDispelTypeTexture(index)
     return self.dispelTypeTextures[index]
 end
 
+function auraButtonMethods:SetRoundLayoutToNearestPixel(enabled)
+    self.roundLayoutToNearestPixel = enabled == true
+    return true
+end
+
+function auraButtonMethods:CreateAnimationGroup()
+    local animGroup = {
+        animations = {},
+        looping = "NONE",
+        playing = false,
+    }
+    function animGroup:SetLooping(mode)
+        self.looping = mode
+    end
+    function animGroup:CreateAnimation(animType)
+        local anim = { animType = animType }
+        function anim:SetFromAlpha(val) self.fromAlpha = val end
+        function anim:SetToAlpha(val) self.toAlpha = val end
+        function anim:SetDuration(val) self.duration = val end
+        function anim:SetScale(x, y) self.scaleX = x; self.scaleY = y end
+        animGroup.animations[#animGroup.animations + 1] = anim
+        return anim
+    end
+    function animGroup:Play() self.playing = true end
+    function animGroup:Stop() self.playing = false end
+    return animGroup
+end
+
+function auraButtonMethods:AddPandemicActiveAnimation(animGroup)
+    assertInitializationOpen(self)
+    self.pandemicActiveAnim = animGroup
+    Mock.trace.pandemicActiveAnimAdds = Mock.trace.pandemicActiveAnimAdds + 1
+    return true
+end
+
+function auraButtonMethods:AddPandemicEnterAnimation(animGroup)
+    assertInitializationOpen(self)
+    self.pandemicEnterAnim = animGroup
+    Mock.trace.pandemicEnterAnimAdds = Mock.trace.pandemicEnterAnimAdds + 1
+    return true
+end
+
+function auraButtonMethods:AddPandemicLeaveAnimation(animGroup)
+    assertInitializationOpen(self)
+    self.pandemicLeaveAnim = animGroup
+    Mock.trace.pandemicLeaveAnimAdds = Mock.trace.pandemicLeaveAnimAdds + 1
+    return true
+end
+
 local function createAuraButton()
     local button = setmetatable({
         createdTextures = {},
@@ -444,7 +543,7 @@ local function createAuraButton()
         dispelTypeTextures = {},
     }, {
         __index = function(_, key)
-            if key == "eamNativeRegions" or key == "eamNativeInitialized" then
+            if type(key) == "string" and (key:sub(1, 3) == "eam" or key:sub(1, 4) == "_eam") then
                 return nil
             end
             local method = auraButtonMethods[key]
@@ -873,6 +972,32 @@ local function createGenericFrame(frameType, frameName)
 
     function frame:GetAlpha()
         return self.alpha or 1.0
+    end
+
+    function frame:SetRoundLayoutToNearestPixel(enabled)
+        self.roundLayoutToNearestPixel = enabled == true
+        return true
+    end
+
+    function frame:CreateAnimationGroup()
+        local animGroup = {
+            animations = {},
+            looping = "NONE",
+            playing = false,
+        }
+        function animGroup:SetLooping(mode) self.looping = mode end
+        function animGroup:CreateAnimation(animType)
+            local anim = { animType = animType }
+            function anim:SetFromAlpha(val) self.fromAlpha = val end
+            function anim:SetToAlpha(val) self.toAlpha = val end
+            function anim:SetDuration(val) self.duration = val end
+            function anim:SetScale(x, y) self.scaleX = x; self.scaleY = y end
+            animGroup.animations[#animGroup.animations + 1] = anim
+            return anim
+        end
+        function animGroup:Play() self.playing = true end
+        function animGroup:Stop() self.playing = false end
+        return animGroup
     end
 
     local noOperationMethods = {
@@ -1575,7 +1700,7 @@ function Mock.install(interfaceVersion)
             Mock.trace.auraGetterCalls = Mock.trace.auraGetterCalls + 1
             error("12.1 native path called legacy aura getter")
         end,
-        AddAuraSound = function(trigger, info)
+        AddAuraSound = function(trigger, info, throttleSeconds)
             assert(
                 trigger == Enum.UnitAuraSoundTrigger.Added
                     or trigger == Enum.UnitAuraSoundTrigger.ApplicationsIncreased
@@ -1599,6 +1724,13 @@ function Mock.install(interfaceVersion)
                 "outputChannel must be a non-empty string"
             )
 
+            local safeThrottle = nil
+            if type(throttleSeconds) == "number" and throttleSeconds >= 0 then
+                safeThrottle = throttleSeconds
+            elseif info and type(info.throttleSeconds) == "number" and info.throttleSeconds >= 0 then
+                safeThrottle = info.throttleSeconds
+            end
+
             local call = {
                 trigger = trigger,
                 info = {
@@ -1607,7 +1739,9 @@ function Mock.install(interfaceVersion)
                     soundFileID = info.soundFileID,
                     soundFileName = info.soundFileName,
                     outputChannel = info.outputChannel,
+                    throttleSeconds = safeThrottle,
                 },
+                throttleSeconds = safeThrottle,
             }
             Mock.trace.addAuraSoundCalls = Mock.trace.addAuraSoundCalls + 1
             Mock.trace.auraSoundCalls[#Mock.trace.auraSoundCalls + 1] = call
@@ -1630,7 +1764,66 @@ function Mock.install(interfaceVersion)
             assert(Mock.activeSounds[registrationID], "unknown sound registration")
             Mock.activeSounds[registrationID] = nil
         end,
+        GetRefreshCarryOverDuration = function(unit, auraInstanceID)
+            if Mock.refreshCarryOverDuration ~= nil then
+                return Mock.refreshCarryOverDuration
+            end
+            return 3.0
+        end,
+        GetRefreshExtendedDuration = function(unit, auraInstanceID)
+            if Mock.refreshExtendedDuration ~= nil then
+                return Mock.refreshExtendedDuration
+            end
+            return 12.0
+        end,
+        GetAuraBaseDuration = function(unit, auraInstanceID)
+            if Mock.auraBaseDuration ~= nil then
+                return Mock.auraBaseDuration
+            end
+            return 10.0
+        end,
     }
+    C_Timer = {
+        NewTimedSignalMap = function(callback)
+            Mock.trace.timedSignalMapCreates = (Mock.trace.timedSignalMapCreates or 0) + 1
+            local signals = {}
+            local map = { callback = callback, signals = signals }
+            function map:SignalAt(key, targetTime)
+                Mock.trace.timedSignalAtCalls = (Mock.trace.timedSignalAtCalls or 0) + 1
+                signals[key] = targetTime
+                return true
+            end
+            function map:SignalAfter(key, delay)
+                return self:SignalAt(key, 100 + (delay or 0))
+            end
+            function map:Cancel(key)
+                Mock.trace.timedSignalCancelCalls = (Mock.trace.timedSignalCancelCalls or 0) + 1
+                signals[key] = nil
+                return true
+            end
+            function map:Clear()
+                Mock.trace.timedSignalClearCalls = (Mock.trace.timedSignalClearCalls or 0) + 1
+                for k in pairs(signals) do
+                    signals[k] = nil
+                end
+                return true
+            end
+            function map:IsNative()
+                return true
+            end
+            return map
+        end,
+    }
+    CreateFrameWithOptions = function(options)
+        if type(options) == "table" then
+            local f = createGenericFrame(options.frameType, options.name)
+            if options.hidden then
+                f.shown = false
+            end
+            return f
+        end
+        return createGenericFrame("Frame", nil)
+    end
     UIParent = createGenericFrame("Frame", "UIParent")
     return Mock
 end

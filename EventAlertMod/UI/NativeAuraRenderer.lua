@@ -12,6 +12,7 @@ Module: UI/NativeAuraRenderer
 
 local _, EAM = ...
 local api = EAM.API
+local Util = EAM.Util
 local TextPlacement = EAM.UI.TextPlacement
 local AlertBorderStyles = EAM.UI.AlertBorderStyles
 
@@ -22,6 +23,8 @@ local NativeAuraRenderer = {
     dualCountdownButtonCount = 0,
     nativePandemicRegionCapabilityCount = 0,
     pandemicRegionBoundCount = 0,
+    nativePandemicAnimationCapabilityCount = 0,
+    pandemicAnimationBoundCount = 0,
     nativeDispelTextureBoundCount = 0,
     buttons = setmetatable({}, { __mode = "k" }),
 }
@@ -182,6 +185,11 @@ local function bindPandemicRegion(auraButton, style)
         return false
     end
 
+    -- 12.1.5 Guard: AddPandemicRegion throws if the same region is added multiple times
+    if rawget(auraButton, "eamPandemicRegion") then
+        return true
+    end
+
     local region = auraButton:CreateTexture(nil, "OVERLAY")
     region:SetAllPoints(auraButton)
     if type(region.SetColorTexture) == "function" then
@@ -189,6 +197,7 @@ local function bindPandemicRegion(auraButton, style)
     end
     local ok = pcall(auraButton.AddPandemicRegion, auraButton, region)
     if ok then
+        auraButton.eamPandemicRegion = region
         NativeAuraRenderer.pandemicRegionBoundCount =
             NativeAuraRenderer.pandemicRegionBoundCount + 1
         return true
@@ -209,16 +218,126 @@ local function bindDispelTypeTexture(auraButton, style)
         return false
     end
 
+    -- 12.1.5 Guard: AddDispelTypeTexture throws if the same region/texture is added multiple times
+    if rawget(auraButton, "eamDispelTexture") then
+        return true
+    end
+
     local texture = auraButton:CreateTexture(nil, "OVERLAY")
     texture:SetAllPoints(auraButton)
     local ok = pcall(auraButton.AddDispelTypeTexture, auraButton, texture, options)
     if ok then
+        auraButton.eamDispelTexture = texture
         NativeAuraRenderer.nativeDispelTextureBoundCount =
             NativeAuraRenderer.nativeDispelTextureBoundCount + 1
         return true
     end
     return false
 end
+
+local function bindPandemicAnimations(auraButton, style)
+    local hasActive = type(auraButton.AddPandemicActiveAnimation) == "function"
+    local hasEnter = type(auraButton.AddPandemicEnterAnimation) == "function"
+    local hasLeave = type(auraButton.AddPandemicLeaveAnimation) == "function"
+
+    if hasActive or hasEnter or hasLeave then
+        NativeAuraRenderer.nativePandemicAnimationCapabilityCount =
+            NativeAuraRenderer.nativePandemicAnimationCapabilityCount + 1
+    end
+
+    if not style.showPandemic or (not hasActive and not hasEnter and not hasLeave) then
+        return false
+    end
+
+    if rawget(auraButton, "eamPandemicAnimBound") then
+        return true
+    end
+
+    if type(auraButton.CreateAnimationGroup) == "function" then
+        if hasActive and not rawget(auraButton, "eamPandemicActiveAnim") then
+            local activeAnim = auraButton:CreateAnimationGroup()
+            if type(activeAnim.SetLooping) == "function" then
+                activeAnim:SetLooping("BOUNCE")
+            end
+            local alpha = activeAnim:CreateAnimation("Alpha")
+            if alpha then
+                if type(alpha.SetFromAlpha) == "function" then alpha:SetFromAlpha(1.0) end
+                if type(alpha.SetToAlpha) == "function" then alpha:SetToAlpha(0.6) end
+                if type(alpha.SetDuration) == "function" then alpha:SetDuration(0.5) end
+            end
+            local ok = pcall(auraButton.AddPandemicActiveAnimation, auraButton, activeAnim)
+            if ok then
+                auraButton.eamPandemicActiveAnim = activeAnim
+            end
+        end
+
+        if hasEnter and not rawget(auraButton, "eamPandemicEnterAnim") then
+            local enterAnim = auraButton:CreateAnimationGroup()
+            local scale = enterAnim:CreateAnimation("Scale")
+            if scale then
+                if type(scale.SetScale) == "function" then scale:SetScale(1.15, 1.15) end
+                if type(scale.SetDuration) == "function" then scale:SetDuration(0.15) end
+            end
+            local ok = pcall(auraButton.AddPandemicEnterAnimation, auraButton, enterAnim)
+            if ok then
+                auraButton.eamPandemicEnterAnim = enterAnim
+            end
+        end
+
+        if hasLeave and not rawget(auraButton, "eamPandemicLeaveAnim") then
+            local leaveAnim = auraButton:CreateAnimationGroup()
+            local scale = leaveAnim:CreateAnimation("Scale")
+            if scale then
+                if type(scale.SetScale) == "function" then scale:SetScale(1.0, 1.0) end
+                if type(scale.SetDuration) == "function" then scale:SetDuration(0.15) end
+            end
+            local ok = pcall(auraButton.AddPandemicLeaveAnimation, auraButton, leaveAnim)
+            if ok then
+                auraButton.eamPandemicLeaveAnim = leaveAnim
+            end
+        end
+
+        auraButton.eamPandemicAnimBound = true
+        NativeAuraRenderer.pandemicAnimationBoundCount =
+            NativeAuraRenderer.pandemicAnimationBoundCount + 1
+        return true
+    end
+    return false
+end
+
+local function safeRemovePandemicRegion(auraButton)
+    local region = rawget(auraButton, "eamPandemicRegion")
+    if not region then return false end
+    local ok = false
+    if type(auraButton.RemovePandemicRegion) == "function" then
+        -- 12.1.5 accepts region object reference
+        ok = pcall(auraButton.RemovePandemicRegion, auraButton, region)
+    end
+    if not ok and type(auraButton.ClearPandemicRegions) == "function" then
+        pcall(auraButton.ClearPandemicRegions, auraButton)
+    end
+    auraButton.eamPandemicRegion = nil
+    return true
+end
+
+local function safeRemoveDispelTypeTexture(auraButton)
+    local texture = rawget(auraButton, "eamDispelTexture")
+    if not texture then return false end
+    local ok = false
+    if type(auraButton.RemoveDispelTypeTexture) == "function" then
+        -- 12.1.5 accepts texture object reference
+        ok = pcall(auraButton.RemoveDispelTypeTexture, auraButton, texture)
+    end
+    if not ok and type(auraButton.ClearDispelTypeTextures) == "function" then
+        pcall(auraButton.ClearDispelTypeTextures, auraButton)
+    end
+    auraButton.eamDispelTexture = nil
+    return true
+end
+
+NativeAuraRenderer.removePandemicRegion = safeRemovePandemicRegion
+NativeAuraRenderer.removeDispelTypeTexture = safeRemoveDispelTypeTexture
+
 local function applySlotAnchor(auraButton, container, slotIndex, layout)
     if not slotIndex then
         return
@@ -313,6 +432,10 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
 
     bindPandemicRegion(auraButton, style)
     bindDispelTypeTexture(auraButton, style)
+    bindPandemicAnimations(auraButton, style)
+    if Util.snapToPixels then
+        Util.snapToPixels(auraButton)
+    end
     if style.dualCountdownProbe then
         NativeAuraRenderer.dualCountdownButtonCount =
             NativeAuraRenderer.dualCountdownButtonCount + 1
@@ -412,6 +535,9 @@ function NativeAuraRenderer.getStatus()
         hasPandemicRegionAPI = NativeAuraRenderer.nativePandemicRegionCapabilityCount > 0,
         nativePandemicRegionCapabilityCount = NativeAuraRenderer.nativePandemicRegionCapabilityCount,
         pandemicRegionBoundCount = NativeAuraRenderer.pandemicRegionBoundCount,
+        hasPandemicAnimationAPI = (NativeAuraRenderer.nativePandemicAnimationCapabilityCount or 0) > 0,
+        nativePandemicAnimationCapabilityCount = NativeAuraRenderer.nativePandemicAnimationCapabilityCount or 0,
+        pandemicAnimationBoundCount = NativeAuraRenderer.pandemicAnimationBoundCount or 0,
         nativeDispelTextureBoundCount = NativeAuraRenderer.nativeDispelTextureBoundCount,
         blizzardPandemicOnUpdateManaged = NativeAuraRenderer.pandemicRegionBoundCount > 0,
         dualCountdownProbeEnabled = config and config.nativeAuraDualCountdownProbe == true or false,

@@ -206,7 +206,7 @@ local function setStatusBarTextureWithFallback(statusBar)
 end
 
 local function createChargeVisual(parent, kind)
-    local host = api.CreateFrame("Frame", nil, parent)
+    local host = (Util and Util.createFrame and Util.createFrame("Frame", nil, parent)) or api.CreateFrame("Frame", nil, parent)
     local bar = api.CreateFrame("StatusBar", nil, host)
     bar:SetAllPoints(host)
 
@@ -764,9 +764,12 @@ end
 
 local function createIcon()
     local name = "EAM_RetailAlertIcon" .. (IconPool.created + 1)
-    local button = api.CreateFrame("Frame", name, UIParent)
+    local button = (Util and Util.createFrame and Util.createFrame("Frame", name, UIParent)) or api.CreateFrame("Frame", name, UIParent)
     button:SetSize(40, 40)
     button:Hide()
+    if Util and Util.snapToPixels then
+        Util.snapToPixels(button)
+    end
 
     local texture = button:CreateTexture(nil, "ARTWORK")
     texture:SetAllPoints(button)
@@ -783,7 +786,7 @@ local function createIcon()
     cooldown:Hide()
 
     -- 建立高層級的文字與裝飾容器，徹底解決層級遮擋與 CDM 寄生裁切問題
-    local overlay = api.CreateFrame("Frame", nil, button)
+    local overlay = (Util and Util.createFrame and Util.createFrame("Frame", nil, button)) or api.CreateFrame("Frame", nil, button)
     overlay:SetAllPoints(button)
     button.overlay = overlay
 

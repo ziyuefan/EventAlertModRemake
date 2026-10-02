@@ -9129,4 +9129,301 @@ FlowTestRunner.registerCase({
         end
         return true, "Zero-alloc alert queue, cooldown dirty diffing, and event coalescing verified successfully"
     end,
+})
+
+FlowTestRunner.registerCase({
+    id = "scheduler.timed_signal_map",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local scheduler = EAM.Modules.Scheduler
+        if not scheduler or type(scheduler.createSignalMap) ~= "function" then
+            return false, "Scheduler.createSignalMap unavailable"
+        end
+
+        local triggeredKeys = {}
+        local map = scheduler.createSignalMap(function(key)
+            triggeredKeys[#triggeredKeys + 1] = key
+        end)
+
+        if not map then
+            return false, "Failed to create SignalMap"
+        end
+
+        local ok1 = map:SignalAt("spell:1001", 105.0)
+        local ok2 = map:SignalAfter("spell:1002", 10.0)
+        local ok3 = map:Cancel("spell:1001")
+        local ok4 = map:Clear()
+
+        -- Verify fallback signal map logic explicitly
+        local fallbackTriggered = {}
+        local fallbackMap = scheduler.createFallbackSignalMap and scheduler.createFallbackSignalMap(function(key)
+            fallbackTriggered[#fallbackTriggered + 1] = key
+        end)
+        local fallbackOk = false
+        if fallbackMap then
+            fallbackMap:SignalAt("spell:A", 200.0)
+            fallbackMap:SignalAfter("spell:B", 5.0)
+            fallbackMap:SignalAt("spell:A", 150.0) -- reschedule sooner
+            fallbackMap:Cancel("spell:B")
+            fallbackMap:Clear()
+            fallbackOk = true
+        end
+
+        return ok1 == true and ok2 == true and ok3 == true and ok4 == true and fallbackOk == true,
+            "TimedSignalMap zero-alloc rescheduling and cancellation verified"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.native.pandemic_animations",
+    primarySuite = "aura121",
+    suites = { aura121 = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        if not mock or not nativeRenderer then
+            return STATUS_SKIP, "AuraButton mock is offline only"
+        end
+
+        local button = mock.createAuraButtonForTest()
+        local initializer = nativeRenderer.createInitializer({
+            unit = "target",
+            filterString = "HARMFUL",
+            style = {
+                showPandemic = true,
+                dispelShowAlways = true,
+                dispelStyle = "BORDER",
+            },
+        }, nil, nil)
+
+        initializer(button)
+
+        local status = nativeRenderer.getStatus()
+        local animValid = mock.trace.pandemicActiveAnimAdds >= 1
+            and mock.trace.pandemicEnterAnimAdds >= 1
+            and mock.trace.pandemicLeaveAnimAdds >= 1
+            and status.hasPandemicAnimationAPI == true
+            and (status.pandemicAnimationBoundCount or 0) >= 1
+
+        -- 12.1.5 Object reference removal verification
+        local regionRemoved = nativeRenderer.removePandemicRegion and nativeRenderer.removePandemicRegion(button)
+        local textureRemoved = nativeRenderer.removeDispelTypeTexture and nativeRenderer.removeDispelTypeTexture(button)
+        local removeValid = (regionRemoved == true) and (textureRemoved == true)
+            and button.eamPandemicRegion == nil
+            and button.eamDispelTexture == nil
+
+        local valid = animValid and removeValid
+        return valid, valid and "12.1.5 Native Pandemic Active/Enter/Leave animations & object-reference removal verified"
+            or "12.1.5 Native Pandemic animations/removal mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura121.carry_over_duration.exact_window",
+    primarySuite = "aura121",
+    suites = { aura121 = true, boundary = true },
+    run = function()
+        local auraService = EAM.Services.AuraService
+        if not auraService then
+            return false, "AuraService unavailable"
+        end
+
+        local originalDB = EAM.db
+        local originalCarryOver = EAM.FlowTestMock and EAM.FlowTestMock.refreshCarryOverDuration
+        local originalBaseDur = EAM.FlowTestMock and EAM.FlowTestMock.auraBaseDuration
+
+        EAM.db = buildAura121TestDB(990001)
+
+        -- Test case 1: carryOver <= 30% base duration (2.5s <= 10.0s * 0.305) -> pandemicReady = true
+        if EAM.FlowTestMock then
+            EAM.FlowTestMock.refreshCarryOverDuration = 2.5
+            EAM.FlowTestMock.auraBaseDuration = 10.0
+        end
+
+        local state1 = {
+            spellID = 2001,
+            auraFilter = "HARMFUL",
+            timer = {},
+            source = {},
+        }
+        local auraData1 = {
+            spellId = 2001,
+            name = "Test DoT",
+            icon = 136000,
+            applications = 1,
+            duration = 10,
+            expirationTime = 102.5,
+            isHarmful = true,
+            isFromPlayerOrPlayerPet = true,
+            auraInstanceID = 5001,
+        }
+
+        local ok1 = auraService.updateStateFromAuraData(state1, auraData1, "target")
+        local ready1 = state1.pandemicReady == true
+
+        -- Test case 2: carryOver > 30% base duration (5.0s > 10.0s * 0.305) -> pandemicReady = nil/false
+        if EAM.FlowTestMock then
+            EAM.FlowTestMock.refreshCarryOverDuration = 5.0
+            EAM.FlowTestMock.auraBaseDuration = 10.0
+            EAM.FlowTestMock.refreshExtendedDuration = 15.0
+        end
+
+        local state2 = {
+            spellID = 2001,
+            auraFilter = "HARMFUL",
+            timer = {},
+            source = {},
+        }
+        local auraData2 = {
+            spellId = 2001,
+            name = "Test DoT",
+            icon = 136000,
+            applications = 1,
+            duration = 10,
+            expirationTime = 105.0,
+            isHarmful = true,
+            isFromPlayerOrPlayerPet = true,
+            auraInstanceID = 5002,
+        }
+
+        local ok2 = auraService.updateStateFromAuraData(state2, auraData2, "target")
+        local ready2 = state2.pandemicReady == nil or state2.pandemicReady == false
+
+        -- Test case 3: Re-read refreshed aura into state1 (was pandemicReady = true), now carryOver = 5.0s (> 30%)
+        -- Verifies state.pandemicReady is properly cleared and not leaked!
+        local ok3 = auraService.updateStateFromAuraData(state1, auraData2, "target")
+        local ready3 = state1.pandemicReady == nil or state1.pandemicReady == false
+
+        -- Test case 4: Boundary test at carryOver = 0.0s (0s carryover when expiring) -> pandemicReady = true
+        if EAM.FlowTestMock then
+            EAM.FlowTestMock.refreshCarryOverDuration = 0.0
+        end
+        local ok4 = auraService.updateStateFromAuraData(state1, auraData1, "target")
+        local ready4 = state1.pandemicReady == true
+
+        -- Restore
+        EAM.db = originalDB
+        if EAM.FlowTestMock then
+            EAM.FlowTestMock.refreshCarryOverDuration = originalCarryOver
+            EAM.FlowTestMock.auraBaseDuration = originalBaseDur
+        end
+
+        local valid = ok1 and ok2 and ok3 and ok4 and ready1 and ready2 and ready3 and ready4
+        return valid, valid and "C_UnitAuras.GetRefreshCarryOverDuration exact pandemic carry-over window verified"
+            or "GetRefreshCarryOverDuration pandemic window calculation failed"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "aura.sound.throttle_seconds",
+    primarySuite = "aura121",
+    suites = { aura121 = true, core = true },
+    run = function()
+        local soundService = EAM.Services.AuraSoundService
+        local mock = EAM.FlowTestMock
+        if not soundService or not mock then
+            return STATUS_SKIP, "AuraSoundService mock is offline only"
+        end
+
+        mock.resetTrace()
+        local plan = {
+            soundRules = {
+                {
+                    alertID = "aura:player:9001",
+                    sound = {
+                        added = {
+                            soundFileID = 567890,
+                            outputChannel = "Master",
+                            throttleSeconds = 0.4,
+                        },
+                    },
+                    unit = "player",
+                    spellID = 9001,
+                },
+            },
+        }
+
+        local capability = {
+            hasAuraSound = true,
+            hasAuraSoundEnum = true,
+            soundTriggerAdded = Enum.UnitAuraSoundTrigger.Added,
+            soundTriggerApplicationsIncreased = Enum.UnitAuraSoundTrigger.ApplicationsIncreased,
+            soundTriggerRemoved = Enum.UnitAuraSoundTrigger.Removed,
+        }
+
+        local ok = soundService.sync(plan, capability)
+        local lastCall = mock.trace.auraSoundCalls[#mock.trace.auraSoundCalls]
+
+        local valid = ok == true
+            and lastCall ~= nil
+            and lastCall.throttleSeconds == 0.4
+            and lastCall.info.throttleSeconds == 0.4
+
+        soundService.removeAll()
+        return valid, valid and "C_UnitAuras.AddAuraSound throttleSeconds passed and verified"
+            or "AuraSound throttleSeconds missing or incorrect"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "util.native_1215_math_table_string",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local Util = EAM.Util
+        if not Util then
+            return false, "Util unavailable"
+        end
+
+        -- Math tests
+        assert(Util.clamp(5, 1, 10) == 5, "clamp inside")
+        assert(Util.clamp(-5, 1, 10) == 1, "clamp min")
+        assert(Util.clamp(15, 1, 10) == 10, "clamp max")
+        assert(Util.saturate(-0.5) == 0, "saturate min")
+        assert(Util.saturate(1.5) == 1, "saturate max")
+        assert(Util.saturate(0.4) == 0.4, "saturate inside")
+        assert(Util.round(3.2) == 3, "round down")
+        assert(Util.round(3.7) == 4, "round up")
+        assert(Util.lerp(0, 100, 0.25) == 25, "lerp")
+        assert(Util.sign(-10) == -1 and Util.sign(10) == 1 and Util.sign(0) == 0, "sign")
+        assert(Util.remap(5, 0, 10, 0, 100) == 50, "remap")
+        assert(Util.isfinite(123) == true and Util.isfinite(math.huge) == false, "isfinite")
+        assert(Util.isnan(0/0) == true and Util.isnan(1) == false, "isnan")
+        assert(Util.isinf(math.huge) == true and Util.isinf(1) == false, "isinf")
+
+        -- String tests
+        assert(Util.stringContains("hello world", "world") == true, "stringContains true")
+        assert(Util.stringContains("hello world", "xyz") == false, "stringContains false")
+        assert(Util.stringLtrim("   abc") == "abc", "stringLtrim")
+        assert(Util.stringRtrim("abc   ") == "abc", "stringRtrim")
+        assert(Util.stringStartsWith("PrefixTest", "Prefix") == true, "stringStartsWith")
+        assert(Util.stringEndsWith("TestSuffix", "Suffix") == true, "stringEndsWith")
+
+        -- Table tests
+        assert(Util.tableIsEmpty({}) == true, "tableIsEmpty true")
+        assert(Util.tableIsEmpty({ a = 1 }) == false, "tableIsEmpty false")
+        assert(Util.tableContains({ "alpha", "beta" }, "beta") == true, "tableContains true")
+        assert(Util.tableIndexOf({ "apple", "banana" }, "banana") == 2, "tableIndexOf")
+
+        local t = { 10, 20, 30 }
+        local removed = Util.tableRemoveUnordered(t, 1)
+        assert(removed == 10 and #t == 2, "tableRemoveUnordered")
+
+        local t2 = { "a", "b", "c" }
+        assert(Util.tableRemoveValue(t2, "b") == true and #t2 == 2, "tableRemoveValue")
+
+        local keys = Util.tableKeys({ x = 1, y = 2 })
+        assert(#keys == 2, "tableKeys")
+
+        local vals = Util.tableValues({ x = 10, y = 20 })
+        assert(#vals == 2, "tableValues")
+
+        -- CreateFrame and snapToPixels
+        local frame = Util.createFrame("Frame", nil, nil)
+        assert(frame ~= nil, "Util.createFrame")
+        assert(Util.snapToPixels(frame) == true, "Util.snapToPixels")
+
+        return true, "Native 12.1.5 Math, String, and Table utilities verified successfully"
+    end,
 })

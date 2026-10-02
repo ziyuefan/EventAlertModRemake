@@ -36,6 +36,7 @@ Retail API 注意:
 ]]
 local _, EAM = ...
 
+local api = EAM.API
 local Util = {}
 EAM.Util = Util
 
@@ -345,6 +346,321 @@ function Util.createBandPassCurve(minThreshold, maxThreshold)
         pcall(curve.AddPoint, curve, 1.0, 0.0)
     end
     return curve
+end
+
+-- ============================================================================
+-- 12.1.5 Native Utility Acceleration & Frame Creation Helpers
+-- ============================================================================
+
+local nativeMathClamp = math.clamp
+local nativeMathSaturate = math.saturate
+local nativeMathRound = math.round
+local nativeMathLerp = math.lerp
+local nativeMathNormalize = math.normalize
+local nativeMathSign = math.sign
+local nativeMathRemap = math.remap
+local nativeMathWrap = math.wrap
+local nativeMathIsFinite = math.isfinite
+local nativeMathIsNaN = math.isnan
+local nativeMathIsInf = math.isinf
+
+function Util.clamp(value, minVal, maxVal)
+    if nativeMathClamp then
+        return nativeMathClamp(value, minVal, maxVal)
+    end
+    if value < minVal then return minVal end
+    if value > maxVal then return maxVal end
+    return value
+end
+
+function Util.saturate(value)
+    if nativeMathSaturate then
+        return nativeMathSaturate(value)
+    end
+    return Util.clamp(value, 0, 1)
+end
+
+function Util.round(value)
+    if nativeMathRound then
+        return nativeMathRound(value)
+    end
+    if not value then return 0 end
+    return math.floor(value + 0.5)
+end
+
+function Util.lerp(a, b, t)
+    if nativeMathLerp then
+        return nativeMathLerp(a, b, t)
+    end
+    return a + (b - a) * t
+end
+
+function Util.normalize(value, minVal, maxVal)
+    if nativeMathNormalize then
+        return nativeMathNormalize(value, minVal, maxVal)
+    end
+    if maxVal == minVal then return 0 end
+    return (value - minVal) / (maxVal - minVal)
+end
+
+function Util.sign(value)
+    if nativeMathSign then
+        return nativeMathSign(value)
+    end
+    if not value or value == 0 then return 0 end
+    return value > 0 and 1 or -1
+end
+
+function Util.remap(value, inMin, inMax, outMin, outMax)
+    if nativeMathRemap then
+        return nativeMathRemap(value, inMin, inMax, outMin, outMax)
+    end
+    if inMax == inMin then return outMin end
+    return outMin + (value - inMin) / (inMax - inMin) * (outMax - outMin)
+end
+
+function Util.wrap(value, minVal, maxVal)
+    if nativeMathWrap then
+        return nativeMathWrap(value, minVal, maxVal)
+    end
+    local range = maxVal - minVal
+    if range == 0 then return minVal end
+    return minVal + ((value - minVal) % range)
+end
+
+function Util.isfinite(value)
+    if nativeMathIsFinite then
+        return nativeMathIsFinite(value)
+    end
+    return type(value) == "number" and value == value and value ~= mathHuge and value ~= -mathHuge
+end
+
+function Util.isnan(value)
+    if nativeMathIsNaN then
+        return nativeMathIsNaN(value)
+    end
+    return type(value) == "number" and value ~= value
+end
+
+function Util.isinf(value)
+    if nativeMathIsInf then
+        return nativeMathIsInf(value)
+    end
+    return value == mathHuge or value == -mathHuge
+end
+
+-- String Utilities
+local nativeStringContains = string.contains
+local nativeStringLtrim = string.ltrim
+local nativeStringRtrim = string.rtrim
+local nativeStringStartsWith = string.startswith
+local nativeStringEndsWith = string.endswith
+
+function Util.stringContains(str, substr)
+    if not str or not substr then return false end
+    if nativeStringContains then
+        return nativeStringContains(str, substr)
+    end
+    return string.find(str, substr, 1, true) ~= nil
+end
+
+function Util.stringLtrim(str)
+    if not str then return "" end
+    if nativeStringLtrim then
+        return nativeStringLtrim(str)
+    end
+    return (string.gsub(str, "^%s+", ""))
+end
+
+function Util.stringRtrim(str)
+    if not str then return "" end
+    if nativeStringRtrim then
+        return nativeStringRtrim(str)
+    end
+    return (string.gsub(str, "%s+$", ""))
+end
+
+function Util.stringStartsWith(str, prefix)
+    if not str or not prefix then return false end
+    if nativeStringStartsWith then
+        return nativeStringStartsWith(str, prefix)
+    end
+    return string.find(str, prefix, 1, true) == 1
+end
+
+function Util.stringEndsWith(str, suffix)
+    if not str or not suffix then return false end
+    if nativeStringEndsWith then
+        return nativeStringEndsWith(str, suffix)
+    end
+    if suffix == "" then return true end
+    local strLen = string.len(str)
+    local suffixLen = string.len(suffix)
+    if suffixLen > strLen then return false end
+    return string.sub(str, strLen - suffixLen + 1) == suffix
+end
+
+Util.contains = Util.stringContains
+Util.ltrim = Util.stringLtrim
+Util.rtrim = Util.stringRtrim
+Util.startswith = Util.stringStartsWith
+Util.endswith = Util.stringEndsWith
+
+-- Table Utilities
+local nativeTableIsEmpty = table.isempty
+local nativeTableContains = table.contains
+local nativeTableIndexOf = table.indexof
+local nativeTableRemoveUnordered = table.removeunordered
+local nativeTableRemoveValue = table.removevalue
+local nativeTableKeys = table.keys
+local nativeTableValues = table.values
+
+function Util.tableIsEmpty(tbl)
+    if not tbl or type(tbl) ~= "table" then return true end
+    if nativeTableIsEmpty then
+        return nativeTableIsEmpty(tbl)
+    end
+    return next(tbl) == nil
+end
+
+function Util.tableContains(tbl, val)
+    if not tbl or type(tbl) ~= "table" then return false end
+    if nativeTableContains then
+        return nativeTableContains(tbl, val)
+    end
+    for _, v in pairs(tbl) do
+        if v == val then return true end
+    end
+    return false
+end
+
+function Util.tableIndexOf(tbl, val)
+    if not tbl or type(tbl) ~= "table" then return nil end
+    if nativeTableIndexOf then
+        return nativeTableIndexOf(tbl, val)
+    end
+    for i, v in ipairs(tbl) do
+        if v == val then return i end
+    end
+    return nil
+end
+
+function Util.tableRemoveUnordered(tbl, index)
+    if not tbl or type(tbl) ~= "table" or not index then return nil end
+    if nativeTableRemoveUnordered then
+        return nativeTableRemoveUnordered(tbl, index)
+    end
+    local len = #tbl
+    if index < 1 or index > len then return nil end
+    local val = tbl[index]
+    tbl[index] = tbl[len]
+    tbl[len] = nil
+    return val
+end
+
+function Util.tableRemoveValue(tbl, val)
+    if not tbl or type(tbl) ~= "table" then return false end
+    if nativeTableRemoveValue then
+        return nativeTableRemoveValue(tbl, val)
+    end
+    for i = 1, #tbl do
+        if tbl[i] == val then
+            table.remove(tbl, i)
+            return true
+        end
+    end
+    return false
+end
+
+function Util.tableKeys(tbl)
+    if not tbl or type(tbl) ~= "table" then return {} end
+    if nativeTableKeys then
+        return nativeTableKeys(tbl)
+    end
+    local keys = {}
+    for k in pairs(tbl) do
+        keys[#keys + 1] = k
+    end
+    return keys
+end
+
+function Util.tableValues(tbl)
+    if not tbl or type(tbl) ~= "table" then return {} end
+    if nativeTableValues then
+        return nativeTableValues(tbl)
+    end
+    local values = {}
+    for _, v in pairs(tbl) do
+        values[#values + 1] = v
+    end
+    return values
+end
+
+Util.isempty = Util.tableIsEmpty
+
+-- Defensive Polyfill onto global math/string/table (if not already provided by engine)
+pcall(function()
+    math.clamp = math.clamp or Util.clamp
+    math.saturate = math.saturate or Util.saturate
+    math.round = math.round or Util.round
+    math.lerp = math.lerp or Util.lerp
+    math.normalize = math.normalize or Util.normalize
+    math.sign = math.sign or Util.sign
+    math.remap = math.remap or Util.remap
+    math.wrap = math.wrap or Util.wrap
+    math.isfinite = math.isfinite or Util.isfinite
+    math.isnan = math.isnan or Util.isnan
+    math.isinf = math.isinf or Util.isinf
+
+    string.contains = string.contains or Util.stringContains
+    string.ltrim = string.ltrim or Util.stringLtrim
+    string.rtrim = string.rtrim or Util.stringRtrim
+    string.startswith = string.startswith or Util.stringStartsWith
+    string.endswith = string.endswith or Util.stringEndsWith
+
+    table.isempty = table.isempty or Util.tableIsEmpty
+    table.contains = table.contains or Util.tableContains
+    table.indexof = table.indexof or Util.tableIndexOf
+    table.removeunordered = table.removeunordered or Util.tableRemoveUnordered
+    table.removevalue = table.removevalue or Util.tableRemoveValue
+    table.keys = table.keys or Util.tableKeys
+    table.values = table.values or Util.tableValues
+end)
+
+-- Frame creation helper (uses 12.1.5 CreateFrameWithOptions to eliminate initial frame flash)
+function Util.createFrame(frameType, frameName, parent, template, id)
+    local eamAPI = EAM.API or api
+    local cfo = (eamAPI and eamAPI.CreateFrameWithOptions) or _G.CreateFrameWithOptions
+    if cfo and type(cfo) == "function" then
+        local options = {
+            frameType = frameType or "Frame",
+            name = frameName,
+            parent = parent,
+            inherits = template,
+            id = id,
+            hidden = true,
+        }
+        local ok, f = pcall(cfo, options)
+        if ok and f then
+            return f
+        end
+    end
+    local cf = (eamAPI and eamAPI.CreateFrame) or _G.CreateFrame
+    if cf and type(cf) == "function" then
+        return cf(frameType or "Frame", frameName, parent, template, id)
+    end
+    return nil
+end
+
+-- Native pixel rounding helper (uses 12.1.5 SetRoundLayoutToNearestPixel)
+function Util.snapToPixels(region)
+    if not region then return false end
+    local ok, func = pcall(function() return region.SetRoundLayoutToNearestPixel end)
+    if ok and type(func) == "function" then
+        pcall(func, region, true)
+        return true
+    end
+    return false
 end
 
 if EAM.API and tableFreeze and not tableIsFrozen(EAM.API) then

@@ -115,7 +115,17 @@ local function registerEntry(key, rule, trigger, soundConfig)
         appendLimitation("soundConfigIncomplete:" .. key)
         return nil
     end
-    local ok, registrationID = pcall(cUnitAuras.AddAuraSound, trigger, info)
+
+    -- 12.1.5: Pass throttleSeconds (0.3s default) to prevent audio spam on high-frequency aura triggers
+    local throttleSeconds = 0.3
+    if soundConfig and Util.isSafeNonNegativeNumber(soundConfig.throttleSeconds) then
+        throttleSeconds = soundConfig.throttleSeconds
+    elseif rule and type(rule.sound) == "table" and Util.isSafeNonNegativeNumber(rule.sound.throttleSeconds) then
+        throttleSeconds = rule.sound.throttleSeconds
+    end
+    info.throttleSeconds = throttleSeconds
+
+    local ok, registrationID = pcall(cUnitAuras.AddAuraSound, trigger, info, throttleSeconds)
     if not ok or not Util.isSafePositiveNumber(registrationID) then
         appendLimitation("soundRegistrationFailed:" .. key)
         return nil
@@ -123,6 +133,7 @@ local function registerEntry(key, rule, trigger, soundConfig)
     return {
         registrationID = registrationID,
         alertID = rule.alertID,
+        throttleSeconds = throttleSeconds,
     }
 end
 
@@ -160,9 +171,12 @@ function AuraSoundService.sync(plan, capability)
     local candidate = {}
     local candidateCount = 0
     local registrationFailed = false
-    for ruleIndex = 1, #plan.soundRules do
-        local rule = plan.soundRules[ruleIndex]
-        local sound = rule.sound
+    local soundRules = (type(plan.soundRules) == "table" and plan.soundRules)
+        or (type(plan.rules) == "table" and plan.rules)
+        or {}
+    for ruleIndex = 1, #soundRules do
+        local rule = soundRules[ruleIndex]
+        local sound = (type(rule) == "table" and (rule.sound or rule.soundTriggers)) or nil
         for keyIndex = 1, #SOUND_KEYS do
             local descriptor = SOUND_KEYS[keyIndex]
             local config = type(sound) == "table" and sound[descriptor.key] or nil
