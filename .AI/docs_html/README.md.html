@@ -515,14 +515,14 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
-<h1 id="eventalertmod-retail-121-eam">EventAlertMod Retail 12.1 (EAM)</h1>
+<h1 id="eventalertmod-retail-1215-eam">EventAlertMod Retail 12.1.5 (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.6-orange" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.8-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5-blue" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen" /></a></p>
 <blockquote>
-<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
+<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
 <p>🌐 <strong>官方線上說明文件與導航中心</strong>：<a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a></p>
 </blockquote>
 <hr />
@@ -848,6 +848,50 @@
 <h2 id="beautified-changelogtxt">📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+<h3 id="retail-1210-alpha-87-20260927">🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h3>
+<ul>
+<li><strong>高頻冷卻事件合併排程與警示更新零分配流水線 (Cooldown Event Coalescing &amp; Zero-Allocation Alert Pipeline)</strong>：<ul>
+<li><strong>警示排隊佇列零記憶體分配 (Zero-Allocation Queue)</strong>：<code>AlertManager</code> 採用持久化槽位（<code>persistentSlots</code>），消除高頻警示更新時每秒數千次的臨時 Table 堆疊分配，根除 Lua GC 垃圾回收卡頓隱患，實機實測記憶體佔用顯著降低約 12 MB，FPS 飆升 +15.1%（86 -&gt; 99 FPS）。</li>
+<li><strong>冷卻狀態髒檢查與無效重繪阻斷 (Cooldown Dirty State Diffing &amp; Render Suppression)</strong>：<code>CooldownService</code> 與 <code>ItemCooldownService</code> 於狀態刷新前嚴格快照並比對 12 項關鍵屬性（顯示、啟用、佔位、灰階、發光、充能、時間），在資料未實質變更時全面抑制狀態廣播與後續繪製，渲染繪製次數暴降 96.9%（從每秒 21 次驟降至 0.65 次）。</li>
+<li><strong>全域冷卻事件同幀合併排程 (Frame-Level Cooldown Event Coalescing)</strong>：針對 <code>SPELL_UPDATE_COOLDOWN</code>、<code>ACTIONBAR_UPDATE_COOLDOWN</code> 與 <code>BAG_UPDATE_COOLDOWN</code> 等無特定法術 ID 負載之高頻全域事件實裝同幀合併調度，杜絕同一幀/Tick 內多次重複的全清單遍歷，極大平滑團隊副本與大秘境高負載環境下的幀率。</li>
+<li><strong>暴雪官方 AddOn Profiler 深度整合</strong>：實裝 <code>C_AddOnProfiler</code> 遙測探針，支援 <code>/eam metrics</code> 即時查看暴雪 C++ 遊戲引擎量測之外掛 CPU 耗時（每幀 CPU 耗時小於 0.08ms）與幀掉落刺波。</li>
+</ul>
+</li>
+<li><strong>角色屬性與吸收量監控全面升級 (Player Stat &amp; Absorb Monitor Upgrade)</strong>：<ul>
+<li><strong>模組即時開關與生命週期修復</strong>：切換開關即時隱藏框架並停止輪詢；底層 Native Aura 結構變更時提供醒目 <code>/reload</code> 警示與一鍵重載按鈕。</li>
+<li><strong>移動所有屬性與主錨點 GPU 樹狀零延遲同步聯動</strong>：拖曳主錨點時，全組屬性框架即時同步跟隨移動。</li>
+<li><strong>依附目標框架多選</strong>：支援 EAM 主錨點、UIParent、玩家頭像、目標頭像、焦點頭像、寵物頭像與 9 大方位錨點。</li>
+<li><strong>進度條雙色漸層渲染 (<code>SetGradient</code> API)</strong>：支援水平與垂直雙色漸層混色渲染，並相容經典降級。</li>
+<li><strong>全項自選色彩</strong>：進度條主色、次色、數值文字、名稱標籤均提供自選調色盤。</li>
+<li><strong>屬性堆疊自選排序</strong>：清單新增上移、下移、重設控制，即時更新畫面堆疊順序。</li>
+</ul>
+</li>
+<li><strong>全模組自訂技能與法術名稱功能實裝 (Custom Display Names Across All Modules)</strong>：<ul>
+<li><strong>全新支援自訂圖示顯示名稱 (簡稱)</strong>：滿足在圖示間距密集、緊湊排版時避免名稱過長互相遮擋的需求（例如可將「聖盾術」簡稱為「盾」、「斬殺」簡稱為「斬」）。</li>
+<li><strong>條件設定視窗佈局全面升級</strong>：新增「自訂顯示名稱 (簡稱)」專屬輸入框，並將視窗高度擴展至 680px。</li>
+<li><strong>清單列表即時標記</strong>：若該項目有設定自訂簡稱，設定清單將即時以「法術名稱 (|cff00ff96簡稱|r)」醒目標註。</li>
+<li><strong>全模組服務層深度整合</strong>：涵蓋自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻（含裝備欄位）與地面效果全流程。</li>
+<li><strong>原生光環防覆蓋機制</strong>：針對 Retail 12.1.0 原生光環容器 (Native Aura) 實裝文字守護鉤子 (Text Guard Hook)，防止暴雪底層預設光環名稱回寫覆蓋。</li>
+</ul>
+</li>
+<li><strong>原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply &amp; Zero Reload)</strong>：<ul>
+<li>徹底修復原生光環在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 <code>/reload</code> 才能生效的重大缺陷。</li>
+<li>實裝 <code>NativeAuraRenderer</code> 弱引用按鈕註冊池與 <code>updateButtonFonts</code> 零配額熱套用機制，拉動滑桿直接原位更新，零延遲、無需銷毀容器、不消耗 18 次配額。</li>
+</ul>
+</li>
+<li><strong>目標光環切換目標即時刷新、殘留圖示清理與倒數鬼影根治 (Target Aura Target-Switching Live Refresh, Ghost Icon Purge &amp; Countdown Ghost Elimination)</strong>：<ul>
+<li>徹底根除切換目標時原目標光環圖示殘留或秒數仍持續倒數的頑疾，實裝 Native 12.1 容器生命週期重置與 Legacy 渲染器即時同步清空與計時器解綁。</li>
+</ul>
+</li>
+<li><strong>技能冷卻與地面效果第一格消失及移動模式坐標漂移根治 (Alert Layout Slot 1 Zero-Anchor Guard &amp; Drag Coordinate Normalization Fix)</strong>：<ul>
+<li>徹底修復 Slot 1 首次渲染時物理消失的重大缺陷，根治 <code>StopMovingOrSizing</code> 強制改寫 <code>BOTTOMLEFT</code> 導致的幾何漂移。</li>
+</ul>
+</li>
+<li><strong>全語系 CLI 命令列擴充 (Slash Commands Expansion)</strong>：<ul>
+<li>補齊 <code>/eam preview</code>、<code>/eam rune</code>、<code>/eam add ground</code> 與 <code>/eam lang</code> 即時語系切換指令。</li>
+</ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-86-20260919">🌟 [Retail 12.1.0 Alpha 8.6] - 2026.09.19</h3>
 <ul>
 <li><strong>地面效果全面對齊冷卻架構與非戰鬥預熱 (Ground Effect Cooldown-Architecture Alignment &amp; Zero In-Combat Interruption)</strong>：<ul>
@@ -1268,7 +1312,7 @@
 <h1 id="eventalertmod-retail-121-eam">EventAlertMod Retail 12.1 (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.5-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.7-orange" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
 <blockquote>
@@ -1585,6 +1629,73 @@
 <h2 id="version-history-changelogtxt">📜 Version History (CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+<h3 id="retail-1210-alpha-87-20260927">🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h3>
+<ul>
+<li><strong>Cooldown Event Coalescing &amp; Zero-Allocation Alert Pipeline</strong>:<ul>
+<li><strong>Zero-Allocation Pending Queue</strong>: <code>AlertManager</code> uses persistent queue slots (<code>persistentSlots</code>) to eliminate thousands of temporary Lua table allocations during rapid alert updates, eradicating Lua garbage collection spikes. Live telemetry confirms ~12 MB memory reduction and +15.1% FPS boost (86 -&gt; 99 FPS).</li>
+<li><strong>Cooldown Dirty State Diffing &amp; Render Suppression</strong>: <code>CooldownService</code> and <code>ItemCooldownService</code> implement state diffing (visibility, charges, usable glow, placeholder, desaturation, timing) to suppress redundant state notifications and icon re-renders when cooldown state is unchanged, drastically dropping render calls by 96.9% (from 21/s down to 0.65/s).</li>
+<li><strong>Frame-Level Cooldown Event Coalescing</strong>: Implemented frame-level event coalescing for high-frequency untargeted cooldown events (<code>SPELL_UPDATE_COOLDOWN</code>, <code>ACTIONBAR_UPDATE_COOLDOWN</code>, <code>BAG_UPDATE_COOLDOWN</code>) to avoid redundant full-list scans within the same frame tick, smoothing framerates during heavy raid and dungeon combat.</li>
+<li><strong>Blizzard Native Engine Profiler Integration</strong>: Implemented <code>C_AddOnProfiler</code> telemetry probes in <code>/eam metrics</code> and diagnostic export, capturing engine-level CPU milliseconds (under 0.08ms per frame) and hitch ticks (&gt;1ms/5ms).</li>
+</ul>
+</li>
+<li><strong>Player Stat &amp; Absorb Monitor Upgrade</strong>:<ul>
+<li><strong>Module Live Lifecycle &amp; Realtime Toggle</strong>: Switching the module toggle immediately clears active frames and stops polling tickers; prominent <code>/reload</code> warning notice and one-click [Reload UI (/reload)] button displayed when underlying Native Aura containers require recreation.</li>
+<li><strong>Group Synchronous Mover Drag</strong>: Child frames parented to group anchor for lag-free GPU tree translation; dragging the master mover translates all grouped stats simultaneously with 0 delay.</li>
+<li><strong>Multiple Attach Target Dropdowns</strong>: Support attaching to EAM Stat Main Anchor, UIParent (Screen Center), PlayerFrame, TargetFrame, FocusFrame, PetFrame, and 9 compass anchor points.</li>
+<li><strong>Two-Color Gradient Bar Rendering</strong>: Native C-level <code>SetGradient</code> API integration supporting horizontal and vertical two-color blending with legacy fallbacks.</li>
+<li><strong>Custom Stack Ordering</strong>: Interactive list ordering controls (▲ Up, ▼ Down, ↺ Reset) to adjust display stacking order in real-time.</li>
+</ul>
+</li>
+<li><strong>Custom Display Names Across All Modules</strong>:<ul>
+<li>Added full support for custom icon text names (short names) to resolve overlapping text in compact icon layouts (e.g., customize "Divine Shield" to "Shield", "Execute" to "Exec").</li>
+<li>Upgraded Condition Frame (<code>EAM_SpellConditionsFrame</code>): added dedicated "Custom Display Name (Short Name)" input box and expanded frame height to 680px for a clean, spacious layout.</li>
+<li>Live List Marking: alerts with custom names configured are immediately marked in the list view as "Spell Name (|cff00ff96ShortName|r)" for easy identification.</li>
+<li>Deep Multi-Service Integration: seamlessly covers Self Buff, Self Debuff, Target Debuff, Spell Cooldown, Item Cooldown (including equipment slots), and Ground Effects.</li>
+<li>Native Aura Text Guard Hook: implemented a <code>SetText</code> guard hook for Retail 12.1.0 native aura buttons, preventing Blizzard C++ internal updates from overwriting custom short names.</li>
+</ul>
+</li>
+<li><strong>Native Aura Font Size Live Hot-Apply &amp; Zero Reload</strong>:<ul>
+<li>Completely fixed the Retail 12.1.0 Native Aura issue where adjusting countdown timer font size, stack font size, or spell name font size failed to update in real-time and required a <code>/reload</code>.</li>
+<li>Implemented a weak table button pool (<code>NativeAuraRenderer.buttons</code>) to safely retain FontString references without memory leaks.</li>
+<li>Implemented <code>updateButtonFonts</code> in-place hot-apply mechanism, directly updating <code>FontString:SetFont</code> on active auras in real-time without consuming the 18-container rebuild quota.</li>
+</ul>
+</li>
+<li><strong>Target Aura Target-Switching Live Refresh, Ghost Icon Purge &amp; Countdown Ghost Elimination</strong>:<ul>
+<li>Completely eliminated ghost icon retention or ticking countdowns upon switching targets via dual-backend Native 12.1 container lifecycle reset and synchronous legacy renderer frame clear.</li>
+</ul>
+</li>
+<li><strong>Alert Layout Slot 1 Zero-Anchor Guard &amp; Drag Coordinate Normalization Fix</strong>:<ul>
+<li>Completely fixed Slot 1 physical disappearance on first render and normalized coordinates to center to eliminate dragging drift.</li>
+</ul>
+</li>
+<li><strong>Slash Commands Localization &amp; Expansion</strong>:<ul>
+<li>Added <code>/eam preview</code>, <code>/eam rune</code>, <code>/eam add ground</code>, and <code>/eam lang</code> live language switching commands.</li>
+</ul>
+</li>
+</ul>
+<h3 id="retail-1210-alpha-86-20260919">🌟 [Retail 12.1.0 Alpha 8.6] - 2026.09.19</h3>
+<ul>
+<li><strong>Ground Effect Cooldown-Architecture Alignment &amp; Zero In-Combat Interruption</strong>:<ul>
+<li>Pre-allocated zero-alpha persistent frames for ground effect spells, enabling instant pop-in animation during combat with 0.00ms latency, zero GC, and zero taint.</li>
+</ul>
+</li>
+<li><strong>Condition Panel Lifecycle &amp; Item Control Isolation Fix</strong>:<ul>
+<li>Resolved control leakage between item cooldowns and ground effects in custom conditions panel.</li>
+</ul>
+</li>
+<li><strong>Cooldown ActionButton Glow Geometric Ratio Fix</strong>:<ul>
+<li>Adjusted action button glow ratio to 1.778x (64/36) for pixel-perfect edge alignment and soft golden feathering.</li>
+</ul>
+</li>
+<li><strong>Native Aura Container Direct Anchor to UIParent</strong>:<ul>
+<li>Anchored Native Aura containers directly to UIParent, preventing coordinate collapse when parent frames hide.</li>
+</ul>
+</li>
+<li><strong>Spell Charges Show Available Charges Only</strong>:<ul>
+<li>Streamlined charge text display to only show current available charges without redundant denominator text.</li>
+</ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-85-20260912">🌟 [Retail 12.1.0 Alpha 8.5] - 2026.09.12</h3>
 <ul>
 <li><strong>Independent Live Preview Panel (PreviewPanel)</strong>:<ul>

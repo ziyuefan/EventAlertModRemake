@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>07_MIGRATION_NOTES.md - EventAlertMod Docs</title>
+    <title>34_CURSEFORGE_MARKDOWN_AUTHORING_GUIDE.md - EventAlertMod Docs</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -516,136 +516,148 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="_1">遷移注意事項</h1>
-<h2 id="_2">舊行為映射</h2>
-<p>費用保留：</p>
+<h1 id="curseforge-markdown-html">CurseForge Markdown 與 HTML 排版注意事項與避坑實戰報告</h1>
+<blockquote>
+<p><strong>報告對象</strong>：EventAlertMod 專案開發與發布團隊<br />
+<strong>制定日期</strong>：2026 年 9 月 27 日<br />
+<strong>環境基準</strong>：CurseForge Web &amp; App 平台、HTML5 Living Standard、Cloudflare WAF 穿透管線  </p>
+</blockquote>
+<hr />
+<h2 id="executive-summary">一、 核心摘要 (Executive Summary)</h2>
+<p>在 CurseForge (CF) 平台編輯專案首頁說明（<code>Description</code>）或長篇 Markdown 時，經常會遇到<strong>「在編輯器預覽完全正常，但一按儲存（Save）發布到前台主頁後，排版全部擠成一坨、甚至整個收合區塊徹底崩壞吞噬」</strong>的極度詭異問題。</p>
+<p>本報告基於 Chrome DevTools 對 CurseForge 前台真實 DOM 的逆向審查與實機注入驗證，揭示其前後端雙軌渲染架構的運作原理，並制定出一套<strong>「100% 免疫後端過濾器清洗、永久不崩壞」</strong>的標準排版規範。</p>
+<hr />
+<h2 id="curseforge-preview-trap">二、 CurseForge 雙軌渲染機制與「預覽陷阱 (Preview Trap)」</h2>
+<p>CurseForge 的文章渲染管線存在致命的前後端脫節：</p>
+<div class="mermaid">
+flowchart TD
+    subgraph Client ["🖥️ 前端瀏覽器（編輯與預覽模式）"]
+        A["輸入 HTML / Markdown"] --> B["前端 JS 富文本引擎 (CKEditor)"]
+        B --> C["即時 Preview Tab 預覽<br/>（尚未經後端清洗：&lt;li&gt; 完好、排版看似正常！）"]
+    end
+
+    subgraph Server ["☁️ CurseForge 後端伺服器（點擊 Save 儲存後）"]
+        D["點擊 Save 儲存"] --> E["後端 HTML Sanitizer 安全過濾清洗器"]
+        E -->|無差別洗白| F["&lt;li&gt; 標籤被全面剝離！只留 &lt;ul&gt;"]
+        E -->|嵌套結構錯亂| G["多層 &lt;ul&gt; 找不到閉合，外層 &lt;/ul&gt;&lt;/div&gt; 被丟棄！"]
+    end
+
+    subgraph Public ["🌐 前台公開主頁（真實訪客視角）"]
+        F --> H["所有清單文字黏成同一大坨長字串"]
+        G --> I["未閉合容器骨牌式向下吞噬 15 層版本收合！"]
+    end
+
+    C -.->|"高度欺騙性假象"| D
+</div>
+
+<ol>
+<li><strong>編輯與預覽階段（Client-side Preview）</strong>：</li>
+<li>依賴瀏覽器端本地的純 JavaScript 引擎即時解析 Markdown 或 HTML。</li>
+<li>此時<strong>尚未進入後端伺服器</strong>，因此不論語法多麼複雜、是否包含未閉合標籤或 <code>&lt;li&gt;</code> 列表，預覽畫面都會呈現出完美的假象。</li>
+<li><strong>儲存入庫與前台展示（Server-side Sanitizer）</strong>：</li>
+<li>點擊「Save」後，文章會傳入後端伺服器，被強制通過一套嚴格但規格殘缺的 <strong>HTML Sanitizer（伺服器端過濾器）</strong> 進行清洗。</li>
+<li><strong>驗收鐵則</strong>：<strong>絕不相信 Preview 標籤頁的預覽效果</strong>，唯一的真理是「實際儲存後前台公開頁面的真實 DOM」。</li>
+</ol>
+<hr />
+<h2 id="sanitizer">三、 後端 Sanitizer 的三大破壞性行為與排坑</h2>
+<h3 id="1-li">1. <code>&lt;li&gt;</code> 標籤被無差別洗白剝離</h3>
 <ul>
-<li>取得自我/debuff警報圖示；</li>
-<li>目標增益/減益警報圖示；</li>
-<li>動動冷卻時間警報圖示；</li>
-<li>itemID 的工件冷卻圖示；</li>
-<li>簡單的spellID加入/刪除工作流程；</li>
-<li><code>/eam opt</code> 設定入口點；</li>
-<li><code>/eam show</code>、<code>/eam showt</code>、<code>/eam showc</code>、<code>/eam showa</code>探測流程工作；</li>
-<li>冷卻行為切換：<ul>
-<li>冷卻完成後移除；</li>
-<li>讓冷卻圖示遠離戰鬥；</li>
+<li><strong>現象</strong>：經 DevTools 實地查詢 <code>document.querySelectorAll('.project-description li')</code>，結果為 <strong>0</strong>。</li>
+<li><strong>後果</strong>：CurseForge 的過濾器白名單放行了 <code>&lt;ul&gt;</code> 與 <code>&lt;ol&gt;</code>，但卻會把所有 <code>&lt;li&gt;</code> 與 <code>&lt;/li&gt;</code> 標籤硬生生剝離！</li>
+<li><strong>排版災難</strong>：失去 <code>&lt;li&gt;</code> 的區塊換行與清單樣式後，所有清單項目直接在 <code>&lt;ul&gt;</code> 裡裸奔，文字首尾相連，被瀏覽器擠壓成一整坨難以閱讀的單行文字。</li>
+</ul>
+<h3 id="2-ul-cascading-unclosed-tags">2. 巢狀 <code>&lt;ul&gt;</code> 引發跨版本標籤吞噬骨牌效應 (Cascading Unclosed Tags)</h3>
+<ul>
+<li><strong>現象</strong>：當使用者在收合內寫了多層縮排列表（如大分類包含子清單）時，<code>&lt;li&gt;</code> 被洗掉後，外層 <code>&lt;ul&gt;</code> 內部會直接包含內層 <code>&lt;ul&gt;</code>。</li>
+<li><strong>後果</strong>：HTML 解析器在處理失衡的 DOM 時會陷入容錯混亂，導致最外層的 <code>&lt;/ul&gt;</code> 與 <code>&lt;/div&gt;</code> 被丟棄。</li>
+<li><strong>排版災難</strong>：未閉合的容器會一路向下「吞噬」後續所有的章節與版次。實機曾測得高達 <strong>15 層深度的俄羅斯套娃收合</strong>（Alpha 8.7 吞了 8.6，8.6 吞了 8.5，最後連最底部的「相容性」與「連結」全被吞入）！</li>
+</ul>
+<h3 id="3-html5-details-markdown1summary">3. HTML5 <code>&lt;details markdown="1"&gt;&lt;summary&gt;</code> 折疊標籤失效</h3>
+<ul>
+<li><strong>現象</strong>：CurseForge 的富文本清洗器會完全剝離 HTML5 <code>&lt;details markdown="1"&gt;</code> 與 <code>&lt;summary&gt;</code>，或直接將其展開打平，無法形成原生折疊效果。</li>
+</ul>
+<hr />
+<h2 id="the-golden-rules">四、 核心排版規範與鐵律 (The Golden Rules)</h2>
+<p>為了在 CurseForge 實現 100% 穩定、跨平台完美呈現的排版，必須嚴格遵守以下五大鐵律：</p>
+<h3 id="1-div-classspoiler">鐵律 1：收合容器統一採用官方標準 <code>&lt;div class="spoiler"&gt;</code></h3>
+<p>CurseForge 唯一官方原生支援的折疊語法為 <code>&lt;div class="spoiler"&gt;</code>：
+- <strong>標題必須置於外部</strong>：例如 <code>&lt;h2&gt;標題&lt;/h2&gt;</code> 或 <code>&lt;h4&gt;版次&lt;/h4&gt;</code> 放容器外，避免被預設隱藏。
+- <strong>嚴禁使用巢狀收合 (Avoid Nested Spoilers)</strong>：全檔必須採「單層一級平鋪架構」。例如「📜 版本更新歷史」大標題常駐展開，其下 21 個歷史版次各自作為獨立的單層 <code>&lt;div class="spoiler"&gt;</code>。</p>
+<h3 id="2-ulolli-brbr">鐵律 2：全面摒棄 <code>&lt;ul&gt;</code>、<code>&lt;ol&gt;</code>、<code>&lt;li&gt;</code>，改用實體符號 + <code>&lt;br&gt;&lt;br&gt;</code></h3>
+<p>既然後端 Sanitizer 會洗掉 <code>&lt;li&gt;</code> 且 <code>&lt;ul&gt;</code> 會引發吞噬，最純粹穩健的解法就是<strong>在描述檔中徹底不使用任何列表標籤</strong>：
+- <strong>一級條目</strong>：自帶專屬 Emoji（如 <code>🔮</code>、<code>🎯</code>、<code>📖</code>）或數字標記，每條結尾加上 <code>&lt;br&gt;&lt;br&gt;</code> 產生舒適的段落空行。
+- <strong>二級子項目</strong>：一律以 HTML 實體圓點 <code>&amp;bull;&amp;nbsp;</code>（即 <code>•</code>）開頭，結尾加上 <code>&lt;br&gt;&lt;br&gt;</code>。
+- <strong>無標籤可被吃</strong>：沒有 <code>&lt;li&gt;</code> 就絕不會被剝離，沒有 <code>&lt;ul&gt;</code> 就絕不會發生跨版本吞噬！</p>
+<h3 id="3-html5-tag">鐵律 3：現代 HTML5 空標籤規範（杜絕 <code>&lt;tag /&gt;</code> 自閉合）</h3>
+<ul>
+<li>依據現代 HTML5 (Living Standard) 規範，所有空元素 (Void Elements) 一律採用標準單標籤：<ul>
+<li>換行：<code>&lt;br&gt;</code></li>
+<li>段落間隙：<code>&lt;br&gt;&lt;br&gt;</code></li>
+<li>分隔線：<code>&lt;hr&gt;</code></li>
+<li>圖片：<code>&lt;img src="..." width="100%" alt="..."&gt;</code></li>
 </ul>
 </li>
-<li>使用時發光；</li>
-<li>圖示顯示切換：<ul>
-<li>顯示框架；</li>
-<li>顯示姓名；</li>
-<li>顯示計時器；</li>
-<li>顯示 flash/glow;</li>
-<li>工具提示附加輔助/item ID；</li>
+<li><strong>嚴禁使用帶有斜線之 XHTML 舊式閉合簡寫</strong>（如 <code>&lt;br /&gt;</code>、<code>&lt;hr /&gt;</code>、<code>&lt;img ... /&gt;</code>）。</li>
 </ul>
-</li>
-<li>名稱、計時器和所在的字體大小控制；</li>
-<li>小地圖選項按鈕語意；</li>
-<li>本地化字串，特別是存在的 zhTW、enUS、koKR、zhCN；</li>
-<li>正式服驗證後可使用預設/物品表。</li>
+<h3 id="4-html-table-html-first">鐵律 4：表格全面 HTML 語意化 (Table HTML-First)</h3>
+<ul>
+<li>Markdown 原生表格（<code>|---|</code>）在包含代碼標籤或遇到收合邊界時極易破版。</li>
+<li>一律採用原生 <code>&lt;table&gt;</code>、<code>&lt;thead&gt;</code>、<code>&lt;tbody&gt;</code>、<code>&lt;tr&gt;</code>、<code>&lt;th&gt;</code>、<code>&lt;td&gt;</code> 結構，圖片欄位加上 <code>width="100%"</code> 自適應寬度。</li>
 </ul>
-<h2 id="savedvariables">舊 SavedVariables 遷移</h2>
-<p>舊版輸入：</p>
-<pre class="codehilite"><code class="language-lua">EA_Config
-EA_Position
-EA_Items
-EA_AltItems
-EA_TarItems
-EA_ScdItems
-EA_GrpItems
-EA_Pos
-</code></pre>
+<h3 id="5-100-curseforge-attachments-cdn">鐵律 5：圖片 100% 對齊 CurseForge Attachments CDN</h3>
+<ul>
+<li>嚴禁使用 GitHub raw（<code>raw.githubusercontent.com/...</code>）或外部圖床，否則會觸發 Cloudflare 防盜鏈警告或破圖。</li>
+<li>必須將截圖上傳至 CurseForge 專用附件空間，並採用 <code>https://media.forgecdn.net/attachments/...</code> 官方 CDN 網址。</li>
+</ul>
+<hr />
+<h2 id="cheatsheet">五、 排版語法速查表 (Cheatsheet)</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">排版需求</th>
+<th style="text-align: left;">❌ 錯誤／易崩壞寫法</th>
+<th style="text-align: left;">✅ 推薦 100% 穩定寫法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>折疊收合</strong></td>
+<td style="text-align: left;">`<details markdown="1"><summary>標題</summary></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<p>內容</p>
+<p></details><code>|</code><h2>標題</h2><code>&lt;br&gt;</code><div class="spoiler"><code>&lt;br&gt;</code>內容<code>&lt;br&gt;</code></div><code>|
+| **功能清單** |</code><ul><li>功能 A</li><li>功能 B</li></ul><code>|</code>📖 <strong>功能 A</strong>：說明文字...<br><br><code>&lt;br&gt;</code>🏷️ <strong>功能 B</strong>：說明文字...<br><br><code>|
+| **子項目清單** |</code><ul><li>主分類<ul><li>子項 1</li></ul></li></ul><code>|</code><strong>主分類</strong>：<br><br><code>&lt;br&gt;</code>&bull;&nbsp;<strong>子項 1</strong>：說明文字...<br><br><code>|
+| **換行與空行** |</code><br /><code>或 Markdown 結尾兩空格 |</code><br><br><code>（段落間距）或</code><br><code>（單行換行） |
+| **分隔線** |</code>---<code>或</code><strong><em><code>或</code><hr /><code>|</code><hr><code>|
+| **行內代碼** | \</code>code`（有時會受 WYSIWYG 轉義破壞） | <code>&lt;code&gt;code&lt;/code&gt;</code> |
+| </em>*粗體</strong> | <code>**text**</code> | <code>&lt;strong&gt;text&lt;/strong&gt;</code> |
+| <strong>特殊符號</strong> | <code>-&gt;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&amp;</code> | <code>&amp;rarr;</code>, <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;amp;</code> |</p>
+<hr />
+<h2 id="golden-template">六、 標準黃金收合模板 (Golden Template)</h2>
+<pre class="codehilite"><code class="language-html">&lt;hr&gt;
 
-<p>目標遷移：</p>
-<pre class="codehilite"><code class="language-js">EventAlertModDB = {
-  schemaVersion: 1,
-  profile: {
-    display: {},
-    behavior: {},
-    alerts: {
-      playerAuras: [],
-      targetAuras: [],
-      spellCooldowns: [],
-      itemCooldowns: [],
-      groupAlerts: []
-    },
-    layout: {}
-  },
-  migration: {
-    fromLegacy: true,
-    sourceKeys: [],
-    warnings: []
-  }
-}
-</code></pre>
+&lt;h2&gt;🎨 現代化視覺與極致操作體驗&lt;/h2&gt;
+&lt;div class=&quot;spoiler&quot;&gt;
 
-<p>確信的目標變數名稱被重寫決定。如果舊變數名稱
-為了相容性，它們仍然需要架構標記和遷移狀態。</p>
-<p>遷移規則：</p>
-<ul>
-<li>永遠不會凍結遷移的 SavedVariables；</li>
-<li>模組將運行時狀態儲存在 SavedVariables 中；</li>
-<li>在遷移安全性互補表下保留未知的遺傳欄位或
-  警告名單；</li>
-<li>驗證spellID/itemID數字欄位；</li>
-<li>將刪除的唯一經典的欄位記錄為遷移預警；</li>
-<li>在備份或遷移設定信件策略生效之前不要刪除舊字段
-  定義的。</li>
-</ul>
-<h2 id="_3">刪除舊行為</h2>
-<p>從Active的正式伺服器架構中刪除：</p>
-<ul>
-<li>Classic、TBC、Wrath、Cata、Mists TOC 和負載根；</li>
-<li><code>G.WOW_VERSION</code> 分支的經典行為；</li>
-<li>經典API的舊解壓縮傳回相內容層；</li>
-<li>老獵人寵物幸福/焦點只存在於經典時代的分支
-  行為；</li>
-<li>大量正常運行時物品ID掃描；</li>
-<li>每個圖示計時器和每個繪圖計時器刷新鏈；</li>
-<li>工具提示掃描作為正常事實來源；</li>
-<li>核心操作的外部依賴要求。</li>
-</ul>
-<h2 id="_4">相容性中斷</h2>
-<p>預計休息時間：</p>
-<ul>
-<li>舊的經典目錄不再載入；</li>
-<li>依賴傳統特定資源的使用者會忽略這些警告；</li>
-<li>事件腳本/配置可能需要簡化；</li>
-<li>import/export 原型必須重新設計或刪除，除非是簡單的安全
-  需要路徑；</li>
-<li><code>Lib_ZYF</code> 助手應該被替換或隔離；不要假設它存在於
-  新的核心。</li>
-</ul>
-<h2 id="_5">本地化遷移</h2>
-<p>現有的語言環境文件：</p>
-<ul>
-<li><code>locale/localization.comm.lua</code></li>
-<li><code>locale/localization.en.lua</code></li>
-<li><code>locale/localization.tw.lua</code></li>
-<li><code>locale/localization.cn.lua</code></li>
-<li><code>locale/localization.kr.lua</code></li>
-<li><code>locale/localization.ru.lua</code>
-保持本地化隔離。不要將字串混合到邏輯模組中。請勿添加
-簡體中文字串為zhTW。</li>
-</ul>
-<h2 id="_6">繼承來源處理</h2>
-<p>目前的舊原始碼保留用於審計/reference：</p>
-<ul>
-<li><code>Classic/</code></li>
-<li><code>TBC/</code></li>
-<li><code>Wrath/</code></li>
-</ul>
-<p>它們不應該由 Retail 重寫載入。如果保留在儲存庫中，
-將它們標記為已文檔/unsupported。</p>
-<h2 id="2026-07-26aura-schema-v1-v2">2026-07-26：Aura schema v1 -&gt; v2</h2>
-<ul>
-<li>遷移前保存 <code>migrationBackups.auraSchemaV1</code> 的 player/target Aura 純資料。</li>
-<li>既有 alert 增補 <code>nativeBackend=AUTO</code> 與顯示偏好，不移除未知欄位或舊 <code>EA_*</code> globals。</li>
-<li>遷移失敗會還原遷移前可序列化 DB，並記錄靜態 warning code。</li>
-<li>12.0.7 使用 Legacy backend；12.1 使用 Native 或 Unsupported，不能以 Legacy Secret 掃描補洞。</li>
-</ul>
+📖 &lt;strong&gt;次世代全量法術庫與智慧預設 (Master Spell Catalog)&lt;/strong&gt;：內建 5 語系先驗資料庫，支援專精樹展開與法術懸停說明。&lt;br&gt;&lt;br&gt;
+
+🏷️ &lt;strong&gt;多維戰術群組與標籤管理 (Group Management)&lt;/strong&gt;：支援技能多對多標籤歸屬與獨立二級管理側窗。&lt;br&gt;&lt;br&gt;
+
+📈 &lt;strong&gt;暴雪原生 CurveObject 曲線架構全面接入&lt;/strong&gt;：&lt;br&gt;&lt;br&gt;
+&amp;bull;&amp;nbsp;&lt;strong&gt;能量/資源條動態色彩曲線染色&lt;/strong&gt;：消耗型與累積型資源自動以三色階動態染色。&lt;br&gt;&lt;br&gt;
+&amp;bull;&amp;nbsp;&lt;strong&gt;階梯閥門曲線 (Step Gate Curve)&lt;/strong&gt;：透過二元階梯函數安全穿透受保護秘密值。&lt;br&gt;&lt;br&gt;
+&amp;bull;&amp;nbsp;&lt;strong&gt;SecondsFormatter 自適應精度曲線&lt;/strong&gt;：時間倒數文字依剩餘秒數平滑切換精度。&lt;br&gt;&lt;br&gt;
+
+🚨 &lt;strong&gt;進入戰鬥紅框閃爍&lt;/strong&gt;：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。&lt;br&gt;&lt;br&gt;
+
+&lt;/div&gt;
+
+&lt;hr&gt;
+</code></pre>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>

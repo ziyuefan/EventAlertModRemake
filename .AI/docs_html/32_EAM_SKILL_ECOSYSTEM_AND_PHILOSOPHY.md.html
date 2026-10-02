@@ -516,7 +516,7 @@
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="eventalertmod-21-agentic-ai-eam-skill-ecosystem-philosophy">EventAlertMod 21 大核心技能體系與 Agentic AI 治理哲學 (EAM Skill Ecosystem &amp; Philosophy)</h1>
+<h1 id="eventalertmod-22-agentic-ai-eam-skill-ecosystem-philosophy">EventAlertMod 22 大核心技能體系與 Agentic AI 治理哲學 (EAM Skill Ecosystem &amp; Philosophy)</h1>
 <blockquote>
 <p>🚀 <strong>以技能為核心（Skill-Driven）、漸進式揭露（Progressive Disclosure）、確定性交付（Deterministic Execution）的現代化魔獸插件 AI 協同體系</strong></p>
 </blockquote>
@@ -536,7 +536,7 @@
                                       │ (動態漸進式加載 Progressive Loading)
                                       ▼
   ┌────────────────────────────────────────────────────────────────────────┐
-  │                     21 大專案標準化 SKILL 體系 (SOP 規範)                │
+  │                     22 大專案標準化 SKILL 體系 (SOP 規範)                │
   │  ┌──────────────────┐ ┌──────────────────┐ ┌─────────────────────────┐  │
   │  │ 12.x 核心引擎與   │ │ 遊戲資料與監控   │ │ 介面互動與視覺系統      │  │
   │  │ API 防禦體系      │ │ 服務體系         │ │ (UI/UX &amp; Interactivity) │  │
@@ -557,7 +557,7 @@
 <ol>
 <li><strong>漸進式揭露（Progressive Disclosure）與極致 Token 節約</strong>：</li>
 <li>不再一次性將數萬行技術文檔全部塞入 Prompt。</li>
-<li>平時僅在記憶體保留 21 個技能的精簡元資料（Name + Description，耗費極低 Token）。</li>
+<li>平時僅在記憶體保留 22 個技能的精簡元資料（Name + Description，耗費極低 Token）。</li>
 <li>
 <p>只有當觸發特定任務時，系統才動態將該技能的專屬 <code>SKILL.md</code> 注入上下文，以最高專注度完成任務。</p>
 </li>
@@ -752,10 +752,21 @@
 <li><strong>核心規範</strong>：維護 <code>ProjectContinuity.json</code>、<code>28_PROJECT_CONTINUITY.md</code> 與 <code>15_DEVELOPMENT_ISSUE_LOG.md</code>。</li>
 </ul>
 </li>
+<li>
+<p><strong><code>eam-miliui-publisher</code> (奇樂說明文件排版、語法特性與發布規範)</strong></p>
+<ul>
+<li><strong>定位</strong>：繁體中文魔獸插件社群平台「奇樂 (MiliUI / WoWbox)」專屬說明文件排版與過濾器防禦。</li>
+<li><strong>核心指令</strong>：<code>python .\.AI\Tools\Build-MiliUIDoc.py</code>（15 項指標自檢）。</li>
+<li><strong>核心規範</strong>：實機網址驗證 (<code>https://addons.miliui.com/wow/28</code>)、純 HTML5 架構 (0% Markdown)、收合語法 (`<details markdown="1"><summary>點擊展開</summary></li>
+</ul>
+</li>
 </ol>
+<div class="details-content"><p>...</p></div>
+
+<p></details><code>)、後端 Sanitizer 表格洗除防禦 (0</code><table><code>、改採</code><ul><code>/</code><ol><code>/</code><li><code>/</code><code>` 結構化)、圖片 50% 寬度排版。</p>
 <hr />
 <h2 id="3-deployment-usage">🛠️ 3. 技能部署架構與調用方式 (Deployment &amp; Usage)</h2>
-<p>專案中所有 21 項技能皆採用雙軌實體部署，確保版本控制與全域可達性：
+<p>專案中所有 22 項技能皆採用雙軌實體部署，確保版本控制與全域可達性：
 - <strong>專案內部版本控制（VCS Tracked）</strong>：
     - <code>D:\Project_EventAlertMod_AGY\.agents\skills\&lt;skill-name&gt;\SKILL.md</code>
     - <code>D:\Project_EventAlertMod_AGY\.AI\skills\&lt;skill-name&gt;\SKILL.md</code>

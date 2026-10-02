@@ -519,11 +519,251 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-09-19.05 (Retail 12.1.0 Alpha 8.7 快捷懸停 CTRL+ALT 跨職業法術加入自身光環分類修復 / 實機測試驗證完成 / 90 Flow / 499 契約全綠)。</p>
+<p>目前快照版本：2026-10-03.01 (Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地)。</p>
 <ul>
 <li><strong>版本斷點與自動遞增規則</strong>：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。</li>
 </ul>
-<h2 id="2026-09-19-retail-1210-alpha-87-ctrlalt">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 快捷懸停 (CTRL+ALT) 跨職業法術加入自身光環目錄分類修復（現行儲存點）</h2>
+<h2 id="2026-10-03-retail-1215-alpha-88-c-timedsignalmap-pandemic">2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地（現行儲存點）</h2>
+<ul>
+<li>current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級全數完成，全套契約 501 條綠燈、Flow 測試 103 案全過、語法檢驗 78 案零錯誤。<ol>
+<li>Retail 12.1.5 關鍵架構特徵與原生加速：</li>
+<li><strong>TOC 介面版本升級</strong>：更新 <code>EventAlertMod.toc</code> 為 <code>## Interface: 120007, 120100, 120105</code>，無縫相容 Retail 12.1.5 正式版、Retail 12.1.0 與 XPTR 12.0.7。</li>
+<li><strong>暴雪底層 C++ 工具函數庫加速與防禦性降級</strong>：</li>
+<li><code>Core/Util.lua</code> 全面整合 12.1.5 Native C++ 數學、字串與表格加速函數（<code>math.clamp</code>、<code>math.lerp</code>、<code>math.saturate</code>、<code>table.isempty</code>、<code>table.contains</code>、<code>string.contains</code>、<code>string.startswith</code> 等），並實裝相容舊版客戶端的高效防禦性降級 (Polyfills)。</li>
+<li><strong>TimedSignalMap 零分配排程器升級</strong>：</li>
+<li><code>Core/Scheduler.lua</code> 整合 <code>C_Timer.NewTimedSignalMap</code> 原生鍵值排程機制，支援在支援的客戶端上由 C++ 引擎接管鍵值排程，並內建完整自主維護的狀態機降級，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)。</li>
+<li><strong>12.1.5 原生 Pandemic 結餘窗口精確判斷</strong>：</li>
+<li><code>Services/AuraService.lua</code> 採用 <code>C_UnitAuras.GetRefreshCarryOverDuration</code> 進行結餘時間精確計算（結餘時長 &lt;= 30.5% 基礎時間），並平滑降級至 <code>GetRefreshExtendedDuration</code>，確保全版本 DoT 補法時機精準無誤。</li>
+<li><strong>原生光環 Pandemic 動態特效動畫</strong>：</li>
+<li><code>UI/NativeAuraRenderer.lua</code> 深度適配 12.1.5 原生動畫綁定 API（<code>AddPandemicActiveAnimation</code>、<code>AddPandemicEnterAnimation</code>、<code>AddPandemicLeaveAnimation</code>），實現精緻流暢的原生補 Dot 動態反饋。</li>
+<li><strong>音效警示高頻頻率限制防護</strong>：</li>
+<li><code>Services/AuraSoundService.lua</code> 整合 <code>C_UnitAuras.AddAuraSound</code> 之 <code>throttleSeconds</code> 頻率限制參數（預設 0.3s），杜絕高頻率觸發引發音效連環轟炸。</li>
+<li><strong>原生像素對齊與初始化防閃爍</strong>：</li>
+<li>支援 <code>SetRoundLayoutToNearestPixel</code> 物理像素對齊，引入 <code>CreateFrameWithOptions</code> 消除初始化首幀閃爍。</li>
+<li><strong>過時暴雪引用清理與防禦性加固</strong>：</li>
+<li>根除對 <code>Blizzard_Deprecated</code> 的任何調用，加固 <code>AuraState</code> 之 <code>timer</code> 與 <code>source</code> 表格隔離。</li>
+<li>當前達成狀態：</li>
+<li>[x] 【全專案門禁 100% 綠燈】：Contracts 501/501 PASS、Flow 103/103 PASS、Syntax 78/78 PASS。</li>
+<li>[x] 【跨檔案版本與文檔 100% 同步】：TOC (120105 / 20261003)、雙語 README、雙語 Changelog。</li>
+<li>[x] 【連續性資料庫更新】：<code>Data/ProjectContinuity.json</code> 與 <code>Docs/28_PROJECT_CONTINUITY.md</code> 同步維護。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-28-miliui-wowbox-sanitizer-eam-miliui-publisher">2026-09-28 多進度儲存點：奇樂 (MiliUI / WoWbox) 說明文件排版、後端 Sanitizer 行為治理與專屬技能體系 (<code>eam-miliui-publisher</code>) 固化（前一儲存點）</h2>
+<ul>
+<li>current-of-truth：奇樂專用說明文件自動化工具（<code>Build-MiliUIDoc.py</code>）落地、雙副本 HTML 產出完成、15 項自動化自檢與 499 條專案契約全數通過、<code>eam-miliui-publisher</code> 專屬技能體系正式建立。<ol>
+<li>奇樂平台特性與發布產物：</li>
+<li><strong>產出檔案</strong>：根目錄 <a href="file:///d:/Project_EventAlertMod_AGY/addons_miliui_eventalertmod.html"><code>addons_miliui_eventalertmod.html</code></a> 與部署目錄 <a href="file:///d:/Project_EventAlertMod_AGY/Deploy/addons_miliui_eventalertmod.html"><code>Deploy/addons_miliui_eventalertmod.html</code></a>。</li>
+<li><strong>實機驗證網址</strong>：<code>https://addons.miliui.com/wow/28</code>。</li>
+<li><strong>後端 Sanitizer 表格洗除防禦</strong>：0 <code>&lt;table&gt;</code> 策略，全面改採 <code>&lt;ul&gt;</code>、<code>&lt;ol&gt;</code>、<code>&lt;li&gt;</code> 與 <code>&lt;code&gt;</code> 結構化展示，杜絕後端將表格洗成 <code>&lt;p&gt;</code> 導致的排版崩潰。</li>
+<li><strong>收合標籤語法</strong>：遵循 `<details markdown="1"><summary>點擊展開</summary></li>
+</ol>
+</li>
+</ul>
+<div class="details-content"><p>...</p></div>
+
+<p></details><code>規範。
+     - **展示圖片適配**：14 張 UI 截圖全數設為</code>width="50%"<code>顯示，適配奇樂版面寬度。
+     - **HTML5 空標籤規範**：無 XHTML 閉合斜線，一律採</code><br><code>、</code><hr><code>、</code><img><code>。
+    2. 技能體系擴充：
+     - 專案內部技能：[</code>.AI/skills/eam-miliui-publisher/SKILL.md<code>](file:///d:/Project_EventAlertMod_AGY/.AI/skills/eam-miliui-publisher/SKILL.md)。
+     - 全域技能：</code>~/.gemini/config/skills/eam-miliui-publisher/SKILL.md<code>。
+     - 專案核心技能體系自 21 大擴充至 22 大核心技能。
+    3. 當前達成狀態：
+     - [x] 【奇樂專用 HTML 建置腳本】：</code>Build-MiliUIDoc.py` 15 項指標自檢全過。
+     - [x] 【全專案契約檢查】：499/499 條全部綠燈。
+     - [x] 【專屬技能雙端部署】：專案與全域一體同步。</p>
+<h2 id="2026-09-27-retail-1210-alpha-87-github-release-curseforge-alpha-88">2026-09-27 多進度儲存點：Retail 12.1.0 Alpha 8.7 雙平台正式發布（GitHub Release &amp; CurseForge）與 Alpha 8.8 開發週期開啟（前一儲存點）</h2>
+<ul>
+<li>current-of-truth：Retail 12.1.0 Alpha 8.7 正式發布完成，全套契約 499 條綠燈、Flow 測試 98 案全過、雙語日誌與說明文件 100% 同步。<ol>
+<li>發布紀錄與雙平台產物：</li>
+<li><strong>GitHub Release</strong>：Tag <code>alpha-8.7</code>，標題 <code>EventAlertMod Retail 12.1.0 Alpha 8.7</code>，發布產物包含 <code>EventAlertMod_MN_20260927_075916-alpha-8.7_AGY.zip</code> 與其 SHA-256 校驗檔。已上傳至：<a href="https://github.com/ziyuefan/EventAlertModRemake/releases/tag/alpha-8.7">GitHub Releases</a>。</li>
+<li><strong>CurseForge</strong>：透過 Windows DPAPI 安全上傳，官方檔案 ID <code>8985797</code>，發布類型 <code>alpha</code>，支援魔獸版本 Retail 12.1.0 (ID: 16519)。專案頁面：<a href="https://www.curseforge.com/wow/addons/eventalertmod">CurseForge EventAlertMod</a>。</li>
+<li><strong>CurseForge 首頁說明檔更新</strong>：產出對齊 14 大 ForgeCDN 截圖之全專案首頁說明檔 <a href="file:///d:/Project_EventAlertMod_AGY/Deploy/CURSEFORGE-DESCRIPTION.md"><code>Deploy/CURSEFORGE-DESCRIPTION.md</code></a>。</li>
+<li>Alpha 8.7 核心發布成果總結：</li>
+<li><strong>冷卻事件同幀合併與警示零分配流水線</strong>：AlertManager 佇列記憶體分配完全歸零（Zero-Alloc），冷卻狀態 12 欄位髒檢查重繪抑制（渲染調用暴降 96.9%），實測 FPS 躍升 +15.1%（86 -&gt; 99 FPS），Lua 記憶體降低約 12 MB。</li>
+<li><strong>角色屬性與吸收量監控全面升級</strong>：即時開關停用、主錨點 GPU 樹狀同步聯動、依附目標多選、SetGradient 雙色漸層與堆疊排序。</li>
+<li><strong>全模組自訂技能與法術名稱</strong>：涵蓋自身增益/減益、目標減益、技能冷卻、物品冷卻與地面效果全流程，條件視窗高度擴展至 680px，原生光環文字守護防覆蓋。</li>
+<li><strong>原生光環字型大小即時熱套用</strong>：弱引用按鈕註冊池與原位 SetFont 更新，零延遲免 /reload 不消耗 18 次配額。</li>
+<li><strong>目標光環切換清場與鬼影根除</strong>：Native 容器生命週期重置與 Legacy 渲染器即時同步清空，徹底根除秒數倒數鬼影。</li>
+<li><strong>技能冷卻與地面效果第一格消失根治</strong>：Slot 1 物理死鎖排除與幾何坐標回正。</li>
+<li><strong>暴雪官方 C_AddOnProfiler 遙測整合</strong>：<code>/eam metrics</code> 即時查看引擎級 CPU 毫秒耗時與刺波統計。</li>
+<li>當前達成狀態：</li>
+<li>[x] 【雙平台正式發布】：GitHub Release (alpha-8.7) 與 CurseForge (8985797) 同步上線。</li>
+<li>[x] 【全套門禁 100% 綠燈】：Contracts 499/499 PASS、Flow 98/98 PASS、Syntax 78/78 PASS。</li>
+<li>[x] 【跨檔案版本與文檔 100% 同步】：TOC (20260927)、雙語 README、雙語 Changelog、changelog.html 與 125 個 FOLDER_INDEX.html 100% 同步。</li>
+<li>[x] 【版本斷點自動遞增】：發布完成，新開發週期自動以 Alpha 8.8 為演進基底。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-27-boost-zero-alloc-queue-dirty-suppression">2026-09-27 多進度儲存點：/boost 高頻冷卻事件合併排程、警示佇列零分配 (Zero-Alloc Queue) 暨狀態變更髒檢查抑制 (Dirty Suppression) 極限效能優化（前一儲存點）</h2>
+<ul>
+<li>current-of-truth：Retail 12.1.0 Alpha 8.7 高頻冷卻事件與警示狀態更新極限效能優化重構完成。<ol>
+<li>核心判斷與架構決策（依據真實遙測日誌診斷）：</li>
+<li><strong>AlertManager 佇列記憶體分配消除</strong>：在 155 秒內 <code>onAlertStateChanged</code> 產生 9,502 次臨時 table 分配（<code>pendingUpdates[state.id] = { state = state, frameName = frameName }</code>）。重構改採以 <code>alertID</code> 為鍵的 <code>persistentSlots</code> 持久化槽位結構，直接原位更新 <code>slot.state</code> 與 <code>slot.frameName</code>，將暫存佇列之堆疊分配降至 0。</li>
+<li><strong>冷卻狀態髒檢查與重複繪製阻斷 (Dirty State Diffing &amp; Render Suppression)</strong>：針對 <code>CooldownService</code> 與 <code>ItemCooldownService</code>，於 <code>refreshAlert</code> 快照前次狀態（顯示、啟用、佔位、灰階、發光、充能、時間），若無實質變更則自動抑制 <code>fireStateChanged</code> 派發，徹底消除戰鬥中大量無效的圖示重繪與 CPU 負擔。</li>
+<li><strong>全域冷卻事件同幀合併排程 (Frame-Level Cooldown Event Coalescing)</strong>：針對 <code>SPELL_UPDATE_COOLDOWN</code>、<code>ACTIONBAR_UPDATE_COOLDOWN</code> 與 <code>BAG_UPDATE_COOLDOWN</code> 等無特定法術/物品 ID 之高頻全域事件實裝同幀合併調度（<code>queueCoalescedRefresh</code>），統一接入專案 <code>Scheduler.after(0)</code> 排程，嚴格遵循 Scheduler 唯一 OnUpdate 原則，杜絕未託管獨立 Frame，並配合持久化 <code>presentAlerts</code> 實現全流程零記憶體配置 (Zero-Allocation)，避免同一幀內觸發多次全清單遍歷，極大平滑團隊副本與大秘境高負載環境下的幀率。</li>
+<li>具體代碼實裝：</li>
+<li><strong>Managers/AlertManager.lua</strong>：實裝 <code>persistentSlots</code> 零分配佇列與解參照清理。</li>
+<li><strong>Services/CooldownService.lua</strong>：實裝 dirty state diffing、isDirty 派發過濾與 <code>queueCoalescedRefresh</code>。</li>
+<li><strong>Services/ItemCooldownService.lua</strong>：實裝 dirty state diffing、isDirty 派發過濾與 <code>queueCoalescedRefresh</code>。</li>
+<li><strong>Tests/FlowValidationHarness.lua</strong>：補齊 <code>AlertManager.lua</code> 模組載入。</li>
+<li><strong>Debug/FlowTestRunner.lua</strong>：新增 <code>performance.cooldown_dirty_diffing_and_queue_zero_alloc</code> 自動化驗證案例。</li>
+<li>當前達成狀態：</li>
+<li>[x] 【AlertManager 佇列零記憶體分配】：實裝持久化槽位，消滅 GC 震盪。</li>
+<li>[x] 【技能與物品冷卻狀態髒檢查】：無實質變更時抑制狀態廣播與重繪。</li>
+<li>[x] 【全域事件同幀合併排程】：同一幀/Tick 內多次全域事件合併執行。</li>
+<li>[x] 【單元測試與門禁 100% 通過】：Flow 98/98 PASS、Contracts 499/499 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-27-c_addonprofiler">2026-09-27 多進度儲存點：暴雪官方 C_AddOnProfiler 深度調研與雙軌遙測架構落地（前一儲存點）</h2>
+<ul>
+<li>current-of-truth：Retail 12.1.0 Alpha 8.7 暴雪原生 Profiler 遙測接入與雙軌效能體系建立完成。<ol>
+<li>核心判斷與架構決策（底層組語/JIT 視角）：</li>
+<li><strong>絕不可替代內部微觀計數器</strong>：官方 <code>C_AddOnProfiler</code> 僅能讀取外掛整體黑盒毫秒耗時，完全無法穿透至單一事件（如 <code>UNIT_AURA</code>）或單一函式（如 <code>Renderer.render</code>）；且其 <code>MeasureCall</code> 底層回傳全新構造之 Lua Table，若放進熱路徑每秒將產生海量 GC 垃圾引發卡頓，與零記憶體配置原則違背。</li>
+<li><strong>非常適合作為按需（On-Demand）宏觀引擎指標</strong>：<code>C_AddOnProfiler.GetAddOnMetric</code> 乃暴雪 C++ 遊戲引擎原生硬體時鐘計時，零 Lua 探針耗時，能提供真實 CPU 毫秒（近期均值、歷史峰值、首領戰均值）與超過 1ms/5ms 掉幀刺波幀數。</li>
+<li><strong>雙軌效能監控體系確立</strong>：微觀（內部計數器）精確定位「誰在狂跑、跑了幾次、CPS」（指導重構）；宏觀（官方 Profiler）精確量測「外掛整體耗時幾毫秒、是否有掉幀刺波」（驗證重構成果）。</li>
+<li>具體代碼實裝與邊界防護：</li>
+<li><strong>Core/Env.lua 與 Core/Performance.lua</strong>：安全綁定 <code>C_AddOnProfiler</code> 與 <code>Enum.AddOnProfilerMetric</code>；實裝 <code>Performance.getEngineProfilerMetrics()</code>，以 <code>pcall</code> 嚴密防護，支援客戶端關閉或版本不支援時優雅降級。</li>
+<li><strong>Debug/RuntimeProbe.lua</strong>：於環境探針中新增 <code>profile.addonProfiler</code> 能力檢定。</li>
+<li><strong>Debug/PromptExport.lua 與 Debug/DebugState.lua</strong>：於診斷匯出 JSON 之 <code>hotPathMetrics</code> 區塊加入 <code>engineProfiler</code> 毫秒遙測資料。</li>
+<li><strong>UI/Slash.lua</strong>：<code>/eam metrics</code> 指令即時印出官方引擎之近期均值、歷史峰值、首領戰均值與掉幀刺波統計。</li>
+<li><strong>Debug/FlowTestRunner.lua</strong>：新增 <code>performance.engine_profiler_telemetry</code> 自動化測試，沙盒驗證優雅降級與數值映射（97/97 PASS）。</li>
+<li>當前達成狀態：</li>
+<li>[x] 【官方 Profiler 深度調研與評判】：產出清晰架構論證與邊界設計。</li>
+<li>[x] 【雙軌遙測防禦性接入】：Core、Debug、PromptExport、CLI 全線打通。</li>
+<li>[x] 【單元測試與門禁 100% 通過】：Flow 97/97 PASS、Contracts 499/499 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-27-hot-path-profiler-savedvariables">2026-09-27 多進度儲存點：高頻熱路徑追蹤器 (Hot Path Profiler) 實裝、SavedVariables 持久化與偵錯匯出整合（前一儲存點）</h2>
+<ul>
+<li>current-of-truth：Retail 12.1.0 Alpha 8.7 高頻熱路徑追蹤器與存檔計數閉環完成。<ol>
+<li>高頻熱路徑追蹤器（Zero-Allocation Profiler）：</li>
+<li><strong>Core/Performance 核心計數器</strong>：依少年欸指示，在 <code>Core/Performance.lua</code> 實裝運行期高頻熱路徑監控計數器，提供 <code>recordHotPath</code>、<code>getSnapshot</code>、<code>resetMetrics</code> 等 API，使用預快取字串鍵，達到熱循環零記憶體配置（Zero-Allocation）與極限暫存器加速。</li>
+<li><strong>核心熱點全覆蓋插樁</strong>：涵蓋 <code>EventRouter.onEvent</code>（分發事件總數與各事件統計）、<code>AlertManager</code>（flushUpdates、clearPending、onAlertStateChanged）、<code>AuraService</code>（onUnitAura、refreshUnit、onTargetChanged）、<code>AuraContainerService</code>（onTargetChanged）、<code>CooldownService</code>（refreshSpell、onSpellcastSucceeded、onCooldownEvent）、<code>Renderer</code>（render、layout、clearFrame）、<code>Scheduler</code>（onUpdate、after）。</li>
+<li>存檔持久化與統計閉環：</li>
+<li><strong>SavedVariables 累積整合</strong>：<code>defaults.hotPathMetrics</code> 初始化結構；登出（<code>PLAYER_LOGOUT</code>）時自動將本次連線（lastSession）呼叫量合併至 <code>cumulative</code> 累積池，並記錄累積運行時間（秒數）；提供 <code>SavedVariables.saveHotPathMetrics</code> 隨時手動寫入。</li>
+<li>偵錯與診斷視窗整合：</li>
+<li><strong>DebugState 快照</strong>：<code>derived.hotPathMetrics</code> 提供完整呼叫次數、執行秒數、CPS（Calls Per Second）與 Top Hot Paths 排序清單。</li>
+<li><strong>PromptExport JSON 匯出</strong>：於診斷匯出報告中加入 <code>hotPathMetrics</code> 結構化區塊，便於 AI 與開發者一眼掌握高頻瓶頸。</li>
+<li><strong>CLI 指令支援</strong>：新增 <code>/eam metrics</code>（或 <code>/eam hotpaths</code>），即時顯示 Top 10 高頻路徑，支援 <code>/eam metrics reset</code> 與 <code>/eam metrics save</code>。</li>
+<li>當前達成狀態：</li>
+<li>[x] 【熱路徑追蹤與插樁】：7 大核心模組零配置插樁完畢。</li>
+<li>[x] 【存檔持久化與登出寫入】：SavedVariables 自動保存本次與累積數據。</li>
+<li>[x] 【除錯報告與 CLI 介面】：PromptExport JSON 與 <code>/eam metrics</code> 實裝。</li>
+<li>[x] 【5 國語系同步】：100% 對齊 zhTW、zhCN、enUS、koKR、ruRU。</li>
+<li>[x] 【單元測試與門禁 100% 通過】：Flow 96/96 PASS、Contracts 499/499 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-27">2026-09-27 多進度儲存點：目標光環切換目標秒數倒數鬼影根治、雙模生命週期閉環與組語視角底層最佳化規範確立</h2>
+<ul>
+<li>current-of-truth：Retail 12.1.0 Alpha 8.7 目標光環換目標生命週期閉環與底層效能規範入庫。<ol>
+<li>目標光環切換目標即時清理與倒數鬼影根除：</li>
+<li><strong>Native 12.1 容器生命週期重置</strong>：<code>AuraContainerService.onTargetChanged</code> 註冊監聽 <code>PLAYER_TARGET_CHANGED</code>，目標變更時即時重設原生容器 <code>SetEnabled(false)</code> -&gt; <code>SetUnit("target")</code> -&gt; <code>SetEnabled(true)</code> -&gt; <code>Update()</code>，無目標時即時 <code>Hide()</code> 與停用，徹底杜絕 C++ 底層 <code>AuraContainer</code> 遺漏切換導致舊目標光環與原生秒數倒數持續運行的缺陷。</li>
+<li><strong>Legacy 渲染器即時同步清空與計時器解綁</strong>：於 <code>AuraService.onTargetChanged</code>、<code>clearUnit("target")</code> 與 <code>renderInactiveUnit("target")</code> 入口直接調用 <code>Renderer.clearFrame("targetAura")</code>，將當前畫面所有目標光環圖示、<code>DurationAdapter</code> 文字綁定與原生計時器立即同步釋放、隱藏並返還圖示池，杜絕異步批次排程延遲。</li>
+<li><strong>AlertManager 佇列過期暫存排空</strong>：新增 <code>AlertManager.clearPending("targetAura")</code>，於切換目標時同步作廢並釋放所有尚未 Flush 的目標光環狀態變更，杜絕舊目標過期更新在下一個 Tick 重新喚醒圖示。</li>
+<li><strong>Native 雙重保險守衛邊界校正</strong>：修正 <code>AlertManager</code> 誤將 <code>targetAura</code> 當作 Native 光環攔截的邊界缺陷（原生渲染器僅託管自身光環），確保 Legacy 目標光環關閉與釋放事件暢通無阻。</li>
+<li>組語視角底層效能最佳化方向確立（零副作用鐵律）：</li>
+<li>依少年欸指示，將「以組語（ASM）視角進行底層效能調優」的六大方向（虛擬暫存器釘定、熱路徑暫存器壓力控制、深層指針鏈提升、連續整數陣列空間局部性、熱路徑零閉包、單一型態保護）正式納入 <code>Docs/05_PERFORMANCE_GUIDE.md</code> 與 <code>Docs/16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md</code>。</li>
+<li>確立核心防禦鐵律：所有底層效能優化嚴禁改變任何業務邏輯、嚴禁產生任何副作用或功能缺失，必須 100% 通過全量契約驗證。</li>
+<li>當前達成狀態：</li>
+<li>[x] 【目標光環雙模切換清場】：實機實測切換目標 100% 即時正常更新，秒數鬼影完全根除。</li>
+<li>[x] 【組語視角底層效能規範入庫】：<code>05_PERFORMANCE_GUIDE.md</code> 與 <code>16_RETAIL_ADDON_OPTIMIZATION_ROADMAP.md</code> 完整同步。</li>
+<li>[x] 【雙語版本日誌與網頁同步】：<code>changelog.txt</code>、<code>changelog_en.txt</code>、<code>changelog.html</code> 100% 同步。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Contracts 499/499 PASS、Folder Indexes 125/125 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-26-scratch-aiagents-aiskills">2026-09-26 多進度儲存點：專案根目錄治理重構（scratch 移入 .AI、.agents 轉址 .AI/skills）與每輪任務推薦規範確立</h2>
+<ul>
+<li>current-of-truth：專案根目錄結構與治理架構純淨化完成。<ol>
+<li>根目錄結構整潔與單一真理原則實裝：</li>
+<li><strong>scratch/ 移入 .AI/scratch/</strong>：消除專案根目錄臨時草稿污染，將所有測試與除錯草稿收斂至 <code>.AI/scratch/</code>，同步修訂 <code>.gitignore</code>。</li>
+<li><strong>.agents/ 轉址協定實裝</strong>：遵循 Antigravity 官方工作區擴充標準，於 <code>.agents/skills.json</code> 配置 <code>{"entries": [{"path": ".AI/skills"}]}</code> 轉址，將技能唯一定義與實體檔案 100% 收斂至 <code>.AI/skills/</code>，徹底消滅跨目錄雙重維護問題，並維持 Antigravity 自動探索 100% 正常。</li>
+<li><strong>全目錄索引更新</strong>：<code>generate_folder_indexes.py</code> 增設 <code>scratch</code> 排除規則並更新 <code>.agents</code> 知識庫，全專案 125 個目錄 FOLDER_INDEX.html 100% 核驗通過。</li>
+<li>新增每輪任務規範：</li>
+<li>確立「每輪任務結束主動向少年欸推薦 Antigravity 內建斜線指令（如 <code>/goal</code>, <code>/plan</code>, <code>/boost</code>, <code>/learn</code> 等）與適用 SKILL」之標準溝通規範，已寫入 <code>.AI/PROJECT_MEMORY.md</code>。</li>
+<li>當前達成狀態：</li>
+<li>[x] 【根目錄純淨化與 scratch 搬遷】：<code>.AI/scratch/</code> 完成，<code>.gitignore</code> 同步。</li>
+<li>[x] 【.agents/ 瘦身與 skills.json 轉址】：<code>.AI/skills/</code> 單一真理確立，重複目錄移除。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Contracts 499/499 PASS、Folder Indexes 125/125 PASS。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-24-retail-1210-alpha-87-slot-1-bottomleft">2026-09-24 多進度儲存點：Retail 12.1.0 Alpha 8.7 技能冷卻與地面效果第一格消失 (Slot 1 物理死鎖) 與幾何漂移 (BOTTOMLEFT 錨點) 根治</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。針對玩家回報「技能冷卻也是第一格消失，然後地面效果也是沒修好，掛在莫名其妙的地方」進行雙重根因排查與物理級根治。<ol>
+<li>根因剖析與架構修復：</li>
+<li><strong>Slot 1 物理蒸發（雙重死鎖）</strong>：<code>prewarmAlertFrames()</code> 預設 <code>layoutX = 0, layoutY = 0</code> 且 <code>isParasite = nil</code>。首次渲染時寄生檢查判定 <code>isParasite ~= false</code> 呼叫 <code>ClearAllPoints()</code> 剝離錨點；隨後 <code>layout()</code> 計算 Slot 1 也是 (0, 0)，因 <code>0 ~= 0</code> 為 false 跳過 <code>SetPoint()</code>，導致 Slot 1 帶有 0 個錨點 (<code>GetNumPoints() == 0</code>) 漂浮在遊戲世界外。Slot 2..16 因偏移量不為 0 而成功重新錨定。</li>
+<li><strong>幾何漂移與 Lua 多回傳值截斷</strong>：暴雪原生 <code>StopMovingOrSizing()</code> 會將框架錨點強制轉為 <code>"BOTTOMLEFT"</code>。當動態增減圖示時父框架執行 <code>SetSize()</code>，因以 <code>"BOTTOMLEFT"</code> 為原點，導致子元件向反方向整體位移。更甚者，先前修復在 <code>OnDragStop</code> 使用了二元運算子包裹函式呼叫，觸發 Lua 截斷陷阱致使 <code>pCenterY</code> 恆為 <code>nil</code>，Y 坐標被強制重設為 0。</li>
+<li><strong>預熱狀態與哨兵值修正 (<code>Renderer.lua</code>)</strong>：<code>prewarmAlertFrames()</code> 初始化圖示 <code>icon.isParasite = false</code>，並將 <code>rendered.layoutX/Y/Size</code> 設為 <code>nil</code>（嚴禁使用 0 作為哨兵值）；<code>IconPool.release()</code> 於回收圖示時同步重置 <code>icon.isParasite = false</code>，杜絕跨生命週期污染。</li>
+<li><strong>物理錨點計數守衛 (<code>Renderer.lua</code>)</strong>：<code>layout()</code> 增加 <code>hasNoPoints = (type(icon.GetNumPoints) == "function" and icon:GetNumPoints() == 0)</code> 計數守衛，只要錨點數為 0 強制執行 <code>ClearAllPoints()</code> 與 <code>SetPoint()</code>。</li>
+<li><strong>拖曳坐標換算與 CENTER 錨點保證 (<code>Renderer.lua</code>, <code>SavedVariables.lua</code>)</strong>：統一實作 <code>saveFrameCenterPosition(parent, pName, fLabel)</code>，安全接收 X、Y 雙回傳值；拖曳結束後強制執行 <code>parent:ClearAllPoints()</code> 與 <code>parent:SetPoint("CENTER", UIParent, "CENTER", xOffset, yOffset)</code>，統一將 <code>cfg.point</code> 存為 <code>"CENTER"</code>；<code>SavedVariables.normalizeLayout(db)</code> 針對歷史存檔中所有的 <code>"BOTTOMLEFT"</code> 錨點進行全量無縫換算為 <code>"CENTER"</code>。</li>
+<li><strong>端到端狀態機測試 (<code>FlowTestRunner.lua</code>)</strong>：新增 <code>cooldown.slot1_prewarm_anchor_integrity</code> 測試案例，完整覆蓋 Slot 1/2 預熱錨點、零點守衛、<code>OnDragStop</code> 2D 幾何坐標換算 (非 0 斷言) 及 <code>normalizeLayout</code>。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
+<li>[x] 【Slot 1 物理錨點守衛與預熱重置】：<code>Renderer.lua</code> 與 <code>IconPool.lua</code> 徹底消除 Slot 1 蒸發死鎖。</li>
+<li>[x] 【拖曳座標 CENTER 幾何換算】：<code>saveFrameCenterPosition</code> 根除 Lua 截斷與幾何漂移。</li>
+<li>[x] 【歷史存檔 BOTTOMLEFT 校正】：<code>SavedVariables.normalizeLayout</code> 全框架無縫兼容遷移。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 94/94 PASS (100%)、Contracts 499/499 PASS。</li>
+<li>[x] 【最新插件包打包完成】：發布產包與雙語日誌同步完成。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-20-retail-1210-alpha-87-pre-render-placeholder">2026-09-20 多進度儲存點：Retail 12.1.0 Alpha 8.7 地面效果預渲染佔位 (Pre-render Placeholder) 機制與全域/單體自選開關實裝</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。落實少年欸指示之「地面效果部分你還是乖乖用預渲染,並讓我可以選擇是否啟用」。<ol>
+<li>根因剖析與架構實裝：</li>
+<li><strong>預渲染佔位需求</strong>：地面效果先前僅在成功施法後才建立渲染狀態，戰鬥中冷卻完畢或待命時無法預知位置。比照 CooldownService 建立待命預渲染機制。</li>
+<li><strong>資料層與設定架構 (<code>SavedVariables.lua</code>, <code>ProfileCodec.lua</code>)</strong>：</li>
+<li><code>DEFAULT_CONFIG</code> 新增 <code>groundEffectPreRender = true</code>。</li>
+<li><code>addAlert</code> 與 <code>updateGroundEffectAlert</code> 支援 <code>options.groundEffectPreRender</code>。</li>
+<li>新增 <code>SavedVariables.updateGroundEffectBehavior(spellID, field, value)</code> API，支援三態循環切換與廣播 <code>EAM_GROUND_EFFECT_CONFIG_CHANGED</code>。</li>
+<li><code>ProfileCodec.lua</code> 允許並正規化 <code>groundEffectPreRender</code> 之匯出與匯入。</li>
+<li><strong>服務層狀態機深度整合 (<code>GroundEffectService.lua</code>)</strong>：</li>
+<li>實裝 <code>resolveBehavior(alert, "groundEffectPreRender")</code> 三態優先級解析（單一技能 &gt; 全域設定 &gt; 預設 true）。</li>
+<li>實裝 <code>GroundEffectService.refreshAll(eventName)</code>，在啟用、戰鬥結束、設定變更與拓撲刷新時建立灰階佔位 state（<code>isPlaceholder = true</code>, <code>isDesaturated = true</code>, <code>shown = true</code>）。</li>
+<li><code>triggerGroundEffect</code> 在施法命中時精準清除佔位與灰階標記（<code>isPlaceholder = false</code>, <code>isDesaturated = false</code>），正常進入全彩動態倒數。</li>
+<li><code>onAlertExpired</code> 到期時依解析結果決定：若啟用預渲染則自動回歸灰階待命佔位；若未啟用則隱藏圖示釋放狀態。</li>
+<li><strong>UI 互動與多語系支援 (<code>Options.lua</code>, 5 大語系)</strong>：</li>
+<li>ScrollBox 列表將地面效果分類納入 <code>isPreRenderCategory</code>，使每行條目均具備綠色「預」快捷按鈕，支援即時三態點擊切換。</li>
+<li>條件設定視窗（<code>condFrame</code>）新增 <code>condFrame.groundPreRenderCb</code> 核取方塊，打通雙向儲存與載入。</li>
+<li>5 大語系（zhTW, zhCN, enUS, koKR, ruRU）完整收錄 <code>EAM_OPT_GROUND_PRERENDER</code> 與 <code>EAM_OPT_GROUND_PRERENDER_TIP</code>。</li>
+<li><strong>全量測試與合約驗證 (<code>FlowTestRunner.lua</code>)</strong>：</li>
+<li>新增 Flow 測試 <code>ground_effect.prerender_toggle_and_lifecycle</code> 完整覆蓋待命佔位、施法點亮、到期回歸與開關切換。</li>
+<li>修正 <code>ground.spell_family_activation</code> 斷言相容預渲染佔位狀態。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
+<li>[x] 【地面效果預渲染佔位機制】：<code>GroundEffectService.lua</code> 完整實裝待命佔位、施法點亮、到期回歸。</li>
+<li>[x] 【全域與單體三態開關】：<code>SavedVariables.lua</code> 與 <code>ProfileCodec.lua</code> 深度整合支援。</li>
+<li>[x] 【UI 控制與列表快捷按鈕】：<code>Options.lua</code> 綠色「預」按鈕與條件設定核取方塊全通。</li>
+<li>[x] 【5 大語系詞條完整收錄】：zhTW, zhCN, enUS, koKR, ruRU 100% 對齊。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 93/93 PASS (100%)、Contracts 499/499 PASS。</li>
+<li>[x] 【最新插件包打包完成】：產出最新 Alpha 8.7 發布包至 <code>Dist/</code>。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-20-retail-1210-alpha-87-hide">2026-09-20 多進度儲存點：Retail 12.1.0 Alpha 8.7 地面效果戰鬥喚醒（父框架 Hide 徹底破除）、預熱中心錨點預置與同名法術反向解析修復</h2>
+<ul>
+<li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。少年欸回報「地面效果又掛掉了」，進行深度檢修與根治。<ol>
+<li>根因剖析與架構修復：</li>
+<li><strong>父框架隱藏致命陷阱（Parent Hide Trap）</strong>：先前修復「冷卻結束不留空格」時，當 <code>shown == false</code> 會將圖示自 order 移除並調用 <code>layout(frameName)</code>；當無圖示時，<code>layout</code> 執行了 <code>parent:Hide()</code>！進入戰鬥後施放地面技能，<code>Renderer.requestLayout</code> 內建戰鬥阻斷契約（<code>layoutBlocked = true</code>），排版排隊等待脫戰，導致 <code>parent</code> 停留在 <code>Hide()</code> 狀態，子圖示即使 <code>SetAlpha(1.0)</code> 也因掛載在隱藏父框架下而完全不可見！</li>
+<li><strong>預熱圖示懸空無錨點</strong>：在 <code>prewarmAlertFrames</code> 建立冷卻與地面效果備用 Frame 時，未預先設定相對父框架的中心錨點與幾何尺寸，戰鬥中點亮瞬間圖示缺乏物理坐標。</li>
+<li><strong>父框架即時喚醒 (<code>Renderer.lua</code>)</strong>：在 <code>Renderer.render()</code> 中加入強保證：只要 <code>alertState.shown == true</code> 且 <code>not fState.parent:IsShown()</code>，立即呼叫 <code>fState.parent:Show()</code>，徹底終結戰鬥中因 <code>parent:Hide()</code> 導致子元件全盲的致命根因。</li>
+<li><strong>預熱物理坐標預置 (<code>Renderer.lua</code>)</strong>：在 <code>prewarmAlertFrames</code> 建立備用 Frame 時，預先賦予相對父框架的中心錨點與尺寸（<code>SetPoint("CENTER", parent, "CENTER", 0, 0)</code>、<code>layoutX = 0, layoutY = 0</code>），確保戰鬥中點亮瞬間必定具有物理坐標。</li>
+<li><strong>動態反向法術名稱比對 (<code>GroundEffectService.lua</code>)</strong>：實裝法術名稱反查機制：當施法 ID 在靜態索引與 Base/Override 均未命中時，動態讀取 <code>C_Spell.GetSpellInfo(spellID).name</code>，只要名稱與監控法術相同立即命中並建立快取，徹底覆蓋巨集與專精變體；並註冊 <code>COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED</code> 即時刷新快取。</li>
+<li><strong>全量 Mock 與測試案例擴充</strong>：<code>WoW121AuraMock</code> 補齊 <code>SetDesaturated</code>、<code>SetProgressCurve</code>、<code>SetCooldownDuration</code>、<code>GetFrameLevel</code> 等；<code>FlowTestRunner</code> 新增 <code>ground_effect.combat_and_name_matching_pipeline</code>，Flow 測試擴增至 92 項全部通過。</li>
+<li>當前多進度各環節達成狀態（Multi-Stage Status）：</li>
+<li>[x] 【父框架戰鬥強制喚醒】：<code>Renderer.lua</code> 消除戰鬥中 parent:Hide 陷阱。</li>
+<li>[x] 【預熱 Frame 物理錨點預置】：<code>Renderer.lua</code> 消除無排版座標懸空。</li>
+<li>[x] 【同名法術動態反向解析】：<code>GroundEffectService.lua</code> 支援同名變體法術。</li>
+<li>[x] 【全套門禁 100% 綠燈通過】：Lua 78/78 PASS、Flow 92/92 PASS、Contracts 499/499 PASS。</li>
+<li>[x] 【產包構建完成】：最新 Alpha 8.7 套件產出至 <code>Dist/</code>。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-09-19-retail-1210-alpha-87-ctrlalt">2026-09-19 多進度儲存點：Retail 12.1.0 Alpha 8.7 快捷懸停 (CTRL+ALT) 跨職業法術加入自身光環目錄分類修復</h2>
 <ul>
 <li>current-of-truth：全面推升至 Retail 12.1.0 Alpha 8.7。少年欸回報以 CTRL+ALT 對 ICON 點選「加入自身光環監控」後出現已加入提示但自身清單看不到，且直覺指出「該法術若手動輸入會出現是否加入的確認詢問，是否與這有關係」。<ol>
 <li>根因剖析與架構修復：</li>

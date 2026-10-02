@@ -705,6 +705,41 @@
 <li>相容規則合併為 AuraGroup；player/target 各保留第一條 Slot PoC。</li>
 <li>舊容器停用後只保留計數，不保存每次重建的 Lua 配對表。</li>
 </ul>
+<h2 id="asm-inspired-low-level-optimization">組語視角底層效能最佳化規範（ASM-Inspired Low-Level Optimization）</h2>
+<blockquote>
+<p><strong>⚠️ 核心防禦鐵律（Zero-Side-Effects &amp; Non-Regression Iron Rule）：</strong>
+所有底層效能優化僅限於「代碼執行效率、記憶體佈局與 JIT 快取親和性」，<strong>絕對禁止改變任何既有業務邏輯、禁止引發任何副作用、禁止造成任何功能缺失或運行錯誤</strong>。每一次底層調整必須 100% 通過 499+ 項合約與回歸驗證。</p>
+</blockquote>
+<h3 id="1-local-register-pinning">1. 虛擬暫存器釘定（Local Register Pinning）</h3>
+<ul>
+<li><strong>組語原理</strong>：Lua 5.1/LuaJIT 是 Register-Based VM。<code>local</code> 變數對應虛擬暫存器 <code>R(A)</code>，LuaJIT 編譯為直接 CPU 暫存器（如 <code>RAX</code>, <code>RDX</code>）。全域變數 <code>_G</code> 則是雜湊字串查表與多次解引用。</li>
+<li><strong>規範</strong>：熱路徑中使用的高頻 API（如 <code>math.min</code>, <code>math.max</code>, <code>pcall</code>, <code>C_UnitAuras</code> 等）必須在模組頂部釘定為局部變數。</li>
+</ul>
+<h3 id="2-register-pressure-control">2. 熱路徑暫存器壓力控制（Register Pressure Control）</h3>
+<ul>
+<li><strong>組語原理</strong>：x86_64 僅有 16 個通用暫存器。若單一熱函式過度臃腫宣告過多區域變數，會引發 Register Spilling（溢出至 Stack 記憶體），產生額外的 <code>mov [rsp], reg</code> 開銷。</li>
+<li><strong>規範</strong>：戰鬥高頻核心函式（事件分發、光環比對、排版更新）的活躍區域變數數量控制在 8~10 個以內，保持邏輯精純。</li>
+</ul>
+<h3 id="3-pointer-chasing-hoisting">3. 多層指針追蹤提升（Pointer Chasing Hoisting）</h3>
+<ul>
+<li><strong>組語原理</strong>：Lua 中 <code>a.b.c.d</code> 是連續 3 次獨立的雜湊查詢，在 Heap 記憶體中來回跳躍，極易破壞 CPU L1/L2 快取行（Cache Line）。</li>
+<li><strong>規範</strong>：迴圈與高頻函式中，不可在迴圈體內重複存取多層巢狀結構，必須在迴圈外一次性提升為區域指標。</li>
+</ul>
+<h3 id="4-array-part-spatial-locality">4. 連續整數陣列空間局部性（Array Part Spatial Locality）</h3>
+<ul>
+<li><strong>組語原理</strong>：Table 的 Array Part 底層為純 C 連續陣列，存取對齊 <code>[base + idx * 16]</code>，CPU 64-Byte Cache Line 可一次載入 4 個 <code>TValue</code>，享受硬體預讀（Hardware Prefetcher）最高吞吐。Hash Part 則離散分佈。</li>
+<li><strong>規範</strong>：批次排隊、圖示順序與狀態清單，一律優先使用 <code>table.create(N, 0)</code> 配置連續整數陣列（<code>1..N</code>）。</li>
+</ul>
+<h3 id="5-zero-hot-path-closures">5. 熱路徑零閉包（Zero Hot-Path Closures）</h3>
+<ul>
+<li><strong>組語原理</strong>：C/組語中呼叫函式僅為一條 <code>call</code> 指令。而在 Lua 中，熱路徑內宣告的匿名函式 <code>function() ... end</code> 每次執行都會 <code>malloc</code> 一個全新的 Closure 物件與 Upvalue 表。</li>
+<li><strong>規範</strong>：熱路徑中嚴禁動態宣告匿名閉包。一律改為靜態具名函式，上下文由參數傳遞。</li>
+</ul>
+<h3 id="6-monomorphic-types-jit-guard-stabilization">6. 單一型態保護（Monomorphic Types &amp; JIT Guard Stabilization）</h3>
+<ul>
+<li><strong>組語原理</strong>：LuaJIT Trace Compiler 依賴型態假設生成本機機器碼。若變數型態在 <code>number</code>、<code>nil</code>、<code>boolean</code> 間動態變化，會導致 Guard 檢查失敗並觸發 Trace Abort，強制回退至直譯器。</li>
+<li><strong>規範</strong>：狀態物件的欄位型態必須 100% 保持單一（Monomorphic），無值時使用明確的預設值或哨兵值（Sentinel），保護 JIT 熱機器碼穩定常駐。</li>
+</ul>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>

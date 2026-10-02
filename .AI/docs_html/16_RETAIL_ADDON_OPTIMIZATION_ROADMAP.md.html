@@ -626,6 +626,51 @@
 <li>Phase 4：嚴格離線流程與遊戲內報告入口完成；本輪 <code>all</code> suite 為 17/17。</li>
 <li>尚未完成：<code>_ptr_</code> 實機 RQA、taint/Forbidden、實際 sound、Reload UI 與效能簽收。</li>
 </ul>
+<h2 id="p5asm-inspired-optimization">優先權 P5：組語視角底層極限最佳化（ASM-Inspired Optimization）</h2>
+<blockquote>
+<p><strong>⚠️ 核心防禦鐵律（Zero-Side-Effects &amp; Non-Regression Iron Rule）：</strong>
+所有底層效能優化僅限於「代碼執行效率、記憶體佈局與 JIT 快取親和性」，<strong>絕對禁止改變任何既有業務邏輯、禁止引發任何副作用、禁止造成任何功能缺失或運行錯誤</strong>。每一次底層調整必須 100% 通過 499+ 項合約與回歸驗證。</p>
+</blockquote>
+<ol>
+<li><strong>虛擬暫存器釘定（Local Register Pinning）</strong>：</li>
+<li>將熱路徑（Hot Path）中所有高頻呼叫的暴雪 API、全域輔助函式（如 <code>math.min</code>, <code>math.max</code>, <code>pcall</code>, <code>C_UnitAuras</code>）於模組頂部提升為 <code>local</code> 變數。</li>
+<li>
+<p>使其在 Lua 虛擬機器中直接映射至虛擬暫存器（Virtual Registers），在 LuaJIT 編譯為直接 CPU 暫存器呼叫，徹底消除 <code>_G</code> 全域雜湊表尋址與記憶體解引用開銷。</p>
+</li>
+<li>
+<p><strong>熱路徑暫存器壓力控制（Register Pressure &amp; Spilling Guard）</strong>：</p>
+</li>
+<li>審查高頻事件處理常式（如 <code>onUnitAura</code>、<code>onTargetChanged</code>、<code>AlertManager.flushUpdates</code>、渲染器迴圈），將單一函式活躍的 <code>local</code> 變數數量精簡至 8~10 個以內。</li>
+<li>
+<p>避免超過 x86_64 實體暫存器上限（16 個通用暫存器）而引發 Register Spilling（暫存器溢出至 Stack 記憶體）的額外 <code>mov [rsp], reg</code> 懲罰。</p>
+</li>
+<li>
+<p><strong>深層指針鏈提升（Pointer Chasing Hoisting）</strong>：</p>
+</li>
+<li>消除熱迴圈內部的多層巢狀結構存取（如 <code>EAM.db.config.iconSize</code> 或 <code>icon.rendered.layoutX</code>）。</li>
+<li>
+<p>在進入迴圈或高頻函式前將其提升為單層區域指標，保護 CPU L1/L2 Data Cache 預讀器（Hardware Prefetcher），消除跨堆（Heap）記憶體跳躍。</p>
+</li>
+<li>
+<p><strong>連續整數陣列空間局部性（Array Part Spatial Locality）</strong>：</p>
+</li>
+<li>所有批次掃描、優先順序清單與池化容器，一律優先使用 <code>table.create(N, 0)</code> 建立連續整數陣列（<code>1..N</code>）。</li>
+<li>
+<p>存取時直接對齊 C 語言連續記憶體指標偏移 <code>[R_base + R_index * 16]</code>，完全利用 CPU 64-Byte Cache Line 批次載入 4 個 <code>TValue</code>，杜絕雜湊桶離散分佈帶來的 Cache Thrashing。</p>
+</li>
+<li>
+<p><strong>熱路徑零閉包（Zero Hot-Path Closures）</strong>：</p>
+</li>
+<li>徹底杜絕在熱路徑（<code>OnUpdate</code>、事件回呼、排程迴圈）中宣告匿名閉包函式 <code>function() ... end</code>，防止 Lua 每次動態 <code>malloc</code> 建立 Closure 物件與 Upvalue 表。</li>
+<li>
+<p>一律採用靜態具名函式，上下文由參數（<code>self</code>, <code>data</code>）傳遞，使底層保持為純粹的函式跳躍（<code>call</code> 指令）。</p>
+</li>
+<li>
+<p><strong>單一型態保護（Monomorphic Types &amp; JIT Guard Stabilization）</strong>：</p>
+</li>
+<li>保持所有狀態物件欄位與函式回傳值型態絕對一致（Monomorphic），數值欄位預設給 <code>0</code> 或特定 Sentinel，不隨意在 <code>number</code>、<code>nil</code>、<code>boolean</code> 間震盪。</li>
+<li>防止 LuaJIT Trace Compiler 的型態守衛失敗（Guard Failure）引發 Trace Abort，使高頻代碼 100% 穩定常駐於 JIT 本機機器碼模式。</li>
+</ol>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>

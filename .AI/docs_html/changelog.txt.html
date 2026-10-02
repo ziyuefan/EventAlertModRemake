@@ -379,49 +379,132 @@
         <div class="changelog-container">
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.7 Custom Display Names, Native Aura Hot-Apply &amp; Slash CLI Overhaul</span>
-        <span class="changelog-date">📅 2026.09.19</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1.5][Alpha 8.8][Native C++ Math Acceleration, TimedSignalMap Scheduler &amp; 12.1.5 Pandemic Precision]</span>
+        <span class="changelog-date">📅 2026.10.03</span>
     </div>
     <div class="changelog-body">
 <ul class="changelog-mainlist">
-<li><strong>全模組自訂技能與法術名稱功能實裝 (Custom Display Names Across All Modules):</strong></li>
+<li><strong>【✨ 新增功能 (Features)】:</strong></li>
 <ul class="changelog-sublist">
-<li>全新支援自訂圖示顯示名稱 (簡稱)：滿足在圖示間距密集、緊湊排版時避免名稱過長互相遮擋的需求（例如可將「聖盾術」簡稱為「盾」、「斬殺」簡稱為「斬」）。</li>
-<li>條件設定視窗 (EAM_SpellConditionsFrame) 佈局全面升級：新增「自訂顯示名稱 (簡稱)」專屬輸入框，並將視窗高度擴展至 680px，開闊清爽零擁擠。</li>
-<li>清單列表即時標記：若該項目有設定自訂簡稱，設定清單將即時以「法術名稱 (|cff00ff96簡稱|r)」醒目標註，清單管理一目了然。</li>
-<li>全模組服務層深度整合：涵蓋自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻（含裝備欄位）與地面效果全流程，優先顯示玩家自訂名稱，留空自動還原預設法術/物品全稱。</li>
-<li>原生光環防覆蓋機制：針對 Retail 12.1.0 原生光環容器 (Native Aura) 實裝文字守護鉤子 (Text Guard Hook)，鎖定玩家自訂簡稱，防止暴雪底層預設光環名稱回寫覆蓋。</li>
-<li>多語系完整支援：繁中 (zhTW)、簡中 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU) 5 大語系詞條 100% 完整收錄與同步。</li>
-<li>原生光環自訂名稱分組繼承修復 (Native Aura Custom Name Group Separation Fix):</li>
-<li>徹底修復原生光環 (Native Aura) 下多光環合併進動態流動群組 (Flow Group) 時，自訂名稱被第 1 個未設定簡稱的法術暴力覆蓋為 nil 的重大缺陷。</li>
-<li>規則編譯器 (AuraRuleCompiler) 於 groupID 納入 customName 與 customIcon，凡有設定自訂名稱的光環自動分離出專屬群組，完整保留簡稱樣式。</li>
-<li>渲染器 (NativeAuraRenderer) 實裝自訂名稱專屬呈現，有自訂名稱時由子元件獨立顯示，不向暴雪註冊 SetSpellName，徹底杜絕暴雪底層 C++ 內核刷回原生法術全名。</li>
+<li>魔獸世界 12.1.5 正式服全面適配 (Retail 12.1.5 Patch Compatibility):</li>
+<li>TOC 介面版本支援正式升級：全面適配魔獸世界正式服 12.1.5 版本號（Interface: 120105），並持續無縫向下相容 12.1.0 及 12.0.7 客戶端。</li>
+<li>暴雪 12.1.5 原生 C++ 數學、字串與表格加速庫整合 (Native C++ Math, String &amp; Table Acceleration):</li>
+<li>實裝針對 Retail 12.1.5 暴雪原生底層 C++ 最佳化工具函數庫：</li>
+<li>數學加速：math.clamp、math.saturate、math.round、math.lerp、math.normalize、math.sign、math.remap、math.wrap、math.isfinite、math.isnan、math.isinf；</li>
+<li>字串加速：string.contains、string.ltrim、string.rtrim、string.startswith、string.endswith；</li>
+<li>表格加速：table.isempty、table.contains、table.indexof、table.removeunordered、table.removevalue、table.keys、table.values；</li>
+<li>防禦性向下相容 (Defensive Polyfills)：在舊版客戶端中自動啟用高效率 Lua 降級實作，兼具極致效能與跨版本無損相容性。</li>
+<li>原生 TimedSignalMap 零分配排程器升級 (Zero-Alloc TimedSignalMap Scheduler Engine):</li>
+<li>深度整合 12.1.5 C_Timer.NewTimedSignalMap 原生鍵值排程機制，在支援的客戶端上由暴雪 C++ 引擎直接託管圖示倒數與定時信號；</li>
+<li>舊版客戶端自動切換至自主維護的精準鍵值排程狀態機，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)，進一步降低垃圾回收 (GC) 開銷。</li>
+<li>12.1.5 原生 Pandemic 結餘窗口精確判斷 (12.1.5 Native Pandemic Carry-Over Duration Precision):</li>
+<li>採用 C_UnitAuras.GetRefreshCarryOverDuration 精準結餘時間計算，嚴格於結餘小於等於 30% 基礎持續時間時觸發 Pandemic 傳染補 Dot 提醒，避免提前補 Dot 浪費剩餘時間；</li>
+<li>舊版客戶端平滑降級至 C_UnitAuras.GetRefreshExtendedDuration 擴展時長評估，確保全版本 DoT 補法時機精準無誤。</li>
+<li>原生光環 Pandemic 動態特效支援 (Native Aura Active/Enter/Leave Animations):</li>
+<li>深度適配 12.1.5 Native Aura 容器之 AddPandemicActiveAnimation、AddPandemicEnterAnimation 與 AddPandemicLeaveAnimation 原生動畫 API，帶來更細緻、更流暢的進入與退出補 Dot 視覺反饋。</li>
+<li>音效警示高頻頻率限制防護 (Aura Sound Alert Throttle Protection):</li>
+<li>於 C_UnitAuras.AddAuraSound 註冊時加入 throttleSeconds 參數（預設 0.3s），杜絕高頻率觸發或層數暴漲時引發連續音效轟炸的現象。</li>
+<li>12.1.5 原生像素對齊與初始化防閃爍 (Native Pixel Snapping &amp; Zero-Flicker Frame Initialization):</li>
+<li>支援 SetRoundLayoutToNearestPixel 原生像素捨入，圖示與文字邊界物理像素對齊更加清晰銳利；</li>
+<li>引入 CreateFrameWithOptions 隱藏預建立機制，徹底消除圖示首次生成時的瞬間畫面閃爍。</li>
 </ul>
-<li><strong>原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply &amp; Zero Reload):</strong></li>
+<li><strong>【⚡ 體驗優化 (Improvements)】:</strong></li>
 <ul class="changelog-sublist">
-<li>徹底修復 Retail 12.1.0 原生光環 (Native Aura) 在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 /reload 才能生效的重大缺陷。</li>
-<li>實裝 NativeAuraRenderer 弱引用按鈕註冊池 (Weak Table Buttons Pool)，於光環按鈕初始化時安全保留 FontString 參照，暴雪銷毀按鈕時由 Lua GC 自動釋放，零記憶體洩漏。</li>
-<li>實裝 updateButtonFonts 零配額熱套用機制，拉動滑桿時直接調用 FontString:SetFont 原位更新畫面上所有活躍光環文字，零延遲、無需銷毀容器、不消耗 18 次配額，徹底擺脫 /reload 泥潭。</li>
-<li>優化 Options.lua 滑桿提交流程與文字通知路由，字型大小滑桿放開時不再觸發無謂的容器重建，杜絕觸發 18 次配額上限導致系統鎖死的隱患。</li>
-<li>統一全專案法術名稱字型大小取值邏輯，完善規則編譯器指紋 (buildVisualFingerprint) 與樣式快照 (snapshotStyle)，確保新舊光環按鈕字型大小 100% 一致。</li>
-</ul>
-<li><strong>全語系 CLI 命令列重構與跳脫字元破裂修復 (Slash Commands Localization &amp; Pipe Escape Fix):</strong></li>
-<ul class="changelog-sublist">
-<li>5 大語系（zhTW、zhCN、enUS、koKR、ruRU）說明文字全在地化，徹底剔除生硬英文。</li>
-<li>修復魔獸聊天框「&lt;spellID|target|...&gt;」因「|t」被當作 Texture 貼圖跳脫碼而破裂為「&lt;spellIDarget&gt;」的嚴重瑕疵，改為標準斜線「&lt;spell/target/cd/item/ground&gt;」。</li>
-<li>補齊「/eam preview」、「/eam rune」、「/eam add ground」與「/eam lang」即時語系切換指令。</li>
-</ul>
-<li><strong>快捷懸停加入 (CTRL+ALT) 跨職業法術歸類為自身光環修復 (Ctrl+Alt Quick-Add Cross-Class Spell to Self Auras Catalog Fix):</strong></li>
-<ul class="changelog-sublist">
-<li>徹底修復使用 CTRL+ALT 快捷懸停對非本職業法術/光環點選「加入自身光環監控」時，因遺漏傳遞 catalogScope 導致法術被自動歸入「跨職業清單」、在自身清單第一頁無法看見的缺陷。</li>
-<li>實裝意圖明確注入：透過快捷選單加入光環時，明確賦予 catalogScope = &quot;SELF&quot; 與 fromPlayer = true，100% 確保條目顯示於自身增益/減益清單（第 1 分頁）。</li>
-<li>實裝舊項目自動校正：若先前已被誤歸類至跨職業清單之法術，再次透過快捷鍵加入時自動更新分類為自身光環並觸發設定即時重繪。</li>
+<li>移除過時暴雪全域函數調用：消除對 Blizzard_Deprecated 的任何引用依賴，提升插件在未來大版本演進時的穩定性與獨立性。</li>
+<li>原生狀態物件保護加固：防禦性隔離 AuraState 之 timer 與 source 表格，提升極限負載與非標準光環事件下的抗崩潰能力。</li>
 </ul>
 </ul>
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.6 Live Preview Overhaul, Modern Dropdowns &amp; System Diagnostics</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names &amp; Target Ghost Purge]</span>
+        <span class="changelog-date">📅 2026.09.27</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>【✨ 新增功能 (Features)】:</strong></li>
+<ul class="changelog-sublist">
+<li>角色屬性與吸收量監控全面升級 (Player Stat &amp; Absorb Monitor Upgrade):</li>
+<li>模組即時開關與生命週期修復：切換開關即時隱藏框架並停止輪詢；底層 Native Aura 結構變更時提供醒目 /reload 警示與一鍵重載按鈕。</li>
+<li>移動所有屬性與主錨點 GPU 樹狀零延遲同步聯動：拖曳主錨點時，全組屬性框架即時同步跟隨移動。</li>
+<li>依附目標框架多選：支援 EAM 主錨點、UIParent、玩家頭像、目標頭像、焦點頭像、寵物頭像與 9 大方位錨點。</li>
+<li>預設停用圖示：無圖示時自適應緊湊收縮，僅呈現數值文字、名稱標籤與進度條。</li>
+<li>進度條雙色漸層渲染 (SetGradient API)：支援水平與垂直雙色漸層混色渲染，並相容經典降級。</li>
+<li>全項自選色彩：進度條主色、次色、數值文字、名稱標籤均提供自選調色盤。</li>
+<li>屬性堆疊自選排序：清單新增上移、下移、重設控制，即時更新畫面堆疊順序。</li>
+<li>全模組自訂技能與法術名稱功能實裝 (Custom Display Names Across All Modules):</li>
+<li>全新支援自訂圖示顯示名稱 (簡稱)：滿足在圖示間距密集、緊湊排版時避免名稱過長互相遮擋的需求（例如可將「聖盾術」簡稱為「盾」、「斬殺」簡稱為「斬」）。</li>
+<li>條件設定視窗 (EAM_SpellConditionsFrame) 佈局全面升級：新增「自訂顯示名稱 (簡稱)」專屬輸入框，並將視窗高度擴展至 680px，開闊清爽零擁擠。</li>
+<li>清單列表即時標記：若該項目有設定自訂簡稱，設定清單將即時以「法術名稱 (|cff00ff96簡稱|r)」醒目標註，清單管理一目了然。</li>
+<li>全模組服務層深度整合：涵蓋自身 Buff、自身 Debuff、目標 Debuff、技能冷卻、物品冷卻（含裝備欄位）與地面效果全流程，優先顯示玩家自訂名稱，留空自動還原預設法術/物品全稱。</li>
+<li>原生光環防覆蓋機制：針對 Retail 12.1.0 原生光環容器 (Native Aura) 實裝文字守護鉤子 (Text Guard Hook)，鎖定玩家自訂簡稱，防止暴雪底層預設光環名稱回寫覆蓋。</li>
+<li>全語系 CLI 命令列擴充 (Slash Commands Expansion):</li>
+<li>補齊「/eam preview」、「/eam rune」、「/eam add ground」與「/eam lang」即時語系切換指令。</li>
+<li>高頻熱路徑追蹤與存檔持久化 (Hot Path Frequency Profiler &amp; SavedVariables Metrics):</li>
+<li>依照效能調優指引，於 Core/Performance 模組實裝零開銷（Zero-Alloc）高頻路徑追蹤器，精確統計運行期間各事件分發、服務掃描、渲染繪製與排程器之實際呼叫次數與每秒頻率 (CPS)。</li>
+<li>存檔深度整合：於 SavedVariables 自動記錄本次連線（lastSession）與跨連線累積（cumulative）呼叫數據及累積運行秒數，於登出 (PLAYER_LOGOUT) 時自動安全合併存檔。</li>
+<li>偵錯模組全面接入：DebugState 快照與 PromptExport 診斷視窗同步匯出結構化 hotPathMetrics JSON，一鍵掌握系統執行熱點（Top Hot Paths）。</li>
+<li>全新命令列工具實裝：新增「/eam metrics」（或「/eam hotpaths」），支援即時印出 Top 10 高頻路徑與呼叫頻率、支援「/eam metrics reset」重設計數與「/eam metrics save」即時寫入存檔。</li>
+<li>暴雪官方引擎 Profiler 深度整合：實裝 C_AddOnProfiler 遙測探針，於「/eam metrics」與診斷匯出中無縫呈現暴雪 C++ 引擎實測之外掛毫秒耗時、近期均值、歷史峰值與幀掉落刺波（&gt;1ms/5ms），完美形成「宏觀 CPU 毫秒 + 微觀呼叫次數」雙軌觀測體系。</li>
+</ul>
+<li><strong>【⚡ 體驗優化 (Improvements)】:</strong></li>
+<ul class="changelog-sublist">
+<li>高頻冷卻事件合併排程與警示更新零分配流水線 (Cooldown Event Coalescing &amp; Zero-Allocation Alert Pipeline):</li>
+<li>警示排隊佇列零記憶體分配 (Zero-Allocation Queue)：AlertManager 採用持久化槽位（persistentSlots），消除高頻警示更新時每秒數千次的臨時 Table 堆疊分配，根除 Lua GC 垃圾回收卡頓隱患。</li>
+<li>冷卻狀態髒檢查與無效重繪阻斷 (Cooldown Dirty State Diffing &amp; Render Suppression)：CooldownService 與 ItemCooldownService 於狀態刷新前嚴格快照並比對顯示、啟用、佔位、灰階、發光、充能與時間數據，在資料未實質變更時全面抑制狀態廣播與後續繪製，大幅降低戰鬥高頻冷卻事件下的渲染開銷。</li>
+<li>全域冷卻事件同幀合併排程 (Frame-Level Cooldown Event Coalescing)：針對 SPELL_UPDATE_COOLDOWN、ACTIONBAR_UPDATE_COOLDOWN 與 BAG_UPDATE_COOLDOWN 等無法術 ID 負載之高頻全域事件實裝同幀合併調度，杜絕同一幀/Tick 內多次重複的全清單遍歷，極大平滑團隊副本與大秘境高負載環境下的幀率。</li>
+<li>原生光環字型大小即時熱套用修復 (Native Aura Font Size Live Hot-Apply &amp; Zero Reload):</li>
+<li>徹底修復 Retail 12.1.0 原生光環 (Native Aura) 在設定介面調整「秒數倒數字型大小」、「堆疊層數字型大小」或「法術名稱字型大小」後無法即時反應、必須 /reload 才能生效的重大缺陷。</li>
+<li>實裝 NativeAuraRenderer 弱引用按鈕註冊池 (Weak Table Buttons Pool)，於光環按鈕初始化時安全保留 FontString 參照，暴雪銷毀按鈕時由 Lua GC 自動釋放，零記憶體洩漏。</li>
+<li>實裝 updateButtonFonts 零配額熱套用機制，拉動滑桿時直接調用 FontString:SetFont 原位更新畫面上所有活躍光環文字，零延遲、無需銷毀容器、不消耗 18 次配額，徹底擺脫 /reload 泥潭。</li>
+<li>優化 Options.lua 滑桿提交流程與文字通知路由，字型大小滑桿放開時不再觸發無謂的容器重建，杜絕觸發 18 次配額上限導致系統鎖死的隱患。</li>
+<li>統一全專案法術名稱字型大小取值邏輯，完善規則編譯器指紋 (buildVisualFingerprint) 與樣式快照 (snapshotStyle)，確保新舊光環按鈕字型大小 100% 一致。</li>
+<li>聊天框跳脫字元破裂修復 (Chat Pipe Escape Fix):</li>
+<li>修復魔獸聊天框「&lt;spellID|target|...&gt;」因「|t」被當作 Texture 貼圖跳脫碼而破裂為「&lt;spellIDarget&gt;」的嚴重瑕疵，改為標準斜線「&lt;spell/target/cd/item/ground&gt;」。</li>
+</ul>
+<li><strong>【🐛 缺陷修復 (Bug Fixes)】:</strong></li>
+<ul class="changelog-sublist">
+<li>角色屬性文字與進度條調色盤按鈕回呼修復 (Player Stat Text &amp; Bar Color Swatch Closure Scope Fix):</li>
+<li>徹底修復在角色屬性面板點擊「數值文字顏色」、「名稱文字顏色」或「進度條主色/漸層色」按鈕開啟調色盤時，引發 attempt to index global &#x27;valColorBtn&#x27; (a nil value) 的重大錯誤。</li>
+<li>將按鈕 OnClick 回呼全面改為以 function(btn) 接收自身元件參照，徹底根治 Lua 區域變數在同一陳述句內閉包宣告時未綁定至 Local Scope 而誤查全域變數 _G 的作用域陷阱。</li>
+<li>目標光環切換目標即時刷新、殘留圖示清理與倒數鬼影根治 (Target Aura Target-Switching Live Refresh, Ghost Icon Purge &amp; Countdown Ghost Elimination):</li>
+<li>徹底根除切換目標時原目標光環圖示殘留或秒數仍持續倒數（幽靈圖示殘留與秒數倒數鬼影）的頑疾：</li>
+<li>1. 雙模 Native 12.1 原生容器生命週期重置：AuraContainerService.onTargetChanged 註冊監聽 PLAYER_TARGET_CHANGED，目標變更時即時重設原生容器 SetEnabled(false) -&gt; SetUnit(&quot;target&quot;) -&gt; SetEnabled(true) -&gt; Update()，無目標時即時 Hide() 與停用，徹底杜絕 C++ 底層 AuraContainer 在目標改變時遺漏切換而使舊目標光環與原生秒數倒數持續運行的缺陷；</li>
+<li>2. Legacy 渲染器即時同步清空與秒數計時器解綁：於 AuraService.onTargetChanged、clearUnit(&quot;target&quot;) 與 renderInactiveUnit(&quot;target&quot;) 入口直接調用 Renderer.clearFrame(targetAura)，將當前畫面所有目標光環圖示、DurationAdapter 文字綁定與原生計時器立即同步釋放、隱藏並返還圖示池，徹底杜絕異步批次排程延遲導致舊目標光環殘留倒數；</li>
+<li>3. AlertManager 佇列過期暫存排空：新增 AlertManager.clearPending(targetAura)，於切換目標時同步作廢並釋放所有尚未 Flush 的目標光環狀態變更，杜絕舊目標的過期更新在下一個 Tick 重新喚醒圖示；</li>
+<li>4. Native 雙重保險守衛邊界校正：修正 AlertManager 誤將 targetAura 當作 Native 光環攔截的邊界缺陷（原生渲染器僅託管自身光環），確保 Legacy 目標光環關閉與釋放事件暢通無阻；</li>
+<li>5. renderInactiveAlert 補齊兜底事件派發，即使底層狀態已提前回收或為 nil，仍保證向 targetAura 派發 shown = false 關閉通知；</li>
+<li>6. Renderer.render 重構圖示隱藏與釋放流程，將 shown = false 判定前置於戰鬥阻斷檢查之前，杜絕戰鬥中隱藏圖示被 combatDeferred 擱置而永久洩漏；</li>
+<li>7. IconPool.release 全面清空 stackText、nameText 與 texture 貼圖並重設錨點與透明度，徹底杜絕舊文字與圖示殘留於畫面上。</li>
+<li>徹底修復切換目標時目標光環無法即時更新最新光環的缺陷：修正 fullScanUnit、renderInactiveUnit 與 clearUnit 狀態遍歷與全量對齊，確保切換目標時舊目標光環 100% 即時清除，新目標光環立即掃描呈現。</li>
+<li>修正 readAuraIntoState 將目標有益增益誤判為減益的嚴重問題，並實裝 alertMatchesAura 嚴格過濾有害/有益極性與施法者歸屬 (fromPlayer)，防止同法術 ID 之增益與減益跨極性誤觸發。</li>
+<li>補齊 Native 與 Legacy 雙模後端事件隔離生命週期 (registerLegacyEvents / unregisterLegacyEvents)，杜絕事件重複綁定或切換遺漏。</li>
+<li>技能冷卻與地面效果第一格消失及移動模式坐標漂移根治 (Alert Layout Slot 1 Zero-Anchor Guard &amp; Drag Coordinate Normalization Fix):</li>
+<li>徹底修復技能冷卻與地面效果第一格槽位 (Slot 1) 首次渲染時物理消失的重大缺陷：消除預熱與寄生判斷在原點 (0, 0) 下誤判略過 SetPoint 的雙重死鎖，引入 GetNumPoints() == 0 物理錨點計數守衛與快取重置，確保 Slot 1 必定具有物理錨點並穩定顯示。</li>
+<li>徹底根治暴雪原生 StopMovingOrSizing 強制改寫 BOTTOMLEFT 導致的幾何大漂移：將 OnDragStop 嚴格換算並重設為相對於 UIParent 之 CENTER 錨點，並修正 Lua 多回傳值截斷導致 Y 坐標被強制重設為 0 的重大缺陷；SavedVariables.normalizeLayout 自動校正歷史存檔中的 BOTTOMLEFT 坐標，徹底終結動態增減圖示時框架位移的問題。</li>
+<li>原生光環自訂名稱分組繼承修復 (Native Aura Custom Name Group Separation Fix):</li>
+<li>徹底修復原生光環 (Native Aura) 下多光環合併進動態流動群組 (Flow Group) 時，自訂名稱被第 1 個未設定簡稱的法術暴力覆蓋為 nil 的重大缺陷。</li>
+<li>規則編譯器 (AuraRuleCompiler) 於 groupID 納入 customName 與 customIcon，凡有設定自訂名稱的光環自動分離出專屬群組，完整保留簡稱樣式。</li>
+<li>渲染器 (NativeAuraRenderer) 實裝自訂名稱專屬呈現，有自訂名稱時由子元件獨立顯示，不向暴雪註冊 SetSpellName，徹底杜絕暴雪底層 C++ 內核刷回原生法術全名。</li>
+<li>快捷懸停加入 (CTRL+ALT) 跨職業法術歸類為自身光環修復 (Ctrl+Alt Quick-Add Cross-Class Spell to Self Auras Catalog Fix):</li>
+<li>徹底修復使用 CTRL+ALT 快捷懸停對非本職業法術/光環點選「加入自身光環監控」時，因遺漏傳遞 catalogScope 導致法術被自動歸入「跨職業清單」、在自身清單第一頁無法看見的缺陷。</li>
+<li>實裝意圖明確注入：透過快捷選單加入光環時，明確賦予 catalogScope = &quot;SELF&quot; 與 fromPlayer = true，100% 確保條目顯示於自身增益/減益清單（第 1 分頁）。</li>
+<li>實裝舊項目自動校正：若先前已被誤歸類至跨職業清單之法術，再次透過快捷鍵加入時自動更新分類為自身光環並觸發設定即時重繪。</li>
+<li>地面效果法術圖示解析、清單排版與順序同步修復 (Ground Effect Spell Presentation, Layout &amp; Order Sync Fix):</li>
+<li>徹底修復部分地面技能（如暴風雪變體 ID）在登入初期因遊戲底層資訊尚未載入而顯示為齒輪圖示「地面技能」的問題；實裝多層原生降級解析與渲染層兜底保護，確保圖示與名稱 100% 正確顯示。</li>
+<li>強化自然數排序 (1..N) 保證與批次派發，設定介面調整上下順位或數字時，畫面圖示即時同步零延遲重排。</li>
+<li>預覽牛頭人避讓與遮蔽根治：徹底修復開啟設定介面或移動模式時，預覽牛頭人 (previewIcons) 覆蓋在真實預渲染圖示之上導致第 1 格（如冰霜之球）被完全遮蔽、第 2 格文字重疊為「地暴風雪」的重大缺陷。實裝智能避讓，當框架有真實圖示時強制隱藏牛頭人，綠色移動框精準包裹真實技能，第 1 格最右側完整清晰展示。</li>
+<li>歷史幽靈法術自動清理與清單解鎖：於 SavedVariables 存檔自動清除歷史筆誤 19306（暴風雪舊版筆誤）、19036 與 343292（火焰之環舊版筆誤）；並在設定介面清單放寬合法數字 ID 顯示，杜絕未知/舊法術在介面隱形導致無法手動點選 [X] 刪除的問題。殘留項目清除後，清單與畫面圖示順序自動回正為連續自然數 (1..N)。</li>
+</ul>
+<li><strong>【🌐 在地化支援 (Localization)】:</strong></li>
+<ul class="changelog-sublist">
+<li>5 大語系（zhTW、zhCN、enUS、koKR、ruRU）說明文字全在地化，徹底剔除生硬英文，詞條 100% 完整收錄與同步。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.6][Live Preview Overhaul, Modern Dropdowns &amp; System Diagnostics]</span>
         <span class="changelog-date">📅 2026.09.14</span>
     </div>
     <div class="changelog-body">
@@ -544,7 +627,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization]</span>
         <span class="changelog-date">📅 2026.09.12</span>
     </div>
     <div class="changelog-body">
@@ -573,7 +656,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Full Theme Visual Overhaul, Modern WoW Gradient Fix &amp; Subwindow Theme Sync</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][Full Theme Visual Overhaul, Modern WoW Gradient Fix &amp; Subwindow Theme Sync]</span>
         <span class="changelog-date">📅 2026.09.12</span>
     </div>
     <div class="changelog-body">
@@ -600,7 +683,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power &amp; Live Preview</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power &amp; Live Preview]</span>
         <span class="changelog-date">📅 2026.09.12</span>
     </div>
     <div class="changelog-body">
@@ -635,7 +718,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Native Curve Architecture &amp; Dynamic Visual Immersion</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][Native Curve Architecture &amp; Dynamic Visual Immersion]</span>
         <span class="changelog-date">📅 2026.09.08</span>
     </div>
     <div class="changelog-body">
@@ -674,7 +757,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility &amp; Stat Hardening</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.4][2D Grid Layout, Cooldown Combat Visibility &amp; Stat Hardening]</span>
         <span class="changelog-date">📅 2026.09.04</span>
     </div>
     <div class="changelog-body">
@@ -717,7 +800,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog &amp; Multidimensional Group Management</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.3][Next-Gen Spell Catalog &amp; Multidimensional Group Management]</span>
         <span class="changelog-date">📅 2026.08.28</span>
     </div>
     <div class="changelog-body">
@@ -748,7 +831,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem &amp; Zero-Delay Font Apply</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.2][LibSharedMedia Full Ecosystem &amp; Zero-Delay Font Apply]</span>
         <span class="changelog-date">📅 2026.08.27</span>
     </div>
     <div class="changelog-body">
@@ -778,7 +861,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.1 Cooldown Zero-Alpha Mode &amp; Combat Stat Memory Fallbacks</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.1][Cooldown Zero-Alpha Mode &amp; Combat Stat Memory Fallbacks]</span>
         <span class="changelog-date">📅 2026.08.26</span>
     </div>
     <div class="changelog-body">
@@ -819,7 +902,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.0 Independent Stat Positioning &amp; Layout Control</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.0][Independent Stat Positioning &amp; Layout Control]</span>
         <span class="changelog-date">📅 2026.08.25</span>
     </div>
     <div class="changelog-body">
@@ -845,7 +928,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.9 Full UI Hover Tooltips &amp; Center Reset &amp; Showcase</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.9][Full UI Hover Tooltips &amp; Center Reset &amp; Showcase]</span>
         <span class="changelog-date">📅 2026.08.24</span>
     </div>
     <div class="changelog-body">
@@ -870,7 +953,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.8 Player Stats &amp; Custom Icons &amp; Classic Preview</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.8][Player Stats &amp; Custom Icons &amp; Classic Preview]</span>
         <span class="changelog-date">📅 2026.08.24</span>
     </div>
     <div class="changelog-body">
@@ -913,7 +996,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.7 Interactive Frame Anchors &amp; Layout Management</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.7][Interactive Frame Anchors &amp; Layout Management]</span>
         <span class="changelog-date">📅 2026.08.24</span>
     </div>
     <div class="changelog-body">
@@ -926,7 +1009,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.5 UI &amp; Feature Overhaul</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.5][UI &amp; Feature Overhaul]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -941,7 +1024,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.4 Rune / Ground Family</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.4][Rune &amp; Ground Family]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -954,7 +1037,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.3 Charge Count Layout</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.3][Charge Count Layout]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -967,7 +1050,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.2 Charge Hotfix</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.2][Charge Hotfix]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -979,7 +1062,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.1</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.1]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -992,7 +1075,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 7 Resource Hotfix</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7][Resource Hotfix]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -1004,7 +1087,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 7 Player Resource Module</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7][Player Resource Module]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -1017,7 +1100,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 7</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -1029,7 +1112,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 6 Cooldown Activation</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 6][Cooldown Activation]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -1040,7 +1123,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 6 Target Aura Diagnostics</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 6][Target Aura Diagnostics]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
@@ -1052,7 +1135,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 6 Player Resource Runtime Follow-up</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 6][Player Resource Runtime Follow-up]</span>
         <span class="changelog-date">📅 2026.08.21</span>
     </div>
     <div class="changelog-body">
@@ -1066,7 +1149,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 6 Resource Follow-up</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 6][Resource Follow-up]</span>
         <span class="changelog-date">📅 2026.08.21</span>
     </div>
     <div class="changelog-body">
@@ -1086,7 +1169,33 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 6</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 6][職業資源設定生命週期]</span>
+        <span class="changelog-date">📅 2026.08.21</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>非戰鬥修改玩家職業資源設定後立即套用，不再以 /reload 作為必要步驟。</strong></li>
+<li><strong>戰鬥中保存設定並於離開戰鬥後合併套用；新增安全的百分比、字型、方向與門檻高亮套用。</strong></li>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 6][Resource Lifecycle Fix]</span>
+        <span class="changelog-date">📅 2026.08.21</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>玩家職業資源設定：</strong></li>
+<ul class="changelog-sublist">
+<li>非戰鬥修改設定後立即套用，不再要求每次變更都執行 /reload。</li>
+<li>戰鬥中設定先保存，離開戰鬥後合併套用一次；避免戰鬥中重建結構造成保護或污染風險。</li>
+<li>新增數值資源的門檻高亮與前景 metadata；Secret 資源仍只作原生狀態列顯示，不輸出原始數值。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 6]</span>
         <span class="changelog-date">📅 2026.08.14</span>
     </div>
     <div class="changelog-body">
@@ -1107,7 +1216,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 5 Follow-up</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 5][Follow-up]</span>
         <span class="changelog-date">📅 2026.08.14</span>
     </div>
     <div class="changelog-body">
@@ -1126,7 +1235,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 PTR8 Alpha 5</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 5][PTR8]</span>
         <span class="changelog-date">📅 2026.08.14</span>
     </div>
     <div class="changelog-body">
@@ -1146,7 +1255,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 PTR8 Alpha 4</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 4][PTR8]</span>
         <span class="changelog-date">📅 2026.08.13</span>
     </div>
     <div class="changelog-body">
@@ -1160,7 +1269,47 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  12.1.0 PTR8 Alpha 3</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 3][Follow-up AuraSound]</span>
+        <span class="changelog-date">📅 2026.08.13</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>Aura 細部設定新增共用素材與 Added、ApplicationsIncreased、Removed 三個 12.1 AuraSound 開關。</strong></li>
+<li><strong>全域 showSound 作為 master gate；container 與 sound fingerprint 分離，純音效更新不消耗 Native 容器配額。</strong></li>
+<li><strong>AuraSound registry 採 candidate 成功後交換；Add 失敗回滾，Remove 失敗保留 ID 供後續重試。</strong></li>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 3][Follow-up 小地圖 SVG 與主題]</span>
+        <span class="changelog-date">📅 2026.08.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>小地圖按鈕改用專案自有 SVG；SetSVG 不可用時回退內建問號圖示，保留左鍵、右鍵與拖曳操作。</strong></li>
+<li><strong>主設定新增 EAM、FF7、Windows XP 主題選擇，保存於 EAM_DB.config.theme。</strong></li>
+<li><strong>戰鬥中主題切換延後至 PLAYER_REGEN_ENABLED，不修改 Blizzard secure/protected frame。</strong></li>
+<li><strong>主題只改 EAM 自有視窗 chrome，七種監控邊框語意色維持獨立。</strong></li>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 3][Follow-up]</span>
+        <span class="changelog-date">📅 2026.08.12</span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-mainlist">
+<li><strong>本地化：</strong></li>
+<ul class="changelog-sublist">
+<li>新增完整 ruRU 字串 catalog，並以 enUS key parity 契約防止新功能字串遺漏。</li>
+<li>主設定面板新增語系下拉清單；Auto Detect 固定英文且為預設，選擇後即時刷新 EAM 自有文字。</li>
+<li>語系值保存於 EAM_DB.config.language；不在 click handler 自動呼叫 ReloadUI，避免混合語言 UI。</li>
+</ul>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 3][PTR8]</span>
         <span class="changelog-date">📅 2026.08.09</span>
     </div>
     <div class="changelog-body">
@@ -1187,7 +1336,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  12.1.0 PTR8 Alpha 2</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 2][PTR8]</span>
         <span class="changelog-date">📅 2026.08.08</span>
     </div>
     <div class="changelog-body">
@@ -1206,7 +1355,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  12.1.0 Alpha</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 1]</span>
         <span class="changelog-date">📅 2026.07.28</span>
     </div>
     <div class="changelog-body">
@@ -1224,7 +1373,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  12.1.0</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Zero-Alloc Architecture &amp; Shadow Host]</span>
         <span class="changelog-date">📅 2026.06.09</span>
     </div>
     <div class="changelog-body">
@@ -1254,7 +1403,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  12.0.7</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.0.7]</span>
         <span class="changelog-date">📅 2026.06.06</span>
     </div>
     <div class="changelog-body">
@@ -1276,7 +1425,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  12.0.7</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.0.7]</span>
         <span class="changelog-date">📅 2026.05.30</span>
     </div>
     <div class="changelog-body">
@@ -1301,7 +1450,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  12.0.7</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.0.7]</span>
         <span class="changelog-date">📅 2026.05.29</span>
     </div>
     <div class="changelog-body">
@@ -1317,14 +1466,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic MOP</span>
+        <span class="changelog-tag">🏷️ [Classic MOP    ]</span>
         <span class="changelog-date">📅 2025.11.26</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.11.26</span>
     </div>
     <div class="changelog-body">
@@ -1334,14 +1483,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic MOP</span>
+        <span class="changelog-tag">🏷️ [Classic MOP    ]</span>
         <span class="changelog-date">📅 2025.11.11</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.11.11</span>
     </div>
     <div class="changelog-body">
@@ -1358,14 +1507,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic MOP</span>
+        <span class="changelog-tag">🏷️ [Classic MOP    ]</span>
         <span class="changelog-date">📅 2025.11.05</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.11.05</span>
     </div>
     <div class="changelog-body">
@@ -1379,14 +1528,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic MOP</span>
+        <span class="changelog-tag">🏷️ [Classic MOP    ]</span>
         <span class="changelog-date">📅 2025.10.26</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.10.26</span>
     </div>
     <div class="changelog-body">
@@ -1398,14 +1547,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic MOP</span>
+        <span class="changelog-tag">🏷️ [Classic MOP    ]</span>
         <span class="changelog-date">📅 2025.10.22</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.10.22</span>
     </div>
     <div class="changelog-body">
@@ -1416,14 +1565,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.10.17</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic MOP</span>
+        <span class="changelog-tag">🏷️ [Classic MOP    ]</span>
         <span class="changelog-date">📅 2025.10.17</span>
     </div>
     <div class="changelog-body">
@@ -1435,14 +1584,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.10.03</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic MOP</span>
+        <span class="changelog-tag">🏷️ [Classic MOP    ]</span>
         <span class="changelog-date">📅 2025.10.03</span>
     </div>
     <div class="changelog-body">
@@ -1454,7 +1603,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.7.29</span>
     </div>
     <div class="changelog-body">
@@ -1468,7 +1617,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.3.16</span>
     </div>
     <div class="changelog-body">
@@ -1482,7 +1631,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.1.29</span>
     </div>
     <div class="changelog-body">
@@ -1494,14 +1643,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.1.10</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic CATA</span>
+        <span class="changelog-tag">🏷️ [Classic CATA   ]</span>
         <span class="changelog-date">📅 2025.1.10</span>
     </div>
     <div class="changelog-body">
@@ -1512,14 +1661,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  TWW</span>
+        <span class="changelog-tag">🏷️ [Retail  TWW    ]</span>
         <span class="changelog-date">📅 2025.1.9</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic CATA</span>
+        <span class="changelog-tag">🏷️ [Classic CATA   ]</span>
         <span class="changelog-date">📅 2025.1.9</span>
     </div>
     <div class="changelog-body">
@@ -1531,14 +1680,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  DF</span>
+        <span class="changelog-tag">🏷️ [Retail  DF    ]</span>
         <span class="changelog-date">📅 2023.03.23</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2023.03.23</span>
     </div>
     <div class="changelog-body">
@@ -1550,14 +1699,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  DF</span>
+        <span class="changelog-tag">🏷️ [Retail  DF    ]</span>
         <span class="changelog-date">📅 2023.02.24</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2023.02.24</span>
     </div>
     <div class="changelog-body">
@@ -1568,14 +1717,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  DF</span>
+        <span class="changelog-tag">🏷️ [Retail  DF    ]</span>
         <span class="changelog-date">📅 2023.02.18</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2023.02.18</span>
     </div>
     <div class="changelog-body">
@@ -1586,14 +1735,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  DF</span>
+        <span class="changelog-tag">🏷️ [Retail  DF    ]</span>
         <span class="changelog-date">📅 2022.12.22</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.12.22</span>
     </div>
     <div class="changelog-body">
@@ -1603,14 +1752,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  DF</span>
+        <span class="changelog-tag">🏷️ [Retail  DF    ]</span>
         <span class="changelog-date">📅 2022.11.18</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.11.18</span>
     </div>
     <div class="changelog-body">
@@ -1624,14 +1773,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.10.28</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  DF</span>
+        <span class="changelog-tag">🏷️ [Retail  DF    ]</span>
         <span class="changelog-date">📅 2022.10.28</span>
     </div>
     <div class="changelog-body">
@@ -1643,14 +1792,14 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.10.18</span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail  SL</span>
+        <span class="changelog-tag">🏷️ [Retail  SL    ]</span>
         <span class="changelog-date">📅 2022.10.18</span>
     </div>
     <div class="changelog-body">
@@ -1661,7 +1810,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.10.01</span>
     </div>
     <div class="changelog-body">
@@ -1673,7 +1822,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.09.27</span>
     </div>
     <div class="changelog-body">
@@ -1685,7 +1834,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.09.26</span>
     </div>
     <div class="changelog-body">
@@ -1699,7 +1848,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic WOTLKC</span>
+        <span class="changelog-tag">🏷️ [Classic WOTLKC]</span>
         <span class="changelog-date">📅 2022.08.22</span>
     </div>
     <div class="changelog-body">
@@ -1711,7 +1860,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic TBC</span>
+        <span class="changelog-tag">🏷️ [Classic TBC]</span>
         <span class="changelog-date">📅 2021.06.25</span>
     </div>
     <div class="changelog-body">
@@ -1726,7 +1875,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic TBC</span>
+        <span class="changelog-tag">🏷️ [Classic TBC]</span>
         <span class="changelog-date">📅 2021.06.22</span>
     </div>
     <div class="changelog-body">
@@ -1738,7 +1887,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic TBC</span>
+        <span class="changelog-tag">🏷️ [Classic TBC]</span>
         <span class="changelog-date">📅 2021.05.22</span>
     </div>
     <div class="changelog-body">
@@ -1751,7 +1900,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Classic TBC</span>
+        <span class="changelog-tag">🏷️ [Classic TBC]</span>
         <span class="changelog-date">📅 2021.05.21</span>
     </div>
     <div class="changelog-body">
@@ -1764,7 +1913,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2021.06.26</span>
     </div>
     <div class="changelog-body">
@@ -1776,7 +1925,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2021.04.14</span>
     </div>
     <div class="changelog-body">
@@ -1790,7 +1939,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.12.26</span>
     </div>
     <div class="changelog-body">
@@ -1807,7 +1956,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.11.17</span>
     </div>
     <div class="changelog-body">
@@ -1823,7 +1972,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.11.03</span>
     </div>
     <div class="changelog-body">
@@ -1835,7 +1984,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.11.01</span>
     </div>
     <div class="changelog-body">
@@ -1856,7 +2005,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.10.26</span>
     </div>
     <div class="changelog-body">
@@ -1879,7 +2028,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.10.18</span>
     </div>
     <div class="changelog-body">
@@ -1894,7 +2043,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.10.17</span>
     </div>
     <div class="changelog-body">
@@ -1913,7 +2062,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.10.04</span>
     </div>
     <div class="changelog-body">
@@ -1925,7 +2074,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.08.23</span>
     </div>
     <div class="changelog-body">
@@ -1938,7 +2087,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.08.22</span>
     </div>
     <div class="changelog-body">
@@ -1952,7 +2101,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ SL</span>
+        <span class="changelog-tag">🏷️ [SL]</span>
         <span class="changelog-date">📅 2020.08.16</span>
     </div>
     <div class="changelog-body">
@@ -1969,7 +2118,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2019.06.27</span>
     </div>
     <div class="changelog-body">
@@ -1985,7 +2134,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2019.06.07</span>
     </div>
     <div class="changelog-body">
@@ -1997,7 +2146,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.11.24</span>
     </div>
     <div class="changelog-body">
@@ -2009,7 +2158,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.11.05</span>
     </div>
     <div class="changelog-body">
@@ -2023,7 +2172,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.10.12</span>
     </div>
     <div class="changelog-body">
@@ -2044,7 +2193,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.10.02</span>
     </div>
     <div class="changelog-body">
@@ -2058,7 +2207,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.09.29</span>
     </div>
     <div class="changelog-body">
@@ -2072,7 +2221,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.09.03</span>
     </div>
     <div class="changelog-body">
@@ -2084,7 +2233,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.08.29</span>
     </div>
     <div class="changelog-body">
@@ -2100,7 +2249,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ BFA</span>
+        <span class="changelog-tag">🏷️ [BFA]</span>
         <span class="changelog-date">📅 2018.08.25</span>
     </div>
     <div class="changelog-body">
@@ -2116,7 +2265,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.09.01</span>
     </div>
     <div class="changelog-body">
@@ -2131,7 +2280,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.07.09</span>
     </div>
     <div class="changelog-body">
@@ -2145,7 +2294,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.07.01</span>
     </div>
     <div class="changelog-body">
@@ -2161,7 +2310,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.06.29</span>
     </div>
     <div class="changelog-body">
@@ -2174,7 +2323,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.06.26</span>
     </div>
     <div class="changelog-body">
@@ -2187,7 +2336,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.06.23</span>
     </div>
     <div class="changelog-body">
@@ -2201,7 +2350,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.06.21</span>
     </div>
     <div class="changelog-body">
@@ -2224,7 +2373,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.06.19</span>
     </div>
     <div class="changelog-body">
@@ -2236,7 +2385,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2017.06.16</span>
     </div>
     <div class="changelog-body">
@@ -2258,7 +2407,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.08.27</span>
     </div>
     <div class="changelog-body">
@@ -2281,21 +2430,21 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ 未完成</span>
+        <span class="changelog-tag">🏷️ [未完成]</span>
         <span class="changelog-date">📅 </span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ 未完成</span>
+        <span class="changelog-tag">🏷️ [未完成]</span>
         <span class="changelog-date">📅 </span>
     </div>
     <div class="changelog-body">
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ 未完成</span>
+        <span class="changelog-tag">🏷️ [未完成]</span>
         <span class="changelog-date">📅 </span>
     </div>
     <div class="changelog-body">
@@ -2305,7 +2454,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.08.22</span>
     </div>
     <div class="changelog-body">
@@ -2332,7 +2481,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.08.16</span>
     </div>
     <div class="changelog-body">
@@ -2347,7 +2496,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.08.11</span>
     </div>
     <div class="changelog-body">
@@ -2362,7 +2511,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.08.09</span>
     </div>
     <div class="changelog-body">
@@ -2381,7 +2530,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.08.01</span>
     </div>
     <div class="changelog-body">
@@ -2399,7 +2548,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.07.27</span>
     </div>
     <div class="changelog-body">
@@ -2437,7 +2586,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.07.26</span>
     </div>
     <div class="changelog-body">
@@ -2450,7 +2599,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ LEG</span>
+        <span class="changelog-tag">🏷️ [LEG]</span>
         <span class="changelog-date">📅 2016.07.25</span>
     </div>
     <div class="changelog-body">
@@ -2473,72 +2622,6 @@
 <li><strong>鳥D 日月能移除，只剩下星能。</strong></li>
 </ul>
 </div></div>
-<div class="changelog-card">
-    <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 3 follow-up</span>
-        <span class="changelog-date">📅 2026.08.12</span>
-    </div>
-    <div class="changelog-body">
-<ul class="changelog-mainlist">
-<li><strong>本地化：</strong></li>
-<ul class="changelog-sublist">
-<li>新增完整 ruRU 字串 catalog，並以 enUS key parity 契約防止新功能字串遺漏。</li>
-<li>主設定面板新增語系下拉清單；Auto Detect 固定英文且為預設，選擇後即時刷新 EAM 自有文字。</li>
-<li>語系值保存於 EAM_DB.config.language；不在 click handler 自動呼叫 ReloadUI，避免混合語言 UI。</li>
-</ul>
-</ul>
-</div></div>
-<div class="changelog-card">
-    <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 3 follow-up</span>
-        <span class="changelog-date">📅 2026.08.12</span>
-    </div>
-    <div class="changelog-body">
-<ul class="changelog-mainlist">
-<li><strong>小地圖按鈕改用專案自有 SVG；SetSVG 不可用時回退內建問號圖示，保留左鍵、右鍵與拖曳操作。</strong></li>
-<li><strong>主設定新增 EAM、FF7、Windows XP 主題選擇，保存於 EAM_DB.config.theme。</strong></li>
-<li><strong>戰鬥中主題切換延後至 PLAYER_REGEN_ENABLED，不修改 Blizzard secure/protected frame。</strong></li>
-<li><strong>主題只改 EAM 自有視窗 chrome，七種監控邊框語意色維持獨立。</strong></li>
-</ul>
-</div></div>
-<div class="changelog-card">
-    <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 3 follow-up</span>
-        <span class="changelog-date">📅 2026.08.13</span>
-    </div>
-    <div class="changelog-body">
-<ul class="changelog-mainlist">
-<li><strong>Aura 細部設定新增共用素材與 Added、ApplicationsIncreased、Removed 三個 12.1 AuraSound 開關。</strong></li>
-<li><strong>全域 showSound 作為 master gate；container 與 sound fingerprint 分離，純音效更新不消耗 Native 容器配額。</strong></li>
-<li><strong>AuraSound registry 採 candidate 成功後交換；Add 失敗回滾，Remove 失敗保留 ID 供後續重試。</strong></li>
-</ul>
-</div></div>
-<div class="changelog-card">
-    <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0</span>
-        <span class="changelog-date">📅 2026.08.21</span>
-    </div>
-    <div class="changelog-body">
-<ul class="changelog-mainlist">
-<li><strong>非戰鬥修改玩家職業資源設定後立即套用，不再以 /reload 作為必要步驟。</strong></li>
-<li><strong>戰鬥中保存設定並於離開戰鬥後合併套用；新增安全的百分比、字型、方向與門檻高亮套用。</strong></li>
-</ul>
-</div></div>
-<div class="changelog-card">
-    <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1 Alpha 6 Resource Lifecycle Fix</span>
-        <span class="changelog-date">📅 2026.08.21</span>
-    </div>
-    <div class="changelog-body">
-<ul class="changelog-mainlist">
-<li><strong>玩家職業資源設定：</strong></li>
-<ul class="changelog-sublist">
-<li>非戰鬥修改設定後立即套用，不再要求每次變更都執行 /reload。</li>
-<li>戰鬥中設定先保存，離開戰鬥後合併套用一次；避免戰鬥中重建結構造成保護或污染風險。</li>
-<li>新增數值資源的門檻高亮與前景 metadata；Secret 資源仍只作原生狀態列顯示，不輸出原始數值。</li>
-</ul>
-</ul>
-</div></div>
 </div>
     </div>
     <div id="doc-content-en" class="lang-content">
@@ -2547,11 +2630,21 @@
         <div class="changelog-container">
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.7 Custom Display Names, Native Aura Hot-Apply &amp; Slash CLI Overhaul</span>
-        <span class="changelog-date">📅 2026.09.19</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names &amp; Target Ghost Purge]</span>
+        <span class="changelog-date">📅 2026.09.27</span>
     </div>
     <div class="changelog-body">
 <ul class="changelog-mainlist">
+<li><strong>Player Stat &amp; Absorb Monitor Upgrade:</strong></li>
+<ul class="changelog-sublist">
+<li>Module Live Lifecycle &amp; Realtime Toggle: switching the module toggle immediately clears active frames and stops polling tickers; prominent /reload warning notice and one-click [Reload UI (/reload)] button displayed when underlying Native Aura containers require recreation.</li>
+<li>Group Synchronous Mover Drag: child frames parented to group anchor for lag-free GPU tree translation; dragging the master mover translates all grouped stats simultaneously with 0 delay.</li>
+<li>Multiple Attach Target Dropdowns: support attaching to EAM Stat Main Anchor, UIParent (Screen Center), PlayerFrame, TargetFrame, FocusFrame, PetFrame, and 9 compass anchor points.</li>
+<li>Default No Icon Display: compact auto-sizing when icons are hidden, cleanly presenting value text, label string, and status bars.</li>
+<li>Two-Color Gradient Bar Rendering: native C-level SetGradient API integration supporting horizontal and vertical two-color blending with legacy fallbacks.</li>
+<li>Color Swatch Pickers: full customization for bar primary color, gradient secondary color, value text color, and label text color.</li>
+<li>Custom Stack Ordering: interactive list ordering controls (▲ Up, ▼ Down, ↺ Reset) to adjust display stacking order in real-time.</li>
+</ul>
 <li><strong>Custom Display Names Across All Modules:</strong></li>
 <ul class="changelog-sublist">
 <li>Added full support for custom icon text names (short names) to resolve overlapping text in compact icon layouts (e.g., customize &quot;Divine Shield&quot; to &quot;Shield&quot;, &quot;Execute&quot; to &quot;Exec&quot;).</li>
@@ -2560,10 +2653,40 @@
 <li>Deep Multi-Service Integration: seamlessly covers Self Buff, Self Debuff, Target Debuff, Spell Cooldown, Item Cooldown (including equipment slots), and Ground Effects, displaying custom names while safely falling back to default names when empty.</li>
 <li>Native Aura Text Guard Hook: implemented a SetText guard hook for Retail 12.1.0 native aura buttons, preventing Blizzard C++ internal updates from overwriting custom short names.</li>
 <li>Comprehensive Multi-Language Localization: 100% synchronized across zhTW, zhCN, enUS, koKR, and ruRU.</li>
+<li>Hot Path Frequency Profiler &amp; SavedVariables Metrics:</li>
+<li>Implemented a zero-allocation runtime Hot Path profiler in Core/Performance to record exact execution counts and calls-per-second (CPS) for event routing, service scans, rendering, and scheduler ticks.</li>
+<li>SavedVariables Persistence: Automatically tracks session and cumulative counters across sessions, safely flushing to SavedVariables on PLAYER_LOGOUT or on demand.</li>
+<li>Full Debug Integration: DebugState snapshot and PromptExport diagnostic window now export structured hotPathMetrics JSON for profiling-guided optimization.</li>
+<li>New CLI Commands: Added &quot;/eam metrics&quot; (or &quot;/eam hotpaths&quot;) to view the Top 10 hottest execution paths, &quot;/eam metrics reset&quot; to clear counters, and &quot;/eam metrics save&quot; to flush to SavedVariables.</li>
+<li>Blizzard Native Engine Profiler Integration: Implemented C_AddOnProfiler telemetry probes in /eam metrics and diagnostic export, capturing engine-level CPU milliseconds (recent average, peak, encounter average) and hitch ticks (&gt;1ms/5ms) to establish full-stack macro + micro telemetry.</li>
+<li>Cooldown Event Coalescing &amp; Zero-Allocation Alert Pipeline:</li>
+<li>Zero-Allocation Pending Queue: AlertManager uses persistent queue slots to eliminate thousands of temporary Lua table allocations during rapid alert updates, eradicating Lua garbage collection spikes.</li>
+<li>Cooldown Dirty State Diffing &amp; Render Suppression: CooldownService and ItemCooldownService implement state diffing (visibility, charges, usable glow, placeholder, desaturation, timing) to suppress redundant state notifications and icon re-renders when cooldown state is unchanged, drastically lightening render pipeline load in combat.</li>
+<li>Frame-Level Cooldown Event Coalescing: Implemented frame-level event coalescing for high-frequency untargeted cooldown events (SPELL_UPDATE_COOLDOWN, ACTIONBAR_UPDATE_COOLDOWN, BAG_UPDATE_COOLDOWN) to avoid redundant full-list scans within the same frame tick, smoothing framerates during heavy raid and dungeon combat.</li>
 <li>Native Aura Custom Name Group Separation Fix:</li>
 <li>Completely resolved the critical bug where multiple auras grouped into a dynamic Flow Group had their custom names overwritten to nil by the first spell without a custom name.</li>
 <li>Rule compiler (AuraRuleCompiler) now incorporates customName and customIcon into the groupID, cleanly isolating auras with custom names into dedicated groups and preserving custom short names.</li>
 <li>Renderer (NativeAuraRenderer) dedicates child FontString rendering for custom names without registering SetSpellName with Blizzard&#x27;s core, preventing internal C++ updates from forcing default spell full names.</li>
+</ul>
+<li><strong>Player Stat Text &amp; Bar Color Swatch Closure Scope Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely fixed the critical error ttempt to index global &#x27;valColorBtn&#x27; (a nil value) when clicking the value text color, label text color, or status bar color swatch buttons in the Player Stat Monitor panel.</li>
+<li>Updated button OnClick callbacks to accept</li>
+</ul>
+<li><strong>unction(btn) receiving its own widget reference, eliminating the Lua lexical scoping pitfall where local variables in identical declaration statements fallback to global lookup.</strong></li>
+<li><strong>Target Aura Target-Switching Live Refresh, Ghost Icon Purge &amp; Countdown Ghost Elimination:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely eliminated ghost icon retention or ticking countdowns upon switching targets:</li>
+<li>1. Dual-Backend Native 12.1 Container Lifecycle Reset: AuraContainerService.onTargetChanged listens to PLAYER_TARGET_CHANGED, cycling SetEnabled(false) -&gt; SetUnit(&quot;target&quot;) -&gt; SetEnabled(true) -&gt; Update(), and calling Hide() when target is absent, preventing Blizzard C++ AuraContainer from continuing countdowns across target switches.</li>
+<li>2. Legacy Renderer Instant Purge &amp; Timer Unbinding: AuraService.onTargetChanged, clearUnit(&quot;target&quot;), and renderInactiveUnit(&quot;target&quot;) synchronously call Renderer.clearFrame(targetAura), immediately releasing all target aura icons, DurationAdapter text bindings, and native timers back to the pool.</li>
+<li>3. AlertManager Stale Queue Purge: implemented AlertManager.clearPending(targetAura) to safely discard un-flushed target aura state updates upon target change, preventing stale updates from resurrecting lingering icons.</li>
+<li>4. Native Aura Guard Boundary Fix: corrected AlertManager guard to only intercept selfAura (since native renderer only hosts player auras), allowing targetAura events to flow through unhindered.</li>
+<li>5. renderInactiveAlert guarantees fallback event dispatch to targetAura with shown = false, even when service state was prematurely nil.</li>
+<li>6. Renderer.render moves shown = false handling prior to inCombat checks, ensuring hide requests are never deferred or leaked during combat.</li>
+<li>7. IconPool.release thoroughly cleans stackText, nameText, and textures, resetting points and alpha to eliminate residual visuals.</li>
+<li>Completely fixed the issue where target auras failed to update upon switching targets: overhauled fullScanUnit, renderInactiveUnit, and clearUnit state reconciliation to guarantee 100% immediate clearance of previous target auras and instant scanning of new target auras.</li>
+<li>Corrected readAuraIntoState misidentifying target beneficial buffs as debuffs, and implemented alertMatchesAura to strictly validate helpful/harmful polarity and fromPlayer ownership, preventing false triggers across shared spell IDs.</li>
+<li>Added clean lifecycle management (registerLegacyEvents / unregisterLegacyEvents) for Native and Legacy dual-backend transitions.</li>
 </ul>
 <li><strong>Native Aura Font Size Live Hot-Apply &amp; Zero Reload:</strong></li>
 <ul class="changelog-sublist">
@@ -2585,11 +2708,16 @@
 <li>Implemented explicit intent injection: adding an aura via the quick-action popup now explicitly assigns catalogScope = &quot;SELF&quot; and fromPlayer = true, ensuring 100% placement in the Self Buff/Debuff list (Category 1).</li>
 <li>Implemented automatic legacy item migration: spells previously misclassified into cross-class auras will be dynamically upgraded to self auras upon re-adding via Ctrl+Alt, immediately triggering an options panel refresh.</li>
 </ul>
+<li><strong>Alert Layout Slot 1 Zero-Anchor Guard &amp; Drag Coordinate Normalization Fix:</strong></li>
+<ul class="changelog-sublist">
+<li>Completely fixed the critical bug where Slot 1 of spell cooldowns and ground effects physically vanished on first render: eliminated the double-deadlock where prewarmAlertFrames and parasite checks bypassed SetPoint at (0, 0), introducing a GetNumPoints() == 0 physical anchor guard and cache invalidation to ensure Slot 1 always has active physical anchor points.</li>
+<li>Completely resolved geometric frame drift caused by Blizzard&#x27;s native StopMovingOrSizing forcing BOTTOMLEFT anchors: OnDragStop strictly recalibrates and re-anchors frames relative to UIParent&#x27;s CENTER, fixing a Lua multiple return value truncation bug where the Y coordinate was forcibly reset to 0. SavedVariables.normalizeLayout automatically migrates legacy BOTTOMLEFT coordinates to CENTER, permanently eliminating geometric drift when alerts dynamically change.</li>
+</ul>
 </ul>
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.6 Spell Name Placement, Live Preview &amp; Resource Dropdown</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.6][Spell Name Placement, Live Preview &amp; Resource Dropdown]</span>
         <span class="changelog-date">📅 2026.09.14</span>
     </div>
     <div class="changelog-body">
@@ -2696,7 +2824,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][Skyriding Gliding-Only Display &amp; Cooldown Swipe Customization]</span>
         <span class="changelog-date">📅 2026.09.12</span>
     </div>
     <div class="changelog-body">
@@ -2725,7 +2853,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Full Theme Visual Overhaul, Modern WoW Gradient Fix &amp; Subwindow Theme Sync</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][Full Theme Visual Overhaul, Modern WoW Gradient Fix &amp; Subwindow Theme Sync]</span>
         <span class="changelog-date">📅 2026.09.12</span>
     </div>
     <div class="changelog-body">
@@ -2752,7 +2880,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power &amp; Live Preview</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power &amp; Live Preview]</span>
         <span class="changelog-date">📅 2026.09.12</span>
     </div>
     <div class="changelog-body">
@@ -2787,7 +2915,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.5 Native Curve Architecture &amp; Dynamic Visual Immersion</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.5][Native Curve Architecture &amp; Dynamic Visual Immersion]</span>
         <span class="changelog-date">📅 2026.09.08</span>
     </div>
     <div class="changelog-body">
@@ -2826,7 +2954,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.4 2D Grid Layout, Cooldown Combat Visibility &amp; Stat Hardening</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.4][2D Grid Layout, Cooldown Combat Visibility &amp; Stat Hardening]</span>
         <span class="changelog-date">📅 2026.09.04</span>
     </div>
     <div class="changelog-body">
@@ -2869,7 +2997,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.3 Next-Gen Spell Catalog &amp; Multidimensional Group Management</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.3][Next-Gen Spell Catalog &amp; Multidimensional Group Management]</span>
         <span class="changelog-date">📅 2026.08.28</span>
     </div>
     <div class="changelog-body">
@@ -2900,7 +3028,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.2 LibSharedMedia Full Ecosystem &amp; Zero-Delay Font Apply</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.2][LibSharedMedia Full Ecosystem &amp; Zero-Delay Font Apply]</span>
         <span class="changelog-date">📅 2026.08.27</span>
     </div>
     <div class="changelog-body">
@@ -2927,7 +3055,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.1 Cooldown Zero-Alpha Mode &amp; Combat Stat Memory Fallbacks</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.1][Cooldown Zero-Alpha Mode &amp; Combat Stat Memory Fallbacks]</span>
         <span class="changelog-date">📅 2026.08.26</span>
     </div>
     <div class="changelog-body">
@@ -2957,7 +3085,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 8.0 Independent Stat Positioning &amp; Adaptive Layout</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 8.0][Independent Stat Positioning &amp; Adaptive Layout]</span>
         <span class="changelog-date">📅 2026.08.25</span>
     </div>
     <div class="changelog-body">
@@ -2968,7 +3096,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.9 UI Hover Tooltips &amp; Center Reset</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.9][UI Hover Tooltips &amp; Center Reset]</span>
         <span class="changelog-date">📅 2026.08.24</span>
     </div>
     <div class="changelog-body">
@@ -2979,7 +3107,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.8 Player Stats &amp; Absorbs Module</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.8][Player Stats &amp; Absorbs Module]</span>
         <span class="changelog-date">📅 2026.08.24</span>
     </div>
     <div class="changelog-body">
@@ -2990,7 +3118,7 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ Retail 12.1.0 Alpha 7.5 ~ 7.7 Window Docking &amp; DK Runes</span>
+        <span class="changelog-tag">🏷️ [Retail][MN][12.1][Alpha 7.5~7.7][Window Docking &amp; DK Runes]</span>
         <span class="changelog-date">📅 2026.08.23</span>
     </div>
     <div class="changelog-body">
