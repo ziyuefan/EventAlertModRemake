@@ -1,3 +1,35 @@
+### 2026-10-03 EAM-20261003-ALPHA-8.8-POST-TAINT-AND-SCHEDULER-HOTFIX：全域環境庫污染排除 (ADDON_ACTION_BLOCKED)、排程器 OnUpdate 激活修復與冷卻介面文字校正
+
+- 狀態：已完成 (Contracts 501/501, Flow 103/103, Syntax 78/78)。
+- 問題通報與根本原因分析：
+  1. **動作受阻錯誤 (ADDON_ACTION_BLOCKED: RightManagedFrameContainer)**：
+     - 現象：玩家於戰鬥中執行目標選取（如 `TargetNearestEnemy`）時，暴雪安全系統拋出 `[ADDON_ACTION_BLOCKED] 插件 'EventAlertMod' 嘗試調用保護功能 'RightManagedFrameContainer:ClearAllPoints()'`。
+     - 根本原因：`Util.lua` 原先對暴雪全域環境庫 `_G.table`、`_G.math`、`_G.string` 注入了防禦性 Polyfill（如 `table.isempty = Util.tableIsEmpty`、`math.clamp = Util.clamp` 等）。由於暴雪原生框架（如 `PetActionBar`、`ActionBar`、`EditModeManager`、`UIParentPanelManager`）會呼叫這些函數，導致暴雪的安全執行上下文呼叫了插件的 Lua 閉包，使整個呼叫棧遭受外掛污染 (Tainted)。當受污染的堆疊後續呼叫受保護的 `RightManagedFrameContainer:ClearAllPoints()` 時，立即遭到暴雪引擎攔截阻斷。
+  2. **所有冷卻相關警示未顯示 (技能冷卻、物品冷卻、地面效果)**：
+     - 現象：遊戲中技能冷卻、物品冷卻與地面效果完全無法渲染顯示。
+     - 根本原因：`Util.createFrame` 呼叫 12.1.5 `CreateFrameWithOptions` 時寫死了 `hidden = true`。當 `Scheduler.lua` 透過 `Util.createFrame` 建立唯一的排程器框架時，該框架處於隱藏狀態。在魔獸世界中，**隱藏的 Frame 不會觸發 OnUpdate 腳本**！這導致 `AlertManager.onAlertStateChanged` 將警示推進 `pendingUpdates` 並呼叫 `Scheduler.after(0, flushUpdates)` 後，`flushUpdates` 永遠無法被排程器喚起，`AlertManager.isPending` 永久卡在 `true`，所有冷卻警示被徹底凍結在佇列中而無法進入 `Renderer.render`。此外，`IconPool.lua` 的 `overlay` 也因此處於隱藏狀態，文字與充能列皆無法顯示。
+  3. **秘密值判斷順序加固**：
+     - 少年欸指出防範秘密值作為參數或運算子操作之風險。檢視發現 `Util.isSafeValue` 原先於最前置先進行 `value == nil` 判斷，在極端受保護 Secret 數值下可能觸發比較運算子限制。
+  4. **冷卻設定介面文字錯誤**：
+     - 截圖反饋 Tab 4 冷卻設定頁面中核取方塊標籤誤植為「冷卻完成移除光環」，實際應為「冷卻完成移除圖示」。
+- 重構實作與產出：
+  1. **全域環境污染徹底拔除 (`Core/Util.lua`)**：
+     - 100% 移除對 `_G.table`、`_G.math`、`_G.string` 的外部賦值與 Polyfill 區塊，所有工具函數完全封裝於 `EAM.Util` 內部，嚴禁任何外掛程式碼污染全域標準庫。
+  2. **視窗工廠預設可見性與排程器框架激活 (`Core/Util.lua`, `Core/Scheduler.lua`, `Core/EventRouter.lua`, `UI/IconPool.lua`)**：
+     - `Util.createFrame` 移除強制 `hidden = true`，使建立的視窗遵循標準 WoW API 預設可見性；
+     - `Scheduler.lua` 於框架初始化與 `Scheduler.after` 排程時增加 `frame:Show()` 守衛，確保只要有待處理任務，框架必然處於 Shown 狀態，保障 `OnUpdate` 100% 穩定喚醒並執行 `flushUpdates`；
+     - `EventRouter.lua` 與 `IconPool.lua` 補齊 `Show()` 呼叫，確保事件分發與圖示 `overlay`（文字、充能條）正確顯示。
+  3. **秘密值安全判斷順序重構 (`Core/Util.lua`)**：
+     - `Util.isSafeValue` 與 `Util.isReadableTable` 調整判斷次序，第一時間調用 `isSecretValue` 與 `isSecretTable` 進行檢定排除，杜絕任何比較運算子或索引操作直接接觸秘密值。
+  4. **全語系與設定介面文字校準 (`Locale/*.lua`, `UI/Options.lua`)**：
+     - `zhTW.lua`：`L.EAM_OPT_COOLDOWN_REMOVE` 由「冷卻完成移除光環」修正為「冷卻完成移除圖示」；
+     - `zhCN.lua`、`enUS.lua`、`koKR.lua`、`ruRU.lua` 同步校準對應文字；
+     - `Options.lua` 冷卻設定頁面同步更新預設文字與懸停說明。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 語法錯誤)。
+  - `Run-FlowValidation.ps1`：103/103 通過 (0 失敗)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+
 ### 2026-10-03 EAM-20261003-ALPHA-8.8-RETAIL-1215-ADAPTATION：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地
 
 - 狀態：已完成 (Contracts 501/501, Flow 103/103, Syntax 78/78)。

@@ -40,6 +40,9 @@ local EventRouter = {
 EAM.Modules.EventRouter = EventRouter
 
 local frame = (Util and Util.createFrame and Util.createFrame("Frame", nil, nil)) or (api.CreateFrame and api.CreateFrame("Frame", nil, nil))
+if frame and frame.Show then
+    frame:Show()
+end
 EventRouter.frame = frame
 
 local eventKeyCache = {}

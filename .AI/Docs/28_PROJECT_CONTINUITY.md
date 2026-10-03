@@ -5,19 +5,24 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-10-03.01 (Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地)。
+目前快照版本：2026-10-03.02 (Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地（現行儲存點）
+## 2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復（現行儲存點）
 
-- current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級全數完成，全套契約 501 條綠燈、Flow 測試 103 案全過、語法檢驗 78 案零錯誤。
+- current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級與高優先級缺陷修復全數完成，全套契約 501 條綠燈、Flow 測試 103 案全過、語法檢驗 78 案零錯誤。
   1. Retail 12.1.5 關鍵架構特徵與原生加速：
      - **TOC 介面版本升級**：更新 `EventAlertMod.toc` 為 `## Interface: 120007, 120100, 120105`，無縫相容 Retail 12.1.5 正式版、Retail 12.1.0 與 XPTR 12.0.7。
-     - **暴雪底層 C++ 工具函數庫加速與防禦性降級**：
-       - `Core/Util.lua` 全面整合 12.1.5 Native C++ 數學、字串與表格加速函數（`math.clamp`、`math.lerp`、`math.saturate`、`table.isempty`、`table.contains`、`string.contains`、`string.startswith` 等），並實裝相容舊版客戶端的高效防禦性降級 (Polyfills)。
-     - **TimedSignalMap 零分配排程器升級**：
+     - **暴雪底層 C++ 工具函數庫加速與防禦性封裝**：
+       - `Core/Util.lua` 全面整合 12.1.5 Native C++ 數學、字串與表格加速函數（`math.clamp`、`math.lerp`、`math.saturate`、`table.isempty`、`table.contains`、`string.contains`、`string.startswith` 等），並完全封閉於 `EAM.Util` 內部，100% 杜絕全域環境庫污染 (Taint Remediation)。
+     - **TimedSignalMap 零分配排程器升級與框架可見性修復**：
        - `Core/Scheduler.lua` 整合 `C_Timer.NewTimedSignalMap` 原生鍵值排程機制，支援在支援的客戶端上由 C++ 引擎接管鍵值排程，並內建完整自主維護的狀態機降級，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)。
+       - 確保排程器框架於建立與任務排程時處於 Shown 狀態，修復先前因視窗隱藏導致 `OnUpdate` 未喚醒、使全模組冷卻（技能冷卻、物品冷卻、地面效果）無法渲染之重大缺陷。
+     - **秘密值安全判斷順序前置**：
+       - `Util.isSafeValue` 與 `Util.isReadableTable` 優先執行 `isSecretValue` / `isSecretTable` 檢定，防範直接接觸秘密值引發的比較或運算異常。
+     - **冷卻設定介面文字校正**：
+       - 全 5 語系與 `Options.lua` 校準 `EAM_OPT_COOLDOWN_REMOVE` 為「冷卻完成移除圖示」。
      - **12.1.5 原生 Pandemic 結餘窗口精確判斷**：
        - `Services/AuraService.lua` 採用 `C_UnitAuras.GetRefreshCarryOverDuration` 進行結餘時間精確計算（結餘時長 <= 30.5% 基礎時間），並平滑降級至 `GetRefreshExtendedDuration`，確保全版本 DoT 補法時機精準無誤。
      - **原生光環 Pandemic 動態特效動畫**：

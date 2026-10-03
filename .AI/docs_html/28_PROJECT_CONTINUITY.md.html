@@ -519,19 +519,24 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-10-03.01 (Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地)。</p>
+<p>目前快照版本：2026-10-03.02 (Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復)。</p>
 <ul>
 <li><strong>版本斷點與自動遞增規則</strong>：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。</li>
 </ul>
-<h2 id="2026-10-03-retail-1215-alpha-88-c-timedsignalmap-pandemic">2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地（現行儲存點）</h2>
+<h2 id="2026-10-03-retail-1215-alpha-88-c-timedsignalmap">2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復（現行儲存點）</h2>
 <ul>
-<li>current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級全數完成，全套契約 501 條綠燈、Flow 測試 103 案全過、語法檢驗 78 案零錯誤。<ol>
+<li>current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級與高優先級缺陷修復全數完成，全套契約 501 條綠燈、Flow 測試 103 案全過、語法檢驗 78 案零錯誤。<ol>
 <li>Retail 12.1.5 關鍵架構特徵與原生加速：</li>
 <li><strong>TOC 介面版本升級</strong>：更新 <code>EventAlertMod.toc</code> 為 <code>## Interface: 120007, 120100, 120105</code>，無縫相容 Retail 12.1.5 正式版、Retail 12.1.0 與 XPTR 12.0.7。</li>
-<li><strong>暴雪底層 C++ 工具函數庫加速與防禦性降級</strong>：</li>
-<li><code>Core/Util.lua</code> 全面整合 12.1.5 Native C++ 數學、字串與表格加速函數（<code>math.clamp</code>、<code>math.lerp</code>、<code>math.saturate</code>、<code>table.isempty</code>、<code>table.contains</code>、<code>string.contains</code>、<code>string.startswith</code> 等），並實裝相容舊版客戶端的高效防禦性降級 (Polyfills)。</li>
-<li><strong>TimedSignalMap 零分配排程器升級</strong>：</li>
+<li><strong>暴雪底層 C++ 工具函數庫加速與防禦性封裝</strong>：</li>
+<li><code>Core/Util.lua</code> 全面整合 12.1.5 Native C++ 數學、字串與表格加速函數（<code>math.clamp</code>、<code>math.lerp</code>、<code>math.saturate</code>、<code>table.isempty</code>、<code>table.contains</code>、<code>string.contains</code>、<code>string.startswith</code> 等），並完全封閉於 <code>EAM.Util</code> 內部，100% 杜絕全域環境庫污染 (Taint Remediation)。</li>
+<li><strong>TimedSignalMap 零分配排程器升級與框架可見性修復</strong>：</li>
 <li><code>Core/Scheduler.lua</code> 整合 <code>C_Timer.NewTimedSignalMap</code> 原生鍵值排程機制，支援在支援的客戶端上由 C++ 引擎接管鍵值排程，並內建完整自主維護的狀態機降級，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)。</li>
+<li>確保排程器框架於建立與任務排程時處於 Shown 狀態，修復先前因視窗隱藏導致 <code>OnUpdate</code> 未喚醒、使全模組冷卻（技能冷卻、物品冷卻、地面效果）無法渲染之重大缺陷。</li>
+<li><strong>秘密值安全判斷順序前置</strong>：</li>
+<li><code>Util.isSafeValue</code> 與 <code>Util.isReadableTable</code> 優先執行 <code>isSecretValue</code> / <code>isSecretTable</code> 檢定，防範直接接觸秘密值引發的比較或運算異常。</li>
+<li><strong>冷卻設定介面文字校正</strong>：</li>
+<li>全 5 語系與 <code>Options.lua</code> 校準 <code>EAM_OPT_COOLDOWN_REMOVE</code> 為「冷卻完成移除圖示」。</li>
 <li><strong>12.1.5 原生 Pandemic 結餘窗口精確判斷</strong>：</li>
 <li><code>Services/AuraService.lua</code> 採用 <code>C_UnitAuras.GetRefreshCarryOverDuration</code> 進行結餘時間精確計算（結餘時長 &lt;= 30.5% 基礎時間），並平滑降級至 <code>GetRefreshExtendedDuration</code>，確保全版本 DoT 補法時機精準無誤。</li>
 <li><strong>原生光環 Pandemic 動態特效動畫</strong>：</li>

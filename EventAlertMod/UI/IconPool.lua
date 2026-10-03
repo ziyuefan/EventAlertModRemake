@@ -207,6 +207,9 @@ end
 
 local function createChargeVisual(parent, kind)
     local host = (Util and Util.createFrame and Util.createFrame("Frame", nil, parent)) or api.CreateFrame("Frame", nil, parent)
+    if host and host.Show then
+        host:Show()
+    end
     local bar = api.CreateFrame("StatusBar", nil, host)
     bar:SetAllPoints(host)
 
@@ -788,6 +791,9 @@ local function createIcon()
     -- 建立高層級的文字與裝飾容器，徹底解決層級遮擋與 CDM 寄生裁切問題
     local overlay = (Util and Util.createFrame and Util.createFrame("Frame", nil, button)) or api.CreateFrame("Frame", nil, button)
     overlay:SetAllPoints(button)
+    if overlay and overlay.Show then
+        overlay:Show()
+    end
     button.overlay = overlay
 
     -- 三種 C 層 StatusBar 預先建立；接收 Secret 後不再切換同一 bar 的 render mode。

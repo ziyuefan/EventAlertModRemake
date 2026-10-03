@@ -515,6 +515,44 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-10-03-eam-20261003-alpha-88-post-taint-and-scheduler-hotfix-addon_action_blocked-onupdate">2026-10-03 EAM-20261003-ALPHA-8.8-POST-TAINT-AND-SCHEDULER-HOTFIX：全域環境庫污染排除 (ADDON_ACTION_BLOCKED)、排程器 OnUpdate 激活修復與冷卻介面文字校正</h3>
+<ul>
+<li>狀態：已完成 (Contracts 501/501, Flow 103/103, Syntax 78/78)。</li>
+<li>問題通報與根本原因分析：<ol>
+<li><strong>動作受阻錯誤 (ADDON_ACTION_BLOCKED: RightManagedFrameContainer)</strong>：</li>
+<li>現象：玩家於戰鬥中執行目標選取（如 <code>TargetNearestEnemy</code>）時，暴雪安全系統拋出 <code>[ADDON_ACTION_BLOCKED] 插件 'EventAlertMod' 嘗試調用保護功能 'RightManagedFrameContainer:ClearAllPoints()'</code>。</li>
+<li>根本原因：<code>Util.lua</code> 原先對暴雪全域環境庫 <code>_G.table</code>、<code>_G.math</code>、<code>_G.string</code> 注入了防禦性 Polyfill（如 <code>table.isempty = Util.tableIsEmpty</code>、<code>math.clamp = Util.clamp</code> 等）。由於暴雪原生框架（如 <code>PetActionBar</code>、<code>ActionBar</code>、<code>EditModeManager</code>、<code>UIParentPanelManager</code>）會呼叫這些函數，導致暴雪的安全執行上下文呼叫了插件的 Lua 閉包，使整個呼叫棧遭受外掛污染 (Tainted)。當受污染的堆疊後續呼叫受保護的 <code>RightManagedFrameContainer:ClearAllPoints()</code> 時，立即遭到暴雪引擎攔截阻斷。</li>
+<li><strong>所有冷卻相關警示未顯示 (技能冷卻、物品冷卻、地面效果)</strong>：</li>
+<li>現象：遊戲中技能冷卻、物品冷卻與地面效果完全無法渲染顯示。</li>
+<li>根本原因：<code>Util.createFrame</code> 呼叫 12.1.5 <code>CreateFrameWithOptions</code> 時寫死了 <code>hidden = true</code>。當 <code>Scheduler.lua</code> 透過 <code>Util.createFrame</code> 建立唯一的排程器框架時，該框架處於隱藏狀態。在魔獸世界中，<strong>隱藏的 Frame 不會觸發 OnUpdate 腳本</strong>！這導致 <code>AlertManager.onAlertStateChanged</code> 將警示推進 <code>pendingUpdates</code> 並呼叫 <code>Scheduler.after(0, flushUpdates)</code> 後，<code>flushUpdates</code> 永遠無法被排程器喚起，<code>AlertManager.isPending</code> 永久卡在 <code>true</code>，所有冷卻警示被徹底凍結在佇列中而無法進入 <code>Renderer.render</code>。此外，<code>IconPool.lua</code> 的 <code>overlay</code> 也因此處於隱藏狀態，文字與充能列皆無法顯示。</li>
+<li><strong>秘密值判斷順序加固</strong>：</li>
+<li>少年欸指出防範秘密值作為參數或運算子操作之風險。檢視發現 <code>Util.isSafeValue</code> 原先於最前置先進行 <code>value == nil</code> 判斷，在極端受保護 Secret 數值下可能觸發比較運算子限制。</li>
+<li><strong>冷卻設定介面文字錯誤</strong>：</li>
+<li>截圖反饋 Tab 4 冷卻設定頁面中核取方塊標籤誤植為「冷卻完成移除光環」，實際應為「冷卻完成移除圖示」。</li>
+</ol>
+</li>
+<li>重構實作與產出：<ol>
+<li><strong>全域環境污染徹底拔除 (<code>Core/Util.lua</code>)</strong>：</li>
+<li>100% 移除對 <code>_G.table</code>、<code>_G.math</code>、<code>_G.string</code> 的外部賦值與 Polyfill 區塊，所有工具函數完全封裝於 <code>EAM.Util</code> 內部，嚴禁任何外掛程式碼污染全域標準庫。</li>
+<li><strong>視窗工廠預設可見性與排程器框架激活 (<code>Core/Util.lua</code>, <code>Core/Scheduler.lua</code>, <code>Core/EventRouter.lua</code>, <code>UI/IconPool.lua</code>)</strong>：</li>
+<li><code>Util.createFrame</code> 移除強制 <code>hidden = true</code>，使建立的視窗遵循標準 WoW API 預設可見性；</li>
+<li><code>Scheduler.lua</code> 於框架初始化與 <code>Scheduler.after</code> 排程時增加 <code>frame:Show()</code> 守衛，確保只要有待處理任務，框架必然處於 Shown 狀態，保障 <code>OnUpdate</code> 100% 穩定喚醒並執行 <code>flushUpdates</code>；</li>
+<li><code>EventRouter.lua</code> 與 <code>IconPool.lua</code> 補齊 <code>Show()</code> 呼叫，確保事件分發與圖示 <code>overlay</code>（文字、充能條）正確顯示。</li>
+<li><strong>秘密值安全判斷順序重構 (<code>Core/Util.lua</code>)</strong>：</li>
+<li><code>Util.isSafeValue</code> 與 <code>Util.isReadableTable</code> 調整判斷次序，第一時間調用 <code>isSecretValue</code> 與 <code>isSecretTable</code> 進行檢定排除，杜絕任何比較運算子或索引操作直接接觸秘密值。</li>
+<li><strong>全語系與設定介面文字校準 (<code>Locale/*.lua</code>, <code>UI/Options.lua</code>)</strong>：</li>
+<li><code>zhTW.lua</code>：<code>L.EAM_OPT_COOLDOWN_REMOVE</code> 由「冷卻完成移除光環」修正為「冷卻完成移除圖示」；</li>
+<li><code>zhCN.lua</code>、<code>enUS.lua</code>、<code>koKR.lua</code>、<code>ruRU.lua</code> 同步校準對應文字；</li>
+<li><code>Options.lua</code> 冷卻設定頁面同步更新預設文字與懸停說明。</li>
+</ol>
+</li>
+<li>驗證結果：<ul>
+<li><code>CheckLuaSyntax.ps1</code>：78/78 通過 (0 語法錯誤)。</li>
+<li><code>Run-FlowValidation.ps1</code>：103/103 通過 (0 失敗)。</li>
+<li><code>Test-ValidationContracts.ps1</code>：501/501 通過 (0 失敗)。</li>
+</ul>
+</li>
+</ul>
 <h3 id="2026-10-03-eam-20261003-alpha-88-retail-1215-adaptationretail-1215-alpha-88-c-timedsignalmap-pandemic">2026-10-03 EAM-20261003-ALPHA-8.8-RETAIL-1215-ADAPTATION：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、原生 Pandemic 精確結餘與動畫落地</h3>
 <ul>
 <li>狀態：已完成 (Contracts 501/501, Flow 103/103, Syntax 78/78)。</li>

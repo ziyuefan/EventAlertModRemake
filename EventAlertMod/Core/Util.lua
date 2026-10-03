@@ -117,11 +117,14 @@ function Util.hasAnySecretValues(value)
 end
 
 function Util.isSafeValue(value)
+    if isSecretValue(value) then
+        return false
+    end
+    if not canAccessValue(value) then
+        return false
+    end
     if value == nil then
         return true
-    end
-    if Util.isSecretValue(value) or not Util.canAccessValue(value) then
-        return false
     end
     return true
 end
@@ -176,10 +179,10 @@ function Util.isSafeTableKey(value)
 end
 
 function Util.isReadableTable(value)
-    if value == nil or Util.isSecretValue(value) or Util.isSecretTable(value) then
+    if isSecretValue(value) or isSecretTable(value) then
         return false
     end
-    if not Util.canAccessTable(value) or Util.hasAnySecretValues(value) then
+    if not canAccessTable(value) or hasAnySecretValues(value) then
         return false
     end
     return type(value) == "table"
@@ -598,36 +601,7 @@ end
 
 Util.isempty = Util.tableIsEmpty
 
--- Defensive Polyfill onto global math/string/table (if not already provided by engine)
-pcall(function()
-    math.clamp = math.clamp or Util.clamp
-    math.saturate = math.saturate or Util.saturate
-    math.round = math.round or Util.round
-    math.lerp = math.lerp or Util.lerp
-    math.normalize = math.normalize or Util.normalize
-    math.sign = math.sign or Util.sign
-    math.remap = math.remap or Util.remap
-    math.wrap = math.wrap or Util.wrap
-    math.isfinite = math.isfinite or Util.isfinite
-    math.isnan = math.isnan or Util.isnan
-    math.isinf = math.isinf or Util.isinf
-
-    string.contains = string.contains or Util.stringContains
-    string.ltrim = string.ltrim or Util.stringLtrim
-    string.rtrim = string.rtrim or Util.stringRtrim
-    string.startswith = string.startswith or Util.stringStartsWith
-    string.endswith = string.endswith or Util.stringEndsWith
-
-    table.isempty = table.isempty or Util.tableIsEmpty
-    table.contains = table.contains or Util.tableContains
-    table.indexof = table.indexof or Util.tableIndexOf
-    table.removeunordered = table.removeunordered or Util.tableRemoveUnordered
-    table.removevalue = table.removevalue or Util.tableRemoveValue
-    table.keys = table.keys or Util.tableKeys
-    table.values = table.values or Util.tableValues
-end)
-
--- Frame creation helper (uses 12.1.5 CreateFrameWithOptions to eliminate initial frame flash)
+-- Frame creation helper (uses 12.1.5 CreateFrameWithOptions when available)
 function Util.createFrame(frameType, frameName, parent, template, id)
     local eamAPI = EAM.API or api
     local cfo = (eamAPI and eamAPI.CreateFrameWithOptions) or _G.CreateFrameWithOptions
@@ -638,7 +612,6 @@ function Util.createFrame(frameType, frameName, parent, template, id)
             parent = parent,
             inherits = template,
             id = id,
-            hidden = true,
         }
         local ok, f = pcall(cfo, options)
         if ok and f then

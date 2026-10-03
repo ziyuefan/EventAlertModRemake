@@ -3295,7 +3295,7 @@ local function createFrame()
 
     -- 上方：冷卻行為開關
     createCheckbox(pageCooldown, localized("EAM_OPT_SHOW_SCD_OUTSIDE", "非戰鬥顯示技能冷卻"), "showSCDOutsideCombat", 16, -14, nil, "脫離戰鬥後仍持續顯示技能冷卻倒數", "非戰鬥顯示技能冷卻")
-    createCheckbox(pageCooldown, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除光環"), "cooldownRemoveAura", 205, -14, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除光環")
+    createCheckbox(pageCooldown, localized("EAM_OPT_COOLDOWN_REMOVE", "冷卻完成移除圖示"), "cooldownRemoveAura", 205, -14, nil, "技能或物品冷卻結束時自動隱藏圖示，不留常駐圖示", "冷卻完成移除圖示")
     createCheckbox(pageCooldown, localized("EAM_OPT_GLOW_SCD", "可用時高亮技能冷卻"), "glowSCDWhenUsable", 395, -14, nil, "技能冷卻完畢且可用時，圖示外框發出流光動畫提示", "可用時高亮技能冷卻")
 
     local chargeBarTitle = pageCooldown:CreateFontString(nil, "OVERLAY", "GameFontNormal")

@@ -413,6 +413,17 @@
 <li>移除過時暴雪全域函數調用：消除對 Blizzard_Deprecated 的任何引用依賴，提升插件在未來大版本演進時的穩定性與獨立性。</li>
 <li>原生狀態物件保護加固：防禦性隔離 AuraState 之 timer 與 source 表格，提升極限負載與非標準光環事件下的抗崩潰能力。</li>
 </ul>
+<li><strong>【🐛 問題修復 (Bug Fixes)】:</strong></li>
+<ul class="changelog-sublist">
+<li>戰鬥按鍵動作受阻錯誤排除 (RightManagedFrameContainer Taint Remediation):</li>
+<li>徹底移除對暴雪全域環境庫 (table/math/string) 的外部賦值與偽填充 (Polyfill)，防禦性收攏至專屬 Util 命名空間，徹底杜絕暴雪介面 (如 PetActionBar/EditMode/RightManagedFrameContainer) 遭污染引發之 ADDON_ACTION_BLOCKED 錯誤。</li>
+<li>冷卻排程器畫面凍結與未渲染修復 (Cooldown Scheduler Frame Activation Fix):</li>
+<li>修復排程器框架在特定初始化條件下處於隱藏狀態，導致 OnUpdate 倒數迴圈未正常運作、使技能冷卻、物品冷卻與地面效果無法即時渲染顯示的異常。</li>
+<li>秘密值安全校驗前置防護 (Secret Value Evaluation Order Safeguard):</li>
+<li>加固 Util.isSafeValue 與 Util.isReadableTable 之判斷順序，先期執行 isSecretValue/isSecretTable 檢定，避免非預期比較操作在秘密值存在時造成報錯。</li>
+<li>冷卻設定介面文字校準 (Cooldown Options UI Text Correction):</li>
+<li>修正冷卻設定頁面中「冷卻完成移除光環」之選項標籤與說明為「冷卻完成移除圖示」，精確反映實際操作語意。</li>
+</ul>
 </ul>
 </div></div>
 <div class="changelog-card">

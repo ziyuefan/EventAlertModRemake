@@ -41,6 +41,9 @@ local Scheduler = {
 EAM.Modules.Scheduler = Scheduler
 
 local frame = (Util and Util.createFrame and Util.createFrame("Frame", nil, nil)) or (api.CreateFrame and api.CreateFrame("Frame", nil, nil))
+if frame and frame.Show then
+    frame:Show()
+end
 Scheduler.frame = frame
 
 local function acquireTask()
@@ -124,6 +127,9 @@ function Scheduler.after(delay, callback, owner)
     Scheduler.count = count
 
     if frame then
+        if frame.Show and frame.IsShown and not frame:IsShown() then
+            frame:Show()
+        end
         frame:SetScript("OnUpdate", onUpdate)
     end
     return true
