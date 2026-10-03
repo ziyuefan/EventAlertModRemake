@@ -194,7 +194,7 @@ local function parseAllDurationCandidates(value)
     local lastEnd = 0
     for i = 1, #rawMatches do
         local m = rawMatches[i]
-        if m.pos >= lastEnd then
+        if m.pos > lastEnd then
             local idx = #candidates + 1
             candidates[idx] = {
                 index = idx,

@@ -179,13 +179,19 @@ function Util.isSafeTableKey(value)
 end
 
 function Util.isReadableTable(value)
-    if isSecretValue(value) or isSecretTable(value) then
+    if isSecretValue(value) then
+        return false
+    end
+    if type(value) ~= "table" then
+        return false
+    end
+    if isSecretTable(value) then
         return false
     end
     if not canAccessTable(value) or hasAnySecretValues(value) then
         return false
     end
-    return type(value) == "table"
+    return true
 end
 
 -- Warning string cache to eliminate runtime string concatenation GC churn

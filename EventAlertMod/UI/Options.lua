@@ -6019,6 +6019,7 @@ local function createFrame()
         if condFrame.groupMenu then condFrame.groupMenu:Hide() end
         if condFrame.itemSlotMenu then condFrame.itemSlotMenu:Hide() end
         if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
+        if condFrame.durationGroupMenu then condFrame.durationGroupMenu:Hide() end
     end)
 
     Options.condFrame = condFrame

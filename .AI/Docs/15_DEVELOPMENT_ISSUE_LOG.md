@@ -1,3 +1,20 @@
+### 2026-10-03 EAM-20261003-ALPHA-8.8-THREE-ROUNDS-AUDIT-HARDENING：三輪需求完成後全面深入審計與邊界防禦加固
+
+- 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78, Package DryRun PASS)。
+- 審計背景與深度檢視：
+  - 少年欸要求「上面連續提出三輪需求，完成後再全面檢查一次」。
+  - 經由專案專項深度審查（DeepInvestigator），針對三輪所有異動模組（`Util.lua`、`Scheduler.lua`、`GroundEffectService.lua`、`SavedVariables.lua`、`Options.lua`、`ProfileCodec.lua`、`FlowTestRunner.lua`、`Locale/*.lua`）進行代碼行級批判性複核與跨環境差異檢驗。
+  - 審計成果：確認前三輪所有功能與修復全數通過，並主動揪出 4 項潛在邊界風險進行事前預防性加固：
+    1. **排程器 key 秘密值比較風險加固 (`Core/Scheduler.lua`)**：在 `nativeMap.SignalAt`、`nativeMap.SignalAfter` 與 fallback 實作中，將 `key == nil` 升級為 `not Util.isSafeTableKey(key)`，防範在 Retail 12.x 受保護值傳入時引發非法比較異常。
+    2. **暴雪 C-Level API 參數型別前置守衛 (`Core/Util.lua`)**：在 `Util.isReadableTable(value)` 中，於 `isSecretValue(value)` 之後立即加入 `type(value) ~= "table"` 檢查，杜絕將 `nil` 或非 table 型別傳入暴雪底層 C 函式（`isSecretTable` / `canAccessTable`）引發 `table expected, got nil` 崩潰。
+    3. **地面效果候選重疊區間 Off-by-one 修正 (`Services/GroundEffectService.lua`)**：將 `m.pos >= lastEnd` 修正為 `m.pos > lastEnd`，在 1-indexed 字串下杜絕前一候選結尾字元與後一候選開頭字元相同時產生的單字元重疊瑕疵。
+    4. **條件設定視窗 OnHide 生命週期健全 (`UI/Options.lua`)**：在 `condFrame:SetScript("OnHide")` 中補齊 `durationGroupMenu:Hide()`，維持視窗關閉時所有動態下拉選單的完整清理。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 語法錯誤)。
+  - `Run-FlowValidation.ps1`：104/104 通過 (0 失敗)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+  - `Deploy/Build-Package.ps1 -PackageLabel DEV`：打包成功 (`EventAlertMod_DEV_20261003_095140.zip`)。
+
 ### 2026-10-03 EAM-20261003-ALPHA-8.8-LIVE-FLOW-SUITE-HARDENING：真機環境 10 項 Flow 測試報錯排查與深度防禦修復
 
 - 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78, Package DryRun PASS)。

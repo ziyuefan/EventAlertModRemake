@@ -198,7 +198,7 @@ local function createFallbackSignalMap(callback)
     end
 
     function map:SignalAt(key, targetTime)
-        if key == nil or not Util.isSafeNumber(targetTime) then
+        if not Util.isSafeTableKey(key) or not Util.isSafeNumber(targetTime) then
             return false, "invalidSignalAt"
         end
         signals[key] = targetTime
@@ -213,7 +213,7 @@ local function createFallbackSignalMap(callback)
     end
 
     function map:SignalAfter(key, delay)
-        if key == nil or not Util.isSafeNonNegativeNumber(delay) then
+        if not Util.isSafeTableKey(key) or not Util.isSafeNonNegativeNumber(delay) then
             return false, "invalidSignalAfter"
         end
         local now = api.GetTime and api.GetTime() or 0
@@ -221,7 +221,7 @@ local function createFallbackSignalMap(callback)
     end
 
     function map:Cancel(key)
-        if key ~= nil then
+        if Util.isSafeTableKey(key) then
             signals[key] = nil
         end
         return true
@@ -265,7 +265,7 @@ function Scheduler.createSignalMap(callback)
             local origSignalAt = nativeMap.SignalAt
             if type(origSignalAt) == "function" then
                 nativeMap.SignalAt = function(self, key, targetTime)
-                    if key == nil or not Util.isSafeNumber(targetTime) then
+                    if not Util.isSafeTableKey(key) or not Util.isSafeNumber(targetTime) then
                         return false, "invalidSignalAt"
                     end
                     local intTime = math.floor(targetTime)
@@ -280,7 +280,7 @@ function Scheduler.createSignalMap(callback)
             end
             if not nativeMap.SignalAfter then
                 nativeMap.SignalAfter = function(self, key, delay)
-                    if key == nil or not Util.isSafeNonNegativeNumber(delay) then
+                    if not Util.isSafeTableKey(key) or not Util.isSafeNonNegativeNumber(delay) then
                         return false, "invalidSignalAfter"
                     end
                     local now = api.GetTime and api.GetTime() or 0

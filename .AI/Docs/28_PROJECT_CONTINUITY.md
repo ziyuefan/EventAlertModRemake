@@ -5,13 +5,18 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-10-03.04 (Retail 12.1.5 Alpha 8.8 真機 10 項 Flow 測試報錯深度排查、EAM.API 解凍、TimedSignalMap 防禦封裝、座標隔離與除零防護)。
+目前快照版本：2026-10-03.05 (Retail 12.1.5 Alpha 8.8 三輪需求全面深度審計、排程器 Key 秘密值加固、暴雪 C-API 型別前置守衛、候選重疊邊界修正與選單 OnHide 清理)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 真機 10 項 Flow 測試報錯深度排查、EAM.API 解凍、TimedSignalMap 防禦封裝、座標隔離與除零防護（現行儲存點）
+## 2026-10-03 多進度儲建點：Retail 12.1.5 Alpha 8.8 三輪需求全面深度審計、排程器 Key 秘密值加固、暴雪 C-API 型別前置守衛、候選重疊邊界修正與選單 OnHide 清理（現行儲存點）
 
-- current-of-truth：針對少年欸在真實 WoW 客戶端（Retail 12.1.0/12.1.5 繁體中文版）執行 Flow 測試回傳的 10 項報錯，完成全方位深層排查與手術式修復，代碼契約 501 條 100% 綠燈、Flow 測試 104 案全過、語法檢驗 78 案零錯誤、發布打包 DryRun 通過。
+- current-of-truth：完成連續三輪需求的獨立批判性複核與前置防禦加固。全套契約 501 條 100% 綠燈、Flow 測試 104 案全過、語法檢驗 78 案零錯誤、發布打包 DEV 成功。
+  1. 深度審計防禦加固：
+     - **排程器 key 秘密值比較風險加固 (`Core/Scheduler.lua`)**：在 `nativeMap.SignalAt`、`nativeMap.SignalAfter` 與 fallback 實作中，將 `key == nil` 升級為 `not Util.isSafeTableKey(key)`，防範在 Retail 12.x 受保護值傳入時引發非法比較異常；
+     - **暴雪 C-Level API 參數型別前置守衛 (`Core/Util.lua`)**：在 `Util.isReadableTable(value)` 中，於 `isSecretValue(value)` 之後立即加入 `type(value) ~= "table"` 檢查，杜絕將 `nil` 或非 table 型別傳入暴雪底層 C 函式（`isSecretTable` / `canAccessTable`）引發 `table expected, got nil` 崩潰；
+     - **地面效果候選重疊區間 Off-by-one 修正 (`Services/GroundEffectService.lua`)**：將 `m.pos >= lastEnd` 修正為 `m.pos > lastEnd`，在 1-indexed 字串下杜絕前一候選結尾字元與後一候選開頭字元相同時產生的單字元重疊瑕疵；
+     - **條件設定視窗 OnHide 生命週期健全 (`UI/Options.lua`)**：在 `condFrame:SetScript("OnHide")` 中補齊 `durationGroupMenu:Hide()`，維持視窗關閉時所有動態下拉選單的完整清理。
   1. 真機 Flow 測試 10 項報錯修復：
      - **解除 `EAM.API` 凍結 (`Core/Util.lua`)**：移除結尾 `tableFreeze(EAM.API)`，解決真機測試中 4 項因動態 mock 導致的 `attempted to perform indexed assignment on a frozen table` 崩潰；
      - **原生排程器 `SignalAt` uint32 防禦 (`Core/Scheduler.lua`)**：封裝原生 `nativeMap.SignalAt`，確保傳入秒數轉換為合法的 uint32 整數並經由 `pcall` 防禦保護，杜絕 `outside of expected range 0 to 4294967295` 報錯；

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-10-03.04",
+  "snapshotVersion": "2026-10-03.05",
   "updatedAt": "2026-10-03",
   "project": {
     "name": "EventAlertModRemake",
