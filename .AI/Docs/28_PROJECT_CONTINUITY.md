@@ -5,13 +5,21 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-10-03.03 (Retail 12.1.5 Alpha 8.8 地面效果多組時間全文解析與下拉自選、暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復)。
+目前快照版本：2026-10-03.04 (Retail 12.1.5 Alpha 8.8 真機 10 項 Flow 測試報錯深度排查、EAM.API 解凍、TimedSignalMap 防禦封裝、座標隔離與除零防護)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 地面效果多組時間全文解析與下拉自選、暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復（現行儲存點）
+## 2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 真機 10 項 Flow 測試報錯深度排查、EAM.API 解凍、TimedSignalMap 防禦封裝、座標隔離與除零防護（現行儲存點）
 
-- current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級、地面效果多組時間智慧自選下拉清單與高優先級缺陷修復全數完成，全套契約 501 條綠燈、Flow 測試 104 案全過、語法檢驗 78 案零錯誤。
+- current-of-truth：針對少年欸在真實 WoW 客戶端（Retail 12.1.0/12.1.5 繁體中文版）執行 Flow 測試回傳的 10 項報錯，完成全方位深層排查與手術式修復，代碼契約 501 條 100% 綠燈、Flow 測試 104 案全過、語法檢驗 78 案零錯誤、發布打包 DryRun 通過。
+  1. 真機 Flow 測試 10 項報錯修復：
+     - **解除 `EAM.API` 凍結 (`Core/Util.lua`)**：移除結尾 `tableFreeze(EAM.API)`，解決真機測試中 4 項因動態 mock 導致的 `attempted to perform indexed assignment on a frozen table` 崩潰；
+     - **原生排程器 `SignalAt` uint32 防禦 (`Core/Scheduler.lua`)**：封裝原生 `nativeMap.SignalAt`，確保傳入秒數轉換為合法的 uint32 整數並經由 `pcall` 防禦保護，杜絕 `outside of expected range 0 to 4294967295` 報錯；
+     - **數學除以零編譯期與執行期防禦 (`Core/Util.lua`, `Debug/FlowTestRunner.lua`)**：`Util.normalize` 與 `Util.remap` 於調用原生 C++ 前優先攔截 `minVal == maxVal`；測試中改用動態變數除法安全計算 NaN，消除常數摺疊之 `Division by zero` 錯誤；
+     - **物理座標隔離與真機零污染還原 (`Debug/FlowTestRunner.lua`)**：`cooldown.slot1_prewarm_anchor_integrity` 測試前暫存玩家真實 `GetCenter` 與物理錨點，測試完成後 100% 乾淨還原，杜絕與玩家實機畫面排版座標撞車；
+     - **Aura 窗口計算真機兼容 (`Debug/FlowTestRunner.lua`)**：針對真機目標無 5001 號假光環之情境，測試期間安全 mock 窗口返回值並於測試後完整還原；
+     - **Profile Codec 預覽區塊對齊 (`Core/ProfileCodec.lua`)**：`exportPlayerResources` 增加 fallback，若角色的 `profile.resources` 為 nil 時生成正規化空資源結構，確保 Profile 匯出時所有區塊 100% 完整無缺漏；
+     - **Native 容器能力判定優雅降級 (`Debug/FlowTestRunner.lua`)**：在尚未開放 Native Container 的正式服環境中優雅回報 `STATUS_SKIP`。
   1. Retail 12.1.5 關鍵架構特徵與原生加速：
      - **地面效果說明全文多組時間智慧解析與條件設定下拉自選**：
        - `Services/GroundEffectService.lua` 實裝 `parseAllDurationCandidates` 與 `scrapeDurationCandidates`，完整搜尋技能說明中所有時間秒數，依照文字位置順序排序去重，生成候選組別（第 1 組、第 2 組等）；

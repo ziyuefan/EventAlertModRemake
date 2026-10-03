@@ -399,10 +399,10 @@ function Util.lerp(a, b, t)
 end
 
 function Util.normalize(value, minVal, maxVal)
+    if maxVal == minVal then return 0 end
     if nativeMathNormalize then
         return nativeMathNormalize(value, minVal, maxVal)
     end
-    if maxVal == minVal then return 0 end
     return (value - minVal) / (maxVal - minVal)
 end
 
@@ -415,19 +415,19 @@ function Util.sign(value)
 end
 
 function Util.remap(value, inMin, inMax, outMin, outMax)
+    if inMax == inMin then return outMin end
     if nativeMathRemap then
         return nativeMathRemap(value, inMin, inMax, outMin, outMax)
     end
-    if inMax == inMin then return outMin end
     return outMin + (value - inMin) / (inMax - inMin) * (outMax - outMin)
 end
 
 function Util.wrap(value, minVal, maxVal)
+    local range = maxVal - minVal
+    if range == 0 then return minVal end
     if nativeMathWrap then
         return nativeMathWrap(value, minVal, maxVal)
     end
-    local range = maxVal - minVal
-    if range == 0 then return minVal end
     return minVal + ((value - minVal) % range)
 end
 
@@ -634,8 +634,4 @@ function Util.snapToPixels(region)
         return true
     end
     return false
-end
-
-if EAM.API and tableFreeze and not tableIsFrozen(EAM.API) then
-    tableFreeze(EAM.API)
 end

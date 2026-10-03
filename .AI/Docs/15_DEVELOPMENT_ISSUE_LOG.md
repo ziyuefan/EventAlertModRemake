@@ -1,3 +1,36 @@
+### 2026-10-03 EAM-20261003-ALPHA-8.8-LIVE-FLOW-SUITE-HARDENING：真機環境 10 項 Flow 測試報錯排查與深度防禦修復
+
+- 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78, Package DryRun PASS)。
+- 需求背景與問題分析：
+  - 少年欸於真實 Retail 12.1.0/12.1.5 客戶端執行 Flow 測試套件，回傳實機報告共 10 項失敗 (`Total: 103 | Passed: 33 | Failed: 10 | Skipped: 60`)。
+  - 經逐一逆向與日誌比對，10 項失敗歸納為 7 大技術成因：
+    1. **凍結表索引賦值失敗 (4 項)**：`Util.lua` 結尾對 `EAM.API` 呼叫了 12.1.5 原生 `tableFreeze`，使 `EAM.API` 永久唯讀，導致測試進行動態 mock (`InCombatLockdown`、`GetTime`、`UnitExists`、`C_AddOnProfiler`) 時拋出 `attempted to perform indexed assignment on a frozen table`。
+    2. **排程器 SignalAt 參數類型超出範圍 (1 項)**：暴雪原生 `C_Timer.NewTimedSignalMap()` 的 `SignalAt(key, time)` 底層 C++ 要求第 2 個參數為 `uint32` 整數，傳入浮點數 `105.0` 時觸發 `outside of expected range 0 to 4294967295`。
+    3. **數學測試除以零 (1 項)**：`FlowTestRunner.lua` 測試中使用字面量 `0/0`，在真機 Lua 5.1/LuaJIT 常數摺疊與執行期直接觸發 `Division by zero`；同時 `Util.normalize` 與 `Util.remap` 需在前置攔截 `minVal == maxVal` 以防暴雪 C++ 崩潰。
+    4. **預熱錨點座標斷言撞真機位置 (1 項)**：`cooldown.slot1_prewarm_anchor_integrity` 測試寫死預期 `(60, 80)`，但在真機中 `parentFrame:GetCenter()` 讀取的是玩家真實擺放的畫面像素座標（如 `(-80.375, -43.568)`），且未做座標隔離與還原。
+    5. **Aura 窗口計算真機缺乏目標光環 (1 項)**：`aura121.carry_over_duration.exact_window` 在離線依賴 `EAM.FlowTestMock`，真機下無此 mock 且目標無 5001 號假光環，導致真實 API 回傳 `nil`。
+    6. **Profile Codec 預覽區塊不匹配 (1 項)**：當角色存檔中未配置 `profile.resources` 時，`exportPlayerResources` 返回 `nil` 導致匯出的包缺少該區塊，預覽時 `plan.sections.playerResources` 為 `false`。
+    7. **Native 容器能力判定報錯 (1 項)**：12.1.0 正式服尚未開放 `CustomAuraContainerTemplate`（或已達上限提示 reload），測試卻強制要求 `selectedBackend == NATIVE` 否則報錯，未遵循安全 `STATUS_SKIP` 降級慣例。
+- 重構實作與產出：
+  1. **解除 `EAM.API` 凍結 (`Core/Util.lua`)**：
+     - 移除結尾的 `tableFreeze(EAM.API)`，保障 API 快取層的動態適配與單元測試 mock 能力；
+     - `Util.normalize`、`Util.remap`、`Util.wrap` 前置優先防禦邊界相等的除以零情境，杜絕原生 C++ 崩潰。
+  2. **原生排程器 `SignalAt` 防禦包裝 (`Core/Scheduler.lua`)**：
+     - 在 `Scheduler.createSignalMap` 中對原生 `nativeMap.SignalAt` 加裝防禦層，確保傳入值經過 `math.floor` 並截斷至 `[0, 4294967295]` 的合法 uint32 整數範圍，並包裹 `pcall` 防禦。
+  3. **存檔配置導出安全 Fallback (`Core/ProfileCodec.lua`)**：
+     - `exportPlayerResources` 增加 fallback：若當前 class profile 未包含自訂資源，自動生成標準正規化空資源結構，確保 Profile 匯出時所有區塊 100% 完整無缺漏。
+  4. **實機 Flow 測試套件全面適配與環境隔離 (`Debug/FlowTestRunner.lua`)**：
+     - `util.native_1215_math_table_string`：改用動態變數除法安全計算 NaN，消除編譯期除以零錯誤；
+     - `cooldown.slot1_prewarm_anchor_integrity`：測試前暫存玩家真實 `GetCenter` 與物理錨點，測試中注入精確測試座標，測試結束後 100% 完美還原，徹底解決坐標衝突與玩家存檔污染問題；
+     - `aura121.carry_over_duration.exact_window`：針對真機調用安全模擬 `C_UnitAuras` 窗口返回值並於測試後還原；
+     - `aura121.capability.native_complete`：若真機環境未啟用 Native Container（如正式服尚未解鎖或需要 reload），安全回報 `STATUS_SKIP`；
+     - `profile.codec.export_full_sections_roundtrip`：強化 Mismatch 診斷字串輸出。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 語法錯誤)。
+  - `Run-FlowValidation.ps1`：104/104 通過 (0 失敗)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+  - `Build-Package.ps1 -DryRun`：打包乾跑通過 (`PACKAGE_DRY_RUN=pass`)。
+
 ### 2026-10-03 EAM-20261003-ALPHA-8.8-GROUND-EFFECT-MULTI-DURATION-SELECTION：地面效果說明全文多組時間智慧解析、條件設定下拉自選與一鍵擷取雙向連動
 
 - 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78)。

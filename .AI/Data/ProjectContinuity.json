@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-10-03.03",
+  "snapshotVersion": "2026-10-03.04",
   "updatedAt": "2026-10-03",
   "project": {
     "name": "EventAlertModRemake",
@@ -22,7 +22,7 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1.5 Alpha 8.8 開發與驗證完成：全面適配魔獸世界 12.1.5 (TOC 120105)；實裝地面效果說明全文多組時間智慧解析、條件設定下拉自選組別與一鍵擷取雙向連動；整合底層 C++ 數學/字串/表格加速庫與防禦性降級；實裝 TimedSignalMap 零分配排程器；精確判定 12.1.5 原生 Pandemic 結餘窗口；支援原生光環 Pandemic 動態特效動畫；實裝音效警示 throttleSeconds 頻率限制防護；支援 SetRoundLayoutToNearestPixel 原生像素對齊與 CreateFrameWithOptions 隱藏預建立防閃爍；徹底移除 Blizzard_Deprecated 全域呼叫；501 契約全綠、104 Flow 離線驗證全過。",
+    "objective": "Retail 12.1.5 Alpha 8.8 真機 10 項 Flow 測試報錯深度排查與修復完成：解除 EAM.API 凍結以防動態 mock 崩潰；封裝原生 TimedSignalMap SignalAt uint32 參數與浮點防禦；修復編譯期除以零與原生 C++ 邊界崩潰；隔離實機 Frame 座標與完美還原防污染；適配真機缺少目標光環情境；Profile Codec 支援空資源 fallback；全套 501 契約全綠、104 Flow 離線驗證全過、打包乾跑通過。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 104,

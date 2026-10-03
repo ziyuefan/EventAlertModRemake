@@ -262,8 +262,27 @@ function Scheduler.createSignalMap(callback)
         local ok, nativeMap = pcall(newSignalMap, callback)
         if ok and nativeMap then
             Scheduler.nativeSignalMapCount = Scheduler.nativeSignalMapCount + 1
+            local origSignalAt = nativeMap.SignalAt
+            if type(origSignalAt) == "function" then
+                nativeMap.SignalAt = function(self, key, targetTime)
+                    if key == nil or not Util.isSafeNumber(targetTime) then
+                        return false, "invalidSignalAt"
+                    end
+                    local intTime = math.floor(targetTime)
+                    if intTime < 0 then intTime = 0 end
+                    if intTime > 4294967295 then intTime = 4294967295 end
+                    local callOk, res = pcall(origSignalAt, self, key, intTime)
+                    if not callOk then
+                        return false, res
+                    end
+                    return res ~= false
+                end
+            end
             if not nativeMap.SignalAfter then
                 nativeMap.SignalAfter = function(self, key, delay)
+                    if key == nil or not Util.isSafeNonNegativeNumber(delay) then
+                        return false, "invalidSignalAfter"
+                    end
                     local now = api.GetTime and api.GetTime() or 0
                     return self:SignalAt(key, now + (delay or 0))
                 end

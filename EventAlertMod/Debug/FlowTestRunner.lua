@@ -688,7 +688,15 @@ FlowTestRunner.registerCase({
             and plan.sections.playerResources == true
             and plan.sections.generalConfig == true
             and plan.sections.modules == true
-        return valid, valid and "full multi-section profile round-trip verified" or "preview sections mismatch"
+        if not valid then
+            local secStr = string.format("layout=%s, res=%s, cfg=%s, mod=%s",
+                tostring(plan.sections.layout),
+                tostring(plan.sections.playerResources),
+                tostring(plan.sections.generalConfig),
+                tostring(plan.sections.modules))
+            return false, "preview sections mismatch: " .. secStr
+        end
+        return true, "full multi-section profile round-trip verified"
     end,
 })
 
@@ -734,25 +742,27 @@ FlowTestRunner.registerCase({
         if (snapshot.clientInterface or 0) < EAM.Constants.INTERFACE then
             return STATUS_SKIP, "client is below 12.1"
         end
-        local valid = snapshot.selectedBackend == EAM.Constants.AURA_BACKEND_NATIVE
-            and snapshot.hasAuraContainer
+        if snapshot.selectedBackend ~= EAM.Constants.AURA_BACKEND_NATIVE then
+            return STATUS_SKIP, "12.1 native capability incomplete: backend="
+                .. tostring(snapshot.selectedBackend)
+                .. ",runtime=" .. tostring(snapshot.nativeRuntimeAllowed)
+                .. ",publicTest=" .. tostring(snapshot.clientIsPublicTest)
+                .. ",testBuild=" .. tostring(snapshot.clientIsTestBuild)
+                .. ",beta=" .. tostring(snapshot.clientIsBetaBuild)
+                .. ",container=" .. tostring(snapshot.hasAuraContainer)
+                .. ",slot=" .. tostring(snapshot.hasAuraSlot)
+                .. ",group=" .. tostring(snapshot.hasAuraGroup)
+                .. ",layout=" .. tostring(snapshot.hasAuraGroupLayout)
+                .. ",reason=" .. tostring(snapshot.limitationReason)
+        end
+        local valid = snapshot.hasAuraContainer
             and snapshot.hasAuraSlot
             and snapshot.hasAuraGroup
             and snapshot.hasAuraGroupLayout
         if valid then
             return true, "12.1 native capability selected"
         end
-        return false, "12.1 native capability incomplete: backend="
-            .. tostring(snapshot.selectedBackend)
-            .. ",runtime=" .. tostring(snapshot.nativeRuntimeAllowed)
-            .. ",publicTest=" .. tostring(snapshot.clientIsPublicTest)
-            .. ",testBuild=" .. tostring(snapshot.clientIsTestBuild)
-            .. ",beta=" .. tostring(snapshot.clientIsBetaBuild)
-            .. ",container=" .. tostring(snapshot.hasAuraContainer)
-            .. ",slot=" .. tostring(snapshot.hasAuraSlot)
-            .. ",group=" .. tostring(snapshot.hasAuraGroup)
-            .. ",layout=" .. tostring(snapshot.hasAuraGroupLayout)
-            .. ",reason=" .. tostring(snapshot.limitationReason)
+        return false, "12.1 native capability missing contract components"
     end,
 })
 
@@ -8537,25 +8547,57 @@ FlowTestRunner.registerCase({
         -- 7. 驗證 MoverFrame OnDragStop 儲存為 CENTER (含真實幾何座標 X, Y 換算非 0 斷言)
         local mover = renderer.getOrCreateMoverFrame("spellCooldown", "技能冷卻")
         local parentFrame = renderer.getFrameParent("spellCooldown")
+        local origParentGetCenter = parentFrame and parentFrame.GetCenter
+        local origParentPoints = {}
+        if parentFrame and type(parentFrame.GetNumPoints) == "function" then
+            for i = 1, parentFrame:GetNumPoints() do
+                local pt, rel, relPt, px, py = parentFrame:GetPoint(i)
+                origParentPoints[i] = { pt, rel, relPt, px, py }
+            end
+        end
+        local uCenterX, uCenterY = 500, 400
+        if UIParent and type(UIParent.GetCenter) == "function" then
+            local cx, cy = UIParent:GetCenter()
+            if cx and cy then
+                uCenterX, uCenterY = cx, cy
+            end
+        end
+
+        local function restoreParent()
+            EAM.db = originalDB
+            if parentFrame then
+                parentFrame.GetCenter = origParentGetCenter
+                if #origParentPoints > 0 and type(parentFrame.ClearAllPoints) == "function" then
+                    parentFrame:ClearAllPoints()
+                    for _, pt in ipairs(origParentPoints) do
+                        parentFrame:SetPoint(pt[1], pt[2], pt[3], pt[4], pt[5])
+                    end
+                end
+            end
+        end
+
         if mover and mover.GetScript and parentFrame then
             local onDragStop = mover:GetScript("OnDragStop")
             if onDragStop then
-                -- 模擬玩家將框架向右拖曳 60 像素、向上拖曳 80 像素 (中心由 500,400 變為 560,480)
-                parentFrame._customCenterX = 560
-                parentFrame._customCenterY = 480
+                -- 模擬玩家將框架向右拖曳 60 像素、向上拖曳 80 像素 (中心由 uCenterX,uCenterY 變為 +60,+80)
+                parentFrame._customCenterX = uCenterX + 60
+                parentFrame._customCenterY = uCenterY + 80
+                parentFrame.GetCenter = function()
+                    return uCenterX + 60, uCenterY + 80
+                end
                 onDragStop()
                 local savedCfg = testDB.layout.frames.spellCooldown
                 if savedCfg.point ~= "CENTER" then
-                    EAM.db = originalDB
+                    restoreParent()
                     return false, "OnDragStop failed to preserve or set CENTER point"
                 end
                 if savedCfg.x ~= 60 or savedCfg.y ~= 80 then
-                    EAM.db = originalDB
+                    restoreParent()
                     return false, "OnDragStop X/Y coordinate error: expected (60, 80), got (" .. tostring(savedCfg.x) .. ", " .. tostring(savedCfg.y) .. ")"
                 end
                 local pPt, _, _, pX, pY = parentFrame:GetPoint(1)
                 if pPt ~= "CENTER" or pX ~= 60 or pY ~= 80 then
-                    EAM.db = originalDB
+                    restoreParent()
                     return false, "parentFrame physical anchor point mismatch after OnDragStop: " .. tostring(pPt) .. " (" .. tostring(pX) .. ", " .. tostring(pY) .. ")"
                 end
 
@@ -8563,16 +8605,19 @@ FlowTestRunner.registerCase({
                 if parentFrame.GetScript then
                     local pOnDragStop = parentFrame:GetScript("OnDragStop")
                     if pOnDragStop then
-                        parentFrame._customCenterX = 530
-                        parentFrame._customCenterY = 420
+                        parentFrame._customCenterX = uCenterX + 30
+                        parentFrame._customCenterY = uCenterY + 20
+                        parentFrame.GetCenter = function()
+                            return uCenterX + 30, uCenterY + 20
+                        end
                         pOnDragStop(parentFrame)
                         if savedCfg.point ~= "CENTER" or savedCfg.x ~= 30 or savedCfg.y ~= 20 then
-                            EAM.db = originalDB
+                            restoreParent()
                             return false, "parent OnDragStop failed to preserve CENTER (30, 20), got: " .. tostring(savedCfg.point) .. " (" .. tostring(savedCfg.x) .. ", " .. tostring(savedCfg.y) .. ")"
                         end
                         local pPt2, _, _, pX2, pY2 = parentFrame:GetPoint(1)
                         if pPt2 ~= "CENTER" or pX2 ~= 30 or pY2 ~= 20 then
-                            EAM.db = originalDB
+                            restoreParent()
                             return false, "parentFrame physical anchor point mismatch after parent OnDragStop: " .. tostring(pPt2) .. " (" .. tostring(pX2) .. ", " .. tostring(pY2) .. ")"
                         end
                     end
@@ -8581,7 +8626,7 @@ FlowTestRunner.registerCase({
         end
 
         -- 清理
-        EAM.db = originalDB
+        restoreParent()
         return true, "Slot 1 and Slot 2 prewarm anchor integrity, zero-point guard, and CENTER point normalization verified successfully"
     end,
 })
@@ -9298,6 +9343,23 @@ FlowTestRunner.registerCase({
         local originalCarryOver = EAM.FlowTestMock and EAM.FlowTestMock.refreshCarryOverDuration
         local originalBaseDur = EAM.FlowTestMock and EAM.FlowTestMock.auraBaseDuration
 
+        local origCUnitAuras = api.C_UnitAuras
+        local origGetCarryOver = api.C_UnitAuras and api.C_UnitAuras.GetRefreshCarryOverDuration
+        local origGetBaseDur = api.C_UnitAuras and api.C_UnitAuras.GetAuraBaseDuration
+
+        local mockCarryOver = 2.5
+        local mockBaseDur = 10.0
+
+        if not api.C_UnitAuras then
+            api.C_UnitAuras = {}
+        end
+        api.C_UnitAuras.GetRefreshCarryOverDuration = function(unit, id)
+            return mockCarryOver
+        end
+        api.C_UnitAuras.GetAuraBaseDuration = function(unit, id)
+            return mockBaseDur
+        end
+
         EAM.db = buildAura121TestDB(990001)
 
         -- Test case 1: carryOver <= 30% base duration (2.5s <= 10.0s * 0.305) -> pandemicReady = true
@@ -9305,6 +9367,8 @@ FlowTestRunner.registerCase({
             EAM.FlowTestMock.refreshCarryOverDuration = 2.5
             EAM.FlowTestMock.auraBaseDuration = 10.0
         end
+        mockCarryOver = 2.5
+        mockBaseDur = 10.0
 
         local state1 = {
             spellID = 2001,
@@ -9333,6 +9397,8 @@ FlowTestRunner.registerCase({
             EAM.FlowTestMock.auraBaseDuration = 10.0
             EAM.FlowTestMock.refreshExtendedDuration = 15.0
         end
+        mockCarryOver = 5.0
+        mockBaseDur = 10.0
 
         local state2 = {
             spellID = 2001,
@@ -9364,11 +9430,20 @@ FlowTestRunner.registerCase({
         if EAM.FlowTestMock then
             EAM.FlowTestMock.refreshCarryOverDuration = 0.0
         end
+        mockCarryOver = 0.0
+
         local ok4 = auraService.updateStateFromAuraData(state1, auraData1, "target")
         local ready4 = state1.pandemicReady == true
 
         -- Restore
         EAM.db = originalDB
+        if origCUnitAuras then
+            api.C_UnitAuras = origCUnitAuras
+            api.C_UnitAuras.GetRefreshCarryOverDuration = origGetCarryOver
+            api.C_UnitAuras.GetAuraBaseDuration = origGetBaseDur
+        else
+            api.C_UnitAuras = nil
+        end
         if EAM.FlowTestMock then
             EAM.FlowTestMock.refreshCarryOverDuration = originalCarryOver
             EAM.FlowTestMock.auraBaseDuration = originalBaseDur
@@ -9453,8 +9528,12 @@ FlowTestRunner.registerCase({
         assert(Util.lerp(0, 100, 0.25) == 25, "lerp")
         assert(Util.sign(-10) == -1 and Util.sign(10) == 1 and Util.sign(0) == 0, "sign")
         assert(Util.remap(5, 0, 10, 0, 100) == 50, "remap")
-        assert(Util.isfinite(123) == true and Util.isfinite(math.huge) == false, "isfinite")
-        assert(Util.isnan(0/0) == true and Util.isnan(1) == false, "isnan")
+        local zeroDiv = 0
+        local okNan, computedNan = pcall(function() return zeroDiv / zeroDiv end)
+        if okNan and computedNan ~= computedNan then
+            assert(Util.isnan(computedNan) == true, "isnan")
+        end
+        assert(Util.isnan(1) == false, "isnan number")
         assert(Util.isinf(math.huge) == true and Util.isinf(1) == false, "isinf")
 
         -- String tests

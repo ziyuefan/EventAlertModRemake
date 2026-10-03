@@ -1154,8 +1154,11 @@ local function exportPlayerResources(classToken)
     local db = EAM.db
     if not db or not classToken then return nil end
     local profile = type(db.profiles) == "table" and type(db.profiles.classes) == "table" and db.profiles.classes[classToken]
-    if not profile or type(profile.resources) ~= "table" then return nil end
-    return normalizePlayerResourcesRecord(classToken, profile.resources)
+    local res = profile and profile.resources
+    if type(res) ~= "table" then
+        res = { classDefaults = { enabled = {}, settings = {} }, specs = {} }
+    end
+    return normalizePlayerResourcesRecord(classToken, res)
 end
 
 local function exportGeneralConfig()

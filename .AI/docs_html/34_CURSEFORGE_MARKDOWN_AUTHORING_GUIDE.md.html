@@ -661,17 +661,151 @@ flowchart TD
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="curseforge-markdown-and-html-typesetting-precautions-and-pitfall-avoidance-practical-report">CurseForge Markdown and HTML Typesetting precautions and pitfall avoidance practical report</h1>
+<blockquote>
+<p><strong>Report to</strong>: EventAlertMod Project Development and Release Team
+<strong>Date of Enactment</strong>: September 27, 2026
+<strong>Environmental Benchmarks</strong>: CurseForge Web &amp; App Platform, HTML5 Living Standard, Cloudflare WAF Penetration Pipeline</p>
+</blockquote>
+<hr />
+<h2 id="1-core-summary-executive-summary">1. Core Summary (Executive Summary)</h2>
+<p>When editing the project homepage description (<code>Description</code>) or long Markdown on the CurseForge (CF) platform, we often encounter the extremely weird problem of <strong>"The preview in the editor is completely normal, but after pressing Save (Save) to publish to the front homepage, the layout is all squeezed into a lump, and even the entire collapsed block is completely collapsed and swallowed."</strong>.
+This report is based on Chrome DevTools's reverse review and real-machine injection verification of CurseForge's front-end real DOM, revealing the operating principle of its front-end and back-end dual-track rendering architecture, and formulating a set of standard layout specifications that are "100% immune to back-end filter cleaning and never crash"**.</p>
+<hr />
+<h2 id="2-curseforge-dual-track-rendering-mechanism-and-preview-trap">2. CurseForge Dual-track rendering mechanism and "Preview Trap"</h2>
+<p>Article by CurseForge There is a fatal front-end and back-end disconnect in the rendering pipeline:</p>
+<div class="mermaid">
+flowchart TD
+    subgraph Client ["🖥️ 前端瀏覽器（編輯與預覽模式）"]
+        A["輸入 HTML / Markdown"] --> B["前端 JS 富文本引擎 (CKEditor)"]
+        B --> C["即時 Preview Tab 預覽<br/>（尚未經後端清洗：&lt;li&gt; 完好、排版看似正常！）"]
+    end
 
-        <div class="translation-fallback">
-            <h3>English Version Offline / Translation Unavailable</h3>
-            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
-            <ul>
-                <li>You are executing the build script in an offline environment.</li>
-                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
-            </ul>
-            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
-        </div>
+    subgraph Server ["☁️ CurseForge 後端伺服器（點擊 Save 儲存後）"]
+        D["點擊 Save 儲存"] --> E["後端 HTML Sanitizer 安全過濾清洗器"]
+        E -->|無差別洗白| F["&lt;li&gt; 標籤被全面剝離！只留 &lt;ul&gt;"]
+        E -->|嵌套結構錯亂| G["多層 &lt;ul&gt; 找不到閉合，外層 &lt;/ul&gt;&lt;/div&gt; 被丟棄！"]
+    end
 
+    subgraph Public ["🌐 前台公開主頁（真實訪客視角）"]
+        F --> H["所有清單文字黏成同一大坨長字串"]
+        G --> I["未閉合容器骨牌式向下吞噬 15 層版本收合！"]
+    end
+
+    C -.->|"高度欺騙性假象"| D
+</div>
+
+<ol>
+<li><strong>Editing and Preview Phase (Client-side Preview)</strong>:</li>
+<li>Rely on the pure JavaScript engine native to the browser to parse Markdown or HTML on the fly.</li>
+<li>We haven't entered the backend server yet, so the preview will appear to be perfect, no matter how complex the syntax, including unclosed tags or <code>&lt;li&gt;</code> lists.</li>
+<li><strong>Storage and front-end display (Server-side Sanitizer)</strong>:</li>
+<li>After clicking "Save", the article will be transferred to the back-end server and forced to pass through a strict but incomplete set of <strong>HTML Sanitizer (server-side filter)</strong> for cleaning.</li>
+<li><strong>Iron Rule of Acceptance</strong>: <strong>Never trust the preview effect of the Preview tab</strong>, the only truth is "the real DOM of the front-end public page after actual storage".</li>
+</ol>
+<hr />
+<h2 id="3-three-major-destructive-behaviors-and-pitfalls-of-back-end-sanitizer">3. Three major destructive behaviors and pitfalls of back-end Sanitizer</h2>
+<h3 id="1-li-labels-are-washed-and-stripped-indiscriminately">1. <code>&lt;li&gt;</code> labels are washed and stripped indiscriminately</h3>
+<ul>
+<li><strong>Phenomena</strong>: After DevTools field inquiry <code>document.querySelectorAll('.project-description li')</code>, the result is <strong>0</strong>.</li>
+<li><strong>Consequences</strong>: The filter whitelist of CurseForge allows <code>&lt;ul&gt;</code> and <code>&lt;ol&gt;</code>, but will strip off all <code>&lt;li&gt;</code> and <code>&lt;/li&gt;</code> tags!</li>
+<li><strong>Typesetting disaster</strong>: After losing the block wrapping and list style of <code>&lt;li&gt;</code>, all list items run naked directly in <code>&lt;ul&gt;</code>, with the text connected end to end, and the browser squeezes it into a single line of text that is difficult to read.</li>
+</ul>
+<h3 id="2-nested-ul-causes-cross-version-tags-to-devour-domino-effect-cascading-unclosed-tags">2. Nested <code>&lt;ul&gt;</code> causes cross-version tags to devour domino effect (Cascading Unclosed Tags)</h3>
+<ul>
+<li><strong>Phenomena</strong>: When the user writes a multi-layer indented list in a collapse (such as a large category containing sub-lists), after <code>&lt;li&gt;</code> is washed away, the outer layer <code>&lt;ul&gt;</code> will directly contain the inner layer <code>&lt;ul&gt;</code>.</li>
+<li><strong>Consequences</strong>: The HTML parser will get into a fault-tolerant mess when processing an unbalanced DOM, causing the outermost <code>&lt;/ul&gt;</code> and <code>&lt;/div&gt;</code> to be discarded.</li>
+<li><strong>Typesetting disaster</strong>: The unclosed container will "swallow" all subsequent chapters and editions all the way down. The actual machine has measured up to <strong>15 layers of Russian matryoshka doll closing</strong> (Alpha 8.7 swallowed 8.6, 8.6 swallowed 8.5, and finally even the "compatibility" and "connection" at the bottom were swallowed)!</li>
+</ul>
+<h3 id="3-html5-details-markdown1summary-folding-label-invalid">3. HTML5 <code>&lt;details markdown="1"&gt;&lt;summary&gt;</code> Folding label invalid</h3>
+<ul>
+<li><strong>Phenomena</strong>: The rich text cleaner of CurseForge will completely peel off HTML5 <code>&lt;details markdown="1"&gt;</code> and <code>&lt;summary&gt;</code>, or directly expand and flatten them, unable to form a native folding effect.</li>
+</ul>
+<hr />
+<h2 id="4-core-typesetting-standards-and-iron-rules-the-golden-rules">4. Core typesetting standards and iron rules (The Golden Rules)</h2>
+<p>In order to achieve 100% stable, cross-platform perfectly rendered typesetting in CurseForge, the following five iron rules must be strictly observed:</p>
+<h3 id="iron-rule-1-all-containers-must-be-closed-using-the-official-standard-div-classspoiler">Iron Rule 1: All containers must be closed using the official standard <code>&lt;div class="spoiler"&gt;</code></h3>
+<p>CurseForge The only officially supported folding syntax is <code>&lt;div class="spoiler"&gt;</code>:
+- <strong>The title must be placed outside</strong>: for example <code>&lt;h2&gt;標題&lt;/h2&gt;</code> or <code>&lt;h4&gt;版次&lt;/h4&gt;</code> placed outside the container to avoid being hidden by default.
+- <strong>Avoid Nested Spoilers are strictly prohibited</strong>: The entire structure must adopt a "single-layer, one-level tile structure". For example, the big title "📜Version Update History" is always expanded, and the 21 historical versions under it each serve as independent single-layer <code>&lt;div class="spoiler"&gt;</code>.</p>
+<h3 id="iron-rule-2-completely-abandon-ul-ol-li-and-use-entity-symbols-brbr-instead">Iron Rule 2: Completely abandon <code>&lt;ul&gt;</code>, <code>&lt;ol&gt;</code>, <code>&lt;li&gt;</code>, and use entity symbols + <code>&lt;br&gt;&lt;br&gt;</code> instead</h3>
+<p>Since the back-end Sanitizer will wash out <code>&lt;li&gt;</code> and <code>&lt;ul&gt;</code> will cause swallowing, the purest and most robust solution is to not use any list tags in the description file at all:
+- <strong>Level 1 Entry</strong>: Comes with its own exclusive Emoji (such as <code>🔮</code>, <code>🎯</code>, <code>📖</code>) or number tags, and adds <code>&lt;br&gt;&lt;br&gt;</code> at the end of each entry to create a comfortable paragraph blank line.
+- <strong>Second-level sub-projects</strong>: always start with HTML entity dot <code>&amp;bull;&amp;nbsp;</code> (that is, <code>•</code>), and add <code>&lt;br&gt;&lt;br&gt;</code> at the end.
+- <strong>No tags can be eaten</strong>: Without <code>&lt;li&gt;</code>, it will never be stripped, and without <code>&lt;ul&gt;</code>, cross-version swallowing will never occur!</p>
+<h3 id="iron-rule-3-modern-html5-empty-label-specification-prevent-tag-from-self-closing">Iron Rule 3: Modern HTML5 empty label specification (prevent <code>&lt;tag /&gt;</code> from self-closing)</h3>
+<ul>
+<li>According to the modern HTML5 (Living Standard) specification, all void elements (Void Elements) use standard single tags:<ul>
+<li>Line break: <code>&lt;br&gt;</code></li>
+</ul>
+</li>
+<li>Paragraph gap: <code>&lt;br&gt;&lt;br&gt;</code><ul>
+<li>Separator: <code>&lt;hr&gt;</code></li>
+<li>Picture: <code>&lt;img src="..." width="100%" alt="..."&gt;</code></li>
+</ul>
+</li>
+<li><strong>It is strictly prohibited to use the XHTML old-style closed abbreviation</strong> with a slash (such as <code>&lt;br /&gt;</code>, <code>&lt;hr /&gt;</code>, <code>&lt;img ... /&gt;</code>).</li>
+</ul>
+<h3 id="iron-rule-4-the-table-is-comprehensive-html-semanticization-table-html-first">Iron Rule 4: The table is comprehensive HTML Semanticization (Table HTML-First)</h3>
+<ul>
+<li>Markdown native tables (<code>|---|</code>) are easily broken when they contain code tags or encounter collapsing boundaries.</li>
+<li>Always use the native <code>&lt;table&gt;</code>, <code>&lt;thead&gt;</code>, <code>&lt;tbody&gt;</code>, <code>&lt;tr&gt;</code>, <code>&lt;th&gt;</code>, <code>&lt;td&gt;</code> structures, and add <code>width="100%"</code> adaptive width to the image field.</li>
+</ul>
+<h3 id="rule-5-images-are-100-aligned-curseforge-attachments-cdn">Rule 5: Images are 100% aligned CurseForge Attachments CDN</h3>
+<ul>
+<li>It is strictly prohibited to use GitHub raw (<code>raw.githubusercontent.com/...</code>) or external image beds, otherwise it will trigger Cloudflare anti-hotlink warning or broken images.</li>
+<li>Screenshots must be uploaded to the CurseForge dedicated attachment space and use the <code>https://media.forgecdn.net/attachments/...</code> official CDN URL.</li>
+</ul>
+<hr />
+<h2 id="5-typesetting-grammar-cheatsheet-cheatsheet">5. Typesetting Grammar Cheatsheet (Cheatsheet)</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Typesetting requirements</th>
+<th style="text-align: left;">❌ Wrong/easy to break writing method</th>
+<th style="text-align: left;">✅ Recommended 100% stable writing method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Collapse</strong></td>
+<td style="text-align: left;">`<details markdown="1"><summary>標題</summary></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<p>內容</p>
+<p></details><code>|</code><h2>標題</h2><code>&lt;br&gt;</code><div class="spoiler"><code>&lt;br&gt;</code>內容<code>&lt;br&gt;</code></div><code>|
+| **Feature List** |</code><ul><li>功能 A</li><li>功能 B</li></ul><code>|</code>📖 <strong>功能 A</strong>：說明文字...<br><br><code>&lt;br&gt;</code>🏷️ <strong>功能 B</strong>：說明文字...<br><br><code>|
+| **Subproject List** |</code><ul><li>主分類<ul><li>子項 1</li></ul></li></ul><code>|</code><strong>主分類</strong>：<br><br><code>&lt;br&gt;</code>&bull;&nbsp;<strong>子項 1</strong>：說明文字...<br><br><code>|
+| **Line breaks and blank lines** |</code><br /><code>or two spaces at the end of Markdown |</code><br><br><code>(paragraph spacing) or</code><br><code>(single line break) |
+| **Separator** |</code>---<code>or</code><strong><em><code>or</code><hr /><code>|</code><hr><code>|
+| **Inline code** | \</code>code` (sometimes broken by WYSIWYG escaping) | <code>&lt;code&gt;code&lt;/code&gt;</code> |
+| </em>*Bold</strong> | <code>**text**</code> | <code>&lt;strong&gt;text&lt;/strong&gt;</code> |
+| <strong>Special symbols</strong> | <code>-&gt;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&amp;</code> | <code>&amp;rarr;</code>, <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;amp;</code> |</p>
+<hr />
+<h2 id="6-standard-golden-closing-template-golden-template">6. Standard golden closing template (Golden Template)</h2>
+<pre class="codehilite"><code class="language-html">&lt;hr&gt;
+
+&lt;h2&gt;🎨 現代化視覺與極致操作體驗&lt;/h2&gt;
+&lt;div class=&quot;spoiler&quot;&gt;
+
+📖 &lt;strong&gt;次世代全量法術庫與智慧預設 (Master Spell Catalog)&lt;/strong&gt;：內建 5 語系先驗資料庫，支援專精樹展開與法術懸停說明。&lt;br&gt;&lt;br&gt;
+
+🏷️ &lt;strong&gt;多維戰術群組與標籤管理 (Group Management)&lt;/strong&gt;：支援技能多對多標籤歸屬與獨立二級管理側窗。&lt;br&gt;&lt;br&gt;
+
+📈 &lt;strong&gt;暴雪原生 CurveObject 曲線架構全面接入&lt;/strong&gt;：&lt;br&gt;&lt;br&gt;
+&amp;bull;&amp;nbsp;&lt;strong&gt;能量/資源條動態色彩曲線染色&lt;/strong&gt;：消耗型與累積型資源自動以三色階動態染色。&lt;br&gt;&lt;br&gt;
+&amp;bull;&amp;nbsp;&lt;strong&gt;階梯閥門曲線 (Step Gate Curve)&lt;/strong&gt;：透過二元階梯函數安全穿透受保護秘密值。&lt;br&gt;&lt;br&gt;
+&amp;bull;&amp;nbsp;&lt;strong&gt;SecondsFormatter 自適應精度曲線&lt;/strong&gt;：時間倒數文字依剩餘秒數平滑切換精度。&lt;br&gt;&lt;br&gt;
+
+🚨 &lt;strong&gt;進入戰鬥紅框閃爍&lt;/strong&gt;：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。&lt;br&gt;&lt;br&gt;
+
+&lt;/div&gt;
+
+&lt;hr&gt;
+</code></pre>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->
