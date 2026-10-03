@@ -162,9 +162,7 @@ function AlertBorderStyles.refreshAll()
                     if icon.rendered then
                         icon.rendered.borderStyleKey = nil
                     end
-                    if icon.alertState then
-                        IconPool.applyTypeBorder(icon, icon.alertState, frameName)
-                    end
+                    IconPool.applyTypeBorder(icon, icon.alertState, frameName)
                 end
             end
         end

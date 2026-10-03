@@ -51,6 +51,12 @@
            -- 徹底隔離離線測試案例與狀態清理，並為技能冷卻圖示提供問號備用材質，徹底消除 40x40 亮黃方塊與 99901 虛擬技能遺留問題。
         -- 地面效果紫色外框顯示穩定性修復 (Ground Effect Purple Border Restoration):
            -- 修復地面效果圖示由預留佔位模式切換至實際施法觸發時，因外框狀態鍵比對誤判而未重新顯示外框、導致紫色邊框偶發性消失的問題。
+         -- 原生 TimedSignalMap C++ 物件唯讀保護與代理封裝 (TimedSignalMap Proxy Wrapper Fix):
+            -- 修復 C_Timer.NewTimedSignalMap 產出之原生 C++ 物件屬唯讀保護結構、在嘗試覆寫 SignalAt 時引發 Attempted to assign to read-only key SignalAt 報錯的問題；改以輕量級 Proxy Table 進行安全防禦代理，全面守護原生 C++ 倒數引擎。
+         -- 表格工具值刪除傳回一致性修復 (Table Remove Value Consistency Fix):
+            -- 強化 Util.tableRemoveValue 與 Util.tableRemoveUnordered 實作，消除對非標準環境擴充函式的傳回型別假設，確保跨版本環境下布林回傳值與陣列長度嚴格一致。
+         -- 模組邊框色彩即時熱更新防護 (Alert Border Color Hot-Refresh Fix):
+            -- 移除 IconPool.applyTypeBorder 狀態鍵短路判定，確保在設定介面即時修改邊框色彩或開關時，已在畫面待命與顯示中的所有圖示（含技能冷卻、地面效果等）色彩均能瞬間動態生效。
 
 -- [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names & Target Ghost Purge] 2026.09.27
      -- 【✨ 新增功能 (Features)】:

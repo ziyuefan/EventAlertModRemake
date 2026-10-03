@@ -556,9 +556,6 @@ end
 
 function Util.tableRemoveUnordered(tbl, index)
     if not tbl or type(tbl) ~= "table" or not index then return nil end
-    if nativeTableRemoveUnordered then
-        return nativeTableRemoveUnordered(tbl, index)
-    end
     local len = #tbl
     if index < 1 or index > len then return nil end
     local val = tbl[index]
@@ -569,9 +566,6 @@ end
 
 function Util.tableRemoveValue(tbl, val)
     if not tbl or type(tbl) ~= "table" then return false end
-    if nativeTableRemoveValue then
-        return nativeTableRemoveValue(tbl, val)
-    end
     for i = 1, #tbl do
         if tbl[i] == val then
             table.remove(tbl, i)

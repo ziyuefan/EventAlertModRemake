@@ -2768,3 +2768,24 @@
   - Lua 語法檢查：78/78 PASS (0 failed)。
   - Flow 狀態機測試：94/94 PASS (100%)。
   - Validation Contracts：499/499 PASS (100%)。
+
+### ISSUE-20261003-004: Retail 12.1.5 原生 TimedSignalMap 唯讀保護與 tableRemoveValue 回傳型別跨環境容錯修復
+
+- 觸發情境：
+  1. 使用者在遊戲實機環境中回饋 FlowTest 報告：
+     - `[FAIL] scheduler.timed_signal_map`: `Interface/AddOns/EventAlertMod/Core/Scheduler.lua:279: Attempted to assign to read-only key SignalAt`
+     - `[FAIL] util.native_1215_math_table_string`: `FlowTestRunner.lua:9593: tableRemoveValue`
+  2. 使用者澄清「是邊框(border)不是遮罩(mask)」，並附圖確認地面效果紫色外框正常顯示，但設定面板外框選色需確保即時熱生效。
+- 根因分析：
+  1. **TimedSignalMap 唯讀 C++ 物件限制**：WoW 12.1.5 `C_Timer.NewTimedSignalMap` 產出之原生 Map 物件為受保護的 C++ userdata/table，內部 metatable 禁止 `__newindex` 寫入。在先前實作中直接為 `nativeMap.SignalAt = ...` 進行 monkey-patching 會引發 `Attempted to assign to read-only key SignalAt` 崩潰。
+  2. **tableRemoveValue 第三方環境回傳型別分歧**：在特定遊戲環境或第三方 UI 函式庫中，`table.removevalue` 函式傳回值可能為被移除之索引 (如 `2`) 或 `nil`，而非布林值 `true`。原 `Util.tableRemoveValue` 直接回傳 `nativeTableRemoveValue(tbl, val)`，導致嚴格斷言 `== true` 失敗。
+  3. **AlertBorderStyles 邊框即時熱更新防護**：`IconPool.applyTypeBorder` 原先若 `rendered.borderStyleKey == styleKey` 且已顯示則短路跳過，導致在設定面板調整邊框色彩時，畫面上的待命或現有圖示無法第一時間重新取色。
+- 修復實作：
+  1. **Scheduler.lua Proxy 封裝**：將 `nativeMap` 包裝於輕量級 Proxy Table (`wrapper`)，透過 `wrapper:SignalAt` 進行輸入檢驗與 uint32 時間防溢位截斷後安全委託給 `nativeMap:SignalAt`，並以 `setmetatable(wrapper, { __index = nativeMap })` 繼承原生方法，完全不修改原生 C++ 物件。
+  2. **Util.lua 表格工具確定性實作**：將 `Util.tableRemoveValue` 與 `Util.tableRemoveUnordered` 全面收斂為純粹、確定性之 Lua 實作，消除對非標準全域環境 polyfill 函式的傳回型別依賴，保證回傳 `true`/`false`。
+  3. **IconPool.lua & AlertBorderStyles.lua 邊框熱套用加固**：移除 `applyTypeBorder` 的短路跳過判定，並在 `AlertBorderStyles.refreshAll()` 中對所有圖示無差別執行樣式更新，確保改色即時生效。
+- 驗證結果：
+  - Lua 語法檢查：78/78 passed (`CheckLuaSyntax.ps1`)。
+  - Flow 業務狀態機驗證：104/104 passed (`Run-FlowValidation.ps1`)。
+  - 全專案契約掃描：501/501 passed (`Test-ValidationContracts.ps1`)。
+  - 開發包打包：`Dist/EventAlertMod_DEV_20261003_211835.zip`。

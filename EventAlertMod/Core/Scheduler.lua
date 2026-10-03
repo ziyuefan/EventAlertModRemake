@@ -262,35 +262,57 @@ function Scheduler.createSignalMap(callback)
         local ok, nativeMap = pcall(newSignalMap, callback)
         if ok and nativeMap then
             Scheduler.nativeSignalMapCount = Scheduler.nativeSignalMapCount + 1
-            local origSignalAt = nativeMap.SignalAt
-            if type(origSignalAt) == "function" then
-                nativeMap.SignalAt = function(self, key, targetTime)
-                    if not Util.isSafeTableKey(key) or not Util.isSafeNumber(targetTime) then
-                        return false, "invalidSignalAt"
-                    end
-                    local intTime = math.floor(targetTime)
-                    if intTime < 0 then intTime = 0 end
-                    if intTime > 4294967295 then intTime = 4294967295 end
-                    local callOk, res = pcall(origSignalAt, self, key, intTime)
-                    if not callOk then
-                        return false, res
-                    end
-                    return res ~= false
+            local wrapper = {}
+            function wrapper:SignalAt(key, targetTime)
+                if not Util.isSafeTableKey(key) or not Util.isSafeNumber(targetTime) then
+                    return false, "invalidSignalAt"
                 end
-            end
-            if not nativeMap.SignalAfter then
-                nativeMap.SignalAfter = function(self, key, delay)
-                    if not Util.isSafeTableKey(key) or not Util.isSafeNonNegativeNumber(delay) then
-                        return false, "invalidSignalAfter"
-                    end
-                    local now = api.GetTime and api.GetTime() or 0
-                    return self:SignalAt(key, now + (delay or 0))
+                local intTime = math.floor(targetTime)
+                if intTime < 0 then intTime = 0 end
+                if intTime > 4294967295 then intTime = 4294967295 end
+                local callOk, res = pcall(nativeMap.SignalAt, nativeMap, key, intTime)
+                if not callOk then
+                    return false, res
                 end
+                return res ~= false
             end
-            if not nativeMap.IsNative then
-                nativeMap.IsNative = function() return true end
+
+            function wrapper:SignalAfter(key, delay)
+                if not Util.isSafeTableKey(key) or not Util.isSafeNonNegativeNumber(delay) then
+                    return false, "invalidSignalAfter"
+                end
+                if type(nativeMap.SignalAfter) == "function" then
+                    local callOk, res = pcall(nativeMap.SignalAfter, nativeMap, key, delay)
+                    if callOk then return res ~= false end
+                end
+                local now = api.GetTime and api.GetTime() or 0
+                return self:SignalAt(key, now + (delay or 0))
             end
-            return nativeMap
+
+            function wrapper:Cancel(key)
+                if type(nativeMap.Cancel) == "function" then
+                    local callOk, res = pcall(nativeMap.Cancel, nativeMap, key)
+                    if callOk then return res ~= false end
+                end
+                return true
+            end
+
+            function wrapper:Clear()
+                if type(nativeMap.Clear) == "function" then
+                    local callOk, res = pcall(nativeMap.Clear, nativeMap)
+                    if callOk then return res ~= false end
+                end
+                return true
+            end
+
+            function wrapper:IsNative()
+                return true
+            end
+
+            setmetatable(wrapper, {
+                __index = nativeMap
+            })
+            return wrapper
         end
     end
 

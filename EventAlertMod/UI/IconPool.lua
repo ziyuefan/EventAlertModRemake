@@ -765,9 +765,6 @@ function IconPool.applyTypeBorder(icon, alertState, frameName)
         rendered.borderStyleKey = nil
         return false, "noStyleKey"
     end
-    if rendered.borderStyleKey == styleKey and type(border.IsShown) == "function" and border:IsShown() then
-        return true, styleKey
-    end
     rendered.borderStyleKey = styleKey
     return AlertBorderStyles.apply(border, styleKey)
 end
