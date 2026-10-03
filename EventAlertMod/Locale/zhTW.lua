@@ -1213,4 +1213,17 @@ L.EAM_STAT_MAIN_ANCHOR_SAVED = "已儲存角色屬性主錨點位置: (%d, %d)"
 L.EAM_MODULE_RELOAD_REQUIRED = "底層原生結構變更，需重新載入介面 (/reload)"
 L.EAM_MODULE_RELOAD_BTN = "重新載入 (/reload)"
 
+L.EAM_OPT_BORDER_SECTION_TITLE = "圖示類型外框與邊框色彩設定"
+L.EAM_OPT_SHOW_BORDER = "啟用圖示類型外框 (取消勾選則全模組無邊框)"
+L.EAM_OPT_SHOW_BORDER_TIP = "為各模組告警圖示顯示區分增益、減益與冷卻類型的彩色邊框；若取消勾選則所有圖示採無邊框風格顯示"
+L.EAM_OPT_BORDER_SELF_HELPFUL = "自身增益邊框"
+L.EAM_OPT_BORDER_SELF_HARMFUL = "自身減益邊框"
+L.EAM_OPT_BORDER_TARGET_HELPFUL = "目標增益邊框"
+L.EAM_OPT_BORDER_TARGET_HARMFUL = "目標減益邊框"
+L.EAM_OPT_BORDER_SPELL_COOLDOWN = "技能冷卻邊框"
+L.EAM_OPT_BORDER_ITEM_COOLDOWN = "物品冷卻邊框"
+L.EAM_OPT_BORDER_GROUND_EFFECT = "地面效果邊框"
+L.EAM_OPT_BORDER_PET_ALERT = "寵物告警邊框"
+L.EAM_OPT_BORDER_RESET_BTN = "重設邊框色彩"
+
 end)

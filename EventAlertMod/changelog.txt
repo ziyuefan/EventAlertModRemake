@@ -25,6 +25,11 @@
            -- 智慧全文多時間組別解析：針對技能說明中包含多組秒數（如地面持續時間 vs 減速持續時間 vs 引導時間，例如暴風雪「8 秒內造成傷害...減速 50%，持續 3 秒」）的複雜技能，自動依在說明文字中的出現位置順序完整解析出所有時間候選（第 1 組、第 2 組等）。
            -- 條件設定視窗自選下拉清單：在地面效果設定介面新增「時間組別選取」下拉選單，使用者可自由挑選欲使用的時間組別，點選後即時同步帶入「手動設定時間」輸入框。
            -- 一鍵擷取聯動更新：點擊「一鍵擷取」時，即時重整並更新下拉選單候選列表，自動選中目標組別秒數並帶入編輯框，省去手動比對與輸入的繁瑣流程。
+        -- 模組圖示外框色彩自訂與無邊框模式 (Customizable Alert Border Colors & Borderless Mode):
+           -- 8 大模組外框獨立選色：自身增益、自身減益、目標增益、目標減益、技能冷卻、物品冷卻、地面效果、寵物警示支援獨立調色盤與透明度調節。
+           -- 無邊框極簡模式支援：提供「啟用圖示類型外框」全域總開關與各模組獨立勾選開關，方便喜愛無邊框風格的玩家完全關閉外框線條。
+           -- 一鍵還原經典預設：提供「重設邊框色彩」按鈕，快速復原為各模組經典識別色彩（綠/紅/紫/黃等）。
+           -- 即時動態熱套用：修改外框色彩或開關後，畫面當前已顯示之所有圖示即時動態重繪，無須手動重載介面 (/reload)。
      -- 【⚡ 體驗優化 (Improvements)】:
         -- 移除過時暴雪全域函數調用：消除對 Blizzard_Deprecated 的任何引用依賴，提升插件在未來大版本演進時的穩定性與獨立性。
         -- 原生狀態物件保護加固：防禦性隔離 AuraState 之 timer 與 source 表格，提升極限負載與非標準光環事件下的抗崩潰能力。
@@ -37,6 +42,15 @@
            -- 加固 Util.isSafeValue 與 Util.isReadableTable 之判斷順序，先期執行 isSecretValue/isSecretTable 檢定，避免非預期比較操作在秘密值存在時造成報錯。
         -- 冷卻設定介面文字校準 (Cooldown Options UI Text Correction):
            -- 修正冷卻設定頁面中「冷卻完成移除光環」之選項標籤與說明為「冷卻完成移除圖示」，精確反映實際操作語意。
+        -- 地面效果說明秒數擷取格式化錯誤修復 (Ground Effect Duration Scrape Format Fix):
+           -- 修復在地面效果設定介面點擊「一鍵擷取」或切換時間組別下拉選單時，動態多語系文字物件傳入 string.format 導致報錯 Options.lua:5575: bad argument #1 to 'format' (string expected, got table) 的問題。
+        -- 戰鬥中多圖示重疊堆疊修復 (Combat Multi-Icon Grid Positioning Fix):
+           -- 修復戰鬥中非安全警示框架因佈局判定誤觸戰鬥延遲，導致戰鬥觸發之新圖示無法計算二維網格位移座標、全部堆疊重疊在中心座標 (0, 0) 的問題。
+        -- 技能冷卻圖示亮黃方塊與動作條按鍵污染修復 (Action Button Taint & Missing-Texture Yellow Box Fix):
+           -- 修復在遊戲中執行流程驗證時覆寫全域 C_Spell/C_Item API 導致動作條按鍵 (MultiBarBottomLeftButton7) 遭受污染並在戰鬥中引發 ADDON_ACTION_BLOCKED 報錯的問題；
+           -- 徹底隔離離線測試案例與狀態清理，並為技能冷卻圖示提供問號備用材質，徹底消除 40x40 亮黃方塊與 99901 虛擬技能遺留問題。
+        -- 地面效果紫色外框顯示穩定性修復 (Ground Effect Purple Border Restoration):
+           -- 修復地面效果圖示由預留佔位模式切換至實際施法觸發時，因外框狀態鍵比對誤判而未重新顯示外框、導致紫色邊框偶發性消失的問題。
 
 -- [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names & Target Ghost Purge] 2026.09.27
      -- 【✨ 新增功能 (Features)】:

@@ -8175,6 +8175,10 @@ FlowTestRunner.registerCase({
     primarySuite = "core",
     suites = { core = true, quick = true },
     run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "Ground effect combat pipeline strict mock is offline only"
+        end
         local groundService = EAM.Services and EAM.Services.GroundEffectService
         local renderer = EAM.UI and EAM.UI.Renderer
         if not groundService or not renderer then
@@ -8306,6 +8310,10 @@ FlowTestRunner.registerCase({
     primarySuite = "core",
     suites = { core = true, quick = true },
     run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "Ground effect pre-render lifecycle strict mock is offline only"
+        end
         local groundService = EAM.Services and EAM.Services.GroundEffectService
         local saved = EAM.Modules and EAM.Modules.SavedVariables
         local renderer = EAM.UI and EAM.UI.Renderer
@@ -8432,11 +8440,12 @@ FlowTestRunner.registerCase({
     primarySuite = "core",
     suites = { core = true, boundary = true, quick = true },
     run = function()
+        local mock = EAM.FlowTestMock
         local renderer = EAM.UI and EAM.UI.Renderer
         local saved = EAM.Modules and EAM.Modules.SavedVariables
         local cSpell = api.C_Spell
-        if not renderer or not saved or not cSpell then
-            return STATUS_SKIP, "Renderer, SavedVariables, or C_Spell missing"
+        if not mock or not renderer or not saved or not cSpell then
+            return STATUS_SKIP, "Cooldown slot 1 prewarm anchor integrity test is offline only"
         end
 
         local originalDB = EAM.db
@@ -8574,6 +8583,9 @@ FlowTestRunner.registerCase({
                     end
                 end
             end
+            if renderer and renderer.clearFrame then
+                renderer.clearFrame("spellCooldown")
+            end
         end
 
         if mover and mover.GetScript and parentFrame then
@@ -8636,11 +8648,12 @@ FlowTestRunner.registerCase({
     primarySuite = "core",
     suites = { core = true, all = true },
     run = function()
+        local mock = EAM.FlowTestMock
         local capability = EAM.Services and EAM.Services.AuraCapabilityService
         local auraService = EAM.Services and EAM.Services.AuraService
         local router = EAM.Modules and EAM.Modules.EventRouter
-        if not capability or not auraService or not router then
-            return STATUS_SKIP, "AuraService dependencies unavailable"
+        if not mock or not capability or not auraService or not router then
+            return STATUS_SKIP, "AuraService legacy target changed refresh mock is offline only"
         end
 
         local originalDB = EAM.db
@@ -8937,9 +8950,10 @@ FlowTestRunner.registerCase({
     primarySuite = "core",
     suites = { core = true, all = true },
     run = function()
+        local mock = EAM.FlowTestMock
         local perf = EAM.Modules and EAM.Modules.Performance
-        if not perf or not perf.getEngineProfilerMetrics then
-            return STATUS_SKIP, "Performance module or getEngineProfilerMetrics unavailable"
+        if not mock or not perf or not perf.getEngineProfilerMetrics then
+            return STATUS_SKIP, "Performance engine profiler telemetry mock is offline only"
         end
 
         -- 1. Verify safe degradation when C_AddOnProfiler is absent (offline test harness)
@@ -9014,6 +9028,10 @@ FlowTestRunner.registerCase({
     primarySuite = "core",
     suites = { core = true, all = true },
     run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "Cooldown dirty diffing and queue zero-alloc strict mock is offline only"
+        end
         local alertMgr = EAM.Managers and EAM.Managers.AlertManager
         local cdService = EAM.Services and EAM.Services.CooldownService
         local itemService = EAM.Services and EAM.Services.ItemCooldownService
@@ -9032,6 +9050,9 @@ FlowTestRunner.registerCase({
         end
 
         local originalDB = EAM.db
+        local originalCDStates = cdService.states
+        local originalCDActivated = cdService.activatedAlerts
+        local originalItemStates = itemService.states
         local originalSpellCooldown = cSpell.GetSpellCooldown
         local originalSpellCharges = cSpell.GetSpellCharges
         local originalItemCooldown = cItem.GetItemCooldown
@@ -9233,6 +9254,19 @@ FlowTestRunner.registerCase({
         cItem.GetItemCooldown = originalItemCooldown
         cdService._testCoalesceEnabled = nil
         itemService._testCoalesceEnabled = nil
+        cdService.states = originalCDStates or {}
+        cdService.activatedAlerts = originalCDActivated or {}
+        if cdService.updateAlertList then cdService.updateAlertList() end
+        itemService.states = originalItemStates or {}
+        if itemService.updateAlertList then itemService.updateAlertList() end
+        if alertMgr and alertMgr.pendingUpdates then
+            wipe(alertMgr.pendingUpdates)
+            alertMgr.isPending = false
+        end
+        if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.clearFrame then
+            EAM.UI.Renderer.clearFrame("spellCooldown")
+            EAM.UI.Renderer.clearFrame("itemCooldown")
+        end
 
         if not ok then
             return false, tostring(err)
@@ -9334,9 +9368,10 @@ FlowTestRunner.registerCase({
     primarySuite = "aura121",
     suites = { aura121 = true, boundary = true },
     run = function()
+        local mock = EAM.FlowTestMock
         local auraService = EAM.Services.AuraService
-        if not auraService then
-            return false, "AuraService unavailable"
+        if not mock or not auraService then
+            return STATUS_SKIP, "Aura carry-over duration exact window mock is offline only"
         end
 
         local originalDB = EAM.db

@@ -1215,4 +1215,17 @@ L.EAM_STAT_MAIN_ANCHOR_SAVED = "Saved Stat Main Anchor Position: (%d, %d)"
 L.EAM_MODULE_RELOAD_REQUIRED = "Native structure changed, please reload UI (/reload)"
 L.EAM_MODULE_RELOAD_BTN = "Reload UI (/reload)"
 
+L.EAM_OPT_BORDER_SECTION_TITLE = "Alert Icon Border Colors"
+L.EAM_OPT_SHOW_BORDER = "Enable Icon Type Borders (Uncheck for Borderless)"
+L.EAM_OPT_SHOW_BORDER_TIP = "Displays colored borders distinguishing buffs, debuffs, and cooldowns. Uncheck to make all alert icons borderless."
+L.EAM_OPT_BORDER_SELF_HELPFUL = "Self Buff Border"
+L.EAM_OPT_BORDER_SELF_HARMFUL = "Self Debuff Border"
+L.EAM_OPT_BORDER_TARGET_HELPFUL = "Target Buff Border"
+L.EAM_OPT_BORDER_TARGET_HARMFUL = "Target Debuff Border"
+L.EAM_OPT_BORDER_SPELL_COOLDOWN = "Spell Cooldown Border"
+L.EAM_OPT_BORDER_ITEM_COOLDOWN = "Item Cooldown Border"
+L.EAM_OPT_BORDER_GROUND_EFFECT = "Ground Effect Border"
+L.EAM_OPT_BORDER_PET_ALERT = "Pet Alert Border"
+L.EAM_OPT_BORDER_RESET_BTN = "Reset Border Colors"
+
 end)

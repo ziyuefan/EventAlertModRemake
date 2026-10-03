@@ -1213,4 +1213,17 @@ L.EAM_STAT_MAIN_ANCHOR_SAVED = "Позиция основного анкора �
 L.EAM_MODULE_RELOAD_REQUIRED = "Структура изменилась, требуется перезагрузка (/reload)"
 L.EAM_MODULE_RELOAD_BTN = "Перезагрузить (/reload)"
 
+L.EAM_OPT_BORDER_SECTION_TITLE = "Цвета рамок значков оповещений"
+L.EAM_OPT_SHOW_BORDER = "Включить рамки типов (Отключите для стиля без рамок)"
+L.EAM_OPT_SHOW_BORDER_TIP = "Отображает цветные рамки для баффов, дебаффов и перезарядок. Отключите для отображения без рамок."
+L.EAM_OPT_BORDER_SELF_HELPFUL = "Рамка баффа игрока"
+L.EAM_OPT_BORDER_SELF_HARMFUL = "Рамка дебаффа игрока"
+L.EAM_OPT_BORDER_TARGET_HELPFUL = "Рамка баффа цели"
+L.EAM_OPT_BORDER_TARGET_HARMFUL = "Рамка дебаффа цели"
+L.EAM_OPT_BORDER_SPELL_COOLDOWN = "Рамка перезарядки заклинаний"
+L.EAM_OPT_BORDER_ITEM_COOLDOWN = "Рамка перезарядки предметов"
+L.EAM_OPT_BORDER_GROUND_EFFECT = "Рамка эффекта на земле"
+L.EAM_OPT_BORDER_PET_ALERT = "Рамка оповещений питомца"
+L.EAM_OPT_BORDER_RESET_BTN = "Сбросить цвета рамок"
+
 end)

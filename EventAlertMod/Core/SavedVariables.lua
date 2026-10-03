@@ -209,6 +209,27 @@ local defaults = {
         cooldownSwipeAlpha = 0.8,
         cooldownSwipeColor = { r = 0.0, g = 0.0, b = 0.0 },
         cooldownProgressCurve = "LINEAR",
+        showBorder = true,
+        borderColors = {
+            selfHelpful = { 0.10, 0.82, 1.00, 1.00 },
+            selfHarmful = { 1.00, 0.18, 0.18, 1.00 },
+            targetHelpful = { 0.25, 0.42, 1.00, 1.00 },
+            targetHarmful = { 1.00, 0.36, 0.08, 1.00 },
+            spellCooldown = { 1.00, 0.85, 0.05, 1.00 },
+            itemCooldown = { 0.15, 0.95, 0.25, 1.00 },
+            groundEffect = { 0.72, 0.25, 1.00, 1.00 },
+            petAlert = { 0.35, 0.95, 0.55, 1.00 },
+        },
+        borderEnabled = {
+            selfHelpful = true,
+            selfHarmful = true,
+            targetHelpful = true,
+            targetHarmful = true,
+            spellCooldown = true,
+            itemCooldown = true,
+            groundEffect = true,
+            petAlert = true,
+        },
         chargeBarLayout = "BOTTOM",
         chargeBarLengthPercent = 150,
         chargeBarThickness = 8,
@@ -981,6 +1002,31 @@ local function normalizeModuleToggles(db)
         appendMigrationWarning(db, "invalidModuleToggleDefaulted")
     end
     config.enableItemCooldown = toggles.itemCooldown
+end
+
+local function normalizeBorderConfig(db)
+    local config = type(db.config) == "table" and db.config or {}
+    db.config = config
+    if type(config.showBorder) ~= "boolean" then
+        config.showBorder = true
+    end
+    if type(config.borderColors) ~= "table" then
+        config.borderColors = {}
+    end
+    for key, defaultColor in pairs(defaults.config.borderColors) do
+        local c = config.borderColors[key]
+        if type(c) ~= "table" or #c < 3 then
+            config.borderColors[key] = { defaultColor[1], defaultColor[2], defaultColor[3], defaultColor[4] or 1.0 }
+        end
+    end
+    if type(config.borderEnabled) ~= "table" then
+        config.borderEnabled = {}
+    end
+    for key, defaultVal in pairs(defaults.config.borderEnabled) do
+        if type(config.borderEnabled[key]) ~= "boolean" then
+            config.borderEnabled[key] = defaultVal
+        end
+    end
 end
 
 local VALID_CHARGE_BAR_LAYOUTS = freeze({
@@ -2130,6 +2176,7 @@ function SavedVariables.initialize()
     normalizeTimerColorCurve(EAM_DB)
     normalizeCurveFeatures(EAM_DB)
     normalizeCooldownSwipeConfig(EAM_DB)
+    normalizeBorderConfig(EAM_DB)
 
     -- 多框架升級相容與舊坐標遷移
     normalizeLayout(EAM_DB)
@@ -2544,6 +2591,45 @@ end
 
 function SavedVariables.updateTextColor(kind, color)
     return SavedVariables.updateTextLayout(kind, nil, nil, color)
+end
+
+function SavedVariables.updateBorderColor(styleKey, color)
+    local db = EAM.db
+    if not db or type(db.config) ~= "table" then return false, "dbUnavailable" end
+    if type(db.config.borderColors) ~= "table" then
+        db.config.borderColors = {}
+    end
+    if type(color) == "table" and #color >= 3 then
+        db.config.borderColors[styleKey] = { color[1], color[2], color[3], color[4] or 1.0 }
+        db.revision = (db.revision or 0) + 1
+        return true, "updated", db.revision
+    end
+    return false, "invalidColor"
+end
+
+function SavedVariables.updateBorderEnabled(styleKey, enabled)
+    local db = EAM.db
+    if not db or type(db.config) ~= "table" then return false, "dbUnavailable" end
+    if type(db.config.borderEnabled) ~= "table" then
+        db.config.borderEnabled = {}
+    end
+    db.config.borderEnabled[styleKey] = (enabled == true)
+    db.revision = (db.revision or 0) + 1
+    return true, "updated", db.revision
+end
+
+function SavedVariables.resetBorderColors()
+    local db = EAM.db
+    if not db or type(db.config) ~= "table" then return false, "dbUnavailable" end
+    db.config.showBorder = true
+    db.config.borderColors = {}
+    db.config.borderEnabled = {}
+    for key, defaultColor in pairs(defaults.config.borderColors) do
+        db.config.borderColors[key] = { defaultColor[1], defaultColor[2], defaultColor[3], defaultColor[4] or 1.0 }
+        db.config.borderEnabled[key] = true
+    end
+    db.revision = (db.revision or 0) + 1
+    return true, "updated", db.revision
 end
 
 function SavedVariables.addAlert(kind, unit, spellID, itemID, options)

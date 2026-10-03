@@ -575,15 +575,15 @@ local function layout(frameName)
         EAM.recordHotPath("Renderer.layout")
     end
     local fState = initFrameState(frameName)
-    if inCombat() then
-        fState.layoutDirty = true
-        fState.layoutBlocked = true
-        return false, "combatDeferred"
-    end
     local parent = ensureParent(frameName)
-    if not parent then
+    if not parent or (fState.layoutBlocked and inCombat()) then
+        if inCombat() then
+            fState.layoutDirty = true
+            fState.layoutBlocked = true
+            return false, "combatDeferred"
+        end
         fState.layoutBlocked = true
-        return
+        return false, "parentUnavailable"
     end
 
     local size = EAM.db and EAM.db.config and EAM.db.config.iconSize or (EAM.db and EAM.db.layout and EAM.db.layout.iconSize) or Renderer.iconSize
@@ -717,7 +717,7 @@ function Renderer.requestLayout(frameName)
     local fState = initFrameState(frameName)
     if fState then
         fState.layoutDirty = true
-        if inCombat() then
+        if (not fState.parent or fState.layoutBlocked) and inCombat() then
             fState.layoutBlocked = true
             return false, "combatDeferred"
         end
@@ -746,6 +746,8 @@ function Renderer.prewarmAlertFrames()
     if not alerts then return end
 
     local frameTypes = {
+        playerAuras = EAM.Constants.ALERT_FRAME_TYPES.selfAura or "selfAura",
+        targetAuras = EAM.Constants.ALERT_FRAME_TYPES.targetAura or "targetAura",
         spellCooldowns = EAM.Constants.ALERT_FRAME_TYPES.spellCooldown or "spellCooldown",
         itemCooldowns = EAM.Constants.ALERT_FRAME_TYPES.itemCooldown or "itemCooldown",
         groundEffects = EAM.Constants.ALERT_FRAME_TYPES.groundEffect or "groundEffect",
@@ -807,6 +809,10 @@ function Renderer.prewarmAlertFrames()
                         if not icon.rendered then
                             icon.rendered = {}
                         end
+                        local currentPlacement = (TextPlacement and TextPlacement.getPlacement and TextPlacement.getPlacement(EAM.db and EAM.db.config, "spellName")) or "OUTSIDE_BOTTOM"
+                        icon.rendered.nameInside = false
+                        icon.rendered.spellNamePlacement = currentPlacement
+                        applyNameLayoutToIcon(icon, false)
                         icon.rendered.layoutAlpha = 0
                         icon.rendered.layoutX = nil
                         icon.rendered.layoutY = nil
@@ -1232,6 +1238,17 @@ function Renderer.render(alertState, frameName)
         end
         fState.icons[alertState.id] = icon
         icon.isParasite = false
+        if not icon.rendered then
+            icon.rendered = {}
+        end
+        local cfg = EAM.db and EAM.db.config or nil
+        local currentPlacement = (TextPlacement and TextPlacement.getPlacement and TextPlacement.getPlacement(cfg, "spellName")) or "OUTSIDE_BOTTOM"
+        if icon.rendered.nameInside == nil then
+            icon.rendered.nameInside = false
+        end
+        if icon.rendered.spellNamePlacement == nil then
+            icon.rendered.spellNamePlacement = currentPlacement
+        end
     end
 
     -- 確保 icon 存在於 fState.order 排版清單中
@@ -1325,6 +1342,9 @@ function Renderer.render(alertState, frameName)
             end
         end
     end
+    if not iconTex then
+        iconTex = "Interface\\Icons\\INV_Misc_QuestionMark"
+    end
     if iconTex and rendered.icon ~= iconTex and icon.texture then
         icon.texture:SetTexture(iconTex)
         rendered.icon = iconTex
@@ -1343,9 +1363,6 @@ function Renderer.render(alertState, frameName)
 
     IconPool.applyTooltipSource(icon, alertState)
     IconPool.applyTypeBorder(icon, alertState, frameName)
-    if isPlaceholder and icon.typeBorder then
-        icon.typeBorder:Hide()
-    end
 
     local config = EAM.db and EAM.db.config or nil
     if inCombat() then
@@ -1697,7 +1714,7 @@ function Renderer.render(alertState, frameName)
     if fState.parent and not fState.parent:IsShown() then
         fState.parent:Show()
     end
-    if not inCombat() and fState.parent and (not fState.parent:IsShown() or rendered.layoutX == nil) then
+    if fState.parent and (not fState.parent:IsShown() or rendered.layoutX == nil) then
         fState.layoutDirty = true
     end
     if fState.layoutDirty then

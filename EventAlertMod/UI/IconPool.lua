@@ -758,8 +758,15 @@ function IconPool.applyTypeBorder(icon, alertState, frameName)
         return false, "borderUnavailable"
     end
     local styleKey = AlertBorderStyles.resolve(frameName, alertState)
-    if rendered.borderStyleKey == styleKey then
-        return styleKey ~= nil, styleKey or "styleUnavailable"
+    if not styleKey then
+        if type(border.Hide) == "function" then
+            border:Hide()
+        end
+        rendered.borderStyleKey = nil
+        return false, "noStyleKey"
+    end
+    if rendered.borderStyleKey == styleKey and type(border.IsShown) == "function" and border:IsShown() then
+        return true, styleKey
     end
     rendered.borderStyleKey = styleKey
     return AlertBorderStyles.apply(border, styleKey)

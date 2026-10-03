@@ -211,20 +211,9 @@ local function bindText(target, key, fallback)
     return false
 end
 
-local function localized(key, fallback)
-    return {
-        eamLocaleKey = key,
-        fallback = fallback,
-    }
-end
-
-local function setWidgetText(target, value)
-    if type(value) == "table" and type(value.eamLocaleKey) == "string" then
-        return bindText(target, value.eamLocaleKey, value.fallback)
-    end
-    if target and type(target.SetText) == "function" then
-        target:SetText(value)
-        return true
+local function unbindText(target)
+    if Locale and type(Locale.unbindText) == "function" then
+        return Locale.unbindText(target)
     end
     return false
 end
@@ -238,6 +227,35 @@ local function resolveText(value)
         return EAM.L[value]
     end
     return tostring(value)
+end
+
+local localizedMt = {
+    __tostring = function(t)
+        return resolveText(t) or ""
+    end,
+    __concat = function(a, b)
+        return tostring(a) .. tostring(b)
+    end,
+}
+
+local function localized(key, fallback)
+    local obj = {
+        eamLocaleKey = key,
+        fallback = fallback,
+    }
+    return setmetatable(obj, localizedMt)
+end
+
+local function setWidgetText(target, value)
+    if type(value) == "table" and type(value.eamLocaleKey) == "string" then
+        return bindText(target, value.eamLocaleKey, value.fallback)
+    end
+    unbindText(target)
+    if target and type(target.SetText) == "function" then
+        target:SetText(value)
+        return true
+    end
+    return false
 end
 
 local function setTooltip(widget, tooltipText, tooltipTitle)
@@ -3563,6 +3581,157 @@ local function createFrame()
 
     createCheckbox(pageFX, localized("EAM_OPT_RESOURCE_DYNAMIC_COLOR", "資源條動態色彩曲線"), "resourceDynamicColor", 300, -285, nil, "依據目前能量/怒氣百分比，透過暴雪 ColorCurveObject 動態平滑渲染顏色", "資源條動態色彩曲線")
 
+    -- ---------------------------------------------------
+    -- 圖示類型外框與自訂邊框色彩 (Alert Border Styles & Colors)
+    -- ---------------------------------------------------
+    local borderTitle = pageFX:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    borderTitle:SetPoint("TOPLEFT", pageFX, "TOPLEFT", 16, -315)
+    bindText(borderTitle, "EAM_OPT_BORDER_SECTION_TITLE", "圖示類型外框與邊框色彩設定")
+
+    local masterBorderCb = createCheckbox(
+        pageFX,
+        localized("EAM_OPT_SHOW_BORDER", "啟用圖示類型外框 (取消勾選則全模組無邊框)"),
+        "showBorder",
+        16,
+        -335,
+        function(val)
+            if EAM.UI.AlertBorderStyles and EAM.UI.AlertBorderStyles.refreshAll then
+                EAM.UI.AlertBorderStyles.refreshAll()
+            end
+            triggerSafeRebuild("BORDER_SETTINGS_CHANGED")
+        end,
+        localized("EAM_OPT_SHOW_BORDER_TIP", "為各模組告警圖示顯示區分增益、減益與冷卻類型的彩色邊框；若取消勾選則所有圖示採無邊框風格顯示"),
+        "啟用圖示類型外框"
+    )
+
+    local borderItems = {
+        { key = "selfHelpful", labelKey = "EAM_OPT_BORDER_SELF_HELPFUL", fallback = "自身增益邊框", col = 1, row = 1 },
+        { key = "selfHarmful", labelKey = "EAM_OPT_BORDER_SELF_HARMFUL", fallback = "自身減益邊框", col = 1, row = 2 },
+        { key = "targetHelpful", labelKey = "EAM_OPT_BORDER_TARGET_HELPFUL", fallback = "目標增益邊框", col = 1, row = 3 },
+        { key = "targetHarmful", labelKey = "EAM_OPT_BORDER_TARGET_HARMFUL", fallback = "目標減益邊框", col = 1, row = 4 },
+        { key = "spellCooldown", labelKey = "EAM_OPT_BORDER_SPELL_COOLDOWN", fallback = "技能冷卻邊框", col = 2, row = 1 },
+        { key = "itemCooldown", labelKey = "EAM_OPT_BORDER_ITEM_COOLDOWN", fallback = "物品冷卻邊框", col = 2, row = 2 },
+        { key = "groundEffect", labelKey = "EAM_OPT_BORDER_GROUND_EFFECT", fallback = "地面效果邊框", col = 2, row = 3 },
+        { key = "petAlert", labelKey = "EAM_OPT_BORDER_PET_ALERT", fallback = "寵物告警邊框", col = 2, row = 4 },
+    }
+
+    local borderWidgets = {}
+    for i = 1, #borderItems do
+        local item = borderItems[i]
+        local colX = (item.col == 1) and 16 or 300
+        local rowY = -338 - (item.row * 26)
+
+        local itemCb = api.CreateFrame("CheckButton", nil, pageFX, "UICheckButtonTemplate")
+        itemCb:SetPoint("TOPLEFT", pageFX, "TOPLEFT", colX, rowY)
+        itemCb:SetSize(22, 22)
+        setTooltip(itemCb, "勾選啟用此模組之彩色邊框，取消勾選則為無邊框風格", item.fallback)
+        itemCb:SetScript("OnClick", function(self)
+            local en = self:GetChecked()
+            local saved = EAM.Modules and EAM.Modules.SavedVariables
+            if saved and saved.updateBorderEnabled then
+                saved.updateBorderEnabled(item.key, en)
+            elseif EAM.db and EAM.db.config then
+                EAM.db.config.borderEnabled = EAM.db.config.borderEnabled or {}
+                EAM.db.config.borderEnabled[item.key] = en
+            end
+            if EAM.UI.AlertBorderStyles and EAM.UI.AlertBorderStyles.refreshAll then
+                EAM.UI.AlertBorderStyles.refreshAll()
+            end
+            triggerSafeRebuild("BORDER_SETTINGS_CHANGED")
+        end)
+
+        local swatch = EAM.UI.createColorSwatchButton(pageFX, 18, 18, function(btn)
+            local cur = btn.currentColor or { 1, 1, 1, 1 }
+            EAM.UI.openColorPicker({
+                r = cur[1],
+                g = cur[2],
+                b = cur[3],
+                a = cur[4] or 1.0,
+                hasOpacity = true,
+                onColorChanged = function(r, g, b, a)
+                    btn:SetColor(r, g, b, a)
+                    btn.currentColor = { r, g, b, a }
+                    local saved = EAM.Modules and EAM.Modules.SavedVariables
+                    if saved and saved.updateBorderColor then
+                        saved.updateBorderColor(item.key, { r, g, b, a })
+                    elseif EAM.db and EAM.db.config then
+                        EAM.db.config.borderColors = EAM.db.config.borderColors or {}
+                        EAM.db.config.borderColors[item.key] = { r, g, b, a }
+                    end
+                    if EAM.UI.AlertBorderStyles and EAM.UI.AlertBorderStyles.refreshAll then
+                        EAM.UI.AlertBorderStyles.refreshAll()
+                    end
+                    triggerSafeRebuild("BORDER_SETTINGS_CHANGED")
+                end,
+                onCancel = function(pr, pg, pb, pa)
+                    btn:SetColor(pr, pg, pb, pa or 1.0)
+                    btn.currentColor = { pr, pg, pb, pa or 1.0 }
+                    local saved = EAM.Modules and EAM.Modules.SavedVariables
+                    if saved and saved.updateBorderColor then
+                        saved.updateBorderColor(item.key, { pr, pg, pb, pa or 1.0 })
+                    elseif EAM.db and EAM.db.config then
+                        EAM.db.config.borderColors = EAM.db.config.borderColors or {}
+                        EAM.db.config.borderColors[item.key] = { pr, pg, pb, pa or 1.0 }
+                    end
+                    if EAM.UI.AlertBorderStyles and EAM.UI.AlertBorderStyles.refreshAll then
+                        EAM.UI.AlertBorderStyles.refreshAll()
+                    end
+                    triggerSafeRebuild("BORDER_SETTINGS_CHANGED")
+                end,
+            })
+        end)
+        swatch:SetPoint("LEFT", itemCb, "RIGHT", 4, 0)
+        setTooltip(swatch, "點擊選擇此模組的外框色彩與透明度", item.fallback)
+
+        local label = pageFX:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        label:SetPoint("LEFT", swatch, "RIGHT", 6, 0)
+        bindText(label, item.labelKey, item.fallback)
+
+        borderWidgets[#borderWidgets + 1] = {
+            key = item.key,
+            cb = itemCb,
+            swatch = swatch,
+        }
+    end
+
+    local function refreshBorderControls()
+        local styles = EAM.UI and EAM.UI.AlertBorderStyles
+        if masterBorderCb and EAM.db and EAM.db.config then
+            masterBorderCb:SetChecked(EAM.db.config.showBorder ~= false)
+        end
+        for _, w in ipairs(borderWidgets) do
+            if w.cb and EAM.db and EAM.db.config then
+                local be = EAM.db.config.borderEnabled
+                w.cb:SetChecked(not be or be[w.key] ~= false)
+            end
+            if w.swatch and styles and styles.getColor then
+                local col = styles.getColor(w.key)
+                if col then
+                    w.swatch:SetColor(col[1], col[2], col[3], col[4] or 1.0)
+                    w.swatch.currentColor = { col[1], col[2], col[3], col[4] or 1.0 }
+                end
+            end
+        end
+    end
+
+    local resetBorderBtn = api.CreateFrame("Button", nil, pageFX, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(resetBorderBtn) end
+    resetBorderBtn:SetSize(130, 22)
+    resetBorderBtn:SetPoint("TOPLEFT", pageFX, "TOPLEFT", 16, -468)
+    bindText(resetBorderBtn, "EAM_OPT_BORDER_RESET_BTN", "重設邊框色彩")
+    setTooltip(resetBorderBtn, "將所有圖示模組的邊框顏色恢復至系統預設值", "重設邊框色彩")
+    resetBorderBtn:SetScript("OnClick", function()
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if saved and saved.resetBorderColors then
+            saved.resetBorderColors()
+        end
+        refreshBorderControls()
+        if EAM.UI.AlertBorderStyles and EAM.UI.AlertBorderStyles.refreshAll then
+            EAM.UI.AlertBorderStyles.refreshAll()
+        end
+        triggerSafeRebuild("BORDER_SETTINGS_CHANGED")
+    end)
+
     -- 初始化分頁選取
     selectTab(1)
 
@@ -3591,6 +3760,9 @@ local function createFrame()
         end
         if Options.refreshCurveDropdown then
             Options.refreshCurveDropdown()
+        end
+        if refreshBorderControls then
+            refreshBorderControls()
         end
     end
     posFrame:HookScript("OnShow", onPosFrameShow)
@@ -5496,7 +5668,7 @@ local function createFrame()
                     and service.scrapeDurationCandidates(spellID) or {}
                 if not candidates or #candidates == 0 then
                     return {
-                        { value = 1, text = localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"), disabled = true }
+                        { value = 1, text = resolveText(localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別")), disabled = true }
                     }
                 end
                 local list = {}
@@ -5504,7 +5676,11 @@ local function createFrame()
                     local c = candidates[i]
                     list[#list + 1] = {
                         value = c.index,
-                        text = c.label or string.format("第 %d 組: %s 秒", c.index, tostring(c.seconds)),
+                        text = c.label or string.format(
+                            resolveText(localized("EAM_OPT_GROUND_GROUP_FORMAT", "第 %d 組: %s 秒")),
+                            c.index,
+                            tostring(c.seconds)
+                        ),
                         seconds = c.seconds,
                     }
                 end
@@ -5513,6 +5689,7 @@ local function createFrame()
             function(item)
                 if item.disabled then return end
                 condFrame.selectedDurationMatchIndex = item.value
+                unbindText(durationGroupDropdown)
                 durationGroupDropdown:SetText(item.text)
                 if item.seconds then
                     manualDurationEditBox:SetText(tostring(item.seconds))
@@ -5570,17 +5747,22 @@ local function createFrame()
                     end
                     condFrame.selectedDurationMatchIndex = chosenIdx
                     local chosen = candidates[chosenIdx] or candidates[1]
-                    durationGroupDropdown:SetText(chosen.label or string.format("第 %d 組: %s 秒", chosen.index, tostring(chosen.seconds)))
+                    unbindText(durationGroupDropdown)
+                    durationGroupDropdown:SetText(chosen.label or string.format(
+                        resolveText(localized("EAM_OPT_GROUND_GROUP_FORMAT", "第 %d 組: %s 秒")),
+                        chosen.index,
+                        tostring(chosen.seconds)
+                    ))
                     manualDurationEditBox:SetText(tostring(chosen.seconds))
                     print(string.format(
-                        localized("EAM_OPT_SCRAPE_MULTI_SUCCESS", "成功解析 %d 組時間，已選取第 %d 組: %s 秒"),
+                        resolveText(localized("EAM_OPT_SCRAPE_MULTI_SUCCESS", "成功解析 %d 組時間，已選取第 %d 組: %s 秒")),
                         #candidates,
                         chosen.index,
                         tostring(chosen.seconds)
                     ))
                 else
-                    durationGroupDropdown:SetText(localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"))
-                    print("|cff00ff96EAM|r " .. localized("EAM_OPT_SCRAPE_FAIL", "未能在說明中解析出秒數，請手動輸入。"))
+                    setWidgetText(durationGroupDropdown, localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"))
+                    print("|cff00ff96EAM|r " .. resolveText(localized("EAM_OPT_SCRAPE_FAIL", "未能在說明中解析出秒數，請手動輸入。")))
                 end
             end
         end
@@ -6154,11 +6336,16 @@ function Options.openConditionsFrame(data)
         if candidates and #candidates > 0 then
             local chosen = candidates[matchIndex] or candidates[1]
             if cf.durationGroupDropdown then
-                cf.durationGroupDropdown:SetText(chosen.label or string.format("第 %d 組: %s 秒", chosen.index, tostring(chosen.seconds)))
+                unbindText(cf.durationGroupDropdown)
+                cf.durationGroupDropdown:SetText(chosen.label or string.format(
+                    resolveText(localized("EAM_OPT_GROUND_GROUP_FORMAT", "第 %d 組: %s 秒")),
+                    chosen.index,
+                    tostring(chosen.seconds)
+                ))
             end
         else
             if cf.durationGroupDropdown then
-                cf.durationGroupDropdown:SetText(localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"))
+                setWidgetText(cf.durationGroupDropdown, localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"))
             end
         end
 

@@ -1211,4 +1211,17 @@ L.EAM_STAT_MAIN_ANCHOR_SAVED = "캐릭터 능력치 메인 앵커 위치 저장�
 L.EAM_MODULE_RELOAD_REQUIRED = "기본 구조 변경됨, UI를 재로드해야 합니다 (/reload)"
 L.EAM_MODULE_RELOAD_BTN = "재로드 (/reload)"
 
+L.EAM_OPT_BORDER_SECTION_TITLE = "경보 아이콘 테두리 색상 설정"
+L.EAM_OPT_SHOW_BORDER = "아이콘 유형 테두리 활성화 (해제 시 무테두리)"
+L.EAM_OPT_SHOW_BORDER_TIP = "버프, 디버프, 재사용 대기시간을 구분하는 컬러 테두리를 표시합니다. 선택 해제 시 모든 경보가 테두리 없음으로 표시됩니다."
+L.EAM_OPT_BORDER_SELF_HELPFUL = "자신 버프 테두리"
+L.EAM_OPT_BORDER_SELF_HARMFUL = "자신 디버프 테두리"
+L.EAM_OPT_BORDER_TARGET_HELPFUL = "대상 버프 테두리"
+L.EAM_OPT_BORDER_TARGET_HARMFUL = "대상 디버프 테두리"
+L.EAM_OPT_BORDER_SPELL_COOLDOWN = "주문 재사용 대기시간 테두리"
+L.EAM_OPT_BORDER_ITEM_COOLDOWN = "아이템 재사용 대기시간 테두리"
+L.EAM_OPT_BORDER_GROUND_EFFECT = "바닥 효과 테두리"
+L.EAM_OPT_BORDER_PET_ALERT = "소환수 경보 테두리"
+L.EAM_OPT_BORDER_RESET_BTN = "테두리 색상 초기화"
+
 end)

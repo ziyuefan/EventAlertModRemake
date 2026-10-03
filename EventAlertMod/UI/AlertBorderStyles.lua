@@ -76,6 +76,26 @@ function AlertBorderStyles.resolve(frameName, alertState)
 end
 
 function AlertBorderStyles.getColor(styleKey)
+    local config = EAM.db and EAM.db.config
+    if config then
+        if config.showBorder == false then
+            return nil
+        end
+        local borderEnabled = config.borderEnabled
+        if borderEnabled and borderEnabled[styleKey] == false then
+            return nil
+        end
+        local borderColors = config.borderColors
+        if borderColors and borderColors[styleKey] then
+            local c = borderColors[styleKey]
+            if type(c) == "table" and c[1] and c[2] and c[3] then
+                if (c[4] or 1.0) <= 0.001 then
+                    return nil
+                end
+                return c
+            end
+        end
+    end
     if styleKey == keys.selfHelpful then return colors.selfHelpful end
     if styleKey == keys.selfHarmful then return colors.selfHarmful end
     if styleKey == keys.targetHelpful then return colors.targetHelpful end
@@ -125,9 +145,28 @@ function AlertBorderStyles.apply(texture, styleKey)
         end
         return false, "styleUnavailable"
     end
-    texture:SetVertexColor(color[1], color[2], color[3], color[4])
+    texture:SetVertexColor(color[1], color[2], color[3], color[4] or 1.0)
     if type(texture.Show) == "function" then
         texture:Show()
     end
     return true, styleKey
+end
+
+function AlertBorderStyles.refreshAll()
+    local IconPool = EAM.UI and EAM.UI.IconPool
+    local Renderer = EAM.UI and EAM.UI.Renderer
+    if Renderer and Renderer.frames and IconPool and IconPool.applyTypeBorder then
+        for frameName, fState in pairs(Renderer.frames) do
+            for _, icon in pairs(fState.icons or {}) do
+                if icon and icon.typeBorder then
+                    if icon.rendered then
+                        icon.rendered.borderStyleKey = nil
+                    end
+                    if icon.alertState then
+                        IconPool.applyTypeBorder(icon, icon.alertState, frameName)
+                    end
+                end
+            end
+        end
+    end
 end

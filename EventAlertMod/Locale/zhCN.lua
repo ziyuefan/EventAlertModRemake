@@ -1172,4 +1172,17 @@ L.EAM_STAT_MAIN_ANCHOR_SAVED = "已保存角色属性主锚点位置: (%d, %d)"
 L.EAM_MODULE_RELOAD_REQUIRED = "底层原生结构变更，需重新加载界面 (/reload)"
 L.EAM_MODULE_RELOAD_BTN = "重新加载 (/reload)"
 
+L.EAM_OPT_BORDER_SECTION_TITLE = "图标类型外框与边框色彩设置"
+L.EAM_OPT_SHOW_BORDER = "启用图标类型外框 (取消勾选则全模块无边框)"
+L.EAM_OPT_SHOW_BORDER_TIP = "为各模块告警图标显示区分增益、减益与冷却类型的彩色边框；若取消勾选则所有图标采用无边框风格显示"
+L.EAM_OPT_BORDER_SELF_HELPFUL = "自身增益边框"
+L.EAM_OPT_BORDER_SELF_HARMFUL = "自身减益边框"
+L.EAM_OPT_BORDER_TARGET_HELPFUL = "目标增益边框"
+L.EAM_OPT_BORDER_TARGET_HARMFUL = "目标减益边框"
+L.EAM_OPT_BORDER_SPELL_COOLDOWN = "技能冷却边框"
+L.EAM_OPT_BORDER_ITEM_COOLDOWN = "物品冷却边框"
+L.EAM_OPT_BORDER_GROUND_EFFECT = "地面效果边框"
+L.EAM_OPT_BORDER_PET_ALERT = "宠物告警边框"
+L.EAM_OPT_BORDER_RESET_BTN = "重设边框色彩"
+
 end)
