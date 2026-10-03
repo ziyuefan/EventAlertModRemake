@@ -1239,6 +1239,7 @@ local function normalizeGroundEffectsForAlerts(db, alerts, appendWarnings)
                 record.unit = "player"
                 record.enabled = alert.enabled ~= false
                 record.durationMode = normalizeGroundDurationMode(alert.durationMode)
+                record.durationMatchIndex = (type(alert.durationMatchIndex) == "number" and alert.durationMatchIndex > 1) and math.floor(alert.durationMatchIndex) or nil
                 record.manualDuration = normalizeGroundDuration(alert.manualDuration, 8)
                 record.order = (type(alert.order) == "number") and alert.order or nil
                 record.groundEffectPreRender = (type(alert.groundEffectPreRender) == "boolean") and alert.groundEffectPreRender or nil
@@ -2640,6 +2641,14 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
                 existing.groundEffectPreRender = (type(options.groundEffectPreRender) == "boolean") and options.groundEffectPreRender or nil
                 changed = true
             end
+            if options.durationMatchIndex ~= nil then
+                local matchIndex = (type(options.durationMatchIndex) == "number" and options.durationMatchIndex >= 1) and math.floor(options.durationMatchIndex) or 1
+                local storedMatchIndex = (matchIndex > 1) and matchIndex or nil
+                if existing.durationMatchIndex ~= storedMatchIndex then
+                    existing.durationMatchIndex = storedMatchIndex
+                    changed = true
+                end
+            end
         end
         if (kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) and options then
             for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
@@ -2721,6 +2730,8 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
         sound = kind == EAM.Constants.ALERT_KIND_AURA and options and normalizeAuraSound(options.sound) or nil,
         durationMode = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
             and normalizeGroundDurationMode(options and options.durationMode) or nil,
+        durationMatchIndex = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
+            and ((type(options and options.durationMatchIndex) == "number" and options.durationMatchIndex > 1) and math.floor(options.durationMatchIndex) or nil) or nil,
         manualDuration = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
             and normalizeGroundDuration(options and options.manualDuration, 8) or nil,
         groundEffectPreRender = kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT
@@ -3392,7 +3403,7 @@ function SavedVariables.swapAlertOrder(kind, unit, id1, id2)
     return true, "swapped", db.revision
 end
 
-function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDuration, groundEffectPreRender)
+function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDuration, groundEffectPreRender, durationMatchIndex)
     local numericID = normalizePositiveInteger(spellID)
     local list = getAlertList(EAM.db, EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player")
     local id = numericID and buildAlertID(EAM.Constants.ALERT_KIND_GROUND_EFFECT, "player", numericID) or nil
@@ -3404,7 +3415,14 @@ function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDur
     local normalizedMode = normalizeGroundDurationMode(durationMode)
     local normalizedDuration = normalizeGroundDuration(manualDuration, 8)
     local normalizedPreRender = (type(groundEffectPreRender) == "boolean") and groundEffectPreRender or nil
-    if alert.durationMode == normalizedMode and alert.manualDuration == normalizedDuration and alert.groundEffectPreRender == normalizedPreRender then
+    local matchIdx = (type(durationMatchIndex) == "number" and durationMatchIndex >= 1) and math.floor(durationMatchIndex) or 1
+    local normalizedMatchIndex = (matchIdx > 1) and matchIdx or nil
+
+    if alert.durationMode == normalizedMode
+        and alert.manualDuration == normalizedDuration
+        and alert.groundEffectPreRender == normalizedPreRender
+        and alert.durationMatchIndex == normalizedMatchIndex
+    then
         return true, "unchanged"
     end
     alert.durationMode = normalizedMode
@@ -3412,6 +3430,7 @@ function SavedVariables.updateGroundEffectAlert(spellID, durationMode, manualDur
     if groundEffectPreRender ~= nil then
         alert.groundEffectPreRender = normalizedPreRender
     end
+    alert.durationMatchIndex = normalizedMatchIndex
     touchRevision(EAM.db)
     if EAM.Modules and EAM.Modules.EventRouter then
         EAM.Modules.EventRouter.fire("EAM_GROUND_EFFECT_CONFIG_CHANGED", EAM.db.revision)

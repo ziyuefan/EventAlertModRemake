@@ -5456,14 +5456,96 @@ local function createFrame()
     setTooltip(durationModeCb, "自動解析法術說明文字 (Tooltip) 中的秒數作為地面效果持續時間", "動態 Tooltip 擷取")
     condFrame.durationModeCb = durationModeCb
 
+    local durationGroupLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    durationGroupLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -170)
+    bindText(durationGroupLabel, "EAM_OPT_GROUND_DURATION_GROUP", "時間組別選取:")
+    condFrame.durationGroupLabel = durationGroupLabel
+
+    local durationGroupDropdown = api.CreateFrame("Button", nil, condFrame, "UIPanelButtonTemplate")
+    if Theme and Theme.registerButton then Theme.registerButton(durationGroupDropdown) end
+    durationGroupDropdown:SetSize(200, 22)
+    durationGroupDropdown:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -190)
+    setTooltip(durationGroupDropdown, localized("EAM_OPT_GROUND_DURATION_GROUP_TIP", "當技能說明包含多組時間時，自選以第幾組作為地面效果持續時間"), localized("EAM_OPT_GROUND_DURATION_GROUP", "時間組別選取"))
+    condFrame.durationGroupDropdown = durationGroupDropdown
+
+    local durationGroupMenu = api.CreateFrame("Frame", nil, condFrame, "BackdropTemplate")
+    durationGroupMenu:SetSize(220, 150)
+    durationGroupMenu:SetPoint("TOPLEFT", durationGroupDropdown, "BOTTOMLEFT", 0, -2)
+    durationGroupMenu:SetFrameStrata("TOOLTIP")
+    durationGroupMenu:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 12, edgeSize = 12,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    durationGroupMenu:SetBackdropColor(0.05, 0.05, 0.05, 0.98)
+    durationGroupMenu:SetBackdropBorderColor(0.6, 0.4, 0.2, 1)
+    registerDropdownMenu(durationGroupMenu, durationGroupDropdown)
+    durationGroupMenu:Hide()
+    condFrame.durationGroupMenu = durationGroupMenu
+
+    local function populateDurationGroupMenu()
+        local d = Options.currentEditingAlert
+        local spellID = d and d.spellID
+        buildScrollableDropdownMenu(
+            durationGroupMenu,
+            durationGroupDropdown,
+            function()
+                local service = EAM.Services and EAM.Services.GroundEffectService
+                local candidates = (spellID and service and service.scrapeDurationCandidates)
+                    and service.scrapeDurationCandidates(spellID) or {}
+                if not candidates or #candidates == 0 then
+                    return {
+                        { value = 1, text = localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"), disabled = true }
+                    }
+                end
+                local list = {}
+                for i = 1, #candidates do
+                    local c = candidates[i]
+                    list[#list + 1] = {
+                        value = c.index,
+                        text = c.label or string.format("第 %d 組: %s 秒", c.index, tostring(c.seconds)),
+                        seconds = c.seconds,
+                    }
+                end
+                return list
+            end,
+            function(item)
+                if item.disabled then return end
+                condFrame.selectedDurationMatchIndex = item.value
+                durationGroupDropdown:SetText(item.text)
+                if item.seconds then
+                    manualDurationEditBox:SetText(tostring(item.seconds))
+                end
+                durationGroupMenu:Hide()
+            end,
+            220,
+            6
+        )
+        for _, btn in ipairs(durationGroupMenu.buttons or {}) do
+            finalizeDropdownMenuButton(btn, btn.text, durationGroupMenu)
+        end
+    end
+
+    durationGroupDropdown:SetScript("OnClick", function()
+        if durationGroupMenu:IsShown() then
+            durationGroupMenu:Hide()
+        else
+            if condFrame.auraSoundMenu then condFrame.auraSoundMenu:Hide() end
+            if condFrame.groupMenu then condFrame.groupMenu:Hide() end
+            populateDurationGroupMenu()
+            durationGroupMenu:Show()
+        end
+    end)
+
     local manualDurationLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    manualDurationLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -175)
+    manualDurationLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -222)
     bindText(manualDurationLabel, "EAM_OPT_COND_MANUAL_DUR", "手動設定時間 (秒)")
     condFrame.manualDurationLabel = manualDurationLabel
 
     local manualDurationEditBox = api.CreateFrame("EditBox", nil, condFrame, "InputBoxTemplate")
     manualDurationEditBox:SetSize(80, 20)
-    manualDurationEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -195)
+    manualDurationEditBox:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 20, -242)
     manualDurationEditBox:SetAutoFocus(false)
     manualDurationEditBox:SetNumeric(false)
     setTooltip(manualDurationEditBox, "若無法自動解析 Tooltip，可手動在此輸入固定持續秒數", "手動設定時間")
@@ -5478,13 +5560,27 @@ local function createFrame()
     scrapeBtn:SetScript("OnClick", function()
         local d = Options.currentEditingAlert
         if d and d.spellID then
-            if EAM.Services.GroundEffectService and EAM.Services.GroundEffectService.scrapeDuration then
-                local num = EAM.Services.GroundEffectService.scrapeDuration(d.spellID)
-                if num then
-                    manualDurationEditBox:SetText(tostring(num))
-                    print(string.format(EAM.L.EAM_OPT_SCRAPE_SUCCESS or "|cff00ff96EAM|r 成功擷取當前持續時間: %s 秒", num))
+            local service = EAM.Services and EAM.Services.GroundEffectService
+            if service and service.scrapeDurationCandidates then
+                local candidates = service.scrapeDurationCandidates(d.spellID)
+                if candidates and #candidates > 0 then
+                    local chosenIdx = condFrame.selectedDurationMatchIndex or d.durationMatchIndex or 1
+                    if chosenIdx > #candidates then
+                        chosenIdx = 1
+                    end
+                    condFrame.selectedDurationMatchIndex = chosenIdx
+                    local chosen = candidates[chosenIdx] or candidates[1]
+                    durationGroupDropdown:SetText(chosen.label or string.format("第 %d 組: %s 秒", chosen.index, tostring(chosen.seconds)))
+                    manualDurationEditBox:SetText(tostring(chosen.seconds))
+                    print(string.format(
+                        localized("EAM_OPT_SCRAPE_MULTI_SUCCESS", "成功解析 %d 組時間，已選取第 %d 組: %s 秒"),
+                        #candidates,
+                        chosen.index,
+                        tostring(chosen.seconds)
+                    ))
                 else
-                    print("|cff00ff96EAM|r " .. (EAM.L.EAM_OPT_SCRAPE_FAIL or "未能在說明中解析出秒數，請手動輸入。"))
+                    durationGroupDropdown:SetText(localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"))
+                    print("|cff00ff96EAM|r " .. localized("EAM_OPT_SCRAPE_FAIL", "未能在說明中解析出秒數，請手動輸入。"))
                 end
             end
         end
@@ -5692,14 +5788,17 @@ local function createFrame()
 
             if d.kind == "groundEffect" then
                 local savedVariables = EAM.Modules.SavedVariables
+                local chosenMatchIdx = condFrame.selectedDurationMatchIndex or 1
                 if savedVariables and savedVariables.updateGroundEffectAlert then
                     savedVariables.updateGroundEffectAlert(
                         d.spellID,
                         condFrame.durationModeCb:GetChecked() and "AUTO" or "MANUAL",
                         condFrame.manualDurationEditBox:GetText(),
-                        condFrame.groundPreRenderCb:GetChecked()
+                        condFrame.groundPreRenderCb:GetChecked(),
+                        chosenMatchIdx
                     )
                 end
+                d.durationMatchIndex = (chosenMatchIdx > 1) and chosenMatchIdx or nil
                 if savedVariables and savedVariables.updateAlertCustomName then
                     savedVariables.updateAlertCustomName("groundEffect", nil, d.spellID, nil, customNameText)
                 end
@@ -6035,12 +6134,32 @@ function Options.openConditionsFrame(data)
             cf.groundPreRenderCb:SetChecked(isPreRender)
         end
         cf.durationModeCb:Show()
+        if cf.durationGroupLabel then cf.durationGroupLabel:Show() end
+        if cf.durationGroupDropdown then cf.durationGroupDropdown:Show() end
+        if cf.durationGroupMenu then cf.durationGroupMenu:Hide() end
         cf.manualDurationLabel:Show()
         cf.manualDurationEditBox:Show()
         cf.scrapeBtn:Show()
 
         cf.durationModeCb:SetChecked(data.durationMode == "AUTO" or data.durationMode == "TOOLTIP" or data.durationMode == nil)
         cf.manualDurationEditBox:SetText(tostring(data.manualDuration or 8))
+
+        local matchIndex = (type(data.durationMatchIndex) == "number" and data.durationMatchIndex >= 1) and data.durationMatchIndex or 1
+        cf.selectedDurationMatchIndex = matchIndex
+
+        local service = EAM.Services and EAM.Services.GroundEffectService
+        local candidates = (service and service.scrapeDurationCandidates and data.spellID)
+            and service.scrapeDurationCandidates(data.spellID) or {}
+        if candidates and #candidates > 0 then
+            local chosen = candidates[matchIndex] or candidates[1]
+            if cf.durationGroupDropdown then
+                cf.durationGroupDropdown:SetText(chosen.label or string.format("第 %d 組: %s 秒", chosen.index, tostring(chosen.seconds)))
+            end
+        else
+            if cf.durationGroupDropdown then
+                cf.durationGroupDropdown:SetText(localized("EAM_OPT_GROUND_NO_CANDIDATES", "無可用時間組別"))
+            end
+        end
 
         -- 隱藏一般的 sliders
         cf.stackSlider:Hide()
@@ -6071,6 +6190,9 @@ function Options.openConditionsFrame(data)
         -- 隱藏地面效果專屬控制項
         if cf.groundPreRenderCb then cf.groundPreRenderCb:Hide() end
         cf.durationModeCb:Hide()
+        if cf.durationGroupLabel then cf.durationGroupLabel:Hide() end
+        if cf.durationGroupDropdown then cf.durationGroupDropdown:Hide() end
+        if cf.durationGroupMenu then cf.durationGroupMenu:Hide() end
         cf.manualDurationLabel:Hide()
         cf.manualDurationEditBox:Hide()
         cf.scrapeBtn:Hide()

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-10-03.02",
+  "snapshotVersion": "2026-10-03.03",
   "updatedAt": "2026-10-03",
   "project": {
     "name": "EventAlertModRemake",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1.5 Alpha 8.8 開發與驗證完成：全面適配魔獸世界 12.1.5 (TOC 120105)；整合底層 C++ 數學/字串/表格加速庫與防禦性降級；實裝 TimedSignalMap 零分配排程器；精確判定 12.1.5 原生 Pandemic 結餘窗口 (GetRefreshCarryOverDuration)；支援原生光環 Pandemic 動態特效動畫 (AddPandemicActiveAnimation 等)；實裝音效警示 throttleSeconds 頻率限制防護；支援 SetRoundLayoutToNearestPixel 原生像素對齊與 CreateFrameWithOptions 隱藏預建立防閃爍；徹底移除 Blizzard_Deprecated 全域呼叫；501 契約全綠、103 Flow 離線驗證全過。",
+    "objective": "Retail 12.1.5 Alpha 8.8 開發與驗證完成：全面適配魔獸世界 12.1.5 (TOC 120105)；實裝地面效果說明全文多組時間智慧解析、條件設定下拉自選組別與一鍵擷取雙向連動；整合底層 C++ 數學/字串/表格加速庫與防禦性降級；實裝 TimedSignalMap 零分配排程器；精確判定 12.1.5 原生 Pandemic 結餘窗口；支援原生光環 Pandemic 動態特效動畫；實裝音效警示 throttleSeconds 頻率限制防護；支援 SetRoundLayoutToNearestPixel 原生像素對齊與 CreateFrameWithOptions 隱藏預建立防閃爍；徹底移除 Blizzard_Deprecated 全域呼叫；501 契約全綠、104 Flow 離線驗證全過。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 103,
-      "passed": 103,
+      "total": 104,
+      "passed": 104,
       "failed": 0,
       "skipped": 0,
       "pending": 0

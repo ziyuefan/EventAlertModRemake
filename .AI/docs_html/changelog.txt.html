@@ -407,6 +407,10 @@
 <li>12.1.5 原生像素對齊與初始化防閃爍 (Native Pixel Snapping &amp; Zero-Flicker Frame Initialization):</li>
 <li>支援 SetRoundLayoutToNearestPixel 原生像素捨入，圖示與文字邊界物理像素對齊更加清晰銳利；</li>
 <li>引入 CreateFrameWithOptions 隱藏預建立機制，徹底消除圖示首次生成時的瞬間畫面閃爍。</li>
+<li>地面效果多組時間解析與自選組別 (Ground Effect Multi-Duration Candidate Dropdown &amp; Selection):</li>
+<li>智慧全文多時間組別解析：針對技能說明中包含多組秒數（如地面持續時間 vs 減速持續時間 vs 引導時間，例如暴風雪「8 秒內造成傷害...減速 50%，持續 3 秒」）的複雜技能，自動依在說明文字中的出現位置順序完整解析出所有時間候選（第 1 組、第 2 組等）。</li>
+<li>條件設定視窗自選下拉清單：在地面效果設定介面新增「時間組別選取」下拉選單，使用者可自由挑選欲使用的時間組別，點選後即時同步帶入「手動設定時間」輸入框。</li>
+<li>一鍵擷取聯動更新：點擊「一鍵擷取」時，即時重整並更新下拉選單候選列表，自動選中目標組別秒數並帶入編輯框，省去手動比對與輸入的繁瑣流程。</li>
 </ul>
 <li><strong>【⚡ 體驗優化 (Improvements)】:</strong></li>
 <ul class="changelog-sublist">

@@ -1,3 +1,34 @@
+### 2026-10-03 EAM-20261003-ALPHA-8.8-GROUND-EFFECT-MULTI-DURATION-SELECTION：地面效果說明全文多組時間智慧解析、條件設定下拉自選與一鍵擷取雙向連動
+
+- 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78)。
+- 需求背景與問題分析：
+  1. 地面效果的持續時間由技能說明文字（Spell Description / Tooltip）動態解析，但許多技能說明中同時包含多組時間數值（例如暴風雪「在 8 秒內造成傷害...使移動速度降低 50%，持續 3 秒」或引導時間 vs 地面持續時間 vs 減速時間）。
+  2. 原先單純抓取第一個命中的正則秒數，導致動態擷取時經常抓到非預期的輔助時間（如 3 秒而非 8 秒）。
+  3. 少年欸提出需求：希望能增加下拉清單讓使用者自選要第幾組當成效果時間，另外「一鍵擷取」按鈕按完後能自動將解析出的所有時間組別更新至下拉清單供使用者選取，並同步帶入「手動設定時間」編輯框。
+- 重構實作與產出：
+  1. **全文多組時間候選解析引擎 (`Services/GroundEffectService.lua`)**：
+     - 實裝 `parseAllDurationCandidates(text)`：透過 `string.find` 完整掃描文本中所有符合語系模式的時間特徵，並依照在文字中出現的先後順序進行排序與重疊去重，格式化為結構化候選列表 `{ index = 1, seconds = 8, label = "第 1 組: 8 秒" }`；
+     - 實裝 `GroundEffectService.scrapeDurationCandidates(spellID)`：整合 `C_Spell.GetSpellDescription` 與 `C_TooltipInfo.GetSpellByID` 取得所有時間候選與來源；
+     - 升級 `resolveAlertDuration(spellID, alert)` 與 `GroundEffectService.scrapeDuration(spellID, matchIndex)`：在 AUTO 模式下支援依 `alert.durationMatchIndex`（預設 1）挑選指定組別秒數；若顯式傳入 `matchIndex` 則選取該組別，並同時回傳完整候選列表。
+  2. **SavedVariables 存檔層持久化 (`Core/SavedVariables.lua`)**：
+     - 於地面效果結構中新增 `alert.durationMatchIndex` 欄位；
+     - 在 `normalizeGroundEffectsForAlerts` 中加入 `durationMatchIndex` 的常態化與備份處理；
+     - 升級 `updateGroundEffectAlert` 與 `addAlert`，支援接收、比對與持久化 `durationMatchIndex`，杜絕無謂的 revision 遞增。
+  3. **條件設定視窗下拉清單與按鈕雙向連動 (`UI/Options.lua`)**：
+     - 在 `condFrame` 地面技能區塊建立 `durationGroupLabel`、`durationGroupDropdown` 與 `durationGroupMenu`（基於 `buildScrollableDropdownMenu` 實現捲動與主題美化）；
+     - `openConditionsFrame` 視窗開啟時主動抓取法術所有時間組別並依目前設定選取對應項；非地面效果時自動隱藏；
+     - 「一鍵擷取」`scrapeBtn` 點擊時即時重整並更新下拉選單候選列表，自動選取目標組別秒數並即時填入 `manualDurationEditBox`；
+     - 使用者在下拉清單點選任意組別時，即時更新下拉按鈕標籤文字並同步將選取秒數帶入編輯框；
+     - 儲存按鈕點擊時將 `condFrame.selectedDurationMatchIndex` 正確傳入 `SavedVariables.updateGroundEffectAlert` 進行保存。
+  4. **全語系支援與流暢測試覆蓋 (`Locale/*.lua`, `Debug/FlowTestRunner.lua`)**：
+     - 於 5 大語系（`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU`）中完整補齊 `EAM_OPT_GROUND_DURATION_GROUP`、`EAM_OPT_GROUND_GROUP_FORMAT`、`EAM_OPT_GROUND_NO_CANDIDATES`、`EAM_OPT_SCRAPE_MULTI_SUCCESS` 詞條；
+     - 於 `FlowTestRunner.lua` 註冊新測試案例 `ground.duration_multi_group_candidates`，覆蓋多組時間解析、組別挑選、AUTO 模式指定組別生效與 SavedVariables 存取 round-trip。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 語法錯誤)。
+  - `Run-FlowValidation.ps1`：104/104 通過 (0 失敗)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+  - `Build-Package.ps1 -PackageLabel DEV`：打包成功 (`EventAlertMod_DEV_20261003_092342.zip`)。
+
 ### 2026-10-03 EAM-20261003-ALPHA-8.8-POST-TAINT-AND-SCHEDULER-HOTFIX：全域環境庫污染排除 (ADDON_ACTION_BLOCKED)、排程器 OnUpdate 激活修復與冷卻介面文字校正
 
 - 狀態：已完成 (Contracts 501/501, Flow 103/103, Syntax 78/78)。

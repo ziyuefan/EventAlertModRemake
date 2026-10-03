@@ -5685,6 +5685,71 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
+    id = "ground.duration_multi_group_candidates",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        if not mock then
+            return STATUS_SKIP, "GroundEffectService multi-group mock is offline only"
+        end
+        local service = EAM.Services and EAM.Services.GroundEffectService
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local cSpell = api.C_Spell
+        if not service or not saved or not cSpell then
+            return false, "GroundEffectService dependencies unavailable"
+        end
+        local originalDB = EAM.db
+        local originalDescription = cSpell.GetSpellDescription
+        local ok, result = pcall(function()
+            EAM.db = {
+                revision = 820010,
+                alerts = {
+                    groundEffects = {
+                        ["groundEffect:player:62001"] = {
+                            id = "groundEffect:player:62001",
+                            enabled = true,
+                            spellID = 62001,
+                            durationMode = "AUTO",
+                            manualDuration = 8,
+                            durationMatchIndex = 2,
+                        },
+                    },
+                },
+            }
+            cSpell.GetSpellDescription = function(spellID)
+                if spellID == 62001 then
+                    return "Lasts 8 sec and slows targets for 3 sec."
+                end
+                return nil
+            end
+            local candidates, source = service.scrapeDurationCandidates(62001)
+            local dAuto, sAuto = service.scrapeDuration(62001)
+            local d1, s1 = service.scrapeDuration(62001, 1)
+            local d2, s2 = service.scrapeDuration(62001, 2)
+
+            local updateOk = saved.updateGroundEffectAlert(62001, "AUTO", 8, true, 2)
+            local savedRecord = EAM.db.alerts.groundEffects["groundEffect:player:62001"]
+
+            return #candidates == 2
+                and candidates[1].seconds == 8
+                and candidates[2].seconds == 3
+                and dAuto == 3
+                and d1 == 8
+                and d2 == 3
+                and updateOk == true
+                and savedRecord ~= nil
+                and savedRecord.durationMatchIndex == 2
+        end)
+        EAM.db = originalDB
+        cSpell.GetSpellDescription = originalDescription
+        local valid = ok and result == true
+        return valid, valid and "ground effect multi-duration candidates and group selection verified"
+            or "ground effect multi-group candidate contract mismatch"
+    end,
+})
+
+FlowTestRunner.registerCase({
     id = "ui.cooldown_swipe_alpha",
     primarySuite = "boundary",
     suites = { boundary = true, core = true, aura121 = true },

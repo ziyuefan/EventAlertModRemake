@@ -147,39 +147,94 @@ function GroundEffectStatePool.release(state)
     GroundEffectStatePool.recycleBin[GroundEffectStatePool.binSize] = state
 end
 
-local function parseDurationText(value)
+local function parseAllDurationCandidates(value)
     if not Util.isSafeString(value) or value == "" then
-        return nil
+        return {}
     end
     local locale = api.GetLocale and api.GetLocale() or "enUS"
     if locale == "enGB" then
         locale = "enUS"
     end
     local patterns = Util.MULTI_LOCALE_PATTERNS[locale] or Util.MULTI_LOCALE_PATTERNS.enUS
-    local lowerValue = locale == "enUS" and string.lower(value) or value
-    for index = 1, #patterns do
-        local matched = string.match(lowerValue, patterns[index])
-        local seconds = matched and tonumber(matched) or nil
-        if Util.isSafePositiveNumber(seconds) and seconds <= 3600 then
-            return seconds
+    local textToSearch = (locale == "enUS") and string.lower(value) or value
+
+    local rawMatches = {}
+    for pIdx = 1, #patterns do
+        local pattern = patterns[pIdx]
+        local searchStart = 1
+        while searchStart <= #textToSearch do
+            local startPos, endPos, matchCap = string.find(textToSearch, pattern, searchStart)
+            if not startPos then
+                break
+            end
+            local seconds = tonumber(matchCap)
+            if Util.isSafePositiveNumber(seconds) and seconds <= 3600 then
+                rawMatches[#rawMatches + 1] = {
+                    pos = startPos,
+                    endPos = endPos,
+                    seconds = seconds,
+                }
+            end
+            searchStart = startPos + 1
         end
+    end
+
+    if #rawMatches == 0 then
+        return {}
+    end
+
+    table.sort(rawMatches, function(a, b)
+        if a.pos ~= b.pos then
+            return a.pos < b.pos
+        end
+        return a.endPos > b.endPos
+    end)
+
+    local candidates = {}
+    local lastEnd = 0
+    for i = 1, #rawMatches do
+        local m = rawMatches[i]
+        if m.pos >= lastEnd then
+            local idx = #candidates + 1
+            candidates[idx] = {
+                index = idx,
+                seconds = m.seconds,
+                label = string.format(
+                    (EAM.L and EAM.L.EAM_OPT_GROUND_GROUP_FORMAT) or "第 %d 組: %s 秒",
+                    idx,
+                    tostring(m.seconds)
+                ),
+            }
+            lastEnd = m.endPos
+        end
+    end
+
+    return candidates
+end
+
+local function parseDurationText(value, matchIndex)
+    local candidates = parseAllDurationCandidates(value)
+    if #candidates > 0 then
+        local idx = matchIndex or 1
+        local chosen = candidates[idx] or candidates[1]
+        return chosen and chosen.seconds or nil
     end
     return nil
 end
 
-local function parseSpellDescription(spellID)
+local function parseSpellDescriptionCandidates(spellID)
     local cSpell = api.C_Spell
     if not cSpell or type(cSpell.GetSpellDescription) ~= "function" then
-        return nil
+        return {}
     end
     local ok, description = pcall(cSpell.GetSpellDescription, spellID)
-    if not ok then
-        return nil
+    if not ok or not description then
+        return {}
     end
-    return parseDurationText(description)
+    return parseAllDurationCandidates(description)
 end
 
-local function parseTooltipDescription(spellID)
+local function parseTooltipDescriptionCandidates(spellID)
     local cTooltipInfo = api.C_TooltipInfo
     local lineTypes = api.TooltipDataLineType
     local descriptionType = lineTypes and lineTypes.SpellDescription
@@ -187,16 +242,16 @@ local function parseTooltipDescription(spellID)
         or not cTooltipInfo
         or type(cTooltipInfo.GetSpellByID) ~= "function"
     then
-        return nil
+        return {}
     end
 
     local ok, data = pcall(cTooltipInfo.GetSpellByID, spellID)
     if not ok or not Util.isReadableTable(data) then
-        return nil
+        return {}
     end
     local lines, linesSafe = Util.readSafeField(data, "lines")
     if not linesSafe or not Util.isReadableTable(lines) then
-        return nil
+        return {}
     end
     for index = 1, #lines do
         local line = lines[index]
@@ -204,14 +259,41 @@ local function parseTooltipDescription(spellID)
             local lineType, typeSafe = Util.readSafeField(line, "type")
             if typeSafe and lineType == descriptionType then
                 local text, textSafe = Util.readSafeField(line, "leftText")
-                local duration = textSafe and parseDurationText(text) or nil
-                if duration then
-                    return duration
+                if textSafe and text then
+                    local candidates = parseAllDurationCandidates(text)
+                    if #candidates > 0 then
+                        return candidates
+                    end
                 end
             end
         end
     end
-    return nil
+    return {}
+end
+
+function GroundEffectService.scrapeDurationCandidates(spellID)
+    if not safeSpellID(spellID) then
+        return {}, nil
+    end
+    local candidates = parseSpellDescriptionCandidates(spellID)
+    if candidates and #candidates > 0 then
+        return candidates, "spellDescription"
+    end
+    candidates = parseTooltipDescriptionCandidates(spellID)
+    if candidates and #candidates > 0 then
+        return candidates, "tooltipDescription"
+    end
+    return {}, nil
+end
+
+local function parseSpellDescription(spellID)
+    local candidates = parseSpellDescriptionCandidates(spellID)
+    return (candidates and candidates[1]) and candidates[1].seconds or nil
+end
+
+local function parseTooltipDescription(spellID)
+    local candidates = parseTooltipDescriptionCandidates(spellID)
+    return (candidates and candidates[1]) and candidates[1].seconds or nil
 end
 
 local function resolveSpellIdentifier(callback, spellID)
@@ -340,14 +422,17 @@ local function resolveAlertDuration(spellID, alert)
         return manualDuration, "manual"
     end
 
-    local duration = parseSpellDescription(spellID)
-    if duration then
-        return duration, "spellDescription"
+    local matchIndex = (alert and type(alert.durationMatchIndex) == "number" and alert.durationMatchIndex >= 1)
+        and math.floor(alert.durationMatchIndex) or 1
+
+    local candidates, source = GroundEffectService.scrapeDurationCandidates(spellID)
+    if candidates and #candidates > 0 then
+        local chosen = candidates[matchIndex] or candidates[1]
+        if chosen and chosen.seconds then
+            return chosen.seconds, source or "spellDescription"
+        end
     end
-    duration = parseTooltipDescription(spellID)
-    if duration then
-        return duration, "tooltipDescription"
-    end
+
     return manualDuration, "manualFallback"
 end
 
@@ -382,7 +467,7 @@ function GroundEffectService.refreshDurationCache()
     return true, GroundEffectService.resolvedCount
 end
 
-function GroundEffectService.scrapeDuration(spellID)
+function GroundEffectService.scrapeDuration(spellID, matchIndex)
     if not moduleEnabled() then
         return nil, nil, "moduleDisabled"
     end
@@ -398,13 +483,28 @@ function GroundEffectService.scrapeDuration(spellID)
         return nil, nil, compileReason
     end
     local alert = GroundEffectService.alertsBySpellID[spellID]
-    local duration, source = resolveAlertDuration(spellID, alert)
+    local candidates, candSource = GroundEffectService.scrapeDurationCandidates(spellID)
+
+    local duration, resSource
+    if matchIndex ~= nil then
+        if candidates and #candidates > 0 then
+            local chosen = candidates[matchIndex] or candidates[1]
+            duration = chosen and chosen.seconds or normalizeManualDuration(alert and alert.manualDuration)
+            resSource = candSource or "spellDescription"
+        else
+            duration = normalizeManualDuration(alert and alert.manualDuration)
+            resSource = "manualFallback"
+        end
+    else
+        duration, resSource = resolveAlertDuration(spellID, alert)
+    end
+
     GroundEffectService.durationCache[spellID] = {
         duration = duration,
-        source = source,
+        source = resSource,
     }
-    GroundEffectService.lastResolutionSource = source
-    return duration, source
+    GroundEffectService.lastResolutionSource = resSource
+    return duration, resSource, candidates
 end
 
 local function onAlertExpired(spellID)

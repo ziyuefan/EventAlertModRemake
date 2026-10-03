@@ -5,14 +5,19 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-10-03.02 (Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復)。
+目前快照版本：2026-10-03.03 (Retail 12.1.5 Alpha 8.8 地面效果多組時間全文解析與下拉自選、暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復（現行儲存點）
+## 2026-10-03 多進度儲存點：Retail 12.1.5 Alpha 8.8 地面效果多組時間全文解析與下拉自選、暴雪底層 C++ 數學加速、TimedSignalMap 排程器、全域污染排除與排程激活熱修復（現行儲存點）
 
-- current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級與高優先級缺陷修復全數完成，全套契約 501 條綠燈、Flow 測試 103 案全過、語法檢驗 78 案零錯誤。
+- current-of-truth：Retail 12.1.5 Alpha 8.8 改造升級、地面效果多組時間智慧自選下拉清單與高優先級缺陷修復全數完成，全套契約 501 條綠燈、Flow 測試 104 案全過、語法檢驗 78 案零錯誤。
   1. Retail 12.1.5 關鍵架構特徵與原生加速：
+     - **地面效果說明全文多組時間智慧解析與條件設定下拉自選**：
+       - `Services/GroundEffectService.lua` 實裝 `parseAllDurationCandidates` 與 `scrapeDurationCandidates`，完整搜尋技能說明中所有時間秒數，依照文字位置順序排序去重，生成候選組別（第 1 組、第 2 組等）；
+       - `Core/SavedVariables.lua` 新增 `alert.durationMatchIndex` 欄位並於常態化、更新與新增時持久化保存；
+       - `UI/Options.lua` 條件設定視窗（`condFrame`）新增「時間組別選取」下拉選單（`durationGroupDropdown`），點選即時帶入「手動設定時間」輸入框；點擊「一鍵擷取」自動刷新所有候選並選中目標秒數帶入編輯框；
+       - `Debug/FlowTestRunner.lua` 增補 `ground.duration_multi_group_candidates` 流程測試案，覆蓋多組候選解析、AUTO 模式自選組別解析與存檔持久化。
      - **TOC 介面版本升級**：更新 `EventAlertMod.toc` 為 `## Interface: 120007, 120100, 120105`，無縫相容 Retail 12.1.5 正式版、Retail 12.1.0 與 XPTR 12.0.7。
      - **暴雪底層 C++ 工具函數庫加速與防禦性封裝**：
        - `Core/Util.lua` 全面整合 12.1.5 Native C++ 數學、字串與表格加速函數（`math.clamp`、`math.lerp`、`math.saturate`、`table.isempty`、`table.contains`、`string.contains`、`string.startswith` 等），並完全封閉於 `EAM.Util` 內部，100% 杜絕全域環境庫污染 (Taint Remediation)。
@@ -34,7 +39,7 @@
      - **過時暴雪引用清理與防禦性加固**：
        - 根除對 `Blizzard_Deprecated` 的任何調用，加固 `AuraState` 之 `timer` 與 `source` 表格隔離。
   2. 當前達成狀態：
-     - [x] 【全專案門禁 100% 綠燈】：Contracts 501/501 PASS、Flow 103/103 PASS、Syntax 78/78 PASS。
+     - [x] 【全專案門禁 100% 綠燈】：Contracts 501/501 PASS、Flow 104/104 PASS、Syntax 78/78 PASS。
      - [x] 【跨檔案版本與文檔 100% 同步】：TOC (120105 / 20261003)、雙語 README、雙語 Changelog。
      - [x] 【連續性資料庫更新】：`Data/ProjectContinuity.json` 與 `Docs/28_PROJECT_CONTINUITY.md` 同步維護。
 
