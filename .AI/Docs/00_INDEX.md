@@ -2,11 +2,11 @@
 # EventAlertMod Remake 說明文件導航中心 / Documentation Hub
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Release](https://img.shields.io/badge/release-Alpha%208.5-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
-[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Release](https://img.shields.io/badge/release-Alpha%208.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.0 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
+> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
 
 歡迎使用 EventAlertMod (EAM) 正式服重構版本說明文件中心。本中心為**插件使用者 (Players & Users)** 以及**代理開發者 (AI & Human Developers)** 提供完整的資訊導覽與架構參考。
 
@@ -16,7 +16,7 @@
 
 | 傳統法術監控 / 複雜大型插件 | 現代重構版 EventAlertMod (EAM) |
 | :--- | :--- |
-| ⚠️ **沉重且佔用資源**：大量背景 OnUpdate 輪詢、吃記憶體、引發戰鬥掉幀。 | ⚡ **極致輕量與零負擔**：純事件驅動架構，全面引入物件池技術（State Pools），消滅 GC 記憶體垃圾。 |
+| ⚠️ **沉重且佔用資源**：大量背景 OnUpdate 輪詢、吃記憶體、引發戰鬥掉幀。 | ⚡ **極致輕量與零負擔**：純事件驅動架構，全面引入物件池技術（State Pools）與常駐零分配佇列，消滅 GC 記憶體垃圾。 |
 | ❌ **容易受污染報錯**：12.0+ 暴雪引入 Secret Values 後，常常在戰鬥中報錯噴黃字或引發 UI 異常。 | 🛡️ **暴雪 12.0+ 終極安全防護**：原生 C-Level `StatusBar:SetValue` 直通渲染與 C-Level 曲線系統（`CurveObject` / `ColorCurveObject`），配合二元階梯閥門突破受保護數值防線，絕不觸發 Taint 污染。 |
 | 🔄 **設定繁瑣、需匯入字串**：需手動到網站翻找 WA 字串或手寫 Lua 條件判斷。 | 🎯 **直覺易用、秒加監控**：滑鼠停在任何技能、光環或物品上按 **`Ctrl + Alt`** 一秒加入，無需查 ID；內建 4,463 個核心法術的次世代全量法術庫與智慧預設系統。 |
 | 🐢 **速度顯示不準確**：傳統插件無法偵測 10.0+ / 11.0+ / 12.0+ 飛龍騎術的真實衝刺速度。 | 🏃 **業界唯一：四合一速度淬鍊**：專屬對接 `C_PlayerInfo.GetGlidingInfo()`，完美支援 **830%~1400%** 動態極速，並支援「僅滑翔時顯示」智慧隱藏與戰鬥真實跑速快取回退！ |
@@ -32,14 +32,31 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 3. ⚔️ **跨職業光環 (Cross-Class / Target Cast)**：監控敵方關鍵爆發或隊友重要增益，支援非本職業法術防誤加互動式確認對話框。
 4. ⏳ **技能冷卻 (Spell Cooldown)**：純透明度（Alpha=0）常駐預載模式，0.00ms 零排版延遲；支援 2D 矩陣折行 (2D Grid Layout)、每列欄數控制 (Columns per Row)、圓形環狀進度條 (`Radial Ring Mode`)、框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)、扇形倒數色彩與透明度自訂、以及非線性衝刺進度曲線。
 5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控，支援 2D 矩陣折行排版。
-6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊與 2D 矩陣折行。
-7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點，支援動態色彩曲線平滑染色與水平/垂直雙向生長；死亡騎士專屬 6 格動態符文儀表板支援 `/eam rune` 診斷。
+6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊、多時間組別候選擷取（Duration Group Selector）與 2D 矩陣折行。
+7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（`>=` / `<=` 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（`/eam rune`）。
 8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：依職業獨立配置，全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量），採 4-Tab 模組化設定面板與單項獨立座標自訂拖曳。
 
 ---
 
 ## 🔥 近期版本重大里程碑 (Recent Release Milestones)
 
+- 🌟 **[Retail 12.1.5 Alpha 8.8] - 2026.10.23**
+    - **職業資源獨立自由拖曳與常見框架九宮格依附 (Independent Resource Positioning & 9-Point Frame Attachment)**：支援將每個職業資源獨立設為「自由移動 (FREE)」或「依附框架 (ATTACH)」，內建玩家、目標、專注目標、個人資源條與 EAM 主錨點依附，並提供九宮格精確方位與 X/Y 偏移微調。
+    - **職業資源動態點數自動分割與自訂格數 (Dynamic & Custom StatusBar Segments)**：連擊點數、聖能、真氣、秘法充能、靈魂裂片與龍能自動對齊天賦加成後之實際上限（5/6/7 格），並提供「自訂分割格數 (0~20 格)」滑桿供任意資源條繪製百分比刻度線。
+    - **職業資源自訂雙色漸層與條件告警系統 (Custom Gradient & Conditional Alerts)**：支援「預設職業動態色」、「自訂單色」、「自訂雙色漸層 (Custom Gradient)」三種色彩模式（透過 `Texture:SetGradient` 與 `C_CurveUtil.CreateColorCurve` 雙軌兼容 Secret Value），以及 `>=` / `<=` 條件告警變色與一次性邊緣觸發音效。
+    - **喚能師 (Evoker) 職業資源正名與五語系官方對齊**：全面修正喚能師核心職業資源為官方「龍能 (`zhTW`) / 精華 (`zhCN`) / Essence (`enUS`) / 정수 (`koKR`) / Сущность (`ruRU`)」，並將 LibSharedMedia-3.0 升級至最新官方版本 `r159` (`8020003`)。
+    - **全模組圖示外框自訂顏色與無框模式 (Customizable Module Border Colors & Borderless Mode)**：為自身光環、目標光環、跨職業、技能冷卻、物品冷卻與地面效果新增獨立外框色彩選擇器與「無外框」開關，並將預設圖示外框線寬加粗至 `2px` 搭配雙層發光強化。
+    - **地面效果多時間組別候選擷取 (Multi-Duration Candidate Selector)**：自動解析法術說明中所有持續秒數（如「持續 5 秒… 持續 12 秒」），透過下拉選單一鍵切換並雙向連動手動秒數框。
+    - **引導技能先驗冷卻即刻初始化與 60ms 零污染突發 CDR 取樣器**：完美支援冰霜射線 (205021) 引導瞬間 60s 倒數與彗星風暴零 CD 覆蓋保護，搭配 60ms 突發取樣器精確捕捉冰槍術 + 白化天賦減 CD 與冰霜之球地面效果延長 0.1s。
+    - **Retail 12.1.5 原生 API 現代化對齊**：整合 `C_Timer.NewTimedSignalMap` C++ 零分配排程、`AuraContainerUtil.GetPandemicWindow`、`AddAuraShown/AssignedAnimation`、`PixelUtil` 像素對齊與 `C_Intl` 語系折疊搜尋。
+- 🌟 **[Retail 12.1.0 Alpha 8.7] - 2026.09.27**
+    - **零分配佇列與冷卻事件合併節流 (Zero-Allocation Queue & Cooldown Event Coalescing)**：重構 `AlertManager.pendingUpdates` 為常駐槽位快取，消除戰鬥高頻 GC；`CooldownService` 實作同幀事件合併與 9 維度髒值比對，無視覺變化時 100% 抑制無效重繪。
+    - **冷卻飛行記錄器 (`/eam trace`) 與引擎效能遙測儀表板 (`/eam metrics`)**：內建 Ring Buffer 飛行黑盒子（捕捉施法、天賦覆蓋、秘密值降級與狀態跳變）與微秒級熱路徑耗時剖析儀表板，支援一鍵匯出結構化報告。
+    - **天賦動態減 CD 即時重繪與目標切換光環精準刷新**：針對非秘密冷卻新增到期時間平移偵測（> 0.05s 即時重繪扇形遮罩），並修復切換目標時目標光環殘留問題。
+- 🌟 **[Retail 12.1.0 Alpha 8.6] - 2026.09.19**
+    - **修復戰鬥中光環消失延遲與天賦變身法術冷卻誤觸發**：新增光環實例反向索引表 (`auraInstanceIndex`) 達成 0.00ms 即時移除；重構 `UNIT_SPELLCAST_SUCCEEDED` 為精確 ID 與主動覆蓋表雙向檢驗，杜絕被動天賦連帶污染。
+    - **修復開戰瞬間冷卻圖示不倒數與隱藏父框架計時停擺**：將核心計時驅動器 (`EAM_SchedulerFrame`) 與事件路由升格為獨立頂層常駐框架，並以預熱快取突破開戰瞬間 Secret Value 封鎖。
+    - **新增自動戰術群組與五語系鍵盤快捷鍵提示**：全自動依玩家天賦配置生成 4 大戰術群組，並在設定面板全面顯示對應鍵盤快捷鍵（`Delete`、`Ctrl+F`、`Ctrl+S`、`ESC`）。
 - 🌟 **[Retail 12.1.0 Alpha 8.5] - 2026.09.08 ~ 2026.09.12**
     - **飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display Option)**：為角色屬性「飛龍模式飛速 (skyridingSpeed)」新增專屬選項，僅在空中滑翔飛行時顯示數值百分比，未滑翔時自動隱藏，避免 0% 佔用畫面。
     - **扇形倒數色彩與透明度自訂 (Cooldown Swipe Color & Alpha Customization)**：告警圖示與預覽面板之冷卻扇形倒數支援透明度與色彩自訂，預設經典黑 (0, 0, 0, 0.8)，徹底解決純白扇形刺眼與遮擋圖示問題。
@@ -123,7 +140,11 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 *   🧠 **[21 大核心技能體系與 Agentic AI 治理哲學 (Skill Ecosystem & Philosophy)](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
     *   **全面技能化（Everything as a Skill）核心手冊**。涵蓋 5 大領域 21 項技能全景目錄、漸進式揭露（Progressive Disclosure）、確定性交付與永續維護哲學。
 *   📜 **[AI 代理人專用結構化 XML 治理指引 (AI Governance Directive)](33_AI_GOVERNANCE_DIRECTIVE.md.html)**
-    *   **大語言模型與子代理人專用結構化 XML 指導檔**。定義何時增設/加載 XML 準則、5 大不可逾越鐵律、Retail 12.x Secret 哨兵防線、模組分層契約與零暖機記憶錨定。實體 XML 儲存於 `AI_GOVERNANCE_DIRECTIVE.xml`。
+    *   **大語言模型與子代理人專用結構化 XML 指導檔**。定義何時增設/加載 XML 準則、5 大不可逾越鐵律、Retail 12.x Secret 哨兵防線、模組分層契約、主動故障預測與威脅推論協議（v1.3）與零暖機記憶錨定。實體 XML 儲存於 `AI_GOVERNANCE_DIRECTIVE.xml`。
+*   📝 **[CurseForge 專案說明與更新日誌 Markdown 語法權威規範](34_CURSEFORGE_MARKDOWN_AUTHORING_GUIDE.md.html)**
+    *   **CurseForge 與 GitHub 雙平台發布排版標準**。涵蓋 HTML Sanitizer 白名單、禁用表格轉嵌套清單規範、安全警報框與自動化審計契約。
+*   🧭 **[WoW AddOn 開發之 MCP 與工具路由權威政策 (WoW MCP Tool Routing Policy)](35_WOW_MCP_TOOL_ROUTING_POLICY.md.html)**
+    *   **6 大 WoW MCP 伺服器權責分工與查證階梯**。定義本機 CASC 實證優先、Nighthawk 主幹檢索、Hated 工具箱驗證與最小修改原則。
 
 ### 🏗️ 系統架構與 API 邊界 (Architecture & API)
 *   📐 **[整體重構系統架構 (Architecture)](01_ARCHITECTURE.md.html)**
@@ -131,7 +152,7 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 *   🛡️ **[正式服 12.x API 安全防線 (Retail API Boundaries)](02_RETAIL_API_BOUNDARIES.md.html)**
     *   四大核心 Secret 檢查 API、Table 索引安全防禦、與 C++ DurationObject 渲染通道。
 *   📡 **[Retail API Change Intelligence：12.0.0 起始基線](25_RETAIL_API_CHANGE_INTELLIGENCE.md.html)**
-    *   APICHG 版本情報、TOC／revision 矩陣、12.0.0～12.1.0 演進與 EAM 遷移窗口。
+    *   APICHG 版本情報、TOC／revision 矩陣、12.0.0～12.1.5 演進與 EAM 遷移窗口。
 *   🧩 **[Retail 12.1 AuraContainer Native Backend](23_AURA_CONTAINER_IMPLEMENTATION.md.html)**
     *   68914 API 契約、Native/Legacy 分流、Slot/Group、Aura Sound、SavedVariables v2 與 PTR RQA 清單。
 *   ⚡ **[玩家職業資源重構報告 (Player Resource Refactor)](30_PLAYER_RESOURCE_REFACTOR_REPORT.md.html)**
@@ -162,4 +183,3 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
     *   上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。
 *   🎮 **[真人實機驗證操作指南 (Live Test Step Guide)](29_LIVE_TEST_STEP_GUIDE.md.html)**
     *   37 個真實遊戲客戶端操作案例的執行步驟與簽收手冊。
-

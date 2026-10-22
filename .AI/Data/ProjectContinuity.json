@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-10-16.03",
-  "updatedAt": "2026-10-16",
+  "snapshotVersion": "2026-10-23.01",
+  "updatedAt": "2026-10-23",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範 (SOP Established)；全套 502 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。",
+    "objective": "Retail 12.1.5 Alpha 8.8 職業資源獨立定位/九宮依附、喚能師五語系正名、動態/自訂格數分割、雙色漸層與雙向條件告警實裝，並完成 GitHub Release (alpha-8.8)、CurseForge (File ID 9289976)、MiliUI 與 GitHub Pages 全量發布；全套 502 契約、109 Flow 測試、77 語法檢查 100% 綠燈通過。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 108,
-      "passed": 108,
+      "total": 109,
+      "passed": 109,
       "failed": 0,
       "skipped": 0,
       "pending": 0

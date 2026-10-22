@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Deployment &amp; Release Tooling Layer">
   <meta name="ai-governance-security" content="Offline PowerShell / DPAPI Protection">
   <meta name="ai-governance-invariants" content="嚴禁未經確認自動執行寫入魔獸遊戲目錄 | 機密隔離：永遠禁止將 API_TOKEN.SEC 包含在打包輸出的 ZIP 壓縮檔內 | 嚴格比對打包檔案清單與來源目錄，確保打包產物 100% 乾淨無暫存檔">
-  <meta name="ai-scan-timestamp" content="2026-09-27T07:24:55.741118+08:00">
+  <meta name="ai-scan-timestamp" content="2026-10-23T01:48:34.373069+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "機密隔離：永遠禁止將 API_TOKEN.SEC 包含在打包輸出的 ZIP 壓縮檔內",
     "嚴格比對打包檔案清單與來源目錄，確保打包產物 100% 乾淨無暫存檔"
   ],
-  "timestamp": "2026-09-27T07:24:55.741118+08:00",
-  "fileCount": 9,
+  "timestamp": "2026-10-23T01:48:34.373069+08:00",
+  "fileCount": 10,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 173516,
+  "totalSizeBytes": 274193,
   "files": [
     {
       "name": "Build-Package.ps1",
@@ -55,9 +55,9 @@
     {
       "name": "CURSEFORGE-DESCRIPTION.md",
       "extension": ".md",
-      "sizeBytes": 53696,
-      "lineCount": 462,
-      "purpose": "EventAlertMod Retail 12.1 (EAM)",
+      "sizeBytes": 75688,
+      "lineCount": 827,
+      "purpose": "Markdown 說明文件",
       "role": "Documentation",
       "security": "Safe"
     },
@@ -114,6 +114,15 @@
       "purpose": "CurseForge API 自動發布腳本，具備 DPAPI 雙重解密、Cloudflare WAF 穿透與乾跑模式",
       "role": "Deploy Automation",
       "security": "Offline Tool"
+    },
+    {
+      "name": "addons_miliui_eventalertmod.html",
+      "extension": ".html",
+      "sizeBytes": 78685,
+      "lineCount": 882,
+      "purpose": "HTML 網頁或說明清單",
+      "role": "Web Document",
+      "security": "Safe"
     }
   ],
   "subdirectories": []
@@ -589,7 +598,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">9</span>
+          <span class="stat-val">10</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">子目錄數量</span>
@@ -597,7 +606,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">169.4 KB</span>
+          <span class="stat-val">267.8 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -620,7 +629,7 @@
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (9)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (10)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -682,12 +691,12 @@
           </td>
           <td><span class="badge badge-doc">DOC</span></td>
           <td>
-            <div style="font-weight: 500; color: #f1f5f9;">EventAlertMod Retail 12.1 (EAM)</div>
+            <div style="font-weight: 500; color: #f1f5f9;">Markdown 說明文件</div>
             <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Documentation</div>
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            52.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 462 行</span>
+            73.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 827 行</span>
           </td>
         </tr>
         
@@ -799,6 +808,24 @@
           </td>
         </tr>
         
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./addons_miliui_eventalertmod.html" title="檢視檔案內容">addons_miliui_eventalertmod.html</a>
+            </div>
+          </td>
+          <td><span class="badge badge-html">HTML</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">HTML 網頁或說明清單</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Web Document</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            76.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 882 行</span>
+          </td>
+        </tr>
+        
           </tbody>
         </table>
       </div>
@@ -807,7 +834,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-09-27T07:24:55.741118+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-10-23T01:48:34.373069+08:00</p>
     </footer>
   </div>
 

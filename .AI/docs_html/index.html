@@ -517,11 +517,11 @@
         <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 <h1 id="eventalertmod-remake-documentation-hub">EventAlertMod Remake 說明文件導航中心 / Documentation Hub</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.5-orange" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.8-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5-blue" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen" /></a></p>
 <blockquote>
-<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.0 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
+<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
 </blockquote>
 <p>歡迎使用 EventAlertMod (EAM) 正式服重構版本說明文件中心。本中心為<strong>插件使用者 (Players &amp; Users)</strong> 以及<strong>代理開發者 (AI &amp; Human Developers)</strong> 提供完整的資訊導覽與架構參考。</p>
 <hr />
@@ -536,7 +536,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">⚠️ <strong>沉重且佔用資源</strong>：大量背景 OnUpdate 輪詢、吃記憶體、引發戰鬥掉幀。</td>
-<td style="text-align: left;">⚡ <strong>極致輕量與零負擔</strong>：純事件驅動架構，全面引入物件池技術（State Pools），消滅 GC 記憶體垃圾。</td>
+<td style="text-align: left;">⚡ <strong>極致輕量與零負擔</strong>：純事件驅動架構，全面引入物件池技術（State Pools）與常駐零分配佇列，消滅 GC 記憶體垃圾。</td>
 </tr>
 <tr>
 <td style="text-align: left;">❌ <strong>容易受污染報錯</strong>：12.0+ 暴雪引入 Secret Values 後，常常在戰鬥中報錯噴黃字或引發 UI 異常。</td>
@@ -561,13 +561,36 @@
 <li>⚔️ <strong>跨職業光環 (Cross-Class / Target Cast)</strong>：監控敵方關鍵爆發或隊友重要增益，支援非本職業法術防誤加互動式確認對話框。</li>
 <li>⏳ <strong>技能冷卻 (Spell Cooldown)</strong>：純透明度（Alpha=0）常駐預載模式，0.00ms 零排版延遲；支援 2D 矩陣折行 (2D Grid Layout)、每列欄數控制 (Columns per Row)、圓形環狀進度條 (<code>Radial Ring Mode</code>)、框外線性條 (<code>TOP/BOTTOM/LEFT/RIGHT</code>)、扇形倒數色彩與透明度自訂、以及非線性衝刺進度曲線。</li>
 <li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控，支援 2D 矩陣折行排版。</li>
-<li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊與 2D 矩陣折行。</li>
-<li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點，支援動態色彩曲線平滑染色與水平/垂直雙向生長；死亡騎士專屬 6 格動態符文儀表板支援 <code>/eam rune</code> 診斷。</li>
+<li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊、多時間組別候選擷取（Duration Group Selector）與 2D 矩陣折行。</li>
+<li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（<code>&gt;=</code> / <code>&lt;=</code> 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（<code>/eam rune</code>）。</li>
 <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：依職業獨立配置，全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量），採 4-Tab 模組化設定面板與單項獨立座標自訂拖曳。</li>
 </ol>
 <hr />
 <h2 id="recent-release-milestones">🔥 近期版本重大里程碑 (Recent Release Milestones)</h2>
 <ul>
+<li>🌟 <strong>[Retail 12.1.5 Alpha 8.8] - 2026.10.23</strong><ul>
+<li><strong>職業資源獨立自由拖曳與常見框架九宮格依附 (Independent Resource Positioning &amp; 9-Point Frame Attachment)</strong>：支援將每個職業資源獨立設為「自由移動 (FREE)」或「依附框架 (ATTACH)」，內建玩家、目標、專注目標、個人資源條與 EAM 主錨點依附，並提供九宮格精確方位與 X/Y 偏移微調。</li>
+<li><strong>職業資源動態點數自動分割與自訂格數 (Dynamic &amp; Custom StatusBar Segments)</strong>：連擊點數、聖能、真氣、秘法充能、靈魂裂片與龍能自動對齊天賦加成後之實際上限（5/6/7 格），並提供「自訂分割格數 (0~20 格)」滑桿供任意資源條繪製百分比刻度線。</li>
+<li><strong>職業資源自訂雙色漸層與條件告警系統 (Custom Gradient &amp; Conditional Alerts)</strong>：支援「預設職業動態色」、「自訂單色」、「自訂雙色漸層 (Custom Gradient)」三種色彩模式（透過 <code>Texture:SetGradient</code> 與 <code>C_CurveUtil.CreateColorCurve</code> 雙軌兼容 Secret Value），以及 <code>&gt;=</code> / <code>&lt;=</code> 條件告警變色與一次性邊緣觸發音效。</li>
+<li><strong>喚能師 (Evoker) 職業資源正名與五語系官方對齊</strong>：全面修正喚能師核心職業資源為官方「龍能 (<code>zhTW</code>) / 精華 (<code>zhCN</code>) / Essence (<code>enUS</code>) / 정수 (<code>koKR</code>) / Сущность (<code>ruRU</code>)」，並將 LibSharedMedia-3.0 升級至最新官方版本 <code>r159</code> (<code>8020003</code>)。</li>
+<li><strong>全模組圖示外框自訂顏色與無框模式 (Customizable Module Border Colors &amp; Borderless Mode)</strong>：為自身光環、目標光環、跨職業、技能冷卻、物品冷卻與地面效果新增獨立外框色彩選擇器與「無外框」開關，並將預設圖示外框線寬加粗至 <code>2px</code> 搭配雙層發光強化。</li>
+<li><strong>地面效果多時間組別候選擷取 (Multi-Duration Candidate Selector)</strong>：自動解析法術說明中所有持續秒數（如「持續 5 秒… 持續 12 秒」），透過下拉選單一鍵切換並雙向連動手動秒數框。</li>
+<li><strong>引導技能先驗冷卻即刻初始化與 60ms 零污染突發 CDR 取樣器</strong>：完美支援冰霜射線 (205021) 引導瞬間 60s 倒數與彗星風暴零 CD 覆蓋保護，搭配 60ms 突發取樣器精確捕捉冰槍術 + 白化天賦減 CD 與冰霜之球地面效果延長 0.1s。</li>
+<li><strong>Retail 12.1.5 原生 API 現代化對齊</strong>：整合 <code>C_Timer.NewTimedSignalMap</code> C++ 零分配排程、<code>AuraContainerUtil.GetPandemicWindow</code>、<code>AddAuraShown/AssignedAnimation</code>、<code>PixelUtil</code> 像素對齊與 <code>C_Intl</code> 語系折疊搜尋。</li>
+</ul>
+</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.7] - 2026.09.27</strong><ul>
+<li><strong>零分配佇列與冷卻事件合併節流 (Zero-Allocation Queue &amp; Cooldown Event Coalescing)</strong>：重構 <code>AlertManager.pendingUpdates</code> 為常駐槽位快取，消除戰鬥高頻 GC；<code>CooldownService</code> 實作同幀事件合併與 9 維度髒值比對，無視覺變化時 100% 抑制無效重繪。</li>
+<li><strong>冷卻飛行記錄器 (<code>/eam trace</code>) 與引擎效能遙測儀表板 (<code>/eam metrics</code>)</strong>：內建 Ring Buffer 飛行黑盒子（捕捉施法、天賦覆蓋、秘密值降級與狀態跳變）與微秒級熱路徑耗時剖析儀表板，支援一鍵匯出結構化報告。</li>
+<li><strong>天賦動態減 CD 即時重繪與目標切換光環精準刷新</strong>：針對非秘密冷卻新增到期時間平移偵測（&gt; 0.05s 即時重繪扇形遮罩），並修復切換目標時目標光環殘留問題。</li>
+</ul>
+</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.6] - 2026.09.19</strong><ul>
+<li><strong>修復戰鬥中光環消失延遲與天賦變身法術冷卻誤觸發</strong>：新增光環實例反向索引表 (<code>auraInstanceIndex</code>) 達成 0.00ms 即時移除；重構 <code>UNIT_SPELLCAST_SUCCEEDED</code> 為精確 ID 與主動覆蓋表雙向檢驗，杜絕被動天賦連帶污染。</li>
+<li><strong>修復開戰瞬間冷卻圖示不倒數與隱藏父框架計時停擺</strong>：將核心計時驅動器 (<code>EAM_SchedulerFrame</code>) 與事件路由升格為獨立頂層常駐框架，並以預熱快取突破開戰瞬間 Secret Value 封鎖。</li>
+<li><strong>新增自動戰術群組與五語系鍵盤快捷鍵提示</strong>：全自動依玩家天賦配置生成 4 大戰術群組，並在設定面板全面顯示對應鍵盤快捷鍵（<code>Delete</code>、<code>Ctrl+F</code>、<code>Ctrl+S</code>、<code>ESC</code>）。</li>
+</ul>
+</li>
 <li>🌟 <strong>[Retail 12.1.0 Alpha 8.5] - 2026.09.08 ~ 2026.09.12</strong><ul>
 <li><strong>飛龍模式飛速專屬：僅滑翔時顯示圖示 (Skyriding Speed Gliding-Only Display Option)</strong>：為角色屬性「飛龍模式飛速 (skyridingSpeed)」新增專屬選項，僅在空中滑翔飛行時顯示數值百分比，未滑翔時自動隱藏，避免 0% 佔用畫面。</li>
 <li><strong>扇形倒數色彩與透明度自訂 (Cooldown Swipe Color &amp; Alpha Customization)</strong>：告警圖示與預覽面板之冷卻扇形倒數支援透明度與色彩自訂，預設經典黑 (0, 0, 0, 0.8)，徹底解決純白扇形刺眼與遮擋圖示問題。</li>
@@ -683,7 +706,15 @@
 </ul>
 </li>
 <li>📜 <strong><a href="33_AI_GOVERNANCE_DIRECTIVE.md.html">AI 代理人專用結構化 XML 治理指引 (AI Governance Directive)</a></strong><ul>
-<li><strong>大語言模型與子代理人專用結構化 XML 指導檔</strong>。定義何時增設/加載 XML 準則、5 大不可逾越鐵律、Retail 12.x Secret 哨兵防線、模組分層契約與零暖機記憶錨定。實體 XML 儲存於 <code>AI_GOVERNANCE_DIRECTIVE.xml</code>。</li>
+<li><strong>大語言模型與子代理人專用結構化 XML 指導檔</strong>。定義何時增設/加載 XML 準則、5 大不可逾越鐵律、Retail 12.x Secret 哨兵防線、模組分層契約、主動故障預測與威脅推論協議（v1.3）與零暖機記憶錨定。實體 XML 儲存於 <code>AI_GOVERNANCE_DIRECTIVE.xml</code>。</li>
+</ul>
+</li>
+<li>📝 <strong><a href="34_CURSEFORGE_MARKDOWN_AUTHORING_GUIDE.md.html">CurseForge 專案說明與更新日誌 Markdown 語法權威規範</a></strong><ul>
+<li><strong>CurseForge 與 GitHub 雙平台發布排版標準</strong>。涵蓋 HTML Sanitizer 白名單、禁用表格轉嵌套清單規範、安全警報框與自動化審計契約。</li>
+</ul>
+</li>
+<li>🧭 <strong><a href="35_WOW_MCP_TOOL_ROUTING_POLICY.md.html">WoW AddOn 開發之 MCP 與工具路由權威政策 (WoW MCP Tool Routing Policy)</a></strong><ul>
+<li><strong>6 大 WoW MCP 伺服器權責分工與查證階梯</strong>。定義本機 CASC 實證優先、Nighthawk 主幹檢索、Hated 工具箱驗證與最小修改原則。</li>
 </ul>
 </li>
 </ul>
@@ -698,7 +729,7 @@
 </ul>
 </li>
 <li>📡 <strong><a href="25_RETAIL_API_CHANGE_INTELLIGENCE.md.html">Retail API Change Intelligence：12.0.0 起始基線</a></strong><ul>
-<li>APICHG 版本情報、TOC／revision 矩陣、12.0.0～12.1.0 演進與 EAM 遷移窗口。</li>
+<li>APICHG 版本情報、TOC／revision 矩陣、12.0.0～12.1.5 演進與 EAM 遷移窗口。</li>
 </ul>
 </li>
 <li>🧩 <strong><a href="23_AURA_CONTAINER_IMPLEMENTATION.md.html">Retail 12.1 AuraContainer Native Backend</a></strong><ul>
@@ -765,11 +796,11 @@
     <div id="doc-content-en" class="lang-content">
         <h1 id="eventalertmod-remake-documentation-hub">EventAlertMod Remake Documentation Hub</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.5-orange" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.8-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5-blue" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen" /></a></p>
 <blockquote>
-<p>🚀 <strong>Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.0 / 12.0+)!</strong></p>
+<p>🚀 <strong>Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.5 / 12.1 / 12.0+)!</strong></p>
 </blockquote>
 <p>Welcome to the EventAlertMod (EAM) Retail Rewrite Documentation Hub. This portal provides tailored navigation and architectural references for both <strong>AddOn users/players</strong> and <strong>AI/Human developers</strong>.</p>
 <hr />
@@ -784,7 +815,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;">⚠️ <strong>Heavy resource drain</strong>: Massive background OnUpdate polling, high memory consumption, combat frame drops.</td>
-<td style="text-align: left;">⚡ <strong>Ultra-lightweight &amp; zero burden</strong>: Pure event-driven architecture with zero-allocation State Pools, eliminating GC memory spikes.</td>
+<td style="text-align: left;">⚡ <strong>Ultra-lightweight &amp; zero burden</strong>: Pure event-driven architecture with zero-allocation State Pools and persistent update queues, eliminating GC memory spikes.</td>
 </tr>
 <tr>
 <td style="text-align: left;">❌ <strong>Vulnerable to combat taint</strong>: 12.0+ Secret Values frequently cause yellow Lua errors or broken frames in combat.</td>
@@ -809,13 +840,36 @@
 <li>⚔️ <strong>Cross-Class / Target Cast</strong>: Key enemy burst cooldowns and crucial friendly buffs, featuring interactive confirmation dialogs for non-class spells.</li>
 <li>⏳ <strong>Spell Cooldown</strong>: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports 2D Grid Layout with customizable columns per row, Radial Ring Mode, outer linear bars (<code>TOP/BOTTOM/LEFT/RIGHT</code>), cooldown swipe color/alpha customization, and non-linear cooldown curves.</li>
 <li>🎒 <strong>Item Cooldown</strong>: Trinkets, on-use equipment, and consumables monitoring with 2D Grid Layout support.</li>
-<li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, AMZ) with Base/Override talent family matching and 2D Grid Layout support.</li>
-<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types, supporting smooth dynamic color curves and bidirectional (horizontal/vertical) bar growth; includes a dedicated 6-slot Death Knight Runes dashboard with <code>/eam rune</code> diagnostics.</li>
+<li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, AMZ) with Base/Override talent family matching, Multi-Duration Candidate Scraping, and 2D Grid Layout support.</li>
+<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types (including official 5-locale Evoker "Essence" naming), supporting per-resource independent dragging &amp; 9-point frame attachment, dynamic max points (5/6/7) auto-segmentation &amp; custom segments (0~20), custom solid/two-color gradients, bidirectional conditional alerts (<code>&gt;=</code> / <code>&lt;=</code> bar recolor &amp; rising-edge sound), and a dedicated 6-slot Death Knight Runes dashboard (<code>/eam rune</code>).</li>
 <li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18 core stats (Primary, Secondary, 4-in-1 Speeds, Armor, Total Shield Absorbs, and Heal Absorbs), powered by a modular 4-Tab settings layout and per-stat draggable positioning.</li>
 </ol>
 <hr />
 <h2 id="recent-release-milestones">🔥 Recent Release Milestones</h2>
 <ul>
+<li>🌟 <strong>[Retail 12.1.5 Alpha 8.8] - 2026.10.23</strong><ul>
+<li><strong>Independent Resource Positioning &amp; 9-Point Frame Attachment</strong>: Each player resource bar now supports independent Free Dragging (<code>FREE</code>) or Frame Attachment (<code>ATTACH</code>) to Player, Target, Focus, Personal Resource Display, or EAM Main Anchor with 9-point directional alignment and X/Y offsets.</li>
+<li><strong>Dynamic &amp; Custom StatusBar Segments</strong>: Discrete point resources (Combo Points, Holy Power, Chi, Arcane Charges, Soul Shards, Essence) automatically adjust segment dividers to talent-modified max points (5/6/7), plus a Custom Segments slider (<code>0~20</code>) for arbitrary percentage tick marks on any bar.</li>
+<li><strong>Custom Two-Color Gradient &amp; Conditional Alerts</strong>: Added 3 bar color modes ("Default Dynamic", "Custom Solid", "Custom Gradient" via <code>Texture:SetGradient</code> + <code>C_CurveUtil.CreateColorCurve</code> dual-track Secret Value compatibility) and bidirectional conditional alerts (<code>&gt;=</code> / <code>&lt;=</code> threshold recolor &amp; rising-edge sound alert).</li>
+<li><strong>Evoker Official Resource Naming &amp; LibSharedMedia-3.0 r159</strong>: Calibrated Evoker primary resource to official "Essence" across all 5 locales (<code>龍能</code> / <code>精華</code> / <code>Essence</code> / <code>정수</code> / <code>Сущность</code>) and upgraded <code>LibSharedMedia-3.0</code> to official release <code>r159</code> (<code>8020003</code>).</li>
+<li><strong>Customizable Module Border Colors &amp; Borderless Mode</strong>: Added per-module border color pickers and a "No Border" toggle across Self Aura, Target Aura, Cross-Class, Spell Cooldown, Item Cooldown, and Ground Effect, while upgrading default border thickness to <code>2px</code> with dual-layer glow.</li>
+<li><strong>Ground Effect Multi-Duration Candidate Selector</strong>: Automatically extracts all duration numbers from multi-stage spell descriptions into a selectable dropdown synced with manual duration inputs.</li>
+<li><strong>Channeled Cooldown Heuristic Initialization &amp; 60ms Burst CDR Sampler</strong>: Instant 60s countdown initialization on <code>UNIT_SPELLCAST_CHANNEL_START</code> (e.g. Ray of Frost 205021) with Comet Storm override protection, paired with a zero-taint 60ms burst CDR sampler for Whiteout + Ice Lance cooldown reduction and Frozen Orb +0.1s duration extension.</li>
+<li><strong>Retail 12.1.5 Native API Alignment</strong>: Integrated <code>C_Timer.NewTimedSignalMap</code>, <code>AuraContainerUtil.GetPandemicWindow</code>, <code>AddAuraShown/AssignedAnimation</code>, <code>PixelUtil</code>, and <code>C_Intl</code> case-folding.</li>
+</ul>
+</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.7] - 2026.09.27</strong><ul>
+<li><strong>Zero-Allocation Update Queue &amp; Cooldown Event Coalescing</strong>: Rebuilt <code>AlertManager.pendingUpdates</code> into persistent slot holders to eliminate combat GC spikes; added same-frame event coalescing and 9-dimension dirty diffing in <code>CooldownService</code>.</li>
+<li><strong>Cooldown Flight Recorder (<code>/eam trace</code>) &amp; Engine Performance Telemetry (<code>/eam metrics</code>)</strong>: Built-in ring-buffer flight recorder and microsecond-precision hot-path profiler with one-click diagnostic report export.</li>
+<li><strong>Dynamic CDR Swipe Redraw &amp; Target-Switch Aura Refresh</strong>: Instant cooldown swipe redraw on expiration shifts (<code>&gt; 0.05s</code>) and immediate target aura cleanup when switching targets.</li>
+</ul>
+</li>
+<li>🌟 <strong>[Retail 12.1.0 Alpha 8.6] - 2026.09.19</strong><ul>
+<li><strong>Zero-Latency Aura Removal &amp; Strict Override Cast Filtering</strong>: Added <code>auraInstanceIndex</code> reverse lookup for 0.00ms aura removal and strict <code>UNIT_SPELLCAST_SUCCEEDED</code> active-override verification.</li>
+<li><strong>Top-Level Persistent Scheduler Frame &amp; Combat Entry Pre-warm Cache</strong>: Promoted <code>EAM_SchedulerFrame</code> to an independent top-level frame and added pre-warm cooldown caching to bypass combat-entry Secret Value locks.</li>
+<li><strong>Automated Tactical Groups &amp; 5-Locale Keyboard Shortcut Hints</strong>: Auto-generates 4 tactical groups from active talents and surfaces keyboard shortcuts (<code>Delete</code>, <code>Ctrl+F</code>, <code>Ctrl+S</code>, <code>ESC</code>) across UI tooltips.</li>
+</ul>
+</li>
 <li>🌟 <strong>[Retail 12.1.0 Alpha 8.5] - 2026.09.08 ~ 2026.09.12</strong><ul>
 <li><strong>Skyriding Speed Gliding-Only Display Option</strong>: Added a dedicated "Glide Only" display option for skyriding speed, presenting velocity only during active gliding (<code>C_PlayerInfo.GetGlidingInfo().isGliding == true</code>) and hiding when stationary to keep UI clean.</li>
 <li><strong>Cooldown Swipe Color &amp; Alpha Customization</strong>: Cooldown swipe on alert icons and preview panels now supports custom color and transparency (defaults to classic dark <code>(0, 0, 0, 0.8)</code>), eliminating glare from solid white swipes.</li>
@@ -922,7 +976,15 @@
 </ul>
 </li>
 <li>📜 <strong><a href="33_AI_GOVERNANCE_DIRECTIVE.md.html">AI Agent Structured XML Governance Directive</a></strong><ul>
-<li><strong>Structured XML directive for LLMs &amp; Subagents</strong>. Defines when to establish/ingest XML directives, 5 absolute iron rules, Retail 12.x Secret sentinel firewalls, architecture layer contracts, and zero cold-start memory anchoring. Physical XML stored at <code>AI_GOVERNANCE_DIRECTIVE.xml</code>.</li>
+<li><strong>Structured XML directive for LLMs &amp; Subagents</strong>. Defines when to establish/ingest XML directives, 5 absolute iron rules, Retail 12.x Secret sentinel firewalls, architecture layer contracts, Proactive Failure Prediction Protocol (v1.3), and zero cold-start memory anchoring. Physical XML stored at <code>AI_GOVERNANCE_DIRECTIVE.xml</code>.</li>
+</ul>
+</li>
+<li>📝 <strong><a href="34_CURSEFORGE_MARKDOWN_AUTHORING_GUIDE.md.html">CurseForge Markdown Authoring &amp; Sanitizer Guide</a></strong><ul>
+<li><strong>Dual-platform Markdown authoring standard for CurseForge &amp; GitHub</strong>. Covers HTML sanitizer whitelists, table-free nested list formatting, callout blocks, and automated validation contracts.</li>
+</ul>
+</li>
+<li>🧭 <strong><a href="35_WOW_MCP_TOOL_ROUTING_POLICY.md.html">WoW MCP &amp; Tool Routing Policy</a></strong><ul>
+<li><strong>Authoritative routing policy across 6 WoW MCP servers</strong>. Defines CASC ground-truth verification, Nighthawk API lookup, Hated linting/validation, and minimal modification rules.</li>
 </ul>
 </li>
 </ul>
@@ -937,7 +999,7 @@
 </ul>
 </li>
 <li>📡 <strong><a href="25_RETAIL_API_CHANGE_INTELLIGENCE.md.html">Retail API Change Intelligence</a></strong><ul>
-<li>APICHG version intelligence, TOC/revision matrix, 12.0.0~12.1.0 evolution, and EAM migration window.</li>
+<li>APICHG version intelligence, TOC/revision matrix, 12.0.0~12.1.5 evolution, and EAM migration window.</li>
 </ul>
 </li>
 <li>🧩 <strong><a href="23_AURA_CONTAINER_IMPLEMENTATION.md.html">Retail 12.1 AuraContainer Native Backend</a></strong><ul>

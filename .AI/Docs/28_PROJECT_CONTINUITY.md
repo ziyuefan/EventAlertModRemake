@@ -5,11 +5,19 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-10-16.03 (開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範 SOP Established)。
+目前快照版本：2026-10-23.01 (Retail 12.1.5 Alpha 8.8 職業資源動態格數分割、雙色漸層與條件告警實裝及三平台全量發布完成)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-10-16 多進度儲存點：開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範（現行儲存點）
+## 2026-10-23 多進度儲存點：Retail 12.1.5 Alpha 8.8 職業資源獨立拖曳/九宮依附、動態格數分割、雙色漸層與條件告警實裝及三平台全量發布（現行儲存點）
+
+- current-of-truth：完成 Retail 12.1.5 Alpha 8.8 四階段核心功能交付與三平台發布：
+  1. **LibSharedMedia-3.0 升級與喚能師 (Evoker) 五語系官方資源正名**：升級 `LibSharedMedia-3.0.lua` 至官方 `r159` (`8020003`)；校準喚能師核心職業資源為官方「龍能 (`zhTW`) / 精華 (`zhCN`) / Essence (`enUS`) / 정수 (`koKR`) / Сущность (`ruRU`)」，並修復 `PlayerResourcePanel.lua` 範疇下拉選單回呼錯誤；
+  2. **職業資源獨立自由拖曳與常見框架九宮格依附 (`FREE` / `ATTACH`)**：支援單一資源獨立拖曳座標或依附玩家、目標、專注目標、個人資源條與 EAM 主錨點之九宮格方位與 X/Y 偏移；
+  3. **職業資源動態點數自動分割、自訂格數 (`0~20`)、自訂雙色漸層與雙向條件告警 (`>=` / `<=`)**：由 Argon 主架構師規劃 JSON 工單派發 Flash 3.8 High 執行並完成審查簽收，實裝 19 道動態分隔線與 20 槽位預分配池、雙色漸層 (`Texture:SetGradient` + `C_CurveUtil.CreateColorCurve`)、以及條件達成變色與一次性邊緣觸發音效；
+  4. **三平台與 GitHub Pages 全量同步發布**：完成 GitHub Release (`alpha-8.8`)、CurseForge API 自動發布 (`File ID: 9289976`)、奇樂 MiliUI 純 HTML5 說明文件與 GitHub Pages 導航中心更新；全套 502 契約、109 Flow 測試、77 語法檢查 100% 綠燈通過。
+
+## 2026-10-16 多進度儲存點：開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範（前一儲存點）
 
 - current-of-truth：少年欸肯定深層故障預測與威脅推論之價值（"靠!你還是能想很細的嘛,以後開發完成都做預測與推論"），並正式確立為專案最高開發流程準則（SOP）。在 `.AI/AGENTS.md`、`.AI/PROJECT_MEMORY.md`、`.AI/Docs/33_AI_GOVERNANCE_DIRECTIVE.md` 與 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`（升級至 v1.3）全面實裝「主動故障預測與威脅推論協議（<failure_prediction_protocol>）」，規範任何開發、修復或架構重構交付前，必須主動提供：1. 高機率邊緣異常（時序、競態、施法延遲、彈道時間、目標狀態突變等）；2. 中機率引擎與視覺邊界異常（次像素外框抖動、視窗縮放比例、音效節流鉗位、元表防護嚴格模式等）；3. 低機率致命風險（戰鬥中 Taint 擴散、Action Blocked 限制、Secret 運算越界、GC 負載峰值等）；4. 實機排查手法與立即對策指引。全套門禁 502 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。
 
