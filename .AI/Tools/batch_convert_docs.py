@@ -7,12 +7,20 @@ import subprocess
 import shutil
 
 # 設定 EAM_DOCS_OFFLINE=1 時，翻譯入口會在任何外部請求前回傳不可用。
+# /// script
+# dependencies = [
+#   "markdown",
+# ]
+# ///
 # Ensure markdown library is installed
 try:
     import markdown
 except ImportError:
-    print("Installing markdown module...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "markdown"])
+    print("Markdown module not found. Installing via uv (or pip fallback)...")
+    if shutil.which("uv"):
+        subprocess.check_call(["uv", "pip", "install", "markdown"])
+    else:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "markdown"])
     import markdown
 
 import urllib.request

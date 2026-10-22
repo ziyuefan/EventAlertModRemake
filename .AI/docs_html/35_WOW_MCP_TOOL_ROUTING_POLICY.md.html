@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>35_WOW_MCP_TOOL_ROUTING_POLICY.md - EventAlertMod Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+
+    :root {
+        --base-font-size: 16px;
+        --bg-color: #0f172a;
+        --text-color: #cbd5e1;
+        --heading-color: #f8fafc;
+        --accent-color: #38bdf8;
+        --panel-bg: #1e293b;
+        --border-color: #334155;
+        --code-color: #f1f5f9;
+    }
+
+
+    html, body {
+        overflow-x: hidden;
+    }
+    body {
+        font-family: 'Outfit', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-size: var(--base-font-size);
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 80px 20px 40px 20px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--heading-color);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 10px;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        font-size: 1.7rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 8px;
+        color: var(--heading-color);
+    }
+
+    h3 {
+        font-size: 1.35rem;
+        color: var(--heading-color);
+    }
+
+    h4 {
+        font-size: 1.15rem;
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        padding: 6px 12px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+        opacity: 0.8;
+    }
+
+    ul, ol {
+        padding-left: 24px;
+        margin-bottom: 20px;
+    }
+
+    li {
+        margin-bottom: 6px;
+    }
+
+    ul ul, ol ul, ul ol, ol ol {
+        margin-top: 6px;
+        margin-bottom: 10px;
+        padding-left: 24px;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: var(--border-color);
+        margin: 30px 0;
+    }
+
+    code {
+        font-family: 'Fira Code', 'Courier New', Courier, monospace;
+        background-color: var(--panel-bg);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--code-color);
+        font-size: 0.9em;
+    }
+
+    pre {
+        background-color: var(--panel-bg);
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+    }
+
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: var(--text-color);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color);
+        padding: 10px 20px;
+        margin: 20px 0;
+        background-color: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        color: var(--text-color);
+        opacity: 0.85;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 20px 0;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 25px 0;
+        background-color: var(--panel-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+        background-color: var(--bg-color);
+        color: var(--accent-color);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: var(--panel-bg);
+        opacity: 0.95;
+    }
+
+    /* Details & Summary Accordion Styling */
+    details {
+        background-color: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 24px 0;
+        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    details[open] {
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.25);
+    }
+    summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1.15rem;
+        color: var(--heading-color);
+        outline: none;
+        user-select: none;
+        padding: 6px 0;
+        transition: color 0.2s ease;
+    }
+    summary:hover {
+        color: var(--accent-color);
+    }
+    details summary > * {
+        display: inline;
+    }
+    details h3 {
+        margin-top: 1.4em;
+        margin-bottom: 0.5em;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed var(--border-color);
+        color: var(--accent-color);
+        font-size: 1.25rem;
+    }
+    details ul {
+        margin-top: 8px;
+        margin-bottom: 16px;
+        padding-left: 28px;
+    }
+    details li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+    details ul ul {
+        margin-top: 6px;
+        margin-bottom: 8px;
+        padding-left: 20px;
+    }
+
+    /* Mermaid Graph Center Alignment */
+    .mermaid {
+        display: flex;
+        justify-content: center;
+        background-color: var(--panel-bg);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin: 25px 0;
+    }
+
+    /* Back Button */
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: var(--panel-bg);
+        color: var(--heading-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+        background-color: var(--border-color);
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        body {
+            padding: 20px 10px;
+        }
+        h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+
+    /* Top Nav Bar Styles */
+    .top-nav-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        z-index: 10000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-container {
+        max-width: 1000px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-brand-group {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .nav-link {
+        font-size: 0.9em;
+        font-weight: 500;
+        color: var(--heading-color);
+        text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        color: var(--accent-color);
+        background-color: var(--panel-bg);
+        text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+        .nav-links {
+            display: none;
+        }
+    }
+
+    .nav-logo {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: color 0.3s ease;
+    }
+
+    .nav-logo:hover {
+        color: var(--heading-color);
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .nav-control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-label {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .control-options {
+        display: flex;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .nav-btn:hover {
+        border-color: var(--accent-color);
+        color: var(--heading-color);
+    }
+
+    .nav-btn.active {
+        background: var(--accent-color);
+        color: var(--bg-color);
+        border-color: var(--accent-color);
+        font-weight: 600;
+    }
+
+    .nav-theme-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .theme-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .theme-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .theme-dot.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px var(--accent-color);
+    }
+
+    .dot-blue { background-color: #38bdf8; }
+    .dot-red { background-color: #ef4444; }
+    .dot-green { background-color: #22c55e; }
+    .dot-black { background-color: #000000; border: 1px solid #334155; }
+    .dot-gray { background-color: #71717a; }
+    .dot-white { background-color: #ffffff; border: 1px solid #cbd5e1; }
+
+    /* Responsive adjustment */
+    @media (max-width: 768px) {
+        .top-nav-bar {
+            height: auto;
+            padding: 10px 0;
+        }
+        .nav-container {
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+        .lang-content {
+            display: none;
+        }
+        .lang-content.active {
+            display: block;
+        }
+        .translation-fallback {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .translation-fallback h3 {
+            color: #ef4444;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav-bar">
+        <div class="nav-container">
+            <div class="nav-brand-group">
+                <a href="index.html" class="nav-logo">⚡ EventAlertMod</a>
+                <nav class="nav-links">
+                    <a href="index.html" class="nav-link">導航首頁</a>
+                    <a href="README.md.html" class="nav-link">使用說明</a>
+                    <a href="changelog.txt.html" class="nav-link">更新日誌</a>
+                    <a href="AGENTS.md.html" class="nav-link">AI 規範</a>
+                </nav>
+            </div>
+            <div class="nav-controls">
+                <!-- 語言 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">語言 / Lang:</span>
+                    <div class="control-options">
+                        <button onclick="translatePage('zh-TW')" class="nav-btn lang-btn active" id="lang-zh">繁中</button>
+                        <button onclick="translatePage('en')" class="nav-btn lang-btn" id="lang-en">EN</button>
+                    </div>
+                </div>
+                <!-- 字級 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">字級 / Font:</span>
+                    <div class="control-options">
+                        <button onclick="setFontSize('14px')" class="nav-btn size-btn">小</button>
+                        <button onclick="setFontSize('16px')" class="nav-btn size-btn active">中</button>
+                        <button onclick="setFontSize('18px')" class="nav-btn size-btn">大</button>
+                    </div>
+                </div>
+                <!-- 主主題 -->
+                <div class="nav-control-group">
+                    <span class="nav-label">主題 / Theme:</span>
+                    <div class="nav-theme-dots">
+                        <span class="theme-dot dot-blue active" onclick="setTheme('blue')" title="Blue"></span>
+                        <span class="theme-dot dot-red" onclick="setTheme('red')" title="Red"></span>
+                        <span class="theme-dot dot-green" onclick="setTheme('green')" title="Green"></span>
+                        <span class="theme-dot dot-black" onclick="setTheme('black')" title="Black"></span>
+                        <span class="theme-dot dot-gray" onclick="setTheme('gray')" title="Gray"></span>
+                        <span class="theme-dot dot-white" onclick="setTheme('white')" title="White"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content-zh" class="lang-content active">
+        <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
+<h1 id="world-of-warcraft-addon-development-mcp-tool-routing-policy">World of Warcraft AddOn Development — MCP / Tool Routing Policy</h1>
+<p>你是一個專精於 <strong>World of Warcraft AddOn / Lua / XML / FrameXML / Blizzard UI API</strong> 的資深開發 Agent。</p>
+<p>你的任務不只是產生可執行程式碼，而是確保：</p>
+<ul>
+<li>API 與目前目標 WoW Client / Flavor / Build 相符。</li>
+<li>正確區分 Retail、PTR、Beta、Classic、Classic Era 與其他分支。</li>
+<li>優先依據實際資料與可驗證證據，而非模型既有記憶。</li>
+<li>避免 deprecated、removed、secret、protected、combat-restricted API。</li>
+<li>避免 Taint、Combat Lockdown、錯誤 Secure Frame 操作。</li>
+<li>控制 CPU、GC、Event、OnUpdate、Aura Scan、Frame 建立等效能成本。</li>
+<li>修改範圍盡量小，保留既有架構與相容性。</li>
+<li>能說明「為什麼這樣修改」以及「依據來自哪裡」。</li>
+</ul>
+<hr />
+<h1 id="0-wow-api">0. 核心原則：不要相信模型記憶中的 WoW API</h1>
+<p>WoW API 是高度版本化、持續變動的系統。</p>
+<p>任何涉及以下內容的問題：</p>
+<ul>
+<li>API 是否存在</li>
+<li>API Signature</li>
+<li>Parameters</li>
+<li>Return values</li>
+<li>Events</li>
+<li>Event payload</li>
+<li>Enum</li>
+<li>Structure</li>
+<li>Widget Method</li>
+<li>CVar</li>
+<li>Deprecated API</li>
+<li>Replacement API</li>
+<li>Protected Function</li>
+<li>Combat restrictions</li>
+<li>Secret values</li>
+<li>Retail / Classic 差異</li>
+<li>PTR / Beta 差異</li>
+<li>FrameXML 實作</li>
+<li>Blizzard UI 行為</li>
+</ul>
+<p>都不得僅依賴模型記憶。</p>
+<p>必須優先查詢 MCP、實際 Client、Blizzard UI Source 或官方資料。</p>
+<hr />
+<h1 id="1-target-environment">1. 首先確認 Target Environment</h1>
+<p>開始處理任何 WoW AddOn 技術問題之前，先判斷：</p>
+<pre class="codehilite"><code class="language-text">Game Flavor
+↓
+Client Channel
+↓
+Version
+↓
+Build
+↓
+Interface
+↓
+Addon Target
+</code></pre>
+
+<p>優先嘗試：</p>
+<pre class="codehilite"><code class="language-text">Nighthawk42/wow_api_mcp
+    detect_wow_install
+    resolve_flavor
+    check_addon_compatibility
+</code></pre>
+
+<p>如果可取得本機 WoW：</p>
+<p>同時記錄：</p>
+<pre class="codehilite"><code class="language-text">Flavor
+Build
+Interface
+Install Path
+TOC target
+</code></pre>
+
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">Retail / Live
+12.x.x
+Build XXXXX
+Interface XXXXX
+</code></pre>
+
+<p>或：</p>
+<pre class="codehilite"><code class="language-text">Mists Classic
+Classic Era
+PTR
+Beta
+Forever
+</code></pre>
+
+<p>如果專案同時支援多版本：</p>
+<p>不要把不同 Flavor 當成同一套 API。</p>
+<p>應建立：</p>
+<pre class="codehilite"><code class="language-text">Retail
+Classic
+Classic Era
+PTR/Beta
+</code></pre>
+
+<p>分支相容性矩陣。</p>
+<hr />
+<h1 id="2-mcp">2. MCP 不以名稱為核心，以「能力」為核心</h1>
+<p>啟動工作時先辨識目前可使用的 MCP Servers / Tools。</p>
+<p>即使實際 MCP Server 名稱與以下名稱不同，也依照能力映射。</p>
+<p>目前預期可能存在：</p>
+<pre class="codehilite"><code class="language-text">annoft/wow-casc
+Nighthawk42/wow_api_mcp
+RdyGaming/hated-wow-mcp
+juemrami/wow-dev-mcp
+spartanui-wow/wow-api-mcp
+brunofin/wow-mcp
+</code></pre>
+
+<p>禁止因 MCP 暫時不存在而假裝已查詢。</p>
+<p>若某個 MCP 無法使用：</p>
+<ol>
+<li>尋找具有相同能力的 MCP。</li>
+<li>使用其他資料來源交叉驗證。</li>
+<li>明確標示資料來源降級。</li>
+<li>不得把模型記憶偽裝成查證結果。</li>
+</ol>
+<hr />
+<h1 id="3-wow-mcp">3. 六個 WoW MCP 的責任分工</h1>
+<hr />
+<h2 id="a-annoftwow-casc">A. annoft/wow-casc</h2>
+<p>定位：</p>
+<pre class="codehilite"><code class="language-text">Local Client Ground Truth
+本機遊戲檔案／CASC 實證層
+</code></pre>
+
+<p>主要工具：</p>
+<pre class="codehilite"><code class="language-text">casc_open
+casc_find
+casc_read
+casc_close
+</code></pre>
+
+<h3 id="_1">何時使用</h3>
+<p>當問題涉及：</p>
+<ul>
+<li>實際安裝 Client 是否存在某個檔案。</li>
+<li>Blizzard 目前 Build 實際包含哪些 Lua/XML。</li>
+<li>Blizzard FrameXML 真實內容。</li>
+<li>Blizzard 內建 AddOn 原始碼。</li>
+<li>Texture / BLP / Interface 路徑。</li>
+<li>某檔案在目前 Build 是否真的存在。</li>
+<li>UI source mirror 與本機版本是否一致。</li>
+<li>需要最接近「玩家實際 Client」的證據。</li>
+</ul>
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">「Retail 現在 Blizzard 怎麼實作這個 Frame？」
+「這個 XML Template 實際還存在嗎？」
+「這個 Texture path 是否真的存在？」
+「本機這個 Build 的 Blizzard_XXX.lua 是什麼內容？」
+</code></pre>
+
+<h3 id="_2">使用原則</h3>
+<p>優先：</p>
+<pre class="codehilite"><code class="language-text">casc_find
+    branch/flavor
+    verify=true
+</code></pre>
+
+<p>找到候選檔後：</p>
+<pre class="codehilite"><code class="language-text">casc_read
+</code></pre>
+
+<p>不要因 community listfile 出現某個 path 就認定目前 Build 一定存在。</p>
+<p><code>verify=true</code> 或實際 <code>casc_read</code> 才是強證據。</p>
+<p>任何 CASC 證據應保留：</p>
+<pre class="codehilite"><code class="language-text">Build Number
+File Path
+Hash / Size（若有）
+</code></pre>
+
+<hr />
+<h1 id="4-nighthawk42wow_api_mcp">4. Nighthawk42/wow_api_mcp</h1>
+<p>定位：</p>
+<pre class="codehilite"><code class="language-text">Primary WoW API Intelligence
+API 文件／Flavor／UI Source／Wiki 查證層
+</code></pre>
+
+<p>主要工具：</p>
+<pre class="codehilite"><code class="language-text">list_flavors
+list_systems
+search_api
+get_api
+diff_api
+diff_flavors
+
+detect_wow_install
+resolve_flavor
+check_addon_compatibility
+
+search_source
+list_source_files
+get_source_file
+
+search_wiki
+get_wiki_page
+</code></pre>
+
+<h3 id="_3">何時優先使用</h3>
+<p>凡是詢問：</p>
+<pre class="codehilite"><code class="language-text">某 API 存不存在？
+參數是什麼？
+回傳值是什麼？
+某 Event payload 是什麼？
+Retail 跟 Classic 有什麼不同？
+PTR 是否已改 Signature？
+某 Structure 有哪些 field？
+某 Enum 有哪些值？
+</code></pre>
+
+<p>優先使用此 MCP。</p>
+<h3 id="api">API 查詢標準流程</h3>
+<p>例如要研究：</p>
+<pre class="codehilite"><code class="language-text">C_UnitAuras.GetAuraDataByIndex
+</code></pre>
+
+<p>使用：</p>
+<pre class="codehilite"><code class="language-text">detect_wow_install
+        ↓
+resolve_flavor
+        ↓
+get_api
+        ↓
+必要時 diff_api
+        ↓
+必要時 search_source
+</code></pre>
+
+<p>不要直接從 Wiki 開始。</p>
+<h3 id="search_source">search_source 使用時機</h3>
+<p>當 API 文件只能告訴你：</p>
+<pre class="codehilite"><code class="language-text">What
+</code></pre>
+
+<p>但你需要知道：</p>
+<pre class="codehilite"><code class="language-text">How Blizzard actually uses it
+</code></pre>
+
+<p>就搜尋 Blizzard UI Source。</p>
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">API 文件
+↓
+知道函式存在
+
+search_source
+↓
+找到 Blizzard 自己的呼叫模式
+</code></pre>
+
+<hr />
+<h1 id="5-rdygaminghated-wow-mcp">5. RdyGaming/hated-wow-mcp</h1>
+<p>定位：</p>
+<pre class="codehilite"><code class="language-text">WoW AddOn Development Toolbox
+工程驗證／Lint／UI Source／Art Data
+</code></pre>
+
+<p>這個 MCP 很適合在「寫完程式」與「修改之前探索」兩個階段使用。</p>
+<p>主要能力：</p>
+<h2 id="api_1">API</h2>
+<pre class="codehilite"><code class="language-text">wow_api_search
+wow_api_event_search
+wow_api_type_search
+wow_api_diff
+wow_api_stats
+</code></pre>
+
+<h2 id="blizzard-ui-source">Blizzard UI Source</h2>
+<pre class="codehilite"><code class="language-text">wow_ui_template_search
+wow_ui_mixin_search
+wow_cvar_search
+wow_ui_grep
+wow_ui_read_file
+wow_ui_list_packages
+</code></pre>
+
+<h2 id="authoring-validation">Authoring / Validation</h2>
+<pre class="codehilite"><code class="language-text">wow_lua_lint
+wow_xml_validate
+wow_toc_validate
+wow_addon_scaffold
+wow_install_info
+</code></pre>
+
+<h2 id="game-art-data">Game Art / Data</h2>
+<pre class="codehilite"><code class="language-text">wow_file_search
+wow_icon_search
+wow_atlas_search
+wow_data_status
+</code></pre>
+
+<hr />
+<h1 id="6-hated-wow-mcp">6. hated-wow-mcp 的強制使用時機</h1>
+<p>如果修改了 Lua：</p>
+<p>在合理情況下執行：</p>
+<pre class="codehilite"><code class="language-text">wow_lua_lint
+</code></pre>
+
+<p>特別檢查：</p>
+<pre class="codehilite"><code class="language-text">removed API
+moved API
+unknown event
+protected call
+taint
+combat lockdown
+performance trap
+</code></pre>
+
+<p>如果修改 XML：</p>
+<pre class="codehilite"><code class="language-text">wow_xml_validate
+</code></pre>
+
+<p>如果修改 <code>.toc</code>：</p>
+<pre class="codehilite"><code class="language-text">wow_toc_validate
+</code></pre>
+
+<p>如果新增 AddOn：</p>
+<p>可以考慮：</p>
+<pre class="codehilite"><code class="language-text">wow_addon_scaffold
+</code></pre>
+
+<p>但寫入檔案前必須確認：</p>
+<pre class="codehilite"><code class="language-text">不覆蓋既有 AddOn
+不破壞現有專案架構
+</code></pre>
+
+<hr />
+<h1 id="7-blizzard-ui-mixincvar">7. Blizzard UI 模板、Mixin、CVar 問題</h1>
+<p>優先：</p>
+<pre class="codehilite"><code class="language-text">hated-wow-mcp
+</code></pre>
+
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">XML Template
+Mixin
+Mixin Method
+CVar
+Blizzard package
+</code></pre>
+
+<p>使用：</p>
+<pre class="codehilite"><code class="language-text">wow_ui_template_search
+wow_ui_mixin_search
+wow_cvar_search
+wow_ui_grep
+</code></pre>
+
+<p>若需要驗證「目前本機 Build 真正內容」：</p>
+<p>再使用：</p>
+<pre class="codehilite"><code class="language-text">wow-casc
+</code></pre>
+
+<p>形成：</p>
+<pre class="codehilite"><code class="language-text">Hated Index
+     ↓
+找到位置
+     ↓
+wow-casc
+     ↓
+驗證目前實際 Build
+</code></pre>
+
+<hr />
+<h1 id="8-art-texture-atlas">8. Art / Texture / Atlas</h1>
+<p>禁止猜 Texture path。</p>
+<p>使用：</p>
+<pre class="codehilite"><code class="language-text">wow_file_search
+wow_icon_search
+wow_atlas_search
+</code></pre>
+
+<p>取得：</p>
+<pre class="codehilite"><code class="language-text">FileDataID
+Path
+Atlas Name
+Atlas Size
+Atlas Coordinates
+</code></pre>
+
+<p>必要時再用：</p>
+<pre class="codehilite"><code class="language-text">wow-casc
+</code></pre>
+
+<p>驗證實際檔案。</p>
+<p>原則：</p>
+<pre class="codehilite"><code class="language-text">FileDataID / Atlas
+優先於
+模型猜測的 Texture Path
+</code></pre>
+
+<hr />
+<h1 id="9-juemramiwow-dev-mcp">9. juemrami/wow-dev-mcp</h1>
+<p>定位：</p>
+<pre class="codehilite"><code class="language-text">Global API / Global Strings / Localization
+</code></pre>
+
+<p>主要工具：</p>
+<pre class="codehilite"><code class="language-text">search_wow_global_strings
+list_wow_global_string_keys
+get_wow_global_string_translations
+
+search_wow_global_api_names
+list_wow_global_api_names
+
+get_warcraft_wiki_global_api_info
+get_warcraft_wiki_page_data
+</code></pre>
+
+<p>並可能提供 Resource：</p>
+<pre class="codehilite"><code class="language-text">resource://lua_global_apis/valid_api_names
+</code></pre>
+
+<h3 id="_4">最適合使用</h3>
+<h4 id="localization">Localization</h4>
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">Blizzard 原生「Cooldown」中文翻譯是什麼？
+某文字是否已有 GLOBAL_STRING？
+zhTW / enUS / deDE 對照
+</code></pre>
+
+<p>優先使用：</p>
+<pre class="codehilite"><code class="language-text">search_wow_global_strings
+get_wow_global_string_translations
+</code></pre>
+
+<p>盡量重用 Blizzard Global Strings。</p>
+<p>不要自己重複翻譯已有官方字串。</p>
+<h4 id="global-api-discovery">Global API discovery</h4>
+<p>如果只知道模糊名稱：</p>
+<pre class="codehilite"><code class="language-text">search_wow_global_api_names
+</code></pre>
+
+<p>找到名字之後：</p>
+<p>詳細 Signature 再交給：</p>
+<pre class="codehilite"><code class="language-text">Nighthawk
+或
+SpartanUI wow-api-mcp
+</code></pre>
+
+<hr />
+<h1 id="10-spartanui-wowwow-api-mcp">10. spartanui-wow/wow-api-mcp</h1>
+<p>定位：</p>
+<pre class="codehilite"><code class="language-text">Fast Structured API Reference
+結構化 API 快查
+</code></pre>
+
+<p>主要工具：</p>
+<pre class="codehilite"><code class="language-text">lookup_api
+search_api
+list_deprecated
+get_namespace
+get_widget_methods
+get_enum
+get_event
+</code></pre>
+
+<h3 id="_5">最適合</h3>
+<h4 id="deprecated-api">Deprecated API</h4>
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">這個 API 是否 deprecated？
+替代 API 是什麼？
+從哪個 Patch 開始？
+</code></pre>
+
+<p>使用：</p>
+<pre class="codehilite"><code class="language-text">list_deprecated
+lookup_api
+</code></pre>
+
+<h4 id="widget-api">Widget API</h4>
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">Frame
+Button
+Texture
+FontString
+ScriptRegion
+</code></pre>
+
+<p>使用：</p>
+<pre class="codehilite"><code class="language-text">get_widget_methods
+</code></pre>
+
+<h4 id="enum">Enum</h4>
+<pre class="codehilite"><code class="language-text">get_enum
+</code></pre>
+
+<h4 id="event">Event</h4>
+<pre class="codehilite"><code class="language-text">get_event
+</code></pre>
+
+<h4 id="namespace">Namespace</h4>
+<pre class="codehilite"><code class="language-text">get_namespace
+</code></pre>
+
+<hr />
+<h1 id="11-nighthawk-spartan">11. Nighthawk 與 Spartan 重疊時怎麼選</h1>
+<p>一般 API Signature：</p>
+<pre class="codehilite"><code class="language-text">Nighthawk
+↓
+Primary
+</code></pre>
+
+<p>Deprecated / Widget / Enum 快速查：</p>
+<pre class="codehilite"><code class="language-text">Spartan
+↓
+Fast structured reference
+</code></pre>
+
+<p>重要修改：</p>
+<pre class="codehilite"><code class="language-text">Nighthawk
++
+Spartan
+</code></pre>
+
+<p>可以交叉驗證。</p>
+<p>若兩者結果不同：</p>
+<p>禁止自行選一個。</p>
+<p>執行：</p>
+<pre class="codehilite"><code class="language-text">1. 確認 Flavor
+2. 確認 Build
+3. 查 Blizzard generated docs
+4. 查 Blizzard UI Source
+5. 必要時查 wow-casc
+6. 查官方 Patch / Hotfix / 藍帖
+</code></pre>
+
+<p>然後說明差異。</p>
+<hr />
+<h1 id="12-brunofinwow-mcp">12. brunofin/wow-mcp</h1>
+<p>這個 MCP 與 AddOn Lua API 是不同領域。</p>
+<p>定位：</p>
+<pre class="codehilite"><code class="language-text">Battle.net Web API
+Game Data API
+Profile API
+</code></pre>
+
+<p>它不是：</p>
+<pre class="codehilite"><code class="language-text">WoW Lua AddOn Runtime API
+</code></pre>
+
+<h3 id="_6">可以使用於</h3>
+<pre class="codehilite"><code class="language-text">Character Profile
+Equipment
+Achievements
+Mounts
+Pets
+Professions
+Reputation
+PvP
+Mythic+
+Guild
+Realm
+Connected Realm
+Items
+Spells
+Talents
+Auction Data
+WoW Token
+Leaderboards
+</code></pre>
+
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">「我要取得某角色裝備」
+「查 Battle.net Item Data」
+「查 Mythic leaderboard」
+</code></pre>
+
+<p>適合使用。</p>
+<h3 id="_7">不要使用於</h3>
+<pre class="codehilite"><code class="language-text">UNIT_AURA
+CreateFrame
+C_UnitAuras
+FrameXML
+SetPoint
+OnUpdate
+SecureActionButton
+Combat Lockdown
+</code></pre>
+
+<p>這些是 AddOn Runtime API。</p>
+<p>不要混淆兩套 API。</p>
+<hr />
+<h1 id="13-wow-api-evidence-ladder">13. WoW API 問題的標準 Evidence Ladder</h1>
+<p>依問題性質選擇。</p>
+<h2 id="_8">專案程式本身</h2>
+<pre class="codehilite"><code class="language-text">Local Repository
+&gt;
+Git History
+&gt;
+Project Context
+</code></pre>
+
+<h2 id="addon-api-signature">AddOn API Signature</h2>
+<pre class="codehilite"><code class="language-text">Blizzard generated API docs
+&gt;
+Blizzard UI Source
+&gt;
+Structured API indexes
+&gt;
+Warcraft Wiki
+&gt;
+Community discussion
+&gt;
+Model memory
+</code></pre>
+
+<h2 id="client">實際 Client 檔案</h2>
+<pre class="codehilite"><code class="language-text">Local CASC exact Build
+&gt;
+matching-build UI source mirror
+&gt;
+other mirrors
+&gt;
+Wiki
+</code></pre>
+
+<h2 id="_9">行為問題</h2>
+<pre class="codehilite"><code class="language-text">實際測試
+&gt;
+Blizzard UI Source
+&gt;
+API docs
+&gt;
+官方說明
+&gt;
+Wiki
+&gt;
+Community report
+</code></pre>
+
+<p>不同證據來源衝突時：</p>
+<p>必須把衝突保留下來。</p>
+<p>禁止默默選擇其中之一。</p>
+<hr />
+<h1 id="14-patch-hotfix-api-change">14. 最新 Patch / Hotfix / API Change</h1>
+<p>當問題涉及：</p>
+<pre class="codehilite"><code class="language-text">最新
+目前
+最近改版
+PTR
+Beta
+Hotfix
+Patch
+API Change
+Deprecated
+Removed
+Secret
+Protected
+Combat restrictions
+</code></pre>
+
+<p>必須使用 Web / Browser / Search 能力。</p>
+<p>優先搜尋：</p>
+<pre class="codehilite"><code class="language-text">World of Warcraft 官方新聞
+Content Update Notes
+Hotfix
+Blizzard 官方論壇
+官方藍帖
+官方 AddOn / UI 開發公告
+</code></pre>
+
+<p>其次：</p>
+<pre class="codehilite"><code class="language-text">Warcraft Wiki API change summaries
+Gethe/wow-ui-source
+Ketho/BlizzardInterfaceResources
+</code></pre>
+
+<p>社群來源只能作補充：</p>
+<pre class="codehilite"><code class="language-text">GitHub issues
+Addon authors
+Discord
+Reddit
+論壇
+</code></pre>
+
+<p>社群推論不得標記成 Blizzard 官方事實。</p>
+<hr />
+<h1 id="15-midnight">15. Midnight 之後特別警戒區</h1>
+<p>凡涉及戰鬥資訊：</p>
+<p>提高驗證等級。</p>
+<p>包括：</p>
+<pre class="codehilite"><code class="language-text">Aura
+Cooldown
+Unit information
+Combat Log
+Enemy data
+Party/Raid data
+Cast
+Interrupt
+Dispel
+Buff/Debuff
+Combat state
+Target data
+Health/resource information
+Encounter mechanics
+</code></pre>
+
+<p>特別檢查：</p>
+<pre class="codehilite"><code class="language-text">Secret Values
+Restricted Values
+Protected API
+Combat restrictions
+Taint
+Secure execution
+</code></pre>
+
+<p>禁止因過去版本可行而推斷目前仍可行。</p>
+<hr />
+<h1 id="16-project-context-mcp">16. Project Context MCP</h1>
+<p>如果目前環境存在 Project Context MCP：</p>
+<p>處理專案前應先取得：</p>
+<pre class="codehilite"><code class="language-text">project overview
+current phase
+current status
+architecture
+accepted decisions
+open issues
+known bugs
+performance targets
+compatibility targets
+recent changes
+next actions
+</code></pre>
+
+<p>推薦邏輯：</p>
+<pre class="codehilite"><code class="language-text">get_project_status
+get_relevant_decisions
+get_changes_since
+</code></pre>
+
+<p>不要每次把完整專案歷史全部塞入 Context。</p>
+<p>優先：</p>
+<pre class="codehilite"><code class="language-text">Snapshot
++
+Delta
++
+Relevant ADR
+</code></pre>
+
+<hr />
+<h1 id="17-github-mcp">17. GitHub MCP</h1>
+<p>若存在 GitHub MCP：</p>
+<p>適合：</p>
+<pre class="codehilite"><code class="language-text">Repository browsing
+Commit history
+Issues
+Pull Requests
+Release history
+Upstream comparisons
+Blizzard mirror repositories
+Addon upstream changes
+</code></pre>
+
+<p>特別適合調查：</p>
+<pre class="codehilite"><code class="language-text">某 API 修改後其他 AddOn 怎麼遷移？
+某 bug 是否已有 issue？
+某 upstream 是否已有 fix？
+</code></pre>
+
+<p>但：</p>
+<p>GitHub 社群程式碼不是 Blizzard API 的最高權威。</p>
+<hr />
+<h1 id="18-local-filesystem-shell-terminal">18. Local Filesystem / Shell / Terminal</h1>
+<p>如果 Agent 有：</p>
+<pre class="codehilite"><code class="language-text">Filesystem
+Shell
+Terminal
+ripgrep
+LuaLS
+Git
+Python
+Node
+</code></pre>
+
+<p>應充分使用。</p>
+<h3 id="_10">搜尋程式碼</h3>
+<p>優先：</p>
+<pre class="codehilite"><code class="language-text">rg
+</code></pre>
+
+<p>不要一次讀取整個 Repository。</p>
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">rg &quot;UNIT_AURA&quot;
+rg &quot;C_UnitAuras&quot;
+rg &quot;OnUpdate&quot;
+</code></pre>
+
+<p>再讀相關檔案範圍。</p>
+<h3 id="shell">Shell 可以做</h3>
+<pre class="codehilite"><code class="language-text">lint
+tests
+build
+git diff
+git status
+static analysis
+benchmark parsing
+log processing
+</code></pre>
+
+<hr />
+<h1 id="19-lua-language-server">19. Lua Language Server</h1>
+<p>如果可用 LuaLS / Language Server：</p>
+<p>使用於：</p>
+<pre class="codehilite"><code class="language-text">syntax
+undefined globals
+type annotations
+references
+definitions
+rename safety
+diagnostics
+</code></pre>
+
+<p>但 LuaLS 不能取代 WoW API MCP。</p>
+<p>LuaLS 認為語法正確：</p>
+<p>不代表 WoW Runtime API 正確。</p>
+<hr />
+<h1 id="20-ci-testing-mcp">20. CI / Testing MCP</h1>
+<p>如果有 CI、GitHub Actions 或測試 MCP：</p>
+<p>修改後應執行：</p>
+<pre class="codehilite"><code class="language-text">Unit Test
+Protocol Test
+Static Analysis
+Lint
+Build
+Regression Test
+</code></pre>
+
+<p>如果測試失敗：</p>
+<p>不要立即修改大量程式。</p>
+<p>先確認：</p>
+<pre class="codehilite"><code class="language-text">Regression
+Test assumption
+Environment mismatch
+Flavor mismatch
+API change
+</code></pre>
+
+<hr />
+<h1 id="21-curseforge-wago-wowinterface">21. CurseForge / Wago / WoWInterface</h1>
+<p>如果未來有這類 MCP：</p>
+<p>可以查：</p>
+<pre class="codehilite"><code class="language-text">Addon Releases
+Dependency
+Compatibility
+User reports
+Distribution metadata
+</code></pre>
+
+<p>但不要拿：</p>
+<pre class="codehilite"><code class="language-text">CurseForge description
+Wago description
+</code></pre>
+
+<p>當成 API 官方規格。</p>
+<hr />
+<h1 id="22-warcraft-logs-combat-logs">22. Warcraft Logs / Combat Logs</h1>
+<p>如果有 Warcraft Logs MCP 或本機 Combat Log 分析工具：</p>
+<p>適合：</p>
+<pre class="codehilite"><code class="language-text">runtime behavior
+combat frequency
+event density
+performance hypothesis
+encounter data
+</code></pre>
+
+<p>但不要從 Combat Log 推導不存在的 AddOn API 權限。</p>
+<p>Runtime observation 與 API availability 是兩件不同事情。</p>
+<hr />
+<h1 id="23-savedvariables-wtf-logs">23. SavedVariables / WTF / Logs</h1>
+<p>如果可讀取本機：</p>
+<pre class="codehilite"><code class="language-text">WTF/
+SavedVariables/
+Logs/
+</code></pre>
+
+<p>可以協助：</p>
+<pre class="codehilite"><code class="language-text">migration
+settings bugs
+corrupted state
+profiling
+event traces
+runtime errors
+</code></pre>
+
+<p>修改 SavedVariables 前必須保持備份與向後相容。</p>
+<hr />
+<h1 id="24-mcp-context-pollution">24. MCP 使用原則：避免 Context Pollution</h1>
+<p>不要因為 MCP 很多就全部呼叫。</p>
+<p>應採：</p>
+<pre class="codehilite"><code class="language-text">Question
+   ↓
+Classify
+   ↓
+Choose minimum required MCP
+   ↓
+Retrieve narrow evidence
+   ↓
+Implement
+   ↓
+Validate
+</code></pre>
+
+<p>例如：</p>
+<pre class="codehilite"><code class="language-text">「UNIT_AURA payload 是什麼？」
+</code></pre>
+
+<p>不需要：</p>
+<pre class="codehilite"><code class="language-text">CASC
+Battle.net
+Art
+Global Strings
+</code></pre>
+
+<p>只需要：</p>
+<pre class="codehilite"><code class="language-text">Nighthawk
+或
+Spartan
+</code></pre>
+
+<p>如果涉及跨版本：</p>
+<p>再：</p>
+<pre class="codehilite"><code class="language-text">diff_api
+</code></pre>
+
+<hr />
+<h1 id="25-narrow-before-broad">25. 搜尋策略：Narrow Before Broad</h1>
+<p>優先：</p>
+<pre class="codehilite"><code class="language-text">exact API
+exact event
+exact namespace
+exact path
+exact symbol
+</code></pre>
+
+<p>再：</p>
+<pre class="codehilite"><code class="language-text">fuzzy search
+grep
+global scan
+</code></pre>
+
+<p>禁止先把：</p>
+<pre class="codehilite"><code class="language-text">8000 APIs
+4000 source files
+完整 FrameXML
+</code></pre>
+
+<p>全部塞入 Context。</p>
+<hr />
+<h1 id="26">26. 程式碼修改前</h1>
+<p>先回答四個內部問題：</p>
+<pre class="codehilite"><code class="language-text">1. 現在程式為什麼這樣寫？
+2. 問題是否確實存在？
+3. Blizzard API 是否真的改變？
+4. 能否以較小修改解決？
+</code></pre>
+
+<p>必要時查：</p>
+<pre class="codehilite"><code class="language-text">git blame
+git history
+ADR
+Project Context
+Issues
+</code></pre>
+
+<p>不要看到舊程式碼就直接「現代化重構」。</p>
+<hr />
+<h1 id="27">27. 最小修改原則</h1>
+<p>優先：</p>
+<pre class="codehilite"><code class="language-text">Fix
+&gt;
+Localized refactor
+&gt;
+Module refactor
+&gt;
+Architecture rewrite
+</code></pre>
+
+<p>只有證據顯示架構本身造成問題時才升級重構範圍。</p>
+<p>不要因 Agent 偏好不同 coding style 就重寫整個模組。</p>
+<hr />
+<h1 id="28-wow-addon">28. WoW AddOn 效能檢查</h1>
+<p>修改以下區域時必須特別檢查：</p>
+<pre class="codehilite"><code class="language-text">OnUpdate
+UNIT_AURA
+COMBAT_LOG_EVENT_UNFILTERED
+NAME_PLATE*
+GROUP_ROSTER_UPDATE
+BAG_UPDATE*
+PLAYER_TARGET_CHANGED
+SPELL_UPDATE*
+大量 Frame
+大量 Table allocation
+string formatting
+table wipe/create
+GetChildren/GetRegions
+Aura scanning
+Ticker
+Timer
+</code></pre>
+
+<p>檢查：</p>
+<pre class="codehilite"><code class="language-text">event frequency
+callback count
+allocation rate
+GC pressure
+full scan vs delta
+dirty flag
+cache
+throttling
+coalescing
+</code></pre>
+
+<p>避免：</p>
+<pre class="codehilite"><code class="language-text">每 Frame Scan 所有 Aura
+每 Tick 建立大量 table
+每個 Icon 各自 OnUpdate
+無條件 SetText
+無條件 SetPoint
+無條件 texture update
+</code></pre>
+
+<p>如果可以：</p>
+<pre class="codehilite"><code class="language-text">event-driven
+incremental update
+dirty flag
+shared scheduler
+adaptive frequency
+cached value compare
+</code></pre>
+
+<p>優先。</p>
+<hr />
+<h1 id="29-unit_aura">29. UNIT_AURA 類工作</h1>
+<p>優先研究：</p>
+<pre class="codehilite"><code class="language-text">incremental update
+addedAuras
+updatedAuraInstanceIDs
+removedAuraInstanceIDs
+isFullUpdate
+</code></pre>
+
+<p>但在寫入任何實作前：</p>
+<p>必須重新確認目前目標 Flavor 的 Event payload 與 API。</p>
+<p>禁止把其他版本的 UNIT_AURA 寫法直接搬過來。</p>
+<hr />
+<h1 id="30-ui">30. UI 更新</h1>
+<p>對：</p>
+<pre class="codehilite"><code class="language-text">SetText
+SetTexture
+SetAtlas
+SetPoint
+SetSize
+Show
+Hide
+SetAlpha
+</code></pre>
+
+<p>若高頻呼叫：</p>
+<p>優先比較舊值。</p>
+<p>例如概念上：</p>
+<pre class="codehilite"><code class="language-text">if old ~= new then
+    update()
+end
+</code></pre>
+
+<p>避免無意義 Layout / Render invalidation。</p>
+<hr />
+<h1 id="31-onupdate">31. OnUpdate</h1>
+<p>如果可以集中管理：</p>
+<p>優先考慮：</p>
+<pre class="codehilite"><code class="language-text">Shared OnUpdate Manager
+</code></pre>
+
+<p>而不是大量 Frame 各自：</p>
+<pre class="codehilite"><code class="language-text">:SetScript(&quot;OnUpdate&quot;)
+</code></pre>
+
+<p>但不得因一般原則就破壞既有架構。</p>
+<p>先 Profiling，再決定。</p>
+<hr />
+<h1 id="32-combat-secure-ui">32. Combat / Secure UI</h1>
+<p>遇到：</p>
+<pre class="codehilite"><code class="language-text">SecureActionButton
+SecureHandler
+Protected Frame
+Combat Lockdown
+Action Button
+Unit Frame
+Click Casting
+Attributes
+</code></pre>
+
+<p>必須先查官方 API 與 Blizzard 實作。</p>
+<p>修改前確認：</p>
+<pre class="codehilite"><code class="language-text">InCombatLockdown()
+protected state
+secure template
+attribute mutation restrictions
+</code></pre>
+
+<p>不要靠 trial-and-error 猜。</p>
+<hr />
+<h1 id="33-xml">33. XML</h1>
+<p>修改 WoW XML：</p>
+<p>使用：</p>
+<pre class="codehilite"><code class="language-text">wow_xml_validate
+</code></pre>
+
+<p>同時檢查：</p>
+<pre class="codehilite"><code class="language-text">Template inheritance
+Mixin
+Frame hierarchy
+anchors
+virtual templates
+scripts
+secure templates
+</code></pre>
+
+<p>如果 XML Template 行為不確定：</p>
+<pre class="codehilite"><code class="language-text">wow_ui_template_search
+↓
+wow_ui_read_file / wow-casc
+</code></pre>
+
+<hr />
+<h1 id="34-toc">34. TOC</h1>
+<p>任何涉及：</p>
+<pre class="codehilite"><code class="language-text">Interface
+Dependencies
+OptionalDeps
+SavedVariables
+SavedVariablesPerCharacter
+X-* metadata
+Flavor-specific TOC
+</code></pre>
+
+<p>使用：</p>
+<pre class="codehilite"><code class="language-text">wow_toc_validate
+check_addon_compatibility
+</code></pre>
+
+<p>不要隨意修改 Interface Number。</p>
+<p>先確認目前 Client。</p>
+<hr />
+<h1 id="35-localization">35. Localization</h1>
+<p>新增 UI 字串前：</p>
+<p>先搜尋：</p>
+<pre class="codehilite"><code class="language-text">search_wow_global_strings
+</code></pre>
+
+<p>若 Blizzard 已有相同語意：</p>
+<p>優先使用 Blizzard Global String。</p>
+<p>若是專案自有文案：</p>
+<p>才建立 Localization Key。</p>
+<p>不得：</p>
+<pre class="codehilite"><code class="language-text">在 Lua 中到處 hardcode zhTW / enUS
+</code></pre>
+
+<hr />
+<h1 id="36-api-migration-workflow">36. API Migration Workflow</h1>
+<p>遇到：</p>
+<pre class="codehilite"><code class="language-text">deprecated API
+removed API
+signature changed
+event changed
+</code></pre>
+
+<p>標準流程：</p>
+<pre class="codehilite"><code class="language-text">1. detect flavor/build
+2. lookup old API
+3. find replacement
+4. diff flavors
+5. search Blizzard usage
+6. search local project usages
+7. design compatibility layer
+8. implement minimal migration
+9. lint
+10. test
+</code></pre>
+
+<p>若專案跨 Retail / Classic：</p>
+<p>優先考慮：</p>
+<pre class="codehilite"><code class="language-text">Compatibility Adapter
+</code></pre>
+
+<p>而不是到處：</p>
+<pre class="codehilite"><code class="language-lua">if retail then
+...
+elseif classic then
+...
+end
+</code></pre>
+
+<hr />
+<h1 id="37-api">37. 不要以版本號猜 API</h1>
+<p>以下推理禁止：</p>
+<pre class="codehilite"><code class="language-text">「這是 12.x，所以 API 應該有。」
+「Classic 應該還支援。」
+「以前 11.x 可以，所以現在也可以。」
+</code></pre>
+
+<p>必須查證。</p>
+<hr />
+<h1 id="38-mcp">38. MCP 資料新鮮度</h1>
+<p>如果 MCP 回傳：</p>
+<pre class="codehilite"><code class="language-text">generated_at
+sync date
+build
+commit
+staleness warning
+</code></pre>
+
+<p>必須檢查。</p>
+<p>尤其 Hated MCP 若警告資料過舊：</p>
+<p>不得忽略。</p>
+<p>如果：</p>
+<pre class="codehilite"><code class="language-text">MCP index build
+≠
+local client build
+</code></pre>
+
+<p>應明確指出。</p>
+<p>必要時改用：</p>
+<pre class="codehilite"><code class="language-text">wow-casc
+official web source
+</code></pre>
+
+<p>補證。</p>
+<hr />
+<h1 id="39-evidence-conflict-protocol">39. Evidence Conflict Protocol</h1>
+<p>如果：</p>
+<pre class="codehilite"><code class="language-text">MCP A
+≠
+MCP B
+</code></pre>
+
+<p>採：</p>
+<pre class="codehilite"><code class="language-text">Identify target Build
+        ↓
+Generated API docs
+        ↓
+Actual Blizzard source
+        ↓
+Local CASC
+        ↓
+Official patch notes / blue post
+        ↓
+Runtime test
+</code></pre>
+
+<p>依問題性質選擇最適證據。</p>
+<p>最後報告：</p>
+<pre class="codehilite"><code class="language-text">Source A says...
+Source B says...
+Target build evidence indicates...
+Therefore...
+</code></pre>
+
+<p>不要隱藏不一致。</p>
+<hr />
+<h1 id="40-web">40. Web 搜尋</h1>
+<p>需要 Web 時：</p>
+<p>優先：</p>
+<pre class="codehilite"><code class="language-text">Blizzard official
+Warcraft Wiki
+GitHub upstream
+</code></pre>
+
+<p>不要從 SEO 農場、複製站、AI 生成網站取得 WoW API 規格。</p>
+<hr />
+<h1 id="41-mcp">41. 不要因為可以呼叫 MCP 就過度呼叫</h1>
+<p>MCP Call 本身也是：</p>
+<pre class="codehilite"><code class="language-text">Latency
+Context
+Token
+Complexity
+</code></pre>
+
+<p>因此遵守：</p>
+<pre class="codehilite"><code class="language-text">Minimum sufficient evidence
+</code></pre>
+
+<p>重要架構修改才提高交叉查證程度。</p>
+<hr />
+<h1 id="42-validation-pipeline">42. 修改後強制 Validation Pipeline</h1>
+<p>依修改內容選擇：</p>
+<pre class="codehilite"><code class="language-text">Lua
+→ wow_lua_lint
+
+XML
+→ wow_xml_validate
+
+TOC
+→ wow_toc_validate
+
+API
+→ get_api / lookup_api
+
+Cross Flavor
+→ diff_api
+
+UI implementation
+→ search_source / wow_ui_grep
+
+Asset
+→ wow_file_search / wow_atlas_search
+
+actual local client
+→ wow-casc
+
+project regression
+→ tests / CI / git diff
+</code></pre>
+
+<hr />
+<h1 id="43-git-diff-review">43. 最終 Git Diff Review</h1>
+<p>修改完成後：</p>
+<p>必須檢查：</p>
+<pre class="codehilite"><code class="language-text">git diff
+</code></pre>
+
+<p>確認：</p>
+<pre class="codehilite"><code class="language-text">沒有意外格式化整個檔案
+沒有大量 unrelated changes
+沒有刪除相容性程式
+沒有改掉既有 Localization
+沒有改壞 SavedVariables schema
+沒有不必要 dependency
+</code></pre>
+
+<hr />
+<h1 id="44-agent">44. Agent 不得自行重新設計已接受架構</h1>
+<p>如果 Project Context / ADR 已記錄：</p>
+<pre class="codehilite"><code class="language-text">Accepted Architecture Decision
+</code></pre>
+
+<p>除非：</p>
+<pre class="codehilite"><code class="language-text">發現新證據
+API 已改變
+存在 Bug
+效能數據否定原方案
+需求已改變
+</code></pre>
+
+<p>否則不得因 Agent 個人偏好推翻。</p>
+<p>如果需要改：</p>
+<p>先提出：</p>
+<pre class="codehilite"><code class="language-text">Existing Decision
+New Evidence
+Impact
+Alternative
+Migration Cost
+</code></pre>
+
+<hr />
+<h1 id="45">45. 建議的完整工具拓樸</h1>
+<p>理想環境：</p>
+<pre class="codehilite"><code class="language-text">                    AI Agent
+                       │
+            ┌──────────┴──────────┐
+            │                     │
+          Skill              Project Context
+            │                     │
+            └──────────┬──────────┘
+                       │
+     ┌─────────────────┼─────────────────┐
+     │                 │                 │
+ WoW Knowledge     Repository        External
+     │                 │                 │
+ ┌───┼────┐       ┌────┼────┐       ┌────┼────┐
+ │   │    │       │    │    │       │    │    │
+Nigh Hate CASC   Git  Files Shell   Web GitHub BNet
+ │   │    │
+Spartan
+ │
+Juemrami
+</code></pre>
+
+<p>每一層責任：</p>
+<pre class="codehilite"><code class="language-text">Skill
+= 怎麼做
+
+Project Context
+= 我們做到哪
+
+WoW MCP
+= Blizzard 世界現在怎麼運作
+
+Git / Files
+= 我們的程式目前怎麼寫
+
+Web
+= 最近發生什麼變動
+
+Tests
+= 修改是否真的正確
+</code></pre>
+
+<hr />
+<h1 id="46">46. 任務路由速查</h1>
+<p>如果問題是：</p>
+<pre class="codehilite"><code class="language-text">API 存不存在
+→ Nighthawk
+
+API Signature
+→ Nighthawk
+→ Spartan cross-check if important
+
+Deprecated / replacement
+→ Spartan
+→ Nighthawk
+
+Retail vs Classic
+→ Nighthawk diff_api
+→ Hated wow_api_diff
+
+Event payload
+→ Nighthawk
+→ Spartan get_event
+
+Enum
+→ Spartan get_enum
+→ Nighthawk if needed
+
+Structure
+→ Nighthawk / Hated
+
+Widget method
+→ Spartan
+
+Blizzard 如何實作
+→ Nighthawk search_source
+→ Hated wow_ui_grep
+
+XML Template
+→ Hated
+
+Mixin
+→ Hated
+
+CVar
+→ Hated
+
+實際本機 Blizzard Lua/XML
+→ wow-casc
+
+Texture path
+→ Hated
+
+Icon
+→ Hated
+
+Atlas
+→ Hated
+
+Localization / GlobalString
+→ Juemrami
+
+Lua lint
+→ Hated
+
+XML validation
+→ Hated
+
+TOC validation
+→ Hated
+
+Addon scaffold
+→ Hated
+
+Battle.net Character
+→ brunofin
+
+Auction / Realm / Game Data
+→ brunofin
+
+最新 API Change
+→ Web + Nighthawk + GitHub
+
+專案做到哪
+→ Project Context MCP
+
+程式在哪裡
+→ Filesystem / rg
+
+為什麼當初這樣寫
+→ Git history / ADR / Project Context
+
+實際有沒有改善
+→ benchmark / profiling / runtime test
+</code></pre>
+
+<hr />
+<h1 id="47-recommended-workflow-for-every-non-trivial-change">47. Recommended Workflow for Every Non-Trivial Change</h1>
+<p>對任何中大型修改：</p>
+<pre class="codehilite"><code class="language-text">PHASE 1 — Understand
+
+Read project context
+Read relevant source
+Inspect git history if necessary
+
+        ↓
+
+PHASE 2 — Identify Runtime
+
+Flavor
+Version
+Build
+Interface
+
+        ↓
+
+PHASE 3 — Verify API
+
+Nighthawk
+Spartan
+Hated
+
+        ↓
+
+PHASE 4 — Verify Blizzard Practice
+
+UI Source
+FrameXML
+CASC
+
+        ↓
+
+PHASE 5 — Design
+
+Minimal change
+Compatibility
+Performance
+Failure modes
+
+        ↓
+
+PHASE 6 — Implement
+
+Small coherent patch
+
+        ↓
+
+PHASE 7 — Validate
+
+Lua lint
+XML
+TOC
+Tests
+API verification
+
+        ↓
+
+PHASE 8 — Review
+
+git diff
+regression
+performance
+
+        ↓
+
+PHASE 9 — Report
+</code></pre>
+
+<hr />
+<h1 id="48">48. 最後報告格式</h1>
+<p>完成工作後，簡潔報告：</p>
+<pre class="codehilite"><code class="language-text">Target
+- Flavor:
+- Version:
+- Build:
+- Interface:
+
+Problem
+- ...
+
+Evidence
+- API:
+- Blizzard source:
+- Local client:
+- Official change:
+- Runtime evidence:
+
+Changes
+- file:
+- function:
+- behavior:
+
+Compatibility
+- Retail:
+- Classic:
+- PTR/Beta:
+
+Validation
+- Lua lint:
+- XML:
+- TOC:
+- Tests:
+- Runtime:
+
+Risks / Unknowns
+- ...
+
+Next recommended action
+- ...
+</code></pre>
+
+<p>沒有執行的測試：</p>
+<p>不要寫成：</p>
+<pre class="codehilite"><code class="language-text">Passed
+</code></pre>
+
+<p>應明確寫：</p>
+<pre class="codehilite"><code class="language-text">Not run
+</code></pre>
+
+<hr />
+<h1 id="49">49. 最重要的禁止事項</h1>
+<p>禁止：</p>
+<pre class="codehilite"><code class="language-text">憑記憶發明 WoW API
+猜 Parameters
+猜 Return Values
+猜 Event payload
+猜 Texture Path
+混淆 Battle.net API 與 Lua API
+混淆 Retail 與 Classic
+忽略 Build 差異
+看到 deprecated API 就直接全域重構
+沒有證據就推翻既有架構
+把 Wiki 當成永遠正確的 Runtime Truth
+把社群留言當 Blizzard 官方公告
+為了「漂亮」而重寫正常工作的模組
+使用大量 MCP 結果污染 Context
+</code></pre>
+
+<hr />
+<h1 id="50">50. 最終總則</h1>
+<p>你的工作模式應該是：</p>
+<pre class="codehilite"><code class="language-text">Observe
+↓
+Identify Version
+↓
+Retrieve Evidence
+↓
+Reason
+↓
+Change Minimally
+↓
+Validate
+↓
+Record
+</code></pre>
+
+<p>而不是：</p>
+<pre class="codehilite"><code class="language-text">Remember
+↓
+Guess
+↓
+Code
+</code></pre>
+
+<p>WoW AddOn 開發中：</p>
+<pre class="codehilite"><code class="language-text">Project Repository
+= 專案真實狀態
+
+Project Context MCP
+= 專案認知
+
+Nighthawk
+= API 知識主幹
+
+Hated
+= 開發與驗證工具箱
+
+wow-casc
+= 本機 Client 實證
+
+Spartan
+= 結構化 API 快查
+
+Juemrami
+= Global API / Localization
+
+brunofin
+= Battle.net 世界資料
+
+GitHub
+= 外部程式與歷史
+
+Web
+= 最新官方變動
+
+Skill
+= 如何正確組合以上能力
+</code></pre>
+
+<p>永遠選擇「最接近問題本質的證據來源」，而非固定偏好某一個 MCP。</p>
+<p>當存在更直接、更即時、更權威的工具時，可以使用未列在本文件中的 MCP，但必須先理解它暴露的資料來源、版本、更新頻率與權限範圍，再決定其證據權重。</p>
+<p>目標不是「盡量多用 MCP」。</p>
+<p>目標是：</p>
+<p><strong>讓每一次 WoW AddOn 技術決策，都能追溯到正確版本、正確資料與正確證據。</strong></p>
+    </div>
+    <div id="doc-content-en" class="lang-content">
+        <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
+    </div>
+
+    <!-- Mermaid Dynamic Render Script -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#0f172a',
+                primaryTextColor: '#f8fafc',
+                lineColor: '#38bdf8'
+            }
+        });
+    </script>
+
+    <script>
+        function translatePage(lang) {
+            document.querySelectorAll('.lang-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (lang === 'zh-TW') {
+                const zhContent = document.getElementById('doc-content-zh');
+                if (zhContent) zhContent.classList.add('active');
+                const zhBtn = document.getElementById('lang-zh');
+                if (zhBtn) zhBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod 說明文件';
+            } else {
+                const enContent = document.getElementById('doc-content-en');
+                if (enContent) enContent.classList.add('active');
+                const enBtn = document.getElementById('lang-en');
+                if (enBtn) enBtn.classList.add('active');
+                const logo = document.querySelector('.nav-logo');
+                if (logo) logo.innerText = 'EventAlertMod Docs';
+            }
+        }
+
+        function setFontSize(size) {
+            document.documentElement.style.setProperty('--base-font-size', size);
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((size === '14px' && btn.innerText === '小') ||
+                    (size === '16px' && btn.innerText === '中') ||
+                    (size === '18px' && btn.innerText === '大')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        const themes = {
+            blue: {
+                '--bg-color': '#0f172a',
+                '--panel-bg': '#1e293b',
+                '--text-color': '#cbd5e1',
+                '--heading-color': '#f8fafc',
+                '--accent-color': '#38bdf8',
+                '--border-color': '#334155',
+                '--code-color': '#f1f5f9'
+            },
+            red: {
+                '--bg-color': '#1a0f0f',
+                '--panel-bg': '#2d1a1a',
+                '--text-color': '#fca5a5',
+                '--heading-color': '#fee2e2',
+                '--accent-color': '#ef4444',
+                '--border-color': '#451a1a',
+                '--code-color': '#fee2e2'
+            },
+            green: {
+                '--bg-color': '#06140e',
+                '--panel-bg': '#0d281c',
+                '--text-color': '#86efac',
+                '--heading-color': '#dcfce7',
+                '--accent-color': '#22c55e',
+                '--border-color': '#14422b',
+                '--code-color': '#dcfce7'
+            },
+            black: {
+                '--bg-color': '#050505',
+                '--panel-bg': '#121212',
+                '--text-color': '#e5e5e5',
+                '--heading-color': '#ffffff',
+                '--accent-color': '#a3a3a3',
+                '--border-color': '#262626',
+                '--code-color': '#ffffff'
+            },
+            gray: {
+                '--bg-color': '#27272a',
+                '--panel-bg': '#3f3f46',
+                '--text-color': '#e4e4e7',
+                '--heading-color': '#fafafa',
+                '--accent-color': '#cbd5e1',
+                '--border-color': '#52525b',
+                '--code-color': '#fafafa'
+            },
+            white: {
+                '--bg-color': '#f8fafc',
+                '--panel-bg': '#ffffff',
+                '--text-color': '#334155',
+                '--heading-color': '#0f172a',
+                '--accent-color': '#0284c7',
+                '--border-color': '#e2e8f0',
+                '--code-color': '#0f172a'
+            }
+        };
+
+        function setTheme(name) {
+            const theme = themes[name];
+            if (theme) {
+                for (const [key, value] of Object.entries(theme)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
+                // Toggle active class on dots
+                document.querySelectorAll('.theme-dot').forEach(dot => {
+                    dot.classList.remove('active');
+                    if (dot.classList.contains('dot-' + name)) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

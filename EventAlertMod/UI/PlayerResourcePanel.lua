@@ -40,6 +40,8 @@ EAM.UI.PlayerResourcePanel = Panel
 local SETTING_FIELDS = freeze({
     "enabled",
     "displayMode",
+    "attachTo",
+    "useCustomPos",
     "anchor",
     "position",
     "showForeground",
@@ -65,6 +67,20 @@ local SETTING_FIELDS = freeze({
     "barHeight",
     "iconSize",
     "spacing",
+    "customMaxPoints",
+    "colorMode",
+    "colorStartR",
+    "colorStartG",
+    "colorStartB",
+    "colorEndR",
+    "colorEndG",
+    "colorEndB",
+    "alertOperator",
+    "alertColorEnabled",
+    "alertColorR",
+    "alertColorG",
+    "alertColorB",
+    "alertSoundEnabled",
 })
 
 local SLIDER_SPECS = freeze({
@@ -84,6 +100,7 @@ local SLIDER_SPECS = freeze({
     freeze({ field = "iconSize", key = "EAM_RESOURCE_ICON_SIZE", fallback = "圖示大小", min = 16, max = 80, step = 1, integer = true }),
     freeze({ field = "spacing", key = "EAM_RESOURCE_SPACING", fallback = "圖示與資源條間距", min = 0, max = 60, step = 1, integer = true }),
     freeze({ field = "order", key = "EAM_RESOURCE_ORDER", fallback = "顯示順序", min = 1, max = 17, step = 1, integer = true }),
+    freeze({ field = "customMaxPoints", key = "EAM_RESOURCE_CUSTOM_MAX_POINTS", fallback = "自訂分割格數 (0=自動)", min = 0, max = 20, step = 1, integer = true }),
 })
 
 local SLIDER_MAP = {}
@@ -102,6 +119,28 @@ local POINT_OPTIONS = freeze({
     "BOTTOMLEFT",
     "BOTTOM",
     "BOTTOMRIGHT",
+})
+
+local POINT_LABELS = freeze({
+    TOPLEFT = "左上 (TOPLEFT)",
+    TOP = "正上 (TOP)",
+    TOPRIGHT = "右上 (TOPRIGHT)",
+    LEFT = "正左 (LEFT)",
+    CENTER = "中央 (CENTER)",
+    RIGHT = "正右 (RIGHT)",
+    BOTTOMLEFT = "左下 (BOTTOMLEFT)",
+    BOTTOM = "正下 (BOTTOM)",
+    BOTTOMRIGHT = "右下 (BOTTOMRIGHT)",
+})
+
+local ATTACH_TARGET_OPTIONS = freeze({
+    freeze({ value = "EAM_ANCHOR", labelKey = "EAM_RESOURCE_TARGET_MAIN_ANCHOR", fallback = "EAM 資源主錨點 (預設)" }),
+    freeze({ value = "UIParent", labelKey = "EAM_RESOURCE_TARGET_SCREEN", fallback = "螢幕中央 (UIParent)" }),
+    freeze({ value = "PlayerFrame", labelKey = "EAM_RESOURCE_TARGET_PLAYER", fallback = "玩家頭像 (PlayerFrame)" }),
+    freeze({ value = "TargetFrame", labelKey = "EAM_RESOURCE_TARGET_TARGET", fallback = "目標頭像 (TargetFrame)" }),
+    freeze({ value = "FocusFrame", labelKey = "EAM_RESOURCE_TARGET_FOCUS", fallback = "焦點頭像 (FocusFrame)" }),
+    freeze({ value = "PetFrame", labelKey = "EAM_RESOURCE_TARGET_PET", fallback = "寵物頭像 (PetFrame)" }),
+    freeze({ value = "PersonalResourceDisplayFrame", labelKey = "EAM_RESOURCE_TARGET_PRD", fallback = "個人資源條 (PersonalResourceDisplay)" }),
 })
 
 local function inCombat()
@@ -283,7 +322,49 @@ end
 local function pointLabel(field, value)
     local labelKey = field == "anchor" and "EAM_RESOURCE_ANCHOR" or "EAM_RESOURCE_POSITION"
     local fallback = field == "anchor" and "父框架錨點" or "資源框架定位點"
-    return localized(labelKey, fallback) .. "：" .. (value or "TOPLEFT")
+    local ptCode = value or "TOPLEFT"
+    return localized(labelKey, fallback) .. "：" .. (POINT_LABELS[ptCode] or ptCode)
+end
+
+local function attachTargetName(value)
+    local code = value or "EAM_ANCHOR"
+    for index = 1, #ATTACH_TARGET_OPTIONS do
+        local opt = ATTACH_TARGET_OPTIONS[index]
+        if opt.value == code then
+            return localized(opt.labelKey, opt.fallback)
+        end
+    end
+    return code
+end
+
+local function attachTargetLabel(value)
+    return localized("EAM_RESOURCE_ATTACH_TARGET", "依附目標框架") .. "：" .. attachTargetName(value)
+end
+
+local function cycleAttachTarget()
+    if not Panel.draft then
+        return
+    end
+    local current = Panel.draft.attachTo or "EAM_ANCHOR"
+    local nextIndex = 1
+    for index = 1, #ATTACH_TARGET_OPTIONS do
+        if ATTACH_TARGET_OPTIONS[index].value == current then
+            nextIndex = index % #ATTACH_TARGET_OPTIONS + 1
+            break
+        end
+    end
+    local value = ATTACH_TARGET_OPTIONS[nextIndex].value
+    Panel.draft.attachTo = value
+    if value ~= "EAM_ANCHOR" then
+        Panel.draft.useCustomPos = true
+        if Panel.controls.useCustomPos then
+            Panel.controls.useCustomPos:SetChecked(true)
+        end
+    end
+    if Panel.controls.attachTo then
+        Panel.controls.attachTo:SetText(attachTargetLabel(value))
+    end
+    autoApplyDraft()
 end
 
 local function cyclePoint(field)
@@ -602,6 +683,45 @@ local function toggleGenericDropdown(btn, options, onSelect, currentVal, customW
     activeDropdownMenu = menu
 end
 
+local function getAlertOperatorOptions()
+    return {
+        { value = "GE", label = localized("EAM_RESOURCE_ALERT_OP_GE", ">= 高於或等於門檻") },
+        { value = "LE", label = localized("EAM_RESOURCE_ALERT_OP_LE", "<= 低於或等於門檻") },
+    }
+end
+
+local function selectAlertOperator(val)
+    if not Panel.draft then return end
+    Panel.draft.alertOperator = val
+    if Panel.alertOperatorButton then
+        Panel.alertOperatorButton:SetText(
+            localized("EAM_RESOURCE_ALERT_OPERATOR", "條件判定") .. "："
+                .. localized("EAM_RESOURCE_ALERT_OP_" .. val, val)
+        )
+    end
+    autoApplyDraft()
+end
+
+local function getColorModeOptions()
+    return {
+        { value = "DEFAULT", label = localized("EAM_RESOURCE_COLOR_MODE_DEFAULT", "預設職業動態色") },
+        { value = "SOLID", label = localized("EAM_RESOURCE_COLOR_MODE_SOLID", "自訂單色") },
+        { value = "GRADIENT", label = localized("EAM_RESOURCE_COLOR_MODE_GRADIENT", "自訂雙色漸層") },
+    }
+end
+
+local function selectColorMode(val)
+    if not Panel.draft then return end
+    Panel.draft.colorMode = val
+    if Panel.colorModeButton then
+        Panel.colorModeButton:SetText(
+            localized("EAM_RESOURCE_COLOR_MODE", "條形色彩模式") .. "："
+                .. localized("EAM_RESOURCE_COLOR_MODE_" .. val, val)
+        )
+    end
+    autoApplyDraft()
+end
+
 local function getModeOptions()
     return {
         { value = "AUTO", label = localized("EAM_RESOURCE_MODE_AUTO", "自動判斷 (Auto)") },
@@ -645,7 +765,7 @@ local function getPointOptionsList()
     local list = {}
     for idx = 1, #POINT_OPTIONS do
         local p = POINT_OPTIONS[idx]
-        table.insert(list, { value = p, label = p })
+        table.insert(list, { value = p, label = POINT_LABELS[p] or p })
     end
     return list
 end
@@ -659,12 +779,71 @@ local function selectPoint(field, val)
     autoApplyDraft()
 end
 
+local function getAttachTargetOptions()
+    local list = {}
+    for idx = 1, #ATTACH_TARGET_OPTIONS do
+        local opt = ATTACH_TARGET_OPTIONS[idx]
+        table.insert(list, { value = opt.value, label = localized(opt.labelKey, opt.fallback) })
+    end
+    return list
+end
+
+local function selectAttachTarget(val)
+    if not Panel.draft then return end
+    Panel.draft.attachTo = val
+    if val ~= "EAM_ANCHOR" then
+        Panel.draft.useCustomPos = true
+        if Panel.controls and Panel.controls.useCustomPos then
+            Panel.controls.useCustomPos:SetChecked(true)
+        end
+    end
+    if Panel.controls and Panel.controls.attachTo then
+        Panel.controls.attachTo:SetText(attachTargetLabel(val))
+    end
+    autoApplyDraft()
+end
+
+function Panel.syncPositionFromDrag(resourceKey, newX, newY)
+    local clampedX = math.max(-1000, math.min(1000, math.floor((newX or 0) + 0.5)))
+    local clampedY = math.max(-1000, math.min(1000, math.floor((newY or 0) + 0.5)))
+    if Panel.selectedKey == resourceKey and Panel.draft then
+        Panel.refreshing = true
+        Panel.draft.useCustomPos = true
+        Panel.draft.offsetX = newX or 0
+        Panel.draft.offsetY = newY or 0
+        if Panel.controls.useCustomPos then
+            Panel.controls.useCustomPos:SetChecked(true)
+        end
+        if Panel.controls.offsetX then
+            Panel.controls.offsetX:SetValue(clampedX)
+            updateSliderValueText(Panel.controls.offsetX, newX or 0)
+        end
+        if Panel.controls.offsetY then
+            Panel.controls.offsetY:SetValue(clampedY)
+            updateSliderValueText(Panel.controls.offsetY, newY or 0)
+        end
+        Panel.refreshing = false
+        autoApplyDraft()
+    else
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        if saved and type(saved.updatePlayerResourceConfig) == "function" then
+            saved.updatePlayerResourceConfig(
+                resourceKey,
+                { useCustomPos = true, offsetX = newX or 0, offsetY = newY or 0 },
+                getScopeSpecializationID()
+            )
+        end
+    end
+end
+
 local function getScopeOptions()
     return {
         { value = "spec", label = localized("EAM_RESOURCE_SCOPE_SPEC", "目前專精覆寫") },
         { value = "class", label = localized("EAM_RESOURCE_SCOPE_CLASS", "全職業通用預設") },
     }
 end
+
+local refreshEditor
 
 local function selectScope(val)
     if not Panel.specializationID and val == "spec" then return end
@@ -683,7 +862,7 @@ local function refreshScopeButton()
     Panel.resetButton:SetEnabled(Panel.scope == "spec" and Panel.specializationID ~= nil)
 end
 
-local function refreshEditor()
+refreshEditor = function()
     if not Panel.frame or not Panel.selectedKey then
         return
     end
@@ -737,6 +916,12 @@ local function refreshEditor()
             .. "："
             .. localized("EAM_RESOURCE_MODE_" .. config.displayMode, config.displayMode)
     )
+    if Panel.controls.useCustomPos then
+        Panel.controls.useCustomPos:SetChecked(config.useCustomPos == true)
+    end
+    if Panel.controls.attachTo then
+        Panel.controls.attachTo:SetText(attachTargetLabel(config.attachTo))
+    end
     Panel.controls.anchor:SetText(pointLabel("anchor", config.anchor))
 Panel.controls.position:SetText(pointLabel("position", config.position))
     Panel.orientationButton:SetText(
@@ -747,6 +932,35 @@ Panel.controls.position:SetText(pointLabel("position", config.position))
         localized("EAM_RESOURCE_FONT_FAMILY", "字型") .. "："
             .. fontFamilyLabel(config.fontFamily)
     )
+    if Panel.alertOperatorButton then
+        Panel.alertOperatorButton:SetText(
+            localized("EAM_RESOURCE_ALERT_OPERATOR", "條件判定") .. "："
+                .. localized("EAM_RESOURCE_ALERT_OP_" .. (config.alertOperator or "GE"), config.alertOperator or "GE")
+        )
+    end
+    if Panel.controls.alertColorEnabled then
+        Panel.controls.alertColorEnabled:SetChecked(config.alertColorEnabled == true)
+    end
+    if Panel.controls.alertSoundEnabled then
+        Panel.controls.alertSoundEnabled:SetChecked(config.alertSoundEnabled == true)
+    end
+    if Panel.alertColorSwatch then
+        Panel.alertColorSwatch:SetColor(config.alertColorR or 1, config.alertColorG or 0.15, config.alertColorB or 0.15, 1)
+    end
+    if Panel.colorModeButton then
+        Panel.colorModeButton:SetText(
+            localized("EAM_RESOURCE_COLOR_MODE", "條形色彩模式") .. "："
+                .. localized("EAM_RESOURCE_COLOR_MODE_" .. (config.colorMode or "DEFAULT"), config.colorMode or "DEFAULT")
+        )
+    end
+    if Panel.colorStartSwatch then
+        local def = Catalog.getDefinition(Panel.selectedKey)
+        local baseColor = (def and def.color) or { 1, 0.82, 0.15, 1 }
+        Panel.colorStartSwatch:SetColor(config.colorStartR or baseColor[1] or 1, config.colorStartG or baseColor[2] or 0.82, config.colorStartB or baseColor[3] or 0.15, 1)
+    end
+    if Panel.colorEndSwatch then
+        Panel.colorEndSwatch:SetColor(config.colorEndR or 1, config.colorEndG or 0.25, config.colorEndB or 0.25, 1)
+    end
     for index = 1, #SLIDER_SPECS do
         local spec = SLIDER_SPECS[index]
         local value = config[spec.field]
@@ -1101,13 +1315,58 @@ local function createPanel()
     end)
     Panel.orientationButton = orientationButton
 
-    createCheckbox(pageDisplay, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "高於門檻時高亮", 16, -88, "當資源達到高亮門檻時觸發閃爍流光特效", "高於門檻時高亮")
+    createCheckbox(pageDisplay, "fullGlow", "EAM_RESOURCE_FULL_GLOW", "達成條件時高亮", 16, -88, "當資源達到條件門檻時觸發閃爍流光特效", "達成條件時高亮")
+
+    local alertOperatorButton = api.CreateFrame("Button", nil, pageDisplay, "UIPanelButtonTemplate")
+    alertOperatorButton:SetSize(210, 24)
+    alertOperatorButton:SetPoint("TOPLEFT", pageDisplay, "TOPLEFT", 250, -84)
+    if Theme and Theme.registerButton then
+        Theme.registerButton(alertOperatorButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(alertOperatorButton, "選擇警報觸發方向 (>= 高於或等於門檻 / <= 低於或等於門檻)", "條件判定")
+    end
+    alertOperatorButton:SetScript("OnClick", function()
+        local cur = Panel.draft and Panel.draft.alertOperator or "GE"
+        toggleGenericDropdown(alertOperatorButton, getAlertOperatorOptions(), selectAlertOperator, cur, 210)
+    end)
+    Panel.alertOperatorButton = alertOperatorButton
 
     createSlider(pageDisplay, SLIDER_MAP.threshold, 16, -135)
     createSlider(pageDisplay, SLIDER_MAP.order, 250, -135)
     createSlider(pageDisplay, SLIDER_MAP.alpha, 16, -185)
     createSlider(pageDisplay, SLIDER_MAP.foregroundAlpha, 250, -185)
     createSlider(pageDisplay, SLIDER_MAP.backgroundAlpha, 16, -235)
+
+    createCheckbox(pageDisplay, "alertColorEnabled", "EAM_RESOURCE_ALERT_COLOR_ENABLED", "條件達成時變色", 16, -280, "資源條在達成警報條件時切換至警戒顏色", "警戒變色")
+
+    local alertColorSwatch = EAM.UI.createColorSwatchButton(pageDisplay, 22, 22, function(btn)
+        local curR = Panel.draft and Panel.draft.alertColorR or 1
+        local curG = Panel.draft and Panel.draft.alertColorG or 0.15
+        local curB = Panel.draft and Panel.draft.alertColorB or 0.15
+        EAM.UI.openColorPicker({
+            r = curR,
+            g = curG,
+            b = curB,
+            hasOpacity = false,
+            onColorChanged = function(r, g, b)
+                if Panel.draft then
+                    Panel.draft.alertColorR = r
+                    Panel.draft.alertColorG = g
+                    Panel.draft.alertColorB = b
+                    btn:SetColor(r, g, b, 1)
+                    autoApplyDraft()
+                end
+            end,
+        })
+    end)
+    alertColorSwatch:SetPoint("TOPLEFT", pageDisplay, "TOPLEFT", 175, -282)
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(alertColorSwatch, "點擊設定條件達成時的條形警戒顏色", "警戒顏色")
+    end
+    Panel.alertColorSwatch = alertColorSwatch
+
+    createCheckbox(pageDisplay, "alertSoundEnabled", "EAM_RESOURCE_ALERT_SOUND_ENABLED", "條件達成時播放音效", 285, -280, "資源條件初次達成時播放 Bell 提示音", "警戒音效")
 
     -- 【Tab 2: 條形與尺寸 (Bar & Dimensions)】
     local pageSizing = tabPages[2]
@@ -1116,12 +1375,120 @@ local function createPanel()
     createSlider(pageSizing, SLIDER_MAP.iconSize, 16, -85)
     createSlider(pageSizing, SLIDER_MAP.spacing, 250, -85)
     createSlider(pageSizing, SLIDER_MAP.scale, 16, -145)
+    createSlider(pageSizing, SLIDER_MAP.customMaxPoints, 250, -145)
+
+    local colorModeButton = api.CreateFrame("Button", nil, pageSizing, "UIPanelButtonTemplate")
+    colorModeButton:SetSize(210, 24)
+    colorModeButton:SetPoint("TOPLEFT", pageSizing, "TOPLEFT", 16, -205)
+    if Theme and Theme.registerButton then
+        Theme.registerButton(colorModeButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(colorModeButton, "選擇資源條色彩填充方式 (預設/單色/漸層)", "條形色彩模式")
+    end
+    colorModeButton:SetScript("OnClick", function()
+        local cur = Panel.draft and Panel.draft.colorMode or "DEFAULT"
+        toggleGenericDropdown(colorModeButton, getColorModeOptions(), selectColorMode, cur, 210)
+    end)
+    Panel.colorModeButton = colorModeButton
+
+    local colorStartSwatch = EAM.UI.createColorSwatchButton(pageSizing, 24, 24, function(btn)
+        local curR = Panel.draft and Panel.draft.colorStartR or 1
+        local curG = Panel.draft and Panel.draft.colorStartG or 0.82
+        local curB = Panel.draft and Panel.draft.colorStartB or 0.15
+        EAM.UI.openColorPicker({
+            r = curR,
+            g = curG,
+            b = curB,
+            hasOpacity = false,
+            onColorChanged = function(r, g, b)
+                if Panel.draft then
+                    Panel.draft.colorStartR = r
+                    Panel.draft.colorStartG = g
+                    Panel.draft.colorStartB = b
+                    btn:SetColor(r, g, b, 1)
+                    autoApplyDraft()
+                end
+            end,
+        })
+    end)
+    colorStartSwatch:SetPoint("TOPLEFT", pageSizing, "TOPLEFT", 250, -205)
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(colorStartSwatch, "點擊設定起點顏色 (單色模式即以此為主色)", "起點顏色")
+    end
+    Panel.colorStartSwatch = colorStartSwatch
+
+    local colorStartLabel = pageSizing:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colorStartLabel:SetPoint("LEFT", colorStartSwatch, "RIGHT", 6, 0)
+    colorStartLabel:SetText(localized("EAM_RESOURCE_COLOR_START", "起點顏色"))
+    Panel.colorStartLabel = colorStartLabel
+
+    local colorEndSwatch = EAM.UI.createColorSwatchButton(pageSizing, 24, 24, function(btn)
+        local curR = Panel.draft and Panel.draft.colorEndR or 1
+        local curG = Panel.draft and Panel.draft.colorEndG or 0.25
+        local curB = Panel.draft and Panel.draft.colorEndB or 0.25
+        EAM.UI.openColorPicker({
+            r = curR,
+            g = curG,
+            b = curB,
+            hasOpacity = false,
+            onColorChanged = function(r, g, b)
+                if Panel.draft then
+                    Panel.draft.colorEndR = r
+                    Panel.draft.colorEndG = g
+                    Panel.draft.colorEndB = b
+                    btn:SetColor(r, g, b, 1)
+                    autoApplyDraft()
+                end
+            end,
+        })
+    end)
+    colorEndSwatch:SetPoint("TOPLEFT", pageSizing, "TOPLEFT", 365, -205)
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(colorEndSwatch, "點擊設定漸層終點顏色", "終點顏色")
+    end
+    Panel.colorEndSwatch = colorEndSwatch
+
+    local colorEndLabel = pageSizing:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    colorEndLabel:SetPoint("LEFT", colorEndSwatch, "RIGHT", 6, 0)
+    colorEndLabel:SetText(localized("EAM_RESOURCE_COLOR_END", "終點顏色"))
+    Panel.colorEndLabel = colorEndLabel
 
     -- 【Tab 3: 位置與錨點 (Position & Anchor)】
     local pagePosition = tabPages[3]
+    createCheckbox(
+        pagePosition,
+        "useCustomPos",
+        "EAM_RESOURCE_USE_CUSTOM_POS",
+        "啟用此項獨立位置 (不隨群組堆疊 / 可獨立拖曳)",
+        16,
+        -12,
+        "勾選後此項職業資源不再隨主錨點自動換行堆疊，可單獨拖曳或依附指定框架九宮格方位",
+        "啟用獨立位置"
+    )
+
+    local attachToButton = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
+    attachToButton:SetSize(444, 24)
+    attachToButton:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -44)
+    if Theme and Theme.registerButton then
+        Theme.registerButton(attachToButton)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(attachToButton, "點擊展開下拉選單選擇此資源要依附的宿主框架（如玩家頭像、目標頭像、焦點頭像、寵物頭像等）；右鍵可快速循環切換", "依附目標框架")
+    end
+    attachToButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    attachToButton:SetScript("OnClick", function(self, mouseBtn)
+        if mouseBtn == "RightButton" then
+            cycleAttachTarget()
+        else
+            local cur = Panel.draft and Panel.draft.attachTo or "EAM_ANCHOR"
+            toggleGenericDropdown(attachToButton, getAttachTargetOptions(), selectAttachTarget, cur, 444)
+        end
+    end)
+    Panel.controls.attachTo = attachToButton
     local anchorButton = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
     anchorButton:SetSize(210, 24)
-    anchorButton:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -18)
+    anchorButton:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -78)
     if Theme and Theme.registerButton then
         Theme.registerButton(anchorButton)
     end
@@ -1141,7 +1508,7 @@ local function createPanel()
 
     local positionButton = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
     positionButton:SetSize(210, 24)
-    positionButton:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 250, -18)
+    positionButton:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 250, -78)
     if Theme and Theme.registerButton then
         Theme.registerButton(positionButton)
     end
@@ -1159,14 +1526,88 @@ local function createPanel()
     end)
     Panel.controls.position = positionButton
 
-    createSlider(pagePosition, SLIDER_MAP.offsetX, 16, -75)
-    createSlider(pagePosition, SLIDER_MAP.offsetY, 250, -75)
+    createSlider(pagePosition, SLIDER_MAP.offsetX, 16, -128)
+    createSlider(pagePosition, SLIDER_MAP.offsetY, 250, -128)
+
+    local moveSingleBtn = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
+    moveSingleBtn:SetSize(142, 24)
+    moveSingleBtn:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -176)
+    moveSingleBtn:SetText(localized("EAM_RESOURCE_MOVE_SINGLE_BTN", "移動此單項資源"))
+    if Theme and Theme.registerButton then
+        Theme.registerButton(moveSingleBtn)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(moveSingleBtn, "在畫面上亮起當前選取資源的專屬拖曳框，按住滑鼠左鍵自由拖曳定位，右鍵點擊完成", "移動此單項資源")
+    end
+    moveSingleBtn:SetScript("OnClick", function()
+        if not Panel.selectedKey then return end
+        if Panel.draft and not Panel.draft.useCustomPos then
+            Panel.draft.useCustomPos = true
+            if Panel.controls.useCustomPos then
+                Panel.controls.useCustomPos:SetChecked(true)
+            end
+            autoApplyDraft()
+        end
+        local pr = EAM.UI and EAM.UI.PowerRenderer
+        if pr and type(pr.setActiveAnchors) == "function" then
+            local nextState = not (pr.isMoving and pr.movingTargetKey == Panel.selectedKey)
+            pr.setActiveAnchors(nextState, Panel.selectedKey)
+        end
+    end)
+    Panel.moveSingleBtn = moveSingleBtn
+
+    local moveAllBtn = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
+    moveAllBtn:SetSize(142, 24)
+    moveAllBtn:SetPoint("LEFT", moveSingleBtn, "RIGHT", 9, 0)
+    moveAllBtn:SetText(localized("EAM_RESOURCE_MOVE_ALL_BTN", "移動全部/主錨點"))
+    if Theme and Theme.registerButton then
+        Theme.registerButton(moveAllBtn)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(moveAllBtn, "亮起 EAM 職業資源主錨點與所有已啟用獨立位置的資源框，可一併拖曳調整位置", "移動全部/主錨點")
+    end
+    moveAllBtn:SetScript("OnClick", function()
+        local pr = EAM.UI and EAM.UI.PowerRenderer
+        if pr and type(pr.setActiveAnchors) == "function" then
+            local nextState = not (pr.isMoving and pr.movingTargetKey == "all")
+            pr.setActiveAnchors(nextState, "all")
+        end
+    end)
+    Panel.moveAllBtn = moveAllBtn
+
+    local resetOffsetBtn = api.CreateFrame("Button", nil, pagePosition, "UIPanelButtonTemplate")
+    resetOffsetBtn:SetSize(142, 24)
+    resetOffsetBtn:SetPoint("LEFT", moveAllBtn, "RIGHT", 9, 0)
+    resetOffsetBtn:SetText(localized("EAM_RESOURCE_RESET_OFFSET_BTN", "歸零偏移 (0, 0)"))
+    if Theme and Theme.registerButton then
+        Theme.registerButton(resetOffsetBtn)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(resetOffsetBtn, "將此項資源的水平與垂直偏移量重設為 (0, 0) 以精準貼齊目標錨點方位", "歸零偏移")
+    end
+    resetOffsetBtn:SetScript("OnClick", function()
+        if not Panel.draft then return end
+        Panel.refreshing = true
+        Panel.draft.offsetX = 0
+        Panel.draft.offsetY = 0
+        if Panel.controls.offsetX then
+            Panel.controls.offsetX:SetValue(0)
+            updateSliderValueText(Panel.controls.offsetX, 0)
+        end
+        if Panel.controls.offsetY then
+            Panel.controls.offsetY:SetValue(0)
+            updateSliderValueText(Panel.controls.offsetY, 0)
+        end
+        Panel.refreshing = false
+        autoApplyDraft()
+    end)
+    Panel.resetOffsetBtn = resetOffsetBtn
 
     local posDesc = pagePosition:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    posDesc:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -135)
+    posDesc:SetPoint("TOPLEFT", pagePosition, "TOPLEFT", 16, -212)
     posDesc:SetWidth(440)
     posDesc:SetJustifyH("LEFT")
-    posDesc:SetText("父框架錨點決定參考點，定位點決定資源自身的對齊原點；偏移數值正負代表相對於原點的像素距離。")
+    posDesc:SetText("提示：可自選依附「玩家頭像」、「目標頭像」等常見框架的九宮格方位（如目標頭像正下、玩家頭像正上），或點擊「移動此單項資源」以滑鼠左鍵自由拖曳、右鍵完成。")
 
     -- 【Tab 4: 數值與文字 (Values & Text)】
     local pageText = tabPages[4]
@@ -1345,6 +1786,9 @@ function Panel.hide()
     end
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
         EAM.UI.Renderer.setActiveAnchors(nil)
+    end
+    if EAM.UI and EAM.UI.PowerRenderer and EAM.UI.PowerRenderer.setActiveAnchors then
+        EAM.UI.PowerRenderer.setActiveAnchors(false)
     end
 end
 

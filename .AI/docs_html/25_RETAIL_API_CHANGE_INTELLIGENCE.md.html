@@ -611,9 +611,9 @@
 <tr>
 <td>12.1.5</td>
 <td style="text-align: right;"><code>120105</code></td>
-<td><code>69952</code>，2026-10-02 18:00:00</td>
-<td>C_Timer.NewTimedSignalMap、C_UnitAuras.GetRefreshCarryOverDuration、AddPandemicActive/Enter/LeaveAnimation、AddAuraSound throttleSeconds、C++ math/table/string 加速、CreateFrameWithOptions、SetRoundLayoutToNearestPixel；移除 10 大舊時代相容模組 (Blizzard_Deprecated)</td>
-<td>實裝 TimedSignalMap 原生排程、精準 Pandemic 窗口與 C++ 工具 polyfills，全面移除 deprecated 依賴</td>
+<td><code>6912957</code> / <code>6905828</code>，2026-10-09 19:28:37</td>
+<td>C_Timer.NewTimedSignalMap、C_UnitAuras.GetRefreshCarryOverDuration、AddPandemicActive/Enter/LeaveAnimation、AddAuraSound (限長5s且throttle&lt;=5s)、C_Intl、C_Weather、C++ math/table/string 加速、CreateFrameWithOptions、SetRoundLayoutToNearestPixel；移除 10 大舊時代相容模組 (Blizzard_Deprecated)</td>
+<td>實裝 TimedSignalMap 原生排程、精準 Pandemic 窗口、C++ 工具 polyfills，全面移除 deprecated 依賴，並嚴格遵循 5s 音效節流限制</td>
 </tr>
 </tbody>
 </table>
@@ -824,378 +824,250 @@
 <li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua">12.1.0.69273 Trigger enum</a></li>
 <li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua">12.1.0.69273 UnitAuraSoundInfo</a></li>
 </ul>
-<h2 id="2026-09-191215-intrinsic_aurabutton-rd-staged-1210">2026-09-19：12.1.5 INTRINSIC_AuraButton 前瞻技術備存（R&amp;D Staged / 非 12.1.0 發布基準）</h2>
-<h3 id="1_1">1. 開發邊界與發布準則（鐵律）</h3>
+<h2 id="2026-09-19-2026-10-091215-ptr-1-ptr-4">2026-09-19 / 2026-10-09：12.1.5 全面解鎖實作與 PTR 1 ~ PTR 4 官方變更與注意事項沉澱</h2>
+<h3 id="1-alpha-88">1. 開發邊界與發布準則（Alpha 8.8 升級）</h3>
 <ul>
-<li><strong>測試環境現狀</strong>：因暴雪關閉 12.1 PTR，本機開發與測試暫於 12.1.5 PTR 進行。</li>
-<li><strong>發布基準鎖定</strong>：對外正式發布之目標環境為 <strong>Retail 12.1.0（TOC: 120100）</strong>。</li>
-<li><strong>實作紅線</strong>：代碼實作 <strong>100% 嚴格以 12.1.0 為主</strong>，維持以 <code>AuraContainerService.lua</code> 與 <code>NativeAuraRenderer.lua</code> 為核心之 12.1.0 相容架構；<strong>絕對禁止在 12.1.0 發布分支中提前使用 12.1.5 專屬 API（如 <code>CreateFrame("AuraButton")</code>）</strong>，以防廣大 12.1.0 玩家客戶端因 API 缺失而報錯崩潰。本段落僅作為技術備存。</li>
+<li><strong>開發環境解鎖</strong>：已全面解鎖 Retail 12.1.5（TOC: 120105）環境之代碼實作，不僅限於研究備存。</li>
+<li><strong>主力實機測試與發布目標</strong>：雖 10/15 正式服才會全面上線 12.1.5，但當前開發以 <strong>12.1.5 PTR 為主力實機測試環境</strong>。</li>
+<li><strong>漸進增強與跨版本防禦相容</strong>：凡引入 12.1.5 專屬 API（如 <code>C_Timer.NewTimedSignalMap</code>、<code>AddPandemicActiveAnimation</code>、<code>C_UnitAuras.GetRefreshCarryOverDuration</code>、<code>math.clamp</code>、<code>table.isempty</code> 等），必須封裝安全能力檢定閘門（Capability Gate）與高效率 Lua 降級實作（Fallback Polyfills），確保代碼在 Retail 12.1.5、Retail 12.1.0（120100）與 XPTR 12.0.7（120007）客戶端中 100% 平穩運行、零報錯。</li>
+<li><strong>每輪需求必訪 Wiki 協議</strong>：主代理與所有分派之 Subagent，每輪任務均必須主動探訪 <code>https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes</code> 與 <code>https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes</code>，追蹤最新 PTR Build 演進。</li>
 </ul>
-<h3 id="2-1215-intrinsic_aurabutton">2. 12.1.5 INTRINSIC_AuraButton 規格摘要</h3>
+<h3 id="2-1215-ptr-1-ptr-2-ptr-3-ptr-4">2. 12.1.5 PTR 1 / PTR 2 / PTR 3 / PTR 4 最新情報深入解析</h3>
+<p>依據 <code>https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes</code>（Revision <code>6912957</code>）與 <code>https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes</code>（Revision <code>6905828</code>）：</p>
+<h4 id="ptr-1-2026-09-03-build-69594">📅 PTR 1 (2026-09-03, Build 69594)</h4>
 <ul>
-<li><strong>固有類型</strong>：<code>CreateFrame("AuraButton", nil, UIParent, "CustomAuraButtonTemplate")</code>（由 Button 繼承之 Intrinsic Frame）。</li>
-<li><strong>關鍵能力</strong>：<ol>
-<li><strong>獨立一級公民</strong>：脫離 12.1.0 必須寄生於 <code>AuraContainer</code> 的被動依賴，允許插件直接以 <code>Button</code> 級別建立單顆獨立光環。</li>
-<li><strong>原生單向 Sinks</strong>：<code>SetDurationBar</code>、<code>SetDurationCooldown</code>、<code>SetDurationText</code>、<code>SetApplicationCount</code>、<code>SetSpellName</code>、<code>SetCasterName</code>、<code>SetIcon</code>。</li>
-<li><strong>解綁與熱替換方法群</strong>：提供 <code>ClearDurationText()</code>、<code>ClearApplicationCount()</code>、<code>ClearSpellName()</code>、<code>ClearDurationBar()</code>、<code>ClearDurationCooldown()</code>、<code>ClearIcon()</code>。</li>
-<li><strong>原生 Pandemic 狀態機</strong>：<code>AddPandemicActiveAnimation</code>、<code>AddPandemicEnterAnimation</code>、<code>AddPandemicLeaveAnimation</code>、<code>AddPandemicRegion</code>，徹底由 C++ 引擎接管 30% 臨界值判定。</li>
-<li><strong>原生驅散著色</strong>：<code>AddDispelTypeTexture</code>、<code>SetDispelTypeText</code>。</li>
-<li><strong>安全右鍵取消</strong>：<code>SetCancelAuraButtons</code>。</li>
-</ol>
+<li><strong>原生 Pandemic 動畫管線 (<code>CustomAuraButton</code>)</strong>：<ul>
+<li><code>AddPandemicEnterAnimation(animGroup)</code>：進入補 DoT 窗口單次觸發（適合單次閃爍/進場動畫）。</li>
+<li><code>AddPandemicActiveAnimation(animGroup)</code>：窗口內持續播放發光/脈動動畫（適合循環動畫）。</li>
+<li><code>AddPandemicLeaveAnimation(animGroup)</code>：脫離窗口平滑停止。</li>
+<li><strong>Forbidden Aspects 擴充</strong>：新增 <code>QueryAnimationProgress</code>（禁止查詢動畫進度與運行狀態）與 <code>AddAnimations</code>（禁止動態掛載/改綁 Parent）。動畫本身具備 <code>ChangeAnimationTarget</code> 切面限制。</li>
+</ul>
+</li>
+<li><strong>Region 參考傳參與破壞性變更</strong>：<ul>
+<li><code>AddPandemicRegion(region)</code> 與 <code>AddDispelTypeTexture(texture, options)</code> 不再返回 index，重複加入同一物件會拋出 Fatal Error。</li>
+<li><code>RemovePandemicRegion(region)</code> 與 <code>RemoveDispelTypeTexture(texture)</code> 必須傳遞 Region 物件參考本身。</li>
+<li><code>CustomAuraButton:SetCasterName(fontString)</code>：原生字串綁定施法者名稱。</li>
+<li>CVar <code>tooltipShowAuraCasterNames</code>：支援在光環浮動提示顯示施法者，並依陣營/職業上色。</li>
+<li><code>CustomAuraContainer</code> 控制：支援 <code>SetAuraGroupEnabled</code>、<code>SetAuraSlotEnabled</code>、<code>SetItemEnchantmentEnabled</code>、<code>SetEditModePreviewEnabled</code> 及 <code>minApplications</code>。</li>
+</ul>
+</li>
+<li><strong>AddOn 安全性防禦</strong>：<ul>
+<li>受保護的 Cooldown 框架（Protected Cooldown Frame）禁止由 Tainted 程式碼調用 <code>SetCooldown</code> 與 <code>Clear</code>。</li>
+<li>Castbar ID 改為依 unit token 大小寫唯一化（例如 <code>"PLAYER"</code> 與 <code>"player"</code> 回傳不同 ID），事件統一使用小寫 token。</li>
+</ul>
+</li>
+<li><strong>C++ 排程器革命 (<code>TimedSignalMap</code>)</strong>：<ul>
+<li><code>C_Timer.NewTimedSignalMap(callback)</code>：單一回呼支援數千 key 註冊，支援 <code>SignalAt(key, time)</code> 原位重設且無須取消操作，零閉包分配、零 GC 壓力。</li>
+<li><code>TimerUtil.CreateTimedSignalCallbackMap()</code>：官方 FrameXML 便捷封裝。</li>
+</ul>
+</li>
+<li><strong>底層原生 C++ 加速與佈局</strong>：<ul>
+<li><code>CreateFrameWithOptions({ frameType = "Frame", hidden = true })</code> 杜絕建立即顯示閃爍。</li>
+<li><code>ScriptRegion:SetRoundLayoutToNearestPixel(true)</code> 原生硬體像素對齊，取代 Lua <code>PixelUtil</code>。</li>
+<li>暴雪底層 C++ 函式庫：<code>math.clamp</code>、<code>math.saturate</code>、<code>math.round</code>、<code>math.lerp</code>、<code>math.normalize</code>、<code>math.sign</code>、<code>math.remap</code>、<code>math.wrap</code>、<code>math.isfinite</code>、<code>math.isnan</code>、<code>math.isinf</code>；<code>string.contains</code>、<code>string.ltrim</code>、<code>string.rtrim</code>、<code>string.startswith</code>、<code>string.endswith</code>；<code>table.isempty</code>、<code>table.contains</code>、<code>table.indexof</code>、<code>table.removeunordered</code>、<code>table.removevalue</code>、<code>table.keys</code>、<code>table.values</code>。</li>
+</ul>
+</li>
+<li><strong>拔除 10 大相容庫</strong>：<code>Blizzard_DeprecatedItemScript</code>、<code>Blizzard_DeprecatedSoundScript</code>、<code>Blizzard_DeprecatedCurrencyScript</code> 等徹底移除，EAM 維持 100% <code>C_Item.*</code> 與現代 API。</li>
+<li><strong>新命名空間</strong>：<code>C_Weather</code> (<code>GetCurrentWeather</code>, 事件 <code>WEATHER_CHANGED</code>) 與 <code>C_Intl</code>（Unicode / 國際化支援庫）。</li>
+</ul>
+<h4 id="ptr-2-2026-09-16-build-69848">📅 PTR 2 (2026-09-16, Build 69848)</h4>
+<ul>
+<li><strong><code>CustomAuraButton</code> 完整生命週期動畫</strong>：<ul>
+<li>新增 <code>AddAuraShownAnimation(animGroup)</code> 與 <code>AddAuraAssignedAnimation(animGroup)</code>，原生處理光環初次顯示與 slot 指派動畫。</li>
+</ul>
+</li>
+<li><strong>Secret Aspects 擴展</strong>：<ul>
+<li><code>Enum.SecretAspect.VertexColor</code> 與 <code>Enum.SecretAspect.TexCoords</code> 納入受限切面，避免透過頂點著色或 UV 貼圖逆向刺探戰鬥秘密。</li>
+</ul>
+</li>
+<li><strong>音效節流保護</strong>：<ul>
+<li><code>C_UnitAuras.AddAuraSound</code> 支援選填 <code>throttleSeconds</code>（如 0.3s），由 C++ 引擎自動節流高頻刷新音效。</li>
+</ul>
+</li>
+<li><strong>單位框架工具庫 (<code>UnitFrameUtil</code>) 引入</strong>：<ul>
+<li>官方提供安全的 <code>UnitFrameUtil.UpdateUnitPvPIndicator</code> 等渲染通道，解決單位框架存取秘密屬性之 Taint 阻斷。</li>
+<li><code>C_Intl</code> 支援 Tainted 秘密字串（但禁止 <code>Null</code>/<code>Remove</code> 轉譯），索引修正為 1-based。</li>
+<li>Enemy Nameplate 獲得額外 1 幀命中框調整窗口 (<code>UNIT_CLASSIFICATION_CHANGED</code>)。</li>
+</ul>
+</li>
+<li><strong>雜項優化</strong>：<ul>
+<li>Chat tab 移除 <code>UIFrameFlash</code> 降低全域 Taint。</li>
+<li><code>C_ClassColor.GetClassColor</code> 支援可選 tint。</li>
+<li>恢復 3 個 CVars：<code>nameplateMotionSpeed</code>、<code>nameplateBottomInset</code>、<code>nameplateTopInset</code>。</li>
+</ul>
 </li>
 </ul>
-<h3 id="3-1215-rd">3. 未來架構潛力（待 12.1.5 正式推進時之 R&amp;D 藍圖）</h3>
+<h4 id="ptr-3-2026-09-22-build-69952">📅 PTR 3 (2026-09-22, Build 69952)</h4>
 <ul>
-<li><strong>解除「18 次重建必須 /reload」限制</strong>：12.1.0 因無解綁 API 且 Container 重建上限為 18 次（<code>maxCreatedContainerCount = 18</code>），導致頻繁變更字型或技能時被迫要求玩家重載介面。12.1.5 單元化獨立後，可改為單顆按鈕建立/釋放，徹底告別 Container 配額壓力。</li>
-<li><strong>光環字型大小免 /reload 即時熱套用</strong>：未來在 12.1.5 可利用 <code>ClearDurationText()</code> 先解綁文字 Sink，重新 <code>SetFont</code> 後再 <code>SetDurationText()</code>，實現字型大小、樣式調整的 100% 平滑即時熱套用。</li>
+<li><strong>競技場敵方專精 Secret 屬性化</strong>：<ul>
+<li><code>GetArenaOpponentSpec</code> 正式回傳 Secret，一般插件不得直接讀取；必須透過 <code>UnitFrameUtil.GetArenaOpponentSpecDisplayInfo</code>、<code>UpdateArenaOpponentSpecDisplay</code> 與 <code>UpdateArenaOpponentSpecDisplayName</code> 進行原生安全顯示。</li>
 </ul>
+</li>
+<li><strong>角色職責圖示安全通道</strong>：<ul>
+<li><code>UnitFrameUtil.GetUnitRoleIconDisplayInfo</code> 與 <code>UpdateUnitFrameRoleIcon</code>（支援 <code>textureMap</code> 參數）。</li>
+</ul>
+</li>
+<li><strong><code>C_UnitAuras.GetRefreshCarryOverDuration</code> 精準結餘</strong>：<ul>
+<li>暴雪官方提供精準 Pandemic 結餘計算（如德魯伊生命之花等具備超額 Carry-Over 的技能），解決自製 30% 臨界值計算偏差問題。</li>
+</ul>
+</li>
+</ul>
+<h4 id="ptr-4-2026-09-29-build-70077-ptr">📅 PTR 4 (2026-09-29, Build 70077, 官方最終 PTR 基準)</h4>
+<ul>
+<li><strong><code>C_UnitAuras.AddAuraSound</code> 安全防禦限縮</strong>：<ul>
+<li>播放的音效檔案長度強制限制最長 5 秒。</li>
+<li><code>throttleSeconds</code> 參數若大於 5 秒將直接拒絕（Reject）。EAM 預設傳入 <code>0.3s</code>，完全處於合規安全區。</li>
+</ul>
+</li>
+<li><strong><code>C_Intl.GetSortKey</code> 容錯加固</strong>：<ul>
+<li>修復傳入空字串與 <code>Enum.CollationStrength.Primary</code> 時回傳 <code>nil</code> 之異常。</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-1215-intrinsic_aurabutton-rd">3. 12.1.5 INTRINSIC_AuraButton 與架構 R&amp;D 藍圖</h3>
+<ul>
+<li><strong>固有類型</strong>：<code>CreateFrame("AuraButton", nil, UIParent, "CustomAuraButtonTemplate")</code>（Button 繼承 Intrinsic Frame）。</li>
+<li><strong>獨立一級公民</strong>：脫離 12.1.0 <code>AuraContainer</code> 寄生限制，允許以 Button 獨立建立單顆光環。</li>
+<li><strong>原生單向 Sinks 與解綁方法群</strong>：<ul>
+<li>Sinks: <code>SetDurationBar</code>、<code>SetDurationCooldown</code>、<code>SetDurationText</code>、<code>SetApplicationCount</code>、<code>SetSpellName</code>、<code>SetCasterName</code>、<code>SetIcon</code>。</li>
+<li>解綁: <code>ClearDurationText()</code>、<code>ClearApplicationCount()</code>、<code>ClearSpellName()</code>、<code>ClearDurationBar()</code>、<code>ClearDurationCooldown()</code>、<code>ClearIcon()</code>。</li>
+</ul>
+</li>
+<li><strong>解除「18 次重建必須 /reload」限制</strong>：12.1.5 單元化獨立後，可改為單顆按鈕建立/釋放，徹底告別 Container 18 次配額死鎖。</li>
+<li><strong>字型大小即時熱套用</strong>：利用 <code>ClearDurationText()</code> 先解綁文字 Sink，重新 <code>SetFont</code> 後再 <code>SetDurationText()</code>，實現字型大小、樣式調整的 100% 平滑即時熱套用。</li>
+</ul>
+<h3 id="4-1215-consolidated-changes-build-69594-70077">4. 12.1.5 Consolidated Changes 總清冊與各系統分類 (Build 69594 ~ 70077)</h3>
+<h4 id="1-api-global-apis">(1) 全域 API (Global APIs)</h4>
+<ul>
+<li><strong>新增 (82)</strong>：<ul>
+<li><strong>光環與冷卻相關</strong>：<code>C_UnitAuras.GetRefreshCarryOverDuration</code>、<code>C_UnitAuras.GetAuraCasterGUID</code>、<code>C_AuraContainerUtil.ProcessCustomAuraButtonCasterNameOptions</code>、<code>C_Timer.NewTimedSignalMap</code>、<code>CreateFrameWithOptions</code>、<code>GetScriptBucketThrottleLimits</code>、<code>GetTextureMetatable</code>。</li>
+<li><strong>動作列與巨集</strong>：<code>C_ActionBar.IsMacroActionWithShowTooltip</code>。</li>
+<li><strong>環境與 PvP</strong>：<code>C_Weather.GetCurrentWeather</code>、<code>C_LFGInfo.GetActiveLFGDungeonName</code>、<code>C_PvP.GetRandomTrainingGroundArenaRewards</code>、<code>C_PvP.GetRandomTrainingGroundBGRewards</code>、<code>C_PvP.HasRandomTrainingGroundArenaWinToday</code>、<code>C_PvP.HasRandomTrainingGroundBGWinToday</code>、<code>C_PvP.IsTrainingGroundsArena</code>、<code>C_PvP.IsTrainingGroundsBG</code>、<code>C_PvP.JoinRandomTrainingGroundBG</code>。</li>
+<li><strong>C++ 原生加速庫 (Math/String/Table)</strong>：<code>math.clamp</code>、<code>math.saturate</code>、<code>math.round</code>、<code>math.lerp</code>、<code>math.normalize</code>、<code>math.sign</code>、<code>math.remap</code>、<code>math.wrap</code>、<code>math.isfinite</code>、<code>math.isnan</code>、<code>math.isinf</code>；<code>string.contains</code>、<code>string.ltrim</code>、<code>string.rtrim</code>、<code>string.startswith</code>、<code>string.endswith</code>；<code>table.isempty</code>、<code>table.contains</code>、<code>table.indexof</code>、<code>table.removeunordered</code>、<code>table.removevalue</code>、<code>table.keys</code>、<code>table.values</code>、<code>table.getcountinfo</code>。</li>
+<li><strong>C++ 相容別名導出</strong>：<code>Clamp</code>、<code>CountTable</code>、<code>GetKeysArray</code>、<code>GetValuesArray</code>、<code>Lerp</code>、<code>Round</code>、<code>RoundToSignificantDigits</code>、<code>Saturate</code>、<code>Sign</code>、<code>TableIsEmpty</code>、<code>tContains</code>、<code>tDeleteItem</code>、<code>tIndexOf</code>、<code>tUnorderedRemove</code>。</li>
+<li><strong>國際化庫 (<code>C_Intl</code>) (24)</strong>：<code>CompareStrings</code>、<code>CreateLocaleContext</code>、<code>FindBreaks</code>、<code>FindStringMatches</code>、<code>FoldCase</code>、<code>FormatCurrency</code>、<code>FormatDate</code>、<code>FormatDateTime</code>、<code>FormatNumber</code>、<code>FormatTime</code>、<code>GetCharacterProperties</code>、<code>GetCurrencyFractionDigits</code>、<code>GetCurrencyName</code>、<code>GetCurrentLocale</code>、<code>GetDisplayName</code>、<code>GetSortKey</code>、<code>IsNormalized</code>、<code>Length</code>、<code>Normalize</code>、<code>ParseCurrency</code>、<code>ParseNumber</code>、<code>SelectPlural</code>、<code>ToLower</code>、<code>ToTitle</code>、<code>ToUpper</code>、<code>TransformLocale</code>、<code>Transliterate</code>。</li>
+</ul>
+</li>
+<li><strong>移除 (4)</strong>：<code>C_PvP.GetRandomTrainingGroundRewards</code>、<code>C_PvP.HasRandomTrainingGroundWinToday</code>、<code>C_PvP.JoinRandomTrainingGroundBattleground</code>、<code>C_TableUtil.FindIndexedMismatch</code>。</li>
+</ul>
+<h4 id="2-framexml">(2) FrameXML 工具函數</h4>
+<ul>
+<li><strong>新增 (29)</strong>：<ul>
+<li><code>ChatFrameUtil</code>: <code>GetTabAlphas</code>、<code>IsTabAlerting</code>、<code>SetTabAlerting</code>、<code>SetTabAlphas</code>、<code>StartFlash</code>、<code>StartSyncedFlash</code>、<code>StopFlash</code>。</li>
+<li><code>UnitFrameUtil</code>: <code>GetArenaOpponentSpecDisplayInfo</code>、<code>GetUnitPvPIndicatorDisplayInfo</code>、<code>GetUnitRoleIconDisplayInfo</code>、<code>UpdateArenaOpponentSpecDisplayName</code>、<code>UpdateArenaOpponentSpecDisplay</code>、<code>UpdateUnitFrameRoleIcon</code>、<code>UpdateUnitPvPIndicator</code>。</li>
+<li><code>TimerUtil</code>: <code>CreateTimedSignalCallbackMap</code>。</li>
+<li><code>PixelUtil</code>: <code>SetRoundLayoutToNearestPixelRecursively</code>。</li>
+<li><code>CombatAudioAlertUtil</code>: <code>EnumeratePulseHealthPercentInfo</code>、<code>GetCurrentPulseHealthPercentInfo</code>、<code>GetPulseHealthPercentInfo</code>、<code>GetPulseHealthSoundKit</code>、<code>SetPulseHealthSoundKit</code>。</li>
+<li>其他：<code>MarchingAnts_Create</code>、<code>MarchingAnts_CreateAsChildOf</code>、<code>MarchingAnts_CreateForTarget</code>、<code>CompactUnitFrame_GetOptionDispelIndicatorAnimatedBorder</code>、<code>GenericTraitUtil.GetKnownTreeIDs</code>、<code>GetTimeSinceLastQuestProgress</code>、<code>HousingFramesUtil.MoveLayoutCameraFloor</code>、<code>QuestMapLog_GetStoryTooltip</code>。</li>
+</ul>
+</li>
+<li><strong>移除 (15)</strong>：舊時代全域 Lua 實現（<code>Clamp</code>、<code>CountTable</code>、<code>GetKeysArray</code>、<code>GetValuesArray</code>、<code>Lerp</code>、<code>Round</code>、<code>RoundToSignificantDigits</code>、<code>Saturate</code>、<code>Sign</code>、<code>StringContains</code>、<code>TableIsEmpty</code>、<code>tContains</code>、<code>tDeleteItem</code>、<code>tIndexOf</code>、<code>tUnorderedRemove</code> 全部移入 C++）。</li>
+</ul>
+<h4 id="3-scriptobjects">(3) ScriptObjects 方法群</h4>
+<ul>
+<li><strong>新增 (30)</strong>：<ul>
+<li><code>TimedSignalMap</code> (8)：<code>CancelAllSignals</code>、<code>CancelSignal</code>、<code>GetNextSignal</code>、<code>GetSignalCount</code>、<code>GetSignalTime</code>、<code>HasSignal</code>、<code>SignalAfter</code>、<code>SignalAt</code>。</li>
+<li><code>LocaleContext</code> (22)：<code>CompareStrings</code>、<code>FindBreaks</code>、<code>FindStringMatches</code>、<code>FoldCase</code>、<code>FormatCurrency</code>、<code>FormatDate</code>、<code>FormatDateTime</code>、<code>FormatNumber</code>、<code>FormatTime</code>、<code>GetCurrencyName</code>、<code>GetDisplayName</code>、<code>GetLocale</code>、<code>GetSortKey</code>、<code>Length</code>、<code>ParseCurrency</code>、<code>ParseNumber</code>、<code>SelectPlural</code>、<code>SetLocale</code>、<code>ToLower</code>、<code>ToTitle</code>、<code>ToUpper</code>、<code>TransformLocale</code>。</li>
+</ul>
+</li>
+</ul>
+<h4 id="4-widgets-events">(4) Widgets 與 Events</h4>
+<ul>
+<li><strong>Widget 新增 (2)</strong>：<code>ScriptRegion:GetRoundLayoutToNearestPixel()</code>、<code>ScriptRegion:SetRoundLayoutToNearestPixel(enabled)</code>。</li>
+<li><strong>Events 新增 (1)</strong>：<code>WEATHER_CHANGED</code>。</li>
+</ul>
+<h4 id="5-cvars-12">(5) 控制台變數 (CVars) (12)</h4>
+<ul>
+<li><code>tooltipShowAuraCasterNames</code> (預設 0, Account)：光環浮動提示顯示施法者。</li>
+<li><code>tooltipShowAuraSpellIDs</code> (預設 0, Game)：修正本地化與著色問題。</li>
+<li><code>minimapShowPlayerCoords</code> (預設 1, Account)：小地圖顯示玩家座標。</li>
+<li><code>coordsByTenths</code> (預設 1, Account)：座標顯示至十分位數。</li>
+<li><code>CAAPulsePlayerHealthPercent</code> (預設 0, Account)：低血量循環脈衝警示音。</li>
+<li><code>CAAPulsePlayerHealthVolume</code> (預設 100, Account)：低血量警示音量。</li>
+<li><code>nameplateMotionSpeed</code> (預設 0.025, Game)：名條移動平滑速率。</li>
+<li><code>nameplateBottomInset</code> (預設 0.100, Game) / <code>nameplateTopInset</code> (預設 0.080, Game)：名條螢幕上下邊距。</li>
+<li><code>raidFramesDispelIndicatorAnimatedBorder</code> (預設 0, Character)：驅散指示器動畫邊框。</li>
+<li><code>dumpSmallAlloc</code> (Game 命令)：小型分配偵錯。</li>
+<li><code>maximumConnectionAttempts</code> (預設 2, Net)：QUIC 連線重試上限。</li>
+<li><code>winePlatformTTS</code> (預設 0, Game)：Wine 平臺 TTS 開關。</li>
+</ul>
+<h4 id="6-10-deprecated">(6) 徹底移除的 10 大 Deprecated 套件</h4>
+<ul>
+<li><code>Blizzard_DeprecatedCurrencyScript</code>、<code>Blizzard_DeprecatedGlue</code>、<code>Blizzard_DeprecatedItemScript</code>、<code>Blizzard_DeprecatedItemSocketInfo</code>、<code>Blizzard_DeprecatedLFG</code>、<code>Blizzard_DeprecatedPetInfo</code>、<code>Blizzard_DeprecatedPvpScript</code>、<code>Blizzard_DeprecatedSoundScript</code>、<code>Blizzard_DeprecatedTradeInfo</code>、<code>Blizzard_DeprecatedWorldElapsedTimerTypes</code>。</li>
+</ul>
+<h3 id="5-eam">5. EAM 核心模組對齊與防禦策略矩陣</h3>
+<table>
+<thead>
+<tr>
+<th>EAM 模組</th>
+<th>涉及 12.1.5 API / 行為</th>
+<th>防禦策略與落地架構</th>
+<th>當前狀態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Core/Scheduler.lua</code></td>
+<td><code>C_Timer.NewTimedSignalMap</code>、<code>TimedSignalMap:SignalAt</code></td>
+<td>封裝能力檢定閘門，優先調用 C++ 原位重設排程器；降級至基底 OnUpdate / Timer 鏈；uint32 floor 與 pcall 隔離防護</td>
+<td>✅ 已落地</td>
+</tr>
+<tr>
+<td><code>UI/NativeAuraRenderer.lua</code></td>
+<td><code>AddPandemicActive/Enter/LeaveAnimation</code>、<code>AddDispelTypeTexture</code>、<code>AddPandemicRegion</code></td>
+<td>嚴格依 Region 物件參考傳參；以 <code>hasPandemicAnimation</code> 探針安全掛載；禁止查詢動畫進度 (Forbidden Aspect)</td>
+<td>✅ 已落地</td>
+</tr>
+<tr>
+<td><code>Services/CooldownService.lua</code></td>
+<td>Cooldown 框架 Taint 限制、法術覆蓋與先驗冷卻</td>
+<td>獨立 Frame 創建杜絕暴雪保護框架污染；施法優先級重啟；引導技能 0ms 先驗冷卻；60ms 自適應突發 CDR 採樣器</td>
+<td>✅ 已落地</td>
+</tr>
+<tr>
+<td><code>Services/AuraService.lua</code></td>
+<td><code>C_UnitAuras.AddAuraSound</code></td>
+<td>嚴格防禦性限制：音效播放長度 $\le 5$ 秒，<code>throttleSeconds</code> 傳入 <code>0.3s</code>（保證 $&lt; 5.0\text{s}$），杜絕高頻音效轟炸與 API 拋錯</td>
+<td>✅ 已落地</td>
+</tr>
+<tr>
+<td><code>Core/Util.lua</code></td>
+<td>原生 C++ <code>math.*</code>、<code>table.*</code>、<code>string.*</code></td>
+<td>建立安全封裝層（<code>Util.clamp</code>、<code>Util.lerp</code>、<code>Util.tableIsEmpty</code> 等），優先調用底層 C++ 加速，提供零除零與 NaN 防禦降級</td>
+<td>✅ 已落地</td>
+</tr>
+<tr>
+<td><code>UI/Renderer.lua</code></td>
+<td><code>SetRoundLayoutToNearestPixel</code>、<code>CreateFrameWithOptions</code></td>
+<td>建立框架時若支援 <code>CreateFrameWithOptions</code> 採用 <code>hidden=true</code>；對 Alert 圖示啟用像素四捨五入對齊消除模糊抖動</td>
+<td>✅ 已落地</td>
+</tr>
+<tr>
+<td>全專案依賴</td>
+<td>拔除 10 大 Deprecated 套件</td>
+<td>全面清查並確認 100% 使用 <code>C_Item.*</code>、<code>C_Sound.*</code>、<code>C_CurrencyInfo.*</code>，零舊版相容庫依賴</td>
+<td>✅ 100% 合規</td>
+</tr>
+</tbody>
+</table>
 <p>固定來源：
+- <a href="https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes">Warcraft Wiki：Patch 12.1.5/API changes</a>（Revision <code>6912957</code>，2026-10-14 01:55:36 UTC，Build <code>69952 ~ 70077</code>）
+- <a href="https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes">Warcraft Wiki：Patch 12.1.5/API changes/notes</a>（Revision <code>6905828</code>，2026-10-09 19:28:37 UTC）
 - <a href="https://warcraft.wiki.gg/wiki/INTRINSIC_AuraButton">Warcraft Wiki：INTRINSIC_AuraButton</a>（Revision <code>6878724</code>，2026-09-19 00:19:09 UTC）</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
-<h1 id="retail-api-change-intelligence-1200-starting-baseline">Retail API Change Intelligence: 12.0.0 starting baseline</h1>
-<h2 id="1-file-purpose-and-status">1. File purpose and status</h2>
-<p>This document is the version baseline of EventAlertMod Retail server AddOn API change information. The goal is not to copy the complete changelog, but to convert the addition, removal, deprecation, Secret/Forbidden rules and Widget behavior changes of API into executable architecture warnings, migration windows and verification work.</p>
-<ul>
-<li>Project scope: WoW Retail only.</li>
-<li>Starting baseline: 12.0.0.</li>
-<li>Activity project TOC: <code>120007, 120100</code>, the same program uses capability gate to distinguish 12.0.7 and 12.1.</li>
-<li>12.1 Status: PTR/Continuous revision; no formal compatibility claims.</li>
-<li>Last verified: 2026-08-13.</li>
-<li>Wiki revision time is the page revision time, not the game patch release time.</li>
-</ul>
-<h2 id="2-apichg-expert-charter">2. APICHG Expert Charter</h2>
-<p><code>EAM_API_Change_Intelligence_Expert</code> (<code>APICHG</code>) is responsible for:</p>
-<ol>
-<li>Maintenance version, TOC, build status, source URL, revision ID and revision time.</li>
-<li>Distinguish between API facts, EAM engineering inferences and PTR/Retail actual machine results.</li>
-<li>Split the changes into <code>P0 阻斷</code>, <code>P1 遷移</code>, <code>P2 觀察</code>, <code>無直接影響</code>.</li>
-<li>Provide lead time for adapter, capability gate, downgrade path and old path exit conditions.</li>
-<li>When the new PTR, RC, official version or source revision changes, trigger impact scanning and file updates.</li>
-</ol>
-<p>Boundaries of Responsibility:</p>
-<ul>
-<li><code>APICHG</code> does not replace the Secret/taint security finalization of <code>SEC</code>.</li>
-<li><code>APICHG</code> does not replace the AuraContainer/AuraButton migration implementation of <code>AURA121</code>.</li>
-<li><code>APICHG</code> does not replace PTR/Retail client evidence for <code>RQA</code>.</li>
-<li><code>DOC</code> is responsible for the consistency of the source and status, and does not judge the technical authenticity of API on its own.</li>
-</ul>
-<h2 id="3-evidence-priority">3. Evidence priority</h2>
-<ol>
-<li>Blizzard official announcement, PTR/RC development notes.</li>
-<li>Blizzard UI source code or traceable version diff:</li>
-<li><a href="https://github.com/Ketho/wow-ui-source-midnight-ptr">Ketho/wow-ui-source-midnight-ptr</a> (Blizzard Midnight / 12.x PTR official UI source code mirror)</li>
-<li><a href="https://github.com/Ketho/WowDoc">Ketho/WowDoc</a> (the most complete community WoW API / FrameXML document and signature library)</li>
-<li><a href="https://github.com/Ketho/BlizzardInterfaceResources">Ketho/BlizzardInterfaceResources</a> (Blizzard UI materials, Atlas, Texture and sound effects list)</li>
-<li>Warcraft Wiki <code>API_change_summaries</code> and each patch API changes page, and revisions must be recorded.</li>
-<li>Project Markdown, activity TOC and actual Lua hits.</li>
-<li>The search summary is only a clue and cannot be used as a structural conclusion alone.</li>
-</ol>
-<h2 id="4-version-evolution-from-1200-to-1215">4. Version evolution from 12.0.0 to 12.1.5</h2>
-<table>
-<thead>
-<tr>
-<th>Version</th>
-<th style="text-align: right;">TOC</th>
-<th>Wiki revision (UTC)</th>
-<th>Changes directly related to EAM</th>
-<th>Strategy interpretation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>API change summaries</td>
-<td style="text-align: right;">—</td>
-<td><code>6747807</code>, 2026-06-19 05:45:08</td>
-<td>Provide version index and cross-version positioning entrance</td>
-<td>revision changes trigger a difference review and do not regard the index page as the only fact</td>
-</tr>
-<tr>
-<td>12.0.0</td>
-<td style="text-align: right;"><code>120000</code></td>
-<td><code>6747189</code>, 2026-06-18 08:59:26</td>
-<td>Introducing Secret Values generation, predicate and a large number of API removed/deprecated</td>
-<td>Secret-safe adapter must become the basis of the service layer, old numerical models cannot be moved directly into 12.x</td>
-</tr>
-<tr>
-<td>12.0.1</td>
-<td style="text-align: right;"><code>120001</code></td>
-<td><code>6747895</code>, 2026-06-19 08:48:51</td>
-<td>Blocking strings and secret laundering such as StatusBar; Secret cooling is changed to <code>SetCooldownFromDurationObject</code>; Some Private Aura calls are restricted in battle</td>
-<td>The display channel and readable data must be separated, <code>pcall</code> or UI relay cannot be used as a bypass</td>
-</tr>
-<tr>
-<td>12.0.5</td>
-<td style="text-align: right;"><code>120005</code></td>
-<td><code>6747894</code>, 2026-06-19 08:48:14</td>
-<td>Formatter, DurationObject zero range behavior, Aura Boolean secretness adjustment, <code>table.freeze</code>/predicate changes; preview Aura overhaul</td>
-<td>Capability gate must check capabilities instead of scattering patch strings; keep stable path first</td>
-</tr>
-<tr>
-<td>12.0.7</td>
-<td style="text-align: right;"><code>120007</code></td>
-<td><code>6747893</code>, 2026-06-19 08:46:57</td>
-<td><code>C_DurationUtil.CreateDurationTextBinding</code>; restricted unit token changed back to nil/default; <code>debugstack</code>/<code>debuglocals</code> secret propagation; Aura refactor points to 12.1</td>
-<td>Current activity baseline; error and debug output may also carry secrecy, and the Aura extraction architecture needs to be prepared to exit</td>
-</tr>
-<tr>
-<td>12.1.0</td>
-<td style="text-align: right;"><code>120100</code></td>
-<td><code>6749767</code>, 2026-06-20 05:57:01</td>
-<td>AuraContainer/AuraButton, Private Script Objects, Forbidden Partition/Aspects; restricted UnitAura data may be all secret or nil</td>
-<td>existing AuraData/spellID The extracted model is a P0 compatibility risk; the content of PTR still needs to be continuously reviewed and revised with real machines</td>
-</tr>
-<tr>
-<td>12.1.5</td>
-<td style="text-align: right;"><code>120105</code></td>
-<td><code>69952</code>, 2026-10-02 18:00:00</td>
-<td>C_Timer.NewTimedSignalMap, C_UnitAuras.GetRefreshCarryOverDuration, AddPandemicActive/Enter/LeaveAnimation, AddAuraSound throttleSeconds, C++ math/table/string acceleration, CreateFrameWithOptions, SetRoundLayoutToNearestPixel; remove top 10 old era compatible modules (Blizzard_Deprecated)</td>
-<td>Implement TimedSignalMap native scheduling, accurate Pandemic window and C++ tool polyfills, completely remove deprecated dependencies</td>
-</tr>
-</tbody>
-</table>
-<h2 id="5-change-context">5. Change context</h2>
-<p>The core of 12.x is not a single API name change, but a gradual tightening of the data permission model:</p>
-<ol>
-<li>12.0.0 establishes the foundation of Secret Values and predicate.</li>
-<li>12.0.1 Closes paths for shuffling secret data through strings, StatusBar, or other UI objects.</li>
-<li>12.0.5 Directs the security display to Formatter/DurationObject, and foreshadows the Aura architecture reorganization.</li>
-<li>12.0.7 provides DurationTextBinding, which expands secret propagation to debug output and explicitly 12.1 Aura refactor.</li>
-<li>12.1.0 Move Aura display to controlled Container/Button and Forbidden boundaries, restricting AddOn to directly extract sensitive Aura facts.
-Therefore, the long-term layout of EAM must be converted from "calculate and render by itself after reading the value" to "service layer recognition capability, retaining legal facts, and UI using native display objects supported by Blizzard".</li>
-</ol>
-<h2 id="6-eam-architecture-strategy">6. EAM Architecture Strategy</h2>
-<ul>
-<li>API The boundary is concentrated in service/adapter, and version judgment is not scattered in Renderer.</li>
-<li>Prioritize feature detection and capability gate; only use TOC judgment when the functional semantics are determined to be consistent.</li>
-<li>PTR The new path coexists with the current stable path until the official contract, UI source and RQA evidence meet the exit conditions.</li>
-<li>Secret/Forbidden data must not be subjected to arithmetic, comparison, stringification, serialization or custom table keys.</li>
-<li>Time display takes precedence over formatters supported by DurationObject, DurationTextBinding and Blizzard.</li>
-<li>Tooltip scraping can only be low-frequency, non-combat, clearly marked sources, and cannot overwrite API security facts.</li>
-<li>Check SavedVariables schema, event payload, Frame/Widget behavior, TOC and packaging settings at the same time for each version change.</li>
-<li>The version file is not compatible with the actual machine; the four types of evidence, static, Mock, PTR, and Retail, are signed separately.</li>
-</ul>
-<h2 id="7-monitor-trigger-conditions">7. Monitor trigger conditions</h2>
-<p>In any of the following situations, start the <code>eam-Retail-api-change-intelligence</code> process:</p>
-<ul>
-<li><code>API_change_summaries</code> Add new patch pages or revision changes.</li>
-<li>Blizzard releases PTR/RC/Official version AddOn, Aura or UI restriction announcement.</li>
-<li>New, removed, deprecated, predicate or mixin/widget interface changes appear in UI source diff.</li>
-<li>TOC／Interface version release or project target version adjustment.</li>
-<li>There is new evidence for the behavior of Secret, Forbidden, Duration, Aura, Tooltip, FrameXML, and event payload.</li>
-<li>EAM active Lua hit has removed API, old global API, or a data stream that is no longer valid.</li>
-</ul>
-<h2 id="8-affects-output-format">8. Affects output format</h2>
-<p>Each verification will produce at least:</p>
-<ol>
-<li>Target version, previous stable version, TOC, build status and source revision.</li>
-<li>Add/remove/deprecate/behavior change list.</li>
-<li>EAM hits the file and line number.</li>
-<li><code>P0／P1／P2／無直接影響</code> classification.</li>
-<li>Disposal window immediately, during PTR, pre-release or follow-up observation.</li>
-<li>adapter/capability gate/downgrade/exit conditions.</li>
-<li>Verifications performed and not performed, and matters requiring signature by <code>SEC/AURA121/RQA/DOC</code>.</li>
-</ol>
-<h2 id="9-current-eam-interpretation">9. Current EAM interpretation</h2>
-<ul>
-<li>12.0.7 retains the readable Legacy Aura path; 12.1 has AuraContainer/AuraButton Native backend, and verifies the initialization period setting with zero Legacy Aura pipeline in offline strict mock.</li>
-<li>Native backend has landed and is not equal to PTR signature. Illustrations, single countdowns, applications, target transitions, Forbidden Aspects, combat restrictions and taint still require <code>_ptr_</code> real-life evidence.</li>
-<li>Cooldown display set via <code>Core/DurationAdapter.lua</code>: <code>CreateDuration()</code> and <code>CreateDurationTextBinding()</code> are both created without parameters and then set with public setters; no longer assume construction parameters or <code>Unbind()</code>.</li>
-<li>12.1 <code>SPELL_UPDATE_COOLDOWN</code> payload is available in <code>spellID</code>, <code>baseSpellID</code> and <code>itemID</code>. EAM uses the security ID as the target refresh, and returns to merged refresh when the value is missing.</li>
-<li>UnitPower uses dual channels: the predicate determines that readable secondary resources can output safe numeric state; the primary resource that may be a Secret only sends <code>UnitPowerPercent()</code> directly to the StatusBar/radial sink supported by Blizzard, and does not read back, compare, or export the original value.</li>
-<li><code>AuraContainerUtil.AddDispelTypeTexture</code> is only considered a dispel type cosmetic ability and does not replace any proc/Pandemic Glow.</li>
-<li>This round of offline process and capability classification testing cannot be regarded as completed for 12.1 PTR or 12.0.7 real machine compatibility.</li>
-</ul>
-<h2 id="10-source">10. Source</h2>
-<ul>
-<li><a href="https://warcraft.wiki.gg/wiki/API_change_summaries">Warcraft Wiki API change summaries</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.0/API_changes?oldid=6747189">Patch 12.0.0 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.1/API_changes?oldid=6747895">Patch 12.0.1 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.5/API_changes?oldid=6747894">Patch 12.0.5 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.0.7/API_changes?oldid=6747893">Patch 12.0.7 API changes</a></li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes?oldid=6749767">Patch 12.1.0 API changes</a></li>
-<li><a href="https://EAMCODE_6__.forums.blizzard.com/en/wow/t/AddOn-and-Aura-in-curse-of-ula%E2%80%99tek/2317456">Blizzard: AddOn and Aura in Curse of Ula’tek</a></li>
-</ul>
-<h2 id="2026-07-26-121068914-fixed-evidence">2026-07-26: 12.1.0.68914 Fixed evidence</h2>
-<ul>
-<li>Native <code>_ptr_</code>: 12.1.0.68914; compare to Gethe/wow-ui-source commit <code>d3915c78aba77a7a9be76acbfa35c674bbb6abe9</code>.</li>
-<li>Native <code>_xptr_</code>: 12.0.7.68887; compare to commit <code>4383ced30106d51b27e3e86d1987f1552f0d259d</code>.</li>
-<li>AuraContainer sorting uses FrameXML global <code>AuraContainerSortMethod</code>/<code>AuraContainerSortDirection</code>; 68914 Generated Documentation does not log in to these two tables.</li>
-<li><code>UnitAuraSortRule</code> is another set of types of Aura getter and cannot be passed in AuraContainer options.</li>
-<li>EAM implementation and API restriction matrix see <code>Docs/23_AURA_CONTAINER_IMPLEMENTATION.md</code>.</li>
-</ul>
-<h2 id="2026-08-01-duration-cooling-aura-appearance-and-unitpower-layout">2026-08-01: Duration, cooling, Aura appearance and UnitPower layout</h2>
-<h3 id="api-facts">API Facts</h3>
-<ul>
-<li>Duration factory and DurationTextBinding factory are both created without parameters and configured through ScriptObject setter; EAM uses a single adapter to manage the life cycle.</li>
-<li><code>SPELL_UPDATE_COOLDOWN</code> can carry <code>itemID</code> in 12.1, item cooldown should not wait for only <code>BAG_UPDATE_COOLDOWN</code>.</li>
-<li><code>UnitPowerPercent(unitToken, powerType, unmodified, curve)</code> produces a percentage suitable for native display sinks; <code>C_Secrets.ShouldUnitPowerBeSecret</code>, <code>ShouldUnitPowerMaxBeSecret</code> and <code>GetPowerTypeSecrecy</code> are used for first-class sorting capabilities.</li>
-<li>StatusBar/radial sink can accept Secret input, but it does not mean that AddOn can read back ordinary numbers from the widget; this path can only be displayed and cannot be used as a custom judgment, serialization or trigger condition for EAM.</li>
-<li>68914 The dispel texture of CustomAuraButton is a specific Aura appearance capability and cannot be extrapolated to arbitrary border/Glow API.</li>
-</ul>
-<h3 id="implementation-and-verification-status">Implementation and verification status</h3>
-<ul>
-<li><code>ClassPowerService</code> has corrected event parameters and resource selection, giving priority to secondary resources such as Holy Power, Combo Points, Soul Shards, Chi, Arcane Charges; the safety value <code>1</code> is no longer hidden by the Renderer as "no layer".</li>
-<li><code>UnitPowerCapabilityProbe</code> can only be activated by player buttons, output ability classification and manual pass/fail/blocked; <code>rawValuesCollected</code> is fixed to <code>false</code>.</li>
-<li>Offline mock has been proven safe. Numeric secondary resources and Secret native sink data streams are accessible; actual professions, specializations, combat restrictions and visual updates still require <code>_ptr_</code> 12.1 and <code>_xptr_</code> 12.0.7 player testing.</li>
-</ul>
-<p>Fixed source:</p>
-<ul>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">68914 Unit API documentation source</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">68914 Secret predicate documentation source</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_AuraContainer/Blizzard_AuraContainerFrameProviders.lua">68914 AuraContainer frame provider</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/d3915c78aba77a7a9be76acbfa35c674bbb6abe9/Interface/AddOn/Blizzard_AuraContainer/Blizzard_CustomAuraButton.lua">68914 CustomAuraButton implementation</a></li>
-</ul>
-<h2 id="2026-08-08-ptr8-and-unitpower-public-api-fixed-evidence">2026-08-08: PTR8 and UnitPower public API fixed evidence</h2>
-<h3 id="ptr8-api-facts">PTR8 API Facts</h3>
-<ul>
-<li>Fixed source for Gethe/wow-ui-source PTR commit <code>a520b6c27bb897e6be2333b6cc2be36d52c7c11b</code>, version <code>12.1.0.69189</code>.</li>
-<li><code>AuraButton:AddPandemicRegion(region)</code>, <code>RemovePandemicRegion(index)</code>, and <code>ClearPandemicRegions()</code> are Pandemic Region contracts; EAM only creates textures when explicitly required by the rules and binds them to <code>initializeFrame</code>. It does not read <code>Enum.SecretAspect.Shown</code> and does not create its own OnUpdate.</li>
-<li><code>AuraButton:AddDispelTypeTexture(texture, options)</code> does not output the useless <code>stealableFilter</code> when using <code>showAlways</code>, Harmful/Helpful and <code>Enum.CustomAuraButtonDispelTypeStealableFilter</code>; <code>showAlways=true</code>. The new program does not depend on the AuraBorder deprecated alias.</li>
-<li>AuraButton and ItemEnchantment display data cleared by Blizzard when <code>AuraContainer</code> is disabled; frames may still exist. This behavior has been added to strict mock, and the PTR real machine still needs to be signed.</li>
-<li>PTR8's tooltip 200ms throttle, duration 0 bug fix and OnSizeChanged exploit fix are Blizzard behaviors, not self-polled or exploited by EAM.</li>
-</ul>
-<h3 id="unitpower-api-facts-and-negative-conclusions">UnitPower API Facts and negative conclusions</h3>
-<ul>
-<li><code>SimpleStatusBarAPIDocumentation.lua</code>, <code>UnitDocumentation.lua</code> and <code>SecretPredicateAPIDocumentation.lua</code> of the same PTR commit are not confirmed <code>StatusBar:SetUnit</code>, <code>SetPowerTextFontString</code>, <code>SetOnUpdateMode</code>; the three methods provided by users must not be regarded as public API or hard dependencies.</li>
-<li>The confirmable Secret display path is <code>UnitPowerPercent()</code>. After obtaining the classification result, send it to <code>StatusBar:SetValue()</code> or <code>Texture:SetRadialProgressBarPercent()</code> in one direction; reading back the widget, comparison, stringification or serialization of the Secret value is prohibited.</li>
-<li><code>ClassPowerService</code> only reads plain numbers if <code>C_Secrets.ShouldUnitPowerBeSecret</code>/<code>ShouldUnitPowerMaxBeSecret</code> are explicitly available and returns <code>false</code>; all UnitPowerEAMCODE_5__ reads in combat are deferred to <code>PLAYER_REGEN_ENABLED</code>.</li>
-<li><code>statusBarSecretSink</code> of <code>UnitPowerCapabilityProbe</code> only retains the initialization compatibility field, and the actual pass still requires case <code>accepted</code> plus player visual pass; files or offline mocks are not upgraded to PTR real machine evidence.</li>
-</ul>
-<p>Fixed source:</p>
-<ul>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleStatusBarAPIDocumentation.lua">SimpleStatusBar API 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua">SimpleTextureBase API 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitDocumentation.lua">Unit API 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SecretPredicateAPIDocumentation.lua">Secret predicate API 12.1.0.69189</a></li>
-</ul>
-<h2 id="2026-08-09-ptr-channel-flags-and-alpha-2-native-aura-gate">2026-08-09: PTR channel flags and Alpha 2 Native Aura gate</h2>
-<h3 id="confirmed-regression-chain">Confirmed regression chain</h3>
-<ul>
-<li>Players' actual observation shows that Alpha 1 can display Aura, and Alpha 2 does not display it at all. The new Native runtime gate in Alpha 2 requires <code>IsPublicTestClient()==true</code> and <code>IsTestBuild()==true</code>.</li>
-<li>The actual machine reports of PTR <code>12.1.0.69189</code> are <code>isPublicTestClient=true</code>, <code>isTestBuild=false</code>, <code>isBetaBuild=false</code>, so the old AND condition must close the Native backend; this is not AuraContainer API which was removed by PTR8.</li>
-<li>After correction, only three raw flags are considered as alternative evidence for the test channel: Interface <code>&gt;=120100</code> and any one of public-test, test-build, and beta is true. Each flag uses <code>pcall</code> to obtain the safe Boolean value; AuraContainer, Slot, Group, and Layout methods still perform capability gates respectively.</li>
-<li>PTR 69189 Fixed FrameXML still having <code>AuraContainerMixin:SetEnabled</code>, <code>SetUnit</code> and Custom container's <code>AddAuraSlot</code>, <code>AddAuraGroup</code>, <code>SetAuraGroupLayout</code>. Therefore, the focus channel determination is currently corrected and fail-closed when the method is missing is not relaxed.</li>
-<li>Offline mock has been changed to public-test=true, test-build=false, beta=false to specifically cover this real flag combination. The strict-mock-only Flow case on the game client was changed to <code>skip</code>, which no longer pretends that the mock function fails.</li>
-</ul>
-<p>Fixed source:</p>
-<ul>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_AuraContainer/Blizzard_AuraContainer.lua">AuraContainer 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_AuraContainer/Blizzard_CustomAuraContainer.lua">CustomAuraContainer 12.1.0.69189</a></li>
-</ul>
-<h3 id="unitpower-actual-machine-report-boundary">UnitPower Actual machine report boundary</h3>
-<ul>
-<li>The return for the same PTR build shows: primary is <code>secret</code>, StatusBar and radial calls are all <code>accepted</code>, but <code>visualObservation=pending</code>; selected is <code>safe-number</code>, both sinks are also <code>accepted</code>, but the visual state is <code>blocked</code>.</li>
-<li><code>rawValuesCollected=false</code> Complies with security contracts. This report confirms that the API call was not rejected, that the screen scaled correctly with resources, and that it was not upgraded to the UnitPower PTR pass.</li>
-</ul>
-<h2 id="2026-08-09-ptr8-aurabutton-border-and-eam-classification-border-separation">2026-08-09: PTR8 AuraButton border and EAM classification border separation</h2>
-<ul>
-<li><code>AuraButton:AddDispelTypeTexture(texture, options)</code> of PTR8 is used for the Blizzard Aura dispellable/stealable/showAlways contract; the seven-color classification border of EAM only indicates the monitoring source type, and the two cannot impersonate each other.</li>
-<li>12.1 Native path can only create EAM own Texture in <code>initializeFrame</code> and apply static <code>unit + filterString</code> color; it is not allowed to add Region after initialization, track <code>OnSizeChanged</code> or use size changes to calculate the number of Aura.</li>
-<li>Aura Tooltips for TargetFrame and BuffFrame may be displayed by Blizzard tooltip objects other than <code>GameTooltip</code>. EAM only receives <code>SetUnitAura</code> post-call for anonymous short-term hover heartbeat, does not read the callback payload, does not save the frame, and does not deduce spellID; after the player presses Ctrl+Alt, he still manually confirms the ID and player/target routing in EAM Popup.</li>
-<li>Macro action ID uses the safe resolved subtype/ID of <code>GetActionInfo</code> as the first source, and then downgrades to <code>GetMacroSpell</code>/<code>GetMacroItem</code>; it does not rely on <code>id</code> in TooltipData which may only represent macro index.</li>
-</ul>
-<h2 id="2026-08-09-ptr8-svg-api-fixed-evidence">2026-08-09: PTR8 SVG API Fixed evidence</h2>
-<p>Fixed verification snapshot for Gethe/wow-ui-source commit a520b6c27bb897e6be2333b6cc2be36d52c7c11b, version 12.1.0.69189:</p>
-<ul>
-<li>Frame:CreateVectorGraphics() returns SimpleVectorGraphics; the generated file marks its SecretArguments as NotAllowed.</li>
-<li>SimpleVectorGraphics provides SetSVG, ClearSVG, HasSVG, GetSVGFileID; VectorGraphics: SecretArguments for SetSVG is AllowedWhenUntainted.</li>
-<li>SimpleTextureBase provides Texture:SetSVG and ClearSVG, but fixed generated files do not have Texture:HasSVG or Texture:GetSVGFileID; Texture:SetSVG's SecretArguments is AllowedWhenTainted. This only describes the Secret argument policy and does not mean allowing the creation or rearrangement of regions during combat.</li>
-<li>VectorGraphics only has the Region capability and does not have the rotation, mask, texcoord and blend contracts of the Texture; EAM is verified separately with the A/B probe, and no inference of capability equivalence is made.</li>
-<li>PTR 69189 Alpha 3 actual machine report confirms that two SetSVG paths are accepted and manual pattern observation is passed. VectorGraphics is HasSVG=true, GetSVGFileID classification zero, clear/reload pass; Texture introspection unavailable is the expected contract, and the old probe did not execute Texture clear/reload due to an error request for HasSVG.</li>
-<li><code>GetSVGFileID() == 0</code> is only considered a non-blocking diagnosis when the fixed AddOn-local package material, HasSVG=true, life cycle and artificial visual inspection are passed; it cannot be generalized to be valid for any SVG path.</li>
-</ul>
-<p>Fixed version source:</p>
-<ul>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleFrameAPIDocumentation.lua">SimpleFrame API 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleVectorGraphicsAPIDocumentation.lua">SimpleVectorGraphics API 12.1.0.69189</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/a520b6c27bb897e6be2333b6cc2be36d52c7c11b/Interface/AddOn/Blizzard_APIDocumentationGenerated/SimpleTextureBaseAPIDocumentation.lua">SimpleTextureBase API 12.1.0.69189</a></li>
-</ul>
-<p>Continuously update the knowledge base:</p>
-<ul>
-<li><a href="https://warcraft.wiki.gg/wiki/UIOBJECT_VectorGraphics">Warcraft Wiki: UIOBJECT_VectorGraphics</a> is used to track methods, inheritance and subsequent Patch changes; the page may be updated with the Wiki and cannot replace the build evidence of the above fixed commit.</li>
-<li><a href="https://warcraft.wiki.gg/wiki/Patch_12.1.0/API_changes">Warcraft Wiki: Patch 12.1.0/API changes</a> is used to track the PTR batch changes and official instructions.
-Applicable evaluation: Pandemic static prompt Region is the highest value candidate; Dispel CustomAsset/PreserveAsset needs to complete asset map/preload first; Legacy Glow can evaluate 12.1 SVG and 12.0.7 original material dual-track. Dynamic spell/item/Aura main icon, UnitPower radial, Tooltip Popup are currently unchanged.</li>
-</ul>
-<h2 id="2026-08-13-ptr-69273-aurasound-intelligence">2026-08-13: PTR 69273 AuraSound Intelligence</h2>
-<table>
-<thead>
-<tr>
-<th>Project</th>
-<th>69273 Facts</th>
-<th>EAM Policy</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Trigger</td>
-<td>Added／ApplicationsIncreased／Removed</td>
-<td>per-alert three switches and three strokes registration</td>
-</tr>
-<tr>
-<td>Sound info</td>
-<td>unitToken, spellID, file name/FileDataID, channel</td>
-<td>Only constructed from ordinary SavedVariables</td>
-</tr>
-<tr>
-<td>Filtering capabilities</td>
-<td>None caster/auraFilter</td>
-<td>Flag limitation, PTR Observation over-fire</td>
-</tr>
-<tr>
-<td>Life cycle</td>
-<td>Add returns registration ID, Remove returns by ID</td>
-<td>session registry, transactional exchange, removal failure and retry</td>
-</tr>
-<tr>
-<td>12.0.7</td>
-<td>only private Aura applied old API</td>
-<td>general Aura three trigger shows unsupported</td>
-</tr>
-<tr>
-<td>P0 boundary: Sound triggers must not be read/derived from AuraData, registration IDs must not be saved, Secret values ​​must not be compared, stringified, table keyed, or JSON. <code>RemoveAuraSound</code> only proves that subsequent registration is cancelled, and cannot be inferred that the played sound effect will stop.</td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>Fixed evidence:</p>
-<ul>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitAuraDocumentation.lua">12.1.0.69273 UnitAura API</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua">12.1.0.69273 Trigger enum</a></li>
-<li><a href="https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOn/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua">12.1.0.69273 UnitAuraSoundInfo</a></li>
-</ul>
-<h2 id="2026-09-19-1215-intrinsic_aurabutton-forward-technology-backup-rd-staged-non-1210-release-baseline">2026-09-19: 12.1.5 INTRINSIC_AuraButton Forward Technology Backup (R&amp;D Staged / Non-12.1.0 Release Baseline)</h2>
-<h3 id="1-development-boundaries-and-release-guidelines-iron-rules">1. Development boundaries and release guidelines (iron rules)</h3>
-<ul>
-<li><strong>Current status of test environment</strong>: Due to Blizzard closing 12.1 PTR, local development and testing are temporarily carried out on 12.1.5 PTR.</li>
-<li><strong>Release Baseline Lock</strong>: The target environment for official external release is <strong>Retail 12.1.0 (TOC: 120100)</strong>.</li>
-<li><strong>Implementation red line</strong>: Code implementation is <strong>100% strictly based on 12.1.0</strong>, maintaining the 12.1.0 compatible architecture with <code>AuraContainerService.lua</code> and <code>NativeAuraRenderer.lua</code> as the core; <strong>It is absolutely prohibited to use 12.1.5 exclusive API in the 12.1.0 release branch in advance (such as <code>CreateFrame("AuraButton")</code>)</strong> to prevent the vast majority of 12.1.0 player clients from crashing due to the missing API. This paragraph is for technical documentation only.</li>
-</ul>
-<h3 id="2-1215-intrinsic_aurabutton-specification-summary">2. 12.1.5 INTRINSIC_AuraButton Specification Summary</h3>
-<ul>
-<li><strong>Intrinsic type</strong>: <code>CreateFrame("AuraButton", nil, UIParent, "CustomAuraButtonTemplate")</code> (Intrinsic Frame inherited by Button).</li>
-<li><strong>Key Abilities</strong>:<ol>
-<li><strong>Independent first-level citizen</strong>: out of 12.1.0, it must be parasitic on the passive dependency of <code>AuraContainer</code>, allowing plug-ins to directly create a single independent Aura at the <code>Button</code> level.</li>
-<li><strong>Native one-way Sinks</strong>: <code>SetDurationBar</code>, <code>SetDurationCooldown</code>, <code>SetDurationText</code>, <code>SetApplicationCount</code>, <code>SetSpellName</code>, <code>SetCasterName</code>, <code>SetIcon</code>.</li>
-</ol>
-</li>
-<li><strong>Unbundling and hot replacement method group</strong>: Provides <code>ClearDurationText()</code>, <code>ClearApplicationCount()</code>, <code>ClearSpellName()</code>, <code>ClearDurationBar()</code>, <code>ClearDurationCooldown()</code>, <code>ClearIcon()</code>.<ol>
-<li><strong>Native Pandemic state machine</strong>: <code>AddPandemicActiveAnimation</code>, <code>AddPandemicEnterAnimation</code>, <code>AddPandemicLeaveAnimation</code>, <code>AddPandemicRegion</code>, with the C++ engine completely taking over the 30% critical value determination.</li>
-<li><strong>Native dispersion shading</strong>: <code>AddDispelTypeTexture</code>, <code>SetDispelTypeText</code>.</li>
-<li><strong>Safe right-click to cancel</strong>: <code>SetCancelAuraButtons</code>.</li>
-</ol>
-</li>
-</ul>
-<h3 id="3-future-architecture-potential-rd-blueprint-to-be-officially-launched-in-1215">3. Future architecture potential (R&amp;D blueprint to be officially launched in 12.1.5)</h3>
-<ul>
-<li><strong>Remove the "18 times of rebuilding requires /reload" restriction</strong>: 12.1.0 Since there is no unbinding API and the upper limit of Container rebuilding is 18 times (<code>maxCreatedContainerCount = 18</code>), players are forced to reload the interface when frequently changing fonts or skills. 12.1.5 After the unit is independent, it can be changed to create/release with a single button, completely saying goodbye to Container quota pressure.</li>
-<li><strong>Aura font size is free of /reload instant hot application</strong>: In the future, <code>ClearDurationText()</code> can be used in 12.1.5. Unbind the text sink first, re-install <code>SetFont</code> and then <code>SetDurationText()</code> to achieve 100% smooth instant hot application of font size and style adjustment.</li>
-</ul>
-<p>Fixed source:
-- <a href="https://warcraft.wiki.gg/wiki/INTRINSIC_AuraButton">Warcraft Wiki: INTRINSIC_AuraButton</a> (Revision <code>6878724</code>, 2026-09-19 00:19:09 UTC)</p>
+
+        <div class="translation-fallback">
+            <h3>English Version Offline / Translation Unavailable</h3>
+            <p>The English translation for this document could not be dynamically generated. This usually happens when:</p>
+            <ul>
+                <li>You are executing the build script in an offline environment.</li>
+                <li>The dynamically accessed Google Translate API is temporarily blocked or timed out.</li>
+            </ul>
+            <p><strong>Recommended Solution:</strong> Directly use your browser's built-in <em>"Translate to English"</em> function by right-clicking on the page.</p>
+        </div>
+
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

@@ -398,21 +398,36 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
     end
 
     -- 🌡️ 完美的 DoT Pandemic (傳染累加) 原生預測
-    -- 支援 12.1.5 GetRefreshCarryOverDuration 精確結餘窗口與 12.1 GetRefreshExtendedDuration
-    if Util.isSafePositiveNumber(auraInstanceID) and api.C_UnitAuras then
-        local baseDur = api.C_UnitAuras.GetAuraBaseDuration and api.C_UnitAuras.GetAuraBaseDuration(unit, auraInstanceID)
-        local carryOverDur = api.C_UnitAuras.GetRefreshCarryOverDuration and api.C_UnitAuras.GetRefreshCarryOverDuration(unit, auraInstanceID)
-        local extendedDur = api.C_UnitAuras.GetRefreshExtendedDuration and api.C_UnitAuras.GetRefreshExtendedDuration(unit, auraInstanceID)
-
-        if Util.isSafeNonNegativeNumber(carryOverDur) and Util.isSafePositiveNumber(baseDur) then
-            -- 12.1.5 精確結餘：結餘時長小於等於法術最大結餘上限（標準為基礎時間的 30%），處於無浪費的完美傳染窗口
-            if carryOverDur <= (baseDur * 0.305) then
-                state.pandemicReady = true
+    -- 優先支援 12.1.5 AuraContainerUtil.GetPandemicWindow，回退相容 12.1.5 GetRefreshCarryOverDuration 與 12.1 GetRefreshExtendedDuration
+    if Util.isSafePositiveNumber(auraInstanceID) then
+        local acu = api.AuraContainerUtil or _G.AuraContainerUtil or api.AuraUtil or _G.AuraUtil
+        local getPandemicWindow = acu and (acu.GetPandemicWindow or acu.IsInPandemicWindow)
+        if type(getPandemicWindow) == "function" then
+            local ok, inPandemic = pcall(getPandemicWindow, unit, auraInstanceID)
+            if ok and inPandemic ~= nil then
+                if type(inPandemic) == "boolean" then
+                    state.pandemicReady = inPandemic
+                elseif type(inPandemic) == "number" and Util.isSafeNonNegativeNumber(inPandemic) then
+                    state.pandemicReady = (inPandemic > 0)
+                end
             end
-        elseif Util.isSafePositiveNumber(extendedDur) and Util.isSafePositiveNumber(baseDur) then
-            -- 若當前重鑄預測時間小於基礎時間的 130% 限制，代表正處於最佳的 Pandemic 傳染窗口！
-            if extendedDur < (baseDur * 1.305) then
-                state.pandemicReady = true
+        end
+
+        if state.pandemicReady == nil and api.C_UnitAuras then
+            local baseDur = api.C_UnitAuras.GetAuraBaseDuration and api.C_UnitAuras.GetAuraBaseDuration(unit, auraInstanceID)
+            local carryOverDur = api.C_UnitAuras.GetRefreshCarryOverDuration and api.C_UnitAuras.GetRefreshCarryOverDuration(unit, auraInstanceID)
+            local extendedDur = api.C_UnitAuras.GetRefreshExtendedDuration and api.C_UnitAuras.GetRefreshExtendedDuration(unit, auraInstanceID)
+
+            if Util.isSafeNonNegativeNumber(carryOverDur) and Util.isSafePositiveNumber(baseDur) then
+                -- 12.1.5 精確結餘：結餘時長小於等於法術最大結餘上限（標準為基礎時間的 30%），處於無浪費的完美傳染窗口
+                if carryOverDur <= (baseDur * 0.305) then
+                    state.pandemicReady = true
+                end
+            elseif Util.isSafePositiveNumber(extendedDur) and Util.isSafePositiveNumber(baseDur) then
+                -- 若當前重鑄預測時間小於基礎時間的 130% 限制，代表正處於最佳的 Pandemic 傳染窗口！
+                if extendedDur < (baseDur * 1.305) then
+                    state.pandemicReady = true
+                end
             end
         end
     end
@@ -699,8 +714,8 @@ local function fullScanUnit(unit, eventName)
     for fIndex = 1, #filters do
         local filter = filters[fIndex]
         for index = 1, AuraService.scanLimit do
-            local auraData = cUnitAuras.GetAuraDataByIndex(unit, index, filter)
-            if not auraData or not canaccesstable(auraData) then
+            local okAura, auraData = pcall(cUnitAuras.GetAuraDataByIndex, unit, index, filter)
+            if not okAura or not auraData or not canaccesstable(auraData) then
                 break
             end
 

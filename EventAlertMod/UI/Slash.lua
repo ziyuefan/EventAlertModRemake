@@ -76,6 +76,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_DIAG or "/eam diag (或 /eam report) - 開啟外掛即時診斷報告視窗並支援一鍵複製")
     printLine(EAM.L.EAM_SLASH_HELP_DEBUG or "/eam debug - 顯示內部模組運作除錯摘要")
     printLine(EAM.L.EAM_SLASH_HELP_RUNE or "/eam rune - 顯示並複製死亡騎士符文即時槽位診斷 JSON")
+    printLine(EAM.L.EAM_SLASH_HELP_TRACE or "/eam trace (或 /eam cdtrace) [clear] - 開啟冷卻與法術覆蓋飛行記錄器視窗並支援一鍵複製")
     printLine(EAM.L.EAM_SLASH_HELP_EXPORT or "/eam export - 輸出精簡 AI 除錯與診斷狀態")
     printLine(EAM.L.EAM_SLASH_HELP_PROFILE or "/eam profile [export/import] - 開啟職業設定字串匯出/匯入視窗")
     printLine(EAM.L.EAM_SLASH_HELP_TEST or "/eam test [quick/core/boundary/aura121/all/live] - 執行流程驗證或開啟測試面版")
@@ -589,6 +590,18 @@ local function handleSlash(input)
                 ))
             end
             printLine("提示: 輸入 |cffffff00/eam metrics reset|r 可重設計數；輸入 |cffffff00/eam export|r 可開啟完整 JSON 匯出視窗。")
+        end
+    elseif command == "trace" or command == "cdtrace" then
+        local subCmd = commandIterator()
+        subCmd = subCmd and string.lower(subCmd)
+        local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+        if not cdTrace then
+            printLine("CooldownTrace 模組未載入。")
+        elseif subCmd == "clear" or subCmd == "reset" then
+            cdTrace.clear()
+            printLine("|cff00ff00[EAM Trace]|r 冷卻與法術覆蓋記錄已清空。")
+        else
+            cdTrace.openWindow()
         end
     elseif command == "export" and EAM.Debug.PromptExport then
         EAM.Debug.PromptExport.openWindow()

@@ -396,7 +396,25 @@ local function buildVisualFingerprint(db)
     local timerFontSize = timer and timer.fontSize or (config and config.fontSizeTimeVal) or 14
     local appFontSize = applications and applications.fontSize or (config and config.fontSizeStack) or 12
     local spellNameFontSize = spellName and spellName.fontSize or (config and config.fontSizeSpellName) or 12
+    -- 外框開關、各模組啟用與色彩必須參與指紋；否則切換邊框時 Native 容器會被判定為未變更而略過重建。
+    local borderParts = { tostring(not config or config.showBorder ~= false) }
+    local borderEnabled = config and config.borderEnabled or nil
+    local borderColors = config and config.borderColors or nil
+    local borderKeys = { "selfHelpful", "selfHarmful", "targetHelpful", "targetHarmful", "petAlert" }
+    for index = 1, #borderKeys do
+        local key = borderKeys[index]
+        borderParts[#borderParts + 1] = tostring(not (type(borderEnabled) == "table" and borderEnabled[key] == false))
+        local c = type(borderColors) == "table" and borderColors[key] or nil
+        if type(c) == "table" and tonumber(c[1]) and tonumber(c[2]) and tonumber(c[3]) then
+            borderParts[#borderParts + 1] = string.format("%.2f,%.2f,%.2f,%.2f",
+                tonumber(c[1]), tonumber(c[2]), tonumber(c[3]), tonumber(c[4]) or 1)
+        else
+            borderParts[#borderParts + 1] = "-"
+        end
+    end
+    local borderStr = table.concat(borderParts, ";")
     return table.concat({
+        borderStr,
         tostring(spellNameFontSize),
         tostring(config and config.fontFamily or "STANDARD"),
         tostring(timer and timer.placement or Constants.TEXT_PLACEMENT_TIMER_DEFAULT),

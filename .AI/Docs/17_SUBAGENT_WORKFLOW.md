@@ -11,6 +11,7 @@
 - 不重複派工；同一問題存在子代理結果時，除非有新證據或不同角度，不再派第二個做同樣分析。
 - 程式修改型子代理程式必須有明確的書寫範圍，避免多個代理程式改同一個檔案。
 - 所有分代理結果均需由主代理整合與最終判斷，不直接視為已驗證事實。
+- **每輪派工必查 Warcraft Wiki API 變更**：主代理派工前與子代理執行 API / 框架 / 事件相關工作時，必須主動查驗 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes` 之最新情報（目前基準為 PTR 3 Build 69952），並於 Prompt 明確交代最新狀態，嚴禁使用過期假設。
 
 ## 適合使用子代理人的姿勢
 
@@ -56,6 +57,8 @@
 
 必要規則：
 - Retail only。
+- 基準環境：以 12.1.5 PTR（Build 69952）為主力實機測試目標，兼顧 12.1.0 / 12.0.7 相容。
+- 依循 Warcraft Wiki 最新 API 變更情報（https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes）。
 - 不支援 Classic / MOP / Cata / Wrath / Era。
 - 不繞過 Secret / Protected Data。
 - 避免 taint；不 hook secure/protected chain。

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- EAM_AI_GOVERNANCE_DIRECTIVE: 專供 AI 代理人（Agentic AI / Subagents）執行指導之權威結構化規範 -->
-<eam_ai_governance version="1.2" last_updated="2026-09-19">
+<eam_ai_governance version="1.3" last_updated="2026-10-16">
     <!-- 1. 元資料與受眾 (Metadata & Audience) -->
     <metadata>
         <title>EventAlertMod AI 代理人核心治理與架構指導規範 (AI Governance Directive)</title>
@@ -45,7 +45,7 @@
         </establishment_policy>
     </lifecycle_and_triggers>
 
-    <!-- 3. 不可逾越之五大絕對鐵律 (Absolute Iron Rules) -->
+    <!-- 3. 不可逾越之六大絕對鐵律 (Absolute Iron Rules) -->
     <iron_rules>
         <rule id="R1_NO_AUTO_DEPLOY" severity="CRITICAL">
             <directive>絕對禁止 AI 自動或主動執行 Deploy-EventAlertMod.ps1 進行任何本機遊戲目錄部署！</directive>
@@ -69,10 +69,15 @@
             <directive>修改、覆寫或刪除專案關鍵檔案前，必須先備份至 .AI/backup/ 目錄。</directive>
             <naming_convention>原始檔名__yyyyMMddHHmmss（例如 AGENTS.md__20260904130000）。</naming_convention>
         </rule>
-        <rule id="R6_STAGED_VERSION_IMPLEMENTATION_BARRIER" severity="CRITICAL">
-            <directive>實作代碼 100% 嚴格以 Retail 12.1.0 為正式發布基準，12.1.5 前瞻技術僅作備存，嚴禁提前進入實作。</directive>
-            <rationale>因暴雪關閉 12.1 PTR，本機暫於 12.1.5 PTR 測試；但玩家正式服客戶端均為 12.1.0。提前引入 12.1.5 專屬 API（如 CreateFrame("AuraButton")）會導致玩家端崩潰。</rationale>
-            <communication_constraint>凡後續對話牽涉到 12.1.5 的任何討論，AI 在回覆結尾均必須明確聲明並確認「12.1.5 的部分目前僅為技術備存／研究，尚不可進入代碼實作，一切實作嚴格以 12.1.0 正式服發布為準」。</communication_constraint>
+        <rule id="R6_PROGRESSIVE_1215_COMPATIBILITY_GATE" severity="CRITICAL">
+            <directive>全面解鎖 Retail 12.1.5（TOC: 120105）環境之代碼實作；新特性採漸進增強與防禦性能力檢定，確保跨版本向下相容 12.1.0 與 12.0.7。</directive>
+            <rationale>專案已全面升級適配魔獸世界正式服 12.1.5，雖 10/15 正式服才會上線，但本機以 12.1.5 PTR 進行主力實機測試，並須無縫向下相容 12.1.0 與 12.0.7 客戶端。凡使用 12.1.5 專屬 API（如 C_Timer.NewTimedSignalMap、原生動畫、GetRefreshCarryOverDuration、math.clamp 等），必須封裝安全能力檢定閘門與 Lua 降級後備（Fallback），嚴禁無保護呼叫導致舊版客戶端崩潰。</rationale>
+            <communication_constraint>12.1.5 環境開發已正式解鎖進入實作（非僅技術備存），移除先前對話結尾強制宣告「12.1.5 僅為備存」之警語約束。</communication_constraint>
+        </rule>
+        <rule id="R7_TOOLCHAIN_RUNTIME_PRECEDENCE" severity="HIGH">
+            <directive>專案輔助工具、套件管理與腳本執行一律嚴格遵守個別評估與優先級：「uv 優先 > Node.js (評估最佳化後選用合適包管理器) > 全域 Python 備援」。</directive>
+            <prohibition>嚴禁未經確認使用全域 pip install 污染使用者系統 Python 環境；現有及未來新增之 Python 腳本必須評估適合環境（具第三方依賴者一律採 uv run + PEP 723 隔離；純標準庫者採輕量 Python）；Node.js 僅在評估確定為最佳化選擇時採用，且須評估合適之包管理器（優先 pnpm 硬連結快取、臨時工具 pnpm dlx / npx、極速建置工具 esbuild / vite 等）。</prohibition>
+            <rationale>確保系統環境純淨無污染，各語言與包管理器各司其職發揮極致效能與確定性。</rationale>
         </rule>
     </iron_rules>
 
@@ -83,6 +88,7 @@
             <definition>動態最新變更情報、官方原始碼 Diff 與本機實機驗證。具有對全專案任何技術規範之最高覆蓋權（Strict Precedence）。</definition>
             <sources>
                 <source path=".AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md">Retail 12.x 最新變更情報庫與 APICHG 專家章程</source>
+                <source url="https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes">Warcraft Wiki Patch 12.1.5 API changes 即時情報（追蹤 PTR 1/2/3 及最新 Builds）</source>
                 <source skill="eam-api-change-intel">WoW 最新 API 變更調研與防禦性封裝技能</source>
                 <source repo="BlizzardInterfaceCode">暴雪官方 UI 最新 Diff（PTR / XPTR / Retail）</source>
                 <source matrix="LiveValidationMatrix.json">本機真人多客戶端實機驗證數據</source>
@@ -128,6 +134,7 @@
             <rule id="AMD_1_MANDATORY_ANCHOR">當發生跨對話接手、記憶壓縮或對 Markdown 規範產生理解歧義時，Agent 必須以本 XML 結構化標籤為第一道硬性校準錨點。</rule>
             <rule id="AMD_2_ZERO_HALLUCINATION">XML 標籤定義之約束（如 iron_rules, secret_values_sentinel, fact_of_truth_hierarchy）具備最高優先權，嚴禁以自由文本之推論漂移覆蓋標籤規定。</rule>
             <rule id="AMD_3_SUBAGENT_SLICE">派發子代理任務時，優先自本 XML 切出對應子節點注入 Prompt，達成 100% 約束力與零語意衰減。</rule>
+            <rule id="AMD_4_PROACTIVE_API_WIKI_INSPECTION">每輪需求啟動前與分派 Subagent 任務時，必須主動探訪 https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes 查核最新 PTR Builds 變更（如 PTR 3 Build 69952），並將最新情報注入 Prompt 與能力檢定中。</rule>
         </anchor_rules>
     </anti_memory_drift_protocol>
 
@@ -247,5 +254,14 @@
         <tone_and_manner>使用預設台灣慣用繁體中文，親切稱呼使用者為「少年欸」，對話專業、技術清晰、直切任務重點。</tone_and_manner>
         <no_assumptions>遇到需求模糊時主動提出關鍵問題釐清，不隨意猜測實機環境。</no_assumptions>
         <doc_synchronization>每次代碼重構或修復完成後，必須主動同步更新相關治理文件、連續性記憶（PROJECT_MEMORY.md / 28_PROJECT_CONTINUITY.md）與問題日誌（15_DEVELOPMENT_ISSUE_LOG.md），不得等待指示。</doc_synchronization>
+        <failure_prediction_protocol>
+            <directive>每次功能開發、修復或架構重構完成時，嚴禁僅回報「代碼完成與測試通過」即收尾；必須主動執行深層故障預測與威脅推論。</directive>
+            <dimensions>
+                <dimension name="high_prob_edge_cases">高機率邊緣異常：長距離法術彈道時間差、目標凍結狀態突變、引導法術提前中斷時序衝突。</dimension>
+                <dimension name="med_prob_engine_boundaries">中機率引擎與視覺邊界異常：次像素外框對齊抖動、視窗縮放比例、音效節流超過引擎容許上限（如 12.1.5 PTR 4 限制 > 5s 拋錯拒絕）、元表嚴格模式屬性存取崩潰。</dimension>
+                <dimension name="low_prob_lethal_risks">低機率致命風險：戰鬥中調用未受保護 UI 方法引發 ADDON_ACTION_BLOCKED、戰鬥中數值為 Secret 時進行 Lua 大小比較崩潰、狀態物件池洩漏導致長時間遊戲記憶體暴增。</dimension>
+                <dimension name="live_troubleshooting_and_mitigation">實機排查手法與立即對策：提供遊戲內木樁距離切換測試、極速連按、頻繁目標切換等具體驗證操作與降級排查手法。</dimension>
+            </dimensions>
+        </failure_prediction_protocol>
     </agent_behavior_protocol>
 </eam_ai_governance>

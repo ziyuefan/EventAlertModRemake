@@ -1,3 +1,263 @@
+### 2026-10-16 EAM-20261016-ALPHA-8.8-FAILURE-PREDICTION-INFERENCE-SOP-ESTABLISHED：開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範 (SOP Established)
+
+- 狀態：已完成 (Contracts 502/502, Flow 108/108, Syntax 79/79, Package DryRun PASS)。
+- 需求背景與治理升級：
+  少年欸肯定「深層故障預測與威脅推論」的價值（"靠!你還是能想很細的嘛,以後開發完成都做預測與推論"），並正式確立為專案最高開發流程準則（SOP）。
+  過去傳統開發往往止步於「靜態語法通過、單元測試綠燈」，然而魔獸世界正式服環境高度複雜（戰鬥中 Secret 數值運算、UI 污染 Taint 擴散、Action Blocked 戰鬥保護、網路 Ping 值與長距離彈道時間差、高更新頻率下的 GC 尖峰、不同解析度次像素抖動等），必須在每次交付前主動進行嚴密威脅推論。
+- 核心規範落地內容：
+  1. **`.AI/AGENTS.md`**：
+     - 在「最終回報必須包含」新增第 12 項「🚨 主動故障預測與威脅推論（Proactive Failure Prediction & Threat Inference）」。
+     - 新增獨立章節 `## 開發完成主動執行故障預測與威脅推論原則 (Proactive Failure Prediction & Threat Inference Protocol)`，規範四大推論維度（高機率邊緣異常、中機率引擎邊界異常、低機率致命風險、實機排查手法與立即對策）。
+  2. **`.AI/PROJECT_MEMORY.md`**：
+     - 在「固定路徑與禁止事項」增補鐵律條款，將交付後主動威脅推論列為 AI 代理人硬性履行義務。
+  3. **`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` & `.AI/Docs/33_AI_GOVERNANCE_DIRECTIVE.md`**：
+     - 升級至 v1.3，於 `<agent_behavior_protocol>` 擴充 `<failure_prediction_protocol>` 結構化節點，確立在模型換代與上下文截斷後仍具 100% 結構化約束力。
+  4. **`.AI/Docs/28_PROJECT_CONTINUITY.md` & `.AI/Data/ProjectContinuity.json`**：
+     - 推進連續性快照至 `2026-10-16.03`，記錄最新治理升級事實。
+- 驗證結果：
+  - CheckLuaSyntax.ps1：79/79 通過。
+  - Run-FlowValidation.ps1：108/108 通過。
+  - Test-ValidationContracts.ps1：502/502 通過。
+  - Build-Package.ps1 -DryRun：PASS。
+
+### 2026-10-16 EAM-20261016-ALPHA-8.8-PATCH-12.1.5-OPTIMIZATION-PLAN-EXECUTION：Retail 12.1.5 (Build 69594 ~ 70077) 官方 API 變更優化計劃四大階段全面實裝與門禁驗證閉環
+
+- 狀態：已完成 (Contracts 502/502, Flow 108/108, Syntax 79/79, Package DryRun PASS)。
+- 需求背景與改造架構：
+  依據最新 12.1.5 API 變更情報，執行《EAM Retail 12.1.5 官方 API 變更優化與改造計劃書》四階段架構重構：
+  1. **Phase 1：核心排程與計時器零分配架構 (Core/Scheduler.lua)**：
+     - 重構 `Scheduler.createSignalMap`，使用原生代理包裹器 (`wrapper`)，支援 `TimedSignalMap` 原生呼叫與安全降級。
+     - 實作雙向別名與高階介面：`HasSignal(key)`、`GetSignalTime(key)`、`GetSignalCount()`、`GetNextSignal()`、`CancelSignal(key)`、`CancelAllSignals()`。
+     - 引入 `callNativeMulti({"CancelSignal", "Cancel"})` 與 `callNativeMulti({"CancelAllSignals", "Clear"})`，完全消除因方法名稱差異引發的誤降級。
+     - 後備實作 `FallbackSignalMap` 與原生代理皆支援全部 10 大介面，提供零 GC 高效排程。
+  2. **Phase 2：光環與音效管線 12.1.5 對齊 (AuraSoundService, NativeAuraRenderer, AuraService)**：
+     - `Services/AuraSoundService.lua`：因應 PTR 4 引擎硬性約束，加入防禦性雙向鉗位 `throttleSeconds = math.min(math.max(throttleSeconds, 0.05), 5.0)`，徹底杜絕音效過度觸發與引擎報錯。
+     - `UI/NativeAuraRenderer.lua`：
+       - 實作生命週期原生動畫綁定 `bindLifecycleAnimations(auraButton, style)`，支援 `AddAuraShownAnimation` 與 `AddAuraAssignedAnimation`。
+       - 實作防禦性探針 `hasButtonMethod(button, methodName)`，利用 `pcall` 隔絕嚴格元表對未定義方法之 `__index` 報錯，確保相容所有實機與測試環境。
+       - 整合 `CustomAuraButton:SetCasterName(casterText)` 支援非玩家光環施法者名稱顯示。
+     - `Services/AuraService.lua`：優先使用 12.1.5 官方精準結餘 API `AuraContainerUtil.GetPandemicWindow(unit, auraInstanceID)` 與 `AuraUtil.GetPandemicWindow`。
+  3. **Phase 3：UI 與工具庫現代化 (Util.lua, AlertBorderStyles.lua, Options.lua)**：
+     - `Core/Util.lua`：
+       - `Util.createFrame`：將 `template` 字串正規化為 `{ template }` 陣列以符合 `CreateFrameWithOptions` 簽章；支援 `extraOptions.hidden = true`，在幀建立初始階段即抑制閃爍。
+       - `Util.snapToPixels`：優先採用 12.1.5 遞迴像素對齊 API `PixelUtil.SetRoundLayoutToNearestPixelRecursively(region)`。
+       - 新增 12.1.5 Unicode 大小寫折疊工具 `Util.foldCase` 與 `Util.foldcase` 別名，優先採用 `C_Intl.FoldCase` / `C_Intl.ToLower`。
+     - `UI/AlertBorderStyles.lua`：外框材質全面以 `Util.snapToPixels` 對齊，消除 2K/4K 縮放時的次像素外框抖動。
+     - `UI/Options.lua`：整合 `Util.foldCase` 提供 Unicode 語系安全的法術搜尋過濾。
+  4. **Phase 4：全套測試覆蓋與品質門禁閉環 (FlowTestRunner.lua)**：
+     - 擴充 `scheduler.timed_signal_map` 流程測試：嚴格斷言 `HasSignal`、`GetSignalTime`、`GetSignalCount`、`GetNextSignal`、`CancelSignal` 與 `CancelAllSignals`。
+     - 擴充 `aura.sound.throttle_seconds` 流程測試：驗證預設值、邊界鉗位上限 5.0s 與下限 0.05s 之防禦行為。
+     - 擴充 `util.native_1215_math_table_string` 流程測試：驗證 `Util.foldCase` / `Util.foldcase` 與 `hidden = true` 建立之幀屬性。
+- 驗證結果：
+  - CheckLuaSyntax.ps1：79/79 通過。
+  - Run-FlowValidation.ps1：108/108 通過 (0 fail, 0 skip)。
+  - Test-ValidationContracts.ps1：502/502 通過。
+  - Build-Package.ps1 -DryRun：打包演練 PASS (`Dist/EventAlertMod_alpha_8.8_*.zip`)。
+
+### 2026-10-16 EAM-20261016-ALPHA-8.8-PATCH-12.1.5-API-CHANGES-KNOWLEDGE-INTAKE：WoW Retail 12.1.5 官方 API 變更與開發注意事項全面納入專案知識管理
+
+- 狀態：已完成 (Contracts 502/502, Flow 108/108, Syntax 79/79, Package DryRun PASS)。
+- 需求背景與調研剖析：
+  1. **官方權威變更源對齊**：
+     - 使用者指示將兩大官方權威變更網址全面納入知識管理：
+       - `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes` (Revision 6905828)；
+       - `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes` (Revision 6912957)。
+  2. **四次 PTR Build 演進與重大安全邊界梳理**：
+     - **PTR 1 (Build 69594)**：`CustomAuraButton` 原生 Pandemic 動畫 (`AddPandemicActive/Enter/LeaveAnimation`)、動畫受限切面 (`QueryAnimationProgress`, `AddAnimations`)；Region 傳參改傳物件參考防 Fatal Error；受保護 Cooldown 框架禁止 Tainted 代碼調用 `SetCooldown` 與 `Clear`；Castbar ID 依 unit token 大小寫唯一化；`TimedSignalMap` C++ 排程器；C++ 原生加載庫 (`math.*`, `table.*`, `string.*`)；徹底移除 10 大相容庫 (Blizzard_Deprecated*)；新命名空間 `C_Weather` 與 `C_Intl`。
+     - **PTR 2 (Build 69848)**：`AddAuraShown/AssignedAnimation`；`VertexColor` 與 `TexCoords` 秘密切面擴充；Damage Meter `sourceGUID` 秘密化；`UnitFrameUtil` 安全轉送庫引入；`C_Intl` 支援 Tainted 秘密字串；恢復 3 個名條 CVars。
+     - **PTR 3 (Build 69952)**：`GetArenaOpponentSpec` 秘密屬性化（由 `UnitFrameUtil` 安全渲染）；`UnitFrameUtil` 擴充角色職責圖示與專精顯示；`C_UnitAuras.GetRefreshCarryOverDuration` 官方精準結餘計算。
+     - **PTR 4 (Build 70077, 最終 PTR 基準)**：`C_UnitAuras.AddAuraSound` 限制播放時長最長 5 秒，且 `throttleSeconds` > 5s 拋錯拒絕；`C_Intl.GetSortKey` 空字串容錯修復。
+  3. **12.1.5 Consolidated Changes 總清冊統計**：
+     - Global API: 82 新增 / 4 移除；
+     - FrameXML: 29 新增 / 15 移除；
+     - ScriptObjects: 30 新增 (TimedSignalMap 8, LocaleContext 22)；
+     - Widgets: 2 新增 (`GetRoundLayoutToNearestPixel`, `SetRoundLayoutToNearestPixel`)；
+     - Events: 1 新增 (`WEATHER_CHANGED`)；
+     - CVars: 12 新增 (`dumpSmallAlloc`, `tooltipShowAuraCasterNames`, `minimapShowPlayerCoords`, `coordsByTenths` 等)；
+     - 10 大 Deprecated 相容套件徹底拔除。
+- 知識庫沉澱與模組對齊產出：
+  1. `.AI/skills/eam-api-change-intel/SKILL.md`：更新第 5 節完整記錄 PTR 1~4 與 Consolidated Changes。
+  2. `.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`：建立 12.1.5 Consolidated Changes 總清冊分類與 EAM 核心模組防禦策略矩陣。
+  3. `.AI/Docs/02_RETAIL_API_BOUNDARIES.md`：增補 12.1.5 安全與 Taint 邊界（受保護冷卻框架防護、`sourceGUID`/專精秘密化、`UnitFrameUtil`、`AddAuraSound` 5s 約束）。
+  4. `.AI/Docs/28_PROJECT_CONTINUITY.md` & `.AI/Data/ProjectContinuity.json`：建立 2026-10-16.01 儲存點與最新事實錨點。
+- 驗證結果：
+  - CheckLuaSyntax.ps1：79/79 通過。
+  - Run-FlowValidation.ps1：108/108 通過。
+  - Test-ValidationContracts.ps1：502/502 通過。
+  - Build-Package.ps1 -DryRun：打包乾跑通過。
+
+### 2026-10-10 EAM-20261010-ALPHA-8.8-TAINT-SECRET-AND-RAY-OF-FROST-CHANNEL-HEURISTIC：秘密光環Taint報錯根除、戰鬥光環靜默隔離、引導先驗冷卻即刻初始化與零污染CDR採樣
+
+- 狀態：已完成 (Contracts 502/502, Flow 108/108, Syntax 79/79, Package DryRun PASS)。
+- 需求背景與問題診斷：
+  1. **魔獸 12.x 戰鬥中秘密光環 Taint 紅字報錯 (GetAuraDataByIndex Taint)**：
+     - 使用者上傳實機報錯截圖 `media_1791564969958_3e98f577.png`，在實機戰鬥中拋出：
+       `EAM Event Error on [UNIT_AURA]: GetAuraDataByIndex(): Auras cannot be accessed when secret while tainted by 'EventAlertMod' Lua Taint: EventAlertMod`
+     - 診斷原因：前次提交於 `CooldownService.lua` 註冊了 `UNIT_AURA` 監聽 target 與 player，並在戰鬥中調用了 `detectTargetFrozenState` 執行 `cUnitAuras.GetAuraDataByIndex("target", i, "HARMFUL")`。在 WoW Retail 12.0/12.1+（Midnight）受污染（Tainted）環境下，戰鬥中存取秘密光環會直接被暴雪 C-engine 攔截並拋出硬性保護錯誤！
+     - 解決方案：**冷卻服務絕對禁止註冊 `UNIT_AURA`**，徹底移除 `onUnitAura` 回呼；戰鬥中全面靜默隔離 `GetAuraDataByIndex`。被動減 CD 的檢驗全權交給 `C_Spell.GetSpellCooldown` 的高頻突發採樣器（Spell Cooldown API 不受 Aura Secret 限制）。同時加固 `AuraService.lua`、`PlayerStatService.lua` 與 `CooldownTrace.lua`，所有光環讀取全面以 `pcall` 與 `InCombatLockdown()` 守衛隔離。
+  2. **引導技能（冰霜射線 205021）引導開始時 remaining=0 且戰鬥中未進入倒數**：
+     - 使用者回報「引導結束才變彗星風暴, 引導前是冰霜射線, 引導開始時remaining是0, 不是引導結束, 引導開始就應該倒數60秒」。
+     - 診斷原因：引導開始時，`GetSpellCooldown(205021)` 回傳 `dur=0` 或受保護秘密值，使得 `infoSafe = false`。代碼在判斷時落入 `else hasActiveCooldown = true`，使 `hasActiveCooldown` 被設為 true。這直接導致後續 `if not hasActiveCooldown` 條件失敗，先驗啟發式字典 (`SpellHeuristics`) **完全被跳過**！隨後落入 `setProtectedTimer` 清空計時器 (`expirationTime = nil`)。
+     - 解決方案：在 `refreshAlert` 中，當 `isCastEvent` 為真時，若暴雪 API 回傳 `duration <= MIN_REAL_COOLDOWN_SECONDS` 或受秘密值保護 (`hasRealNumericCooldown == false`)，立即以先驗啟發式字典 `SpellHeuristics.SPELL_META[alert.spellID]` 初始化 `startTime = now, duration = fallbackCD, infoSafe = true, isOnGCD = false`。使「冰霜射線」於 `UNIT_SPELLCAST_CHANNEL_START` 第 0 毫秒即刻進入 60.0s 倒數並啟動原生轉圈遮罩，`ACTIVATE_MATCH` 精確輸出 `remaining = 60.0`。
+  3. **白化天賦與冰槍碎冰解耦聯動**：
+     - 冰法打出冰霜長矛 (30455) 時，在 `onSpellcastSucceeded` 中派發 `router.fire("EAM_SHATTER_CONSUMED", 30455, 1)`，通知 `GroundEffectService` 為場上的冰霜之球 (84714) 延長 0.1s，完全不讀取受保護秘密光環。
+     - 60ms 高頻自適應突發採樣器 (`startBurstCDRSampler`) 輪詢 `C_Spell.GetSpellCooldown(84714)`，伺服器結算 0.5s 縮短時即刻以 `SetCooldown` 同步轉圈角度。
+- 重構實作與產出：
+  1. `Services/CooldownService.lua`：徹底移除 `UNIT_AURA` 監聽與 `onUnitAura`，加固先驗冷卻即刻初始化；施放冰槍派發 `EAM_SHATTER_CONSUMED`；60ms 突發採樣器即時比對。
+  2. `Services/AuraService.lua`、`PlayerStatService.lua`、`Debug/CooldownTrace.lua`：全面加固 `pcall` 與戰鬥鎖定檢驗，杜絕秘密光環報錯。
+  3. `Data/SpellHeuristics.lua`：補充寒冰護體 `[11426] = { cooldown = 25.0 }`。
+- 驗證結果：
+  - CheckLuaSyntax.ps1：79/79 通過。
+  - Run-FlowValidation.ps1：108/108 通過。
+  - Test-ValidationContracts.ps1：502/502 通過。
+  - Build-Package.ps1 -DryRun：打包乾跑通過。
+
+### 2026-10-10 EAM-20261010-ALPHA-8.8-CDR-OVERHAUL-BURST-SAMPLER-AND-SHATTER-TELEMETRY：天賦減CD全流程重構、80ms自適應突發採樣器與白化天賦地面效果延伸
+
+- 狀態：已完成 (Contracts 502/502, Flow 108/108, Syntax 79/79, Package DryRun PASS)。
+- 需求背景與問題診斷：
+  1. **冰法等多天賦被動減 CD 無法即時反映與倒數脫節**：
+     - 使用者回報「幹! 那觸發冷卻就不要抓GetBaseSpell 就不會覆蓋冰霜射線的法術ID啊」、「接下來請徹底解決減CD問題, 如果原本的trace 追蹤資訊不夠請在思考要log 那些資訊, 例如結冰天賦還要考慮冰霜長矛目標有無凍結的 deuff , 額外打到的敵人目標身上是打掉」。
+     - 診斷原因一（GetBaseSpell 反向劫持）：在施法事件中，若直接以技能之 GetBaseSpell 反向查詢基礎法術，引導冰霜射線 (205021) 期間若觸發施放彗星風暴 (153595)，或施放時光倒轉後返回技能，會反向查表命中主技能並將正在倒數中的主冷卻抹除清空！
+     - 診斷原因二（彈道飛行時間與舊取樣器脫節）：冰霜長矛 (30455) 具有 0.2~1.2 秒彈道飛行延遲（最遠 40 碼）。原本的 3 次延遲取樣 (0.12s, 0.35s, 0.70s) 在命中前就已結束，且多次連續施法時 token 會互相覆蓋導致後續取樣遺失。
+     - 診斷原因三（暴雪不派發事件與碎冰前置判定）：暴雪 Retail 12.x 對被動天賦微幅減 CD (如碎冰減 0.1s、白化減 0.5s) 不會派發 SPELL_UPDATE_COOLDOWN 框架事件；且若目標身上未帶有凍結 Debuff（如冬之寒意 Winter's Chill）或玩家無寒冰指，冰槍命中根本不觸發碎冰，導致冷卻時間根本未被暴雪扣減。
+     - 診斷原因四（轉圈遮罩與地面持續時間）：暴雪原生 CooldownFrame 若綁定相同 DurationObject 指標時可能略過轉圈進度重繪；且天賦「白化」每碎冰一層會延長「冰霜之球」地面效果持續時間 0.1 秒，地面效果服務原先未予適配。
+- 重構實作與產出：
+  1. **杜絕 GetBaseSpell 反向劫持 (Services/CooldownService.lua)**：
+     - 施法觸發嚴格限定於精確匹配 (spellID == alert.spellID) 或天賦覆蓋替換匹配 (alertOverrideSpellIDs[index] == spellID)；
+     - 嚴格規定當主技能正處於有效冷卻倒數中時，禁止任何異種法術 ID 覆蓋其冷卻身分，徹底終結冰霜射線遭彗星風暴反向抹除冷卻的重大隱患。
+  2. **高頻自適應突發取樣器 (Services/CooldownService.lua)**：
+     - 實裝 CooldownService.startBurstCDRSampler(1.25) 與 burstCDRSamplerTick，以 80ms 週期高頻取樣當前運行中之冷卻，持續 1.25 秒（無縫覆蓋 0~40 碼彈道飛行）；
+     - 逐一比對 oldExpirationTime 與 newExpirationTime，一旦檢測到縮短超過 0.02 秒，即刻觸發 fireStateChanged 並記錄 CDR_DETECTED；
+     - 活躍取樣器全面支援充能技能 (isChargeBased)，兼顧合規性保留 _activeCDRRetryPending 標記契約。
+  3. **白化天賦對地面效果持續時間延伸 (Services/GroundEffectService.lua)**：
+     - 監聽 EAM_SHATTER_CONSUMED 事件：若場上有運行的冰霜之球 (84714) 地面效果且玩家習得白化 (1281638) 天賦，自動將持續時間與到期時間延長 0.1 秒，精確同步天賦機制。
+  4. **渲染器原生轉圈角度補償 (UI/Renderer.lua)**：
+     - 在 timingChanged 發生時，加固呼叫 icon.cooldown:SetCooldown(timer.startTime, timer.duration)，確保暴雪原生 CooldownFrame 遮罩角度即時重繪。
+  5. **冷卻飛行記錄器全方位冰霜與 CDR 遙測 (Debug/CooldownTrace.lua)**：
+     - 增加 detectTargetFrozenState（目標冬之寒意層數與凍結狀態）與 detectPlayerFrostState（寒冰指層數與 5 大關鍵減 CD 天賦）；
+     - 記錄 CDR_TRIGGER_CAST、SHATTER_IMPACT 與 CDR_DETECTED，並於輸出底部展示「Frost State & CDR Environment Snapshot」。
+- 驗證結果：
+  - CheckLuaSyntax.ps1：79/79 通過。
+  - Run-FlowValidation.ps1：108/108 通過。
+  - Test-ValidationContracts.ps1：502/502 通過。
+  - Build-Package.ps1 -DryRun：打包乾跑通過。
+
+### 2026-10-07 EAM-20261007-ALPHA-8.8-ZERO-CD-OVERRIDE-AND-ACTIVE-CDR-FLIGHT-TRACE：零CD天賦覆蓋觸發技冷卻保留、活躍冷卻250ms自適應採樣器與冷卻飛行記錄器實裝
+
+- 狀態：已完成 (Contracts 501/501, Flow 108/108, Syntax 79/79, Package DryRun PASS)。
+- 需求背景與問題診斷：
+  1. **冰霜射線點了彗星風暴天賦後，施放彗星風暴導致冰霜射線冷卻直接消失**：
+     - 使用者回報「冰霜射線: 點了彗星風暴後, 引導期間其實就計算冷卻了, 但是引導結束才會變成彗星風暴, 此時施放彗星風暴視同同一技能ID結果變成沒有冷卻時間,直接冷卻消失, 如果不點彗星風暴這類override spell 就不會」。
+     - 診斷原因：冰霜射線 (205021) 在導引結束後，天賦將技能按鍵臨時覆蓋為免費觸發技「彗星風暴」(153595)。當玩家施放彗星風暴時，`activateSpell` 匹配到冰霜射線的警報，盲目將 `activationSpellIDs` 覆寫為 153595 並查詢其冷卻。由於該臨時彗星風暴為免費觸發技 (duration = 0)，EAM 誤判冷卻已完成，將 `state.completed` 設為 true 並清空計時器，導致冰霜射線原本剩餘的 55 秒冷卻被徹底抹除！
+  2. **被動天賦減 CD 無法即時更新畫面**：
+     - 使用者回報「另外減CD這件事還是沒法即時更新, 得另外想辦法」。
+     - 診斷原因：被動天賦減 CD（如冰槍術搭配白化縮短冰霜之球冷卻時間）具有遠距離彈道時間（最遠 40 碼可達 1.1 秒），且暴雪伺服器在傷害結算扣減冷卻時不會派發任何客戶端事件（無 SPELL_UPDATE_COOLDOWN）。單純依賴施法瞬間的固定延遲重試無法穩定覆蓋所有距離與被動跳跳傷害。
+  3. **線上除錯與記錄蒐集需求**：
+     - 使用者提出「你要不要再增加一些線上可以除錯或蒐集偵錯訊息的方案讓我可以回報給你(或者我RL後你可以從WTF 的SAVE讀取)」。
+- 重構實作與產出：
+  1. **零 CD 覆蓋觸發技保護屏障 (`Services/CooldownService.lua`)**：
+     - 在 `activateSpell` 中加入覆蓋保護邏輯：若施放的技能與警報基礎技能不同 (`spellID ~= alert.spellID`)，且該法術無實質冷卻 (`duration <= 1.5s`)，但目前警報已有未到期的有效倒數 (`expirationTime > now + 0.3`)，判定為「零 CD 臨時覆蓋觸發技」，禁止覆寫 `activationSpellIDs`。
+     - 在 `refreshAlert` 中，若查詢結果為無活躍冷卻，但先前狀態有未過期的倒數且處於法術覆蓋狀態，強制保留現有計時器，絕不提前抹除。
+  2. **活躍冷卻 250ms 自適應動態採樣器 (`Services/CooldownService.lua`)**：
+     - 實裝 `CooldownService.ensureActiveCDRSampler()` 與 `activeCDRSamplerTick`。只要畫面上存在正在倒數中的冷卻，自動以 0.25 秒為週期進行極低開銷微取樣。
+     - 當檢測到 `expirationTime` 因減 CD 縮短時，即刻調用 `fireStateChanged` 刷新畫面；所有冷卻倒數結束後自動休眠（0 效能開銷）。
+  3. **高精度冷卻飛行記錄器與 UI 視窗 (`Debug/CooldownTrace.lua`, `UI/Slash.lua`, `Core/SavedVariables.lua`)**：
+     - 建立專用記錄器 `EAM.Debug.CooldownTrace`，容量為 300 條環形緩衝區 (Circular Ring Buffer)，精確記錄微秒時間戳、事件名稱、法術 ID/名稱、覆蓋 ID、API 底層冷卻回傳參數與狀態機即時轉移。
+     - 支援遊戲內除錯彈出視窗 (`/eam trace` 或 `/eam cdtrace`)，內建「全選記錄 (Ctrl+C)」、「清空記錄」與「即時刷新」功能。
+     - 玩家重載介面 (/reload) 或登出時，飛行日誌自動持久化儲存至 WTF 存檔中 (`EventAlertModDB.cooldownTrace`)，並同步整合至 `PromptExport.lua` JSON 匯出。
+  4. **全套測試與契約覆蓋 (`Debug/FlowTestRunner.lua`, `.AI/Tests/FlowValidationHarness.lua`)**：
+     - 新增測試案例 `cooldown.override_proc_preservation_and_flight_trace`，完整驗證冰霜射線 -> 彗星風暴零 CD 觸發覆蓋保護、飛行記錄器寫入與 SavedVariables 持久化、以及活躍減 CD 取樣器。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：79/79 通過。
+  - `Run-FlowValidation.ps1`：108/108 通過。
+  - `Test-ValidationContracts.ps1`：501/501 通過。
+  - `Build-Package.ps1 -DryRun`：打包乾跑通過。
+
+### 2026-10-06 EAM-20261006-ALPHA-8.8-GLOW-BORDER-ZORDER-AND-GCD-CDR-FIX：高亮發光層級外移防遮蔽、公共冷卻 (GCD) 期間真實冷卻與天賦減CD/第二次施法修復
+
+- 狀態：已完成 (Contracts 501/501, Flow 105/105, Syntax 78/78, Package DryRun PASS)。
+- 需求背景與問題診斷：
+  1. **邊框被金色發光覆蓋遮蔽**：
+     - 使用者回報「OK遮罩沒了,只留邊框正確, 但高亮應該要在邊框外,不能遮蔽原來邊框」。
+     - 診斷原因：`AlertBorderStyles.createBorder` 原先直接在 `icon` (FrameLevel 1) 上建立 4 條線條材質；而 `LibButtonGlow` 建立之 `__LBGoverlay` 位於 `icon:GetFrameLevel() + 5` (FrameLevel 6)。根據 WoW UI 引擎階層規則，子框架在較高 FrameLevel 時會覆蓋父框架材質，導致高亮金色動畫覆蓋並遮蔽了 2px 綠色外框。
+  2. **冰霜射線第二次施法不進入冷卻倒數，且施放減 CD 技能無法更新**：
+     - 使用者回報「另外冰霜射線仍然無法正常, 不施放減CD技能雖然會正常倒數,但第二次施放就不進入冷卻倒數了 要是施放減CD技能也是沒有正確更新」。
+     - 深度診斷原因一（GCD 誤殺真實冷卻）：在 `CooldownService.lua` (行 274, 661, 938, 1102)，冷卻有效判定無條件要求 `and isOnGCD ~= true`。在魔獸世界中，當玩家施法（如冰霜射線第二次施放）或施放減 CD 技能（如冰槍術觸發「結冰」天賦減 CD）時，角色會進入 1.5 秒公共冷卻 (GCD)，使暴雪 `SpellCooldownInfo.isOnGCD` 標記為 `true`。該條件導致即使技能擁有 60 秒的真實冷卻時間，`hasActiveCooldown` 仍被誤判為 `false`，進而清空計時器並將圖示重設為佔位模式！
+     - 深度診斷原因二（法術覆蓋快取中毒）：`resolveSpellFamily` 原先直接優先返回 `baseToOverrideMap` 快取，未動態查詢 `C_Spell.GetOverrideSpell`。當冰霜射線觸發的彗星風暴效果過期結束後，快取中仍永久殘留彗星風暴（冷卻為 0），導致第二次施法時候選比對永遠命中冷卻為 0 的過期覆蓋法術，無法重新進入 60 秒倒數。
+- 重構實作與產出：
+  1. **外框載體提權與發光外擴 (`UI/AlertBorderStyles.lua`, `UI/IconPool.lua`)**：
+     - 在 `AlertBorderStyles.createBorder` 中，為擁有 `GetFrameLevel` 的框架建立獨立載體 `eamBorderHost`，並將其物理層級提升至 `GetFrameLevel() + 8`（高於 LibButtonGlow 的 +5），並使用 `pcall` 防禦性檢查避免觸發嚴格 Mock 報錯；
+     - 在 `IconPool.tryLibraryGlow` 中，動態微調並擴展 `__LBGoverlay` 錨點至 `math.max(pad + 4, frameWidth * 0.25)`；在 `IconPool.setGlow` 備用發光中同步放大尺寸，確保金色發光光暈嚴格綻放於外框外側，層次分明且 100% 不遮擋邊框。
+  2. **公共冷卻 (GCD) 邊界校正與真實冷卻判定 (`Services/CooldownService.lua`)**：
+     - 將 `MIN_REAL_COOLDOWN_SECONDS = 1.5` 提至模組頂層常數；
+     - 在 `getSpellCooldownInfo` (行 274)、`refreshAlert` (行 938, 1102) 與 `probeActiveCooldown` 中，將 `and isOnGCD ~= true` 改為 `and (duration > MIN_REAL_COOLDOWN_SECONDS or isOnGCD ~= true)`。只要持續時間大於 1.5 秒，即視為絕對真實冷卻，不受 GCD 狀態干擾，徹底解決施放減 CD 技能與第二次施法中斷倒數的重大異常。
+  3. **動態法術覆蓋同步與過期快取清理 (`Services/CooldownService.lua`)**：
+     - 重構 `resolveSpellFamily`：即時透過 `C_Spell.GetOverrideSpell` 取得即時覆蓋狀態。當覆蓋法術切換回基礎法術（`overrideSpellID == baseSpellID`）時，立即將過期覆蓋移至 `previousOverrideMap` 並清空 `baseToOverrideMap`，杜絕過期覆蓋殘留。
+  4. **渲染器減 CD 精度校準 (`UI/Renderer.lua`)**：
+     - 將 `Renderer.lua` 的冷卻變更過濾門檻由 0.05 秒精確至 0.01 秒（與服務層 10ms 保持一致），並確保每次數值冷卻變更時一併同步調用 `icon.cooldown:SetCooldown(startTime, duration)`，保障減 CD 時圖示倒數與冷卻轉圈動畫即時動態刷新。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 語法錯誤)。
+  - `Run-FlowValidation.ps1`：105/105 通過 (100% 通過，0 失敗，0 略過)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+  - `Build-Package.ps1 -DryRun`：打包乾跑通過 (`PACKAGE_DRY_RUN=pass`)。
+
+### 2026-10-06 EAM-20261006-ALPHA-8.8-WOW-MCP-ECOSYSTEM-AND-ROUTING-POLICY：六大魔獸世界專屬 MCP 伺服器體系部署與工具路由權威政策確立
+
+- 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78, Package DryRun PASS)。
+- 需求背景與目標：
+  1. 依少年欸指令全面安裝 6 款 World of Warcraft 社群與官方開源 MCP 伺服器：`annoft/wow-casc`、`Nighthawk42/wow_api_mcp`、`RdyGaming/hated-wow-mcp`、`juemrami/wow-dev-mcp`、`spartanui-wow-api`、`brunofin/wow-mcp`。
+  2. 確立最高標準之《World of Warcraft AddOn Development — MCP / Tool Routing Policy》（50 條核心開發、工具路由與驗證鐵律）。
+  3. 徹底落實「不要相信模型記憶中的 WoW API」，建立以實證為依歸之 API 查證階梯（Evidence Ladder）與多工具責任分工體系。
+- 實作與產出：
+  1. **6 大 MCP 伺服器安裝與設定 (`C:\Users\ZYF\.gemini\config\mcp_config.json`)**：
+     - `wow-casc`：完成本地源碼 clone、npm 依賴構建與 stdio 對接；同步註冊 Agent Skill (`wow-casc`)，提供本地 CASC 解包與 Ground Truth 實證（4 tools）。
+     - `wow-api-nighthawk`：完成 npx 配置，設定本機安裝路徑 `D:/World of Warcraft`，支援跨版本 diff、API signature 與 Blizzard 原始碼搜尋（14 tools）。
+     - `hated-wow-mcp`：完成 npx 快取與註冊，提供 8,000+ API、Widget 方法、CVars、Atlas 貼圖與 Lua Linter 工具箱（20 tools）。
+     - `wow-dev-mcp`：完成 tarball 解包與 schema 定義，提供 10 大語系 GlobalStrings 模糊檢索與 Wiki 整合（7 tools）。
+     - `spartanui-wow-api`：完成快查工具註冊，直接聯動本機 VS Code 內建之 `ketho.wow-api-0.22.3`，提供 `list_deprecated` 與結構化快速查閱（7 tools）。
+     - `wow-blizzard-api`：完成 TypeScript 編譯、stdio 入口擴充（`dist/stdio.js`）與防呆憑證防禦（未填金鑰時優雅提示，不崩潰），涵蓋 196 款官方 Game Data & Profile 端點（197 tools）。
+     - 合計共 **249 款全新專屬工具**，全數導出 Lazy Schema 至 `C:\Users\ZYF\.gemini\antigravity\mcp`。
+  2. **AI 治理政策與專屬技能確立**：
+     - 建立權威指導文件：[`.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md`](.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md)。
+     - 建立三端同步 Agent 技能：`.AI/skills/wow-mcp-tool-routing/SKILL.md` 與 `~/.gemini/config/skills/wow-mcp-tool-routing/SKILL.md`。
+     - 同步更新 `.AI/AGENTS.md`（增設專章與必讀文件）與 `.AI/PROJECT_MEMORY.md`。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 語法錯誤)。
+  - `Run-FlowValidation.ps1`：104/104 通過 (100% 通過，0 失敗)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+  - `Build-Package.ps1 -DryRun`：打包乾跑通過 (`PACKAGE_DRY_RUN=pass`)。
+
+### 2026-10-04 EAM-20261004-ALPHA-8.8-BORDER-SUPPRESSION-AND-COOLDOWN-RELIABILITY-FIX：光環邊框即時隱藏與驅散外框清理、天賦覆蓋技能冷卻倒數精準捕捉與排程代理修復
+
+- 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78, Package DryRun PASS)。
+- 需求背景與問題分析：
+  1. **取消邊框顯示仍殘留光環邊框**：
+     - 在 Retail 12.1 Native Aura 容器中，Blizzard 原生驅散外框透過 `CustomAuraButton:AddDispelTypeTexture(texture, options)` 綁定，其預設樣式為 `BorderWithIcon`。當玩家於設定頁面關閉「啟用圖示類型外框」時，EAM 自身的 `WHITE8X8` 邊框雖已隱藏，但暴雪原生驅散邊框依然常駐顯示。
+     - 此外，`AuraRuleCompiler.buildVisualFingerprint` 缺少邊框狀態序列化，導致在設定介面勾選/取消邊框時，Native Aura 容器因視覺指紋未變更而判定無須重建，變更無法即時套用。
+  2. **技能使用後偶發性不進入冷卻倒數（時有時無）**：
+     - 當玩家施放具有天賦覆蓋/替換的技能（如法師閃現術替換為閃爍、冰霜射線、彗星風暴等）時，`UNIT_SPELLCAST_SUCCEEDED` 事件傳入的是天賦法術 ID。然而 `refreshAlert` 底層查詢 `cSpell.GetSpellCooldown` 時僅固定傳入原始設定的 `alert.spellID`。
+     - 暴雪 API 對已被替換的基礎法術回傳 `duration = 0`，導致 EAM 判定 `hasActiveCooldown = false`。若設定「冷卻完成移除圖示」，圖示會瞬間被隱藏；若保留圖示，其倒數計時器則被清空為 `TIMER_UNKNOWN`，造成冷卻倒數時有時無的嚴重異常。
+  3. **排程器 TimedSignalMap 參數偏移與測試倒退**：
+     - `Scheduler.lua` 中包裝的 `callNative` 前版函式簽章存在參數位移瑕疵，造成 `scheduler.timed_signal_map` 流程測試調用失敗；
+     - 之前暫時於 `refreshAlert` 加入的 `probeActiveCooldown` 導致全域登入/戰鬥回血刷新時誤將未施放之技能整批啟用，破壞 `cooldown.combat_heal_regen_no_bulk_render` 代碼契約。
+- 重構實作與產出：
+  1. **光環邊框指紋整合與暴雪驅散邊框動態清理 (`Managers/AuraRuleCompiler.lua`, `UI/NativeAuraRenderer.lua`, `UI/AlertBorderStyles.lua`)**：
+     - 在 `AuraRuleCompiler.buildVisualFingerprint` 中納入全域外框開關、各模組啟用狀態與各模組 RGBA 色彩字串，確保外框修改時 100% 觸發容器指紋變更與安全重建；
+     - 在 `NativeAuraRenderer.bindDispelTypeTexture` 中加入防護：若全域關閉外框或該光環類別無有效邊框色，阻斷綁定暴雪驅散外框；
+     - 實裝 `NativeAuraRenderer.refreshBorders()`，並由 `AlertBorderStyles.refreshAll()` 連動調用：即時更新解鎖按鈕外框，並對關閉外框之按鈕調用 `safeRemoveDispelTypeTexture`，徹底拔除殘留之暴雪驅散邊框。
+  2. **天賦覆蓋多候選法術家族智能比對 (`Services/CooldownService.lua`)**：
+     - 移除 `refreshAlert` 內 premature 之全域 auto-activation 邏輯，嚴格維持「僅玩家實體施法 (`UNIT_SPELLCAST_SUCCEEDED`) 啟用」之核心架構契約，回歸乾淨狀態機；
+     - 實裝 `getSpellCooldownInfo(cSpell, spellID, preferredSpellID)`：構建候選池（優先施法 ID、覆蓋 ID、基礎 ID、設定原始 ID），優先檢出存在非 GCD 真實冷卻 (`duration > 1.5 and not isOnGCD`) 之候選，並回傳命中之 `cooldownSpellID`；
+     - 在數值冷卻與原生 `DurationObject` 綁定處傳入 `cooldownSpellID`，確保 100% 精準捕捉實際冷卻時間與平滑倒數。
+  3. **排程器代理調用健全修復 (`Core/Scheduler.lua`)**：
+     - 校準 `callNative(methodName, ...)` 簽章，消除引數偏移，確保 `SignalAt`、`SignalAfter`、`Cancel`、`Clear` 呼叫與自動降級契約完全正常。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：78/78 通過 (0 語法錯誤)。
+  - `Run-FlowValidation.ps1`：104/104 通過 (100% 通過，0 失敗，0 略過)。
+  - `Test-ValidationContracts.ps1`：501/501 通過 (0 失敗)。
+  - `Build-Package.ps1 -DryRun`：打包乾跑通過 (`PACKAGE_DRY_RUN=pass`)。
+
 ### 2026-10-03 EAM-20261003-ALPHA-8.8-THREE-ROUNDS-AUDIT-HARDENING：三輪需求完成後全面深入審計與邊界防禦加固
 
 - 狀態：已完成 (Contracts 501/501, Flow 104/104, Syntax 78/78, Package DryRun PASS)。
@@ -2789,3 +3049,146 @@
   - Flow 業務狀態機驗證：104/104 passed (`Run-FlowValidation.ps1`)。
   - 全專案契約掃描：501/501 passed (`Test-ValidationContracts.ps1`)。
   - 開發包打包：`Dist/EventAlertMod_DEV_20261003_211835.zip`。
+
+### ISSUE-20261004-001: Retail 12.1.5 PTR 3 (Build 69952) 情報深入對齊、AI 治理條文升級與每輪派工必查 Wiki 協議固化
+
+- 觸發情境：
+  1. 使用者提示：「目前已經解鎖12.1.5環境開發，不僅是研究而已，好像有個AI治理條文尚未修改」。
+  2. 使用者明確指出測試戰略：「雖然10/15正式服才會上線12.1.5,但我會12.1.5PTR進行主力測試，並且每輪需求或者你分派的subagent你仍要不斷探訪api change wiki網頁，因為他們仍會不斷更新最新狀態，例如現在已到PTR 3 (9/22日）」。
+- 根因分析：
+  1. **治理條文未同步**：先前雖然移除了「12.1.5 僅為技術備存／研究」的對話結尾警語，但 `.AI/Docs/33_AI_GOVERNANCE_DIRECTIVE.md` 與 `AI_GOVERNANCE_DIRECTIVE.xml` 註解中仍記載「五大絕對鐵律」，未完整將第 6 條鐵律 `R6_PROGRESSIVE_1215_COMPATIBILITY_GATE` 與 12.1.5 PTR 主力實機測試情境納入；子代理工作流 `.AI/Docs/17_SUBAGENT_WORKFLOW.md` 亦尚未將 Warcraft Wiki API 變更查核納入派工強制門禁。
+  2. **最新 PTR 演進持續中**：Warcraft Wiki `Patch_12.1.5/API_changes` 已演進至 PTR 3（2026-09-22, Build 69952），包含 `GetArenaOpponentSpec` 回傳 Secret、`UnitFrameUtil` 安全通道擴展、以及 `C_UnitAuras.GetRefreshCarryOverDuration` 官方結餘 API 等重要變更，若代理人未主動追蹤即可能產生過期假設。
+- 修復實作：
+  1. **AI 治理規範全域升級**：
+     - `.AI/AGENTS.md`：增列「12.1.5 PTR 主力實機測試與 10/15 正式服發布對齊」及「每輪需求與分派 Subagent 必查 Warcraft Wiki API 變更機制（Proactive API Change Intelligence Protocol）」。
+     - `AI_GOVERNANCE_DIRECTIVE.xml`：註解升級為「六大絕對鐵律」，於事實階梯 Level 1 加入即時 Wiki 來源，並於 `<anti_memory_drift_protocol>` 實裝 `<rule id="AMD_4_PROACTIVE_API_WIKI_INSPECTION">`。
+     - `.AI/Docs/33_AI_GOVERNANCE_DIRECTIVE.md`：同步更新為 v1.2，明載六大鐵律與 AMD_4 條文。
+     - `.AI/Docs/17_SUBAGENT_WORKFLOW.md`：於基本原則與派工模板明確約束 Subagent 必須以最新 12.1.5 PTR 3 Build 69952 情報為依據。
+     - `.AI/PROJECT_MEMORY.md`：更新最後維護時間與 12.1.5 PTR 治理重點。
+  2. **變更情報庫擴展**：
+     - `.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md` 與 `.AI/skills/eam-api-change-intel/SKILL.md`：詳實收錄 PTR 1 (Build 69594)、PTR 2 (Build 69848)、PTR 3 (Build 69952) 的完整差異與 EAM 對策。
+- 驗證結果：
+  - 文件與治理同步齊備，全套自動化契約、語法與 Flow 測試維持 100% PASS。
+
+### ISSUE-20261006-001: 暴雪冷卻機制 (CooldownViewer) 深度架構借鑑、天賦覆蓋補償 (Previous Override) 與秘密值 (Secret Values) 安全邊界加固
+
+- 觸發情境：
+  1. 深度研析暴雪官方冷卻管理器 (CooldownViewer) 之底層實作細節，探究暴雪如何處理高頻技能切換、天賦替換過渡期以及 12.x 秘密值 (Secret Values)。
+  2. 發現暴雪官方在天賦動態替換或充能消耗完畢時，會於 `COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED` 記錄 `previousOverrideSpellID`，以彌補 `SPELL_UPDATE_COOLDOWN` 觸發前覆蓋狀態已先被消除的時間窗口。
+  3. 發現暴雪官方在內部環境雖然具備 `secretunwrap`，但在第三方插件載入前 (`EnvironmentCleanup.lua`) 已嚴格將其置為 `nil`；第三方插件若直接以 Secret Value 進行表格索引或數值運算，將立即引發不可逆的崩潰或 Taint 擴散。
+- 根因分析：
+  1. **天賦覆蓋過渡期識別中斷**：當玩家施放多段天賦技能（或切換天賦）時，暴雪在某些技能施放成功的當下立即解除了覆蓋法術 ID，導致稍後抵達的 `SPELL_UPDATE_COOLDOWN` 無法透過 `GetOverrideSpell` 取得原先的覆蓋 ID，進而無法命中監控列表中的目標警報。
+  2. **秘密值安全邊界**：第三方插件無法解開 Secret Value，任何將未檢驗之 `spellID`、`duration` 等當作 Lua Table Key 或進行大小比較的行為均極具風險；安全邊界是透過 `Util.isSafeTableKey` 守衛，並將數值直接單向傳遞至原生 C++ 元件（`Cooldown:SetCooldown`、`StatusBar:SetValue`、`DurationObject`）處理。
+  3. **預熱圖示原點堆疊閃爍**：新啟用或預熱之冷卻圖示在尚未由 `Renderer.layoutFrameIcons` 計算好實體二維位移坐標 `layoutX, layoutY` 前，若直接調用 `icon:Show()`，會在畫面原點 `(0, 0)` 產生瞬間重疊閃爍。
+- 修復實作：
+  1. **CooldownService 實裝 Previous Override 補償映射**：
+     - 在 `CooldownService.lua` 中維護 `previousOverrideMap` 與 `previousOverrideToBaseMap`；
+     - 於 `COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED` 監聽中，當天賦覆蓋被取消或變更時，自動記錄先前的覆蓋關係；
+     - 在 `resolveSpellFamily` 與 `alertMatchesSpellFamily` 中納入 `previousOverrideMap` 查找，使天賦覆蓋交替窗口期的冷卻倒數 100% 準確捕獲。
+  2. **秘密值與表格鍵加固**：
+     - 於 `refreshAlert`、`resolveSpellFamily`、`applyChargeStatusBar` 等關鍵熱路徑中嚴格執行 `Util.isSafeTableKey` 與 `Util.isSafePositiveNumber` 檢定，杜絕任何潛在的 Secret Value 滲漏至 Lua 索引中。
+  3. **Renderer 佈局座標守衛**：
+     - 在 `Renderer.lua` 的 `render` 流程中，加入 `rendered.layoutX ~= nil` 檢定，確保圖示必須在完成實體網格坐標排版後才允許 `Show()`，徹底杜絕畫面原點 (0, 0) 重疊堆疊。
+  4. **全套測試與契約覆蓋**：
+     - 在 `FlowTestRunner.lua` 增補 `cooldown.previous_override_compensation` 狀態機測試；
+     - 全套 501 項契約、105 項 Flow 測試、78 項 Lua 語法檢查 100% 綠燈通過。
+- 驗證結果：
+  - Lua 語法檢查：78/78 PASS (`CheckLuaSyntax.ps1`)。
+  - Flow 狀態機測試：105/105 PASS (`Run-FlowValidation.ps1`)。
+  - 全專案契約掃描：501/501 PASS (`Test-ValidationContracts.ps1`)。
+  - 打包乾跑測試：`Build-Package.ps1 -DryRun` PASS。
+
+### ISSUE-20261009-001: 實機冷卻狀態機四大病灶修復 (SpellHeuristics 字典對齊、新施法結餘繼承隔離、充能判定校準與快照負數修復)
+
+- 觸發情境：
+  1. 玩家實機操作法師時，回報「冰霜射線」(205021) 點擊天賦彗星風暴後，第二次施放無法重新進入 60s 冷卻，殘留負數剩餘時間；
+  2. 冰霜之球 (84714) 在第二次、第三次施放時，冷卻被鎖死在 15~17 秒（舊倒數結餘），無法啟動完整的 60 秒新倒數；
+  3. 彗星風暴 (153595, 零 CD 覆蓋 Proc) 施放時，`isZeroCDOverrideProc` 在實機飛行記錄中仍顯示為 `false`，未能完全隔離；
+  4. Active Cooldowns Snapshot 中所有技能均顯示 `Rem=0.00s | Exp=0.00`，且充斥預渲染待命佔位。
+- 根因分析：
+  1. **病灶 A (SpellHeuristics 字典名稱不一致)**：`SpellHeuristics.lua` 中啟發式冷卻字典定義為 `SPELL_META`，而 `CooldownService.lua` 查核時使用 `SpellHeuristics.SPELL_DATA`，導致運行時 `heuristicData` 為 nil，施法初期 GCD/延遲補償（60s 先驗冷卻）完全未生效。
+  2. **病灶 B (新施法被誤判為法術覆蓋並繼承舊剩餘時間)**：`CooldownService.lua` 原 `isOverridden` 誤將 `or (eventName == "UNIT_SPELLCAST_SUCCEEDED")` 納入，導致玩家在舊 CD 剩餘（或被動減 CD 縮短）期間再次施法時，被 `oldHasRunningCooldown and isOverridden` 分支強行繼承了舊剩餘秒數（如 15.12s），阻斷了全新 60s 冷卻啟動。
+  3. **病灶 C (充能技能判定誤判單次施法技能)**：暴雪 Retail API 對非充能技能亦返回包含 `maxCharges = 1` 的表格，原代碼僅檢查 `type(chInfo) == "table"`，導致 `hasCharges` 恆為 true，使得零 CD 覆蓋 Proc 判定 (`isZeroCDOverrideProc`) 永遠無法成立。
+  4. **病灶 D (活躍冷卻採樣器與飛行快照)**：`activeCDRSamplerTick` 未排除充能技能，且 `ACTIVATE_MATCH` 中在 `expirationTime` 為 0 時直接以 `0 - now` 計算剩餘時間產生巨大負數時間戳。
+- 修復實作：
+  1. `SpellHeuristics.lua`：導出 `SpellHeuristics.SPELL_DATA = SpellHeuristics.SPELL_META`，確保先驗字典雙向對齊；
+  2. `CooldownService.lua`：
+     - 重構 `refreshAlert` 中 `isCastEvent` 與 `oldHasRunningCooldown` 順序，移除 `isOverridden` 對施法事件之強制覆蓋，確保新施法以最高優先級啟動全額冷卻；
+     - 在 `activateSpell` 中改採 `readChargeCandidate` 嚴格檢驗 `maxCharges > 1`，使彗星風暴等零 CD 覆蓋 Proc 正確識別並徹底隔離保護主技能；
+     - 加固 `activeCDRSamplerTick` 排除 `state.isChargeBased` 並限制正值剩餘時間；
+     - 校準 `ACTIVATE_MATCH` 之 `remaining` 計算，避免負數時間戳。
+  3. `CooldownTrace.lua`：在 Active Cooldowns Snapshot 中加入 `| Placeholder=true` 標註，清晰區分待命佔位圖示。
+- 驗證結果：
+  - Lua 語法檢查：79/79 PASS (`CheckLuaSyntax.ps1`)。
+  - Flow 狀態機測試：108/108 PASS (`Run-FlowValidation.ps1`)。
+  - 全專案契約掃描：502/502 PASS (`Test-ValidationContracts.ps1`)。
+### ISSUE-20261010-001: 戰鬥中秘密值光環 Taint 報錯根除、引導型技能先驗冷卻即刻初始化與天賦減 CD 零污染實裝
+
+- 觸發情境：
+  1. 玩家實機操作並回報截圖 (`media_1791564969958_3e98f577.png`)：
+     `EAM Event Error on [UNIT_AURA]: GetAuraDataByIndex(): Auras cannot be accessed when secret while tainted by 'EventAlertMod' Lua Taint: EventAlertMod`；
+  2. `/eam trace` 飛行記錄中，法師「冰霜射線」(Spell ID: 205021) 於戰鬥中開始引導時 (UNIT_SPELLCAST_CHANNEL_START)，API 回傳持續時間為 0 或受秘密值保護，導致警報狀態被掛在空計時器 (`remaining=0, expTime=nil`)，未在戰鬥中進入 60 秒倒數，直至脫戰才顯現；
+  3. 天賦減 CD（結冰 1247798、冰之心 1247799、破裂冰霜 378448、分裂寒冰 56377、白化 1281638）需要兼具即時性與 100% 零 Taint 安全。
+- 根因分析：
+  1. **病灶 A (戰鬥中讀取受保護秘密光環引發 Taint 報錯)**：
+     - 在 `CooldownService.lua` 中註冊了 `UNIT_AURA`，並於回呼中呼叫 `detectTargetFrozenState` 與 `detectPlayerFrostState`；
+     - 這些函式調用了 `C_UnitAuras.GetAuraDataByIndex("target", i, "HARMFUL")`；
+     - 依據 Retail 12.x 秘密值防禦規範（`eam-secret-taint-sentinel`），在受污染環境下戰鬥中禁止第三方插件存取目標或玩家的受保護光環，暴雪引擎直接拋出硬性紅字錯誤。
+  2. **病灶 B (引導技能先驗冷卻初始化旁路)**：
+     - 當 API 因延遲、引導未結算或受保護回傳 `duration = 0` 或非安全值時，`infoSafe = false` 導致代碼將 `hasActiveCooldown = true` 誤設為 true；
+     - 此判定直接阻斷了後續 `if not hasActiveCooldown` 的先驗冷卻字典查詢 (`SpellHeuristics.SPELL_META[205021]`)；
+     - 導致代碼落入 `setProtectedTimer` 並呼叫 `clearTimer`，將計時器完全清空 (`expirationTime = nil, remaining = 0`)，圖示呈現 0.00s 且無轉圈動畫。
+- 修復實作：
+  1. **徹底移除 `UNIT_AURA` 監聽與光環探測戰鬥安全隔離**：
+     - 自 `CooldownService.initialize()` 中徹底移除 `UNIT_AURA` 註冊，並刪除 `CooldownService.onUnitAura`；
+     - 在 `CooldownTrace.lua` 的 `detectTargetFrozenState` 與 `detectPlayerFrostState` 中加入戰鬥鎖定檢驗（`if InCombatLockdown() then return nil end`），且所有 `GetAuraDataByIndex` 調用全面以 `pcall` 隔離；
+     - 在 `AuraService.lua` (Legacy fullScanUnit) 與 `PlayerStatService.lua` 中的 `GetAuraDataByIndex` 呼叫全面加固 `pcall`，杜絕任何意外崩潰。
+  2. **實裝施法即刻先驗冷卻初始化 (Heuristic Cooldown Cast Initialization)**：
+     - 在 `CooldownService.lua` 的 `refreshAlert` 中，針對施法事件 (`isCastEvent`)，若 API 尚未回傳實質數值冷卻 (`hasRealNumericCooldown == false`)，立即以先驗啟發式字典 (`SpellHeuristics`) 查詢；
+     - 冰霜射線 (205021) 於施法第 0 毫秒即刻初始化 `startTime = now, duration = 60.0, expirationTime = now + 60.0`，圖示即刻呈現 60.0s 倒數與原生轉圈遮罩；
+     - 配合 `oldHasRunningCooldown` 守衛，引導結束與後續觸發無冷卻覆蓋 Proc (如彗星風暴) 時穩定持續倒數，不再被抹除。
+  3. **零 Taint 天賦減 CD 與地面效果動態聯動**：
+     - 減 CD 全面由 60ms 高頻自適應突發採樣器 (`startBurstCDRSampler`) 輪詢 `C_Spell.GetSpellCooldown`（非秘密合法公開 API），伺服器結算 0.5s 縮短時即刻以 `SetCooldown` 同步轉圈角度；
+     - 玩家施放冰霜長矛 (30455) 時，直接派發自訂事件 `EAM_SHATTER_CONSUMED` 供 `GroundEffectService` 為冰霜之球 (84714) 延長 0.1 秒持續時間，100% 零光環 API 依賴、零 Taint 風險。
+- 驗證結果：
+  - Lua 語法檢查：79/79 PASS (`CheckLuaSyntax.ps1`)。
+  - Flow 狀態機測試：108/108 PASS (`Run-FlowValidation.ps1`)。
+  - 全專案契約掃描：502/502 PASS (`Test-ValidationContracts.ps1`)。
+  - 打包乾跑測試：`Build-Package.ps1 -DryRun` PASS。
+
+### ISSUE-20261010-001: 實機冷卻圖示文字轉圈卡死不倒數修復 (DurationObject 劫持隔離、OnUpdate 首幀刷新、覆蓋邊界檢定校準)
+
+- 狀態：已解決
+- 觸發情境：
+  1. 玩家實機操作冰霜法師並回報最新 `/eam trace` 遙測日誌，指出：「這次更慘，射線冷卻直接不倒數」；
+  2. 遙測日誌內部顯示冷卻資料庫中確實有 `Spell=205021(冰霜射線), remaining=51.06s`，且減 CD 取樣器能偵測到 `activeCDs=205021(22.3s)`；
+  3. 但畫面上「冰霜射線」圖示的秒數文字空白/靜止，轉圈遮罩完全不轉動，視覺效果徹底凍結卡死。
+- 根因分析：
+  1. **病灶 A (DurationObject 綁定暴雪 0 秒物件劫殺 UI)**：
+     - 引導技能「冰霜射線」(205021) 暴雪 API `C_Spell.GetSpellCooldown(205021)` 永遠回傳 `dur=0`；
+     - EAM 先驗字典以 60.0s 初始化了倒數，但在 `CooldownService.lua` 盲目調用了 `cSpell.GetSpellCooldownDuration(205021, true)`；
+     - 暴雪底層對未上冷卻的法術回傳了一個「持續時間為 0 的 DurationObject」；
+     - `Renderer.lua` 檢測到 `timer.durationObject` 存在，開啟 `useNativeBinding` 綁定此 0 秒物件，文字被清空為 `""`，轉圈設為 0；
+     - 同時呼叫了 `Renderer.unregisterLegacyTimer(icon)`，將 EAM 自主 Lua `OnUpdate` 計時器註銷，導致畫面秒數與轉圈徹底停滯。
+  2. **病灶 B (oldHasRunningCooldown 守衛誤加 and isOverridden 導致覆蓋結束時抹除冷卻)**：
+     - 在 `CooldownService.lua`，原代碼寫 `if oldHasRunningCooldown and isOverridden then`；
+     - 當冰霜射線引導結束，或彗星風暴覆蓋過期/被消耗時，`isOverridden` 變為 `false`；
+     - 後續冷卻事件 (如 `SPELL_UPDATE_COOLDOWN`) 判定 `hasActiveCooldown = false`，誤將剩餘 50 幾秒的冷卻徹底抹除。
+  3. **病灶 C (正常冷卻完成與計時器到期事件被 oldHasRunningCooldown 誤留)**：
+     - 當一般技能冷卻自然完成或 `onVisualTimerExpired` 觸發時 (`eventName == "COOLDOWN_TIMER_EXPIRED"`)，若未排除計時到期事件且未校準天賦/啟發式判定，會導致一般技能狀態無法如期清除。
+- 修復實作：
+  1. **先驗冷卻與舊冷卻延續時強制 DurationObject = nil**：
+     - 於 `CooldownService.lua` 中，凡是由先驗字典初始化 (`isHeuristic`) 或延續運行中冷卻 (`oldHasRunningCooldown`) 時，強制 `state.timer.durationObject = nil`；
+     - `Renderer.lua` 偵測到無 DurationObject，必定走穩定的 `icon.cooldown:SetCooldown` 原生轉圈 + `legacyTimer` (Lua `OnUpdate`) 即時文字倒數通道。
+  2. **OnUpdate 首幀即時格式化輸出秒數**：
+     - 在 `Renderer.lua` 的 `registerLegacyTimer` 註冊當下，第 0 毫秒立即呼叫 `icon.timerText:SetFormattedText` 輸出初始秒數（如 60），並加入 `legacyTimerFrame:Show()` 保障，消除首個 OnUpdate 週期空窗。
+  3. **多態冷卻保留守衛精確化**：
+     - `oldHasRunningCooldown` 增加 `not isTimerExpired` 保障，計時到期事件絕不誤留；
+     - 保留條件精確限定於 `(isOverridden or isHeuristicCandidate)`，既百分之百保護冰霜射線與天賦覆蓋技能不被零 CD 抹除，又確保普通技能在冷卻結束時如期隱藏；
+     - `Renderer.lua` 降級通道剩餘時間檢驗閾值由 0.05 秒細化至 0.01 秒，與天賦減 CD 精度嚴格對齊。
+- 驗證結果：
+  - Lua 語法檢查：79/79 PASS (`CheckLuaSyntax.ps1`)。
+  - Flow 狀態機測試：108/108 PASS (`Run-FlowValidation.ps1`)。
+  - 全專案契約掃描：502/502 PASS (`Test-ValidationContracts.ps1`)。
+  - 打包乾跑測試：`Build-Package.ps1 -DryRun` PASS。
+

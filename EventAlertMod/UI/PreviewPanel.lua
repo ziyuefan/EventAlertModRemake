@@ -341,6 +341,16 @@ local function createFrame()
     resVal:SetText("65 / 100 (65%)")
     resContainer.valText = resVal
 
+    local resMarkers = {}
+    for index = 1, 19 do
+        local marker = resBar:CreateTexture(nil, "OVERLAY")
+        marker:SetSize(1, 16)
+        marker:SetColorTexture(0, 0, 0, 0.75)
+        marker:Hide()
+        resMarkers[index] = marker
+    end
+    resContainer.markers = resMarkers
+
     PreviewPanel.resContainer = resContainer
 
     local powerSlider = api.CreateFrame("Slider", nil, pageResource, "OptionsSliderTemplate")
@@ -586,10 +596,17 @@ function PreviewPanel.refreshResourcePreview()
 
     -- 動態資源圖示與名稱
     local pService = EAM.Services and EAM.Services.PlayerResourceService
-    local resInfo = pService and pService.getResourceDefinition and pService.getResourceDefinition(selectedKey)
-    local iconTex = (resInfo and resInfo.icon) or 136080
+    local catalog = EAM.Data and EAM.Data.PlayerResourceCatalog
+    local resInfo = (catalog and catalog.getDefinition and catalog.getDefinition(selectedKey))
+        or (pService and pService.getResourceDefinition and pService.getResourceDefinition(selectedKey))
+    local iconTex = (catalog and catalog.getResourceIcon and catalog.getResourceIcon(selectedKey))
+        or (resInfo and resInfo.icon)
+        or 136080
     rc.icon:SetTexture(iconTex)
-    local resLabel = (EAM.L and EAM.L["EAM_RESOURCE_" .. string.upper(selectedKey)]) or (resInfo and resInfo.name) or selectedKey
+    local resLabel = (resInfo and resInfo.nameKey and EAM.L and EAM.L[resInfo.nameKey])
+        or (EAM.L and EAM.L["EAM_RESOURCE_" .. string.upper(selectedKey)])
+        or (resInfo and (resInfo.fallbackName or resInfo.name))
+        or selectedKey
     rc.label:SetText(resLabel)
 
     local isVertical = dbRes.orientation == "VERTICAL"
@@ -655,6 +672,96 @@ function PreviewPanel.refreshResourcePreview()
         rc.icon:SetPoint("LEFT", rc, "LEFT", 0, 0)
         rc.statusBar:SetPoint("LEFT", rc.icon, "RIGHT", spacing, 0)
         rc.label:SetPoint("BOTTOMLEFT", rc.statusBar, "TOPLEFT", 0, 2)
+    end
+
+    local effectiveKind = (dbRes.displayMode and dbRes.displayMode ~= "AUTO") and dbRes.displayMode or (resInfo and resInfo.rendererKind) or "BAR"
+    local customMax = Util.isSafePositiveNumber(dbRes.customMaxPoints) and math.floor(dbRes.customMaxPoints + 0.5) or 0
+    local targetSegments = 5
+    if customMax >= 1 and customMax <= 20 then
+        targetSegments = customMax
+    elseif resInfo and resInfo.maxPoints and resInfo.maxPoints >= 1 and resInfo.maxPoints <= 20 then
+        targetSegments = math.floor(resInfo.maxPoints + 0.5)
+    end
+    if rc.markers then
+        for index = 1, #rc.markers do
+            local marker = rc.markers[index]
+            if effectiveKind == "POINTS" and targetSegments > 1 and index < targetSegments then
+                marker:ClearAllPoints()
+                if isVertical then
+                    marker:SetSize(actualWidth, 1)
+                    marker:SetPoint("BOTTOM", rc.statusBar, "BOTTOM", 0, actualHeight * index / targetSegments)
+                else
+                    marker:SetSize(1, actualHeight)
+                    marker:SetPoint("LEFT", rc.statusBar, "LEFT", actualWidth * index / targetSegments, 0)
+                end
+                marker:Show()
+            else
+                marker:Hide()
+            end
+        end
+    end
+
+    local simPct = PreviewPanel.simulatedPower or 0.65
+    local alertOp = dbRes.alertOperator or "GE"
+    local alertTh = tonumber(dbRes.threshold) or 0.9
+    local isAlert = (alertOp == "LE") and (simPct <= alertTh) or (simPct >= alertTh)
+
+    local tex = nil
+    pcall(function()
+        if rc.statusBar.GetStatusBarTexture then
+            tex = rc.statusBar:GetStatusBarTexture()
+        end
+    end)
+
+    if isAlert and dbRes.alertColorEnabled == true then
+        local ar = Util.isSafeNumber(dbRes.alertColorR) and dbRes.alertColorR or 1
+        local ag = Util.isSafeNumber(dbRes.alertColorG) and dbRes.alertColorG or 0.15
+        local ab = Util.isSafeNumber(dbRes.alertColorB) and dbRes.alertColorB or 0.15
+        pcall(function()
+            if tex and tex.SetGradient and _G.CreateColor then
+                tex:SetGradient(isVertical and "VERTICAL" or "HORIZONTAL", _G.CreateColor(ar, ag, ab, 1), _G.CreateColor(ar, ag, ab, 1))
+            end
+        end)
+        rc.statusBar:SetStatusBarColor(ar, ag, ab, 1)
+    elseif dbRes.colorMode == "GRADIENT" then
+        local r1 = Util.isSafeNumber(dbRes.colorStartR) and dbRes.colorStartR or ((resInfo and resInfo.color and resInfo.color[1]) or 1)
+        local g1 = Util.isSafeNumber(dbRes.colorStartG) and dbRes.colorStartG or ((resInfo and resInfo.color and resInfo.color[2]) or 0.82)
+        local b1 = Util.isSafeNumber(dbRes.colorStartB) and dbRes.colorStartB or ((resInfo and resInfo.color and resInfo.color[3]) or 0.15)
+        local r2 = Util.isSafeNumber(dbRes.colorEndR) and dbRes.colorEndR or 1
+        local g2 = Util.isSafeNumber(dbRes.colorEndG) and dbRes.colorEndG or 0.25
+        local b2 = Util.isSafeNumber(dbRes.colorEndB) and dbRes.colorEndB or 0.25
+        local appliedGradient = false
+        pcall(function()
+            if tex and tex.SetGradient and _G.CreateColor then
+                tex:SetGradient(isVertical and "VERTICAL" or "HORIZONTAL", _G.CreateColor(r1, g1, b1, 1), _G.CreateColor(r2, g2, b2, 1))
+                appliedGradient = true
+                rc.statusBar:SetStatusBarColor(1, 1, 1, 1)
+            end
+        end)
+        if not appliedGradient then
+            local cr = r1 + (r2 - r1) * simPct
+            local cg = g1 + (g2 - g1) * simPct
+            local cb = b1 + (b2 - b1) * simPct
+            rc.statusBar:SetStatusBarColor(cr, cg, cb, 1)
+        end
+    elseif dbRes.colorMode == "SOLID" then
+        local r1 = Util.isSafeNumber(dbRes.colorStartR) and dbRes.colorStartR or ((resInfo and resInfo.color and resInfo.color[1]) or 1)
+        local g1 = Util.isSafeNumber(dbRes.colorStartG) and dbRes.colorStartG or ((resInfo and resInfo.color and resInfo.color[2]) or 0.82)
+        local b1 = Util.isSafeNumber(dbRes.colorStartB) and dbRes.colorStartB or ((resInfo and resInfo.color and resInfo.color[3]) or 0.15)
+        pcall(function()
+            if tex and tex.SetGradient and _G.CreateColor then
+                tex:SetGradient(isVertical and "VERTICAL" or "HORIZONTAL", _G.CreateColor(r1, g1, b1, 1), _G.CreateColor(r1, g1, b1, 1))
+            end
+        end)
+        rc.statusBar:SetStatusBarColor(r1, g1, b1, 1)
+    else
+        local defColor = (resInfo and resInfo.color) or { 1, 0.82, 0.15, 1 }
+        pcall(function()
+            if tex and tex.SetGradient and _G.CreateColor then
+                tex:SetGradient(isVertical and "VERTICAL" or "HORIZONTAL", _G.CreateColor(defColor[1], defColor[2], defColor[3], 1), _G.CreateColor(defColor[1], defColor[2], defColor[3], 1))
+            end
+        end)
+        rc.statusBar:SetStatusBarColor(defColor[1], defColor[2], defColor[3], defColor[4] or 1)
     end
 
     local valOffsetX = tonumber(dbRes.valueOffsetX) or 0
@@ -823,13 +930,17 @@ function PreviewPanel.generateDiagnosticReport()
         table.insert(lines, text or "")
     end
 
-    local curTime = (api.date and api.date("%Y-%m-%d %H:%M:%S")) or "N/A"
+    local dateFn = api.date or _G.date
+    local curTime = (dateFn and dateFn("%Y-%m-%d %H:%M:%S")) or "N/A"
     local buildVersion, buildNumber, buildDate, tocVersion = "N/A", "N/A", "N/A", "N/A"
-    if api.GetBuildInfo then
-        buildVersion, buildNumber, buildDate, tocVersion = api.GetBuildInfo()
+    local getBuildInfoFn = api.GetBuildInfo or _G.GetBuildInfo
+    if getBuildInfoFn then
+        buildVersion, buildNumber, buildDate, tocVersion = getBuildInfoFn()
     end
-    local addonVersion = "Alpha 8.6"
-    if api.GetAddOnMetadata then
+    local addonVersion = "Alpha 8.8"
+    if _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata then
+        addonVersion = _G.C_AddOns.GetAddOnMetadata("EventAlertMod", "Version") or addonVersion
+    elseif api.GetAddOnMetadata then
         addonVersion = api.GetAddOnMetadata("EventAlertMod", "Version") or addonVersion
     end
     local locale = (api.GetLocale and api.GetLocale()) or "unknown"
@@ -900,10 +1011,16 @@ function PreviewPanel.generateDiagnosticReport()
 
     -- 3. 核心模組與服務運行檢測
     add("[3. 核心模組與服務狀態]")
-    local alertMgr = EAM.AlertManager or (EAM.Services and EAM.Services.AlertManager)
+    local alertMgr = (EAM.Managers and EAM.Managers.AlertManager) or EAM.AlertManager or (EAM.Services and EAM.Services.AlertManager)
     local alertCount = 0
     if alertMgr and alertMgr.getActiveAlertCount then
         alertCount = alertMgr.getActiveAlertCount()
+    elseif EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.frames then
+        for _, fState in pairs(EAM.UI.Renderer.frames) do
+            if fState.order then
+                alertCount = alertCount + #fState.order
+            end
+        end
     end
     add("  - AlertManager: " .. (alertMgr and "正常載入" or "未載入") .. " (當前活躍告警數: " .. tostring(alertCount) .. ")")
 

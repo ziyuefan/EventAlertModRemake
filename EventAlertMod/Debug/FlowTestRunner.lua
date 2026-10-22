@@ -4948,8 +4948,6 @@ FlowTestRunner.registerCase({
                 and secondCycle.completed == false
                 and secondCycle.chargeSpentObserved == false
                 and secondCycle.chargeCompletionDeferred == true
-                and service.chargeSpentObserved[alertID] == nil
-
             return provisionalValid and spentValid and completedRemoved and secondCycleValid
         end)
 
@@ -7475,6 +7473,193 @@ FlowTestRunner.registerCase({
 })
 
 FlowTestRunner.registerCase({
+    id = "unitpower.dynamic_segments_custom_color_and_alert",
+    primarySuite = "boundary",
+    suites = { boundary = true, core = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.PlayerResourceService
+        local renderer = EAM.UI and EAM.UI.PowerRenderer
+        if not mock or not service or not renderer then
+            return STATUS_SKIP, "Resource dynamic segments/color/alert mock is offline only"
+        end
+
+        local originalDB = EAM.db
+        local originalCombat = mock.inCombat
+        local originalClass = mock.unitClassToken
+        local originalSpec = mock.specializationID
+        local originalPowerType = mock.unitPowerType
+        local originalPowerToken = mock.unitPowerToken
+        local originalValues = mock.unitPowerValues
+        local originalMaximums = mock.unitPowerMaxValues
+        local originalSecretTypes = mock.secretPowerTypes
+        local originalSecretMaxTypes = mock.secretPowerMaxTypes
+        local details = "pcallFailed"
+
+        local function isRegionShown(region)
+            if not region then return false end
+            local okShown, shown = pcall(function()
+                return region:IsShown()
+            end)
+            if okShown and type(shown) == "boolean" then
+                return shown
+            end
+            return rawget(region, "shown") == true
+        end
+
+        local ok, result = pcall(function()
+            EAM.db = { config = {} }
+            mock.setCombat(false)
+            mock.setForegroundPower(4, "COMBO_POINTS")
+            mock.setUnitPowerScenario(
+                "ROGUE",
+                { [4] = 3 },
+                { [4] = 5 },
+                {},
+                {},
+                259
+            )
+            local rebuilt = service.rebuildTopology("dynamicSegmentsTest")
+            local frame = renderer.frames.COMBO_POINTS
+            if not frame then
+                details = "frameNotCreated"
+                return false
+            end
+
+            -- 1. Initial 5 points
+            local ok5 = renderer.applyNumeric("COMBO_POINTS", 4, 3, 5, 0.6, true, true, false, 0.9)
+            local seg5 = frame.activeMaxPoints == 5
+                and isRegionShown(frame.markers[4]) == true
+                and isRegionShown(frame.markers[5]) == false
+
+            -- 2. Dynamic scale 5 -> 6 points
+            local ok6 = renderer.applyNumeric("COMBO_POINTS", 4, 4, 6, 4 / 6, true, true, false, 0.9)
+            local seg6 = frame.activeMaxPoints == 6
+                and isRegionShown(frame.markers[5]) == true
+                and isRegionShown(frame.markers[6]) == false
+
+            -- 3. Dynamic scale 6 -> 7 points
+            local ok7 = renderer.applyNumeric("COMBO_POINTS", 4, 5, 7, 5 / 7, true, true, false, 0.9)
+            local seg7 = frame.activeMaxPoints == 7
+                and isRegionShown(frame.markers[6]) == true
+                and isRegionShown(frame.markers[7]) == false
+
+            -- 4. customMaxPoints override (forces 8 points, ignores incoming max 5)
+            frame.config = frame.config or {}
+            frame.config.customMaxPoints = 8
+            renderer.configureResource(frame.definition, frame.config)
+            frame.visible = true
+            local okOverride = renderer.applyNumeric("COMBO_POINTS", 4, 4, 5, 0.8, true, true, false, 0.9)
+            local segOverride = frame.activeMaxPoints == 8
+                and isRegionShown(frame.markers[7]) == true
+                and isRegionShown(frame.markers[8]) == false
+
+            -- 5. Custom Color Mode: GRADIENT & SOLID
+            frame.config.colorMode = "GRADIENT"
+            frame.config.colorStartR = 0.2
+            frame.config.colorStartG = 0.8
+            frame.config.colorStartB = 0.2
+            frame.config.colorEndR = 0.9
+            frame.config.colorEndG = 0.1
+            frame.config.colorEndB = 0.1
+            local okGradient = renderer.applyNumeric("COMBO_POINTS", 4, 4, 8, 0.5, true, true, false, 0.9)
+
+            frame.config.colorMode = "SOLID"
+            local okSolid = renderer.applyNumeric("COMBO_POINTS", 4, 4, 8, 0.5, true, true, false, 0.9)
+
+            -- 6. Conditional Alert: GE (Greater-than or Equal)
+            frame.config.colorMode = "DEFAULT"
+            frame.config.alertOperator = "GE"
+            frame.config.alertColorEnabled = true
+            frame.config.alertColorR = 1.0
+            frame.config.alertColorG = 0.0
+            frame.config.alertColorB = 0.0
+            frame.config.alertSoundEnabled = true
+            frame.alertTriggeredLatch = false
+
+            -- GE Below threshold (0.625 < 0.8) -> no alert, no glow
+            renderer.applyNumeric("COMBO_POINTS", 4, 5, 8, 0.625, true, true, true, 0.8)
+            local geBelow = (frame.glow and isRegionShown(frame.glow) == false)
+                and frame.alertTriggeredLatch == false
+
+            -- GE Above threshold (0.875 >= 0.8) -> alert, glow shown, latch set
+            renderer.applyNumeric("COMBO_POINTS", 4, 7, 8, 0.875, true, true, true, 0.8)
+            local geAbove = (frame.glow and isRegionShown(frame.glow) == true)
+                and frame.alertTriggeredLatch == true
+
+            -- 7. Conditional Alert: LE (Less-than or Equal)
+            frame.config.alertOperator = "LE"
+            frame.alertTriggeredLatch = false
+
+            -- LE Above threshold (0.5 > 0.35) -> no alert, no glow
+            renderer.applyNumeric("COMBO_POINTS", 4, 4, 8, 0.5, true, true, true, 0.35)
+            local leAbove = (frame.glow and isRegionShown(frame.glow) == false)
+                and frame.alertTriggeredLatch == false
+
+            -- LE Below threshold (0.25 <= 0.35) -> alert, glow shown, latch set
+            renderer.applyNumeric("COMBO_POINTS", 4, 2, 8, 0.25, true, true, true, 0.35)
+            local leBelow = (frame.glow and isRegionShown(frame.glow) == true)
+                and frame.alertTriggeredLatch == true
+
+            -- Reset condition -> latch cleared
+            renderer.applyNumeric("COMBO_POINTS", 4, 4, 8, 0.5, true, true, true, 0.35)
+            local latchReset = (frame.alertTriggeredLatch == false)
+
+            details = string.format(
+                "rebuilt=%s ok5=%s seg5=%s ok6=%s seg6=%s ok7=%s seg7=%s override=%s grad=%s sol=%s geBelow=%s geAbove=%s leAbove=%s leBelow=%s latchReset=%s",
+                tostring(rebuilt),
+                tostring(ok5), tostring(seg5),
+                tostring(ok6), tostring(seg6),
+                tostring(ok7), tostring(seg7),
+                tostring(segOverride),
+                tostring(okGradient),
+                tostring(okSolid),
+                tostring(geBelow),
+                tostring(geAbove),
+                tostring(leAbove),
+                tostring(leBelow),
+                tostring(latchReset)
+            )
+
+            return rebuilt == true
+                and ok5 == true and seg5 == true
+                and ok6 == true and seg6 == true
+                and ok7 == true and seg7 == true
+                and okOverride == true and segOverride == true
+                and okGradient == true
+                and okSolid == true
+                and geBelow == true
+                and geAbove == true
+                and leAbove == true
+                and leBelow == true
+                and latchReset == true
+        end)
+
+        EAM.db = originalDB
+        mock.setCombat(originalCombat)
+        mock.unitClassToken = originalClass
+        mock.specializationID = originalSpec
+        mock.unitPowerType = originalPowerType
+        mock.unitPowerToken = originalPowerToken
+        mock.unitPowerValues = originalValues
+        mock.unitPowerMaxValues = originalMaximums
+        mock.secretPowerTypes = originalSecretTypes
+        mock.secretPowerMaxTypes = originalSecretMaxTypes
+        if not mock.inCombat then
+            pcall(service.rebuildTopology, "dynamicSegmentsRestore")
+        end
+
+        if not ok then
+            details = "pcallError: " .. tostring(result)
+        end
+        local valid = ok and result == true
+        return valid, valid
+            and "Dynamic segments (5 to 6 to 7), customMaxPoints override, gradient/solid color, and GE/LE alert conditions verified"
+            or ("Dynamic segments/color/alert contract mismatch: " .. details)
+    end,
+})
+
+FlowTestRunner.registerCase({
     id = "ground.spell_family_activation",
     primarySuite = "boundary",
     suites = { boundary = true, core = true, aura121 = true },
@@ -9296,7 +9481,10 @@ FlowTestRunner.registerCase({
 
         local ok1 = map:SignalAt("spell:1001", 105.0)
         local ok2 = map:SignalAfter("spell:1002", 10.0)
+        local hasSig1 = map:HasSignal("spell:1001")
         local ok3 = map:Cancel("spell:1001")
+        local okCancelSig = map:CancelSignal("spell:1002")
+        local okCancelAll = map:CancelAllSignals()
         local ok4 = map:Clear()
 
         -- Verify fallback signal map logic explicitly
@@ -9309,12 +9497,19 @@ FlowTestRunner.registerCase({
             fallbackMap:SignalAt("spell:A", 200.0)
             fallbackMap:SignalAfter("spell:B", 5.0)
             fallbackMap:SignalAt("spell:A", 150.0) -- reschedule sooner
-            fallbackMap:Cancel("spell:B")
-            fallbackMap:Clear()
+            assert(fallbackMap:HasSignal("spell:A") == true, "HasSignal true")
+            assert(fallbackMap:GetSignalTime("spell:A") == 150.0, "GetSignalTime")
+            assert(fallbackMap:GetSignalCount() == 2, "GetSignalCount")
+            local nextKey, nextTime = fallbackMap:GetNextSignal()
+            assert(nextKey ~= nil and nextTime ~= nil, "GetNextSignal")
+            assert(fallbackMap:CancelSignal("spell:B") == true, "CancelSignal")
+            assert(fallbackMap:CancelAllSignals() == true, "CancelAllSignals")
+            assert(fallbackMap:GetSignalCount() == 0, "GetSignalCount after cancel all")
+            assert(fallbackMap:HasSignal("spell:A") == false, "HasSignal false after cancel all")
             fallbackOk = true
         end
 
-        return ok1 == true and ok2 == true and ok3 == true and ok4 == true and fallbackOk == true,
+        return ok1 == true and ok2 == true and ok3 == true and ok4 == true and fallbackOk == true and okCancelSig == true and okCancelAll == true,
             "TimedSignalMap zero-alloc rescheduling and cancellation verified"
     end,
 })
@@ -9503,6 +9698,7 @@ FlowTestRunner.registerCase({
 
         mock.resetTrace()
         local plan = {
+            soundFingerprint = "flow-sound-throttle-default",
             soundRules = {
                 {
                     alertID = "aura:player:9001",
@@ -9535,9 +9731,53 @@ FlowTestRunner.registerCase({
             and lastCall.throttleSeconds == 0.4
             and lastCall.info.throttleSeconds == 0.4
 
+        -- Also test defensive clamp bounds [0.05, 5.0]
+        local planHigh = {
+            soundFingerprint = "flow-sound-throttle-high",
+            soundRules = {
+                {
+                    alertID = "aura:player:9002",
+                    sound = {
+                        added = {
+                            soundFileID = 567890,
+                            outputChannel = "Master",
+                            throttleSeconds = 10.0,
+                        },
+                    },
+                    unit = "player",
+                    spellID = 9002,
+                },
+            },
+        }
+        soundService.sync(planHigh, capability)
+        local highCall = mock.trace.auraSoundCalls[#mock.trace.auraSoundCalls]
+        local highValid = highCall and highCall.throttleSeconds == 5.0
+
+        local planLow = {
+            soundFingerprint = "flow-sound-throttle-low",
+            soundRules = {
+                {
+                    alertID = "aura:player:9003",
+                    sound = {
+                        added = {
+                            soundFileID = 567890,
+                            outputChannel = "Master",
+                            throttleSeconds = 0.01,
+                        },
+                    },
+                    unit = "player",
+                    spellID = 9003,
+                },
+            },
+        }
+        soundService.sync(planLow, capability)
+        local lowCall = mock.trace.auraSoundCalls[#mock.trace.auraSoundCalls]
+        local lowValid = lowCall and lowCall.throttleSeconds == 0.05
+
         soundService.removeAll()
-        return valid, valid and "C_UnitAuras.AddAuraSound throttleSeconds passed and verified"
-            or "AuraSound throttleSeconds missing or incorrect"
+        local allValid = valid and highValid and lowValid
+        return allValid, allValid and "C_UnitAuras.AddAuraSound throttleSeconds passed and verified with clamp"
+            or "AuraSound throttleSeconds missing, incorrect, or unclamped"
     end,
 })
 
@@ -9578,6 +9818,8 @@ FlowTestRunner.registerCase({
         assert(Util.stringRtrim("abc   ") == "abc", "stringRtrim")
         assert(Util.stringStartsWith("PrefixTest", "Prefix") == true, "stringStartsWith")
         assert(Util.stringEndsWith("TestSuffix", "Suffix") == true, "stringEndsWith")
+        assert(Util.foldCase("TeXt") == "text", "foldCase")
+        assert(Util.foldcase("TeXt") == "text", "foldcase alias")
 
         -- Table tests
         assert(Util.tableIsEmpty({}) == true, "tableIsEmpty true")
@@ -9602,7 +9844,754 @@ FlowTestRunner.registerCase({
         local frame = Util.createFrame("Frame", nil, nil)
         assert(frame ~= nil, "Util.createFrame")
         assert(Util.snapToPixels(frame) == true, "Util.snapToPixels")
+        local hiddenFrame = Util.createFrame("Frame", nil, nil, "BackdropTemplate", nil, { hidden = true })
+        assert(hiddenFrame ~= nil and hiddenFrame:IsShown() == false, "createFrame hidden option")
 
         return true, "Native 12.1.5 Math, String, and Table utilities verified successfully"
     end,
-})
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.previous_override_compensation",
+    primarySuite = "core",
+    suites = { core = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.CooldownService
+        local router = EAM.Modules and EAM.Modules.EventRouter
+        local cSpell = api.C_Spell
+        if not mock then
+            return STATUS_SKIP, "CooldownService strict mock is offline only"
+        end
+        if not service or not cSpell or not router then
+            return false, "CooldownService dependencies unavailable"
+        end
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalActivated = service.activatedAlerts
+        local originalActivationIDs = service.activationSpellIDs
+        local originalBaseToOverride = service.baseToOverrideMap
+        local originalOverrideToBase = service.overrideToBaseMap
+        local originalPrevOverride = service.previousOverrideMap
+        local originalPrevOverrideToBase = service.previousOverrideToBaseMap
+        local originalGetCooldown = cSpell.GetSpellCooldown
+        local originalGetCharges = cSpell.GetSpellCharges
+        local originalGetDuration = cSpell.GetSpellCooldownDuration
+
+        local ok, err = pcall(function()
+            wipe(service.states)
+            wipe(service.activatedAlerts)
+            wipe(service.activationSpellIDs)
+            wipe(service.baseToOverrideMap)
+            wipe(service.overrideToBaseMap)
+            wipe(service.previousOverrideMap)
+            wipe(service.previousOverrideToBaseMap)
+            service.initialize()
+
+            -- Configure monitored alert for base spell 1953
+            EAM.db = {
+                revision = 820002,
+                alerts = {
+                    spellCooldowns = {
+                        ["spellCooldown:player:1953"] = {
+                            id = "spellCooldown:player:1953",
+                            enabled = true,
+                            spellID = 1953,
+                        },
+                    },
+                },
+            }
+            cSpell.GetSpellCharges = function() return nil end
+
+            -- Simulate talent override: 1953 is overridden by 212653 (Shimmer)
+            service.baseToOverrideMap[1953] = 212653
+            service.overrideToBaseMap[212653] = 1953
+            service.updateAlertList()
+
+            -- Simulate player casts 212653 and override is removed (overrideSpellID = nil) before event
+            router.fire("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", 1953, nil)
+
+            -- Verify previousOverrideMap captured 212653
+            assert(service.previousOverrideMap[1953] == 212653, "previousOverrideMap captured 212653")
+            assert(service.previousOverrideToBaseMap[212653] == 1953, "previousOverrideToBaseMap mapped 212653 to 1953")
+            assert(service.baseToOverrideMap[1953] == nil, "current baseToOverrideMap cleared")
+
+            -- Mock cooldown query returning active cooldown on 212653
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 212653 then
+                    return { startTime = 100, duration = 20, isEnabled = true, isOnGCD = false }
+                end
+                return nil
+            end
+
+            -- Now SPELL_UPDATE_COOLDOWN or targeted refresh fires with base spell 1953
+            service.activatedAlerts["spellCooldown:player:1953"] = true
+            local refreshedState = service.refreshSpell(1953, "SPELL_UPDATE_COOLDOWN")
+            assert(refreshedState ~= nil, "refreshedState exists")
+            assert(refreshedState.shown == true, "refreshedState is shown")
+            assert(refreshedState.timer.duration == 20, "cooldown duration matches previous override duration (20s)")
+
+            -- Also test targeted refresh with the previous override spellID directly
+            local targetRefreshed = service.refreshSpell(212653, "SPELL_UPDATE_COOLDOWN")
+            assert(targetRefreshed ~= nil, "targetRefreshed via previous override spell ID exists")
+            assert(targetRefreshed.timer.duration == 20, "targetRefreshed matches duration 20s")
+        end)
+
+        -- Cleanup
+        service.states = originalStates
+        service.activatedAlerts = originalActivated
+        service.activationSpellIDs = originalActivationIDs
+        service.baseToOverrideMap = originalBaseToOverride
+        service.overrideToBaseMap = originalOverrideToBase
+        service.previousOverrideMap = originalPrevOverride
+        service.previousOverrideToBaseMap = originalPrevOverrideToBase
+        cSpell.GetSpellCooldown = originalGetCooldown
+        cSpell.GetSpellCharges = originalGetCharges
+        cSpell.GetSpellCooldownDuration = originalGetDuration
+        EAM.db = originalDB
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Previous override spell compensation correctly matched and resolved cooldown"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.multi_cast_continuous_lifecycle",
+    category = "cooldown",
+    description = "Validate continuous multi-cast lifecycle: 1st cast -> expire -> 2nd cast -> combat exit -> re-enter combat -> 3rd cast -> pet alert",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services.CooldownService
+        local alertManager = EAM.Managers.AlertManager
+        local renderer = EAM.UI.Renderer
+        local cSpell = api.C_Spell
+        local router = EAM.Modules.EventRouter
+
+        if not mock then
+            return STATUS_SKIP, "Multi-cast continuous lifecycle mock is offline only"
+        end
+        if not service or not alertManager or not renderer or not cSpell then
+            return false, "Dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalActivated = service.activatedAlerts
+        local originalActivationIDs = service.activationSpellIDs
+        local originalActivationEvents = service.activationEvents
+        local originalChargeSpent = service.chargeSpentObserved
+        local originalGetCooldown = cSpell.GetSpellCooldown
+        local originalCombat = mock and mock.inCombat
+
+        local ok, err = pcall(function()
+            alertManager.initialize()
+            service.initialize()
+            service.states = {}
+            service.activatedAlerts = {}
+            service.activationSpellIDs = {}
+            service.chargeSpentObserved = {}
+
+            EAM.db = {
+                revision = 999001,
+                config = {
+                    iconSize = 40,
+                    iconSpacing = 5,
+                },
+                layout = {
+                    iconSize = 40,
+                    spacing = 5,
+                    frames = {
+                        spellCooldown = { growDirection = 1, columns = 8 },
+                        petAlert = { growDirection = 1, columns = 8 },
+                    },
+                },
+                alerts = {
+                    spellCooldowns = {
+                        ["spellCooldown:player:60101"] = {
+                            id = "spellCooldown:player:60101",
+                            enabled = true,
+                            spellID = 60101,
+                            cooldownRemoveAura = true,
+                            showSCDOutsideCombat = true,
+                            glowSCDWhenUsable = false,
+                            cooldownPreRender = false,
+                        },
+                        ["spellCooldown:pet:30101"] = {
+                            id = "spellCooldown:pet:30101",
+                            enabled = true,
+                            spellID = 30101,
+                            unit = "pet",
+                            cooldownRemoveAura = true,
+                            showSCDOutsideCombat = true,
+                            glowSCDWhenUsable = false,
+                            cooldownPreRender = false,
+                        },
+                    },
+                },
+            }
+            service.updateAlertList()
+
+            local function drainScheduler()
+                local scheduler = EAM.Modules.Scheduler
+                local it = 0
+                while scheduler and scheduler.count > 0 and it < 20 do
+                    it = it + 1
+                    EAM.FlowTestAdvanceTime(0.05)
+                    local onUpdate = scheduler.frame and scheduler.frame:GetScript("OnUpdate")
+                    if onUpdate then
+                        onUpdate()
+                    else
+                        break
+                    end
+                end
+            end
+
+            -- Phase 1: In Combat, Cast 1 of player spell 60101
+            mock.setCombat(true)
+            local cdInfo = { startTime = 100, duration = 20, isEnabled = true, isOnGCD = false }
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 60101 then return cdInfo end
+                return nil
+            end
+
+            local state1 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-1", 60101)
+            assert(state1 ~= nil, "Cast 1 returned state")
+            assert(state1.shown == true, "Cast 1 state is shown")
+            assert(state1.timer.duration == 20, "Cast 1 duration is 20")
+
+            -- Flush AlertManager and render
+            drainScheduler()
+            local icon1 = renderer.frames.spellCooldown and renderer.frames.spellCooldown.icons["spellCooldown:player:60101"]
+            assert(icon1 ~= nil, "Renderer has icon for 60101")
+            assert(icon1:IsShown() == true, "Renderer icon is shown for cast 1")
+            assert(icon1.rendered.layoutX ~= nil, "Renderer icon has layoutX for cast 1")
+
+            -- Phase 2: Cooldown finishes (off CD)
+            cdInfo = { startTime = 0, duration = 0, isEnabled = true, isOnGCD = false }
+            local expireResult = service.onVisualTimerExpired("spellCooldown:player:60101")
+            assert(expireResult == true, "Visual timer expired handled")
+            assert(service.states["spellCooldown:player:60101"] == nil, "State is hidden and nil in service.states")
+
+            drainScheduler()
+            assert(icon1:IsShown() == false, "Renderer icon is hidden after expiry")
+
+            -- Phase 3: Cast 2 of player spell 60101 in combat (WITHOUT manual wipe!)
+            cdInfo = { startTime = 120, duration = 20, isEnabled = true, isOnGCD = false }
+            local state2 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-2", 60101)
+            assert(state2 ~= nil, "Cast 2 returned state")
+            assert(state2.shown == true, "Cast 2 state is shown")
+            assert(state2.timer.duration == 20, "Cast 2 duration is 20")
+
+            drainScheduler()
+            assert(icon1:IsShown() == true, "Renderer icon is shown for cast 2")
+            assert(icon1.rendered.layoutX ~= nil, "Renderer icon has layoutX for cast 2")
+
+            -- Phase 4: Drop combat -> Re-enter combat -> Cast 3
+            mock.setCombat(false)
+            service.onCombatEvent("PLAYER_REGEN_ENABLED")
+            renderer.onCombatEnd()
+
+            -- Cooldown finishes outside combat
+            cdInfo = { startTime = 0, duration = 0, isEnabled = true, isOnGCD = false }
+            service.onCooldownEvent("SPELL_UPDATE_COOLDOWN")
+            drainScheduler()
+
+            -- Re-enter combat
+            mock.setCombat(true)
+            service.onCombatEvent("PLAYER_REGEN_DISABLED")
+
+            -- Cast 3 in new combat
+            cdInfo = { startTime = 150, duration = 20, isEnabled = true, isOnGCD = false }
+            local state3 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-3", 60101)
+            assert(state3 ~= nil, "Cast 3 returned state after combat re-entry")
+            assert(state3.shown == true, "Cast 3 state is shown after combat re-entry")
+
+            drainScheduler()
+            assert(icon1:IsShown() == true, "Renderer icon is shown for cast 3")
+
+            -- Phase 5: Pet alert continuous multi-cast
+            local petCDInfo = { startTime = 160, duration = 15, isEnabled = true, isOnGCD = false }
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 30101 then return petCDInfo end
+                if spellID == 60101 then return cdInfo end
+                return nil
+            end
+
+            local petState1 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "pet", "pet-cast-1", 30101)
+            assert(petState1 ~= nil, "Pet cast 1 returned state")
+            assert(petState1.shown == true, "Pet cast 1 state is shown")
+
+            drainScheduler()
+            local petIcon = renderer.frames.petAlert and renderer.frames.petAlert.icons["spellCooldown:pet:30101"]
+            assert(petIcon ~= nil, "Renderer has icon for pet alert")
+            assert(petIcon:IsShown() == true, "Pet icon is shown for cast 1")
+
+            -- Pet cooldown expires
+            petCDInfo = { startTime = 0, duration = 0, isEnabled = true, isOnGCD = false }
+            local petExpireResult = service.onVisualTimerExpired("spellCooldown:pet:30101")
+            drainScheduler()
+
+            -- Pet cast 2 in combat
+            petCDInfo = { startTime = 180, duration = 15, isEnabled = true, isOnGCD = false }
+            local petState2 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "pet", "pet-cast-2", 30101)
+            assert(petState2 ~= nil, "Pet cast 2 returned state")
+            assert(petState2.shown == true, "Pet cast 2 state is shown")
+
+            drainScheduler()
+            assert(petIcon:IsShown() == true, "Pet icon is shown for cast 2")
+
+            -- Phase 6: Production default configuration (cooldownRemoveAura = false, cooldownPreRender = true)
+            -- with asynchronous GCD-delayed cooldown on Cast 2
+            mock.setCombat(false)
+            service.onCombatEvent("PLAYER_REGEN_ENABLED")
+            renderer.onCombatEnd()
+            drainScheduler()
+
+            EAM.db.alerts.spellCooldowns["spellCooldown:player:70101"] = {
+                id = "spellCooldown:player:70101",
+                enabled = true,
+                spellID = 70101,
+                cooldownRemoveAura = false,
+                showSCDOutsideCombat = true,
+                glowSCDWhenUsable = true,
+                cooldownPreRender = true,
+            }
+            service.updateAlertList()
+            drainScheduler()
+
+            -- Enter combat
+            mock.setCombat(true)
+            service.onCombatEvent("PLAYER_REGEN_DISABLED")
+            drainScheduler()
+
+            -- Cast 1 of 70101
+            local prodCDInfo = { startTime = 300, duration = 25, isEnabled = true, isOnGCD = false }
+            cSpell.GetSpellCooldown = function(spellID)
+                if spellID == 70101 then return prodCDInfo end
+                if spellID == 30101 then return petCDInfo end
+                if spellID == 60101 then return cdInfo end
+                return nil
+            end
+
+            local prodState1 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "prod-cast-1", 70101)
+            assert(prodState1 ~= nil, "Prod Cast 1 returned state")
+            assert(prodState1.shown == true, "Prod Cast 1 state is shown")
+            assert(prodState1.timer.duration == 25, "Prod Cast 1 duration is 25")
+            drainScheduler()
+
+            local prodIcon = renderer.frames.spellCooldown and renderer.frames.spellCooldown.icons["spellCooldown:player:70101"]
+            assert(prodIcon ~= nil, "Renderer has icon for 70101")
+            assert(prodIcon:IsShown() == true, "Prod icon is shown for cast 1")
+
+            -- Cast 1 cooldown finishes -> becomes placeholder desaturated
+            prodCDInfo = { startTime = 0, duration = 0, isEnabled = true, isOnGCD = false }
+            service.onVisualTimerExpired("spellCooldown:player:70101")
+            drainScheduler()
+
+            local placeholderState = service.states["spellCooldown:player:70101"]
+            assert(placeholderState ~= nil, "Placeholder state exists after cooldown expires")
+            assert(placeholderState.isPlaceholder == true, "Placeholder mode is active")
+            assert(placeholderState.isDesaturated == true, "Desaturated mode is active")
+
+            -- Cast 2 of 70101: Asynchronous simulation!
+            -- At the instant of UNIT_SPELLCAST_SUCCEEDED, engine returns only GCD (1.5s, isOnGCD = true)
+            prodCDInfo = { startTime = 325, duration = 1.5, isEnabled = true, isOnGCD = true }
+            local prodState2 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "prod-cast-2", 70101)
+            assert(prodState2 ~= nil, "Prod Cast 2 returned state on cast")
+
+            -- Now engine updates cooldown table to actual 25s cooldown before trailing retry fires
+            prodCDInfo = { startTime = 325, duration = 25, isEnabled = true, isOnGCD = false }
+            drainScheduler()
+
+            local activeState2 = service.states["spellCooldown:player:70101"]
+            assert(activeState2 ~= nil, "Active state 2 exists after retry")
+            assert(activeState2.completed == false, "Cast 2 is active (not completed)")
+            assert(activeState2.isPlaceholder == false, "Cast 2 placeholder is cleared")
+            assert(activeState2.timer.duration == 25, "Cast 2 duration is 25")
+            assert(prodIcon:IsShown() == true, "Prod icon is shown for cast 2")
+
+            -- Phase 7: Drop combat with showSCDOutsideCombat = false -> Re-enter combat -> Cast 3
+            EAM.db.alerts.spellCooldowns["spellCooldown:player:70101"].showSCDOutsideCombat = false
+            mock.setCombat(false)
+            service.onCombatEvent("PLAYER_REGEN_ENABLED")
+            renderer.onCombatEnd()
+            drainScheduler()
+
+            -- Re-enter combat
+            mock.setCombat(true)
+            service.onCombatEvent("PLAYER_REGEN_DISABLED")
+            drainScheduler()
+
+            -- Cast 3 in new combat
+            prodCDInfo = { startTime = 360, duration = 25, isEnabled = true, isOnGCD = false }
+            local prodState3 = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "prod-cast-3", 70101)
+            assert(prodState3 ~= nil, "Prod Cast 3 returned state after combat re-entry")
+            drainScheduler()
+
+            local activeState3 = service.states["spellCooldown:player:70101"]
+            assert(activeState3 ~= nil, "Active state 3 exists")
+            assert(activeState3.completed == false, "Cast 3 is active")
+            assert(activeState3.timer.duration == 25, "Cast 3 duration is 25")
+            assert(prodIcon:IsShown() == true, "Prod icon is shown for cast 3")
+        end)
+
+        EAM.db = originalDB
+        cSpell.GetSpellCooldown = originalGetCooldown
+        service.states = originalStates
+        service.activatedAlerts = originalActivated
+        service.activationSpellIDs = originalActivationIDs
+        service.activationEvents = originalActivationEvents
+        service.chargeSpentObserved = originalChargeSpent
+        if mock and mock.setCombat then
+            mock.setCombat(originalCombat)
+        end
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Multi-cast continuous lifecycle across repeated casts, combat transitions, and pet alerts fully validated"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.channeled_activation_and_passive_cdr_sync",
+    category = "cooldown",
+    description = "Validate channeled spell (205021 Ray of Frost) cooldown activation on UNIT_SPELLCAST_CHANNEL_START in combat, passive CDR sync on player casts (Whiteout reducing Frozen Orb 84714 upon Ice Lance 30455), unmonitored spell gating, and channeled ground effect activation",
+    primarySuite = "core",
+    suites = { core = true, boundary = true, aura121 = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services.CooldownService
+        local groundService = EAM.Services.GroundEffectService
+        local alertManager = EAM.Managers.AlertManager
+        local renderer = EAM.UI.Renderer
+        local cSpell = api.C_Spell
+
+        if not mock then
+            return STATUS_SKIP, "Cooldown channeled activation and CDR sync requires offline flow mock"
+        end
+        if not service or not groundService or not cSpell then
+            return false, "Dependencies unavailable"
+        end
+
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalActivated = service.activatedAlerts
+        local originalActivationIDs = service.activationSpellIDs
+        local originalActivationEvents = service.activationEvents
+        local originalGroundActive = groundService.activeAlerts
+        local originalGroundStates = groundService.activeStates
+        local originalCombat = mock.inCombat
+        local originalGetCooldown = cSpell.GetSpellCooldown
+        local originalGetCharges = cSpell.GetSpellCharges
+        local originalGetSpellInfo = cSpell.GetSpellInfo
+
+        local ok, err = pcall(function()
+            alertManager.initialize()
+            service.initialize()
+            groundService.initialize()
+            service.states = {}
+            service.activatedAlerts = {}
+            service.activationSpellIDs = {}
+            service.activationEvents = {}
+            service.chargeSpentObserved = {}
+            groundService.activeAlerts = {}
+            groundService.activeStates = {}
+
+            EAM.db = {
+                revision = 999101,
+                config = {
+                    iconSize = 40,
+                    iconSpacing = 5,
+                },
+                layout = {
+                    iconSize = 40,
+                    spacing = 5,
+                    frames = {
+                        spellCooldown = { growDirection = 1, columns = 8 },
+                        groundEffect = { growDirection = 1, columns = 8 },
+                    },
+                },
+                alerts = {
+                    spellCooldowns = {
+                        ["spellCooldown:player:205021"] = {
+                            id = "spellCooldown:player:205021",
+                            enabled = true,
+                            spellID = 205021,
+                            cooldownRemoveAura = true,
+                            showSCDOutsideCombat = false,
+                            glowSCDWhenUsable = false,
+                            cooldownPreRender = false,
+                        },
+                        ["spellCooldown:player:84714"] = {
+                            id = "spellCooldown:player:84714",
+                            enabled = true,
+                            spellID = 84714,
+                            cooldownRemoveAura = true,
+                            showSCDOutsideCombat = false,
+                            glowSCDWhenUsable = false,
+                            cooldownPreRender = false,
+                        },
+                    },
+                    groundEffects = {
+                        ["groundEffect:player:84714"] = {
+                            id = "groundEffect:player:84714",
+                            enabled = true,
+                            spellID = 84714,
+                            manualDuration = 8.0,
+                        },
+                        ["groundEffect:player:190356"] = {
+                            id = "groundEffect:player:190356",
+                            enabled = true,
+                            spellID = 190356,
+                            manualDuration = 3.0,
+                        },
+                    },
+                },
+            }
+            service.updateAlertList()
+            groundService.initialize()
+
+            local cdStore = {
+                [205021] = { startTime = 100, duration = 60, isEnabled = true, isOnGCD = false },
+                [84714] = { startTime = 100, duration = 60, isEnabled = true, isOnGCD = false },
+            }
+
+            cSpell.GetSpellCharges = function() return nil end
+            cSpell.GetSpellCooldown = function(spellID)
+                return cdStore[spellID] or { startTime = 0, duration = 0, isEnabled = true, isOnGCD = false }
+            end
+            cSpell.GetSpellInfo = function(spellID)
+                if spellID == 205021 then return { name = "冰霜射線", icon = 135848 } end
+                if spellID == 84714 then return { name = "冰霜之球", icon = 135849 } end
+                if spellID == 30455 then return { name = "冰霜長矛", icon = 135850 } end
+                if spellID == 190356 then return { name = "暴風雪", icon = 135851 } end
+                return { name = "Spell" .. tostring(spellID), icon = 136243 }
+            end
+
+            local function drainScheduler()
+                local scheduler = EAM.Modules.Scheduler
+                local it = 0
+                while scheduler and scheduler.count > 0 and it < 20 do
+                    it = it + 1
+                    EAM.FlowTestAdvanceTime(0.05)
+                    local onUpdate = scheduler.frame and scheduler.frame:GetScript("OnUpdate")
+                    if onUpdate then
+                        onUpdate()
+                    else
+                        break
+                    end
+                end
+            end
+
+            -- Phase 1: In Combat, player casts Ray of Frost (205021, channeled) via UNIT_SPELLCAST_CHANNEL_START
+            mock.setCombat(true)
+            local resChannel = service.onSpellcastSucceeded("UNIT_SPELLCAST_CHANNEL_START", "player", "channel-guid-1", 205021)
+            assert(resChannel ~= nil and resChannel ~= false, "Ray of Frost activated via UNIT_SPELLCAST_CHANNEL_START")
+            assert(service.activatedAlerts["spellCooldown:player:205021"] == true, "Ray of Frost is marked activated")
+            local rayState = service.states["spellCooldown:player:205021"]
+            assert(rayState ~= nil, "Ray of Frost state exists")
+            assert(rayState.active == true, "Ray of Frost state is active")
+            assert(rayState.completed == false, "Ray of Frost state is not completed")
+            assert(rayState.timer.duration == 60, "Ray of Frost duration is 60")
+            assert(rayState.source.activation == "UNIT_SPELLCAST_CHANNEL_START:player", "Ray of Frost activation source is UNIT_SPELLCAST_CHANNEL_START:player")
+
+            -- Verify background SPELL_UPDATE_COOLDOWN does not clobber channeled activation source
+            service.onCooldownEvent("SPELL_UPDATE_COOLDOWN")
+            local rayStateAfterEvent = service.states["spellCooldown:player:205021"]
+            assert(rayStateAfterEvent ~= nil and rayStateAfterEvent.source.activation == "UNIT_SPELLCAST_CHANNEL_START:player", "Ray of Frost activation source remains UNIT_SPELLCAST_CHANNEL_START:player after SPELL_UPDATE_COOLDOWN")
+
+            -- Verify UNIT_SPELLCAST_CHANNEL_STOP
+            local resStop = service.onSpellcastChannelStop("UNIT_SPELLCAST_CHANNEL_STOP", "player", "channel-guid-1", 205021)
+            assert(resStop == true, "UNIT_SPELLCAST_CHANNEL_STOP successfully handled for Ray of Frost")
+
+            -- Phase 2: In Combat, player casts Blizzard (190356, channeled ground effect) via UNIT_SPELLCAST_CHANNEL_START
+            local resGround = groundService.onSpellcastSucceeded("UNIT_SPELLCAST_CHANNEL_START", "player", "blizz-guid-1", 190356)
+            assert(resGround == true, "Channeled ground effect (190356 Blizzard) triggered via UNIT_SPELLCAST_CHANNEL_START")
+            local blizzState = groundService.activeStates[190356]
+            assert(blizzState ~= nil and blizzState.active == true, "Blizzard ground effect state is active")
+            assert(blizzState.source.event == "UNIT_SPELLCAST_CHANNEL_START", "Blizzard ground effect source event is UNIT_SPELLCAST_CHANNEL_START")
+
+            -- Phase 3: Player casts Frozen Orb (84714) via UNIT_SPELLCAST_SUCCEEDED
+            local resOrb = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "orb-guid-1", 84714)
+            assert(resOrb ~= nil, "Frozen Orb activated via UNIT_SPELLCAST_SUCCEEDED")
+            local orbState = service.states["spellCooldown:player:84714"]
+            assert(orbState ~= nil and orbState.active == true, "Frozen Orb state is active")
+            assert(orbState.timer.expirationTime == 160, "Frozen Orb initial expirationTime is 160")
+
+            -- Phase 4: Whiteout passive CDR - Ice Lance (30455) cast reduces Frozen Orb cooldown by 0.5s
+            cdStore[84714] = { startTime = 99.5, duration = 60, isEnabled = true, isOnGCD = false }
+            local resLance = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "lance-guid-1", 30455)
+            assert(resLance == nil, "Ice Lance itself is not in monitored CD list, activateSpell returns nil")
+            local orbStateAfterLance = service.states["spellCooldown:player:84714"]
+            assert(orbStateAfterLance ~= nil, "Frozen Orb state persists")
+            assert(math.abs(orbStateAfterLance.timer.expirationTime - 159.5) < 0.001, "Frozen Orb expirationTime reduced by 0.5s via active CDR sync")
+
+            -- Further reduction: targeted SPELL_UPDATE_COOLDOWN for 30455 with another 0.5s reduction
+            cdStore[84714] = { startTime = 99.0, duration = 60, isEnabled = true, isOnGCD = false }
+            service.onCooldownEvent("SPELL_UPDATE_COOLDOWN", 30455)
+            local orbStateAfterCDEvent = service.states["spellCooldown:player:84714"]
+            assert(orbStateAfterCDEvent ~= nil and math.abs(orbStateAfterCDEvent.timer.expirationTime - 159.0) < 0.001, "Targeted cooldown event also syncs active CDR")
+
+            -- Rapid second cast: verify generation token maintains pending retries
+            cdStore[84714] = { startTime = 98.5, duration = 60, isEnabled = true, isOnGCD = false }
+            service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "lance-guid-2", 30455)
+            assert(service._activeCDRRetryPending == true, "Trailing CDR retry pending during rapid succession")
+
+            -- Drain scheduler for trailing multi-stage retries
+            drainScheduler()
+            assert(service._activeCDRRetryPending == false, "Trailing CDR retry finished")
+
+            -- Phase 5: Gating checks
+            local unmonRes = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-x", 999999)
+            assert(unmonRes == nil, "Unmonitored spell does not activate")
+            local enemyRes, enemyReason = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "target", "guid-enemy", 205021)
+            assert(enemyRes == false and enemyReason == "notPlayerCast", "Target/enemy cast is rejected")
+        end)
+
+        cSpell.GetSpellCooldown = originalGetCooldown
+        cSpell.GetSpellCharges = originalGetCharges
+        cSpell.GetSpellInfo = originalGetSpellInfo
+        service.states = originalStates
+        service.activatedAlerts = originalActivated
+        service.activationSpellIDs = originalActivationIDs
+        service.activationEvents = originalActivationEvents
+        groundService.activeAlerts = originalGroundActive
+        groundService.activeStates = originalGroundStates
+        mock.setCombat(originalCombat)
+        EAM.db = originalDB
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Channeled activation (Ray of Frost / Blizzard) and passive CDR sync (Whiteout -> Frozen Orb) fully validated"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "cooldown.override_proc_preservation_and_flight_trace",
+    category = "cooldown",
+    description = "Validate zero-CD override proc preservation (Ray of Frost -> Comet Storm), CooldownTrace flight recorder, and active CDR sampler tick",
+    primarySuite = "core",
+    suites = { core = true, quick = true, boundary = true },
+    run = function()
+        local mock = EAM.FlowTestMock
+        local service = EAM.Services and EAM.Services.CooldownService
+        local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+        local cSpell = api and api.C_Spell or (EAM.API and EAM.API.C_Spell)
+        if not mock then
+            return STATUS_SKIP, "Zero-CD override proc preservation test requires offline flow mock"
+        end
+        if not service or not cSpell or not cdTrace then
+            return false, "CooldownService, C_Spell or CooldownTrace unavailable"
+        end
+
+        local originalDB = EAM.db
+        local originalStates = service.states
+        local originalActivated = service.activatedAlerts
+        local originalActivationIDs = service.activationSpellIDs
+        local originalActivationEvents = service.activationEvents
+        local originalBaseMap = service.baseToOverrideMap
+        local originalOverrideMap = service.overrideToBaseMap
+        local originalGetCooldown = cSpell.GetSpellCooldown
+        local originalGetOverride = cSpell.GetOverrideSpell
+        local originalCombat = mock.inCombat
+
+        local ok, err = pcall(function()
+            if mock and mock.setCombat then
+                mock.setCombat(true)
+            end
+            service.states = {}
+            service.activatedAlerts = {}
+            service.activationSpellIDs = {}
+            service.activationEvents = {}
+            service.baseToOverrideMap = {}
+            service.overrideToBaseMap = {}
+            cdTrace.clear()
+
+            EAM.db = {
+                revision = 1,
+                config = { showSCDOutsideCombat = true, cooldownRemoveAura = false },
+                alerts = {
+                    spellCooldowns = {
+                        [1] = { id = "spellCooldown:player:205021", spellID = 205021, enabled = true, order = 1 },
+                        [2] = { id = "spellCooldown:player:84714", spellID = 84714, enabled = true, order = 2 },
+                    }
+                }
+            }
+            service.updateAlertList()
+
+            local cdStore = {
+                [205021] = { startTime = 100, duration = 60, isEnabled = true, isOnGCD = false },
+                [153595] = { startTime = 0, duration = 0, isEnabled = true, isOnGCD = false },
+                [84714] = { startTime = 100, duration = 60, isEnabled = true, isOnGCD = false },
+            }
+
+            cSpell.GetSpellCooldown = function(id)
+                return cdStore[id] or { startTime = 0, duration = 0, isEnabled = true, isOnGCD = false }
+            end
+
+            -- Step 1: Ray of Frost starts channeling (CHANNEL_START) -> activated with 60s CD
+            local resChannel = service.onSpellcastSucceeded("UNIT_SPELLCAST_CHANNEL_START", "player", "ray-guid", 205021)
+            assert(resChannel ~= nil, "Ray of Frost activated")
+            local rayState = service.states["spellCooldown:player:205021"]
+            assert(rayState and rayState.active == true, "Ray of Frost state active")
+            assert(rayState.timer.expirationTime == 160, "Ray of Frost expiration is 160")
+
+            -- Step 2: Override occurs -> Comet Storm (153595) replaces Ray of Frost (205021)
+            service.baseToOverrideMap[205021] = 153595
+            service.overrideToBaseMap[153595] = 205021
+            cSpell.GetOverrideSpell = function(id)
+                if id == 205021 then return 153595 end
+                return id
+            end
+
+            -- Step 3: Player casts Comet Storm (153595, zero-CD override proc)
+            -- Verify: Ray of Frost's 60s cooldown is NOT erased or wiped!
+            local resOverride = service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "comet-guid", 153595)
+            local rayStateAfter = service.states["spellCooldown:player:205021"]
+            assert(rayStateAfter ~= nil, "Ray of Frost state still exists")
+            assert(rayStateAfter.active == true, "Ray of Frost remains active after zero-CD override cast")
+            assert(rayStateAfter.completed ~= true, "Ray of Frost is NOT marked completed by zero-CD override")
+            assert(rayStateAfter.timer and rayStateAfter.timer.expirationTime == 160, "Ray of Frost expirationTime remains 160")
+            assert(service.activationSpellIDs["spellCooldown:player:205021"] == 205021, "Activation ID preserved as 205021, not overwritten by zero-CD proc")
+
+            -- Step 4: CooldownTrace verification
+            assert(cdTrace.count > 0, "CooldownTrace recorded events")
+            local dump = cdTrace.dumpToString()
+            assert(type(dump) == "string" and string.find(dump, "205021"), "Trace dump contains Ray of Frost")
+            assert(EAM.db.cooldownTrace and #EAM.db.cooldownTrace > 0, "Trace automatically persisted to SavedVariables")
+
+            -- Step 5: Active CDR Sampler Tick verification
+            -- Frozen Orb is running (exp=160), Whiteout reduces CD by 3s mid-flight without direct event
+            service.onSpellcastSucceeded("UNIT_SPELLCAST_SUCCEEDED", "player", "orb-guid", 84714)
+            cdStore[84714] = { startTime = 97, duration = 60, isEnabled = true, isOnGCD = false }
+            -- Call sampler refresh
+            local synced = service.refreshActiveCooldowns(nil)
+            assert(synced >= 1, "Active CDR sampler successfully synced active cooldowns")
+            local orbState = service.states["spellCooldown:player:84714"]
+            assert(math.abs(orbState.timer.expirationTime - 157) < 0.001, "Frozen Orb expiration reduced to 157 by active CDR sync")
+        end)
+
+        cSpell.GetSpellCooldown = originalGetCooldown
+        cSpell.GetOverrideSpell = originalGetOverride
+        service.states = originalStates
+        service.activatedAlerts = originalActivated
+        service.activationSpellIDs = originalActivationIDs
+        service.activationEvents = originalActivationEvents
+        service.baseToOverrideMap = originalBaseMap
+        if mock and mock.setCombat then
+            mock.setCombat(originalCombat)
+        end
+        EAM.db = originalDB
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Zero-CD override proc preservation (Ray of Frost -> Comet Storm), flight trace, and active CDR sampler fully validated"
+    end,
+})

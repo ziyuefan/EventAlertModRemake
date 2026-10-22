@@ -23,6 +23,7 @@ local Constants = EAM.Constants or {}
 local MediaService = {
     lsm = nil,
     hasLSM = false,
+    registeredBuiltins = false,
     registeredCallbacks = false,
     cache = {
         font = nil,
@@ -66,7 +67,7 @@ local BUILTIN_SOUNDS = {
 local BUILTIN_STATUSBARS = {
     { value = "DEFAULT", labelKey = "EAM_OPT_BAR_DEFAULT", path = "Interface\\TargetingFrame\\UI-StatusBar" },
     { value = "FLAT", labelKey = "EAM_OPT_BAR_FLAT", path = "Interface\\Buttons\\WHITE8X8" },
-    { value = "SMOOTH", labelKey = "EAM_OPT_BAR_SMOOTH", path = "Interface\\AddOns\\EventAlertMod\\Textures\\Smooth" },
+    { value = "SMOOTH", labelKey = "EAM_OPT_BAR_SMOOTH", path = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill" },
 }
 
 function MediaService.ensureLSM()
@@ -131,21 +132,33 @@ function MediaService.registerBuiltinsToLSM()
     if not lsm or type(lsm.Register) ~= "function" then
         return
     end
+    local fontType = (lsm.MediaType and lsm.MediaType.FONT) or "font"
+    local soundType = (lsm.MediaType and lsm.MediaType.SOUND) or "sound"
+    local statusbarType = (lsm.MediaType and lsm.MediaType.STATUSBAR) or "statusbar"
+    local allLocalesMask = (
+        (lsm.LOCALE_BIT_koKR or 1)
+        + (lsm.LOCALE_BIT_ruRU or 2)
+        + (lsm.LOCALE_BIT_zhCN or 4)
+        + (lsm.LOCALE_BIT_zhTW or 8)
+        + (lsm.LOCALE_BIT_western or 128)
+    )
+
     for _, item in ipairs(BUILTIN_FONTS) do
         if item.path and item.path ~= "STANDARD" then
-            pcall(lsm.Register, lsm, "font", "EAM " .. item.value, item.path)
+            pcall(lsm.Register, lsm, fontType, "EAM " .. item.value, item.path, allLocalesMask)
         end
     end
     for _, item in ipairs(BUILTIN_SOUNDS) do
         if item.path and not item.aliasOf then
-            pcall(lsm.Register, lsm, "sound", "EAM " .. item.value, item.path)
+            pcall(lsm.Register, lsm, soundType, "EAM " .. item.value, item.path)
         end
     end
     for _, item in ipairs(BUILTIN_STATUSBARS) do
         if item.path then
-            pcall(lsm.Register, lsm, "statusbar", "EAM " .. item.value, item.path)
+            pcall(lsm.Register, lsm, statusbarType, "EAM " .. item.value, item.path)
         end
     end
+    MediaService.registeredBuiltins = true
 end
 
 function MediaService.getMediaList(mediaType, forceRefresh)

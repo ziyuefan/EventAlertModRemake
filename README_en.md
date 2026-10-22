@@ -1,12 +1,12 @@
-# EventAlertMod Retail 12.1 (EAM)
+# EventAlertMod Retail 12.1.5 (EAM)
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.7-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
-[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Release](https://img.shields.io/badge/release-Alpha%208.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.0 / 12.0+)!**
+> 🚀 **Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.5 / 12.1 / 12.0+)!**
 >
 > 🌐 **Official Online Documentation & Navigation Hub**: [https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
 
@@ -150,6 +150,32 @@ In-game, you never need to manually look up Spell IDs:
 
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+
+### 🌟 [Retail 12.1.5 Alpha 8.8] - 2026.10.23
+- **Retail 12.1.5 Patch Compatibility & Native C++ Acceleration**:
+  - **TOC Interface Update**: Full compatibility for World of Warcraft Retail 12.1.5 (Interface: `120105`), maintaining seamless backward compatibility with `120100` and `120007` clients.
+  - **Blizzard 12.1.5 Native C++ Low-Level Acceleration**: Integrated native C++ math library (`math.clamp`, `math.saturate`, `math.round`, `math.lerp`, etc.), string library (`string.contains`, `string.startswith`, etc.), and table library (`table.isempty`, `table.contains`, etc.) with defensive polyfills for older clients.
+- **Zero-Alloc TimedSignalMap Scheduler Engine**:
+  - Deep integration with 12.1.5 `C_Timer.NewTimedSignalMap` native key-value scheduler, hosted directly by Blizzard's C++ engine, smoothly switching to an autonomous state machine on older clients with zero repeated memory allocation (Zero-Alloc Key Rescheduling).
+- **12.1.5 Native Pandemic Carry-Over Precision & Animations**:
+  - Employs `C_UnitAuras.GetRefreshCarryOverDuration` for exact carry-over time evaluation, strictly alerting when carry-over is <= 30% of base duration to eliminate DoT clipping.
+  - Deeply adapted to 12.1.5 Native Aura container animation APIs (`AddPandemicActiveAnimation`, `AddPandemicEnterAnimation`, `AddPandemicLeaveAnimation`) for smoother visual transitions.
+- **Ground Effect Multi-Duration Candidate Selection**:
+  - Intelligently parses all candidate durations in sequence from complex tooltips containing multiple durations (e.g., ground duration vs slow duration vs channel duration), providing a dedicated dropdown in the configuration UI.
+- **Customizable Alert Border Colors & Borderless Mode**:
+  - 8 alert modules support independent color swatches and opacity controls, plus a global and per-module "Borderless Mode" and "Reset Classic Defaults" button with instant live hot-apply.
+- **Per-Resource Independent Dragging & 9-Point Frame Attachment**:
+  - Each player resource supports "Enable Independent Position" to detach from group stacks and move freely via mouse drag/right-click commit; supports attaching to target frames with 9-point compass alignment.
+- **Dynamic/Custom StatusBar Segments, Custom Gradient Colors & Conditional Alerts**:
+  - Discrete point resources (Combo Points 5/6/7, Chi 5/6, Evoker Essence 5/6, Holy Power 5, Soul Shards 5, Arcane Charges 4, Runes 6) dynamically partition status bar segment markers based on live `UnitPowerMax`, with a new "Custom Segments (0=Auto, 1~20)" slider.
+  - Added "Custom Solid" and "Custom Two-Color Gradient" horizontal/vertical rendering, plus `>=` or `<=` threshold conditional alerts with custom color override and rising-edge sound alert latch.
+- **LibSharedMedia-3.0 Updated to r156 & 5-Locale Evoker Essence Calibration**:
+  - Upgraded LibSharedMedia-3.0 to r156 (supporting 12.0.1+ / Interface 12000103), expanding font and texture asset libraries.
+  - Fully calibrated Evoker primary resource naming across all 5 official Blizzard client localizations: Traditional Chinese (龍能), Simplified Chinese (精华), English (Essence), Korean (정수), and Russian (Сущность).
+- **Critical Bug Fixes & Stability Enhancements**:
+  - **Action Bar Taint Remediation**: Completely eliminated global environment pollution, eradicating `ADDON_ACTION_BLOCKED` errors on action bars.
+  - **Talent Override Cooldown Detection & Live CDR Sync**: Overhauled cooldown cast-matching and spell family heuristics, introducing an adaptive burst sampler and projectile flight compensation to synchronize talent-based CDR (e.g. Ray of Frost, Comet Storm, Frozen Orb).
+  - **Secret Value Protection**: Fortified `Util.isSafeTableKey` checks to isolate secret values from Lua tables, binding exclusively through native one-way sinks with 100% zero taint.
 
 ### 🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27
 - **Cooldown Event Coalescing & Zero-Allocation Alert Pipeline**:

@@ -172,6 +172,82 @@ function DurationAdapter.buildResourceDynamicColorCurve(baseColor, isReverse)
     return curve
 end
 
+function DurationAdapter.buildCustomResourceColorCurve(baseColor, colorMode, startColor, endColor, alertEnabled, alertOperator, alertThreshold, alertColor, isReverse)
+    if colorMode == "DEFAULT" and not alertEnabled then
+        return DurationAdapter.buildResourceDynamicColorCurve(baseColor, isReverse)
+    end
+
+    local cCurveUtil = api.C_CurveUtil or _G.C_CurveUtil
+    if not cCurveUtil or type(cCurveUtil.CreateColorCurve) ~= "function" then
+        return nil
+    end
+
+    local ok, curve = pcall(cCurveUtil.CreateColorCurve)
+    if not ok or not curve or type(curve.AddPoint) ~= "function" then
+        return nil
+    end
+
+    local curveType = api.LuaCurveType or (_G.Enum and _G.Enum.LuaCurveType)
+    if curveType and curveType.Linear and type(curve.SetType) == "function" then
+        pcall(curve.SetType, curve, curveType.Linear)
+    end
+
+    local r1, g1, b1, a1 = 1, 1, 1, 1
+    local r2, g2, b2, a2 = 1, 1, 1, 1
+
+    if colorMode == "SOLID" then
+        local s = (type(startColor) == "table") and startColor or baseColor or { 1, 0.82, 0.15, 1 }
+        r1, g1, b1, a1 = tonumber(s[1]) or 1, tonumber(s[2]) or 0.82, tonumber(s[3]) or 0.15, 1
+        r2, g2, b2, a2 = r1, g1, b1, a1
+    elseif colorMode == "GRADIENT" then
+        local s = (type(startColor) == "table") and startColor or baseColor or { 1, 0.82, 0.15, 1 }
+        local e = (type(endColor) == "table") and endColor or { 1, 0.25, 0.25, 1 }
+        r1, g1, b1, a1 = tonumber(s[1]) or 1, tonumber(s[2]) or 0.82, tonumber(s[3]) or 0.15, 1
+        r2, g2, b2, a2 = tonumber(e[1]) or 1, tonumber(e[2]) or 0.25, tonumber(e[3]) or 0.25, 1
+    else -- "DEFAULT"
+        local b = (type(baseColor) == "table") and baseColor or { 1, 0.82, 0.15, 1 }
+        local br, bg, bb = tonumber(b[1]) or 1, tonumber(b[2]) or 0.82, tonumber(b[3]) or 0.15
+        if isReverse then
+            r1, g1, b1, a1 = 0.35, 0.35, 0.35, 0.8
+            r2, g2, b2, a2 = br, bg, bb, 1
+        else
+            r1, g1, b1, a1 = br * 0.65, bg * 0.65, bb * 0.65, 1
+            r2, g2, b2, a2 = br, bg, bb, 1
+        end
+    end
+
+    local c1 = createColorWrapper({ r1, g1, b1, a1 }, r1, g1, b1, a1)
+    local c2 = createColorWrapper({ r2, g2, b2, a2 }, r2, g2, b2, a2)
+
+    if alertEnabled and type(alertColor) == "table" then
+        local th = math.max(0.05, math.min(0.95, tonumber(alertThreshold) or 0.9))
+        local alertColorObj = createColorWrapper(alertColor, 1.0, 0.15, 0.15, 1.0)
+        local midColor = createColorWrapper(
+            { r1 + (r2 - r1) * th, g1 + (g2 - g1) * th, b1 + (b2 - b1) * th, 1.0 },
+            r1 + (r2 - r1) * th,
+            g1 + (g2 - g1) * th,
+            b1 + (b2 - b1) * th,
+            1.0
+        )
+        if alertOperator == "LE" then
+            pcall(curve.AddPoint, curve, 0.0, alertColorObj)
+            pcall(curve.AddPoint, curve, math.max(0.0, th - 0.001), alertColorObj)
+            pcall(curve.AddPoint, curve, th, midColor)
+            pcall(curve.AddPoint, curve, 1.0, c2)
+        else
+            pcall(curve.AddPoint, curve, 0.0, c1)
+            pcall(curve.AddPoint, curve, math.max(0.0, th - 0.001), midColor)
+            pcall(curve.AddPoint, curve, th, alertColorObj)
+            pcall(curve.AddPoint, curve, 1.0, alertColorObj)
+        end
+    else
+        pcall(curve.AddPoint, curve, 0.0, c1)
+        pcall(curve.AddPoint, curve, 1.0, c2)
+    end
+
+    return curve
+end
+
 function DurationAdapter.getActiveColorCurve()
     if not colorCurveDirty and cachedColorCurve ~= nil then
         return cachedColorCurve

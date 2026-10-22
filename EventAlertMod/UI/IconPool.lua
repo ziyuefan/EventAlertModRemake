@@ -590,6 +590,20 @@ local function tryLibraryGlow(icon, enabled)
             return false
         end
         local ok = pcall(show, icon)
+        if ok then
+            overlay = readField(icon, "__LBGoverlay")
+            if overlay and type(overlay.ClearAllPoints) == "function" and type(overlay.SetPoint) == "function" then
+                local frameWidth, frameHeight = icon:GetSize()
+                frameWidth = (frameWidth and frameWidth > 0) and frameWidth or 40
+                frameHeight = (frameHeight and frameHeight > 0) and frameHeight or 40
+                local pad = (icon.typeBorder and icon.typeBorder.thickness) or 2
+                local extraW = math.max(pad + 4, frameWidth * 0.25)
+                local extraH = math.max(pad + 4, frameHeight * 0.25)
+                overlay:ClearAllPoints()
+                overlay:SetPoint("TOPLEFT", icon, "TOPLEFT", -extraW, extraH)
+                overlay:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", extraW, -extraH)
+            end
+        end
         return ok
     end
     if not overlay then
@@ -642,9 +656,11 @@ function IconPool.setGlow(icon, enabled, r, g, b, a)
         local w, h = icon:GetSize()
         w = (w and w > 0) and w or 40
         h = (h and h > 0) and h or 40
+        local pad = (icon.typeBorder and icon.typeBorder.thickness) or 2
+        local extraScale = math.max(64 / 36, (w + pad * 4) / w)
         glow:ClearAllPoints()
         glow:SetPoint("CENTER", icon, "CENTER", 0, 0)
-        glow:SetSize(w * (64 / 36), h * (64 / 36))
+        glow:SetSize(w * extraScale, h * extraScale)
         if customColor then
             glow:SetVertexColor(
                 r,
@@ -838,7 +854,11 @@ local function createIcon()
     timerText:SetPoint("CENTER", overlay, "CENTER", 0, 0)
     button.timerText = timerText
 
-    local typeBorder = button:CreateTexture(nil, "BORDER")
+    local legacyBorderTex = button:CreateTexture(nil, "BORDER")
+    legacyBorderTex:SetTexture("Interface\\Buttons\\WHITE8X8")
+    legacyBorderTex:Hide()
+
+    local typeBorder = (AlertBorderStyles and AlertBorderStyles.createBorder and AlertBorderStyles.createBorder(button, "OVERLAY", 2, 0)) or legacyBorderTex
     typeBorder:SetTexture("Interface\\Buttons\\WHITE8X8")
     typeBorder:SetBlendMode("BLEND")
     AlertBorderStyles.anchorTexture(typeBorder, button)

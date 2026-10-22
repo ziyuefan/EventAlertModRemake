@@ -35,6 +35,12 @@ local buttonHooked = setmetatable({}, { __mode = "k" })
 EAM.UI = EAM.UI or {}
 EAM.UI.NativeAuraRenderer = NativeAuraRenderer
 
+local function hasButtonMethod(button, methodName)
+    if not button then return false end
+    local ok, method = pcall(function() return button[methodName] end)
+    return ok and type(method) == "function"
+end
+
 local function safePositive(value, fallback)
     if EAM.Util.isSafePositiveNumber(value) then
         return value
@@ -103,6 +109,7 @@ local function snapshotStyle(rule)
         swipeAlpha = safeAlpha(config and config.cooldownSwipeAlpha),
         swipeColor = { r = swipeR, g = swipeG, b = swipeB },
         borderStyleKey = AlertBorderStyles.resolveAura(rule and rule.unit or nil, rule and rule.filterString or nil),
+        showBorder = not config or config.showBorder ~= false,
         dualCountdownProbe = config and config.nativeAuraDualCountdownProbe == true or false,
         showCountdown = showCountdown,
         showStacks = showStacks,
@@ -217,6 +224,10 @@ local function bindDispelTypeTexture(auraButton, style)
     if not hasAPI or not options then
         return false
     end
+    -- 全域「取消圖示類型外框」或該分類關閉時，Blizzard 原生驅散類型外框也一併停用。
+    if style.showBorder == false or not AlertBorderStyles.getColor(style.borderStyleKey) then
+        return false
+    end
 
     -- 12.1.5 Guard: AddDispelTypeTexture throws if the same region/texture is added multiple times
     if rawget(auraButton, "eamDispelTexture") then
@@ -305,6 +316,51 @@ local function bindPandemicAnimations(auraButton, style)
     return false
 end
 
+local function bindLifecycleAnimations(auraButton, style)
+    local hasShown = hasButtonMethod(auraButton, "AddAuraShownAnimation")
+    local hasAssigned = hasButtonMethod(auraButton, "AddAuraAssignedAnimation")
+    if not hasShown and not hasAssigned then
+        return false
+    end
+
+    if rawget(auraButton, "eamLifecycleAnimBound") then
+        return true
+    end
+
+    if type(auraButton.CreateAnimationGroup) == "function" then
+        if hasShown and not rawget(auraButton, "eamAuraShownAnim") then
+            local shownAnim = auraButton:CreateAnimationGroup()
+            local alpha = shownAnim:CreateAnimation("Alpha")
+            if alpha then
+                if type(alpha.SetFromAlpha) == "function" then alpha:SetFromAlpha(0.2) end
+                if type(alpha.SetToAlpha) == "function" then alpha:SetToAlpha(1.0) end
+                if type(alpha.SetDuration) == "function" then alpha:SetDuration(0.12) end
+            end
+            local ok = pcall(auraButton.AddAuraShownAnimation, auraButton, shownAnim)
+            if ok then
+                auraButton.eamAuraShownAnim = shownAnim
+            end
+        end
+
+        if hasAssigned and not rawget(auraButton, "eamAuraAssignedAnim") then
+            local assignAnim = auraButton:CreateAnimationGroup()
+            local scale = assignAnim:CreateAnimation("Scale")
+            if scale then
+                if type(scale.SetScale) == "function" then scale:SetScale(1.08, 1.08) end
+                if type(scale.SetDuration) == "function" then scale:SetDuration(0.1) end
+            end
+            local ok = pcall(auraButton.AddAuraAssignedAnimation, auraButton, assignAnim)
+            if ok then
+                auraButton.eamAuraAssignedAnim = assignAnim
+            end
+        end
+
+        auraButton.eamLifecycleAnimBound = true
+        return true
+    end
+    return false
+end
+
 local function safeRemovePandemicRegion(auraButton)
     local region = rawget(auraButton, "eamPandemicRegion")
     if not region then return false end
@@ -360,12 +416,17 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     icon:SetAllPoints(auraButton)
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-    local typeBorder = auraButton:CreateTexture(nil, "BORDER")
+    local legacyBorderTex = auraButton:CreateTexture(nil, "BORDER")
+    legacyBorderTex:SetTexture("Interface\\Buttons\\WHITE8X8")
+    legacyBorderTex:Hide()
+
+    local typeBorder = (AlertBorderStyles and AlertBorderStyles.createBorder and AlertBorderStyles.createBorder(auraButton, "OVERLAY", 2, 0)) or legacyBorderTex
     typeBorder:SetTexture("Interface\\Buttons\\WHITE8X8")
     typeBorder:SetBlendMode("BLEND")
     AlertBorderStyles.anchorTexture(typeBorder, auraButton)
     AlertBorderStyles.apply(typeBorder, style.borderStyleKey)
     auraButton.eamTypeBorder = typeBorder
+    auraButton.eamBorderStyleKey = style.borderStyleKey
     local cooldown = api.CreateFrame("Cooldown", nil, auraButton, "CooldownFrameTemplate")
     cooldown:SetAllPoints(auraButton)
     if type(cooldown.SetHideCountdownNumbers) == "function" then
@@ -433,6 +494,20 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     bindPandemicRegion(auraButton, style)
     bindDispelTypeTexture(auraButton, style)
     bindPandemicAnimations(auraButton, style)
+    bindLifecycleAnimations(auraButton, style)
+
+    if hasButtonMethod(auraButton, "SetCasterName") and (rule and rule.unit ~= "player") then
+        local casterText = auraButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
+        TextPlacement.apply(casterText, auraButton, "OUTSIDE_TOP")
+        TextPlacement.applyFont(casterText, style.nameFontSize or 10, style.fontFamily)
+        local ok = pcall(auraButton.SetCasterName, auraButton, casterText)
+        if ok then
+            auraButton.eamCasterText = casterText
+        else
+            casterText:Hide()
+        end
+    end
+
     if Util.snapToPixels then
         Util.snapToPixels(auraButton)
     end
@@ -465,6 +540,27 @@ end
 
 function NativeAuraRenderer.resetButtons()
     NativeAuraRenderer.buttons = setmetatable({}, { __mode = "k" })
+end
+
+-- 邊框設定變更時的熱更新：僅處理尚未被 Blizzard 鎖定的按鈕；鎖定者由容器重建（指紋已含外框設定）處理。
+function NativeAuraRenderer.refreshBorders()
+    local count = 0
+    local config = EAM.db and EAM.db.config
+    local showBorder = not config or config.showBorder ~= false
+    for button in pairs(NativeAuraRenderer.buttons) do
+        local isLocked = button and rawget(button, "_eamInitializationLocked") == true
+        local border = button and rawget(button, "eamTypeBorder")
+        local styleKey = button and rawget(button, "eamBorderStyleKey")
+        if not isLocked and border then
+            pcall(AlertBorderStyles.apply, border, styleKey)
+            count = count + 1
+        end
+        local color = AlertBorderStyles.getColor(styleKey)
+        if not showBorder or not color then
+            safeRemoveDispelTypeTexture(button)
+        end
+    end
+    return count
 end
 
 function NativeAuraRenderer.updateButtonFonts(config)

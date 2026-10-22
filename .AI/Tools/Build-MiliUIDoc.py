@@ -273,8 +273,8 @@ def build_compatibility_html():
         '  <div class="details-content">\n'
         '    <p><strong>支援環境</strong>：</p>\n'
         '    <ul>\n'
-        '      <li>《魔獸世界：正式服》World of Warcraft: Retail 12.1.0+ (Interface 120100)</li>\n'
-        '      <li>相容通道 Retail 12.0.7+ (Interface 120007)</li>\n'
+        '      <li>《魔獸世界：正式服》World of Warcraft: Retail 12.1.5+ (Interface 120105)</li>\n'
+        '      <li>相容通道 Retail 12.1.0+ (Interface 120100) / Retail 12.0.7+ (Interface 120007)</li>\n'
         '    </ul>\n'
         '    <p><strong>不支援環境</strong>：</p>\n'
         '    <ul>\n'
@@ -381,13 +381,13 @@ def main():
         # 區塊 7: 安裝說明 (Installation)
         elif spoiler_idx == 7:
             return build_installation_html()
-        # 區塊 29: 相容性與支援邊界
-        elif spoiler_idx == 29:
-            return build_compatibility_html()
-        # 區塊 30: 說明文件與相關連結
+        # 區塊 30: 相容性與支援邊界
         elif spoiler_idx == 30:
+            return build_compatibility_html()
+        # 區塊 31: 說明文件與相關連結
+        elif spoiler_idx == 31:
             return build_docs_links_html()
-        # 區塊 8~28: 版本更新歷史 Changelog
+        # 區塊 8~29: 版本更新歷史 Changelog
         else:
             return convert_changelog_spoiler(inner)
 
@@ -418,10 +418,10 @@ def main():
     ol_count = len(re.findall(r'<ol[\s>]', final_html))
     code_count = len(re.findall(r'<code[\s>]', final_html))
 
-    assert details_count == 30, f"Expected 30 details, got {details_count}"
-    assert details_end_count == 30, f"Expected 30 closing details, got {details_end_count}"
-    assert summary_count == 30, f"Expected 30 summaries, got {summary_count}"
-    assert details_content_count == 30, f"Expected 30 details-content, got {details_content_count}"
+    assert details_count == 31, f"Expected 31 details, got {details_count}"
+    assert details_end_count == 31, f"Expected 31 closing details, got {details_end_count}"
+    assert summary_count == 31, f"Expected 31 summaries, got {summary_count}"
+    assert details_content_count == 31, f"Expected 31 details-content, got {details_content_count}"
     assert len(remaining_tables) == 0, f"Expected 0 tables, got {len(remaining_tables)}"
     assert remaining_spoilers == 0, f"Expected 0 spoilers, got {remaining_spoilers}"
     assert remaining_slashes == 0, f"Expected 0 self-closing slashes, got {remaining_slashes}"

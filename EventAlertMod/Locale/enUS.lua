@@ -49,7 +49,7 @@ L.EA_SPELL_POWER_NAME = {
 	Pain 			= "Pain",
 	Fury 			= "Fury",
 	ComboPoints 	= "Combo Points",
-	LunarPower 		= "Lunar Power",
+	LunarPower 		= "Astral Power",
 	HolyPower 		= "Holy Power",
 	ArcaneCharges 	= "Arcane Charges",
 	Insanity 		= "Insanity",
@@ -942,6 +942,19 @@ L.EAM_RESOURCE_BAR_HEIGHT = "Bar height"
 L.EAM_RESOURCE_ICON_SIZE = "Icon size"
 L.EAM_RESOURCE_SPACING = "Icon-to-bar spacing"
 L.EAM_RESOURCE_ORDER = "Display order"
+L.EAM_RESOURCE_CUSTOM_MAX_POINTS = "Custom Segments (0=Auto)"
+L.EAM_RESOURCE_COLOR_MODE = "Bar Color Mode"
+L.EAM_RESOURCE_COLOR_MODE_DEFAULT = "Default Dynamic"
+L.EAM_RESOURCE_COLOR_MODE_SOLID = "Custom Solid"
+L.EAM_RESOURCE_COLOR_MODE_GRADIENT = "Custom Gradient"
+L.EAM_RESOURCE_COLOR_START = "Start Color"
+L.EAM_RESOURCE_COLOR_END = "End Color"
+L.EAM_RESOURCE_ALERT_OPERATOR = "Alert Condition"
+L.EAM_RESOURCE_ALERT_OP_GE = ">= At or Above Threshold"
+L.EAM_RESOURCE_ALERT_OP_LE = "<= At or Below Threshold"
+L.EAM_RESOURCE_ALERT_COLOR_ENABLED = "Alert Bar Color"
+L.EAM_RESOURCE_ALERT_COLOR = "Alert Color"
+L.EAM_RESOURCE_ALERT_SOUND_ENABLED = "Alert Sound"
 L.EAM_RESOURCE_STATUS_READY = "Player resource settings are ready."
 L.EAM_RESOURCE_STATUS_UPDATED = "Resource settings updated."
 L.EAM_RESOURCE_STATUS_UNCHANGED = "No settings changed."

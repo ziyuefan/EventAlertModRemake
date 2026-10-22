@@ -848,6 +848,51 @@
 <h2 id="beautified-changelogtxt">📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+<h3 id="retail-1215-alpha-88-20261023">🌟 [Retail 12.1.5 Alpha 8.8] - 2026.10.23</h3>
+<ul>
+<li><strong>魔獸世界 12.1.5 正式服全面適配與原生 C++ 加速庫 (Retail 12.1.5 Compatibility &amp; Native Acceleration)</strong>：<ul>
+<li><strong>TOC 介面升級</strong>：全面適配魔獸世界正式服 12.1.5 版本號（Interface: <code>120105</code>），持續無縫向下相容 <code>120100</code> 與 <code>120007</code> 客戶端。</li>
+<li><strong>暴雪 12.1.5 原生底層 C++ 加速</strong>：整合暴雪底層數學庫 (<code>math.clamp</code>, <code>math.saturate</code>, <code>math.round</code>, <code>math.lerp</code> 等)、字串庫 (<code>string.contains</code>, <code>string.startswith</code> 等) 與表格庫 (<code>table.isempty</code>, <code>table.contains</code> 等)，並具備防禦性向下相容 (Polyfills)。</li>
+</ul>
+</li>
+<li><strong>原生 TimedSignalMap 零分配排程器升級 (Zero-Alloc TimedSignalMap Scheduler)</strong>：<ul>
+<li>深度整合 12.1.5 <code>C_Timer.NewTimedSignalMap</code> 原生鍵值排程機制，由暴雪 C++ 引擎直接託管倒數計時與定時信號，舊版客戶端自動平滑切換至自主狀態機，達成定時器重設零記憶體配置 (Zero-Alloc Key Rescheduling)。</li>
+</ul>
+</li>
+<li><strong>12.1.5 原生 Pandemic 結餘窗口精確判斷與動畫支援 (12.1.5 Native Pandemic Carry-Over Precision &amp; Animations)</strong>：<ul>
+<li>採用 <code>C_UnitAuras.GetRefreshCarryOverDuration</code> 精準結餘時間計算，嚴格於結餘小於等於 30% 基礎時長時觸發補 DoT 提示，杜絕提早補 DoT 損失秒數。</li>
+<li>深度對接 12.1.5 Native Aura 原生動畫 API (<code>AddPandemicActiveAnimation</code>, <code>AddPandemicEnterAnimation</code>, <code>AddPandemicLeaveAnimation</code>)，補 DoT 進入與退出動畫更細緻流暢。</li>
+</ul>
+</li>
+<li><strong>地面效果多組時間解析與自選組別 (Ground Effect Multi-Duration Candidate Selection)</strong>：<ul>
+<li>針對技能說明中包含多組秒數（如地面持續時間 vs 減速持續時間 vs 引導時間）的複雜技能，智慧解析所有時間候選，於設定介面提供下拉選單自由選取並聯動手動時間輸入框。</li>
+</ul>
+</li>
+<li><strong>模組圖示外框色彩自訂與無邊框模式 (Customizable Alert Border Colors &amp; Borderless Mode)</strong>：<ul>
+<li>8 大模組支援獨立調色盤與透明度調節，並提供全域與單項「無邊框模式」開關與「重設經典預設」按鈕，畫面當前圖示支援即時動態熱套用。</li>
+</ul>
+</li>
+<li><strong>玩家職業資源獨立拖曳定位與九宮格依附 (Per-Resource Independent Dragging &amp; 9-Point Attachment)</strong>：<ul>
+<li>每項資源支援「啟用獨立位置」，可脫離群組堆疊並直接以滑鼠左鍵拖曳、右鍵完成定位；新增依附目標框架與 9 大方位精準對齊。</li>
+</ul>
+</li>
+<li><strong>玩家職業資源動態格數分割、雙色漸層與條件式警戒系統 (Dynamic Segments, Gradient Colors &amp; Conditional Alerts)</strong>：<ul>
+<li>點數型資源（連擊點數 5/6/7、真氣 5/6、喚能師龍能 5/6、聖能 5、靈魂裂片 5、秘法充能 4、符文 6）自動依據角色實際上限 (<code>UnitPowerMax</code>) 即時分割 StatusBar 格線與底部子格，並支援「自訂分割格數 (0=自動, 1~20)」滑桿。</li>
+<li>支援「自訂單色」與「自訂雙色漸層」水平/垂直漸層渲染，擴充 <code>&gt;=</code> 或 <code>&lt;=</code> 門檻變色與邊緣觸發防洗頻音效提示。</li>
+</ul>
+</li>
+<li><strong>第三方素材庫 LibSharedMedia-3.0 升級與語系術語校準 (LibSharedMedia r156 &amp; Evoker Essence Calibration)</strong>：<ul>
+<li>LibSharedMedia-3.0 升級至 r156 (支援 12.0.1+ / Interface 12000103)，擴充字型與材質素材庫。</li>
+<li>全面校準喚能師專用資源「龍能」五語系暴雪官方術語命名（繁中「龍能」、簡中「精华」、英文「Essence」、韓文「정수」、俄文「Сущность」）。</li>
+</ul>
+</li>
+<li><strong>關鍵問題修復與戰鬥穩定性加固 (Critical Bug Fixes &amp; Stability)</strong>：<ul>
+<li><strong>戰鬥中動作條污染報錯徹底排除</strong>：消除對暴雪全域環境庫外部賦值，杜絕 <code>ADDON_ACTION_BLOCKED</code> 錯誤。</li>
+<li><strong>天賦覆蓋技能冷卻倒數與天賦減 CD 即時同步</strong>：重構冷卻施法比對與法術家族識別，新增 60ms 高頻自適應突發採樣器與彈道飛行延遲補償，精準同步冰霜射線、彗星風暴、冰霜之球等天賦減 CD。</li>
+<li><strong>秘密值安全防護加固</strong>：加固 <code>Util.isSafeTableKey</code> 檢定，秘密值嚴格走底層原生元件單向綁定，零 Taint 零崩潰。</li>
+</ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-87-20260927">🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h3>
 <ul>
 <li><strong>高頻冷卻事件合併排程與警示更新零分配流水線 (Cooldown Event Coalescing &amp; Zero-Allocation Alert Pipeline)</strong>：<ul>
@@ -1309,14 +1354,14 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<h1 id="eventalertmod-retail-121-eam">EventAlertMod Retail 12.1 (EAM)</h1>
+<h1 id="eventalertmod-retail-1215-eam">EventAlertMod Retail 12.1.5 (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.7-orange" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" /></a></p>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.8-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5-blue" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen" /></a></p>
 <blockquote>
-<p>🚀 <strong>Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.0 / 12.0+)!</strong></p>
+<p>🚀 <strong>Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.5 / 12.1 / 12.0+)!</strong></p>
 <p>🌐 <strong>Official Online Documentation &amp; Navigation Hub</strong>: <a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a></p>
 </blockquote>
 <hr />
@@ -1629,6 +1674,51 @@
 <h2 id="version-history-changelogtxt">📜 Version History (CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.0 Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+<h3 id="retail-1215-alpha-88-20261023">🌟 [Retail 12.1.5 Alpha 8.8] - 2026.10.23</h3>
+<ul>
+<li><strong>Retail 12.1.5 Patch Compatibility &amp; Native C++ Acceleration</strong>:<ul>
+<li><strong>TOC Interface Update</strong>: Full compatibility for World of Warcraft Retail 12.1.5 (Interface: <code>120105</code>), maintaining seamless backward compatibility with <code>120100</code> and <code>120007</code> clients.</li>
+<li><strong>Blizzard 12.1.5 Native C++ Low-Level Acceleration</strong>: Integrated native C++ math library (<code>math.clamp</code>, <code>math.saturate</code>, <code>math.round</code>, <code>math.lerp</code>, etc.), string library (<code>string.contains</code>, <code>string.startswith</code>, etc.), and table library (<code>table.isempty</code>, <code>table.contains</code>, etc.) with defensive polyfills for older clients.</li>
+</ul>
+</li>
+<li><strong>Zero-Alloc TimedSignalMap Scheduler Engine</strong>:<ul>
+<li>Deep integration with 12.1.5 <code>C_Timer.NewTimedSignalMap</code> native key-value scheduler, hosted directly by Blizzard's C++ engine, smoothly switching to an autonomous state machine on older clients with zero repeated memory allocation (Zero-Alloc Key Rescheduling).</li>
+</ul>
+</li>
+<li><strong>12.1.5 Native Pandemic Carry-Over Precision &amp; Animations</strong>:<ul>
+<li>Employs <code>C_UnitAuras.GetRefreshCarryOverDuration</code> for exact carry-over time evaluation, strictly alerting when carry-over is &lt;= 30% of base duration to eliminate DoT clipping.</li>
+<li>Deeply adapted to 12.1.5 Native Aura container animation APIs (<code>AddPandemicActiveAnimation</code>, <code>AddPandemicEnterAnimation</code>, <code>AddPandemicLeaveAnimation</code>) for smoother visual transitions.</li>
+</ul>
+</li>
+<li><strong>Ground Effect Multi-Duration Candidate Selection</strong>:<ul>
+<li>Intelligently parses all candidate durations in sequence from complex tooltips containing multiple durations (e.g., ground duration vs slow duration vs channel duration), providing a dedicated dropdown in the configuration UI.</li>
+</ul>
+</li>
+<li><strong>Customizable Alert Border Colors &amp; Borderless Mode</strong>:<ul>
+<li>8 alert modules support independent color swatches and opacity controls, plus a global and per-module "Borderless Mode" and "Reset Classic Defaults" button with instant live hot-apply.</li>
+</ul>
+</li>
+<li><strong>Per-Resource Independent Dragging &amp; 9-Point Frame Attachment</strong>:<ul>
+<li>Each player resource supports "Enable Independent Position" to detach from group stacks and move freely via mouse drag/right-click commit; supports attaching to target frames with 9-point compass alignment.</li>
+</ul>
+</li>
+<li><strong>Dynamic/Custom StatusBar Segments, Custom Gradient Colors &amp; Conditional Alerts</strong>:<ul>
+<li>Discrete point resources (Combo Points 5/6/7, Chi 5/6, Evoker Essence 5/6, Holy Power 5, Soul Shards 5, Arcane Charges 4, Runes 6) dynamically partition status bar segment markers based on live <code>UnitPowerMax</code>, with a new "Custom Segments (0=Auto, 1~20)" slider.</li>
+<li>Added "Custom Solid" and "Custom Two-Color Gradient" horizontal/vertical rendering, plus <code>&gt;=</code> or <code>&lt;=</code> threshold conditional alerts with custom color override and rising-edge sound alert latch.</li>
+</ul>
+</li>
+<li><strong>LibSharedMedia-3.0 Updated to r156 &amp; 5-Locale Evoker Essence Calibration</strong>:<ul>
+<li>Upgraded LibSharedMedia-3.0 to r156 (supporting 12.0.1+ / Interface 12000103), expanding font and texture asset libraries.</li>
+<li>Fully calibrated Evoker primary resource naming across all 5 official Blizzard client localizations: Traditional Chinese (龍能), Simplified Chinese (精华), English (Essence), Korean (정수), and Russian (Сущность).</li>
+</ul>
+</li>
+<li><strong>Critical Bug Fixes &amp; Stability Enhancements</strong>:<ul>
+<li><strong>Action Bar Taint Remediation</strong>: Completely eliminated global environment pollution, eradicating <code>ADDON_ACTION_BLOCKED</code> errors on action bars.</li>
+<li><strong>Talent Override Cooldown Detection &amp; Live CDR Sync</strong>: Overhauled cooldown cast-matching and spell family heuristics, introducing an adaptive burst sampler and projectile flight compensation to synchronize talent-based CDR (e.g. Ray of Frost, Comet Storm, Frozen Orb).</li>
+<li><strong>Secret Value Protection</strong>: Fortified <code>Util.isSafeTableKey</code> checks to isolate secret values from Lua tables, binding exclusively through native one-way sinks with 100% zero taint.</li>
+</ul>
+</li>
+</ul>
 <h3 id="retail-1210-alpha-87-20260927">🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h3>
 <ul>
 <li><strong>Cooldown Event Coalescing &amp; Zero-Allocation Alert Pipeline</strong>:<ul>

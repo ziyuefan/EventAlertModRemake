@@ -182,6 +182,22 @@ Warcraft Wiki 的安全執行 / taint 文件指出，AddOn 與 `/script` 屬於�
 - 主要資源 Secret 顯示採單向 C-level sink：`StatusBar:SetValue` 或 `Texture:SetRadialProgressBarPercent`；不讀回 widget 值。
 - PTR8 Pandemic／Dispel APIs 僅於 initializeFrame 建立 Region／texture；不讀 `Shown`、不建立自製 ticker，停用容器清除由 Blizzard 管理。
 
+## 2026-10-09：12.1.5 安全與 Taint 邊界增補 (Patch 12.1.5 Build 69594 ~ 70077)
+
+- **受保護 Cooldown 框架禁止 Tainted 呼叫**：
+  - 暴雪於 12.1.5 明確限制：若 Cooldown 框架本身為受保護框架（Protected Frame），禁止由 Tainted 程式碼調用 `SetCooldown` 與 `Clear`。
+  - EAM 的冷卻警報圖示均為插件獨立 `CreateFrame` 建立之自訂框架，絕不重用或掛載至暴雪受保護按鈕，符合防禦安全標準。
+- **DamageMeter 與競技場對手專精秘密屬性化**：
+  - Damage Meter 的 `sourceGUID` 當身分受保護時改為 Secret；`GetArenaOpponentSpec` 正式回傳 Secret。
+  - 任何單位框架圖示渲染均嚴禁直接讀取秘密值，必須透過暴雪官方安全轉送庫 `UnitFrameUtil`（如 `GetArenaOpponentSpecDisplayInfo`、`UpdateArenaOpponentSpecDisplay`、`UpdateUnitFrameRoleIcon`，支援自訂 `textureMap`）。
+- **Secret Aspects 新增受限切面**：
+  - 新增 `Enum.SecretAspect.VertexColor` 與 `Enum.SecretAspect.TexCoords` 秘密切面，杜絕透過著色器頂點顏色或 UV 貼圖座標洗出戰鬥秘密。
+  - `CustomAuraButton` 動畫管線亦嚴格受此切面約束。
+- **施法條 ID (Castbar ID) 大小寫唯一化**：
+  - 暴雪改為依 unit token 大小寫唯一化 Castbar ID（例如 `"PLAYER"` 與 `"player"` 回傳不同 ID），防範 AddOn 利用 Castbar ID 跨單位比對。事件載荷固定為小寫 token。
+- **`C_UnitAuras.AddAuraSound` 5 秒上限與節流強制規則**：
+  - 播放的音效檔案長度上限 5 秒；`throttleSeconds` 參數大於 5 秒將直接拒絕（Reject）。EAM 預設傳入 `0.3s`，嚴格遵守節流規範。
+
 ## 權威社群參考資源 (Authoritative Community Reference Repositories)
 
 - **Ketho/WowDoc**: [https://github.com/Ketho/WowDoc](https://github.com/Ketho/WowDoc)

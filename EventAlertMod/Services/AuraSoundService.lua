@@ -116,13 +116,15 @@ local function registerEntry(key, rule, trigger, soundConfig)
         return nil
     end
 
-    -- 12.1.5: Pass throttleSeconds (0.3s default) to prevent audio spam on high-frequency aura triggers
+    -- 12.1.5: Pass throttleSeconds (0.3s default) to prevent audio spam on high-frequency aura triggers.
+    -- PTR 4 constraint: throttleSeconds must be clamped within [0.05, 5.0] to prevent engine rejection.
     local throttleSeconds = 0.3
     if soundConfig and Util.isSafeNonNegativeNumber(soundConfig.throttleSeconds) then
         throttleSeconds = soundConfig.throttleSeconds
     elseif rule and type(rule.sound) == "table" and Util.isSafeNonNegativeNumber(rule.sound.throttleSeconds) then
         throttleSeconds = rule.sound.throttleSeconds
     end
+    throttleSeconds = math.min(math.max(throttleSeconds, 0.05), 5.0)
     info.throttleSeconds = throttleSeconds
 
     local ok, registrationID = pcall(cUnitAuras.AddAuraSound, trigger, info, throttleSeconds)

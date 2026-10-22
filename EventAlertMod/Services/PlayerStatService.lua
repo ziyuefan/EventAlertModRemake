@@ -814,8 +814,8 @@ local STAT_DEFINITIONS = {
             if total <= 0 and C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
                 local i = 1
                 while true do
-                    local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-                    if not aura then break end
+                    local okAura, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
+                    if not okAura or not aura then break end
                     if aura.points and type(aura.points) == "table" and canaccesstable(aura.points) then
                         for pIdx = 1, #aura.points do
                             local pt = aura.points[pIdx]
@@ -853,8 +853,8 @@ local STAT_DEFINITIONS = {
             if total <= 0 and C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
                 local i = 1
                 while true do
-                    local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HARMFUL")
-                    if not aura then break end
+                    local okAura, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HARMFUL")
+                    if not okAura or not aura then break end
                     if aura.points and type(aura.points) == "table" and canaccesstable(aura.points) then
                         for pIdx = 1, #aura.points do
                             local pt = aura.points[pIdx]

@@ -1579,6 +1579,9 @@ function Panel.hide()
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.setActiveAnchors then
         EAM.UI.Renderer.setActiveAnchors(nil)
     end
+    if PlayerStatService and PlayerStatService.setActiveAnchors and PlayerStatService.isMoving then
+        PlayerStatService.setActiveAnchors(false)
+    end
 end
 
 Panel.close = Panel.hide

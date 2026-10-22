@@ -438,6 +438,14 @@ local function readActionMacroContext(tooltip)
         end
     end
 
+    local isShowTooltip = nil
+    if actionBar and type(actionBar.IsMacroActionWithShowTooltip) == "function" then
+        local stOK, hasST = pcall(actionBar.IsMacroActionWithShowTooltip, actionSlot)
+        if stOK and type(hasST) == "boolean" then
+            isShowTooltip = hasST
+        end
+    end
+
     local macroID
     if macroName and api.GetMacroIndexByName then
         local indexOK, macroIndex = pcall(api.GetMacroIndexByName, macroName)

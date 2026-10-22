@@ -66,7 +66,10 @@ EAM.UI.Options = Options
 local api = EAM.API
 local Theme = EAM.Theme
 local Locale = EAM.Locale
+local Util = EAM.Util
 local mathFloor = math.floor
+local foldCase = (Util and Util.foldCase) or string.lower
+Options.foldCase = foldCase
 
 local COOLDOWN_BEHAVIOR_OPTIONS = {
     {

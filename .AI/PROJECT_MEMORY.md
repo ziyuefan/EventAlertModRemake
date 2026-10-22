@@ -1,7 +1,7 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 # EventAlertMod 專案接續記憶
 
-> 最後更新：2026-09-13（Asia/Taipei）
+> 最後更新：2026-10-16（Asia/Taipei）
 > 用途：提供 Codex／AI Agent 在對話中斷、內容壓縮或工作轉交後的最短接續路徑。
 > 證據界線：本檔只做索引與工作狀態摘要，不可取代程式碼、測試報告、實機報告或結構化事實檔。
 
@@ -24,8 +24,17 @@
 - 舊專案 `D:\EventAlertMod` 已停用，禁止讀取、寫入、比較、同步或作 fallback。
 - 任一部署目標若是 SymbolicLink、Junction 或其他 Reparse Point，必須 fail-closed；不得追蹤、覆蓋、刪除或重建。
 - 未經使用者要求，不讀取 `WTF\Account` 內帳號或角色資料。
+- 🚨 開發完成主動執行故障預測與威脅推論原則（Proactive Failure Prediction & Threat Inference）：
+  任何功能開發、修復或架構重構完成時，嚴禁僅回報代碼完成與測試通過；必須主動進行深度故障預測與威脅推論，完整分析：1. 高機率邊緣異常（時序/競態/施法延遲/彈道時間/目標狀態突變）；2. 中機率引擎與視覺邊界異常（次像素外框/縮放比例/音效節流/元表嚴格模式）；3. 低機率致命風險（戰鬥 Taint 擴散/Action Blocked/Secret 越界/GC 記憶體洩漏）；4. 實機排查技巧與立即對策指引。
 - 🚨 部署腳本異動通報義務：若因應需求修改 `Deploy/` 目錄下任何腳本（如 `Deploy-EventAlertMod.ps1`、`Build-Package.ps1`、`Upload-CurseForge.ps1` 等），必須主動明確向少年欸報告具體改動內容。
 - 🚨 每輪任務結束必做建議：每輪任務完成時，必須主動向少年欸推薦當前情境可使用的 Antigravity 內建斜線指令（如 `/goal`, `/plan`, `/boost`, `/learn` 等）或適用之 Agent SKILL。
+- 🚨 每輪需求與 Subagent 派工必查 Wiki：主代理每輪規劃與派發涉及 API/架構之子代理時，必須主動檢索 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes` 掌握最新 PTR Build 演進（當前基準：PTR 3 Build 69952）。
+- 🚨 工具鏈執行環境評估與優先級原則（Toolchain Evaluation & Runtime Precedence）：
+  - **腳本環境評估鐵律**：現有及未來新增之 Python 腳本，必須依據是否含第三方依賴、標準庫純度與隔離需求逐一評估最佳執行環境（含第三方依賴者一律採 `uv run` + PEP 723 宣告極速隔離；純標準庫者由輕量 Python 即開即跑）。
+  - **Node.js 最佳化選擇與建置環境評估原則**：
+    - 引入門檻：Node.js 不得盲目或隨意引入，僅在技術評估確認為「最佳化選擇」（如 NPM 專屬生態、現代前端/AST 工具、或 UI Extension Sidecar）時方可採用。
+    - 包管理器與建置評估：若評估確認需使用 Node.js，亦必須仔細評估最合適的執行與建置環境及包管理器：優先評估 **`pnpm`**（全域硬連結快取、極省硬碟空間、杜絕幽靈依賴，與 uv 哲學高度契合，本機已就位 v11.14.0）；臨時一次性工具使用 **`pnpm dlx` / `npx`** 免安裝執行；建置工具依需求評估搭配極速方案（如 `esbuild`, `tsup`, `vite`）；標準 `npm` 作為無額外依賴時之純淨備援。
+  - **總體架構層級**：**`uv` 優先 > `Node.js` (評估最佳化後選用合適包管理器) > 全域 `Python` 備援**；嚴禁未經確認使用全域 `pip install` 污染本機系統 Python 環境。
 
 ## 目前目錄契約
 
@@ -44,13 +53,17 @@
 1. 新根目錄、`EventAlertMod/` 唯一插件來源、`.AI/` 治理、`Deploy/` 工具與 `Dist/` ignored 契約已完成。
 2. 2026-09-13 完成技能庫倉庫雙軌制（skills.sh + lobehub.com）確立與 20 套 WoW Patch 12.0.0 官方技能手冊安裝與治理三端同步（Global、.agents、.AI）。
 3. 2026-09-13 升級 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`（v1.1）與說明手冊，建立事實階梯與 XML 機器抗記憶漂移硬性備援機制。
-4. 2026-09-14 實裝 **Retail 12.1.0 Alpha 8.6** 四大核心功能：
-   - **技能名稱自訂排版**：預設全面改為置於圖示下方（`OUTSIDE_BOTTOM`），提供 21 種錨點位置下拉選單，所調即所見。
-   - **角色屬性預覽即時更新**：修復切換屬性、調整尺寸、字級、小數點、替代圖示與警戒門檻時未即時反映之問題；統一門檻欄位命名相容（`thresholdMin` / `minThreshold`），紅框即時亮起。
-   - **職業資源縮放與可捲動字型清單**：改建為 10 行可捲動下拉選單（`ScrollableDropdown`），相容 LSM 與內建字型；補齊資源縮放（`scale`）於預覽視窗之即時等比縮放連動。
-   - **獨立效果預覽連動加固**：修復預覽視窗與主設定面板連動中斷缺陷，增設透明度滑桿、安全呼叫守衛（`safeCall`）。
-5. 最新離線證據：Lua syntax 78/78 通過、Flow all 87/87 通過、Validation Contracts 499/499 通過、Build-Package DryRun 通過。
-6. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 同步。依規範嚴格限制零自動部署（鐵律 R1）。
+4. 2026-10-04 實裝 **Retail 12.1.5 Alpha 8.8**（解鎖實作開發生態）：
+   - 確立以 12.1.5 PTR（Build 69952）為主力實機測試環境，10/15 正式服全面上線。
+   - 升級 AI 治理鐵律 R6（`R6_PROGRESSIVE_1215_COMPATIBILITY_GATE`），移除先前僅供技術備存限制，採漸進增強與能力檢定兼顧 12.1.0/12.0.7 相容。
+   - 實裝 12.1.5 原生 C++ 數學加速、`TimedSignalMap` 原生排程、`GetRefreshCarryOverDuration` 精準結餘與原生動畫。
+   - 修復光環邊框即時隱藏與暴雪原生驅散外框動態清理、天賦覆蓋多候選法術家族冷卻比對。
+5. 最新離線證據：Lua syntax 78/78 通過、Flow all 104/104 通過、Validation Contracts 501/501 通過、Build-Package DEV 通過。
+6. 2026-10-06 建立 **WoW AddOn 開發之 MCP / 工具路由權威政策（WoW MCP / Tool Routing Policy）**：
+   - 全面納入 6 大 WoW MCP 伺服器體系（`wow-casc`、`wow-api-nighthawk`、`hated-wow-mcp`、`wow-dev-mcp`、`spartanui-wow-api`、`wow-blizzard-api`，共 249 項工具）。
+   - 建立 50 條核心開發與路由規範（[`.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md`](.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md) 及專屬技能 `wow-mcp-tool-routing`）。
+   - 確立「禁止相信模型記憶」原則、Evidence Ladder 實證層級、強制 Lint/驗證管線與標準報告結構。
+7. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 同步。依規範嚴格限制零自動部署（鐵律 R1）。
 
 ## 已完成的結構工作
 

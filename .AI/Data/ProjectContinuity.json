@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-10-03.05",
-  "updatedAt": "2026-10-03",
+  "snapshotVersion": "2026-10-16.03",
+  "updatedAt": "2026-10-16",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1.5 Alpha 8.8 真機 10 項 Flow 測試報錯深度排查與修復完成：解除 EAM.API 凍結以防動態 mock 崩潰；封裝原生 TimedSignalMap SignalAt uint32 參數與浮點防禦；修復編譯期除以零與原生 C++ 邊界崩潰；隔離實機 Frame 座標與完美還原防污染；適配真機缺少目標光環情境；Profile Codec 支援空資源 fallback；全套 501 契約全綠、104 Flow 離線驗證全過、打包乾跑通過。",
+    "objective": "開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範 (SOP Established)；全套 502 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 104,
-      "passed": 104,
+      "total": 108,
+      "passed": 108,
       "failed": 0,
       "skipped": 0,
       "pending": 0
@@ -702,6 +702,18 @@
         ".AI/TestResults/EAM_FlowValidation_all_20260823_174946.json",
         ".AI/TestResults/EAM_FlowValidation_boundary_20260823_174739.json",
         ".AI/Tools/Test-ValidationContracts.ps1"
+      ]
+    },
+    {
+      "id": "FACT-20261009-001",
+      "statement": "專案輔助工具、套件管理與腳本執行遵守環境個別評估與優先級原則：現有及未來新增之 Python 腳本依依賴隔離需求評估環境（第三方套件採 uv run + PEP 723 隔離，純標準庫採輕量 Python）；Node.js 僅在評估確定為最佳化選擇時採用，且須評估合適之包管理器（如 pnpm 硬連結快取、pnpm dlx 等）；總體層級為 uv 優先 > Node.js (評估最佳化後選用合適包管理器) > 全域 Python 備援，嚴禁全域 pip install 污染系統環境。",
+      "state": "confirmed",
+      "provenance": "project-rule",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        ".AI/AGENTS.md",
+        ".AI/PROJECT_MEMORY.md",
+        ".AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"
       ]
     }
   ],

@@ -107,9 +107,193 @@ function AlertBorderStyles.getColor(styleKey)
     return nil
 end
 
+local BORDER_LINE_THICKNESS = 2
+
+function AlertBorderStyles.createBorder(owner, drawLayer, thickness, padding)
+    if not owner or type(owner.CreateTexture) ~= "function" then
+        return nil
+    end
+    thickness = (Util.isSafePositiveNumber(thickness) and thickness) or BORDER_LINE_THICKNESS
+    padding = (Util.isSafeNumber(padding) and padding) or 0
+    drawLayer = drawLayer or "OVERLAY"
+
+    local host = owner
+    local getFrameLevel = nil
+    local okLevel, fnLevel = pcall(function() return owner.GetFrameLevel end)
+    if okLevel and type(fnLevel) == "function" then
+        getFrameLevel = fnLevel
+    end
+
+    if getFrameLevel then
+        local okHost, borderHost = pcall(function()
+            if not owner.eamBorderHost then
+                local bh = (Util and Util.createFrame and Util.createFrame("Frame", nil, owner)) or (EAM.API and EAM.API.CreateFrame and EAM.API.CreateFrame("Frame", nil, owner)) or CreateFrame("Frame", nil, owner)
+                if bh then
+                    bh:SetAllPoints(owner)
+                    local baseLevel = getFrameLevel(owner) or 1
+                    bh:SetFrameLevel(baseLevel + 8)
+                    if bh.Show then
+                        bh:Show()
+                    end
+                    owner.eamBorderHost = bh
+                end
+            else
+                local baseLevel = getFrameLevel(owner) or 1
+                owner.eamBorderHost:SetFrameLevel(baseLevel + 8)
+            end
+            return owner.eamBorderHost
+        end)
+        if okHost and borderHost then
+            host = borderHost
+        end
+    end
+
+    local top = host:CreateTexture(nil, drawLayer, nil, 6)
+    local bottom = host:CreateTexture(nil, drawLayer, nil, 6)
+    local left = host:CreateTexture(nil, drawLayer, nil, 6)
+    local right = host:CreateTexture(nil, drawLayer, nil, 6)
+
+    local function setupLine(line)
+        if type(line.SetColorTexture) == "function" then
+            line:SetColorTexture(1, 1, 1, 1)
+        elseif type(line.SetTexture) == "function" then
+            line:SetTexture("Interface\\Buttons\\WHITE8X8")
+        end
+        if type(line.Hide) == "function" then
+            line:Hide()
+        end
+    end
+    setupLine(top)
+    setupLine(bottom)
+    setupLine(left)
+    setupLine(right)
+
+    top:ClearAllPoints()
+    top:SetPoint("TOPLEFT", owner, "TOPLEFT", -padding, padding)
+    top:SetPoint("TOPRIGHT", owner, "TOPRIGHT", padding, padding)
+    top:SetHeight(thickness)
+
+    bottom:ClearAllPoints()
+    bottom:SetPoint("BOTTOMLEFT", owner, "BOTTOMLEFT", -padding, -padding)
+    bottom:SetPoint("BOTTOMRIGHT", owner, "BOTTOMRIGHT", padding, -padding)
+    bottom:SetHeight(thickness)
+
+    left:ClearAllPoints()
+    left:SetPoint("TOPLEFT", owner, "TOPLEFT", -padding, padding)
+    left:SetPoint("BOTTOMLEFT", owner, "BOTTOMLEFT", -padding, -padding)
+    left:SetWidth(thickness)
+
+    right:ClearAllPoints()
+    right:SetPoint("TOPRIGHT", owner, "TOPRIGHT", padding, padding)
+    right:SetPoint("BOTTOMRIGHT", owner, "BOTTOMRIGHT", padding, -padding)
+    right:SetWidth(thickness)
+
+    if Util and Util.snapToPixels then
+        Util.snapToPixels(host)
+        Util.snapToPixels(top)
+        Util.snapToPixels(bottom)
+        Util.snapToPixels(left)
+        Util.snapToPixels(right)
+    end
+
+    local chrome = {
+        host = host,
+        top = top,
+        bottom = bottom,
+        left = left,
+        right = right,
+        isBorderChrome = true,
+        thickness = thickness,
+        padding = padding,
+        shown = false,
+        vertexColor = nil,
+    }
+
+    function chrome:SetVertexColor(r, g, b, a)
+        self.vertexColor = { r, g, b, a }
+        if type(self.top.SetVertexColor) == "function" then
+            self.top:SetVertexColor(r, g, b, a)
+            self.bottom:SetVertexColor(r, g, b, a)
+            self.left:SetVertexColor(r, g, b, a)
+            self.right:SetVertexColor(r, g, b, a)
+        end
+    end
+
+    function chrome:Show()
+        self.shown = true
+        if self.host and self.host ~= owner and self.host.Show then
+            self.host:Show()
+        end
+        self.top:Show()
+        self.bottom:Show()
+        self.left:Show()
+        self.right:Show()
+    end
+
+    function chrome:Hide()
+        self.shown = false
+        if self.host and self.host ~= owner and self.host.Hide then
+            self.host:Hide()
+        end
+        self.top:Hide()
+        self.bottom:Hide()
+        self.left:Hide()
+        self.right:Hide()
+    end
+
+    function chrome:SetShown(shown)
+        if shown then self:Show() else self:Hide() end
+    end
+
+    function chrome:IsShown()
+        return self.shown == true
+    end
+
+    function chrome:SetColorTexture(r, g, b, a)
+        self.vertexColor = { r, g, b, a }
+        if type(self.top.SetColorTexture) == "function" then
+            self.top:SetColorTexture(r, g, b, a)
+            self.bottom:SetColorTexture(r, g, b, a)
+            self.left:SetColorTexture(r, g, b, a)
+            self.right:SetColorTexture(r, g, b, a)
+        end
+    end
+
+    function chrome:SetTexture(tex)
+        if type(self.top.SetTexture) == "function" then
+            self.top:SetTexture(tex)
+            self.bottom:SetTexture(tex)
+            self.left:SetTexture(tex)
+            self.right:SetTexture(tex)
+        end
+    end
+
+    function chrome:SetBlendMode(mode)
+        if type(self.top.SetBlendMode) == "function" then
+            self.top:SetBlendMode(mode)
+            self.bottom:SetBlendMode(mode)
+            self.left:SetBlendMode(mode)
+            self.right:SetBlendMode(mode)
+        end
+    end
+
+    function chrome:ClearAllPoints()
+    end
+
+    function chrome:SetPoint(...)
+    end
+
+    return chrome
+end
+
 function AlertBorderStyles.anchorTexture(texture, owner)
-    if not texture or not owner
-        or type(texture.ClearAllPoints) ~= "function"
+    if not texture or not owner then
+        return false, "anchorUnavailable"
+    end
+    if texture.isBorderChrome then
+        return true, texture.padding or 0
+    end
+    if type(texture.ClearAllPoints) ~= "function"
         or type(texture.SetPoint) ~= "function"
     then
         return false, "anchorUnavailable"
@@ -166,5 +350,9 @@ function AlertBorderStyles.refreshAll()
                 end
             end
         end
+    end
+    local NativeAuraRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+    if NativeAuraRenderer and type(NativeAuraRenderer.refreshBorders) == "function" then
+        pcall(NativeAuraRenderer.refreshBorders)
     end
 end

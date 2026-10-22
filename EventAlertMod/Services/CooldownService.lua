@@ -37,6 +37,8 @@ local Util = EAM.Util
 local CooldownStatePool
 local SpellInfoService = EAM.Services and EAM.Services.SpellInfoService
 local ModuleController = EAM.Modules and EAM.Modules.ModuleController
+local DurationAdapter = EAM.Modules and EAM.Modules.DurationAdapter
+local MIN_REAL_COOLDOWN_SECONDS = 1.5
 
 local CooldownService = {
     states = {},
@@ -44,11 +46,16 @@ local CooldownService = {
     activatedAlerts = {},
     -- 保存本輪實際施放 ID，避免 base/override 家族在後續充能事件查錯成員。
     activationSpellIDs = {},
+    -- 保存激活事件名稱（如 UNIT_SPELLCAST_CHANNEL_START 或 UNIT_SPELLCAST_SUCCEEDED），防範背景刷新覆寫。
+    activationEvents = {},
     -- 完成移除前，必須先安全觀察到本輪至少消耗一層充能。
     chargeSpentObserved = {},
     -- 英雄天賦與法術覆蓋雙向對齊映射表
     baseToOverrideMap = {},
     overrideToBaseMap = {},
+    -- 前次覆蓋技能記錄（補償法術在覆蓋移除前即進入冷卻之邊界狀態）
+    previousOverrideMap = {},
+    previousOverrideToBaseMap = {},
 }
 
 EAM.Services.CooldownService = CooldownService
@@ -100,40 +107,55 @@ end
 
 local function resolveSpellFamily(spellID)
     if not Util.isSafePositiveNumber(spellID) then
-        return nil, nil
-    end
-
-    -- 優先從動態覆蓋快取表快速對齊
-    local cachedOverride = CooldownService.baseToOverrideMap[spellID]
-    local cachedBase = CooldownService.overrideToBaseMap[spellID]
-    if cachedOverride then
-        return spellID, cachedOverride
-    end
-    if cachedBase then
-        return cachedBase, spellID
+        return nil, nil, nil
     end
 
     local cSpell = api.C_Spell
     local baseSpellID = cSpell
         and resolveSpellIdentifier(cSpell.GetBaseSpell, spellID)
         or nil
-    baseSpellID = baseSpellID or spellID
+    if not Util.isSafePositiveNumber(baseSpellID) then
+        baseSpellID = CooldownService.overrideToBaseMap[spellID]
+            or CooldownService.previousOverrideToBaseMap[spellID]
+            or spellID
+    end
 
-    local overrideSpellID = cSpell
-        and resolveSpellIdentifier(cSpell.GetOverrideSpell, baseSpellID)
-        or nil
-    if not overrideSpellID and baseSpellID ~= spellID and cSpell then
+    if not cSpell then
+        local cachedOverride = CooldownService.baseToOverrideMap[spellID] or CooldownService.baseToOverrideMap[baseSpellID]
+        local cachedPrev = CooldownService.previousOverrideMap[baseSpellID] or CooldownService.previousOverrideMap[spellID]
+        return baseSpellID, cachedOverride or baseSpellID, cachedPrev
+    end
+
+    local overrideSpellID = resolveSpellIdentifier(cSpell.GetOverrideSpell, baseSpellID)
+    if not overrideSpellID and baseSpellID ~= spellID then
         overrideSpellID = resolveSpellIdentifier(cSpell.GetOverrideSpell, spellID)
     end
     overrideSpellID = overrideSpellID or baseSpellID
 
-    -- 寫入快取加速熱路徑
-    if baseSpellID and overrideSpellID and baseSpellID ~= overrideSpellID then
-        CooldownService.baseToOverrideMap[baseSpellID] = overrideSpellID
-        CooldownService.overrideToBaseMap[overrideSpellID] = baseSpellID
+    -- 動態同步覆蓋狀態；當覆蓋已解除或過期（overrideSpellID == baseSpellID）時即時清除快取
+    if baseSpellID then
+        local existingOverride = CooldownService.baseToOverrideMap[baseSpellID]
+        if Util.isSafePositiveNumber(overrideSpellID) and overrideSpellID ~= baseSpellID then
+            if existingOverride and existingOverride ~= overrideSpellID then
+                CooldownService.previousOverrideMap[baseSpellID] = existingOverride
+                CooldownService.previousOverrideToBaseMap[existingOverride] = baseSpellID
+                CooldownService.overrideToBaseMap[existingOverride] = nil
+            end
+            CooldownService.baseToOverrideMap[baseSpellID] = overrideSpellID
+            CooldownService.overrideToBaseMap[overrideSpellID] = baseSpellID
+        else
+            -- 覆蓋已解除或重置，將舊覆蓋捕獲至 previousOverrideMap 以補償殘存事件，並清除活躍覆蓋快取
+            if existingOverride and existingOverride ~= baseSpellID then
+                CooldownService.previousOverrideMap[baseSpellID] = existingOverride
+                CooldownService.previousOverrideToBaseMap[existingOverride] = baseSpellID
+                CooldownService.overrideToBaseMap[existingOverride] = nil
+                CooldownService.baseToOverrideMap[baseSpellID] = nil
+            end
+        end
     end
 
-    return baseSpellID, overrideSpellID
+    local finalPrev = CooldownService.previousOverrideMap[baseSpellID]
+    return baseSpellID, overrideSpellID, finalPrev
 end
 
 local function readChargeCandidate(cSpell, spellID)
@@ -168,25 +190,106 @@ local function getSpellChargesInfo(cSpell, spellID, preferredSpellID)
         return chargesInfo, selectedSpellID
     end
 
-    local baseSpellID, overrideSpellID = resolveSpellFamily(spellID)
+    local baseSpellID, overrideSpellID, previousOverrideSpellID = resolveSpellFamily(spellID)
     if overrideSpellID ~= preferredSpellID then
         chargesInfo, selectedSpellID = readChargeCandidate(cSpell, overrideSpellID)
         if chargesInfo then
             return chargesInfo, selectedSpellID
         end
     end
-    if baseSpellID ~= preferredSpellID and baseSpellID ~= overrideSpellID then
+    if Util.isSafePositiveNumber(previousOverrideSpellID)
+        and previousOverrideSpellID ~= preferredSpellID
+        and previousOverrideSpellID ~= overrideSpellID
+    then
+        chargesInfo, selectedSpellID = readChargeCandidate(cSpell, previousOverrideSpellID)
+        if chargesInfo then
+            return chargesInfo, selectedSpellID
+        end
+    end
+    if baseSpellID ~= preferredSpellID and baseSpellID ~= overrideSpellID and baseSpellID ~= previousOverrideSpellID then
         chargesInfo, selectedSpellID = readChargeCandidate(cSpell, baseSpellID)
         if chargesInfo then
             return chargesInfo, selectedSpellID
         end
     end
-    if spellID ~= preferredSpellID and spellID ~= overrideSpellID and spellID ~= baseSpellID then
+    if spellID ~= preferredSpellID and spellID ~= overrideSpellID and spellID ~= previousOverrideSpellID and spellID ~= baseSpellID then
         chargesInfo, selectedSpellID = readChargeCandidate(cSpell, spellID)
         if chargesInfo then
             return chargesInfo, selectedSpellID
         end
     end
+    return nil, nil
+end
+
+local function readCooldownCandidate(cSpell, spellID)
+    if not Util.isSafePositiveNumber(spellID) or type(cSpell.GetSpellCooldown) ~= "function" then
+        return nil, nil
+    end
+    local ok, cooldownInfo = pcall(cSpell.GetSpellCooldown, spellID)
+    if not ok or type(cooldownInfo) ~= "table" then
+        return nil, nil
+    end
+    return cooldownInfo, spellID
+end
+
+local function getSpellCooldownInfo(cSpell, spellID, preferredSpellID)
+    if not cSpell or type(cSpell.GetSpellCooldown) ~= "function"
+        or not Util.isSafePositiveNumber(spellID)
+    then
+        return nil, nil
+    end
+
+    local candidates = {}
+    if Util.isSafePositiveNumber(preferredSpellID) then
+        candidates[#candidates + 1] = preferredSpellID
+    end
+    local baseSpellID, overrideSpellID, previousOverrideSpellID = resolveSpellFamily(spellID)
+    if Util.isSafePositiveNumber(overrideSpellID) and overrideSpellID ~= preferredSpellID then
+        candidates[#candidates + 1] = overrideSpellID
+    end
+    if Util.isSafePositiveNumber(previousOverrideSpellID)
+        and previousOverrideSpellID ~= preferredSpellID
+        and previousOverrideSpellID ~= overrideSpellID
+    then
+        candidates[#candidates + 1] = previousOverrideSpellID
+    end
+    if Util.isSafePositiveNumber(baseSpellID)
+        and baseSpellID ~= preferredSpellID
+        and baseSpellID ~= overrideSpellID
+        and baseSpellID ~= previousOverrideSpellID
+    then
+        candidates[#candidates + 1] = baseSpellID
+    end
+    if spellID ~= preferredSpellID
+        and spellID ~= overrideSpellID
+        and spellID ~= previousOverrideSpellID
+        and spellID ~= baseSpellID
+    then
+        candidates[#candidates + 1] = spellID
+    end
+
+    -- First pass: find candidate with an active non-GCD cooldown
+    for i = 1, #candidates do
+        local candID = candidates[i]
+        local info, resolvedID = readCooldownCandidate(cSpell, candID)
+        if info and Util.canAccessTable(info) then
+            local dur, durSafe = Util.readSafeField(info, "duration", nil, "cooldown")
+            local gcd, gcdSafe = Util.readSafeField(info, "isOnGCD", nil, "cooldown")
+            if durSafe and type(dur) == "number" and dur > 0 and (not gcdSafe or gcd ~= true) then
+                return info, resolvedID
+            end
+        end
+    end
+
+    -- Second pass: fallback to first valid candidate (preferred, override, previousOverride, base, or original)
+    for i = 1, #candidates do
+        local candID = candidates[i]
+        local info, resolvedID = readCooldownCandidate(cSpell, candID)
+        if info then
+            return info, resolvedID
+        end
+    end
+
     return nil, nil
 end
 
@@ -336,6 +439,7 @@ local function setStateHidden(alertID, state, clearActivation)
     if clearActivation then
         CooldownService.activatedAlerts[alertID] = nil
         CooldownService.activationSpellIDs[alertID] = nil
+        CooldownService.activationEvents[alertID] = nil
         CooldownService.chargeSpentObserved[alertID] = nil
     end
     if not state then
@@ -418,10 +522,18 @@ function CooldownStatePool.release(state)
     state.shown = false
     state.completed = nil
     state.usableGlow = nil
+    state.isPlaceholder = nil
+    state.isDesaturated = nil
+    state.unit = nil
+    state.rawAlert = nil
+    state.order = nil
     state.cooldownRemoveAura = nil
     state.showSCDOutsideCombat = nil
     state.glowSCDWhenUsable = nil
+    state.cooldownPreRender = nil
+    state.overlayGlow = nil
     state.boundaryLimited = false
+    state.isHeuristic = nil
     state.releaseFunc = nil
     wipe(state.boundaryWarnings)
     if state.timer then
@@ -439,6 +551,7 @@ end
 local alertList = Util.tableCreate(32, 0)
 local alertBaseSpellIDs = Util.tableCreate(32, 0)
 local alertOverrideSpellIDs = Util.tableCreate(32, 0)
+local alertPreviousOverrideSpellIDs = Util.tableCreate(32, 0)
 local alertCount = 0
 local lastDbRevision = -1
 
@@ -451,9 +564,10 @@ function CooldownService.updateAlertList()
         for _, alert in pairs(alerts.spellCooldowns) do
             alertCount = alertCount + 1
             alertList[alertCount] = alert
-            local baseSpellID, overrideSpellID = resolveSpellFamily(alert and alert.spellID)
+            local baseSpellID, overrideSpellID, previousOverrideSpellID = resolveSpellFamily(alert and alert.spellID)
             alertBaseSpellIDs[alertCount] = baseSpellID
             alertOverrideSpellIDs[alertCount] = overrideSpellID
+            alertPreviousOverrideSpellIDs[alertCount] = previousOverrideSpellID
         end
     end
     -- Clean up subsequent slots if the list shrank.
@@ -461,6 +575,7 @@ function CooldownService.updateAlertList()
         alertList[index] = nil
         alertBaseSpellIDs[index] = nil
         alertOverrideSpellIDs[index] = nil
+        alertPreviousOverrideSpellIDs[index] = nil
     end
 
     if EAM.UI and EAM.UI.Renderer and EAM.UI.Renderer.prewarmAlertFrames then
@@ -473,15 +588,29 @@ local function alertMatchesSpellFamily(index, spellID, baseSpellID, overrideSpel
     local alertSpellID = alert and alert.spellID or nil
     local alertBaseSpellID = alertBaseSpellIDs[index]
     local alertOverrideSpellID = alertOverrideSpellIDs[index]
+    local alertPrevOverrideSpellID = alertPreviousOverrideSpellIDs[index]
+    local prevOverrideSpellID = (Util.isSafePositiveNumber(baseSpellID) and CooldownService.previousOverrideMap[baseSpellID])
+        or (Util.isSafePositiveNumber(spellID) and CooldownService.previousOverrideMap[spellID])
+        or nil
     return sameSpellID(alertSpellID, spellID)
         or sameSpellID(alertSpellID, baseSpellID)
         or sameSpellID(alertSpellID, overrideSpellID)
+        or sameSpellID(alertSpellID, prevOverrideSpellID)
+        or sameSpellID(alertSpellID, alertPrevOverrideSpellID)
         or sameSpellID(alertBaseSpellID, spellID)
         or sameSpellID(alertBaseSpellID, baseSpellID)
         or sameSpellID(alertBaseSpellID, overrideSpellID)
+        or sameSpellID(alertBaseSpellID, prevOverrideSpellID)
+        or sameSpellID(alertBaseSpellID, alertPrevOverrideSpellID)
         or sameSpellID(alertOverrideSpellID, spellID)
         or sameSpellID(alertOverrideSpellID, baseSpellID)
         or sameSpellID(alertOverrideSpellID, overrideSpellID)
+        or sameSpellID(alertOverrideSpellID, prevOverrideSpellID)
+        or sameSpellID(alertOverrideSpellID, alertPrevOverrideSpellID)
+        or sameSpellID(alertPrevOverrideSpellID, spellID)
+        or sameSpellID(alertPrevOverrideSpellID, baseSpellID)
+        or sameSpellID(alertPrevOverrideSpellID, overrideSpellID)
+        or sameSpellID(alertPrevOverrideSpellID, prevOverrideSpellID)
 end
 
 local function verifyAlertList()
@@ -492,6 +621,61 @@ local function verifyAlertList()
         CooldownService.updateAlertList()
         lastDbRevision = currentRev
     end
+end
+
+-- 僅以安全（非 Secret）值判定「確實處於非 GCD 冷卻」；任何欄位不可讀即回傳 false（fail-closed，不自動開啟）。
+function CooldownService.probeActiveCooldown(alert)
+    local cSpell = api.C_Spell
+    local spellID = type(alert) == "table" and alert.spellID or nil
+    if not cSpell or not Util.isSafePositiveNumber(spellID) then
+        return false
+    end
+
+    if type(cSpell.GetSpellCharges) == "function" then
+        local chargesInfo = getSpellChargesInfo(cSpell, spellID, nil)
+        if type(chargesInfo) == "table"
+            and not Util.isSecretTable(chargesInfo)
+            and Util.canAccessTable(chargesInfo)
+        then
+            local cur, curSafe = readChargeField(chargesInfo, "currentCharges", nil, "chargeProbe")
+            local mx, mxSafe = readChargeField(chargesInfo, "maxCharges", nil, "chargeProbe")
+            if curSafe and mxSafe
+                and Util.isSafeNonNegativeNumber(cur)
+                and Util.isSafePositiveNumber(mx)
+            then
+                return cur < mx
+            end
+            return false
+        end
+    end
+
+    if type(cSpell.GetSpellCooldown) ~= "function" then
+        return false
+    end
+    local okInfo, info = pcall(cSpell.GetSpellCooldown, spellID)
+    if not okInfo or type(info) ~= "table" or not Util.canAccessTable(info) then
+        return false
+    end
+    local st, stSafe = Util.readSafeField(info, "startTime", nil, "cooldownProbe")
+    local dur, durSafe = Util.readSafeField(info, "duration", nil, "cooldownProbe")
+    local en, enSafe = Util.readSafeField(info, "isEnabled", nil, "cooldownProbe")
+    local gcd, gcdSafe = Util.readSafeField(info, "isOnGCD", nil, "cooldownProbe")
+    if not (stSafe and durSafe) then
+        return false
+    end
+    if gcdSafe and gcd == true then
+        return false
+    end
+    if type(st) ~= "number" or type(dur) ~= "number" then
+        return false
+    end
+    if dur <= MIN_REAL_COOLDOWN_SECONDS or st <= 0 then
+        return false
+    end
+    if enSafe and en == false then
+        return false
+    end
+    return true
 end
 
 local function refreshAlert(alert, eventName)
@@ -513,6 +697,7 @@ local function refreshAlert(alert, eventName)
     local oldTimer = oldState and oldState.timer
     local oldStartTime = oldTimer and oldTimer.startTime
     local oldDuration = oldTimer and oldTimer.duration
+    local oldExpirationTime = oldTimer and oldTimer.expirationTime
 
     if alert.enabled == false or not Util.isSafePositiveNumber(alert.spellID) then
         local hidden = setStateHidden(alertID, oldState, true)
@@ -694,7 +879,11 @@ local function refreshAlert(alert, eventName)
     end
 
     -- 2. Process Cooldown Facts
-    local cooldownInfo = cSpell.GetSpellCooldown and cSpell.GetSpellCooldown(alert.spellID) or nil
+    local cooldownInfo, cooldownSpellID = getSpellCooldownInfo(
+        cSpell,
+        alert.spellID,
+        CooldownService.activationSpellIDs[alertID]
+    )
     local infoSafe = false
     local startTime, duration, isEnabled, isOnGCD
 
@@ -764,6 +953,71 @@ local function refreshAlert(alert, eventName)
         end
     end
 
+    -- 🛡️ 覆蓋與過渡狀態保護：若前一狀態仍有未過期的實質倒數，但當前候選因法術覆蓋（如彗星風暴取代冰霜射線）
+    -- 或過渡延遲回傳 duration = 0，切勿直接截斷或抹除正在進行中的冷卻！
+    local now = (api.GetTime and api.GetTime()) or 0
+    local isTimerExpired = (eventName == "COOLDOWN_TIMER_EXPIRED")
+    local oldTimer = oldState and oldState.timer
+    local oldHasRunningCooldown = not isTimerExpired
+        and oldState and oldState.active and not oldState.completed
+        and oldTimer and type(oldTimer.expirationTime) == "number"
+        and oldTimer.expirationTime > (now + 0.3)
+    local isCastEvent = (eventName == "UNIT_SPELLCAST_SUCCEEDED" or eventName == "UNIT_SPELLCAST_CHANNEL_START" or eventName == "SPELLCAST_TRAILING_RETRY")
+
+    -- 🛡️ 施法即刻啟動與先驗冷卻初始化 (Heuristic Cooldown Initialization)：
+    -- 當玩家剛施法 (isCastEvent)，若 API 尚未回傳實質數值冷卻 (例如引導型技能冰霜射線回傳 0、GCD 或受保護秘密值)，
+    -- 絕不能將其掛在空的 protectedTimer 導致 remaining=0；必須立即以先驗啟發式字典初始化冷卻倒數！
+    local isHeuristic = false
+    local heuristicData = EAM.Data and EAM.Data.SpellHeuristics and (EAM.Data.SpellHeuristics.SPELL_META or EAM.Data.SpellHeuristics.SPELL_DATA)
+    local hasHeuristicMeta = heuristicData and (heuristicData[alert.spellID] or (cooldownSpellID and heuristicData[cooldownSpellID])) ~= nil
+
+    if isCastEvent and not isChargeBased then
+        local hasRealNumericCooldown = hasActiveCooldown and infoSafe and isOnGCD ~= true and type(duration) == "number" and duration > MIN_REAL_COOLDOWN_SECONDS
+        if not hasRealNumericCooldown then
+            local spellMeta = heuristicData and (heuristicData[alert.spellID] or (cooldownSpellID and heuristicData[cooldownSpellID]))
+            local fallbackCD = spellMeta and (spellMeta.cooldown or spellMeta.baseCooldown)
+            if fallbackCD and fallbackCD > MIN_REAL_COOLDOWN_SECONDS then
+                hasActiveCooldown = true
+                startTime = now
+                duration = fallbackCD
+                infoSafe = true
+                isOnGCD = false
+                isHeuristic = true
+                local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+                if cdTrace and cdTrace.record then
+                    cdTrace.record("HEURISTIC_INIT", alert.spellID, oldState and oldState.name, {
+                        reason = "Initialized heuristic cooldown upon cast",
+                        cooldown = fallbackCD,
+                    })
+                end
+            end
+        end
+    elseif not hasActiveCooldown and not isChargeBased then
+        local baseID, curOverride = resolveSpellFamily(alert.spellID)
+        local isOverridden = (curOverride ~= nil and curOverride ~= alert.spellID)
+            or (CooldownService.baseToOverrideMap[alert.spellID] ~= nil)
+            or (CooldownService.previousOverrideMap[alert.spellID] ~= nil)
+        local elapsedSinceStart = (oldTimer and type(oldTimer.startTime) == "number") and (now - oldTimer.startTime) or 999
+        local inInitialGraceWindow = (hasHeuristicMeta or (oldState and oldState.isHeuristic == true))
+            and elapsedSinceStart >= 0 and elapsedSinceStart <= 4.5
+
+        if oldHasRunningCooldown and (isOverridden or inInitialGraceWindow) then
+            hasActiveCooldown = true
+            startTime = oldTimer.startTime
+            duration = oldTimer.duration
+            infoSafe = true
+            isHeuristic = true
+            local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+            if cdTrace and cdTrace.record then
+                cdTrace.record("OVERRIDE_PRESERVED", alert.spellID, oldState.name, {
+                    reason = isOverridden and "Preserved running cooldown against zero-CD override proc" or "Preserved running cooldown in initial cast grace window",
+                    remaining = oldTimer.expirationTime - now,
+                    overrideSpellID = curOverride,
+                })
+            end
+        end
+    end
+
     local shouldShow = hasActiveCooldown
     if not visibleNow then
         shouldShow = false
@@ -806,6 +1060,7 @@ local function refreshAlert(alert, eventName)
     state.maxCharges = isChargeBased and maxCharges or nil
     state.chargeSpellID = isChargeBased and chargeSpellID or nil
     state.isChargeBased = isChargeBased
+    state.isHeuristic = isHeuristic or (oldState and oldState.isHeuristic == true and oldHasRunningCooldown and true or false)
     state.chargesSafe = chargesSafe
     state.chargeActive = nil
     if chargeActiveSafe then
@@ -892,8 +1147,8 @@ local function refreshAlert(alert, eventName)
                     state.timer.startTime = start
                     state.timer.duration = dur
                     state.timer.expirationTime = start + dur
-                    state.timer.durationObject = cSpell.GetSpellChargeDuration
-                        and cSpell.GetSpellChargeDuration(chargeSpellID or alert.spellID)
+                    state.timer.durationObject = (cSpell.GetSpellChargeDuration and cSpell.GetSpellChargeDuration(chargeSpellID or alert.spellID))
+                        or (DurationAdapter and DurationAdapter.createFromStart and DurationAdapter.createFromStart(start, dur))
                         or nil
                 else
                     setProtectedTimer(
@@ -927,26 +1182,36 @@ local function refreshAlert(alert, eventName)
         state.timer.startTime = startTime
         state.timer.duration = duration
         state.timer.expirationTime = startTime + duration
-        state.timer.durationObject = cSpell.GetSpellCooldownDuration
-            and cSpell.GetSpellCooldownDuration(alert.spellID, true)
+        local durationSpellID = cooldownSpellID or alert.spellID
+        state.timer.durationObject = (not isHeuristic and not oldHasRunningCooldown and cSpell.GetSpellCooldownDuration and cSpell.GetSpellCooldownDuration(durationSpellID, true))
             or nil
+    elseif oldHasRunningCooldown and state.isHeuristic then
+        state.timer.mode = EAM.Constants.TIMER_NUMERIC
+        state.timer.startTime = oldTimer.startTime
+        state.timer.duration = oldTimer.duration
+        state.timer.expirationTime = oldTimer.expirationTime
+        state.timer.durationObject = nil
     else
+        local durationSpellID = cooldownSpellID or alert.spellID
         setProtectedTimer(
             state,
-            getDurationObject(cSpell.GetSpellCooldownDuration, alert.spellID, true),
+            getDurationObject(cSpell.GetSpellCooldownDuration, durationSpellID, true),
             "timingProtected"
         )
     end
 
     state.source.event = eventName
     state.source.api = isChargeBased and "C_Spell.GetSpellCharges" or "C_Spell.GetSpellCooldown"
-    state.source.activation = "UNIT_SPELLCAST_SUCCEEDED:player"
+    local actEvent = CooldownService.activationEvents[alertID] or (eventName == "UNIT_SPELLCAST_CHANNEL_START" and "UNIT_SPELLCAST_CHANNEL_START" or "UNIT_SPELLCAST_SUCCEEDED")
+    state.source.activation = tostring(actEvent) .. ":" .. tostring(state.unit or "player")
     state.source.activationSpellID = CooldownService.activationSpellIDs[alertID]
     state.source.chargeSpellID = chargeSpellID
     local newTimer = state.timer
     local newStartTime = newTimer and newTimer.startTime
     local newDuration = newTimer and newTimer.duration
+    local newExpirationTime = newTimer and newTimer.expirationTime
 
+    local isCastEvent = (eventName == "UNIT_SPELLCAST_SUCCEEDED" or eventName == "UNIT_SPELLCAST_CHANNEL_START" or eventName == "SPELLCAST_TRAILING_RETRY")
     local isDirty = (oldState == nil)
         or (oldShown ~= state.shown)
         or (oldActive ~= state.active)
@@ -959,6 +1224,8 @@ local function refreshAlert(alert, eventName)
         or (oldIcon ~= state.icon)
         or (oldStartTime ~= newStartTime)
         or (oldDuration ~= newDuration)
+        or (math.abs((oldExpirationTime or 0) - (newExpirationTime or 0)) > 0.01)
+        or (isCastEvent and hasActiveCooldown)
 
     return state, isDirty
 end
@@ -976,6 +1243,7 @@ local function cleanupDeletedAlerts()
         if not presentAlerts[alertID] then
             CooldownService.activatedAlerts[alertID] = nil
             CooldownService.activationSpellIDs[alertID] = nil
+            CooldownService.activationEvents[alertID] = nil
             CooldownService.chargeSpentObserved[alertID] = nil
         end
     end
@@ -1033,29 +1301,61 @@ function refreshAll(eventName)
         return true, "empty"
     end
 
+    local hasAnyActive = false
     for index = 1, alertCount do
         local alert = alertList[index]
         local state, isDirty = refreshAlert(alert, eventName)
-        if state and isDirty then
-            fireStateChanged(state)
+        if state then
+            if state.active and not state.completed and not state.isPlaceholder then
+                hasAnyActive = true
+            end
+            if isDirty then
+                fireStateChanged(state)
+            end
         end
+    end
+    if hasAnyActive then
+        CooldownService.ensureActiveCDRSampler()
     end
     return true, "updated"
 end
 function CooldownService.initialize()
     CooldownStatePool.initialize()
+    DurationAdapter = DurationAdapter or (EAM.Modules and EAM.Modules.DurationAdapter)
     local router = EAM.Modules.EventRouter
     if router then
         router.register("SPELL_UPDATE_COOLDOWN", CooldownService.onCooldownEvent)
         router.register("SPELL_UPDATE_CHARGES", CooldownService.onCooldownEvent)
         router.register("PET_BAR_UPDATE", CooldownService.onCooldownEvent)
         router.register("UNIT_SPELLCAST_SUCCEEDED", CooldownService.onSpellcastSucceeded)
+        router.register("UNIT_SPELLCAST_CHANNEL_START", CooldownService.onSpellcastSucceeded)
+        router.register("UNIT_SPELLCAST_CHANNEL_STOP", CooldownService.onSpellcastChannelStop)
         router.register("PLAYER_REGEN_ENABLED", CooldownService.onCombatEvent)
         router.register("PLAYER_REGEN_DISABLED", CooldownService.onCombatEvent)
         router.register("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", function(eventName, baseSpellID, overrideSpellID)
-            if Util.isSafePositiveNumber(baseSpellID) and Util.isSafePositiveNumber(overrideSpellID) then
-                CooldownService.baseToOverrideMap[baseSpellID] = overrideSpellID
-                CooldownService.overrideToBaseMap[overrideSpellID] = baseSpellID
+            local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+            if cdTrace and cdTrace.record then
+                cdTrace.record("OVERRIDE_UPDATED", baseSpellID, nil, { overrideSpellID = overrideSpellID })
+            end
+            if Util.isSafePositiveNumber(baseSpellID) then
+                local prevOverride = CooldownService.baseToOverrideMap[baseSpellID]
+                if Util.isSafePositiveNumber(overrideSpellID) and overrideSpellID ~= baseSpellID then
+                    if prevOverride and prevOverride ~= overrideSpellID then
+                        CooldownService.previousOverrideMap[baseSpellID] = prevOverride
+                        CooldownService.previousOverrideToBaseMap[prevOverride] = baseSpellID
+                        CooldownService.overrideToBaseMap[prevOverride] = nil
+                    end
+                    CooldownService.baseToOverrideMap[baseSpellID] = overrideSpellID
+                    CooldownService.overrideToBaseMap[overrideSpellID] = baseSpellID
+                else
+                    -- 覆蓋已移除或重置為基礎技能，捕獲前次覆蓋以補償冷卻事件
+                    if prevOverride then
+                        CooldownService.previousOverrideMap[baseSpellID] = prevOverride
+                        CooldownService.previousOverrideToBaseMap[prevOverride] = baseSpellID
+                        CooldownService.overrideToBaseMap[prevOverride] = nil
+                    end
+                    CooldownService.baseToOverrideMap[baseSpellID] = nil
+                end
             end
 
             CooldownService.updateAlertList()
@@ -1063,12 +1363,16 @@ function CooldownService.initialize()
                 lastDbRevision = EAM.db.revision or 0
             end
 
-            -- 若當前有活躍警報正處於舊的 baseSpellID 或已被覆蓋，動態遷移活躍狀態
-            if Util.isSafePositiveNumber(baseSpellID) or Util.isSafePositiveNumber(overrideSpellID) then
+            -- 若當前有活躍警報正處於舊的 baseSpellID、前次覆蓋或新覆蓋，動態遷移活躍狀態
+            local prevOverride = Util.isSafePositiveNumber(baseSpellID) and CooldownService.previousOverrideMap[baseSpellID] or nil
+            if Util.isSafePositiveNumber(baseSpellID) or Util.isSafePositiveNumber(overrideSpellID) or Util.isSafePositiveNumber(prevOverride) then
                 local targetSpellID = Util.isSafePositiveNumber(overrideSpellID) and overrideSpellID or baseSpellID
                 CooldownService.refreshSpell(targetSpellID, eventName, baseSpellID)
                 if Util.isSafePositiveNumber(baseSpellID) and baseSpellID ~= targetSpellID then
                     CooldownService.refreshSpell(baseSpellID, eventName, baseSpellID)
+                end
+                if Util.isSafePositiveNumber(prevOverride) and prevOverride ~= targetSpellID and prevOverride ~= baseSpellID then
+                    CooldownService.refreshSpell(prevOverride, eventName, baseSpellID)
                 end
             end
 
@@ -1080,15 +1384,18 @@ function CooldownService.initialize()
 end
 
 local function resolveEventSpellFamily(spellID, suppliedBaseSpellID)
-    local baseSpellID, overrideSpellID = resolveSpellFamily(spellID)
+    local baseSpellID, overrideSpellID, previousOverrideSpellID = resolveSpellFamily(spellID)
     if Util.isSafePositiveNumber(suppliedBaseSpellID) then
         baseSpellID = suppliedBaseSpellID
-        local _, suppliedOverrideSpellID = resolveSpellFamily(suppliedBaseSpellID)
+        local _, suppliedOverrideSpellID, suppliedPrevOverride = resolveSpellFamily(suppliedBaseSpellID)
         if Util.isSafePositiveNumber(suppliedOverrideSpellID) then
             overrideSpellID = suppliedOverrideSpellID
         end
+        if Util.isSafePositiveNumber(suppliedPrevOverride) then
+            previousOverrideSpellID = suppliedPrevOverride
+        end
     end
-    return baseSpellID, overrideSpellID
+    return baseSpellID, overrideSpellID, previousOverrideSpellID
 end
 
 function CooldownService.refreshSpell(spellID, eventName, suppliedBaseSpellID)
@@ -1138,35 +1445,419 @@ function CooldownService.activateSpell(spellID, eventName)
         return nil, "invalidSpellID"
     end
     verifyAlertList()
-    local baseSpellID, overrideSpellID = resolveEventSpellFamily(spellID)
     local result
+    local hasAnyActiveCooldown = false
+    local matchedCount = 0
+    local now = (api.GetTime and api.GetTime()) or 0
+
     for index = 1, alertCount do
         local alert = alertList[index]
         if alert
             and Util.isSafeTableKey(alert.id)
             and alert.enabled ~= false
-            and alertMatchesSpellFamily(index, spellID, baseSpellID, overrideSpellID)
         then
-            CooldownService.activatedAlerts[alert.id] = true
-            CooldownService.activationSpellIDs[alert.id] = spellID
-            CooldownService.chargeSpentObserved[alert.id] = nil
-            local state, isDirty = refreshAlert(alert, eventName or "UNIT_SPELLCAST_SUCCEEDED")
-            if state then
-                if isDirty then
-                    fireStateChanged(state)
+            local isExactMatch = sameSpellID(alert.spellID, spellID)
+            local isOverrideMatch = false
+            local oldState = CooldownService.states[alert.id]
+            local oldTimer = oldState and oldState.timer
+            local oldActiveRunning = oldState and oldState.active and not oldState.completed
+                and oldTimer and type(oldTimer.expirationTime) == "number"
+                and oldTimer.expirationTime > (now + 0.3)
+
+            -- 🛡️ 施法觸發精確防禦（杜絕 GetBaseSpell 反向劫持）：
+            -- 1. 精確匹配：本次施放的正是該警報所監控之法術 (spellID == alert.spellID)。
+            -- 2. 天賦覆蓋匹配：此警報的基礎法術被天賦永久替換（alertOverrideSpellIDs[index] == spellID），
+            --    但前提是：主技能當前「沒有」正在倒數中的有效冷卻（避免像冰霜射線引導後觸發的彗星風暴反向破壞主冷卻）！
+            --    且觸發冷卻時絕不拿施法技能的 GetBaseSpell 去反向抓取無關的基礎技能！
+            if not isExactMatch and not oldActiveRunning then
+                local alertOverrideID = alertOverrideSpellIDs[index]
+                if alertOverrideID and sameSpellID(alertOverrideID, spellID) then
+                    isOverrideMatch = true
                 end
-                result = state
+            end
+
+            if isExactMatch or isOverrideMatch then
+                matchedCount = matchedCount + 1
+                CooldownService.activatedAlerts[alert.id] = true
+                CooldownService.activationSpellIDs[alert.id] = spellID
+                CooldownService.chargeSpentObserved[alert.id] = nil
+                CooldownService.activationEvents[alert.id] = eventName or "UNIT_SPELLCAST_SUCCEEDED"
+
+                local state, isDirty = refreshAlert(alert, eventName or "UNIT_SPELLCAST_SUCCEEDED")
+                if state then
+                    local hasActive = (state.completed ~= true and state.isPlaceholder ~= true)
+                    if hasActive then
+                        hasAnyActiveCooldown = true
+                    end
+                    if isDirty or hasActive then
+                        fireStateChanged(state)
+                    end
+                    result = state
+                end
+
+                local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+                if cdTrace and cdTrace.record then
+                    local expTime = state and state.timer and state.timer.expirationTime
+                    local rem = (type(expTime) == "number" and expTime > now) and (expTime - now) or 0
+                    cdTrace.record("ACTIVATE_MATCH", alert.spellID, state and state.name, {
+                        castSpellID = spellID,
+                        isOverrideMatch = isOverrideMatch,
+                        hasActive = (state and state.completed ~= true and state.isPlaceholder ~= true),
+                        remaining = rem,
+                    })
+                end
             end
         end
     end
+
+    if hasAnyActiveCooldown then
+        CooldownService.ensureActiveCDRSampler()
+    end
+
+    -- 若匹配到警示，但當下 Blizzard 引擎尚未回傳實質冷卻（例如僅回傳 0 或 GCD），
+    -- 排程微延遲重試 (50ms 與 150ms)，確保客戶端在收到冷卻封包後即刻刷新激活
+    if matchedCount > 0 and not hasAnyActiveCooldown then
+        local scheduler = EAM.Modules and EAM.Modules.Scheduler
+        if scheduler and scheduler.after then
+            scheduler.after(0.05, function()
+                CooldownService.refreshSpell(spellID, "SPELLCAST_TRAILING_RETRY", baseSpellID)
+            end)
+            scheduler.after(0.15, function()
+                CooldownService.refreshSpell(spellID, "SPELLCAST_TRAILING_RETRY", baseSpellID)
+            end)
+        end
+    end
+
     return result
+end
+
+function CooldownService.refreshActiveCooldowns(excludeSpellID)
+    if not moduleEnabled() then
+        return false, "moduleDisabled"
+    end
+    verifyAlertList()
+    local refreshedCount = 0
+    local baseExclude, overrideExclude = nil, nil
+    if Util.isSafePositiveNumber(excludeSpellID) then
+        baseExclude, overrideExclude = resolveEventSpellFamily(excludeSpellID)
+    end
+
+    for index = 1, alertCount do
+        local alert = alertList[index]
+        if alert and Util.isSafeTableKey(alert.id) and alert.enabled ~= false then
+            if CooldownService.activatedAlerts[alert.id] == true then
+                local state = CooldownService.states[alert.id]
+                if state and state.active and not state.completed and not state.isPlaceholder then
+                    local isExcluded = false
+                    if Util.isSafePositiveNumber(excludeSpellID) then
+                        if alert.spellID == excludeSpellID
+                            or (baseExclude and alert.spellID == baseExclude)
+                            or (overrideExclude and alert.spellID == overrideExclude)
+                        then
+                            isExcluded = true
+                        end
+                    end
+                    if not isExcluded then
+                        local refreshedState, isDirty = refreshAlert(alert, "ACTIVE_COOLDOWN_SYNC")
+                        if refreshedState then
+                            refreshedCount = refreshedCount + 1
+                            if isDirty then
+                                fireStateChanged(refreshedState)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return refreshedCount
+end
+
+local burstSamplerActive = false
+local burstEndTime = 0
+local burstInterval = 0.08 -- 80ms 高頻取樣
+
+local function burstCDRSamplerTick()
+    if not burstSamplerActive or not moduleEnabled() then
+        burstSamplerActive = false
+        return
+    end
+
+    local now = (api.GetTime and api.GetTime()) or 0
+    if now > burstEndTime then
+        burstSamplerActive = false
+        return
+    end
+
+    local activeCount = 0
+    verifyAlertList()
+
+    for index = 1, alertCount do
+        local alert = alertList[index]
+        if alert and Util.isSafeTableKey(alert.id) and alert.enabled ~= false then
+            if CooldownService.activatedAlerts[alert.id] == true then
+                local oldState = CooldownService.states[alert.id]
+                if oldState and oldState.active and not oldState.completed and not oldState.isPlaceholder then
+                    activeCount = activeCount + 1
+                    local oldTimer = oldState.timer
+                    local oldExp = oldTimer and oldTimer.expirationTime
+
+                    local refreshedState, isDirty = refreshAlert(alert, "BURST_CDR_TICK")
+                    if refreshedState then
+                        local newTimer = refreshedState.timer
+                        local newExp = newTimer and newTimer.expirationTime
+
+                        -- 檢測到實質冷卻縮短（CDR 發生）
+                        if type(oldExp) == "number" and type(newExp) == "number" and (oldExp - newExp) > 0.02 then
+                            local delta = newExp - oldExp
+                            local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+                            if cdTrace and cdTrace.record then
+                                cdTrace.record("CDR_DETECTED", alert.spellID, refreshedState.name, {
+                                    delta = string.format("%.2fs", delta),
+                                    remaining = string.format("%.2fs", math.max(0, newExp - now)),
+                                    oldExp = string.format("%.2f", oldExp),
+                                    newExp = string.format("%.2f", newExp),
+                                })
+                            end
+                            fireStateChanged(refreshedState)
+                        elseif isDirty then
+                            fireStateChanged(refreshedState)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if activeCount > 0 and now < burstEndTime then
+        local scheduler = EAM.Modules and EAM.Modules.Scheduler
+        if scheduler and scheduler.after then
+            scheduler.after(burstInterval, burstCDRSamplerTick)
+        else
+            burstSamplerActive = false
+        end
+    else
+        burstSamplerActive = false
+    end
+end
+
+function CooldownService.startBurstCDRSampler(duration)
+    local dur = duration or 1.25 -- 預設突發取樣 1.25 秒，完整覆蓋 0~40 碼彈道
+    local now = (api.GetTime and api.GetTime()) or 0
+    burstEndTime = math.max(burstEndTime, now + dur)
+    if burstSamplerActive then
+        return
+    end
+    burstSamplerActive = true
+    local scheduler = EAM.Modules and EAM.Modules.Scheduler
+    if scheduler and scheduler.after then
+        scheduler.after(0.06, burstCDRSamplerTick)
+    else
+        burstSamplerActive = false
+    end
+end
+
+function CooldownService.scheduleActiveCDRRetries()
+    local scheduler = EAM.Modules and EAM.Modules.Scheduler
+    if scheduler and scheduler.after then
+        local retryToken = (CooldownService._activeCDRToken or 0) + 1
+        CooldownService._activeCDRToken = retryToken
+        CooldownService._activeCDRRetryPending = true
+        -- 多段彈道飛行時間支援（近戰 120ms、中距離 350ms、極限 40 碼 700ms）
+        scheduler.after(0.12, function()
+            if moduleEnabled() then
+                CooldownService.refreshActiveCooldowns(nil)
+            end
+        end)
+        scheduler.after(0.35, function()
+            if moduleEnabled() then
+                CooldownService.refreshActiveCooldowns(nil)
+            end
+        end)
+        scheduler.after(0.70, function()
+            if CooldownService._activeCDRToken == retryToken then
+                CooldownService._activeCDRRetryPending = false
+            end
+            if moduleEnabled() then
+                CooldownService.refreshActiveCooldowns(nil)
+            end
+        end)
+    end
+    CooldownService.startBurstCDRSampler(1.25)
+end
+
+local activeCDRSamplerActive = false
+
+local function activeCDRSamplerTick()
+    if not activeCDRSamplerActive or not moduleEnabled() then
+        activeCDRSamplerActive = false
+        return
+    end
+
+    local activeCount = 0
+    verifyAlertList()
+
+    for index = 1, alertCount do
+        local alert = alertList[index]
+        if alert and Util.isSafeTableKey(alert.id) and alert.enabled ~= false then
+            if CooldownService.activatedAlerts[alert.id] == true then
+                local oldState = CooldownService.states[alert.id]
+                if oldState and oldState.active and not oldState.completed and not oldState.isPlaceholder then
+                    activeCount = activeCount + 1
+                    local oldTimer = oldState.timer
+                    local oldExp = oldTimer and oldTimer.expirationTime
+
+                    local refreshedState, isDirty = refreshAlert(alert, "ACTIVE_CDR_TICK")
+                    if refreshedState then
+                        local newTimer = refreshedState.timer
+                        local newExp = newTimer and newTimer.expirationTime
+
+                        if type(oldExp) == "number" and type(newExp) == "number" and (oldExp - newExp) > 0.02 then
+                            local delta = newExp - oldExp
+                            local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+                            if cdTrace and cdTrace.record then
+                                cdTrace.record("CDR_DETECTED", alert.spellID, refreshedState.name, {
+                                    delta = string.format("%.2fs", delta),
+                                    remaining = string.format("%.2fs", math.max(0, newExp - (api.GetTime and api.GetTime() or 0))),
+                                })
+                            end
+                            fireStateChanged(refreshedState)
+                        elseif isDirty then
+                            fireStateChanged(refreshedState)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if activeCount > 0 then
+        local scheduler = EAM.Modules and EAM.Modules.Scheduler
+        if scheduler and scheduler.after then
+            scheduler.after(0.25, activeCDRSamplerTick)
+        else
+            activeCDRSamplerActive = false
+        end
+    else
+        activeCDRSamplerActive = false
+    end
+end
+
+function CooldownService.ensureActiveCDRSampler()
+    if activeCDRSamplerActive then
+        return
+    end
+    activeCDRSamplerActive = true
+    local scheduler = EAM.Modules and EAM.Modules.Scheduler
+    if scheduler and scheduler.after then
+        scheduler.after(0.25, activeCDRSamplerTick)
+    else
+        activeCDRSamplerActive = false
+    end
+end
+
+-- 🛡️ 戰鬥中受保護冷卻之先驗減 CD 推算器 (In-Combat Heuristic CDR Deduction)：
+-- 在 Retail 12.1+ 戰鬥中 (InCombatLockdown)，C_Spell.GetSpellCooldown 的 startTime 與 duration 會轉為 Secret Value，
+-- 導致針對先驗初始化 (isHeuristic) 的冷卻無法透過 API 讀出減 CD 後的新數值。
+-- 此函式在玩家施放減 CD 觸發技能時，即時對正在倒數中的先驗冷卻進行安全數值扣減，並於脫戰或 API 解鎖時自動無縫對齊官方時間！
+function CooldownService.applyCombatHeuristicCDR(triggerSpellID)
+    if not Util.isSafePositiveNumber(triggerSpellID) then
+        return 0
+    end
+    local now = (api.GetTime and api.GetTime()) or 0
+    local isKnown = function(sID)
+        if api.IsPlayerSpell and api.IsPlayerSpell(sID) then return true end
+        local cSpell = api.C_Spell
+        if cSpell and cSpell.IsSpellKnownOrOverridesKnown and cSpell.IsSpellKnownOrOverridesKnown(sID) then return true end
+        return false
+    end
+
+    local cdrTargets = nil
+    if triggerSpellID == 30455 then
+        -- 冰霜長矛 (Ice Lance 30455):
+        -- 1. 白化 (Whiteout 1281638) + 碎冰消融: 縮短冰霜之球 (84714) 冷卻時間
+        -- 2. 結冰 (Freezing 1247798) / 冰之心 (Heart of Ice 1247799): 消耗碎冰縮短冰霜射線 (205021) 冷卻時間
+        local orbDelta = isKnown(1281638) and 1.5 or 0.5
+        local rayDelta = (isKnown(1247798) or isKnown(1247799)) and 2.0 or 1.0
+        cdrTargets = {
+            [84714] = orbDelta,
+            [205021] = rayDelta,
+        }
+    elseif triggerSpellID == 44614 or triggerSpellID == 228354 then
+        -- 冰風暴 (Flurry): 縮短冰霜之球與冰霜射線冷卻
+        cdrTargets = {
+            [84714] = 0.5,
+            [205021] = 1.0,
+        }
+    elseif triggerSpellID == 190356 or triggerSpellID == 1248829 then
+        -- 暴風雪 (Blizzard): 縮短冰霜之球冷卻
+        cdrTargets = {
+            [84714] = 0.5,
+        }
+    end
+
+    if not cdrTargets then
+        return 0
+    end
+
+    local adjustedCount = 0
+    local cSpell = api.C_Spell
+    local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+
+    for alertID, state in pairs(CooldownService.states) do
+        if state and state.active and not state.completed and not state.isPlaceholder and state.timer then
+            local targetSpellID = state.spellID
+            local delta = targetSpellID and cdrTargets[targetSpellID]
+            if delta and delta > 0 and type(state.timer.expirationTime) == "number" and state.timer.expirationTime > now then
+                -- 先檢查當前 API 是否已提供非 Secret 的安全數值（如非戰鬥或模擬測試環境）；若有安全數值則交由 refreshActiveCooldowns 精確同步
+                local apiHasSafeNumeric = false
+                if cSpell and type(cSpell.GetSpellCooldown) == "function" then
+                    local okInfo, info = pcall(cSpell.GetSpellCooldown, targetSpellID)
+                    if okInfo and type(info) == "table" and Util.canAccessTable(info) then
+                        local _, stSafe = Util.readSafeField(info, "startTime", nil, "cdrCheck")
+                        local dur, durSafe = Util.readSafeField(info, "duration", nil, "cdrCheck")
+                        local gcd, gcdSafe = Util.readSafeField(info, "isOnGCD", nil, "cdrCheck")
+                        if stSafe and durSafe and type(dur) == "number" and dur > MIN_REAL_COOLDOWN_SECONDS and (not gcdSafe or gcd ~= true) then
+                            apiHasSafeNumeric = true
+                        end
+                    end
+                end
+
+                if not apiHasSafeNumeric then
+                    local oldExp = state.timer.expirationTime
+                    local newExp = math.max(now + 0.1, oldExp - delta)
+                    local actualDelta = oldExp - newExp
+                    if actualDelta > 0.01 then
+                        state.timer.startTime = (state.timer.startTime or now) - actualDelta
+                        state.timer.expirationTime = newExp
+                        state.isHeuristic = true
+                        adjustedCount = adjustedCount + 1
+                        if cdTrace and cdTrace.record then
+                            cdTrace.record("CDR_DETECTED", targetSpellID, state.name, {
+                                delta = string.format("-%.2fs (Heuristic)", actualDelta),
+                                remaining = string.format("%.2fs", math.max(0, newExp - now)),
+                                triggerSpellID = triggerSpellID,
+                            })
+                        end
+                        fireStateChanged(state)
+                    end
+                end
+            end
+        end
+    end
+
+    return adjustedCount
 end
 
 function CooldownService.onSpellcastSucceeded(eventName, unit, castGUID, spellID)
     if EAM.recordHotPath then
         EAM.recordHotPath("CooldownService.onSpellcastSucceeded")
     end
-    if eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" then
+    if eventName == "UNIT_SPELLCAST_CHANNEL_START" then
+        if unit ~= "player" and unit ~= "pet" then
+            return false, "notPlayerCast"
+        end
+    elseif eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" then
         if unit ~= "pet" then
             return false, "notPlayerCast"
         end
@@ -1174,7 +1865,68 @@ function CooldownService.onSpellcastSucceeded(eventName, unit, castGUID, spellID
     if not Util.isSafePositiveNumber(spellID) then
         return false, "invalidSpellID"
     end
-    return CooldownService.activateSpell(spellID, eventName)
+    local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+    if cdTrace and cdTrace.record then
+        cdTrace.record(eventName, spellID, nil, { unit = unit })
+    end
+    local result = CooldownService.activateSpell(spellID, eventName)
+    if unit == "player" then
+        if spellID == 30455 then
+            -- 冰霜長矛施放：觸發地面效果（白化延長）與突發採樣器，零 Taint 風險
+            local router = EAM.Modules and EAM.Modules.EventRouter
+            if router and router.fire then
+                router.fire("EAM_SHATTER_CONSUMED", 30455, 1)
+            end
+            if cdTrace and cdTrace.record then
+                local activeCDs = cdTrace.snapshotActiveCooldowns and cdTrace.snapshotActiveCooldowns()
+                cdTrace.record("CDR_TRIGGER_CAST", 30455, "冰霜長矛", {
+                    activeCDs = activeCDs,
+                })
+            end
+        end
+        CooldownService.applyCombatHeuristicCDR(spellID)
+        local refreshedCount = CooldownService.refreshActiveCooldowns(spellID)
+        local hasActiveAlerts = (refreshedCount and refreshedCount > 0)
+            or (result ~= nil and result.active and not result.completed and not result.isPlaceholder)
+            or (next(CooldownService.activatedAlerts) ~= nil)
+        if hasActiveAlerts then
+            CooldownService.scheduleActiveCDRRetries()
+            CooldownService.ensureActiveCDRSampler()
+        end
+    end
+    return result
+end
+
+CooldownService.onSpellcastChannelStart = CooldownService.onSpellcastSucceeded
+
+function CooldownService.onSpellcastChannelStop(eventName, unit, castGUID, spellID)
+    if EAM.recordHotPath then
+        EAM.recordHotPath("CooldownService.onSpellcastChannelStop")
+    end
+    if unit ~= "player" and unit ~= "pet" then
+        return false, "notPlayerCast"
+    end
+    if not Util.isSafePositiveNumber(spellID) then
+        return false, "invalidSpellID"
+    end
+    local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+    if cdTrace and cdTrace.record then
+        cdTrace.record(eventName, spellID, nil, { unit = unit })
+    end
+    local refreshed = CooldownService.refreshSpell(spellID, eventName)
+    if not refreshed and unit == "player" then
+        refreshed = CooldownService.activateSpell(spellID, eventName)
+    end
+    if unit == "player" then
+        local refreshedCount = CooldownService.refreshActiveCooldowns(spellID)
+        local hasActiveAlerts = (refreshedCount and refreshedCount > 0)
+            or (next(CooldownService.activatedAlerts) ~= nil)
+        if hasActiveAlerts then
+            CooldownService.scheduleActiveCDRRetries()
+            CooldownService.ensureActiveCDRSampler()
+        end
+    end
+    return refreshed ~= nil
 end
 
 function CooldownService.onCombatEvent(eventName)
@@ -1192,11 +1944,21 @@ function CooldownService.onVisualTimerExpired(alertID)
     end
     verifyAlertList()
     local state = CooldownService.states[alertID]
-    if not state then
+    local targetSpellID = state and state.spellID
+    if not targetSpellID then
+        for i = 1, alertCount do
+            local a = alertList[i]
+            if a and a.id == alertID then
+                targetSpellID = a.spellID
+                break
+            end
+        end
+    end
+    if not targetSpellID then
         return false, "notActive"
     end
-    return CooldownService.refreshSpell(state.spellID, "COOLDOWN_TIMER_EXPIRED") ~= nil,
-        "refreshed"
+    local refreshedState = CooldownService.refreshSpell(targetSpellID, "COOLDOWN_TIMER_EXPIRED")
+    return (refreshedState ~= nil or state ~= nil), "refreshed"
 end
 function CooldownService.refreshAll(eventName)
     return refreshAll(eventName or "manual")
@@ -1216,8 +1978,12 @@ function CooldownService.onCooldownEvent(eventName, spellID, baseSpellID)
             targetSpellID = baseSpellID
         end
         if targetSpellID then
-            CooldownService.refreshSpell(targetSpellID, eventName, baseSpellID)
-            return true, "targeted"
+            local matched = CooldownService.refreshSpell(targetSpellID, eventName, baseSpellID)
+            if matched ~= nil then
+                CooldownService.refreshActiveCooldowns(targetSpellID)
+                return true, "targeted"
+            end
+            -- 共用類別冷卻、覆蓋 ID 或尚未顯示過的警示不會被 targeted 路徑命中；改走合併全掃描。
         end
     end
     return queueCoalescedRefresh(eventName)
@@ -1234,7 +2000,14 @@ function CooldownService.onModuleToggle(enabled, reason)
         end
         wipe(CooldownService.activatedAlerts)
         wipe(CooldownService.activationSpellIDs)
+        wipe(CooldownService.activationEvents)
         wipe(CooldownService.chargeSpentObserved)
+        wipe(CooldownService.baseToOverrideMap)
+        wipe(CooldownService.overrideToBaseMap)
+        wipe(CooldownService.previousOverrideMap)
+        wipe(CooldownService.previousOverrideToBaseMap)
+        CooldownService._activeCDRRetryPending = nil
+        CooldownService._activeCDRToken = nil
         return true, "disabled"
     end
     -- 重新啟用不會把設定清單視為已施放；只刷新先前仍被保留的 activation。

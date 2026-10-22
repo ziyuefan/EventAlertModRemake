@@ -26,7 +26,7 @@ local SpellHeuristics = {
         [51052] = { duration = 6.0, name = "反魔法力場" },
         [53563] = { duration = 10.0, name = "聖光信標" },
         [61882] = { duration = 10.0, name = "地震術" },
-        [84714] = { duration = 8.0, name = "冰霜之球" },
+        [84714] = { duration = 15.0, name = "冰霜之球" },
         [156910] = { duration = 10.0, name = "虔信信標" },
         [190356] = { duration = 3.0, name = "暴風雪" },
         [197446] = { duration = 10.0, name = "光明使者信標" },
@@ -276,7 +276,7 @@ local SpellHeuristics = {
         [8143] = { baseDuration = 10.0 },
         [8679] = { baseDuration = 12.0 },
         [10060] = { baseDuration = 15.0, statType = "haste", statVal = 20.0 },
-        [11426] = { statType = "armor" },
+        [11426] = { statType = "armor", cooldown = 25.0 },
         [12051] = { baseDuration = 3.0 },
         [12294] = { baseDuration = 10.0 },
         [12323] = { baseDuration = 8.0 },
@@ -368,7 +368,7 @@ local SpellHeuristics = {
         [80240] = { baseDuration = 15.0 },
         [80353] = { baseDuration = 40.0, statType = "haste", statVal = 30.0 },
         [81749] = { baseDuration = 15.0 },
-        [84714] = { baseDuration = 8.0, tags = { "ground_effect" } },
+        [84714] = { baseDuration = 15.0, cooldown = 60.0, tags = { "ground_effect" } },
         [85043] = { baseDuration = 8.0, statType = "strength", statVal = 2.0 },
         [85948] = { baseDuration = 8.0 },
         [86093] = { statType = "intellect", statVal = 5.0 },
@@ -432,6 +432,7 @@ local SpellHeuristics = {
         [132578] = { baseDuration = 25.0 },
         [145205] = { baseDuration = 30.0 },
         [152278] = { tags = { "burst" } },
+        [153595] = { cooldown = 30.0, tags = { "burst" } },
         [155835] = { baseDuration = 8.0 },
         [156910] = { tags = { "ground_effect" } },
         [157442] = { statType = "crit", statVal = 5.0 },
@@ -535,7 +536,7 @@ local SpellHeuristics = {
         [204254] = { baseDuration = 20.0 },
         [204331] = { baseDuration = 15.0 },
         [204336] = { baseDuration = 3.0 },
-        [205021] = { baseDuration = 4.0 },
+        [205021] = { baseDuration = 4.0, cooldown = 60.0 },
         [205029] = { tags = { "burst" } },
         [205148] = { baseDuration = 8.0 },
         [205364] = { baseDuration = 30.0, tags = { "burst" } },
@@ -1408,6 +1409,7 @@ local SpellHeuristics = {
         [1280483] = { statType = "mastery", statVal = 3.0 },
         [1280733] = { statType = "armor", statVal = 10.0 },
         [1280961] = { statType = "crit", statVal = 3.0 },
+        [1281638] = { name = "白化", tags = { "talent" } },
         [1285387] = { baseDuration = 15.0 },
         [1309497] = { baseDuration = 15.0 },
         [1311653] = { baseDuration = 15.0 },
@@ -1415,4 +1417,5 @@ local SpellHeuristics = {
     },
 }
 
+SpellHeuristics.SPELL_DATA = SpellHeuristics.SPELL_META
 EAM.Data.SpellHeuristics = SpellHeuristics

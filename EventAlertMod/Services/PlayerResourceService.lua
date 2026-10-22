@@ -130,7 +130,11 @@ local function resolveConfig(definition, specializationID, defaultOrder, savedOv
     local legacyEnabled = true
     local dbConfig = EAM.db and EAM.db.config
     if type(dbConfig) == "table" and definition.legacyConfigKey then
-        legacyEnabled = dbConfig[definition.legacyConfigKey] ~= false
+        if type(dbConfig[definition.legacyConfigKey]) == "boolean" then
+            legacyEnabled = dbConfig[definition.legacyConfigKey] ~= false
+        elseif definition.key == "ESSENCE" and type(dbConfig.powerVigor) == "boolean" then
+            legacyEnabled = dbConfig.powerVigor ~= false
+        end
     end
 
     local saved = savedOverride
@@ -156,6 +160,8 @@ local function resolveConfig(definition, specializationID, defaultOrder, savedOv
     return {
         enabled = enabled,
         displayMode = displayMode,
+        attachTo = saved and saved.attachTo or "EAM_ANCHOR",
+        useCustomPos = saved and saved.useCustomPos == true or false,
         anchor = saved and saved.anchor or "TOPLEFT",
         position = saved and saved.position or "TOPLEFT",
         showForeground = not saved or saved.showForeground ~= false,
@@ -184,6 +190,20 @@ local function resolveConfig(definition, specializationID, defaultOrder, savedOv
         iconSize = boundedNumber(saved and saved.iconSize, 30, 16, 80),
         spacing = boundedNumber(saved and saved.spacing, 6, 0, 60),
         order = boundedNumber(saved and saved.order, defaultOrder, 1, Catalog.ResourceCount),
+        customMaxPoints = boundedNumber(saved and saved.customMaxPoints, 0, 0, 20),
+        colorMode = (saved and (saved.colorMode == "SOLID" or saved.colorMode == "GRADIENT" or saved.colorMode == "DEFAULT")) and saved.colorMode or "DEFAULT",
+        colorStartR = boundedNumber(saved and saved.colorStartR, (definition and definition.color and definition.color[1]) or 1, 0, 1),
+        colorStartG = boundedNumber(saved and saved.colorStartG, (definition and definition.color and definition.color[2]) or 0.82, 0, 1),
+        colorStartB = boundedNumber(saved and saved.colorStartB, (definition and definition.color and definition.color[3]) or 0.15, 0, 1),
+        colorEndR = boundedNumber(saved and saved.colorEndR, 1, 0, 1),
+        colorEndG = boundedNumber(saved and saved.colorEndG, 0.25, 0, 1),
+        colorEndB = boundedNumber(saved and saved.colorEndB, 0.25, 0, 1),
+        alertOperator = (saved and (saved.alertOperator == "LE" or saved.alertOperator == "GE")) and saved.alertOperator or "GE",
+        alertColorEnabled = saved and saved.alertColorEnabled == true or false,
+        alertColorR = boundedNumber(saved and saved.alertColorR, 1, 0, 1),
+        alertColorG = boundedNumber(saved and saved.alertColorG, 0.15, 0, 1),
+        alertColorB = boundedNumber(saved and saved.alertColorB, 0.15, 0, 1),
+        alertSoundEnabled = saved and saved.alertSoundEnabled == true or false,
     }
 end
 
@@ -1306,6 +1326,14 @@ end
 PlayerResourceService.detectClassPower = PlayerResourceService.rebuildTopology
 PlayerResourceService.updatePower = PlayerResourceService.updateAll
 PlayerResourceService.refreshActiveResources = PlayerResourceService.refreshVisualState
+
+function PlayerResourceService.setActiveAnchors(enable, targetKey)
+    local draw = renderer()
+    if draw and type(draw.setActiveAnchors) == "function" then
+        return draw.setActiveAnchors(enable, targetKey)
+    end
+    return false, "rendererUnavailable"
+end
 
 function PlayerResourceService.initialize()
     if PlayerResourceService.initialized then

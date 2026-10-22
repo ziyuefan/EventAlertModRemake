@@ -5,13 +5,153 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-10-03.05 (Retail 12.1.5 Alpha 8.8 三輪需求全面深度審計、排程器 Key 秘密值加固、暴雪 C-API 型別前置守衛、候選重疊邊界修正與選單 OnHide 清理)。
+目前快照版本：2026-10-16.03 (開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範 SOP Established)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-10-03 多進度儲建點：Retail 12.1.5 Alpha 8.8 三輪需求全面深度審計、排程器 Key 秘密值加固、暴雪 C-API 型別前置守衛、候選重疊邊界修正與選單 OnHide 清理（現行儲存點）
+## 2026-10-16 多進度儲存點：開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範（現行儲存點）
 
-- current-of-truth：完成連續三輪需求的獨立批判性複核與前置防禦加固。全套契約 501 條 100% 綠燈、Flow 測試 104 案全過、語法檢驗 78 案零錯誤、發布打包 DEV 成功。
+- current-of-truth：少年欸肯定深層故障預測與威脅推論之價值（"靠!你還是能想很細的嘛,以後開發完成都做預測與推論"），並正式確立為專案最高開發流程準則（SOP）。在 `.AI/AGENTS.md`、`.AI/PROJECT_MEMORY.md`、`.AI/Docs/33_AI_GOVERNANCE_DIRECTIVE.md` 與 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`（升級至 v1.3）全面實裝「主動故障預測與威脅推論協議（<failure_prediction_protocol>）」，規範任何開發、修復或架構重構交付前，必須主動提供：1. 高機率邊緣異常（時序、競態、施法延遲、彈道時間、目標狀態突變等）；2. 中機率引擎與視覺邊界異常（次像素外框抖動、視窗縮放比例、音效節流鉗位、元表防護嚴格模式等）；3. 低機率致命風險（戰鬥中 Taint 擴散、Action Blocked 限制、Secret 運算越界、GC 負載峰值等）；4. 實機排查手法與立即對策指引。全套門禁 502 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。
+
+## 2026-10-16 多進度儲存點：Retail 12.1.5 Alpha 8.8 官方 API 變更優化改造四大階段全數驗證完成（前一儲存點）
+
+- current-of-truth：全面執行《EAM Retail 12.1.5 官方 API 變更優化與改造計劃書》四階段架構重構：
+  1. **Phase 1：核心排程與計時器零分配架構 (Core/Scheduler.lua)**：實作 `TimedSignalMap` 原生代理與後備雙向對齊（`HasSignal`, `GetSignalTime`, `GetSignalCount`, `GetNextSignal`, `CancelSignal`, `CancelAllSignals`），以 `callNativeMulti` 杜絕方法名歧異誤降級；
+  2. **Phase 2：光環與音效管線 12.1.5 對齊 (AuraSoundService, NativeAuraRenderer, AuraService)**：`throttleSeconds` 嚴格鉗位 [0.05, 5.0] 遵循 PTR 4 引擎邊界；實裝原生生命週期動畫 `AddAuraShown/AssignedAnimation` 與非玩家光環 `SetCasterName`，並以 `hasButtonMethod` 探針隔絕嚴格元表報錯；優先採用 `AuraContainerUtil.GetPandemicWindow`；
+  3. **Phase 3：UI 與工具庫現代化 (Util.lua, AlertBorderStyles.lua, Options.lua)**：`createFrame` 支援 `hidden = true` 抑制首幀閃爍；優先調用 `PixelUtil.SetRoundLayoutToNearestPixelRecursively` 消除次像素抖動；實裝 `Util.foldCase` / `Util.foldcase` 支援 Unicode 語系折疊搜尋；
+  4. **Phase 4：品質門禁驗證閉環**：Contracts 502/502 PASS、Flow 108/108 PASS、Syntax 79/79 PASS、Package DryRun PASS。
+
+## 2026-10-16 多進度儲存點：Retail 12.1.5 Alpha 8.8 官方 API 變更與開發注意事項全面納入知識庫 (Build 69594 ~ 70077)（前一儲存點）
+
+- current-of-truth：全面抓取並深入解析 Warcraft Wiki 官方 Patch 12.1.5 API 變更兩大核心源（`API_changes` 與 `API_changes/notes`），完成從 PTR 1 (Build 69594) 至 PTR 4 (Build 70077) 完整生命週期之演進盤點與架構對齊；系統化歸納 82 個新增 Global API、29 個 FrameXML 函數、30 個 ScriptObjects 方法、2 個 Widget 方法、1 個 Event、12 個 CVars 與 10 大徹底移除之 Deprecated 套件；同步更新專案技能庫 (`.AI/skills/eam-api-change-intel/SKILL.md`)、情報庫 (`.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md`) 與安全邊界 (`.AI/Docs/02_RETAIL_API_BOUNDARIES.md`)；確認 EAM 目前之 `C_Timer.NewTimedSignalMap`、`CustomAuraButton` 原生動畫、`C_UnitAuras.AddAuraSound` (0.3s 節流且符合 5s 上限)、`UnitFrameUtil` 安全轉送通道與 C++ 函式庫 polyfill 完全合規且 100% 綠燈通過。
+  1. **兩大官方情報源全文解析與沉澱**：
+     - `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes` (Revision 6912957, Build 69952 ~ 70077)；
+     - `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes` (Revision 6905828, Build 69594 ~ 70077)。
+  2. **PTR 1 ~ PTR 4 演進矩陣與安全邊界補完**：
+     - PTR 1: 原生 Pandemic 動畫 (`AddPandemicActive/Enter/LeaveAnimation`)、Region 傳參改物件參考防報錯、`TimedSignalMap` C++ 零 GC 排程、受保護 Cooldown 框架 Taint 呼叫禁止、Castbar ID 依 unit token 大小寫唯一化、10 大相容庫拔除。
+     - PTR 2: `AddAuraShown/AssignedAnimation`、`VertexColor`/`TexCoords` 秘密切面、`sourceGUID` 秘密化、`UnitFrameUtil` 引入、`C_Intl` 秘密字串支援。
+     - PTR 3: `GetArenaOpponentSpec` 秘密化並由 `UnitFrameUtil` 安全渲染、`C_UnitAuras.GetRefreshCarryOverDuration` 官方精準結餘。
+     - PTR 4: `C_UnitAuras.AddAuraSound` 播放時長上限 5s，`throttleSeconds` > 5s 拒絕拋錯；`C_Intl.GetSortKey` 空字串修復。
+  3. **EAM 核心架構對齊核驗**：
+     - `Core/Scheduler.lua` 的 `NewTimedSignalMap` 優先調用與安全 uint32 降級；
+     - `Services/AuraService.lua` 音效調度嚴格遵守 5s 上限與 0.3s 節流；
+     - `Services/CooldownService.lua` 自建 Frame 隔離，杜絕受保護冷卻框架 Taint 阻斷；
+     - `Core/Util.lua` 原生 C++ `math.*`、`table.*`、`string.*` 工具加速與安全降級。
+  4. **全套測試覆蓋**：
+     - Contracts 502/502 PASS、Flow 108/108 PASS、Syntax 79/79 PASS、Packaging DryRun PASS。
+
+## 2026-10-10 多進度儲存點：Retail 12.1.5 Alpha 8.8 先驗冷卻 DurationObject 隔離、OnUpdate 首幀即時倒數與多態冷卻保留守衛精確化（前一儲存點）
+
+- current-of-truth：深入排查使用者實機最新飛行日誌呈現之「射線冷卻直接不倒數」卡死死穴：定位暴雪 API 對無冷卻技能回傳持續時間為 0 的 DurationObject，導致渲染層原生物件文字綁定清空文字並誤將自主 OnUpdate 計時器註銷；實裝先驗與延續冷卻強制 durationObject = nil，走原生 SetCooldown 轉圈遮罩與 OnUpdate 高頻文字刷新通道；在 registerLegacyTimer 第 0 毫秒立即格式化輸出初始秒數，消除首幀空窗；多態冷卻保留守衛精確化判定 (isOverridden or isHeuristicCandidate)，排除 COOLDOWN_TIMER_EXPIRED 計時到期事件，確保普通技能冷卻結束如期隱藏；將渲染器 timingChanged 檢驗閾值細化至 0.01 秒，與天賦減 CD 精度對齊。全套門禁 502 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。
+  1. **先驗冷卻 DurationObject 隔離 (Services/CooldownService.lua)**：
+     - 當 isHeuristic 或 oldHasRunningCooldown 為真時，強制 state.timer.durationObject = nil，徹底杜絕綁定暴雪 0 秒物件；
+     - 渲染層自動回退至原生 SetCooldown 與 OnUpdate 文字倒數，完全擺脫暴雪 0 秒空物件的畫面劫持。
+  2. **OnUpdate 首幀即時秒數格式化 (UI/Renderer.lua)**：
+     - 在 registerLegacyTimer 註冊瞬間立即執行 icon.timerText:SetFormattedText 輸出初始秒數（如 60），並加入 legacyTimerFrame:Show() 保障，消除 16ms 首幀空窗。
+  3. **多態冷卻保留守衛精確化 (Services/CooldownService.lua)**：
+     - oldHasRunningCooldown 加入 not isTimerExpired 判定，計時到期事件 (COOLDOWN_TIMER_EXPIRED) 絕不誤留；
+     - 冷卻保留條件限定於 isOverridden or isHeuristicCandidate，兼顧天賦覆蓋/先驗冷卻防零CD抹除與普通技能自然冷卻完成如期隱藏。
+  4. **減 CD 渲染比對閾值細化 (UI/Renderer.lua)**：
+     - 將 timingChanged 檢驗剩餘時間閾值由 0.05s 細化至 0.01s，與天賦減 CD (CDR) 精度完全對齊。
+  5. **全套測試覆蓋**：
+     - Contracts 502/502 PASS、Flow 108/108 PASS、Syntax 79/79 PASS、Packaging DryRun PASS。
+
+## 2026-10-10 多進度儲存點：Retail 12.1.5 Alpha 8.8 秘密光環Taint報錯根除、引導先驗冷卻即刻初始化、60ms零污染突發CDR採樣與白化天賦地面效果延伸（現行儲存點）
+
+- current-of-truth：深入排查使用者實機回報之秘密光環 Taint 紅字報錯 (GetAuraDataByIndex Taint) 與引導技能 (冰霜射線 205021) 戰鬥中冷卻 remaining=0 未倒數問題：徹底根除冷卻服務對 UNIT_AURA 之監聽與回呼，戰鬥中全面靜默隔離 GetAuraDataByIndex，所有被動減 CD 比對全權由施法事件與 60ms 高頻自適應突發採樣器直接比對 C_Spell.GetSpellCooldown 非秘密冷卻結算；重構先驗冷卻即刻初始化邏輯，使引導技能於 UNIT_SPELLCAST_CHANNEL_START 第 0 毫秒即刻進入 60.0s 倒數並啟動原生轉圈遮罩；冰槍施法派發 EAM_SHATTER_CONSUMED 解耦聯動白化天賦為冰霜之球 (84714) 地面效果延長 0.1s；全套門禁 502 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。
+  1. **秘密光環 Taint 報錯根除與戰鬥光環靜默隔離 (Services/CooldownService.lua, AuraService.lua, PlayerStatService.lua, Debug/CooldownTrace.lua)**：
+     - 徹底移除 CooldownService.initialize 中對 UNIT_AURA 之註冊，並刪除 CooldownService.onUnitAura；
+     - 在 CooldownTrace.lua 中為 detectTargetFrozenState 與 detectPlayerFrostState 加入 InCombatLockdown() 守衛並全面以 pcall 隔離；
+     - AuraService.fullScanUnit 與 PlayerStatService 中所有 GetAuraDataByIndex 調用全面加固 pcall 保護，杜絕任何秘密光環在受污染環境下拋出紅字。
+  2. **引導技能先驗冷卻即刻初始化 (Services/CooldownService.lua, Data/SpellHeuristics.lua)**：
+     - 在 refreshAlert 中，當 isCastEvent 為真時，若暴雪 API 回傳 duration <= MIN_REAL_COOLDOWN_SECONDS 或受秘密值保護，立即以先驗啟發式字典 SpellHeuristics.SPELL_META[alert.spellID] 初始化倒數；
+     - 冰霜射線 (205021) 於 UNIT_SPELLCAST_CHANNEL_START 第 0 毫秒即刻進入 60.0s 倒數，ACTIVATE_MATCH 精確輸出 remaining = 60.0，且在引導結束後獲得零 CD 彗星風暴時持續穩定倒數；
+     - 為寒冰護體 (11426) 補充 cooldown = 25.0。
+  3. **杜絕 GetBaseSpell 反向劫持 (Services/CooldownService.lua)**：
+     - 在 activateSpell 中，施法觸發嚴格限定於精確匹配 (spellID == alert.spellID) 或天賦覆蓋替換匹配 (alertOverrideSpellIDs[index] == spellID)；
+     - 嚴格規定當主技能正處於有效冷卻倒數中時，禁止任何異種法術 ID 覆蓋其冷卻身分，徹底終結冰霜射線遭彗星風暴反向抹除冷卻的重大隱患。
+  4. **零污染 60ms/80ms 高頻自適應突發取樣器 (Services/CooldownService.lua)**：
+     - 實裝 CooldownService.startBurstCDRSampler(1.25)，以高頻週期取樣當前運行中之冷卻，持續 1.25 秒（無縫覆蓋 0~40 碼彈道飛行）；
+     - 逐一比對 oldExpirationTime 與 newExpirationTime，一旦檢測到縮短超過 0.02 秒，即刻觸發 fireStateChanged 並記錄 CDR_DETECTED；
+     - 活躍取樣器全面支援充能技能 (isChargeBased)，兼顧合規性保留 _activeCDRRetryPending 標記契約。
+  5. **白化天賦對地面效果持續時間延伸 (Services/GroundEffectService.lua)**：
+     - 冰霜長矛 (30455) 施法成功派發 EAM_SHATTER_CONSUMED 事件：若場上有運行的冰霜之球 (84714) 地面效果且玩家習得白化 (1281638) 天賦，自動將持續時間與到期時間延長 0.1 秒，精確同步天賦機制。
+  6. **渲染器原生轉圈角度補償 (UI/Renderer.lua)**：
+     - 在 timingChanged 發生時，加固呼叫 icon.cooldown:SetCooldown(timer.startTime, timer.duration)，確保暴雪原生 CooldownFrame 遮罩角度即時重繪。
+  7. **冷卻飛行記錄器全方位冰霜與 CDR 遙測 (Debug/CooldownTrace.lua)**：
+     - 增加安全態 detectTargetFrozenState 與 detectPlayerFrostState；
+     - 記錄 CDR_TRIGGER_CAST、SHATTER_IMPACT 與 CDR_DETECTED，並於輸出底部展示「Frost State & CDR Environment Snapshot」。
+  8. **全套測試覆蓋**：
+     - Contracts 502/502 PASS、Flow 108/108 PASS、Syntax 79/79 PASS、Packaging DryRun PASS。
+
+## 2026-10-09 多進度儲存點：Retail 12.1.5 Alpha 8.8 實機冷卻狀態機四大病灶修復 (SPELL_DATA字典對齊、新施法優先權重啟、充能過濾與快照佔位標記)（現行儲存點）
+
+- current-of-truth：深入排查使用者實機最新飛行日誌呈現之冷卻異常問題：修復 `SpellHeuristics.lua` 與 `CooldownService.lua` 先驗字典引用命名不一致 (`SPELL_DATA` vs `SPELL_META`)，使 60s 先驗延遲補償即刻生效；修復 `refreshAlert` 將新施法事件誤判為覆蓋繼承舊剩餘秒數之重大錯誤，確立新施法以最高優先級重啟全額冷卻；重構充能技能檢定採 `readChargeCandidate` 嚴格過濾 `maxCharges > 1`，排除暴雪 API 單次技能結構表誤判，確保「冰霜射線」等技能引導後獲得的「彗星風暴」零 CD 覆蓋 Proc 100% 正確識別與完全隔離；加固活躍冷卻採樣器與飛行記錄快照輸出標註待命佔位圖示 (| Placeholder=true)，杜絕負數剩餘時間記錄。全套門禁 502 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。
+  1. **先驗字典名稱對齊 (`Data/SpellHeuristics.lua`)**：
+     - 導出 `SpellHeuristics.SPELL_DATA = SpellHeuristics.SPELL_META`，確保 `CooldownService` 在 API 初期僅回傳 GCD (1.14s) 或 0 秒時，能 100% 準確提取 60s 先驗冷卻時間啟動倒數。
+  2. **新施法優先權重啟 (`Services/CooldownService.lua`)**：
+     - 移除 `isOverridden` 對施法事件之強制覆蓋，調整邏輯為新施法事件優先啟動新生命週期，解決「冰霜之球」在天賦縮短後再次施放被鎖死在 15~17 秒舊結餘無法啟動全新 60 秒倒數的重大異常。
+  3. **充能技能檢定校準與零 CD 觸發技完全隔離 (`Services/CooldownService.lua`)**：
+     - 針對暴雪 Retail API 對非充能技能亦回傳單層結構表之特性，改用 `readChargeCandidate` 嚴格要求 `maxCharges > 1`，消除充能誤判；使「彗星風暴」等零 CD 覆蓋 Proc 能 100% 識別為 `isZeroCDOverrideProc = true` 並完全隔離，主技能有效倒數不被清空。
+  4. **活躍取樣器與飛行快照優化 (`Services/CooldownService.lua`, `Debug/CooldownTrace.lua`)**：
+     - 取樣器排除 `state.isChargeBased` 並嚴格校準正值剩餘時間；飛行記錄快照新增 `| Placeholder=true` 標記，並消除 `ACTIVATE_MATCH` 負數時間戳。
+  5. **全套測試覆蓋**：
+     - Contracts 502/502 PASS、Flow 108/108 PASS、Syntax 79/79 PASS、Packaging DryRun PASS。
+
+## 2026-10-07 多進度儲存點：Retail 12.1.5 Alpha 8.8 零CD天賦覆蓋觸發技冷卻保留、活躍冷卻250ms自適應採樣器與冷卻飛行記錄器實裝（前一儲存點）
+
+- current-of-truth：深入排查冰霜射線點了彗星風暴天賦後冷卻直接消失、以及被動傷害減 CD 無即時事件通知之問題：實裝零 CD 覆蓋觸發技保護屏障，施放無冷卻臨時覆蓋技時嚴格保護原技能倒數不被清空；實裝 250ms 活躍冷卻自適應動態採樣器，覆蓋超遠距離彈道與無事件被動減 CD；新增容量 300 條的高精度冷卻飛行記錄器 (CooldownTrace)，提供遊戲內 `/eam trace` UI 視窗一鍵複製並自動持久化至 WTF 存檔。全套門禁 501 契約、108 Flow 測試、79 語法檢查 100% 綠燈通過。
+  1. **零 CD 覆蓋觸發技保護屏障 (`Services/CooldownService.lua`)**：
+     - 在 `activateSpell` 中：若施法技能與警報基礎技能不同 (`spellID ~= alert.spellID`)，且該法術無實質冷卻 (`duration <= 1.5s`)，但當前警報已有進行中的有效倒數 (`expirationTime > now + 0.3`)，判定為「零 CD 臨時覆蓋觸發技」，禁止覆寫 `activationSpellIDs`，保留原技能激活身分；
+     - 在 `refreshAlert` 中：若查詢結果 `hasActiveCooldown == false`，但先前狀態有未過期的倒數且當前處於法術覆蓋狀態，強制保護並保留現有計時器，絕不提前抹除。
+  2. **活躍冷卻 250ms 自適應動態採樣器 (`Services/CooldownService.lua`)**：
+     - 實裝 `CooldownService.ensureActiveCDRSampler()` 與 `activeCDRSamplerTick`。只要畫面上存在正在倒數中的活躍冷卻，自動以每 0.25 秒（250ms）為週期進行極低開銷微取樣；
+     - 一旦檢測到 `expirationTime` 因減 CD 縮短，即刻觸發 `fireStateChanged` 刷新畫面，所有冷卻結束後自動休眠（0 效能開銷）。
+  3. **高精度冷卻飛行記錄器與 UI 視窗 (`Debug/CooldownTrace.lua`, `UI/Slash.lua`, `Core/SavedVariables.lua`)**：
+     - 建立專用記錄器 `EAM.Debug.CooldownTrace`，容量為 300 條環形緩衝區 (Circular Ring Buffer)，精確記錄微秒時間戳、事件名稱、法術 ID/名稱、覆蓋 ID、API 底層冷卻回傳參數與狀態機即時轉移；
+     - 提供 `/eam trace`（或 `/eam cdtrace`）遊戲內除錯彈出視窗，內建「全選記錄 (Ctrl+C)」一鍵複製、清空記錄與即時刷新功能；
+     - 於重載介面 (/reload) 或登出時自動將飛行日誌持久化儲存至 WTF 存檔中 (`EventAlertModDB.cooldownTrace`)，並同步整合至 `PromptExport.lua` JSON 匯出。
+  4. **全套測試覆蓋**：
+     - Contracts 501/501 PASS、Flow 108/108 PASS、Syntax 79/79 PASS、Packaging DryRun PASS。
+  5. **工具鏈執行環境評估與優先級原則確立**：
+     - 現有及未來新增之 Python 腳本實施個別環境評估（第三方套件依賴採 `uv run` + PEP 723 隔離；純標準庫採輕量 Python）；
+     - Node.js 嚴格於評估為最佳化選擇（如 NPM 專屬生態、AST、前端打包或 Sidecar）時採用，且須評估合適之包管理器與建置環境（優先 pnpm 硬連結快取、臨時工具 pnpm dlx / npx、極速建置 esbuild / vite 等）；
+     - 總體執行層級：**`uv` 優先 > `Node.js` (評估最佳化後選用合適包管理器) > 全域 `Python` 備援**。
+
+## 2026-10-06 多進度儲存點：Retail 12.1.5 Alpha 8.8 高亮發光外框分離防遮蔽、GCD 期間真實冷卻與天賦減CD/第二次施法修復（前一儲存點）
+
+- current-of-truth：深入排查高亮覆蓋邊框與冰霜射線施法冷卻異常：將外框紋理提權至獨立載體層 (`FrameLevel +8`) 並外擴發光動畫框，徹底消除金色高亮對 2px 外框的遮蔽；修復 `CooldownService.lua` 誤以 `isOnGCD` 否定大於 1.5 秒之真實冷卻問題，並即時清除過期法術覆蓋快取，解決第二次施法不進入冷卻與施放減 CD 技能無法刷新的重大問題。全套門禁 501 契約、105 Flow 測試、78 語法檢查 100% 綠燈通過。
+  1. **外框載體提權與發光外擴 (`UI/AlertBorderStyles.lua`, `UI/IconPool.lua`)**：
+     - 在 `AlertBorderStyles.createBorder` 中建立 `eamBorderHost` 並設為 `GetFrameLevel() + 8`（高於 LibButtonGlow 的 +5），以 `pcall` 防禦嚴格 Mock，確保自訂邊框線條永遠處於發光之上；
+     - 在 `IconPool.tryLibraryGlow` 與 `IconPool.setGlow` 中擴展發光框尺寸與錨點，使高亮發光光暈完美環繞於外框外側。
+  2. **公共冷卻 (GCD) 期間真實冷卻判定 (`Services/CooldownService.lua`)**：
+     - 移除冷卻判定中對 `isOnGCD` 的絕對排除，改為 `(duration > MIN_REAL_COOLDOWN_SECONDS or isOnGCD ~= true)`；
+     - 凡冷卻大於 1.5 秒即判定為真實冷卻，不受玩家施法或施放減 CD 技能（如冰槍術觸發「結冰」天賦）引發之 1.5 秒 GCD 干擾。
+  3. **動態法術覆蓋過期快取清理 (`Services/CooldownService.lua`)**：
+     - 重構 `resolveSpellFamily`：即時查詢 `C_Spell.GetOverrideSpell`，並在覆蓋結束切換回基礎法術時清空 `baseToOverrideMap`，解決第二次施法命中過期覆蓋法術（冷卻為 0）導致無法倒數的問題。
+  4. **渲染器減 CD 精度校準 (`UI/Renderer.lua`)**：
+     - 降低冷卻更新過濾門檻至 0.01 秒，並確保數值更新時同步調用 `icon.cooldown:SetCooldown`，減 CD 時圖示與轉圈動畫即時動態刷新。
+  5. **全套測試覆蓋**：
+     - Contracts 501/501 PASS、Flow 105/105 PASS、Syntax 78/78 PASS、Packaging DryRun PASS。
+
+## 2026-10-06 多進度儲存點：Retail 12.1.5 Alpha 8.8 天賦覆蓋補償 (Previous Override)、秘密值安全邊界防護與預熱佈局防重疊（前一儲存點）
+
+- current-of-truth：深入研究暴雪底層冷卻管理器 (CooldownViewer) 機制後完成架構升級：實裝天賦覆蓋交替窗口期的 `previousOverrideMap` 補償機制，全面加固秘密值 (Secret Values) 傳遞至底層原生接收槽（避免 Lua 索引崩潰），並加入預熱圖示實體網格坐標計算守衛杜絕原點 (0, 0) 重疊堆疊。全套門禁 501 契約、105 Flow 測試、78 語法檢查 100% 綠燈通過。
+  1. **天賦覆蓋切換過渡期冷卻補償檢定 (`CooldownService.lua`)**：
+     - 在 `CooldownService.lua` 維護 `previousOverrideMap` 與 `previousOverrideToBaseMap`；
+     - 在 `COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED` 觸發且 override 消除或變化時，保留前一刻的覆蓋關係，使多段天賦覆蓋或天賦切換時冷卻倒數與充能層數 100% 無縫對齊。
+  2. **秘密值安全性與原生接收槽單向管道加固 (`CooldownService.lua`, `Util.lua`, `Renderer.lua`)**：
+     - 全面收斂冷卻服務與渲染器中對法術 ID、計時秒數與狀態鍵的型別安全性校驗（`Util.isSafeTableKey` / `Util.isSafePositiveNumber`）；
+     - 秘密值與保護屬性數據嚴格隔離於 Lua 陣列索引與字串運算之外，一律由底層原生元件（`Cooldown:SetCooldown`、`StatusBar:SetValue`、`DurationObject`）單向管道接收。
+  3. **預熱圖示排版槽位初始化防重疊隔離 (`Renderer.lua`)**：
+     - 在 `Renderer.render` 加入 `rendered.layoutX ~= nil` 檢定，確保圖示必須在完成實體網格位移坐標計算後才允許顯示，徹底消除新圖示或預熱圖示於畫面原點 (0, 0) 的瞬間重疊現象。
+  4. **全套測試覆蓋**：
+     - 增補 `cooldown.previous_override_compensation` 狀態機測試；
+     - Contracts 501/501 PASS、Flow 105/105 PASS、Syntax 78/78 PASS、Packaging DryRun PASS。
+
+## 2026-10-04 多進度儲存點：Retail 12.1.5 Alpha 8.8 治理條文升級（解鎖實作）、光環邊框即時隱藏與驅散清理、天賦覆蓋冷卻精準捕捉（前一儲存點）
+
+- current-of-truth：全面升級 AI 治理規範（`.AI/AGENTS.md` 與 `AI_GOVERNANCE_DIRECTIVE.xml` 規則 R6），正式解鎖 12.1.5 環境代碼實作；落實光環邊框動態隱藏與驅散外框清理、天賦覆蓋多候選法術家族冷卻比對，全套門禁 501 契約、104 Flow 測試、78 語法檢查 100% 綠燈通過。
   1. 深度審計防禦加固：
      - **排程器 key 秘密值比較風險加固 (`Core/Scheduler.lua`)**：在 `nativeMap.SignalAt`、`nativeMap.SignalAfter` 與 fallback 實作中，將 `key == nil` 升級為 `not Util.isSafeTableKey(key)`，防範在 Retail 12.x 受保護值傳入時引發非法比較異常；
      - **暴雪 C-Level API 參數型別前置守衛 (`Core/Util.lua`)**：在 `Util.isReadableTable(value)` 中，於 `isSecretValue(value)` 之後立即加入 `type(value) ~= "table"` 檢查，杜絕將 `nil` 或非 table 型別傳入暴雪底層 C 函式（`isSecretTable` / `canAccessTable`）引發 `table expected, got nil` 崩潰；
@@ -55,6 +195,7 @@
      - [x] 【全專案門禁 100% 綠燈】：Contracts 501/501 PASS、Flow 104/104 PASS、Syntax 78/78 PASS。
      - [x] 【跨檔案版本與文檔 100% 同步】：TOC (120105 / 20261003)、雙語 README、雙語 Changelog。
      - [x] 【連續性資料庫更新】：`Data/ProjectContinuity.json` 與 `Docs/28_PROJECT_CONTINUITY.md` 同步維護。
+     - [x] 【12.1.5 PTR 主力測試與每輪必查 Wiki 治理固化】：`AGENTS.md`、`AI_GOVERNANCE_DIRECTIVE.xml` (六大鐵律 R1~R6)、`33_AI_GOVERNANCE_DIRECTIVE.md`、`17_SUBAGENT_WORKFLOW.md` 與 `PROJECT_MEMORY.md` 全面同步完成。
 
 ## 2026-09-28 多進度儲存點：奇樂 (MiliUI / WoWbox) 說明文件排版、後端 Sanitizer 行為治理與專屬技能體系 (`eam-miliui-publisher`) 固化（前一儲存點）
 

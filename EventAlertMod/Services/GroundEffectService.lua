@@ -612,7 +612,7 @@ local function readSpellPresentation(spellID, alert)
     return name, icon
 end
 
-local function triggerGroundEffect(canonicalSpellID, activationSpellID)
+local function triggerGroundEffect(canonicalSpellID, activationSpellID, eventName)
     if not moduleEnabled() then
         GroundEffectService.lastTriggerResult = "moduleDisabled"
         return false, "moduleDisabled"
@@ -681,7 +681,7 @@ local function triggerGroundEffect(canonicalSpellID, activationSpellID)
     state.timer.expirationTime = now + duration
     state.timer.durationObject = DurationAdapter
         and DurationAdapter.createFromStart(now, duration) or nil
-    state.source.event = "UNIT_SPELLCAST_SUCCEEDED"
+    state.source.event = eventName or "UNIT_SPELLCAST_SUCCEEDED"
     state.source.api = source
     state.source.activationSpellID = activationSpellID
     state.source.updatedAt = now
@@ -714,7 +714,7 @@ function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spe
         GroundEffectService.lastTriggerResult = "moduleDisabled"
         return false, "moduleDisabled"
     end
-    if eventName ~= "UNIT_SPELLCAST_SUCCEEDED" or unit ~= "player" then
+    if (eventName ~= "UNIT_SPELLCAST_SUCCEEDED" and eventName ~= "UNIT_SPELLCAST_CHANNEL_START") or unit ~= "player" then
         GroundEffectService.lastTriggerResult = "eventIgnored"
         return false, "eventIgnored"
     end
@@ -788,8 +788,10 @@ function GroundEffectService.onSpellcastSucceeded(eventName, unit, castGUID, spe
         return false, "notMonitored"
     end
     GroundEffectService.lastCanonicalSpellID = canonicalSpellID
-    return triggerGroundEffect(canonicalSpellID, spellID)
+    return triggerGroundEffect(canonicalSpellID, spellID, eventName)
 end
+
+GroundEffectService.onSpellcastChannelStart = GroundEffectService.onSpellcastSucceeded
 
 function GroundEffectService.refreshAll(eventName)
     if not moduleEnabled() then
@@ -990,6 +992,7 @@ function GroundEffectService.initialize()
     local router = EAM.Modules.EventRouter
     if router then
         router.register("UNIT_SPELLCAST_SUCCEEDED", GroundEffectService.onSpellcastSucceeded)
+        router.register("UNIT_SPELLCAST_CHANNEL_START", GroundEffectService.onSpellcastSucceeded)
         router.register("SPELLS_CHANGED", GroundEffectService.onSpellTopologyChanged)
         router.register("PLAYER_TALENT_UPDATE", GroundEffectService.onSpellTopologyChanged)
         router.register("PLAYER_SPECIALIZATION_CHANGED", GroundEffectService.onSpellTopologyChanged)
@@ -999,6 +1002,39 @@ function GroundEffectService.initialize()
         router.register("COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED", GroundEffectService.onSpellTopologyChanged)
         router.register("EAM_GROUND_EFFECT_CONFIG_CHANGED", GroundEffectService.onConfigChanged)
         router.register("EAM_CONFIG_CHANGED", GroundEffectService.onConfigChanged)
+        router.register("EAM_SHATTER_CONSUMED", function(eventName, consumedSpellID, stackCount)
+            if not moduleEnabled() then return end
+            -- 檢查冰霜之球 (84714) 是否為活躍地面效果
+            local state = GroundEffectService.activeStates[84714]
+            if not state or not state.shown or not state.timer then return end
+
+            -- 檢查玩家是否習得白化天賦 (1281638)
+            local isKnown = function(sID)
+                if api.IsPlayerSpell and api.IsPlayerSpell(sID) then return true end
+                local cSpell = api.C_Spell
+                if cSpell and cSpell.IsSpellKnownOrOverridesKnown and cSpell.IsSpellKnownOrOverridesKnown(sID) then return true end
+                return false
+            end
+            if not isKnown(1281638) then return end
+
+            -- 白化天賦：每碎冰一層凍結，冰霜之球地面持續時間延長 0.1 秒
+            local stacks = tonumber(stackCount) or 1
+            local extendAmount = 0.1 * stacks
+            local now = api.GetTime and api.GetTime() or 0
+            local timer = state.timer
+            if timer and timer.expirationTime and timer.expirationTime > now then
+                timer.duration = (timer.duration or 15) + extendAmount
+                timer.expirationTime = timer.expirationTime + extendAmount
+                GroundEffectService.activeAlerts[84714] = timer.expirationTime
+                if DurationAdapter and DurationAdapter.createFromStart then
+                    timer.durationObject = DurationAdapter.createFromStart(timer.startTime or now, timer.duration)
+                end
+                local r = EAM.Modules.EventRouter
+                if r then
+                    r.fire("EAM_GROUND_EFFECT_STATE_CHANGED", state, EAM.Constants.ALERT_FRAME_TYPES.groundEffect)
+                end
+            end
+        end)
     end
 end
 

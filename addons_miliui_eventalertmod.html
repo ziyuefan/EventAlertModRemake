@@ -1,19 +1,19 @@
 <!-- EventAlertMod (EAM) - 魔獸世界繁體中文插件站 (奇樂 / MiliUI) 專屬說明 HTML -->
 <!-- 本檔為純 HTML5 規範格式，100% 無 Markdown 語法，全篇 0 個 table 表格標籤（徹底免疫網站富文字過濾清洗），全面採用 <code>、<ul>、<ol>、<li> 語意化結構，void elements 嚴格遵循無結尾斜線規範，收合區塊嚴格採用 details/summary/details-content -->
 
-<h1>EventAlertMod Retail 12.1 (EAM)</h1>
+<h1>EventAlertMod Retail 12.1.5 (EAM)</h1>
 
 <p>
   <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/source-GitHub-181717" alt="GitHub"></a>
   <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" alt="Docs"></a>
-  <a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img src="https://img.shields.io/badge/release-Alpha%208.7-orange" alt="Release"></a>
-  <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/WoW-Retail%2012.1-blue" alt="Retail"></a>
-  <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/Interface-120007%20%7C%20120100-brightgreen" alt="Interface"></a>
+  <a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img src="https://img.shields.io/badge/release-Alpha%208.8-orange" alt="Release"></a>
+  <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/WoW-Retail%2012.1.5-blue" alt="Retail"></a>
+  <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen" alt="Interface"></a>
 </p>
 
 <blockquote>
   <p>
-    🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong><br><br>
+    🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong><br><br>
     🌐 <strong>官方線上說明文件與導航中心</strong>：<a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a>
   </p>
 </blockquote>
@@ -255,7 +255,63 @@
 
 <h2>📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 
-<h3>🌟 Retail 12.1.0 Alpha 8 系列 (最新架構重構)</h3>
+<h3>🌟 Retail 12.1.5 Alpha 8 系列 (最新架構重構)</h3>
+
+<h4>🌟 [Retail 12.1.5 Alpha 8.8] - 2026.10.23</h4>
+<details>
+  <summary>點擊展開</summary>
+  <div class="details-content">
+    <p><strong>魔獸世界 12.1.5 正式服全面適配與原生 C++ 加速庫 (Retail 12.1.5 Compatibility & Native Acceleration)</strong>：</p>
+    <ul>
+      <li><strong>TOC 介面版本支援正式升級</strong>：全面適配魔獸世界正式服 12.1.5 版本號（Interface: 120105），並持續無縫向下相容 12.1.0 及 12.0.7 客戶端。</li>
+      <li><strong>暴雪 12.1.5 原生 C++ 數學、字串與表格加速庫整合</strong>：整合暴雪底層數學庫（<code>math.clamp</code>、<code>math.saturate</code>、<code>math.round</code>、<code>math.lerp</code> 等）、字串庫（<code>string.contains</code>、<code>string.startswith</code> 等）與表格庫（<code>table.isempty</code>、<code>table.contains</code> 等），並具備防禦性向下相容 (Polyfills)。</li>
+    </ul>
+    <p><strong>原生 TimedSignalMap 零分配排程器升級 (Zero-Alloc TimedSignalMap Scheduler Engine)</strong>：</p>
+    <ul>
+      <li>深度整合 12.1.5 <code>C_Timer.NewTimedSignalMap</code> 原生鍵值排程機制，在支援的客戶端上由暴雪 C++ 引擎直接託管圖示倒數與定時信號；舊版客戶端自動切換至自主狀態機，達成重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)。</li>
+    </ul>
+    <p><strong>12.1.5 原生 Pandemic 結餘窗口精確判斷與動畫支援 (12.1.5 Native Pandemic Carry-Over Precision & Animations)</strong>：</p>
+    <ul>
+      <li>採用 <code>C_UnitAuras.GetRefreshCarryOverDuration</code> 精準結餘時間計算，嚴格於結餘小於等於 30% 基礎持續時間時觸發補 DoT 提醒，避免提前補 DoT 浪費剩餘時間；舊版客戶端平滑降級至 <code>C_UnitAuras.GetRefreshExtendedDuration</code>。</li>
+      <li>深度適配 12.1.5 Native Aura 容器之 <code>AddPandemicActiveAnimation</code>、<code>AddPandemicEnterAnimation</code> 與 <code>AddPandemicLeaveAnimation</code> 原生動畫 API，帶來更細緻、更流暢的進入與退出補 DoT 視覺反饋。</li>
+    </ul>
+    <p><strong>音效警示高頻頻率限制防護與原生像素對齊 (Audio Throttle & Pixel Snapping)</strong>：</p>
+    <ul>
+      <li>於 <code>C_UnitAuras.AddAuraSound</code> 註冊時加入 <code>throttleSeconds</code> 參數（預設 0.3s），杜絕高頻率觸發或層數暴漲時引發連續音效轟炸。</li>
+      <li>支援 <code>SetRoundLayoutToNearestPixel</code> 原生物理像素捨入對齊；引入 <code>CreateFrameWithOptions</code> 隱藏預建立機制，消除圖示初次生成畫面閃爍。</li>
+    </ul>
+    <p><strong>地面效果多組時間解析與自選組別 (Ground Effect Multi-Duration Candidate Selection)</strong>：</p>
+    <ul>
+      <li>智慧全文解析技能說明中包含的多組秒數候選（如地面持續時間 vs 減速持續時間 vs 引導時間），並於地面效果設定介面新增「時間組別選取」下拉選單與「一鍵擷取」聯動。</li>
+    </ul>
+    <p><strong>模組圖示外框色彩自訂與無邊框模式 (Customizable Alert Border Colors & Borderless Mode)</strong>：</p>
+    <ul>
+      <li>8 大模組外框獨立選色、支援透明度調節，並提供「無邊框模式」開關與「重設邊框色彩」按鈕，畫面當前已顯示圖示即時動態熱套用。</li>
+    </ul>
+    <p><strong>玩家職業資源獨立拖曳定位與九宮格依附 (Per-Resource Independent Dragging & 9-Point Attachment)</strong>：</p>
+    <ul>
+      <li>每項資源新增「啟用此項獨立位置」，支援脫離群組堆疊並以滑鼠左鍵自由拖曳定位、右鍵完成；支援依附目標框架與 9 大方位精準對齊。</li>
+    </ul>
+    <p><strong>玩家職業資源動態格數分割、雙色漸層與條件式警戒系統 (Dynamic Segments, Gradient Colors & Conditional Alerts)</strong>：</p>
+    <ul>
+      <li>點數型資源（連擊點數 5/6/7、真氣 5/6、喚能師龍能 5/6、聖能 5、靈魂裂片 5、秘法充能 4、符文 6）自動依據角色實際上限 (<code>UnitPowerMax</code>) 即時分割 StatusBar 格線與底部子格，並新增「自訂分割格數 (0=自動, 1~20)」滑桿。</li>
+      <li>新增「條形色彩模式」（預設職業動態色、自訂單色、自訂雙色漸層）及調色盤，支援水平與垂直漸層渲染。</li>
+      <li>StatusBar 條件式警戒擴充：新增「條件判定」（>= 或 <= 門檻）、「條件達成時變色」及「條件達成時播放音效」（邊緣觸發防洗頻提示音）。</li>
+    </ul>
+    <p><strong>第三方素材庫 LibSharedMedia-3.0 升級與語系術語校準 (LibSharedMedia r156 & Evoker Essence Calibration)</strong>：</p>
+    <ul>
+      <li>第三方素材庫 LibSharedMedia-3.0 升級至 r156 (支援 12.0.1+ / Interface 12000103)，擴充字型與材質素材庫。</li>
+      <li>全面校準喚能師專用資源「龍能」五語系暴雪官方術語命名（繁中「龍能」、簡中「精华」、英文「Essence」、韓文「정수」、俄文「Сущность」）。</li>
+    </ul>
+    <p><strong>關鍵缺陷修復與戰鬥防禦加固 (Critical Bug Fixes & Combat Hardening)</strong>：</p>
+    <ul>
+      <li><strong>戰鬥動作條污染報錯徹底排除</strong>：移除對暴雪全域環境庫外部賦值，杜絕 <code>ADDON_ACTION_BLOCKED</code> 報錯。</li>
+      <li><strong>天賦覆蓋技能冷卻倒數與天賦減 CD 即時同步</strong>：重構冷卻施法匹配與法術家族識別，新增 60ms 高頻自適應突發採樣器與彈道飛行延遲補償，精準同步冰霜射線、彗星風暴、冰霜之球等天賦減 CD。</li>
+      <li><strong>冷卻飛行記錄器 (Cooldown Flight Trace)</strong>：內建 300 筆高精度環形緩衝區，提供 <code>/eam trace</code> 即時除錯視窗與一鍵複製 (Ctrl+C)。</li>
+      <li><strong>秘密值安全校驗前置防護</strong>：加固 <code>Util.isSafeTableKey</code> 檢定，秘密值嚴格走底層原生元件單向管道綁定，杜絕 Taint 與崩潰。</li>
+    </ul>
+  </div>
+</details>
 
 <h4>🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27</h4>
 <details>
@@ -799,8 +855,8 @@
   <div class="details-content">
     <p><strong>支援環境</strong>：</p>
     <ul>
-      <li>《魔獸世界：正式服》World of Warcraft: Retail 12.1.0+ (Interface 120100)</li>
-      <li>相容通道 Retail 12.0.7+ (Interface 120007)</li>
+      <li>《魔獸世界：正式服》World of Warcraft: Retail 12.1.5+ (Interface 120105)</li>
+      <li>相容通道 Retail 12.1.0+ (Interface 120100) / Retail 12.0.7+ (Interface 120007)</li>
     </ul>
     <p><strong>不支援環境</strong>：</p>
     <ul>

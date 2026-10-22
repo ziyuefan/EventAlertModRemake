@@ -1,4 +1,4 @@
--- [Retail][MN][12.1.5][Alpha 8.8][Native C++ Math Acceleration, TimedSignalMap Scheduler & 12.1.5 Pandemic Precision] 2026.10.03
+-- [Retail][MN][12.1.5][Alpha 8.8][Native C++ Math Acceleration, TimedSignalMap Scheduler & 12.1.5 Pandemic Precision] 2026.10.23
      -- 【✨ 新增功能 (Features)】:
         -- 魔獸世界 12.1.5 正式服全面適配 (Retail 12.1.5 Patch Compatibility):
            -- TOC 介面版本支援正式升級：全面適配魔獸世界正式服 12.1.5 版本號（Interface: 120105），並持續無縫向下相容 12.1.0 及 12.0.7 客戶端。
@@ -30,6 +30,17 @@
            -- 無邊框極簡模式支援：提供「啟用圖示類型外框」全域總開關與各模組獨立勾選開關，方便喜愛無邊框風格的玩家完全關閉外框線條。
            -- 一鍵還原經典預設：提供「重設邊框色彩」按鈕，快速復原為各模組經典識別色彩（綠/紅/紫/黃等）。
            -- 即時動態熱套用：修改外框色彩或開關後，畫面當前已顯示之所有圖示即時動態重繪，無須手動重載介面 (/reload)。
+        -- 玩家職業資源獨立拖曳定位與常見框架九宮格依附 (Per-Resource Independent Dragging & 9-Point Frame Attachment):
+           -- 每項資源獨立位置與自由拖曳：於「玩家職業資源 -> 位置與錨點」新增「啟用此項獨立位置」開關與「移動此單項資源」／「移動全部/主錨點」／「歸零偏移 (0, 0)」操作按鈕，支援個別資源脫離群組堆疊並以滑鼠左鍵直接拖曳定位、右鍵點擊完成並自動同步滑桿數值。
+           -- 常見框架九宮格方向依附：新增「依附目標框架」選單（支援 EAM 資源主錨點、螢幕中央 UIParent、玩家頭像 PlayerFrame、目標頭像 TargetFrame、焦點頭像 FocusFrame、寵物頭像 PetFrame、個人資源條 PersonalResourceDisplay），搭配中文直覺化九宮格方位（左上、正上、右上、正左、中央、正右、左下、正下、右下）自由對齊。
+        -- 玩家職業資源動態格數分割、雙色漸層與條件式警戒系統 (Dynamic/Custom StatusBar Segments, Custom Gradient Colors & Conditional Alerts):
+           -- 點數型資源自動對齊角色上限與自訂分割格數：連擊點數 (5/6/7)、真氣 (5/6)、喚能師龍能/精華 (5/6)、聖能 (5)、靈魂裂片 (5)、秘法充能 (4)、符文 (6) 現已自動依據角色實際上限 (UnitPowerMax) 即時分割 StatusBar 格線與底部子格，並於「條形與尺寸」新增「自訂分割格數 (0=自動, 1~20)」滑桿。
+           -- 自訂條形單色與雙色漸層：於「條形與尺寸」新增「條形色彩模式」（預設職業動態色、自訂單色、自訂雙色漸層）及起點／終點調色盤，支援水平與垂直漸層渲染。
+           -- StatusBar 條件式警戒擴充：於「顯示與模式」新增「條件判定」（>= 高於或等於門檻 / <= 低於或等於門檻）、「條件達成時變色」（含警戒顏色調色盤）及「條件達成時播放音效」（邊緣觸發防洗頻提示音）。
+        -- 第三方素材庫 LibSharedMedia-3.0 升級至 r156 (LibSharedMedia-3.0 Update to r156):
+           -- 第三方素材庫 LibSharedMedia-3.0 升級至 r156 (支援 12.0.1+ / Interface 12000103)，擴充字型與材質素材庫，提升素材動態載入相容性與記憶體管理效率。
+        -- 喚能師專用資源「龍能」五語系官方術語校準 (Evoker Essence 5-Locale Blizzard Terminology Calibration):
+           -- 全面校準喚能師專用資源於全語系之暴雪官方術語命名（繁體中文「龍能」、簡體中文「精华」、英文「Essence」、韓文「정수」、俄文「Сущность」），確保介面選單、狀態條標籤與提示訊息 100% 精準對齊各語系官方客戶端。
      -- 【⚡ 體驗優化 (Improvements)】:
         -- 移除過時暴雪全域函數調用：消除對 Blizzard_Deprecated 的任何引用依賴，提升插件在未來大版本演進時的穩定性與獨立性。
         -- 原生狀態物件保護加固：防禦性隔離 AuraState 之 timer 與 source 表格，提升極限負載與非標準光環事件下的抗崩潰能力。
@@ -48,6 +59,8 @@
            -- 修復戰鬥中非安全警示框架因佈局判定誤觸戰鬥延遲，導致戰鬥觸發之新圖示無法計算二維網格位移座標、全部堆疊重疊在中心座標 (0, 0) 的問題。
         -- 技能冷卻圖示亮黃方塊與動作條按鍵污染修復 (Action Button Taint & Missing-Texture Yellow Box Fix):
            -- 修復在遊戲中執行流程驗證時覆寫全域 C_Spell/C_Item API 導致動作條按鍵 (MultiBarBottomLeftButton7) 遭受污染並在戰鬥中引發 ADDON_ACTION_BLOCKED 報錯的問題；
+        -- 玩家職業資源設定範圍切換錯誤修復 (Player Resource Scope Switch Forward Declaration Fix):
+           -- 修復在「玩家職業資源」面板左上角下拉選單切換「目前專精覆寫」與「全職業通用預設」時，因 refreshEditor 函數前置宣告缺失導致報錯 attempt to call a nil value 的問題。
            -- 徹底隔離離線測試案例與狀態清理，並為技能冷卻圖示提供問號備用材質，徹底消除 40x40 亮黃方塊與 99901 虛擬技能遺留問題。
         -- 地面效果紫色外框顯示穩定性修復 (Ground Effect Purple Border Restoration):
            -- 修復地面效果圖示由預留佔位模式切換至實際施法觸發時，因外框狀態鍵比對誤判而未重新顯示外框、導致紫色邊框偶發性消失的問題。
@@ -57,7 +70,80 @@
             -- 強化 Util.tableRemoveValue 與 Util.tableRemoveUnordered 實作，消除對非標準環境擴充函式的傳回型別假設，確保跨版本環境下布林回傳值與陣列長度嚴格一致。
          -- 模組邊框色彩即時熱更新防護 (Alert Border Color Hot-Refresh Fix):
             -- 移除 IconPool.applyTypeBorder 狀態鍵短路判定，確保在設定介面即時修改邊框色彩或開關時，已在畫面待命與顯示中的所有圖示（含技能冷卻、地面效果等）色彩均能瞬間動態生效。
+         -- 原生光環無邊框設定即時隱藏與暴雪驅散外框防護 (Native Aura Border Toggle & Dispel Texture Suppression Fix):
+            -- 修復關閉「啟用圖示類型外框」或特定光環外框時，Retail 12.1 Native Aura 容器因未將外框開關納入視覺指紋 (Visual Fingerprint) 導致重建判定略過、以及暴雪原生 AddDispelTypeTexture 驅散邊框持續殘留顯示的問題；
+            -- 實裝即時邊框熱更新 (refreshBorders) 與驅散邊框清理 (safeRemoveDispelTypeTexture)，確保勾選關閉邊框時光環邊框與驅散外框能瞬間隱藏。
+         -- 技能天賦覆蓋冷卻倒數精準度與時有時無問題修復 (Talent Override Cooldown Detection & Countdown Reliability Fix):
+            -- 修復技能冷卻在施放具有天賦覆蓋/替換 (如閃現術替換為閃爍、彗星風暴、冰霜射線等) 的技能後，底層查詢仍僅鎖定設定之原始法術 ID，導致暴雪 API 回傳持續時間為 0、使技能冷卻偶發性無法進入倒數或立刻被清除隱藏的異常；
+            -- 引入多候選法術家族智能比對 (getSpellCooldownInfo)，依序檢定優先施法 ID、覆蓋 ID、基礎 ID 與原始 ID，確保天賦覆蓋技能在施放後 100% 精準捕捉實際冷卻時間與原生 DurationObject。
+         -- 原生排程器代理調用簽章校準 (TimedSignalMap Proxy Call Signature Fix):
+            -- 修正 Scheduler 原生 TimedSignalMap 呼叫包裝之參數偏移問題，保障 C++ 底層排程在全情境下穩定分發與優雅降級。
+         -- 天賦覆蓋技能動態切換冷卻補償檢定 (Talent Override Transition Cooldown Compensation):
+            -- 當天賦技能發生切換或多段覆蓋消耗完畢切回基礎技能時，自動保留前一刻的覆蓋技能對應關係 (previousOverrideMap)，確保在技能施放與冷卻更新事件觸發的交界窗口期，冷卻計時器與充能層數狀態能無縫對齊並精準倒數，杜絕圖示瞬間遺失或倒數失效。
+         -- 秘密值 (Secret Values) 安全性防護與原生接收槽邊界檢定 (Secret Value Table-Key Guard & Native Sink Binding):
+            -- 全面加固冷卻服務與渲染器中對法術 ID、計時秒數與狀態鍵的型別安全性校驗（Util.isSafeTableKey / Util.isSafePositiveNumber），任何含有秘密值或保護屬性的數據嚴格隔離於 Lua 陣列索引與字串運算之外，一律由底層原生元件（Cooldown:SetCooldown、StatusBar:SetValue、DurationObject）進行單向管道綁定，徹底杜絕潛在的 Taint 與運算崩潰風險。
+         -- 預熱圖示排版槽位初始化防重疊隔離機制 (Prewarm Alert Slot Layout Isolation):
+            -- 優化圖示預熱與初次啟用流程中的排版狀態判定，在圖示尚未完成實體網格二維座標 (layoutX, layoutY) 計算前嚴格保持隱藏狀態，杜絕新觸發圖示在完成幾何佈局前瞬間於畫面原點 (0, 0) 出現重疊閃爍的現象。
+         -- 高亮發光層級與外框分離防遮蔽修復 (Proc Glow & Alert Border Visual Hierarchy Separation):
+            -- 提升圖示類型外框之物理渲染層級至獨立載體層 (FrameLevel +8)，確保自訂外框線條永遠處於最上層，不再被 LibButtonGlow 金色發光或自訂高亮所遮蔽掩蓋；
+            -- 同步擴展高亮發光動畫框之尺寸與錨點位移，使高亮發光效果嚴格綻放於圖示與外框之外側，視覺層次分明銳利。
+         -- 公共冷卻 (GCD) 期間真實技能冷卻與減CD即時更新修復 (Real Cooldown & Cooldown Reduction on GCD Fix):
+            -- 修正冷卻判定中誤將公共冷卻 (isOnGCD) 作為絕對排除條件、導致大於 1.5 秒之真實技能冷卻在施法觸發公共冷卻（或在冷卻期間施放減 CD 技能觸發公共冷卻）時被誤判為無冷卻而立即重設中斷的問題；
+            -- 修正法術覆蓋快取在覆蓋效果結束後未即時自快取中清除、導致第二次施放或切換回基礎技能時無法重新進入冷卻倒數的異常；
+            -- 降低渲染器冷卻剩餘時間變更比對閾值至 0.01 秒，確保天賦減 CD 觸發時冷卻倒數與原生動畫即時精準刷新。
+         -- 連續多次施法與進出戰鬥冷卻重置異常修復 (Continuous Multi-Cast & Combat Re-entry Cooldown Activation Fix):
+            -- 修復技能第二次施放或在脫戰後重新進入戰鬥時，冷卻圖示未正常觸發進入倒數的異常；
+            -- 修正施法成功當下 (UNIT_SPELLCAST_SUCCEEDED) 若暴雪客戶端冷卻數據存在微幅延遲（僅返回 0 或公共冷卻 GCD）時，因已處於佔位狀態誤判為未變更而丟失通知的問題，加入精確激活標記與 50ms/150ms 非同步微重試機制；
+            -- 徹底修復圖示池回收狀態物件 (CooldownStatePool) 未完整清理 isPlaceholder、isDesaturated 與 unit 等標記導致的狀態污染；
+            -- 移除渲染器中將圖示顯隱綁定於特定座標存在與否的限制，確保活躍警報在戰鬥內外均能 100% 穩定呈現。
+         -- 引導技能戰鬥中冷卻激活與天賦減CD即時動態同步 (Channeled Spell Cooldown Activation & Talent Passive CDR Live Sync):
+            -- 修復引導類型技能 (如法師「冰霜射線」Spell ID: 205021、以及「暴風雪」等引導型地面效果) 於戰鬥中施放時，因暴雪引擎僅派發 UNIT_SPELLCAST_CHANNEL_START 而非 UNIT_SPELLCAST_SUCCEEDED 事件，導致冷卻警報在戰鬥中未被激活倒數、直至脫離戰鬥才顯現冷卻的重大異常；
+            -- 支援引導技能於引導起始瞬間 (UNIT_SPELLCAST_CHANNEL_START) 即刻精確激活冷卻計時器與地面效果，並監聽引導結束 (UNIT_SPELLCAST_CHANNEL_STOP) 即時結算冷卻狀態，在戰鬥中無縫無延遲倒數；
+            -- 實裝玩家施法活躍冷卻動態同步機制 (refreshActiveCooldowns)：針對具有被動縮短其他技能冷卻之天賦 (如法師「白化」天賦以冰霜長矛縮短「冰霜之球」冷卻時間)，於每次玩家施法與定向冷卻更新當下主動重新查詢並校準所有正在倒數之活躍冷卻，比對冷卻剩餘時間變更並即時重整計時器與原生動畫；
+            -- 實裝 120ms/350ms/700ms 多段彈道飛行微重試延遲，全距涵蓋近戰、中距離與 40 碼極限距離飛行命中碎冰減 CD，徹底解決非目標冷卻事件脫節問題；
+            -- 狀態來源激活事件持久化隔離，防範全域與定向背景冷卻事件更新時誤將引導激活標記覆寫；校準冰霜之球地面效果基礎持續時間為 15.0 秒。
+         -- 零CD天賦覆蓋觸發技冷卻保留修復 (Zero-CD Talent Override Proc Cooldown Protection):
+            -- 修復技能（如「冰霜射線」）因天賦觸發免費無冷卻的臨時覆蓋技能（如「彗星風暴」）時，施放該覆蓋技能因其冷卻時間為 0、導致系統誤判冷卻已完成並將原技能原本正在倒數的數十秒冷卻直接抹除清空的重大異常；
+            -- 實裝覆蓋技能冷卻保護屏障：施放無實質冷卻之臨時覆蓋觸發技時，禁止覆寫原技能激活身分，並於冷卻更新時嚴格保留既有未到期之倒數計時器，絕不提前截斷有效冷卻。
+         -- 活躍冷卻自適應動態採樣器 (Continuous Active CDR Live Sampler):
+            -- 針對超遠距離彈道飛行命中（如 40 碼冰霜長矛碎冰）以及暴雪未派發框架事件的被動傷害減 CD 機制，實裝輕量化自適應取樣器（以 250ms 週期微取樣畫面中正在倒數中的活躍冷卻）；
+            -- 只要檢測到冷卻因任何天賦或傷害事件被縮短，即刻動態同步畫面剩餘秒數與倒數動畫，無冷卻倒數時自動進入休眠狀態（0 效能開銷）。
+         -- 冷卻與法術覆蓋飛行記錄器與即時偵錯視窗 (Cooldown & Spell Override Flight Recorder / Trace UI):
+            -- 實裝內建 300 筆環形緩衝區之高精度冷卻飛行記錄器 (CooldownTrace)，完整記錄每次施法成功、引導啟閉、法術覆蓋更新、API 底層冷卻回傳參數與狀態機即時轉移；
+            -- 提供 /eam trace（或 /eam cdtrace）遊戲內除錯彈出視窗，內建「全選記錄 (Ctrl+C)」一鍵複製、清空記錄與即時刷新功能，便於即時檢閱與回報；
+            -- 於重載介面 (/reload) 或登出時自動將飛行日誌持久化儲存至 WTF 存檔中 (EventAlertModDB.cooldownTrace)，方便離線追蹤分析。
+         -- 技能啟發式先驗冷卻字典與延遲補償修復 (Spell Heuristics & GCD Delay Compensation Fix):
+            -- 修復引導與長冷卻技能（如冰霜射線、冰霜之球）在施法瞬間暴雪 API 僅回傳公共冷卻 (GCD) 或 0 秒時，底層字典引用未命中導致無法即刻以先驗 60 秒冷卻啟動倒數的問題。
+         -- 多次施法新冷卻重啟與覆蓋結餘鎖死修復 (Subsequent Cast Renewal & Cooldown Residue Override Fix):
+            -- 修復冰霜之球等技能在冷卻期間被天賦縮短後再次施放（第二、三次施放）時，新施法被誤判為法術覆蓋繼承舊倒數、導致冷卻被鎖死在 15~17 秒舊結餘無法啟動全新 60 秒冷卻的重大問題；嚴格保證玩家主動施法事件以最高優先級啟動新生命週期。
+         -- 單次技能充能判定校準與零CD觸發技完全隔離 (Spell Charges Detection & Zero-CD Proc Isolation):
+            -- 針對暴雪 Retail API 對非充能技能亦返回單層結構表之特性，實裝嚴格 maxCharges > 1 充能技能判定，徹底消除充能誤判；
+            -- 確保「冰霜射線」引導後獲得的「彗星風暴」等零 CD 覆蓋 Proc 在施放時百分之百正確識別並完全隔離，杜絕主技能正在進行中的冷卻倒數遭抹除。
+         -- 冷卻飛行記錄快照佔位狀態標註與取樣優化 (Cooldown Flight Trace Snapshot & Sampler Enhancement):
+            -- 於 /eam trace 快照輸出中清晰標記待命佔位圖示 (| Placeholder=true)，並校準施法匹配記錄之剩餘時間運算；
+            -- 限制活躍冷卻採樣器僅追蹤實質運行中之冷卻倒數，杜絕負數時間戳記錄。
 
+          -- 施法觸發精確防禦與杜絕 GetBaseSpell 反向劫持 (Base Spell Family Reverse Lookup Guard):
+             -- 徹底重構冷卻服務施法觸發匹配架構，杜絕拿觸發技能 (如彗星風暴、時光倒轉返回技) 之 GetBaseSpell 反向查詢基礎技能並覆蓋主冷卻；
+             -- 嚴格規定當主技能正處於有效冷卻倒數中時，禁止任何異種法術 ID 覆蓋其冷卻身分，徹底終結冰霜射線遭彗星風暴反向抹除冷卻的重大隱患。
+          -- 天賦減CD高頻自適應突發採樣與彈道精準同步 (Burst Adaptive CDR Sampler & Travel Time Sync):
+             -- 針對冰法等天賦（結冰 1247798、冰之心 1247799、破裂冰霜 378448、分裂寒冰 56377、白化 1281638）的被動減 CD，實裝 80ms 週期、1.25 秒高頻自適應突發取樣器 (Burst Polling Window)，精準覆蓋 0~40 碼彈道飛行時間與伺服器結算延遲；
+             -- 當暴雪 API 檢測到冷卻時間縮短超過 0.02 秒時，即刻觸發狀態更新並以 SetCooldown 強制校準原生轉圈遮罩角度，解決小幅減 CD 畫面轉圈停滯問題；全面支援充能技能同步。
+           -- 戰鬥秘密值光環防禦與 Taint 報錯徹底排除 (Combat Secret Aura Taint Elimination & Zero-Taint CDR Engine):
+              -- 徹底移除冷卻服務對 UNIT_AURA 事件之監聽，並對戰鬥中所有目標與玩家光環探測進行安全靜默隔離，杜絕 Retail 12.x 戰鬥中因調用 GetAuraDataByIndex 踩中秘密光環引發之 Auras cannot be accessed when secret while tainted by 'EventAlertMod' 紅字報錯；
+              -- 天賦減 CD（結冰、白化等）全面由施法成功與 60ms 高頻自適應突發採樣器直接比對伺服器非秘密冷卻結算，兼具零延遲動態更新與 100% 零 Taint 安全。
+           -- 引導技能先驗冷卻即刻初始化與倒數修復 (Channeled Spell Immediate Heuristic Cooldown Initialization):
+              -- 修復「冰霜射線」(Spell ID: 205021) 等引導技能於戰鬥中開始引導時 (UNIT_SPELLCAST_CHANNEL_START)，因暴雪 API 回傳冷卻為 0 或受秘密值保護，導致警報狀態遺失計時器 (remaining=0) 而未在戰鬥中倒數的重大異常；
+              -- 實裝施法即刻先驗冷卻初始化：施法瞬間若 API 尚未回傳實質數值冷卻，自動由啟發式先驗字典初始化 60 秒冷卻倒數，圖示即刻呈現 60.0s 並啟動原生轉圈遮罩，且於後續觸發覆蓋技能 (如彗星風暴) 時持續穩定倒數。
+           -- 白化天賦對地面效果持續時間延伸支援 (Whiteout Ground Effect Duration Extension):
+              -- 實裝法師白化 (1281638) 天賦對地面效果（如「冰霜之球」Spell ID: 84714）的動態聯動：冰霜長矛施放時自動為場上運行的冰霜之球持續時間延長 0.1 秒，精確同步天賦機制。
+           -- 冷卻飛行記錄器 (Cooldown Flight Trace) 全方位冰霜與 CDR 遙測升級:
+              -- 非戰鬥安全環境下記錄目標凍結狀態、玩家寒冰指層數、關鍵天賦與當前活躍冷卻秒數；
+              -- 記錄 [CDR_TRIGGER_CAST] 與 [CDR_DETECTED]（含 Delta 縮短秒數與到期時間前後對比），並於 /eam trace 視窗底部展示「Frost State & CDR Environment Snapshot」。
+            -- 先驗冷卻 DurationObject 隔離與渲染層即時倒數修復 (Heuristic Cooldown DurationObject Isolation & Instant Countdown Refresh Fix):
+               -- 修復引導型技能（如「冰霜射線」）在先驗啟動冷卻倒數後，底層查詢暴雪 DurationObject 獲取到持續時間為 0 的空物件並傳入渲染層，導致原生物件文字綁定覆蓋為空字串、且誤將自主 OnUpdate 計時器註銷、畫面圖示呈現「直接不倒數」卡死不動的重大死穴；
+               -- 嚴格隔離先驗啟發式冷卻之 DurationObject 綁定（強制為 nil），走原生 SetCooldown 轉圈遮罩與 OnUpdate 高頻文字刷新通道，並在註冊首個毫秒立即格式化輸出初始秒數，消除首幀空窗；
+               -- 精確鎖定天賦覆蓋過期與一般冷卻完成之邊界判定，消除冷卻中途誤殺有效倒數的異常，並將渲染器冷卻剩餘時間變更比對閾值進一步細化至 0.01 秒，與天賦減 CD 瞬時同步。
 -- [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names & Target Ghost Purge] 2026.09.27
      -- 【✨ 新增功能 (Features)】:
         -- 角色屬性與吸收量監控全面升級 (Player Stat & Absorb Monitor Upgrade):

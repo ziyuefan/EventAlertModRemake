@@ -49,6 +49,56 @@ local function inCombat()
     return api.InCombatLockdown and api.InCombatLockdown() == true
 end
 
+local function resolveAnchorTarget(attachTo, defaultAnchor)
+    if attachTo == "UIParent" then
+        return _G.UIParent or defaultAnchor
+    elseif attachTo == "PlayerFrame" then
+        return _G.PlayerFrame or _G.UIParent or defaultAnchor
+    elseif attachTo == "TargetFrame" then
+        return _G.TargetFrame or _G.UIParent or defaultAnchor
+    elseif attachTo == "FocusFrame" then
+        return _G.FocusFrame or _G.UIParent or defaultAnchor
+    elseif attachTo == "PetFrame" then
+        return _G.PetFrame or _G.UIParent or defaultAnchor
+    elseif attachTo == "PersonalResourceDisplayFrame" then
+        return _G.PersonalResourceDisplayFrame or _G.NamePlatePersonalFrame or _G.UIParent or defaultAnchor
+    end
+    return defaultAnchor
+end
+
+local function getRegionPointScreenCoords(region, pointName)
+    if not region or type(region.GetCenter) ~= "function" then
+        return nil, nil, 1
+    end
+    local okC, cx, cy = pcall(region.GetCenter, region)
+    if not okC or not Util.isSafeNumber(cx) or not Util.isSafeNumber(cy) then
+        return nil, nil, 1
+    end
+    local left = type(region.GetLeft) == "function" and region:GetLeft() or cx
+    local right = type(region.GetRight) == "function" and region:GetRight() or cx
+    local top = type(region.GetTop) == "function" and region:GetTop() or cy
+    local bottom = type(region.GetBottom) == "function" and region:GetBottom() or cy
+    local scale = (type(region.GetEffectiveScale) == "function" and region:GetEffectiveScale())
+        or (type(region.GetScale) == "function" and region:GetScale())
+        or 1
+    if not Util.isSafePositiveNumber(scale) then
+        scale = 1
+    end
+    local px = cx
+    if pointName == "TOPLEFT" or pointName == "LEFT" or pointName == "BOTTOMLEFT" then
+        px = Util.isSafeNumber(left) and left or cx
+    elseif pointName == "TOPRIGHT" or pointName == "RIGHT" or pointName == "BOTTOMRIGHT" then
+        px = Util.isSafeNumber(right) and right or cx
+    end
+    local py = cy
+    if pointName == "TOPLEFT" or pointName == "TOP" or pointName == "TOPRIGHT" then
+        py = Util.isSafeNumber(top) and top or cy
+    elseif pointName == "BOTTOMLEFT" or pointName == "BOTTOM" or pointName == "BOTTOMRIGHT" then
+        py = Util.isSafeNumber(bottom) and bottom or cy
+    end
+    return px * scale, py * scale, scale
+end
+
 local function clearNumericText(frame)
     frame.valueText:ClearText()
     frame.valueText:Hide()
@@ -99,6 +149,9 @@ local function createResourceFrame(anchor, definition)
     local label = container:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     label:SetPoint("BOTTOMLEFT", statusBar, "TOPLEFT", 0, 2)
     label:SetText(definition.fallbackName)
+    if EAM.Locale and type(EAM.Locale.bindText) == "function" then
+        EAM.Locale.bindText(label, definition.nameKey, definition.fallbackName)
+    end
 
     local valueText = container:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     valueText:SetPoint("CENTER", statusBar, "CENTER", 0, 0)
@@ -111,39 +164,37 @@ local function createResourceFrame(anchor, definition)
     glow:SetVertexColor(1, 0.82, 0.15, 0.95)
     glow:Hide()
 
+    local MAX_RESOURCE_SEGMENTS = 20
     local markers = {}
-    local maxPoints = definition.maxPoints or 5
-    for index = 1, maxPoints - 1 do
+    for index = 1, MAX_RESOURCE_SEGMENTS - 1 do
         local marker = statusBar:CreateTexture(nil, "OVERLAY")
         marker:SetSize(1, 16)
-        marker:SetPoint("LEFT", statusBar, "LEFT", 126 * index / maxPoints, 0)
+        marker:SetPoint("LEFT", statusBar, "LEFT", 126 * index / 5, 0)
         marker:SetColorTexture(0, 0, 0, 0.75)
         marker:Hide()
         markers[index] = marker
     end
 
     local slotBars = {}
-    if definition.rendererKind == "POINTS" and maxPoints and maxPoints > 0 then
-        for index = 1, maxPoints do
-            local slotBar = api.CreateFrame("StatusBar", nil, container)
-            slotBar:SetSize(20, 3)
-            slotBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-            slotBar:SetStatusBarColor(
-                definition.color[1],
-                definition.color[2],
-                definition.color[3],
-                0.9
-            )
-            slotBar:SetMinMaxValues(0, 1)
-            slotBar:SetValue(1)
+    for index = 1, MAX_RESOURCE_SEGMENTS do
+        local slotBar = api.CreateFrame("StatusBar", nil, container)
+        slotBar:SetSize(20, 3)
+        slotBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        slotBar:SetStatusBarColor(
+            definition.color[1],
+            definition.color[2],
+            definition.color[3],
+            0.9
+        )
+        slotBar:SetMinMaxValues(0, 1)
+        slotBar:SetValue(1)
 
-            local slotBg = slotBar:CreateTexture(nil, "BACKGROUND")
-            slotBg:SetAllPoints(slotBar)
-            slotBg:SetColorTexture(0.02, 0.02, 0.02, 0.65)
-            slotBar.bg = slotBg
-            slotBar:Hide()
-            slotBars[index] = slotBar
-        end
+        local slotBg = slotBar:CreateTexture(nil, "BACKGROUND")
+        slotBg:SetAllPoints(slotBar)
+        slotBg:SetColorTexture(0.02, 0.02, 0.02, 0.65)
+        slotBar.bg = slotBg
+        slotBar:Hide()
+        slotBars[index] = slotBar
     end
 
     container:Hide()
@@ -167,6 +218,8 @@ local function createResourceFrame(anchor, definition)
         glow = glow,
         markers = markers,
         slotBars = slotBars,
+        activeMaxPoints = definition.maxPoints or 5,
+        alertTriggeredLatch = false,
         colorCurve = colorCurve,
         configured = false,
         visible = false,
@@ -175,6 +228,89 @@ local function createResourceFrame(anchor, definition)
         powerType = definition.powerType,
         config = nil,
     }
+end
+
+local function updateResourceSegments(frame, maxPoints)
+    local cfg = frame.config
+    local effectiveKind = (cfg and cfg.displayMode and cfg.displayMode ~= "AUTO") and cfg.displayMode or frame.definition.rendererKind
+    local customMax = (cfg and Util.isSafePositiveNumber(cfg.customMaxPoints)) and math.floor(cfg.customMaxPoints + 0.5) or 0
+    local targetSegments = 5
+    if customMax >= 1 and customMax <= 20 then
+        targetSegments = customMax
+    elseif Util.isSafePositiveNumber(maxPoints) and maxPoints >= 1 and maxPoints <= 20 then
+        targetSegments = math.floor(maxPoints + 0.5)
+    else
+        targetSegments = frame.definition.maxPoints or 5
+    end
+    if targetSegments < 1 then
+        targetSegments = 1
+    elseif targetSegments > 20 then
+        targetSegments = 20
+    end
+    frame.activeMaxPoints = targetSegments
+
+    local isVertical = cfg and cfg.orientation == "VERTICAL"
+    local barWidth = Util.isSafePositiveNumber(cfg and cfg.barWidth) and cfg.barWidth or 126
+    local barHeight = Util.isSafePositiveNumber(cfg and cfg.barHeight) and cfg.barHeight or 16
+    local actualBarWidth = isVertical and barHeight or barWidth
+    local actualBarHeight = isVertical and barWidth or barHeight
+
+    local markerCount = #frame.markers
+    for index = 1, markerCount do
+        local marker = frame.markers[index]
+        if effectiveKind == "POINTS" and targetSegments > 1 and index < targetSegments then
+            marker:ClearAllPoints()
+            if isVertical then
+                marker:SetSize(actualBarWidth, 1)
+                marker:SetPoint("BOTTOM", frame.statusBar, "BOTTOM", 0, actualBarHeight * index / targetSegments)
+            else
+                marker:SetSize(1, barHeight)
+                marker:SetPoint("LEFT", frame.statusBar, "LEFT", barWidth * index / targetSegments, 0)
+            end
+            marker:Show()
+        else
+            marker:Hide()
+        end
+    end
+
+    if frame.slotBars then
+        local slotBarCount = #frame.slotBars
+        local slotHeight = math.max(1, (actualBarHeight / targetSegments) - 1)
+        local slotWidth = math.max(1, (barWidth / targetSegments) - 1)
+        for index = 1, slotBarCount do
+            local slotBar = frame.slotBars[index]
+            if effectiveKind == "POINTS" and index <= targetSegments then
+                slotBar:ClearAllPoints()
+                local cMode = cfg and cfg.colorMode or "DEFAULT"
+                local sr = (cMode ~= "DEFAULT" and Util.isSafeNumber(cfg and cfg.colorStartR)) and cfg.colorStartR or frame.definition.color[1]
+                local sg = (cMode ~= "DEFAULT" and Util.isSafeNumber(cfg and cfg.colorStartG)) and cfg.colorStartG or frame.definition.color[2]
+                local sb = (cMode ~= "DEFAULT" and Util.isSafeNumber(cfg and cfg.colorStartB)) and cfg.colorStartB or frame.definition.color[3]
+                slotBar:SetStatusBarColor(sr, sg, sb, 0.9)
+                if isVertical then
+                    slotBar:SetSize(3, slotHeight)
+                    slotBar:SetPoint(
+                        "BOTTOMRIGHT",
+                        frame.statusBar,
+                        "BOTTOMLEFT",
+                        -2,
+                        (index - 1) * (actualBarHeight / targetSegments)
+                    )
+                else
+                    slotBar:SetSize(slotWidth, 3)
+                    slotBar:SetPoint(
+                        "TOPLEFT",
+                        frame.statusBar,
+                        "BOTTOMLEFT",
+                        (index - 1) * (barWidth / targetSegments),
+                        -2
+                    )
+                end
+                slotBar:Show()
+            else
+                slotBar:Hide()
+            end
+        end
+    end
 end
 
 function PowerRenderer.initialize()
@@ -237,13 +373,18 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
 
     local position = config and VALID_ANCHOR_POINTS[config.position] and config.position or "TOPLEFT"
     local anchorPoint = config and VALID_ANCHOR_POINTS[config.anchor] and config.anchor or "TOPLEFT"
+    local attachTo = config and config.attachTo or "EAM_ANCHOR"
+    local useCustomPos = config and config.useCustomPos == true
+    local targetAnchor = resolveAnchorTarget(attachTo, frame.anchor)
+    local stepY = isVertical and (actualBarHeight + iconSize + spacing + 12) or ROW_HEIGHT
+    local stackY = (useCustomPos or attachTo ~= "EAM_ANCHOR") and y or (y - ((orderIndex or 1) - 1) * stepY)
     frame.container:ClearAllPoints()
     frame.container:SetPoint(
         position,
-        frame.anchor,
+        targetAnchor,
         anchorPoint,
         x,
-        y - ((orderIndex or 1) - 1) * (isVertical and (actualBarHeight + iconSize + spacing + 12) or ROW_HEIGHT)
+        stackY
     )
     if isVertical then
         frame.container:SetSize(math.max(iconSize, actualBarWidth + 24), iconSize + spacing + actualBarHeight + 20)
@@ -310,66 +451,50 @@ function PowerRenderer.configureResource(definition, config, displayName, orderI
         frame.valueText:ClearAllPoints()
         frame.valueText:SetPoint("CENTER", frame.icon, "CENTER", valueOffsetX, valueOffsetY)
     end
-    local effectiveKind = displayMode == "AUTO" and definition.rendererKind or displayMode
-    local maxPoints = definition.maxPoints or 5
-    for index = 1, #frame.markers do
-        local marker = frame.markers[index]
-        marker:ClearAllPoints()
-        if isVertical then
-            marker:SetSize(actualBarWidth, 1)
-            marker:SetPoint("BOTTOM", frame.statusBar, "BOTTOM", 0, actualBarHeight * index / maxPoints)
-        else
-            marker:SetSize(1, barHeight)
-            marker:SetPoint("LEFT", frame.statusBar, "LEFT", barWidth * index / maxPoints, 0)
-        end
-        if effectiveKind == "POINTS" then
-            marker:Show()
-        else
-            marker:Hide()
-        end
-    end
+    frame.config = config
+    updateResourceSegments(frame, definition.maxPoints or 5)
 
-    if frame.slotBars then
-        if isVertical then
-            local slotHeight = math.max(1, (actualBarHeight / maxPoints) - 1)
-            for index = 1, #frame.slotBars do
-                local slotBar = frame.slotBars[index]
-                slotBar:ClearAllPoints()
-                slotBar:SetSize(3, slotHeight)
-                slotBar:SetPoint(
-                    "BOTTOMRIGHT",
-                    frame.statusBar,
-                    "BOTTOMLEFT",
-                    -2,
-                    (index - 1) * (actualBarHeight / maxPoints)
-                )
-                if effectiveKind == "POINTS" then
-                    slotBar:Show()
-                else
-                    slotBar:Hide()
-                end
-            end
-        else
-            local slotWidth = math.max(1, (barWidth / maxPoints) - 1)
-            for index = 1, #frame.slotBars do
-                local slotBar = frame.slotBars[index]
-                slotBar:ClearAllPoints()
-                slotBar:SetSize(slotWidth, 3)
-                slotBar:SetPoint(
-                    "TOPLEFT",
-                    frame.statusBar,
-                    "BOTTOMLEFT",
-                    (index - 1) * (barWidth / maxPoints),
-                    -2
-                )
-                if effectiveKind == "POINTS" then
-                    slotBar:Show()
-                else
-                    slotBar:Hide()
-                end
-            end
-        end
+    local colorMode = config and config.colorMode or "DEFAULT"
+    local startColor = {
+        Util.isSafeNumber(config and config.colorStartR) and config.colorStartR or definition.color[1],
+        Util.isSafeNumber(config and config.colorStartG) and config.colorStartG or definition.color[2],
+        Util.isSafeNumber(config and config.colorStartB) and config.colorStartB or definition.color[3],
+        1,
+    }
+    local endColor = {
+        Util.isSafeNumber(config and config.colorEndR) and config.colorEndR or 1,
+        Util.isSafeNumber(config and config.colorEndG) and config.colorEndG or 0.25,
+        Util.isSafeNumber(config and config.colorEndB) and config.colorEndB or 0.25,
+        1,
+    }
+    local alertThreshold = Util.isSafeNumber(config and config.threshold) and config.threshold or 0.9
+    local alertColor = {
+        Util.isSafeNumber(config and config.alertColorR) and config.alertColorR or 1,
+        Util.isSafeNumber(config and config.alertColorG) and config.alertColorG or 0.15,
+        Util.isSafeNumber(config and config.alertColorB) and config.alertColorB or 0.15,
+        1,
+    }
+    local alertOperator = config and config.alertOperator or "GE"
+    local alertEnabled = config and config.alertColorEnabled == true
+    local isReverse = (definition.powerType == 1
+        or definition.powerType == 6
+        or definition.powerType == 17
+        or definition.powerType == 18)
+
+    if DurationAdapter and type(DurationAdapter.buildCustomResourceColorCurve) == "function" then
+        frame.colorCurve = DurationAdapter.buildCustomResourceColorCurve(
+            definition.color,
+            colorMode,
+            startColor,
+            endColor,
+            alertEnabled,
+            alertOperator,
+            alertThreshold,
+            alertColor,
+            isReverse
+        )
     end
+    frame.alertTriggeredLatch = false
 
     frame.label:SetText(displayName or definition.fallbackName)
     frame.valueText:ClearText()
@@ -404,6 +529,7 @@ function PowerRenderer.reflowResourceFrames(nodes, count)
         return false, "rendererUnavailable"
     end
     local total = count or #nodes
+    local groupedIndex = 0
     for index = 1, total do
         local node = nodes[index]
         local frame = node and PowerRenderer.frames[node.key] or nil
@@ -412,6 +538,10 @@ function PowerRenderer.reflowResourceFrames(nodes, count)
             local x = Util.isSafeNumber(config.offsetX) and config.offsetX or 0
             local y = Util.isSafeNumber(config.offsetY) and config.offsetY or 0
             local position = VALID_ANCHOR_POINTS[config.position] and config.position or "TOPLEFT"
+            local anchorPoint = VALID_ANCHOR_POINTS[config.anchor] and config.anchor or "TOPLEFT"
+            local attachTo = config.attachTo or "EAM_ANCHOR"
+            local useCustomPos = config.useCustomPos == true
+            local targetAnchor = resolveAnchorTarget(attachTo, frame.anchor)
             local isVertical = (config.orientation == "VERTICAL")
             local stepY = ROW_HEIGHT
             if isVertical then
@@ -420,13 +550,18 @@ function PowerRenderer.reflowResourceFrames(nodes, count)
                 local sp = Util.isSafeNonNegativeNumber(config.spacing) and config.spacing or 6
                 stepY = bWidth + iSize + sp + 12
             end
+            local stackY = y
+            if not useCustomPos and attachTo == "EAM_ANCHOR" then
+                groupedIndex = groupedIndex + 1
+                stackY = y - (groupedIndex - 1) * stepY
+            end
             frame.container:ClearAllPoints()
             frame.container:SetPoint(
                 position,
-                frame.anchor,
+                targetAnchor,
                 anchorPoint,
                 x,
-                y - (index - 1) * stepY
+                stackY
             )
         end
     end
@@ -464,35 +599,94 @@ function PowerRenderer.setResourceState(resourceKey, foreground, available)
     return visible, visible and "visible" or "hidden"
 end
 
-local function applyPercent(frame, powerType, percent)
+local function applyPercent(frame, powerType, percent, isAlertActive)
     if not frame or not frame.configured or not frame.visible or powerType ~= frame.powerType then
         PowerRenderer.rejectedWriteCount = PowerRenderer.rejectedWriteCount + 1
         return false, "sinkUnavailable"
     end
 
-    local globalConfig = EAM.db and EAM.db.config
-    local dynamicEnabled = (not globalConfig or globalConfig.resourceDynamicColor ~= false)
-        and (not frame.config or frame.config.dynamicColor ~= false)
-    if dynamicEnabled and frame.colorCurve then
-        local color = nil
-        if type(percent) == "number" then
-            color = frame.colorCurve:Evaluate(percent)
-        elseif _G.UnitPowerPercent then
-            pcall(function()
-                color = _G.UnitPowerPercent("player", powerType, false, frame.colorCurve)
-            end)
+    local cfg = frame.config or {}
+    local tex = nil
+    pcall(function()
+        if frame.statusBar.GetStatusBarTexture then
+            tex = frame.statusBar:GetStatusBarTexture()
         end
-        if color and color.GetRGB then
-            local r, g, b = color:GetRGB()
-            frame.statusBar:SetStatusBarColor(r, g, b, frame.definition.color[4] or 1)
+    end)
+    local isVertical = cfg.orientation == "VERTICAL"
+
+    if isAlertActive and cfg.alertColorEnabled == true then
+        local ar = Util.isSafeNumber(cfg.alertColorR) and cfg.alertColorR or 1
+        local ag = Util.isSafeNumber(cfg.alertColorG) and cfg.alertColorG or 0.15
+        local ab = Util.isSafeNumber(cfg.alertColorB) and cfg.alertColorB or 0.15
+        pcall(function()
+            if tex and tex.SetGradient and _G.CreateColor then
+                tex:SetGradient(isVertical and "VERTICAL" or "HORIZONTAL", _G.CreateColor(ar, ag, ab, 1), _G.CreateColor(ar, ag, ab, 1))
+            end
+        end)
+        frame.statusBar:SetStatusBarColor(ar, ag, ab, 1)
+    elseif cfg.colorMode == "GRADIENT" then
+        local r1 = Util.isSafeNumber(cfg.colorStartR) and cfg.colorStartR or frame.definition.color[1]
+        local g1 = Util.isSafeNumber(cfg.colorStartG) and cfg.colorStartG or frame.definition.color[2]
+        local b1 = Util.isSafeNumber(cfg.colorStartB) and cfg.colorStartB or frame.definition.color[3]
+        local r2 = Util.isSafeNumber(cfg.colorEndR) and cfg.colorEndR or 1
+        local g2 = Util.isSafeNumber(cfg.colorEndG) and cfg.colorEndG or 0.25
+        local b2 = Util.isSafeNumber(cfg.colorEndB) and cfg.colorEndB or 0.25
+        local appliedGradient = false
+        pcall(function()
+            if tex and tex.SetGradient and _G.CreateColor then
+                tex:SetGradient(isVertical and "VERTICAL" or "HORIZONTAL", _G.CreateColor(r1, g1, b1, 1), _G.CreateColor(r2, g2, b2, 1))
+                appliedGradient = true
+                frame.statusBar:SetStatusBarColor(1, 1, 1, 1)
+            end
+        end)
+        if not appliedGradient then
+            if frame.colorCurve and type(percent) == "number" then
+                local color = frame.colorCurve:Evaluate(percent)
+                if color and color.GetRGB then
+                    local cr, cg, cb = color:GetRGB()
+                    frame.statusBar:SetStatusBarColor(cr, cg, cb, 1)
+                else
+                    frame.statusBar:SetStatusBarColor(r1, g1, b1, 1)
+                end
+            else
+                frame.statusBar:SetStatusBarColor(r1, g1, b1, 1)
+            end
         end
-    else
-        frame.statusBar:SetStatusBarColor(
-            frame.definition.color[1],
-            frame.definition.color[2],
-            frame.definition.color[3],
-            frame.definition.color[4] or 1
-        )
+    elseif cfg.colorMode == "SOLID" then
+        local r1 = Util.isSafeNumber(cfg.colorStartR) and cfg.colorStartR or frame.definition.color[1]
+        local g1 = Util.isSafeNumber(cfg.colorStartG) and cfg.colorStartG or frame.definition.color[2]
+        local b1 = Util.isSafeNumber(cfg.colorStartB) and cfg.colorStartB or frame.definition.color[3]
+        pcall(function()
+            if tex and tex.SetGradient and _G.CreateColor then
+                tex:SetGradient(isVertical and "VERTICAL" or "HORIZONTAL", _G.CreateColor(r1, g1, b1, 1), _G.CreateColor(r1, g1, b1, 1))
+            end
+        end)
+        frame.statusBar:SetStatusBarColor(r1, g1, b1, 1)
+    else -- "DEFAULT"
+        local globalConfig = EAM.db and EAM.db.config
+        local dynamicEnabled = (not globalConfig or globalConfig.resourceDynamicColor ~= false)
+            and (not frame.config or frame.config.dynamicColor ~= false)
+        if dynamicEnabled and frame.colorCurve then
+            local color = nil
+            if type(percent) == "number" then
+                color = frame.colorCurve:Evaluate(percent)
+            elseif _G.UnitPowerPercent then
+                pcall(function()
+                    color = _G.UnitPowerPercent("player", powerType, false, frame.colorCurve)
+                end)
+            end
+            if color and color.GetRGB then
+                local r, g, b = color:GetRGB()
+                frame.statusBar:SetStatusBarColor(r, g, b, frame.definition.color[4] or 1)
+            end
+        else
+            frame.statusBar:SetStatusBarColor(
+                frame.definition.color[1],
+                frame.definition.color[2],
+                frame.definition.color[3],
+                frame.definition.color[4] or 1
+            )
+        end
     end
 
     local ok = pcall(frame.statusBar.SetValue, frame.statusBar, percent)
@@ -514,7 +708,7 @@ function PowerRenderer.applySecretPercent(resourceKey, powerType, percent)
     if frame and frame.glow then
         frame.glow:Hide()
     end
-    return applyPercent(frame, powerType, percent)
+    return applyPercent(frame, powerType, percent, false)
 end
 
 function PowerRenderer.applyNumeric(resourceKey, powerType, currentValue, maximumValue, percent, showValue, showPercent, fullGlow, threshold)
@@ -529,6 +723,16 @@ function PowerRenderer.applyNumeric(resourceKey, powerType, currentValue, maximu
     if not frame then
         return false, "sinkUnavailable"
     end
+
+    -- Dynamic segment count check when customMaxPoints == 0
+    local customMax = (frame.config and Util.isSafePositiveNumber(frame.config.customMaxPoints)) and math.floor(frame.config.customMaxPoints + 0.5) or 0
+    if customMax == 0 then
+        local effectiveKind = (frame.config and frame.config.displayMode and frame.config.displayMode ~= "AUTO") and frame.config.displayMode or frame.definition.rendererKind
+        if effectiveKind == "POINTS" and maximumValue >= 1 and maximumValue <= 20 and frame.activeMaxPoints ~= maximumValue then
+            updateResourceSegments(frame, maximumValue)
+        end
+    end
+
     frame.numericTextSink(
         frame,
         currentValue,
@@ -537,15 +741,52 @@ function PowerRenderer.applyNumeric(resourceKey, powerType, currentValue, maximu
         showValue,
         showPercent
     )
+
+    -- Conditional Alert evaluation
+    local effKind = (frame.config and frame.config.displayMode and frame.config.displayMode ~= "AUTO") and frame.config.displayMode or frame.definition.rendererKind
+    if effKind == "POINTS" and resourceKey ~= "RUNES" and frame.slotBars then
+        local activeMax = frame.activeMaxPoints or 5
+        for index = 1, activeMax do
+            local slotBar = frame.slotBars[index]
+            if slotBar then
+                local slotProgress = 0
+                if currentValue >= index then
+                    slotProgress = 1
+                elseif currentValue > (index - 1) then
+                    slotProgress = currentValue - (index - 1)
+                end
+                pcall(slotBar.SetValue, slotBar, slotProgress)
+            end
+        end
+    end
+    local alertOp = (frame.config and frame.config.alertOperator) or "GE"
+    local glowThreshold = Util.isSafeNumber(threshold) and threshold or 0.9
+    local conditionMet = false
+    if alertOp == "LE" then
+        conditionMet = (percent <= glowThreshold)
+    else
+        conditionMet = (percent >= glowThreshold)
+    end
+
     if frame.glow then
-        local glowThreshold = Util.isSafeNumber(threshold) and threshold or 0.9
-        if fullGlow == true and percent >= glowThreshold then
+        if fullGlow == true and conditionMet then
             frame.glow:Show()
         else
             frame.glow:Hide()
         end
     end
-    return applyPercent(frame, powerType, percent)
+
+    -- Rising-edge Sound Alert
+    if frame.config and frame.config.alertSoundEnabled == true and conditionMet then
+        if not frame.alertTriggeredLatch then
+            frame.alertTriggeredLatch = true
+            pcall(api.PlaySoundFile, "Interface\\AddOns\\EventAlertMod\\Sounds\\Bell.ogg", "Master")
+        end
+    elseif not conditionMet then
+        frame.alertTriggeredLatch = false
+    end
+
+    return applyPercent(frame, powerType, percent, conditionMet)
 end
 
 function PowerRenderer.hideResource(resourceKey)
@@ -575,6 +816,149 @@ function PowerRenderer.hideAll()
 end
 
 PowerRenderer.hide = PowerRenderer.hideAll
+
+local function ensureDragOverlay(frame)
+    if frame.dragOverlay then
+        return frame.dragOverlay
+    end
+    local overlay = api.CreateFrame("Frame", nil, frame.container, "BackdropTemplate")
+    if overlay.SetAllPoints then
+        overlay:SetAllPoints(frame.container)
+    end
+    if overlay.SetBackdrop then
+        overlay:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true,
+            tileSize = 12,
+            edgeSize = 12,
+            insets = { left = 2, right = 2, top = 2, bottom = 2 },
+        })
+        overlay:SetBackdropColor(0.08, 0.28, 0.48, 0.65)
+        overlay:SetBackdropBorderColor(0.25, 0.85, 1.0, 0.95)
+    end
+    if overlay.CreateFontString then
+        local hint = overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        hint:SetPoint("TOP", frame.container, "BOTTOM", 0, -2)
+        hint:SetTextColor(0.35, 0.92, 1.0, 1.0)
+        hint:SetText("[左鍵拖曳獨立位置 / 右鍵完成]")
+        overlay.hint = hint
+    end
+    overlay:Hide()
+    frame.dragOverlay = overlay
+    return overlay
+end
+
+function PowerRenderer.setActiveAnchors(enable, targetKey)
+    if inCombat() then
+        return false, "combatDeferred"
+    end
+    PowerRenderer.isMoving = enable == true
+    PowerRenderer.movingTargetKey = enable == true and (targetKey or "all") or nil
+
+    if enable == true then
+        if not PowerRenderer.initialized then
+            PowerRenderer.initialize()
+        end
+        if (targetKey == "all" or targetKey == nil) and Renderer and type(Renderer.setActiveAnchors) == "function" then
+            Renderer.setActiveAnchors("classPower")
+        end
+        for key, frame in pairs(PowerRenderer.frames) do
+            local cfg = frame.config or {}
+            local shouldEnableDrag = (targetKey == key)
+                or ((targetKey == "all" or targetKey == nil) and (cfg.useCustomPos == true or (cfg.attachTo and cfg.attachTo ~= "EAM_ANCHOR")) and cfg.enabled ~= false)
+            if shouldEnableDrag and frame.container then
+                local overlay = ensureDragOverlay(frame)
+                if overlay then
+                    if overlay.hint then
+                        local defName = (EAM.L and frame.definition and frame.definition.nameKey and EAM.L[frame.definition.nameKey])
+                            or (frame.definition and frame.definition.fallbackName)
+                            or key
+                        overlay.hint:SetText(defName .. " [左鍵拖曳 / 右鍵完成]")
+                    end
+                    overlay:Show()
+                end
+                frame.container:Show()
+                frame.container:SetAlpha(1)
+                if frame.container.SetMovable then frame.container:SetMovable(true) end
+                if frame.container.EnableMouse then frame.container:EnableMouse(true) end
+                if frame.container.SetFrameStrata then frame.container:SetFrameStrata("FULLSCREEN_DIALOG") end
+                if frame.container.SetClampedToScreen then frame.container:SetClampedToScreen(true) end
+                if frame.container.RegisterForDrag then frame.container:RegisterForDrag("LeftButton") end
+                if frame.container.SetScript then
+                    frame.container:SetScript("OnDragStart", function(self)
+                        if self.StartMoving then
+                            self:StartMoving()
+                        end
+                    end)
+                    frame.container:SetScript("OnDragStop", function(self)
+                        if self.StopMovingOrSizing then
+                            self:StopMovingOrSizing()
+                        end
+                        local curCfg = frame.config or {}
+                        local posPoint = VALID_ANCHOR_POINTS[curCfg.position] and curCfg.position or "TOPLEFT"
+                        local ancPoint = VALID_ANCHOR_POINTS[curCfg.anchor] and curCfg.anchor or "TOPLEFT"
+                        local attTo = curCfg.attachTo or "EAM_ANCHOR"
+                        local targetAnchor = resolveAnchorTarget(attTo, frame.anchor)
+                        local cX, cY, cScale = getRegionPointScreenCoords(self, posPoint)
+                        local tX, tY = getRegionPointScreenCoords(targetAnchor, ancPoint)
+                        local newX, newY = 0, 0
+                        if Util.isSafeNumber(cX) and Util.isSafeNumber(cY) and Util.isSafeNumber(tX) and Util.isSafeNumber(tY) and Util.isSafePositiveNumber(cScale) then
+                            newX = math.floor(((cX - tX) / cScale) + 0.5)
+                            newY = math.floor(((cY - tY) / cScale) + 0.5)
+                        elseif type(self.GetPoint) == "function" then
+                            local _, _, _, gx, gy = self:GetPoint()
+                            newX = Util.isSafeNumber(gx) and math.floor(gx + 0.5) or 0
+                            newY = Util.isSafeNumber(gy) and math.floor(gy + 0.5) or 0
+                        end
+                        if newX < -2000 then newX = -2000 elseif newX > 2000 then newX = 2000 end
+                        if newY < -2000 then newY = -2000 elseif newY > 2000 then newY = 2000 end
+                        curCfg.useCustomPos = true
+                        curCfg.offsetX = newX
+                        curCfg.offsetY = newY
+                        self:ClearAllPoints()
+                        self:SetPoint(posPoint, targetAnchor, ancPoint, newX, newY)
+                        local panel = EAM.UI and EAM.UI.PlayerResourcePanel
+                        if panel and type(panel.syncPositionFromDrag) == "function" then
+                            panel.syncPositionFromDrag(key, newX, newY)
+                        end
+                        local defName = (EAM.L and frame.definition and frame.definition.nameKey and EAM.L[frame.definition.nameKey])
+                            or (frame.definition and frame.definition.fallbackName)
+                            or key
+                        print("|cff00ff96EAM|r [" .. defName .. "] 獨立位置已儲存: X=" .. tostring(newX) .. ", Y=" .. tostring(newY))
+                    end)
+                    frame.container:SetScript("OnMouseUp", function(self, button)
+                        if button == "RightButton" and PowerRenderer.isMoving then
+                            PowerRenderer.setActiveAnchors(false)
+                            print("|cff00ff96EAM|r " .. ((EAM.L and EAM.L.EAM_MOVE_MODE_OFF) or "已關閉移動模式。"))
+                        end
+                    end)
+                end
+            end
+        end
+    else
+        for _, frame in pairs(PowerRenderer.frames) do
+            if frame.container then
+                if frame.container.SetMovable then frame.container:SetMovable(false) end
+                if frame.container.EnableMouse then frame.container:EnableMouse(false) end
+                if frame.container.SetFrameStrata then frame.container:SetFrameStrata("MEDIUM") end
+                if frame.container.SetScript then
+                    frame.container:SetScript("OnDragStart", nil)
+                    frame.container:SetScript("OnDragStop", nil)
+                    frame.container:SetScript("OnMouseUp", nil)
+                end
+            end
+            if frame.dragOverlay then
+                frame.dragOverlay:Hide()
+            end
+        end
+        local service = EAM.Services and EAM.Services.PlayerResourceService
+        if service and type(service.refreshVisualState) == "function" then
+            service.refreshVisualState("resourceMoveModeEnded")
+        end
+    end
+    return true, enable == true and "moveModeEnabled" or "moveModeDisabled"
+end
 
 function PowerRenderer.getStatus()
     local configuredCount = 0

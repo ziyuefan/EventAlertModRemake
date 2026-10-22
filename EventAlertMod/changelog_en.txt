@@ -1,3 +1,147 @@
+-- [Retail][MN][12.1.5][Alpha 8.8][Native C++ Math Acceleration, TimedSignalMap Scheduler & 12.1.5 Pandemic Precision] 2026.10.23
+     -- Features:
+        -- Retail 12.1.5 Patch Compatibility:
+           -- TOC interface support updated for World of Warcraft Retail 12.1.5 (Interface: 120105), maintaining seamless backward compatibility with 12.1.0 and 12.0.7 clients.
+        -- Native C++ Math, String & Table Acceleration:
+           -- Integrated Blizzard 12.1.5 native C++ low-level accelerated utility functions:
+              -- Math: math.clamp, math.saturate, math.round, math.lerp, math.normalize, math.sign, math.remap, math.wrap, math.isfinite, math.isnan, math.isinf;
+              -- String: string.contains, string.ltrim, string.rtrim, string.startswith, string.endswith;
+              -- Table: table.isempty, table.contains, table.indexof, table.removeunordered, table.removevalue, table.keys, table.values;
+           -- Defensive Polyfills: Automatically enables high-efficiency Lua fallback implementations on older clients, ensuring maximum performance and cross-version compatibility.
+        -- Zero-Alloc TimedSignalMap Scheduler Engine:
+           -- Deep integration with 12.1.5 C_Timer.NewTimedSignalMap native key-value scheduler; icon countdowns and timed signals are hosted directly by Blizzard's C++ engine on supported clients.
+           -- Automatically switches to an autonomous key-value scheduler state machine on older clients, achieving zero memory allocations for repeated timer rescheduling (Zero-Alloc Key Rescheduling) and minimizing garbage collection (GC) overhead.
+        -- 12.1.5 Native Pandemic Carry-Over Duration Precision:
+           -- Employs C_UnitAuras.GetRefreshCarryOverDuration for precise carry-over time calculation, strictly triggering Pandemic refresh alerts when carry-over is <= 30% of base duration, preventing premature DoT clipping.
+           -- Smoothly falls back to C_UnitAuras.GetRefreshExtendedDuration on older clients, ensuring accurate DoT refresh timing across all client versions.
+        -- Native Aura Active/Enter/Leave Animations:
+           -- Deeply adapted to 12.1.5 Native Aura container APIs (AddPandemicActiveAnimation, AddPandemicEnterAnimation, and AddPandemicLeaveAnimation), providing smoother, richer visual feedback upon entering and leaving Pandemic refresh windows.
+        -- Aura Sound Alert Throttle Protection:
+           -- Added throttleSeconds parameter (default 0.3s) to C_UnitAuras.AddAuraSound registrations, preventing ear-fatiguing sound spam during high-frequency procs or rapid stack shifts.
+        -- Native Pixel Snapping & Zero-Flicker Frame Initialization:
+           -- Supports SetRoundLayoutToNearestPixel native pixel rounding, rendering icon and text boundaries sharp and crisp at physical pixel edges.
+           -- Introduced CreateFrameWithOptions hidden pre-creation mechanism, completely eliminating momentary screen flicker during initial icon instantiation.
+        -- Ground Effect Multi-Duration Candidate Dropdown & Selection:
+           -- Full-text multi-duration parsing: Intelligently parses all candidate durations in sequence from complex tooltip descriptions containing multiple seconds (e.g., ground duration vs slow duration vs channel duration, such as Blizzard: "8 sec ... slow 50% for 3 sec").
+           -- Candidate Selection Dropdown: Added a "Duration Candidate Selection" dropdown in the Ground Effect settings panel, allowing users to choose the target duration, which instantly synchronizes with the "Manual Duration" input box.
+           -- One-Click Scrape Synchronization: Clicking "Scrape Duration" dynamically refreshes candidate dropdown options, automatically selecting the target duration candidate.
+        -- Customizable Alert Border Colors & Borderless Mode:
+           -- 8 Module Independent Border Colors: Buffs, Debuffs, Target Debuffs, Spell Cooldowns, Item Cooldowns, Ground Effects, and Pet Alerts support independent color swatches and opacity controls.
+           -- Borderless Minimalist Mode: Added global "Enable Alert Type Borders" master toggle and per-module checkboxes to completely hide border frames for players who prefer a clean, borderless aesthetic.
+           -- One-Click Reset to Classic Defaults: Added "Reset Border Colors" button to quickly restore classic module identification colors (Green/Red/Purple/Yellow, etc.).
+           -- Live Dynamic Hot-Refresh: Modifying border colors or toggling borders immediately redraws all active on-screen icons in real-time without requiring a /reload.
+        -- Per-Resource Independent Dragging & 9-Point Frame Attachment:
+           -- Independent Positioning & Free Dragging: Added "Enable Independent Position" toggle and "Move Single Resource" / "Move All/Anchor" / "Zero Offset (0, 0)" buttons in "Player Resources -> Position & Anchor", supporting individual resource detachment from group stacks with left-click drag and right-click commit.
+           -- 9-Point Compass Frame Attachment: Added "Attach Target Frame" dropdown (supporting EAM Resource Main Anchor, UIParent, PlayerFrame, TargetFrame, FocusFrame, PetFrame, and PersonalResourceDisplay) with 9 intuitive anchor points (Top Left, Top, Top Right, Left, Center, Right, Bottom Left, Bottom, Bottom Right).
+        -- Dynamic/Custom StatusBar Segments, Custom Gradient Colors & Conditional Alerts:
+           -- Dynamic Max Points Alignment & Custom Segments: Discrete point resources including Combo Points (5/6/7), Chi (5/6), Evoker Essence (5/6), Holy Power (5), Soul Shards (5), Arcane Charges (4), and Runes (6) dynamically partition status bar segment markers and slot bars based on live UnitPowerMax, with a new "Custom Segments (0=Auto, 1~20)" slider in "Bar & Dimensions".
+           -- Custom Solid & Two-Color Gradient Modes: Added "Bar Color Mode" (Default Dynamic Class Color, Custom Solid, Custom Two-Color Gradient) with start/end color pickers supporting horizontal and vertical gradient rendering.
+           -- StatusBar Conditional Alert System: Added "Condition Operator" (>= Greater/Equal or <= Less/Equal to Threshold), "Alert Color Override" (with dedicated alert color picker), and "Play Sound on Alert" with rising-edge latching to prevent sound spam.
+        -- LibSharedMedia-3.0 Updated to r156:
+           -- Upgraded third-party LibSharedMedia-3.0 library to r156 (supporting 12.0.1+ / Interface 12000103), expanding font and texture asset libraries and improving dynamic asset loading stability.
+        -- Evoker Essence 5-Locale Blizzard Terminology Calibration:
+           -- Calibrated Evoker primary resource naming across all 5 official Blizzard client localizations: Traditional Chinese (龍能), Simplified Chinese (精华), English (Essence), Korean (정수), and Russian (Сущность).
+     -- Improvements:
+        -- Deprecated Global Clean-Up: Removed all legacy references to Blizzard_Deprecated, ensuring long-term addon stability and independence across major patch transitions.
+        -- Native State Protection Hardening: Defensively isolated timer and source tables within AuraState, enhancing stability under extreme combat load and non-standard aura events.
+     -- Bug Fixes:
+        -- RightManagedFrameContainer Taint Remediation:
+           -- Completely eliminated external modifications and polyfills to Blizzard global libraries (table/math/string), strictly isolating utility functions inside the private Util namespace to prevent ADDON_ACTION_BLOCKED errors on Blizzard action bars (e.g. PetActionBar, EditMode, RightManagedFrameContainer).
+        -- Cooldown Scheduler Frame Activation Fix:
+           -- Fixed an issue where scheduler frames remained hidden under specific initialization paths, halting the OnUpdate countdown loop and preventing cooldown, item, and ground effect alerts from rendering.
+        -- Secret Value Evaluation Order Safeguard:
+           -- Fortified inspection order in Util.isSafeValue and Util.isReadableTable, evaluating isSecretValue/isSecretTable before standard comparisons to prevent runtime errors when encountering secret values.
+        -- Cooldown Options UI Text Correction:
+           -- Corrected the option label and tooltip for "Remove Icon When Cooldown Finishes" in the cooldown configuration panel, ensuring exact semantic alignment with addon behavior.
+        -- Ground Effect Duration Scrape Format Fix:
+           -- Resolved an Options.lua:5575 error (bad argument #1 to 'format', string expected, got table) caused by passing localized string objects directly into string.format during duration scraping or dropdown changes.
+        -- Combat Multi-Icon Grid Positioning Fix:
+           -- Fixed a bug where in-combat alert frames falsely deferred layout updates, causing newly triggered icons to stack on top of each other at coordinate (0, 0) instead of positioning along the 2D grid.
+        -- Action Button Taint & Missing-Texture Yellow Box Fix:
+           -- Resolved an issue where overriding global C_Spell/C_Item APIs during in-game flow validation caused action bar buttons (MultiBarBottomLeftButton7) to become tainted and block actions in combat.
+           -- Completely isolated offline test cases and provided question mark fallback textures, eliminating 40x40 bright yellow placeholder boxes and residual 99901 test spells.
+        -- Player Resource Scope Switch Forward Declaration Fix:
+           -- Fixed an attempt to call a nil value error caused by a missing forward declaration of refreshEditor when switching between "Current Spec Override" and "All Specs Default" in the Player Resource panel.
+        -- Ground Effect Purple Border Restoration:
+           -- Fixed an issue where ground effect icons transitioning from placeholder mode to active cast triggers occasionally lost their purple border due to a misaligned border state check.
+        -- TimedSignalMap Proxy Wrapper Fix:
+           -- Fixed an Attempted to assign to read-only key SignalAt error when wrapping C_Timer.NewTimedSignalMap native read-only C++ objects by introducing a defensive lightweight proxy table wrapper.
+        -- Table Remove Value Consistency Fix:
+           -- Fortified Util.tableRemoveValue and Util.tableRemoveUnordered implementations, eliminating assumptions about non-standard environment extensions to ensure boolean return values and array lengths remain strictly consistent across all clients.
+        -- Alert Border Color Hot-Refresh Fix:
+           -- Removed state-key short circuits in IconPool.applyTypeBorder, ensuring instant real-time border color updates on all standing and active on-screen icons (including cooldowns and ground effects).
+        -- Native Aura Border Toggle & Dispel Texture Suppression Fix:
+           -- Resolved an issue in Retail 12.1 Native Aura containers where disabling alert borders failed to hide borders due to visual fingerprint caching, and suppressed residual Blizzard AddDispelTypeTexture borders.
+           -- Implemented instant border hot-refresh (refreshBorders) and safe dispel texture clearing (safeRemoveDispelTypeTexture) when toggling borders off.
+        -- Talent Override Cooldown Detection & Countdown Reliability Fix:
+           -- Fixed a critical bug where casting abilities with talent overrides (e.g. Blink replaced by Shimmer, Comet Storm, Ray of Frost) only queried the original spell ID, causing Blizzard APIs to report duration 0 and prematurely aborting cooldown countdowns.
+           -- Introduced intelligent multi-candidate spell family matching (getSpellCooldownInfo) querying preferred cast ID, override ID, base ID, and original ID, capturing accurate cooldown durations and native DurationObjects.
+        -- TimedSignalMap Proxy Call Signature Fix:
+           -- Corrected argument offsets in Scheduler TimedSignalMap wrappers to ensure C++ underlying scheduling dispatches reliably with graceful fallback.
+        -- Talent Override Transition Cooldown Compensation:
+           -- Maintained a previousOverrideMap mapping when talents transition or multi-charge overrides deplete, ensuring cooldown timers and charge states synchronize seamlessly without dropping icons.
+        -- Secret Value Table-Key Guard & Native Sink Binding:
+           -- Fortified type safety checks (Util.isSafeTableKey / Util.isSafePositiveNumber) for spell IDs, countdown durations, and state keys in cooldown services and renderers. Any data containing secret or protected attributes is strictly isolated from Lua table keys and string formatting, binding exclusively through native one-way sinks (Cooldown:SetCooldown, StatusBar:SetValue, DurationObject).
+        -- Prewarm Alert Slot Layout Isolation:
+           -- Enhanced layout state checks during icon prewarming, keeping newly created icons strictly hidden until their 2D grid coordinates (layoutX, layoutY) are fully calculated, preventing overlapping flashes at screen origin (0, 0).
+        -- Proc Glow & Alert Border Visual Hierarchy Separation:
+           -- Elevated alert type border frame level to an independent carrier tier (FrameLevel +8), guaranteeing custom borders always render above textures without being obstructed by LibButtonGlow procs.
+           -- Expanded proc glow animation frame dimensions and offsets so proc glow blooms cleanly around the outer perimeter of the icon and border.
+        -- Real Cooldown & Cooldown Reduction on GCD Fix:
+           -- Corrected cooldown logic that mistook Global Cooldown (isOnGCD) as an absolute exclusion filter, preventing real cooldowns (>1.5s) from aborting when GCD triggers or when CDR spells are cast during GCD.
+           -- Cleared spell override caches immediately upon override expiration, allowing subsequent casts or returns to base spells to start fresh cooldowns.
+           -- Lowered renderer cooldown delta threshold to 0.01s, ensuring talent-based cooldown reductions immediately update on-screen countdowns and native animations.
+        -- Continuous Multi-Cast & Combat Re-entry Cooldown Activation Fix:
+           -- Fixed an issue where subsequent casts or re-entering combat after dropping combat failed to trigger cooldown countdowns.
+           -- Resolved lost notifications when Blizzard client cooldown APIs experienced slight latency at cast completion (UNIT_SPELLCAST_SUCCEEDED) by introducing explicit activation flags and 50ms/150ms asynchronous retries.
+           -- Thoroughly cleaned isPlaceholder, isDesaturated, and unit tags in CooldownStatePool to prevent state contamination upon pool recycling.
+           -- Removed position-dependent visibility restrictions in the renderer, guaranteeing active alerts display consistently inside and outside combat.
+        -- Channeled Spell Cooldown Activation & Talent Passive CDR Live Sync:
+           -- Fixed a critical issue where channeled spells (such as Mage Ray of Frost, Spell ID: 205021, and Blizzard) failed to activate cooldown alerts in combat because Blizzard only fires UNIT_SPELLCAST_CHANNEL_START rather than UNIT_SPELLCAST_SUCCEEDED.
+           -- Added instant cooldown timer and ground effect activation on UNIT_SPELLCAST_CHANNEL_START, and finalized cooldowns on UNIT_SPELLCAST_CHANNEL_STOP for lag-free in-combat tracking.
+           -- Implemented active cooldown dynamic synchronization (refreshActiveCooldowns) for passive CDR talents (such as Mage Whiteout reducing Frozen Orb cooldown via Ice Lance), actively recalculating active cooldowns upon every player cast.
+           -- Added multi-stage projectile flight retries (120ms/350ms/700ms) covering melee, mid-range, and 40-yard max-range Ice Lance impacts to sync non-target cooldown events.
+           -- Isolated channel activation tags to prevent background cooldown scans from overwriting active states, and calibrated Frozen Orb base ground duration to 15.0s.
+        -- Zero-CD Talent Override Proc Cooldown Protection:
+           -- Fixed a critical bug where triggering a free zero-cooldown talent override (e.g. Ray of Frost proccing Comet Storm) wiped out the original spell's ongoing 60s cooldown due to the override's cooldown duration being 0.
+           -- Established a cooldown protection barrier: casting zero-CD override procs is barred from overriding the primary spell's activation identity, preserving active countdown timers.
+        -- Continuous Active CDR Live Sampler:
+           -- Implemented a lightweight adaptive sampler (250ms interval) for long-range projectile hits and passive damage-based CDR mechanisms lacking Blizzard frame events.
+           -- Dynamically updates on-screen seconds and animations whenever cooldown reductions are detected, sleeping automatically when no cooldowns are active (0 CPU overhead).
+        -- Cooldown & Spell Override Flight Recorder / Trace UI:
+           -- Built an internal high-precision 300-entry ring-buffer flight recorder (CooldownTrace), capturing cast events, channels, spell overrides, raw API cooldown returns, and state machine transitions.
+           -- Added an in-game debug popup via /eam trace (or /eam cdtrace) featuring one-click copy (Ctrl+C), log clearing, and live refresh.
+           -- Automatically persists flight trace logs to WTF SavedVariables on reload or logout (EventAlertModDB.cooldownTrace) for offline analysis.
+        -- Spell Heuristics & GCD Delay Compensation Fix:
+           -- Resolved an issue where channeled and long-cooldown spells (e.g. Ray of Frost, Frozen Orb) failed to start immediate 60s cooldowns due to dictionary lookup misses when Blizzard APIs initially returned GCD or 0s.
+        -- Subsequent Cast Renewal & Cooldown Residue Override Fix:
+           -- Fixed a major bug where recasting Frozen Orb after cooldown reductions locked the timer into a stale 15-17s residual countdown; active player casts are now strictly guaranteed highest priority to launch fresh lifecycles.
+        -- Spell Charges Detection & Zero-CD Proc Isolation:
+           -- Enforced strict maxCharges > 1 checks for charge spells to account for Retail APIs returning single-layer tables for non-charge spells.
+           -- Guaranteed zero-CD override procs (e.g. Comet Storm from Ray of Frost) are 100% cleanly isolated, preventing ongoing main cooldown countdowns from being cleared.
+        -- Cooldown Flight Trace Snapshot & Sampler Enhancement:
+           -- Clearly tagged placeholder alerts (| Placeholder=true) in /eam trace snapshots and refined remaining time calculations.
+           -- Constrained active cooldown samplers to strictly running cooldowns, eliminating negative timestamp artifacts.
+        -- Base Spell Family Reverse Lookup Guard:
+           -- Overhauled cooldown cast-matching architecture to prevent reverse GetBaseSpell lookups from trigger spells (e.g. Comet Storm, Alter Time return) from hijacking main cooldowns.
+           -- Prohibited dissimilar spell IDs from overriding active cooldown identities while a spell is in valid countdown.
+        -- Burst Adaptive CDR Sampler & Travel Time Sync:
+           -- Implemented an 80ms interval, 1.25s high-frequency burst polling window for Frost Mage CDR talents (Ice Floes 1247798, Heart of Frost 1247799, Fractured Frost 378448, Splitting Ice 56377, Whiteout 1281638), covering 0-40 yard travel times and server resolution delays.
+           -- Immediately triggers state updates and synchronizes native swipe textures via SetCooldown when cooldown reductions >0.02s are detected, fully supporting charge-based abilities.
+        -- Combat Secret Aura Taint Elimination & Zero-Taint CDR Engine:
+           -- Completely removed UNIT_AURA event listening from cooldown services and silently isolated combat aura probing, eradicating Retail 12.x "Auras cannot be accessed when secret while tainted by EventAlertMod" errors from GetAuraDataByIndex.
+           -- Passive CDR is now driven entirely by successful casts and 60ms high-frequency adaptive burst sampling comparing server non-secret cooldown resolutions, ensuring zero-latency dynamic updates with 100% zero taint.
+        -- Channeled Spell Immediate Heuristic Cooldown Initialization:
+           -- Fixed an issue where channeled spells (Ray of Frost 205021) starting in combat (UNIT_SPELLCAST_CHANNEL_START) lost timers (remaining=0) due to Blizzard API returning 0 or secret values.
+           -- Instantly initializes a 60s heuristic cooldown upon cast if the API has not returned numeric cooldowns, immediately displaying 60.0s and starting native swipe textures.
+        -- Whiteout Ground Effect Duration Extension:
+           -- Implemented Whiteout (1281638) talent support for ground effects (Frozen Orb 84714), extending active ground duration by 0.1s upon casting Ice Lance.
+        -- Cooldown Flight Trace Telemetry Upgrade:
+           -- Safely logs target freeze state, Fingers of Frost stacks, key talents, and active cooldown seconds in non-combat environments.
+           -- Logs [CDR_TRIGGER_CAST] and [CDR_DETECTED] (with delta reduction seconds and expiration timestamps), displayed in /eam trace under "Frost State & CDR Environment Snapshot".
+        -- Heuristic Cooldown DurationObject Isolation & Instant Countdown Refresh Fix:
+           -- Fixed a critical bug where heuristic channeled cooldowns bound empty zero-duration DurationObjects to the renderer, wiping text bindings and halting OnUpdate timers.
+           -- Strictly isolates heuristic DurationObject bindings (forcing nil), utilizing native SetCooldown swipe masks and high-frequency OnUpdate text refresh channels.
 -- [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names & Target Ghost Purge] 2026.09.27
       -- Player Stat & Absorb Monitor Upgrade:
          -- Module Live Lifecycle & Realtime Toggle: switching the module toggle immediately clears active frames and stops polling tickers; prominent /reload warning notice and one-click [Reload UI (/reload)] button displayed when underlying Native Aura containers require recreation.

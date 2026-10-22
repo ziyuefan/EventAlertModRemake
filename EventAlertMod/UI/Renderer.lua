@@ -135,7 +135,9 @@ local function onDurationTimerExpired(token)
         icon.rendered.activeToken = nil
         icon.rendered.scheduledExpirationTime = nil
         local handled = false
-        if token.frameName == EAM.Constants.ALERT_FRAME_TYPES.spellCooldown then
+        if token.frameName == EAM.Constants.ALERT_FRAME_TYPES.spellCooldown
+            or token.frameName == EAM.Constants.ALERT_FRAME_TYPES.petAlert
+        then
             local cooldownService = EAM.Services and EAM.Services.CooldownService
             if cooldownService and type(cooldownService.onVisualTimerExpired) == "function" then
                 handled = cooldownService.onVisualTimerExpired(token.alertID)
@@ -240,7 +242,22 @@ function Renderer.registerLegacyTimer(icon, expirationTime)
     if not legacyTimerFrame then
         legacyTimerFrame = api.CreateFrame("Frame")
     end
+    if type(legacyTimerFrame.Show) == "function" then
+        legacyTimerFrame:Show()
+    end
     legacyTimerFrame:SetScript("OnUpdate", onLegacyTimerUpdate)
+
+    if icon.timerText and icon.timerText.SetFormattedText then
+        local now = api.GetTime and api.GetTime() or 0
+        local timeLeft = expirationTime - now
+        if timeLeft > 0 then
+            if timeLeft < 3.05 then
+                icon.timerText:SetFormattedText("%.1f", timeLeft)
+            else
+                icon.timerText:SetFormattedText("%d", math.ceil(timeLeft))
+            end
+        end
+    end
 end
 
 function Renderer.unregisterLegacyTimer(icon)
@@ -517,8 +534,8 @@ local function applyTextLayoutToIcon(icon, config)
             icon.timerText:Hide()
         else
             local hasBinding = rawget(icon, "timerBinding") ~= nil
-            local expTime = rawget(icon, "expirationTime")
-            if hasBinding or (rendered.cooldownDuration and rendered.cooldownDuration > 0) or (expTime and expTime > 0) then
+            local expTime = rawget(icon, "expirationTime") or (rendered and rendered.expirationTime)
+            if hasBinding or (rendered and rendered.cooldownDuration and rendered.cooldownDuration > 0) or (expTime and expTime > 0) then
                 icon.timerText:Show()
             end
         end
@@ -626,7 +643,6 @@ local function layout(frameName)
         end)
     end
 
-    parent:Hide()
     local layoutIndex = 0
     for index = 1, count do
         local id = fState.order[index]
@@ -745,85 +761,118 @@ function Renderer.prewarmAlertFrames()
         or (EAM.db and EAM.db.alerts)
     if not alerts then return end
 
-    local frameTypes = {
-        playerAuras = EAM.Constants.ALERT_FRAME_TYPES.selfAura or "selfAura",
-        targetAuras = EAM.Constants.ALERT_FRAME_TYPES.targetAura or "targetAura",
-        spellCooldowns = EAM.Constants.ALERT_FRAME_TYPES.spellCooldown or "spellCooldown",
-        itemCooldowns = EAM.Constants.ALERT_FRAME_TYPES.itemCooldown or "itemCooldown",
-        groundEffects = EAM.Constants.ALERT_FRAME_TYPES.groundEffect or "groundEffect",
+    local frameAlerts = {
+        [EAM.Constants.ALERT_FRAME_TYPES.selfAura or "selfAura"] = {},
+        [EAM.Constants.ALERT_FRAME_TYPES.targetAura or "targetAura"] = {},
+        [EAM.Constants.ALERT_FRAME_TYPES.spellCooldown or "spellCooldown"] = {},
+        [EAM.Constants.ALERT_FRAME_TYPES.itemCooldown or "itemCooldown"] = {},
+        [EAM.Constants.ALERT_FRAME_TYPES.groundEffect or "groundEffect"] = {},
+        [EAM.Constants.ALERT_FRAME_TYPES.petAlert or "petAlert"] = {},
     }
 
-    for alertType, fName in pairs(frameTypes) do
-        local list = alerts[alertType]
-        if list and type(list) == "table" then
-            local parent = ensureParent(fName)
-            local fState = initFrameState(fName)
+    local function routeAlert(alert, defaultFrame)
+        if not alert or not alert.id then return end
+        local fName = defaultFrame
+        if alert.unit == "pet" or alert.isPet then
+            fName = EAM.Constants.ALERT_FRAME_TYPES.petAlert or "petAlert"
+        end
+        local list = frameAlerts[fName]
+        if list then
+            list[alert.id] = alert
+        end
+    end
 
-            -- 1. 建立當前有效且已啟用的 alert 映射
-            local activeAlerts = {}
-            for _, alert in pairs(list) do
-                if alert and alert.id and alert.enabled ~= false then
-                    activeAlerts[alert.id] = alert
+    if type(alerts.playerAuras) == "table" then
+        for _, alert in pairs(alerts.playerAuras) do
+            routeAlert(alert, EAM.Constants.ALERT_FRAME_TYPES.selfAura or "selfAura")
+        end
+    end
+    if type(alerts.targetAuras) == "table" then
+        for _, alert in pairs(alerts.targetAuras) do
+            routeAlert(alert, EAM.Constants.ALERT_FRAME_TYPES.targetAura or "targetAura")
+        end
+    end
+    if type(alerts.spellCooldowns) == "table" then
+        for _, alert in pairs(alerts.spellCooldowns) do
+            routeAlert(alert, EAM.Constants.ALERT_FRAME_TYPES.spellCooldown or "spellCooldown")
+        end
+    end
+    if type(alerts.itemCooldowns) == "table" then
+        for _, alert in pairs(alerts.itemCooldowns) do
+            routeAlert(alert, EAM.Constants.ALERT_FRAME_TYPES.itemCooldown or "itemCooldown")
+        end
+    end
+    if type(alerts.groundEffects) == "table" then
+        for _, alert in pairs(alerts.groundEffects) do
+            routeAlert(alert, EAM.Constants.ALERT_FRAME_TYPES.groundEffect or "groundEffect")
+        end
+    end
+    if type(alerts.petAlerts) == "table" then
+        for _, alert in pairs(alerts.petAlerts) do
+            routeAlert(alert, EAM.Constants.ALERT_FRAME_TYPES.petAlert or "petAlert")
+        end
+    end
+
+    for fName, activeAlerts in pairs(frameAlerts) do
+        local parent = ensureParent(fName)
+        local fState = initFrameState(fName)
+
+        -- 1. 清理已被停用 (enabled == false) 或自清單刪除的舊 Frame
+        local newOrder = {}
+        for i = 1, fState.orderCount do
+            local id = fState.order[i]
+            local alert = activeAlerts[id]
+            if not alert or alert.enabled == false then
+                local icon = fState.icons[id]
+                if icon then
+                    if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end
+                    pcall(icon.Hide, icon)
+                    IconPool.release(icon)
+                    fState.icons[id] = nil
+                    fState.layoutDirty = true
+                end
+            else
+                newOrder[#newOrder + 1] = id
+                local icon = fState.icons[id]
+                if icon then
+                    icon.alertOrder = alert.order
                 end
             end
+        end
+        fState.order = newOrder
+        fState.orderCount = #newOrder
 
-            -- 2. 清理已被停用 (enabled == false) 或自清單刪除的舊 Frame
-            local newOrder = {}
-            for i = 1, fState.orderCount do
-                local id = fState.order[i]
-                local alert = activeAlerts[id]
-                if not alert then
-                    local icon = fState.icons[id]
-                    if icon then
-                        if icon.SetAlpha then pcall(icon.SetAlpha, icon, 0) end
-                        pcall(icon.Hide, icon)
-                        IconPool.release(icon)
-                        fState.icons[id] = nil
-                        fState.layoutDirty = true
+        -- 2. 為已啟用且尚未持有 Frame 的項目預熱 (僅常駐 Frame 備用，不加入排版 order)
+        for _, alert in pairs(activeAlerts) do
+            if alert and alert.id and alert.enabled ~= false and not fState.icons[alert.id] then
+                local icon = IconPool.acquire()
+                if icon then
+                    icon:SetParent(parent)
+                    fState.icons[alert.id] = icon
+                    icon.alertOrder = alert.order
+                    icon:SetAlpha(0)
+                    icon.isParasite = false
+                    icon:ClearAllPoints()
+                    icon:SetPoint("CENTER", parent, "CENTER", 0, 0)
+                    local currentSize = EAM.db and EAM.db.config and EAM.db.config.iconSize or Renderer.iconSize or 40
+                    icon:SetSize(currentSize, currentSize)
+                    if not icon.rendered then
+                        icon.rendered = {}
                     end
-                else
-                    newOrder[#newOrder + 1] = id
-                    local icon = fState.icons[id]
-                    if icon then
-                        icon.alertOrder = alert.order
-                    end
+                    local currentPlacement = (TextPlacement and TextPlacement.getPlacement and TextPlacement.getPlacement(EAM.db and EAM.db.config, "spellName")) or "OUTSIDE_BOTTOM"
+                    icon.rendered.nameInside = false
+                    icon.rendered.spellNamePlacement = currentPlacement
+                    applyNameLayoutToIcon(icon, false)
+                    icon.rendered.layoutAlpha = 0
+                    icon.rendered.layoutX = nil
+                    icon.rendered.layoutY = nil
+                    icon.rendered.layoutSize = nil
+                    icon:Hide()
                 end
             end
-            fState.order = newOrder
-            fState.orderCount = #newOrder
-
-            -- 3. 為已啟用且尚未持有 Frame 的項目預熱 (僅常駐 Frame 備用，不加入排版 order)
-            for _, alert in pairs(list) do
-                if alert and alert.id and alert.enabled ~= false and not fState.icons[alert.id] then
-                    local icon = IconPool.acquire()
-                    if icon then
-                        icon:SetParent(parent)
-                        fState.icons[alert.id] = icon
-                        icon.alertOrder = alert.order
-                        icon:SetAlpha(0)
-                        icon.isParasite = false
-                        icon:ClearAllPoints()
-                        icon:SetPoint("CENTER", parent, "CENTER", 0, 0)
-                        local currentSize = EAM.db and EAM.db.config and EAM.db.config.iconSize or Renderer.iconSize or 40
-                        icon:SetSize(currentSize, currentSize)
-                        if not icon.rendered then
-                            icon.rendered = {}
-                        end
-                        local currentPlacement = (TextPlacement and TextPlacement.getPlacement and TextPlacement.getPlacement(EAM.db and EAM.db.config, "spellName")) or "OUTSIDE_BOTTOM"
-                        icon.rendered.nameInside = false
-                        icon.rendered.spellNamePlacement = currentPlacement
-                        applyNameLayoutToIcon(icon, false)
-                        icon.rendered.layoutAlpha = 0
-                        icon.rendered.layoutX = nil
-                        icon.rendered.layoutY = nil
-                        icon.rendered.layoutSize = nil
-                        icon:Hide()
-                    end
-                end
-            end
-            if fState.layoutDirty then
-                layout(fName)
-            end
+        end
+        if fState.layoutDirty then
+            layout(fName)
         end
     end
 end
@@ -1066,7 +1115,7 @@ function Renderer.render(alertState, frameName)
 
     -- 圖示隱藏/釋放處理 (冷卻與地面效果類型框架透過透明度 Alpha = 0 隱藏，保持 Frame 結構常駐)
     if not alertState.shown then
-        local isCooldownFrame = (frameName == "spellCooldown" or frameName == "itemCooldown" or frameName == "groundEffect")
+        local isCooldownFrame = (frameName == "spellCooldown" or frameName == "itemCooldown" or frameName == "groundEffect" or frameName == "petAlert" or (alertState and (alertState.kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or alertState.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN or alertState.kind == "groundEffect")))
         if not icon and isCooldownFrame and not inCombat() and alertState.rawAlert and alertState.rawAlert.enabled ~= false then
             icon = IconPool.acquire()
             if icon then
@@ -1435,6 +1484,7 @@ function Renderer.render(alertState, frameName)
         if inCombat() then
             rendered.nameLayoutPending = true
             rendered.pendingNameInside = nameInside
+            Renderer.textLayoutPending = true
             fState.layoutDirty = true
             fState.layoutBlocked = true
         else
@@ -1497,7 +1547,12 @@ function Renderer.render(alertState, frameName)
             curveToApply = DurationAdapter.buildSpellColorCurve(spellRedLimit, spellRedColor)
         end
 
+        local timingChanged = (rendered.cooldownStart ~= timer.startTime)
+            or (rendered.cooldownDuration ~= timer.duration)
+            or (math.abs((rendered.expirationTime or 0) - (timer.expirationTime or 0)) > 0.01)
+
         if rendered.durationObject ~= timer.durationObject
+            or timingChanged
             or rendered.countdownRedLimit ~= spellRedLimit
             or rendered.countdownRedColor ~= spellRedColor
         then
@@ -1510,25 +1565,40 @@ function Renderer.render(alertState, frameName)
                 pcall(icon.cooldown.SetProgressCurve, icon.cooldown, progressCurve)
             end
 
-            if icon.cooldown.SetCooldownDuration and progressCurve then
-                local ok = pcall(icon.cooldown.SetCooldownDuration, icon.cooldown, timer.durationObject, progressCurve)
-                if not ok and icon.cooldown.SetCooldownFromDurationObject then
-                    icon.cooldown:SetCooldownFromDurationObject(timer.durationObject)
+            local durationObjectSet = false
+            if timer.durationObject then
+                if icon.cooldown.SetCooldownDuration then
+                    if progressCurve then
+                        durationObjectSet = pcall(icon.cooldown.SetCooldownDuration, icon.cooldown, timer.durationObject, progressCurve)
+                    else
+                        durationObjectSet = pcall(icon.cooldown.SetCooldownDuration, icon.cooldown, timer.durationObject)
+                    end
+                    if not durationObjectSet and icon.cooldown.SetCooldownFromDurationObject then
+                        durationObjectSet = pcall(icon.cooldown.SetCooldownFromDurationObject, icon.cooldown, timer.durationObject)
+                    end
+                elseif icon.cooldown.SetCooldownFromDurationObject then
+                    durationObjectSet = pcall(icon.cooldown.SetCooldownFromDurationObject, icon.cooldown, timer.durationObject)
                 end
-            elseif icon.cooldown.SetCooldownFromDurationObject then
-                icon.cooldown:SetCooldownFromDurationObject(timer.durationObject)
-            elseif timer.startTime and timer.duration then
-                icon.cooldown:SetCooldown(timer.startTime, timer.duration)
-            else
-                icon.cooldown:SetCooldown(0, 0)
+            end
+
+            if not durationObjectSet then
+                if timer.startTime and timer.duration and icon.cooldown.SetCooldown then
+                    pcall(icon.cooldown.SetCooldown, icon.cooldown, timer.startTime, timer.duration)
+                elseif not icon.cooldown.SetCooldownDuration and not icon.cooldown.SetCooldownFromDurationObject and icon.cooldown.SetCooldown then
+                    pcall(icon.cooldown.SetCooldown, icon.cooldown, 0, 0)
+                end
+            elseif timingChanged and timer.startTime and timer.duration and icon.cooldown.SetCooldown then
+                -- 🛡️ 減 CD 即時同步補償：當冷卻時間縮短時，以 SetCooldown 同步原生轉圈角度進度
+                pcall(icon.cooldown.SetCooldown, icon.cooldown, timer.startTime, timer.duration)
             end
 
             rendered.durationObject = timer.durationObject
             rendered.durationBindingAvailable = icon.timerBinding ~= nil
             rendered.countdownRedLimit = spellRedLimit
             rendered.countdownRedColor = spellRedColor
-            rendered.cooldownStart = nil
-            rendered.cooldownDuration = nil
+            rendered.cooldownStart = timer.startTime
+            rendered.cooldownDuration = timer.duration
+            rendered.expirationTime = timer.expirationTime
         end
         if icon.timerBinding then
             Renderer.unregisterLegacyTimer(icon)
@@ -1543,10 +1613,14 @@ function Renderer.render(alertState, frameName)
         if icon.cooldown and type(icon.cooldown.Show) == "function" then
             icon.cooldown:Show()
         end
-        if rendered.cooldownStart ~= timer.startTime or rendered.cooldownDuration ~= timer.duration then
+        local timingChanged = (rendered.cooldownStart ~= timer.startTime)
+            or (rendered.cooldownDuration ~= timer.duration)
+            or (math.abs((rendered.expirationTime or 0) - (timer.expirationTime or 0)) > 0.01)
+        if timingChanged then
             icon.cooldown:SetCooldown(timer.startTime, timer.duration)
             rendered.cooldownStart = timer.startTime
             rendered.cooldownDuration = timer.duration
+            rendered.expirationTime = timer.expirationTime
             rendered.durationObject = nil
         end
         releaseTimerBinding(icon)
@@ -1573,6 +1647,7 @@ function Renderer.render(alertState, frameName)
         end
         rendered.cooldownStart = nil
         rendered.cooldownDuration = nil
+        rendered.expirationTime = nil
         rendered.durationObject = nil
         rendered.durationBindingAvailable = nil
         releaseTimerBinding(icon)
@@ -1701,7 +1776,9 @@ function Renderer.render(alertState, frameName)
 
     local targetAlpha = config and config.iconAlpha or 1.0
     if icon.SetAlpha then pcall(icon.SetAlpha, icon, targetAlpha) end
-    if icon.Show then icon:Show() end
+    if icon.Show then
+        icon:Show()
+    end
     rendered.layoutAlpha = targetAlpha
     icon.alertState = alertState
 

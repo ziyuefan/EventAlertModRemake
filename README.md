@@ -158,6 +158,32 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
 
+### 🌟 [Retail 12.1.5 Alpha 8.8] - 2026.10.23
+- **魔獸世界 12.1.5 正式服全面適配與原生 C++ 加速庫 (Retail 12.1.5 Compatibility & Native Acceleration)**：
+  - **TOC 介面升級**：全面適配魔獸世界正式服 12.1.5 版本號（Interface: `120105`），持續無縫向下相容 `120100` 與 `120007` 客戶端。
+  - **暴雪 12.1.5 原生底層 C++ 加速**：整合暴雪底層數學庫 (`math.clamp`, `math.saturate`, `math.round`, `math.lerp` 等)、字串庫 (`string.contains`, `string.startswith` 等) 與表格庫 (`table.isempty`, `table.contains` 等)，並具備防禦性向下相容 (Polyfills)。
+- **原生 TimedSignalMap 零分配排程器升級 (Zero-Alloc TimedSignalMap Scheduler)**：
+  - 深度整合 12.1.5 `C_Timer.NewTimedSignalMap` 原生鍵值排程機制，由暴雪 C++ 引擎直接託管倒數計時與定時信號，舊版客戶端自動平滑切換至自主狀態機，達成定時器重設零記憶體配置 (Zero-Alloc Key Rescheduling)。
+- **12.1.5 原生 Pandemic 結餘窗口精確判斷與動畫支援 (12.1.5 Native Pandemic Carry-Over Precision & Animations)**：
+  - 採用 `C_UnitAuras.GetRefreshCarryOverDuration` 精準結餘時間計算，嚴格於結餘小於等於 30% 基礎時長時觸發補 DoT 提示，杜絕提早補 DoT 損失秒數。
+  - 深度對接 12.1.5 Native Aura 原生動畫 API (`AddPandemicActiveAnimation`, `AddPandemicEnterAnimation`, `AddPandemicLeaveAnimation`)，補 DoT 進入與退出動畫更細緻流暢。
+- **地面效果多組時間解析與自選組別 (Ground Effect Multi-Duration Candidate Selection)**：
+  - 針對技能說明中包含多組秒數（如地面持續時間 vs 減速持續時間 vs 引導時間）的複雜技能，智慧解析所有時間候選，於設定介面提供下拉選單自由選取並聯動手動時間輸入框。
+- **模組圖示外框色彩自訂與無邊框模式 (Customizable Alert Border Colors & Borderless Mode)**：
+  - 8 大模組支援獨立調色盤與透明度調節，並提供全域與單項「無邊框模式」開關與「重設經典預設」按鈕，畫面當前圖示支援即時動態熱套用。
+- **玩家職業資源獨立拖曳定位與九宮格依附 (Per-Resource Independent Dragging & 9-Point Attachment)**：
+  - 每項資源支援「啟用獨立位置」，可脫離群組堆疊並直接以滑鼠左鍵拖曳、右鍵完成定位；新增依附目標框架與 9 大方位精準對齊。
+- **玩家職業資源動態格數分割、雙色漸層與條件式警戒系統 (Dynamic Segments, Gradient Colors & Conditional Alerts)**：
+  - 點數型資源（連擊點數 5/6/7、真氣 5/6、喚能師龍能 5/6、聖能 5、靈魂裂片 5、秘法充能 4、符文 6）自動依據角色實際上限 (`UnitPowerMax`) 即時分割 StatusBar 格線與底部子格，並支援「自訂分割格數 (0=自動, 1~20)」滑桿。
+  - 支援「自訂單色」與「自訂雙色漸層」水平/垂直漸層渲染，擴充 `>=` 或 `<=` 門檻變色與邊緣觸發防洗頻音效提示。
+- **第三方素材庫 LibSharedMedia-3.0 升級與語系術語校準 (LibSharedMedia r156 & Evoker Essence Calibration)**：
+  - LibSharedMedia-3.0 升級至 r156 (支援 12.0.1+ / Interface 12000103)，擴充字型與材質素材庫。
+  - 全面校準喚能師專用資源「龍能」五語系暴雪官方術語命名（繁中「龍能」、簡中「精华」、英文「Essence」、韓文「정수」、俄文「Сущность」）。
+- **關鍵問題修復與戰鬥穩定性加固 (Critical Bug Fixes & Stability)**：
+  - **戰鬥中動作條污染報錯徹底排除**：消除對暴雪全域環境庫外部賦值，杜絕 `ADDON_ACTION_BLOCKED` 錯誤。
+  - **天賦覆蓋技能冷卻倒數與天賦減 CD 即時同步**：重構冷卻施法比對與法術家族識別，新增 60ms 高頻自適應突發採樣器與彈道飛行延遲補償，精準同步冰霜射線、彗星風暴、冰霜之球等天賦減 CD。
+  - **秘密值安全防護加固**：加固 `Util.isSafeTableKey` 檢定，秘密值嚴格走底層原生元件單向綁定，零 Taint 零崩潰。
+
 ### 🌟 [Retail 12.1.0 Alpha 8.7] - 2026.09.27
 - **高頻冷卻事件合併排程與警示更新零分配流水線 (Cooldown Event Coalescing & Zero-Allocation Alert Pipeline)**：
   - **警示排隊佇列零記憶體分配 (Zero-Allocation Queue)**：`AlertManager` 採用持久化槽位（`persistentSlots`），消除高頻警示更新時每秒數千次的臨時 Table 堆疊分配，根除 Lua GC 垃圾回收卡頓隱患，實機實測記憶體佔用顯著降低約 12 MB，FPS 飆升 +15.1%（86 -> 99 FPS）。

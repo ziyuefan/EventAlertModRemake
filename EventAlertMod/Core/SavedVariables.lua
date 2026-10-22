@@ -104,6 +104,7 @@ local defaults = {
         addonVersion = "12.1.0",
     },
     debug = false,
+    cooldownTrace = {},
     hotPathMetrics = {
         cumulative = {},
         lastSession = {},
@@ -262,6 +263,7 @@ local defaults = {
         powerMana = true,
         powerPetFocus = true,
         powerPetEnergy = true,
+        powerEssence = true,
         powerVigor = true,
     }
 }
@@ -347,6 +349,9 @@ for index = 1, #PLAYER_RESOURCE_DEFINITIONS do
     local legacyDefinition = PLAYER_RESOURCE_BY_LEGACY_KEY[legacyKey]
     if legacyDefinition == nil and not PLAYER_RESOURCE_LEGACY_ALIAS_COLLISIONS[legacyKey] then
         PLAYER_RESOURCE_BY_LEGACY_KEY[legacyKey] = definition
+        if definition.key == "ESSENCE" then
+            PLAYER_RESOURCE_BY_LEGACY_KEY["POWERVIGOR"] = definition
+        end
     elseif legacyDefinition ~= definition then
         PLAYER_RESOURCE_BY_LEGACY_KEY[legacyKey] = nil
         PLAYER_RESOURCE_LEGACY_ALIAS_COLLISIONS[legacyKey] = true
@@ -376,6 +381,16 @@ local PLAYER_RESOURCE_ANCHOR_POINTS = freeze({
     BOTTOMRIGHT = true,
 })
 
+local PLAYER_RESOURCE_ATTACH_TARGETS = freeze({
+    EAM_ANCHOR = true,
+    UIParent = true,
+    PlayerFrame = true,
+    TargetFrame = true,
+    FocusFrame = true,
+    PetFrame = true,
+    PersonalResourceDisplayFrame = true,
+})
+
 local function normalizePlayerResourceFontFamily(value, fillDefaults)
     if type(value) ~= "string" or value == "" then
         return fillDefaults and (EAM.Constants.FONT_FAMILY_DEFAULT or "STANDARD") or nil
@@ -403,6 +418,8 @@ end
 
 local PLAYER_RESOURCE_SETTING_FIELDS = freeze({
     "displayMode",
+    "attachTo",
+    "useCustomPos",
     "anchor",
     "position",
     "showForeground",
@@ -428,12 +445,29 @@ local PLAYER_RESOURCE_SETTING_FIELDS = freeze({
     "barHeight",
     "iconSize",
     "spacing",
+    "customMaxPoints",
+    "colorMode",
+    "colorStartR",
+    "colorStartG",
+    "colorStartB",
+    "colorEndR",
+    "colorEndG",
+    "colorEndB",
+    "alertOperator",
+    "alertColorEnabled",
+    "alertColorR",
+    "alertColorG",
+    "alertColorB",
+    "alertSoundEnabled",
 })
 
 local PLAYER_RESOURCE_SETTING_FIELD_SET = freeze({
     displayMode = true,
+    attachTo = true,
+    useCustomPos = true,
     anchor = true,
     position = true,
+    useCustomPos = true,
     showForeground = true,
     showBackground = true,
     showValue = true,
@@ -457,14 +491,42 @@ local PLAYER_RESOURCE_SETTING_FIELD_SET = freeze({
     barHeight = true,
     iconSize = true,
     spacing = true,
+    customMaxPoints = true,
+    colorMode = true,
+    colorStartR = true,
+    colorStartG = true,
+    colorStartB = true,
+    colorEndR = true,
+    colorEndG = true,
+    colorEndB = true,
+    alertOperator = true,
+    alertColorEnabled = true,
+    alertColorR = true,
+    alertColorG = true,
+    alertColorB = true,
+    alertSoundEnabled = true,
+})
+
+local VALID_RESOURCE_COLOR_MODES = freeze({
+    DEFAULT = true,
+    SOLID = true,
+    GRADIENT = true,
+})
+
+local VALID_RESOURCE_ALERT_OPERATORS = freeze({
+    GE = true,
+    LE = true,
 })
 
 local PLAYER_RESOURCE_BOOLEAN_FIELDS = freeze({
+    useCustomPos = true,
     showForeground = true,
     showBackground = true,
     showValue = true,
     showPercent = true,
     fullGlow = true,
+    alertColorEnabled = true,
+    alertSoundEnabled = true,
 })
 
 local PLAYER_RESOURCE_NUMBER_LIMITS = freeze({
@@ -484,6 +546,16 @@ local PLAYER_RESOURCE_NUMBER_LIMITS = freeze({
     valueOffsetX = freeze({ -100, 100, 0 }),
     valueOffsetY = freeze({ -100, 100, 0 }),
     threshold = freeze({ 0, 1, 0.9 }),
+    customMaxPoints = freeze({ 0, 20, 0 }),
+    colorStartR = freeze({ 0, 1, 1 }),
+    colorStartG = freeze({ 0, 1, 0.82 }),
+    colorStartB = freeze({ 0, 1, 0.15 }),
+    colorEndR = freeze({ 0, 1, 1 }),
+    colorEndG = freeze({ 0, 1, 0.25 }),
+    colorEndB = freeze({ 0, 1, 0.25 }),
+    alertColorR = freeze({ 0, 1, 1 }),
+    alertColorG = freeze({ 0, 1, 0.15 }),
+    alertColorB = freeze({ 0, 1, 0.15 }),
 })
 
 local function boundedPlayerResourceNumber(value, field, fallback)
@@ -498,15 +570,22 @@ local function boundedPlayerResourceNumber(value, field, fallback)
     elseif value > limits[2] then
         value = limits[2]
     end
-    if field == "order" then
+    if field == "order" or field == "customMaxPoints" then
         value = mathFloor(value + 0.5)
     end
     return value
 end
 
-local function createPlayerResourceSetting(defaultOrder)
+local function createPlayerResourceSetting(defaultOrder, definition)
+    if type(defaultOrder) == "table" and definition == nil then
+        definition = defaultOrder
+        defaultOrder = definition.defaultOrder or 1
+    end
+    local baseColor = (definition and type(definition.color) == "table") and definition.color or { 1, 0.82, 0.15, 1 }
     return {
         displayMode = "AUTO",
+        attachTo = "EAM_ANCHOR",
+        useCustomPos = false,
         anchor = "TOPLEFT",
         position = "TOPLEFT",
         showForeground = true,
@@ -527,17 +606,31 @@ local function createPlayerResourceSetting(defaultOrder)
         alpha = 1,
         foregroundAlpha = 1,
         backgroundAlpha = 0.55,
-        order = defaultOrder,
+        order = defaultOrder or 1,
         barWidth = 126,
         barHeight = 16,
         iconSize = 30,
         spacing = 6,
+        customMaxPoints = 0,
+        colorMode = "DEFAULT",
+        colorStartR = baseColor[1] or 1,
+        colorStartG = baseColor[2] or 0.82,
+        colorStartB = baseColor[3] or 0.15,
+        colorEndR = 1,
+        colorEndG = 0.25,
+        colorEndB = 0.25,
+        alertOperator = "GE",
+        alertColorEnabled = false,
+        alertColorR = 1,
+        alertColorG = 0.15,
+        alertColorB = 0.15,
+        alertSoundEnabled = false,
     }
 end
 
-local function normalizePlayerResourceSetting(setting, fillDefaults, defaultOrder)
+local function normalizePlayerResourceSetting(setting, fillDefaults, defaultOrder, definition)
     if type(setting) ~= "table" then
-        return fillDefaults and createPlayerResourceSetting(defaultOrder) or nil
+        return fillDefaults and createPlayerResourceSetting(defaultOrder, definition) or nil
     end
     for field in pairs(setting) do
         if not PLAYER_RESOURCE_SETTING_FIELD_SET[field] then
@@ -550,26 +643,46 @@ local function normalizePlayerResourceSetting(setting, fillDefaults, defaultOrde
     if not PLAYER_RESOURCE_ORIENTATIONS[setting.orientation] then
         setting.orientation = fillDefaults and "HORIZONTAL" or nil
     end
+    if not PLAYER_RESOURCE_ATTACH_TARGETS[setting.attachTo] then
+        setting.attachTo = fillDefaults and "EAM_ANCHOR" or nil
+    end
     if not PLAYER_RESOURCE_ANCHOR_POINTS[setting.anchor] then
         setting.anchor = fillDefaults and "TOPLEFT" or nil
     end
     if not PLAYER_RESOURCE_ANCHOR_POINTS[setting.position] then
         setting.position = fillDefaults and "TOPLEFT" or nil
     end
+    if not VALID_RESOURCE_COLOR_MODES[setting.colorMode] then
+        setting.colorMode = fillDefaults and "DEFAULT" or nil
+    end
+    if not VALID_RESOURCE_ALERT_OPERATORS[setting.alertOperator] then
+        setting.alertOperator = fillDefaults and "GE" or nil
+    end
     setting.fontFamily = normalizePlayerResourceFontFamily(setting.fontFamily, fillDefaults)
     for field in pairs(PLAYER_RESOURCE_BOOLEAN_FIELDS) do
         if type(setting[field]) ~= "boolean" then
             local defaultValue = true
-            if field == "showPercent" or field == "fullGlow" then
+            if field == "showPercent" or field == "fullGlow" or field == "useCustomPos" or field == "alertColorEnabled" or field == "alertSoundEnabled" then
                 defaultValue = false
             end
             setting[field] = fillDefaults and defaultValue or nil
         end
     end
+    local baseColor = (definition and type(definition.color) == "table") and definition.color or nil
     for field, limits in pairs(PLAYER_RESOURCE_NUMBER_LIMITS) do
         local fallback = nil
         if fillDefaults then
-            fallback = field == "order" and defaultOrder or limits[3]
+            if field == "order" then
+                fallback = defaultOrder
+            elseif field == "colorStartR" then
+                fallback = (baseColor and baseColor[1]) or limits[3]
+            elseif field == "colorStartG" then
+                fallback = (baseColor and baseColor[2]) or limits[3]
+            elseif field == "colorStartB" then
+                fallback = (baseColor and baseColor[3]) or limits[3]
+            else
+                fallback = limits[3]
+            end
         end
         setting[field] = boundedPlayerResourceNumber(setting[field], field, fallback)
     end
@@ -602,6 +715,8 @@ local function createPlayerResourceConfigFromLegacy(db)
             local definition = PLAYER_RESOURCE_DEFINITIONS[index]
             if type(config[definition.legacyKey]) == "boolean" then
                 resources.classDefaults.enabled[definition.key] = config[definition.legacyKey]
+            elseif definition.key == "ESSENCE" and type(config.powerVigor) == "boolean" then
+                resources.classDefaults.enabled[definition.key] = config.powerVigor
             end
         end
     end
@@ -626,7 +741,8 @@ local function normalizePlayerResourceScope(scope, fillDefaults)
             scope.settings[key] = normalizePlayerResourceSetting(
                 setting,
                 false,
-                definition.defaultOrder
+                definition.defaultOrder,
+                definition
             )
         end
     end
@@ -640,7 +756,8 @@ local function normalizePlayerResourceScope(scope, fillDefaults)
                 scope.settings[definition.key] = normalizePlayerResourceSetting(
                     scope.settings[definition.key],
                     false,
-                    index
+                    index,
+                    definition
                 )
             end
         end
@@ -1444,7 +1561,7 @@ local function migrateV5ToV6(db)
             "powerHoly", "powerShard", "powerCombo", "powerChi", "powerRage",
             "powerInsanity", "powerMaelstrom", "powerRunic", "powerAstral",
             "powerEnergy", "powerFocus", "powerArcane", "powerRunes", "powerFury", "powerPain",
-            "powerMana", "powerVigor", "powerLifebloom", "powerPetFocus",
+            "powerMana", "powerEssence", "powerVigor", "powerLifebloom", "powerPetFocus",
             "powerPetEnergy", "powerFrenzy",
         }
         for index = 1, #legacyKeys do
@@ -1863,6 +1980,8 @@ local function getLegacyPlayerResourceEnabled(db, definition)
     local config = type(db) == "table" and db.config or nil
     if type(config) == "table" and type(config[definition.legacyKey]) == "boolean" then
         return config[definition.legacyKey], "legacy"
+    elseif type(config) == "table" and definition.key == "ESSENCE" and type(config.powerVigor) == "boolean" then
+        return config.powerVigor, "legacy"
     end
     return true, "default"
 end
@@ -1896,7 +2015,7 @@ local function buildPlayerResourceValue(db, classToken, specializationID, defini
             or createPlayerResourceConfigFromLegacy(db)
     end
     local classDefaults = resources and resources.classDefaults or nil
-    local effective = createPlayerResourceSetting(definition.defaultOrder)
+    local effective = createPlayerResourceSetting(definition.defaultOrder, definition)
     if resources and resources.globalDefaults then
         copyPlayerResourceSetting(effective, resources.globalDefaults)
     end
@@ -2240,11 +2359,29 @@ local function validatePlayerResourcePatchValue(field, value)
         end
         return false, nil, "invalidResourceOrientation"
     end
+    if field == "attachTo" then
+        if PLAYER_RESOURCE_ATTACH_TARGETS[value] then
+            return true, value
+        end
+        return false, nil, "invalidResourceAttachTarget"
+    end
     if field == "anchor" or field == "position" then
         if PLAYER_RESOURCE_ANCHOR_POINTS[value] then
             return true, value
         end
         return false, nil, "invalidResourceAnchorPoint"
+    end
+    if field == "colorMode" then
+        if VALID_RESOURCE_COLOR_MODES[value] then
+            return true, value
+        end
+        return false, nil, "invalidResourceColorMode"
+    end
+    if field == "alertOperator" then
+        if VALID_RESOURCE_ALERT_OPERATORS[value] then
+            return true, value
+        end
+        return false, nil, "invalidResourceAlertOperator"
     end
     if field == "fontFamily" then
         local normalized = normalizePlayerResourceFontFamily(value, false)

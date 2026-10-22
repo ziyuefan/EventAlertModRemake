@@ -227,6 +227,8 @@ local function createFallbackSignalMap(callback)
         return true
     end
 
+    map.CancelSignal = map.Cancel
+
     function map:Clear()
         for k in pairs(signals) do
             signals[k] = nil
@@ -234,6 +236,41 @@ local function createFallbackSignalMap(callback)
         activeToken = activeToken + 1
         currentDueAt = nil
         return true
+    end
+
+    map.CancelAllSignals = map.Clear
+
+    function map:HasSignal(key)
+        if not Util.isSafeTableKey(key) then
+            return false
+        end
+        return signals[key] ~= nil
+    end
+
+    function map:GetSignalTime(key)
+        if not Util.isSafeTableKey(key) then
+            return nil
+        end
+        return signals[key]
+    end
+
+    function map:GetSignalCount()
+        local c = 0
+        for _ in pairs(signals) do
+            c = c + 1
+        end
+        return c
+    end
+
+    function map:GetNextSignal()
+        local nextKey, nextTime = nil, nil
+        for k, dueAt in pairs(signals) do
+            if not nextTime or dueAt < nextTime then
+                nextTime = dueAt
+                nextKey = k
+            end
+        end
+        return nextKey, nextTime
     end
 
     function map:IsNative()
@@ -262,56 +299,189 @@ function Scheduler.createSignalMap(callback)
         local ok, nativeMap = pcall(newSignalMap, callback)
         if ok and nativeMap then
             Scheduler.nativeSignalMapCount = Scheduler.nativeSignalMapCount + 1
+            -- 原生物件為唯讀 C++ 物件，只能以代理表包裝。原生簽章若與預期不符（方法缺失、
+            -- 拒絕過去時間戳、回傳 false 或拋錯），代理會永久降級至 Lua 後備實作，
+            -- 確保呼叫端得到一致且可用的 SignalAt/SignalAfter/Cancel/Clear 契約。
             local wrapper = {}
+            local fallback = nil
+            local degraded = false
+
+            local function readNativeMethod(methodName)
+                local okIdx, method = pcall(function()
+                    return nativeMap[methodName]
+                end)
+                if okIdx and type(method) == "function" then
+                    return method
+                end
+                return nil
+            end
+
+            local function callNative(methodName, ...)
+                local method = readNativeMethod(methodName)
+                if not method then
+                    return false, "nativeMethodMissing:" .. tostring(methodName)
+                end
+                local callOk, res = pcall(method, nativeMap, ...)
+                if not callOk then
+                    return false, res
+                end
+                if res == false then
+                    return false, "nativeRejected"
+                end
+                return true, res
+            end
+
+            local function callNativeMulti(methodNames, ...)
+                for i = 1, #methodNames do
+                    local name = methodNames[i]
+                    local method = readNativeMethod(name)
+                    if method then
+                        local callOk, res = pcall(method, nativeMap, ...)
+                        if not callOk then
+                            return false, res
+                        end
+                        if res == false then
+                            return false, "nativeRejected"
+                        end
+                        return true, res
+                    end
+                end
+                return false, "nativeMethodMissing:" .. tostring(methodNames[1])
+            end
+
+            local function degrade(reason)
+                if not degraded then
+                    degraded = true
+                    Scheduler.nativeSignalMapDegradeCount = (Scheduler.nativeSignalMapDegradeCount or 0) + 1
+                    Scheduler.lastNativeSignalMapError = tostring(reason or "unknown")
+                    -- 清除原生端可能殘留的排程，避免與後備實作重複觸發。
+                    local clear = readNativeMethod("CancelAllSignals") or readNativeMethod("Clear")
+                    if clear then
+                        pcall(clear, nativeMap)
+                    end
+                end
+                if not fallback then
+                    fallback = createFallbackSignalMap(callback)
+                end
+                return fallback
+            end
+
             function wrapper:SignalAt(key, targetTime)
                 if not Util.isSafeTableKey(key) or not Util.isSafeNumber(targetTime) then
                     return false, "invalidSignalAt"
                 end
-                local intTime = math.floor(targetTime)
-                if intTime < 0 then intTime = 0 end
-                if intTime > 4294967295 then intTime = 4294967295 end
-                local callOk, res = pcall(nativeMap.SignalAt, nativeMap, key, intTime)
-                if not callOk then
-                    return false, res
+                if degraded then
+                    return fallback:SignalAt(key, targetTime)
                 end
-                return res ~= false
+                local nativeOk, reason = callNative("SignalAt", key, targetTime)
+                if nativeOk then
+                    return true
+                end
+                return degrade(reason):SignalAt(key, targetTime)
             end
 
             function wrapper:SignalAfter(key, delay)
                 if not Util.isSafeTableKey(key) or not Util.isSafeNonNegativeNumber(delay) then
                     return false, "invalidSignalAfter"
                 end
-                if type(nativeMap.SignalAfter) == "function" then
-                    local callOk, res = pcall(nativeMap.SignalAfter, nativeMap, key, delay)
-                    if callOk then return res ~= false end
+                if degraded then
+                    return fallback:SignalAfter(key, delay)
+                end
+                local nativeOk = callNative("SignalAfter", key, delay)
+                if nativeOk then
+                    return true
                 end
                 local now = api.GetTime and api.GetTime() or 0
-                return self:SignalAt(key, now + (delay or 0))
+                return self:SignalAt(key, now + delay)
             end
 
             function wrapper:Cancel(key)
-                if type(nativeMap.Cancel) == "function" then
-                    local callOk, res = pcall(nativeMap.Cancel, nativeMap, key)
-                    if callOk then return res ~= false end
+                if not Util.isSafeTableKey(key) then
+                    return false, "invalidCancel"
                 end
-                return true
+                if degraded then
+                    return fallback:Cancel(key)
+                end
+                local nativeOk, reason = callNativeMulti({ "CancelSignal", "Cancel" }, key)
+                if nativeOk then
+                    return true
+                end
+                return degrade(reason):Cancel(key)
+            end
+
+            function wrapper:CancelSignal(key)
+                return self:Cancel(key)
             end
 
             function wrapper:Clear()
-                if type(nativeMap.Clear) == "function" then
-                    local callOk, res = pcall(nativeMap.Clear, nativeMap)
-                    if callOk then return res ~= false end
+                if degraded then
+                    return fallback:Clear()
                 end
-                return true
+                local nativeOk, reason = callNativeMulti({ "CancelAllSignals", "Clear" })
+                if nativeOk then
+                    return true
+                end
+                return degrade(reason):Clear()
+            end
+
+            function wrapper:CancelAllSignals()
+                return self:Clear()
+            end
+
+            function wrapper:HasSignal(key)
+                if not Util.isSafeTableKey(key) then
+                    return false
+                end
+                if degraded then
+                    return fallback:HasSignal(key)
+                end
+                local nativeOk, res = callNative("HasSignal", key)
+                if nativeOk then
+                    return res == true
+                end
+                return false
+            end
+
+            function wrapper:GetSignalTime(key)
+                if not Util.isSafeTableKey(key) then
+                    return nil
+                end
+                if degraded then
+                    return fallback:GetSignalTime(key)
+                end
+                local nativeOk, res = callNative("GetSignalTime", key)
+                if nativeOk and Util.isSafeNumber(res) then
+                    return res
+                end
+                return nil
+            end
+
+            function wrapper:GetSignalCount()
+                if degraded then
+                    return fallback:GetSignalCount()
+                end
+                local nativeOk, res = callNative("GetSignalCount")
+                if nativeOk and type(res) == "number" then
+                    return res
+                end
+                return 0
+            end
+
+            function wrapper:GetNextSignal()
+                if degraded then
+                    return fallback:GetNextSignal()
+                end
+                local nativeOk, k, t = callNative("GetNextSignal")
+                if nativeOk then
+                    return k, t
+                end
+                return nil, nil
             end
 
             function wrapper:IsNative()
-                return true
+                return not degraded
             end
 
-            setmetatable(wrapper, {
-                __index = nativeMap
-            })
             return wrapper
         end
     end

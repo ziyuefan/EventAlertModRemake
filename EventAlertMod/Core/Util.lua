@@ -515,6 +515,26 @@ Util.rtrim = Util.stringRtrim
 Util.startswith = Util.stringStartsWith
 Util.endswith = Util.stringEndsWith
 
+-- 12.1.5 Unicode-aware case folding / lowercase
+local cIntl = (api and api.C_Intl) or _G.C_Intl
+local nativeFoldCase = cIntl and cIntl.FoldCase
+local nativeIntlToLower = cIntl and cIntl.ToLower
+
+function Util.foldCase(str)
+    if not str then return "" end
+    if nativeFoldCase then
+        local ok, res = pcall(nativeFoldCase, str)
+        if ok and res then return res end
+    end
+    if nativeIntlToLower then
+        local ok, res = pcall(nativeIntlToLower, str)
+        if ok and res then return res end
+    end
+    return string.lower(str)
+end
+
+Util.foldcase = Util.foldCase
+
 -- Table Utilities
 local nativeTableIsEmpty = table.isempty
 local nativeTableContains = table.contains
@@ -602,32 +622,70 @@ end
 Util.isempty = Util.tableIsEmpty
 
 -- Frame creation helper (uses 12.1.5 CreateFrameWithOptions when available)
-function Util.createFrame(frameType, frameName, parent, template, id)
+function Util.createFrame(frameType, frameName, parent, template, id, extraOptions)
     local eamAPI = EAM.API or api
     local cfo = (eamAPI and eamAPI.CreateFrameWithOptions) or _G.CreateFrameWithOptions
+
+    local inheritsTable = nil
+    if type(template) == "string" and template ~= "" then
+        inheritsTable = { template }
+    elseif type(template) == "table" then
+        inheritsTable = template
+    end
+
+    local isHidden = (extraOptions and extraOptions.hidden == true) or false
+
     if cfo and type(cfo) == "function" then
         local options = {
             frameType = frameType or "Frame",
             name = frameName,
             parent = parent,
-            inherits = template,
+            inherits = inheritsTable,
             id = id,
+            hidden = isHidden,
         }
+        if extraOptions and type(extraOptions) == "table" then
+            for k, v in pairs(extraOptions) do
+                if options[k] == nil then
+                    options[k] = v
+                end
+            end
+        end
         local ok, f = pcall(cfo, options)
         if ok and f then
+            if isHidden and f.Hide and f.IsShown and f:IsShown() then
+                f:Hide()
+            end
             return f
         end
     end
     local cf = (eamAPI and eamAPI.CreateFrame) or _G.CreateFrame
     if cf and type(cf) == "function" then
-        return cf(frameType or "Frame", frameName, parent, template, id)
+        local templateStr = (type(template) == "string") and template or nil
+        if not templateStr and type(template) == "table" and #template > 0 then
+            templateStr = table.concat(template, ", ")
+        end
+        local f = cf(frameType or "Frame", frameName, parent, templateStr, id)
+        if f and isHidden and f.Hide then
+            f:Hide()
+        end
+        return f
     end
     return nil
 end
 
--- Native pixel rounding helper (uses 12.1.5 SetRoundLayoutToNearestPixel)
+-- Native pixel rounding helper (uses 12.1.5 SetRoundLayoutToNearestPixelRecursively and SetRoundLayoutToNearestPixel)
 function Util.snapToPixels(region)
     if not region then return false end
+    local pu = (EAM.API and EAM.API.PixelUtil) or _G.PixelUtil
+    if pu and type(pu.SetRoundLayoutToNearestPixelRecursively) == "function" then
+        local ok = pcall(pu.SetRoundLayoutToNearestPixelRecursively, region)
+        if ok then return true end
+    end
+    if pu and type(pu.SetRoundLayoutToNearestPixel) == "function" then
+        local ok = pcall(pu.SetRoundLayoutToNearestPixel, region, true)
+        if ok then return true end
+    end
     local ok, func = pcall(function() return region.SetRoundLayoutToNearestPixel end)
     if ok and type(func) == "function" then
         pcall(func, region, true)

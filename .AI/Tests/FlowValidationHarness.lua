@@ -77,7 +77,7 @@ function frameMethods:ClearAllPoints()
 end
 
 function frameMethods:SetPoint(point, relativeTo, relativePoint, x, y)
-    self.points = self.points or {}
+    self.points = (type(self.points) == "table") and self.points or {}
     self.points[#self.points + 1] = {
         point = point or "CENTER",
         relativeTo = relativeTo,
@@ -88,7 +88,7 @@ function frameMethods:SetPoint(point, relativeTo, relativePoint, x, y)
 end
 
 function frameMethods:SetAllPoints(relativeTo)
-    self.points = self.points or {}
+    self.points = (type(self.points) == "table") and self.points or {}
     self.points[1] = {
         point = "TOPLEFT",
         relativeTo = relativeTo,
@@ -99,12 +99,12 @@ function frameMethods:SetAllPoints(relativeTo)
 end
 
 function frameMethods:GetNumPoints()
-    return self.points and #self.points or 0
+    return (type(self.points) == "table") and #self.points or 0
 end
 
 function frameMethods:GetPoint(index)
     index = index or 1
-    local p = self.points and self.points[index]
+    local p = (type(self.points) == "table") and self.points[index] or nil
     if p then
         return p.point, p.relativeTo, p.relativePoint, p.x, p.y
     end
@@ -472,6 +472,7 @@ EAM.Services.AuraService.initialize()
 EAM.Services.AuraContainerService.initialize()
 EAM.Services.TooltipMonitorService.initialize()
 loadModule("EventAlertMod/Debug/RuntimeProbe.lua")
+loadModule("EventAlertMod/Debug/CooldownTrace.lua")
 loadModule("EventAlertMod/Debug/FlowTestRunner.lua")
 loadModule("EventAlertMod/Debug/PlayerResourceProbe.lua")
 loadModule("EventAlertMod/Debug/UnitPowerCapabilityProbe.lua")

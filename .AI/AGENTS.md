@@ -16,12 +16,23 @@
   - 後續開發與 AI 協作的絕對指導文件，一律以 `.AI/AGENTS.md` 以及其內文指名之 `.md` 原始檔為唯一事實與 Facts-of-Truth 參考。
   - HTML 版本供人類（少年欸）在瀏覽器中觀看易讀使用，AI 在讀取、檢索與參考時，必須一律以 `.md` 原始檔為唯一基準，嚴禁以 HTML 作為開發事實參考。
   - 當 `.AI/Docs/*.md` 或 `.AI/AGENTS.md` 修改包含心智圖（Mermaid）、表格、流程圖、圖片時，必須執行轉換工具（`batch_convert_docs.py`），在 `.AI/docs_html/` 內產出同名的 HTML 檔。
-  - 文件轉換預設使用 `$env:EAM_DOCS_OFFLINE='1'; python .\.AI\Tools\batch_convert_docs.py`，禁止未經少年欸明確授權就把 Markdown 全文送往外部翻譯服務。
+  - 文件轉換預設使用 `$env:EAM_DOCS_OFFLINE='1'; uv run .\.AI\Tools\batch_convert_docs.py`（若環境無 uv 則降級由 `python` 備援），禁止未經少年欸明確授權就把 Markdown 全文送往外部翻譯服務。
 - **XML 結構化抗記憶漂移備援（Anti-Memory-Drift XML Directive）**：
   - 除了 Markdown（.md）人機協同文件外，[`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml) 為專案對抗大語言模型長對話截斷、跨模型交接與自由文本語意漂移（Memory Drift）之**最高結構化確定性備援保險箱**。
   - 當遭遇上下文壓縮、更換模型、或對 Markdown 規範產生理解歧義時，Agent 必須第一時間讀取該 XML 檔進行硬性記憶校準（Hard Semantic Recalibration），以 XML 標籤鎖定之邊界與鐵律為唯一硬性約束基準。
-- **12.1.5 前瞻討論邊界警語（強制溝通約束）**：
-  - 實作代碼 100% 嚴格以 Retail 12.1.0 為正式發布基準。凡討論牽涉到 12.1.5 的任何內容，**回覆結尾均必須明確聲明並確認「12.1.5 的部分目前僅為技術備存／研究，尚不可進入代碼實作，一切實作嚴格以 12.1.0 正式服發布為準」**。
+- **12.1.5 解鎖實作與跨版本防禦性相容原則（12.1.5 Unlocked & Cross-Version Compatibility）**：
+  - 專案已全面正式解鎖 Retail 12.1.5（TOC: 120105）環境之代碼實作，不僅限於研究備存。
+  - 核心架構採**漸進增強（Progressive Enhancement）與防禦性能力檢定（Capability Gate）**：凡引進 12.1.5 新特性（如原生 C++ 數學加速、TimedSignalMap 排程器、原生動畫、GetRefreshCarryOverDuration 精準結餘等），必須提供安全向下相容降級封裝（Defensive Polyfills / Fallbacks），確保代碼在 Retail 12.1.5、Retail 12.1.0 與 XPTR 12.0.7 等多版本客戶端中 100% 平穩運行、零報錯。
+  - 移除先前的「12.1.5 僅為技術備存／研究，尚不可進入代碼實作」限制及對話結尾強制宣告約束。
+  - **12.1.5 PTR 主力實機測試與 10/15 正式服發布對齊**：雖然 10/15 正式服才會上線 12.1.5，但當前開發以 12.1.5 PTR 為主力實機測試環境。
+  - **每輪需求與分派 Subagent 必查 Warcraft Wiki API 變更機制（Proactive API Change Intelligence Protocol）**：
+    - 主代理在每輪需求規劃前、以及分派任何涉及 API / 架構 / 事件 / 光環 / 冷卻 / 框架的 Subagent 任務時，**必須主動造訪與檢索魔獸世界官方 API 變更 Wiki 網頁（`https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes`）**。
+    - 持續追蹤最新 PTR build（例如 PTR 1 Build 69594、PTR 2 Build 69848、PTR 3 Build 69952 等後續持續更新版本）的最新變更情報。
+    - 派工給 Subagent 的 Prompt 必須強制注入當前最新的 API 變更情報，或指示 Subagent 調研最新差異，嚴禁使用過期或猜測的 API 假設。
+- **工具鏈執行環境評估與優先級原則（Toolchain Evaluation & Precedence: uv > Node.js > Python）**：
+  - 現有及未來新增之 Python 腳本，必須依據是否含第三方依賴、標準庫純度與隔離需求逐一評估最佳執行環境（含第三方套件依賴者一律採 `uv run` + PEP 723 內嵌宣告；純標準庫者由輕量 Python 執行）。
+  - Node.js 不得盲目引入，僅在技術評估確認為「最佳化選擇」（如 NPM 專屬生態、現代前端/AST 工具、或 UI Extension Sidecar）時採用；且若採用 Node.js，亦須評估合適的包管理器與建置環境：優先評估 **`pnpm`**（全域硬連結快取、極省硬碟、杜絕幽靈依賴，本機已就位 v11.14.0），臨時 CLI 工具使用 **`pnpm dlx` / `npx`**，建置工具依需求評估搭配極速方案（如 `esbuild`, `tsup`, `vite`），標準 `npm` 作為無額外依賴時之純淨備援。
+  - 總體執行架構遵循：**`uv` 優先 > `Node.js` (評估最佳化後選用合適包管理器) > 全域 `Python` 備援**；嚴禁未經確認使用全域 `pip install` 污染本機系統 Python 環境（`C:\Python314`）。
 
 ## 社群技能庫（skills.sh 與 lobehub.com）檢索與候選規則
 
@@ -37,6 +48,23 @@
   - 任何時效性更迭、API 簽名變更、受保護/秘密屬性（Secret Values）、Taint 阻斷、或與現有架構的衝突，**一律以本專案最新《.AI/Docs/25_RETAIL_API_CHANGE_INTELLIGENCE.md》、專屬技能 `eam-api-change-intel` 以及暴雪最新 PTR/XPTR 實機證據為唯一最高裁決依據（Strict Precedence）！**
   - 嚴禁盲從外部 Skill 中的無保護或舊版寫法；凡涉及 12.0.7 / 12.1.0 變更者，必須嚴格通過 `eam-secret-taint-sentinel` 審查與專案防禦性封裝（Fallback Wrappers / Capability Gate）。
 
+## WoW AddOn 開發與 MCP / 工具路由權威政策（MCP / Tool Routing Policy）
+
+所有在專案中執行之 Agent 與 Subagent 必須嚴格遵守 [`.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md`](.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md) 與專屬技能 `wow-mcp-tool-routing`：
+
+1. **核心原則：不要相信模型記憶中的 WoW API**：
+   - WoW API 是高度版本化、持續變動的系統。任何 API 存否、簽名、參數、回傳值、Event Payload、Enum、Structure、Widget 方法、CVar、廢棄替代等，**禁止憑記憶猜測或發明**，必須優先查詢 MCP、實際 Client、Blizzard UI Source 或官方資料。
+2. **六大 WoW MCP 責任分工與實證階梯（Evidence Ladder）**：
+   - `annoft/wow-casc`：**本地 CASC 實證層（Local Client Ground Truth）**。本機實際安裝 Client 是否存在某檔案、當前 Build 的實際 Lua/XML/FrameXML、BLP 材質與真實 Blizzard 內建 AddOn 內容。
+   - `Nighthawk42/wow_api_mcp`：**主要 API 智慧情報層（Primary WoW API Intelligence）**。API 文件、版本差異（`diff_api`）、Blizzard UI Source 搜尋（`search_source`）、Wiki 查證。
+   - `RdyGaming/hated-wow-mcp`：**開發驗證工具箱（AddOn Development Toolbox）**。工程驗證、`wow_lua_lint`、`wow_xml_validate`、`wow_toc_validate`、XML Template/Mixin/CVar 檢索、Atlas/圖示搜尋。
+   - `juemrami/wow-dev-mcp`：**全域字串與在地化（Global Strings & Localization）**。全域字串多語系翻譯對照、官方原生用詞重用、全域 API 清單。
+   - `spartanui-wow-api`：**結構化 API 快查（Fast Structured API Reference）**。`list_deprecated` 廢棄函式與替代方案查詢、Widget 方法、Enum 與 Event 快查。
+   - `brunofin/wow-mcp`：**暴雪官方 Web API（Battle.net REST API）**。專用於英雄榜、裝備、大密境、成就時間軸等 Web 資料，**嚴禁混淆為 AddOn Lua 執行期 API**。
+3. **最小修改原則與架構決策守護**：
+   - 優先 Localized Fix，非必要不重構。已記錄之 Accepted Architecture Decision（ADR）未經新證據否定不得因個人偏好推翻。
+4. **強制驗證與報告規範**：
+   - 修改 Lua 後執行 `wow_lua_lint`，修改 XML/TOC 後執行對應驗證工具；遵循標準 Evidence 報告格式（Target Flavor/Build、Problem、Evidence、Changes、Compatibility、Validation、Risks/Unknowns）。
 
 ## 必讀文件
 在更改程式碼之前，請先閱讀以下文件：
@@ -75,6 +103,8 @@
 - `.AI/Docs/31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md`
 - `.AI/Docs/32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md`
 - `.AI/Docs/33_AI_GOVERNANCE_DIRECTIVE.md`
+- `.AI/Docs/34_CURSEFORGE_MARKDOWN_AUTHORING_GUIDE.md`
+- `.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md`
 - `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`
 - `.AI/Data/ProjectContinuity.json`
 
@@ -255,6 +285,7 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 - 派工時必須明確指定檔案責任範圍、禁止事項、備份規則、驗證輸出及最終回傳格式。
 - 子代理的查證結果必須由主代理整合核實；嚴禁將子代理的 API 判定直接視為已實機驗證。
 - 所有協作與 PR 審查必須遵循 `.AI/Docs/21_RACI_EXPERTS_MATRIX.md` 的權責分工與審查原則。
+- **子代理 API 變更即時探測協議**：派發涉及 WoW API、FrameXML、原生光環、冷卻、事件或底層工具之子代理時，Prompt 必須明確注入或指示其調研 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes` 之最新情報（目前基準為 PTR 3 Build 69952），嚴禁依賴過期假設或猜測參數。
 
 ## 機密憑證與 Token 安全防護規範 (Secret & Token Security Governance)
 
@@ -298,7 +329,22 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 9. 尚未執行的實機驗證項目。
 10. WoW 正式服實機測試需求與步驟。
 11. 已知限制與潛在風險。
-12. 下一步建議任務。
+12. **🚨 主動故障預測與威脅推論（Proactive Failure Prediction & Threat Inference）**：
+    - 高機率邊緣異常（時序、競態、施法延遲、彈道時間、目標狀態突變等）。
+    - 中機率引擎與視覺邊界異常（次像素外框抖動、視窗縮放比例、音效節流鉗位、元表防護嚴格模式等）。
+    - 低機率致命風險（戰鬥中 Taint 擴散、Action Blocked 限制、Secret 運算越界、GC 負載峰值等）。
+    - 實機排查技巧與立即對策指引。
+13. 下一步建議任務。
+
+## 開發完成主動執行故障預測與威脅推論原則 (Proactive Failure Prediction & Threat Inference Protocol)
+
+- **核心宗旨**：任何開發、修復或架構重構完成時，**嚴禁僅回報「已修改完成、測試全過」即草草收尾**；必須主動換位思考，站在魔獸世界正式服戰鬥環境、底層 C++ 引擎邊界、網路延遲與極端玩家操作視角，進行深度故障預測與威脅推論。
+- **推論架構四維度**：
+  1. **高機率邊緣異常**：長距離法術彈道時間差（如 40 碼冰霜長矛飛行時間超過採樣視窗）、目標狀態突變（碎冰凍結判定與目標提前解除）、引導中斷瞬態時序衝突。
+  2. **中機率引擎邊界異常**：不同解析度（1080p vs 2K vs 4K）之次像素外框縫隙、音效節流超過引擎最大容許時長（如 12.1.5 PTR 4 限制 > 5s 拋錯拒絕）、元表嚴格模式下的屬性存取崩潰。
+  3. **低機率致命風險**：戰鬥中調用未受保護之受限 UI 方法引發 `ADDON_ACTION_BLOCKED`、戰鬥中數值為 Secret 時進行 Lua 大小比較引發崩潰、狀態物件池洩漏導致長時間遊戲記憶體暴增。
+  4. **實機排查手法與立即防護措施**：提供玩家在遊戲內快速驗證（例如木樁距離切換測試、極速連按測試、頻繁切換目標測試）之具體操作與降級排查手法。
+
 
 ## 專案歷史里程碑與核心重構摘要
 

@@ -50,7 +50,7 @@
 | 12.0.5 | `120005` | `6747894`，2026-06-19 08:48:14 | Formatter、DurationObject 零區間行為、Aura 布林值秘密性調整、`table.freeze`／predicate 變更；預告 Aura overhaul | Capability gate 必須檢查能力而非散落 patch 字串；先保留穩定路徑 |
 | 12.0.7 | `120007` | `6747893`，2026-06-19 08:46:57 | `C_DurationUtil.CreateDurationTextBinding`；受限 unit token 改回傳 nil／預設；`debugstack`／`debuglocals` 秘密傳播；Aura refactor 指向 12.1 | 目前活動基線；錯誤與除錯輸出也可能攜帶秘密性，Aura 抽取架構需準備退場 |
 | 12.1.0 | `120100` | `6749767`，2026-06-20 05:57:01 | AuraContainer／AuraButton、Private Script Objects、Forbidden Partition／Aspects；受限 UnitAura 資料可能全為 secret 或 nil | 既有逐 AuraData／spellID 抽取模型屬 P0 相容性風險；PTR 內容仍需持續追 revision 與實機 |
-| 12.1.5 | `120105` | `69952`，2026-10-02 18:00:00 | C_Timer.NewTimedSignalMap、C_UnitAuras.GetRefreshCarryOverDuration、AddPandemicActive/Enter/LeaveAnimation、AddAuraSound throttleSeconds、C++ math/table/string 加速、CreateFrameWithOptions、SetRoundLayoutToNearestPixel；移除 10 大舊時代相容模組 (Blizzard_Deprecated) | 實裝 TimedSignalMap 原生排程、精準 Pandemic 窗口與 C++ 工具 polyfills，全面移除 deprecated 依賴 |
+| 12.1.5 | `120105` | `6912957` / `6905828`，2026-10-09 19:28:37 | C_Timer.NewTimedSignalMap、C_UnitAuras.GetRefreshCarryOverDuration、AddPandemicActive/Enter/LeaveAnimation、AddAuraSound (限長5s且throttle<=5s)、C_Intl、C_Weather、C++ math/table/string 加速、CreateFrameWithOptions、SetRoundLayoutToNearestPixel；移除 10 大舊時代相容模組 (Blizzard_Deprecated) | 實裝 TimedSignalMap 原生排程、精準 Pandemic 窗口、C++ 工具 polyfills，全面移除 deprecated 依賴，並嚴格遵循 5s 音效節流限制 |
 
 ## 5. 變更脈絡
 
@@ -242,29 +242,147 @@ P0 邊界：不得從 AuraData 讀取／推導 sound trigger，不得保存 regi
 - [12.1.0.69273 Trigger enum](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitAuraConstantsDocumentation.lua)
 - [12.1.0.69273 UnitAuraSoundInfo](https://github.com/Gethe/wow-ui-source/blob/6e348870ed8f93d95f0cd16d299b51dbce500296/Interface/AddOns/Blizzard_APIDocumentationGenerated/UnitConstantsDocumentation.lua)
 
-## 2026-09-19：12.1.5 INTRINSIC_AuraButton 前瞻技術備存（R&D Staged / 非 12.1.0 發布基準）
+## 2026-09-19 / 2026-10-09：12.1.5 全面解鎖實作與 PTR 1 ~ PTR 4 官方變更與注意事項沉澱
 
-### 1. 開發邊界與發布準則（鐵律）
+### 1. 開發邊界與發布準則（Alpha 8.8 升級）
 
-- **測試環境現狀**：因暴雪關閉 12.1 PTR，本機開發與測試暫於 12.1.5 PTR 進行。
-- **發布基準鎖定**：對外正式發布之目標環境為 **Retail 12.1.0（TOC: 120100）**。
-- **實作紅線**：代碼實作 **100% 嚴格以 12.1.0 為主**，維持以 `AuraContainerService.lua` 與 `NativeAuraRenderer.lua` 為核心之 12.1.0 相容架構；**絕對禁止在 12.1.0 發布分支中提前使用 12.1.5 專屬 API（如 `CreateFrame("AuraButton")`）**，以防廣大 12.1.0 玩家客戶端因 API 缺失而報錯崩潰。本段落僅作為技術備存。
+- **開發環境解鎖**：已全面解鎖 Retail 12.1.5（TOC: 120105）環境之代碼實作，不僅限於研究備存。
+- **主力實機測試與發布目標**：雖 10/15 正式服才會全面上線 12.1.5，但當前開發以 **12.1.5 PTR 為主力實機測試環境**。
+- **漸進增強與跨版本防禦相容**：凡引入 12.1.5 專屬 API（如 `C_Timer.NewTimedSignalMap`、`AddPandemicActiveAnimation`、`C_UnitAuras.GetRefreshCarryOverDuration`、`math.clamp`、`table.isempty` 等），必須封裝安全能力檢定閘門（Capability Gate）與高效率 Lua 降級實作（Fallback Polyfills），確保代碼在 Retail 12.1.5、Retail 12.1.0（120100）與 XPTR 12.0.7（120007）客戶端中 100% 平穩運行、零報錯。
+- **每輪需求必訪 Wiki 協議**：主代理與所有分派之 Subagent，每輪任務均必須主動探訪 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes` 與 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes`，追蹤最新 PTR Build 演進。
 
-### 2. 12.1.5 INTRINSIC_AuraButton 規格摘要
+### 2. 12.1.5 PTR 1 / PTR 2 / PTR 3 / PTR 4 最新情報深入解析
 
-- **固有類型**：`CreateFrame("AuraButton", nil, UIParent, "CustomAuraButtonTemplate")`（由 Button 繼承之 Intrinsic Frame）。
-- **關鍵能力**：
-  1. **獨立一級公民**：脫離 12.1.0 必須寄生於 `AuraContainer` 的被動依賴，允許插件直接以 `Button` 級別建立單顆獨立光環。
-  2. **原生單向 Sinks**：`SetDurationBar`、`SetDurationCooldown`、`SetDurationText`、`SetApplicationCount`、`SetSpellName`、`SetCasterName`、`SetIcon`。
-  3. **解綁與熱替換方法群**：提供 `ClearDurationText()`、`ClearApplicationCount()`、`ClearSpellName()`、`ClearDurationBar()`、`ClearDurationCooldown()`、`ClearIcon()`。
-  4. **原生 Pandemic 狀態機**：`AddPandemicActiveAnimation`、`AddPandemicEnterAnimation`、`AddPandemicLeaveAnimation`、`AddPandemicRegion`，徹底由 C++ 引擎接管 30% 臨界值判定。
-  5. **原生驅散著色**：`AddDispelTypeTexture`、`SetDispelTypeText`。
-  6. **安全右鍵取消**：`SetCancelAuraButtons`。
+依據 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes`（Revision `6912957`）與 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes`（Revision `6905828`）：
 
-### 3. 未來架構潛力（待 12.1.5 正式推進時之 R&D 藍圖）
+#### 📅 PTR 1 (2026-09-03, Build 69594)
+- **原生 Pandemic 動畫管線 (`CustomAuraButton`)**：
+  - `AddPandemicEnterAnimation(animGroup)`：進入補 DoT 窗口單次觸發（適合單次閃爍/進場動畫）。
+  - `AddPandemicActiveAnimation(animGroup)`：窗口內持續播放發光/脈動動畫（適合循環動畫）。
+  - `AddPandemicLeaveAnimation(animGroup)`：脫離窗口平滑停止。
+  - **Forbidden Aspects 擴充**：新增 `QueryAnimationProgress`（禁止查詢動畫進度與運行狀態）與 `AddAnimations`（禁止動態掛載/改綁 Parent）。動畫本身具備 `ChangeAnimationTarget` 切面限制。
+- **Region 參考傳參與破壞性變更**：
+  - `AddPandemicRegion(region)` 與 `AddDispelTypeTexture(texture, options)` 不再返回 index，重複加入同一物件會拋出 Fatal Error。
+  - `RemovePandemicRegion(region)` 與 `RemoveDispelTypeTexture(texture)` 必須傳遞 Region 物件參考本身。
+  - `CustomAuraButton:SetCasterName(fontString)`：原生字串綁定施法者名稱。
+  - CVar `tooltipShowAuraCasterNames`：支援在光環浮動提示顯示施法者，並依陣營/職業上色。
+  - `CustomAuraContainer` 控制：支援 `SetAuraGroupEnabled`、`SetAuraSlotEnabled`、`SetItemEnchantmentEnabled`、`SetEditModePreviewEnabled` 及 `minApplications`。
+- **AddOn 安全性防禦**：
+  - 受保護的 Cooldown 框架（Protected Cooldown Frame）禁止由 Tainted 程式碼調用 `SetCooldown` 與 `Clear`。
+  - Castbar ID 改為依 unit token 大小寫唯一化（例如 `"PLAYER"` 與 `"player"` 回傳不同 ID），事件統一使用小寫 token。
+- **C++ 排程器革命 (`TimedSignalMap`)**：
+  - `C_Timer.NewTimedSignalMap(callback)`：單一回呼支援數千 key 註冊，支援 `SignalAt(key, time)` 原位重設且無須取消操作，零閉包分配、零 GC 壓力。
+  - `TimerUtil.CreateTimedSignalCallbackMap()`：官方 FrameXML 便捷封裝。
+- **底層原生 C++ 加速與佈局**：
+  - `CreateFrameWithOptions({ frameType = "Frame", hidden = true })` 杜絕建立即顯示閃爍。
+  - `ScriptRegion:SetRoundLayoutToNearestPixel(true)` 原生硬體像素對齊，取代 Lua `PixelUtil`。
+  - 暴雪底層 C++ 函式庫：`math.clamp`、`math.saturate`、`math.round`、`math.lerp`、`math.normalize`、`math.sign`、`math.remap`、`math.wrap`、`math.isfinite`、`math.isnan`、`math.isinf`；`string.contains`、`string.ltrim`、`string.rtrim`、`string.startswith`、`string.endswith`；`table.isempty`、`table.contains`、`table.indexof`、`table.removeunordered`、`table.removevalue`、`table.keys`、`table.values`。
+- **拔除 10 大相容庫**：`Blizzard_DeprecatedItemScript`、`Blizzard_DeprecatedSoundScript`、`Blizzard_DeprecatedCurrencyScript` 等徹底移除，EAM 維持 100% `C_Item.*` 與現代 API。
+- **新命名空間**：`C_Weather` (`GetCurrentWeather`, 事件 `WEATHER_CHANGED`) 與 `C_Intl`（Unicode / 國際化支援庫）。
 
-- **解除「18 次重建必須 /reload」限制**：12.1.0 因無解綁 API 且 Container 重建上限為 18 次（`maxCreatedContainerCount = 18`），導致頻繁變更字型或技能時被迫要求玩家重載介面。12.1.5 單元化獨立後，可改為單顆按鈕建立/釋放，徹底告別 Container 配額壓力。
-- **光環字型大小免 /reload 即時熱套用**：未來在 12.1.5 可利用 `ClearDurationText()` 先解綁文字 Sink，重新 `SetFont` 後再 `SetDurationText()`，實現字型大小、樣式調整的 100% 平滑即時熱套用。
+#### 📅 PTR 2 (2026-09-16, Build 69848)
+- **`CustomAuraButton` 完整生命週期動畫**：
+  - 新增 `AddAuraShownAnimation(animGroup)` 與 `AddAuraAssignedAnimation(animGroup)`，原生處理光環初次顯示與 slot 指派動畫。
+- **Secret Aspects 擴展**：
+  - `Enum.SecretAspect.VertexColor` 與 `Enum.SecretAspect.TexCoords` 納入受限切面，避免透過頂點著色或 UV 貼圖逆向刺探戰鬥秘密。
+- **音效節流保護**：
+  - `C_UnitAuras.AddAuraSound` 支援選填 `throttleSeconds`（如 0.3s），由 C++ 引擎自動節流高頻刷新音效。
+- **單位框架工具庫 (`UnitFrameUtil`) 引入**：
+  - 官方提供安全的 `UnitFrameUtil.UpdateUnitPvPIndicator` 等渲染通道，解決單位框架存取秘密屬性之 Taint 阻斷。
+  - `C_Intl` 支援 Tainted 秘密字串（但禁止 `Null`/`Remove` 轉譯），索引修正為 1-based。
+  - Enemy Nameplate 獲得額外 1 幀命中框調整窗口 (`UNIT_CLASSIFICATION_CHANGED`)。
+- **雜項優化**：
+  - Chat tab 移除 `UIFrameFlash` 降低全域 Taint。
+  - `C_ClassColor.GetClassColor` 支援可選 tint。
+  - 恢復 3 個 CVars：`nameplateMotionSpeed`、`nameplateBottomInset`、`nameplateTopInset`。
+
+#### 📅 PTR 3 (2026-09-22, Build 69952)
+- **競技場敵方專精 Secret 屬性化**：
+  - `GetArenaOpponentSpec` 正式回傳 Secret，一般插件不得直接讀取；必須透過 `UnitFrameUtil.GetArenaOpponentSpecDisplayInfo`、`UpdateArenaOpponentSpecDisplay` 與 `UpdateArenaOpponentSpecDisplayName` 進行原生安全顯示。
+- **角色職責圖示安全通道**：
+  - `UnitFrameUtil.GetUnitRoleIconDisplayInfo` 與 `UpdateUnitFrameRoleIcon`（支援 `textureMap` 參數）。
+- **`C_UnitAuras.GetRefreshCarryOverDuration` 精準結餘**：
+  - 暴雪官方提供精準 Pandemic 結餘計算（如德魯伊生命之花等具備超額 Carry-Over 的技能），解決自製 30% 臨界值計算偏差問題。
+
+#### 📅 PTR 4 (2026-09-29, Build 70077, 官方最終 PTR 基準)
+- **`C_UnitAuras.AddAuraSound` 安全防禦限縮**：
+  - 播放的音效檔案長度強制限制最長 5 秒。
+  - `throttleSeconds` 參數若大於 5 秒將直接拒絕（Reject）。EAM 預設傳入 `0.3s`，完全處於合規安全區。
+- **`C_Intl.GetSortKey` 容錯加固**：
+  - 修復傳入空字串與 `Enum.CollationStrength.Primary` 時回傳 `nil` 之異常。
+
+### 3. 12.1.5 INTRINSIC_AuraButton 與架構 R&D 藍圖
+
+- **固有類型**：`CreateFrame("AuraButton", nil, UIParent, "CustomAuraButtonTemplate")`（Button 繼承 Intrinsic Frame）。
+- **獨立一級公民**：脫離 12.1.0 `AuraContainer` 寄生限制，允許以 Button 獨立建立單顆光環。
+- **原生單向 Sinks 與解綁方法群**：
+  - Sinks: `SetDurationBar`、`SetDurationCooldown`、`SetDurationText`、`SetApplicationCount`、`SetSpellName`、`SetCasterName`、`SetIcon`。
+  - 解綁: `ClearDurationText()`、`ClearApplicationCount()`、`ClearSpellName()`、`ClearDurationBar()`、`ClearDurationCooldown()`、`ClearIcon()`。
+- **解除「18 次重建必須 /reload」限制**：12.1.5 單元化獨立後，可改為單顆按鈕建立/釋放，徹底告別 Container 18 次配額死鎖。
+- **字型大小即時熱套用**：利用 `ClearDurationText()` 先解綁文字 Sink，重新 `SetFont` 後再 `SetDurationText()`，實現字型大小、樣式調整的 100% 平滑即時熱套用。
+
+### 4. 12.1.5 Consolidated Changes 總清冊與各系統分類 (Build 69594 ~ 70077)
+
+#### (1) 全域 API (Global APIs)
+- **新增 (82)**：
+  - **光環與冷卻相關**：`C_UnitAuras.GetRefreshCarryOverDuration`、`C_UnitAuras.GetAuraCasterGUID`、`C_AuraContainerUtil.ProcessCustomAuraButtonCasterNameOptions`、`C_Timer.NewTimedSignalMap`、`CreateFrameWithOptions`、`GetScriptBucketThrottleLimits`、`GetTextureMetatable`。
+  - **動作列與巨集**：`C_ActionBar.IsMacroActionWithShowTooltip`。
+  - **環境與 PvP**：`C_Weather.GetCurrentWeather`、`C_LFGInfo.GetActiveLFGDungeonName`、`C_PvP.GetRandomTrainingGroundArenaRewards`、`C_PvP.GetRandomTrainingGroundBGRewards`、`C_PvP.HasRandomTrainingGroundArenaWinToday`、`C_PvP.HasRandomTrainingGroundBGWinToday`、`C_PvP.IsTrainingGroundsArena`、`C_PvP.IsTrainingGroundsBG`、`C_PvP.JoinRandomTrainingGroundBG`。
+  - **C++ 原生加速庫 (Math/String/Table)**：`math.clamp`、`math.saturate`、`math.round`、`math.lerp`、`math.normalize`、`math.sign`、`math.remap`、`math.wrap`、`math.isfinite`、`math.isnan`、`math.isinf`；`string.contains`、`string.ltrim`、`string.rtrim`、`string.startswith`、`string.endswith`；`table.isempty`、`table.contains`、`table.indexof`、`table.removeunordered`、`table.removevalue`、`table.keys`、`table.values`、`table.getcountinfo`。
+  - **C++ 相容別名導出**：`Clamp`、`CountTable`、`GetKeysArray`、`GetValuesArray`、`Lerp`、`Round`、`RoundToSignificantDigits`、`Saturate`、`Sign`、`TableIsEmpty`、`tContains`、`tDeleteItem`、`tIndexOf`、`tUnorderedRemove`。
+  - **國際化庫 (`C_Intl`) (24)**：`CompareStrings`、`CreateLocaleContext`、`FindBreaks`、`FindStringMatches`、`FoldCase`、`FormatCurrency`、`FormatDate`、`FormatDateTime`、`FormatNumber`、`FormatTime`、`GetCharacterProperties`、`GetCurrencyFractionDigits`、`GetCurrencyName`、`GetCurrentLocale`、`GetDisplayName`、`GetSortKey`、`IsNormalized`、`Length`、`Normalize`、`ParseCurrency`、`ParseNumber`、`SelectPlural`、`ToLower`、`ToTitle`、`ToUpper`、`TransformLocale`、`Transliterate`。
+- **移除 (4)**：`C_PvP.GetRandomTrainingGroundRewards`、`C_PvP.HasRandomTrainingGroundWinToday`、`C_PvP.JoinRandomTrainingGroundBattleground`、`C_TableUtil.FindIndexedMismatch`。
+
+#### (2) FrameXML 工具函數
+- **新增 (29)**：
+  - `ChatFrameUtil`: `GetTabAlphas`、`IsTabAlerting`、`SetTabAlerting`、`SetTabAlphas`、`StartFlash`、`StartSyncedFlash`、`StopFlash`。
+  - `UnitFrameUtil`: `GetArenaOpponentSpecDisplayInfo`、`GetUnitPvPIndicatorDisplayInfo`、`GetUnitRoleIconDisplayInfo`、`UpdateArenaOpponentSpecDisplayName`、`UpdateArenaOpponentSpecDisplay`、`UpdateUnitFrameRoleIcon`、`UpdateUnitPvPIndicator`。
+  - `TimerUtil`: `CreateTimedSignalCallbackMap`。
+  - `PixelUtil`: `SetRoundLayoutToNearestPixelRecursively`。
+  - `CombatAudioAlertUtil`: `EnumeratePulseHealthPercentInfo`、`GetCurrentPulseHealthPercentInfo`、`GetPulseHealthPercentInfo`、`GetPulseHealthSoundKit`、`SetPulseHealthSoundKit`。
+  - 其他：`MarchingAnts_Create`、`MarchingAnts_CreateAsChildOf`、`MarchingAnts_CreateForTarget`、`CompactUnitFrame_GetOptionDispelIndicatorAnimatedBorder`、`GenericTraitUtil.GetKnownTreeIDs`、`GetTimeSinceLastQuestProgress`、`HousingFramesUtil.MoveLayoutCameraFloor`、`QuestMapLog_GetStoryTooltip`。
+- **移除 (15)**：舊時代全域 Lua 實現（`Clamp`、`CountTable`、`GetKeysArray`、`GetValuesArray`、`Lerp`、`Round`、`RoundToSignificantDigits`、`Saturate`、`Sign`、`StringContains`、`TableIsEmpty`、`tContains`、`tDeleteItem`、`tIndexOf`、`tUnorderedRemove` 全部移入 C++）。
+
+#### (3) ScriptObjects 方法群
+- **新增 (30)**：
+  - `TimedSignalMap` (8)：`CancelAllSignals`、`CancelSignal`、`GetNextSignal`、`GetSignalCount`、`GetSignalTime`、`HasSignal`、`SignalAfter`、`SignalAt`。
+  - `LocaleContext` (22)：`CompareStrings`、`FindBreaks`、`FindStringMatches`、`FoldCase`、`FormatCurrency`、`FormatDate`、`FormatDateTime`、`FormatNumber`、`FormatTime`、`GetCurrencyName`、`GetDisplayName`、`GetLocale`、`GetSortKey`、`Length`、`ParseCurrency`、`ParseNumber`、`SelectPlural`、`SetLocale`、`ToLower`、`ToTitle`、`ToUpper`、`TransformLocale`。
+
+#### (4) Widgets 與 Events
+- **Widget 新增 (2)**：`ScriptRegion:GetRoundLayoutToNearestPixel()`、`ScriptRegion:SetRoundLayoutToNearestPixel(enabled)`。
+- **Events 新增 (1)**：`WEATHER_CHANGED`。
+
+#### (5) 控制台變數 (CVars) (12)
+- `tooltipShowAuraCasterNames` (預設 0, Account)：光環浮動提示顯示施法者。
+- `tooltipShowAuraSpellIDs` (預設 0, Game)：修正本地化與著色問題。
+- `minimapShowPlayerCoords` (預設 1, Account)：小地圖顯示玩家座標。
+- `coordsByTenths` (預設 1, Account)：座標顯示至十分位數。
+- `CAAPulsePlayerHealthPercent` (預設 0, Account)：低血量循環脈衝警示音。
+- `CAAPulsePlayerHealthVolume` (預設 100, Account)：低血量警示音量。
+- `nameplateMotionSpeed` (預設 0.025, Game)：名條移動平滑速率。
+- `nameplateBottomInset` (預設 0.100, Game) / `nameplateTopInset` (預設 0.080, Game)：名條螢幕上下邊距。
+- `raidFramesDispelIndicatorAnimatedBorder` (預設 0, Character)：驅散指示器動畫邊框。
+- `dumpSmallAlloc` (Game 命令)：小型分配偵錯。
+- `maximumConnectionAttempts` (預設 2, Net)：QUIC 連線重試上限。
+- `winePlatformTTS` (預設 0, Game)：Wine 平臺 TTS 開關。
+
+#### (6) 徹底移除的 10 大 Deprecated 套件
+- `Blizzard_DeprecatedCurrencyScript`、`Blizzard_DeprecatedGlue`、`Blizzard_DeprecatedItemScript`、`Blizzard_DeprecatedItemSocketInfo`、`Blizzard_DeprecatedLFG`、`Blizzard_DeprecatedPetInfo`、`Blizzard_DeprecatedPvpScript`、`Blizzard_DeprecatedSoundScript`、`Blizzard_DeprecatedTradeInfo`、`Blizzard_DeprecatedWorldElapsedTimerTypes`。
+
+### 5. EAM 核心模組對齊與防禦策略矩陣
+
+| EAM 模組 | 涉及 12.1.5 API / 行為 | 防禦策略與落地架構 | 當前狀態 |
+| --- | --- | --- | --- |
+| `Core/Scheduler.lua` | `C_Timer.NewTimedSignalMap`、`TimedSignalMap:SignalAt` | 封裝能力檢定閘門，優先調用 C++ 原位重設排程器；降級至基底 OnUpdate / Timer 鏈；uint32 floor 與 pcall 隔離防護 | ✅ 已落地 |
+| `UI/NativeAuraRenderer.lua` | `AddPandemicActive/Enter/LeaveAnimation`、`AddDispelTypeTexture`、`AddPandemicRegion` | 嚴格依 Region 物件參考傳參；以 `hasPandemicAnimation` 探針安全掛載；禁止查詢動畫進度 (Forbidden Aspect) | ✅ 已落地 |
+| `Services/CooldownService.lua` | Cooldown 框架 Taint 限制、法術覆蓋與先驗冷卻 | 獨立 Frame 創建杜絕暴雪保護框架污染；施法優先級重啟；引導技能 0ms 先驗冷卻；60ms 自適應突發 CDR 採樣器 | ✅ 已落地 |
+| `Services/AuraService.lua` | `C_UnitAuras.AddAuraSound` | 嚴格防禦性限制：音效播放長度 $\le 5$ 秒，`throttleSeconds` 傳入 `0.3s`（保證 $< 5.0\text{s}$），杜絕高頻音效轟炸與 API 拋錯 | ✅ 已落地 |
+| `Core/Util.lua` | 原生 C++ `math.*`、`table.*`、`string.*` | 建立安全封裝層（`Util.clamp`、`Util.lerp`、`Util.tableIsEmpty` 等），優先調用底層 C++ 加速，提供零除零與 NaN 防禦降級 | ✅ 已落地 |
+| `UI/Renderer.lua` | `SetRoundLayoutToNearestPixel`、`CreateFrameWithOptions` | 建立框架時若支援 `CreateFrameWithOptions` 採用 `hidden=true`；對 Alert 圖示啟用像素四捨五入對齊消除模糊抖動 | ✅ 已落地 |
+| 全專案依賴 | 拔除 10 大 Deprecated 套件 | 全面清查並確認 100% 使用 `C_Item.*`、`C_Sound.*`、`C_CurrencyInfo.*`，零舊版相容庫依賴 | ✅ 100% 合規 |
 
 固定來源：
+- [Warcraft Wiki：Patch 12.1.5/API changes](https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes)（Revision `6912957`，2026-10-14 01:55:36 UTC，Build `69952 ~ 70077`）
+- [Warcraft Wiki：Patch 12.1.5/API changes/notes](https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes/notes)（Revision `6905828`，2026-10-09 19:28:37 UTC）
 - [Warcraft Wiki：INTRINSIC_AuraButton](https://warcraft.wiki.gg/wiki/INTRINSIC_AuraButton)（Revision `6878724`，2026-09-19 00:19:09 UTC）
+

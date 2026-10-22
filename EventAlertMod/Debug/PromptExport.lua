@@ -655,6 +655,48 @@ function PromptExport.buildDetailed()
         end
     end
     add(table.concat(logList, ",\n"))
+    add('\n  ],\n')
+
+    -- Cooldown & Override Flight Trace
+    add('  "cooldownTrace": [\n')
+    local traceBuffer = {}
+    local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
+    if cdTrace and cdTrace.entries and cdTrace.count > 0 then
+        local max = cdTrace.maxEntries or 300
+        local count = cdTrace.count
+        local startIndex = (count == max) and (cdTrace.head + 1) or 1
+        for i = 0, count - 1 do
+            local idx = ((startIndex - 1 + i) % max) + 1
+            local entry = cdTrace.entries[idx]
+            if entry then
+                local detailsStr = ""
+                if type(entry.details) == "table" then
+                    local dParts = {}
+                    for k, v in pairs(entry.details) do
+                        table.insert(dParts, tostring(k) .. "=" .. tostring(v))
+                    end
+                    detailsStr = table.concat(dParts, ", ")
+                elseif entry.details then
+                    detailsStr = tostring(entry.details)
+                end
+                local cdStr = "null"
+                if entry.cd then
+                    cdStr = string.format('{"startTime":%.2f,"duration":%.2f,"isOnGCD":%s,"isEnabled":%s}',
+                        entry.cd.startTime or 0, entry.cd.duration or 0, tostring(entry.cd.isOnGCD), tostring(entry.cd.isEnabled))
+                end
+                table.insert(traceBuffer, string.format('    {"time":%s,"event":%s,"spellID":%s,"spellName":%s,"overrideID":%s,"cd":%s,"details":%s}',
+                    safeJsonStr(entry.time),
+                    safeJsonStr(entry.event),
+                    tostring(entry.spellID or 0),
+                    safeJsonStr(entry.spellName),
+                    tostring(entry.overrideID or "null"),
+                    cdStr,
+                    safeJsonStr(detailsStr)
+                ))
+            end
+        end
+    end
+    add(table.concat(traceBuffer, ",\n"))
     add('\n  ]\n')
 
     add("}")

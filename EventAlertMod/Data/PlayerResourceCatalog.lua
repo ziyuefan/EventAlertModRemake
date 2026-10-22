@@ -70,22 +70,22 @@ local function define(key, fallbackPowerType, token, legacyConfigKey, icon, name
 end
 
 local MANA = define("MANA", 0, "MANA", "powerMana", 136096, "EAM_RESOURCE_MANA", "法力", "BAR", nil, { 0.10, 0.45, 1.00, 1.00 })
-local RAGE = define("RAGE", 1, "RAGE", "powerRage", 132344, "EAM_POWER_RAGE", "怒氣", "BAR", nil, { 0.90, 0.10, 0.10, 1.00 })
+local RAGE = define("RAGE", 1, "RAGE", "powerRage", 132344, "EAM_RESOURCE_RAGE", "怒氣", "BAR", nil, { 0.90, 0.10, 0.10, 1.00 })
 local FOCUS = define("FOCUS", 2, "FOCUS", "powerFocus", 132242, "EAM_RESOURCE_FOCUS", "集中值", "BAR", nil, { 1.00, 0.55, 0.20, 1.00 })
 local ENERGY = define("ENERGY", 3, "ENERGY", "powerEnergy", 136110, "EAM_RESOURCE_ENERGY", "能量", "BAR", nil, { 1.00, 0.85, 0.10, 1.00 })
-local COMBO = define("COMBO_POINTS", 4, "COMBO_POINTS", "powerCombo", 132292, "EAM_POWER_COMBO_POINTS", "連擊點", "POINTS", 7, { 1.00, 0.75, 0.15, 1.00 })
+local COMBO = define("COMBO_POINTS", 4, "COMBO_POINTS", "powerCombo", 132292, "EAM_RESOURCE_COMBO_POINTS", "連擊點數", "POINTS", 7, { 1.00, 0.75, 0.15, 1.00 })
 local RUNES = define("RUNES", 5, "RUNES", "powerRunes", 134417, "EAM_RESOURCE_RUNES", "符文", "POINTS", 6, { 0.20, 0.80, 1.00, 1.00 })
-local RUNIC = define("RUNIC_POWER", 6, "RUNIC_POWER", "powerRunic", 135767, "EAM_POWER_RUNIC_POWER", "符文能量", "BAR", nil, { 0.05, 0.80, 1.00, 1.00 })
-local SHARDS = define("SOUL_SHARDS", 7, "SOUL_SHARDS", "powerShard", 136184, "EAM_POWER_SOUL_SHARDS", "靈魂碎片", "POINTS", 5, { 0.65, 0.25, 1.00, 1.00 })
+local RUNIC = define("RUNIC_POWER", 6, "RUNIC_POWER", "powerRunic", 135767, "EAM_RESOURCE_RUNIC_POWER", "符能", "BAR", nil, { 0.05, 0.80, 1.00, 1.00 })
+local SHARDS = define("SOUL_SHARDS", 7, "SOUL_SHARDS", "powerShard", 136184, "EAM_RESOURCE_SOUL_SHARDS", "靈魂裂片", "POINTS", 5, { 0.65, 0.25, 1.00, 1.00 })
 local LUNAR = define("LUNAR_POWER", 8, "LUNAR_POWER", "powerAstral", 236168, "EAM_RESOURCE_LUNAR_POWER", "星能", "BAR", nil, { 0.30, 0.45, 1.00, 1.00 })
-local HOLY = define("HOLY_POWER", 9, "HOLY_POWER", "powerHoly", 524203, "EAM_POWER_HOLY_POWER", "聖能", "POINTS", 5, { 1.00, 0.90, 0.25, 1.00 })
-local MAELSTROM = define("MAELSTROM", 11, "MAELSTROM", "powerMaelstrom", 136099, "EAM_RESOURCE_MAELSTROM", "漩渦值", "BAR", nil, { 0.15, 0.55, 1.00, 1.00 })
-local CHI = define("CHI", 12, "CHI", "powerChi", 627485, "EAM_POWER_CHI", "真氣", "POINTS", 6, { 0.20, 0.90, 0.80, 1.00 })
+local HOLY = define("HOLY_POWER", 9, "HOLY_POWER", "powerHoly", 524203, "EAM_RESOURCE_HOLY_POWER", "聖能", "POINTS", 5, { 1.00, 0.90, 0.25, 1.00 })
+local MAELSTROM = define("MAELSTROM", 11, "MAELSTROM", "powerMaelstrom", 136099, "EAM_RESOURCE_MAELSTROM", "元能", "BAR", nil, { 0.15, 0.55, 1.00, 1.00 })
+local CHI = define("CHI", 12, "CHI", "powerChi", 627485, "EAM_RESOURCE_CHI", "真氣", "POINTS", 6, { 0.20, 0.90, 0.80, 1.00 })
 local INSANITY = define("INSANITY", 13, "INSANITY", "powerInsanity", 237569, "EAM_RESOURCE_INSANITY", "瘋狂值", "BAR", nil, { 0.55, 0.15, 0.85, 1.00 })
-local ARCANE = define("ARCANE_CHARGES", 16, "ARCANE_CHARGES", "powerArcane", 135732, "EAM_POWER_ARCANE_CHARGES", "秘法充能", "POINTS", 4, { 0.35, 0.55, 1.00, 1.00 })
+local ARCANE = define("ARCANE_CHARGES", 16, "ARCANE_CHARGES", "powerArcane", 135732, "EAM_RESOURCE_ARCANE_CHARGES", "秘法充能", "POINTS", 4, { 0.35, 0.55, 1.00, 1.00 })
 local FURY = define("FURY", 17, "FURY", "powerFury", 1275380, "EAM_RESOURCE_FURY", "魔怒", "BAR", nil, { 0.75, 0.10, 0.95, 1.00 })
-local PAIN = define("PAIN", 18, "PAIN", "powerPain", 1247264, "EAM_RESOURCE_PAIN", "痛苦", "BAR", nil, { 0.85, 0.20, 0.25, 1.00 })
-local ESSENCE = define("ESSENCE", 19, "ESSENCE", "powerVigor", 4630437, "EAM_RESOURCE_ESSENCE", "精華", "POINTS", 6, { 0.25, 0.85, 1.00, 1.00 })
+local PAIN = define("PAIN", 18, "PAIN", "powerPain", 1247264, "EAM_RESOURCE_PAIN", "魔痛", "BAR", nil, { 0.85, 0.20, 0.25, 1.00 })
+local ESSENCE = define("ESSENCE", 19, "ESSENCE", "powerEssence", 4622458, "EAM_RESOURCE_ESSENCE", "龍能", "POINTS", 6, { 0.25, 0.85, 1.00, 1.00 })
 
 local function keys(...)
     return freeze({ ... })
@@ -176,6 +176,15 @@ function Catalog.getResourceIcon(key, specializationID)
         local ok, _, _, _, specIcon = pcall(api.GetSpecializationInfoByID, specID)
         if ok and specIcon and type(specIcon) == "number" and specIcon > 0 then
             return specIcon
+        end
+    end
+    if key == "ESSENCE" then
+        local cSpell = (api and api.C_Spell) or _G.C_Spell
+        if cSpell and type(cSpell.GetSpellTexture) == "function" then
+            local ok, tex = pcall(cSpell.GetSpellTexture, 359618)
+            if ok and type(tex) == "number" and tex > 0 then
+                return tex
+            end
         end
     end
     local specMap = SPEC_ICONS[key]
