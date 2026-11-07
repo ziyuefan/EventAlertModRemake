@@ -822,6 +822,85 @@ local function createFrame()
     threshHint:SetJustifyH("LEFT")
     threshHint:SetText("提示：留空或填 0 表示不啟用該項警戒。支援整數或小數格式（例如 25 或 35.5）。")
 
+    -- Forever 精神 (Spirit) 專屬控制項
+    local spiritSection = api.CreateFrame("Frame", nil, pageThresh)
+    spiritSection:SetPoint("TOPLEFT", pageThresh, "TOPLEFT", 12, -215)
+    spiritSection:SetSize(380, 150)
+
+    local spiritSectionTitle = spiritSection:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    spiritSectionTitle:SetPoint("TOPLEFT", spiritSection, "TOPLEFT", 0, 0)
+    spiritSectionTitle:SetText(localized("EAM_STAT_SPIRIT_SETTINGS", "精神與回魔/回血動態提醒 (Forever)"))
+
+    local spiritModeLabel = spiritSection:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    spiritModeLabel:SetPoint("TOPLEFT", spiritSection, "TOPLEFT", 4, -22)
+    spiritModeLabel:SetText(localized("EAM_STAT_SPIRIT_MODE", "精神數值顯示模式:"))
+
+    local spiritModeBtn = api.CreateFrame("Button", nil, spiritSection, "UIPanelButtonTemplate")
+    spiritModeBtn:SetSize(240, 22)
+    spiritModeBtn:SetPoint("TOPLEFT", spiritSection, "TOPLEFT", 4, -40)
+    spiritSection.currentMode = "FULL"
+
+    local function getModeLabel(mode)
+        if mode == "REGEN_ONLY" then
+            return localized("EAM_STAT_SPIRIT_MODE_REGEN", "僅5秒回魔與回血")
+        elseif mode == "STAT_ONLY" then
+            return localized("EAM_STAT_SPIRIT_MODE_STAT", "僅單一數值")
+        else
+            return localized("EAM_STAT_SPIRIT_MODE_FULL", "精神 + 5秒回魔/回血")
+        end
+    end
+
+    local function updateSpiritModeButtonText(mode)
+        spiritSection.currentMode = mode
+        spiritModeBtn:SetText(getModeLabel(mode))
+    end
+
+    spiritModeBtn:SetScript("OnClick", function()
+        if spiritSection.currentMode == "FULL" then
+            updateSpiritModeButtonText("REGEN_ONLY")
+        elseif spiritSection.currentMode == "REGEN_ONLY" then
+            updateSpiritModeButtonText("STAT_ONLY")
+        else
+            updateSpiritModeButtonText("FULL")
+        end
+        if Panel.applyLiveChange then
+            Panel.applyLiveChange()
+        end
+    end)
+
+    local spiritActiveAlertCb = api.CreateFrame("CheckButton", nil, spiritSection, "UICheckButtonTemplate")
+    spiritActiveAlertCb:SetPoint("TOPLEFT", spiritSection, "TOPLEFT", 2, -66)
+    spiritActiveAlertCb.text = spiritActiveAlertCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    spiritActiveAlertCb.text:SetPoint("LEFT", spiritActiveAlertCb, "RIGHT", 4, 1)
+    spiritActiveAlertCb.text:SetText(localized("EAM_STAT_SPIRIT_ACTIVE_ALERT", "啟用精神恢復 Active 動態提醒 (圖示邊框動畫 / 無圖示文字放大高亮)"))
+
+    local spiritBlueFlashCb = api.CreateFrame("CheckButton", nil, spiritSection, "UICheckButtonTemplate")
+    spiritBlueFlashCb:SetPoint("TOPLEFT", spiritSection, "TOPLEFT", 2, -92)
+    spiritBlueFlashCb.text = spiritBlueFlashCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    spiritBlueFlashCb.text:SetPoint("LEFT", spiritBlueFlashCb, "RIGHT", 4, 1)
+    spiritBlueFlashCb.text:SetText(localized("EAM_STAT_SPIRIT_BLUE_FLASH", "精神回魔啟動時播放全螢幕藍色邊框動畫"))
+
+    local testBlueBtn = api.CreateFrame("Button", nil, spiritSection, "UIPanelButtonTemplate")
+    testBlueBtn:SetSize(86, 20)
+    testBlueBtn:SetPoint("LEFT", spiritBlueFlashCb.text, "RIGHT", 8, 0)
+    testBlueBtn:SetText(localized("EAM_STAT_TEST_BLUE_FLASH", "測試藍框"))
+    testBlueBtn:SetScript("OnClick", function()
+        if EAM.UI.CombatFlash and EAM.UI.CombatFlash.triggerSpiritActive then
+            EAM.UI.CombatFlash.triggerSpiritActive()
+        end
+    end)
+
+    if Theme and Theme.registerButton then
+        Theme.registerButton(spiritModeBtn)
+        Theme.registerButton(testBlueBtn)
+    end
+    if EAM.UI.setTooltip then
+        EAM.UI.setTooltip(spiritModeBtn, localized("EAM_STAT_SPIRIT_MODE_TIP", "切換精神數值顯示模式：完整 (精神+MP5+HP5) / 僅回魔 (MP5+HP5) / 僅屬性 (精神)"), localized("EAM_STAT_SPIRIT_MODE", "顯示模式"))
+        EAM.UI.setTooltip(spiritActiveAlertCb, localized("EAM_STAT_SPIRIT_ACTIVE_ALERT_TIP", "當脫離5秒規則精神回魔全速啟動時，圖示外框播放冰藍發光動畫，無圖示時文字放大高亮提醒"), localized("EAM_STAT_SPIRIT_ACTIVE_ALERT_TITLE", "Active 動態提醒"))
+        EAM.UI.setTooltip(spiritBlueFlashCb, localized("EAM_STAT_SPIRIT_BLUE_FLASH_TIP", "當脫離5秒規則精神回魔瞬間啟動時，播放全螢幕冰藍色邊緣閃爍動畫提醒"), localized("EAM_STAT_SPIRIT_BLUE_FLASH_TITLE", "藍色邊框閃爍"))
+        EAM.UI.setTooltip(testBlueBtn, localized("EAM_STAT_TEST_BLUE_FLASH_TIP", "點擊立即測試全螢幕冰藍色邊緣閃爍動畫效果"), localized("EAM_STAT_TEST_BLUE_FLASH", "測試藍框"))
+    end
+
     -- =========================================================================
     -- 【Tab 4: 位置與錨點 (Position & Anchors)】
     -- =========================================================================
@@ -1153,6 +1232,11 @@ local function createFrame()
         cfg.minThreshold = cfg.thresholdMin
         cfg.thresholdMax = tonumber(maxThreshEditBox:GetText())
         cfg.maxThreshold = cfg.thresholdMax
+        if EAM.isForever and (Panel.selectedKey == "spirit" or Panel.selectedKey == "spiritManaRegen") then
+            cfg.spiritActiveAlert = spiritActiveAlertCb:GetChecked() and true or false
+            cfg.spiritBlueScreenFlash = spiritBlueFlashCb:GetChecked() and true or false
+            cfg.spiritDisplayMode = spiritSection.currentMode or "FULL"
+        end
         cfg.useCustomPos = useCustomPosCb:GetChecked() and true or false
         cfg.point = statPointDropdown.pointValue or "CENTER"
         cfg.offsetX = offsetXSlider:GetValue()
@@ -1192,6 +1276,8 @@ local function createFrame()
     gradientCb:SetScript("OnClick", applyLiveChange)
     glideOnlyIconCb:SetScript("OnClick", applyLiveChange)
     useCustomPosCb:SetScript("OnClick", applyLiveChange)
+    spiritActiveAlertCb:SetScript("OnClick", applyLiveChange)
+    spiritBlueFlashCb:SetScript("OnClick", applyLiveChange)
 
     iconEditBox:SetScript("OnTextChanged", function(self)
         local txt = self:GetText()
@@ -1289,7 +1375,11 @@ local function createFrame()
         isUpdatingUI = true
 
         detailTitle:SetText((EAM.L and def.labelKey and EAM.L[def.labelKey]) or def.defaultLabel)
-        detailValPreview:SetText("當前數值: " .. PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+        if EAM.isForever and (statKey == "spirit" or statKey == "spiritManaRegen") and PlayerStatService and PlayerStatService.formatSpiritDisplay then
+            detailValPreview:SetText("當前數值: " .. PlayerStatService.formatSpiritDisplay(statKey, cfg))
+        else
+            detailValPreview:SetText("當前數值: " .. PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+        end
 
         local iconTex = PlayerStatService and PlayerStatService.getStatIcon and PlayerStatService.getStatIcon(statKey, cfg.customIcon) or def.defaultIcon
         detailIcon:SetTexture(iconTex)
@@ -1337,6 +1427,15 @@ local function createFrame()
         shortNumberCb:SetChecked(cfg.shortNumber ~= false)
         minThreshEditBox:SetText(cfg.thresholdMin and tostring(cfg.thresholdMin) or "")
         maxThreshEditBox:SetText(cfg.thresholdMax and tostring(cfg.thresholdMax) or "")
+        if EAM.isForever and (statKey == "spirit" or statKey == "spiritManaRegen") then
+            spiritSection:Show()
+            local mode = cfg.spiritDisplayMode or (statKey == "spirit" and "FULL" or "REGEN_ONLY")
+            updateSpiritModeButtonText(mode)
+            spiritActiveAlertCb:SetChecked(cfg.spiritActiveAlert ~= false)
+            spiritBlueFlashCb:SetChecked(cfg.spiritBlueScreenFlash == true)
+        else
+            spiritSection:Hide()
+        end
 
         useCustomPosCb:SetChecked(cfg.useCustomPos == true)
         if Panel.refreshAttachTargetDropdown then
@@ -1446,7 +1545,11 @@ local function createFrame()
             local val = PlayerStatService.getStatValue(key)
             local labelStr = (EAM.L and def.labelKey and EAM.L[def.labelKey]) or def.defaultLabel
             row.text:SetText(labelStr)
-            row.valText:SetText(PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+            if EAM.isForever and (key == "spirit" or key == "spiritManaRegen") and PlayerStatService and PlayerStatService.formatSpiritDisplay then
+                row.valText:SetText(PlayerStatService.formatSpiritDisplay(key, cfg))
+            else
+                row.valText:SetText(PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+            end
             row.cb:SetChecked(cfg.enabled == true)
 
             local iconTex = PlayerStatService and PlayerStatService.getStatIcon and PlayerStatService.getStatIcon(key, cfg.customIcon) or def.defaultIcon
@@ -1467,7 +1570,11 @@ local function createFrame()
                 local val = PlayerStatService.getStatValue(key)
                 local labelStr = (EAM.L and def.labelKey and EAM.L[def.labelKey]) or def.defaultLabel
                 if row.text then row.text:SetText(labelStr) end
-                row.valText:SetText(PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+                if EAM.isForever and (key == "spirit" or key == "spiritManaRegen") and PlayerStatService and PlayerStatService.formatSpiritDisplay then
+                    row.valText:SetText(PlayerStatService.formatSpiritDisplay(key, cfg))
+                else
+                    row.valText:SetText(PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+                end
                 row.cb:SetChecked(cfg.enabled == true)
                 local iconTex = PlayerStatService and PlayerStatService.getStatIcon and PlayerStatService.getStatIcon(key, cfg.customIcon) or def.defaultIcon
                 row.icon:SetTexture(iconTex)
@@ -1488,7 +1595,11 @@ local function createFrame()
             local cfg = getStatConfig(Panel.selectedKey)
             if def and cfg then
                 local val = PlayerStatService.getStatValue(Panel.selectedKey)
-                detailValPreview:SetText("當前數值: " .. PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+                if EAM.isForever and (Panel.selectedKey == "spirit" or Panel.selectedKey == "spiritManaRegen") and PlayerStatService and PlayerStatService.formatSpiritDisplay then
+                    detailValPreview:SetText("當前數值: " .. PlayerStatService.formatSpiritDisplay(Panel.selectedKey, cfg))
+                else
+                    detailValPreview:SetText("當前數值: " .. PlayerStatService.formatStatNumber(val, def.format, cfg.decimals, cfg.shortNumber, def.suffix))
+                end
                 enableCb:SetChecked(cfg.enabled == true)
             end
         end

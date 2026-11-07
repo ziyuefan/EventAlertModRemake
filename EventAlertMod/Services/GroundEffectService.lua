@@ -340,6 +340,17 @@ end
 
 local function indexSpellFamily(canonicalSpellID)
     indexEventSpellID(canonicalSpellID, canonicalSpellID)
+    if EAM.isForever and EAM.Services and EAM.Services.SpellRankService then
+        local alert = GroundEffectService.alertsBySpellID[canonicalSpellID]
+        if not alert or alert.exactRankOnly ~= true then
+            local rankIDs = EAM.Services.SpellRankService.getRankSpellIDs(canonicalSpellID)
+            if type(rankIDs) == "table" then
+                for i = 1, #rankIDs do
+                    indexEventSpellID(rankIDs[i], canonicalSpellID)
+                end
+            end
+        end
+    end
     local cSpell = api.C_Spell
     if not cSpell then
         return

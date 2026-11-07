@@ -108,12 +108,16 @@ function DebugState.snapshot()
                 }
             end)() or nil,
             hotPathMetrics = EAM.Modules.Performance and EAM.Modules.Performance.getSnapshot and EAM.Modules.Performance.getSnapshot() or nil,
+            spellRanks = EAM.isForever and EAM.Services and EAM.Services.SpellRankService and {
+                knownCount = EAM.Services.SpellRankService.getKnownSpellCount and EAM.Services.SpellRankService.getKnownSpellCount() or 0,
+            } or nil,
         },
         humanNotes = {},
         boundaryWarnings = boundaryWarnings,
         environment = {
-            interface = EAM.Constants.INTERFACE,
-            flavor = EAM.Constants.ADDON_FLAVOR,
+            interface = EAM.isForever and (EAM.interfaceVersion or 16001) or EAM.Constants.INTERFACE,
+            flavor = EAM.isForever and "Forever" or EAM.Constants.ADDON_FLAVOR,
+            gameFlavor = EAM.isForever and "Forever" or "Retail",
             initialized = EAM.Modules.Main and EAM.Modules.Main.initialized or false,
             inCombat = EAM.API.InCombatLockdown and EAM.API.InCombatLockdown() or false,
             fps = EAM.API.GetFramerate and EAM.API.GetFramerate() or nil,

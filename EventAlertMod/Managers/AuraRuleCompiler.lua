@@ -111,12 +111,17 @@ local function collectAlerts(db)
                         unit = unit,
                         spellID = spellID,
                         fromPlayer = alert.fromPlayer == true,
+                        exactRankOnly = alert.exactRankOnly == true,
                         priority = normalizePriority(alert.priority),
                         auraFilter = Util.isSafeString(alert.auraFilter) and alert.auraFilter or nil,
                         showStacks = alert.showStacks ~= false,
                         showName = alert.showName ~= false,
                         showCountdown = alert.showCountdown ~= false,
                         showPandemic = alert.showPandemic == true,
+                        showApplicationBar = alert.showApplicationBar,
+                        applicationBarMax = alert.applicationBarMax,
+                        applicationBarMin = alert.applicationBarMin,
+                        showDurationBar = alert.showDurationBar,
                         dispelMode = normalizeDispelMode(alert.dispelMode),
                         dispelShowAlways = alert.dispelShowAlways == true,
                         dispelStealableFilter = normalizeStealableFilter(alert.dispelStealableFilter),
@@ -182,6 +187,44 @@ local function buildBaseRule(record, capability, defaultSound, soundEnabled, db)
     if record.showStacks ~= nil then
         showStacks = record.showStacks == true
     end
+    local showApplicationBar = false
+    if config and config.showApplicationBar ~= nil then
+        showApplicationBar = config.showApplicationBar == true
+    elseif config and config.auraStackBar ~= nil then
+        showApplicationBar = config.auraStackBar == true
+    end
+    if record.showApplicationBar ~= nil then
+        showApplicationBar = record.showApplicationBar == true
+    end
+    local applicationBarMax = (record.applicationBarMax and tonumber(record.applicationBarMax))
+        or (config and tonumber(config.applicationBarMax))
+        or 5
+    local applicationBarMin = (record.applicationBarMin and tonumber(record.applicationBarMin))
+        or (config and tonumber(config.applicationBarMin))
+        or (config and tonumber(config.minApplications))
+        or 1
+    local showDurationBar = false
+    if config and config.showDurationBar ~= nil then
+        showDurationBar = config.showDurationBar == true
+    end
+    if record.showDurationBar ~= nil then
+        showDurationBar = record.showDurationBar == true
+    end
+
+    local ruleSound = soundEnabled and (record.sound or defaultSound) or nil
+    if ruleSound and type(ruleSound) == "table" and config and tonumber(config.audioThrottle) then
+        local throttle = tonumber(config.audioThrottle)
+        if ruleSound.added and ruleSound.added.throttleSeconds == nil then
+            ruleSound.added.throttleSeconds = throttle
+        end
+        if ruleSound.applicationsIncreased and ruleSound.applicationsIncreased.throttleSeconds == nil then
+            ruleSound.applicationsIncreased.throttleSeconds = throttle
+        end
+        if ruleSound.removed and ruleSound.removed.throttleSeconds == nil then
+            ruleSound.removed.throttleSeconds = throttle
+        end
+    end
+
     local rule = {
         alertID = record.alertID,
         priority = record.priority,
@@ -200,6 +243,10 @@ local function buildBaseRule(record, capability, defaultSound, soundEnabled, db)
             showName = showName,
             showCountdown = showCountdown,
             showPandemic = record.showPandemic,
+            showApplicationBar = showApplicationBar,
+            applicationBarMax = applicationBarMax,
+            applicationBarMin = applicationBarMin,
+            showDurationBar = showDurationBar,
             dispelMode = record.dispelMode,
             dispelShowAlways = record.dispelShowAlways,
             dispelStealableFilter = record.dispelStealableFilter,
@@ -208,9 +255,13 @@ local function buildBaseRule(record, capability, defaultSound, soundEnabled, db)
             customIcon = record.customIcon,
         },
         layout = capability.layout,
-        sound = soundEnabled and (record.sound or defaultSound) or nil,
+        sound = ruleSound,
         limitations = {},
     }
+
+    if EAM.isForever and record.exactRankOnly ~= true and EAM.Services and EAM.Services.SpellRankService then
+        EAM.Services.SpellRankService.populateSpellIDSet(record.spellID, rule.candidateFilters.includeSpellIDs)
+    end
 
     local polarity
     rule.filterString, polarity = resolveFilter(record, rule)
@@ -248,7 +299,13 @@ local function buildGroup(groupID, rules, layout)
     local limitations = {}
     for index = 1, #rules do
         local rule = rules[index]
-        spellIDs[rule.spellID] = true
+        if rule.candidateFilters and rule.candidateFilters.includeSpellIDs then
+            for sid in pairs(rule.candidateFilters.includeSpellIDs) do
+                spellIDs[sid] = true
+            end
+        else
+            spellIDs[rule.spellID] = true
+        end
         append(alertIDs, rule.alertID)
         for limitationIndex = 1, #rule.limitations do
             append(limitations, rule.limitations[limitationIndex])
@@ -333,6 +390,10 @@ local function buildContainerFingerprint(plan)
         append(parts, tostring(rule.style and rule.style.showName == true))
         append(parts, tostring(rule.style and rule.style.showCountdown == true))
         append(parts, tostring(rule.style and rule.style.showPandemic == true))
+        append(parts, tostring(rule.style and rule.style.showApplicationBar == true))
+        append(parts, tostring(rule.style and rule.style.applicationBarMax or "-"))
+        append(parts, tostring(rule.style and rule.style.applicationBarMin or "-"))
+        append(parts, tostring(rule.style and rule.style.showDurationBar == true))
         append(parts, tostring(rule.style and rule.style.dispelMode or "-"))
         append(parts, tostring(rule.style and rule.style.dispelShowAlways == true))
         append(parts, tostring(rule.style and rule.style.dispelStealableFilter or "-"))
@@ -345,6 +406,14 @@ local function buildContainerFingerprint(plan)
             for alertIndex = 1, #rule.alertIDs do
                 append(parts, rule.alertIDs[alertIndex])
             end
+        end
+        if rule.candidateFilters and rule.candidateFilters.includeSpellIDs then
+            local rankKeys = {}
+            for sid in pairs(rule.candidateFilters.includeSpellIDs) do
+                append(rankKeys, sid)
+            end
+            table.sort(rankKeys)
+            append(parts, "ranks:" .. table.concat(rankKeys, ","))
         end
     end
     return table.concat(parts, "|")
@@ -431,6 +500,10 @@ local function buildVisualFingerprint(db)
         colorStr,
         tostring(config and config.iconAlpha or 1.0),
         tostring(config and config.nativeAuraDualCountdownProbe == true),
+        tostring(config and config.showApplicationBar == true or (config and config.auraStackBar == true)),
+        tostring(config and config.applicationBarMax or 5),
+        tostring(config and config.applicationBarMin or (config and config.minApplications) or 1),
+        tostring(config and config.showDurationBar == true),
     }, ":")
 end
 
@@ -449,6 +522,9 @@ local function buildDefaultSound(db)
         added.soundFileID = asset
     else
         added.soundFileName = asset
+    end
+    if config and config.audioThrottle and tonumber(config.audioThrottle) then
+        added.throttleSeconds = tonumber(config.audioThrottle)
     end
     return { added = added }
 end
@@ -514,6 +590,10 @@ function AuraRuleCompiler.compile(db, capability)
                     .. "_" .. tostring(rule.style.showName)
                     .. "_" .. tostring(rule.style.showCountdown)
                     .. "_" .. tostring(rule.style.showPandemic)
+                    .. "_" .. tostring(rule.style.showApplicationBar)
+                    .. "_" .. tostring(rule.style.applicationBarMax or "-")
+                    .. "_" .. tostring(rule.style.applicationBarMin or "-")
+                    .. "_" .. tostring(rule.style.showDurationBar)
                     .. "_" .. tostring(rule.style.dispelMode or "-")
                     .. "_" .. tostring(rule.style.dispelShowAlways)
                     .. "_" .. tostring(rule.style.dispelStealableFilter or "-")

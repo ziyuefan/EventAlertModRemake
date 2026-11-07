@@ -5,11 +5,55 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-10-23.01 (Retail 12.1.5 Alpha 8.8 職業資源動態格數分割、雙色漸層與條件告警實裝及三平台全量發布完成)。
+目前快照版本：2026-11-08.02 (Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備完成，21 大深層測試、110 Flow、502 契約滿分通過)。
+
+## 2026-11-08 多進度儲存點：Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備（現行儲存點）
+
+- current-of-truth：全面修復實機戰鬥致命 Secret Value 報錯，並實作法術等級與精神回魔/回血動態提醒：
+  1. **秘密數值 (Secret Values) 深度防禦 (Core/Env.lua, Util.lua, CooldownService.lua, AuraService.lua, CombatFlash.lua, LibButtonGlow-1.0.lua)**：
+     - 新增 `EAM.isModernEngineInterface` (120100+ 與 16001)，維持 XPTR 120007 Legacy 不變；
+     - 新增零閉包 `Util.readStructuredField`，避免 `hasanysecretvalues` 否決結構表；
+     - `CooldownService.lua` 優先檢查官方 NeverSecret 欄位 `isActive` 與 `shouldReplaceNormalCooldown`，消除 `locDur > 0` Secret Number 崩潰；
+     - `AuraService.lua` 萃取 `updateInfo.isFullUpdate`，消除 Secret Boolean 崩潰；
+     - `CombatFlash.lua` 與 `LibButtonGlow-1.0.lua` 數值比較嚴格受 `isSafeNumber` 守護。
+  2. **永恆服全鏈路法術等級管理 (SpellRankService.lua, ForeverCatalog.lua, AuraRuleCompiler.lua, GroundEffectService.lua, Options.lua)**：
+     - 新增 `SpellRankService` 與 9 大職業經典多等級家族目錄；
+     - 原生光環容器展開 `candidateFilters.includeSpellIDs = { [r1]=true, [r2]=true, ... }`，原生 C++ 容器單一槽位無重複圖示無縫匹配全部等級（支援降階施法 Downranking 與隊友 Buff）；
+     - 地面效果與選項介面支援等級 subtext 顯示。
+  3. **經典五大魔法抗性監控 (PlayerStatService.lua, PlayerStatPanel.lua & 5 Locales)**：
+     - 支援秘法、火焰、冰霜、自然、暗影五大抗性，整合 `UnitResistance("player", damageClass)` 以 `effectiveRes` 為核心顯示，支援自訂警戒紅框與進度條；5 語系詞條同步對齊。
+  4. **精神 5 秒回魔規則 (5SR) 狀態機、MP5/HP5 雙恢復提醒與 Active 動畫 (PlayerStatService.lua, PlayerStatPanel.lua, CombatFlash.lua)**：
+     - 精確監聽 `UNIT_SPELLCAST_SUCCEEDED` 與 `UNIT_POWER_UPDATE`，解析 `C_Spell.GetSpellPowerCost` 之法力消耗，觸發 5 秒回魔抑制視窗；
+     - 整合 `GetManaRegenFromSpirit() * 5` (MP5) 與 `GetHealthRegenFromSpirit() * 0.75 * 5` (HP5)；
+     - 支援 `FULL`、`REGEN_ONLY`、`STAT_ONLY` 三種數值呈現，無圖示模式下自動自適應寬度 `math.max(size * 2.8, 128)`；
+     - 支援 Active 圖示發光邊框動畫、無圖示文字 1.32x 放大與 1.45x 脈衝彈跳、以及可選全螢幕寶石藍邊框脈衝動畫 (`CombatFlash.triggerSpiritActive()`)。
+  5. **部署自動化與除錯診斷中心全面適配 (Deploy/Deploy-EventAlertMod.ps1, Debug/DebugCenterPanel.lua, RuntimeProbe.lua, ValidationEnvironment.lua, LiveTestPanel.lua)**：
+     - `Deploy-EventAlertMod.ps1`：支援多候選執行檔偵測 (WowClassic.exe / Wow.exe)，動態顯示 [1]~[4] 通道選單支援 Forever WTF 獨立備份與還原；
+     - 診斷中心、提示詞匯出、執行期探針與實機簽收面板全面適配 Forever 1.60.1。
+  6. **門禁與驗證全數通過**：
+     - `test_native_apis.py`：21 大深層測試套件全數通過 (`ALL 21 DEEP TEST SUITES PASSED WITH ZERO ERRORS!`)；
+     - `Run-FlowValidation.ps1 -Suite all`：110/110 全數通過 (`FLOW_VALIDATION suite=all total=110 passed=110 failed=0`)；
+     - `Test-ValidationContracts.ps1`：502/502 全數通過 (`VALIDATION_CONTRACTS passed=502 failed=0`)；
+     - `Build-Package.ps1 -DryRun -SkipFlowValidation`：PASS (`LUA_SYNTAX scope=addon passed=80 failed=0`)；
+     - `Deploy-EventAlertMod.ps1 -Action Forever -DryRun`：PASS；
+     - `Deploy-EventAlertMod.ps1 -Action Backup -Channel Forever -DryRun`：PASS。
+
+ (Retail 12.1.5 Alpha 8.9 原生光環進度條 SetApplicationBar/SetDurationBar、Pandemic 三態呼吸動畫、TimedSignalMap、音訊防洪節流與 4K 視網膜級像素對齊大改造完成，110/110 Flow 滿分通過)。
 
 - **版本斷點與自動遞增規則**：以正式發佈至 GitHub Release 及 CurseForge 為版本斷點；發布後的新開發週期自動將版次遞增 0.1（例如 Alpha 8.5 發布後，後續所有新增功能、異動、修正等均以 Alpha 8.6 紀錄，不含 Alpha 8.5 歷史內容）。
 
-## 2026-10-23 多進度儲存點：Retail 12.1.5 Alpha 8.8 職業資源獨立拖曳/九宮依附、動態格數分割、雙色漸層與條件告警實裝及三平台全量發布（現行儲存點）
+## 2026-10-23 多進度儲存點：Retail 12.1.5 Alpha 8.9 原生光環進度條 (SetApplicationBar/SetDurationBar)、Pandemic 三態呼吸動畫、TimedSignalMap、音訊防洪節流與 4K 視網膜級像素對齊大改造（現行儲存點）
+
+- current-of-truth：全面執行《EventAlertMod 12.1.5+ 原生光環與底層效能大改造實作計畫書》，將 12.1.5 PTR API 變更研究成果完整落地至 EventAlertMod：
+  1. **光環原生雙條渲染 (UI/NativeAuraRenderer.lua)**：實裝 `CustomAuraButton:SetApplicationBar(bar, options)` 與 `SetDurationBar(bar)` 原生條狀計量管線，採頂底互斥排版（層數條錨定於頂部、持續時間條錨定於底部，高度 4px），支援 `applicationBarMax` (1~20) 與原生門檻過濾 (`applicationBarMin / minApplications`)，舊版自動文字疊層降級；
+  2. **原生 Pandemic 三態呼吸微動動畫與進場光暈 (UI/NativeAuraRenderer.lua)**：全面適配 12.1.5 Native Aura 容器之 `AddPandemicEnterAnimation` (One-shot Pop 放大 1.15，`OUT` 緩動)、`AddPandemicActiveAnimation` (窗口期循環心跳呼吸 Breathing Loop，BOUNCE 縮放 1.0~1.04 與透明度 0.65~1.0，`IN_OUT` 緩動) 與 `AddPandemicLeaveAnimation` (平滑淡出還原，縮放 1.0，`IN` 緩動)；實裝 `AddAuraShownAnimation` 與 `AddAuraAssignedAnimation` 大招/Proc 進場動感光暈；
+  3. **零 GC 原生排程器深度擴展 (Core/Scheduler.lua)**：擴展偵測 FrameXML 原生 `TimerUtil.CreateTimedSignalCallbackMap` 與 `C_Timer.CreateTimedSignalCallbackMap`，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)；
+  4. **4K 視網膜級物理像素對齊 (UI/PowerRenderer.lua & UI/NativeAuraRenderer.lua)**：全面套用 `SetRoundLayoutToNearestPixel` / `Util.snapToPixels` 至資源條、19 道分割線、20 格槽位條與光環外框雙條，消除高解析度下 1px 發虛；嚴格保持零污染安全契約（無任何 `GetValue(`、`GetMinMaxValues(`、`SetScript("OnUpdate"`、`string.format`）；
+  5. **智慧音訊防洪閘門 (Services/MediaService.lua & AuraSoundService.lua)**：在 `MediaService.playSound` 與 `C_UnitAuras.AddAuraSound` 注入 `audioThrottle` 節流保護（預設 0.3s，範圍 0.05s~5.0s），杜絕音效連發轟炸；
+  6. **設定結構與多語系同步 (Core/SavedVariables.lua, UI/Options.lua, Managers/AuraRuleCompiler.lua, Locale)**：擴充並標準化 5 大欄位；`Options.lua` Tab 5 加入 UI 控制項；`buildVisualFingerprint` 與 `groupID` 納入雙條樣式特徵；全 5 語系同步新增 6 個新詞條；
+  7. **全套測試覆蓋**：15 大深層測試套件全數通過、CheckLuaSyntax 80/80 通過、Run-FlowValidation 110/110 通過、Test-ValidationContracts 502/502 通過、Package DryRun PASS。
+
+## 2026-10-23 多進度儲存點：Retail 12.1.5 Alpha 8.8 職業資源獨立拖曳/九宮依附、動態格數分割、雙色漸層與條件告警實裝及三平台全量發布（前一儲存點）
 
 - current-of-truth：完成 Retail 12.1.5 Alpha 8.8 四階段核心功能交付與三平台發布：
   1. **LibSharedMedia-3.0 升級與喚能師 (Evoker) 五語系官方資源正名**：升級 `LibSharedMedia-3.0.lua` 至官方 `r159` (`8020003`)；校準喚能師核心職業資源為官方「龍能 (`zhTW`) / 精華 (`zhCN`) / Essence (`enUS`) / 정수 (`koKR`) / Сущность (`ruRU`)」，並修復 `PlayerResourcePanel.lua` 範疇下拉選單回呼錯誤；

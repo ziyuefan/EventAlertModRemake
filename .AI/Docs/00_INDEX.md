@@ -2,11 +2,11 @@
 # EventAlertMod Remake 說明文件導航中心 / Documentation Hub
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Release](https://img.shields.io/badge/release-Alpha%208.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
-[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5-blue)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Release](https://img.shields.io/badge/release-Alpha%208.9-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
+> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《魔獸世界：永恆之樹 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
 
 歡迎使用 EventAlertMod (EAM) 正式服重構版本說明文件中心。本中心為**插件使用者 (Players & Users)** 以及**代理開發者 (AI & Human Developers)** 提供完整的資訊導覽與架構參考。
 
@@ -33,13 +33,25 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 4. ⏳ **技能冷卻 (Spell Cooldown)**：純透明度（Alpha=0）常駐預載模式，0.00ms 零排版延遲；支援 2D 矩陣折行 (2D Grid Layout)、每列欄數控制 (Columns per Row)、圓形環狀進度條 (`Radial Ring Mode`)、框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)、扇形倒數色彩與透明度自訂、以及非線性衝刺進度曲線。
 5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控，支援 2D 矩陣折行排版。
 6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊、多時間組別候選擷取（Duration Group Selector）與 2D 矩陣折行。
-7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（`>=` / `<=` 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（`/eam rune`）。
-8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：依職業獨立配置，全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量），採 4-Tab 模組化設定面板與單項獨立座標自訂拖曳。
+7. ⚡ **玩家職業資源 (Player Resource)**：支援 Retail 全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（`>=` / `<=` 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（`/eam rune`）；同步支援《魔獸世界：永恆之樹》(Forever 1.60.1) 經典 60 級 9 大職業資源拓撲（戰士怒氣、盜賊能量與 5 格連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力），徹底隔離現代專精雜訊。
+8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：依職業獨立配置，全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量），採 4-Tab 模組化設定面板與單項獨立座標自訂拖曳；永恆服 (Forever 1.60.1) 專屬支援五大魔法抗性（秘法、火焰、冰霜、自然、暗影）有效數值監控、經典精神 (Spirit) 5 秒回魔規則 (5SR) 狀態機、`FULL` / `REGEN_ONLY` / `STAT_ONLY` 三種數值呈現模式、Active 動態圖示高亮/文字放大脈衝、以及可選全螢幕寶石藍呼吸閃爍。
 
 ---
 
 ## 🔥 近期版本重大里程碑 (Recent Release Milestones)
 
+- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08**
+    - **雙版本跨時代統一架構 (Multi-Flavor Unified Architecture)**：全面適配魔獸世界正式服 12.1.5（Interface: `120105`，向下相容 `120100` / `120007`）與《魔獸世界：永恆之樹》1.60.1（Interface: `16001`，專案代號 Camelot），單一程式碼庫自動偵測環境，實現零程式碼分岔。
+    - **暴雪 12.1.5 & 1.60.1 秘密值 (Secret Values) 終極安全防護熱修復**：徹底修復失去控制冷卻 `locDur`（Secret Number 比較）與光環全量更新 `isFullUpdate`（Secret Boolean 判斷）在戰鬥中引發的運算中斷；採用 `issecretvalue()` 與 `canaccessvalue()` 雙重防禦檢驗，受保護數值直接單向傳遞至原生 `Cooldown:SetCooldown`、`DurationObject` 與 `StatusBar:SetValue`，戰鬥中零黃字噴錯、零 UI 污染。
+    - **永恆服法術技能全等級管理 (Forever Spell Rank Multi-Tier Lifecycle) [Forever 1.60.1 專屬]**：整合永恆服 `C_SpellBook` 與 `C_Spell.GetSpellSubtext`，自動展開並匹配同一法術之所有歷史與當前等級，原生光環容器支援全等級雜湊集合過濾（`includeSpellIDs = { [r1]=true, [r2]=true, ... }`），單一槽位無重複圖示精確匹配降階施法 (Downranking) 與隊友增益。
+    - **永恆服經典 60 級 9 大職業資源拓撲 [Forever 1.60.1 專屬]**：專屬打造經典 9 大職業（戰士怒氣、盜賊能量與連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力）資源拓撲，徹底隔離現代專精與多餘資源型態（真氣、龍能、狂亂、符文、聖能、秘法充能等）。
+    - **五大魔法抗性即時戰鬥監控 [Forever 1.60.1 專屬]**：角色屬性面板新增秘法 (`resistArcane`)、火焰 (`resistFire`)、冰霜 (`resistFrost`)、自然 (`resistNature`) 與暗影 (`resistShadow`) 五大抗性監控，直通取值 `UnitResistance("player", damageClass)` 之有效抗性 (`effectiveRes`)，支援警戒值紅框與自訂進度條。
+    - **精神 5 秒回魔規則 (5SR) 狀態機、MP5/HP5 雙恢復提醒與動態藍光閃爍 [Forever 1.60.1 專屬]**：監控精神主屬性 (`spirit`) 與施法後 5 秒回魔狀態機；提供 `FULL`（精神 + MP5/HP5）、`REGEN_ONLY`（僅顯示回魔/回血）與 `STAT_ONLY`（僅顯示精神）三種呈現模式；脫離 5 秒規則進入全速回魔時觸發 Active 圖示發光邊框、無圖示文字 1.32x 放大與 1.45x 脈衝彈跳、以及可選全螢幕寶石藍邊框呼吸閃爍警示（附 `[測試藍框]` 按鈕）；同步納入經典防禦技能、獵人寵物快樂度/忠誠度、遠程彈藥警報、護甲穿透與十字軍等經典飾品觸發監控。
+    - **原生光環雙條渲染、Pandemic 三態呼吸動畫與進場光暈 [Retail 12.1.5 專屬]**：實裝 `CustomAuraButton:SetApplicationBar(bar)` 與 `SetDurationBar(bar)` 原生雙條計量管線；深度適配 12.1.5 原生 Pandemic 三態呼吸微動動畫 (`AddPandemicEnter/Active/LeaveAnimation`)、大招/Proc 進場光暈 (`AddAuraShown/AssignedAnimation`) 與 `C_UnitAuras.GetRefreshCarryOverDuration` 30% 精準結餘計算。
+    - **零 GC TimedSignalMap 原生排程器引擎 [雙版本共通]**：深度整合 12.1.5 `C_Timer.NewTimedSignalMap` 與 `TimerUtil.CreateTimedSignalCallbackMap` 原生鍵值排程機制，搭配防禦性 Proxy Table 保護，實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)。
+    - **4K 視網膜級物理像素對齊 [雙版本共通]**：全面套用 `PixelUtil.SetRoundLayoutToNearestPixelRecursively` / `Util.snapToPixels` 至資源條、分割線與光環外框雙條，消除高解析度下 1px 發虛。
+    - **Profile 設定檔 EAMAP2 原生 Deflate 壓縮 [雙版本共通]**：整合原生 `C_EncodingUtil` 實裝 `EAMAP2:` 壓縮協定，縮減 60%~75% 分享字串長度，並完整向下相容 `EAMAP1:` 解碼；實裝 `EvaluateColorFromBoolean` 秘密布林安全染色與 `C_CombatAudioAlert` 戰鬥語音 TTS。
+    - **視窗位置一鍵重設命令 [雙版本共通]**：新增 `/eam reset`（別名：`/eam resetpos`、`/eam center`），可隨時將主設定面板一鍵重置回螢幕正中央。
 - 🌟 **[Retail 12.1.5 Alpha 8.8] - 2026.10.23**
     - **職業資源獨立自由拖曳與常見框架九宮格依附 (Independent Resource Positioning & 9-Point Frame Attachment)**：支援將每個職業資源獨立設為「自由移動 (FREE)」或「依附框架 (ATTACH)」，內建玩家、目標、專注目標、個人資源條與 EAM 主錨點依附，並提供九宮格精確方位與 X/Y 偏移微調。
     - **職業資源動態點數自動分割與自訂格數 (Dynamic & Custom StatusBar Segments)**：連擊點數、聖能、真氣、秘法充能、靈魂裂片與龍能自動對齊天賦加成後之實際上限（5/6/7 格），並提供「自訂分割格數 (0~20 格)」滑桿供任意資源條繪製百分比刻度線。

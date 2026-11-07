@@ -81,6 +81,13 @@ local isSecretTable = issecrettable or function() return false end
 local hasAnySecretValues = hasanysecretvalues or function() return false end
 local mathHuge = math.huge
 
+Util.isModernEngineInterface = EAM.isModernEngineInterface or function(interfaceVersion)
+    local iv = tonumber(interfaceVersion) or 0
+    if iv >= 120100 then return true end
+    if (iv >= 16000 and iv < 20000) or (iv == 0 and EAM.isForever) then return true end
+    return false
+end
+
 function Util.canAccessTable(value)
     if canAccessTable then
         return canAccessTable(value)
@@ -263,6 +270,30 @@ function Util.readSafeField(source, key, warnings, warningCode)
 
     local value = source[key]
     return Util.readSafeScalar(value, warnings, warningCode, key)
+end
+
+local function safeIndex(t, k)
+    return t[k]
+end
+
+function Util.readStructuredField(source, key, warnings, warningCode)
+    if type(source) ~= "table" or Util.isSecretValue(source) or Util.isSecretTable(source) or not Util.canAccessTable(source) then
+        Util.appendBoundaryWarning(warnings, warningCode or EAM.Constants.BOUNDARY_TABLE_RESTRICTED, "table")
+        return nil, false
+    end
+
+    if not Util.isSafeTableKey(key) then
+        Util.appendBoundaryWarning(warnings, warningCode or EAM.Constants.BOUNDARY_SECRET_VALUE, "key")
+        return nil, false
+    end
+
+    local ok, rawVal = pcall(safeIndex, source, key)
+    if not ok then
+        Util.appendBoundaryWarning(warnings, warningCode or EAM.Constants.BOUNDARY_TABLE_RESTRICTED, key)
+        return nil, false
+    end
+
+    return Util.readSafeScalar(rawVal, warnings, warningCode, key)
 end
 
 function Util.acquireTable(pool)
@@ -693,3 +724,194 @@ function Util.snapToPixels(region)
     end
     return false
 end
+
+-- ============================================================================
+-- Retail 12.1+ Native Encoding & Compression Helpers (C_EncodingUtil)
+-- ============================================================================
+
+local function fallbackDeflate(str)
+    local len = #str
+    if len == 0 then
+        return string.char(1, 0, 0, 255, 255)
+    end
+    local parts = {}
+    local pos = 1
+    while pos <= len do
+        local chunkLen = math.min(65535, len - pos + 1)
+        local isFinal = (pos + chunkLen > len) and 1 or 0
+        local chunk = string.sub(str, pos, pos + chunkLen - 1)
+        local nlen = 65535 - chunkLen
+        local b1 = chunkLen % 256
+        local b2 = math.floor(chunkLen / 256)
+        local nb1 = nlen % 256
+        local nb2 = math.floor(nlen / 256)
+        parts[#parts + 1] = string.char(isFinal, b1, b2, nb1, nb2) .. chunk
+        pos = pos + chunkLen
+    end
+    return table.concat(parts)
+end
+
+local function fallbackInflate(str)
+    local pos = 1
+    local totalLen = #str
+    local parts = {}
+    while pos <= totalLen do
+        if pos + 4 > totalLen then break end
+        local header = string.byte(str, pos)
+        local isFinal = (header % 2 == 1)
+        local btype = math.floor((header % 8) / 2)
+        if btype ~= 0 then
+            return nil, "unsupportedDeflateBlock"
+        end
+        local b1 = string.byte(str, pos + 1)
+        local b2 = string.byte(str, pos + 2)
+        local nb1 = string.byte(str, pos + 3)
+        local nb2 = string.byte(str, pos + 4)
+        local chunkLen = b1 + b2 * 256
+        local nlen = nb1 + nb2 * 256
+        if chunkLen + nlen ~= 65535 then
+            return nil, "corruptDeflateBlock"
+        end
+        pos = pos + 5
+        if pos + chunkLen - 1 > totalLen then
+            return nil, "truncatedDeflateBlock"
+        end
+        parts[#parts + 1] = string.sub(str, pos, pos + chunkLen - 1)
+        pos = pos + chunkLen
+        if isFinal then
+            return table.concat(parts)
+        end
+    end
+    return table.concat(parts)
+end
+
+function Util.compressString(str, method, level)
+    if type(str) ~= "string" then return nil, "invalidInput" end
+    local encoding = rawget(_G, "C_EncodingUtil")
+    if encoding then
+        if type(encoding.CompressString) == "function" then
+            local compMethod = method or (Enum and Enum.CompressionMethod and Enum.CompressionMethod.Deflate or 1)
+            local ok, compressed = pcall(encoding.CompressString, str, compMethod, level)
+            if ok and type(compressed) == "string" then
+                return compressed, "native"
+            end
+        elseif type(encoding.Deflate) == "function" then
+            local ok, compressed = pcall(encoding.Deflate, str)
+            if ok and type(compressed) == "string" then
+                return compressed, "native"
+            end
+        end
+    end
+    return fallbackDeflate(str), "fallback"
+end
+
+function Util.decompressString(str, method)
+    if type(str) ~= "string" then return nil, "invalidInput" end
+    local encoding = rawget(_G, "C_EncodingUtil")
+    if encoding then
+        if type(encoding.DecompressString) == "function" then
+            local compMethod = method or (Enum and Enum.CompressionMethod and Enum.CompressionMethod.Deflate or 1)
+            local ok, decompressed = pcall(encoding.DecompressString, str, compMethod)
+            if ok and type(decompressed) == "string" then
+                return decompressed, "native"
+            end
+        elseif type(encoding.Inflate) == "function" then
+            local ok, decompressed = pcall(encoding.Inflate, str)
+            if ok and type(decompressed) == "string" then
+                return decompressed, "native"
+            end
+        end
+    end
+    local decomp, err = fallbackInflate(str)
+    if decomp then
+        return decomp, "fallback"
+    end
+    return nil, err or "decompressFailed"
+end
+
+function Util.serializeJSON(value)
+    local encoding = rawget(_G, "C_EncodingUtil")
+    if encoding and type(encoding.SerializeJSON) == "function" then
+        local ok, result = pcall(encoding.SerializeJSON, value)
+        if ok and type(result) == "string" then
+            return result, "native"
+        end
+    end
+    return nil, "unavailable"
+end
+
+function Util.deserializeJSON(str)
+    if type(str) ~= "string" then return nil, "invalidInput" end
+    local encoding = rawget(_G, "C_EncodingUtil")
+    if encoding and type(encoding.DeserializeJSON) == "function" then
+        local ok, result = pcall(encoding.DeserializeJSON, str)
+        if ok and type(result) == "table" then
+            return result, "native"
+        end
+    end
+    return nil, "unavailable"
+end
+
+function Util.serializeCBOR(value)
+    local encoding = rawget(_G, "C_EncodingUtil")
+    if encoding and type(encoding.SerializeCBOR) == "function" then
+        local ok, result = pcall(encoding.SerializeCBOR, value)
+        if ok and type(result) == "string" then
+            return result, "native"
+        end
+    end
+    return nil, "unavailable"
+end
+
+function Util.deserializeCBOR(str)
+    if type(str) ~= "string" then return nil, "invalidInput" end
+    local encoding = rawget(_G, "C_EncodingUtil")
+    if encoding and type(encoding.DeserializeCBOR) == "function" then
+        local ok, result = pcall(encoding.DeserializeCBOR, str)
+        if ok and result ~= nil then
+            return result, "native"
+        end
+    end
+    return nil, "unavailable"
+end
+
+-- ============================================================================
+-- Retail 12.1+ Secret Boolean Piercing & Color Evaluation (C_CurveUtil)
+-- ============================================================================
+
+function Util.evaluateColorFromBoolean(boolValue, colorIfTrue, colorIfFalse)
+    local curve = rawget(_G, "C_CurveUtil")
+    if curve and type(curve.EvaluateColorFromBoolean) == "function" then
+        local ok, res = pcall(curve.EvaluateColorFromBoolean, boolValue, colorIfTrue, colorIfFalse)
+        if ok and res ~= nil then
+            return res
+        end
+    end
+    if Util.isSecretValue and Util.isSecretValue(boolValue) then
+        return colorIfTrue or colorIfFalse
+    end
+    if boolValue then
+        return colorIfTrue
+    else
+        return colorIfFalse
+    end
+end
+
+function Util.evaluateColorValueFromBoolean(boolValue, valIfTrue, valIfFalse)
+    local curve = rawget(_G, "C_CurveUtil")
+    if curve and type(curve.EvaluateColorValueFromBoolean) == "function" then
+        local ok, res = pcall(curve.EvaluateColorValueFromBoolean, boolValue, valIfTrue, valIfFalse)
+        if ok and res ~= nil then
+            return res
+        end
+    end
+    if Util.isSecretValue and Util.isSecretValue(boolValue) then
+        return valIfTrue or valIfFalse
+    end
+    if boolValue then
+        return valIfTrue
+    else
+        return valIfFalse
+    end
+end
+

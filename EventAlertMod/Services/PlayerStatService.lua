@@ -81,6 +81,23 @@ end
 
 PlayerStatService.isPlayerGliding = isPlayerGliding
 
+local function getHealPredictionCalculator()
+    if PlayerStatService.healPredictionCalc then
+        return PlayerStatService.healPredictionCalc
+    end
+    local createCalc = rawget(_G, "CreateUnitHealPredictionCalculator")
+    if type(createCalc) == "function" then
+        local ok, calc = pcall(createCalc)
+        if ok and calc then
+            PlayerStatService.healPredictionCalc = calc
+            return calc
+        end
+    end
+    return nil
+end
+
+PlayerStatService.getHealPredictionCalculator = getHealPredictionCalculator
+
 -- 依職業獲取獨立的 playerStats 設定表 (Per-Class Profile Support)
 function PlayerStatService.getPlayerStatsConfig()
     local db = EAM.db
@@ -747,6 +764,7 @@ local STAT_DEFINITIONS = {
     skyridingSpeed = {
         key = "skyridingSpeed",
         labelKey = "EAM_STAT_SKYRIDING_SPEED",
+        requiresRetail = true,
         defaultLabel = "飛龍模式飛速",
         defaultIcon = 4667307, -- ability_dragonriding_surgeforward01
         category = "speed",
@@ -801,10 +819,33 @@ local STAT_DEFINITIONS = {
         defaultIcon = 135940, -- Spell_Holy_PowerWordShield
         category = "survival",
         getRawValue = function()
+            local calc = getHealPredictionCalculator()
+            local getDetailed = rawget(_G, "UnitGetDetailedHealPrediction")
+            if calc and type(getDetailed) == "function" then
+                local ok = pcall(getDetailed, "player", nil, calc)
+                if ok and type(calc.GetDamageAbsorbs) == "function" then
+                    local okDmg, dmgAbsorb = pcall(calc.GetDamageAbsorbs, calc)
+                    if okDmg and isSafeNumber(dmgAbsorb) then
+                        return dmgAbsorb
+                    end
+                end
+            end
             return UnitGetTotalAbsorbs and UnitGetTotalAbsorbs("player") or 0
         end,
         getValue = function()
             local total = 0
+            local calc = getHealPredictionCalculator()
+            local getDetailed = rawget(_G, "UnitGetDetailedHealPrediction")
+            if calc and type(getDetailed) == "function" then
+                local ok = pcall(getDetailed, "player", nil, calc)
+                if ok and type(calc.GetDamageAbsorbs) == "function" then
+                    local okDmg, dmgAbsorb = pcall(calc.GetDamageAbsorbs, calc)
+                    if okDmg and isSafeNumber(dmgAbsorb) then
+                        PlayerStatService.lastKnownStats["totalAbsorb"] = dmgAbsorb
+                        return dmgAbsorb
+                    end
+                end
+            end
             if UnitGetTotalAbsorbs then
                 local ok, val = pcall(UnitGetTotalAbsorbs, "player")
                 if ok and isSafeNumber(val) and val > 0 then
@@ -840,10 +881,33 @@ local STAT_DEFINITIONS = {
         defaultIcon = 136120, -- Spell_Shadow_AntiShadow
         category = "survival",
         getRawValue = function()
+            local calc = getHealPredictionCalculator()
+            local getDetailed = rawget(_G, "UnitGetDetailedHealPrediction")
+            if calc and type(getDetailed) == "function" then
+                local ok = pcall(getDetailed, "player", nil, calc)
+                if ok and type(calc.GetHealAbsorbs) == "function" then
+                    local okHeal, hAbsorb = pcall(calc.GetHealAbsorbs, calc)
+                    if okHeal and isSafeNumber(hAbsorb) then
+                        return hAbsorb
+                    end
+                end
+            end
             return UnitGetTotalHealAbsorbs and UnitGetTotalHealAbsorbs("player") or 0
         end,
         getValue = function()
             local total = 0
+            local calc = getHealPredictionCalculator()
+            local getDetailed = rawget(_G, "UnitGetDetailedHealPrediction")
+            if calc and type(getDetailed) == "function" then
+                local ok = pcall(getDetailed, "player", nil, calc)
+                if ok and type(calc.GetHealAbsorbs) == "function" then
+                    local okHeal, hAbsorb = pcall(calc.GetHealAbsorbs, calc)
+                    if okHeal and isSafeNumber(hAbsorb) then
+                        PlayerStatService.lastKnownStats["healAbsorb"] = hAbsorb
+                        return hAbsorb
+                    end
+                end
+            end
             if UnitGetTotalHealAbsorbs then
                 local ok, val = pcall(UnitGetTotalHealAbsorbs, "player")
                 if ok and isSafeNumber(val) and val > 0 then
@@ -902,19 +966,603 @@ local STAT_DEFINITIONS = {
         end,
         format = "number",
     },
+    -- Forever 1.60.1 專屬經典屬性
+    spiritManaRegen = {
+        key = "spiritManaRegen",
+        labelKey = "EAM_STAT_SPIRIT_MANA_REGEN",
+        defaultLabel = "精神回魔",
+        defaultIcon = 135981, -- Spell_Holy_MagicalSentry
+        category = "manaRegen",
+        requiresForever = true,
+        getRawValue = function()
+            local fn = api.GetManaRegenFromSpirit or _G.GetManaRegenFromSpirit
+            if fn then
+                local ok, powerRegen, combatPowerRegen = pcall(fn)
+                if ok and powerRegen ~= nil then
+                    if isSafeNumber(powerRegen) then
+                        return math.floor(powerRegen * 5 + 0.5)
+                    end
+                    return powerRegen
+                end
+            end
+            return PlayerStatService.lastKnownStats["spiritManaRegen"] or 0
+        end,
+        getValue = function()
+            local fn = api.GetManaRegenFromSpirit or _G.GetManaRegenFromSpirit
+            if fn then
+                local ok, powerRegen, combatPowerRegen = pcall(fn)
+                if ok and isSafeNumber(powerRegen) and powerRegen > 0 then
+                    local mp5 = math.floor(powerRegen * 5 + 0.5)
+                    PlayerStatService.lastKnownStats["spiritManaRegen"] = mp5
+                    return mp5
+                end
+            end
+            return PlayerStatService.lastKnownStats["spiritManaRegen"] or 0
+        end,
+        format = "number",
+        suffix = "/5s",
+    },
+    defenseSkill = {
+        key = "defenseSkill",
+        labelKey = "EAM_STAT_DEFENSE_SKILL",
+        defaultLabel = "防禦技能",
+        defaultIcon = 132341, -- Inv_Shield_06
+        category = "defense",
+        requiresForever = true,
+        getRawValue = function()
+            local fn = api.UnitDefenseSkill or _G.UnitDefenseSkill
+            if fn then
+                local ok, base, modifier = pcall(fn, "player")
+                if ok and base ~= nil then
+                    if isSafeNumber(base) then
+                        return base + (isSafeNumber(modifier) and modifier or 0)
+                    end
+                    return base
+                end
+            end
+            return PlayerStatService.lastKnownStats["defenseSkill"] or 0
+        end,
+        getValue = function()
+            local fn = api.UnitDefenseSkill or _G.UnitDefenseSkill
+            if fn then
+                local ok, base, modifier = pcall(fn, "player")
+                if ok and isSafeNumber(base) then
+                    local total = base + (isSafeNumber(modifier) and modifier or 0)
+                    if total > 0 then
+                        PlayerStatService.lastKnownStats["defenseSkill"] = total
+                        return total
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["defenseSkill"] or 0
+        end,
+        format = "number",
+    },
+    petHappiness = {
+        key = "petHappiness",
+        labelKey = "EAM_STAT_PET_HAPPINESS",
+        defaultLabel = "寵物快樂度",
+        defaultIcon = 132242, -- Ability_Hunter_BeastTraining
+        category = "pet",
+        requiresForever = true,
+        classLimit = "HUNTER",
+        getRawValue = function()
+            local petInfo = api.C_PetInfo or _G.C_PetInfo
+            if petInfo and petInfo.GetPetHappiness then
+                local ok, happiness = pcall(petInfo.GetPetHappiness)
+                if ok and happiness ~= nil then
+                    return happiness
+                end
+            end
+            local fn = _G.GetPetHappiness
+            if fn then
+                local ok, happiness = pcall(fn)
+                if ok and happiness ~= nil then
+                    return happiness
+                end
+            end
+            return PlayerStatService.lastKnownStats["petHappiness"] or 0
+        end,
+        getValue = function()
+            local petInfo = api.C_PetInfo or _G.C_PetInfo
+            if petInfo and petInfo.GetPetHappiness then
+                local ok, happiness = pcall(petInfo.GetPetHappiness)
+                if ok and isSafeNumber(happiness) and happiness > 0 then
+                    PlayerStatService.lastKnownStats["petHappiness"] = happiness
+                    return happiness
+                end
+            end
+            local fn = _G.GetPetHappiness
+            if fn then
+                local ok, happiness = pcall(fn)
+                if ok and isSafeNumber(happiness) and happiness > 0 then
+                    PlayerStatService.lastKnownStats["petHappiness"] = happiness
+                    return happiness
+                end
+            end
+            return PlayerStatService.lastKnownStats["petHappiness"] or 0
+        end,
+        format = "number",
+    },
+    ammoStatus = {
+        key = "ammoStatus",
+        labelKey = "EAM_STAT_AMMO_STATUS",
+        defaultLabel = "彈藥存量",
+        defaultIcon = 132381, -- Inv_Ammo_Arrow_02
+        category = "ammo",
+        requiresForever = true,
+        classLimit = "HUNTER",
+        getRawValue = function()
+            local usesAmmo = api.UnitUsesAmmo or _G.UnitUsesAmmo
+            if usesAmmo then
+                local ok, needed = pcall(usesAmmo, "player")
+                if ok and not needed then
+                    return 0
+                end
+            end
+            if _G.GetInventoryItemCount then
+                local ok, count = pcall(_G.GetInventoryItemCount, "player", 0)
+                if ok and count ~= nil then
+                    return count
+                end
+            end
+            return PlayerStatService.lastKnownStats["ammoStatus"] or 0
+        end,
+        getValue = function()
+            local usesAmmo = api.UnitUsesAmmo or _G.UnitUsesAmmo
+            if usesAmmo then
+                local ok, needed = pcall(usesAmmo, "player")
+                if ok and not needed then
+                    return 0
+                end
+            end
+            if _G.GetInventoryItemCount then
+                local ok, count = pcall(_G.GetInventoryItemCount, "player", 0)
+                if ok and isSafeNumber(count) then
+                    PlayerStatService.lastKnownStats["ammoStatus"] = count
+                    return count
+                end
+            end
+            return PlayerStatService.lastKnownStats["ammoStatus"] or 0
+        end,
+        format = "number",
+    },
+    -- 五大抗性 (Forever 專屬)
+    resistArcane = {
+        key = "resistArcane",
+        labelKey = "EAM_STAT_RESIST_ARCANE",
+        defaultLabel = "秘法抗性",
+        defaultIcon = 136096,
+        category = "resistance",
+        requiresForever = true,
+        getRawValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Arcane) or 6
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and effectiveRes ~= nil then
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistArcane"] or 0
+        end,
+        getValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Arcane) or 6
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and isSafeNumber(effectiveRes) and effectiveRes >= 0 then
+                    PlayerStatService.lastKnownStats["resistArcane"] = effectiveRes
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistArcane"] or 0
+        end,
+    },
+    resistFire = {
+        key = "resistFire",
+        labelKey = "EAM_STAT_RESIST_FIRE",
+        defaultLabel = "火焰抗性",
+        defaultIcon = 135824,
+        category = "resistance",
+        requiresForever = true,
+        getRawValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Fire) or 2
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and effectiveRes ~= nil then
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistFire"] or 0
+        end,
+        getValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Fire) or 2
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and isSafeNumber(effectiveRes) and effectiveRes >= 0 then
+                    PlayerStatService.lastKnownStats["resistFire"] = effectiveRes
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistFire"] or 0
+        end,
+    },
+    resistFrost = {
+        key = "resistFrost",
+        labelKey = "EAM_STAT_RESIST_FROST",
+        defaultLabel = "冰霜抗性",
+        defaultIcon = 135848,
+        category = "resistance",
+        requiresForever = true,
+        getRawValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Frost) or 4
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and effectiveRes ~= nil then
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistFrost"] or 0
+        end,
+        getValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Frost) or 4
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and isSafeNumber(effectiveRes) and effectiveRes >= 0 then
+                    PlayerStatService.lastKnownStats["resistFrost"] = effectiveRes
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistFrost"] or 0
+        end,
+    },
+    resistNature = {
+        key = "resistNature",
+        labelKey = "EAM_STAT_RESIST_NATURE",
+        defaultLabel = "自然抗性",
+        defaultIcon = 136074,
+        category = "resistance",
+        requiresForever = true,
+        getRawValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Nature) or 3
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and effectiveRes ~= nil then
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistNature"] or 0
+        end,
+        getValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Nature) or 3
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and isSafeNumber(effectiveRes) and effectiveRes >= 0 then
+                    PlayerStatService.lastKnownStats["resistNature"] = effectiveRes
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistNature"] or 0
+        end,
+    },
+    resistShadow = {
+        key = "resistShadow",
+        labelKey = "EAM_STAT_RESIST_SHADOW",
+        defaultLabel = "暗影抗性",
+        defaultIcon = 136192,
+        category = "resistance",
+        requiresForever = true,
+        getRawValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Shadow) or 5
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and effectiveRes ~= nil then
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistShadow"] or 0
+        end,
+        getValue = function()
+            local getRes = api.UnitResistance or _G.UnitResistance
+            if getRes then
+                local dc = (Enum and Enum.Damageclass and Enum.Damageclass.Shadow) or 5
+                local ok, baseRes, realRes, effectiveRes = pcall(getRes, "player", dc)
+                if ok and isSafeNumber(effectiveRes) and effectiveRes >= 0 then
+                    PlayerStatService.lastKnownStats["resistShadow"] = effectiveRes
+                    return effectiveRes
+                end
+            end
+            return PlayerStatService.lastKnownStats["resistShadow"] or 0
+        end,
+    },
+    spirit = {
+        key = "spirit",
+        labelKey = "EAM_STAT_SPIRIT",
+        defaultLabel = "精神",
+        defaultIcon = 135981, -- Spell_Nature_Regenerate
+        category = "primary",
+        requiresForever = true,
+        getRawValue = function()
+            local getStat = api.UnitStat or _G.UnitStat
+            if getStat then
+                local ok, stat, effectiveStat = pcall(getStat, "player", 5)
+                if ok and (effectiveStat ~= nil or stat ~= nil) then
+                    return effectiveStat or stat
+                end
+            end
+            return PlayerStatService.lastKnownStats["spirit"] or 0
+        end,
+        getValue = function()
+            local getStat = api.UnitStat or _G.UnitStat
+            if getStat then
+                local ok, stat, effectiveStat = pcall(getStat, "player", 5)
+                local val = effectiveStat or stat
+                if ok and isSafeNumber(val) and val >= 0 then
+                    PlayerStatService.lastKnownStats["spirit"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["spirit"] or 0
+        end,
+        format = "number",
+    },
 }
 PlayerStatService.DEFINITIONS = STAT_DEFINITIONS
 
-local ORDERED_KEYS = {
+local RETAIL_ORDERED_KEYS = {
     "strength", "agility", "stamina", "intellect",
     "crit", "haste", "mastery", "versatility",
     "avoidance", "leech", "speedRating",
     "runSpeed", "swimSpeed", "flightSpeed", "skyridingSpeed",
     "totalAbsorb", "healAbsorb", "armor"
 }
+
+local FOREVER_ORDERED_KEYS = {
+    "strength", "agility", "stamina", "intellect", "spirit",
+    "crit", "haste", "spiritManaRegen", "defenseSkill",
+    "armor", "resistArcane", "resistFire", "resistFrost", "resistNature", "resistShadow",
+    "runSpeed", "swimSpeed",
+    "petHappiness", "ammoStatus",
+    "totalAbsorb", "healAbsorb"
+}
+
+local ORDERED_KEYS = RETAIL_ORDERED_KEYS
+PlayerStatService.RETAIL_ORDERED_KEYS = RETAIL_ORDERED_KEYS
+PlayerStatService.FOREVER_ORDERED_KEYS = FOREVER_ORDERED_KEYS
 PlayerStatService.ORDERED_KEYS = ORDERED_KEYS
 
 -- 取得當前屬性排列順序（優先讀取職業獨立/全域設定，支援使用者自選排序）
+
+local spiritSnapshot = {
+    isActive = false,
+    isManaActive = false,
+    isHealthActive = false,
+    fiveSecRemaining = 0,
+    justActivated = false,
+    spiritVal = 0,
+    spiritMP5 = 0,
+    spiritHP5 = 0,
+    hasManaPool = false,
+    lastPopTime = 0,
+}
+
+PlayerStatService.spiritState = {
+    manaSpendExpireTime = 0,
+    lastSafeMana = nil,
+    isSitting = false,
+    wasActive = nil,
+    justActivated = false,
+    lastPopTime = 0,
+    lastEvalTime = -1,
+}
+
+function PlayerStatService.resetSpiritRegenState()
+    local state = PlayerStatService.spiritState
+    state.manaSpendExpireTime = 0
+    state.lastSafeMana = nil
+    state.isSitting = false
+    state.wasActive = nil
+    state.justActivated = false
+    state.lastPopTime = 0
+    state.lastEvalTime = -1
+    spiritSnapshot.isActive = false
+    spiritSnapshot.isManaActive = false
+    spiritSnapshot.isHealthActive = false
+    spiritSnapshot.fiveSecRemaining = 0
+    spiritSnapshot.justActivated = false
+    spiritSnapshot.spiritVal = 0
+    spiritSnapshot.spiritMP5 = 0
+    spiritSnapshot.spiritHP5 = 0
+    spiritSnapshot.hasManaPool = false
+    spiritSnapshot.lastPopTime = 0
+end
+
+local function hasPlayerFreecastAura()
+    local cUnitAuras = api.C_UnitAuras or _G.C_UnitAuras
+    if cUnitAuras and cUnitAuras.GetPlayerAuraBySpellID then
+        local FREECAST_SPELLS = { 12536, 16246, 16870 }
+        for i = 1, #FREECAST_SPELLS do
+            local ok, aura = pcall(cUnitAuras.GetPlayerAuraBySpellID, FREECAST_SPELLS[i])
+            if ok and aura and (type(aura) == "table" or type(aura) == "userdata") then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function PlayerStatService.onPlayerSpellCastSucceeded(spellID)
+    if not isSafeNumber(spellID) or spellID <= 0 then return end
+    if hasPlayerFreecastAura() then return end
+    local now = (api.GetTime or _G.GetTime)()
+    local cSpell = api.C_Spell or _G.C_Spell
+    if cSpell and cSpell.GetSpellPowerCost then
+        local ok, costs = pcall(cSpell.GetSpellPowerCost, spellID)
+        if ok and type(costs) == "table" then
+            local hasManaCost = false
+            for i = 1, #costs do
+                local entry = costs[i]
+                if type(entry) == "table" then
+                    local costType = Util.readStructuredField(entry, "type")
+                    local cost = Util.readStructuredField(entry, "cost")
+                    local minCost = Util.readStructuredField(entry, "minCost")
+                    if costType == 0 or costType == (Enum and Enum.PowerType and Enum.PowerType.Mana) then
+                        if (isSafeNumber(cost) and cost > 0) or (isSafeNumber(minCost) and minCost > 0) or Util.isSecretValue(cost) or Util.isSecretValue(minCost) then
+                            hasManaCost = true
+                            break
+                        end
+                    end
+                end
+            end
+            if hasManaCost then
+                PlayerStatService.spiritState.manaSpendExpireTime = now + 5.0
+                return
+            end
+        end
+    end
+end
+
+function PlayerStatService.onPlayerPowerUpdate()
+    local getPower = api.UnitPower or _G.UnitPower
+    if not getPower then return end
+    local ok, curMana = pcall(getPower, "player", 0)
+    if ok and isSafeNumber(curMana) then
+        local last = PlayerStatService.spiritState.lastSafeMana
+        if last and curMana < (last - 0.5) then
+            local now = (api.GetTime or _G.GetTime)()
+            PlayerStatService.spiritState.manaSpendExpireTime = now + 5.0
+        end
+        PlayerStatService.spiritState.lastSafeMana = curMana
+    end
+end
+
+function PlayerStatService.getSpiritRegenState()
+    local now = (api.GetTime or _G.GetTime)()
+    local state = PlayerStatService.spiritState
+
+    if state.lastEvalTime == now then
+        return spiritSnapshot
+    end
+
+    local fnSpiritMP = api.GetManaRegenFromSpirit or _G.GetManaRegenFromSpirit
+    local spiritMP5 = 0
+    if fnSpiritMP then
+        local ok, sRegen = pcall(fnSpiritMP)
+        if ok and isSafeNumber(sRegen) and sRegen > 0 then
+            spiritMP5 = math.floor(sRegen * 5 + 0.5)
+        end
+    end
+
+    local fnSpiritHP = api.GetHealthRegenFromSpirit or _G.GetHealthRegenFromSpirit
+    local spiritHP5 = 0
+    if fnSpiritHP then
+        local ok, sRegenHP = pcall(fnSpiritHP)
+        if ok and isSafeNumber(sRegenHP) and sRegenHP > 0 then
+            spiritHP5 = math.floor(sRegenHP * 0.75 * 5 + 0.5)
+        end
+    end
+
+    local spiritVal = 0
+    local getStat = api.UnitStat or _G.UnitStat
+    if getStat then
+        local ok, stat, effectiveStat = pcall(getStat, "player", 5)
+        local val = effectiveStat or stat
+        if ok and isSafeNumber(val) then
+            spiritVal = val
+        end
+    end
+
+    local hasManaPool = false
+    local getPowerMax = api.UnitPowerMax or _G.UnitPowerMax
+    if getPowerMax then
+        local ok, maxP = pcall(getPowerMax, "player", 0)
+        if ok and isSafeNumber(maxP) and maxP > 0 then
+            hasManaPool = true
+        end
+    end
+    if not hasManaPool and api.UnitClass then
+        local ok, _, classToken = pcall(api.UnitClass, "player")
+        if ok and classToken ~= "WARRIOR" and classToken ~= "ROGUE" then
+            hasManaPool = true
+        end
+    end
+
+    local fiveSecRemaining = math.max(0, state.manaSpendExpireTime - now)
+    local isManaActive = hasManaPool and (fiveSecRemaining <= 0)
+    local isHealthActive = not inCombat()
+
+    local isActive = false
+    if hasManaPool then
+        isActive = isManaActive
+    else
+        isActive = isHealthActive
+    end
+
+    local justActivated = false
+    if state.wasActive == false and isActive == true then
+        justActivated = true
+        state.lastPopTime = now
+    end
+    state.wasActive = isActive
+    state.justActivated = justActivated
+    state.lastEvalTime = now
+
+    spiritSnapshot.isActive = isActive
+    spiritSnapshot.isManaActive = isManaActive
+    spiritSnapshot.isHealthActive = isHealthActive
+    spiritSnapshot.fiveSecRemaining = fiveSecRemaining
+    spiritSnapshot.justActivated = justActivated
+    spiritSnapshot.spiritVal = spiritVal
+    spiritSnapshot.spiritMP5 = spiritMP5
+    spiritSnapshot.spiritHP5 = spiritHP5
+    spiritSnapshot.hasManaPool = hasManaPool
+    spiritSnapshot.lastPopTime = state.lastPopTime
+
+    return spiritSnapshot
+end
+
+function PlayerStatService.formatSpiritDisplay(key, cfg)
+    local rState = PlayerStatService.getSpiritRegenState()
+    cfg = cfg or {}
+    local dispMode = cfg.spiritDisplayMode or (key == "spirit" and "FULL" or "REGEN_ONLY")
+    local isZh = (api.GetLocale and api.GetLocale() or "zhTW"):sub(1, 2) == "zh"
+    local manaPrefix = isZh and "魔+" or "M+"
+    local hpPrefix = isZh and "血+" or "H+"
+    local manaSuppress = isZh and "魔0/" or "M0/"
+
+    if dispMode == "FULL" then
+        if rState.isActive then
+            return string.format("%d (%s%d/%s%d)", rState.spiritVal, manaPrefix, rState.spiritMP5, hpPrefix, rState.spiritHP5)
+        elseif rState.fiveSecRemaining > 0 then
+            return string.format("%d (%.1fs|%s%d)", rState.spiritVal, rState.fiveSecRemaining, hpPrefix, rState.spiritHP5)
+        else
+            return string.format("%d (%s%d|%s%d)", rState.spiritVal, manaSuppress, rState.spiritMP5, hpPrefix, rState.spiritHP5)
+        end
+    elseif dispMode == "REGEN_ONLY" then
+        if rState.isActive then
+            return string.format("%s%d / %s%d", manaPrefix, rState.spiritMP5, hpPrefix, rState.spiritHP5)
+        elseif rState.fiveSecRemaining > 0 then
+            return string.format("%.1fs (%s%d) / %s%d", rState.fiveSecRemaining, manaPrefix, rState.spiritMP5, hpPrefix, rState.spiritHP5)
+        else
+            return string.format("%s%d / %s%d", manaSuppress, rState.spiritMP5, hpPrefix, rState.spiritHP5)
+        end
+    else -- "STAT_ONLY"
+        if key == "spirit" then
+            return tostring(rState.spiritVal)
+        else
+            return tostring(rState.spiritMP5) .. "/5s"
+        end
+    end
+end
+
 function PlayerStatService.getOrder()
     local _, classToken = PlayerStatService.getPlayerStatsConfig()
     local db = EAM.db
@@ -923,25 +1571,48 @@ function PlayerStatService.getOrder()
         profileOrder = db.profiles.classes[classToken].playerStatsOrder
     end
     local rawOrder = profileOrder or (db and db.playerStatsOrder)
+    local activeBaseKeys = (EAM.isForever and FOREVER_ORDERED_KEYS) or RETAIL_ORDERED_KEYS
+
+    local function isAllowedKey(k)
+        local def = STAT_DEFINITIONS[k]
+        if not def then
+            return false
+        end
+        if def.requiresForever and not EAM.isForever then
+            return false
+        end
+        if def.requiresRetail and EAM.isForever then
+            return false
+        end
+        return true
+    end
+
     if type(rawOrder) == "table" and #rawOrder > 0 then
         local seen = {}
         local order = {}
         for _, k in ipairs(rawOrder) do
-            if STAT_DEFINITIONS[k] and not seen[k] then
+            if isAllowedKey(k) and not seen[k] then
                 seen[k] = true
                 order[#order + 1] = k
             end
         end
-        for _, k in ipairs(ORDERED_KEYS) do
-            if not seen[k] then
+        for _, k in ipairs(activeBaseKeys) do
+            if isAllowedKey(k) and not seen[k] then
                 seen[k] = true
                 order[#order + 1] = k
             end
         end
         return order
     end
+
     local copy = {}
-    for i, k in ipairs(ORDERED_KEYS) do copy[i] = k end
+    local seen = {}
+    for _, k in ipairs(activeBaseKeys) do
+        if isAllowedKey(k) and not seen[k] then
+            seen[k] = true
+            copy[#copy + 1] = k
+        end
+    end
     return copy
 end
 
@@ -1353,7 +2024,11 @@ function PlayerStatService.update()
         for _, data in ipairs(activeList) do
             local item = statItemFrames[data.key]
             if item and item:IsShown() then
-                renderStatValueText(item.valText, data.val, data.rawVal, data.def.format, data.cfg.decimals, data.cfg.shortNumber, data.def.suffix)
+                if EAM.isForever and (data.key == "spirit" or data.key == "spiritManaRegen") and PlayerStatService.formatSpiritDisplay then
+                    item.valText:SetText(PlayerStatService.formatSpiritDisplay(data.key, data.cfg))
+                else
+                    renderStatValueText(item.valText, data.val, data.rawVal, data.def.format, data.cfg.decimals, data.cfg.shortNumber, data.def.suffix)
+                end
             end
         end
         return
@@ -1396,13 +2071,18 @@ function PlayerStatService.update()
 
         -- 當取消圖示時（預設），依數值相對方位自適應框架尺寸
         if cfg.showIcon ~= true then
-            local placement = cfg.valuePlacement or "TOP"
-            if placement == "LEFT" or placement == "RIGHT" then
-                itemW = math.max(size * 1.8, 80)
-                itemH = math.max(size * 0.7, 24)
-            else
-                itemW = math.max(size * 1.2, 56)
+            if EAM.isForever and (data.key == "spirit" or data.key == "spiritManaRegen") and (cfg.spiritDisplayMode == "FULL" or cfg.spiritDisplayMode == "REGEN_ONLY" or (cfg.spiritDisplayMode == nil and data.key == "spirit")) then
+                itemW = math.max(size * 2.8, 128)
                 itemH = math.max(size * 0.9, 36)
+            else
+                local placement = cfg.valuePlacement or "TOP"
+                if placement == "LEFT" or placement == "RIGHT" then
+                    itemW = math.max(size * 1.8, 80)
+                    itemH = math.max(size * 0.7, 24)
+                else
+                    itemW = math.max(size * 1.2, 56)
+                    itemH = math.max(size * 0.9, 36)
+                end
             end
         end
         item:SetSize(itemW, itemH)
@@ -1492,16 +2172,89 @@ function PlayerStatService.update()
         end
 
         -- 數值文字 (透過 FontString:SetFormattedText 進行 C-Level 零 GC 分配與 Secret Values 容錯渲染)
-        renderStatValueText(item.valText, val, rawVal, def.format, cfg.decimals, cfg.shortNumber, def.suffix)
-        if cfg.fontSizeValue then
+        local isSpiritSpecial = false
+        if EAM.isForever and (data.key == "spirit" or data.key == "spiritManaRegen") then
+            isSpiritSpecial = true
+            local rState = PlayerStatService.getSpiritRegenState()
+            local text = PlayerStatService.formatSpiritDisplay(data.key, cfg)
+            item.valText:SetText(text)
+
+            -- Active 醒目提醒 (圖示邊框發光 / 文字放大高亮)
+            local doActiveAlert = cfg.spiritActiveAlert ~= false
+            local LBG = _G.LibStub and _G.LibStub("LibButtonGlow-1.0", true)
+            if doActiveAlert then
+                if cfg.showIcon == true then
+                    if rState.isActive then
+                        if LBG and LBG.ShowOverlayGlow then
+                            LBG.ShowOverlayGlow(item)
+                        end
+                        if not PlayerStatService.isMoving then
+                            item:SetBackdropBorderColor(0.20, 0.82, 1.00, 1.0)
+                        end
+                    else
+                        if LBG and LBG.HideOverlayGlow then
+                            LBG.HideOverlayGlow(item)
+                        end
+                        if not PlayerStatService.isMoving then
+                            item:SetBackdropBorderColor(0.30, 0.35, 0.45, 0.85)
+                        end
+                    end
+                else
+                    if LBG and LBG.HideOverlayGlow then
+                        LBG.HideOverlayGlow(item)
+                    end
+                    local baseFont = cfg.fontSizeValue or 12
+                    local now = (api.GetTime or _G.GetTime)()
+                    if rState.isActive then
+                        local scale = 1.32
+                        if (now - rState.lastPopTime) < 0.35 then
+                            scale = 1.45
+                        end
+                        local targetFont = math.floor(baseFont * scale + 0.5)
+                        if EAM.UI.TextPlacement and EAM.UI.TextPlacement.applyFont then
+                            EAM.UI.TextPlacement.applyFont(item.valText, targetFont, globalConfig)
+                        end
+                        item.valText:SetTextColor(0.25, 0.88, 1.00, 1.0)
+                    else
+                        if EAM.UI.TextPlacement and EAM.UI.TextPlacement.applyFont then
+                            EAM.UI.TextPlacement.applyFont(item.valText, baseFont, globalConfig)
+                        end
+                        item.valText:SetTextColor(0.60, 0.66, 0.74, 0.88)
+                    end
+                end
+            else
+                if LBG and LBG.HideOverlayGlow then
+                    LBG.HideOverlayGlow(item)
+                end
+            end
+
+            -- 全螢幕藍色邊框動畫
+            if cfg.spiritBlueScreenFlash == true and rState.justActivated then
+                local CF = EAM.UI and EAM.UI.CombatFlash
+                if CF and CF.triggerSpiritActive then
+                    CF.triggerSpiritActive()
+                end
+            end
+        else
+            renderStatValueText(item.valText, val, rawVal, def.format, cfg.decimals, cfg.shortNumber, def.suffix)
+        end
+        if not isSpiritSpecial and cfg.fontSizeValue then
             if EAM.UI.TextPlacement and EAM.UI.TextPlacement.applyFont then
                 EAM.UI.TextPlacement.applyFont(item.valText, cfg.fontSizeValue, globalConfig)
             end
         end
-        if cfg.valueColor then
-            item.valText:SetTextColor(cfg.valueColor[1] or 1, cfg.valueColor[2] or 1, cfg.valueColor[3] or 1, cfg.valueColor[4] or 1)
-        else
-            item.valText:SetTextColor(1, 1, 1, 1)
+        if not isSpiritSpecial then
+            if cfg.valueColor then
+                item.valText:SetTextColor(cfg.valueColor[1] or 1, cfg.valueColor[2] or 1, cfg.valueColor[3] or 1, cfg.valueColor[4] or 1)
+            else
+                item.valText:SetTextColor(1, 1, 1, 1)
+            end
+        elseif cfg.showIcon == true then
+            if cfg.valueColor then
+                item.valText:SetTextColor(cfg.valueColor[1] or 1, cfg.valueColor[2] or 1, cfg.valueColor[3] or 1, cfg.valueColor[4] or 1)
+            else
+                item.valText:SetTextColor(1, 1, 1, 1)
+            end
         end
 
         -- 名稱標籤
@@ -1573,8 +2326,11 @@ function PlayerStatService.update()
             end
             item.valText:SetTextColor(1.0, 0.3, 0.3, 1.0)
         else
-            if cfg.showIcon == true and not PlayerStatService.isMoving then
-                item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
+            local isSpiritManagedBorder = isSpiritSpecial and (cfg.spiritActiveAlert ~= false) and (cfg.showIcon == true)
+            if not isSpiritManagedBorder then
+                if cfg.showIcon == true and not PlayerStatService.isMoving then
+                    item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
+                end
             end
         end
 
@@ -1755,6 +2511,24 @@ function PlayerStatService.initialize()
         router.register("UNIT_MAXHEALTH", onEvent)
         router.register("COMBAT_RATING_UPDATE", onEvent)
         router.register("SPEED_UPDATE", onEvent)
+        router.register("UNIT_RESISTANCES", onEvent)
+        if EAM.isForever then
+            router.register("UNIT_SPELLCAST_SUCCEEDED", function(event, unit, castGUID, spellID)
+                if unit == "player" and spellID then
+                    PlayerStatService.onPlayerSpellCastSucceeded(spellID)
+                end
+            end)
+            router.register("UNIT_POWER_FREQUENT", function(event, unit, powerToken)
+                if unit == "player" and (powerToken == nil or powerToken == "MANA") then
+                    PlayerStatService.onPlayerPowerUpdate()
+                end
+            end)
+            router.register("UNIT_POWER_UPDATE", function(event, unit, powerToken)
+                if unit == "player" and (powerToken == nil or powerToken == "MANA") then
+                    PlayerStatService.onPlayerPowerUpdate()
+                end
+            end)
+        end
         router.register("PLAYER_SPECIALIZATION_CHANGED", onPrewarmEvent)
         router.register("PLAYER_ENTERING_WORLD", onPrewarmEvent)
         router.register("PLAYER_LOGIN", onPrewarmEvent)

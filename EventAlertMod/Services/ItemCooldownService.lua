@@ -252,12 +252,20 @@ local function getCooldownData(alert)
             isEnabled = true
         end
 
+        local function isZeroTiming(st, dur)
+            if not st or not dur then return true end
+            if Util.isSafeNumber(st) and Util.isSafeNumber(dur) then
+                return st == 0 or dur == 0
+            end
+            return false
+        end
+
         -- 軌道 2：ItemLocation 現代化 API 備援 (適用於 Retail 11.x / 12.x)
-        if (not startTime or startTime == 0 or not duration or duration == 0) and _G.ItemLocation and _G.ItemLocation.CreateFromEquipmentSlot and api.C_Item and api.C_Item.GetItemCooldown then
+        if isZeroTiming(startTime, duration) and _G.ItemLocation and _G.ItemLocation.CreateFromEquipmentSlot and api.C_Item and api.C_Item.GetItemCooldown then
             local itemLoc = _G.ItemLocation:CreateFromEquipmentSlot(slotID)
             if itemLoc and api.C_Item.DoesItemExist and api.C_Item.DoesItemExist(itemLoc) then
                 local ok, cStart, cDur, cEnable = pcall(api.C_Item.GetItemCooldown, itemLoc)
-                if ok and cStart and cDur and cDur > 0 then
+                if ok and Util.isSafeNumber(cStart) and Util.isSafePositiveNumber(cDur) then
                     startTime = cStart
                     duration = cDur
                     isEnabled = (cEnable == true or cEnable == 1 or cEnable == nil)
@@ -265,13 +273,29 @@ local function getCooldownData(alert)
             end
         end
 
-        -- 軌道 3：具體物品 ID 同軌備援 (以解析之 equippedItemID 查詢 C_Item.GetItemCooldown)
-        if (not startTime or startTime == 0 or not duration or duration == 0) and equippedItemID and api.C_Item and api.C_Item.GetItemCooldown then
-            local ok, cStart, cDur, cEnable = pcall(api.C_Item.GetItemCooldown, equippedItemID)
-            if ok and cStart and cDur and cDur > 0 then
-                startTime = cStart
-                duration = cDur
-                isEnabled = (cEnable == true or cEnable == 1 or cEnable == nil)
+        -- 軌道 3：具體物品 ID 同軌備援 (Forever 優先支援 C_Spell.GetItemCooldown，並降級至 C_Item.GetItemCooldown)
+        if isZeroTiming(startTime, duration) and equippedItemID then
+            local cSpell = api.C_Spell or _G.C_Spell
+            if cSpell and type(cSpell.GetItemCooldown) == "function" then
+                local ok, cdInfo = pcall(cSpell.GetItemCooldown, equippedItemID)
+                if ok and type(cdInfo) == "table" and not Util.isSecretTable(cdInfo) and Util.canAccessTable(cdInfo) then
+                    local cdDur, durSafe = Util.readStructuredField(cdInfo, "duration", nil, "itemCooldown")
+                    local cdStart, stSafe = Util.readStructuredField(cdInfo, "startTime", nil, "itemCooldown")
+                    local cdEn, enSafe = Util.readStructuredField(cdInfo, "isEnabled", nil, "itemCooldown")
+                    if durSafe and Util.isSafePositiveNumber(cdDur) then
+                        startTime = stSafe and cdStart or 0
+                        duration = cdDur
+                        isEnabled = (cdEn ~= false)
+                    end
+                end
+            end
+            if isZeroTiming(startTime, duration) and api.C_Item and api.C_Item.GetItemCooldown then
+                local ok, cStart, cDur, cEnable = pcall(api.C_Item.GetItemCooldown, equippedItemID)
+                if ok and Util.isSafeNumber(cStart) and Util.isSafePositiveNumber(cDur) then
+                    startTime = cStart
+                    duration = cDur
+                    isEnabled = (cEnable == true or cEnable == 1 or cEnable == nil)
+                end
             end
         end
 
@@ -297,10 +321,38 @@ local function getCooldownData(alert)
         local cItem = api.C_Item
         local startTime, duration, isEnabled = 0, 0, true
         local icon, name = nil, nil
-        if cItem and cItem.GetItemCooldown then
-            startTime, duration, isEnabled = cItem.GetItemCooldown(itemID)
+        local function isZeroTiming(st, dur)
+            if not st or not dur then return true end
+            if Util.isSafeNumber(st) and Util.isSafeNumber(dur) then
+                return st == 0 or dur == 0
+            end
+            return false
         end
-        if type(isEnabled) == "number" then
+
+        -- Forever 1.60.1 專用 C_Spell.GetItemCooldown 優先查詢
+        local cSpell = api.C_Spell or _G.C_Spell
+        if cSpell and type(cSpell.GetItemCooldown) == "function" then
+            local ok, cdInfo = pcall(cSpell.GetItemCooldown, itemID)
+            if ok and type(cdInfo) == "table" and not Util.isSecretTable(cdInfo) and Util.canAccessTable(cdInfo) then
+                local cdDur, durSafe = Util.readStructuredField(cdInfo, "duration", nil, "itemCooldown")
+                local cdStart, stSafe = Util.readStructuredField(cdInfo, "startTime", nil, "itemCooldown")
+                local cdEn, enSafe = Util.readStructuredField(cdInfo, "isEnabled", nil, "itemCooldown")
+                if durSafe and Util.isSafePositiveNumber(cdDur) then
+                    startTime = stSafe and cdStart or 0
+                    duration = cdDur
+                    isEnabled = (cdEn ~= false)
+                end
+            end
+        end
+        if isZeroTiming(startTime, duration) and cItem and cItem.GetItemCooldown then
+            local ok, cStart, cDur, cEnable = pcall(cItem.GetItemCooldown, itemID)
+            if ok and Util.isSafeNumber(cStart) and Util.isSafePositiveNumber(cDur) then
+                startTime = cStart
+                duration = cDur
+                isEnabled = (cEnable == true or cEnable == 1 or cEnable == nil)
+            end
+        end
+        if Util.isSafeNumber(isEnabled) then
             isEnabled = (isEnabled == 1)
         elseif isEnabled == nil then
             isEnabled = true
@@ -412,7 +464,7 @@ local function refreshAlert(alert, eventName)
 
     local hasSafeTiming = Util.isSafeNumber(startTime) and Util.isSafeNumber(duration)
     local hasSafeEnabled = (isEnabled == true or isEnabled == 1 or isEnabled == nil or Util.isSafeBoolean(isEnabled))
-    local hasActiveCooldown = hasSafeTiming and hasSafeEnabled and duration > 0 and isEnabled ~= false and isEnabled ~= 0
+    local hasActiveCooldown = hasSafeTiming and hasSafeEnabled and Util.isSafePositiveNumber(duration) and isEnabled ~= false and isEnabled ~= 0
 
     local shouldShow = false
     if not visibleNow then

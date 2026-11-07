@@ -634,16 +634,16 @@
 </ul>
 <h3 id="lua-durationobject">Lua 格式化程式與 DurationObject</h3>
 <p>12.0.5 新增 Lua 數位格式化類型：</p>
-<pre class="codehilite"><code class="language-lua">AbbreviatedNumberFormatter
-NumericRuleFormatter
-SecondsFormatter
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">AbbreviatedNumberFormatter</span>
+<span class="nv">NumericRuleFormatter</span>
+<span class="nv">SecondsFormatter</span>
+</code></pre></div>
 
 <p>文件指出這些格式化程式可穿透持續時間物件的 <code>Format</code> 函數接收秘密數字，並提供冷卻訊框使用。</p>
 <p>新增冷卻時間API：</p>
-<pre class="codehilite"><code class="language-lua">Cooldown:SetCountdownFormatter(formatter)
-Cooldown:SetCountdownMillisecondsThreshold(seconds)
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">Cooldown</span><span class="p">:</span><span class="nf">SetCountdownFormatter</span><span class="p">(</span><span class="nv">formatter</span><span class="p">)</span>
+<span class="nv">Cooldown</span><span class="p">:</span><span class="nf">SetCountdownMillisecondsThreshold</span><span class="p">(</span><span class="nv">seconds</span><span class="p">)</span>
+</code></pre></div>
 
 <p>EAM 渲染器規則：</p>
 <ul>
@@ -654,10 +654,10 @@ Cooldown:SetCountdownMillisecondsThreshold(seconds)
 </ul>
 <h3 id="_3">充能次數、恢復時間與零跨度持續時間</h3>
 <p>12.0.5 指出以下充能持續時間 API 在已達到最大充能時，會回傳零跨度 <code>DurationObject</code>：</p>
-<pre class="codehilite"><code class="language-lua">C_SpellBook.GetSpellBookItemChargeDuration
-C_Spell.GetSpellChargeDuration
-C_ActionBar.GetActionChargeDuration
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">C_SpellBook</span><span class="p">.</span><span class="py">GetSpellBookItemChargeDuration</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellChargeDuration</span>
+<span class="nv">C_ActionBar</span><span class="p">.</span><span class="py">GetActionChargeDuration</span>
+</code></pre></div>
 
 <p><code>DurationObject</code> 描述的是「下一層恢復時間」，不等於「目前剩餘可用次數」。12.1 的 <code>C_Spell.GetSpellCharges</code> 中，<code>currentCharges</code> 可為 Secret，而 <code>maxCharges</code> 與 <code>isActive</code> 可保持安全；<code>StatusBar:SetValue</code> 可接收 Secret BarValue，<code>StatusBar:SetRenderMode(Enum.StatusBarRenderMode.Radial)</code> 則可把同一個狀態列改為環形進度。</p>
 <p>EAM CooldownService／IconPool 規則：</p>
@@ -684,12 +684,12 @@ C_ActionBar.GetActionChargeDuration
 - 仍需保留GCD虛擬法術<code>61304</code>作為測試/相容觀察點，但不適合作為唯一架構。</p>
 <h3 id="auradata">AuraData 欄位不再秘密</h3>
 <p>12.0.5指出以下<code>AuraData</code>欄位不再秘密：</p>
-<pre class="codehilite"><code class="language-lua">isHelpful
-isHarmful
-isRaid
-isNameplateOnly
-isFromPlayerOrPlayerPet
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">isHelpful</span>
+<span class="nv">isHarmful</span>
+<span class="nv">isRaid</span>
+<span class="nv">isNameplateOnly</span>
+<span class="nv">isFromPlayerOrPlayerPet</span>
+</code></pre></div>
 
 <p>EAM AuraService 規則：</p>
 <ul>
@@ -721,9 +721,9 @@ isFromPlayerOrPlayerPet
 </ul>
 <h3 id="freeze-isfrozen">表.freeze / 表.isfrozen</h3>
 <p>12.0.5新增：</p>
-<pre class="codehilite"><code class="language-lua">table.freeze(tbl)
-table.isfrozen(tbl)
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">table</span><span class="p">.</span><span class="nf">freeze</span><span class="p">(</span><span class="nv">tbl</span><span class="p">)</span>
+<span class="nv">table</span><span class="p">.</span><span class="nf">isfrozen</span><span class="p">(</span><span class="nv">tbl</span><span class="p">)</span>
+</code></pre></div>
 
 <p>EAM 規則：</p>
 <ul>
@@ -752,9 +752,9 @@ table.isfrozen(tbl)
 </ul>
 <h3 id="_4">字體平滑縮放</h3>
 <p>12.0.5新增：</p>
-<pre class="codehilite"><code class="language-lua">FontString:GetSmoothScaling()
-FontString:SetSmoothScaling(smooth)
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">FontString</span><span class="p">:</span><span class="nf">GetSmoothScaling</span><span class="p">()</span>
+<span class="nv">FontString</span><span class="p">:</span><span class="nf">SetSmoothScaling</span><span class="p">(</span><span class="nv">smooth</span><span class="p">)</span>
+</code></pre></div>
 
 <p>EAM 渲染器可在即時正式服驗證後，用於定時器/name/stack 標籤視覺品質，但不宜放入熱路徑重複設定。</p>
 <h3 id="_5">冷卻小部件秘密方面</h3>
@@ -797,38 +797,38 @@ FontString:SetSmoothScaling(smooth)
 <h2 id="api_2">秘密相關 API</h2>
 <p>12.0.0 新增多個秘密檢查/處理API。 EAM重寫應集中包裝在<code>Core/Env.lua</code>或<code>Core/Util.lua</code>，不要讓各服務直接散落呼叫。</p>
 <p>重要全域API：</p>
-<pre class="codehilite"><code class="language-lua">issecretvalue
-issecrettable
-hasanysecretvalues
-canaccesstable
-canaccessvalue
-canaccessallvalues
-canaccesssecrets
-scrubsecretvalues
-dropsecretaccess
-mapvalues
-secretwrap
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">issecretvalue</span>
+<span class="nv">issecrettable</span>
+<span class="nv">hasanysecretvalues</span>
+<span class="nv">canaccesstable</span>
+<span class="nv">canaccessvalue</span>
+<span class="nv">canaccessallvalues</span>
+<span class="nv">canaccesssecrets</span>
+<span class="nv">scrubsecretvalues</span>
+<span class="nv">dropsecretaccess</span>
+<span class="nv">mapvalues</span>
+<span class="nv">secretwrap</span>
+</code></pre></div>
 
 <p>重要<code>C_Secrets</code> API：</p>
-<pre class="codehilite"><code class="language-lua">C_Secrets.HasSecretRestrictions
-C_Secrets.ShouldAurasBeSecret
-C_Secrets.ShouldCooldownsBeSecret
-C_Secrets.ShouldSpellAuraBeSecret
-C_Secrets.ShouldSpellCooldownBeSecret
-C_Secrets.ShouldSpellBookItemCooldownBeSecret
-C_Secrets.ShouldUnitAuraIndexBeSecret
-C_Secrets.ShouldUnitAuraInstanceBeSecret
-C_Secrets.ShouldUnitAuraSlotBeSecret
-C_Secrets.ShouldUnitPowerBeSecret
-C_Secrets.ShouldUnitPowerMaxBeSecret
-C_Secrets.ShouldUnitSpellCastBeSecret
-C_Secrets.ShouldUnitSpellCastingBeSecret
-C_Secrets.GetSpellAuraSecrecy
-C_Secrets.GetSpellCooldownSecrecy
-C_Secrets.GetSpellCastSecrecy
-C_Secrets.GetPowerTypeSecrecy
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">C_Secrets</span><span class="p">.</span><span class="py">HasSecretRestrictions</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldAurasBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldCooldownsBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldSpellAuraBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldSpellCooldownBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldSpellBookItemCooldownBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldUnitAuraIndexBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldUnitAuraInstanceBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldUnitAuraSlotBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldUnitPowerBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldUnitPowerMaxBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldUnitSpellCastBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">ShouldUnitSpellCastingBeSecret</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">GetSpellAuraSecrecy</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">GetSpellCooldownSecrecy</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">GetSpellCastSecrecy</span>
+<span class="nv">C_Secrets</span><span class="p">.</span><span class="py">GetPowerTypeSecrecy</span>
+</code></pre></div>
 
 <p>實行規則：</p>
 <ul>
@@ -879,13 +879,13 @@ C_Secrets.GetPowerTypeSecrecy
 <li>脱战<code>PLAYER_REGEN_ENABLED</code>后做一次安全重扫，清掉残影与边界限制状态。</li>
 </ul>
 <p>相關API：</p>
-<pre class="codehilite"><code class="language-lua">C_UnitAuras.GetAuraDuration
-C_UnitAuras.GetAuraBaseDuration
-C_UnitAuras.DoesAuraHaveExpirationTime
-C_UnitAuras.GetAuraApplicationDisplayCount
-C_UnitAuras.GetUnitAuraInstanceIDs
-C_TooltipInfo.GetUnitAuraByAuraInstanceID
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">C_UnitAuras</span><span class="p">.</span><span class="py">GetAuraDuration</span>
+<span class="nv">C_UnitAuras</span><span class="p">.</span><span class="py">GetAuraBaseDuration</span>
+<span class="nv">C_UnitAuras</span><span class="p">.</span><span class="py">DoesAuraHaveExpirationTime</span>
+<span class="nv">C_UnitAuras</span><span class="p">.</span><span class="py">GetAuraApplicationDisplayCount</span>
+<span class="nv">C_UnitAuras</span><span class="p">.</span><span class="py">GetUnitAuraInstanceIDs</span>
+<span class="nv">C_TooltipInfo</span><span class="p">.</span><span class="py">GetUnitAuraByAuraInstanceID</span>
+</code></pre></div>
 
 <h3 id="c_unitaurasgetauradatabyaurainstanceid">C_UnitAuras.GetAuraDataByAuraInstanceID</h3>
 <p><code>C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)</code> 的 <code>auraInstanceID</code> 參數標記為 <code>NeverSecret</code>，但回傳的 <code>UnitAuraInfo</code> 可能是 <code>SecretWhenUnitAuraRestricted</code>。</p>
@@ -915,26 +915,26 @@ C_TooltipInfo.GetUnitAuraByAuraInstanceID
 <h2 id="api_3">冷卻 API 變更重點</h2>
 <p>12.0 刪除或淘汰許多舊的全域法術 API。 EAM 不應再保留 Classic/ 舊版解壓縮返回層。</p>
 <p>舊 global API 應改用 <code>C_Spell</code>：</p>
-<pre class="codehilite"><code class="language-lua">GetSpellInfo       -&gt; C_Spell.GetSpellInfo
-GetSpellCooldown   -&gt; C_Spell.GetSpellCooldown
-GetSpellTexture    -&gt; C_Spell.GetSpellTexture
-GetSpellCharges    -&gt; C_Spell.GetSpellCharges
-IsUsableSpell      -&gt; C_Spell.IsSpellUsable
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">GetSpellInfo</span><span class="w">       </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellInfo</span>
+<span class="nv">GetSpellCooldown</span><span class="w">   </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellCooldown</span>
+<span class="nv">GetSpellTexture</span><span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellTexture</span>
+<span class="nv">GetSpellCharges</span><span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellCharges</span>
+<span class="nv">IsUsableSpell</span><span class="w">      </span><span class="o">-&gt;</span><span class="w"> </span><span class="nv">C_Spell</span><span class="p">.</span><span class="py">IsSpellUsable</span>
+</code></pre></div>
 
 <p>12.0 相關<code>C_Spell</code> 重點：</p>
-<pre class="codehilite"><code class="language-lua">C_Spell.GetSpellCooldownDuration
-C_Spell.GetSpellChargeDuration
-C_Spell.GetSpellDisplayCount
-C_Spell.GetSpellMaxCumulativeAuraApplications
-C_Spell.IsPriorityAura
-C_Spell.IsSelfBuff
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellCooldownDuration</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellChargeDuration</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellDisplayCount</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellMaxCumulativeAuraApplications</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">IsPriorityAura</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">IsSelfBuff</span>
+</code></pre></div>
 
 <p><code>SpellCooldownInfo</code> 在 12.x 中有新的欄位，例如：</p>
-<pre class="codehilite"><code class="language-lua">timeUntilEndOfStartRecovery
-isOnGCD
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">timeUntilEndOfStartRecovery</span>
+<span class="nv">isOnGCD</span>
+</code></pre></div>
 
 <p>魔獸爭霸維基單頁指出 <code>C_Spell.GetSpellCooldown</code> 是補丁 11.0.0 加入取代舊 <code>GetSpellCooldown</code> 的 API；它可能回傳 nil，且在法術冷卻受限時可能回傳秘密。 <code>isOnGCD</code> 欄位為 <code>NeverSecret</code>，但檔案提醒除非正在回應 <code>SPELL_UPDATE_COOLDOWN</code>，否則不要信任此欄位。</p>
 <p>EAM <code>CooldownService</code> 實施規則：</p>
@@ -995,21 +995,21 @@ isOnGCD
 </ul>
 <p><code>DurationObject</code> 用來讓原生端處理可能為 Secret 的時間資料。它可由 <code>C_DurationUtil.CreateDuration()</code> 建立，也可能由光環、施法或冷卻 API 提供，並可傳給 <code>Cooldown:SetCooldownFromDurationObject()</code> 或其他明確接受 DurationObject 的 widget。
 12.x規劃方向是刪除剩餘時間API，改用duration物件：</p>
-<pre class="codehilite"><code class="language-lua">C_ActionBar.GetActionCooldownRemaining
-C_ActionBar.GetActionCooldownRemainingPercent
-C_Spell.GetSpellCooldownRemaining
-C_Spell.GetSpellCooldownRemainingPercent
-C_UnitAuras.GetAuraDurationRemaining
-C_UnitAuras.GetAuraDurationRemainingPercent
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">C_ActionBar</span><span class="p">.</span><span class="py">GetActionCooldownRemaining</span>
+<span class="nv">C_ActionBar</span><span class="p">.</span><span class="py">GetActionCooldownRemainingPercent</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellCooldownRemaining</span>
+<span class="nv">C_Spell</span><span class="p">.</span><span class="py">GetSpellCooldownRemainingPercent</span>
+<span class="nv">C_UnitAuras</span><span class="p">.</span><span class="py">GetAuraDurationRemaining</span>
+<span class="nv">C_UnitAuras</span><span class="p">.</span><span class="py">GetAuraDurationRemainingPercent</span>
+</code></pre></div>
 
 <p>由此 API 應避免成為新的架構依賴。</p>
 <p>重要小工具API：</p>
-<pre class="codehilite"><code class="language-lua">Cooldown:SetCooldownFromDurationObject(duration [, clearIfZero])
-Cooldown:SetCooldownFromExpirationTime(expirationTime, duration [, modRate])
-Cooldown:SetPaused(paused)
-Cooldown:GetCountdownFontString()
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">Cooldown</span><span class="p">:</span><span class="nf">SetCooldownFromDurationObject</span><span class="p">(</span><span class="nv">duration</span><span class="w"> </span><span class="p">[,</span><span class="w"> </span><span class="nv">clearIfZero</span><span class="p">])</span>
+<span class="nv">Cooldown</span><span class="p">:</span><span class="nf">SetCooldownFromExpirationTime</span><span class="p">(</span><span class="nv">expirationTime</span><span class="p">,</span><span class="w"> </span><span class="nv">duration</span><span class="w"> </span><span class="p">[,</span><span class="w"> </span><span class="nv">modRate</span><span class="p">])</span>
+<span class="nv">Cooldown</span><span class="p">:</span><span class="nf">SetPaused</span><span class="p">(</span><span class="nv">paused</span><span class="p">)</span>
+<span class="nv">Cooldown</span><span class="p">:</span><span class="nf">GetCountdownFontString</span><span class="p">()</span>
+</code></pre></div>
 
 <p>EAM <code>Renderer</code> 实作规则：</p>
 <ul>
@@ -1022,8 +1022,8 @@ Cooldown:GetCountdownFontString()
 </ul>
 <h2 id="fontstring">FontString 與文字秘密方面</h2>
 <p>12.0.1新增：</p>
-<pre class="codehilite"><code class="language-lua">FontString:ClearText()
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">FontString</span><span class="p">:</span><span class="nf">ClearText</span><span class="p">()</span>
+</code></pre></div>
 
 <p>其用途是將文字設為​​空字符串，並刪除文字秘密方面。</p>
 <p>EAM 渲染器建議：</p>
@@ -1050,37 +1050,37 @@ Cooldown:GetCountdownFontString()
 </blockquote>
 <h4 id="100pcall">🛡️ 100%絕對可行且安全的「本地內聯pcall閉匿名包」防禦方案：</h4>
 <p>為了在不呼叫自訂函數傳參的前提下，安全地讀取表屬性，我們必須使用系統內建、具有底層C++執行休眠權與錯誤捕獲權的<strong><code>pcall</code></strong>，在<strong>同一個本地作用域（Scope）內進行本地內聯匿名閉包讀取</strong>：</p>
-<pre class="codehilite"><code class="language-lua">-- ====================================================================
--- 本地 Inline pcall 屬性盾範例 (在業務代碼中直接原地 inline 呼叫)
--- ====================================================================
-local data = C_TooltipInfo.GetUnitBuffByAuraInstanceID(&quot;player&quot;, instanceID)
+<div class="codehilite"><pre><span></span><code><span class="c1">-- ====================================================================</span>
+<span class="c1">-- 本地 Inline pcall 屬性盾範例 (在業務代碼中直接原地 inline 呼叫)</span>
+<span class="c1">-- ====================================================================</span>
+<span class="kd">local</span><span class="w"> </span><span class="nv">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">C_TooltipInfo</span><span class="p">.</span><span class="nf">GetUnitBuffByAuraInstanceID</span><span class="p">(</span><span class="s2">"player"</span><span class="p">,</span><span class="w"> </span><span class="nv">instanceID</span><span class="p">)</span>
 
--- 1. 用 pcall 在本地安全讀取 lines 表，防止 data 被限制時直接讀屬性崩潰
-local dataOk, lines
-if data then
-    dataOk, lines = pcall(function() return data.lines end)
-end
+<span class="c1">-- 1. 用 pcall 在本地安全讀取 lines 表，防止 data 被限制時直接讀屬性崩潰</span>
+<span class="kd">local</span><span class="w"> </span><span class="nv">dataOk</span><span class="p">,</span><span class="w"> </span><span class="nv">lines</span>
+<span class="kr">if</span><span class="w"> </span><span class="nv">data</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">    </span><span class="nv">dataOk</span><span class="p">,</span><span class="w"> </span><span class="nv">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">pcall</span><span class="p">(</span><span class="kr">function</span><span class="p">()</span><span class="w"> </span><span class="kr">return</span><span class="w"> </span><span class="nv">data</span><span class="p">.</span><span class="py">lines</span><span class="w"> </span><span class="kr">end</span><span class="p">)</span>
+<span class="kr">end</span>
 
-if dataOk and lines then
-    for i = 1, #lines do
-        local line = lines[i]
+<span class="kr">if</span><span class="w"> </span><span class="nv">dataOk</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="nv">lines</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">    </span><span class="kr">for</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="o">#</span><span class="nv">lines</span><span class="w"> </span><span class="kr">do</span>
+<span class="w">        </span><span class="kd">local</span><span class="w"> </span><span class="nv">line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">lines</span><span class="p">[</span><span class="nv">i</span><span class="p">]</span>
 
-        -- 2. 用 pcall 本地匿名閉包讀取 leftText，絕不將 line 作為參數傳出！
-        local lineOk, text
-        if line then
-            lineOk, text = pcall(function() return line.leftText end)
-        end
+<span class="w">        </span><span class="c1">-- 2. 用 pcall 本地匿名閉包讀取 leftText，絕不將 line 作為參數傳出！</span>
+<span class="w">        </span><span class="kd">local</span><span class="w"> </span><span class="nv">lineOk</span><span class="p">,</span><span class="w"> </span><span class="nv">text</span>
+<span class="w">        </span><span class="kr">if</span><span class="w"> </span><span class="nv">line</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">            </span><span class="nv">lineOk</span><span class="p">,</span><span class="w"> </span><span class="nv">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">pcall</span><span class="p">(</span><span class="kr">function</span><span class="p">()</span><span class="w"> </span><span class="kr">return</span><span class="w"> </span><span class="nv">line</span><span class="p">.</span><span class="py">leftText</span><span class="w"> </span><span class="kr">end</span><span class="p">)</span>
+<span class="w">        </span><span class="kr">end</span>
 
-        -- 3. 確保讀取成功，且最終獲取的字串值不是 Secret Value，此時 text 100% 安全
-        if lineOk and text and not issecretvalue(text) then
-            -- 在此安全地進行任何 string.find 等 Lua 運算！
-            if string.find(text, &quot;恢復&quot;) then
-                -- 處理邏輯
-            end
-        end
-    end
-end
-</code></pre>
+<span class="w">        </span><span class="c1">-- 3. 確保讀取成功，且最終獲取的字串值不是 Secret Value，此時 text 100% 安全</span>
+<span class="w">        </span><span class="kr">if</span><span class="w"> </span><span class="nv">lineOk</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="nv">text</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="nf">issecretvalue</span><span class="p">(</span><span class="nv">text</span><span class="p">)</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">            </span><span class="c1">-- 在此安全地進行任何 string.find 等 Lua 運算！</span>
+<span class="w">            </span><span class="kr">if</span><span class="w"> </span><span class="nb">string.find</span><span class="p">(</span><span class="nv">text</span><span class="p">,</span><span class="w"> </span><span class="s2">"恢復"</span><span class="p">)</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">                </span><span class="c1">-- 處理邏輯</span>
+<span class="w">            </span><span class="kr">end</span>
+<span class="w">        </span><span class="kr">end</span>
+<span class="w">    </span><span class="kr">end</span>
+<span class="kr">end</span>
+</code></pre></div>
 
 <p>EAM <code>AuraService</code> 與其他分析模組在存取任何可能受到限制的 C_TooltipInfo 傳回值時，<strong>一律嚴格遵循此本地內聯 pcall 匿名閉包模式</strong>，杜絕任何裸讀查表與自訂函數傳參。</p>
 <p><code>C_TooltipInfo.GetUnitAuraByAuraInstanceID</code> 在 12.0.0 加入，謂詞包含 <code>MayReturnNothing</code> 和 <code>SecretWhenInCombat</code>，且 <code>SecretArguments</code> 只允許未污染的使用。其過濾器在 12.0.1 新增 <code>CROWD_CONTROL</code>、<code>RAID_IN_COMBAT</code>、<code>RAID_PLAYER_DISPELLABLE</code>、<code>BIG_DEFENSIVE</code>、<code>IMPORTANT</code>。</p>
@@ -1125,18 +1125,18 @@ end
 <h2 id="_7">事件與架構</h2>
 <p>12.x 不適合讓 EAM 繼續依賴戰鬥日誌盲掃。</p>
 <p>建議活動：</p>
-<pre class="codehilite"><code class="language-lua">PLAYER_LOGIN
-PLAYER_ENTERING_WORLD
-PLAYER_REGEN_ENABLED
-PLAYER_REGEN_DISABLED
-PLAYER_TARGET_CHANGED
-UNIT_AURA
-SPELL_UPDATE_COOLDOWN
-SPELL_UPDATE_CHARGES
-BAG_UPDATE_COOLDOWN
-UNIT_SPELLCAST_SUCCEEDED
-ADDON_RESTRICTION_STATE_CHANGED
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">PLAYER_LOGIN</span>
+<span class="nv">PLAYER_ENTERING_WORLD</span>
+<span class="nv">PLAYER_REGEN_ENABLED</span>
+<span class="nv">PLAYER_REGEN_DISABLED</span>
+<span class="nv">PLAYER_TARGET_CHANGED</span>
+<span class="nv">UNIT_AURA</span>
+<span class="nv">SPELL_UPDATE_COOLDOWN</span>
+<span class="nv">SPELL_UPDATE_CHARGES</span>
+<span class="nv">BAG_UPDATE_COOLDOWN</span>
+<span class="nv">UNIT_SPELLCAST_SUCCEEDED</span>
+<span class="nv">ADDON_RESTRICTION_STATE_CHANGED</span>
+</code></pre></div>
 
 <p>實行規則：</p>
 <ul>
@@ -1159,14 +1159,14 @@ ADDON_RESTRICTION_STATE_CHANGED
 </ul>
 <h2 id="_8">偵錯匯出規則</h2>
 <p>除錯導出必須分層：</p>
-<pre class="codehilite"><code class="language-js">{
-  facts: {},
-  derived: {},
-  boundaryWarnings: [],
-  humanNotes: [],
-  environment: {}
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nx">facts</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">  </span><span class="nx">derived</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nx">humanNotes</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nx">environment</span><span class="o">:</span><span class="w"> </span><span class="p">{}</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>規則：</p>
 <ul>

@@ -124,6 +124,8 @@ def render_html(versions):
             b_class = "badge-generic"
             if "Retail" in b:
                 b_class = "badge-retail"
+            elif "Forever" in b or b == "1.60.1":
+                b_class = "badge-classic"
             elif "MN" in b:
                 b_class = "badge-mn"
             elif "Alpha" in b:

@@ -527,15 +527,15 @@
 <li>❌ <strong>非插件運行時 XML (Not AddOn FrameXML)</strong>：不參與遊戲內 UI 繪製、不載入於 <code>EventAlertMod.toc</code>。</li>
 <li>✅ <strong>AI 代理人治理專用 XML (Agentic AI Governance XML)</strong>：作為大型語言模型（LLMs，如 Claude、Gemini Pro、Codex）與子代理集群（Subagents）的高保真度（High-Fidelity）、零歧義結構化指導檔。實體 XML 儲存於 <a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a>。</li>
 </ul>
-<pre class="codehilite"><code>                       EAM 雙軌治理體系 (Dual Governance Tracks)
-                                          │
-                 ┌────────────────────────┴────────────────────────┐
-                 ▼                                                 ▼
-     【人類人類讀取軌 (Human Track)】                   【AI 代理人結構化軌 (AI Agent Track)】
-     - 格式：Markdown (.md) / HTML                     - 格式：結構化 XML (.xml)
-     - 用途：瀏覽器閱讀、圖文導覽、架構討論            - 用途：System Prompt 注入、精確約束、零暖機錨定
-     - 核心：00_INDEX, 01_ARCHITECTURE 等             - 核心：AI_GOVERNANCE_DIRECTIVE.xml
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">                       EAM 雙軌治理體系 (Dual Governance Tracks)</span>
+<span class="n">                                          │</span>
+<span class="n">                 ┌────────────────────────┴────────────────────────┐</span>
+<span class="n">                 ▼                                                 ▼</span>
+<span class="n">     【人類人類讀取軌 (Human Track)】                   【AI 代理人結構化軌 (AI Agent Track)】</span>
+<span class="n">     - 格式：Markdown (.md) / HTML                     - 格式：結構化 XML (.xml)</span>
+<span class="n">     - 用途：瀏覽器閱讀、圖文導覽、架構討論            - 用途：System Prompt 注入、精確約束、零暖機錨定</span>
+<span class="n">     - 核心：00_INDEX, 01_ARCHITECTURE 等             - 核心：AI_GOVERNANCE_DIRECTIVE.xml</span>
+</code></pre></div>
 
 <hr />
 <h2 id="2-xml-ai-why-structured-xml">💡 2. 為什麼採用結構化 XML 作為 AI 指導檔？(Why Structured XML?)</h2>
@@ -591,41 +591,41 @@
 <hr />
 <h2 id="4-xml-directives-overview">🛡️ 4. 核心治理節點架構一覽 (XML Directives Overview)</h2>
 <p>實體 XML 檔案包含 11 大核心模組節點（v1.3 最新版次）：</p>
-<pre class="codehilite"><code class="language-xml">&lt;eam_ai_governance version=&quot;1.3&quot; last_updated=&quot;2026-10-16&quot;&gt;
-    &lt;!-- 1. 元資料與受眾：界定專案路徑、台灣繁中與「少年欸」稱呼習慣 --&gt;
-    &lt;metadata&gt; ... &lt;/metadata&gt;
+<div class="codehilite"><pre><span></span><code><span class="nt">&lt;eam_ai_governance</span><span class="w"> </span><span class="na">version=</span><span class="s">"1.3"</span><span class="w"> </span><span class="na">last_updated=</span><span class="s">"2026-10-16"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- 1. 元資料與受眾：界定專案路徑、台灣繁中與「少年欸」稱呼習慣 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;metadata&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/metadata&gt;</span>
 
-    &lt;!-- 2. 生命週期與何時增設決策：定義五大觸發場景 (C1~C5 記憶漂移防禦) --&gt;
-    &lt;lifecycle_and_triggers&gt; ... &lt;/lifecycle_and_triggers&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 2. 生命週期與何時增設決策：定義五大觸發場景 (C1~C5 記憶漂移防禦) --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;lifecycle_and_triggers&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/lifecycle_and_triggers&gt;</span>
 
-    &lt;!-- 3. 七大絕對鐵律：禁止自動部署、正式服限定、舊目錄廢棄、TokenDPAPI加密、修改前備份、12.1.5防禦性解鎖相容、工具鏈執行層級(uv優先&gt;nodejs次之&gt;python備援) --&gt;
-    &lt;iron_rules&gt; ... &lt;/iron_rules&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 3. 七大絕對鐵律：禁止自動部署、正式服限定、舊目錄廢棄、TokenDPAPI加密、修改前備份、12.1.5防禦性解鎖相容、工具鏈執行層級(uv優先&gt;nodejs次之&gt;python備援) --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;iron_rules&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/iron_rules&gt;</span>
 
-    &lt;!-- 4. 最高事實裁決階梯：Level 1 動態情報 &gt; Level 2 安全門禁 &gt; Level 3 靜態社群基線 --&gt;
-    &lt;fact_of_truth_hierarchy&gt; ... &lt;/fact_of_truth_hierarchy&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 4. 最高事實裁決階梯：Level 1 動態情報 &gt; Level 2 安全門禁 &gt; Level 3 靜態社群基線 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;fact_of_truth_hierarchy&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/fact_of_truth_hierarchy&gt;</span>
 
-    &lt;!-- 5. 社群技能庫雙軌收錄：skills.sh 與 lobehub.com、3 個候選上限、授權門禁與三端部署 --&gt;
-    &lt;skills_warehouse_ecosystem&gt; ... &lt;/skills_warehouse_ecosystem&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 5. 社群技能庫雙軌收錄：skills.sh 與 lobehub.com、3 個候選上限、授權門禁與三端部署 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;skills_warehouse_ecosystem&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/skills_warehouse_ecosystem&gt;</span>
 
-    &lt;!-- 6. 抗記憶漂移結構化備援協議：強制錨定、零幻覺推論、子代理任務切片注入、每輪必訪API變更Wiki --&gt;
-    &lt;anti_memory_drift_protocol&gt; ... &lt;/anti_memory_drift_protocol&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 6. 抗記憶漂移結構化備援協議：強制錨定、零幻覺推論、子代理任務切片注入、每輪必訪API變更Wiki --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;anti_memory_drift_protocol&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/anti_memory_drift_protocol&gt;</span>
 
-    &lt;!-- 7. Secret Values 與 Taint 哨兵：五大檢定 API、禁止四則運算/比對、原生 C-Level Sink --&gt;
-    &lt;secret_values_sentinel&gt; ... &lt;/secret_values_sentinel&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 7. Secret Values 與 Taint 哨兵：五大檢定 API、禁止四則運算/比對、原生 C-Level Sink --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;secret_values_sentinel&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/secret_values_sentinel&gt;</span>
 
-    &lt;!-- 8. 系統架構契約：Core, Services, UI, Managers 四層邊界職責 --&gt;
-    &lt;architecture_contracts&gt; ... &lt;/architecture_contracts&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 8. 系統架構契約：Core, Services, UI, Managers 四層邊界職責 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;architecture_contracts&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/architecture_contracts&gt;</span>
 
-    &lt;!-- 9. 極限效能與熱路徑鐵律：零匿名閉包、零臨時 Table、數字循環、物件池規範 --&gt;
-    &lt;hot_path_guidelines&gt; ... &lt;/hot_path_guidelines&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 9. 極限效能與熱路徑鐵律：零匿名閉包、零臨時 Table、數字循環、物件池規範 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;hot_path_guidelines&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/hot_path_guidelines&gt;</span>
 
-    &lt;!-- 10. 驗證門禁體系：語法 79/79、Flow 108/108、契約 502/502、Deploy DryRun --&gt;
-    &lt;verification_gates&gt; ... &lt;/verification_gates&gt;
+<span class="w">    </span><span class="cm">&lt;!-- 10. 驗證門禁體系：語法 79/79、Flow 108/108、契約 502/502、Deploy DryRun --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;verification_gates&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/verification_gates&gt;</span>
 
-    &lt;!-- 11. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核、開發完成主動執行故障預測與威脅推論 (&lt;failure_prediction_protocol&gt;) --&gt;
-    &lt;agent_behavior_protocol&gt; ... &lt;/agent_behavior_protocol&gt;
-&lt;/eam_ai_governance&gt;
-</code></pre>
+<span class="w">    </span><span class="cm">&lt;!-- 11. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核、開發完成主動執行故障預測與威脅推論 (&lt;failure_prediction_protocol&gt;) --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;agent_behavior_protocol&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/agent_behavior_protocol&gt;</span>
+<span class="nt">&lt;/eam_ai_governance&gt;</span>
+</code></pre></div>
 
 <hr />
 <h2 id="5-physical-file-reference">📌 5. 權威實體檔案位置 (Physical File Reference)</h2>

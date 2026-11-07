@@ -1,4 +1,4 @@
-<# EAM_FILE_COMMENTARY
+﻿<# EAM_FILE_COMMENTARY
 EventAlertMod Retail Rewrite
 檔案: Tools\Test-ValidationContracts.ps1
 
@@ -10,7 +10,7 @@ EventAlertMod Retail Rewrite
 - 不啟動或操作 WoW，不讀 WTF，不輸入遊戲行為，不修改來源檔案。
 - 匯入器反例只在系統暫存目錄建立合成 JSON 與輸出，不得列為實機證據。
 #>
-#Requires -Version 7.0
+#Requires -Version 5.1
 [CmdletBinding()]
 param(
     [string]$FlowReport
@@ -152,22 +152,24 @@ function Invoke-ImporterContract {
 
     $hostExecutable = Join-Path $PSHOME "pwsh.exe"
     if (-not (Test-Path -LiteralPath $hostExecutable)) {
-        $hostExecutable = Join-Path $PSHOME "pwsh"
+        $hostExecutable = Join-Path $PSHOME "powershell.exe"
     }
+    if (-not (Test-Path -LiteralPath $hostExecutable)) {
+        $hostExecutable = (Get-Process -Id $PID).Path
+    }
+    $argsList = @("-NoProfile", "-File", $ImporterPath, "-Path", $DataPath, "-ReportType", $ReportType, "-OutputDirectory", $OutputDirectory)
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $hostExecutable
     $startInfo.UseShellExecute = $false
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
-    [void]$startInfo.ArgumentList.Add("-NoProfile")
-    [void]$startInfo.ArgumentList.Add("-File")
-    [void]$startInfo.ArgumentList.Add($ImporterPath)
-    [void]$startInfo.ArgumentList.Add("-Path")
-    [void]$startInfo.ArgumentList.Add($DataPath)
-    [void]$startInfo.ArgumentList.Add("-ReportType")
-    [void]$startInfo.ArgumentList.Add($ReportType)
-    [void]$startInfo.ArgumentList.Add("-OutputDirectory")
-    [void]$startInfo.ArgumentList.Add($OutputDirectory)
+    if ($startInfo.PSObject.Properties['ArgumentList']) {
+        foreach ($arg in $argsList) {
+            [void]$startInfo.ArgumentList.Add($arg)
+        }
+    } else {
+        $startInfo.Arguments = ($argsList | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }) -join " "
+    }
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
@@ -192,16 +194,24 @@ function Invoke-ValidationScriptContract {
 
     $hostExecutable = Join-Path $PSHOME "pwsh.exe"
     if (-not (Test-Path -LiteralPath $hostExecutable)) {
-        $hostExecutable = Join-Path $PSHOME "pwsh"
+        $hostExecutable = Join-Path $PSHOME "powershell.exe"
     }
+    if (-not (Test-Path -LiteralPath $hostExecutable)) {
+        $hostExecutable = (Get-Process -Id $PID).Path
+    }
+    $argsList = @("-NoProfile", "-File", $ScriptPath)
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $hostExecutable
     $startInfo.UseShellExecute = $false
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
-    [void]$startInfo.ArgumentList.Add("-NoProfile")
-    [void]$startInfo.ArgumentList.Add("-File")
-    [void]$startInfo.ArgumentList.Add($ScriptPath)
+    if ($startInfo.PSObject.Properties['ArgumentList']) {
+        foreach ($arg in $argsList) {
+            [void]$startInfo.ArgumentList.Add($arg)
+        }
+    } else {
+        $startInfo.Arguments = ($argsList | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }) -join " "
+    }
 
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
@@ -1159,9 +1169,9 @@ Assert-Contract ($missingConfirmLocaleKeys.Count -eq 0) "Five locales cover all 
 
 $resourceLocaleReference = [System.IO.File]::ReadAllText((Join-Path $root "Locale\enUS.lua"))
 $resourceLocaleKeys = @(
-    [regex]::Matches($resourceLocaleReference, '(?m)^L\.(EAM_RESOURCE_[A-Z0-9_]+)\s*=')
-    | ForEach-Object { $_.Groups[1].Value }
-    | Sort-Object -Unique
+    [regex]::Matches($resourceLocaleReference, '(?m)^L\.(EAM_RESOURCE_[A-Z0-9_]+)\s*=') |
+    ForEach-Object { $_.Groups[1].Value } |
+    Sort-Object -Unique
 )
 $missingResourceLocaleKeys = @()
 foreach ($localeName in $localeNames) {

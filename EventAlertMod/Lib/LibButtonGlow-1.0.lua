@@ -34,7 +34,14 @@ if not LibStub then error(MAJOR_VERSION .. " requires LibStub.") end
 local lib, oldversion = LibStub:NewLibrary(MAJOR_VERSION, MINOR_VERSION)
 if not lib then return end
 
-local Midnight = (select(4, GetBuildInfo())) >= 120000
+local tocVersion = 0
+if GetBuildInfo then
+	local ok, _, _, _, toc = pcall(GetBuildInfo)
+	if ok and type(toc) == "number" then
+		tocVersion = toc
+	end
+end
+local Midnight = (tocVersion >= 120000) or (_G.WOW_PROJECT_ID == (_G.WOW_PROJECT_CAMELOT or 18)) or (tocVersion >= 16000 and tocVersion < 20000)
 
 local Masque = LibStub("Masque", true)
 
@@ -64,7 +71,9 @@ local function OverlayGlow_OnUpdate(self, elapsed)
 	local cooldown = self:GetParent().cooldown
 	-- we need some threshold to avoid dimming the glow during the gdc
 	-- (using 1500 exactly seems risky, what if casting speed is slowed or something?)
-	if not Midnight and cooldown and cooldown:IsShown() and cooldown:GetCooldownDuration() > 3000 then
+	local cdDur = (cooldown and type(cooldown.GetCooldownDuration) == "function") and cooldown:GetCooldownDuration() or nil
+	local isCdDurSafe = type(cdDur) == "number" and not (issecretvalue and issecretvalue(cdDur))
+	if not Midnight and cooldown and cooldown:IsShown() and isCdDurSafe and cdDur > 3000 then
 		self:SetAlpha(0.5)
 	else
 		self:SetAlpha(1.0)

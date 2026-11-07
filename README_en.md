@@ -1,12 +1,12 @@
-# EventAlertMod Retail 12.1.5 (EAM)
+# EventAlertMod Retail 12.1.5 & Forever 1.60.1 (EAM)
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
-[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5-blue)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Release](https://img.shields.io/badge/release-Alpha%208.9-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.5 / 12.1 / 12.0+)!**
+> 🚀 **Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.5 / 12.1 / 12.0+) and Forever (1.60.1)!**
 >
 > 🌐 **Official Online Documentation & Navigation Hub**: [https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
 
@@ -33,8 +33,8 @@ EAM features 8 completely decoupled, independently positioned, and freely dragga
 4. ⏳ **Spell Cooldown**: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode & outer linear bars (`TOP/BOTTOM/LEFT/RIGHT`), custom reordering (drag & drop, up/down), and desaturated placeholder masks.
 5. 🎒 **Item Cooldown**: Trinkets, on-use equipment, and consumables monitoring; fully supports dual-track monitoring (19 equipment slots & item IDs), 3-tier robust cooldown fallback, and real-time gear swap synchronization.
 6. 🌋 **Ground Effect**: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.
-7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types (Mana, Rage, Energy, Combo Points, Chi, Insanity, Runic Power, Arcane Charges, Soul Shards, Holy Power, Essence, etc.).
-8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles with 18 core stats (Primary, Secondary, 4-in-1 Speeds, Armor, Total Shield Absorbs, and Heal Absorbs).
+7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).
+8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles with 18 core stats in Retail, plus classic stat tracking in Forever 1.60.1 (Five Magic Resistances, Spirit 5-Second Rule MP5/HP5 with Active visual & full-screen blue-border flash alerts, Defense Skill crit immunity, Pet Happiness/Loyalty, Ranged Ammo Status, Armor Penetration).
 
 ---
 
@@ -142,6 +142,7 @@ In-game, you never need to manually look up Spell IDs:
 1. Visit [GitHub Releases](https://github.com/ziyuefan/EventAlertModRemake/releases) and download the latest `EventAlertMod_MN_*.zip`.
 2. Extract the archive and place the `EventAlertMod` folder into your World of Warcraft directory:
    - Retail Path: `World of Warcraft\_retail_\Interface\AddOns\EventAlertMod`
+   - Forever Path: `World of Warcraft\_forever_\Interface\AddOns\EventAlertMod`
 3. Launch World of Warcraft. On the Character Selection screen, verify that `EventAlertMod` is checked in the "AddOns" menu.
 
 ---
@@ -149,7 +150,79 @@ In-game, you never need to manually look up Spell IDs:
 ## 📜 Version History (CHANGELOG.TXT)
 
 <details open markdown="1">
-<summary><b>🔥 Retail 12.1.0 Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+<summary><b>🔥 Retail 12.1.5 & Forever 1.60.1 Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+
+### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08
+- **Multi-Flavor Unified Architecture**:
+  - Single addon directory with inline TOC conditional loading directives (`[AllowLoadGameType camelot, forever]`), simultaneously supporting Retail (12.1.5) and Forever (1.60.1) clients.
+  - Runtime environment detection (`EAM.detectGameFlavor`) providing zero-overhead isolation of flavor-specific data and business logic.
+  - Zero-allocation memory architecture: Shared core engine, native C++ `TimedSignalMap` scheduler, and `StatePool` object pools.
+- **[Forever 1.60.1 Exclusive] Full Pipeline Spell Rank Management**:
+  - Added `SpellRankService` and `ForeverCatalog.FOREVER_SPELL_RANK_FAMILIES`, dynamically populating native AuraContainer `candidateFilters.includeSpellIDs` to seamlessly match all spell ranks in a single slot without duplicate icons (supporting downranking and group buffs).
+  - GroundEffectService and Options.lua support spell rank subtext (e.g. `[Rank 4]`) display.
+- **[Forever 1.60.1 Exclusive] Five Magic Resistances Monitoring**:
+  - Supported Arcane, Fire, Frost, Nature, and Shadow resistances in PlayerStatPanel, integrating `UnitResistance("player", damageClass)` using `effectiveRes`, with custom threshold alerts and status bars.
+- **[Forever 1.60.1 Exclusive] Spirit 5-Second Rule State Machine, MP5/HP5 Dual Metrics & Active Alert**:
+  - Precision detection for 5-Second Rule (5SR) after mana-spending spellcasts, integrating `GetManaRegenFromSpirit` (x5 MP5) and `GetHealthRegenFromSpirit` (x0.75x5 HP5).
+  - Supported `FULL` (Spirit + MP5/HP5), `REGEN_ONLY` (MP5/HP5), and `STAT_ONLY` display modes.
+  - Supported Active alerts (glow overlay / text scaling 1.32x with 1.45x pop + ice-blue highlight) and optional full-screen blue flash (`CombatFlash.triggerSpiritActive()`).
+- **[Forever 1.60.1 Exclusive] Classic 60-Level Player Resource Topology**:
+  - Full support for 9 classic classes and their energy systems: Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, and pure Mana systems for Paladins, Priests, Shamans, and Mages.
+- **[Forever 1.60.1 Exclusive] Classic Character Stats & State Monitor**:
+  - Spirit Mana Regen & 5-Second Rule (`SPIRIT_MANA_REGEN`): Integrated `GetManaRegenFromSpirit` and `GetHealthRegen` for real-time mana regeneration tracking.
+  - Defense Skill (`DEFENSE_SKILL`): Real-time monitoring of `UnitDefenseSkill` and crit immunity thresholds with safe arithmetic checks.
+  - Pet Happiness & Loyalty (`PET_HAPPINESS`): Integrated `C_PetInfo` for live pet emotional state tracking (Unhappy/Content/Happy with 75%/100%/125% damage modifiers).
+  - Ranged Ammo Status (`AMMO_STATUS`): Integrated `UnitUsesAmmo` and `C_PaperDollInfo` for visual alerts when ammunition runs low.
+  - Armor Penetration & Glancing Blow: Accurate calculations of core physical offensive parameters.
+- **[Forever 1.60.1 Exclusive] Forever Default Alerts & Spell Heuristics**:
+  - Built-in default alert configurations for 9 classic classes (Clearcasting, Arcane Power, Presence of Mind, Overpower, Execute, Enrage, Flurry, Riposte, Improved Aspect of the Hawk, etc.) and classic trinkets/enchants.
+  - Heuristic evaluation support for Classic spell ranks and conditional combat triggers (Overpower after dodge, Riposte after parry, Execute at sub-20% health).
+- **[Retail 12.1.5 Exclusive] Native Aura Application & Duration Bars**:
+  - Native `CustomAuraButton:SetApplicationBar` and `SetDurationBar` progress bar pipelines.
+  - Mutually exclusive layout (application bar at top, duration bar at bottom) preventing overlap.
+  - Configurable application limits (1~20) with fallback text overlay and `ExponentialEaseOut` smooth bar interpolation.
+- **[Retail 12.1.5 Exclusive] Native Aura 3-Stage Pandemic & Lifecycle Animations**:
+  - `AddPandemicEnterAnimation` (pop 1.15), `AddPandemicActiveAnimation` (heartbeat loop), and `AddPandemicLeaveAnimation` (smooth fade).
+  - `AddAuraShownAnimation` and `AddAuraAssignedAnimation` kinetic glow effects.
+  - Strict Secret Aspect isolation preventing combat taint.
+- **[Retail 12.1.5 Exclusive] 12.1.5 Native Pandemic Carry-Over Duration Precision**:
+  - `C_UnitAuras.GetRefreshCarryOverDuration` precision check triggering refresh alerts at <=30% duration.
+  - Older clients smoothly fall back to `C_UnitAuras.GetRefreshExtendedDuration`.
+- **[Retail 12.1.5 Exclusive] Dynamic/Custom StatusBar Segments, Custom Gradient Colors & Conditional Alerts**:
+  - Discrete point resources dynamically partition status bar segment markers based on live `UnitPowerMax`.
+  - Custom solid and two-color gradient horizontal/vertical rendering.
+  - Threshold conditional alerts with color shift and rising-edge sound alert latch.
+- **[Retail 12.1.5 Exclusive] Evoker Essence 5-Locale Blizzard Terminology Calibration**:
+  - Calibrated Evoker primary resource naming across 5 official client localizations (Traditional Chinese, Simplified Chinese, English, Korean, Russian).
+- **[Shared] Zero-Alloc TimedSignalMap Scheduler Engine**:
+  - Integrated 12.1.5 `C_Timer.NewTimedSignalMap`, `TimerUtil.CreateTimedSignalCallbackMap`, and `C_Timer.CreateTimedSignalCallbackMap` native key-value scheduling.
+  - Zero-allocation key rescheduling significantly reducing Lua garbage collection overhead with graceful fallback proxy.
+- **[Shared] Intelligent Audio Floodgate**:
+  - Injected `audioThrottle` protection (default 0.3s, range 0.05s~5.0s) into `C_UnitAuras.AddAuraSound` and `MediaService.playSound`.
+- **[Shared] Retina Pixel Snapping & Zero-Flicker Frame Initialization**:
+  - `SetRoundLayoutToNearestPixel` applied across NativeAuraRenderer and PowerRenderer.
+  - `CreateFrameWithOptions` hidden pre-creation mechanism eliminating frame flash upon first icon generation.
+- **[Shared] Native C++ Math, String & Table Acceleration**:
+  - Blizzard native C++ utility acceleration library support for math, string, and table functions with defensive polyfills in Lua.
+- **[Shared] ProfileCodec EAMAP2: Native Encoding & Compression**:
+  - Export strings with `EAMAP2:` format utilizing `C_EncodingUtil` Deflate compression (60%~75% length reduction) with backward compatibility for `EAMAP1:`.
+- **[Shared] C_CurveUtil EvaluateColorFromBoolean Integration**:
+  - Safe evaluation of Secret Booleans via `EvaluateColorValueFromBoolean`, eliminating Lua branch taint risks.
+- **[Shared] C_AddOnProfiler Native Engine Profiling Telemetry**:
+  - Integrated `C_AddOnProfiler` with `RecentAverageTime`, `PeakTime`, and `CountTimeOver1Ms` metrics viewable via `/eam metrics`.
+- **[Shared] MediaService TTS Alerting**:
+  - Dual-track voice synthesis via `C_CombatAudioAlert.SpeakText` and `C_VoiceChat` with speech queuing.
+- **[Shared] Loss of Control Cooldown Duration Integration**:
+  - `C_Spell.GetSpellLossOfControlCooldownDuration` and `LOSS_OF_CONTROL_UPDATE` integration for precise lockout timer tracking.
+- **[Shared] Native Heal & Absorb Prediction Calculator Integration**:
+  - `CreateUnitHealPredictionCalculator` and `UnitGetDetailedHealPrediction` for high-precision damage/heal absorb tracking.
+- **Core Stability & Bug Fixes**:
+  - Forever Loss of Control Secret Value Comparison Fix (`CooldownService.lua:963` Secret Number `locDur > 0` comparison fix).
+  - Forever Aura isFullUpdate Secret Boolean Fix (`AuraService.lua:939` Secret Boolean `isFullUpdate` test fix).
+  - CombatFlash & LibButtonGlow Secret Value Protection against Secret Numbers during combat.
+  - Player Resource Scope Switch Forward Declaration Fix (`PlayerResourcePanel.lua:672` forward declaration nil call fix).
+  - Native `TimedSignalMap` C++ Object Read-Only Protection Proxy Wrapper Fix.
+  - Table Remove Value Boolean Return Consistency Fix.
 
 ### 🌟 [Retail 12.1.5 Alpha 8.8] - 2026.10.23
 - **Retail 12.1.5 Patch Compatibility & Native C++ Acceleration**:
@@ -331,10 +404,11 @@ In-game, you never need to manually look up Spell IDs:
 ## 📌 Compatibility
 
 - **Supported Client Environments**:
-  - World of Warcraft: Retail 12.1.0+ (Interface `120100`)
+  - World of Warcraft: Retail 12.1.5+ (Interface `120105` / `120100`)
   - Retail Compatibility Channel 12.0.7+ (Interface `120007`)
+  - World of Warcraft: Forever 1.60.1+ (Interface `16001`)
 - **Unsupported Environments**:
-  - Classic Era, MoP Classic, TBC Classic, Wrath Classic (Out of scope for this Retail remake project).
+  - Classic Era, MoP Classic, TBC Classic, Wrath Classic (Traditional legacy classic realms out of scope for this modern engine project).
 
 ---
 

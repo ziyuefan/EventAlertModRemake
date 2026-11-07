@@ -671,24 +671,24 @@ flowchart LR
 <p><code>all</code> 會執行全部案例。新增跨模組流程時，需在正式 runner 註冊案例，離線 harness 自動取得同一案例。</p>
 <h2 id="4">4. 離線執行</h2>
 <p>完整驗證：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\.AI\Tools\CheckLuaSyntax.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\.AI\Tools\Run-FlowValidation.ps1 -Suite all
-pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">CheckLuaSyntax</span><span class="p">.</span><span class="n">ps1</span>
+<span class="n">powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">all</span>
+<span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="nb">Test-ValidationContracts</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
 
 <p>可用 suite：</p>
-<pre class="codehilite"><code class="language-powershell">.\.AI\Tools\Run-FlowValidation.ps1 -Suite quick
-.\.AI\Tools\Run-FlowValidation.ps1 -Suite core
-.\.AI\Tools\Run-FlowValidation.ps1 -Suite boundary
-.\.AI\Tools\Run-FlowValidation.ps1 -Suite all
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">quick</span>
+<span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">core</span>
+<span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">boundary</span>
+<span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">all</span>
+</code></pre></div>
 
 <p>輸出位於 <code>.AI/TestResults/</code>，預設不納入 Git。若任何案例為 <code>failed</code> 或 <code>pending</code>，工具回傳 exit code 1。</p>
 <h2 id="5">5. 遊戲內實機流程</h2>
 <p>實機前先執行本機版本與部署目標斷言：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
-    -File .\.AI\Tools\Test-LocalWoWEnvironment.ps1
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="p">`</span>
+    <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="nb">Test-LocalWoWEnvironment</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
 
 <p>工具以 WoW 主程式 <code>ProductVersion</code> 比對預期 patch train，並檢查所測通道的 <code>Interface\AddOns\EventAlertMod</code> 是無巢狀 Reparse Point且含 TOC 的完整實體目錄。失敗時回傳 exit code 1，禁止繼續實機簽收；完整 build 與目標證據輸出至 <code>.AI/TestResults/</code>。</p>
 <p>非戰鬥中使用：</p>
@@ -714,14 +714,14 @@ pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1
 </ul>
 <h2 id="6">6. 開發回灌</h2>
 <p>遊戲內 runner 與真人工作台完成後會更新獨立 SavedVariable：</p>
-<pre class="codehilite"><code class="language-lua">EAM_FLOW_TEST_REPORT_JSON = &quot;{...}&quot;
-EAM_LIVE_TEST_REPORT_JSON = &quot;{...}&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EAM_FLOW_TEST_REPORT_JSON</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"{...}"</span>
+<span class="nv">EAM_LIVE_TEST_REPORT_JSON</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"{...}"</span>
+</code></pre></div>
 
 <p>面板「複製」直接取得記憶體內最新 JSON。若從 WTF 匯入，完成報告後必須再由玩家自行 <code>/reload</code> 或正常登出，WoW 才會把最新 SavedVariables 寫回磁碟；沒有這一步時匯入器讀到的可能仍是舊 schema／舊 session。</p>
 <p>本機開發基準根目錄為：</p>
-<pre class="codehilite"><code class="language-text">D:\World of Warcraft
-</code></pre>
+<div class="codehilite"><pre><span></span><code>D:\World of Warcraft
+</code></pre></div>
 
 <p>目前已確認 <code>_retail_</code>、<code>_ptr_</code>、<code>_xptr_</code> 都有 <code>WTF</code> 與 <code>Interface\AddOns</code>。最近一次 2026-08-08 唯讀快照如下；build 會更新，實機前仍必須重跑環境斷言：</p>
 <table>
@@ -755,91 +755,91 @@ EAM_LIVE_TEST_REPORT_JSON = &quot;{...}&quot;
 </tbody>
 </table>
 <p>EAM 實機報告候選路徑依測試客戶端推導：</p>
-<pre class="codehilite"><code class="language-text">D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+<div class="codehilite"><pre><span></span><code>D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
 D:\World of Warcraft\_ptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
 D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
-</code></pre>
+</code></pre></div>
 
 <p>匯入前必須先確認測試使用的客戶端版本，不得從 Classic 版本樹取證，也不得將帳號或角色名稱寫入文件與報告。2026-08-21 三個 AddOn 目標均為實體目錄，但只有 PTR 含 TOC；Retail／XPTR 完成部署並通過環境斷言前不得簽收。回灌流程只讀 WTF，不修改 AddOn 目標；完整規則見 <code>.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md</code>。</p>
 <p>匯入命令：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
-    -File .\.AI\Tools\Import-EAMFlowReport.ps1 `
-    -Path '&lt;EventAlertMod.lua 或 report.json&gt;'
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="p">`</span>
+    <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="nb">Import-EAMFlowReport</span><span class="p">.</span><span class="n">ps1</span> <span class="p">`</span>
+    <span class="n">-Path</span> <span class="s1">'&lt;EventAlertMod.lua 或 report.json&gt;'</span>
+</code></pre></div>
 
 <p>輸出位於 <code>TestResults/Imported/</code>。匯入工具不修改 WTF。</p>
 <h2 id="7">7. 報告契約</h2>
-<pre class="codehilite"><code class="language-json">{
-  &quot;schema&quot;: 2,
-  &quot;type&quot;: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
-  &quot;purpose&quot;: &quot;offline-contract|capability-probe&quot;,
-  &quot;matrixVersion&quot;: &quot;2026-08-08.1&quot;,
-  &quot;suite&quot;: &quot;all&quot;,
-  &quot;status&quot;: &quot;pass&quot;,
-  &quot;environment&quot;: {
-    &quot;executionSource&quot;: &quot;offline-mock|client&quot;,
-    &quot;source&quot;: &quot;offline-mock|ptr-live-manual|xptr-live-manual|retail-live-manual&quot;,
-    &quot;declaredInstallation&quot;: &quot;offline|_ptr_|_xptr_|_retail_&quot;,
-    &quot;channelValidation&quot;: &quot;pass|mismatch|unconfirmed&quot;,
-    &quot;interface&quot;: 120007,
-    &quot;isTestBuild&quot;: true,
-    &quot;isTestBuildKnown&quot;: true,
-    &quot;buildFlags&quot;: {
-      &quot;isPublicTestClient&quot;: true,
-      &quot;isTestBuild&quot;: true,
-      &quot;isBetaBuild&quot;: false
-    },
-    &quot;initialized&quot;: true,
-    &quot;inCombat&quot;: false,
-    &quot;locale&quot;: &quot;zhTW&quot;
-  },
-  &quot;summary&quot;: {
-    &quot;total&quot;: 32,
-    &quot;passed&quot;: 32,
-    &quot;failed&quot;: 0,
-    &quot;skipped&quot;: 0,
-    &quot;pending&quot;: 0
-  },
-  &quot;cases&quot;: [],
-  &quot;boundaryWarnings&quot;: []
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"schema"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"EAM_FLOW_VALIDATION_REPORT"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offline-contract|capability-probe"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"matrixVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-08-08.1"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"suite"</span><span class="p">:</span><span class="w"> </span><span class="s2">"all"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pass"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"environment"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"executionSource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offline-mock|client"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offline-mock|ptr-live-manual|xptr-live-manual|retail-live-manual"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"declaredInstallation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offline|_ptr_|_xptr_|_retail_"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"channelValidation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pass|mismatch|unconfirmed"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"interface"</span><span class="p">:</span><span class="w"> </span><span class="mi">120007</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"isTestBuild"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"isTestBuildKnown"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"buildFlags"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"isPublicTestClient"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"isTestBuild"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"isBetaBuild"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"initialized"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"inCombat"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"locale"</span><span class="p">:</span><span class="w"> </span><span class="s2">"zhTW"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"summary"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"total"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"passed"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"failed"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"skipped"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"pending"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"cases"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"boundaryWarnings"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>真人簽收使用獨立契約：</p>
-<pre class="codehilite"><code class="language-json">{
-  &quot;schema&quot;: 1,
-  &quot;type&quot;: &quot;EAM_LIVE_VALIDATION_REPORT&quot;,
-  &quot;purpose&quot;: &quot;rqa-signoff&quot;,
-  &quot;matrixVersion&quot;: &quot;2026-08-08.1&quot;,
-  &quot;status&quot;: &quot;pass|fail|incomplete&quot;,
-  &quot;session&quot;: {
-    &quot;phase&quot;: &quot;active|complete&quot;,
-    &quot;reloadSequence&quot;: 1,
-    &quot;resumedAfterReload&quot;: true,
-    &quot;humanObserved&quot;: true
-  },
-  &quot;environment&quot;: {
-    &quot;executionSource&quot;: &quot;client&quot;,
-    &quot;declaredInstallation&quot;: &quot;_ptr_|_xptr_|_retail_&quot;,
-    &quot;source&quot;: &quot;ptr-live-manual|xptr-live-manual|retail-live-manual&quot;,
-    &quot;isTestBuild&quot;: true,
-    &quot;isTestBuildKnown&quot;: true,
-    &quot;buildFlags&quot;: {
-      &quot;isPublicTestClient&quot;: true,
-      &quot;isTestBuild&quot;: true,
-      &quot;isBetaBuild&quot;: false
-    }
-  },
-  &quot;automation&quot;: {
-    &quot;gameInputAutomated&quot;: false,
-    &quot;reloadUIAutomated&quot;: false,
-    &quot;playerOperated&quot;: true
-  },
-  &quot;summary&quot;: { &quot;total&quot;: 37, &quot;required&quot;: 37 },
-  &quot;cases&quot;: [],
-  &quot;boundaryWarnings&quot;: []
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"schema"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"EAM_LIVE_VALIDATION_REPORT"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"rqa-signoff"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"matrixVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-08-08.1"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pass|fail|incomplete"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"session"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"phase"</span><span class="p">:</span><span class="w"> </span><span class="s2">"active|complete"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"reloadSequence"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"resumedAfterReload"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"humanObserved"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"environment"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"executionSource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"client"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"declaredInstallation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_ptr_|_xptr_|_retail_"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ptr-live-manual|xptr-live-manual|retail-live-manual"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"isTestBuild"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"isTestBuildKnown"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"buildFlags"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"isPublicTestClient"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"isTestBuild"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"isBetaBuild"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"automation"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"gameInputAutomated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"reloadUIAutomated"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"playerOperated"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"summary"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"total"</span><span class="p">:</span><span class="w"> </span><span class="mi">37</span><span class="p">,</span><span class="w"> </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="mi">37</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"cases"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"boundaryWarnings"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>對應 schema 位於 <code>Schemas/EAM_FlowValidationReport.schema.json</code> 與 <code>Schemas/EAM_LiveValidationReport.schema.json</code>。Live <code>pass</code> 由 schema 同時約束 complete phase、至少一次 reload、已知 build identity、37/37、零 warning；schema 1 Flow 缺少可信 client identity，只能輸出 <code>legacy-unverified</code> 並以 exit code 1 拒絕簽收。</p>
 <p>報告只能包含測試控制值與確認安全的環境欄位；不得包含 Secret、Protected、完整 SavedVariables、無界限事件日誌、原始 Aura／Cooldown facts、帳號／角色／伺服器或檔案系統路徑。遊戲內先遮蔽，匯入器仍會遞迴檢查屬性名稱與字串值。</p>
@@ -1074,15 +1074,15 @@ flowchart LR
 <hr />
 <h2 id="3-test-execution-commands">3. Test Execution Commands</h2>
 <h3 id="offline-cli-test-commands">Offline CLI Test Commands:</h3>
-<pre class="codehilite"><code class="language-powershell"># 1. Check Lua 5.1 Syntax across all files
-pwsh -NoProfile -File .\.AI\Tools\CheckLuaSyntax.ps1
+<div class="codehilite"><pre><span></span><code><span class="c"># 1. Check Lua 5.1 Syntax across all files</span>
+<span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">CheckLuaSyntax</span><span class="p">.</span><span class="n">ps1</span>
 
-# 2. Run Offline Flow Validation Suites (quick, core, boundary, all)
-pwsh -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1 -Suite all
+<span class="c"># 2. Run Offline Flow Validation Suites (quick, core, boundary, all)</span>
+<span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">all</span>
 
-# 3. Verify Project Integrity &amp; AST Validation Contracts (496 assertions)
-pwsh -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1
-</code></pre>
+<span class="c"># 3. Verify Project Integrity &amp; AST Validation Contracts (496 assertions)</span>
+<span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="nb">Test-ValidationContracts</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
 
 <h3 id="in-game-slash-commands">In-Game Slash Commands:</h3>
 <ul>

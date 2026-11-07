@@ -238,23 +238,28 @@ local function createFrame()
     )
 
     local retailButton = createButton(
-        frame, localized("EAM_LIVE_START_RETAIL", "開始正式服"), 120,
+        frame, localized("EAM_LIVE_START_RETAIL", "開始正式服"), 110,
         "TOPLEFT", frame, "TOPLEFT", 20, -72,
         function() startSession("_retail_") end
     )
     local ptrButton = createButton(
-        frame, localized("EAM_LIVE_START_PTR", "開始 PTR 12.1"), 130,
+        frame, localized("EAM_LIVE_START_PTR", "開始 PTR 12.1"), 120,
         "LEFT", retailButton, "RIGHT", 8, 0,
         function() startSession("_ptr_") end
     )
     local xptrButton = createButton(
-        frame, localized("EAM_LIVE_START_XPTR", "開始 XPTR 12.0.7"), 145,
+        frame, localized("EAM_LIVE_START_XPTR", "開始 XPTR 12.0.7"), 135,
         "LEFT", ptrButton, "RIGHT", 8, 0,
         function() startSession("_xptr_") end
     )
+    local foreverButton = createButton(
+        frame, localized("EAM_LIVE_START_FOREVER", "開始永恆服 1.60.1"), 145,
+        "LEFT", xptrButton, "RIGHT", 8, 0,
+        function() startSession("_forever_") end
+    )
     createButton(
         frame, localized("EAM_LIVE_CANCEL_SESSION", "取消目前 session"), 130,
-        "LEFT", xptrButton, "RIGHT", 8, 0,
+        "LEFT", foreverButton, "RIGHT", 8, 0,
         function()
             local session = EAM.Debug.LiveTestSession
             local state = session and session.getState()

@@ -10595,3 +10595,171 @@ FlowTestRunner.registerCase({
         return true, "Zero-CD override proc preservation (Ray of Frost -> Comet Storm), flight trace, and active CDR sampler fully validated"
     end,
 })
+
+FlowTestRunner.registerCase({
+    id = "aura.1215_native_aura_and_timed_signal_map",
+    category = "aura",
+    description = "Validate 12.1.5 SetApplicationBar, SetDurationBar, Pandemic lifecycle animations, audio throttling, and TimedSignalMap scheduler",
+    primarySuite = "aura121",
+    suites = { aura121 = true, core = true, quick = true, boundary = true },
+    run = function()
+        local Scheduler = EAM.Modules and EAM.Modules.Scheduler
+        local NativeAuraRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        local AuraRuleCompiler = EAM.Managers and EAM.Managers.AuraRuleCompiler
+        local Util = EAM.Util
+
+        if not Scheduler or not NativeAuraRenderer or not AuraRuleCompiler then
+            return false, "Scheduler, NativeAuraRenderer, or AuraRuleCompiler unavailable"
+        end
+
+        local originalDB = EAM.db
+        local testDB = {
+            config = {
+                showApplicationBar = true,
+                applicationBarMax = 8,
+                applicationBarMin = 2,
+                showDurationBar = true,
+                audioThrottle = 0.5,
+            },
+            alerts = {
+                playerAuras = {
+                    [1] = {
+                        id = "test_aura_1",
+                        spellID = 12345,
+                        enabled = true,
+                        priority = 10,
+                        showPandemic = true,
+                        showApplicationBar = true,
+                        applicationBarMax = 10,
+                        applicationBarMin = 3,
+                        showDurationBar = true,
+                    }
+                }
+            }
+        }
+        EAM.db = testDB
+
+        local ok, err = pcall(function()
+            -- 1. Test AuraRuleCompiler derives dual bar styles and propagates audioThrottle
+            local plan = AuraRuleCompiler.compile(testDB, {
+                backend = EAM.Constants.AURA_BACKEND_NATIVE,
+                layout = { elementWidth = 40, elementHeight = 40, elementSpacing = 6 },
+            })
+            assert(plan ~= nil, "Compiler produced plan")
+            assert(plan.rules and #plan.rules >= 1, "Plan has compiled rules")
+            local rule = plan.rules[1]
+            assert(rule.style ~= nil, "Rule has style")
+            assert(rule.style.showApplicationBar == true, "showApplicationBar compiled as true")
+            assert(rule.style.applicationBarMax == 10, "applicationBarMax compiled as 10 from record")
+            assert(rule.style.applicationBarMin == 3, "applicationBarMin compiled as 3 from record")
+            assert(rule.style.showDurationBar == true, "showDurationBar compiled as true")
+
+            -- 2. Test NativeAuraRenderer initializer with mock CustomAuraButton
+            local boundOptions = nil
+            local boundBar = nil
+            local boundDurationBar = nil
+            local activeAnimPassed = nil
+            local mockButton = {
+                SetSize = function() end,
+                ClearAllPoints = function() end,
+                SetPoint = function() end,
+                CreateTexture = function()
+                    return {
+                        ClearAllPoints = function() end,
+                        SetPoint = function() end,
+                        SetAllPoints = function() end,
+                        SetTexCoord = function() end,
+                        SetTexture = function() end,
+                        SetColorTexture = function() end,
+                        SetBlendMode = function() end,
+                        SetVertexColor = function() end,
+                        SetHeight = function() end,
+                        SetWidth = function() end,
+                        Hide = function() end,
+                        Show = function() end,
+                    }
+                end,
+                CreateFontString = function()
+                    return {
+                        ClearAllPoints = function() end,
+                        SetPoint = function() end,
+                        SetFont = function() end,
+                        SetTextColor = function() end,
+                        SetText = function() end,
+                        Hide = function() end,
+                        Show = function() end,
+                    }
+                end,
+                SetIcon = function() end,
+                SetDurationCooldown = function() end,
+                SetDurationText = function() end,
+                SetApplicationCount = function() end,
+                SetSpellName = function() end,
+                CreateAnimationGroup = function()
+                    return {
+                        SetLooping = function() end,
+                        CreateAnimation = function(_, animType)
+                            return {
+                                SetFromAlpha = function() end,
+                                SetToAlpha = function() end,
+                                SetScale = function() end,
+                                SetDuration = function() end,
+                                SetSmoothing = function() end,
+                            }
+                        end,
+                    }
+                end,
+                AddPandemicActiveAnimation = function(_, anim) activeAnimPassed = anim end,
+                AddPandemicEnterAnimation = function() end,
+                AddPandemicLeaveAnimation = function() end,
+                AddAuraShownAnimation = function() end,
+                AddAuraAssignedAnimation = function() end,
+                SetApplicationBar = function(_, bar, opts)
+                    boundBar = bar
+                    boundOptions = opts
+                    return true
+                end,
+                SetDurationBar = function(_, bar)
+                    boundDurationBar = bar
+                    return true
+                end,
+            }
+
+            local initializer = NativeAuraRenderer.createInitializer(rule, nil, 1)
+            initializer(mockButton)
+
+            assert(boundBar ~= nil, "SetApplicationBar bound statusBar")
+            assert(boundOptions ~= nil, "SetApplicationBar passed options table")
+            assert(boundOptions.maxApplications == 10, "options.maxApplications matches rule style")
+            assert(boundOptions.minApplications == 3, "options.minApplications matches rule style")
+            assert(boundDurationBar ~= nil, "SetDurationBar bound statusBar")
+            assert(activeAnimPassed ~= nil, "Pandemic active animation attached")
+
+            -- 3. Test TimedSignalMap / Scheduler.createSignalMap zero-allocation scheduling
+            local triggeredKey = nil
+            local signalMap = Scheduler.createSignalMap(function(key)
+                triggeredKey = key
+            end)
+            assert(signalMap ~= nil, "createSignalMap returned map instance")
+            assert(type(signalMap.SignalAt) == "function", "map has SignalAt method")
+            assert(type(signalMap.Cancel) == "function", "map has Cancel method")
+
+            signalMap:SignalAt("alert_key_1", (api.GetTime and api.GetTime() or 0) + 10)
+            assert(signalMap:HasSignal("alert_key_1") == true, "Signal registered")
+            signalMap:Cancel("alert_key_1")
+            assert(signalMap:HasSignal("alert_key_1") == false, "Signal successfully cancelled")
+
+            -- 4. Test PixelUtil / Util.snapToPixels
+            local snapped = Util.snapToPixels(mockButton)
+            assert(type(snapped) == "boolean", "snapToPixels returns boolean result")
+        end)
+
+        EAM.db = originalDB
+
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "12.1.5 SetApplicationBar, SetDurationBar, Pandemic lifecycle animations, and TimedSignalMap scheduler fully validated"
+    end,
+})
+

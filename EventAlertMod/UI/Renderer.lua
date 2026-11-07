@@ -121,6 +121,52 @@ local function releaseToken(token)
     timerTokenPool.recycleBin[timerTokenPool.binSize] = token
 end
 
+local alertSignalMap = nil
+local activeAlertTargets = {}
+
+local function onAlertSignalExpired(alertKey)
+    local target = activeAlertTargets[alertKey]
+    if not target then
+        return
+    end
+    activeAlertTargets[alertKey] = nil
+    local icon = target.icon
+    if icon and icon.rendered and icon.rendered.scheduledExpirationTime == target.expTime then
+        icon.rendered.scheduledExpirationTime = nil
+        icon.rendered.signalKey = nil
+        local handled = false
+        if target.frameName == EAM.Constants.ALERT_FRAME_TYPES.spellCooldown
+            or target.frameName == EAM.Constants.ALERT_FRAME_TYPES.petAlert
+        then
+            local cooldownService = EAM.Services and EAM.Services.CooldownService
+            if cooldownService and type(cooldownService.onVisualTimerExpired) == "function" then
+                handled = cooldownService.onVisualTimerExpired(target.alertID)
+            end
+        elseif target.frameName == EAM.Constants.ALERT_FRAME_TYPES.itemCooldown then
+            local itemCooldownService = EAM.Services and EAM.Services.ItemCooldownService
+            if itemCooldownService and type(itemCooldownService.onVisualTimerExpired) == "function" then
+                handled = itemCooldownService.onVisualTimerExpired(target.alertID)
+            end
+        end
+        if not handled then
+            Renderer.render({ id = target.alertID, shown = false }, target.frameName)
+        end
+    end
+end
+
+local function getAlertSignalMap()
+    if alertSignalMap then
+        return alertSignalMap
+    end
+    local Scheduler = EAM.Modules and EAM.Modules.Scheduler
+    if Scheduler and Scheduler.createSignalMap then
+        alertSignalMap = Scheduler.createSignalMap(onAlertSignalExpired)
+    end
+    return alertSignalMap
+end
+
+Renderer.getAlertSignalMap = getAlertSignalMap
+
 local function onDurationTimerExpired(token)
     if not token or not token.active then
         releaseToken(token)
@@ -1401,12 +1447,25 @@ function Renderer.render(alertState, frameName)
 
     local isPlaceholder = (alertState.isPlaceholder == true) or (alertState.isDesaturated == true)
     if icon.texture then
-        if isPlaceholder then
-            if icon.texture.SetDesaturated then icon.texture:SetDesaturated(true) end
-            if icon.texture.SetVertexColor then icon.texture:SetVertexColor(0.4, 0.4, 0.4, 0.65) end
-        else
-            if icon.texture.SetDesaturated then icon.texture:SetDesaturated(false) end
-            if icon.texture.SetVertexColor then icon.texture:SetVertexColor(1, 1, 1, 1) end
+        if icon.texture.SetDesaturated then
+            local desat = Util.evaluateColorValueFromBoolean and Util.evaluateColorValueFromBoolean(isPlaceholder, true, false)
+            if desat == nil then desat = (isPlaceholder == true) end
+            pcall(icon.texture.SetDesaturated, icon.texture, desat)
+        end
+        if icon.texture.SetVertexColor then
+            local r = 1.0
+            local g = 1.0
+            local b = 1.0
+            local a = 1.0
+            if isPlaceholder then
+                r, g, b, a = 0.4, 0.4, 0.4, 0.65
+            end
+            if alertState.outOfRange ~= nil and Util.evaluateColorValueFromBoolean then
+                r = Util.evaluateColorValueFromBoolean(alertState.outOfRange, 0.8, r)
+                g = Util.evaluateColorValueFromBoolean(alertState.outOfRange, 0.1, g)
+                b = Util.evaluateColorValueFromBoolean(alertState.outOfRange, 0.1, b)
+            end
+            pcall(icon.texture.SetVertexColor, icon.texture, r, g, b, a)
         end
     end
 
@@ -1740,26 +1799,51 @@ function Renderer.render(alertState, frameName)
         if Util.isSafePositiveNumber(remaining)
             and rendered.scheduledExpirationTime ~= expirationTime
         then
-            if rendered.activeToken then
-                rendered.activeToken.active = false
-                rendered.activeToken = nil
-            end
-
-            local token = acquireToken()
-            token.icon = icon
-            token.expTime = expirationTime
-            token.active = true
-            token.frameName = frameName
-            token.alertID = alertState.id
-
-            rendered.activeToken = token
+            local signalMap = getAlertSignalMap()
+            local alertKey = tostring(frameName) .. ":" .. tostring(alertState.id)
             rendered.scheduledExpirationTime = expirationTime
+            rendered.signalKey = alertKey
 
-            local Scheduler = EAM.Modules.Scheduler
-            if Scheduler and Scheduler.after then
-                Scheduler.after(remaining, onDurationTimerExpired, token)
+            if signalMap then
+                local target = activeAlertTargets[alertKey]
+                if not target then
+                    target = {}
+                    activeAlertTargets[alertKey] = target
+                end
+                target.icon = icon
+                target.frameName = frameName
+                target.alertID = alertState.id
+                target.expTime = expirationTime
+                signalMap:SignalAt(alertKey, expirationTime)
+            else
+                if rendered.activeToken then
+                    rendered.activeToken.active = false
+                    rendered.activeToken = nil
+                end
+
+                local token = acquireToken()
+                token.icon = icon
+                token.expTime = expirationTime
+                token.active = true
+                token.frameName = frameName
+                token.alertID = alertState.id
+
+                rendered.activeToken = token
+
+                local Scheduler = EAM.Modules and EAM.Modules.Scheduler
+                if Scheduler and Scheduler.after then
+                    Scheduler.after(remaining, onDurationTimerExpired, token)
+                end
             end
         elseif not Util.isSafePositiveNumber(remaining) then
+            if rendered.signalKey then
+                local signalMap = getAlertSignalMap()
+                if signalMap then
+                    signalMap:Cancel(rendered.signalKey)
+                end
+                activeAlertTargets[rendered.signalKey] = nil
+                rendered.signalKey = nil
+            end
             if rendered.activeToken then
                 rendered.activeToken.active = false
                 rendered.activeToken = nil
@@ -1767,6 +1851,14 @@ function Renderer.render(alertState, frameName)
             rendered.scheduledExpirationTime = nil
         end
     else
+        if rendered.signalKey then
+            local signalMap = getAlertSignalMap()
+            if signalMap then
+                signalMap:Cancel(rendered.signalKey)
+            end
+            activeAlertTargets[rendered.signalKey] = nil
+            rendered.signalKey = nil
+        end
         if rendered.activeToken then
             rendered.activeToken.active = false
             rendered.activeToken = nil
@@ -1774,7 +1866,14 @@ function Renderer.render(alertState, frameName)
         rendered.scheduledExpirationTime = nil
     end
 
-    local targetAlpha = config and config.iconAlpha or 1.0
+    local baseAlpha = config and config.iconAlpha or 1.0
+    local targetAlpha = baseAlpha
+    if alertState.outOfRange ~= nil and Util.evaluateColorValueFromBoolean then
+        targetAlpha = Util.evaluateColorValueFromBoolean(alertState.outOfRange, baseAlpha * 0.6, baseAlpha)
+    end
+    if alertState.notUsable ~= nil and Util.evaluateColorValueFromBoolean then
+        targetAlpha = Util.evaluateColorValueFromBoolean(alertState.notUsable, baseAlpha * 0.6, targetAlpha)
+    end
     if icon.SetAlpha then pcall(icon.SetAlpha, icon, targetAlpha) end
     if icon.Show then
         icon:Show()

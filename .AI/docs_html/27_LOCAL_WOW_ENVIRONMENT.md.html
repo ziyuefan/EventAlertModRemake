@@ -640,27 +640,27 @@
 <li>操作 AddOns 前先驗證 <code>LinkType</code>、<code>Target</code>、<code>ReparsePoint</code> 與 <code>EventAlertMod.toc</code>；只有完整實體目錄才可作實機簽收。</li>
 </ul>
 <h3 id="_1">自動斷言工具</h3>
-<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass `
-    -File .\.AI\Tools\Test-LocalWoWEnvironment.ps1
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="p">`</span>
+    <span class="o">-File</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="nb">Test-LocalWoWEnvironment</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
 
 <p>預設斷言 Retail <code>12.1.0</code>、PTR <code>12.1.0</code>、XPTR <code>12.0.7</code> 的 patch train，不鎖定 build 尾碼；完整 <code>ProductVersion</code>、<code>FileVersion</code> 與目標型態會寫入 <code>.AI/TestResults/EAM_LocalWoWEnvironment_*.json</code> 及 <code>.md</code>。版本不符、Reparse Point、檔案目標、巢狀 Reparse Point或實體目錄缺少 TOC 都回傳 exit code 1，且不執行修復。</p>
 <p>Battle.net 切換版本線後可暫時用 <code>-RetailExpectedPatch</code>、<code>-PtrExpectedPatch</code>、<code>-XPtrExpectedPatch</code> 覆寫預期值；確認新基準後仍須同步更新本文件與 <code>AGENTS.md</code>。</p>
 <p>唯讀驗證範例：</p>
-<pre class="codehilite"><code class="language-powershell">$link = Get-Item -LiteralPath 'D:\World of Warcraft\_ptr_\Interface\AddOns\EventAlertMod' -Force
-$link | Select-Object FullName, LinkType, Target, Attributes
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">$link</span> <span class="p">=</span> <span class="nb">Get-Item</span> <span class="n">-LiteralPath</span> <span class="s1">'D:\World of Warcraft\_ptr_\Interface\AddOns\EventAlertMod'</span> <span class="n">-Force</span>
+<span class="nv">$link</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">FullName</span><span class="p">,</span> <span class="n">LinkType</span><span class="p">,</span> <span class="n">Target</span><span class="p">,</span> <span class="n">Attributes</span>
+</code></pre></div>
 
 <h2 id="5-wtf">5. WTF 路徑推導</h2>
-<pre class="codehilite"><code class="language-text">&lt;WOW_ROOT&gt;\&lt;VERSION&gt;\WTF
+<div class="codehilite"><pre><span></span><code>&lt;WOW_ROOT&gt;\&lt;VERSION&gt;\WTF
 &lt;WOW_ROOT&gt;\&lt;VERSION&gt;\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
-</code></pre>
+</code></pre></div>
 
 <p>目前候選：</p>
-<pre class="codehilite"><code class="language-text">D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
+<div class="codehilite"><pre><span></span><code>D:\World of Warcraft\_retail_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
 D:\World of Warcraft\_ptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
 D:\World of Warcraft\_xptr_\WTF\Account\&lt;ACCOUNT&gt;\SavedVariables\EventAlertMod.lua
-</code></pre>
+</code></pre></div>
 
 <p>不應遞迴列出 <code>WTF\Account</code>。需要回灌時，先確認實際測試版本與 build，再由使用者提供明確的 <code>EventAlertMod.lua</code> 路徑給 <code>.AI/Tools/Import-EAMFlowReport.ps1</code>。</p>
 <h2 id="6">6. 隱私與實機證據</h2>

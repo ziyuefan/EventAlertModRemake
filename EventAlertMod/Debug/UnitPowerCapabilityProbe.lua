@@ -290,8 +290,8 @@ function UnitPowerCapabilityProbe.buildReport()
     for index = 1, #(environmentWarnings or {}) do
         warnings[#warnings + 1] = environmentWarnings[index]
     end
-    local radialRequired = Util.isSafeNumber(environment.interface)
-        and environment.interface >= EAM.Constants.INTERFACE
+    local radialRequired = (EAM.isModernEngineInterface and EAM.isModernEngineInterface(environment.interface))
+        or (Util.isSafeNumber(environment.interface) and environment.interface >= EAM.Constants.INTERFACE)
     local aggregateObservation = "pass"
     for index = 1, #cases do
         local case = cases[index]

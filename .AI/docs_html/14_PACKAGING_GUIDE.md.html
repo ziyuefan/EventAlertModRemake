@@ -540,48 +540,48 @@
 <p>本節覆蓋本文較早的舊根命令與內容描述；舊段落保留作歷史證據。本輪文件更新後已以 EAM_DOCS_OFFLINE=1 離線重建 docs_html，未使用外部翻譯服務。</p>
 <h2 id="_2">快速指令</h2>
 <p>使用者輸入「打包」時執行：</p>
-<pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Build-Package.ps1
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Build-Package</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
 
 <p>使用者輸入「打包原始碼」時（已停用）：</p>
 <blockquote>
 <p>註：自 2026-09-04 起，本機不再打包 SRC 版本，由 GitHub Release 原生自動打包提供。</p>
 </blockquote>
 <p>使用者輸入「發布至 CurseForge」時執行：</p>
-<pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Upload-CurseForge</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
 
 <p>使用者輸入「模擬發布」時執行：</p>
-<pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Upload-CurseForge.ps1 -DryRun
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Upload-CurseForge</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-DryRun</span>
+</code></pre></div>
 
 <p>需要部署時先檢查狀態，再由互動選單確認版本與目標：</p>
-<pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1 -Action Status
-pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Deploy-EventAlertMod</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Action</span> <span class="n">Status</span>
+<span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Deploy-EventAlertMod</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
 
 <p>封裝命令會修改 <code>Dist/</code>；部署選單只有在使用者最終確認且所有前檢通過後才會寫入 WoW。</p>
 <h2 id="_3">版本命名</h2>
 <p>TOC 版本名稱必須符合：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod_資料片簡稱_打包年月日
-</code></pre>
+<div class="codehilite"><pre><span></span><code>EventAlertMod_資料片簡稱_打包年月日
+</code></pre></div>
 
 <p>目前資料片名稱固定為：</p>
-<pre class="codehilite"><code class="language-text">MN
-</code></pre>
+<div class="codehilite"><pre><span></span><code>MN
+</code></pre></div>
 
 <p>範例：</p>
-<pre class="codehilite"><code class="language-text">## Version: EventAlertMod_MN_20260504
-</code></pre>
+<div class="codehilite"><pre><span></span><code>## Version: EventAlertMod_MN_20260504
+</code></pre></div>
 
 <h2 id="_4">備用檔名</h2>
 <p>zip檔名必須符合：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod_資料片簡稱_打包年月日_打包時分秒.zip
-</code></pre>
+<div class="codehilite"><pre><span></span><code>EventAlertMod_資料片簡稱_打包年月日_打包時分秒.zip
+</code></pre></div>
 
 <p>範例：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod_MN_20260504_205216.zip
-</code></pre>
+<div class="codehilite"><pre><span></span><code>EventAlertMod_MN_20260504_205216.zip
+</code></pre></div>
 
 <h2 id="_5">插件包內容契約</h2>
 <ul>
@@ -595,13 +595,13 @@ pwsh -NoProfile -File .\Deploy\Deploy-EventAlertMod.ps1
 <p>Deploy-EventAlertMod.ps1 的 W／U 選單與 Backup／Restore 命令只處理選定版本通道的 WTF EventAlertMod 相關檔案。備份保留相對於版本根目錄的 WTF/... 路徑，manifest.json 記錄通道、版本與 SHA-256；還原前會建立 rollback 備份。一般插件部署不檢查 Wow.exe／WowT.exe 執行狀態，也不會因程序仍在執行而拒絕覆蓋；Reparse Point、路徑越界與雜湊不符仍維持 fail-closed。</p>
 <h2 id="_6">可選參數</h2>
 <p>只驗證、不建立 ZIP：</p>
-<pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -DryRun
-pwsh -NoProfile -File .\Deploy\Build-SourcePackage.ps1 -DryRun
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Build-Package</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-DryRun</span>
+<span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Build-SourcePackage</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-DryRun</span>
+</code></pre></div>
 
 <p>指定輸出目錄或套件標籤：</p>
-<pre class="codehilite"><code class="language-powershell">pwsh -NoProfile -File .\Deploy\Build-Package.ps1 -OutputDirectory &lt;目錄&gt; -PackageLabel &lt;標籤&gt;
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">pwsh</span> <span class="n">-NoProfile</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Deploy</span><span class="p">\</span><span class="n">Build-Package</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-OutputDirectory</span> <span class="p">&lt;</span><span class="n">目錄</span><span class="p">&gt;</span> <span class="n">-PackageLabel</span> <span class="p">&lt;</span><span class="n">標籤</span><span class="p">&gt;</span>
+</code></pre></div>
 
 <p><code>-SkipLuaCheck</code> 與 <code>-SkipFlowValidation</code> 只供診斷工具故障；正式發布不得使用。專案 source 包只有 <code>-OutputDirectory</code> 與 <code>-DryRun</code>。</p>
 <h2 id="_7">驗證要求</h2>
@@ -617,9 +617,9 @@ pwsh -NoProfile -File .\Deploy\Build-SourcePackage.ps1 -DryRun
 <p>專案 source 包必須排除 <code>Dist/</code>、本機附件、<code>.AI/patch-temp/</code>，並以 leaf 規則排除任意深度的 <code>.git/</code>、<code>backup/</code>、<code>.trash_*/</code>、<code>TestResults/</code>、快取、log 與既有 ZIP；同時保留 <code>.vscode/</code>、<code>.codex/</code>、<code>.AI/skills/</code> 與 <code>.AI/docs_html/</code>。</p>
 <h2 id="html">HTML 說明檔案轉換</h2>
 <p><code>.AI/Docs/*.md</code> 或 <code>.AI/AGENTS.md</code> 修改後，在專案根執行：</p>
-<pre class="codehilite"><code class="language-powershell">$env:EAM_DOCS_OFFLINE='1'
-python .\.AI\Tools\batch_convert_docs.py
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">$env:EAM_DOCS_OFFLINE</span><span class="p">=</span><span class="s1">'1'</span>
+<span class="n">python</span> <span class="p">.\.</span><span class="n">AI</span><span class="p">\</span><span class="n">Tools</span><span class="p">\</span><span class="n">batch_convert_docs</span><span class="p">.</span><span class="n">py</span>
+</code></pre></div>
 
 <p>輸出位於 <code>.AI/docs_html/</code>。Markdown 原檔仍是 AI 與開發唯一 Facts-of-Truth；HTML 只供人類閱讀。離線模式不得把全文送往外部翻譯服務，也不再建立根目錄 <code>readme.html</code>。</p>
 <h2 id="_8">注意事項</h2>

@@ -40,7 +40,7 @@ local function resolveClientAdapter()
     if interfaceVersion >= 120000 and interfaceVersion < 120100 then
         return Capability.RETAIL_120_NUMERIC, interfaceVersion, "legacyRetail120"
     end
-    if interfaceVersion >= 120100 then
+    if EAM.isModernEngineInterface(interfaceVersion) then
         return Capability.RETAIL_121_SECRET, interfaceVersion, "retail121SecretAware"
     end
     return Capability.UNSUPPORTED_CLIENT, interfaceVersion, "unsupportedClient"

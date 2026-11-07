@@ -10,7 +10,7 @@ EventAlertMod Retail Rewrite
 - 不連網、不讀 WTF、不啟動或操作 WoW、不寫入 fixture、報告或任何其他 artifact。
 - 固定高風險 ID 僅輸出警告；是否存在都不構成本測試的失敗條件。
 #>
-#Requires -Version 7.0
+#Requires -Version 5.1
 [CmdletBinding()]
 param()
 

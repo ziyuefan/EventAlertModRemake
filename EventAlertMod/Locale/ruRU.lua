@@ -1037,6 +1037,10 @@ L.EAM_STAT_SKYRIDING_SPEED = "Скорость полетов на дракон�
 L.EAM_STAT_TOTAL_ABSORB = "Общее поглощение"
 L.EAM_STAT_HEAL_ABSORB = "Поглощение исцеления"
 L.EAM_STAT_ARMOR = "Броня"
+L.EAM_STAT_SPIRIT_MANA_REGEN = "Регенерация маны от духа"
+L.EAM_STAT_DEFENSE_SKILL = "Навык защиты"
+L.EAM_STAT_PET_HAPPINESS = "Счастье питомца"
+L.EAM_STAT_AMMO_STATUS = "Количество боеприпасов"
 L.EAM_OPT_CUSTOM_NAME_LABEL = "Пользовательское имя (кратко):"
 L.EAM_OPT_CUSTOM_NAME_TIP = "Настройте отображаемое имя значка (напр. Щит). Оставьте пустым для имени по умолчанию, чтобы избежать наложения текста при близком расположении значков."
 L.EAM_OPT_CUSTOM_ICON_LABEL = "Замена иконки (ID или путь к текстуре):"
@@ -1141,6 +1145,12 @@ L.EAM_OPT_SLIDER_LOW_HEALTH = "Порог низкого уровня здоро
 
 L.EAM_OPT_AURA_STACK_BAR = "Включить сегментированную полосу стаков ауры"
 L.EAM_OPT_MIN_APPLICATIONS = "Минимальный порог стаков (minApplications)"
+L.EAM_OPT_APPLICATION_BAR_MAX = "Максимум полосы стаков (applicationBarMax)"
+L.EAM_OPT_APPLICATION_BAR_MIN = "Минимальный порог стаков (applicationBarMin)"
+L.EAM_OPT_AUDIO_THROTTLE = "Ограничение звуковых оповещений (сек)"
+L.EAM_OPT_AUDIO_THROTTLE_TIP = "Ограничивает частоту звуковых сигналов для одной ауры, предотвращая спам звуков при быстром обновлении (0.05-5.0 сек, по умолчанию 0.3 сек)"
+L.EAM_OPT_AURA_DURATION_BAR = "Включить полосу длительности ауры (Duration Bar)"
+L.EAM_OPT_AURA_DURATION_BAR_TIP = "Отображает нативную полосу длительности 12.1.5 под иконкой ауры"
 L.EAM_OPT_OVERDRIVE_GLOW = "Включить свечение при макс. стаках (ADD)"
 
 L.EAM_TAB_GENERAL = "Общие"
@@ -1238,5 +1248,22 @@ L.EAM_OPT_BORDER_ITEM_COOLDOWN = "Рамка перезарядки предме
 L.EAM_OPT_BORDER_GROUND_EFFECT = "Рамка эффекта на земле"
 L.EAM_OPT_BORDER_PET_ALERT = "Рамка оповещений питомца"
 L.EAM_OPT_BORDER_RESET_BTN = "Сбросить цвета рамок"
+
+
+L.EAM_STAT_RESIST_ARCANE = "Сопротивление тайной магии"
+L.EAM_STAT_RESIST_FIRE = "Сопротивление огню"
+L.EAM_STAT_RESIST_FROST = "Сопротивление магии льда"
+L.EAM_STAT_RESIST_NATURE = "Сопротивление силам природы"
+L.EAM_STAT_RESIST_SHADOW = "Сопротивление темной магии"
+L.EAM_LIVE_START_FOREVER = "Начать Forever 1.60.1"
+
+L.EAM_STAT_SPIRIT_SETTINGS = "Дух и регенерация активные оповещения (Forever)"
+L.EAM_STAT_SPIRIT_MODE = "Режим отображения духа:"
+L.EAM_STAT_SPIRIT_MODE_FULL = "Дух + реген. маны/HP за 5 сек"
+L.EAM_STAT_SPIRIT_MODE_REGEN = "Только реген. маны и HP за 5 сек"
+L.EAM_STAT_SPIRIT_MODE_STAT = "Только значение характеристики"
+L.EAM_STAT_SPIRIT_ACTIVE_ALERT = "Включить активное оповещение духа (анимация рамки / увеличение текста)"
+L.EAM_STAT_SPIRIT_BLUE_FLASH = "Полноэкранная синяя вспышка при активации регенерации духа"
+L.EAM_STAT_TEST_BLUE_FLASH = "Тест синей вспышки"
 
 end)

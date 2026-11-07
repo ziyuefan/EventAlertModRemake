@@ -78,8 +78,17 @@ local function refreshRuntimeStatus()
     lines[#lines + 1] = "=== EAM Runtime & Backend Diagnostics ==="
     lines[#lines + 1] = "Time: " .. (date and date("%Y-%m-%d %H:%M:%S") or "N/A")
     lines[#lines + 1] = "Addon Version: " .. (EAM.Constants and EAM.Constants.VERSION or "Unknown")
+    lines[#lines + 1] = "Game Flavor: " .. (EAM.isForever and "Forever (1.60.1)" or "Retail (12.1.5)")
     lines[#lines + 1] = "Schema Version: " .. tostring(EAM.Constants and EAM.Constants.SCHEMA_VERSION or "N/A")
     lines[#lines + 1] = ""
+
+    if EAM.isForever then
+        local srs = EAM.Services and EAM.Services.SpellRankService
+        lines[#lines + 1] = "[SpellRank Service (Forever)]"
+        lines[#lines + 1] = "  - Active: " .. tostring(srs ~= nil)
+        lines[#lines + 1] = "  - Known Ranked Spells: " .. tostring(srs and srs.getKnownSpellCount and srs.getKnownSpellCount() or 0)
+        lines[#lines + 1] = ""
+    end
 
     -- Aura Backend
     local containerService = EAM.Services and EAM.Services.AuraContainerService
@@ -131,7 +140,65 @@ end
 -- =========================================================================
 -- Tab 2: DK Rune & Resource Probe
 -- =========================================================================
+local function refreshForeverProbe()
+    local lines = {}
+    lines[#lines + 1] = "=== Forever (1.60.1) Classic Resource & Resistance Probe ==="
+    lines[#lines + 1] = "Time: " .. (date and date("%Y-%m-%d %H:%M:%S") or "N/A")
+    lines[#lines + 1] = ""
+
+    -- Five resistances
+    lines[#lines + 1] = "[Magic Resistances (Effective / Base)]"
+    local getRes = api.UnitResistance or _G.UnitResistance
+    local schools = {
+        { name = "Arcane", id = 6, label = "秘法" },
+        { name = "Fire", id = 2, label = "火焰" },
+        { name = "Frost", id = 4, label = "冰霜" },
+        { name = "Nature", id = 3, label = "自然" },
+        { name = "Shadow", id = 5, label = "暗影" },
+    }
+    for _, sc in ipairs(schools) do
+        local eff, base = 0, 0
+        if getRes then
+            local ok, b, r, e = pcall(getRes, "player", sc.id)
+            if ok then
+                base = b or 0
+                eff = e or r or b or 0
+            end
+        end
+        lines[#lines + 1] = string.format("  - %-8s (%s): %d (Base: %d)", sc.name, sc.label, eff, base)
+    end
+    lines[#lines + 1] = ""
+
+    -- Spirit & Regen state
+    lines[#lines + 1] = "[Spirit & Regen State]"
+    local pss = EAM.Services and EAM.Services.PlayerStatService
+    if pss and pss.getSpiritRegenState then
+        local rState = pss.getSpiritRegenState()
+        lines[#lines + 1] = "  - Spirit Stat: " .. tostring(rState.spiritVal)
+        lines[#lines + 1] = "  - Spirit MP5: " .. tostring(rState.spiritMP5)
+        lines[#lines + 1] = "  - Spirit HP5: " .. tostring(rState.spiritHP5)
+        lines[#lines + 1] = "  - Active State: " .. tostring(rState.isActive)
+        lines[#lines + 1] = "  - 5-Sec Rule Remaining: " .. string.format("%.2f s", rState.fiveSecRemaining or 0)
+    else
+        lines[#lines + 1] = "  - PlayerStatService unavailable"
+    end
+    lines[#lines + 1] = ""
+
+    -- Spell Rank Summary
+    local srs = EAM.Services and EAM.Services.SpellRankService
+    lines[#lines + 1] = "[Spell Rank Management]"
+    lines[#lines + 1] = "  - Active: " .. tostring(srs ~= nil)
+    lines[#lines + 1] = "  - Known Ranked Spells: " .. tostring(srs and srs.getKnownSpellCount and srs.getKnownSpellCount() or 0)
+
+    setContent(table.concat(lines, "\n"))
+    setStatus(localized("EAM_DEBUG_STATUS_FOREVER_REFRESHED", "已更新永恆服資源與抗性診斷數據。"))
+end
+
 local function refreshRuneProbe()
+    if EAM.isForever then
+        refreshForeverProbe()
+        return
+    end
     local lines = {}
     lines[#lines + 1] = "=== Death Knight Rune Diagnostic & State ==="
     lines[#lines + 1] = "Time: " .. (date and date("%Y-%m-%d %H:%M:%S") or "N/A")

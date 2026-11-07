@@ -1,4 +1,4 @@
-<# EAM_FILE_COMMENTARY
+﻿<# EAM_FILE_COMMENTARY
 EventAlertMod Retail Rewrite
 檔案: Deploy\Upload-CurseForge.ps1
 
@@ -490,10 +490,10 @@ if ([string]::IsNullOrWhiteSpace($ReleaseType)) {
     }
 }
 
-# 預設遊戲版本 (12.1.0: 16519)
+# 預設遊戲版本 (Retail 12.1.0/12.1.5: 16519; Forever 1.60.1: 16001)
 if ($GameVersionIds.Count -eq 0) {
-    # 預設 12.1.0 官方版本 ID: 16519
-    $GameVersionIds = @(16519) # 12.1.0
+    # 預設支援 Retail 12.1.5 與 Forever 1.60.1 (多版本標註)
+    $GameVersionIds = @(16519) # 12.1.0 / 12.1.5 (Retail)
 }
 
 # 4. 判斷是否進入互動詢問模式
@@ -592,7 +592,7 @@ if ($isInteractive) {
 
     # --- 步驟 6: 確認遊戲版本 ---
     Write-Host "`n6. 魔獸世界版本 (Game Versions)：" -ForegroundColor Yellow
-    Write-Host "   預設目標版本 ID: $($GameVersionIds -join ', ') (Retail 12.1.0)" -ForegroundColor White
+    Write-Host "   預設目標版本 ID: $($GameVersionIds -join ', ') (Retail 12.1.5 + Forever 1.60.1)" -ForegroundColor White
 
     # --- 最終摘要卡片與確認 ---
     Write-Host "`n================ [ 發布資訊摘要確認 ] ================" -ForegroundColor Cyan

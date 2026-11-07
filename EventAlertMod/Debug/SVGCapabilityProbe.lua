@@ -370,7 +370,8 @@ function SVGCapabilityProbe.buildReport()
         warnings[#warnings + 1] = environmentWarnings[index]
     end
     local cases = buildCaseList()
-    local required = Util.isSafeNumber(environment.interface) and environment.interface >= 120100
+    local required = (EAM.isModernEngineInterface and EAM.isModernEngineInterface(environment.interface))
+        or (Util.isSafeNumber(environment.interface) and environment.interface >= 120100)
     local aggregateObservation = "pass"
     local capabilityPass = true
     for index = 1, #cases do

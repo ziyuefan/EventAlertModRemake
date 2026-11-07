@@ -35,7 +35,9 @@ local stringFind = string.find
 local stringMatch = string.match
 local stringFormat = string.format
 
-local PREFIX = "EAMAP1:"
+local PREFIX_V1 = "EAMAP1:"
+local PREFIX_V2 = "EAMAP2:"
+local PREFIX = PREFIX_V2
 local CURRENT_SCHEMA = 1
 local LIMITS = {
     encodedBytes = 262144,
@@ -82,6 +84,8 @@ local COOLDOWN_BEHAVIOR_FIELDS = {
 
 local Codec = {
     PREFIX = PREFIX,
+    PREFIX_V1 = PREFIX_V1,
+    PREFIX_V2 = PREFIX_V2,
     schema = CURRENT_SCHEMA,
     limits = LIMITS,
 }
@@ -1397,23 +1401,45 @@ end
 local function decodeEnvelope(encoded)
     if type(encoded) ~= "string" then return nil, "payloadType" end
     encoded = stringMatch(encoded, "^%s*(.-)%s*$")
-    if stringSub(encoded, 1, #PREFIX) ~= PREFIX then return nil, "prefixMissing" end
-    local base64 = stringSub(encoded, #PREFIX + 1)
+    local base64 = nil
+    local isV2 = false
+    if stringSub(encoded, 1, #PREFIX_V2) == PREFIX_V2 then
+        base64 = stringSub(encoded, #PREFIX_V2 + 1)
+        isV2 = true
+    elseif stringSub(encoded, 1, #PREFIX_V1) == PREFIX_V1 then
+        base64 = stringSub(encoded, #PREFIX_V1 + 1)
+        isV2 = false
+    else
+        return nil, "prefixMissing"
+    end
     if #base64 > LIMITS.encodedBytes then return nil, "encodedSize" end
-    local json, backendOrReason = decodeBase64(base64)
-    if not json then return nil, backendOrReason end
+    local raw, backendOrReason = decodeBase64(base64)
+    if not raw then return nil, backendOrReason end
+    local json = raw
+    local decompBackend = nil
+    if isV2 then
+        if type(Util.decompressString) == "function" then
+            local decomp, dBackend = Util.decompressString(raw)
+            if not decomp then return nil, "decompressFailed" end
+            json = decomp
+            decompBackend = dBackend
+        end
+    end
     if #json > LIMITS.decodedBytes then return nil, "decodedSize" end
     local envelope, parseReason = parseJSON(json)
     if not envelope then return nil, parseReason end
     local validated, validateReason = validateEnvelope(envelope)
     if not validated then return nil, validateReason end
     validated._encodingBackend = backendOrReason
+    validated._profileFormat = isV2 and "EAMAP2" or "EAMAP1"
+    validated._compressionBackend = decompBackend
     return validated
 end
 
 local function compareRecord(moduleName, record, classToken)
     local definition = MODULE_DEFINITIONS[moduleName]
     local list = getList(definition, classToken)
+    local id = record[definition.idField]
     local key
     if definition.kind == "itemCooldown" then
         key = EAM.Modules.SavedVariables.buildAlertID(definition.kind, definition.unit, nil, record.slotID and nil or id, record.slotID)
@@ -1429,13 +1455,15 @@ local function compareRecord(moduleName, record, classToken)
     return leftJSON == rightJSON and "unchanged" or "update"
 end
 
-function Codec.exportProfile(moduleSelection, sectionSelection)
+function Codec.exportProfile(moduleSelection, sectionSelection, exportOptions)
     local classToken = currentClassToken()
     if not classToken then return nil, "classUnavailable" end
     local modules, sections
+    local options = exportOptions
     if type(moduleSelection) == "table" and (moduleSelection.modules ~= nil or moduleSelection.sections ~= nil) then
         sections = moduleSelection.sections
         modules = moduleSelection.modules and normalizeModuleSelection(moduleSelection.modules) or {}
+        options = options or moduleSelection.options
     else
         modules = normalizeModuleSelection(moduleSelection)
         sections = sectionSelection
@@ -1446,15 +1474,36 @@ function Codec.exportProfile(moduleSelection, sectionSelection)
     local envelope, json = buildEnvelope(classToken, modules, payload, sections)
     if not envelope or not json then return nil, json or "jsonEncodeFailed" end
     if #json > LIMITS.decodedBytes then return nil, "decodedSize" end
-    local base64, backend = encodeBase64(json)
-    local result = PREFIX .. base64
+
+    local useV1 = (options and (options.format == "EAMAP1" or options.legacy == true))
+    local result, base64, backend, compressBackend
+    if useV1 then
+        base64, backend = encodeBase64(json)
+        result = PREFIX_V1 .. base64
+    else
+        local compressed = nil
+        local cBackend = nil
+        if type(Util.compressString) == "function" then
+            compressed, cBackend = Util.compressString(json)
+        end
+        if not compressed then
+            compressed = json
+            cBackend = "none"
+        end
+        compressBackend = cBackend
+        base64, backend = encodeBase64(compressed)
+        result = PREFIX_V2 .. base64
+    end
+
     if #result > LIMITS.encodedBytes then return nil, "encodedSize" end
     return result, {
         classToken = classToken,
         modules = modules,
         sections = sections,
+        format = useV1 and "EAMAP1" or "EAMAP2",
         alertCount = alertCountOrReason,
         encodingBackend = backend,
+        compressionBackend = compressBackend,
         payloadBytes = envelope.payloadBytes,
         checksum = envelope.checksum.value,
     }
@@ -1547,6 +1596,13 @@ function Codec.applyImport(plan, mode, targetClassToken, selectedSections)
     if not ok then return nil, status end
     plan.consumed = true
     return report or { status = status }
+end
+
+function Codec.importProfile(encoded, mode, options)
+    local plan, reason = Codec.previewImport(encoded, options)
+    if not plan then return nil, reason end
+    mode = mode or (options and options.mode) or "merge"
+    return Codec.applyImport(plan, mode, options and options.targetClassToken, options and options.selectedSections)
 end
 
 function Codec.decodeForTest(encoded)

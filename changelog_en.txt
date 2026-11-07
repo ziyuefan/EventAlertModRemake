@@ -1,410 +1,1235 @@
--- [Retail][MN][12.1.5][Alpha 8.8][Native C++ Math Acceleration, TimedSignalMap Scheduler & 12.1.5 Pandemic Precision] 2026.10.23
+-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 8.9][Multi-Flavor Unified Architecture, Forever 60-Level Resource Topology, Classic Stat Monitoring & Retail 12.1.5 Native Aura Overhaul] 2026.11.08
+     -- [Features]:
+        -- [Forever 1.60.1] Full Pipeline Spell Rank Management:
+           -- Added SpellRankService and ForeverCatalog.FOREVER_SPELL_RANK_FAMILIES, dynamically populating candidateFilters.includeSpellIDs in native AuraContainers to seamlessly match all spell ranks in a single slot without duplicate icons (supporting downranking and group buffs);
+           -- GroundEffectService and Options.lua support spell rank subtext (e.g. [Rank 4]) display.
+        -- [Forever 1.60.1] Five Magic Resistances Monitoring:
+           -- Supported Arcane, Fire, Frost, Nature, and Shadow resistances in PlayerStatPanel, integrating UnitResistance("player", damageClass) using effectiveRes, with custom threshold alerts and status bars.
+        -- [Forever 1.60.1] Spirit 5-Second Rule State Machine, MP5/HP5 Dual Metrics & Active Alert:
+           -- Precision detection for 5-Second Rule (5SR) after mana-spending spellcasts, integrating GetManaRegenFromSpirit (x5 MP5) and GetHealthRegenFromSpirit (x0.75x5 HP5);
+           -- Supported FULL (Spirit + MP5/HP5), REGEN_ONLY (MP5/HP5), and STAT_ONLY display modes;
+           -- Supported Active alerts (glow overlay / text scaling 1.32x with 1.45x pop + ice-blue highlight) and optional full-screen blue flash (CombatFlash.triggerSpiritActive).
+        -- [Shared] Multi-Flavor Unified Architecture:
+           -- Single addon folder with inline TOC conditional loading directives ([AllowLoadGameType camelot, forever]), supporting both Retail (12.1.5) and Forever (1.60.1) clients simultaneously;
+           -- Dynamic runtime flavor detection (EAM.detectGameFlavor) ensuring zero-overhead isolation of flavor-specific data layers and business logic;
+           -- Zero-allocation memory architecture: Shared core engine, native C++ TimedSignalMap scheduler, and StatePool reusable object pools across both flavors.
+        -- [Shared] Zero-Alloc TimedSignalMap Scheduler Engine:
+           -- Integrated 12.1.5 C_Timer.NewTimedSignalMap, TimerUtil.CreateTimedSignalCallbackMap, and C_Timer.CreateTimedSignalCallbackMap native key-value scheduling;
+           -- Zero-allocation key rescheduling significantly reducing Lua garbage collection overhead;
+           -- Graceful fallback proxy handling non-12.1.5 environments.
+        -- [Shared] Intelligent Audio Floodgate:
+           -- Injected audioThrottle throttling protection (default 0.3s, range 0.05s~5.0s) into C_UnitAuras.AddAuraSound and MediaService.playSound, preventing repeated sound explosions during multi-target DoT flurries.
+        -- [Shared] Retina Pixel Snapping & Zero-Flicker Frame Initialization:
+           -- SetRoundLayoutToNearestPixel applied across NativeAuraRenderer and PowerRenderer (resource bars and 20-segment markers), eliminating blurry 1px lines;
+           -- CreateFrameWithOptions hidden pre-creation mechanism eliminating frame flash upon first icon generation.
+        -- [Shared] Native C++ Math, String & Table Acceleration:
+           -- Blizzard native C++ utility acceleration library support for math, string, and table functions;
+           -- Defensive polyfills in Lua ensuring backward compatibility on older engines.
+        -- [Shared] ProfileCodec EAMAP2: Native Encoding & Compression:
+           -- Export strings with EAMAP2: format utilizing C_EncodingUtil Deflate compression (60%~75% length reduction) with backward compatibility for EAMAP1:.
+        -- [Shared] C_CurveUtil EvaluateColorFromBoolean Integration:
+           -- Safe evaluation of Secret Booleans via EvaluateColorValueFromBoolean, eliminating Lua branch taint risks.
+        -- [Shared] C_AddOnProfiler Native Engine Profiling Telemetry:
+           -- Integrated C_AddOnProfiler with RecentAverageTime, PeakTime, and CountTimeOver1Ms metrics viewable via /eam metrics.
+        -- [Shared] MediaService TTS Alerting:
+           -- Dual-track voice synthesis via C_CombatAudioAlert.SpeakText and C_VoiceChat with speech queuing.
+        -- [Shared] Loss of Control Cooldown Duration Integration:
+           -- C_Spell.GetSpellLossOfControlCooldownDuration and LOSS_OF_CONTROL_UPDATE integration for precise lockout timer tracking.
+        -- [Shared] Native Heal & Absorb Prediction Calculator Integration:
+           -- CreateUnitHealPredictionCalculator and UnitGetDetailedHealPrediction for high-precision damage/heal absorb tracking.
+        -- [Forever 1.60.1 Exclusive] Classic 60-Level Player Resource Topology:
+           -- Full support for 9 classic classes and their energy systems: Hunter Mana and Pet Focus, Warlock Mana and Soul Shards, Druid 4-form transformations (Mana/Rage/Energy/Combo Points), Rogue Energy and Combo Points, Warrior Rage, and pure Mana systems for Paladins, Priests, Shamans, and Mages;
+           -- Dedicated resource bar styling and custom segment division tailored for classic 60-level combat pacing.
+        -- [Forever 1.60.1 Exclusive] Classic Character Stats & State Monitor:
+           -- Spirit Mana Regen & 5-Second Rule: Integrated GetManaRegenFromSpirit and GetHealthRegen for real-time in-combat vs out-of-5SR mana regeneration tracking;
+           -- Defense Skill: Real-time monitoring of UnitDefenseSkill and crit immunity thresholds;
+           -- Pet Happiness & Loyalty: Integrated C_PetInfo for live pet emotional state tracking (Unhappy/Content/Happy with 75%/100%/125% damage modifiers) and loyalty tiers;
+           -- Ranged Ammo Status: Integrated UnitUsesAmmo and C_PaperDollInfo for visual alerts when arrow/bullet reserves run low;
+           -- Armor Penetration & Glancing Blow: Accurate calculations of core physical offensive parameters.
+        -- [Forever 1.60.1 Exclusive] Forever Default Alerts & Spell Heuristics:
+           -- Built-in default alert configurations for 9 classic classes (Clearcasting, Arcane Power, Presence of Mind, Overpower, Execute, Enrage, Flurry, Riposte, Improved Aspect of the Hawk, etc.);
+           -- Classic trinket and enchant proc support (Crusader, Lifestealing, Diamond Flask, Briarwood Reed, Hand of Justice, Mind Quickening Gem, etc.);
+           -- Heuristic evaluation support for Classic spell ranks and conditional combat triggers (Overpower after dodge, Riposte after parry, Execute at sub-20% health).
+        -- [Retail 12.1.5 Exclusive] Native Aura Application & Duration Bars:
+           -- Native CustomAuraButton:SetApplicationBar and SetDurationBar progress bar pipelines;
+           -- Mutually exclusive layout (application bar at top, duration bar at bottom);
+           -- Configurable application limits (1~20) with fallback text overlay;
+           -- ExponentialEaseOut smooth bar interpolation.
+        -- [Retail 12.1.5 Exclusive] Native Aura 3-Stage Pandemic & Lifecycle Animations:
+           -- AddPandemicEnterAnimation (pop 1.15), AddPandemicActiveAnimation (heartbeat loop), and AddPandemicLeaveAnimation (smooth fade);
+           -- AddAuraShownAnimation and AddAuraAssignedAnimation kinetic glow effects;
+           -- Strict Secret Aspect isolation preventing combat taint.
+        -- [Retail 12.1.5 Exclusive] 12.1.5 Native Pandemic Carry-Over Duration Precision:
+           -- C_UnitAuras.GetRefreshCarryOverDuration precision check triggering refresh alerts at <=30% duration.
+        -- [Retail 12.1.5 Exclusive] Dynamic/Custom StatusBar Segments, Custom Gradient Colors & Conditional Alerts:
+           -- Automatic segment division aligned with player UnitPowerMax;
+           -- Custom gradient color modes (horizontal and vertical);
+           -- Threshold conditional alerts with color shift and audio alert.
+        -- [Retail 12.1.5 Exclusive] Evoker Essence 5-Locale Blizzard Terminology Calibration:
+           -- Aligned Evoker resource names across 5 locales.
+        -- [Retail 12.1.5 Exclusive] Modern Engine Optimizations:
+           -- Layout fingerprint optimization eliminating redundant rebuilds;
+           -- Dynamic gliding speed sampling and 40 modern spec topologies.
+     -- [Improvements]:
+        -- About Panel Flavor Adaptation: Dynamically displays "Compatibility: Retail 12.0.0 - 12.1.5" or "Compatibility: Forever 1.60.1" based on the running environment.
+        -- Forever Environment Adaptation: Added comprehensive client file structure, font rendering, and multi-channel profile architecture support for World of Warcraft: Forever.
+        -- Deprecated API Removal: Removed Blizzard_Deprecated dependencies.
+        -- Native State Protection: Defensive isolation of AuraState timers and tables under extreme load.
+     -- [Bug Fixes]:
+        -- Forever Loss of Control Secret Value Comparison Fix: Fixed Lua crash when C_Spell.GetSpellLossOfControlCooldownInfo returned Secret Numbers during combat by prioritizing NeverSecret fields isActive and shouldReplaceNormalCooldown with isSafePositiveNumber and DurationObject safe fallbacks.
+        -- Forever Aura isFullUpdate Secret Boolean Fix: Fixed fatal error attempt to perform boolean test on field 'isFullUpdate' under UNIT_AURA by switching to Util.readStructuredField zero-closure safe single-field extraction.
+        -- CombatFlash & LibButtonGlow Secret Value Protection: Guarded health comparisons and cooldown durations against secret numbers in combat.
+        -- Forever Profile Compatibility Fix: Optimized client executable detection and profile directory alignment, ensuring smooth settings management across environments.
+        -- Item Cooldown Service Compatibility: Dual-track support for C_Spell.GetItemCooldown and legacy GetItemCooldown.
+        -- Player Stat Defense Skill Secret Value Arithmetic Fix: Added isSafeNumber check on UnitDefenseSkill base value, preventing Lua crashes on Secret Values in combat.
+        -- Player Stat Order Dynamic Flavor Filtering Fix: Enforced dynamic flavor filtering across both rawOrder and activeBaseKeys branches in PlayerStatService.getOrder().
+        -- Player Resource Scope Switch Forward Declaration Fix: Fixed forward declaration of refreshEditor when switching class vs spec scopes.
+        -- TimedSignalMap Proxy Wrapper Fix: Read-only protection fix using lightweight proxy table for C_Timer.NewTimedSignalMap.
+        -- Table Remove Value Consistency Fix: Standardized boolean return types in table removal helpers.
+
+
+
+-- [Retail][MN][12.1.5][Alpha 8.8][Ground Effect Multi-Duration Candidate Parser, Borderless Mode & Independent Resource Dragging] 2026.10.23
+
      -- Features:
+
         -- Retail 12.1.5 Patch Compatibility:
            -- TOC interface support updated for World of Warcraft Retail 12.1.5 (Interface: 120105), maintaining seamless backward compatibility with 12.1.0 and 12.0.7 clients.
-        -- Native C++ Math, String & Table Acceleration:
-           -- Integrated Blizzard 12.1.5 native C++ low-level accelerated utility functions:
-              -- Math: math.clamp, math.saturate, math.round, math.lerp, math.normalize, math.sign, math.remap, math.wrap, math.isfinite, math.isnan, math.isinf;
-              -- String: string.contains, string.ltrim, string.rtrim, string.startswith, string.endswith;
-              -- Table: table.isempty, table.contains, table.indexof, table.removeunordered, table.removevalue, table.keys, table.values;
-           -- Defensive Polyfills: Automatically enables high-efficiency Lua fallback implementations on older clients, ensuring maximum performance and cross-version compatibility.
-        -- Zero-Alloc TimedSignalMap Scheduler Engine:
-           -- Deep integration with 12.1.5 C_Timer.NewTimedSignalMap native key-value scheduler; icon countdowns and timed signals are hosted directly by Blizzard's C++ engine on supported clients.
-           -- Automatically switches to an autonomous key-value scheduler state machine on older clients, achieving zero memory allocations for repeated timer rescheduling (Zero-Alloc Key Rescheduling) and minimizing garbage collection (GC) overhead.
-        -- 12.1.5 Native Pandemic Carry-Over Duration Precision:
-           -- Employs C_UnitAuras.GetRefreshCarryOverDuration for precise carry-over time calculation, strictly triggering Pandemic refresh alerts when carry-over is <= 30% of base duration, preventing premature DoT clipping.
-           -- Smoothly falls back to C_UnitAuras.GetRefreshExtendedDuration on older clients, ensuring accurate DoT refresh timing across all client versions.
-        -- Native Aura Active/Enter/Leave Animations:
-           -- Deeply adapted to 12.1.5 Native Aura container APIs (AddPandemicActiveAnimation, AddPandemicEnterAnimation, and AddPandemicLeaveAnimation), providing smoother, richer visual feedback upon entering and leaving Pandemic refresh windows.
-        -- Aura Sound Alert Throttle Protection:
-           -- Added throttleSeconds parameter (default 0.3s) to C_UnitAuras.AddAuraSound registrations, preventing ear-fatiguing sound spam during high-frequency procs or rapid stack shifts.
-        -- Native Pixel Snapping & Zero-Flicker Frame Initialization:
-           -- Supports SetRoundLayoutToNearestPixel native pixel rounding, rendering icon and text boundaries sharp and crisp at physical pixel edges.
-           -- Introduced CreateFrameWithOptions hidden pre-creation mechanism, completely eliminating momentary screen flicker during initial icon instantiation.
+
         -- Ground Effect Multi-Duration Candidate Dropdown & Selection:
            -- Full-text multi-duration parsing: Intelligently parses all candidate durations in sequence from complex tooltip descriptions containing multiple seconds (e.g., ground duration vs slow duration vs channel duration, such as Blizzard: "8 sec ... slow 50% for 3 sec").
            -- Candidate Selection Dropdown: Added a "Duration Candidate Selection" dropdown in the Ground Effect settings panel, allowing users to choose the target duration, which instantly synchronizes with the "Manual Duration" input box.
            -- One-Click Scrape Synchronization: Clicking "Scrape Duration" dynamically refreshes candidate dropdown options, automatically selecting the target duration candidate.
+
         -- Customizable Alert Border Colors & Borderless Mode:
-           -- 8 Module Independent Border Colors: Buffs, Debuffs, Target Debuffs, Spell Cooldowns, Item Cooldowns, Ground Effects, and Pet Alerts support independent color swatches and opacity controls.
-           -- Borderless Minimalist Mode: Added global "Enable Alert Type Borders" master toggle and per-module checkboxes to completely hide border frames for players who prefer a clean, borderless aesthetic.
-           -- One-Click Reset to Classic Defaults: Added "Reset Border Colors" button to quickly restore classic module identification colors (Green/Red/Purple/Yellow, etc.).
-           -- Live Dynamic Hot-Refresh: Modifying border colors or toggling borders immediately redraws all active on-screen icons in real-time without requiring a /reload.
+           -- 8 Alert Modules Independent Colors: Self Buff, Self Debuff, Target Buff, Target Debuff, Spell Cooldown, Item Cooldown, Ground Effect, and Pet Alert now support independent color pickers and opacity tuning.
+           -- Borderless Minimalist Mode: Added a global toggle for alert borders and per-module checkboxes to completely disable border outlines.
+           -- One-Click Reset to Default: Quick reset button restores original classic identification colors (green/red/purple/yellow, etc.).
+           -- Live Hot-Apply: Modifying border colors or toggles instantly repaints all visible alert icons without needing a /reload.
+
         -- Per-Resource Independent Dragging & 9-Point Frame Attachment:
-           -- Independent Positioning & Free Dragging: Added "Enable Independent Position" toggle and "Move Single Resource" / "Move All/Anchor" / "Zero Offset (0, 0)" buttons in "Player Resources -> Position & Anchor", supporting individual resource detachment from group stacks with left-click drag and right-click commit.
-           -- 9-Point Compass Frame Attachment: Added "Attach Target Frame" dropdown (supporting EAM Resource Main Anchor, UIParent, PlayerFrame, TargetFrame, FocusFrame, PetFrame, and PersonalResourceDisplay) with 9 intuitive anchor points (Top Left, Top, Top Right, Left, Center, Right, Bottom Left, Bottom, Bottom Right).
-        -- Dynamic/Custom StatusBar Segments, Custom Gradient Colors & Conditional Alerts:
-           -- Dynamic Max Points Alignment & Custom Segments: Discrete point resources including Combo Points (5/6/7), Chi (5/6), Evoker Essence (5/6), Holy Power (5), Soul Shards (5), Arcane Charges (4), and Runes (6) dynamically partition status bar segment markers and slot bars based on live UnitPowerMax, with a new "Custom Segments (0=Auto, 1~20)" slider in "Bar & Dimensions".
-           -- Custom Solid & Two-Color Gradient Modes: Added "Bar Color Mode" (Default Dynamic Class Color, Custom Solid, Custom Two-Color Gradient) with start/end color pickers supporting horizontal and vertical gradient rendering.
-           -- StatusBar Conditional Alert System: Added "Condition Operator" (>= Greater/Equal or <= Less/Equal to Threshold), "Alert Color Override" (with dedicated alert color picker), and "Play Sound on Alert" with rising-edge latching to prevent sound spam.
-        -- LibSharedMedia-3.0 Updated to r156:
-           -- Upgraded third-party LibSharedMedia-3.0 library to r156 (supporting 12.0.1+ / Interface 12000103), expanding font and texture asset libraries and improving dynamic asset loading stability.
-        -- Evoker Essence 5-Locale Blizzard Terminology Calibration:
-           -- Calibrated Evoker primary resource naming across all 5 official Blizzard client localizations: Traditional Chinese (龍能), Simplified Chinese (精华), English (Essence), Korean (정수), and Russian (Сущность).
-     -- Improvements:
-        -- Deprecated Global Clean-Up: Removed all legacy references to Blizzard_Deprecated, ensuring long-term addon stability and independence across major patch transitions.
-        -- Native State Protection Hardening: Defensively isolated timer and source tables within AuraState, enhancing stability under extreme combat load and non-standard aura events.
+           -- Independent Positioning & Dragging: Added "Enable Independent Position" toggle and dedicated buttons to drag individual resource bars or the master anchor, with right-click completion and slider sync.
+           -- 9-Point Frame Attachment: Added attachment dropdown (EAM Master Anchor, UIParent, PlayerFrame, TargetFrame, FocusFrame, PetFrame, PersonalResourceDisplay) with intuitive 9-point directional anchoring.
+
+        -- LibSharedMedia-3.0 Update to r156:
+           -- Updated LibSharedMedia-3.0 to r156 (Interface 12000103 / 12.0.1+), expanding the font and texture library.
+
      -- Bug Fixes:
+
         -- RightManagedFrameContainer Taint Remediation:
-           -- Completely eliminated external modifications and polyfills to Blizzard global libraries (table/math/string), strictly isolating utility functions inside the private Util namespace to prevent ADDON_ACTION_BLOCKED errors on Blizzard action bars (e.g. PetActionBar, EditMode, RightManagedFrameContainer).
+           -- Completely removed external monkey-patching of Blizzard global libraries (table/math/string) and consolidated polyfills into EAM.Util, eliminating ADDON_ACTION_BLOCKED errors in Blizzard UI.
         -- Cooldown Scheduler Frame Activation Fix:
-           -- Fixed an issue where scheduler frames remained hidden under specific initialization paths, halting the OnUpdate countdown loop and preventing cooldown, item, and ground effect alerts from rendering.
+           -- Fixed an issue where hidden scheduler frames prevented OnUpdate loops from running, causing cooldown and ground effect icons to not render.
         -- Secret Value Evaluation Order Safeguard:
-           -- Fortified inspection order in Util.isSafeValue and Util.isReadableTable, evaluating isSecretValue/isSecretTable before standard comparisons to prevent runtime errors when encountering secret values.
+           -- Reinforced evaluation ordering in Util.isSafeValue and Util.isReadableTable to check isSecretValue first.
         -- Cooldown Options UI Text Correction:
-           -- Corrected the option label and tooltip for "Remove Icon When Cooldown Finishes" in the cooldown configuration panel, ensuring exact semantic alignment with addon behavior.
+           -- Corrected the cooldown options label to "Remove Icon on Cooldown Completion" across all 5 locales.
         -- Ground Effect Duration Scrape Format Fix:
-           -- Resolved an Options.lua:5575 error (bad argument #1 to 'format', string expected, got table) caused by passing localized string objects directly into string.format during duration scraping or dropdown changes.
+           -- Fixed a format error where localized text objects passed into string.format raised "bad argument #1 to format".
         -- Combat Multi-Icon Grid Positioning Fix:
-           -- Fixed a bug where in-combat alert frames falsely deferred layout updates, causing newly triggered icons to stack on top of each other at coordinate (0, 0) instead of positioning along the 2D grid.
+           -- Fixed an issue where alerts in combat erroneously deferred layout calculations, causing overlapping icons at (0, 0).
         -- Action Button Taint & Missing-Texture Yellow Box Fix:
-           -- Resolved an issue where overriding global C_Spell/C_Item APIs during in-game flow validation caused action bar buttons (MultiBarBottomLeftButton7) to become tainted and block actions in combat.
-           -- Completely isolated offline test cases and provided question mark fallback textures, eliminating 40x40 bright yellow placeholder boxes and residual 99901 test spells.
-        -- Player Resource Scope Switch Forward Declaration Fix:
-           -- Fixed an attempt to call a nil value error caused by a missing forward declaration of refreshEditor when switching between "Current Spec Override" and "All Specs Default" in the Player Resource panel.
+           -- Fixed taint on MultiBarBottomLeftButton7 caused by flow tests overriding global APIs in-game, and added placeholder fallbacks to eliminate yellow boxes.
         -- Ground Effect Purple Border Restoration:
-           -- Fixed an issue where ground effect icons transitioning from placeholder mode to active cast triggers occasionally lost their purple border due to a misaligned border state check.
-        -- TimedSignalMap Proxy Wrapper Fix:
-           -- Fixed an Attempted to assign to read-only key SignalAt error when wrapping C_Timer.NewTimedSignalMap native read-only C++ objects by introducing a defensive lightweight proxy table wrapper.
-        -- Table Remove Value Consistency Fix:
-           -- Fortified Util.tableRemoveValue and Util.tableRemoveUnordered implementations, eliminating assumptions about non-standard environment extensions to ensure boolean return values and array lengths remain strictly consistent across all clients.
+           -- Resolved an issue where ground effect icons switching from placeholder to active cast failed to re-display purple borders.
         -- Alert Border Color Hot-Refresh Fix:
-           -- Removed state-key short circuits in IconPool.applyTypeBorder, ensuring instant real-time border color updates on all standing and active on-screen icons (including cooldowns and ground effects).
+           -- Removed state key short-circuiting in IconPool.applyTypeBorder, ensuring instant border color updates.
         -- Native Aura Border Toggle & Dispel Texture Suppression Fix:
-           -- Resolved an issue in Retail 12.1 Native Aura containers where disabling alert borders failed to hide borders due to visual fingerprint caching, and suppressed residual Blizzard AddDispelTypeTexture borders.
-           -- Implemented instant border hot-refresh (refreshBorders) and safe dispel texture clearing (safeRemoveDispelTypeTexture) when toggling borders off.
+           -- Resolved an issue where disabling borders failed to trigger native container rebuilds and left dispel textures visible.
         -- Talent Override Cooldown Detection & Countdown Reliability Fix:
-           -- Fixed a critical bug where casting abilities with talent overrides (e.g. Blink replaced by Shimmer, Comet Storm, Ray of Frost) only queried the original spell ID, causing Blizzard APIs to report duration 0 and prematurely aborting cooldown countdowns.
-           -- Introduced intelligent multi-candidate spell family matching (getSpellCooldownInfo) querying preferred cast ID, override ID, base ID, and original ID, capturing accurate cooldown durations and native DurationObjects.
+           -- Implemented multi-candidate spell family matching (getSpellCooldownInfo) to accurately detect cooldowns for talent overrides.
         -- TimedSignalMap Proxy Call Signature Fix:
-           -- Corrected argument offsets in Scheduler TimedSignalMap wrappers to ensure C++ underlying scheduling dispatches reliably with graceful fallback.
+           -- Corrected parameter offset in Scheduler native signal map proxy calls.
         -- Talent Override Transition Cooldown Compensation:
-           -- Maintained a previousOverrideMap mapping when talents transition or multi-charge overrides deplete, ensuring cooldown timers and charge states synchronize seamlessly without dropping icons.
+           -- Preserved previousOverrideMap across talent swaps to guarantee seamless cooldown transitions.
         -- Secret Value Table-Key Guard & Native Sink Binding:
-           -- Fortified type safety checks (Util.isSafeTableKey / Util.isSafePositiveNumber) for spell IDs, countdown durations, and state keys in cooldown services and renderers. Any data containing secret or protected attributes is strictly isolated from Lua table keys and string formatting, binding exclusively through native one-way sinks (Cooldown:SetCooldown, StatusBar:SetValue, DurationObject).
+           -- Strengthened type checks to isolate secret values from Lua tables, binding directly to native widgets.
         -- Prewarm Alert Slot Layout Isolation:
-           -- Enhanced layout state checks during icon prewarming, keeping newly created icons strictly hidden until their 2D grid coordinates (layoutX, layoutY) are fully calculated, preventing overlapping flashes at screen origin (0, 0).
+           -- Kept icons hidden until physical 2D grid coordinates are fully resolved.
         -- Proc Glow & Alert Border Visual Hierarchy Separation:
-           -- Elevated alert type border frame level to an independent carrier tier (FrameLevel +8), guaranteeing custom borders always render above textures without being obstructed by LibButtonGlow procs.
-           -- Expanded proc glow animation frame dimensions and offsets so proc glow blooms cleanly around the outer perimeter of the icon and border.
-        -- Real Cooldown & Cooldown Reduction on GCD Fix:
-           -- Corrected cooldown logic that mistook Global Cooldown (isOnGCD) as an absolute exclusion filter, preventing real cooldowns (>1.5s) from aborting when GCD triggers or when CDR spells are cast during GCD.
-           -- Cleared spell override caches immediately upon override expiration, allowing subsequent casts or returns to base spells to start fresh cooldowns.
-           -- Lowered renderer cooldown delta threshold to 0.01s, ensuring talent-based cooldown reductions immediately update on-screen countdowns and native animations.
+           -- Elevated border physical FrameLevel (+8) above proc glows, eliminating visual occlusion.
+        -- Real Cooldown and CDR on GCD Fix:
+           -- Corrected cooldown logic to allow true cooldown tracking during GCD and updated CDR diffing threshold to 0.01s.
         -- Continuous Multi-Cast & Combat Re-entry Cooldown Activation Fix:
-           -- Fixed an issue where subsequent casts or re-entering combat after dropping combat failed to trigger cooldown countdowns.
-           -- Resolved lost notifications when Blizzard client cooldown APIs experienced slight latency at cast completion (UNIT_SPELLCAST_SUCCEEDED) by introducing explicit activation flags and 50ms/150ms asynchronous retries.
-           -- Thoroughly cleaned isPlaceholder, isDesaturated, and unit tags in CooldownStatePool to prevent state contamination upon pool recycling.
-           -- Removed position-dependent visibility restrictions in the renderer, guaranteeing active alerts display consistently inside and outside combat.
+           -- Resolved cooldown countdown failures on repeated casts and combat re-entry with retry mechanisms and pool sanitation.
         -- Channeled Spell Cooldown Activation & Talent Passive CDR Live Sync:
-           -- Fixed a critical issue where channeled spells (such as Mage Ray of Frost, Spell ID: 205021, and Blizzard) failed to activate cooldown alerts in combat because Blizzard only fires UNIT_SPELLCAST_CHANNEL_START rather than UNIT_SPELLCAST_SUCCEEDED.
-           -- Added instant cooldown timer and ground effect activation on UNIT_SPELLCAST_CHANNEL_START, and finalized cooldowns on UNIT_SPELLCAST_CHANNEL_STOP for lag-free in-combat tracking.
-           -- Implemented active cooldown dynamic synchronization (refreshActiveCooldowns) for passive CDR talents (such as Mage Whiteout reducing Frozen Orb cooldown via Ice Lance), actively recalculating active cooldowns upon every player cast.
-           -- Added multi-stage projectile flight retries (120ms/350ms/700ms) covering melee, mid-range, and 40-yard max-range Ice Lance impacts to sync non-target cooldown events.
-           -- Isolated channel activation tags to prevent background cooldown scans from overwriting active states, and calibrated Frozen Orb base ground duration to 15.0s.
+           -- Fixed channeled spell activation on UNIT_SPELLCAST_CHANNEL_START and implemented active cooldown live sync for passive CDR talents.
         -- Zero-CD Talent Override Proc Cooldown Protection:
-           -- Fixed a critical bug where triggering a free zero-cooldown talent override (e.g. Ray of Frost proccing Comet Storm) wiped out the original spell's ongoing 60s cooldown due to the override's cooldown duration being 0.
-           -- Established a cooldown protection barrier: casting zero-CD override procs is barred from overriding the primary spell's activation identity, preserving active countdown timers.
-        -- Continuous Active CDR Live Sampler:
-           -- Implemented a lightweight adaptive sampler (250ms interval) for long-range projectile hits and passive damage-based CDR mechanisms lacking Blizzard frame events.
-           -- Dynamically updates on-screen seconds and animations whenever cooldown reductions are detected, sleeping automatically when no cooldowns are active (0 CPU overhead).
-        -- Cooldown & Spell Override Flight Recorder / Trace UI:
-           -- Built an internal high-precision 300-entry ring-buffer flight recorder (CooldownTrace), capturing cast events, channels, spell overrides, raw API cooldown returns, and state machine transitions.
-           -- Added an in-game debug popup via /eam trace (or /eam cdtrace) featuring one-click copy (Ctrl+C), log clearing, and live refresh.
-           -- Automatically persists flight trace logs to WTF SavedVariables on reload or logout (EventAlertModDB.cooldownTrace) for offline analysis.
+           -- Prevented zero-cooldown temporary overrides from clearing existing cooldown timers.
+        -- Active CDR Live Sampler:
+           -- Implemented an adaptive 250ms sampler for passive/distance CDR tracking.
+        -- Cooldown Trace Flight Recorder (/eam trace):
+           -- Built-in 300-entry flight recorder tracking casts, overrides, and cooldown API transitions.
         -- Spell Heuristics & GCD Delay Compensation Fix:
-           -- Resolved an issue where channeled and long-cooldown spells (e.g. Ray of Frost, Frozen Orb) failed to start immediate 60s cooldowns due to dictionary lookup misses when Blizzard APIs initially returned GCD or 0s.
+           -- Implemented heuristic fallback cooldowns for delayed API responses.
         -- Subsequent Cast Renewal & Cooldown Residue Override Fix:
-           -- Fixed a major bug where recasting Frozen Orb after cooldown reductions locked the timer into a stale 15-17s residual countdown; active player casts are now strictly guaranteed highest priority to launch fresh lifecycles.
+           -- Guaranteed primary cast events start fresh cooldown lifecycles without inheriting stale residue.
         -- Spell Charges Detection & Zero-CD Proc Isolation:
-           -- Enforced strict maxCharges > 1 checks for charge spells to account for Retail APIs returning single-layer tables for non-charge spells.
-           -- Guaranteed zero-CD override procs (e.g. Comet Storm from Ray of Frost) are 100% cleanly isolated, preventing ongoing main cooldown countdowns from being cleared.
-        -- Cooldown Flight Trace Snapshot & Sampler Enhancement:
-           -- Clearly tagged placeholder alerts (| Placeholder=true) in /eam trace snapshots and refined remaining time calculations.
-           -- Constrained active cooldown samplers to strictly running cooldowns, eliminating negative timestamp artifacts.
-        -- Base Spell Family Reverse Lookup Guard:
-           -- Overhauled cooldown cast-matching architecture to prevent reverse GetBaseSpell lookups from trigger spells (e.g. Comet Storm, Alter Time return) from hijacking main cooldowns.
-           -- Prohibited dissimilar spell IDs from overriding active cooldown identities while a spell is in valid countdown.
-        -- Burst Adaptive CDR Sampler & Travel Time Sync:
-           -- Implemented an 80ms interval, 1.25s high-frequency burst polling window for Frost Mage CDR talents (Ice Floes 1247798, Heart of Frost 1247799, Fractured Frost 378448, Splitting Ice 56377, Whiteout 1281638), covering 0-40 yard travel times and server resolution delays.
-           -- Immediately triggers state updates and synchronizes native swipe textures via SetCooldown when cooldown reductions >0.02s are detected, fully supporting charge-based abilities.
-        -- Combat Secret Aura Taint Elimination & Zero-Taint CDR Engine:
-           -- Completely removed UNIT_AURA event listening from cooldown services and silently isolated combat aura probing, eradicating Retail 12.x "Auras cannot be accessed when secret while tainted by EventAlertMod" errors from GetAuraDataByIndex.
-           -- Passive CDR is now driven entirely by successful casts and 60ms high-frequency adaptive burst sampling comparing server non-secret cooldown resolutions, ensuring zero-latency dynamic updates with 100% zero taint.
-        -- Channeled Spell Immediate Heuristic Cooldown Initialization:
-           -- Fixed an issue where channeled spells (Ray of Frost 205021) starting in combat (UNIT_SPELLCAST_CHANNEL_START) lost timers (remaining=0) due to Blizzard API returning 0 or secret values.
-           -- Instantly initializes a 60s heuristic cooldown upon cast if the API has not returned numeric cooldowns, immediately displaying 60.0s and starting native swipe textures.
-        -- Whiteout Ground Effect Duration Extension:
-           -- Implemented Whiteout (1281638) talent support for ground effects (Frozen Orb 84714), extending active ground duration by 0.1s upon casting Ice Lance.
-        -- Cooldown Flight Trace Telemetry Upgrade:
-           -- Safely logs target freeze state, Fingers of Frost stacks, key talents, and active cooldown seconds in non-combat environments.
-           -- Logs [CDR_TRIGGER_CAST] and [CDR_DETECTED] (with delta reduction seconds and expiration timestamps), displayed in /eam trace under "Frost State & CDR Environment Snapshot".
-        -- Heuristic Cooldown DurationObject Isolation & Instant Countdown Refresh Fix:
-           -- Fixed a critical bug where heuristic channeled cooldowns bound empty zero-duration DurationObjects to the renderer, wiping text bindings and halting OnUpdate timers.
-           -- Strictly isolates heuristic DurationObject bindings (forcing nil), utilizing native SetCooldown swipe masks and high-frequency OnUpdate text refresh channels.
+           -- Strict maxCharges > 1 validation to eliminate charge misclassification.
+
 -- [Retail][MN][12.1][Alpha 8.7][Zero-Alloc Cooldown Pipeline, Custom Display Names & Target Ghost Purge] 2026.09.27
+
+
+
       -- Player Stat & Absorb Monitor Upgrade:
+
+
+
          -- Module Live Lifecycle & Realtime Toggle: switching the module toggle immediately clears active frames and stops polling tickers; prominent /reload warning notice and one-click [Reload UI (/reload)] button displayed when underlying Native Aura containers require recreation.
+
+
+
          -- Group Synchronous Mover Drag: child frames parented to group anchor for lag-free GPU tree translation; dragging the master mover translates all grouped stats simultaneously with 0 delay.
+
+
+
          -- Multiple Attach Target Dropdowns: support attaching to EAM Stat Main Anchor, UIParent (Screen Center), PlayerFrame, TargetFrame, FocusFrame, PetFrame, and 9 compass anchor points.
+
+
+
          -- Default No Icon Display: compact auto-sizing when icons are hidden, cleanly presenting value text, label string, and status bars.
+
+
+
          -- Two-Color Gradient Bar Rendering: native C-level SetGradient API integration supporting horizontal and vertical two-color blending with legacy fallbacks.
+
+
+
          -- Color Swatch Pickers: full customization for bar primary color, gradient secondary color, value text color, and label text color.
+
+
+
          -- Custom Stack Ordering: interactive list ordering controls (▲ Up, ▼ Down, ↺ Reset) to adjust display stacking order in real-time.
+
+
+
      -- Custom Display Names Across All Modules:
+
+
+
         -- Added full support for custom icon text names (short names) to resolve overlapping text in compact icon layouts (e.g., customize "Divine Shield" to "Shield", "Execute" to "Exec").
+
+
+
         -- Upgraded Condition Frame (EAM_SpellConditionsFrame): added dedicated "Custom Display Name (Short Name)" input box and expanded frame height to 680px for a clean, spacious layout.
+
+
+
         -- Live List Marking: alerts with custom names configured are immediately marked in the list view as "Spell Name (|cff00ff96ShortName|r)" for easy identification.
+
+
+
         -- Deep Multi-Service Integration: seamlessly covers Self Buff, Self Debuff, Target Debuff, Spell Cooldown, Item Cooldown (including equipment slots), and Ground Effects, displaying custom names while safely falling back to default names when empty.
+
+
+
         -- Native Aura Text Guard Hook: implemented a SetText guard hook for Retail 12.1.0 native aura buttons, preventing Blizzard C++ internal updates from overwriting custom short names.
+
+
+
         -- Comprehensive Multi-Language Localization: 100% synchronized across zhTW, zhCN, enUS, koKR, and ruRU.
+
+
+
         -- Hot Path Frequency Profiler & SavedVariables Metrics:
+
+
+
             -- Implemented a zero-allocation runtime Hot Path profiler in Core/Performance to record exact execution counts and calls-per-second (CPS) for event routing, service scans, rendering, and scheduler ticks.
+
+
+
             -- SavedVariables Persistence: Automatically tracks session and cumulative counters across sessions, safely flushing to SavedVariables on PLAYER_LOGOUT or on demand.
+
+
+
             -- Full Debug Integration: DebugState snapshot and PromptExport diagnostic window now export structured hotPathMetrics JSON for profiling-guided optimization.
+
+
+
             -- New CLI Commands: Added "/eam metrics" (or "/eam hotpaths") to view the Top 10 hottest execution paths, "/eam metrics reset" to clear counters, and "/eam metrics save" to flush to SavedVariables.
+
+
+
             -- Blizzard Native Engine Profiler Integration: Implemented C_AddOnProfiler telemetry probes in /eam metrics and diagnostic export, capturing engine-level CPU milliseconds (recent average, peak, encounter average) and hitch ticks (>1ms/5ms) to establish full-stack macro + micro telemetry.
+
+
+
          -- Cooldown Event Coalescing & Zero-Allocation Alert Pipeline:
+
+
+
             -- Zero-Allocation Pending Queue: AlertManager uses persistent queue slots to eliminate thousands of temporary Lua table allocations during rapid alert updates, eradicating Lua garbage collection spikes.
+
+
+
             -- Cooldown Dirty State Diffing & Render Suppression: CooldownService and ItemCooldownService implement state diffing (visibility, charges, usable glow, placeholder, desaturation, timing) to suppress redundant state notifications and icon re-renders when cooldown state is unchanged, drastically lightening render pipeline load in combat.
+
+
+
             -- Frame-Level Cooldown Event Coalescing: Implemented frame-level event coalescing for high-frequency untargeted cooldown events (SPELL_UPDATE_COOLDOWN, ACTIONBAR_UPDATE_COOLDOWN, BAG_UPDATE_COOLDOWN) to avoid redundant full-list scans within the same frame tick, smoothing framerates during heavy raid and dungeon combat.
+
+
+
         -- Native Aura Custom Name Group Separation Fix:
+
+
+
             -- Completely resolved the critical bug where multiple auras grouped into a dynamic Flow Group had their custom names overwritten to nil by the first spell without a custom name.
+
+
+
             -- Rule compiler (AuraRuleCompiler) now incorporates customName and customIcon into the groupID, cleanly isolating auras with custom names into dedicated groups and preserving custom short names.
+
+
+
             -- Renderer (NativeAuraRenderer) dedicates child FontString rendering for custom names without registering SetSpellName with Blizzard's core, preventing internal C++ updates from forcing default spell full names.
+
+
+
      -- Player Stat Text & Bar Color Swatch Closure Scope Fix:
+
+
+
         -- Completely fixed the critical error ttempt to index global 'valColorBtn' (a nil value) when clicking the value text color, label text color, or status bar color swatch buttons in the Player Stat Monitor panel.
-        -- Updated button OnClick callbacks to accept unction(btn) receiving its own widget reference, eliminating the Lua lexical scoping pitfall where local variables in identical declaration statements fallback to global lookup.
+
+
+
+        -- Updated button OnClick callbacks to accept 
+
+unction(btn) receiving its own widget reference, eliminating the Lua lexical scoping pitfall where local variables in identical declaration statements fallback to global lookup.
+
+
+
      -- Target Aura Target-Switching Live Refresh, Ghost Icon Purge & Countdown Ghost Elimination:
+
+
+
         -- Completely eliminated ghost icon retention or ticking countdowns upon switching targets:
+
+
+
            1. Dual-Backend Native 12.1 Container Lifecycle Reset: AuraContainerService.onTargetChanged listens to PLAYER_TARGET_CHANGED, cycling SetEnabled(false) -> SetUnit("target") -> SetEnabled(true) -> Update(), and calling Hide() when target is absent, preventing Blizzard C++ AuraContainer from continuing countdowns across target switches.
+
+
+
            2. Legacy Renderer Instant Purge & Timer Unbinding: AuraService.onTargetChanged, clearUnit("target"), and renderInactiveUnit("target") synchronously call Renderer.clearFrame(targetAura), immediately releasing all target aura icons, DurationAdapter text bindings, and native timers back to the pool.
+
+
+
            3. AlertManager Stale Queue Purge: implemented AlertManager.clearPending(targetAura) to safely discard un-flushed target aura state updates upon target change, preventing stale updates from resurrecting lingering icons.
+
+
+
            4. Native Aura Guard Boundary Fix: corrected AlertManager guard to only intercept selfAura (since native renderer only hosts player auras), allowing targetAura events to flow through unhindered.
+
+
+
            5. renderInactiveAlert guarantees fallback event dispatch to targetAura with shown = false, even when service state was prematurely nil.
+
+
+
            6. Renderer.render moves shown = false handling prior to inCombat checks, ensuring hide requests are never deferred or leaked during combat.
+
+
+
            7. IconPool.release thoroughly cleans stackText, nameText, and textures, resetting points and alpha to eliminate residual visuals.
+
+
+
         -- Completely fixed the issue where target auras failed to update upon switching targets: overhauled fullScanUnit, renderInactiveUnit, and clearUnit state reconciliation to guarantee 100% immediate clearance of previous target auras and instant scanning of new target auras.
+
+
+
         -- Corrected readAuraIntoState misidentifying target beneficial buffs as debuffs, and implemented alertMatchesAura to strictly validate helpful/harmful polarity and fromPlayer ownership, preventing false triggers across shared spell IDs.
+
+
+
         -- Added clean lifecycle management (registerLegacyEvents / unregisterLegacyEvents) for Native and Legacy dual-backend transitions.
+
+
+
      -- Native Aura Font Size Live Hot-Apply & Zero Reload:
+
+
+
         -- Completely fixed the Retail 12.1.0 Native Aura issue where adjusting countdown timer font size, stack font size, or spell name font size failed to update in real-time and required a /reload.
+
+
+
         -- Implemented a weak table button pool (NativeAuraRenderer.buttons) to safely retain FontString references without memory leaks.
+
+
+
         -- Implemented updateButtonFonts in-place hot-apply mechanism, directly updating FontString:SetFont on active auras in real-time without consuming the 18-container rebuild quota.
+
+
+
         -- Eliminated slider change rebuild deadlocks, preventing permanent nativeReloadRequired lockups from repeated slider adjustments.
+
+
+
         -- Unified spell name font size resolution across rule compiler fingerprints and style snapshots.
+
+
+
      -- Slash Commands Localization & Pipe Escape Fix:
+
+
+
         -- Fully localized all slash command help descriptions across all 5 languages, eliminating raw English artifacts.
+
+
+
         -- Fixed chat pipe escape artifact where "<spellID|target|...>" broke into "<spellIDarget>" due to "|t" being treated as texture escape codes, adopting standard slashes "<spell/target/cd/item/ground>".
+
+
+
         -- Added missing slash commands: "/eam preview", "/eam rune", "/eam add ground", and "/eam lang".
+
+
+
      -- Ctrl+Alt Quick-Add Cross-Class Spell to Self Auras Catalog Fix:
+
+
+
         -- Completely fixed the issue where quick-adding a cross-class spell/aura to player aura monitoring via Ctrl+Alt omitted catalogScope, causing the spell to be automatically classified into "Cross-Class Auras" and appear missing from the Self Auras panel (Category 1).
+
+
+
         -- Implemented explicit intent injection: adding an aura via the quick-action popup now explicitly assigns catalogScope = "SELF" and fromPlayer = true, ensuring 100% placement in the Self Buff/Debuff list (Category 1).
+
+
+
         -- Implemented automatic legacy item migration: spells previously misclassified into cross-class auras will be dynamically upgraded to self auras upon re-adding via Ctrl+Alt, immediately triggering an options panel refresh.
+
+
+
      -- Alert Layout Slot 1 Zero-Anchor Guard & Drag Coordinate Normalization Fix:
+
+
+
         -- Completely fixed the critical bug where Slot 1 of spell cooldowns and ground effects physically vanished on first render: eliminated the double-deadlock where prewarmAlertFrames and parasite checks bypassed SetPoint at (0, 0), introducing a GetNumPoints() == 0 physical anchor guard and cache invalidation to ensure Slot 1 always has active physical anchor points.
+
+
+
         -- Completely resolved geometric frame drift caused by Blizzard's native StopMovingOrSizing forcing BOTTOMLEFT anchors: OnDragStop strictly recalibrates and re-anchors frames relative to UIParent's CENTER, fixing a Lua multiple return value truncation bug where the Y coordinate was forcibly reset to 0. SavedVariables.normalizeLayout automatically migrates legacy BOTTOMLEFT coordinates to CENTER, permanently eliminating geometric drift when alerts dynamically change.
 
+
+
+
+
+
+
 -- [Retail][MN][12.1][Alpha 8.6][Spell Name Placement, Live Preview & Resource Dropdown] 2026.09.14
+
+
+
      -- Ground Effect Cooldown-Architecture Alignment & Zero In-Combat Interruption:
+
+
+
         -- Completely resolved the issue where ground effects failed to display during combat: fixed Renderer.prewarmAlertFrames to fetch class profile alerts via SavedVariables.getActiveAlerts(), ensuring frames are 100% prewarmed out of combat.
+
+
+
         -- Fully aligned with CooldownService mature architecture: eliminated in-combat compile blocking from verifyCompiledAlerts, adopting instant in-memory indexing to prevent combatCompileDeferred interruptions.
+
+
+
         -- triggerGroundEffect accurately binds rawAlert and order; expired effects retain persistent frames at Alpha = 0, instantly illuminating via SetAlpha during combat with zero taint, zero GC, and zero lag.
+
+
+
      -- Condition Frame Lifecycle & Item Control Isolation Fix:
+
+
+
         -- Completely resolved UI element leaks where item cooldown controls persisted across spell and ground effect condition panels.
+
+
+
         -- Strictly enforced default condFrame Hide state, category-specific control isolation, and OnHide lifecycle cleanup.
+
+
+
      -- Spell Charges Show Available Charges Only:
+
+
+
         -- Refined spell charge counter text to display available charges only (e.g. 2) rather than appending max charges (e.g. 2/2), resulting in a cleaner and clearer UI.
+
+
+
      -- Native Aura Prominent /reload Reminder & One-Click UI Reload:
+
+
+
         -- Added prominent golden-yellow warning notices and a quick [/reload] button in the general settings panel for Blizzard 12.1 Native Aura sandbox containers.
+
+
+
         -- Displayed contextual warning notices in self buff/debuff and target debuff list panels informing users to /reload if aura changes do not take effect immediately.
+
+
+
         -- Enhanced chat feedback when manually reapplying Native Aura, advising users to execute /reload if in-game timer or stack updates remain desynchronized.
+
+
+
      -- Aura Frame Position Sync & Reload Persistence Fix:
+
+
+
         -- Completely fixed the issue where native aura container coordinates remained static, dynamically anchoring Retail 12.1 native aura containers to their parent alert frames (self and target), ensuring 100% accurate position persistence both during mover dragging and across UI reloads (/reload).
+
+
+
         -- Fixed mover frame dragging termination saving incorrect (0, 0) offsets to SavedVariables, instantly recording true parent frame coordinates and updating revision state upon mouse release.
+
+
+
      -- Aura Text, Timer & Stack Live Refresh Fix:
+
+
+
         -- Resolved the issue where toggling "Show Spell Name", "Show Timer", or altering any of the 21 text placement anchors in conditions detail failed to update active aura icons on screen immediately.
+
+
+
         -- Implemented global active aura refresh (AuraService.refreshAll), immediately re-rendering active auras for player, target, and pet upon checkbox or text placement changes.
+
+
+
         -- Corrected native aura compiler visual fingerprinting to incorporate spell name placement and toggle states with strict boolean parsing, ensuring instant visual style updates upon configuration changes.
+
+
+
      -- Frame Position Reset Immediate Apply Fix:
+
+
+
         -- Clicking "Reset All Icons & Positions" now immediately invokes Renderer.applyFramePositions(), restoring all alert frame coordinates and anchors in real-time without requiring a /reload.
+
+
+
      -- Mover Frame with Translucent Green Highlight:
+
+
+
         -- Upgraded frame mover mode: renders a translucent green background (0.02, 0.28, 0.12, 0.35) with bright emerald borders (0.20, 1.00, 0.45, 0.95) enclosing all preview icons, labels, and spacings.
+
+
+
         -- Clicks anywhere on the bounding box allow smooth dragging of the entire alert group, resolving single-icon drag limitations across multiple preview cows.
+
+
+
         -- Displays group title at top and hotkey guides at bottom for intuitive multi-frame positioning.
+
+
+
      -- Realtime Spacing & Size Wheel Adjustment with Floating HUD:
+
+
+
         -- Inside the mover frame: [Ctrl + Mouse Wheel] tunes horizontal spacing (±1px), [Alt + Mouse Wheel] tunes vertical spacing (±1px), [Shift + Mouse Wheel] scales icon size (±2px).
+
+
+
         -- Floating HUD appears at the mover center displaying instant parameter updates (e.g. "Horizontal Spacing: 8 px") with smooth fadeout, automatically saving to SavedVariables.
+
+
+
      -- Default Cooldown Pre-Render & Quick Toggle in List View:
+
+
+
         -- Default value for cooldownPreRender in both Spell Cooldown and Item Cooldown modules is now ON (true) by default.
+
+
+
         -- Added a dedicated quick toggle button ("Pre") next to the gear icon in list view rows, showing bright green when active and dark gray when inactive, toggling pre-rendering with a single click.
+
+
+
      -- Spell Cooldown Alert Frame Drag & Move Fix:
+
+
+
         -- Completely fixed the issue where pre-rendered placeholder icons intercepted mouse clicks out of combat, preventing the preview frame from being dragged.
+
+
+
         -- Real icons are temporarily set to EnableMouse(false) during mover mode, while preview icons delegate OnDragStart/Stop to the parent frame, restoring interaction seamlessly upon locking.
+
+
+
       -- Equipment Slot Cooldown Support (19 Slots) & 3-Tier Fallback Fix:
+
+
+
          -- Added "Add to Equipment" button and a quick popup menu for 19 standard equipment slots (Trinket 1/2, Hands, Waist, etc.), supporting slot IDs 1~19.
+
+
+
          -- Item alert list rows annotate slot name, slot ID, and equipped item name, with mouse hover directly routing to native SetInventoryItem tooltip with SetItemByID fallback.
+
+
+
          -- Fixed a critical state-machine bug where native GetInventoryItemCooldown returning number 1 for enable was misjudged by boolean validation, ensuring trinkets and gear reliably trigger cooldown sweeps and timers.
+
+
+
          -- Implemented 3-tier robust cooldown fallback: Tier 1 standard GetInventoryItemCooldown -> Tier 2 modern ItemLocation:CreateFromEquipmentSlot -> Tier 3 direct C_Item.GetItemCooldown, preventing missing cache or zero-duration response.
+
+
+
          -- Added equipment slot resolution to SPELL_UPDATE_COOLDOWN and ACTIONBAR_UPDATE_COOLDOWN events, wired with UNIT_INVENTORY_CHANGED for real-time gear swap synchronization.
+
+
+
       -- Item vs Equip Slot Mode Selector & Cooldown Overrides in Conditions Frame:
+
+
+
         -- Added "Cooldown Target" toggle group to detail conditions frame, supporting free switching between Item ID mode and Equipment Slot mode.
+
+
+
         -- Opened 4 cooldown behavior overrides (remove on complete, show out of combat, usable glow, pre-render placeholder) for item/equip cooldowns with dual-track SavedVariables persistence and ProfileCodec roundtrip support.
+
+
+
      -- Spell Name Text Placement & Default Outside Bottom:
+
+
+
        -- Spell and aura names now default to outside bottom (OUTSIDE_BOTTOM) for cleaner and more balanced icon aesthetics.
+
+
+
        -- Added "Spell Name Placement" dropdown offering 21 anchor placement positions under Font & Text settings, granting full 21-point alignment freedom matching countdown timers and stack counters with live feedback.
+
+
+
     -- Player Stat Real-Time Preview Synchronization:
+
+
+
        -- Resolved preview update delays across stat switching, resizing, font sizing, decimal precision, custom icons/labels, and threshold adjustments.
+
+
+
        -- Unified threshold field naming compatibility (thresholdMin / minThreshold), enabling red warning borders to trigger accurately in real time.
+
+
+
        -- Automatically switches preview panel to the Player Stat tab when opening or selecting stats if preview window is active.
+
+
+
     -- Player Resource Scale & Scrollable Font Dropdown:
+
+
+
        -- Replaced single-button font cycling with a 10-row scrollable dropdown (ScrollableDropdown), fully supporting LibSharedMedia-3.0 (LSM) and built-in system fonts.
+
+
+
        -- Added real-time scale synchronization for resource bars in the preview panel, synchronizing bar width, height, icon size, spacing, font sizes, and value offsets with zero latency.
+
+
+
     -- Real-Time Live Preview Synchronization:
+
+
+
        -- Fully resolved synchronization delays between the independent preview panel (PreviewPanel) and the frame mover preview cow-heads (Renderer), achieving true zero-latency "what you see is what you get".
+
+
+
        -- Added an Icon Alpha slider to the Layout tab, immediately applying opacity changes (0.1 to 1.0) to active previews and live alert frames on drag.
+
+
+
        -- Real-time updates for all 21 text layout placements (TextPlacement), font sizes for timer/name/stacks, and global font family switches.
+
+
+
        -- Immediate synchronization for spell name toggle, countdown timer toggle, cooldown swipe shadow toggle, and timer color curve thresholds/palettes.
+
+
+
     -- Preview Panel Defensive Architecture:
+
+
+
        -- Upgraded preview icons with native CooldownFrameTemplate and high-strata text overlay containers, supporting custom swipe colors and alphas.
+
+
+
        -- Implemented safeCall method wrappers against uninitialized frames or strict mock environments, guaranteeing crash-proof stability across all clients.
+
+
+
 -- [Retail][MN][12.1][Alpha 8.5][Skyriding Gliding-Only Display & Cooldown Swipe Customization] 2026.09.12
+
+
+
     -- Skyriding Speed Gliding-Only Display Option:
+
+
+
        -- Added a dedicated "Glide Only" option for Skyriding Speed (skyridingSpeed) in Player Stats & Absorbs.
+
+
+
        -- When enabled, the icon and live speed percentage only appear while actively skyriding/gliding (C_PlayerInfo.GetGlidingInfo() isGliding == true); automatically hidden while grounded to prevent 0% screen clutter.
+
+
+
        -- Tab 1 (Display & Icon) dynamically loads this dedicated control, auto-hidden for other 17 stats to maintain clean UI.
+
+
+
        -- Frame drag mode protection: forces display when adjusting layout frames for easy positioning.
+
+
+
        -- 100% mirrored across all 5 languages (zhTW, zhCN, enUS, koKR, ruRU).
+
+
+
     -- Cooldown Swipe Color & Alpha Customization:
+
+
+
        -- Cooldown swipe texture on alert icons and preview panels now supports custom color and alpha, defaulting to classic black (0, 0, 0, 0.8) to eliminate blinding white washouts.
+
+
+
        -- Added color swatch button and native ColorPickerFrame integration with immediate hot-reload in General Layout, fully serialized in ProfileCodec and fingerprinted in AuraRuleCompiler.
+
+
+
     -- Non-Class Spell Add Interactive Confirmation Dialog:
+
+
+
        -- Adding a non-class Spell ID in Self Buffs/Debuffs tab now intercepts silent reclassification and presents an interactive themed confirmation dialog.
+
+
+
        -- Displays spell icon, name, ID, and prompt ("This SPELL ID may not belong to your class. Do you still want to add it?").
+
+
+
        -- Provides "Confirm" button: forcibly adds to the current module's list (Self Buffs/Debuffs) upon confirmation rather than redirecting to Cross-Class; "Cancel" button (plus ESC key support) dismisses safely without modifying any configuration.
+
+
+
        -- Fully localized across 5 languages (zhTW, zhCN, enUS, koKR, ruRU).
+
+
+
 -- [Retail][MN][12.1][Alpha 8.5][Full Theme Visual Overhaul, Modern WoW Gradient Fix & Subwindow Theme Sync] 2026.09.12
+
+
+
     -- 11 Classic & Modern Themes Deep Visual Overhaul:
+
+
+
        -- EAM Classic: Restored 9.0.1 slate dark brown background (0.08, 0.06, 0.05), metallic gold border (0.65, 0.50, 0.25), and ruby red 3D buttons (0.55, 0.10, 0.08).
+
+
+
        -- FF7 Battle Window: Restored top royal blue (0.00, 0.12, 0.85) to bottom dark navy (0.00, 0.01, 0.10) vertical gradient, pure white double border (1.0, 1.0, 1.0), and dark blue crystal buttons with pure white text.
+
+
+
        -- Windows XP (Luna blue), Windows 7 (Aero glass), Windows 10 (Metro dark flat), Windows 3.1 (3D convex gray buttons), Borland C++ IDE (DOS blue screen yellow text), DOS CRT (P1 phosphor green), ETen Chinese (bright yellow on pure blue), Red Alert (armored dark gray red warning border), and macOS Aqua (jelly blue capsule gradient).
+
+
+
     -- Modern WoW Vertical Gradient Rendering Pipeline Fix:
+
+
+
        -- Eliminated SetColorTexture shader conflicts by standardizing on SetTexture("Interface\\Buttons\\WHITE8X8") placed at BACKGROUND layer sublevel 1, perfectly compatible with Retail 10.x/11.x/12.x native Texture:SetGradient("VERTICAL", cMin, cMax).
+
+
+
        -- Corrected vertical gradient coordinate mapping ensuring vivid top-to-bottom contrast.
+
+
+
     -- Unified Subwindow & Panel Theme Registration:
+
+
+
        -- Implemented Theme.applyContainerBackground, resolving un-themed dark gray fallbacks across GroupManagerPanel, SpellCatalogTreePanel, and condition menus.
+
+
+
        -- Wired Theme.registerFrame on position settings inner container (posInner) and spell list inner container (listInner), eliminating disconnected dark brown blocks.
+
+
+
        -- Introduced lightweight "row" role for tree and group list items, preventing heavy redundant gradient creation across large lists.
+
+
+
        -- Connected all preview buttons, dropdowns, and action buttons to Theme.registerButton.
+
+
+
 -- [Retail][MN][12.1][Alpha 8.5][ESC Zero-Alpha Suppression, Stat 4-Tab Modularization, Vertical Power & Live Preview] 2026.09.12
+
+
+
     -- ESC Key Zero-Alpha Suppression & Pre-render Protection:
+
+
+
        -- Pressing ESC in game hides alert icons via Zero-Alpha (SetAlpha(0)) without destroying frames or resetting cooldown layouts and timers.
+
+
+
        -- Automatically unsuppresses on new alerts, combat entry, or opening options. Protected by in-combat taint guards.
+
+
+
     -- Player Stats 4-Tab Modular Layout:
+
+
+
        -- Widened stat panel to 720x540 and modularized into 4 tabs: "Display & Icon", "Font & Format", "Thresholds", and "Position & Anchor".
+
+
+
        -- Generous 50-60px slider vertical spacing eliminates Low/High label collisions with adjacent controls.
+
+
+
     -- Vertical Resource StatusBar Growth Fix:
+
+
+
        -- Fixed vertical resource bars failing to grow upwards.
+
+
+
        -- Transposes dimensions, calls SetRotatesTexture(true) to rotate Blizzard StatusBar textures, anchors icon at bottom growing up, and aligns dividers and slot bars.
+
+
+
     -- Independent Live Preview Panel:
+
+
+
        -- Introduced draggable, screen-clamped floating preview window (PreviewPanel).
+
+
+
        -- Features 3 tabs: "Alert Icon", "Resource Bar", and "Player Stat" with real-time sliders for timer color curve testing, Proc glow, Pandemic border, power percentage, and stat reflections.
+
+
+
        -- Wired preview toggle buttons and live refresh across main options, pos frame, resource, and stat panels.
+
+
+
     -- 5-Locale Mirroring & SavedVariables Timestamping:
+
+
+
        -- Fully mirrored 19 new preview and tab keys across zhTW, zhCN, enUS, koKR, and ruRU.
+
+
+
        -- Added meta timestamp stamping to SavedVariables recording local datetime and Unix epoch.
+
+
+
 -- [Retail][MN][12.1][Alpha 8.5][Native Curve Architecture & Dynamic Visual Immersion] 2026.09.08
+
+
+
     -- Native C-Level Curve Architecture Integration (CurveObject & ColorCurveObject):
+
+
+
        -- Fully integrated Blizzard's Patch 12.0.0 / Midnight C-Level ScriptObject_CurveObject and ScriptObject_ColorCurveObject architectures, eliminating taint and combat lockdown limitations.
+
+
+
     -- Dynamic Color Curve Tinting for Power and Resource Bars (Resource Dynamic Color Curve):
+
+
+
        -- Expending and accumulating resources are smoothly interpolated across a 3-stage dynamic color palette (Critical Red -> Warning Yellow -> Signature Class Color) via ColorCurveObject.
+
+
+
        -- Seamlessly compatible with 12.0+ UnitPowerPercent("player", powerType, false, colorCurve) native hardware-level rendering, flowing colors dynamically with current power percentages.
+
+
+
     -- Step Gate Curves for Protected / Secret Numerical Values:
+
+
+
        -- Implemented Util.createStepGateCurve and Util.createColorStepGateCurve, utilizing binary step functions to penetrate protected Secret Numbers.
+
+
+
        -- Delivers exact execute phase (<20% / <35%) and power threshold alarms without Lua-side comparison operators, preventing taint failures.
+
+
+
     -- Adaptive SecondsFormatter Unit Count Curve:
+
+
+
        -- Configured SecondsFormatter:SetDesiredUnitCountCurve to dynamically format timer countdowns. Displays whole integers for long durations and smoothly switches to single-digit decimals for <= 5 seconds with zero GC allocations.
+
+
+
     -- Non-Linear Cooldown Progress Sprint Curves:
+
+
+
        -- Added support for Linear, Cubic (late acceleration sprint), and Cosine (smooth ease) progress curves. Critical cooldowns noticeably accelerate during their final 15% phase to build combat anticipation.
+
+
+
     -- Full-Screen Dynamic Low Health Breathing Pulse:
+
+
+
        -- Powered by UnitHealthPercent("player", true, healthCurve) to drive a dynamic full-screen red pulsating vignette. Intensity deepens as player health drops, automatically hiding out of combat.
+
+
+
     -- Options UI Modernization & 5-Locale Full Synchronization:
+
+
+
        -- Added resource dynamic color checkbox, cooldown progress curve dropdown, low health breathing pulse toggle, and critical health threshold slider, fully localized across all 5 languages (zhTW, zhCN, enUS, koKR, ruRU).
+
+
+
 -- [Retail][MN][12.1][Alpha 8.4][2D Grid Layout, Cooldown Combat Visibility & Stat Hardening] 2026.09.04
+
+
+
     -- 2D Grid Layout Engine & Columns per Row Configuration for Aura and Cooldown Modules:
+
+
+
        -- 2D Grid Layout Engine: The Self Aura (selfAura), Target Aura (targetAura), Spell Cooldown (spellCooldown), Item Cooldown (itemCooldown), and Ground Effect (groundEffect) modules are upgraded to 2D matrix layouts. When icon count exceeds the configured column limit, icons automatically wrap to the next row along the growth direction, preventing single-direction overflow across screen boundaries.
+
+
+
        -- Columns per Row Slider in List Window: Added a "Columns per Row" slider (range 1-20, default 8) to the top right of the specialization dropdown in the list window, supporting per-category independent configuration.
+
+
+
        -- Zero-Delay Dynamic Reflow: Dragging the slider dynamically recalculates icon coordinates and container dimensions in real time, fully compatible with combat-lockdown deferral protection.
+
+
+
        -- Profile Codec & SavedVariables Backward Compatibility: Profile export/import and SavedVariables migration seamlessly persist and normalize the `columns` attribute for all frames.
+
+
+
     -- Pre-rendered Cooldown Combat Visibility & Zero-Alpha Toggle:
+
+
+
        -- Honors "Show Cooldown Outside Combat" setting: Pre-rendered cooldown placeholder icons now respect the showSCDOutsideCombat toggle. If configured to hide outside combat, they are automatically hidden via SetAlpha(0) when out of combat.
+
+
+
        -- Seamless Combat Transition: Pre-rendered icons instantly become visible in desaturated standby mode (SetAlpha(1)) upon entering combat, and smoothly revert to SetAlpha(0) upon exiting combat.
+
+
+
        -- Zero Frame Mutation: Frame objects and layout order slots remain permanently anchored and allocated, completely eliminating in-combat Frame allocations, taint, and 2D grid reflow jumps.
+
+
+
     -- Combat Speed Restriction Guard & True Cache Fallback:
+
+
+
        -- Resolves the Retail 12.x / Midnight issue where Blizzard restricts GetUnitSpeed("player") in combat and forces a clamped return value of 1.0, which incorrectly resulted in 14.3% (1.0 / 7.0 * 100) speed displays.
+
+
+
        -- Implemented proactive combat speed detection: When speed <= 1.05 during combat, the system seamlessly falls back to the authentic out-of-combat memory cache (lastKnownStats), guaranteeing accurate speed reporting (e.g. 100% or 130%).
+
+
+
     -- Cooldown Location Order & Per-Spell Pre-render Placeholders:
+
+
+
        -- Cooldown Location Order: Added Location Order input box to each row, displaying its unique natural number slot (1..N). Supports ▲/▼ shifting, drag-and-drop reordering, and direct numeric input jump with automatic continuous normalization.
+
+
+
        -- Strict placeholder guard for disabled spells: Alerts that are disabled (enabled == false) strictly never create pre-render frames or placeholders, taking zero layout slots or memory.
+
+
+
        -- Per-spell independent pre-render toggle: Removed global-level switch in favor of independent per-spell condition toggles (grayed out when inactive, full color on cooldown), default false.
+
+
+
     -- Smooth Scroll Tracking & Persistent Selection Highlight:
+
+
+
        -- When reordering or clicking rows, the ScrollBox smoothly scrolls to track the target item and displays a distinct blue selection highlight, preventing viewport resets and loss of focus.
+
+
+
     -- In-Combat Player Stats Live Updates & C-Level Zero-GC Rendering:
+
+
+
        -- Full adoption of native FontString:SetFormattedText for all 18 stat displays, achieving 0.00ms C-level formatting with zero Lua GC string allocation.
+
+
+
        -- Implemented getRawValue routing across 18 attributes, aligning with Retail 12.x / Midnight AllowedWhenTainted and Enum.SecretAspect.Text contracts, fixing stat freezing in combat.
+
+
+
        -- Single Stat Icon Drag-and-Drop Fix: Fixed a bad argument #4 (format) Lua error in PlayerStatService caused by argument mismatch with localized string templates upon releasing dragged stat icons.
+
+
+
 -- [Retail][MN][12.1][Alpha 8.3][Next-Gen Spell Catalog & Multidimensional Group Management] 2026.08.28
+
+
+
     -- Next-Gen Master Spell Catalog & Intelligent Presets:
+
+
+
        -- Built-in 5-language offline database: 4,463 core spells & 466 auras covering 13 classes, 40 specs, and 39 Hero Talent trees, with real-time switching across zhTW, zhCN, enUS, koKR, and ruRU.
+
+
+
        -- Hierarchical Spell Catalog Tree Panel (SpellCatalogTreePanel): Spec tree expand/collapse, tri-state toggles, instant search by spell name or ID.
+
+
+
        -- Target Module Redirection: Header dropdown assigns selected spells directly to Spell Cooldown, Player Buff, Target Buff, Special Aura, or Ground Effect.
+
+
+
        -- One-Click Talent Auto-Sync: Integrated SpellBookScannerService scans current talent loadouts and spellbook, synchronizing active spells to target modules.
+
+
+
        -- Native Spell Tooltips (GameTooltip:SetSpellByID): Full spell description, cast time, range, and ID shown on hover.
+
+
+
     -- Multidimensional Tactical Group Management Module:
+
+
+
        -- Core Group Service (GroupService): 4 built-in system tactical groups (Major Burst, Critical Mitigation, CC/Interrupt, Ground AoE) + custom tag groups.
+
+
+
        -- Many-to-many spell and group associations, independent global group toggles, and combat-only filters.
+
+
+
        -- Dedicated Group Manager Panel (GroupManagerPanel): Group name editing, independent save button, combat context filters, multi-select spell associations, and comprehensive hover tooltips.
+
+
+
        -- Spell Detail Window Group Multi-Select (Options.lua): Integrated multi-select dropdown button with live summaries in all spell condition windows.
+
+
+
     -- Hardening & Bug Fixes:
+
+
+
        -- Deprecated API ban: Replaced all GetSpellInfo, GetItemInfo, GetSpellCooldown with modern C_Spell / C_Item APIs, guarded by CI static AST assertions.
+
+
+
        -- Profile Codec export/import: Added uniqueness deduplication in buildPayload, fixing duplicateAlertID errors from legacy imported data.
+
+
+
        -- Font validation fix: Added LSM fallback checks, ensuring invalid or unmapped font names safely fall back to STANDARD.
+
+
+
        -- Fixed condition window dropdown SetText type incompatibility.
+
+
+
 -- [Retail][MN][12.1][Alpha 8.2][LibSharedMedia Full Ecosystem & Zero-Delay Font Apply] 2026.08.27
+
+
+
     -- Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration:
+
+
+
        -- Complete integration with LibSharedMedia-3.0, supporting third-party sound, font, and border asset packages.
+
+
+
        -- Implemented MediaService.ensureLSM() dynamic runtime discovery with PLAYER_LOGIN deferred sync, preventing sounds from being frozen at the default 12 items.
+
+
+
        -- Dual-channel sound queries (lsm:List and lsm:HashTable) with automated deduplication for 100% sound coverage.
+
+
+
        -- Dual-channel safe audio playback (MediaService.playSound) compatible with FileDataIDs, SoundKitIDs, and relative file paths (.ogg / .mp3).
+
+
+
        -- 12.1 Native Aura Rule Compiler (AuraRuleCompiler) integrated with MediaService for custom LSM aura trigger audio.
+
+
+
     -- Zero-Delay Live Font Application (No /reload Needed):
+
+
+
        -- Whitelist unlocked in SavedVariables.lua to allow all LSM-registered fonts without reverting on reload.
+
+
+
        -- Live font refresh across preview icons, general alert icons, player resources, and player stats text via EAM_FONT_FAMILY_CHANGED.
+
+
+
        -- Included fontFamily in Native Aura layout fingerprint (buildLayoutFingerprint).
+
+
+
     -- Adaptive Scrollable Dropdown Menus:
+
+
+
        -- Implemented buildScrollableDropdownMenu with UIPanelScrollFrameTemplate and mouse wheel scrolling for long asset lists.
+
+
+
 -- [Retail][MN][12.1][Alpha 8.1][Cooldown Zero-Alpha Mode & Combat Stat Memory Fallbacks] 2026.08.26
+
+
+
     -- Persistent Pre-anchoring & Zero-Alpha Cooldown Mode:
+
+
+
        -- Out-of-combat pre-creation of cooldown frame objects and static layout calculation.
+
+
+
        -- Uses SetAlpha(0) on cooldown completion, preserving frame structures and layout coordinates with 0.00ms latency and 100% combat lockdown immunity.
+
+
+
     -- Combat Stat Memory Fallbacks:
+
+
+
        -- In-memory cache table (lastKnownStats) across 18 stats for seamless non-zero combat displays under restricted APIs.
+
+
+
     -- Per-Class Player Stat Profiles:
+
+
+
        -- Completely isolated stat monitoring profiles, thresholds, and positions per class.
+
+
+
     -- Dual-Channel Shield & Heal Absorb Detection:
+
+
+
        -- Native Unit APIs + C_UnitAuras.points accumulation.
+
+
+
     -- Aura Shield Absorb Amount Display:
+
+
+
        -- Formatted shield amount overlays (e.g. 45.2k, 1.2M, 3(45k)).
+
+
+
 -- [Retail][MN][12.1][Alpha 8.0][Independent Stat Positioning & Adaptive Layout] 2026.08.25
+
+
+
     -- Independent positioning and grow directions across all 18 player stats.
+
+
+
     -- Iconless adaptive layout with automatic spacing and zero text overlapping.
+
+
+
 -- [Retail][MN][12.1][Alpha 7.9][UI Hover Tooltips & Center Reset] 2026.08.24
+
+
+
     -- Comprehensive UI hover tooltips across all 10 major configuration windows.
+
+
+
     -- ClampedToScreen & /eam reset window center reset command.
+
+
+
 -- [Retail][MN][12.1][Alpha 7.8][Player Stats & Absorbs Module] 2026.08.24
+
+
+
     -- 18 core stats, 4-in-1 velocities (ground, swim, flight, gliding 830%~1400%).
+
+
+
     -- Custom icon overrides across all modules.
+
+
+
 -- [Retail][MN][12.1][Alpha 7.5~7.7][Window Docking & DK Runes] 2026.08.23
+
+
+
     -- Seamless 3-level APPEND docking and synchronized multi-window dragging.
+
+
+
     -- Profile sharing with EAMAP1 Base64 codec.
+
+
+
     -- Death Knight 6-slot dynamic rune dashboard with micro charge bars.
+
+
+

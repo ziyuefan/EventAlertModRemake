@@ -68,10 +68,10 @@ function SpellInfoService.getSpellInfo(spellID)
     if api.C_Spell and api.C_Spell.GetSpellInfo then
         local info = api.C_Spell.GetSpellInfo(spellID)
         if type(info) == "table" and Util.canAccessTable(info) then
-            local name, nameSafe = Util.readSafeField(info, "name", record.warnings, "spellInfo")
-            local icon, iconSafe = Util.readSafeField(info, "iconID", record.warnings, "spellInfo")
+            local name, nameSafe = Util.readStructuredField(info, "name", record.warnings, "spellInfo")
+            local icon, iconSafe = Util.readStructuredField(info, "iconID", record.warnings, "spellInfo")
             if icon == nil then
-                icon, iconSafe = Util.readSafeField(info, "icon", record.warnings, "spellInfo")
+                icon, iconSafe = Util.readStructuredField(info, "icon", record.warnings, "spellInfo")
             end
             record.name = name
             record.icon = icon
@@ -111,6 +111,12 @@ function SpellInfoService.getSpellInfo(spellID)
             end
         end
     end
+    if not record.name and EAM.isForever and EAM.Data and EAM.Data.ForeverCatalog and EAM.Data.ForeverCatalog.GetSpellHeuristics then
+        local fh = EAM.Data.ForeverCatalog.GetSpellHeuristics(spellID)
+        if fh and fh.name and fh.name ~= "" then
+            record.name = fh.name
+        end
+    end
     if not record.name and EAM.Data and EAM.Data.SpellHeuristics and EAM.Data.SpellHeuristics[spellID] then
         local h = EAM.Data.SpellHeuristics[spellID]
         if h and h.name and h.name ~= "" then
@@ -137,4 +143,33 @@ function SpellInfoService.getOverrideSpell(spellID)
         end
     end
     return spellID
+end
+
+function SpellInfoService.isSpellBookItemLowRank(slotIndex, spellBank)
+    local api = EAM.API
+    if not api.C_SpellBook then
+        return false
+    end
+    spellBank = spellBank or (Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player) or "player"
+    if type(api.C_SpellBook.GetSpellBookItemInfo) == "function" then
+        local ok, info = pcall(api.C_SpellBook.GetSpellBookItemInfo, slotIndex, spellBank)
+        if ok and type(info) == "table" and info.name and info.subName and info.subName ~= "" then
+            local currentRank = info.subName:match("(%d+)")
+            if currentRank and (info.spellID or info.actionID) then
+                if type(api.C_SpellBook.FindSpellBookSlotForSpell) == "function" then
+                    local okFind, maxSlot = pcall(api.C_SpellBook.FindSpellBookSlotForSpell, info.name)
+                    if okFind and maxSlot and maxSlot ~= slotIndex then
+                        local okMax, maxInfo = pcall(api.C_SpellBook.GetSpellBookItemInfo, maxSlot, spellBank)
+                        if okMax and type(maxInfo) == "table" and maxInfo.subName then
+                            local maxRank = maxInfo.subName:match("(%d+)")
+                            if maxRank and tonumber(maxRank) > tonumber(currentRank) then
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return false
 end

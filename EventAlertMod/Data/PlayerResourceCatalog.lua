@@ -161,6 +161,16 @@ function Catalog.getSpecResourceKeys(classToken, specializationID)
     return classFallback[classToken]
 end
 
+function Catalog.GetFlavorCandidateKeys(classToken, specializationID)
+    if EAM.isForever and EAM.Data and EAM.Data.ForeverCatalog and type(EAM.Data.ForeverCatalog.GetCandidateResourceKeys) == "function" then
+        local foreverKeys = EAM.Data.ForeverCatalog.GetCandidateResourceKeys(classToken)
+        if foreverKeys then
+            return foreverKeys
+        end
+    end
+    return Catalog.getSpecResourceKeys(classToken, specializationID)
+end
+
 function Catalog.getResourceIcon(key, specializationID)
     local specID = specializationID
     if not specID and api and type(api.GetSpecialization) == "function" and type(api.GetSpecializationInfo) == "function" then

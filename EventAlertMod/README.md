@@ -1,12 +1,12 @@
-# EventAlertMod Retail 12.1.5 (EAM)
+# EventAlertMod Retail 12.1.5 & Forever 1.60.1 (EAM)
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
-[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5-blue)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Release](https://img.shields.io/badge/release-Alpha%208.9-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
+> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《永恆之樹 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
 >
 > 🌐 **官方線上說明文件與導航中心**：[https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
 
@@ -33,8 +33,8 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 4. ⏳ **技能冷卻 (Spell Cooldown)**：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (`Radial Mode`) 與框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)。
 5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控；全面支援 19 部位裝備欄位代號與具體物品 ID 雙軌監控、穿戴裝備三軌冷卻備援機制與即時換裝響應。
 6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。
-7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。
-8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。
+7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（正式服至暗之夜全職業現代專精資源；經典 60 級 9 職業經典能量拓樸如獵人法力/寵物集中值、術士法力/靈魂碎片、德魯伊四形態切換、盜賊能量/連擊點、戰士怒氣等）。
+8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位即時監控角色數值（正式服 18 種主副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、精神 5 秒回魔規則 MP5/HP5 與 Active 動態提醒/全螢幕藍框閃爍、防禦技能、寵物快樂度與遠程彈藥等）。
 
 ---
 
@@ -149,6 +149,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 1. 前往 [GitHub Releases](https://github.com/ziyuefan/EventAlertModRemake/releases) 下載最新版本之 `EventAlertMod_MN_*.zip`。
 2. 解壓縮後將 `EventAlertMod` 資料夾放置於魔獸世界安裝目錄：
    - 正式服路徑：`World of Warcraft\_retail_\Interface\AddOns\EventAlertMod`
+   - 永恆服路徑：`World of Warcraft\_forever_\Interface\AddOns\EventAlertMod`
 3. 啟動遊戲，在角色選擇畫面確認「插件」清單中已勾選啟用 `EventAlertMod`。
 
 ---
@@ -156,7 +157,85 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ## 📜 版本更新歷史 (Beautified CHANGELOG.TXT)
 
 <details open markdown="1">
-<summary><b>🔥 Retail 12.1.0 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+<summary><b>🔥 Retail 12.1.5 & Forever 1.60.1 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+
+### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08
+- **雙版本無縫統一架構 (Multi-Flavor Unified Architecture)**：
+  - 採用單一插件目錄與單一 TOC 內聯條件載入技術 (`[AllowLoadGameType camelot, forever]`)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《永恆之樹》經典永恆服 (Forever 1.60.1)。
+  - 執行期自動偵測遊戲環境 (`EAM.detectGameFlavor`)，零效能耗損隔離各版本專屬資料層與業務邏輯。
+  - 零分配記憶體架構：跨版本核心引擎、原生 C++ 倒數排程器 (`TimedSignalMap`) 與狀態物件池 (`StatePool`) 100% 共通共享。
+- **[Forever 1.60.1 永恆服專屬] 全鏈路法術技能等級 (Spell Rank) 整合與暴雪原生容器相容**：
+  - 新增 `SpellRankService` 與靜態多等級法術家族目錄 `ForeverCatalog.FOREVER_SPELL_RANK_FAMILIES`，動態展開原生光環容器 `candidateFilters.includeSpellIDs`，實現單一槽位無重複圖示無縫匹配全部等級（支援降階施法 Downranking 與隊友 Buff）。
+  - 地面效果 `GroundEffectService` 與選項介面 `Options.lua` 支援法術等級 subtext (如 `[等級 4]`) 顯示。
+- **[Forever 1.60.1 永恆服專屬] 經典五大魔法抗性 (Five Magic Resistances) 監控**：
+  - 於人物屬性面板支援秘法、火焰、冰霜、自然、暗影五大抗性，整合 `UnitResistance("player", damageClass)` 以 `effectiveRes` 為核心顯示，支援自訂達標警戒紅框與進度條。
+- **[Forever 1.60.1 永恆服專屬] 精神 (Spirit) 5 秒回魔規則偵測、MP5/HP5 雙恢復數值提醒與 Active 視覺動畫**：
+  - 精準偵測施放法力消耗技能後的 5 秒不回魔規則 (5-Second Rule: 5SR)，整合 `GetManaRegenFromSpirit` (x5 MP5) 與 `GetHealthRegenFromSpirit` (x0.75x5 HP5)；
+  - 支援 `FULL` (精神+5秒回魔/回血)、`REGEN_ONLY` (僅回魔/回血) 與 `STAT_ONLY` 三種數值顯示模式；
+  - 提供 Active 醒目提醒（圖示發光邊框 / 無圖示文字 1.32x 放大與 1.45x 脈衝彈跳 + 冰晶藍亮色），並可選啟用全螢幕藍色邊框閃爍 (`CombatFlash.triggerSpiritActive()`)。
+- **[Forever 1.60.1 永恆服專屬] 經典 60 級職業資源拓樸 (Classic 60-Level Player Resource Topology)**：
+  - 完美支援經典 60 級 9 大職業經典能量機制：獵人法力與寵物集中值 (Mana / Focus)、術士法力與靈魂碎片 (Mana / Soul Shards)、德魯伊四形態切換 (法力 / 怒氣 / 能量 / 連擊點數)、盜賊能量與連擊點數、戰士怒氣、聖騎士/牧師/薩滿/法師純法力體系。
+- **[Forever 1.60.1 永恆服專屬] 經典人物屬性與狀態即時監控 (Classic Character Stats & State Monitor)**：
+  - 精神回魔五秒規則 (`SPIRIT_MANA_REGEN`)：整合 `GetManaRegenFromSpirit` 與 `GetHealthRegen`，精準提供施法中與脫離 5 秒規則後的高低回魔數值監控。
+  - 防禦技能監控 (`DEFENSE_SKILL`)：整合 `UnitDefenseSkill`，防禦性判定回傳數值安全性，即時反映當前防禦技能與免爆門檻。
+  - 獵人寵物快樂度與忠誠度 (`PET_HAPPINESS`)：整合 `C_PetInfo`，即時監控寵物心情狀態 (不快 / 高興 / 快樂) 與忠誠度階段。
+  - 遠程彈藥剩餘需求 (`AMMO_STATUS`)：整合 `UnitUsesAmmo` 與 `C_PaperDollInfo`，於箭矢或子彈存量不足時即時提供視覺警報。
+  - 護甲穿透與偏斜打擊率 (`ARMOR_PENETRATION` & `GLANCING_BLOW`)：精確計算經典 60 級物理輸出核心參數。
+- **[Forever 1.60.1 永恆服專屬] 經典核心法術預設警報與啟發規則 (Forever Default Alerts & Spell Heuristics)**：
+  - 內建 9 大職業經典 60 核心觸發預設監控（法師節能施法/秘法強化、戰士壓制/斬殺/狂怒/亂擊、盜賊還擊/無情打擊、獵人強化雄鷹守護等）與熱門飾品附魔。
+  - 啟發式規則深度支援法術等級 (`SpellInfoService.isSpellBookItemLowRank`) 與經典觸發條件（閃躲後壓制、招架後還擊、目標 20% 血量斬殺）。
+- **[Retail 12.1.5 專屬] 原生光環層數與持續時間雙條支援 (Native Aura Application & Duration Bars)**：
+  - 深度實裝 12.1.5 `CustomAuraButton:SetApplicationBar` 與 `SetDurationBar` 原生條狀計量管線。
+  - 採用頂底互斥排版（層數條錨定於頂部、持續時間條錨定於底部），文字倒數與計量圖形互不干擾。
+  - 支援層數自訂上限 (`applicationBarMax: 1~20`) 與原生門檻過濾 (`applicationBarMin / minApplications`)，並具備舊版文字疊層自動降級。
+  - 原生平滑緩動：精確支援 `Enum.StatusBarInterpolation.ExponentialEaseOut`，疊層增減絲滑無比。
+- **[Retail 12.1.5 專屬] 原生光環 Pandemic 三態呼吸微動動畫與進場光暈 (Native Aura 3-Stage Pandemic & Lifecycle Animations)**：
+  - 深度適配 12.1.5 Native Aura 容器之 `AddPandemicEnterAnimation` (One-shot Pop 放大)、`AddPandemicActiveAnimation` (窗口期循環心跳呼吸 Breathing Loop) 與 `AddPandemicLeaveAnimation` (平滑淡出還原) 原生動畫 API。
+  - 導入 `AddAuraShownAnimation` 與 `AddAuraAssignedAnimation` 大招與重要 Proc 進場動感光暈，帶來視網膜級流暢視覺。
+  - 嚴格 Secret Aspect 隔離：封印 `GetProgress` 查詢與戰鬥中換親，徹底防範 Taint 污染。
+- **[Retail 12.1.5 專屬] 12.1.5 原生 Pandemic 結餘窗口精確判斷 (12.1.5 Native Pandemic Carry-Over Duration Precision)**：
+  - 採用 `C_UnitAuras.GetRefreshCarryOverDuration` 精準結餘時間計算，嚴格於結餘小於等於 30% 基礎持續時間時觸發 Pandemic 傳染補 Dot 提醒，避免提前補 Dot 浪費剩餘時間。
+  - 舊版客戶端平滑降級至 `C_UnitAuras.GetRefreshExtendedDuration` 擴展時長評估，確保全版本 DoT 補法時機精準無誤。
+- **[Retail 12.1.5 專屬] 玩家職業資源動態格數分割、雙色漸層與條件式警戒系統 (Dynamic/Custom StatusBar Segments, Custom Gradient Colors & Conditional Alerts)**：
+  - 點數型資源自動對齊角色上限與自訂分割格數：連擊點數 (5/6/7)、真氣 (5/6)、喚能師龍能/精華 (5/6)、聖能 (5)、靈魂裂片 (5)、秘法充能 (4)、符文 (6) 現已自動依據角色實際上限 (`UnitPowerMax`) 即時分割 StatusBar 格線與底部子格，並於「條形與尺寸」新增「自訂分割格數 (0=自動, 1~20)」滑桿。
+  - 自訂條形單色與雙色漸層：於「條形與尺寸」新增「條形色彩模式」（預設職業動態色、自訂單色、自訂雙色漸層）及起點／終點調色盤，支援水平與垂直漸層渲染。
+  - StatusBar 條件式警戒擴充：於「顯示與模式」新增「條件判定」（`>=` 高於或等於門檻 / `<=` 低於或等於門檻）、「條件達成時變色」（含警戒顏色調色盤）及「條件達成時播放音效」（邊緣觸發防洗頻提示音）。
+- **[Retail 12.1.5 專屬] 喚能師專用資源「龍能」五語系官方術語校準 (Evoker Essence 5-Locale Blizzard Terminology Calibration)**：
+  - 全面校準喚能師專用資源於全語系之暴雪官方術語命名（繁體中文「龍能」、簡體中文「精华」、英文「Essence」、韓文「정수」、俄文「Сущность」），確保介面選單、狀態條標籤與提示訊息 100% 精準對齊各語系官方客戶端。
+- **[雙版本共通] 零 GC 原生排程器深度擴展 (Zero-Alloc TimedSignalMap Scheduler Engine)**：
+  - 深度整合 12.1.5 `C_Timer.NewTimedSignalMap`、`TimerUtil.CreateTimedSignalCallbackMap` 與 `C_Timer.CreateTimedSignalCallbackMap` 原生鍵值排程機制，在支援的客戶端上由暴雪 C++ 引擎直接託管圖示倒數與定時信號。
+  - 實現重複定時重設零記憶體配置 (Zero-Alloc Key Rescheduling)，大幅降低垃圾回收 (GC) 開銷。
+  - 內建優雅降級代理，非 12.1.5 環境平滑 fallback 至自主維護狀態機。
+- **[雙版本共通] 智慧音訊防洪閘門 (Intelligent Audio Floodgate)**：
+  - 於 `C_UnitAuras.AddAuraSound` 與 `MediaService.playSound` 雙向注入 `audioThrottle` 節流防護（預設 0.3s，範圍 0.05s~5.0s），杜絕多目標 DoT 頻繁刷新或層數暴漲時引發連續音效轟炸的現象。
+- **[雙版本共通] 4K 視網膜級物理像素對齊 (Retina Pixel Snapping & Zero-Flicker Frame Initialization)**：
+  - 於 NativeAuraRenderer 與 PowerRenderer（資源條與 20 格分割點）全面實裝 `SetRoundLayoutToNearestPixel` 原生像素捨入，消除 1px 線條發虛或粗細不均。
+  - 引入 `CreateFrameWithOptions` 隱藏預建立機制，徹底消除圖示首次生成時的瞬間畫面閃爍。
+- **[雙版本共通] 暴雪 12.1.5 原生 C++ 數學、字串與表格加速庫整合 (Native C++ Math, String & Table Acceleration)**：
+  - 實裝針對 Retail 12.1.5 暴雪原生底層 C++ 最佳化工具函數庫：
+    - 數學加速：`math.clamp`、`math.saturate`、`math.round`、`math.lerp`、`math.normalize`、`math.sign`、`math.remap`、`math.wrap`、`math.isfinite`、`math.isnan`、`math.isinf`。
+    - 字串加速：`string.contains`、`string.ltrim`、`string.rtrim`、`string.startswith`、`string.endswith`。
+    - 表格加速：`table.isempty`、`table.contains`、`table.indexof`、`table.removeunordered`、`table.removevalue`、`table.keys`、`table.values`。
+  - 防禦性向下相容 (Defensive Polyfills)：在舊版客戶端中自動啟用高效率 Lua 降級實作，兼具極致效能與跨版本無損相容性。
+- **[雙版本共通] 暴雪 12.1+ 原生 C_EncodingUtil 與 Deflate 壓縮設定檔字串整合 (ProfileCodec EAMAP2: Native Encoding & Compression)**：
+  - 支援以全新「EAMAP2:」格式匯出分享字串，全面整合暴雪 12.1+ 原生 `C_EncodingUtil` 序列化與 Deflate 壓縮，大幅縮減字串長度達 60%~75%，並完美向下相容舊版「EAMAP1:」純文字 Base64 字串匯入。
+- **[雙版本共通] 原生布林色彩安全轉換與無污染渲染 (C_CurveUtil EvaluateColorFromBoolean Integration)**：
+  - 採用 `C_CurveUtil.EvaluateColorValueFromBoolean` 與 `EvaluateColorFromBoolean` 處理秘密布林值 (Secret Booleans)，消除 Lua 分支比對造成的潛在 Taint 污染，確保技能可用性與超出射程透明度/灰階平滑渲染。
+- **[雙版本共通] 原生引擎效能遙測模組 (C_AddOnProfiler Native Engine Profiling Telemetry)**：
+  - 整合暴雪 12.1+ `C_AddOnProfiler` 原生分析器，提供即時近期平均耗時 (`RecentAverageTime`)、峰值耗時 (`PeakTime`) 與超限統計 (`CountTimeOver1Ms`)，可透過 `/eam metrics` 檢視插件健康度。
+- **[雙版本共通] 暴雪 12.1+ C_CombatAudioAlert 戰鬥語音 TTS 整合 (MediaService TTS Alerting)**：
+  - 整合 `C_CombatAudioAlert.SpeakText` 與 `C_VoiceChat` 雙軌語音合成 (TTS)，支援自訂提醒文字之語音朗讀與防重疊機制。
+- **[雙版本共通] 原生斷法鎖系與失控冷卻偵測 (Loss of Control Cooldown Duration Integration)**：
+  - 整合 `C_Spell.GetSpellLossOfControlCooldownDuration` 與 `LOSS_OF_CONTROL_UPDATE` 事件，精確偵測被斷法或特定系別受控時的原生冷卻時長與 DurationObject 倒數。
+- **[雙版本共通] 原生治療與吸收量預測計算機整合 (Native Heal & Absorb Prediction Calculator Integration)**：
+  - 整合 `CreateUnitHealPredictionCalculator` 與 `UnitGetDetailedHealPrediction` 原生預測計算機，提供高精度傷害吸收盾量 (`GetDamageAbsorbs`) 與治療吸收量 (`GetHealAbsorbs`) 即時統計。
+- **核心穩定性修復 (Core Stability & Bug Fixes)**：
+  - 永恆服失控冷卻秘密數值比較崩潰修復 (`CooldownService.lua:963` Secret Number `locDur > 0` comparison fix)。
+  - 永恆服光環全量更新秘密布林值崩潰修復 (`AuraService.lua:939` Secret Boolean `isFullUpdate` test fix)。
+  - 戰鬥紅框與發光外框秘密數值比較加固 (`CombatFlash.lua` & `LibButtonGlow-1.0.lua` Secret Number protection)。
+  - 玩家職業資源設定範圍切換錯誤修復 (`PlayerResourcePanel.lua:672` forward declaration nil call fix)。
+  - 原生 `TimedSignalMap` C++ 物件唯讀保護與代理封裝 (`TimedSignalMap Proxy Wrapper Fix`)。
+  - 表格工具值刪除傳回一致性修復 (`tableRemoveValue` boolean return consistency)。
 
 ### 🌟 [Retail 12.1.5 Alpha 8.8] - 2026.10.23
 - **魔獸世界 12.1.5 正式服全面適配與原生 C++ 加速庫 (Retail 12.1.5 Compatibility & Native Acceleration)**：
@@ -488,10 +567,11 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 ## 📌 相容性與支援邊界 (Compatibility)
 
 - **支援環境**：
-  - 《魔獸世界：正式服》World of Warcraft: Retail 12.1.0+ (Interface 120100)
+  - 《魔獸世界：正式服》World of Warcraft: Retail 12.1.5+ (Interface 120105 / 120100)
   - 相容通道 Retail 12.0.7+ (Interface 120007)
+  - 《魔獸世界：永恆之樹》World of Warcraft: Forever 1.60.1+ (Interface 16001)
 - **不支援環境**：
-  - 經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等不在本專案支援範圍）。
+  - 經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等傳統懷舊服不在本專案支援範圍）。
 
 ---
 

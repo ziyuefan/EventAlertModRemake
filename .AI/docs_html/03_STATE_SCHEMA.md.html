@@ -519,23 +519,23 @@
 <h1 id="_1">狀態模式</h1>
 <h2 id="savedvariables">SavedVariables 審核</h2>
 <p>當前 TOC 聲明的重寫版 SavedVariables：</p>
-<pre class="codehilite"><code class="language-lua">EAM_DB
-EAM_FLOW_TEST_REPORT_JSON
-EAM_VALIDATION_PROFILE
-EAM_LIVE_TEST_SESSION
-EAM_LIVE_TEST_REPORT_JSON
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EAM_DB</span>
+<span class="nv">EAM_FLOW_TEST_REPORT_JSON</span>
+<span class="nv">EAM_VALIDATION_PROFILE</span>
+<span class="nv">EAM_LIVE_TEST_SESSION</span>
+<span class="nv">EAM_LIVE_TEST_REPORT_JSON</span>
+</code></pre></div>
 
 <p>舊版相容與遷移來源仍包含：</p>
-<pre class="codehilite"><code class="language-lua">EA_Config
-EA_Position
-EA_Items
-EA_AltItems
-EA_TarItems
-EA_ScdItems
-EA_GrpItems
-EA_Pos
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EA_Config</span>
+<span class="nv">EA_Position</span>
+<span class="nv">EA_Items</span>
+<span class="nv">EA_AltItems</span>
+<span class="nv">EA_TarItems</span>
+<span class="nv">EA_ScdItems</span>
+<span class="nv">EA_GrpItems</span>
+<span class="nv">EA_Pos</span>
+</code></pre></div>
 
 <h2 id="schema-v3native-aura">歷史 Schema v3：Native Aura 與文字版面設定</h2>
 <ul>
@@ -548,18 +548,18 @@ EA_Pos
 <h3 id="_2">語系設定</h3>
 <p><code>EAM_DB.config.language</code> 是可遷移的純字串設定，接受 <code>auto</code>、<code>enUS</code>、<code>zhTW</code>、<code>zhCN</code>、<code>koKR</code>、<code>ruRU</code>；預設為 <code>auto</code>。<code>auto</code> 依客戶端 <code>GetLocale()</code> 選擇 catalog，缺少的 key 由 enUS fallback 補底。<code>SavedVariables.updateLanguage()</code> 只有在值改變時增加 revision，但 updated／unchanged 都會同步發出 <code>EAM_LANGUAGE_CHANGED</code>，讓記憶體狀態與已載入 UI 對齊。<code>Locale.apply()</code> 保持 <code>EAM.L</code> table identity，原地清除並合併 enUS fallback 與選定 catalog，再刷新已註冊的 EAM 自有 FontString、按鈕與複合文字。新版程式載入後，選擇語系立即生效，不需為套用語系執行 <code>/reload</code>；<code>/reload</code> 只用於驗證設定保存、載入磁碟上的新程式，或將最新 SavedVariables 寫回磁碟。</p>
 <p>文字顯示設定使用單一正規化結構：</p>
-<pre class="codehilite"><code class="language-lua">EAM_DB.config.textLayout = {
-    schema = 1,
-    timer = {
-        placement = &quot;OUTSIDE_TOP&quot;,
-        fontSize = 14,
-    },
-    applications = {
-        placement = &quot;INSIDE_BOTTOM_RIGHT&quot;,
-        fontSize = 12,
-    },
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EAM_DB</span><span class="p">.</span><span class="py">config</span><span class="p">.</span><span class="py">textLayout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">timer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">placement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"OUTSIDE_TOP"</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">applications</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">placement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"INSIDE_BOTTOM_RIGHT"</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <ul>
 <li><code>placement</code> 只接受 <code>Data/TextPlacementContract.json</code> 定義的 21 個 ID：框內中央加八方向、框外八個角邊位置與四個正面位置。</li>
@@ -578,10 +578,10 @@ EA_Pos
 <li><code>EAM_FLOW_TEST_REPORT_JSON</code>：schema 2 能力／離線契約報告；<code>offline-mock</code> 不得升格為實機證據。
 觀察到 default/runtime 同伴：</li>
 </ul>
-<pre class="codehilite"><code class="language-lua">EA_Config2
-EA_ShowScrollSpells
-EA_ShowScrollSpell_YPos
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EA_Config2</span>
+<span class="nv">EA_ShowScrollSpells</span>
+<span class="nv">EA_ShowScrollSpell_YPos</span>
+</code></pre></div>
 
 <p><code>EA_Config</code> 目前儲存顯示和行為切換，例如框架
 可見性、名稱/timer/flash 顯示、聲音、字體大小、備用警報、
@@ -596,170 +596,170 @@ shape 是遺留的，應該由版本管理器遷移，而不是凍結。</p>
 <p><code>EA_Pos</code> 透過 <code>G.Pos</code> 儲存每個類別的共用位置資料。</p>
 <h2 id="_3">目前全球國家審計</h2>
 <p>命名空間：</p>
-<pre class="codehilite"><code class="language-lua">_G.EventAlertMod
-G -- addon namespace from ...
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nb">_G</span><span class="p">.</span><span class="nv">EventAlertMod</span>
+<span class="nv">G</span><span class="w"> </span><span class="c1">-- addon namespace from ...</span>
+</code></pre></div>
 
 <p>主要命名空間運行時表：</p>
-<pre class="codehilite"><code class="language-lua">G.Pos
-G.SPELLINFO_SELF
-G.SPELLINFO_TARGET
-G.SPELLINFO_SCD
-G.ClassAltSpellName
-G.GC_IndexOfGroupFrame
-G.EA_CurrentBuffs
-G.EA_TarCurrentBuffs
-G.EA_ScdCurrentBuffs
-G.EA_ShowScrollSpells
-G.SpecFrame_LifeBloom
-G.iconTextures
-G.runeTextures
-G.runeSetTexCoord
-G.runeEnergizeTextures
-G.runeColors
-G.runeTypeText
-G.RUNE_MAPPING
-G.Auras
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">G</span><span class="p">.</span><span class="py">Pos</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">SPELLINFO_SELF</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">SPELLINFO_TARGET</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">SPELLINFO_SCD</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">ClassAltSpellName</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">GC_IndexOfGroupFrame</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">EA_CurrentBuffs</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">EA_TarCurrentBuffs</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">EA_ScdCurrentBuffs</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">EA_ShowScrollSpells</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">SpecFrame_LifeBloom</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">iconTextures</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">runeTextures</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">runeSetTexCoord</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">runeEnergizeTextures</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">runeColors</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">runeTypeText</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">RUNE_MAPPING</span>
+<span class="nv">G</span><span class="p">.</span><span class="py">Auras</span>
+</code></pre></div>
 
 <p>全球家庭：</p>
-<pre class="codehilite"><code class="language-lua">EA_CLASS*
-EA_SPELL_POWER*
-EA_X*
-EA_TTIP*
-EX_XCLSALERT*
-SLASH_EVENTALERTMOD1
-SLASH_EVENTALERTMOD2
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EA_CLASS</span><span class="o">*</span>
+<span class="nv">EA_SPELL_POWER</span><span class="o">*</span>
+<span class="nv">EA_X</span><span class="o">*</span>
+<span class="nv">EA_TTIP</span><span class="o">*</span>
+<span class="nv">EX_XCLSALERT</span><span class="o">*</span>
+<span class="nv">SLASH_EVENTALERTMOD1</span>
+<span class="nv">SLASH_EVENTALERTMOD2</span>
+</code></pre></div>
 
 <p>主要 XML/UI 全域變數：</p>
-<pre class="codehilite"><code class="language-lua">EA_Main_Frame
-EA_Version_Frame
-EA_Options_Frame
-EA_Icon_Options_Frame
-EA_Class_Events_Frame
-EA_Other_Events_Frame
-EA_Target_Events_Frame
-EA_SCD_Events_Frame
-EA_Group_Events_Frame
-EA_SpellCondition_Frame
-EA_GroupEventSetting_Frame
-EA_Anchor_Frame*
-EA_MinimapOption
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EA_Main_Frame</span>
+<span class="nv">EA_Version_Frame</span>
+<span class="nv">EA_Options_Frame</span>
+<span class="nv">EA_Icon_Options_Frame</span>
+<span class="nv">EA_Class_Events_Frame</span>
+<span class="nv">EA_Other_Events_Frame</span>
+<span class="nv">EA_Target_Events_Frame</span>
+<span class="nv">EA_SCD_Events_Frame</span>
+<span class="nv">EA_Group_Events_Frame</span>
+<span class="nv">EA_SpellCondition_Frame</span>
+<span class="nv">EA_GroupEventSetting_Frame</span>
+<span class="nv">EA_Anchor_Frame</span><span class="o">*</span>
+<span class="nv">EA_MinimapOption</span>
+</code></pre></div>
 
 <p>透過作業掃描發現的值得注意的意外全域候選者：</p>
-<pre class="codehilite"><code class="language-lua">auraData, eaf, eaf2, EAEXF, EAItems, EASCDFrame, EA_icon, EA_rank,
-EA_timeLeft, currentBuffs, startTime, duration, expirationTime, timeLeft,
-usable, spellId, spellName, icon, frame, importButton, exportButton,
-importFrame, exportFrame, MyAddonFrame, tempFunc
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">auraData</span><span class="p">,</span><span class="w"> </span><span class="nv">eaf</span><span class="p">,</span><span class="w"> </span><span class="nv">eaf2</span><span class="p">,</span><span class="w"> </span><span class="nv">EAEXF</span><span class="p">,</span><span class="w"> </span><span class="nv">EAItems</span><span class="p">,</span><span class="w"> </span><span class="nv">EASCDFrame</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_icon</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_rank</span><span class="p">,</span>
+<span class="nv">EA_timeLeft</span><span class="p">,</span><span class="w"> </span><span class="nv">currentBuffs</span><span class="p">,</span><span class="w"> </span><span class="nv">startTime</span><span class="p">,</span><span class="w"> </span><span class="nv">duration</span><span class="p">,</span><span class="w"> </span><span class="nv">expirationTime</span><span class="p">,</span><span class="w"> </span><span class="nv">timeLeft</span><span class="p">,</span>
+<span class="nv">usable</span><span class="p">,</span><span class="w"> </span><span class="nv">spellId</span><span class="p">,</span><span class="w"> </span><span class="nv">spellName</span><span class="p">,</span><span class="w"> </span><span class="nv">icon</span><span class="p">,</span><span class="w"> </span><span class="nv">frame</span><span class="p">,</span><span class="w"> </span><span class="nv">importButton</span><span class="p">,</span><span class="w"> </span><span class="nv">exportButton</span><span class="p">,</span>
+<span class="nv">importFrame</span><span class="p">,</span><span class="w"> </span><span class="nv">exportFrame</span><span class="p">,</span><span class="w"> </span><span class="nv">MyAddonFrame</span><span class="p">,</span><span class="w"> </span><span class="nv">tempFunc</span>
+</code></pre></div>
 
 <p>重寫應將它們移至模組擁有的本地狀態或顯式
 命名空間欄位。</p>
 <h2 id="alertstate">AlertState</h2>
-<pre class="codehilite"><code class="language-js">AlertState = {
-  id: &quot;string&quot;,
-  kind: &quot;aura|spellCooldown|itemCooldown&quot;,
-  spellID: &quot;number?&quot;,
-  itemID: &quot;number?&quot;,
-  unit: &quot;player|pet|target?&quot;,
-  icon: &quot;number|string?&quot;,
-  name: &quot;string?&quot;,
-  stacks: &quot;number?&quot;,
-  timer: TimerState?,
-  flags: AlertFlags,
-  source: SourceState,
-  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">AlertState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="s2">"aura|spellCooldown|itemCooldown"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">spellID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">itemID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s2">"player|pet|target?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">"number|string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">stacks</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timer</span><span class="o">:</span><span class="w"> </span><span class="nx">TimerState</span><span class="o">?</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">flags</span><span class="o">:</span><span class="w"> </span><span class="nx">AlertFlags</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">source</span><span class="o">:</span><span class="w"> </span><span class="nx">SourceState</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;string&gt;?"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="timerstate">TimerState</h2>
-<pre class="codehilite"><code class="language-js">TimerState = {
-  mode: &quot;none|numeric|displayOnly|protected|unknown&quot;,
-  startTime: &quot;number?&quot;,
-  duration: &quot;number?&quot;,
-  expirationTime: &quot;number?&quot;,
-  timeLeft: &quot;number?&quot;,
-  displayText: &quot;string?&quot;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">TimerState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"none|numeric|displayOnly|protected|unknown"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">startTime</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">duration</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">expirationTime</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timeLeft</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">displayText</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="aurastate">AuraState</h2>
-<pre class="codehilite"><code class="language-js">AuraState = {
-  alertID: &quot;string&quot;,
-  unit: &quot;player|pet|target&quot;,
-  auraInstanceID: &quot;number?&quot;,
-  spellID: &quot;number?&quot;,
-  name: &quot;string?&quot;,
-  icon: &quot;number|string?&quot;,
-  applications: &quot;number?&quot;,
-  fromPlayer: &quot;boolean?&quot;,
-  timer: TimerState,
-  factsSafe: &quot;boolean&quot;,
-  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">AuraState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">alertID</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s2">"player|pet|target"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">auraInstanceID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">spellID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">"number|string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">applications</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">fromPlayer</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timer</span><span class="o">:</span><span class="w"> </span><span class="nx">TimerState</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">factsSafe</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;string&gt;?"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="cooldownstate">CooldownState</h2>
-<pre class="codehilite"><code class="language-js">CooldownState = {
-  alertID: &quot;string&quot;,
-  spellID: &quot;number&quot;,
-  name: &quot;string?&quot;,
-  icon: &quot;number|string?&quot;,
-  usable: &quot;boolean?&quot;,
-  charges: &quot;number?&quot;,
-  maxCharges: &quot;number?&quot;,
-  timer: TimerState,
-  factsSafe: &quot;boolean&quot;,
-  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">CooldownState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">alertID</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">spellID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">"number|string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">usable</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">charges</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">maxCharges</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timer</span><span class="o">:</span><span class="w"> </span><span class="nx">TimerState</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">factsSafe</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;string&gt;?"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="itemcooldownstate">ItemCooldownState</h2>
-<pre class="codehilite"><code class="language-js">ItemCooldownState = {
-  alertID: &quot;string&quot;,
-  itemID: &quot;number&quot;,
-  linkedSpellID: &quot;number?&quot;,
-  name: &quot;string?&quot;,
-  icon: &quot;number|string?&quot;,
-  timer: TimerState,
-  cacheStatus: &quot;none|direct|pending|ready|throttled|combatBlocked&quot;,
-  boundaryWarnings: &quot;array&lt;string&gt;?&quot;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">ItemCooldownState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">alertID</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">itemID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">linkedSpellID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">"number|string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timer</span><span class="o">:</span><span class="w"> </span><span class="nx">TimerState</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">cacheStatus</span><span class="o">:</span><span class="w"> </span><span class="s2">"none|direct|pending|ready|throttled|combatBlocked"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;string&gt;?"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="iconrenderstate">IconRenderState</h2>
-<pre class="codehilite"><code class="language-js">IconRenderState = {
-  alertID: &quot;string&quot;,
-  visible: &quot;boolean&quot;,
-  texture: &quot;number|string?&quot;,
-  stackText: &quot;string?&quot;,
-  timerText: &quot;string?&quot;,
-  nameText: &quot;string?&quot;,
-  cooldown: { start: &quot;number?&quot;, duration: &quot;number?&quot;, enabled: &quot;boolean?&quot; },
-  glow: &quot;none|active|usable|warning&quot;,
-  alpha: &quot;number?&quot;,
-  layoutKey: &quot;string&quot;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">IconRenderState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">alertID</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">visible</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">texture</span><span class="o">:</span><span class="w"> </span><span class="s2">"number|string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">stackText</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timerText</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">nameText</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">cooldown</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">start</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span><span class="w"> </span><span class="nx">duration</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span><span class="w"> </span><span class="nx">enabled</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean?"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">glow</span><span class="o">:</span><span class="w"> </span><span class="s2">"none|active|usable|warning"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">alpha</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">layoutKey</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="debugsnapshot">DebugSnapshot</h2>
-<pre class="codehilite"><code class="language-js">DebugSnapshot = {
-  schema: 1,
-  addon: { name: &quot;EventAlertMod&quot;, version: &quot;string?&quot;, build: &quot;number?&quot; },
-  environment: { retailOnly: true, inCombat: &quot;boolean&quot;, fps: &quot;number?&quot; },
-  facts: { alerts: &quot;array&lt;AlertState&gt;&quot; },
-  derived: { icons: &quot;array&lt;IconRenderState&gt;&quot;, dirtyQueues: &quot;object&quot; },
-  boundaryWarnings: &quot;array&lt;object&gt;&quot;,
-  humanNotes: &quot;array&lt;string&gt;&quot;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">DebugSnapshot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">schema</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">addon</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"EventAlertMod"</span><span class="p">,</span><span class="w"> </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span><span class="w"> </span><span class="nx">build</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">environment</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">retailOnly</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">inCombat</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span><span class="w"> </span><span class="nx">fps</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">facts</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">alerts</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;AlertState&gt;"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">derived</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">icons</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;IconRenderState&gt;"</span><span class="p">,</span><span class="w"> </span><span class="nx">dirtyQueues</span><span class="o">:</span><span class="w"> </span><span class="s2">"object"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;object&gt;"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">humanNotes</span><span class="o">:</span><span class="w"> </span><span class="s2">"array&lt;string&gt;"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="2026-08-12-theme">2026-08-12 Theme 設定</h2>
 <p><code>EAM_DB.config.theme</code> 是可持久化的 EAM 自有 UI 主題選擇，允許值與預設如下：</p>
-<pre class="codehilite"><code class="language-js">config.theme = &quot;eam&quot; // &quot;eam|ff7|winxp|win7|win10|win31|borland|doscrt|eten|redalert|aqua&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">config</span><span class="p">.</span><span class="nx">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"eam"</span><span class="w"> </span><span class="c1">// "eam|ff7|winxp|win7|win10|win31|borland|doscrt|eten|redalert|aqua"</span>
+</code></pre></div>
 
 <ul>
 <li><code>eam</code> 為既有棕金視覺，亦是缺值或非法值的安全回退。</li>
@@ -771,12 +771,12 @@ importFrame, exportFrame, MyAddonFrame, tempFunc
 </ul>
 <h2 id="2026-08-13-aurasound">2026-08-13 AuraSound 純資料契約</h2>
 <p>Aura alert 可保存以下 additive 純資料，不增加目前 SavedVariables schema 版本：</p>
-<pre class="codehilite"><code class="language-lua">alert.sound = {
-    added = { soundFileID = 566564, outputChannel = &quot;Master&quot; },
-    applicationsIncreased = nil,
-    removed = { soundFileName = &quot;Interface\\AddOns\\EventAlertMod\\Media\\example.ogg&quot; },
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">alert</span><span class="p">.</span><span class="py">sound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">added</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">soundFileID</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">566564</span><span class="p">,</span><span class="w"> </span><span class="nv">outputChannel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Master"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">applicationsIncreased</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">removed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">soundFileName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Interface</span><span class="se">\\</span><span class="s2">AddOns</span><span class="se">\\</span><span class="s2">EventAlertMod</span><span class="se">\\</span><span class="s2">Media</span><span class="se">\\</span><span class="s2">example.ogg"</span><span class="w"> </span><span class="p">},</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <ul>
 <li>trigger 白名單固定為 <code>added</code>、<code>applicationsIncreased</code>、<code>removed</code>。</li>
@@ -845,16 +845,16 @@ importFrame, exportFrame, MyAddonFrame, tempFunc
 <h1 id="state-schema-data-models">State Schema &amp; Data Models</h1>
 <h2 id="savedvariables-schema-governance">SavedVariables Schema &amp; Governance</h2>
 <p>The modernized EventAlertMod declares the following <code>SavedVariables</code> in its TOC:</p>
-<pre class="codehilite"><code class="language-lua">EAM_DB
-EAM_FLOW_TEST_REPORT_JSON
-EAM_VALIDATION_PROFILE
-EAM_LIVE_TEST_SESSION
-EAM_LIVE_TEST_REPORT_JSON
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EAM_DB</span>
+<span class="nv">EAM_FLOW_TEST_REPORT_JSON</span>
+<span class="nv">EAM_VALIDATION_PROFILE</span>
+<span class="nv">EAM_LIVE_TEST_SESSION</span>
+<span class="nv">EAM_LIVE_TEST_REPORT_JSON</span>
+</code></pre></div>
 
 <p>Legacy tables preserved solely for migration backups:</p>
-<pre class="codehilite"><code class="language-lua">EA_Config, EA_Position, EA_Items, EA_AltItems, EA_TarItems, EA_ScdItems, EA_GrpItems, EA_Pos
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EA_Config</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_Position</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_Items</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_AltItems</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_TarItems</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_ScdItems</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_GrpItems</span><span class="p">,</span><span class="w"> </span><span class="nv">EA_Pos</span>
+</code></pre></div>
 
 <hr />
 <h2 id="schema-versions-migration-contracts">Schema Versions &amp; Migration Contracts</h2>
@@ -865,18 +865,18 @@ EAM_LIVE_TEST_REPORT_JSON
 <li><strong>Future Schema Fallback</strong>: If <code>schemaVersion</code> on disk is newer than the running AddOn code understands, the AddOn must NOT overwrite or normalize it; it safely falls back to a clean in-memory defaults copy marked with <code>futureSchemaPreserved</code>.</li>
 </ul>
 <h3 id="normalized-text-layout-schema">Normalized Text Layout Schema</h3>
-<pre class="codehilite"><code class="language-lua">EAM_DB.config.textLayout = {
-    schema = 1,
-    timer = {
-        placement = &quot;OUTSIDE_TOP&quot;,
-        fontSize = 14,
-    },
-    applications = {
-        placement = &quot;INSIDE_BOTTOM_RIGHT&quot;,
-        fontSize = 12,
-    },
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EAM_DB</span><span class="p">.</span><span class="py">config</span><span class="p">.</span><span class="py">textLayout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">timer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">placement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"OUTSIDE_TOP"</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">14</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">applications</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">placement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"INSIDE_BOTTOM_RIGHT"</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <ul>
 <li><code>placement</code> accepts one of the 21 canonical IDs defined in <code>Data/TextPlacementContract.json</code>.</li>
@@ -885,58 +885,58 @@ EAM_LIVE_TEST_REPORT_JSON
 <hr />
 <h2 id="core-runtime-state-models">Core Runtime State Models</h2>
 <h3 id="1-alertstate">1. <code>AlertState</code></h3>
-<pre class="codehilite"><code class="language-typescript">interface AlertState {
-  id: string;
-  kind: &quot;selfAura&quot; | &quot;targetAura&quot; | &quot;spellCooldown&quot; | &quot;itemCooldown&quot; | &quot;groundEffect&quot;;
-  spellID?: number;
-  itemID?: number;
-  order?: number;
-  unit?: &quot;player&quot; | &quot;pet&quot; | &quot;target&quot;;
-  icon?: number | string;
-  name?: string;
-  stacks?: number;
-  absorbAmount?: number;
-  timer?: TimerState;
-  isPlaceholder?: boolean;
-  isDesaturated?: boolean;
-  usableGlow?: boolean;
-  factsSafe: boolean;
-  boundaryWarnings?: string[];
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">AlertState</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="s2">"selfAura"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"targetAura"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"spellCooldown"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"itemCooldown"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"groundEffect"</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">spellID?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">itemID?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">order?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">unit</span><span class="o">?:</span><span class="w"> </span><span class="s2">"player"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"pet"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"target"</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">icon?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">stacks?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">absorbAmount?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">timer?</span><span class="o">:</span><span class="w"> </span><span class="kt">TimerState</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">isPlaceholder?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">isDesaturated?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">usableGlow?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">factsSafe</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">boundaryWarnings?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h3 id="2-timerstate">2. <code>TimerState</code></h3>
-<pre class="codehilite"><code class="language-typescript">interface TimerState {
-  mode: &quot;none&quot; | &quot;numeric&quot; | &quot;displayOnly&quot; | &quot;protected&quot; | &quot;unknown&quot;;
-  startTime?: number;
-  duration?: number;
-  expirationTime?: number;
-  timeLeft?: number;
-  displayText?: string;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">TimerState</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"none"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"numeric"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"displayOnly"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"protected"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"unknown"</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">startTime?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">duration?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">expirationTime?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">timeLeft?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">displayText?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h3 id="3-iconrenderstate">3. <code>IconRenderState</code></h3>
-<pre class="codehilite"><code class="language-typescript">interface IconRenderState {
-  alertID: string;
-  visible: boolean;
-  texture?: number | string;
-  stackText?: string;
-  timerText?: string;
-  nameText?: string;
-  cooldown?: {
-    start?: number;
-    duration?: number;
-    enabled?: boolean;
-    durationObject?: any;
-  };
-  glow: &quot;none&quot; | &quot;active&quot; | &quot;usable&quot; | &quot;pandemic&quot; | &quot;warning&quot;;
-  alpha?: number;
-  layoutKey: string;
-  isPlaceholder?: boolean;
-  isDesaturated?: boolean;
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">IconRenderState</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">alertID</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">visible</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">texture?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">stackText?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">timerText?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">nameText?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">cooldown</span><span class="o">?:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">start?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">duration?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">enabled?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">durationObject?</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">;</span>
+<span class="w">  </span><span class="p">};</span>
+<span class="w">  </span><span class="nx">glow</span><span class="o">:</span><span class="w"> </span><span class="s2">"none"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"active"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"usable"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"pandemic"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"warning"</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">alpha?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">layoutKey</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">isPlaceholder?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">isDesaturated?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
     </div>
 
     <!-- Mermaid Dynamic Render Script -->

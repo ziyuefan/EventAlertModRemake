@@ -123,6 +123,8 @@ local function registerEntry(key, rule, trigger, soundConfig)
         throttleSeconds = soundConfig.throttleSeconds
     elseif rule and type(rule.sound) == "table" and Util.isSafeNonNegativeNumber(rule.sound.throttleSeconds) then
         throttleSeconds = rule.sound.throttleSeconds
+    elseif EAM.db and EAM.db.config and Util.isSafeNonNegativeNumber(EAM.db.config.audioThrottle) then
+        throttleSeconds = tonumber(EAM.db.config.audioThrottle)
     end
     throttleSeconds = math.min(math.max(throttleSeconds, 0.05), 5.0)
     info.throttleSeconds = throttleSeconds

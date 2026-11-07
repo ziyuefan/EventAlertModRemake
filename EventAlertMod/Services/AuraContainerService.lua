@@ -214,7 +214,7 @@ function AuraContainerService.requestRebuild(reason)
     if not capability or not capability.initialized then
         return false, "capabilityUnavailable"
     end
-    if capability.clientInterface < Constants.INTERFACE then
+    if not EAM.isModernEngineInterface(capability.clientInterface) then
         return false, "legacyBackend"
     end
     if capability.nativeRuntimeAllowed ~= true then
@@ -432,7 +432,7 @@ function AuraContainerService.initialize()
         router.register("EAM_FONT_FAMILY_CHANGED", AuraContainerService.requestRebuild)
     end
 
-    if capability.clientInterface >= Constants.INTERFACE then
+    if EAM.isModernEngineInterface(capability.clientInterface) then
         AuraContainerService.requestRebuild("initialize")
     end
 end

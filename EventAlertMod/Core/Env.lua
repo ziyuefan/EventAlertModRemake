@@ -36,8 +36,45 @@ Retail API 注意:
 local addonName, EAM = ...
 
 EAM.name = addonName
-EAM.version = "Retail_12.1.5_Alpha_8.8"
-EAM.isRetailOnly = true
+EAM.version = "Retail_12.1.5_Forever_1.60.1_Alpha_8.9"
+EAM.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
+
+function EAM.detectGameFlavor()
+    local projID = _G.WOW_PROJECT_ID
+    local tocversion = 0
+    if _G.GetBuildInfo then
+        local ok, _, _, _, toc = pcall(_G.GetBuildInfo)
+        if ok and type(toc) == "number" then
+            tocversion = toc
+        end
+    end
+
+    if projID == EAM.WOW_PROJECT_CAMELOT or (tocversion >= 16000 and tocversion < 20000) then
+        EAM.isForever = true
+        EAM.isRetail = false
+        EAM.isRetailOnly = false
+        EAM.gameFlavor = "FOREVER"
+    else
+        EAM.isForever = false
+        EAM.isRetail = true
+        EAM.isRetailOnly = true
+        EAM.gameFlavor = "RETAIL"
+    end
+    return EAM.gameFlavor
+end
+
+EAM.detectGameFlavor()
+
+function EAM.isModernEngineInterface(interfaceVersion)
+    local iv = tonumber(interfaceVersion) or 0
+    if iv >= 120100 then
+        return true
+    end
+    if (iv >= 16000 and iv < 20000) or (iv == 0 and EAM.isForever) then
+        return true
+    end
+    return false
+end
 
 EAM.Modules = EAM.Modules or {}
 EAM.Services = EAM.Services or {}
@@ -137,11 +174,27 @@ EAM.API = {
     C_Secrets = C_Secrets,
     C_Timer = C_Timer,
     C_AddOnProfiler = C_AddOnProfiler,
-    AddOnProfilerMetric = Enum and Enum.AddOnProfilerMetric,
+    StatusBarInterpolation = Enum and Enum.StatusBarInterpolation,
+    PixelUtil = PixelUtil,
+    TimerUtil = TimerUtil,
     GetInventoryItemID = GetInventoryItemID or function() return nil end,
     GetInventoryItemCooldown = GetInventoryItemCooldown or function() return 0, 0, 0 end,
     GetInventoryItemTexture = GetInventoryItemTexture or function() return nil end,
     GetInventoryItemLink = GetInventoryItemLink or function() return nil end,
+    -- Forever 1.60.1 專屬 API 綁定
+    GetManaRegenFromSpirit = GetManaRegenFromSpirit,
+    GetHealthRegenFromSpirit = GetHealthRegenFromSpirit,
+    GetHealthRegen = GetHealthRegen,
+    UnitDefenseSkill = UnitDefenseSkill,
+    UnitResistance = UnitResistance,
+    GetGlancingBlowChance = GetGlancingBlowChance,
+    GetGlancingBlowPenalty = GetGlancingBlowPenalty,
+    GetArmorPenetration = GetArmorPenetration,
+    UnitUsesAmmo = UnitUsesAmmo,
+    C_PetInfo = C_PetInfo,
+    C_SwingTimer = C_SwingTimer,
+    C_SkillInfo = C_SkillInfo,
+    C_PaperDollInfo = C_PaperDollInfo,
 }
 
 EAM.DebugLog = {}

@@ -79,7 +79,7 @@ function AuraCapabilityService.initialize()
         and type(api.IsTestBuild) == "function"
         and type(api.IsBetaBuild) == "function"
     -- 12.1 正式服與 PTR 共用 Native Aura；test flags 只辨識通道，不是能力授權。
-    AuraCapabilityService.nativeRuntimeAllowed = AuraCapabilityService.clientInterface >= Constants.INTERFACE
+    AuraCapabilityService.nativeRuntimeAllowed = EAM.isModernEngineInterface(AuraCapabilityService.clientInterface)
 
     local unitAuras = api.C_UnitAuras
     AuraCapabilityService.hasAuraSound = type(unitAuras) == "table"
@@ -97,7 +97,7 @@ function AuraCapabilityService.initialize()
     AuraCapabilityService.hasDurationObject = type(api.C_DurationUtil) == "table"
         and type(api.C_DurationUtil.CreateDuration) == "function"
 
-    if AuraCapabilityService.clientInterface >= Constants.INTERFACE then
+    if EAM.isModernEngineInterface(AuraCapabilityService.clientInterface) then
         AuraCapabilityService.selectedBackend = Constants.AURA_BACKEND_UNSUPPORTED
         AuraCapabilityService.limitationReason = "containerProbePending"
     else
@@ -115,7 +115,7 @@ function AuraCapabilityService.acceptContainer(container)
     AuraCapabilityService.hasAuraSlot = hasMethod(container, "AddAuraSlot")
     AuraCapabilityService.hasAuraGroupLayout = hasMethod(container, "SetAuraGroupLayout")
 
-    if AuraCapabilityService.clientInterface >= Constants.INTERFACE
+    if EAM.isModernEngineInterface(AuraCapabilityService.clientInterface)
         and AuraCapabilityService.nativeRuntimeAllowed
         and AuraCapabilityService.hasAuraContainer
         and AuraCapabilityService.hasAuraGroup
@@ -127,7 +127,7 @@ function AuraCapabilityService.acceptContainer(container)
         return true
     end
 
-    AuraCapabilityService.selectedBackend = AuraCapabilityService.clientInterface < Constants.INTERFACE
+    AuraCapabilityService.selectedBackend = not EAM.isModernEngineInterface(AuraCapabilityService.clientInterface)
         and Constants.AURA_BACKEND_LEGACY
         or Constants.AURA_BACKEND_UNSUPPORTED
     AuraCapabilityService.limitationReason = "nativeContainerContractMissing"
@@ -141,7 +141,7 @@ function AuraCapabilityService.rejectContainer(reason)
     AuraCapabilityService.hasAuraGroup = false
     AuraCapabilityService.hasAuraSlot = false
     AuraCapabilityService.hasAuraGroupLayout = false
-    AuraCapabilityService.selectedBackend = AuraCapabilityService.clientInterface < Constants.INTERFACE
+    AuraCapabilityService.selectedBackend = not EAM.isModernEngineInterface(AuraCapabilityService.clientInterface)
         and Constants.AURA_BACKEND_LEGACY
         or Constants.AURA_BACKEND_UNSUPPORTED
     AuraCapabilityService.limitationReason = reason or "nativeContainerCreationFailed"

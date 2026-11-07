@@ -1,4 +1,4 @@
-<# EAM_FILE_COMMENTARY
+﻿<# EAM_FILE_COMMENTARY
 EventAlertMod Retail Rewrite
 檔案: .AI\Tools\Build-AndUploadCurseForge.ps1
 

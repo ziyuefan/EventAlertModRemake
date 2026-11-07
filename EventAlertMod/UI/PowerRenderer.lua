@@ -197,6 +197,25 @@ local function createResourceFrame(anchor, definition)
         slotBars[index] = slotBar
     end
 
+    if Util and Util.snapToPixels then
+        Util.snapToPixels(container)
+        Util.snapToPixels(icon)
+        Util.snapToPixels(statusBar)
+        Util.snapToPixels(background)
+        Util.snapToPixels(label)
+        Util.snapToPixels(valueText)
+        Util.snapToPixels(glow)
+        for index = 1, #markers do
+            Util.snapToPixels(markers[index])
+        end
+        for index = 1, #slotBars do
+            Util.snapToPixels(slotBars[index])
+            if slotBars[index].bg then
+                Util.snapToPixels(slotBars[index].bg)
+            end
+        end
+    end
+
     container:Hide()
     local isReverse = (definition.powerType == 1
         or definition.powerType == 6

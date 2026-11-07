@@ -189,6 +189,16 @@ local function collectCapabilities(snapshot, runFrameProbe)
     addGlobalCapability(snapshot, "profile.scriptCPU", "GetScriptCPUUsage", api.GetScriptCPUUsage, "on-demand profiling only")
     addFunctionCapability(snapshot, "profile.addonProfiler", "C_AddOnProfiler.GetAddOnMetric", api.C_AddOnProfiler or _G.C_AddOnProfiler, "GetAddOnMetric", "Modern Retail native engine profiler")
 
+    if EAM.isForever then
+        local srs = EAM.Services and EAM.Services.SpellRankService
+        addCapability(snapshot, "forever.spellRankService", "SpellRankService", srs and STATUS_AVAILABLE or STATUS_MISSING, "Forever spell rank management")
+        addFunctionCapability(snapshot, "forever.spellBook", "C_SpellBook.GetSpellBookItemInfo", api.C_SpellBook or _G.C_SpellBook, "GetSpellBookItemInfo", "Forever rank spellbook scan")
+        addFunctionCapability(snapshot, "forever.spellSubtext", "C_Spell.GetSpellSubtext", api.C_Spell or _G.C_Spell, "GetSpellSubtext", "Forever spell rank subtext")
+        addGlobalCapability(snapshot, "forever.unitResistance", "UnitResistance", api.UnitResistance or _G.UnitResistance, "Forever 5 resistances query")
+        addGlobalCapability(snapshot, "forever.manaRegenFromSpirit", "GetManaRegenFromSpirit", api.GetManaRegenFromSpirit or _G.GetManaRegenFromSpirit, "Forever spirit mana regen")
+        addGlobalCapability(snapshot, "forever.healthRegenFromSpirit", "GetHealthRegenFromSpirit", api.GetHealthRegenFromSpirit or _G.GetHealthRegenFromSpirit, "Forever spirit health regen")
+    end
+
     if runFrameProbe then
         probeFrameTemplates(snapshot)
     else
@@ -224,7 +234,8 @@ function RuntimeProbe.snapshot(options)
     local snapshot = {
         environment = {
             addonVersion = EAM.version,
-            expectedInterface = EAM.Constants and EAM.Constants.INTERFACE or 0,
+            expectedInterface = EAM.isForever and (EAM.interfaceVersion or 16001) or (EAM.Constants and EAM.Constants.INTERFACE or 0),
+            gameFlavor = EAM.isForever and "Forever" or "Retail",
             clientVersion = version,
             clientBuild = build,
             clientBuildDate = buildDate,

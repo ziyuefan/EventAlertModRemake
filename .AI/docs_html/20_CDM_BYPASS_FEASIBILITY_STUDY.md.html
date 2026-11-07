@@ -530,10 +530,10 @@
     * 當官方圖示顯示/隱藏時，EAM的圖示會<strong>自動</strong>顯示/Hide。
 * 官方圖示移動或重排（佈局）時，EAM 的圖示拓樸。
     * 由於依賴基礎C++引擎的渲染級聯動，<strong>戰鬥中不需要執行任何Lua程式碼來控制顯示與位置，實現0-Taint與0-GC戰鬥同步</strong>。</p>
-<pre class="codehilite"><code class="language-text"> Blizzard CooldownViewer (Shadow Host) [Alpha = 0, Secure Frame]
+<div class="codehilite"><pre><span></span><code> Blizzard CooldownViewer (Shadow Host) [Alpha = 0, Secure Frame]
    └── (Parent-Child Bind)
         └── EAM Custom Icon (Parasitic Frame) [Alpha = 1, Display Only]
-</code></pre>
+</code></pre></div>
 
 <hr />
 <h2 id="api">二、地域分析與API 邊界審計</h2>
@@ -560,45 +560,45 @@
 <h2 id="proof-of-concept">三、實作概念碼（Proof of Concept）</h2>
 <h3 id="1cooldownviewer">1.影子化官方CooldownViewer</h3>
 <p>在非戰鬥狀態下，對官方主要框架進行透明化，並降低框架等級。</p>
-<pre class="codehilite"><code class="language-lua">local function MakeHostInvisible(hostFrame)
-    if not hostFrame or InCombatLockdown() then return end
+<div class="codehilite"><pre><span></span><code><span class="kd">local</span><span class="w"> </span><span class="kr">function</span><span class="w"> </span><span class="nf">MakeHostInvisible</span><span class="p">(</span><span class="nv">hostFrame</span><span class="p">)</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="nv">hostFrame</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="nf">InCombatLockdown</span><span class="p">()</span><span class="w"> </span><span class="kr">then</span><span class="w"> </span><span class="kr">return</span><span class="w"> </span><span class="kr">end</span>
 
-    -- 設為完全透明，但保留其 Child Widgets 的 Show/Hide 生命週期與 Layout 重排
-    hostFrame:SetAlpha(0)
+<span class="w">    </span><span class="c1">-- 設為完全透明，但保留其 Child Widgets 的 Show/Hide 生命週期與 Layout 重排</span>
+<span class="w">    </span><span class="nv">hostFrame</span><span class="p">:</span><span class="nf">SetAlpha</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-    -- 將層級降至背景最底層，以防萬一
-    hostFrame:SetFrameStrata(&quot;BACKGROUND&quot;)
-    hostFrame:SetFrameLevel(0)
-end
+<span class="w">    </span><span class="c1">-- 將層級降至背景最底層，以防萬一</span>
+<span class="w">    </span><span class="nv">hostFrame</span><span class="p">:</span><span class="nf">SetFrameStrata</span><span class="p">(</span><span class="s2">"BACKGROUND"</span><span class="p">)</span>
+<span class="w">    </span><span class="nv">hostFrame</span><span class="p">:</span><span class="nf">SetFrameLevel</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="kr">end</span>
 
-local function InitShadowHosts()
-    if EssentialCooldownViewer then
-        MakeHostInvisible(EssentialCooldownViewer)
-    end
-    if UtilityCooldownViewer then
-        MakeHostInvisible(UtilityCooldownViewer)
-    end
-end
-</code></pre>
+<span class="kd">local</span><span class="w"> </span><span class="kr">function</span><span class="w"> </span><span class="nf">InitShadowHosts</span><span class="p">()</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="nv">EssentialCooldownViewer</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">        </span><span class="nf">MakeHostInvisible</span><span class="p">(</span><span class="nv">EssentialCooldownViewer</span><span class="p">)</span>
+<span class="w">    </span><span class="kr">end</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="nv">UtilityCooldownViewer</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">        </span><span class="nf">MakeHostInvisible</span><span class="p">(</span><span class="nv">UtilityCooldownViewer</span><span class="p">)</span>
+<span class="w">    </span><span class="kr">end</span>
+<span class="kr">end</span>
+</code></pre></div>
 
 <h3 id="2">2. 寄生掛載與佈局等級聯</h3>
 <p>取得官方圖示池（通常為 FramePool 或靜態佇列），將 EAM 圖示設定在其上。</p>
-<pre class="codehilite"><code class="language-lua">local function AnchorParasiticIcon(eamIcon, hostIcon)
-    if InCombatLockdown() then return end
+<div class="codehilite"><pre><span></span><code><span class="kd">local</span><span class="w"> </span><span class="kr">function</span><span class="w"> </span><span class="nf">AnchorParasiticIcon</span><span class="p">(</span><span class="nv">eamIcon</span><span class="p">,</span><span class="w"> </span><span class="nv">hostIcon</span><span class="p">)</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="nf">InCombatLockdown</span><span class="p">()</span><span class="w"> </span><span class="kr">then</span><span class="w"> </span><span class="kr">return</span><span class="w"> </span><span class="kr">end</span>
 
-    -- 將 EAM 圖示的 Parent 設為官方圖示
-    eamIcon:SetParent(hostIcon)
-    eamIcon:ClearAllPoints()
-    eamIcon:SetPoint(&quot;CENTER&quot;, hostIcon, &quot;CENTER&quot;, 0, 0)
+<span class="w">    </span><span class="c1">-- 將 EAM 圖示的 Parent 設為官方圖示</span>
+<span class="w">    </span><span class="nv">eamIcon</span><span class="p">:</span><span class="nf">SetParent</span><span class="p">(</span><span class="nv">hostIcon</span><span class="p">)</span>
+<span class="w">    </span><span class="nv">eamIcon</span><span class="p">:</span><span class="nf">ClearAllPoints</span><span class="p">()</span>
+<span class="w">    </span><span class="nv">eamIcon</span><span class="p">:</span><span class="nf">SetPoint</span><span class="p">(</span><span class="s2">"CENTER"</span><span class="p">,</span><span class="w"> </span><span class="nv">hostIcon</span><span class="p">,</span><span class="w"> </span><span class="s2">"CENTER"</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
 
-    -- 確保 EAM 圖示的 Strata 比官方高，且 Alpha 為 1
-    eamIcon:SetFrameStrata(&quot;MEDIUM&quot;)
-    eamIcon:SetFrameLevel(hostIcon:GetFrameLevel() + 10)
-    eamIcon:SetAlpha(1)
+<span class="w">    </span><span class="c1">-- 確保 EAM 圖示的 Strata 比官方高，且 Alpha 為 1</span>
+<span class="w">    </span><span class="nv">eamIcon</span><span class="p">:</span><span class="nf">SetFrameStrata</span><span class="p">(</span><span class="s2">"MEDIUM"</span><span class="p">)</span>
+<span class="w">    </span><span class="nv">eamIcon</span><span class="p">:</span><span class="nf">SetFrameLevel</span><span class="p">(</span><span class="nv">hostIcon</span><span class="p">:</span><span class="nf">GetFrameLevel</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="p">)</span>
+<span class="w">    </span><span class="nv">eamIcon</span><span class="p">:</span><span class="nf">SetAlpha</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
-    -- 影子載體會同步控制 eamIcon.Show / Hide
-end
-</code></pre>
+<span class="w">    </span><span class="c1">-- 影子載體會同步控制 eamIcon.Show / Hide</span>
+<span class="kr">end</span>
+</code></pre></div>
 
 <hr />
 <h2 id="_1">四風險與防禦策略（分散計畫）</h2>

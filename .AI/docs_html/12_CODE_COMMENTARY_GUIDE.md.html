@@ -528,28 +528,28 @@
 <li>當模組責任變更時，必須同步更新檔案註解與<code>Docs/04_MODULE_CONTRACTS.md</code>。</li>
 </ul>
 <h2 id="_3">建議格式</h2>
-<pre class="codehilite"><code class="language-lua">--[[
-EventAlertMod Retail Rewrite
-Module: Core/EventRouter
+<div class="codehilite"><pre><span></span><code><span class="cm">--[[</span>
+<span class="cm">EventAlertMod Retail Rewrite</span>
+<span class="cm">Module: Core/EventRouter</span>
 
-理念:
-- 集中管理 Blizzard event dispatch，避免各模組自行建立事件 frame。
-- 使用孤兒 frame，降低 UIParent 與戰鬥保護互動風險。
+<span class="cm">理念:</span>
+<span class="cm">- 集中管理 Blizzard event dispatch，避免各模組自行建立事件 frame。</span>
+<span class="cm">- 使用孤兒 frame，降低 UIParent 與戰鬥保護互動風險。</span>
 
-責任:
-- 擁有唯一事件 frame。
-- 將 event 分派給已註冊 module handler。
+<span class="cm">責任:</span>
+<span class="cm">- 擁有唯一事件 frame。</span>
+<span class="cm">- 將 event 分派給已註冊 module handler。</span>
 
-邊界:
-- 不讀取 aura/cooldown API。
-- 不建立 UI icon。
-- 不寫入 SavedVariables。
+<span class="cm">邊界:</span>
+<span class="cm">- 不讀取 aura/cooldown API。</span>
+<span class="cm">- 不建立 UI icon。</span>
+<span class="cm">- 不寫入 SavedVariables。</span>
 
-維護注意:
-- 不在註冊熱路徑配置 closure。
-- 不使用 RegisterAllEvents。
-]]
-</code></pre>
+<span class="cm">維護注意:</span>
+<span class="cm">- 不在註冊熱路徑配置 closure。</span>
+<span class="cm">- 不使用 RegisterAllEvents。</span>
+<span class="cm">]]</span>
+</code></pre></div>
 
 <h2 id="_4">必須記錄的項目</h2>
 <ul>

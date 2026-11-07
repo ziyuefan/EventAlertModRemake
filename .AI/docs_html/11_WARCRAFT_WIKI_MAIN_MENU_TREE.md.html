@@ -544,7 +544,7 @@
 <li>https://EAMCODE_0__.wiki.gg/wiki/HOWTOs</li>
 </ul>
 <h2 id="_2">樹概述</h2>
-<pre class="codehilite"><code class="language-text">Warcraft Wiki Main Menu
+<div class="codehilite"><pre><span></span><code>Warcraft Wiki Main Menu
 ├─ WoW API
 │  ├─ API systems
 │  │  ├─ C_UnitAuras
@@ -735,13 +735,13 @@
    └─ EAM relevance
       ├─ useful as background only
       └─ not an authoritative Retail 12.x runtime contract
-</code></pre>
+</code></pre></div>
 
 <h2 id="eam">EAM 實施導向摘要</h2>
 <h3 id="wow-api">WoW API</h3>
 <p><code>WoW API</code> 是主要運行時 API 入口。 EAM rewrite 應優先從 API 系統找到對應的命名空間，而不是保留舊的全域包裝器。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">WoW API
+<div class="codehilite"><pre><span></span><code>WoW API
 ├─ API systems
 │  ├─ C_UnitAuras
 │  │  └─ AuraService
@@ -753,7 +753,7 @@
 │  │  └─ low-frequency fallback only
 │  └─ C_Secrets
 │     └─ boundary checks
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -764,7 +764,7 @@
 <h3 id="lua-api">Lua API</h3>
 <p><code>Lua API</code> 說明 WoW 使用 Lua 5.1 子集，且缺少作業系統/檔案 I/O 函式庫。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">Lua API
+<div class="codehilite"><pre><span></span><code>Lua API
 ├─ basic functions
 │  ├─ pcall / xpcall
 │  └─ type / select
@@ -776,7 +776,7 @@
 │  ├─ table.wipe
 │  ├─ table.freeze
 │  └─ table.isfrozen
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -787,7 +787,7 @@
 <h3 id="framexml-api">FrameXML API</h3>
 <p><code>FrameXML 函數</code> 包含 UI helper、pool、EventUtil、TooltipUtil、LinkUtil 等。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">FrameXML API
+<div class="codehilite"><pre><span></span><code>FrameXML API
 ├─ Mixins / pools
 │  ├─ CreateFramePool
 │  ├─ CreateTexturePool
@@ -799,7 +799,7 @@
 └─ UIParent / panels
    ├─ ShowUIPanel
    └─ Toggle*Frame
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -810,7 +810,7 @@
 <h3 id="api">小工具 API / 小工具腳本</h3>
 <p><code>Widget API</code> 和 <code>Widget script handlers</code> 是 EAM 渲染器、EventRouter、調度器的基礎。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">Widget API
+<div class="codehilite"><pre><span></span><code>Widget API
 ├─ Frame
 │  ├─ RegisterEvent
 │  ├─ RegisterAllEvents
@@ -822,9 +822,9 @@
 └─ FontString
    ├─ SetText
    └─ ClearText
-</code></pre>
+</code></pre></div>
 
-<pre class="codehilite"><code class="language-text">Widget scripts
+<div class="codehilite"><pre><span></span><code>Widget scripts
 ├─ Frame
 │  ├─ OnEvent
 │  └─ OnUpdate
@@ -834,7 +834,7 @@
 └─ EditBox
    ├─ OnTextChanged
    └─ OnEnterPressed / OnEscapePressed
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -846,7 +846,7 @@
 <h3 id="xml">XML 架構</h3>
 <p><code>XML schema</code> 說明 XML 可以建立 UI，但 Lua Widget API 也可以做大部分事情。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">XML schema
+<div class="codehilite"><pre><span></span><code>XML schema
 ├─ Ui
 │  ├─ Include
 │  └─ Script
@@ -858,7 +858,7 @@
    ├─ Layers
    ├─ Frames
    └─ Scripts
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -869,7 +869,7 @@
 <h3 id="_3">活動</h3>
 <p><code>Events</code> / <code>Category:API events</code> 是 EventRouter 的事件來源。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">Events
+<div class="codehilite"><pre><span></span><code>Events
 ├─ UNIT_AURA
 │  ├─ unitTarget
 │  ├─ updateInfo.addedAuras
@@ -882,7 +882,7 @@
 └─ combat boundary
    ├─ PLAYER_REGEN_DISABLED
    └─ PLAYER_REGEN_ENABLED
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -893,7 +893,7 @@
 <h3 id="cvar">CVar</h3>
 <p><code>控制台變數</code> 說明 CVar 可以用 <code>GetCVar</code> / <code>SetCVar</code> / <code>/console</code> 管理，部分安全 CVar 不能在戰鬥中修改。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">CVars
+<div class="codehilite"><pre><span></span><code>CVars
 ├─ query
 │  ├─ GetCVar
 │  ├─ GetCVarDefault
@@ -904,7 +904,7 @@
 └─ reset
    ├─ cvar_default
    └─ cvar_reset
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -915,7 +915,7 @@
 <h3 id="_4">巨集命令</h3>
 <p><code>巨集指令</code>分為字元、戰鬥等指令。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">Macro commands
+<div class="codehilite"><pre><span></span><code>Macro commands
 ├─ character commands
 ├─ combat commands
 │  ├─ cast / use
@@ -925,7 +925,7 @@
    ├─ /eam opt
    ├─ /eam debug
    └─ /eam export
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -936,7 +936,7 @@
 <h3 id="_5">戰鬥日誌</h3>
 <p><code>Combat Log</code> / <code>COMBAT_LOG_EVENT_UNFILTERED</code> 是歷史上常見的 AddOn 資料來源，但 12.x 目標與 EAM 重寫無法依賴盲掃。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">Combat Log
+<div class="codehilite"><pre><span></span><code>Combat Log
 ├─ Combat Log window / file
 ├─ COMBAT_LOG_EVENT_UNFILTERED
 │  ├─ source
@@ -947,7 +947,7 @@
    ├─ not primary source
    ├─ no heavy parsing
    └─ use event services instead
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -958,13 +958,13 @@
 <h3 id="_6">轉義序列/超鏈接</h3>
 <p><code>UI escape strings</code> 和 <code>Hyperlinks</code> 是偵錯文字、工具提示、匯入/export 的風險區。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">Escape sequences
+<div class="codehilite"><pre><span></span><code>Escape sequences
 ├─ color
 ├─ texture
 └─ reset
-</code></pre>
+</code></pre></div>
 
-<pre class="codehilite"><code class="language-text">Hyperlinks
+<div class="codehilite"><pre><span></span><code>Hyperlinks
 ├─ link format
 │  ├─ color prefix
 │  ├─ type:payload
@@ -976,7 +976,7 @@
    ├─ spell link display
    ├─ item link display
    └─ debug-safe export
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -987,7 +987,7 @@
 <h3 id="api_1">API 更改</h3>
 <p><code>API變更摘要</code>是版本追蹤入口。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">API changes
+<div class="codehilite"><pre><span></span><code>API changes
 ├─ Retail
 │  ├─ 12.0.0
 │  ├─ 12.0.1
@@ -1003,7 +1003,7 @@
    ├─ removed API cleanup
    ├─ C_* migration
    └─ live validation targets
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>
@@ -1014,7 +1014,7 @@
 <h3 id="_7">操作指南</h3>
 <p><code>HOWTOs</code> 是教學頁面索引，適合作為 UI 操作參考，但不是 Retail 12.x API 合約。</p>
 <p>重要三層：</p>
-<pre class="codehilite"><code class="language-text">HOWTOs
+<div class="codehilite"><pre><span></span><code>HOWTOs
 ├─ Getting Started
 │  ├─ Introduction to Lua
 │  └─ Create a WoW AddOn
@@ -1025,7 +1025,7 @@
    ├─ options UI reference
    ├─ anchor movement
    └─ avoid example-grade hot path code
-</code></pre>
+</code></pre></div>
 
 <p>結論：</p>
 <ul>

@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-10-23.01",
-  "updatedAt": "2026-10-23",
+  "snapshotVersion": "2026-11-08.02",
+  "updatedAt": "2026-11-08",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,11 +22,11 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "Retail 12.1.5 Alpha 8.8 職業資源獨立定位/九宮依附、喚能師五語系正名、動態/自訂格數分割、雙色漸層與雙向條件告警實裝，並完成 GitHub Release (alpha-8.8)、CurseForge (File ID 9289976)、MiliUI 與 GitHub Pages 全量發布；全套 502 契約、109 Flow 測試、77 語法檢查 100% 綠燈通過。",
+    "objective": "World of Warcraft: Forever 1.60.1 秘密數值 (Secret Values) 崩潰根治、全鏈路法術等級展開、五大魔法抗性與精神 5 秒規則 (5SR) 狀態機實裝完成；Alpha 8.9 全專案文件同步（雙語 Changelog/README、CurseForge、MiliUI 奇樂、Dist 發布筆記）與驗證門檻 100% 通過。",
     "offlineValidation": {
       "source": "offline-mock",
-      "total": 109,
-      "passed": 109,
+      "total": 110,
+      "passed": 110,
       "failed": 0,
       "skipped": 0,
       "pending": 0

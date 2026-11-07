@@ -235,6 +235,11 @@ local defaults = {
         chargeBarLengthPercent = 150,
         chargeBarThickness = 8,
         auraStackBar = true,
+        showApplicationBar = true,
+        applicationBarMax = 5,
+        applicationBarMin = 1,
+        showDurationBar = false,
+        audioThrottle = 0.3,
         minApplications = 1,
         overdriveGlow = true,
         nativeAuraDualCountdownProbe = false,
@@ -1853,6 +1858,21 @@ local function normalizeCurveFeatures(db)
     end
     if config.auraStackBar == nil then
         config.auraStackBar = true
+    end
+    if config.showApplicationBar == nil then
+        config.showApplicationBar = (config.auraStackBar ~= nil) and config.auraStackBar or true
+    end
+    if type(config.applicationBarMax) ~= "number" or config.applicationBarMax < 1 or config.applicationBarMax > 20 then
+        config.applicationBarMax = 5
+    end
+    if type(config.applicationBarMin) ~= "number" or config.applicationBarMin < 1 or config.applicationBarMin > 20 then
+        config.applicationBarMin = (type(config.minApplications) == "number") and config.minApplications or 1
+    end
+    if config.showDurationBar == nil then
+        config.showDurationBar = false
+    end
+    if type(config.audioThrottle) ~= "number" or config.audioThrottle < 0.05 or config.audioThrottle > 5.0 then
+        config.audioThrottle = 0.3
     end
     if type(config.minApplications) ~= "number" or config.minApplications < 1 or config.minApplications > 20 then
         config.minApplications = 1
@@ -3740,7 +3760,13 @@ function SavedVariables.updateChargeBarLayout(layout)
 end
 
 function SavedVariables.updateConfigBoolean(key, value)
-    if key ~= "nativeAuraDualCountdownProbe" or type(EAM.db) ~= "table" then
+    local allowed = {
+        nativeAuraDualCountdownProbe = true,
+        showApplicationBar = true,
+        auraStackBar = true,
+        showDurationBar = true,
+    }
+    if not allowed[key] or type(EAM.db) ~= "table" then
         return false, "invalidConfigKey"
     end
     local booleanValue = value == true
@@ -3748,6 +3774,11 @@ function SavedVariables.updateConfigBoolean(key, value)
         return true, "unchanged"
     end
     EAM.db.config[key] = booleanValue
+    if key == "showApplicationBar" then
+        EAM.db.config.auraStackBar = booleanValue
+    elseif key == "auraStackBar" then
+        EAM.db.config.showApplicationBar = booleanValue
+    end
     touchRevision(EAM.db)
     return true, "updated", EAM.db.revision
 end
@@ -3894,6 +3925,51 @@ function SavedVariables.setCooldownSwipeColor(color)
     touchRevision(EAM.db)
     if EAM.Modules.EventRouter then
         EAM.Modules.EventRouter.fire("EAM_COOLDOWN_SWIPE_CHANGED", normalized)
+    end
+    return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.updateApplicationBarSettings(showBar, maxApps, minApps, showDurationBar)
+    if type(EAM.db) ~= "table" or type(EAM.db.config) ~= "table" then
+        return false, "databaseUnavailable"
+    end
+    local cfg = EAM.db.config
+    if showBar ~= nil then
+        cfg.showApplicationBar = showBar == true
+        cfg.auraStackBar = showBar == true
+    end
+    if maxApps ~= nil then
+        cfg.applicationBarMax = math.max(1, math.min(20, tonumber(maxApps) or 5))
+    end
+    if minApps ~= nil then
+        cfg.applicationBarMin = math.max(1, math.min(20, tonumber(minApps) or 1))
+        cfg.minApplications = cfg.applicationBarMin
+    end
+    if showDurationBar ~= nil then
+        cfg.showDurationBar = showDurationBar == true
+    end
+    touchRevision(EAM.db)
+    if EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_APPLICATION_BAR_CHANGED", {
+            showApplicationBar = cfg.showApplicationBar,
+            applicationBarMax = cfg.applicationBarMax,
+            applicationBarMin = cfg.applicationBarMin,
+            showDurationBar = cfg.showDurationBar,
+        })
+    end
+    return true, "updated", EAM.db.revision
+end
+
+function SavedVariables.updateAudioThrottle(seconds)
+    if type(EAM.db) ~= "table" or type(EAM.db.config) ~= "table" then
+        return false, "databaseUnavailable"
+    end
+    local val = tonumber(seconds) or 0.3
+    val = math.min(math.max(val, 0.05), 5.0)
+    EAM.db.config.audioThrottle = val
+    touchRevision(EAM.db)
+    if EAM.Modules.EventRouter then
+        EAM.Modules.EventRouter.fire("EAM_AUDIO_THROTTLE_CHANGED", val)
     end
     return true, "updated", EAM.db.revision
 end

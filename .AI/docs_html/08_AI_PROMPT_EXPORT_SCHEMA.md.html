@@ -535,99 +535,99 @@ EAM 狀態，消耗轉儲大量日誌。</p>
 - 環境：建造、區域設定、戰鬥狀態、FPS、外掛程式版本。</p>
 <p>不要將猜測值與事實混為一談。</p>
 <h2 id="_3">簡潔模式</h2>
-<pre class="codehilite"><code class="language-js">{
-  schema: 1,
-  mode: &quot;debug-min|analysis-full|github-issue&quot;,
-  environment: {
-    addon: &quot;EventAlertMod&quot;,
-    addonVersion: &quot;string?&quot;,
-    interface: &quot;number?&quot;,
-    build: &quot;string?&quot;,
-    locale: &quot;string?&quot;,
-    inCombat: &quot;boolean&quot;,
-    fps: &quot;number?&quot;,
-    retailOnly: true
-  },
-  facts: {
-    alertCount: &quot;number&quot;,
-    alerts: [
-      {
-        id: &quot;string&quot;,
-        kind: &quot;aura|spellCooldown|itemCooldown&quot;,
-        spellID: &quot;number?&quot;,
-        itemID: &quot;number?&quot;,
-        unit: &quot;string?&quot;,
-        name: &quot;string?&quot;,
-        icon: &quot;number|string?&quot;,
-        stacks: &quot;number?&quot;,
-        timerMode: &quot;none|numeric|displayOnly|protected|unknown&quot;,
-        active: &quot;boolean&quot;,
-        sourceAPI: &quot;string?&quot;
-      }
-    ]
-  },
-  derived: {
-    visibleIcons: &quot;number&quot;,
-    dirtyQueues: { aura: &quot;number&quot;, cooldown: &quot;number&quot;, item: &quot;number&quot; },
-    schedulerJobs: &quot;number&quot;
-  },
-  boundaryWarnings: [
-    { id: &quot;string?&quot;, code: &quot;string&quot;, note: &quot;string&quot; }
-  ],
-  humanNotes: [&quot;string&quot;]
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nx">schema</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"debug-min|analysis-full|github-issue"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">environment</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">addon</span><span class="o">:</span><span class="w"> </span><span class="s2">"EventAlertMod"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">addonVersion</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">    </span><span class="kr">interface</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">build</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">locale</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">inCombat</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">fps</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">retailOnly</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">facts</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">alertCount</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">alerts</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="s2">"aura|spellCooldown|itemCooldown"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">spellID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">itemID</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="s2">"number|string?"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">stacks</span><span class="o">:</span><span class="w"> </span><span class="s2">"number?"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">timerMode</span><span class="o">:</span><span class="w"> </span><span class="s2">"none|numeric|displayOnly|protected|unknown"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">sourceAPI</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">derived</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">visibleIcons</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">dirtyQueues</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">aura</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span><span class="w"> </span><span class="nx">cooldown</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span><span class="w"> </span><span class="nx">item</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">schedulerJobs</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s2">"string?"</span><span class="p">,</span><span class="w"> </span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nx">note</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nx">humanNotes</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"string"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>＃＃例子</p>
-<pre class="codehilite"><code class="language-js">{
-  schema: 1,
-  mode: &quot;debug-min&quot;,
-  environment: {
-    addon: &quot;EventAlertMod&quot;,
-    interface: 120000,
-    locale: &quot;zhTW&quot;,
-    inCombat: false,
-    fps: 118,
-    retailOnly: true
-  },
-  facts: {
-    alertCount: 2,
-    alerts: [
-      {
-        id: &quot;aura:player:12345&quot;,
-        kind: &quot;aura&quot;,
-        spellID: 12345,
-        unit: &quot;player&quot;,
-        name: &quot;Example Buff&quot;,
-        timerMode: &quot;numeric&quot;,
-        active: true,
-        sourceAPI: &quot;C_UnitAuras&quot;
-      },
-      {
-        id: &quot;spellCooldown:67890&quot;,
-        kind: &quot;spellCooldown&quot;,
-        spellID: 67890,
-        timerMode: &quot;protected&quot;,
-        active: true,
-        sourceAPI: &quot;C_Spell&quot;
-      }
-    ]
-  },
-  derived: {
-    visibleIcons: 2,
-    dirtyQueues: { aura: 0, cooldown: 0, item: 0 },
-    schedulerJobs: 1
-  },
-  boundaryWarnings: [
-    {
-      id: &quot;spellCooldown:67890&quot;,
-      code: &quot;SPELL_COOLDOWN_SECRET&quot;,
-      note: &quot;Timer details unavailable; icon-only render used.&quot;
-    }
-  ],
-  humanNotes: []
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nx">schema</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"debug-min"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">environment</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">addon</span><span class="o">:</span><span class="w"> </span><span class="s2">"EventAlertMod"</span><span class="p">,</span>
+<span class="w">    </span><span class="kr">interface</span><span class="o">:</span><span class="w"> </span><span class="mf">120000</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">locale</span><span class="o">:</span><span class="w"> </span><span class="s2">"zhTW"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">inCombat</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">fps</span><span class="o">:</span><span class="w"> </span><span class="mf">118</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">retailOnly</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">facts</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">alertCount</span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">alerts</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s2">"aura:player:12345"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="s2">"aura"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">spellID</span><span class="o">:</span><span class="w"> </span><span class="mf">12345</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s2">"player"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"Example Buff"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">timerMode</span><span class="o">:</span><span class="w"> </span><span class="s2">"numeric"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">sourceAPI</span><span class="o">:</span><span class="w"> </span><span class="s2">"C_UnitAuras"</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s2">"spellCooldown:67890"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="s2">"spellCooldown"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">spellID</span><span class="o">:</span><span class="w"> </span><span class="mf">67890</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">timerMode</span><span class="o">:</span><span class="w"> </span><span class="s2">"protected"</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">sourceAPI</span><span class="o">:</span><span class="w"> </span><span class="s2">"C_Spell"</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">derived</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">visibleIcons</span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">dirtyQueues</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">aura</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="nx">cooldown</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="nx">item</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">schedulerJobs</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s2">"spellCooldown:67890"</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="s2">"SPELL_COOLDOWN_SECRET"</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">note</span><span class="o">:</span><span class="w"> </span><span class="s2">"Timer details unavailable; icon-only render used."</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nx">humanNotes</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <h2 id="_4">出口限制</h2>
 <ul>
@@ -640,37 +640,37 @@ EAM 狀態，消耗轉儲大量日誌。</p>
 </ul>
 <h2 id="_5">流程驗證報告</h2>
 <p>流程測試使用獨立 schema，不與一般 DebugSnapshot 混合：</p>
-<pre class="codehilite"><code class="language-js">{
-  schema: 1,
-  type: &quot;EAM_FLOW_VALIDATION_REPORT&quot;,
-  suite: &quot;quick|core|boundary|all&quot;,
-  status: &quot;pass|fail&quot;,
-  environment: {
-    source: &quot;offline-mock|retail-client&quot;,
-    interface: &quot;number&quot;,
-    initialized: &quot;boolean&quot;,
-    inCombat: &quot;boolean&quot;,
-    locale: &quot;string&quot;
-  },
-  summary: {
-    total: &quot;number&quot;,
-    passed: &quot;number&quot;,
-    failed: &quot;number&quot;,
-    skipped: &quot;number&quot;,
-    pending: &quot;number&quot;
-  },
-  cases: [
-    {
-      id: &quot;string&quot;,
-      suite: &quot;string&quot;,
-      status: &quot;pass|fail|skip|pending&quot;,
-      durationMs: &quot;number&quot;,
-      message: &quot;safe string&quot;
-    }
-  ],
-  boundaryWarnings: []
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nx">schema</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s2">"EAM_FLOW_VALIDATION_REPORT"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">suite</span><span class="o">:</span><span class="w"> </span><span class="s2">"quick|core|boundary|all"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="s2">"pass|fail"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">environment</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">source</span><span class="o">:</span><span class="w"> </span><span class="s2">"offline-mock|retail-client"</span><span class="p">,</span>
+<span class="w">    </span><span class="kr">interface</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">initialized</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">inCombat</span><span class="o">:</span><span class="w"> </span><span class="s2">"boolean"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">locale</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">summary</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">total</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">passed</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">failed</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">skipped</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">pending</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">cases</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">suite</span><span class="o">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="s2">"pass|fail|skip|pending"</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">durationMs</span><span class="o">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="s2">"safe string"</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nx">boundaryWarnings</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>限制：</p>
 <ul>

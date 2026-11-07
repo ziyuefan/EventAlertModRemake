@@ -43,6 +43,13 @@ local PROFILES = freeze({
         expectedInterface = 120100,
         expectedTestBuild = false,
     }),
+    ["_forever_"] = freeze({
+        channel = "FOREVER",
+        source = "forever-live-manual",
+        expectedPatch = "1.60.1",
+        expectedInterface = 16001,
+        expectedTestBuild = nil,
+    }),
 })
 
 local ValidationEnvironment = {
@@ -144,6 +151,9 @@ function ValidationEnvironment.snapshot()
     local locale = type(api.GetLocale) == "function" and safeScalar(api.GetLocale()) or nil
     local projectID = safeScalar(api.WOW_PROJECT_ID)
 
+    local currentProduct = EAM.isForever and "wow_forever" or "wow_retail"
+    local currentTargetInterface = EAM.isForever and (EAM.Constants.FOREVER_INTERFACE or 16001) or EAM.Constants.INTERFACE
+
     if EAM.FlowTestEnvironment == "offline-mock" then
         return {
             product = "wow_retail",
@@ -155,7 +165,7 @@ function ValidationEnvironment.snapshot()
             build = build,
             buildDate = buildDate,
             interface = interface,
-            targetInterface = EAM.Constants.INTERFACE,
+            targetInterface = currentTargetInterface,
             projectID = projectID,
             isTestBuild = isTestBuild,
             isTestBuildKnown = testBuildKnown,
@@ -192,7 +202,7 @@ function ValidationEnvironment.snapshot()
     end
 
     return {
-        product = "wow_retail",
+        product = currentProduct,
         executionSource = "client",
         clientChannel = expected and expected.channel or "UNCONFIRMED",
         declaredInstallation = declaredInstallation,
@@ -201,7 +211,7 @@ function ValidationEnvironment.snapshot()
         build = build,
         buildDate = buildDate,
         interface = interface,
-        targetInterface = EAM.Constants.INTERFACE,
+        targetInterface = currentTargetInterface,
         projectID = projectID,
         isTestBuild = isTestBuild,
         isTestBuildKnown = testBuildKnown,

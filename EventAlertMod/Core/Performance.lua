@@ -155,6 +155,10 @@ function Performance.resetMetrics(scope)
 end
 
 function Performance.getEngineProfilerMetrics()
+    local ep = EAM.Debug and EAM.Debug.EngineProfiler
+    if ep and type(ep.getMetrics) == "function" then
+        return ep.getMetrics("EventAlertMod")
+    end
     local api = EAM.API or {}
     local profiler = api.C_AddOnProfiler or _G.C_AddOnProfiler
     if not profiler or type(profiler.IsEnabled) ~= "function" then

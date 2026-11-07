@@ -336,14 +336,15 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
         return false
     end
 
-    local name = auraData.name
-    local icon = auraData.icon
-    local stacks = auraData.applications
-    local duration = auraData.duration
-    local expirationTime = auraData.expirationTime
-    local fromPlayer = auraData.isFromPlayerOrPlayerPet
-    local auraInstanceID = auraData.auraInstanceID
-    local isDebuff = (auraData.isHarmful == true) or (auraData.isHarmful == nil and state.auraFilter == "HARMFUL")
+    local name = Util.readStructuredField(auraData, "name", nil, "aura")
+    local icon = Util.readStructuredField(auraData, "icon", nil, "aura")
+    local stacks, stacksSafe = Util.readStructuredField(auraData, "applications", nil, "aura")
+    local duration, durSafe = Util.readStructuredField(auraData, "duration", nil, "aura")
+    local expirationTime, expSafe = Util.readStructuredField(auraData, "expirationTime", nil, "aura")
+    local fromPlayer, fpSafe = Util.readStructuredField(auraData, "isFromPlayerOrPlayerPet", nil, "aura")
+    local auraInstanceID, idSafe = Util.readStructuredField(auraData, "auraInstanceID", nil, "aura")
+    local isHarmful, hSafe = Util.readStructuredField(auraData, "isHarmful", nil, "aura")
+    local isDebuff = (hSafe and isHarmful == true) or (not hSafe and state.auraFilter == "HARMFUL")
 
     if (not name or not icon) and SpellInfoService then
         local info = SpellInfoService.getSpellInfo(state.spellID)
@@ -388,7 +389,10 @@ local function readAuraIntoState(unit, state, auraData, eventName, apiName)
     state.absorbAmount = absorbAmount
 
     -- 🌟 重要光環與首領機制高亮 (Important / Boss / Priority / Stealable)
-    if auraData.isBossAura or auraData.isPriorityAura or auraData.isStealable then
+    local isBoss = Util.readStructuredField(auraData, "isBossAura", nil, "aura")
+    local isPrio = Util.readStructuredField(auraData, "isPriorityAura", nil, "aura")
+    local isSteal = Util.readStructuredField(auraData, "isStealable", nil, "aura")
+    if isBoss == true or isPrio == true or isSteal == true then
         state.isImportant = true
     elseif api.C_Spell and api.C_Spell.IsSpellImportant and Util.isSafePositiveNumber(state.spellID) then
         local ok, isImp = pcall(api.C_Spell.IsSpellImportant, state.spellID)
@@ -536,22 +540,26 @@ function AuraService.clearUnit(unit, eventName)
 end
 
 local function alertMatchesAura(alert, auraData)
+    local isHarmful, hSafe = Util.readStructuredField(auraData, "isHarmful", nil, "aura")
+    local isHelpful, hpSafe = Util.readStructuredField(auraData, "isHelpful", nil, "aura")
+    local isFromPlayer, fpSafe = Util.readStructuredField(auraData, "isFromPlayerOrPlayerPet", nil, "aura")
+
     local expectedFilter = alert.auraFilter
     if expectedFilter ~= "HELPFUL" and expectedFilter ~= "HARMFUL" then
         expectedFilter = (alert.unit == "target") and "HARMFUL" or "HELPFUL"
     end
     if expectedFilter == "HARMFUL" then
-        if auraData.isHarmful ~= true then
+        if not hSafe or isHarmful ~= true then
             return false
         end
     elseif expectedFilter == "HELPFUL" then
-        if auraData.isHarmful == true or (auraData.isHelpful ~= nil and auraData.isHelpful ~= true) then
+        if (hSafe and isHarmful == true) or (hpSafe and isHelpful ~= true) then
             return false
         end
     end
 
     if alert.fromPlayer == true or alert.self == true then
-        if auraData.isFromPlayerOrPlayerPet ~= true then
+        if not fpSafe or isFromPlayer ~= true then
             return false
         end
     end
@@ -936,28 +944,32 @@ function AuraService.onUnitAura(_, unit, updateInfo)
     end
 
     local cUnitAuras = api.C_UnitAuras
-    if not updateInfo or updateInfo.isFullUpdate or not cUnitAuras then
+    local isFullUpdate, fullSafe = Util.readStructuredField(updateInfo, "isFullUpdate", nil, "unitAura")
+    if not updateInfo or not cUnitAuras or not fullSafe or isFullUpdate == true then
         clearUnitCache(unit)
         AuraService.refreshUnit(unit, "UNIT_AURA_FULL")
         return
     end
 
-    local removed = updateInfo.removedAuraInstanceIDs
-    if type(removed) == "table" then
+    local removed = Util.canAccessTable(updateInfo) and not Util.isSecretTable(updateInfo) and updateInfo.removedAuraInstanceIDs
+    if type(removed) == "table" and Util.canAccessTable(removed) and not Util.isSecretTable(removed) then
         for index = 1, #removed do
-            local spellID, remaining, wasFromPlayer, wasHarmful = removeCachedAura(unit, removed[index])
-            if spellID then
-                local alerts = getAlertsForSpell(unit, spellID)
-                if type(alerts) == "table" then
-                    for _, alert in pairs(alerts) do
-                        local alertExpectedHarmful = (alert.auraFilter == "HARMFUL") or (alert.auraFilter ~= "HELPFUL" and alert.unit == "target")
-                        local filterMatches = (wasHarmful == nil) or (alertExpectedHarmful == wasHarmful)
-                        if filterMatches then
-                            if remaining == 0 then
-                                renderInactiveAlert(alert, "UNIT_AURA_REMOVED")
-                            elseif alert.fromPlayer == true or alert.self == true then
-                                if wasFromPlayer and not hasPlayerAuraInstance(unit, spellID, wasHarmful) then
+            local instanceID = removed[index]
+            if Util.isSafeTableKey(instanceID) then
+                local spellID, remaining, wasFromPlayer, wasHarmful = removeCachedAura(unit, instanceID)
+                if spellID then
+                    local alerts = getAlertsForSpell(unit, spellID)
+                    if type(alerts) == "table" then
+                        for _, alert in pairs(alerts) do
+                            local alertExpectedHarmful = (alert.auraFilter == "HARMFUL") or (alert.auraFilter ~= "HELPFUL" and alert.unit == "target")
+                            local filterMatches = (wasHarmful == nil) or (alertExpectedHarmful == wasHarmful)
+                            if filterMatches then
+                                if remaining == 0 then
                                     renderInactiveAlert(alert, "UNIT_AURA_REMOVED")
+                                elseif alert.fromPlayer == true or alert.self == true then
+                                    if wasFromPlayer and not hasPlayerAuraInstance(unit, spellID, wasHarmful) then
+                                        renderInactiveAlert(alert, "UNIT_AURA_REMOVED")
+                                    end
                                 end
                             end
                         end
@@ -967,19 +979,25 @@ function AuraService.onUnitAura(_, unit, updateInfo)
         end
     end
 
-    local added = updateInfo.addedAuras
-    if type(added) == "table" then
+    local added = Util.canAccessTable(updateInfo) and not Util.isSecretTable(updateInfo) and updateInfo.addedAuras
+    if type(added) == "table" and Util.canAccessTable(added) and not Util.isSecretTable(added) then
         for index = 1, #added do
-            processAuraData(unit, added[index], "UNIT_AURA_ADDED", "UNIT_AURA.addedAuras")
+            local auraData = added[index]
+            if auraData and Util.canAccessTable(auraData) and not Util.isSecretTable(auraData) then
+                processAuraData(unit, auraData, "UNIT_AURA_ADDED", "UNIT_AURA.addedAuras")
+            end
         end
     end
 
-    local updated = updateInfo.updatedAuraInstanceIDs
-    if type(updated) == "table" and cUnitAuras.GetAuraDataByAuraInstanceID then
+    local updated = Util.canAccessTable(updateInfo) and not Util.isSecretTable(updateInfo) and updateInfo.updatedAuraInstanceIDs
+    if type(updated) == "table" and Util.canAccessTable(updated) and not Util.isSecretTable(updated) and cUnitAuras.GetAuraDataByAuraInstanceID then
         for index = 1, #updated do
-            local auraData = cUnitAuras.GetAuraDataByAuraInstanceID(unit, updated[index])
-            if auraData then
-                processAuraData(unit, auraData, "UNIT_AURA_UPDATED", "C_UnitAuras.GetAuraDataByAuraInstanceID")
+            local instanceID = updated[index]
+            if Util.isSafeTableKey(instanceID) then
+                local ok, auraData = pcall(cUnitAuras.GetAuraDataByAuraInstanceID, unit, instanceID)
+                if ok and auraData and Util.canAccessTable(auraData) and not Util.isSecretTable(auraData) then
+                    processAuraData(unit, auraData, "UNIT_AURA_UPDATED", "C_UnitAuras.GetAuraDataByAuraInstanceID")
+                end
             end
         end
     end

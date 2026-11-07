@@ -106,14 +106,16 @@ function WeaponEnchantService.refresh(eventName)
 
     -- 主手 (Slot 16)
     local mhState = getOrCreateState("WEAPON_ENCHANT_16")
-    if hasMH and mhExp and mhExp > 0 then
+    local hasMHSafe = Util.isSafeBoolean(hasMH) and hasMH == true
+    local mhExpSafe = Util.isSafePositiveNumber(mhExp)
+    if hasMHSafe and mhExpSafe then
         anyActive = true
         local durationSec = mhExp / 1000
         local getTexture = api.GetInventoryItemTexture or GetInventoryItemTexture
         local tex = (type(getTexture) == "function" and getTexture("player", 16)) or 136518
         mhState.name = EAM.Locale and EAM.Locale.EAM_WEAPON_ENCHANT_MH or "主手附魔"
         mhState.icon = tex
-        mhState.stacks = (mhCharges and mhCharges > 0) and mhCharges or nil
+        mhState.stacks = Util.isSafePositiveNumber(mhCharges) and mhCharges or nil
         mhState.active = true
         mhState.shown = true
         mhState.fromPlayer = true
@@ -130,14 +132,16 @@ function WeaponEnchantService.refresh(eventName)
 
     -- 副手 (Slot 17)
     local ohState = getOrCreateState("WEAPON_ENCHANT_17")
-    if hasOH and ohExp and ohExp > 0 then
+    local hasOHSafe = Util.isSafeBoolean(hasOH) and hasOH == true
+    local ohExpSafe = Util.isSafePositiveNumber(ohExp)
+    if hasOHSafe and ohExpSafe then
         anyActive = true
         local durationSec = ohExp / 1000
         local getTexture = api.GetInventoryItemTexture or GetInventoryItemTexture
         local tex = (type(getTexture) == "function" and getTexture("player", 17)) or 136518
         ohState.name = EAM.Locale and EAM.Locale.EAM_WEAPON_ENCHANT_OH or "副手附魔"
         ohState.icon = tex
-        ohState.stacks = (ohCharges and ohCharges > 0) and ohCharges or nil
+        ohState.stacks = Util.isSafePositiveNumber(ohCharges) and ohCharges or nil
         ohState.active = true
         ohState.shown = true
         ohState.fromPlayer = true

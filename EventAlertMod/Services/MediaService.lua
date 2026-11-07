@@ -313,10 +313,31 @@ function MediaService.getStatusBarPath(key, fallback)
     return MediaService.fetchMedia("statusbar", key, fallback or "Interface\\TargetingFrame\\UI-StatusBar")
 end
 
-function MediaService.playSound(soundName, channel)
+local soundLastPlayed = {}
+
+function MediaService.clearSoundThrottle()
+    for k in pairs(soundLastPlayed) do
+        soundLastPlayed[k] = nil
+    end
+end
+
+function MediaService.playSound(soundName, channel, throttleSeconds)
     channel = channel or "Master"
     if not soundName or soundName == "" or soundName == "NONE" then
         return false
+    end
+    local throttle = throttleSeconds
+    if throttle == nil and EAM.db and EAM.db.config then
+        throttle = tonumber(EAM.db.config.audioThrottle)
+    end
+    if throttle and throttle > 0 then
+        throttle = math.min(math.max(throttle, 0.05), 5.0)
+        local now = (EAM.API and EAM.API.GetTime and EAM.API.GetTime()) or (_G.GetTime and _G.GetTime()) or 0
+        local last = soundLastPlayed[soundName]
+        if last and (now - last) < throttle then
+            return false, "throttled"
+        end
+        soundLastPlayed[soundName] = now
     end
     MediaService.ensureLSM()
     local asset = MediaService.getSoundPath(soundName)
@@ -345,5 +366,43 @@ function MediaService.playSound(soundName, channel)
     return false
 end
 
+function MediaService.hasTTS()
+    local alert = rawget(_G, "C_CombatAudioAlert")
+    if alert and type(alert.SpeakText) == "function" then
+        return true, "C_CombatAudioAlert"
+    end
+    local voice = rawget(_G, "C_VoiceChat")
+    if voice and type(voice.SpeakText) == "function" then
+        return true, "C_VoiceChat"
+    end
+    return false, "unavailable"
+end
+
+function MediaService.speakTTS(text, category, allowOverlap)
+    if not text or text == "" then
+        return false, "emptyText"
+    end
+    local alert = rawget(_G, "C_CombatAudioAlert")
+    if alert and type(alert.SpeakText) == "function" then
+        local cat = category or 0
+        local overlap = (allowOverlap == true)
+        local ok, err = pcall(alert.SpeakText, text, cat, overlap)
+        if ok then
+            return true, "native"
+        end
+        return false, err
+    end
+    local voice = rawget(_G, "C_VoiceChat")
+    if voice and type(voice.SpeakText) == "function" then
+        local ok, err = pcall(voice.SpeakText, 0, text, 0, 100)
+        if ok then
+            return true, "voiceChatFallback"
+        end
+        return false, err
+    end
+    return false, "unavailable"
+end
+
 -- 模組載入時立即嘗試連接 LSM
 pcall(MediaService.init)
+

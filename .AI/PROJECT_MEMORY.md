@@ -1,7 +1,7 @@
 <!-- EAM_DOCUMENTATION_SOURCE: zh-TW -->
 # EventAlertMod 專案接續記憶
 
-> 最後更新：2026-10-16（Asia/Taipei）
+> 最後更新：2026-11-08（Asia/Taipei）
 > 用途：提供 Codex／AI Agent 在對話中斷、內容壓縮或工作轉交後的最短接續路徑。
 > 證據界線：本檔只做索引與工作狀態摘要，不可取代程式碼、測試報告、實機報告或結構化事實檔。
 
@@ -64,6 +64,12 @@
    - 建立 50 條核心開發與路由規範（[`.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md`](.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md) 及專屬技能 `wow-mcp-tool-routing`）。
    - 確立「禁止相信模型記憶」原則、Evidence Ladder 實證層級、強制 Lint/驗證管線與標準報告結構。
 7. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 同步。依規範嚴格限制零自動部署（鐵律 R1）。
+8. 2026-11-08 實裝 **Retail 12.1.5 & Forever 1.60.1 Alpha 8.9**（雙版本跨時代統一架構與文件策展）：
+   - 成功根治永恆服 (Forever 1.60.1 / Interface 16001) 實機戰鬥中遭遇的兩大致命 Secret Value 報錯（`CooldownService: locDur` 比較與 `AuraService: isFullUpdate` 布林判斷），採用雙重檢定與原生直通渲染。
+   - 完整實裝永恆服法術技能等級（Spell Rank）全鏈路展開與 Native Aura 雜湊集合過濾。
+   - 實裝永恆服經典 60 級 9 大職業資源拓撲、五大魔法抗性即時戰鬥監控、經典精神 5 秒回魔規則 (5SR) 狀態機、雙模態 MP5/HP5 與動態水藍色全螢幕呼吸閃爍警示。
+   - 完成全專案跨檔版本日誌、雙語說明、CurseForge、MiliUI 奇樂說明與 Dist 發布筆記雙平台排版整備，全套離線五大閘門驗證 100% 通過。
+
 
 ## 已完成的結構工作
 

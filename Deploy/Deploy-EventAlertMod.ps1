@@ -1,4 +1,4 @@
-<# EAM_FILE_COMMENTARY
+﻿<# EAM_FILE_COMMENTARY
 EventAlertMod Retail Rewrite
 檔案: Deploy\Deploy-EventAlertMod.ps1
 
@@ -14,11 +14,11 @@ EventAlertMod Retail Rewrite
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet("Menu", "Status", "Retail", "PTR", "XPTR", "All", "Backup", "Restore")]
+    [ValidateSet("Menu", "Status", "Retail", "PTR", "XPTR", "Forever", "All", "Backup", "Restore")]
     [string]$Action = "Menu",
     [string]$WowRoot = "",
     [switch]$DryRun,
-    [ValidateSet("Retail", "PTR", "XPTR", "All")]
+    [ValidateSet("Retail", "PTR", "XPTR", "Forever", "All")]
     [string]$Channel = "",
     [string]$WtfBackupPath = ""
 )
@@ -215,7 +215,15 @@ function Get-ClientState {
     )
 
     $versionRoot = Join-Path $RootPath ([string]$Definition.directory)
+    $candidateExes = @([string]$Definition.executable, "WowClassic.exe", "Wow.exe", "WowB.exe", "WowT.exe")
     $executablePath = Join-Path $versionRoot ([string]$Definition.executable)
+    foreach ($cand in $candidateExes) {
+        $p = Join-Path $versionRoot $cand
+        if (Test-Path -LiteralPath $p -PathType Leaf) {
+            $executablePath = $p
+            break
+        }
+    }
     $addonsRoot = Join-Path $versionRoot "Interface\AddOns"
     $targetPath = Join-Path $addonsRoot "EventAlertMod"
     $rawProductVersion = ""
@@ -510,20 +518,25 @@ function Read-WtfStateSelection {
     param([Parameter(Mandatory = $true)][object[]]$States)
 
     Write-Host ""
-    Write-Host "[1] WTF 備份／還原：$($States[0].menuLabel)"
-    Write-Host "[2] WTF 備份／還原：$($States[1].menuLabel)"
-    Write-Host "[3] WTF 備份／還原：$($States[2].menuLabel)"
-    Write-Host "[4] WTF 備份／還原：全部通道"
-    $choice = (Read-Host "選擇版本通道").Trim()
-    $selected = switch ($choice) {
-        "1" { @($States[0]) }
-        "2" { @($States[1]) }
-        "3" { @($States[2]) }
-        "4" { @($States) }
-        default { throw "無效版本通道選項：$choice" }
+    for ($i = 0; $i -lt $States.Count; $i++) {
+        Write-Host ("[{0}] WTF 備份／還原：{1}" -f ($i + 1), $States[$i].menuLabel)
     }
-    if ($choice -eq "2" -or $choice -eq "3") {
-        $includeRetail = (Read-Host "是否同時包含 Retail？輸入 Y 加入，其他只處理目前通道").Trim().ToUpperInvariant()
+    $allIdx = $States.Count + 1
+    Write-Host ("[{0}] WTF 備份／還原：全部通道" -f $allIdx)
+
+    $choice = (Read-Host "請選擇通道").Trim()
+    $selected = if ($choice -eq [string]$allIdx) {
+        @($States)
+    } else {
+        $idx = 0
+        if ([int]::TryParse($choice, [ref]$idx) -and $idx -ge 1 -and $idx -le $States.Count) {
+            @($States[$idx - 1])
+        } else {
+            throw "無效的通道選項：$choice"
+        }
+    }
+    if ($choice -ne "1" -and $choice -ne [string]$allIdx) {
+        $includeRetail = (Read-Host "是否同時包含 Retail？輸入 Y 加入，其餘僅處理目前通道").Trim().ToUpperInvariant()
         if ($includeRetail -eq "Y") {
             $selected = @($States[0]) + @($selected)
         }
@@ -805,7 +818,7 @@ if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) {
     throw "部署設定不存在：$configPath"
 }
 $config = Get-Content -LiteralPath $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($config.type -ne "EAM_DEPLOYMENT_TARGETS" -or [int]$config.schema -ne 1 -or @($config.targets).Count -ne 3) {
+if ($config.type -ne "EAM_DEPLOYMENT_TARGETS" -or [int]$config.schema -ne 1 -or @($config.targets).Count -lt 3) {
     throw "部署設定格式不符：$configPath"
 }
 $wowRootExplicit = -not [string]::IsNullOrWhiteSpace($WowRoot)
@@ -852,7 +865,7 @@ function Find-State {
 
 if ($Action -eq "Backup" -or $Action -eq "Restore") {
     if ([string]::IsNullOrWhiteSpace($Channel)) {
-        throw "-Action $Action 必須同時指定 -Channel Retail、PTR、XPTR 或 All。"
+        throw "-Action $Action 必須同時指定 -Channel Retail、PTR、XPTR、Forever 或 All。"
     }
     if ($Action -eq "Restore" -and $Channel -eq "All") {
         throw "-Action Restore 不接受 -Channel All；請逐通道指定 -WtfBackupPath。"
@@ -891,9 +904,14 @@ while ($true) {
     $states = @(Get-ClientStates -Definitions @($config.targets) -RootPath $wowRootPath)
     Write-ClientStatus -States $states -RootPath $wowRootPath -RootSource $wowRootSource
     Write-Host "[1] $($states[0].menuLabel)"
+
     Write-Host "[2] $($states[1].menuLabel)"
+
     Write-Host "[3] $($states[2].menuLabel)"
-    Write-Host "[4] 全部通道"
+
+    Write-Host "[4] $($states[3].menuLabel)"
+
+    Write-Host "[5] 全部通道"
     Write-Host "[W] 備份 WTF 中的 EventAlertMod 存檔"
     Write-Host "[U] 還原 WTF 中的 EventAlertMod 存檔"
     Write-Host "[B] 從 EventAlertMod 建立插件 ZIP"
@@ -986,14 +1004,15 @@ while ($true) {
         "1" { @($states[0]) }
         "2" { @($states[1]) }
         "3" { @($states[2]) }
-        "4" { @($states) }
+        "4" { @($states[3]) }
+        "5" { @($states) }
         default { @() }
     }
     if (@($selected).Count -eq 0) {
         Write-Host "無效選項。" -ForegroundColor Yellow
         continue
     }
-    if ($choice -eq "2" -or $choice -eq "3") {
+    if ($choice -eq "2" -or $choice -eq "3" -or $choice -eq "4") {
         $includeRetail = (Read-Host "是否同時包含 Retail？輸入 Y 加入，其他只部署目前通道").Trim().ToUpperInvariant()
         if ($includeRetail -eq "Y") {
             $selected = @($states[0]) + @($selected)

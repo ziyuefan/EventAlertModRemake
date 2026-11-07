@@ -337,7 +337,7 @@ local function createAuraSoundEntry(asset)
     return nil
 end
 
-function Options.buildAuraSoundConfig(soundName, added, applicationsIncreased, removed)
+function Options.buildAuraSoundConfig(soundName, added, applicationsIncreased, removed, throttleSeconds)
     if not added and not applicationsIncreased and not removed then
         return nil
     end
@@ -346,14 +346,26 @@ function Options.buildAuraSoundConfig(soundName, added, applicationsIncreased, r
         or soundAssets[soundName]
         or soundAssets.ShayBell
     local sound = {}
+    local throttle = nil
+    if throttleSeconds ~= nil and tonumber(throttleSeconds) then
+        throttle = math.max(0.05, math.min(5.0, tonumber(throttleSeconds)))
+    elseif EAM.db and EAM.db.config and tonumber(EAM.db.config.audioThrottle) then
+        throttle = math.max(0.05, math.min(5.0, tonumber(EAM.db.config.audioThrottle)))
+    end
+    if throttle then
+        sound.throttleSeconds = throttle
+    end
     if added then
         sound.added = createAuraSoundEntry(asset)
+        if throttle then sound.added.throttleSeconds = throttle end
     end
     if applicationsIncreased then
         sound.applicationsIncreased = createAuraSoundEntry(asset)
+        if throttle then sound.applicationsIncreased.throttleSeconds = throttle end
     end
     if removed then
         sound.removed = createAuraSoundEntry(asset)
+        if throttle then sound.removed.throttleSeconds = throttle end
     end
     return sound
 end
@@ -3553,13 +3565,33 @@ local function createFrame()
     -- ===================================================
     local pageFX = tabPages[5]
 
-    -- 左側：光環分段層數條 (Application Bar) 與斬殺線
-    createCheckbox(pageFX, localized("EAM_OPT_AURA_STACK_BAR", "啟用光環分段層數條"), "auraStackBar", 16, -14, nil, "為具有堆疊層數的光環圖示顯示分段刻度層數條 (Application Bar)", "啟用光環分段層數條")
-    createSlider(pageFX, localized("EAM_OPT_MIN_APPLICATIONS", "最低顯示層數門檻 (minApplications)"), "minApplications", 1, 10, 1, 16, -68, 250, false, nil, "光環層數達到或超過此門檻時才顯示分段條，低於此層數靜默隱藏", "最低顯示層數門檻")
-    createCheckbox(pageFX, localized("EAM_OPT_OVERDRIVE_GLOW", "啟用滿層過曝炫光 (ADD Overdrive)"), "overdriveGlow", 16, -120, nil, "當光環堆疊至滿層或爆發狀態時，啟用純 GPU 加法過曝炫光與 FrameLevel 圖層提權", "滿層過曝炫光")
+    -- 左側：光環分段層數條 (Application Bar)、持續時間條與斬殺線
+    createCheckbox(pageFX, localized("EAM_OPT_AURA_STACK_BAR", "啟用光環分段層數條"), "auraStackBar", 16, -14, function(val)
+        if EAM.db and EAM.db.config then
+            EAM.db.config.showApplicationBar = val
+        end
+        triggerSafeRebuild("APPLICATION_BAR_CHANGED")
+    end, "為具有堆疊層數的光環圖示顯示分段刻度層數條 (Application Bar)", "啟用光環分段層數條")
 
-    createCheckbox(pageFX, localized("EAM_OPT_ENABLE_EXECUTE", "啟用斬殺線"), "enableBossExecute", 16, -165, nil, "啟用目標進入斬殺血量時之高亮提示與警示外框", "啟用斬殺線")
-    createSlider(pageFX, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 16, -220, 250, true, nil, "設定目標斬殺血量比例門檻（例如 20% 或 35%）", "斬殺血量閾值")
+    createSlider(pageFX, localized("EAM_OPT_APPLICATION_BAR_MAX", "層數進度條上限 (applicationBarMax)"), "applicationBarMax", 1, 20, 1, 16, -58, 250, false, function(val)
+        triggerSafeRebuild("APPLICATION_BAR_MAX_CHANGED")
+    end, "設定光環層數進度條的最大刻度上限 (1~20)", "層數進度條上限")
+
+    createSlider(pageFX, localized("EAM_OPT_MIN_APPLICATIONS", "最低顯示層數門檻 (minApplications)"), "minApplications", 1, 10, 1, 16, -112, 250, false, function(val)
+        if EAM.db and EAM.db.config then
+            EAM.db.config.applicationBarMin = val
+        end
+        triggerSafeRebuild("APPLICATION_BAR_MIN_CHANGED")
+    end, "光環層數達到或超過此門檻時才顯示分段條，低於此層數靜默隱藏", "最低顯示層數門檻")
+
+    createCheckbox(pageFX, localized("EAM_OPT_AURA_DURATION_BAR", "啟用光環持續時間條 (Duration Bar)"), "showDurationBar", 16, -165, function(val)
+        triggerSafeRebuild("DURATION_BAR_CHANGED")
+    end, localized("EAM_OPT_AURA_DURATION_BAR_TIP", "在光環圖示下方渲染 12.1.5 原生持續時間條，與頂部層數條雙軌並行"), "啟用光環持續時間條")
+
+    createCheckbox(pageFX, localized("EAM_OPT_OVERDRIVE_GLOW", "啟用滿層過曝炫光 (ADD Overdrive)"), "overdriveGlow", 16, -195, nil, "當光環堆疊至滿層或爆發狀態時，啟用純 GPU 加法過曝炫光與 FrameLevel 圖層提權", "滿層過曝炫光")
+
+    createCheckbox(pageFX, localized("EAM_OPT_ENABLE_EXECUTE", "啟用斬殺線"), "enableBossExecute", 16, -230, nil, "啟用目標進入斬殺血量時之高亮提示與警示外框", "啟用斬殺線")
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_EXECUTE_LIMIT", "斬殺血量閾值 (Execute Limit)"), "bossExecuteThreshold", 0.0, 1.0, 0.05, 16, -265, 250, true, nil, "設定目標斬殺血量比例門檻（例如 20% 或 35%）", "斬殺血量閾值")
 
     -- 右側：全螢幕閃爍、瀕死動態呼吸紅框與減益著色
     createCheckbox(pageFX, localized("EAM_OPT_SHOW_FLASH", "啟用全螢幕閃爍"), "showFlash", 300, -14, nil, "當特定重大光環觸發或進入戰鬥時，全螢幕邊緣閃爍紅框", "啟用全螢幕閃爍")
@@ -3577,12 +3609,16 @@ local function createFrame()
     end)
 
     createCheckbox(pageFX, localized("EAM_OPT_LOW_HEALTH_FLASH", "啟用瀕死動態呼吸紅框"), "lowHealthFlash", 300, -52, nil, "血量危急時全螢幕邊緣動態呼吸閃爍，血量越低越顯著", "啟用瀕死動態呼吸紅框")
-    createSlider(pageFX, localized("EAM_OPT_SLIDER_LOW_HEALTH", "瀕死危急閾值 (Low Health)"), "lowHealthThreshold", 0.1, 0.6, 0.05, 300, -105, 275, true, nil, "瀕死危急狀態之血量比例門檻（例如 35%）", "瀕死危急閾值")
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_LOW_HEALTH", "瀕死危急閾值 (Low Health)"), "lowHealthThreshold", 0.1, 0.6, 0.05, 300, -95, 275, true, nil, "瀕死危急狀態之血量比例門檻（例如 35%）", "瀕死危急閾值")
 
-    createSlider(pageFX, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自身減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 300, -165, 275, true, nil, "自身受到減益效果 (Debuff) 時圖示邊框的紅色著色程度", "自身減益色度")
-    createSlider(pageFX, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 300, -225, 275, true, nil, "目標身上為減益效果時圖示邊框的綠色著色程度", "目標減益色度")
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_DEBUFF_RED", "自身減益色度 (Self Debuff Red)"), "selfDebuffRed", 0.0, 1.0, 0.05, 300, -148, 275, true, nil, "自身受到減益效果 (Debuff) 時圖示邊框的紅色著色程度", "自身減益色度")
+    createSlider(pageFX, localized("EAM_OPT_SLIDER_DEBUFF_GREEN", "目標減益色度 (Target Debuff Green)"), "targetDebuffGreen", 0.0, 1.0, 0.05, 300, -200, 275, true, nil, "目標身上為減益效果時圖示邊框的綠色著色程度", "目標減益色度")
 
-    createCheckbox(pageFX, localized("EAM_OPT_RESOURCE_DYNAMIC_COLOR", "資源條動態色彩曲線"), "resourceDynamicColor", 300, -285, nil, "依據目前能量/怒氣百分比，透過暴雪 ColorCurveObject 動態平滑渲染顏色", "資源條動態色彩曲線")
+    createCheckbox(pageFX, localized("EAM_OPT_RESOURCE_DYNAMIC_COLOR", "資源條動態色彩曲線"), "resourceDynamicColor", 300, -248, nil, "依據目前能量/怒氣百分比，透過暴雪 ColorCurveObject 動態平滑渲染顏色", "資源條動態色彩曲線")
+
+    createSlider(pageFX, localized("EAM_OPT_AUDIO_THROTTLE", "音訊警報防洪節流 (秒)"), "audioThrottle", 0.05, 3.0, 0.05, 300, -280, 275, true, function(val)
+        notifyAuraSoundChanged()
+    end, localized("EAM_OPT_AUDIO_THROTTLE_TIP", "限制同一光環在指定秒數內重複觸發音效的頻率，避免高速疊層或多目標 DoT 頻繁刷新引發音效連發轟炸 (0.05s~5.0s，預設 0.3s)"), "音訊防洪節流")
 
     -- ---------------------------------------------------
     -- 圖示類型外框與自訂邊框色彩 (Alert Border Styles & Colors)
@@ -4279,6 +4315,14 @@ local function createFrame()
             texture = C_Spell.GetSpellTexture(data.spellID)
             local spellInfo = C_Spell.GetSpellInfo(data.spellID)
             name = spellInfo and spellInfo.name or ((EAM.L.EAM_OPT_COND_SPELL_NAME or "法術 ") .. data.spellID)
+            if EAM.isForever and spellInfo and spellInfo.subName and spellInfo.subName ~= "" then
+                name = string.format("%s (%s)", name, spellInfo.subName)
+            elseif EAM.isForever and C_Spell and C_Spell.GetSpellSubtext then
+                local sub = C_Spell.GetSpellSubtext(data.spellID)
+                if sub and sub ~= "" then
+                    name = string.format("%s (%s)", name, sub)
+                end
+            end
         end
         itemFrame.icon:SetTexture(texture or "Interface\\Icons\\INV_Misc_QuestionMark")
         
@@ -5081,6 +5125,14 @@ local function createFrame()
         confirmIcon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
 
         local name = (spellInfo and spellInfo.name) or (tostring(spellID))
+        if EAM.isForever and spellInfo and spellInfo.subName and spellInfo.subName ~= "" then
+            name = string.format("%s (%s)", name, spellInfo.subName)
+        elseif EAM.isForever and api and api.C_Spell and api.C_Spell.GetSpellSubtext then
+            local sub = api.C_Spell.GetSpellSubtext(spellID)
+            if sub and sub ~= "" then
+                name = string.format("%s (%s)", name, sub)
+            end
+        end
         confirmNameText:SetText(name)
 
         local idStr = string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", spellID)
@@ -6246,6 +6298,14 @@ function Options.openConditionsFrame(data)
         texture = C_Spell.GetSpellTexture(data.spellID)
         local spellInfo = C_Spell.GetSpellInfo(data.spellID)
         name = spellInfo and spellInfo.name or ((EAM.L.EAM_OPT_COND_SPELL_NAME or "法術 ") .. data.spellID)
+        if EAM.isForever and spellInfo and spellInfo.subName and spellInfo.subName ~= "" then
+            name = string.format("%s (%s)", name, spellInfo.subName)
+        elseif EAM.isForever and C_Spell and C_Spell.GetSpellSubtext then
+            local sub = C_Spell.GetSpellSubtext(data.spellID)
+            if sub and sub ~= "" then
+                name = string.format("%s (%s)", name, sub)
+            end
+        end
         idStr = string.format(EAM.L.EAM_OPT_COND_SPELL_ID_FORMAT or "Spell ID: %d", data.spellID)
     end
 

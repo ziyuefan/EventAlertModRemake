@@ -553,58 +553,58 @@ graph TD
 </li>
 </ul>
 <h3 id="2_1">2.核心程式碼設計</h3>
-<pre class="codehilite"><code class="language-lua">local AuraStatePool = {
-    active = {},
-    recycleBin = {},
-    binSize = 0,
-}
+<div class="codehilite"><pre><span></span><code><span class="kd">local</span><span class="w"> </span><span class="nv">AuraStatePool</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">    </span><span class="nv">recycleBin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">    </span><span class="nv">binSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="p">}</span>
 
-function AuraStatePool.initialize()
-    -- 預先建立 80 個 AuraState 對象備用
-    for i = 1, 80 do
-        local state = table.create(0, 16)
-        state.timer = table.create(0, 4)
-        state.source = table.create(0, 3)
-        state.boundaryWarnings = table.create(0, 4)
+<span class="kr">function</span><span class="w"> </span><span class="nc">AuraStatePool</span><span class="p">.</span><span class="nf">initialize</span><span class="p">()</span>
+<span class="w">    </span><span class="c1">-- 預先建立 80 個 AuraState 對象備用</span>
+<span class="w">    </span><span class="kr">for</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">80</span><span class="w"> </span><span class="kr">do</span>
+<span class="w">        </span><span class="kd">local</span><span class="w"> </span><span class="nv">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">)</span>
+<span class="w">        </span><span class="nv">state</span><span class="p">.</span><span class="py">timer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span>
+<span class="w">        </span><span class="nv">state</span><span class="p">.</span><span class="py">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span>
+<span class="w">        </span><span class="nv">state</span><span class="p">.</span><span class="py">boundaryWarnings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span>
 
-        AuraStatePool.recycleBin[i] = state
-    end
-    AuraStatePool.binSize = 80
-end
+<span class="w">        </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">recycleBin</span><span class="p">[</span><span class="nv">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">state</span>
+<span class="w">    </span><span class="kr">end</span>
+<span class="w">    </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">80</span>
+<span class="kr">end</span>
 
-function AuraStatePool.acquire()
-    if AuraStatePool.binSize &gt; 0 then
-        local state = AuraStatePool.recycleBin[AuraStatePool.binSize]
-        AuraStatePool.recycleBin[AuraStatePool.binSize] = nil
-        AuraStatePool.binSize = AuraStatePool.binSize - 1
-        return state
-    else
-        -- 溢出時才分配新對象
-        local state = table.create(0, 16)
-        state.timer = table.create(0, 4)
-        state.source = table.create(0, 3)
-        state.boundaryWarnings = table.create(0, 4)
-        return state
-    end
-end
+<span class="kr">function</span><span class="w"> </span><span class="nc">AuraStatePool</span><span class="p">.</span><span class="nf">acquire</span><span class="p">()</span>
+<span class="w">    </span><span class="kr">if</span><span class="w"> </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="kr">then</span>
+<span class="w">        </span><span class="kd">local</span><span class="w"> </span><span class="nv">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">recycleBin</span><span class="p">[</span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="p">]</span>
+<span class="w">        </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">recycleBin</span><span class="p">[</span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">        </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="nv">state</span>
+<span class="w">    </span><span class="kr">else</span>
+<span class="w">        </span><span class="c1">-- 溢出時才分配新對象</span>
+<span class="w">        </span><span class="kd">local</span><span class="w"> </span><span class="nv">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">)</span>
+<span class="w">        </span><span class="nv">state</span><span class="p">.</span><span class="py">timer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span>
+<span class="w">        </span><span class="nv">state</span><span class="p">.</span><span class="py">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span>
+<span class="w">        </span><span class="nv">state</span><span class="p">.</span><span class="py">boundaryWarnings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">table</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span>
+<span class="w">        </span><span class="kr">return</span><span class="w"> </span><span class="nv">state</span>
+<span class="w">    </span><span class="kr">end</span>
+<span class="kr">end</span>
 
-function AuraStatePool.release(state)
-    -- 清洗狀態，防止殘留資料污染
-    state.id = nil
-    state.spellID = nil
-    state.name = nil
-    state.icon = nil
-    state.stacks = nil
-    state.active = false
-    state.shown = false
-    wipe(state.timer)
-    wipe(state.source)
-    wipe(state.boundaryWarnings)
+<span class="kr">function</span><span class="w"> </span><span class="nc">AuraStatePool</span><span class="p">.</span><span class="nf">release</span><span class="p">(</span><span class="nv">state</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">-- 清洗狀態，防止殘留資料污染</span>
+<span class="w">    </span><span class="nv">state</span><span class="p">.</span><span class="py">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="nv">state</span><span class="p">.</span><span class="py">spellID</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="nv">state</span><span class="p">.</span><span class="py">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="nv">state</span><span class="p">.</span><span class="py">icon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="nv">state</span><span class="p">.</span><span class="py">stacks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="nv">state</span><span class="p">.</span><span class="py">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="nv">state</span><span class="p">.</span><span class="py">shown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="nf">wipe</span><span class="p">(</span><span class="nv">state</span><span class="p">.</span><span class="py">timer</span><span class="p">)</span>
+<span class="w">    </span><span class="nf">wipe</span><span class="p">(</span><span class="nv">state</span><span class="p">.</span><span class="py">source</span><span class="p">)</span>
+<span class="w">    </span><span class="nf">wipe</span><span class="p">(</span><span class="nv">state</span><span class="p">.</span><span class="py">boundaryWarnings</span><span class="p">)</span>
 
-    AuraStatePool.binSize = AuraStatePool.binSize + 1
-    AuraStatePool.recycleBin[AuraStatePool.binSize] = state
-end
-</code></pre>
+<span class="w">    </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">recycleBin</span><span class="p">[</span><span class="nv">AuraStatePool</span><span class="p">.</span><span class="py">binSize</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">state</span>
+<span class="kr">end</span>
+</code></pre></div>
 
 <h3 id="3">3.秘密價值指數安全防禦</h3>
 <p>在戰鬥中，如果未用驗證的Key對自訂表進行索引，一旦該Key為秘密值，Lua就會發生致命的崩潰。
@@ -641,7 +641,7 @@ end
 <hr />
 <h2 id="1210">四、12.1.0模組化目錄結構預期</h2>
 <p>12.1.0的重構將進一步優化模組結構，如下所示：</p>
-<pre class="codehilite"><code class="language-text">EventAlertMod/
+<div class="codehilite"><pre><span></span><code>EventAlertMod/
 ├── Core/
 │   ├── EventRouter.lua      (單一事件分派器)
 │   └── Scheduler.lua        (集中式 OnUpdate 排程器，驅動 Track B)
@@ -656,7 +656,7 @@ end
 │   └── Options.lua          (設定面板，防戰鬥 Taint)
 └── Locale/
     └── Common.lua           (語系註冊入口，無熱路徑消耗)
-</code></pre>
+</code></pre></div>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>

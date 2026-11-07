@@ -548,38 +548,38 @@
 </ul>
 <h2 id="savedvariables">舊 SavedVariables 遷移</h2>
 <p>舊版輸入：</p>
-<pre class="codehilite"><code class="language-lua">EA_Config
-EA_Position
-EA_Items
-EA_AltItems
-EA_TarItems
-EA_ScdItems
-EA_GrpItems
-EA_Pos
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nv">EA_Config</span>
+<span class="nv">EA_Position</span>
+<span class="nv">EA_Items</span>
+<span class="nv">EA_AltItems</span>
+<span class="nv">EA_TarItems</span>
+<span class="nv">EA_ScdItems</span>
+<span class="nv">EA_GrpItems</span>
+<span class="nv">EA_Pos</span>
+</code></pre></div>
 
 <p>目標遷移：</p>
-<pre class="codehilite"><code class="language-js">EventAlertModDB = {
-  schemaVersion: 1,
-  profile: {
-    display: {},
-    behavior: {},
-    alerts: {
-      playerAuras: [],
-      targetAuras: [],
-      spellCooldowns: [],
-      itemCooldowns: [],
-      groupAlerts: []
-    },
-    layout: {}
-  },
-  migration: {
-    fromLegacy: true,
-    sourceKeys: [],
-    warnings: []
-  }
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nx">EventAlertModDB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">schemaVersion</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">profile</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">display</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">    </span><span class="nx">behavior</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">    </span><span class="nx">alerts</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">playerAuras</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">      </span><span class="nx">targetAuras</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">      </span><span class="nx">spellCooldowns</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">      </span><span class="nx">itemCooldowns</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">      </span><span class="nx">groupAlerts</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">layout</span><span class="o">:</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">migration</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">fromLegacy</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">sourceKeys</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">    </span><span class="nx">warnings</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>確信的目標變數名稱被重寫決定。如果舊變數名稱
 為了相容性，它們仍然需要架構標記和遷移狀態。</p>

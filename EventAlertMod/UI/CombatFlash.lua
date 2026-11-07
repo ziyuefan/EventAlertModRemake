@@ -19,11 +19,91 @@ local _, EAM = ...
 EAM.UI = EAM.UI or {}
 
 local api = EAM.API or {}
+local Util = EAM.Util
+local function isSafeNumber(v)
+    if Util and Util.isSafeNumber then
+        return Util.isSafeNumber(v)
+    end
+    return type(v) == "number" and not (Util and Util.isSecretValue and Util.isSecretValue(v))
+end
+
 local CombatFlash = {
     frame = nil,
     animGroup = nil,
+    spiritFrame = nil,
+    spiritAnimGroup = nil,
 }
 EAM.UI.CombatFlash = CombatFlash
+
+local function createSpiritFlashFrame()
+    if CombatFlash.spiritFrame then
+        return CombatFlash.spiritFrame
+    end
+
+    local parent = _G.UIParent
+    if not parent then return nil end
+
+    local frame = api.CreateFrame and api.CreateFrame("Frame", "EAM_SpiritActiveFlashFrame", parent)
+    if not frame then return nil end
+
+    frame:SetAllPoints(parent)
+    frame:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame:EnableMouse(false)
+    frame:Hide()
+
+    local texture = frame:CreateTexture(nil, "BACKGROUND")
+    texture:SetAllPoints(frame)
+    local texPath = "Interface\\FullScreenTextures\\LowHealth"
+    texture:SetTexture(texPath)
+    texture:SetBlendMode("ADD")
+    texture:SetVertexColor(0.15, 0.65, 1.00, 0.80)
+    frame.texture = texture
+
+    if frame.CreateAnimationGroup then
+        local ag = frame:CreateAnimationGroup()
+        local a1 = ag:CreateAnimation("Alpha")
+        a1:SetFromAlpha(0)
+        a1:SetToAlpha(0.80)
+        a1:SetDuration(0.15)
+        a1:SetOrder(1)
+
+        local a2 = ag:CreateAnimation("Alpha")
+        a2:SetFromAlpha(0.80)
+        a2:SetToAlpha(0)
+        a2:SetDuration(0.70)
+        a2:SetOrder(2)
+
+        ag:SetScript("OnFinished", function()
+            frame:Hide()
+        end)
+        CombatFlash.spiritAnimGroup = ag
+    end
+
+    CombatFlash.spiritFrame = frame
+    return frame
+end
+
+function CombatFlash.triggerSpiritActive()
+    local frame = createSpiritFlashFrame()
+    if frame then
+        frame:Show()
+        if CombatFlash.spiritAnimGroup then
+            CombatFlash.spiritAnimGroup:Stop()
+            CombatFlash.spiritAnimGroup:Play()
+        else
+            frame:SetAlpha(0.80)
+            if _G.C_Timer and _G.C_Timer.After then
+                _G.C_Timer.After(0.7, function()
+                    if frame then frame:Hide() end
+                end)
+            else
+                frame:Hide()
+            end
+        end
+        return true, "spiritCustom"
+    end
+    return false, "unavailable"
+end
 
 local function createFlashFrame()
     if CombatFlash.frame then
@@ -196,13 +276,13 @@ local function onHealthUpdate(unit)
     local alpha = 0
     if _G.UnitHealthPercent and CombatFlash.healthCurve then
         local ok, val = pcall(_G.UnitHealthPercent, "player", true, CombatFlash.healthCurve)
-        if ok and type(val) == "number" then
+        if ok and isSafeNumber(val) then
             alpha = val
         end
     elseif _G.UnitHealth and _G.UnitHealthMax then
         local cur = _G.UnitHealth("player")
         local maxH = _G.UnitHealthMax("player")
-        if cur and maxH and maxH > 0 then
+        if isSafeNumber(cur) and isSafeNumber(maxH) and maxH > 0 then
             local pct = cur / maxH
             if CombatFlash.healthCurve then
                 alpha = CombatFlash.healthCurve:Evaluate(pct)
@@ -215,7 +295,7 @@ local function onHealthUpdate(unit)
     local frame = CombatFlash.getLowHealthFrame()
     if not frame then return end
 
-    if alpha and alpha > 0.05 then
+    if isSafeNumber(alpha) and alpha > 0.05 then
         frame:Show()
         frame:SetAlpha(math.min(alpha, 0.95))
     else

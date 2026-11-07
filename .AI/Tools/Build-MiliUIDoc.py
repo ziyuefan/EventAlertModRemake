@@ -36,7 +36,7 @@ def build_comparison_html():
         '<details>\n'
         '  <summary>點擊展開</summary>\n'
         '  <div class="details-content">\n'
-        '    <p>EAM 專為 12.0+ / 12.1+ Retail 正式服深度重構，徹底解決傳統法術監控插件沉重、掉幀與報錯污染問題：</p>\n'
+        '    <p>EAM 專為 12.0+ / 12.1+ Retail 正式服與 1.60+ 永恆服深度重構，徹底解決傳統法術監控插件沉重、掉幀與報錯污染問題：</p>\n'
         '    <ol>\n'
         '      <li>\n'
         '        <strong>資源佔用與運行效能</strong>\n'
@@ -46,9 +46,9 @@ def build_comparison_html():
         '        </ul>\n'
         '      </li>\n'
         '      <li>\n'
-        '        <strong>暴雪 12.0+ 終極安全防護</strong>\n'
+        '        <strong>暴雪 12.0+ / 1.60+ 終極安全防護</strong>\n'
         '        <ul>\n'
-        '          <li>❌ <strong>傳統法術監控 / 複雜大型插件</strong>：12.0+ 暴雪引入 Secret Values 後，常常在戰鬥中報錯噴黃字或引發 UI 異常。</li>\n'
+        '          <li>❌ <strong>傳統法術監控 / 複雜大型插件</strong>：12.0+ / 1.60+ 暴雪引入 Secret Values 後，常常在戰鬥中報錯噴黃字或引發 UI 異常。</li>\n'
         '          <li>🛡️ <strong>現代重構版 EventAlertMod (EAM)</strong>：獨家採用原生 C-Level <code>StatusBar:SetValue</code> 直通渲染技術，絕不觸發 Taint 污染。</li>\n'
         '        </ul>\n'
         '      </li>\n'
@@ -117,7 +117,7 @@ def build_visual_experience_html():
         '        </ul>\n'
         '      </li>\n'
         '      <li>🚨 <strong>進入戰鬥紅框閃爍</strong>：提供全螢幕戰鬥進入警示動畫與即時測試按鈕。</li>\n'
-        '      <li>📦 <strong>Profile 設定檔跨角色分享</strong>：支援 8 大分類自選項目匯出／匯入（EAMAP1 JSON / Base64 編碼），附防禦性白名單校驗。</li>\n'
+        '      <li>📦 <strong>Profile 設定檔跨角色分享</strong>：支援 8 大分類自選項目匯出／匯入（EAMAP1 / EAMAP2 JSON 與 Base64 編碼，支援跨版本向後相容與 EAMAP2 原生壓縮），附防禦性白名單校驗。</li>\n'
         '      <li>🌐 <strong>完整多國語系支援</strong>：繁體中文 (zhTW - 嚴格對齊台灣官方術語：致命、加速、臨機應變)、簡體中文 (zhCN)、英文 (enUS)、韓文 (koKR)、俄文 (ruRU)。</li>\n'
         '    </ul>\n'
         '  </div>\n'
@@ -257,6 +257,7 @@ def build_installation_html():
         '      <li>解壓縮後將 <code>EventAlertMod</code> 資料夾放置於魔獸世界安裝目錄：\n'
         '        <ul>\n'
         r'          <li>正式服路徑：<code>World of Warcraft\_retail_\Interface\AddOns\EventAlertMod</code></li>' + '\n'
+        r'          <li>永恆服路徑：<code>World of Warcraft\_forever_\Interface\AddOns\EventAlertMod</code></li>' + '\n'
         '        </ul>\n'
         '      </li>\n'
 
@@ -382,12 +383,12 @@ def main():
         elif spoiler_idx == 7:
             return build_installation_html()
         # 區塊 30: 相容性與支援邊界
-        elif spoiler_idx == 30:
-            return build_compatibility_html()
-        # 區塊 31: 說明文件與相關連結
         elif spoiler_idx == 31:
+            return build_compatibility_html()
+        # 區塊 32: 說明文件與相關連結
+        elif spoiler_idx == 32:
             return build_docs_links_html()
-        # 區塊 8~29: 版本更新歷史 Changelog
+        # 區塊 8~30: 版本更新歷史 Changelog
         else:
             return convert_changelog_spoiler(inner)
 
@@ -418,10 +419,10 @@ def main():
     ol_count = len(re.findall(r'<ol[\s>]', final_html))
     code_count = len(re.findall(r'<code[\s>]', final_html))
 
-    assert details_count == 31, f"Expected 31 details, got {details_count}"
-    assert details_end_count == 31, f"Expected 31 closing details, got {details_end_count}"
-    assert summary_count == 31, f"Expected 31 summaries, got {summary_count}"
-    assert details_content_count == 31, f"Expected 31 details-content, got {details_content_count}"
+    assert details_count == 32, f"Expected 31 details, got {details_count}"
+    assert details_end_count == 32, f"Expected 31 closing details, got {details_end_count}"
+    assert summary_count == 32, f"Expected 31 summaries, got {summary_count}"
+    assert details_content_count == 32, f"Expected 31 details-content, got {details_content_count}"
     assert len(remaining_tables) == 0, f"Expected 0 tables, got {len(remaining_tables)}"
     assert remaining_spoilers == 0, f"Expected 0 spoilers, got {remaining_spoilers}"
     assert remaining_slashes == 0, f"Expected 0 self-closing slashes, got {remaining_slashes}"

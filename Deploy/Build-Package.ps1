@@ -1,4 +1,4 @@
-<# EAM_FILE_COMMENTARY
+﻿<# EAM_FILE_COMMENTARY
 EventAlertMod Retail Rewrite
 檔案: Deploy\Build-Package.ps1
 
@@ -68,7 +68,10 @@ function Get-TocFiles {
         if ($trimmed.Length -eq 0 -or $trimmed.StartsWith("#")) {
             continue
         }
-        $files.Add($trimmed.Replace("\", "/"))
+        $cleanPath = ($trimmed -replace '\s*\[.*$', '').Trim()
+        if ($cleanPath.Length -gt 0) {
+            $files.Add($cleanPath.Replace("\", "/"))
+        }
     }
     return @($files)
 }
@@ -155,7 +158,7 @@ function Test-AddonSource {
     }
 
     $version = Get-TocValue -Key "Version"
-    if ([string]::IsNullOrWhiteSpace($version) -or $version -notmatch '^EventAlertMod_[A-Za-z0-9]+_[0-9]{8}$') {
+    if ([string]::IsNullOrWhiteSpace($version) -or ($version -notmatch '^EventAlertMod_[A-Za-z0-9]+_[0-9]{8}$' -and $version -notmatch '^EventAlertMod_[A-Za-z0-9._-]+$')) {
         throw "TOC Version 格式不符：$version"
     }
 
@@ -229,11 +232,14 @@ function Invoke-PowerShellTool {
         [string[]]$Arguments = @()
     )
 
+    $pwshExe = $null
     $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
-    if (-not $pwsh) {
-        throw "需要 PowerShell 7 (pwsh)：$ScriptPath"
+    if ($pwsh -and (Test-Path -LiteralPath $pwsh.Source) -and (Get-Item $pwsh.Source).Length -gt 0) {
+        $pwshExe = $pwsh.Source
+    } else {
+        $pwshExe = (Get-Process -Id $PID).Path
     }
-    & $pwsh.Source -NoProfile -File $ScriptPath @Arguments
+    & $pwshExe -NoProfile -File $ScriptPath @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "工具失敗（exit $LASTEXITCODE）：$ScriptPath"
     }

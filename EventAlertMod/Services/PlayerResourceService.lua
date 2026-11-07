@@ -940,7 +940,8 @@ function PlayerResourceService.rebuildTopology(reason)
     PlayerResourceService.classToken = classToken
     PlayerResourceService.specializationID = specializationID
 
-    local resourceKeys = classToken and Catalog.getSpecResourceKeys(classToken, specializationID) or nil
+    local getCandidateFn = Catalog.GetFlavorCandidateKeys or Catalog.getSpecResourceKeys
+    local resourceKeys = classToken and getCandidateFn(classToken, specializationID) or nil
     if not resourceKeys then
         PlayerResourceService.lastResultClass = "classTopologyUnavailable"
         return false, "classTopologyUnavailable"

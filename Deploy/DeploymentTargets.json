@@ -27,6 +27,14 @@
       "roleLabel": "舊版公開測試服",
       "executable": "WowT.exe",
       "showVersionInMenu": true
+    },
+    {
+      "key": "forever",
+      "directory": "_forever_",
+      "displayName": "Forever",
+      "roleLabel": "永恆服",
+      "executable": "Wow.exe",
+      "showVersionInMenu": true
     }
   ]
 }

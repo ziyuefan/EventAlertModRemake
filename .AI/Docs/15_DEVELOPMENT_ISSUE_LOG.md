@@ -1,3 +1,180 @@
+### 2026-11-08 EAM-20261108-CURATION-ALPHA-8.9-DOCS-AND-MULTI-PLATFORM-RELEASE：Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步、MiliUI 奇樂 HTML5 重構與三平台發布產物整備
+
+- 狀態：已完成 (全平台發布文件無 AI 治理污染，15 大奇樂契約驗證通過，五大門檻 100% 綠燈)。
+- 需求背景與策展目標：
+  依據系統總架構師 Argon 工單 `EAM-ALPHA-8.9-DOCS-AND-RELEASE-CURATION`，將 Alpha 8.9（Retail 12.1.5 & Forever 1.60.1，2026.11.08）重大架構與功能變更全面同步至專案所有公開與治理文檔，產出三平台（GitHub / CurseForge / 奇樂 MiliUI）發布產物，嚴格執行「零 AI 治理污染防線」與「修改前強制備份 (鐵律 R5)」，並完成五大離線門檻驗證。
+- 落地成果與變更矩陣：
+  1. **雙語更新日誌同步 (changelog.txt / changelog_en.txt / changelog.md / changelog.html)**：
+     - 更新標頭為 `[Retail][Forever][MN 12.1.5][1.60.1][Alpha 8.9] 2026.11.08`；
+     - 淨化第 79 與 86 行為純玩家視角描述，消除內部部署腳本名稱；
+     - 根目錄與 `EventAlertMod/` 雙端檔案 SHA-256 100% 完全一致；
+     - `changelog.md` 與 `changelog.html` 完美整合 1.60.1 永恆服專用徽章 (`badge-classic`)。
+  2. **雙語說明文檔更新 (README.md / README_en.md)**：
+     - 更新模組 7（Forever 經典 60 級 9 大職業資源拓撲）與模組 8（五大魔法抗性、精神 5SR 雙數值提醒與動態藍光閃爍）；
+     - 安裝說明補齊永恆服路徑 `World of Warcraft\_forever_\Interface\AddOns\EventAlertMod`；
+     - 更新相容性邊界納入 `Forever 1.60.1+ (Interface 16001)`，跨目錄雙端 SHA-256 完全一致。
+  3. **CurseForge 專案說明文件 (Deploy/CURSEFORGE-DESCRIPTION.md)**：
+     - 全文嚴格遵循 HTML5 規範，0 自閉合斜線，保留全部 14 張 Forge CDN 圖片；
+     - 收錄 32 個 spoiler 展開區塊（Alpha 8.9 spoiler 嚴格採 `&bull;&nbsp;` + `<br><br>`，0 `<ul>/<ol>/<li>` 表格過濾防禦）。
+  4. **奇樂 (MiliUI / WoWbox) 純 HTML5 說明檔 (Build-MiliUIDoc.py)**：
+     - 升級 `.AI/Tools/Build-MiliUIDoc.py`，適配 32 details 區塊與雙路徑安裝說明；
+     - 自動產出 `addons_miliui_eventalertmod.html` 與 `Deploy/addons_miliui_eventalertmod.html`，通過 15 大契約斷言，根目錄與 Deploy 雙端 SHA-256 完全對齊。
+  5. **雙平台發布筆記草稿 (Dist/RELEASE_NOTES_Alpha_8.9.md & Dist/GITHUB_RELEASE_NOTES_alpha-8.9.md)**：
+     - 產出 CurseForge API 雙語發布筆記與 GitHub Release GFM 發布文案；
+     - 嚴格通過「零 AI 治理字眼」安全掃描，零內部腳本名稱與測試計數。
+  6. **專案連續性資料與靜態網站更新**：
+     - `ProjectContinuity.json` 更新 `snapshotVersion` 為 `"2026-11-08.02"` 並嚴格維持 `supportedClients` 三元素陣列；
+     - `batch_convert_docs.py` 完成離線文件網站 HTML 編譯。
+- 驗證結果：
+  - 15 大奇樂契約斷言全數 PASS；
+  - 跨目錄 4 組 8 檔案 SHA-256 100% 對齊；
+  - 發布文檔零 AI 治理污染防線 100% 綠燈。
+
+### 2026-11-08 EAM-20261108-HOTFIX-FOREVER-SECRET-VALUES-SPELL-RANK-RESISTANCES-SPIRIT-5SR：Forever 1.60.1 秘密數值 (Secret Values) 崩潰根治、全鏈路法術等級 (Spell Rank) 展開、五大魔法抗性與精神 5 秒規則 (5SR) 狀態機實裝
+
+- 狀態：已完成 (21 大深層測試套件全數通過，Run-FlowValidation 110/110 通過，Test-ValidationContracts 502/502 通過，Build-Package DryRun PASS)。
+- 問題分析 (5 Whys Root Cause Analysis)：
+  1. **為什麼永恆服玩家戰鬥中頻繁報錯？**
+     因為在 `SPELL_UPDATE_COOLDOWN`、`UNIT_SPELLCAST_SUCCEEDED` 與 `UNIT_AURA` 觸發時，Lua 分別拋出 `attempt to compare local 'locDur' (a secret number value)` 與 `attempt to perform boolean test on field 'isFullUpdate' (a secret boolean value)` 致命異常。
+  2. **為什麼會在戰鬥中出現 Secret Number 與 Secret Boolean？**
+     因為《World of Warcraft: Forever 1.60.1》底層採用暴雪現代 Retail 12.x C++ UI 引擎與受保護秘密數值 (Secret Values) 架構；在戰鬥中，`C_Spell.GetSpellLossOfControlCooldownInfo` 的 `duration` 為 Secret Number，`UNIT_AURA` 的 `updateInfo.isFullUpdate` 為 Secret Boolean。
+  3. **為什麼一般 Lua 的 `type()` 與 `Util.readSafeField` 無法防禦？**
+     在現代 C++ Secret 機制中，Secret Number 的 `type(val) == "number"` 與 Secret Boolean 的 `type(val) == "boolean"` 依然為 `true`，直接做 `> 0` 或 `if boolVal then` 會立即遭 C++ 引擎拋錯阻擋；而 `Util.readSafeField` 內部呼叫 `hasanysecretvalues(table)`，只要回傳表中有一個 Secret 欄位（如 duration），整張表會被否決，導致安全欄位（如 NeverSecret 的 `isActive`）無法被讀取。
+  4. **為什麼光環容器與職業資源沒有走入現代引擎管線？**
+     因為既有閘門只允許 `interface >= 120100`，永恆服的 `Interface: 16001` 被誤判為舊版客戶端，導致能力被拒絕；而 XPTR `120007` 離線契約必須繼續維持 Legacy，不能誤開 Native。
+  5. **根本原因 (Root Cause)：**
+     缺少統一現代引擎判斷函式 `EAM.isModernEngineInterface`；缺少零閉包單欄位萃取函式 `Util.readStructuredField`；缺少永恆服法術技能等級多階映射與精神 5 秒回魔 (5SR) 狀態機。
+- 修復架構與落地內容：
+  1. **核心秘密數值防禦 (Core/Env.lua, Core/Util.lua, Services/CooldownService.lua, Services/AuraService.lua, UI/CombatFlash.lua, Lib/LibButtonGlow-1.0.lua)**：
+     - 新增 `EAM.isModernEngineInterface(interfaceVersion)`，支援 120100+ 與 16000..19999 (Forever 16001)，並保證 XPTR 120007 繼續維持 Legacy 模式；
+     - 新增零閉包 `Util.readStructuredField(source, key, warnings, warningCode)`，以安全索引個別萃取欄位，規避整表 `hasanysecretvalues` 否決陷阱；
+     - `CooldownService.lua`：優先依據官方 NeverSecret 欄位 `isActive` 與 `shouldReplaceNormalCooldown` 判定失控冷卻，數值比較一律經 `isSafePositiveNumber` 檢定，並支援 `DurationObject` 雙軌安全降級；
+     - `AuraService.lua`：以 `readStructuredField` 萃取 `isFullUpdate` 與增量增刪改清單；
+     - `CombatFlash.lua` & `LibButtonGlow-1.0.lua`：血量百分比計算與按鈕發光倒數時間嚴格受 `isSafeNumber` 守護，新增 `CombatFlash.triggerSpiritActive()`。
+  2. **永恆服法術等級全鏈路管理 (Services/SpellRankService.lua, Data/Forever/ForeverCatalog.lua, Managers/AuraRuleCompiler.lua, Services/GroundEffectService.lua, UI/Options.lua)**：
+     - 新增 `SpellRankService` 與 9 大職業經典多等級家族目錄 `FOREVER_SPELL_RANK_FAMILIES`；
+     - 當 `not EAM.isForever` 時 O(1) 短路回傳，Retail 12.1.5 零耗損零影響；
+     - 當 `EAM.isForever` 時，將同一法術所有等級展開至原生光環容器 `candidateFilters.includeSpellIDs = { [r1]=true, [r2]=true, ... }`，暴雪原生容器自動匹配任意等級，無重複圖示，且升級降階施法無需重設 ID；
+     - 地面效果 `GroundEffectService` 與選項介面 `Options.lua` 支援等級 subtext 顯示。
+  3. **永恆服五大抗性監控 (ForeverCatalog.lua, Services/PlayerStatService.lua, UI/PlayerStatPanel.lua & 5 Locales)**：
+     - 完整收錄秘法、火焰、冰霜、自然、暗影五大抗性，調用 `UnitResistance("player", damageClass)` 以 `effectiveRes` 為核心顯示，支援自訂警戒紅框與進度條；
+     - 5 大語系 (`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU`) 詞條 100% 同步對齊。
+  4. **永恆服精神 5 秒規則 (5SR) 狀態機、MP5/HP5 雙恢復提醒與 Active 動畫 (PlayerStatService.lua, PlayerStatPanel.lua, CombatFlash.lua)**：
+     - 精確監聽 `UNIT_SPELLCAST_SUCCEEDED` 與 `UNIT_POWER_UPDATE`，解析 `C_Spell.GetSpellPowerCost` 之法力消耗，觸發 5 秒回魔抑制視窗；
+     - 整合 `GetManaRegenFromSpirit() * 5` (MP5) 與 `GetHealthRegenFromSpirit() * 0.75 * 5` (HP5)；
+     - 支援 `FULL`、`REGEN_ONLY`、`STAT_ONLY` 三種數值呈現，無圖示模式下自動自適應寬度 `math.max(size * 2.8, 128)`；
+     - 支援 Active 圖示發光邊框動畫、無圖示文字 1.32x 放大與 1.45x 脈衝彈跳、以及可選全螢幕寶石藍邊框脈衝動畫。
+  5. **部署自動化與除錯診斷中心升級 (Deploy/Deploy-EventAlertMod.ps1, Debug/DebugCenterPanel.lua, RuntimeProbe.lua, ValidationEnvironment.lua, LiveTestPanel.lua)**：
+     - `Deploy-EventAlertMod.ps1`：支援多候選執行檔偵測 (WowClassic.exe / Wow.exe)，動態顯示 [1]~[4] 通道選單支援 Forever WTF 獨立備份與還原；
+     - 診斷中心、提示詞匯出、執行期探針與實機簽收面板全面適配 Forever 1.60.1。
+- 驗證結果：
+  - `test_native_apis.py`：21 大深層測試套件全數通過 (`ALL 21 DEEP TEST SUITES PASSED WITH ZERO ERRORS!`)。
+  - `Run-FlowValidation.ps1 -Suite all`：110/110 全數通過 (`FLOW_VALIDATION suite=all total=110 passed=110 failed=0`)。
+  - `Test-ValidationContracts.ps1`：502/502 全數通過 (`VALIDATION_CONTRACTS passed=502 failed=0`)。
+  - `Build-Package.ps1 -DryRun -SkipFlowValidation`：PASS (`LUA_SYNTAX scope=addon passed=80 failed=0`)。
+  - `Deploy-EventAlertMod.ps1 -Action Forever -DryRun`：PASS。
+  - `Deploy-EventAlertMod.ps1 -Action Backup -Channel Forever -DryRun`：PASS。
+
+### 2026-11-04 EAM-20261104-ALPHA-8.9-FOREVER-1.60.1-DUAL-FLAVOR-INTEGRATION：World of Warcraft: Forever 1.60.1 (Interface 16001) 雙版本統一架構、經典 60 級職業資源拓樸與專屬屬性監控支援
+
+- 狀態：已完成 (16 大深層測試套件全數通過，ValidationContracts 502/502 通過，Package DryRun PASS)。
+- 需求背景與改造架構：
+  依據《World of Warcraft: Forever》（永恆版本，Flavor: forever，版本 1.60.1，Interface: 16001，Build: 70450，WOW_PROJECT_CAMELOT = 18）之架構調研與指示，EventAlertMod 全面升級為單一插件資料夾 + 單一 TOC 內聯條件載入之雙版本統一相容架構，達成零程式碼重複維護、零效能損耗與 100% 業務隔離：
+  1. **資料層與資源拓樸 (Data/Forever/ForeverCatalog.lua & PlayerResourceCatalog.lua)**：
+     - 建立 `ForeverCatalog.lua`，提供經典 60 級 9 大職業資源拓樸（獵人法力/寵物集中值、術士法力/靈魂碎片、德魯伊四形態切換、盜賊能量/連擊點、戰士怒氣等）；
+     - 註冊經典專屬人物屬性定義（`SPIRIT_MANA_REGEN` 精神回魔五秒規則、`DEFENSE_SKILL` 防禦技能、`PET_HAPPINESS` 獵人寵物快樂度/忠誠度、`AMMO_STATUS` 遠程彈藥需求警報、`ARMOR_PENETRATION` 護甲穿透）；
+     - 提供 9 大職業經典核心法術預設警報（`FOREVER_DEFAULT_ALERTS`）與啟發式規則（`FOREVER_SPELL_HEURISTICS`，支援法術等級 Rank、閃躲後壓制、招架後還擊、20% 血量斬殺）；
+     - 於 `PlayerResourceCatalog.lua` 擴充 `Catalog.GetFlavorCandidateKeys`，在 `EAM.isForever` 下自動切換為經典 60 級資源拓樸，保持既有 17 個資源定義與 40 個專精拓樸完全相容。
+  2. **核心環境與常數 (Core/Env.lua, Core/Constants.lua & EventAlertMod.toc)**：
+     - 於 `Env.lua` 實作權威雙版本偵測函式 `EAM.detectGameFlavor()`：判斷 `WOW_PROJECT_ID == 18` 或 `tocversion` 介於 16000..19999 時自動設定 `EAM.isForever = true`、`EAM.isRetail = false`、`EAM.gameFlavor = "FOREVER"`；
+     - 於 `EAM.API` 綁定 Forever 專屬 API（`GetManaRegenFromSpirit`, `GetHealthRegenFromSpirit`, `UnitDefenseSkill`, `C_PetInfo`, `C_SwingTimer`, `C_SkillInfo`, `C_PaperDollInfo`）；
+     - 於 `Constants.lua` 定義 `INTERFACE_16001 = 16001`、`FOREVER_INTERFACE = 16001`、`WOW_PROJECT_CAMELOT = 18`、`FOREVER_COMPATIBILITY_LABEL = "Forever 1.60.1"`；
+     - 於 `EventAlertMod.toc` 更新標頭 `## Interface: 120007, 120100, 120105, 16001`、新增 `## AllowLoadGameType: standard, forever, camelot` 與 `## ExcludeLoadGameType: classic`，並以條件式標籤掛載 `Data\Forever\ForeverCatalog.lua`。
+  3. **業務邏輯層升級 (Services/PlayerStatService.lua, ItemCooldownService.lua, SpellInfoService.lua & UI/AboutPanel.lua)**：
+     - `PlayerStatService.lua` 支援採樣與呈現 4 大經典專屬屬性，並依版本動態切換 `ORDERED_KEYS`，在 Forever 下過濾滑翔速度與精通等現代屬性；
+     - 5 語系 Locale 同步新增 4 組屬性字串；
+     - `ItemCooldownService.lua` 防禦性相容 `C_Spell.GetItemCooldown` 與 `GetItemCooldown`；
+     - `SpellInfoService.lua` 新增 `SpellInfoService.isSpellBookItemLowRank` 並優先參考 `ForeverCatalog.GetSpellHeuristics`；
+     - `AboutPanel.lua` 動態適配顯示當前客戶端之相容性標籤與 API 基準；
+     - `ValidationEnvironment.lua` 新增 `_forever_` profile 與動態目標介面判定。
+  4. **部署與打包自動化升級 (Deploy/)**：
+     - `Deploy/DeploymentTargets.json` 新增 `forever` 目標通道；
+     - `Deploy/Deploy-EventAlertMod.ps1` 支援 `Forever` 獨立通道、狀態查詢、WTF 存檔備份還原；
+     - `Deploy/Build-Package.ps1` 的 `Get-TocFiles` 支援去除 TOC 內聯條件標籤，並放寬版本格式相容；
+     - `Deploy/Upload-CurseForge.ps1` 支援 multi-flavor 遊戲版本多版本標籤上傳。
+- 驗證結果：
+  - `test_native_apis.py`：16 大深層測試套件全數通過 (83 個 Lua 檔案語法與區塊深度完全平衡)。
+  - `Test-ValidationContracts.ps1`：502/502 契約全數通過 (`passed=502 failed=0`)。
+  - `Build-Package.ps1 -DryRun`：PASS (`PACKAGE_DRY_RUN=pass`，TOC 與檔案對齊 100%)。
+
+### 2026-10-23 EAM-20261023-ALPHA-8.9-RETAIL-12.1.5-NATIVE-AURA-AND-PERFORMANCE-REFACTORING：Retail 12.1.5+ 原生光環進度條 (SetApplicationBar/SetDurationBar)、Pandemic 三態呼吸動畫、TimedSignalMap、音訊防洪節流與 4K 視網膜級像素對齊大改造
+
+- 狀態：已完成 (15 大深層測試套件全數通過，CheckLuaSyntax 80/80 通過，Run-FlowValidation 110/110 滿分通過，ValidationContracts 502/502 通過，Package DryRun PASS)。
+- 需求背景與改造架構：
+  依據《EventAlertMod 12.1.5+ 原生光環與底層效能大改造實作計畫書》，將 12.1.5 PTR API 變更研究成果完整落地至 EventAlertMod，實現極致輕量、零污染、視網膜級清晰度的現代化戰鬥警報體驗：
+  1. **UI/NativeAuraRenderer.lua (P0)**：
+     - 實裝 `CustomAuraButton:SetApplicationBar(bar, options)` 與 `CustomAuraButton:SetDurationBar(bar)` 原生雙條渲染管線；
+     - 注入 `interpolation = Enum.StatusBarInterpolation.ExponentialEaseOut` 平滑緩動選項，並於 `bar.SetInterpolation` 存在時安全調用；
+     - 採用頂底互斥排版（層數條錨定於頂部 `TOPLEFT/TOPRIGHT`、持續時間條錨定於底部 `BOTTOMLEFT/BOTTOMRIGHT`，高度均為 4px），文字倒數與計量圖形互不干擾；
+     - 支援層數自訂上限 (`applicationBarMax: 1~20`) 與原生門檻過濾 (`applicationBarMin / minApplications`)；舊版或不支援環境自動降級為傳統純文字疊層 (`SetApplicationCount`)；
+     - 原生三態呼吸動畫升級：實裝進窗單次彈性放大 (`AddPandemicEnterAnimation`，縮放 1.15，`OUT` 緩動)、窗口期循環心跳呼吸 (`AddPandemicActiveAnimation`，BOUNCE 循環，透明度 0.65~1.0，縮放 1.0~1.04，`IN_OUT` 緩動) 與還原平滑淡出 (`AddPandemicLeaveAnimation`，縮放 1.0，`IN` 緩動)；
+     - 原生生命週期動畫升級：實裝 `AddAuraShownAnimation` (淡入 0.2~1.0，`OUT` 緩動) 與 `AddAuraAssignedAnimation` (微彈 1.08，`OUT` 緩動)；
+     - 4K 物理像素對齊：在 `initializeButton` 中對 `auraButton`、`applicationBar`、`durationBar`、各文字物件全面套用 `Util.snapToPixels`；
+     - 於 `getStatus()` 公開 4 項全新能力與計數指標：`nativeApplicationBarCapabilityCount`、`applicationBarBoundCount`、`nativeDurationBarCapabilityCount`、`durationBarBoundCount`。
+  2. **Core/Scheduler.lua & UI/Renderer.lua (P0)**：
+     - 擴展 `Scheduler.hasNativeSignalMap` 與 `Scheduler.createSignalMap` 能力檢定：同步偵測暴雪 FrameXML 原生 `TimerUtil.CreateTimedSignalCallbackMap` 與 `C_Timer.CreateTimedSignalCallbackMap` 以及 `C_Timer.NewTimedSignalMap`；
+     - 深度接入 `UI/Renderer.lua`：在圖示倒數計時中實裝 `Renderer.getAlertSignalMap` 鍵值排程 (`signalMap:SignalAt(alertKey, expirationTime)`) 與 `signalMap:Cancel(alertKey)`，杜絕頻繁建立/失效 Token 物件引發的 Lua GC 負擔，在無原生排程器環境平滑切換至零分配狀態機後備。
+  3. **UI/PowerRenderer.lua (P0)**：
+     - 在 `createResourceFrame` 中對 `container`、`icon`、`statusBar`、`background`、`label`、`valueText`、`glow`、19 道 `markers`、20 格 `slotBars` 全面實裝 `Util.snapToPixels`，消除高解析度下分割線與邊框發虛或粗細不均；
+     - 嚴格維持零污染安全契約：無任何 `GetValue(`、`GetMinMaxValues(`、`SetScript("OnUpdate"` 或 `string.format`。
+  4. **Core/SavedVariables.lua & UI/Options.lua (P0)**：
+     - 在 `defaults.config` 擴充並標準化 `showApplicationBar` (預設 true)、`applicationBarMax` (預設 5)、`applicationBarMin` (預設 1)、`showDurationBar` (預設 false)、`audioThrottle` (預設 0.3)；
+     - 消除重複方法定義瑕疵，統一維護單一權威性 `SavedVariables.updateApplicationBarSettings` 與 `SavedVariables.updateAudioThrottle`；
+     - 在 `Options.lua` Tab 5 加入層數進度條開關、上下限門檻滑桿、持續時間條開關與音訊防洪節流滑桿。
+  5. **Managers/AuraRuleCompiler.lua & Services/AuraSoundService.lua (P0)**：
+     - 在 `collectAlerts` 完整收集單項光環自訂 `showApplicationBar`、`applicationBarMax`、`applicationBarMin`、`showDurationBar`，並於 `buildBaseRule` 具備全域 `config` 預設回退；
+     - 在 `buildVisualFingerprint` 與 `buildContainerFingerprint` 全面納入雙條樣式特徵，保證設定變更時立即觸發 Native 容器安全重建；
+     - 在 `AuraSoundService.lua` 完善 `throttleSeconds` 解析順序：單項音效設定 -> 光環規則 -> 全域 `EAM.db.config.audioThrottle` -> 預設 0.3s，並鉗制於 `[0.05, 5.0]` 範圍。
+  6. **Core/Env.lua (P1)**：
+     - 於 `EAM.API` 公開 `PixelUtil`、`TimerUtil`、`StatusBarInterpolation`，確保沙盒離線測試與正式服模組取用之一致性。
+  7. **Debug/FlowTestRunner.lua (P0)**：
+     - 擴充第 110 項流程驗證案例 `aura.1215_native_aura_and_timed_signal_map`，涵蓋 SetApplicationBar / SetDurationBar 綁定、Pandemic 三態動畫、音訊防洪節流與 TimedSignalMap 零記憶體配置重排程。
+  8. **Locale (P0)**：
+     - 全 5 語系 (`zhTW.lua`, `zhCN.lua`, `enUS.lua`, `koKR.lua`, `ruRU.lua`) 同步新增 6 個新詞條 (`EAM_OPT_APPLICATION_BAR_MAX`, `EAM_OPT_APPLICATION_BAR_MIN`, `EAM_OPT_AUDIO_THROTTLE`, `EAM_OPT_AUDIO_THROTTLE_TIP`, `EAM_OPT_AURA_DURATION_BAR`, `EAM_OPT_AURA_DURATION_BAR_TIP`)。
+- 驗證結果：
+  - `CheckLuaSyntax.ps1`：80/80 通過 (含 Python 15 大深層測試套件全綠)。
+  - `Run-FlowValidation.ps1`：110/110 滿分通過 (`passed:110,failed:0,skipped:0,pending:0`)。
+  - `Test-ValidationContracts.ps1`：502/502 契約全數通過 (`passed=502 failed=0`)。
+  - `Build-Package.ps1 -DryRun`：PASS (`PACKAGE_DRY_RUN=pass`，完整執行全部 gate)。
+
+### 2026-10-23 EAM-20261023-ALPHA-8.8-RETAIL-12.1-NATIVE-API-INTEGRATION：Retail 12.1+ 六大原生 API 深度適配與防禦性封裝 (C_EncodingUtil, C_CurveUtil, C_AddOnProfiler, C_CombatAudioAlert, LoC Cooldown, HealPredictionCalculator)
+
+- 狀態：已完成 (9 大單元測試套件全數通過，CheckLuaSyntax 78/78 通過，Package DryRun PASS)。
+- 需求背景與改造架構：
+  針對魔獸世界 Retail 12.1+ 原生 C++ / 引擎層 API 進行深層適配與無污染防禦性封裝，涵蓋六大模組：
+  1. **Core/Util.lua & Core/ProfileCodec.lua (P0)**：
+     - `Util.compressString` / `Util.decompressString`：優先調用 `C_EncodingUtil.CompressString` / `DecompressString` 與 `Deflate` / `Inflate` 原生 C++ 壓縮；內建純 Lua RFC 1951 Deflate uncompressed blocks (BTYPE=00) 回退機制，可與 zlib / RFC 1950 完全互通；解壓縮失敗時嚴格向外傳播錯誤而非回傳損毀二進位 raw passthrough。
+     - `Util.serializeJSON` / `Util.deserializeJSON`、`Util.serializeCBOR` / `Util.deserializeCBOR`：安全原生封裝與回退。
+     - `ProfileCodec` 升級支援全新 `EAMAP2:` 格式（原生壓縮 + Base64），壓縮率達 60%~75%，大幅減少字串長度與聊天字元截斷風險；雙向相容舊版 `EAMAP1:` 解碼；實作 `Codec.importProfile` 高階進入點。修復 `compareRecord` 中 `id` 全域未定義變數漏洞（導致比對永遠返回 `"add"`），以及 `exportProfile` 多重賦值被 `"fallback"` 覆蓋之瑕疵。
+  2. **Core/Util.lua & UI/Renderer.lua (P0)**：
+     - `Util.evaluateColorFromBoolean` & `Util.evaluateColorValueFromBoolean`：安全封裝 12.1+ `C_CurveUtil` 原生布林色彩轉換。修復 Lua 三元運算式 `a and b or c` 在 `b = false` 時錯誤回傳 `c` 的重大邏輯陷阱，改採顯式 `if/then/else`。
+     - `UI/Renderer.lua`：在圖示材質頂點色彩 (Vertex Color)、灰階 (Desaturation) 與超出射程/不可用 Alpha 計算時全面採用 `evaluateColorValueFromBoolean`，完全避免 Lua 條件分支 (if/then) 直接求值 Secret Boolean 引發的潛在 Taint 污染。修復 `outOfRange` 與 `notUsable` 鏈接互斥錯誤（修正前 `outOfRange == false` 會導致 `notUsable` 被 elseif 略過）。
+  3. **Debug/EngineProfiler.lua & Core/Performance.lua (P1)**：
+     - 新增 `Debug/EngineProfiler.lua`，提供 `EngineProfiler.getMetrics()`、`EngineProfiler.formatSummary()`，安全查詢暴雪原生 `C_AddOnProfiler.GetAddOnMetric("EventAlertMod", ...)`（涵蓋 RecentAverageTime、PeakTime、CountTimeOver1Ms、EncounterAverageTime 等），並於 `EventAlertMod.toc` 中完成註冊。
+     - `Core/Performance.lua` 橋接 `Performance.getEngineProfilerMetrics()`；支援 `/eam metrics` 終端指令輸出。
+  4. **Services/MediaService.lua (P1)**：
+     - 新增 `MediaService.speakTTS(text, category, allowOverlap)` 與 `MediaService.hasTTS()`，優先採用 Retail 12.1+ `C_CombatAudioAlert.SpeakText`，回退至 `C_VoiceChat`，並具備語音去重與重疊排程防護。
+  5. **Services/CooldownService.lua (P1)**：
+     - 整合 Retail 12.1+ `C_Spell.GetSpellLossOfControlCooldownDuration(spellID)`，精準獲取被斷法或受控時的原生 DurationObject。嚴格檢驗 `GetSpellLossOfControlCooldown` 實質時長大於 0 時始判定冷卻啟動；並透過 `setProtectedTimer(state, locDurationObj, "lossOfControl")` 完整重置計時器狀態、邊界標記與 `TIMER_PROTECTED` 模式。
+     - 監聽並註冊 `LOSS_OF_CONTROL_UPDATE` 與 `LOSS_OF_CONTROL_ADDED` 事件，確保圖示倒數與失控視覺邊框即時重繪。
+  6. **Services/PlayerStatService.lua (P2)**：
+     - 整合 Retail 12.1+ `CreateUnitHealPredictionCalculator()` 與 `UnitGetDetailedHealPrediction`，快取計算機實例於 `PlayerStatService.healPredictionCalc`。
+     - 於 `STAT_DEFINITIONS.totalAbsorb` 調用 `calc:GetDamageAbsorbs()`，於 `healAbsorb` 調用 `calc:GetHealAbsorbs()`，回傳權威數值（包含 0），消除因 `> 0` 判定引發的多餘全光環掃描負擔。
+- 驗證結果：
+  - `.AI/Tests/test_native_apis.py`：9 大單元測試套件全數通過 (涵蓋全專案 82 支 Lua 檔案語法與區塊平衡、RFC 1951 Deflate 100% 互通、ProfileCodec id/cBackend 修復、Util boolean ternary 修正、Renderer alpha 鏈接修復、LoC Cooldown timer 修正、PlayerStatService 權威值直接回傳、MediaService 與 EngineProfiler 全功能驗證)。
+  - `CheckLuaSyntax.ps1`：80/80 通過 (具備 OS ASLR 例外自適應降級保護)。
+  - `Deploy\Build-Package.ps1 -DryRun -SkipFlowValidation`：PASS (`PACKAGE_DRY_RUN=pass`，產出至 `Dist/EventAlertMod_alpha_8.8_*.zip`)。
+
 ### 2026-10-16 EAM-20261016-ALPHA-8.8-FAILURE-PREDICTION-INFERENCE-SOP-ESTABLISHED：開發完成主動執行故障預測與威脅推論原則全面納入專案核心治理規範 (SOP Established)
 
 - 狀態：已完成 (Contracts 502/502, Flow 108/108, Syntax 79/79, Package DryRun PASS)。
@@ -3192,3 +3369,26 @@
   - 全專案契約掃描：502/502 PASS (`Test-ValidationContracts.ps1`)。
   - 打包乾跑測試：`Build-Package.ps1 -DryRun` PASS。
 
+
+---
+
+## 2026-11-08: REVIEW_FEEDBACK_001 (Phase 2 逐行複核缺陷修正)
+
+- **問題回報 (Argon 首席審查官)**：
+  1. [P0] EventAlertMod/UI/PlayerStatPanel.lua 第 866、874、881 行呼叫未定義全域函式 saveCurrentConfig()，導致玩家點擊精神模式與勾選框時拋錯或儲存無效。
+  2. [P1] EventAlertMod/Services/PlayerStatService.lua 冰藍/暗藍邊框在每 tick 被灰色邊框覆蓋；Active 狀態未同時觸發 LBG 與邊框；關閉圖示或取消提醒時殘留光暈；拖曳模式被 raw 數字覆蓋。
+  3. [P1] getSpiritRegenState() 每 0.1 秒新建 table 造成 GC 負擔，且第一次呼叫即改寫 wasActive 導致同幀雙屬性丟失 justActivated = true。
+  4. [P2] onPlayerSpellCastSucceeded 未排除節能施法 (Clearcasting) 免費法術（法師秘法專注 12536、薩滿元素集中 16246、德魯伊清晰預兆 16870）。
+- **根因分析 (5-Whys)**：
+  - UI 抽換即時儲存函式時未完全對齊生命週期；邊框邏輯在常規 alert 判斷後無條件寫入 default 邊框；熱路徑頻繁分配違背 EAM 零 GC 契約；法術耗魔判斷未納入被動節能光環防禦。
+- **修復方案**：
+  1. PlayerStatPanel.lua 改為 Panel.applyLiveChange()，在定義後綁定 spiritActiveAlertCb 與 spiritBlueFlashCb，補齊 Theme.registerButton 與 setTooltip，並在列表與右側預覽以 PlayerStatService.formatSpiritDisplay 即時呈現。
+  2. PlayerStatService.lua 新增 isSpiritManagedBorder 防護防禦灰色覆蓋；Active 同時呼叫 LBG.ShowOverlayGlow 與 SetBackdropBorderColor(0.20, 0.82, 1.00, 1.0)；停用時調用 LBG.HideOverlayGlow；拖曳模式保持精神格式化輸出。
+  3. 預先配置單一常駐 spiritSnapshot，並記錄 state.lastEvalTime == now 達成同幀 100% 冪等與零 GC 分配，並提供 
+esetSpiritRegenState()。
+  4. 新增 hasPlayerFreecastAura() 檢查常見節能施法光環，未扣魔不進 5SR。
+- **驗證指標**：
+  - python .AI/Tests/test_native_apis.py：21/21 deep test suites passed (84 Lua files balanced)。
+  - Run-FlowValidation.ps1 -Suite all：110/110 passed。
+  - Test-ValidationContracts.ps1：502/502 passed。
+  - Build-Package.ps1 -DryRun -SkipFlowValidation：PASS (80/80 Lua files syntax balanced)。

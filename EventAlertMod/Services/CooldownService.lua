@@ -273,9 +273,11 @@ local function getSpellCooldownInfo(cSpell, spellID, preferredSpellID)
         local candID = candidates[i]
         local info, resolvedID = readCooldownCandidate(cSpell, candID)
         if info and Util.canAccessTable(info) then
-            local dur, durSafe = Util.readSafeField(info, "duration", nil, "cooldown")
-            local gcd, gcdSafe = Util.readSafeField(info, "isOnGCD", nil, "cooldown")
-            if durSafe and type(dur) == "number" and dur > 0 and (not gcdSafe or gcd ~= true) then
+            local dur, durSafe = Util.readStructuredField(info, "duration", nil, "cooldown")
+            local gcd, gcdSafe = Util.readStructuredField(info, "isOnGCD", nil, "cooldown")
+            local act, actSafe = Util.readStructuredField(info, "isActive", nil, "cooldown")
+            if (durSafe and Util.isSafePositiveNumber(dur) and (not gcdSafe or gcd ~= true))
+                or (actSafe and act == true and (not gcdSafe or gcd ~= true)) then
                 return info, resolvedID
             end
         end
@@ -886,18 +888,26 @@ local function refreshAlert(alert, eventName)
     )
     local infoSafe = false
     local startTime, duration, isEnabled, isOnGCD
+    local enSafe, gcdSafe, actSafe = false, false, false
+    local cdActive = nil
 
     if cooldownInfo and Util.canAccessTable(cooldownInfo) then
-        local st, stSafe = Util.readSafeField(cooldownInfo, "startTime", nil, "cooldown")
-        local dur, durSafe = Util.readSafeField(cooldownInfo, "duration", nil, "cooldown")
-        local en, enSafe = Util.readSafeField(cooldownInfo, "isEnabled", nil, "cooldown")
-        local gcd, gcdSafe = Util.readSafeField(cooldownInfo, "isOnGCD", nil, "cooldown")
+        local st, stSafe = Util.readStructuredField(cooldownInfo, "startTime", nil, "cooldown")
+        local dur, durSafe = Util.readStructuredField(cooldownInfo, "duration", nil, "cooldown")
+        local en, eSafe = Util.readStructuredField(cooldownInfo, "isEnabled", nil, "cooldown")
+        local gcd, gSafe = Util.readStructuredField(cooldownInfo, "isOnGCD", nil, "cooldown")
+        local act, aSafe = Util.readStructuredField(cooldownInfo, "isActive", nil, "cooldown")
 
-        if stSafe and durSafe and enSafe and gcdSafe then
+        enSafe = eSafe
+        gcdSafe = gSafe
+        actSafe = aSafe
+        cdActive = act
+        isEnabled = en
+        isOnGCD = gcd
+
+        if stSafe and durSafe and eSafe and gSafe then
             startTime = st
             duration = dur
-            isEnabled = en
-            isOnGCD = gcd
             infoSafe = true
         end
     end
@@ -942,14 +952,52 @@ local function refreshAlert(alert, eventName)
     elseif cooldownInfo then
         CooldownService.chargeSpentObserved[alertID] = nil
         if infoSafe then
-            hasActiveCooldown = type(startTime) == "number"
-                and type(duration) == "number"
-                and duration > 0
+            hasActiveCooldown = Util.isSafeNumber(startTime)
+                and Util.isSafePositiveNumber(duration)
                 and isEnabled ~= false
                 and isOnGCD ~= true
         else
-            -- 無法讀取安全數字時保留 display-only／DurationObject 路徑。
-            hasActiveCooldown = true
+            -- 當 infoSafe == false（戰鬥中 startTime/duration 為 Secret）時：
+            -- 若 (enSafe and isEnabled == false) 或 (gcdSafe and isOnGCD == true) -> hasActiveCooldown = false；
+            -- 否則若 actSafe and type(cdActive) == "boolean" -> hasActiveCooldown = (cdActive == true)；
+            -- 否則（如離線 Mock 未提供 isActive 欄位，cdActive == nil）-> 維持 hasActiveCooldown = true，確保所有既有離線測試 100% 相容！
+            if (enSafe and isEnabled == false) or (gcdSafe and isOnGCD == true) then
+                hasActiveCooldown = false
+            elseif actSafe and type(cdActive) == "boolean" then
+                hasActiveCooldown = (cdActive == true)
+            else
+                hasActiveCooldown = true
+            end
+        end
+    end
+
+    local durationSpellID = cooldownSpellID or alert.spellID
+    local locDurationObj = nil
+    if cSpell and type(cSpell.GetSpellLossOfControlCooldownDuration) == "function" then
+        local hasLoc = false
+        if type(cSpell.GetSpellLossOfControlCooldownInfo) == "function" then
+            local okInfo, locInfo = pcall(cSpell.GetSpellLossOfControlCooldownInfo, durationSpellID)
+            if okInfo and type(locInfo) == "table" then
+                local locActive, actSafe = Util.readStructuredField(locInfo, "isActive", nil, "lossOfControl")
+                local locReplace, repSafe = Util.readStructuredField(locInfo, "shouldReplaceNormalCooldown", nil, "lossOfControl")
+                if actSafe and locActive == true then
+                    if not repSafe or locReplace == true or not hasActiveCooldown then
+                        hasLoc = true
+                    end
+                end
+            end
+        elseif type(cSpell.GetSpellLossOfControlCooldown) == "function" then
+            local ok, locStart, locDur = pcall(cSpell.GetSpellLossOfControlCooldown, durationSpellID)
+            if ok and Util.isSafePositiveNumber(locDur) then
+                hasLoc = true
+            end
+        end
+
+        if hasLoc or (not cSpell.GetSpellLossOfControlCooldownInfo and not cSpell.GetSpellLossOfControlCooldown) then
+            locDurationObj = getDurationObject(cSpell.GetSpellLossOfControlCooldownDuration, durationSpellID)
+            if locDurationObj and hasLoc then
+                hasActiveCooldown = true
+            end
         end
     end
 
@@ -960,7 +1008,7 @@ local function refreshAlert(alert, eventName)
     local oldTimer = oldState and oldState.timer
     local oldHasRunningCooldown = not isTimerExpired
         and oldState and oldState.active and not oldState.completed
-        and oldTimer and type(oldTimer.expirationTime) == "number"
+        and oldTimer and Util.isSafeNumber(oldTimer.expirationTime)
         and oldTimer.expirationTime > (now + 0.3)
     local isCastEvent = (eventName == "UNIT_SPELLCAST_SUCCEEDED" or eventName == "UNIT_SPELLCAST_CHANNEL_START" or eventName == "SPELLCAST_TRAILING_RETRY")
 
@@ -972,7 +1020,7 @@ local function refreshAlert(alert, eventName)
     local hasHeuristicMeta = heuristicData and (heuristicData[alert.spellID] or (cooldownSpellID and heuristicData[cooldownSpellID])) ~= nil
 
     if isCastEvent and not isChargeBased then
-        local hasRealNumericCooldown = hasActiveCooldown and infoSafe and isOnGCD ~= true and type(duration) == "number" and duration > MIN_REAL_COOLDOWN_SECONDS
+        local hasRealNumericCooldown = hasActiveCooldown and infoSafe and isOnGCD ~= true and Util.isSafeNumber(duration) and duration > MIN_REAL_COOLDOWN_SECONDS
         if not hasRealNumericCooldown then
             local spellMeta = heuristicData and (heuristicData[alert.spellID] or (cooldownSpellID and heuristicData[cooldownSpellID]))
             local fallbackCD = spellMeta and (spellMeta.cooldown or spellMeta.baseCooldown)
@@ -997,7 +1045,7 @@ local function refreshAlert(alert, eventName)
         local isOverridden = (curOverride ~= nil and curOverride ~= alert.spellID)
             or (CooldownService.baseToOverrideMap[alert.spellID] ~= nil)
             or (CooldownService.previousOverrideMap[alert.spellID] ~= nil)
-        local elapsedSinceStart = (oldTimer and type(oldTimer.startTime) == "number") and (now - oldTimer.startTime) or 999
+        local elapsedSinceStart = (oldTimer and Util.isSafeNumber(oldTimer.startTime)) and (now - oldTimer.startTime) or 999
         local inInitialGraceWindow = (hasHeuristicMeta or (oldState and oldState.isHeuristic == true))
             and elapsedSinceStart >= 0 and elapsedSinceStart <= 4.5
 
@@ -1172,9 +1220,8 @@ local function refreshAlert(alert, eventName)
             )
         end
     elseif infoSafe
-        and type(startTime) == "number"
-        and type(duration) == "number"
-        and duration > 0
+        and Util.isSafeNumber(startTime)
+        and Util.isSafePositiveNumber(duration)
         and isEnabled ~= false
         and isOnGCD ~= true
     then
@@ -1183,8 +1230,14 @@ local function refreshAlert(alert, eventName)
         state.timer.duration = duration
         state.timer.expirationTime = startTime + duration
         local durationSpellID = cooldownSpellID or alert.spellID
-        state.timer.durationObject = (not isHeuristic and not oldHasRunningCooldown and cSpell.GetSpellCooldownDuration and cSpell.GetSpellCooldownDuration(durationSpellID, true))
-            or nil
+        if locDurationObj then
+            state.timer.durationObject = locDurationObj
+            state.isLossOfControl = true
+            state.source.lossOfControl = true
+        else
+            state.timer.durationObject = (not isHeuristic and not oldHasRunningCooldown and cSpell.GetSpellCooldownDuration and cSpell.GetSpellCooldownDuration(durationSpellID, true))
+                or nil
+        end
     elseif oldHasRunningCooldown and state.isHeuristic then
         state.timer.mode = EAM.Constants.TIMER_NUMERIC
         state.timer.startTime = oldTimer.startTime
@@ -1193,11 +1246,17 @@ local function refreshAlert(alert, eventName)
         state.timer.durationObject = nil
     else
         local durationSpellID = cooldownSpellID or alert.spellID
-        setProtectedTimer(
-            state,
-            getDurationObject(cSpell.GetSpellCooldownDuration, durationSpellID, true),
-            "timingProtected"
-        )
+        if locDurationObj then
+            setProtectedTimer(state, locDurationObj, "lossOfControl")
+            state.isLossOfControl = true
+            state.source.lossOfControl = true
+        else
+            setProtectedTimer(
+                state,
+                getDurationObject(cSpell.GetSpellCooldownDuration, durationSpellID, true),
+                "timingProtected"
+            )
+        end
     end
 
     state.source.event = eventName
@@ -1327,6 +1386,8 @@ function CooldownService.initialize()
         router.register("SPELL_UPDATE_COOLDOWN", CooldownService.onCooldownEvent)
         router.register("SPELL_UPDATE_CHARGES", CooldownService.onCooldownEvent)
         router.register("PET_BAR_UPDATE", CooldownService.onCooldownEvent)
+        router.register("LOSS_OF_CONTROL_UPDATE", CooldownService.onCooldownEvent)
+        router.register("LOSS_OF_CONTROL_ADDED", CooldownService.onCooldownEvent)
         router.register("UNIT_SPELLCAST_SUCCEEDED", CooldownService.onSpellcastSucceeded)
         router.register("UNIT_SPELLCAST_CHANNEL_START", CooldownService.onSpellcastSucceeded)
         router.register("UNIT_SPELLCAST_CHANNEL_STOP", CooldownService.onSpellcastChannelStop)
@@ -1461,7 +1522,7 @@ function CooldownService.activateSpell(spellID, eventName)
             local oldState = CooldownService.states[alert.id]
             local oldTimer = oldState and oldState.timer
             local oldActiveRunning = oldState and oldState.active and not oldState.completed
-                and oldTimer and type(oldTimer.expirationTime) == "number"
+                and oldTimer and Util.isSafeNumber(oldTimer.expirationTime)
                 and oldTimer.expirationTime > (now + 0.3)
 
             -- 🛡️ 施法觸發精確防禦（杜絕 GetBaseSpell 反向劫持）：
@@ -1498,7 +1559,7 @@ function CooldownService.activateSpell(spellID, eventName)
                 local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
                 if cdTrace and cdTrace.record then
                     local expTime = state and state.timer and state.timer.expirationTime
-                    local rem = (type(expTime) == "number" and expTime > now) and (expTime - now) or 0
+                    local rem = (Util.isSafeNumber(expTime) and expTime > now) and (expTime - now) or 0
                     cdTrace.record("ACTIVATE_MATCH", alert.spellID, state and state.name, {
                         castSpellID = spellID,
                         isOverrideMatch = isOverrideMatch,
@@ -1608,7 +1669,7 @@ local function burstCDRSamplerTick()
                         local newExp = newTimer and newTimer.expirationTime
 
                         -- 檢測到實質冷卻縮短（CDR 發生）
-                        if type(oldExp) == "number" and type(newExp) == "number" and (oldExp - newExp) > 0.02 then
+                        if Util.isSafeNumber(oldExp) and Util.isSafeNumber(newExp) and (oldExp - newExp) > 0.02 then
                             local delta = newExp - oldExp
                             local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
                             if cdTrace and cdTrace.record then
@@ -1712,7 +1773,7 @@ local function activeCDRSamplerTick()
                         local newTimer = refreshedState.timer
                         local newExp = newTimer and newTimer.expirationTime
 
-                        if type(oldExp) == "number" and type(newExp) == "number" and (oldExp - newExp) > 0.02 then
+                        if Util.isSafeNumber(oldExp) and Util.isSafeNumber(newExp) and (oldExp - newExp) > 0.02 then
                             local delta = newExp - oldExp
                             local cdTrace = EAM.Debug and EAM.Debug.CooldownTrace
                             if cdTrace and cdTrace.record then
@@ -1808,16 +1869,16 @@ function CooldownService.applyCombatHeuristicCDR(triggerSpellID)
         if state and state.active and not state.completed and not state.isPlaceholder and state.timer then
             local targetSpellID = state.spellID
             local delta = targetSpellID and cdrTargets[targetSpellID]
-            if delta and delta > 0 and type(state.timer.expirationTime) == "number" and state.timer.expirationTime > now then
+            if Util.isSafePositiveNumber(delta) and Util.isSafeNumber(state.timer.expirationTime) and state.timer.expirationTime > now then
                 -- 先檢查當前 API 是否已提供非 Secret 的安全數值（如非戰鬥或模擬測試環境）；若有安全數值則交由 refreshActiveCooldowns 精確同步
                 local apiHasSafeNumeric = false
                 if cSpell and type(cSpell.GetSpellCooldown) == "function" then
                     local okInfo, info = pcall(cSpell.GetSpellCooldown, targetSpellID)
                     if okInfo and type(info) == "table" and Util.canAccessTable(info) then
-                        local _, stSafe = Util.readSafeField(info, "startTime", nil, "cdrCheck")
-                        local dur, durSafe = Util.readSafeField(info, "duration", nil, "cdrCheck")
-                        local gcd, gcdSafe = Util.readSafeField(info, "isOnGCD", nil, "cdrCheck")
-                        if stSafe and durSafe and type(dur) == "number" and dur > MIN_REAL_COOLDOWN_SECONDS and (not gcdSafe or gcd ~= true) then
+                        local _, stSafe = Util.readStructuredField(info, "startTime", nil, "cdrCheck")
+                        local dur, durSafe = Util.readStructuredField(info, "duration", nil, "cdrCheck")
+                        local gcd, gcdSafe = Util.readStructuredField(info, "isOnGCD", nil, "cdrCheck")
+                        if stSafe and durSafe and Util.isSafeNumber(dur) and dur > MIN_REAL_COOLDOWN_SECONDS and (not gcdSafe or gcd ~= true) then
                             apiHasSafeNumeric = true
                         end
                     end

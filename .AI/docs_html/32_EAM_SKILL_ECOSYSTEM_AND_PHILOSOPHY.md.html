@@ -524,7 +524,7 @@
 <h2 id="1-core-philosophy">🧭 1. 核心治理哲學與架構理念 (Core Philosophy)</h2>
 <p>在過去大型軟體專案與 AI 協同開發中，最常面臨的致命瓶頸包含：<strong>上下文窗口爆炸（Context Window Explosion）、注意力稀釋（Lost in the Middle）、對話截斷失憶（Context Truncation）、以及更換 Agent 後的架構漂移與破壞（Architecture Drift）</strong>。</p>
 <p>為徹底根除上述痛點，EventAlertMod (EAM) 引入了業界領先的 <strong>「全面技能化（Everything as a Skill）」</strong> 架構：</p>
-<pre class="codehilite"><code>                           EAM Agentic AI 治理架構
+<div class="codehilite"><pre><span></span><code>                           EAM Agentic AI 治理架構
   ┌────────────────────────────────────────────────────────────────────────┐
   │                    使用者意圖 / 宣告式指令 (User Intent)                 │
   └───────────────────────────────────┬────────────────────────────────────┘
@@ -551,7 +551,7 @@
   ┌────────────────────────────────────────────────────────────────────────┐
   │  Subagents (子代理集群) / 腳本工具鏈 / 493+ 靜態契約驗證 / 84+ Flow 沙盒  │
   └────────────────────────────────────────────────────────────────────────┘
-</code></pre>
+</code></pre></div>
 
 <h3 id="_1">💡 技能化帶來的五大質變效益：</h3>
 <ol>
@@ -773,7 +773,7 @@
 - <strong>本機 Antigravity 全域目錄（Global Discovery）</strong>：
     - <code>C:\Users\ZYF\.gemini\config\skills\&lt;skill-name&gt;\SKILL.md</code></p>
 <h3 id="_2">💬 自然語言與意圖調用範例：</h3>
-<pre class="codehilite"><code class="language-markdown">使用者輸入：「幫我發布目前的開發版至 CurseForge」
+<div class="codehilite"><pre><span></span><code>使用者輸入：「幫我發布目前的開發版至 CurseForge」
 ➔ Agent 自動觸發：[eam-curseforge-publisher] + [eam-secret-vault-manager]
 
 使用者輸入：「12.1.0 戰鬥中這個能量 API 報錯了，請排查 Secret」
@@ -784,7 +784,7 @@
 
 使用者輸入：「調查最新暴雪 PTR Build 關於技能冷卻覆蓋的 API 變更」
 ➔ Agent 自動觸發：[eam-api-change-intel] + [eam-cooldown-activation-guard]
-</code></pre>
+</code></pre></div>
 
 <hr />
 <h2 id="4-conclusion">🏁 4. 結語 (Conclusion)</h2>
@@ -801,7 +801,7 @@
 <h2 id="1-core-architecture-philosophy">🧭 1. Core Architecture Philosophy</h2>
 <p>In traditional large-scale software engineering with AI agents, teams frequently encounter critical bottlenecks: <strong>Context Window Explosion, Lost in the Middle, Context Truncation, and Architecture Drift across different agents</strong>.</p>
 <p>To decisively eliminate these bottlenecks, EventAlertMod (EAM) implements an industry-leading <strong>"Everything as a Skill"</strong> architecture:</p>
-<pre class="codehilite"><code>                           EAM Agentic AI Governance Architecture
+<div class="codehilite"><pre><span></span><code>                           EAM Agentic AI Governance Architecture
   ┌────────────────────────────────────────────────────────────────────────┐
   │                   User Declarative Intent (User Prompt)                │
   └───────────────────────────────────┬────────────────────────────────────┘
@@ -828,7 +828,7 @@
   ┌────────────────────────────────────────────────────────────────────────┐
   │  Subagents Cluster / Toolchain / 496+ AST Validation / 84+ Flow Sandbox │
   └────────────────────────────────────────────────────────────────────────┘
-</code></pre>
+</code></pre></div>
 
 <h3 id="five-core-transformation-benefits">💡 Five Core Transformation Benefits:</h3>
 <ol>

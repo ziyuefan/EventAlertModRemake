@@ -74,11 +74,13 @@ end
 
 function AboutPanel.getInformation()
     local patch, build, interface = readObservedBuild()
+    local compatibilityLabel = EAM.isForever and (Constants.FOREVER_COMPATIBILITY_LABEL or "Forever 1.60.1") or Constants.RETAIL_COMPATIBILITY_LABEL
+    local apiBaseline = (EAM.isForever and "Forever 1.60.1" or Constants.API_BASELINE_LABEL) .. " (Build " .. (EAM.isForever and "70450" or Constants.API_BASELINE_BUILD) .. ")"
     return {
         addonVersion = readAddonVersion(),
         author = Constants.PROJECT_AUTHOR,
-        apiBaseline = Constants.API_BASELINE_LABEL .. " (Build " .. Constants.API_BASELINE_BUILD .. ")",
-        compatibility = Constants.RETAIL_COMPATIBILITY_LABEL,
+        apiBaseline = apiBaseline,
+        compatibility = compatibilityLabel,
         clientChannel = readClientChannel(),
         clientPatch = patch,
         clientBuild = build,

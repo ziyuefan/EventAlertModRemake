@@ -26,6 +26,10 @@ local NativeAuraRenderer = {
     nativePandemicAnimationCapabilityCount = 0,
     pandemicAnimationBoundCount = 0,
     nativeDispelTextureBoundCount = 0,
+    nativeApplicationBarCapabilityCount = 0,
+    applicationBarBoundCount = 0,
+    nativeDurationBarCapabilityCount = 0,
+    durationBarBoundCount = 0,
     buttons = setmetatable({}, { __mode = "k" }),
 }
 
@@ -93,6 +97,29 @@ local function snapshotStyle(rule)
     if ruleStyle and ruleStyle.showStacks ~= nil then
         showStacks = ruleStyle.showStacks == true
     end
+    local showApplicationBar = false
+    if config and config.showApplicationBar ~= nil then
+        showApplicationBar = config.showApplicationBar == true
+    elseif config and config.auraStackBar ~= nil then
+        showApplicationBar = config.auraStackBar == true
+    end
+    if ruleStyle and ruleStyle.showApplicationBar ~= nil then
+        showApplicationBar = ruleStyle.showApplicationBar == true
+    end
+    local applicationBarMax = (ruleStyle and ruleStyle.applicationBarMax)
+        or (config and config.applicationBarMax)
+        or 5
+    local applicationBarMin = (ruleStyle and ruleStyle.applicationBarMin)
+        or (config and config.applicationBarMin)
+        or (config and config.minApplications)
+        or 1
+    local showDurationBar = false
+    if config and config.showDurationBar ~= nil then
+        showDurationBar = config.showDurationBar == true
+    end
+    if ruleStyle and ruleStyle.showDurationBar ~= nil then
+        showDurationBar = ruleStyle.showDurationBar == true
+    end
     local swipeR, swipeG, swipeB = safeColorRGB(config and config.cooldownSwipeColor)
     return {
         iconSize = safePositive(config and config.iconSize, 40),
@@ -114,6 +141,10 @@ local function snapshotStyle(rule)
         showCountdown = showCountdown,
         showStacks = showStacks,
         showName = showName,
+        showApplicationBar = showApplicationBar,
+        applicationBarMax = applicationBarMax,
+        applicationBarMin = applicationBarMin,
+        showDurationBar = showDurationBar,
         showPandemic = ruleStyle and ruleStyle.showPandemic == true or false,
         dispelMode = ruleStyle and ruleStyle.dispelMode or nil,
         dispelShowAlways = ruleStyle and ruleStyle.dispelShowAlways == true or false,
@@ -273,8 +304,15 @@ local function bindPandemicAnimations(auraButton, style)
             local alpha = activeAnim:CreateAnimation("Alpha")
             if alpha then
                 if type(alpha.SetFromAlpha) == "function" then alpha:SetFromAlpha(1.0) end
-                if type(alpha.SetToAlpha) == "function" then alpha:SetToAlpha(0.6) end
-                if type(alpha.SetDuration) == "function" then alpha:SetDuration(0.5) end
+                if type(alpha.SetToAlpha) == "function" then alpha:SetToAlpha(0.65) end
+                if type(alpha.SetDuration) == "function" then alpha:SetDuration(0.6) end
+                if type(alpha.SetSmoothing) == "function" then alpha:SetSmoothing("IN_OUT") end
+            end
+            local scale = activeAnim:CreateAnimation("Scale")
+            if scale then
+                if type(scale.SetScale) == "function" then scale:SetScale(1.04, 1.04) end
+                if type(scale.SetDuration) == "function" then scale:SetDuration(0.6) end
+                if type(scale.SetSmoothing) == "function" then scale:SetSmoothing("IN_OUT") end
             end
             local ok = pcall(auraButton.AddPandemicActiveAnimation, auraButton, activeAnim)
             if ok then
@@ -288,6 +326,7 @@ local function bindPandemicAnimations(auraButton, style)
             if scale then
                 if type(scale.SetScale) == "function" then scale:SetScale(1.15, 1.15) end
                 if type(scale.SetDuration) == "function" then scale:SetDuration(0.15) end
+                if type(scale.SetSmoothing) == "function" then scale:SetSmoothing("OUT") end
             end
             local ok = pcall(auraButton.AddPandemicEnterAnimation, auraButton, enterAnim)
             if ok then
@@ -301,6 +340,7 @@ local function bindPandemicAnimations(auraButton, style)
             if scale then
                 if type(scale.SetScale) == "function" then scale:SetScale(1.0, 1.0) end
                 if type(scale.SetDuration) == "function" then scale:SetDuration(0.15) end
+                if type(scale.SetSmoothing) == "function" then scale:SetSmoothing("IN") end
             end
             local ok = pcall(auraButton.AddPandemicLeaveAnimation, auraButton, leaveAnim)
             if ok then
@@ -335,6 +375,7 @@ local function bindLifecycleAnimations(auraButton, style)
                 if type(alpha.SetFromAlpha) == "function" then alpha:SetFromAlpha(0.2) end
                 if type(alpha.SetToAlpha) == "function" then alpha:SetToAlpha(1.0) end
                 if type(alpha.SetDuration) == "function" then alpha:SetDuration(0.12) end
+                if type(alpha.SetSmoothing) == "function" then alpha:SetSmoothing("OUT") end
             end
             local ok = pcall(auraButton.AddAuraShownAnimation, auraButton, shownAnim)
             if ok then
@@ -348,6 +389,7 @@ local function bindLifecycleAnimations(auraButton, style)
             if scale then
                 if type(scale.SetScale) == "function" then scale:SetScale(1.08, 1.08) end
                 if type(scale.SetDuration) == "function" then scale:SetDuration(0.1) end
+                if type(scale.SetSmoothing) == "function" then scale:SetSmoothing("OUT") end
             end
             local ok = pcall(auraButton.AddAuraAssignedAnimation, auraButton, assignAnim)
             if ok then
@@ -356,6 +398,96 @@ local function bindLifecycleAnimations(auraButton, style)
         end
 
         auraButton.eamLifecycleAnimBound = true
+        return true
+    end
+    return false
+end
+
+local function bindApplicationBar(auraButton, style)
+    local hasAPI = hasButtonMethod(auraButton, "SetApplicationBar")
+    if hasAPI then
+        NativeAuraRenderer.nativeApplicationBarCapabilityCount =
+            NativeAuraRenderer.nativeApplicationBarCapabilityCount + 1
+    end
+    if not style.showApplicationBar or not hasAPI then
+        return false
+    end
+    if rawget(auraButton, "eamApplicationBar") then
+        return true
+    end
+
+    local bar = api.CreateFrame("StatusBar", nil, auraButton)
+    bar:ClearAllPoints()
+    bar:SetPoint("BOTTOMLEFT", auraButton, "TOPLEFT", 0, 1)
+    bar:SetPoint("BOTTOMRIGHT", auraButton, "TOPRIGHT", 0, 1)
+    bar:SetHeight(4)
+    if Util.snapToPixels then
+        Util.snapToPixels(bar)
+    end
+    if type(bar.SetStatusBarTexture) == "function" then
+        bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    end
+    local maxVal = tonumber(style.applicationBarMax) or 5
+    local minVal = tonumber(style.applicationBarMin) or 1
+    if type(bar.SetMinMaxValues) == "function" then
+        bar:SetMinMaxValues(0, maxVal)
+    end
+
+    local interpEnum = (_G.Enum and _G.Enum.StatusBarInterpolation and _G.Enum.StatusBarInterpolation.ExponentialEaseOut)
+        or (api and api.StatusBarInterpolation and api.StatusBarInterpolation.ExponentialEaseOut)
+        or nil
+    if interpEnum and type(bar.SetInterpolation) == "function" then
+        pcall(bar.SetInterpolation, bar, interpEnum)
+    end
+
+    local options = {
+        maxApplications = maxVal,
+        minApplications = minVal,
+        interpolation = interpEnum,
+    }
+    local ok = pcall(auraButton.SetApplicationBar, auraButton, bar, options)
+    if not ok then
+        ok = pcall(auraButton.SetApplicationBar, auraButton, bar)
+    end
+    if ok then
+        auraButton.eamApplicationBar = bar
+        NativeAuraRenderer.applicationBarBoundCount =
+            NativeAuraRenderer.applicationBarBoundCount + 1
+        return true
+    end
+    return false
+end
+
+local function bindDurationBar(auraButton, style)
+    local hasAPI = hasButtonMethod(auraButton, "SetDurationBar")
+    if hasAPI then
+        NativeAuraRenderer.nativeDurationBarCapabilityCount =
+            NativeAuraRenderer.nativeDurationBarCapabilityCount + 1
+    end
+    if not style.showDurationBar or not hasAPI then
+        return false
+    end
+    if rawget(auraButton, "eamDurationBar") then
+        return true
+    end
+
+    local bar = api.CreateFrame("StatusBar", nil, auraButton)
+    bar:ClearAllPoints()
+    bar:SetPoint("TOPLEFT", auraButton, "BOTTOMLEFT", 0, -1)
+    bar:SetPoint("TOPRIGHT", auraButton, "BOTTOMRIGHT", 0, -1)
+    bar:SetHeight(4)
+    if Util.snapToPixels then
+        Util.snapToPixels(bar)
+    end
+    if type(bar.SetStatusBarTexture) == "function" then
+        bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    end
+
+    local ok = pcall(auraButton.SetDurationBar, auraButton, bar)
+    if ok then
+        auraButton.eamDurationBar = bar
+        NativeAuraRenderer.durationBarBoundCount =
+            NativeAuraRenderer.durationBarBoundCount + 1
         return true
     end
     return false
@@ -495,6 +627,8 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     bindDispelTypeTexture(auraButton, style)
     bindPandemicAnimations(auraButton, style)
     bindLifecycleAnimations(auraButton, style)
+    bindApplicationBar(auraButton, style)
+    bindDurationBar(auraButton, style)
 
     if hasButtonMethod(auraButton, "SetCasterName") and (rule and rule.unit ~= "player") then
         local casterText = auraButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
@@ -510,6 +644,16 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
 
     if Util.snapToPixels then
         Util.snapToPixels(auraButton)
+        if auraButton.eamApplicationBar then
+            Util.snapToPixels(auraButton.eamApplicationBar)
+        end
+        if auraButton.eamDurationBar then
+            Util.snapToPixels(auraButton.eamDurationBar)
+        end
+        if timerText then Util.snapToPixels(timerText) end
+        if stackText then Util.snapToPixels(stackText) end
+        if nameText then Util.snapToPixels(nameText) end
+        if auraButton.eamCasterText then Util.snapToPixels(auraButton.eamCasterText) end
     end
     if style.dualCountdownProbe then
         NativeAuraRenderer.dualCountdownButtonCount =
@@ -634,6 +778,10 @@ function NativeAuraRenderer.getStatus()
         hasPandemicAnimationAPI = (NativeAuraRenderer.nativePandemicAnimationCapabilityCount or 0) > 0,
         nativePandemicAnimationCapabilityCount = NativeAuraRenderer.nativePandemicAnimationCapabilityCount or 0,
         pandemicAnimationBoundCount = NativeAuraRenderer.pandemicAnimationBoundCount or 0,
+        nativeApplicationBarCapabilityCount = NativeAuraRenderer.nativeApplicationBarCapabilityCount or 0,
+        applicationBarBoundCount = NativeAuraRenderer.applicationBarBoundCount or 0,
+        nativeDurationBarCapabilityCount = NativeAuraRenderer.nativeDurationBarCapabilityCount or 0,
+        durationBarBoundCount = NativeAuraRenderer.durationBarBoundCount or 0,
         nativeDispelTextureBoundCount = NativeAuraRenderer.nativeDispelTextureBoundCount,
         blizzardPandemicOnUpdateManaged = NativeAuraRenderer.pandemicRegionBoundCount > 0,
         dualCountdownProbeEnabled = config and config.nativeAuraDualCountdownProbe == true or false,

@@ -618,8 +618,8 @@ flowchart LR
 
 <p>Native 路徑不得建立 <code>AuraState</code>，不得送出 <code>EAM_AURA_STATE_CHANGED</code>，不得進入 <code>AlertManager</code>、一般 <code>Renderer</code>、<code>IconPool</code> 或 Scheduler expiration token。</p>
 <p>12.0.7 的 Legacy 路徑仍保留：</p>
-<pre class="codehilite"><code class="language-text">Readable AuraData -&gt; AuraService -&gt; AlertManager -&gt; Renderer -&gt; IconPool
-</code></pre>
+<div class="codehilite"><pre><span></span><code>Readable AuraData -&gt; AuraService -&gt; AlertManager -&gt; Renderer -&gt; IconPool
+</code></pre></div>
 
 <p>12.1 若 Native API 不完整，後端狀態為 <code>UNSUPPORTED</code>；不得偷偷回退到可能讀取 Secret AuraData 的 Legacy 路徑。</p>
 <h2 id="_3">模組責任</h2>
@@ -697,13 +697,13 @@ stateDiagram-v2
 </ul>
 <h2 id="_7">驗證入口</h2>
 <p>離線：</p>
-<pre class="codehilite"><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite aura121
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Run-FlowValidation.ps1 -Suite all
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">aura121</span>
+<span class="n">powershell</span> <span class="n">-NoProfile</span> <span class="n">-ExecutionPolicy</span> <span class="n">Bypass</span> <span class="o">-File</span> <span class="p">.\</span><span class="n">Tools</span><span class="p">\</span><span class="n">Run-FlowValidation</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-Suite</span> <span class="n">all</span>
+</code></pre></div>
 
 <p>遊戲內：</p>
-<pre class="codehilite"><code class="language-text">/eam test aura121
-</code></pre>
+<div class="codehilite"><pre><span></span><code>/eam test aura121
+</code></pre></div>
 
 <p>流程面板亦提供「12.1 Aura」按鈕。報告寫入 <code>EAM_FLOW_TEST_REPORT_JSON</code>，可用 <code>Tools/Import-EAMFlowReport.ps1</code> 回灌。</p>
 <h2 id="ptr-rqa">PTR RQA 必測</h2>

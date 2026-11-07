@@ -284,7 +284,10 @@ Scheduler.createFallbackSignalMap = createFallbackSignalMap
 
 function Scheduler.hasNativeSignalMap()
     local cTimer = api.C_Timer or _G.C_Timer
+    local TimerUtil = api.TimerUtil or _G.TimerUtil
     return (cTimer and type(cTimer.NewTimedSignalMap) == "function")
+        or (cTimer and type(cTimer.CreateTimedSignalCallbackMap) == "function")
+        or (TimerUtil and type(TimerUtil.CreateTimedSignalCallbackMap) == "function")
         or type(_G.TimedSignalMap) == "function"
 end
 
@@ -294,7 +297,11 @@ function Scheduler.createSignalMap(callback)
     end
 
     local cTimer = api.C_Timer or _G.C_Timer
-    local newSignalMap = (cTimer and cTimer.NewTimedSignalMap) or _G.TimedSignalMap
+    local TimerUtil = api.TimerUtil or _G.TimerUtil
+    local newSignalMap = (cTimer and cTimer.NewTimedSignalMap)
+        or (TimerUtil and TimerUtil.CreateTimedSignalCallbackMap)
+        or (cTimer and cTimer.CreateTimedSignalCallbackMap)
+        or _G.TimedSignalMap
     if type(newSignalMap) == "function" then
         local ok, nativeMap = pcall(newSignalMap, callback)
         if ok and nativeMap then
@@ -439,6 +446,9 @@ function Scheduler.createSignalMap(callback)
                 if nativeOk then
                     return res == true
                 end
+                if type(nativeMap) == "table" and type(nativeMap.signals) == "table" then
+                    return nativeMap.signals[key] ~= nil
+                end
                 return false
             end
 
@@ -453,6 +463,9 @@ function Scheduler.createSignalMap(callback)
                 if nativeOk and Util.isSafeNumber(res) then
                     return res
                 end
+                if type(nativeMap) == "table" and type(nativeMap.signals) == "table" then
+                    return nativeMap.signals[key]
+                end
                 return nil
             end
 
@@ -463,6 +476,13 @@ function Scheduler.createSignalMap(callback)
                 local nativeOk, res = callNative("GetSignalCount")
                 if nativeOk and type(res) == "number" then
                     return res
+                end
+                if type(nativeMap) == "table" and type(nativeMap.signals) == "table" then
+                    local c = 0
+                    for _ in pairs(nativeMap.signals) do
+                        c = c + 1
+                    end
+                    return c
                 end
                 return 0
             end

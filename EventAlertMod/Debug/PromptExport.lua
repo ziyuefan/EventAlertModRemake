@@ -55,8 +55,10 @@ function PromptExport.build()
     if hotPath then
         hotPathStr = ",hotPaths:{calls:" .. tostring(hotPath.totalSessionCalls or 0) .. ",cps:" .. string.format("%.1f", hotPath.callsPerSecond or 0) .. "}"
     end
-    return "{environment:{interface:" .. tostring(EAM.Constants.INTERFACE)
-        .. ",flavor:\"Retail\",initialized:" .. tostring(initialized)
+    local flavor = EAM.isForever and "Forever" or "Retail"
+    local iface = EAM.isForever and (EAM.interfaceVersion or 16001) or EAM.Constants.INTERFACE
+    return "{environment:{interface:" .. tostring(iface)
+        .. ",flavor:\"" .. flavor .. "\",initialized:" .. tostring(initialized)
         .. "},migration:{imported:" .. tostring(report and report.imported or 0)
         .. ",skipped:" .. tostring(report and report.skipped or 0)
         .. "},dbRevision:" .. tostring(derived.dbRevision or 0)
@@ -87,6 +89,12 @@ function PromptExport.buildDetailed()
         local env = snapshot.environment
         add('    "interface": ' .. tostring(env.interface or 0) .. ',\n')
         add('    "flavor": "' .. tostring(env.flavor or "Retail") .. '",\n')
+        if EAM.isForever then
+            add('    "gameFlavor": "Forever",\n')
+            add('    "wowProjectID": ' .. tostring(_G.WOW_PROJECT_ID or 0) .. ',\n')
+            add('    "clientVersion": "' .. tostring(EAM.clientVersion or "1.60.1") .. '",\n')
+            add('    "clientBuild": ' .. tostring(EAM.clientBuild or 0) .. ',\n')
+        end
         add('    "initialized": ' .. tostring(env.initialized) .. ',\n')
         add('    "inCombat": ' .. tostring(env.inCombat) .. ',\n')
         add('    "fps": ' .. tostring(env.fps and math.floor(env.fps) or "null") .. ',\n')
@@ -697,8 +705,21 @@ function PromptExport.buildDetailed()
         end
     end
     add(table.concat(traceBuffer, ",\n"))
-    add('\n  ]\n')
-
+    add('\n  ]')
+    if EAM.isForever then
+        add(',\n  "foreverDiagnostics": {\n')
+        local srs = EAM.Services and EAM.Services.SpellRankService
+        local rankCount = (srs and srs.getKnownSpellCount and srs.getKnownSpellCount()) or 0
+        local pss = EAM.Services and EAM.Services.PlayerStatService
+        local rState = pss and pss.getSpiritRegenState and pss.getSpiritRegenState()
+        add('    "spellRanksKnown": ' .. tostring(rankCount) .. ',\n')
+        add('    "spiritActive": ' .. tostring(rState and rState.isActive) .. ',\n')
+        add('    "spiritMP5": ' .. tostring(rState and rState.spiritMP5 or 0) .. ',\n')
+        add('    "spiritHP5": ' .. tostring(rState and rState.spiritHP5 or 0) .. '\n')
+        add('  }\n')
+    else
+        add('\n')
+    end
     add("}")
     local result = table.concat(buffer)
     if EAM.db then
