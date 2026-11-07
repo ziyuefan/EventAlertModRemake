@@ -36,7 +36,7 @@ Retail API 注意:
 local addonName, EAM = ...
 
 EAM.name = addonName
-EAM.version = "Retail_12.1.5_Forever_1.60.1_Alpha_8.9"
+EAM.version = "Retail_12.1.5_Forever_1.60.1_Alpha_9.0"
 EAM.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
 
 function EAM.detectGameFlavor()

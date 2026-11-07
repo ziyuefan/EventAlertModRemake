@@ -5,7 +5,7 @@
 ## 邊界: 不載入 Classic/MOP/TBC/Wrath 分支，不載入 ReferenceLibs 或 LegacyReference。
 ## 維護: 新增正式模組時同步確認 Docs/04_MODULE_CONTRACTS.md 與 Docs/12_CODE_COMMENTARY_GUIDE.md。
 ## Interface: 120007, 120100, 120105, 16001
-## Version: EventAlertMod_MN_12.1.5_Forever_1.60.1_Alpha_8.9
+## Version: EventAlertMod_MN_12.1.5_Forever_1.60.1_Alpha_9.0
 ## X-WoWI-ID: 26550
 ## X-Curse-Project-ID: 826042
 
@@ -17,8 +17,8 @@
 ## Author: Successor Developer: ziyuefan(2014-)
 
 ## Notes: Simple aura, cooldown, and item cooldown alert icons for Retail (12.1.5) and Forever (1.60.1).
-## Notes-zhTW: 支援正式服 (12.1.5) 與永恆服 (1.60.1) 的簡易光環、技能冷卻與物品冷卻提示。
-## Notes-zhCN: 支持正式服 (12.1.5) 与永恒服 (1.60.1) 的简易光环、技能冷却与物品冷却提示。
+## Notes-zhTW: 支援正式服 (12.1.5) 與永恆 (1.60.1) 的簡易光環、技能冷卻與物品冷卻提示。
+## Notes-zhCN: 支持正式服 (12.1.5) 与无限 (1.60.1) 的简易光环、技能冷却与物品冷却提示。
 ## Notes-koKR: Retail (12.1.5) 및 Forever (1.60.1) 전용 오라, 주문 및 아이템 재사용 대기시간 알림.
 ## Notes-ruRU: Оповещения об аурах, времени восстановления заклинаний и предметов для Retail (12.1.5) и Forever (1.60.1).
 ## AllowLoadGameType: standard, forever, camelot

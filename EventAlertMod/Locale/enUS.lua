@@ -1268,4 +1268,11 @@ L.EAM_STAT_SPIRIT_ACTIVE_ALERT = "Enable Spirit Active Alert (Glow Border / Text
 L.EAM_STAT_SPIRIT_BLUE_FLASH = "Full-screen blue flash on Spirit Regen activation"
 L.EAM_STAT_TEST_BLUE_FLASH = "Test Blue Flash"
 
+L.EAM_DEBUG_STATUS_FOREVER_REFRESHED = "Forever resource and resistance diagnostics refreshed."
+L.EAM_STAT_SPIRIT_MODE_TIP = "Cycle Spirit display mode: Full (Spirit+MP5+HP5) / Regen Only (MP5+HP5) / Stat Only (Spirit)"
+L.EAM_STAT_SPIRIT_ACTIVE_ALERT_TITLE = "Active Regen Alert"
+L.EAM_STAT_SPIRIT_ACTIVE_ALERT_TIP = "When leaving the 5-Second Rule into full Spirit mana regen, plays an ice-blue glow border on the icon or scales/highlights text when iconless."
+L.EAM_STAT_SPIRIT_BLUE_FLASH_TITLE = "Blue Border Flash"
+L.EAM_STAT_SPIRIT_BLUE_FLASH_TIP = "Plays a fullscreen ice-blue breathing border animation when full Spirit mana regeneration activates."
+
 end)

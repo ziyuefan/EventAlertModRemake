@@ -150,11 +150,11 @@ local function refreshForeverProbe()
     lines[#lines + 1] = "[Magic Resistances (Effective / Base)]"
     local getRes = api.UnitResistance or _G.UnitResistance
     local schools = {
-        { name = "Arcane", id = 6, label = "秘法" },
-        { name = "Fire", id = 2, label = "火焰" },
-        { name = "Frost", id = 4, label = "冰霜" },
-        { name = "Nature", id = 3, label = "自然" },
-        { name = "Shadow", id = 5, label = "暗影" },
+        { name = "Arcane", id = 6, labelKey = "EAM_STAT_RESIST_ARCANE", defLabel = "秘法抗性" },
+        { name = "Fire", id = 2, labelKey = "EAM_STAT_RESIST_FIRE", defLabel = "火焰抗性" },
+        { name = "Frost", id = 4, labelKey = "EAM_STAT_RESIST_FROST", defLabel = "冰霜抗性" },
+        { name = "Nature", id = 3, labelKey = "EAM_STAT_RESIST_NATURE", defLabel = "自然抗性" },
+        { name = "Shadow", id = 5, labelKey = "EAM_STAT_RESIST_SHADOW", defLabel = "暗影抗性" },
     }
     for _, sc in ipairs(schools) do
         local eff, base = 0, 0
@@ -165,7 +165,8 @@ local function refreshForeverProbe()
                 eff = e or r or b or 0
             end
         end
-        lines[#lines + 1] = string.format("  - %-8s (%s): %d (Base: %d)", sc.name, sc.label, eff, base)
+        local lbl = localized(sc.labelKey, sc.defLabel)
+        lines[#lines + 1] = string.format("  - %-8s (%s): %d (Base: %d)", sc.name, lbl, eff, base)
     end
     lines[#lines + 1] = ""
 
@@ -191,7 +192,7 @@ local function refreshForeverProbe()
     lines[#lines + 1] = "  - Known Ranked Spells: " .. tostring(srs and srs.getKnownSpellCount and srs.getKnownSpellCount() or 0)
 
     setContent(table.concat(lines, "\n"))
-    setStatus(localized("EAM_DEBUG_STATUS_FOREVER_REFRESHED", "已更新永恆服資源與抗性診斷數據。"))
+    setStatus(localized("EAM_DEBUG_STATUS_FOREVER_REFRESHED", "已更新永恆資源與抗性診斷數據。"))
 end
 
 local function refreshRuneProbe()

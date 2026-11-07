@@ -522,7 +522,7 @@
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen" /></a></p>
 <blockquote>
-<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《永恆之樹 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
+<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《永恆 / 無限 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
 <p>🌐 <strong>官方線上說明文件與導航中心</strong>：<a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a></p>
 </blockquote>
 <hr />
@@ -852,7 +852,7 @@
 <h3 id="retail-1215-forever-1601-alpha-89-20261108">🌟 [Retail 12.1.5 &amp; Forever 1.60.1 Alpha 8.9] - 2026.11.08</h3>
 <ul>
 <li><strong>雙版本無縫統一架構 (Multi-Flavor Unified Architecture)</strong>：<ul>
-<li>採用單一插件目錄與單一 TOC 內聯條件載入技術 (<code>[AllowLoadGameType camelot, forever]</code>)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《永恆之樹》經典永恆服 (Forever 1.60.1)。</li>
+<li>採用單一插件目錄與單一 TOC 內聯條件載入技術 (<code>[AllowLoadGameType camelot, forever]</code>)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《魔獸世界：永恆 / 無限》經典永恆服 (Forever 1.60.1)。</li>
 <li>執行期自動偵測遊戲環境 (<code>EAM.detectGameFlavor</code>)，零效能耗損隔離各版本專屬資料層與業務邏輯。</li>
 <li>零分配記憶體架構：跨版本核心引擎、原生 C++ 倒數排程器 (<code>TimedSignalMap</code>) 與狀態物件池 (<code>StatePool</code>) 100% 共通共享。</li>
 </ul>
@@ -1462,7 +1462,7 @@
 <li><strong>支援環境</strong>：<ul>
 <li>《魔獸世界：正式服》World of Warcraft: Retail 12.1.5+ (Interface 120105 / 120100)</li>
 <li>相容通道 Retail 12.0.7+ (Interface 120007)</li>
-<li>《魔獸世界：永恆之樹》World of Warcraft: Forever 1.60.1+ (Interface 16001)</li>
+<li>《魔獸世界：永恆 / 無限》World of Warcraft: Forever 1.60.1+ (Interface 16001，繁中「永恆」、簡中「無限」)</li>
 </ul>
 </li>
 <li><strong>不支援環境</strong>：<ul>
@@ -1481,7 +1481,7 @@
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
-<h1 id="eventalertmod-retail-1215-forever-1601-eam">EventAlertMod Retail 12.1.5 &amp; Forever 1.60.1 (EAM)</h1>
+<h1 id="eventalertmod-retail-1215-forever-1601-zhtw-zhcn-eam">EventAlertMod Retail 12.1.5 &amp; Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.9-orange" /></a>
@@ -1529,8 +1529,8 @@
 <li>⏳ <strong>Spell Cooldown</strong>: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode &amp; outer linear bars (<code>TOP/BOTTOM/LEFT/RIGHT</code>), custom reordering (drag &amp; drop, up/down), and desaturated placeholder masks.</li>
 <li>🎒 <strong>Item Cooldown</strong>: Trinkets, on-use equipment, and consumables monitoring; fully supports dual-track monitoring (19 equipment slots &amp; item IDs), 3-tier robust cooldown fallback, and real-time gear swap synchronization.</li>
 <li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.</li>
-<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).</li>
-<li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18 core stats in Retail, plus classic stat tracking in Forever 1.60.1 (Five Magic Resistances, Spirit 5-Second Rule MP5/HP5 with Active visual &amp; full-screen blue-border flash alerts, Defense Skill crit immunity, Pet Happiness/Loyalty, Ranged Ammo Status, Armor Penetration).</li>
+<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).</li>
+<li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18 core stats in Retail, plus classic stat tracking in Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (Five Magic Resistances, Spirit 5-Second Rule MP5/HP5 with Active visual &amp; full-screen blue-border flash alerts, Defense Skill crit immunity, Pet Happiness/Loyalty, Ranged Ammo Status, Armor Penetration).</li>
 </ol>
 <hr />
 <h2 id="modern-visuals-streamlined-experience">🎨 Modern Visuals &amp; Streamlined Experience</h2>
@@ -1801,8 +1801,8 @@
 <hr />
 <h2 id="version-history-changelogtxt">📜 Version History (CHANGELOG.TXT)</h2>
 <details open="open">
-<summary><b>🔥 Retail 12.1.5 &amp; Forever 1.60.1 Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
-<h3 id="retail-1215-forever-1601-alpha-89-20261108">🌟 [Retail 12.1.5 &amp; Forever 1.60.1 Alpha 8.9] - 2026.11.08</h3>
+<summary><b>🔥 Retail 12.1.5 &amp; Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+<h3 id="retail-1215-forever-1601-zhtw-zhcn-alpha-89-20261108">🌟 [Retail 12.1.5 &amp; Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Alpha 8.9] - 2026.11.08</h3>
 <ul>
 <li><strong>Multi-Flavor Unified Architecture</strong>:<ul>
 <li>Single addon directory with inline TOC conditional loading directives (<code>[AllowLoadGameType camelot, forever]</code>), simultaneously supporting Retail (12.1.5) and Forever (1.60.1) clients.</li>
@@ -1810,26 +1810,26 @@
 <li>Zero-allocation memory architecture: Shared core engine, native C++ <code>TimedSignalMap</code> scheduler, and <code>StatePool</code> object pools.</li>
 </ul>
 </li>
-<li><strong>[Forever 1.60.1 Exclusive] Full Pipeline Spell Rank Management</strong>:<ul>
+<li><strong>[Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Exclusive] Full Pipeline Spell Rank Management</strong>:<ul>
 <li>Added <code>SpellRankService</code> and <code>ForeverCatalog.FOREVER_SPELL_RANK_FAMILIES</code>, dynamically populating native AuraContainer <code>candidateFilters.includeSpellIDs</code> to seamlessly match all spell ranks in a single slot without duplicate icons (supporting downranking and group buffs).</li>
 <li>GroundEffectService and Options.lua support spell rank subtext (e.g. <code>[Rank 4]</code>) display.</li>
 </ul>
 </li>
-<li><strong>[Forever 1.60.1 Exclusive] Five Magic Resistances Monitoring</strong>:<ul>
+<li><strong>[Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Exclusive] Five Magic Resistances Monitoring</strong>:<ul>
 <li>Supported Arcane, Fire, Frost, Nature, and Shadow resistances in PlayerStatPanel, integrating <code>UnitResistance("player", damageClass)</code> using <code>effectiveRes</code>, with custom threshold alerts and status bars.</li>
 </ul>
 </li>
-<li><strong>[Forever 1.60.1 Exclusive] Spirit 5-Second Rule State Machine, MP5/HP5 Dual Metrics &amp; Active Alert</strong>:<ul>
+<li><strong>[Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Exclusive] Spirit 5-Second Rule State Machine, MP5/HP5 Dual Metrics &amp; Active Alert</strong>:<ul>
 <li>Precision detection for 5-Second Rule (5SR) after mana-spending spellcasts, integrating <code>GetManaRegenFromSpirit</code> (x5 MP5) and <code>GetHealthRegenFromSpirit</code> (x0.75x5 HP5).</li>
 <li>Supported <code>FULL</code> (Spirit + MP5/HP5), <code>REGEN_ONLY</code> (MP5/HP5), and <code>STAT_ONLY</code> display modes.</li>
 <li>Supported Active alerts (glow overlay / text scaling 1.32x with 1.45x pop + ice-blue highlight) and optional full-screen blue flash (<code>CombatFlash.triggerSpiritActive()</code>).</li>
 </ul>
 </li>
-<li><strong>[Forever 1.60.1 Exclusive] Classic 60-Level Player Resource Topology</strong>:<ul>
+<li><strong>[Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Exclusive] Classic 60-Level Player Resource Topology</strong>:<ul>
 <li>Full support for 9 classic classes and their energy systems: Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, and pure Mana systems for Paladins, Priests, Shamans, and Mages.</li>
 </ul>
 </li>
-<li><strong>[Forever 1.60.1 Exclusive] Classic Character Stats &amp; State Monitor</strong>:<ul>
+<li><strong>[Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Exclusive] Classic Character Stats &amp; State Monitor</strong>:<ul>
 <li>Spirit Mana Regen &amp; 5-Second Rule (<code>SPIRIT_MANA_REGEN</code>): Integrated <code>GetManaRegenFromSpirit</code> and <code>GetHealthRegen</code> for real-time mana regeneration tracking.</li>
 <li>Defense Skill (<code>DEFENSE_SKILL</code>): Real-time monitoring of <code>UnitDefenseSkill</code> and crit immunity thresholds with safe arithmetic checks.</li>
 <li>Pet Happiness &amp; Loyalty (<code>PET_HAPPINESS</code>): Integrated <code>C_PetInfo</code> for live pet emotional state tracking (Unhappy/Content/Happy with 75%/100%/125% damage modifiers).</li>
@@ -1837,7 +1837,7 @@
 <li>Armor Penetration &amp; Glancing Blow: Accurate calculations of core physical offensive parameters.</li>
 </ul>
 </li>
-<li><strong>[Forever 1.60.1 Exclusive] Forever Default Alerts &amp; Spell Heuristics</strong>:<ul>
+<li><strong>[Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Exclusive] Forever Default Alerts &amp; Spell Heuristics</strong>:<ul>
 <li>Built-in default alert configurations for 9 classic classes (Clearcasting, Arcane Power, Presence of Mind, Overpower, Execute, Enrage, Flurry, Riposte, Improved Aspect of the Hawk, etc.) and classic trinkets/enchants.</li>
 <li>Heuristic evaluation support for Classic spell ranks and conditional combat triggers (Overpower after dodge, Riposte after parry, Execute at sub-20% health).</li>
 </ul>
@@ -2209,7 +2209,7 @@
 <li><strong>Supported Client Environments</strong>:<ul>
 <li>World of Warcraft: Retail 12.1.5+ (Interface <code>120105</code> / <code>120100</code>)</li>
 <li>Retail Compatibility Channel 12.0.7+ (Interface <code>120007</code>)</li>
-<li>World of Warcraft: Forever 1.60.1+ (Interface <code>16001</code>)</li>
+<li>World of Warcraft: Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (zhTW: 永恆 / zhCN: 無限)+ (zhTW: 永恆 / zhCN: 無限) (Interface <code>16001</code>)</li>
 </ul>
 </li>
 <li><strong>Unsupported Environments</strong>:<ul>

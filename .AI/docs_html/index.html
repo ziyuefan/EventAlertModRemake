@@ -521,7 +521,7 @@
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen" /></a></p>
 <blockquote>
-<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《魔獸世界：永恆之樹 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
+<p>🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《魔獸世界：永恆 / 無限 (Forever 1.60.1)》（繁中客戶端為「永恆」、簡中客戶端為「無限」）打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong></p>
 </blockquote>
 <p>歡迎使用 EventAlertMod (EAM) 正式服重構版本說明文件中心。本中心為<strong>插件使用者 (Players &amp; Users)</strong> 以及<strong>代理開發者 (AI &amp; Human Developers)</strong> 提供完整的資訊導覽與架構參考。</p>
 <hr />
@@ -562,14 +562,14 @@
 <li>⏳ <strong>技能冷卻 (Spell Cooldown)</strong>：純透明度（Alpha=0）常駐預載模式，0.00ms 零排版延遲；支援 2D 矩陣折行 (2D Grid Layout)、每列欄數控制 (Columns per Row)、圓形環狀進度條 (<code>Radial Ring Mode</code>)、框外線性條 (<code>TOP/BOTTOM/LEFT/RIGHT</code>)、扇形倒數色彩與透明度自訂、以及非線性衝刺進度曲線。</li>
 <li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控，支援 2D 矩陣折行排版。</li>
 <li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊、多時間組別候選擷取（Duration Group Selector）與 2D 矩陣折行。</li>
-<li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援 Retail 全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（<code>&gt;=</code> / <code>&lt;=</code> 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（<code>/eam rune</code>）；同步支援《魔獸世界：永恆之樹》(Forever 1.60.1) 經典 60 級 9 大職業資源拓撲（戰士怒氣、盜賊能量與 5 格連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力），徹底隔離現代專精雜訊。</li>
+<li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援 Retail 全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（<code>&gt;=</code> / <code>&lt;=</code> 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（<code>/eam rune</code>）；同步支援《魔獸世界：永恆 / 無限》(Forever 1.60.1，繁中「永恆」、簡中「無限」) 經典 60 級 9 大職業資源拓撲（戰士怒氣、盜賊能量與 5 格連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力），徹底隔離現代專精雜訊。</li>
 <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：依職業獨立配置，全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量），採 4-Tab 模組化設定面板與單項獨立座標自訂拖曳；永恆服 (Forever 1.60.1) 專屬支援五大魔法抗性（秘法、火焰、冰霜、自然、暗影）有效數值監控、經典精神 (Spirit) 5 秒回魔規則 (5SR) 狀態機、<code>FULL</code> / <code>REGEN_ONLY</code> / <code>STAT_ONLY</code> 三種數值呈現模式、Active 動態圖示高亮/文字放大脈衝、以及可選全螢幕寶石藍呼吸閃爍。</li>
 </ol>
 <hr />
 <h2 id="recent-release-milestones">🔥 近期版本重大里程碑 (Recent Release Milestones)</h2>
 <ul>
 <li>🌟 <strong>[Retail 12.1.5 &amp; Forever 1.60.1 Alpha 8.9] - 2026.11.08</strong><ul>
-<li><strong>雙版本跨時代統一架構 (Multi-Flavor Unified Architecture)</strong>：全面適配魔獸世界正式服 12.1.5（Interface: <code>120105</code>，向下相容 <code>120100</code> / <code>120007</code>）與《魔獸世界：永恆之樹》1.60.1（Interface: <code>16001</code>，專案代號 Camelot），單一程式碼庫自動偵測環境，實現零程式碼分岔。</li>
+<li><strong>雙版本跨時代統一架構 (Multi-Flavor Unified Architecture)</strong>：全面適配魔獸世界正式服 12.1.5（Interface: <code>120105</code>，向下相容 <code>120100</code> / <code>120007</code>）與《魔獸世界：永恆 / 無限》1.60.1（繁中「永恆」、簡中「無限」）（Interface: <code>16001</code>，專案代號 Camelot），單一程式碼庫自動偵測環境，實現零程式碼分岔。</li>
 <li><strong>暴雪 12.1.5 &amp; 1.60.1 秘密值 (Secret Values) 終極安全防護熱修復</strong>：徹底修復失去控制冷卻 <code>locDur</code>（Secret Number 比較）與光環全量更新 <code>isFullUpdate</code>（Secret Boolean 判斷）在戰鬥中引發的運算中斷；採用 <code>issecretvalue()</code> 與 <code>canaccessvalue()</code> 雙重防禦檢驗，受保護數值直接單向傳遞至原生 <code>Cooldown:SetCooldown</code>、<code>DurationObject</code> 與 <code>StatusBar:SetValue</code>，戰鬥中零黃字噴錯、零 UI 污染。</li>
 <li><strong>永恆服法術技能全等級管理 (Forever Spell Rank Multi-Tier Lifecycle) [Forever 1.60.1 專屬]</strong>：整合永恆服 <code>C_SpellBook</code> 與 <code>C_Spell.GetSpellSubtext</code>，自動展開並匹配同一法術之所有歷史與當前等級，原生光環容器支援全等級雜湊集合過濾（<code>includeSpellIDs = { [r1]=true, [r2]=true, ... }</code>），單一槽位無重複圖示精確匹配降階施法 (Downranking) 與隊友增益。</li>
 <li><strong>永恆服經典 60 級 9 大職業資源拓撲 [Forever 1.60.1 專屬]</strong>：專屬打造經典 9 大職業（戰士怒氣、盜賊能量與連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力）資源拓撲，徹底隔離現代專精與多餘資源型態（真氣、龍能、狂亂、符文、聖能、秘法充能等）。</li>

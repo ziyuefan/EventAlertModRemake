@@ -5,9 +5,21 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-11-08.02 (Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備完成，21 大深層測試、110 Flow、502 契約滿分通過)。
+目前快照版本：2026-11-08.03 (Forever 雙語區官方名稱校準：繁中「永恆」、簡中「无限」，消滅「永恆之樹」誤植；Alpha 9.0 開發週期正式開啟，5 語系詞條 100% 對齊) (Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備完成，21 大深層測試、110 Flow、502 契約滿分通過)。
 
-## 2026-11-08 多進度儲存點：Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備（現行儲存點）
+## 2026-11-08 多進度儲存點：Forever 1.60.1 雙語區官方名稱校準（繁中「永恆」、簡中「无限」）與 Alpha 9.0 開發週期啟動（現行儲存點）
+
+- current-of-truth：全面校準《World of Warcraft: Forever 1.60.1》官方客戶端名稱並開啟 Alpha 9.0 開發週期：
+  1. **雙語區官方名稱全面對齊**：繁體中文 (zhTW) 官方名稱為「永恆」（徹底消滅誤植之「永恆之樹」），簡體中文 (zhCN) 官方名稱為「无限 / 無限」（徹底消滅誤植之「永恒」或「永恒服」）；
+  2. **公開發布產物即時正名 (Alpha 8.9)**：更新 Dist 發布筆記、CurseForge 專案說明、奇樂 MiliUI HTML5 說明檔與雙語 README，標註繁中「永恆」／簡中「無限」；
+  3. **插件本體開啟 Alpha 9.0 開發週期**：
+     - TOC 版本提升至 `EventAlertMod_MN_12.1.5_Forever_1.60.1_Alpha_9.0`，修正 zhTW 與 zhCN 插件描述；
+     - `Env.lua` 更新為 `Retail_12.1.5_Forever_1.60.1_Alpha_9.0`；
+     - 5 語系新增 6 個 UI 互動詞條 (`EAM_DEBUG_STATUS_FOREVER_REFRESHED`, `EAM_STAT_SPIRIT_MODE_TIP`, `EAM_STAT_SPIRIT_ACTIVE_ALERT_TITLE`, `EAM_STAT_SPIRIT_ACTIVE_ALERT_TIP`, `EAM_STAT_SPIRIT_BLUE_FLASH_TITLE`, `EAM_STAT_SPIRIT_BLUE_FLASH_TIP`)，維持 5 語系鍵值 100% 對齊；
+     - `LiveTestPanel.lua`、`DebugCenterPanel.lua`（五系抗性本地化詞條動態載入）與 `DeploymentTargets.json` 部署標籤同步對齊；
+     - `changelog.txt` / `changelog_en.txt` / `changelog.md` / `changelog.html` 鏡像雙端 100% SHA-256 對齊。
+
+## 2026-11-08 多進度儲存點：Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備（前一儲存點）
 
 - current-of-truth：全面修復實機戰鬥致命 Secret Value 報錯，並實作法術等級與精神回魔/回血動態提醒：
   1. **秘密數值 (Secret Values) 深度防禦 (Core/Env.lua, Util.lua, CooldownService.lua, AuraService.lua, CombatFlash.lua, LibButtonGlow-1.0.lua)**：

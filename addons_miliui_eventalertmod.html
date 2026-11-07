@@ -13,7 +13,7 @@
 
 <blockquote>
   <p>
-    🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《魔獸世界：永恆之樹 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong><br><br>
+    🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《魔獸世界：永恆 / 無限 (Forever 1.60.1)》（繁中客戶端為「永恆」、簡中客戶端為「無限」）打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong><br><br>
     🌐 <strong>官方線上說明文件與導航中心</strong>：<a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a>
   </p>
 </blockquote>
@@ -24,7 +24,7 @@
 <details>
   <summary>點擊展開</summary>
   <div class="details-content">
-    <p>EAM 專為 12.0+ / 12.1+ Retail 正式服與 1.60+ 永恆服深度重構，徹底解決傳統法術監控插件沉重、掉幀與報錯污染問題：</p>
+    <p>EAM 專為 12.0+ / 12.1+ Retail 正式服與 1.60+ 永恆 / 無限服深度重構，徹底解決傳統法術監控插件沉重、掉幀與報錯污染問題：</p>
     <ol>
       <li>
         <strong>資源佔用與運行效能</strong>
@@ -244,7 +244,7 @@
       <li>解壓縮後將 <code>EventAlertMod</code> 資料夾放置於魔獸世界安裝目錄：
         <ul>
           <li>正式服路徑：<code>World of Warcraft\_retail_\Interface\AddOns\EventAlertMod</code></li>
-          <li>永恆服路徑：<code>World of Warcraft\_forever_\Interface\AddOns\EventAlertMod</code></li>
+          <li>永恆 / 無限服路徑：<code>World of Warcraft\_forever_\Interface\AddOns\EventAlertMod</code>（繁中「永恆」、簡中「無限」）</li>
         </ul>
       </li>
       <li>啟動遊戲，在角色選擇畫面確認「插件」清單中已勾選啟用 <code>EventAlertMod</code>。</li>
@@ -264,7 +264,7 @@
   <div class="details-content">
     <p><strong>雙版本無縫統一架構 (Multi-Flavor Unified Architecture)</strong>：</p>
     <ul>
-      <li><strong>單一插件目錄雙版本無縫相容</strong>：採用單一 TOC 內聯條件載入技術 (<code>[AllowLoadGameType camelot, forever]</code>)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《永恆之樹》經典永恆服 (Forever 1.60.1)。</li>
+      <li><strong>單一插件目錄雙版本無縫相容</strong>：採用單一 TOC 內聯條件載入技術 (<code>[AllowLoadGameType camelot, forever]</code>)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《魔獸世界：永恆 / 無限》經典永恆服 (Forever 1.60.1)。</li>
       <li><strong>執行期動態環境偵測</strong>：執行期自動偵測遊戲環境 (<code>EAM.detectGameFlavor</code>)，零效能耗損隔離各版本專屬資料層與業務邏輯。</li>
       <li><strong>零分配記憶體架構</strong>：跨版本核心引擎、原生 C++ 倒數排程器 (<code>TimedSignalMap</code>) 與狀態物件池 (<code>StatePool</code>) 100% 共通共享。</li>
     </ul>

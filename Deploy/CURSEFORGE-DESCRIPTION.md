@@ -10,7 +10,7 @@
 
 <blockquote>
   <p>
-    🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《魔獸世界：永恆之樹 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong><br><br>
+    🚀 <strong>專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《魔獸世界：永恆 / 無限 (Forever 1.60.1)》（繁中客戶端為「永恆」、簡中客戶端為「無限」）打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！</strong><br><br>
     🌐 <strong>官方線上說明文件與導航中心</strong>：<a href="https://ziyuefan.github.io/EventAlertModRemake/">https://ziyuefan.github.io/EventAlertModRemake/</a>
   </p>
 </blockquote>
@@ -381,7 +381,7 @@
 &bull;&nbsp;前往 <a href="https://github.com/ziyuefan/EventAlertModRemake/releases">GitHub Releases</a> 下載最新版本之 <code>EventAlertMod_MN_*.zip</code>。<br><br>
 解壓縮後將 <code>EventAlertMod</code> 資料夾放置於魔獸世界安裝目錄：<br><br>
 &bull;&nbsp;正式服路徑：<code>World of Warcraft\_retail_\Interface\AddOns\EventAlertMod</code><br><br>
-&bull;&nbsp;永恆服路徑：<code>World of Warcraft\_forever_\Interface\AddOns\EventAlertMod</code><br><br>
+&bull;&nbsp;永恆 / 無限服路徑：<code>World of Warcraft\_forever_\Interface\AddOns\EventAlertMod</code>（繁中客戶端為「永恆」、簡中客戶端為「無限」）<br><br>
 &bull;&nbsp;啟動遊戲，在角色選擇畫面確認「插件」清單中已勾選啟用 <code>EventAlertMod</code>。<br><br>
 
 </div>
@@ -396,7 +396,7 @@
 <div class="spoiler">
 
 <strong>雙版本無縫統一架構 (Multi-Flavor Unified Architecture)</strong>：<br><br>
-&bull;&nbsp;<strong>單一插件目錄雙版本無縫相容</strong>：採用單一 TOC 內聯條件載入技術 (<code>[AllowLoadGameType camelot, forever]</code>)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《永恆之樹》經典永恆服 (Forever 1.60.1)。<br><br>
+&bull;&nbsp;<strong>單一插件目錄雙版本無縫相容</strong>：採用單一 TOC 內聯條件載入技術 (<code>[AllowLoadGameType camelot, forever]</code>)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《魔獸世界：永恆 / 無限》經典永恆服 (Forever 1.60.1)。<br><br>
 &bull;&nbsp;<strong>執行期動態環境偵測</strong>：執行期自動偵測遊戲環境 (<code>EAM.detectGameFlavor</code>)，零效能耗損隔離各版本專屬資料層與業務邏輯。<br><br>
 &bull;&nbsp;<strong>零分配記憶體架構</strong>：跨版本核心引擎、原生 C++ 倒數排程器 (<code>TimedSignalMap</code>) 與狀態物件池 (<code>StatePool</code>) 100% 共通共享。<br><br>
 
@@ -909,7 +909,7 @@
 <strong>支援環境</strong>：<br><br>
 &bull;&nbsp;《魔獸世界：正式服》World of Warcraft: Retail 12.1.5+ (Interface 120105)<br><br>
 &bull;&nbsp;相容通道 Retail 12.1.0+ (Interface 120100) / Retail 12.0.7+ (Interface 120007)<br><br>
-&bull;&nbsp;《魔獸世界：永恆之樹》World of Warcraft: Forever 1.60.1+ (Interface 16001)<br><br>
+&bull;&nbsp;《魔獸世界：永恆 / 無限》World of Warcraft: Forever 1.60.1+ (Interface 16001)<br><br>
 <strong>不支援環境</strong>：<br><br>
 &bull;&nbsp;經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等傳統懷舊服不在本專案支援範圍）。<br><br>
 

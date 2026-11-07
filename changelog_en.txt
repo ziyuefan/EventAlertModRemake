@@ -1,3 +1,8 @@
+-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Regional Localization Alignment] 2026.11.08
+     -- [Localization]:
+        -- Calibrated official regional client names for Forever: Traditional Chinese (zhTW) unified as "永恆" (World of Warcraft: Forever) and Simplified Chinese (zhCN) unified as "无限" (World of Warcraft: Infinite).
+        -- Synchronized Simplified Chinese TOC description, LiveTest panel, Spirit 5SR dynamic regen alert tooltips, and DebugCenter five resistance localized entries.
+
 -- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 8.9][Multi-Flavor Unified Architecture, Forever 60-Level Resource Topology, Classic Stat Monitoring & Retail 12.1.5 Native Aura Overhaul] 2026.11.08
      -- [Features]:
         -- [Forever 1.60.1] Full Pipeline Spell Rank Management:

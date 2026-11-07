@@ -36,7 +36,7 @@ def build_comparison_html():
         '<details>\n'
         '  <summary>點擊展開</summary>\n'
         '  <div class="details-content">\n'
-        '    <p>EAM 專為 12.0+ / 12.1+ Retail 正式服與 1.60+ 永恆服深度重構，徹底解決傳統法術監控插件沉重、掉幀與報錯污染問題：</p>\n'
+        '    <p>EAM 專為 12.0+ / 12.1+ Retail 正式服與 1.60+ 永恆 / 無限服深度重構，徹底解決傳統法術監控插件沉重、掉幀與報錯污染問題：</p>\n'
         '    <ol>\n'
         '      <li>\n'
         '        <strong>資源佔用與運行效能</strong>\n'
@@ -257,7 +257,7 @@ def build_installation_html():
         '      <li>解壓縮後將 <code>EventAlertMod</code> 資料夾放置於魔獸世界安裝目錄：\n'
         '        <ul>\n'
         r'          <li>正式服路徑：<code>World of Warcraft\_retail_\Interface\AddOns\EventAlertMod</code></li>' + '\n'
-        r'          <li>永恆服路徑：<code>World of Warcraft\_forever_\Interface\AddOns\EventAlertMod</code></li>' + '\n'
+        r'          <li>永恆 / 無限服路徑：<code>World of Warcraft\_forever_\Interface\AddOns\EventAlertMod</code>（繁中「永恆」、簡中「無限」）</li>' + '\n'
         '        </ul>\n'
         '      </li>\n'
 

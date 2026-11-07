@@ -1264,4 +1264,11 @@ L.EAM_STAT_SPIRIT_ACTIVE_ALERT = "정신력 재생 활성 동적 알림 사용 (
 L.EAM_STAT_SPIRIT_BLUE_FLASH = "정신력 마나 재생 시작 시 전체 화면 파란색 테두리 애니메이션 재생"
 L.EAM_STAT_TEST_BLUE_FLASH = "파란 플래시 테스트"
 
+L.EAM_DEBUG_STATUS_FOREVER_REFRESHED = "포에버 자원 및 저항 진단 데이터를 갱신했습니다."
+L.EAM_STAT_SPIRIT_MODE_TIP = "정신력 수치 표시 모드 전환: 전체 (정신력+MP5+HP5) / 재생만 (MP5+HP5) / 능력치만 (정신력)"
+L.EAM_STAT_SPIRIT_ACTIVE_ALERT_TITLE = "활성 동적 알림"
+L.EAM_STAT_SPIRIT_ACTIVE_ALERT_TIP = "5초 규칙을 벗어나 정신력 마나 재생이 최대 속도로 활성화되면 아이콘 테두리 발광 또는 텍스트 확대 알림을 표시합니다."
+L.EAM_STAT_SPIRIT_BLUE_FLASH_TITLE = "파란색 테두리 점멸"
+L.EAM_STAT_SPIRIT_BLUE_FLASH_TIP = "5초 규칙 이후 정신력 마나 재생이 시작되는 순간 전체 화면 얼음빛 파란색 테두리 점멸 애니메이션을 재생합니다."
+
 end)

@@ -1266,4 +1266,11 @@ L.EAM_STAT_SPIRIT_ACTIVE_ALERT = "Включить активное оповещ
 L.EAM_STAT_SPIRIT_BLUE_FLASH = "Полноэкранная синяя вспышка при активации регенерации духа"
 L.EAM_STAT_TEST_BLUE_FLASH = "Тест синей вспышки"
 
+L.EAM_DEBUG_STATUS_FOREVER_REFRESHED = "Данные диагностики ресурсов и сопротивлений Forever обновлены."
+L.EAM_STAT_SPIRIT_MODE_TIP = "Переключить режим отображения духа: Полный (Дух+MP5+HP5) / Только реген. / Только дух"
+L.EAM_STAT_SPIRIT_ACTIVE_ALERT_TITLE = "Активное оповещение"
+L.EAM_STAT_SPIRIT_ACTIVE_ALERT_TIP = "При выходе из правила 5 секунд и запуске полной регенерации маны от духа включает свечение рамки значка или увеличение текста."
+L.EAM_STAT_SPIRIT_BLUE_FLASH_TITLE = "Синяя вспышка рамки"
+L.EAM_STAT_SPIRIT_BLUE_FLASH_TIP = "При мгновенной активации регенерации маны от духа воспроизводит полноэкранную ледяную синюю анимацию по краям экрана."
+
 end)

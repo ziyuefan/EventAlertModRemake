@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-11-08.02",
+  "snapshotVersion": "2026-11-08.03",
   "updatedAt": "2026-11-08",
   "project": {
     "name": "EventAlertModRemake",
@@ -22,7 +22,7 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "World of Warcraft: Forever 1.60.1 秘密數值 (Secret Values) 崩潰根治、全鏈路法術等級展開、五大魔法抗性與精神 5 秒規則 (5SR) 狀態機實裝完成；Alpha 8.9 全專案文件同步（雙語 Changelog/README、CurseForge、MiliUI 奇樂、Dist 發布筆記）與驗證門檻 100% 通過。",
+    "objective": "World of Warcraft: Forever 1.60.1 雙語區官方名稱校準（繁中「永恆」、簡中「无限」，消滅「永恆之樹」誤植）完成；Alpha 9.0 開發週期啟動，5 語系新增 6 個互動詞條並 100% 鍵值對齊，全套驗證門檻通過。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 110,

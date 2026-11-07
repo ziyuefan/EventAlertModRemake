@@ -6,7 +6,7 @@
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《永恆之樹 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
+> 🚀 **專為《魔獸世界：正式服 (Retail 12.1.5 / 12.1 / 12.0+)》與《永恆 / 無限 (Forever 1.60.1)》打造的超輕量、零污染、純事件驅動法術監控與戰鬥告警插件！**
 >
 > 🌐 **官方線上說明文件與導航中心**：[https://ziyuefan.github.io/EventAlertModRemake/](https://ziyuefan.github.io/EventAlertModRemake/)
 
@@ -161,7 +161,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 ### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08
 - **雙版本無縫統一架構 (Multi-Flavor Unified Architecture)**：
-  - 採用單一插件目錄與單一 TOC 內聯條件載入技術 (`[AllowLoadGameType camelot, forever]`)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《永恆之樹》經典永恆服 (Forever 1.60.1)。
+  - 採用單一插件目錄與單一 TOC 內聯條件載入技術 (`[AllowLoadGameType camelot, forever]`)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《魔獸世界：永恆 / 無限》經典永恆服 (Forever 1.60.1)。
   - 執行期自動偵測遊戲環境 (`EAM.detectGameFlavor`)，零效能耗損隔離各版本專屬資料層與業務邏輯。
   - 零分配記憶體架構：跨版本核心引擎、原生 C++ 倒數排程器 (`TimedSignalMap`) 與狀態物件池 (`StatePool`) 100% 共通共享。
 - **[Forever 1.60.1 永恆服專屬] 全鏈路法術技能等級 (Spell Rank) 整合與暴雪原生容器相容**：
@@ -569,7 +569,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 - **支援環境**：
   - 《魔獸世界：正式服》World of Warcraft: Retail 12.1.5+ (Interface 120105 / 120100)
   - 相容通道 Retail 12.0.7+ (Interface 120007)
-  - 《魔獸世界：永恆之樹》World of Warcraft: Forever 1.60.1+ (Interface 16001)
+  - 《魔獸世界：永恆 / 無限》World of Warcraft: Forever 1.60.1+ (Interface 16001，繁中「永恆」、簡中「無限」)
 - **不支援環境**：
   - 經典懷舊服全系列（Classic Era、MoP Classic、TBC Classic、Wrath 等傳統懷舊服不在本專案支援範圍）。
 

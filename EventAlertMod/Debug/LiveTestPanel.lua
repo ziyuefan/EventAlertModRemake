@@ -253,7 +253,7 @@ local function createFrame()
         function() startSession("_xptr_") end
     )
     local foreverButton = createButton(
-        frame, localized("EAM_LIVE_START_FOREVER", "開始永恆服 1.60.1"), 145,
+        frame, localized("EAM_LIVE_START_FOREVER", "開始永恆 1.60.1"), 145,
         "LEFT", xptrButton, "RIGHT", 8, 0,
         function() startSession("_forever_") end
     )

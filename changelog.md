@@ -7,9 +7,14 @@
 
 ## 📅 版本紀錄 (Version History)
 
+### [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.08
+- **【🌐 在地化支援】(Localization)**：
+  - 校準 Forever 雙語區官方客戶端名稱：繁體中文 (zhTW) 統一為「永恆」（《魔獸世界：永恆》）、簡體中文 (zhCN) 統一為「无限」（《魔兽世界：无限》）。
+  - 同步校準簡中插件說明、實機測試面板、精神 5 秒回藍動態提醒提示框與除錯中心五系抗性本地化詞條。
+
 ### [Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08
 - **雙版本無縫統一架構 (Multi-Flavor Unified Architecture)**：
-  - 採用單一插件目錄與單一 TOC 內聯條件載入技術 (`[AllowLoadGameType camelot, forever]`)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《永恆之樹》經典永恆服 (Forever 1.60.1)。
+  - 採用單一插件目錄與單一 TOC 內聯條件載入技術 (`[AllowLoadGameType camelot, forever]`)，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《魔獸世界：永恆》經典永恆服 (Forever 1.60.1)。
   - 執行期自動偵測遊戲環境 (`EAM.detectGameFlavor`)，零效能耗損隔離各版本專屬資料層與業務邏輯。
   - 零分配記憶體架構：跨版本核心引擎、原生 C++ 倒數排程器 (`TimedSignalMap`) 與狀態物件池 (`StatePool`) 100% 共通共享。
 - **[Forever 1.60.1 永恆服專屬] 全鏈路法術技能等級 (Spell Rank) 整合與暴雪原生容器相容**：

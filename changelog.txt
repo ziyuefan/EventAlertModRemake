@@ -1,3 +1,8 @@
+-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Regional Localization Alignment] 2026.11.08
+     -- 【🌐 在地化支援 (Localization)】:
+        -- 校準 Forever 雙語區官方客戶端名稱：繁體中文 (zhTW) 統一為「永恆」（《魔獸世界：永恆》）、簡體中文 (zhCN) 統一為「无限」（《魔兽世界：无限》）。
+        -- 同步校準簡中插件說明、實機測試面板、精神 5 秒回藍動態提醒提示框與除錯中心五系抗性本地化詞條。
+
 -- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 8.9][Multi-Flavor Unified Architecture, Forever 60-Level Resource Topology, Classic Stat Monitoring & Retail 12.1.5 Native Aura Overhaul] 2026.11.08
      -- 【✨ 新增功能 (Features)】:
         -- [Forever 1.60.1 永恆服專屬] 全鏈路法術等級整合與暴雪原生容器相容 (Full Pipeline Spell Rank Management):
@@ -10,7 +15,7 @@
            -- 支援 FULL (精神+5秒回魔/回血)、REGEN_ONLY (僅回魔/回血) 與 STAT_ONLY 三種數值顯示模式；
            -- 提供 Active 醒目提醒（圖示發光邊框 / 無圖示文字 1.32x 放大與 1.45x 脈衝彈跳 + 冰晶藍亮色），並可選啟用全螢幕藍色邊框閃爍 (CombatFlash.triggerSpiritActive)。
         -- [雙版本共通 / Shared] 雙版本無縫統一架構 (Multi-Flavor Unified Architecture):
-           -- 採用單一插件目錄與單一 TOC 內聯條件載入技術 (Inline TOC GameType Directives: [AllowLoadGameType camelot, forever])，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《永恆之樹》經典永恆服 (Forever 1.60.1)；
+           -- 採用單一插件目錄與單一 TOC 內聯條件載入技術 (Inline TOC GameType Directives: [AllowLoadGameType camelot, forever])，同時支援《至暗之夜》正式服 (Retail 12.1.5) 與《魔獸世界：永恆》經典永恆服 (Forever 1.60.1)；
            -- 執行期自動偵測遊戲環境 (EAM.detectGameFlavor)，零效能耗損隔離各版本專屬資料層與業務邏輯；
            -- 零分配記憶體架構：跨版本核心引擎、原生 C++ 倒數排程器 (TimedSignalMap) 與狀態物件池 (StatePool) 100% 共通共享。
         -- [雙版本共通 / Shared] 零 GC 原生排程器深度擴展 (Zero-Alloc TimedSignalMap Scheduler Engine):
@@ -76,7 +81,7 @@
            -- 動態滑翔移速採樣 (C_PlayerInfo.GetGlidingInfo) 與 13 職業 40 種現代專精資源拓樸持續運作。
      -- 【⚡ 體驗優化 (Improvements)】:
         -- 關於視窗版本自適應 (About Panel Flavor Adaptation)：根據當前運行環境動態呈現「相容版本：Retail 12.0.0 - 12.1.5」或「相容版本：Forever 1.60.1」，提供清晰明瞭的環境識別。
-        -- 永恆服相容性與環境自適應增強 (Forever Environment Adaptation)：全面支援《永恆之樹》客戶端之遊戲檔案結構、字型渲染與多通道設定檔架構。
+        -- 永恆服相容性與環境自適應增強 (Forever Environment Adaptation)：全面支援《魔獸世界：永恆》客戶端之遊戲檔案結構、字型渲染與多通道設定檔架構。
         -- 移除過時暴雪全域函數調用：消除對 Blizzard_Deprecated 的任何引用依賴，提升插件在未來大版本演進時的穩定性與獨立性。
         -- 原生狀態物件保護加固：防禦性隔離 AuraState 之 timer 與 source 表格，提升極限負載與非標準光環事件下的抗崩潰能力。
      -- 【🐛 問題修復 (Bug Fixes)】:
