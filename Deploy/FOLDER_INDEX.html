@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Deployment &amp; Release Tooling Layer">
   <meta name="ai-governance-security" content="Offline PowerShell / DPAPI Protection">
   <meta name="ai-governance-invariants" content="嚴禁未經確認自動執行寫入魔獸遊戲目錄 | 機密隔離：永遠禁止將 API_TOKEN.SEC 包含在打包輸出的 ZIP 壓縮檔內 | 嚴格比對打包檔案清單與來源目錄，確保打包產物 100% 乾淨無暫存檔">
-  <meta name="ai-scan-timestamp" content="2026-10-23T01:48:34.373069+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.602184+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,16 +29,16 @@
     "機密隔離：永遠禁止將 API_TOKEN.SEC 包含在打包輸出的 ZIP 壓縮檔內",
     "嚴格比對打包檔案清單與來源目錄，確保打包產物 100% 乾淨無暫存檔"
   ],
-  "timestamp": "2026-10-23T01:48:34.373069+08:00",
+  "timestamp": "2026-11-13T12:35:11.602184+08:00",
   "fileCount": 10,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 274193,
+  "totalSizeBytes": 316172,
   "files": [
     {
       "name": "Build-Package.ps1",
       "extension": ".ps1",
-      "sizeBytes": 15931,
-      "lineCount": 407,
+      "sizeBytes": 16292,
+      "lineCount": 414,
       "purpose": "魔獸世界正式服發布包打包腳本，嚴格驗證 TOC 一致性、清理暫存並生成雜湊清單",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -46,7 +46,7 @@
     {
       "name": "Build-SourcePackage.ps1",
       "extension": ".ps1",
-      "sizeBytes": 9131,
+      "sizeBytes": 9134,
       "lineCount": 205,
       "purpose": "專案源碼發布包打包工具，排除本機衍生物與敏感快取，生成標準 Git 發布源碼包",
       "role": "Deploy Automation",
@@ -55,8 +55,8 @@
     {
       "name": "CURSEFORGE-DESCRIPTION.md",
       "extension": ".md",
-      "sizeBytes": 75688,
-      "lineCount": 827,
+      "sizeBytes": 96028,
+      "lineCount": 970,
       "purpose": "Markdown 說明文件",
       "role": "Documentation",
       "security": "Safe"
@@ -64,8 +64,8 @@
     {
       "name": "Deploy-EventAlertMod.ps1",
       "extension": ".ps1",
-      "sizeBytes": 44006,
-      "lineCount": 1021,
+      "sizeBytes": 43524,
+      "lineCount": 1040,
       "purpose": "本機多魔獸客戶端安全部署工具，具備 Windows Registry 根目錄偵測與 WTF 存檔備份",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -73,8 +73,8 @@
     {
       "name": "DeploymentTargets.json",
       "extension": ".json",
-      "sizeBytes": 766,
-      "lineCount": 32,
+      "sizeBytes": 974,
+      "lineCount": 40,
       "purpose": "JSON 資料結構 (鍵數: 5)",
       "role": "Data Schema",
       "security": "Safe"
@@ -82,8 +82,8 @@
     {
       "name": "Publish-GitHubRelease.ps1",
       "extension": ".ps1",
-      "sizeBytes": 12148,
-      "lineCount": 289,
+      "sizeBytes": 12258,
+      "lineCount": 292,
       "purpose": "GitHub 自動發布工具，自動擷取 changelog 最新區塊並建立 Release 標籤",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -100,7 +100,7 @@
     {
       "name": "Sync-GitHubBranch.ps1",
       "extension": ".ps1",
-      "sizeBytes": 3542,
+      "sizeBytes": 3545,
       "lineCount": 113,
       "purpose": "Git 分支同步與上游遠端推送同步輔助工具",
       "role": "Deploy Automation",
@@ -109,8 +109,8 @@
     {
       "name": "Upload-CurseForge.ps1",
       "extension": ".ps1",
-      "sizeBytes": 28013,
-      "lineCount": 648,
+      "sizeBytes": 28810,
+      "lineCount": 649,
       "purpose": "CurseForge API 自動發布腳本，具備 DPAPI 雙重解密、Cloudflare WAF 穿透與乾跑模式",
       "role": "Deploy Automation",
       "security": "Offline Tool"
@@ -118,8 +118,8 @@
     {
       "name": "addons_miliui_eventalertmod.html",
       "extension": ".html",
-      "sizeBytes": 78685,
-      "lineCount": 882,
+      "sizeBytes": 99324,
+      "lineCount": 1057,
       "purpose": "HTML 網頁或說明清單",
       "role": "Web Document",
       "security": "Safe"
@@ -606,7 +606,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">267.8 KB</span>
+          <span class="stat-val">308.8 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -660,7 +660,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            15.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 407 行</span>
+            15.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 414 行</span>
           </td>
         </tr>
         
@@ -696,7 +696,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            73.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 827 行</span>
+            93.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 970 行</span>
           </td>
         </tr>
         
@@ -714,7 +714,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            43.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1021 行</span>
+            42.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1040 行</span>
           </td>
         </tr>
         
@@ -732,7 +732,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            766 B<span style="font-size: 0.78rem; color: #64748b;"> • 32 行</span>
+            974 B<span style="font-size: 0.78rem; color: #64748b;"> • 40 行</span>
           </td>
         </tr>
         
@@ -750,7 +750,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            11.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 289 行</span>
+            12.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 292 行</span>
           </td>
         </tr>
         
@@ -804,7 +804,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            27.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 648 行</span>
+            28.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 649 行</span>
           </td>
         </tr>
         
@@ -822,7 +822,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            76.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 882 行</span>
+            97.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1057 行</span>
           </td>
         </tr>
         
@@ -834,7 +834,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-10-23T01:48:34.373069+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.602184+08:00</p>
     </footer>
   </div>
 

@@ -377,20 +377,54 @@
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
         <h1>📜 EventAlertMod 完整版本更新日誌 (Changelog)</h1>
         <div class="changelog-container">
-<div class="changelog-card">
-    <div class="changelog-header">
-        <span class="changelog-tag">🏷️ [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Regional Localization Alignment]</span>
-        <span class="changelog-date">📅 2026.11.08</span>
-    </div>
-    <div class="changelog-body">
 <ul class="changelog-mainlist">
+<li><strong>﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Character Attributes Engine, Independent Weapon Enchant Service &amp; Aura Out-of-Combat Visibility] 2026.11.12</strong></li>
+<li><strong>【✨ 新增功能 (Features)】:</strong></li>
+<ul class="changelog-sublist">
+<li>獨立武器臨時附魔模組 (Independent Weapon Enchant Service Pipeline):</li>
+<li>建立專屬服務 WeaponEnchantService.lua，底層呼叫暴雪原生專用 API GetWeaponEnchantInfo()，完美支援主手 (Slot 16)、副手 (Slot 17) 與遠程 (Slot 18) 之臨時附魔；</li>
+<li>支援各版本武器增益機制：經典舊世/永恆服之磨刀石、平衡石、巫術之油、法力之油、盜賊毒藥、薩滿風怒/火舌/冰封武器；正式服之武器符文熔鑄、磨刀石、暗影之核之油與毒藥；</li>
+<li>【缺少武器附魔警告 (Missing Enchant Warning)】：當角色裝備了武器但未施加臨時附魔時，觸發高亮醒目警告（支援 LibButtonGlow 發光與節流音效警報）；</li>
+<li>【附魔即將到期倒數 (Expiring Warning)】：當附魔剩餘時間低於設定閾值（預設 5 分鐘）或次數耗盡時，橘紅邊框發光提醒；</li>
+<li>支援獨立移動模式與 HUD 定位保存（/eam enchant 或屬性面板頂部按鈕，左鍵拖曳、右鍵完成）。</li>
+<li>永恆服 11 大角色屬性機制校準與原生 Tooltip 知識引擎 (Forever 1.60.1 11 Stats Knowledge Base):</li>
+<li>依據實機面板數據精確校準 11 大屬性公式與換算比例，並為畫面 HUD 圖示/文字與面板 row 實裝原生 GameTooltip 浮動提示：</li>
+<li>力量：提高近戰 AP (1 力量 = 2 AP)，格擋值提高 = 力量 / 20；</li>
+<li>耐力：提高生命力上限 (1 耐力 = 10 生命力)；</li>
+<li>敏捷：提高護甲值 (1 敏捷 = 2 護甲)，提升近戰/遠程致命與閃躲機率；</li>
+<li>智力：提高法力與法術致命，【關鍵機制：提高武器技能/熟練度提升機率】；</li>
+<li>精神：HP5 非戰鬥回血、MP5 未施法回魔、5 秒規則 (5SR)，【關鍵機制：坐下或躺下時，生命力恢復速度提高 33%】；</li>
+<li>攻擊強度 (AP)：【核心換算：每 14 點攻擊強度提高 1 點武器 DPS (14 AP = 1 DPS)】；</li>
+<li>致命一擊：近戰致命造成 200% 傷害 (+100%)，法術/治療致命效果提高 50% (150% 效果)，多數週期性持續傷害/治療 (DoT/HoT) 可致命；</li>
+<li>防禦技能：提高閃躲/格擋/招架，生物致命 200%，【首領機制：高 3 級生物造成 150% 碾壓傷害；防禦達 440 點時團隊副本首領無法造成致命 (-5.60% 致命機率)】；</li>
+<li>閃躲機率：敏捷與防禦可提升，【核心機制：對玩家來說只有來自正面的近戰攻擊可閃躲；對生物來說來自任何方向均可閃躲】；</li>
+<li>招架機率：完全偏斜正面近戰攻擊，【成功招架時觸發招架提速 (Parry Haste)】；</li>
+<li>護甲值：減免物理傷害，【免傷上限：來自護甲的傷害減免不能超過 75.00%】。</li>
+<li>屬性清單擴充：新增 attackPower (攻擊強度)、dodge (閃躲機率)、parry (招架機率)、block (格擋機率與格擋值)，適配 Forever 與 Retail 雙端。</li>
+<li>光環脫戰自動隱藏 (Hide Auras Outside Combat):</li>
+<li>於一般設定新增「脫戰後隱藏光環 (脫戰消失)」全域開關，預設為關閉（保留既有非戰鬥常規提示習慣）；</li>
+<li>各技能條件設定支援單技能三態獨立覆寫（預設全域 / 覆寫：開 [強制脫戰消失] / 覆寫：關 [強制脫戰保留]）；</li>
+<li>雙核心引擎深度相容：完整支援 Legacy / Readable 光環後端（AuraService）與 Retail 12.1+ 原生光環容器（NativeAuraRenderer / AuraContainerService / AuraRuleCompiler）；</li>
+<li>戰鬥狀態即時切換：進入戰鬥 (PLAYER_REGEN_DISABLED) 即刻還原顯示，脫戰 (PLAYER_REGEN_ENABLED) 即刻安全淡出或隱藏；</li>
+<li>設定分享與備份：ProfileCodec 匯出與匯入完整支援單技能脫戰行為與全域設定遷移。</li>
+<li>法力屬性與 5 秒精神回魔三態醒目提醒 (Mana Stat &amp; 5SR Three-State Alerts):</li>
+<li>於人物屬性監控擴展法力 (Mana) 屬性，支援當前法力/最大法力 (百分比) 監控；</li>
+<li>深度整合精神 5 秒規則 (5SR) 狀態機，提供 StatusBar 進度條雙色反差（5SR 全速回魔作用中切換為耀眼冰晶藍色 (0.20, 0.85, 1.00)，5 秒施法懲罰期間切換為暗琥珀色 (0.85, 0.45, 0.15)）；</li>
+<li>圖示 (Icon) 於 5SR 作用中觸發 LibButtonGlow 冰藍/金色光環；</li>
+<li>文字於 5SR 作用中放大 1.32x 且明亮冰藍高亮，懲罰期間以 %.1fs 倒數等待時長；</li>
+<li>Tooltip 詳盡呈現坐下/躺下回血加成 33%、5 秒規則作用狀態與數值。</li>
+<li>模擬全螢幕持續柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow):</li>
+<li>於 CombatFlash.lua 建立專屬微光全螢幕圖層 EAM_SpiritActiveGlowFrame，採用 LowHealth 紋理與 ADD 混色；</li>
+<li>提供平滑淡入 (0 -&gt; 0.35 費時 0.40s) 與淡出 (0.35 -&gt; 0 費時 0.30s) 動畫；</li>
+<li>施法耗魔瞬間淡出，脫離 5 秒懲罰進入全速回魔瞬間平滑淡入，大幅提升經典版補師與法系控魔節奏感知；</li>
+<li>於屬性設定面板提供「全螢幕藍色泛光 (精神回魔作用中常駐)」獨立開關。</li>
+</ul>
 <li><strong>【🌐 在地化支援 (Localization)】:</strong></li>
 <ul class="changelog-sublist">
 <li>校準 Forever 雙語區官方客戶端名稱：繁體中文 (zhTW) 統一為「永恆」（《魔獸世界：永恆》）、簡體中文 (zhCN) 統一為「无限」（《魔兽世界：无限》）。</li>
-<li>同步校準簡中插件說明、實機測試面板、精神 5 秒回藍動態提醒提示框與除錯中心五系抗性本地化詞條。</li>
+<li>5 語系（繁中、簡中、英文、韓文、俄文）100% 同步新增武器附魔、法力屬性、精神暗角藍色泛光、新屬性與快捷指令詞條。</li>
 </ul>
 </ul>
-</div></div>
 <div class="changelog-card">
     <div class="changelog-header">
         <span class="changelog-tag">🏷️ [Retail][Forever][MN 12.1.5][1.60.1][Alpha 8.9][Multi-Flavor Unified Architecture, Forever 60-Level Resource Topology, Classic Stat Monitoring &amp; Retail 12.1.5 Native Aura Overhaul]</span>
@@ -2992,12 +3026,54 @@
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
         <h1>📜 EventAlertMod Complete Version History (Changelog)</h1>
         <div class="changelog-container">
+<ul class="changelog-mainlist">
+<li><strong>﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Character Attributes Engine, Independent Weapon Enchant Service &amp; Aura Out-of-Combat Visibility] 2026.11.12</strong></li>
+</ul>
 <div class="changelog-card">
     <div class="changelog-header">
-        <span class="changelog-tag">🏷️ [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Regional Localization Alignment]</span>
-        <span class="changelog-date">📅 2026.11.08</span>
+        <span class="changelog-tag">🏷️ [Features]</span>
+        <span class="changelog-date">📅 </span>
     </div>
     <div class="changelog-body">
+<ul class="changelog-sublist">
+<li>Independent Weapon Enchant Service Pipeline:</li>
+<li>Implemented dedicated WeaponEnchantService.lua calling Blizzard native GetWeaponEnchantInfo() API, fully supporting Main Hand (Slot 16), Off Hand (Slot 17), and Ranged (Slot 18) temporary enchants;</li>
+<li>Supported cross-flavor enchant mechanisms: Sharpening Stones, Weightstones, Wizard/Mana Oils, Rogue Poisons, Shaman Windfury/Flametongue/Frostbrand, DK Runeforging, Shadowcore Oil, etc.;</li>
+<li>Missing Weapon Enchant Warning: Triggers prominent alerts (LibButtonGlow overlay and throttled audio warning) when a weapon is equipped without temporary enchant;</li>
+<li>Expiring Enchant Warning: Glow alert and highlighted timer countdown when remaining duration is below threshold (default 5 minutes) or charges are depleted;</li>
+<li>Independent mover HUD and saved layout positioning (/eam enchant or button in PlayerStatPanel, left drag, right click to finish).</li>
+<li>Forever 1.60.1 11 Character Attributes Knowledge Base &amp; Native Tooltip Engine:</li>
+<li>Calibrated 11 attribute formulas and mechanics based on in-game screenshots, adding native GameTooltip hover previews to HUD stat frames and option rows:</li>
+<li>Strength: +AP (1 Str = 2 AP), Shield Block Value = Str / 20;</li>
+<li>Stamina: +Max Health (1 Sta = 10 HP);</li>
+<li>Agility: +Armor (1 Agi = 2 Armor), Melee/Ranged Crit &amp; Dodge chance;</li>
+<li>Intellect: +Mana, Spell Crit, and Key Mechanic: Increases chance of weapon skill/proficiency level-ups;</li>
+<li>Spirit: HP5 out-of-combat, MP5 out-of-casting (5SR), and Key Mechanic: Health regeneration rate increased by 33% when sitting or lying down;</li>
+<li>Attack Power (AP): Core Conversion: Every 14 Attack Power increases weapon damage by 1 DPS (14 AP = 1 DPS);</li>
+<li>Critical Strike: Melee crits deal 200% damage (+100%), Spell/Heal crits deal 150% effect (+50%), and Most periodic effects (DoTs/HoTs) can critically strike;</li>
+<li>Defense Skill: Increases Dodge/Block/Parry, Mob crits deal 200% damage, Boss Mechanic: Mobs 3+ levels higher deal 150% Crushing Blows, Boss crit immunity at 440 Defense (-5.60% crit chance);</li>
+<li>Dodge: Agility &amp; Defense scale dodge, Key Mechanic: Players can only dodge frontal melee attacks; creatures can dodge from any direction;</li>
+<li>Parry: Deflects frontal melee attacks, Triggers Parry Haste on success;</li>
+<li>Armor: Reduces physical damage taken, Max Damage Reduction Cap cannot exceed 75.00%.</li>
+<li>Expanded attribute catalog: Added attackPower, dodge, parry, block for both Forever and Retail.</li>
+<li>Aura Out-of-Combat Visibility Control (Hide Auras Outside Combat):</li>
+<li>Added global &quot;Hide Auras Outside Combat&quot; setting in General options (disabled by default to maintain classic behavior);</li>
+<li>Added per-spell tri-state override in Condition Settings (Default Global / Override: On [Force Hide Out of Combat] / Override: Off [Force Keep Out of Combat]);</li>
+<li>Full dual-engine compatibility: seamlessly supports both Legacy/Readable Aura backend (AuraService) and Retail 12.1+ native Aura containers (NativeAuraRenderer / AuraContainerService / AuraRuleCompiler);</li>
+<li>Instant combat state transitions: automatically restores visibility upon entering combat (PLAYER_REGEN_DISABLED) and suppresses upon combat end (PLAYER_REGEN_ENABLED);</li>
+<li>Profile sharing &amp; migration: ProfileCodec fully preserves per-aura out-of-combat overrides and general config during export and import.</li>
+<li>Mana Stat Monitoring &amp; 5SR Three-State Alerts (Mana Stat &amp; 5SR Three-State Alerts):</li>
+<li>Expanded PlayerStatService with Mana attribute, supporting current mana / max mana (percentage) monitoring;</li>
+<li>Deep integration with Spirit 5-Second Rule (5SR) state machine, providing high-contrast dual-color status bars (glowing ice-blue (0.20, 0.85, 1.00) while full-speed spirit regen is active, switching to dark amber (0.85, 0.45, 0.15) during 5-second casting penalty);</li>
+<li>Icon triggers LibButtonGlow overlay effect when 5SR active regen is running;</li>
+<li>Text scales 1.32x with bright ice-blue highlight during active regen, counting down remaining penalty time in %.1fs during the 5-second window;</li>
+<li>Rich GameTooltip displaying 33% sitting/lying health regen bonus, 5SR active state, and MP5/HP5 metrics.</li>
+<li>Continuous Full-Screen Soft Blue Vignette Glow (Continuous Full-Screen Soft Blue Glow):</li>
+<li>Created dedicated full-screen soft glow frame EAM_SpiritActiveGlowFrame in CombatFlash.lua, utilizing Blizzard&#x27;s LowHealth vignette texture with ADD blend mode;</li>
+<li>Smooth fade-in (0 -&gt; 0.35 in 0.40s) and fade-out (0.35 -&gt; 0 in 0.30s) animations;</li>
+<li>Instantly fades out on mana-spending spellcasts and smoothly fades in upon exiting the 5-second penalty, greatly enhancing pacing and resource awareness for classic healers and casters;</li>
+<li>Added dedicated toggle &quot;Continuous Blue Vignette Glow (Spirit Regen Active)&quot; in the player stats options panel.</li>
+</ul>
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
@@ -3007,7 +3083,7 @@
     <div class="changelog-body">
 <ul class="changelog-sublist">
 <li>Calibrated official regional client names for Forever: Traditional Chinese (zhTW) unified as &quot;永恆&quot; (World of Warcraft: Forever) and Simplified Chinese (zhCN) unified as &quot;无限&quot; (World of Warcraft: Infinite).</li>
-<li>Synchronized Simplified Chinese TOC description, LiveTest panel, Spirit 5SR dynamic regen alert tooltips, and DebugCenter five resistance localized entries.</li>
+<li>100% synchronized all 5 locales (enUS, zhTW, zhCN, koKR, ruRU) for weapon enchants, mana stat, continuous soft blue glow, new attributes, and slash command help.</li>
 </ul>
 </div></div>
 <div class="changelog-card">

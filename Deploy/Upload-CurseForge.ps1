@@ -599,7 +599,8 @@ if ($isInteractive) {
     Write-Host "  專案 ID   : $ProjectId" -ForegroundColor White
     Write-Host "  發布檔案 : $ZipPath" -ForegroundColor White
     Write-Host "  檔案大小 : $( [Math]::Round((Get-Item -LiteralPath $ZipPath).Length / 1KB, 2) ) KB" -ForegroundColor White
-    Write-Host "  發布通道 : $ReleaseType" -ForegroundColor ($ReleaseType -eq "release" ? "Green" : "Yellow")
+    $releaseColor = if ($ReleaseType -eq "release") { "Green" } else { "Yellow" }
+    Write-Host "  發布通道 : $ReleaseType" -ForegroundColor $releaseColor
     Write-Host "  顯示標題 : $DisplayName" -ForegroundColor White
     Write-Host "  版本說明 : $($Changelog.Length) 字元 ($ReleaseNotesPath)" -ForegroundColor White
     Write-Host "  目標版本 : $($GameVersionIds -join ', ')" -ForegroundColor White

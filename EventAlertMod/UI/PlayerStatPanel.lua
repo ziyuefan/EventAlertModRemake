@@ -146,6 +146,20 @@ local function createFrame()
         end
     end)
 
+    -- 武器附魔按鈕
+    local enchantBtn = api.CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    enchantBtn:SetSize(88, 22)
+    enchantBtn:SetPoint("LEFT", previewBtn, "RIGHT", 8, 0)
+    enchantBtn:SetText(localized("EAM_WEAPON_ENCHANT_TITLE", "武器附魔"))
+    if Theme and Theme.registerButton then Theme.registerButton(enchantBtn) end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(enchantBtn, "開啟或關閉獨立的武器臨時附魔移動與定位錨點", "武器附魔") end
+    enchantBtn:SetScript("OnClick", function()
+        local WES = EAM.Services and EAM.Services.WeaponEnchantService
+        if WES and WES.setActiveAnchors then
+            WES.setActiveAnchors(not WES.isMoving)
+        end
+    end)
+
     -- 整體圖示排列方向下拉選單
     local growDirLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     growDirLabel:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -150, -17)
@@ -825,7 +839,7 @@ local function createFrame()
     -- Forever 精神 (Spirit) 專屬控制項
     local spiritSection = api.CreateFrame("Frame", nil, pageThresh)
     spiritSection:SetPoint("TOPLEFT", pageThresh, "TOPLEFT", 12, -215)
-    spiritSection:SetSize(380, 150)
+    spiritSection:SetSize(380, 180)
 
     local spiritSectionTitle = spiritSection:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     spiritSectionTitle:SetPoint("TOPLEFT", spiritSection, "TOPLEFT", 0, 0)
@@ -880,6 +894,12 @@ local function createFrame()
     spiritBlueFlashCb.text:SetPoint("LEFT", spiritBlueFlashCb, "RIGHT", 4, 1)
     spiritBlueFlashCb.text:SetText(localized("EAM_STAT_SPIRIT_BLUE_FLASH", "精神回魔啟動時播放全螢幕藍色邊框動畫"))
 
+    local spiritBlueScreenGlowCb = api.CreateFrame("CheckButton", nil, spiritSection, "UICheckButtonTemplate")
+    spiritBlueScreenGlowCb:SetPoint("TOPLEFT", spiritSection, "TOPLEFT", 2, -118)
+    spiritBlueScreenGlowCb.text = spiritBlueScreenGlowCb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    spiritBlueScreenGlowCb.text:SetPoint("LEFT", spiritBlueScreenGlowCb, "RIGHT", 4, 1)
+    spiritBlueScreenGlowCb.text:SetText(localized("EAM_STAT_SPIRIT_BLUE_GLOW", "全螢幕藍色泛光 (精神回魔作用中常駐)"))
+
     local testBlueBtn = api.CreateFrame("Button", nil, spiritSection, "UIPanelButtonTemplate")
     testBlueBtn:SetSize(86, 20)
     testBlueBtn:SetPoint("LEFT", spiritBlueFlashCb.text, "RIGHT", 8, 0)
@@ -898,6 +918,7 @@ local function createFrame()
         EAM.UI.setTooltip(spiritModeBtn, localized("EAM_STAT_SPIRIT_MODE_TIP", "切換精神數值顯示模式：完整 (精神+MP5+HP5) / 僅回魔 (MP5+HP5) / 僅屬性 (精神)"), localized("EAM_STAT_SPIRIT_MODE", "顯示模式"))
         EAM.UI.setTooltip(spiritActiveAlertCb, localized("EAM_STAT_SPIRIT_ACTIVE_ALERT_TIP", "當脫離5秒規則精神回魔全速啟動時，圖示外框播放冰藍發光動畫，無圖示時文字放大高亮提醒"), localized("EAM_STAT_SPIRIT_ACTIVE_ALERT_TITLE", "Active 動態提醒"))
         EAM.UI.setTooltip(spiritBlueFlashCb, localized("EAM_STAT_SPIRIT_BLUE_FLASH_TIP", "當脫離5秒規則精神回魔瞬間啟動時，播放全螢幕冰藍色邊緣閃爍動畫提醒"), localized("EAM_STAT_SPIRIT_BLUE_FLASH_TITLE", "藍色邊框閃爍"))
+        EAM.UI.setTooltip(spiritBlueScreenGlowCb, localized("EAM_STAT_SPIRIT_BLUE_GLOW_TIP", "五秒精神回魔作用中時，在全螢幕周圍呈現柔和沉浸式藍色暗角泛光"), localized("EAM_STAT_SPIRIT_BLUE_GLOW", "全螢幕藍色泛光"))
         EAM.UI.setTooltip(testBlueBtn, localized("EAM_STAT_TEST_BLUE_FLASH_TIP", "點擊立即測試全螢幕冰藍色邊緣閃爍動畫效果"), localized("EAM_STAT_TEST_BLUE_FLASH", "測試藍框"))
     end
 
@@ -1232,9 +1253,10 @@ local function createFrame()
         cfg.minThreshold = cfg.thresholdMin
         cfg.thresholdMax = tonumber(maxThreshEditBox:GetText())
         cfg.maxThreshold = cfg.thresholdMax
-        if EAM.isForever and (Panel.selectedKey == "spirit" or Panel.selectedKey == "spiritManaRegen") then
+        if EAM.isForever and (Panel.selectedKey == "spirit" or Panel.selectedKey == "spiritManaRegen" or Panel.selectedKey == "mana") then
             cfg.spiritActiveAlert = spiritActiveAlertCb:GetChecked() and true or false
             cfg.spiritBlueScreenFlash = spiritBlueFlashCb:GetChecked() and true or false
+            cfg.spiritBlueScreenGlow = spiritBlueScreenGlowCb:GetChecked() and true or false
             cfg.spiritDisplayMode = spiritSection.currentMode or "FULL"
         end
         cfg.useCustomPos = useCustomPosCb:GetChecked() and true or false
@@ -1278,6 +1300,7 @@ local function createFrame()
     useCustomPosCb:SetScript("OnClick", applyLiveChange)
     spiritActiveAlertCb:SetScript("OnClick", applyLiveChange)
     spiritBlueFlashCb:SetScript("OnClick", applyLiveChange)
+    spiritBlueScreenGlowCb:SetScript("OnClick", applyLiveChange)
 
     iconEditBox:SetScript("OnTextChanged", function(self)
         local txt = self:GetText()
@@ -1427,12 +1450,13 @@ local function createFrame()
         shortNumberCb:SetChecked(cfg.shortNumber ~= false)
         minThreshEditBox:SetText(cfg.thresholdMin and tostring(cfg.thresholdMin) or "")
         maxThreshEditBox:SetText(cfg.thresholdMax and tostring(cfg.thresholdMax) or "")
-        if EAM.isForever and (statKey == "spirit" or statKey == "spiritManaRegen") then
+        if EAM.isForever and (statKey == "spirit" or statKey == "spiritManaRegen" or statKey == "mana") then
             spiritSection:Show()
-            local mode = cfg.spiritDisplayMode or (statKey == "spirit" and "FULL" or "REGEN_ONLY")
+            local mode = cfg.spiritDisplayMode or ((statKey == "spirit" or statKey == "mana") and "FULL" or "REGEN_ONLY")
             updateSpiritModeButtonText(mode)
             spiritActiveAlertCb:SetChecked(cfg.spiritActiveAlert ~= false)
             spiritBlueFlashCb:SetChecked(cfg.spiritBlueScreenFlash == true)
+            spiritBlueScreenGlowCb:SetChecked(cfg.spiritBlueScreenGlow == true)
         else
             spiritSection:Hide()
         end
@@ -1526,6 +1550,17 @@ local function createFrame()
 
                 row:SetScript("OnClick", function()
                     loadStatToDetail(row.statKey)
+                end)
+
+                row:SetScript("OnEnter", function(self)
+                    if PlayerStatService and PlayerStatService.showStatTooltip and self.statKey then
+                        PlayerStatService.showStatTooltip(self, self.statKey)
+                    end
+                end)
+                row:SetScript("OnLeave", function(self)
+                    if _G.GameTooltip then
+                        _G.GameTooltip:Hide()
+                    end
                 end)
 
                 cb:SetScript("OnClick", function(self)

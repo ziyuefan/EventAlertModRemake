@@ -88,6 +88,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_REMOVE or "/eam remove <spell/target/cd/item/ground> <ID> (或 /eam rem) - 移除指定監控提示")
     printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER or "/eam unitpower background <資源類型> - 標記背景資源缺少事件，啟用共用採樣器")
     printLine(EAM.L.EAM_SLASH_HELP_METRICS or "/eam metrics (或 /eam hotpaths) [reset/save/export] - 檢視高頻路徑呼叫統計與即時頻率")
+    printLine(EAM.L.EAM_SLASH_HELP_ENCHANT or "/eam enchant (或 /eam weapon / we) - 開啟或關閉武器臨時附魔位置移動模式")
     printLine(EAM.L.EAM_SLASH_HELP_LANG or "/eam lang <auto/zhTW/zhCN/enUS/koKR/ruRU> - 即時切換外掛介面語系")
 end
 
@@ -632,6 +633,13 @@ local function handleSlash(input)
             EAM.UI.PreviewPanel.toggle()
         else
             printLine("EAM: PreviewPanel 模組尚未載入。")
+        end
+    elseif command == "enchant" or command == "weapon" or command == "we" then
+        local WES = EAM.Services and EAM.Services.WeaponEnchantService
+        if WES and WES.setActiveAnchors then
+            WES.setActiveAnchors(not WES.isMoving)
+        else
+            printLine("EAM: WeaponEnchantService 模組尚未載入。")
         end
     elseif command == "lang" or command == "language" or command == "locale" then
         local iterator = nextToken(input)

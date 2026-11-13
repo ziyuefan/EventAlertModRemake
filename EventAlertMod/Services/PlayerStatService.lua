@@ -1314,20 +1314,185 @@ local STAT_DEFINITIONS = {
         end,
         format = "number",
     },
+    attackPower = {
+        key = "attackPower",
+        labelKey = "EAM_STAT_ATTACK_POWER",
+        defaultLabel = "攻擊強度",
+        defaultIcon = 132333, -- Ability_MeleeDamage
+        category = "offense",
+        getRawValue = function()
+            local getAP = api.UnitAttackPower or _G.UnitAttackPower
+            if getAP then
+                local ok, base, posBuff, negBuff = pcall(getAP, "player")
+                if ok and base ~= nil then
+                    local total = (base or 0) + (posBuff or 0) + (negBuff or 0)
+                    if total > 0 then return total end
+                end
+            end
+            local getRAP = api.UnitRangedAttackPower or _G.UnitRangedAttackPower
+            if getRAP then
+                local ok, base, posBuff, negBuff = pcall(getRAP, "player")
+                if ok and base ~= nil then
+                    local total = (base or 0) + (posBuff or 0) + (negBuff or 0)
+                    if total > 0 then return total end
+                end
+            end
+            return PlayerStatService.lastKnownStats["attackPower"] or 0
+        end,
+        getValue = function()
+            local getAP = api.UnitAttackPower or _G.UnitAttackPower
+            if getAP then
+                local ok, base, posBuff, negBuff = pcall(getAP, "player")
+                if ok and isSafeNumber(base) then
+                    local total = base + (isSafeNumber(posBuff) and posBuff or 0) + (isSafeNumber(negBuff) and negBuff or 0)
+                    if total > 0 then
+                        PlayerStatService.lastKnownStats["attackPower"] = total
+                        return total
+                    end
+                end
+            end
+            local getRAP = api.UnitRangedAttackPower or _G.UnitRangedAttackPower
+            if getRAP then
+                local ok, base, posBuff, negBuff = pcall(getRAP, "player")
+                if ok and isSafeNumber(base) then
+                    local total = base + (isSafeNumber(posBuff) and posBuff or 0) + (isSafeNumber(negBuff) and negBuff or 0)
+                    if total > 0 then
+                        PlayerStatService.lastKnownStats["attackPower"] = total
+                        return total
+                    end
+                end
+            end
+            return PlayerStatService.lastKnownStats["attackPower"] or 0
+        end,
+        format = "number",
+    },
+    dodge = {
+        key = "dodge",
+        labelKey = "EAM_STAT_DODGE",
+        defaultLabel = "閃躲",
+        defaultIcon = 132302, -- Ability_Rogue_Feint
+        category = "defense",
+        getRawValue = function()
+            local fn = api.GetDodgeChance or _G.GetDodgeChance
+            if fn then
+                local ok, val = pcall(fn)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["dodge"] or 0
+        end,
+        getValue = function()
+            local fn = api.GetDodgeChance or _G.GetDodgeChance
+            if fn then
+                local ok, val = pcall(fn)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["dodge"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["dodge"] or 0
+        end,
+        format = "percent",
+        suffix = "%",
+    },
+    parry = {
+        key = "parry",
+        labelKey = "EAM_STAT_PARRY",
+        defaultLabel = "招架",
+        defaultIcon = 132304, -- Ability_Parry
+        category = "defense",
+        getRawValue = function()
+            local fn = api.GetParryChance or _G.GetParryChance
+            if fn then
+                local ok, val = pcall(fn)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["parry"] or 0
+        end,
+        getValue = function()
+            local fn = api.GetParryChance or _G.GetParryChance
+            if fn then
+                local ok, val = pcall(fn)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["parry"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["parry"] or 0
+        end,
+        format = "percent",
+        suffix = "%",
+    },
+    block = {
+        key = "block",
+        labelKey = "EAM_STAT_BLOCK",
+        defaultLabel = "格擋",
+        defaultIcon = 132343, -- Ability_Warrior_ShieldBlock
+        category = "defense",
+        getRawValue = function()
+            local fn = api.GetBlockChance or _G.GetBlockChance
+            if fn then
+                local ok, val = pcall(fn)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["block"] or 0
+        end,
+        getValue = function()
+            local fn = api.GetBlockChance or _G.GetBlockChance
+            if fn then
+                local ok, val = pcall(fn)
+                if ok and isSafeNumber(val) then
+                    PlayerStatService.lastKnownStats["block"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["block"] or 0
+        end,
+        format = "percent",
+        suffix = "%",
+    },
+    mana = {
+        key = "mana",
+        labelKey = "EAM_STAT_MANA",
+        defaultLabel = "法力",
+        defaultIcon = 136096, -- Spell_Arcane_PortalIronForge / Arcane / Mana
+        category = "resource",
+        getRawValue = function()
+            local getP = api.UnitPower or _G.UnitPower
+            if getP then
+                local ok, val = pcall(getP, "player", 0)
+                if ok and val ~= nil then return val end
+            end
+            return PlayerStatService.lastKnownStats["mana"] or 0
+        end,
+        getValue = function()
+            local getP = api.UnitPower or _G.UnitPower
+            if getP then
+                local ok, val = pcall(getP, "player", 0)
+                if ok and isSafeNumber(val) and val >= 0 then
+                    PlayerStatService.lastKnownStats["mana"] = val
+                    return val
+                end
+            end
+            return PlayerStatService.lastKnownStats["mana"] or 0
+        end,
+        format = "number",
+    },
 }
 PlayerStatService.DEFINITIONS = STAT_DEFINITIONS
 
 local RETAIL_ORDERED_KEYS = {
-    "strength", "agility", "stamina", "intellect",
-    "crit", "haste", "mastery", "versatility",
+    "strength", "agility", "stamina", "intellect", "mana",
+    "attackPower", "crit", "haste", "mastery", "versatility",
+    "dodge", "parry", "block",
     "avoidance", "leech", "speedRating",
     "runSpeed", "swimSpeed", "flightSpeed", "skyridingSpeed",
     "totalAbsorb", "healAbsorb", "armor"
 }
 
 local FOREVER_ORDERED_KEYS = {
-    "strength", "agility", "stamina", "intellect", "spirit",
-    "crit", "haste", "spiritManaRegen", "defenseSkill",
+    "strength", "agility", "stamina", "intellect", "spirit", "mana",
+    "attackPower", "crit", "haste", "spiritManaRegen", "defenseSkill",
+    "dodge", "parry", "block",
     "armor", "resistArcane", "resistFire", "resistFrost", "resistNature", "resistShadow",
     "runSpeed", "swimSpeed",
     "petHappiness", "ammoStatus",
@@ -1532,11 +1697,35 @@ end
 function PlayerStatService.formatSpiritDisplay(key, cfg)
     local rState = PlayerStatService.getSpiritRegenState()
     cfg = cfg or {}
-    local dispMode = cfg.spiritDisplayMode or (key == "spirit" and "FULL" or "REGEN_ONLY")
+    local dispMode = cfg.spiritDisplayMode or (key == "spirit" and "FULL" or (key == "mana" and "FULL" or "REGEN_ONLY"))
     local isZh = (api.GetLocale and api.GetLocale() or "zhTW"):sub(1, 2) == "zh"
     local manaPrefix = isZh and "魔+" or "M+"
     local hpPrefix = isZh and "血+" or "H+"
     local manaSuppress = isZh and "魔0/" or "M0/"
+
+    if key == "mana" then
+        local curM = (api.UnitPower and api.UnitPower("player", 0)) or (_G.UnitPower and _G.UnitPower("player", 0)) or 0
+        local maxM = (api.UnitPowerMax and api.UnitPowerMax("player", 0)) or (_G.UnitPowerMax and _G.UnitPowerMax("player", 0)) or 0
+        if dispMode == "FULL" then
+            if rState.isActive then
+                return string.format("%d/%d (%s%d)", curM, maxM, manaPrefix, rState.spiritMP5 or 0)
+            elseif rState.fiveSecRemaining > 0 then
+                return string.format("%d/%d (%.1fs)", curM, maxM, rState.fiveSecRemaining)
+            else
+                return string.format("%d/%d", curM, maxM)
+            end
+        elseif dispMode == "REGEN_ONLY" then
+            if rState.isActive then
+                return string.format("%d (%s%d)", curM, manaPrefix, rState.spiritMP5 or 0)
+            elseif rState.fiveSecRemaining > 0 then
+                return string.format("%d (%.1fs)", curM, rState.fiveSecRemaining)
+            else
+                return tostring(curM)
+            end
+        else -- "STAT_ONLY"
+            return tostring(curM)
+        end
+    end
 
     if dispMode == "FULL" then
         if rState.isActive then
@@ -1747,6 +1936,147 @@ local function formatStatNumber(val, formatType, decimals, shortNumber, suffix)
     return tostring(val)
 end
 PlayerStatService.formatStatNumber = formatStatNumber
+
+-- 角色屬性知識 Tooltip 計算與截圖機制校準
+function PlayerStatService.getStatTooltipInfo(key)
+    local def = STAT_DEFINITIONS[key]
+    if not def then return nil end
+
+    local label = (EAM.L and def.labelKey and EAM.L[def.labelKey]) or def.defaultLabel or key
+    local val = PlayerStatService.getStatValue(key)
+    local lines = {}
+    local title = label
+
+    if key == "strength" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        local ap = math.floor(val * 2)
+        local blk = math.max(1, math.floor(val / 20))
+        lines[#lines + 1] = { text = string.format("• 提高近戰攻擊強度 %d 點 (每 1 點力量 = 2 AP)", ap), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = string.format("• 提高盾牌格擋值 %d 點", blk), r = 0.9, g = 0.9, b = 0.9 }
+    elseif key == "stamina" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        local hp = math.floor(val * 10)
+        lines[#lines + 1] = { text = string.format("• 提高生命力上限 %d 點 (每 1 點耐力 = 10 生命力)", hp), r = 0.9, g = 0.9, b = 0.9 }
+    elseif key == "agility" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        local armor = math.floor(val * 2)
+        lines[#lines + 1] = { text = string.format("• 提高護甲值 %d 點 (每 1 點敏捷 = 2 護甲)", armor), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 提高物理近戰與遠程致命一擊機率", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 提高閃躲攻擊機率", r = 0.9, g = 0.9, b = 0.9 }
+    elseif key == "intellect" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        local mana = math.floor(val * 15)
+        lines[#lines + 1] = { text = string.format("• 提高法力上限 %d 點", mana), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 提高法術與神聖法術致命一擊機率", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 【關鍵機制】提高武器技能/熟練度提升機率 (智力影響升熟練度速度)", r = 0.2, g = 0.9, b = 1.0 }
+    elseif key == "spirit" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        local rState = PlayerStatService.getSpiritRegenState()
+        lines[#lines + 1] = { text = string.format("• 非戰鬥狀態下每 5 秒生命力恢復 (HP5): +%d", rState.spiritHP5 or 0), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = string.format("• 未施法狀態下每 5 秒法力恢復 (MP5): +%d", rState.spiritMP5 or 0), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 消耗法力後 5 秒內精神不提供法力恢復 (5秒規則 5SR)", r = 1.0, g = 0.82, b = 0.2 }
+        lines[#lines + 1] = { text = "• 【關鍵機制】坐下或躺下時，生命力恢復速度提高 33%", r = 0.3, g = 1.0, b = 0.4 }
+    elseif key == "attackPower" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        local dps = val / 14.0
+        lines[#lines + 1] = { text = string.format("• 近戰與遠程武器傷害每秒提高 %.1f 點", dps), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 【核心換算】每擁有 14 點攻擊強度，每秒提高 1 點傷害 (14 AP = 1 DPS)", r = 0.2, g = 0.9, b = 1.0 }
+        lines[#lines + 1] = { text = "• 攻擊強度受力量與敏捷屬性加成", r = 0.8, g = 0.8, b = 0.8 }
+    elseif key == "crit" then
+        title = string.format("%s: %.2f%%", label, val)
+        lines[#lines + 1] = { text = "• 近戰與遠程致命依敏捷提高，法術致命依智力提高", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 近戰與遠程致命造成傷害提高 100% (造成 200% 傷害)", r = 1.0, g = 0.82, b = 0.2 }
+        lines[#lines + 1] = { text = "• 法術和治療致命效果提高 50% (造成 150% 效果)", r = 1.0, g = 0.82, b = 0.2 }
+        lines[#lines + 1] = { text = "• 【永恆特色】多數週期性持續傷害/治療 (DoT/HoT) 可造成致命一擊", r = 0.2, g = 0.9, b = 1.0 }
+    elseif key == "defenseSkill" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        lines[#lines + 1] = { text = "• 提高閃躲、格擋與招架機率，降低被敵人命中與致命機率", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 來自生物與怪物的致命一擊造成 200% 傷害", r = 1.0, g = 0.5, b = 0.3 }
+        lines[#lines + 1] = { text = "• 【首領機制】高 3 級以上生物造成 150% 碾壓傷害 (Crushing Blow)", r = 1.0, g = 0.3, b = 0.3 }
+        lines[#lines + 1] = { text = "• 【免暴臨界】防禦達 440 點時，團隊副本首領無法造成致命一擊 (-5.60% 致命機率)", r = 0.2, g = 1.0, b = 0.4 }
+    elseif key == "dodge" then
+        title = string.format("%s: %.2f%%", label, val)
+        lines[#lines + 1] = { text = "• 完全閃避即將承受的物理近戰與遠程攻擊", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 敏捷與防禦技能可持續提升閃躲機率", r = 0.8, g = 0.8, b = 0.8 }
+        lines[#lines + 1] = { text = "• 【核心機制】對玩家來說只有來自正面的近戰攻擊可閃躲；對生物來說來自任何方向均可閃躲", r = 0.2, g = 0.9, b = 1.0 }
+    elseif key == "parry" then
+        title = string.format("%s: %.2f%%", label, val)
+        lines[#lines + 1] = { text = "• 招架敵方正面近戰攻擊，完全偏斜該次傷害", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 成功招架時可重置並加速下一次武器揮擊 (Parry Haste 招架提速)", r = 1.0, g = 0.82, b = 0.2 }
+        lines[#lines + 1] = { text = "• 防禦技能與裝備招架等級可提升招架機率 (需裝備近戰武器)", r = 0.8, g = 0.8, b = 0.8 }
+    elseif key == "block" then
+        local blkVal = 0
+        local getSB = api.GetShieldBlock or _G.GetShieldBlock
+        if getSB then
+            local ok, b = pcall(getSB)
+            if ok and isSafeNumber(b) then blkVal = b end
+        end
+        title = string.format("%s: %.2f%%", label, val)
+        lines[#lines + 1] = { text = "• 裝備盾牌時有機率格擋來自正面的物理攻擊", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = string.format("• 盾牌格擋值: %d (每次格擋成功減免之物理傷害)", blkVal), r = 1.0, g = 0.82, b = 0.2 }
+        lines[#lines + 1] = { text = "• 格擋值受力量與盾牌/裝備加成提高", r = 0.8, g = 0.8, b = 0.8 }
+    elseif key == "armor" then
+        title = string.format("%s: %d", label, math.floor(val + 0.5))
+        lines[#lines + 1] = { text = "• 顯著減免承受之物理攻擊傷害", r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 敏捷可提升護甲值 (每 1 點敏捷 = 2 護甲)", r = 0.8, g = 0.8, b = 0.8 }
+        lines[#lines + 1] = { text = "• 【免傷上限】來自護甲的傷害減免不能超過 75.00%", r = 1.0, g = 0.3, b = 0.3 }
+    elseif key == "spiritManaRegen" then
+        local rState = PlayerStatService.getSpiritRegenState()
+        title = string.format("%s: %d/5s", label, rState.spiritMP5 or 0)
+        lines[#lines + 1] = { text = string.format("• 未施法狀態下每 5 秒法力恢復 (MP5): +%d", rState.spiritMP5 or 0), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = string.format("• 非戰鬥狀態下每 5 秒生命力恢復 (HP5): +%d", rState.spiritHP5 or 0), r = 0.9, g = 0.9, b = 0.9 }
+        lines[#lines + 1] = { text = "• 消耗法力後 5 秒內精神不提供法力恢復 (5秒規則 5SR)", r = 1.0, g = 0.82, b = 0.2 }
+        lines[#lines + 1] = { text = "• 坐下或躺下時，生命力恢復速度提高 33%", r = 0.3, g = 1.0, b = 0.4 }
+    elseif key == "mana" then
+        local curM = math.floor(val + 0.5)
+        local maxM = 0
+        local getPM = api.UnitPowerMax or _G.UnitPowerMax
+        if getPM then
+            local ok, m = pcall(getPM, "player", 0)
+            if ok and isSafeNumber(m) then maxM = math.floor(m + 0.5) end
+        end
+        local pct = maxM > 0 and (curM / maxM * 100) or 100
+        title = string.format("%s: %d / %d (%.1f%%)", label, curM, maxM, pct)
+        local rState = PlayerStatService.getSpiritRegenState()
+        if rState.hasManaPool then
+            if rState.isActive then
+                lines[#lines + 1] = { text = string.format("• 【5秒精神回魔作用中】MP5: +%d (精神全速恢復中)", rState.spiritMP5 or 0), r = 0.2, g = 1.0, b = 0.4 }
+            elseif rState.fiveSecRemaining > 0 then
+                lines[#lines + 1] = { text = string.format("• 【5秒規則等待中】剩餘 %.1f 秒進入精神全速回魔", rState.fiveSecRemaining), r = 1.0, g = 0.82, b = 0.2 }
+            else
+                lines[#lines + 1] = { text = "• 【5秒規則懲罰中】施法消耗法力後 5 秒內精神不回魔", r = 0.9, g = 0.5, b = 0.3 }
+            end
+            lines[#lines + 1] = { text = string.format("• 精神回魔能力 (MP5): %d / 5秒", rState.spiritMP5 or 0), r = 0.8, g = 0.8, b = 0.8 }
+            lines[#lines + 1] = { text = "• 坐下或躺下時，生命力恢復速度提高 33%", r = 0.3, g = 1.0, b = 0.4 }
+        else
+            lines[#lines + 1] = { text = "• 當前職業或專精未啟用傳統法力池", r = 0.6, g = 0.6, b = 0.6 }
+        end
+    else
+        title = string.format("%s: %s", label, tostring(val))
+        lines[#lines + 1] = { text = string.format("當前數值: %s", tostring(val)), r = 0.9, g = 0.9, b = 0.9 }
+    end
+
+    return { title = title, lines = lines }
+end
+
+function PlayerStatService.showStatTooltip(anchorFrame, statKey)
+    local info = PlayerStatService.getStatTooltipInfo(statKey)
+    if not info or not _G.GameTooltip then return end
+    local tooltip = _G.GameTooltip
+    tooltip:SetOwner(anchorFrame, "ANCHOR_RIGHT")
+    tooltip:ClearLines()
+    tooltip:AddLine(info.title or statKey, 1.0, 0.82, 0.0)
+    if info.lines then
+        for _, line in ipairs(info.lines) do
+            if type(line) == "table" then
+                tooltip:AddLine(line.text or "", line.r or 1, line.g or 1, line.b or 1, true)
+            else
+                tooltip:AddLine(tostring(line), 1, 1, 1, true)
+            end
+        end
+    end
+    tooltip:Show()
+end
 
 function PlayerStatService.prewarmStats()
     for _, key in ipairs(ORDERED_KEYS) do
@@ -1964,6 +2294,18 @@ local function getOrCreateStatItemFrame(statKey)
     item:SetBackdropColor(0.06, 0.06, 0.06, 0.85)
     item:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.9)
 
+    item:EnableMouse(true)
+    item:SetScript("OnEnter", function(self)
+        if not PlayerStatService.isMoving then
+            PlayerStatService.showStatTooltip(self, self.statKey)
+        end
+    end)
+    item:SetScript("OnLeave", function(self)
+        if _G.GameTooltip then
+            _G.GameTooltip:Hide()
+        end
+    end)
+
     statItemFrames[statKey] = item
     return item
 end
@@ -2071,7 +2413,7 @@ function PlayerStatService.update()
 
         -- 當取消圖示時（預設），依數值相對方位自適應框架尺寸
         if cfg.showIcon ~= true then
-            if EAM.isForever and (data.key == "spirit" or data.key == "spiritManaRegen") and (cfg.spiritDisplayMode == "FULL" or cfg.spiritDisplayMode == "REGEN_ONLY" or (cfg.spiritDisplayMode == nil and data.key == "spirit")) then
+            if EAM.isForever and (data.key == "spirit" or data.key == "spiritManaRegen" or data.key == "mana") and (cfg.spiritDisplayMode == "FULL" or cfg.spiritDisplayMode == "REGEN_ONLY" or (cfg.spiritDisplayMode == nil and (data.key == "spirit" or data.key == "mana"))) then
                 itemW = math.max(size * 2.8, 128)
                 itemH = math.max(size * 0.9, 36)
             else
@@ -2173,7 +2515,7 @@ function PlayerStatService.update()
 
         -- 數值文字 (透過 FontString:SetFormattedText 進行 C-Level 零 GC 分配與 Secret Values 容錯渲染)
         local isSpiritSpecial = false
-        if EAM.isForever and (data.key == "spirit" or data.key == "spiritManaRegen") then
+        if EAM.isForever and (data.key == "spirit" or data.key == "spiritManaRegen" or data.key == "mana") then
             isSpiritSpecial = true
             local rState = PlayerStatService.getSpiritRegenState()
             local text = PlayerStatService.formatSpiritDisplay(data.key, cfg)
@@ -2196,7 +2538,11 @@ function PlayerStatService.update()
                             LBG.HideOverlayGlow(item)
                         end
                         if not PlayerStatService.isMoving then
-                            item:SetBackdropBorderColor(0.30, 0.35, 0.45, 0.85)
+                            if rState.fiveSecRemaining > 0 then
+                                item:SetBackdropBorderColor(0.85, 0.45, 0.15, 0.85)
+                            else
+                                item:SetBackdropBorderColor(0.30, 0.35, 0.45, 0.85)
+                            end
                         end
                     end
                 else
@@ -2219,7 +2565,11 @@ function PlayerStatService.update()
                         if EAM.UI.TextPlacement and EAM.UI.TextPlacement.applyFont then
                             EAM.UI.TextPlacement.applyFont(item.valText, baseFont, globalConfig)
                         end
-                        item.valText:SetTextColor(0.60, 0.66, 0.74, 0.88)
+                        if rState.fiveSecRemaining > 0 then
+                            item.valText:SetTextColor(0.95, 0.65, 0.25, 0.95)
+                        else
+                            item.valText:SetTextColor(0.60, 0.66, 0.74, 0.88)
+                        end
                     end
                 end
             else
@@ -2253,7 +2603,14 @@ function PlayerStatService.update()
             if cfg.valueColor then
                 item.valText:SetTextColor(cfg.valueColor[1] or 1, cfg.valueColor[2] or 1, cfg.valueColor[3] or 1, cfg.valueColor[4] or 1)
             else
-                item.valText:SetTextColor(1, 1, 1, 1)
+                local rState = PlayerStatService.getSpiritRegenState()
+                if (cfg.spiritActiveAlert ~= false) and rState.isActive then
+                    item.valText:SetTextColor(0.25, 0.88, 1.00, 1.0)
+                elseif (cfg.spiritActiveAlert ~= false) and rState.fiveSecRemaining > 0 then
+                    item.valText:SetTextColor(0.95, 0.65, 0.25, 0.95)
+                else
+                    item.valText:SetTextColor(1, 1, 1, 1)
+                end
             end
         end
 
@@ -2295,6 +2652,12 @@ function PlayerStatService.update()
             elseif data.key == "totalAbsorb" or data.key == "healAbsorb" then
                 local ok, hm = pcall(UnitHealthMax, "player")
                 maxVal = (ok and isSafeNumber(hm) and hm > 0) and hm or 100000
+            elseif data.key == "mana" then
+                local getPM = api.UnitPowerMax or _G.UnitPowerMax
+                if getPM then
+                    local ok, m = pcall(getPM, "player", 0)
+                    if ok and isSafeNumber(m) and m > 0 then maxVal = m end
+                end
             elseif def.category == "primary" then
                 maxVal = 50000
             elseif data.key == "armor" then
@@ -2302,6 +2665,22 @@ function PlayerStatService.update()
             end
 
             applyStatusBarColor(item.statusBar, cfg, def)
+
+            -- 5 秒精神回魔專屬 StatusBar 顏色覆蓋 (mana, spirit, spiritManaRegen)
+            if EAM.isForever and (data.key == "mana" or data.key == "spirit" or data.key == "spiritManaRegen") then
+                local rState = PlayerStatService.getSpiritRegenState()
+                if rState.hasManaPool then
+                    if rState.isActive then
+                        -- 耀眼冰晶藍 (0.20, 0.85, 1.00, 1.00)
+                        item.statusBar:SetStatusBarColor(0.20, 0.85, 1.00, 1.00)
+                    elseif rState.fiveSecRemaining > 0 then
+                        -- 5 秒懲罰期間變暗/琥珀色 (0.85, 0.45, 0.15, 0.95)
+                        item.statusBar:SetStatusBarColor(0.85, 0.45, 0.15, 0.95)
+                    else
+                        item.statusBar:SetStatusBarColor(0.15, 0.50, 0.90, 0.95)
+                    end
+                end
+            end
 
             pcall(item.statusBar.SetMinMaxValues, item.statusBar, 0, maxVal)
             pcall(item.statusBar.SetValue, item.statusBar, rawVal)
@@ -2335,6 +2714,32 @@ function PlayerStatService.update()
         end
 
         item:Show()
+    end
+
+    -- 檢查全螢幕藍色常駐泛光 (Spirit Continuous Blue Glow)
+    if EAM.isForever then
+        local anyBlueGlowEnabled = false
+        local statsCfg = PlayerStatService.getPlayerStatsConfig()
+        if statsCfg then
+            local checkKeys = { "mana", "spirit", "spiritManaRegen" }
+            for _, k in ipairs(checkKeys) do
+                local c = statsCfg[k]
+                if c and c.enabled ~= false and c.spiritBlueScreenGlow == true then
+                    anyBlueGlowEnabled = true
+                    break
+                end
+            end
+        end
+
+        local CF = EAM.UI and EAM.UI.CombatFlash
+        if CF and CF.setSpiritActiveGlow then
+            if anyBlueGlowEnabled then
+                local rState = PlayerStatService.getSpiritRegenState()
+                CF.setSpiritActiveGlow(rState.isActive == true)
+            else
+                CF.setSpiritActiveGlow(false)
+            end
+        end
     end
 end
 
@@ -2452,7 +2857,7 @@ function PlayerStatService.setActiveAnchors(enable, targetKey)
         end
         for _, item in pairs(statItemFrames) do
             item:SetMovable(false)
-            item:EnableMouse(false)
+            item:EnableMouse(true)
             item:SetFrameStrata("MEDIUM")
             if item.dragHint then item.dragHint:Hide() end
         end
@@ -2472,6 +2877,10 @@ function PlayerStatService.onModuleToggle(enabled, reason)
         end
         if PlayerStatService.isMoving then
             PlayerStatService.setActiveAnchors(false)
+        end
+        local CF = EAM.UI and EAM.UI.CombatFlash
+        if CF and CF.setSpiritActiveGlow then
+            CF.setSpiritActiveGlow(false)
         end
     else
         PlayerStatService.update()
@@ -2512,6 +2921,9 @@ function PlayerStatService.initialize()
         router.register("COMBAT_RATING_UPDATE", onEvent)
         router.register("SPEED_UPDATE", onEvent)
         router.register("UNIT_RESISTANCES", onEvent)
+        router.register("UNIT_ATTACK_POWER", onEvent)
+        router.register("UNIT_RANGED_ATTACK_POWER", onEvent)
+        router.register("SKILL_LINES_CHANGED", onPrewarmEvent)
         if EAM.isForever then
             router.register("UNIT_SPELLCAST_SUCCEEDED", function(event, unit, castGUID, spellID)
                 if unit == "player" and spellID then

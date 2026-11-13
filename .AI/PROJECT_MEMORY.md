@@ -24,8 +24,10 @@
 - 舊專案 `D:\EventAlertMod` 已停用，禁止讀取、寫入、比較、同步或作 fallback。
 - 任一部署目標若是 SymbolicLink、Junction 或其他 Reparse Point，必須 fail-closed；不得追蹤、覆蓋、刪除或重建。
 - 未經使用者要求，不讀取 `WTF\Account` 內帳號或角色資料。
-- 🚨 Forever 雙語區官方名稱硬性規範（Forever Official Regional Naming Rule）：
-  《魔獸世界：永恆》(World of Warcraft: Forever 1.60.1, Interface 16001) 繁體中文客戶端官方名稱為「永恆」（絕對禁止誤植為「永恆之樹」），簡體中文客戶端官方名稱為「无限 / 無限」（絕對禁止誤植為「永恒」或「永恒服」）。公開文件、插件說明、測試面板與設定檔統一標註繁中「永恆」／簡中「無限」。
+- 🚨 Forever 雙語區官方名稱與 Classic Era 嚴格區分硬性規範（Forever vs. Classic Era Strict Distinction Rule）：
+  - 《魔獸世界：永恆 / 無限》(World of Warcraft: Forever 1.60.1, `_forever_`, Interface 16001) 是搭載現代 12.1.5+ 引擎（含 `C_UnitAuras`、`CustomAuraContainer`、Secret Value 保護機制）之獨立客戶端分支，**與傳統經典舊世 `Classic Era` (`_classic_era_`, 1.15.x) 本質完全不同**。
+  - 繁體中文客戶端官方名稱為「永恆」（絕對禁止誤植為「永恆之樹」），簡體中文客戶端官方名稱為「无限 / 無限」（絕對禁止誤植為「永恒」或「永恒服」）。公開文件、插件說明、測試面板與設定檔統一標註繁中「永恆」／簡中「無限」。
+  - **嚴禁混稱鐵律**：任何程式碼註解、公開文件、更新日誌、AI 治理文檔與 Agent 回報中，提及 `1.60.1` (`_forever_`) 時，必須明確標示為 `Forever 1.60.1（繁中：永恆 / 簡中：無限）`，**絕對禁止將 Forever 1.60.1 稱為 `Classic Era 1.60.1` 或將兩者混為一談**（傳統 `Classic Era` 不在本專案支援範圍）。
 - 🚨 開發完成主動執行故障預測與威脅推論原則（Proactive Failure Prediction & Threat Inference）：
   任何功能開發、修復或架構重構完成時，嚴禁僅回報代碼完成與測試通過；必須主動進行深度故障預測與威脅推論，完整分析：1. 高機率邊緣異常（時序/競態/施法延遲/彈道時間/目標狀態突變）；2. 中機率引擎與視覺邊界異常（次像素外框/縮放比例/音效節流/元表嚴格模式）；3. 低機率致命風險（戰鬥 Taint 擴散/Action Blocked/Secret 越界/GC 記憶體洩漏）；4. 實機排查技巧與立即對策指引。
 - 🚨 部署腳本異動通報義務：若因應需求修改 `Deploy/` 目錄下任何腳本（如 `Deploy-EventAlertMod.ps1`、`Build-Package.ps1`、`Upload-CurseForge.ps1` 等），必須主動明確向少年欸報告具體改動內容。
@@ -66,6 +68,10 @@
    - 建立 50 條核心開發與路由規範（[`.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md`](.AI/Docs/35_WOW_MCP_TOOL_ROUTING_POLICY.md) 及專屬技能 `wow-mcp-tool-routing`）。
    - 確立「禁止相信模型記憶」原則、Evidence Ladder 實證層級、強制 Lint/驗證管線與標準報告結構。
 7. 本輪文件、Continuity JSON 與 `.AI/docs_html/` 同步。依規範嚴格限制零自動部署（鐵律 R1）。
+10. 2026-11-13 完成 **# Project Governance v1.4 雙軌動態模型調度升級與 Track B 正式切換**：
+    - 補完 Level 3 閉合 `<argon_ticket>` XML 派工契約標準（含 `<meta>`、`<scope>/<allowed_files>`、`<immutable_files>`、`<invariants>`、`<execution_plan>`、`<verification>` 與 `<cold_context_review>` 冷面漂移審查），並同步更新 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` 至 **v1.4**（對齊 `Data/` 靜態隔離、`FOLDER_INDEX.html` 與 `Forever 1.60.1` 非 `Classic Era` 紅線）。
+    - 因 `Gemini 4 Argon` 額度僅餘 `1%`，正式切換作用中架構至 **Track B（`Gemini 4 Hydrogen (XHigh)` 首席仲裁 ＋ `Hydrogen` 四階動態強度 `LOW/MEDIUM/HIGH/XHIGH`）**，保留 Track A（`Gemini 4 Argon (High)` 仲裁）供未來額度恢復後依明確指示切回。
+    - 新增 `.AI/skills/eam-dual-track-orchestration/SKILL.md`，同步更新 `.AI/AGENTS.md`、`17_SUBAGENT_WORKFLOW.md`、`32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md(.en)`、`33_AI_GOVERNANCE_DIRECTIVE.md(.en)`、`00_INDEX.md(.en)`、雙語 `README` 與 `eam-project-continuity-governor`/`eam-docs-site-builder` 技能。
 9. 2026-11-08 開啟 **Retail 12.1.5 & Forever 1.60.1 Alpha 9.0** 開發週期：
    - 雙語區官方客戶端名稱全面校準：繁體中文 (zhTW) 為「永恆」（徹底清除誤植之「永恆之樹」），簡體中文 (zhCN) 為「无限」（徹底清除誤植之「永恒服」）。
    - 插件 TOC、Env.lua、5 語系詞條（新增 6 個 UI 互動詞條並維持 5 語系 100% 鍵值對齊）、除錯中心五系抗性本地化、LiveTestPanel 與 DeploymentTargets 全面同步。

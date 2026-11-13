@@ -523,7 +523,7 @@
 <li>預設使用台灣慣用繁體中文（zh-TW）。</li>
 <li>稱呼使用者為「少年欸」。</li>
 <li>回覆直接切入任務，保持技術精確、架構清晰。</li>
-<li>WoW AddOn 相關任務必須先確認正式服與經典服差異；本專案唯一支援目標為正式服（Retail 12.x / 午夜 Midnight），不支援經典服（Classic）。</li>
+<li>WoW AddOn 相關任務必須先確認版本分支差異；本專案支援目標為正式服（Retail 12.x / 至暗之夜 Midnight）與永恆服（Forever 1.60.1 / Interface 16001，繁中「永恆」／簡中「無限」），不支援傳統經典懷舊服（Classic Era 1.15.x、MoP Classic、TBC/Wrath/Cata Classic）。嚴禁將 Forever 1.60.1 誤稱為 Classic Era 或與 Classic Era 混為一談。</li>
 <li>涉及 12.x API、Secret Values、C_* 命名空間或 Widget 行為時，需優先參考 <code>Docs</code> 與最新 Warcraft Wiki API 變更資訊。</li>
 <li>尚未在 WoW Retail 中實際加載並測試過的功能，嚴禁宣稱已完成實機驗證。</li>
 <li>進行開發時，程式碼與相關文檔必須主動同步更新，保持文檔與代碼一致性（主動出擊，不得被動等待指示）。</li>
@@ -636,8 +636,8 @@
 </ul>
 <h2 id="_3">專案目標</h2>
 <ul>
-<li>目標遊戲：僅限魔獸世界正式服（World of Warcraft Retail）。</li>
-<li>目標 API 世代：正式服 12.x / 午夜時代（Midnight）AddOn API。</li>
+<li>目標遊戲：魔獸世界正式服（World of Warcraft Retail 12.x）與永恆／無限（World of Warcraft: Forever 1.60.1, <em>forever</em>）。</li>
+<li>目標 API 世代：現代 12.x / 12.1.5+（Interface 120105 / 120100 / 120007）與 Forever 現代引擎分支（Interface 16001）AddOn API。</li>
 <li>架構方向：事件驅動、極限零分配（Zero-Allocation）、低 GC、模組化、高可維護性。</li>
 <li>使用者體驗：保留 EAM「比 WeakAuras 簡單輕量、專注光環與冷卻提醒」的核心定位。</li>
 <li>既有資料表、在地化字串、斜線命令語意與直覺視覺化予以保留；內部系統架構徹底現代化重構。</li>
@@ -650,14 +650,14 @@
 <li>2026-08-21 唯讀 metadata：<code>_retail_</code> 與 <code>_ptr_</code> 為 <code>12.1.0.69382</code>，<code>_xptr_</code> 為 <code>12.0.7.68887</code>；版本會變動，部署與實測前須重新讀取執行檔 <code>ProductVersion</code>。</li>
 <li>部署目標固定為各版本目錄下的 <code>Interface\AddOns\EventAlertMod</code>。安全實體資料夾可先備份後更新；missing 目標可建立；Reparse Point 與檔案目標一律停止。</li>
 <li>WoW 各客戶端的 <code>Interface\AddOns\EventAlertMod</code> 若為 SymbolicLink／Junction／Reparse Point，任何部署或清理都必須立即停止；不得追蹤、覆蓋、刪除或重建連結（fail-closed 防禦）。</li>
-<li>Classic 不在支援範圍。PTR／XPTR 互動部署時須再詢問是否同時部署 Retail，並在確認畫面列出全部候選版本。</li>
+<li>傳統經典服（Classic Era <em>classic_era</em> 等）不在支援範圍（注意：Forever <em>forever</em> 1.60.1 為支援範圍內之獨立現代引擎分支，與 Classic Era 截然不同）。PTR／XPTR／Forever 互動部署時須列出全部候選版本。</li>
 <li><code>WTF</code> 路徑只在明確測試任務中動態組合；未經授權不得讀取或列出 <code>WTF\Account</code> 的帳號與角色資料。</li>
 <li>🚨 部署腳本異動通報義務：若因應需求修改 <code>Deploy/</code> 目錄下任何腳本，必須主動明確向少年欸報告具體改動內容。</li>
 <li>完整規則見 <code>.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md</code>。</li>
 </ul>
 <h2 id="_4">硬性限制與邊界</h2>
 <ul>
-<li>不支援 Classic 經典服。</li>
+<li>不支援傳統 Classic Era（<em>classic_era</em> 經典舊世）等舊版懷舊服；所有文件、治理與報告必須嚴格區分 Forever 1.60.1（永恆／無限）與 Classic Era，嚴禁混稱。</li>
 <li>嚴禁直接繼承或複製舊 EAM 的架構邏輯。</li>
 </ul>
 <h2 id="secret-protected-values">秘密/受保護資料規則與安全檢查 (Secret &amp; Protected Values)</h2>
@@ -813,6 +813,15 @@
 <li>子代理的查證結果必須由主代理整合核實；嚴禁將子代理的 API 判定直接視為已實機驗證。</li>
 <li>所有協作與 PR 審查必須遵循 <code>.AI/Docs/21_RACI_EXPERTS_MATRIX.md</code> 的權責分工與審查原則。</li>
 <li><strong>子代理 API 變更即時探測協議</strong>：派發涉及 WoW API、FrameXML、原生光環、冷卻、事件或底層工具之子代理時，Prompt 必須明確注入或指示其調研 <code>https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes</code> 之最新情報（目前基準為 PTR 3 Build 69952），嚴禁依賴過期假設或猜測參數。</li>
+</ul>
+<h2 id="level-3-xml-track-a-track-b">雙軌動態模型調度與 Level 3 XML 派工契約 (Track A / Track B)</h2>
+<ul>
+<li><strong>現行作用中軌道（Active Track）</strong>：<strong>Track B</strong>（<code>Gemini 4 Hydrogen (XHigh)</code> 擔任首席架構師與冷面審查仲裁者 ＋ <code>Gemini 4 Hydrogen</code> 動態四階 <code>LOW / MEDIUM / HIGH / XHIGH</code> 執行群）。Track A（<code>Gemini 4 Argon (High)</code> 仲裁 ＋ <code>Hydrogen</code> 動態）留存為高配額恢復備援軌；非經使用者明確指示不跨軌自動切換（權威定義見 <code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code> v1.4 與 <code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code>）。</li>
+<li><strong>強制首行回覆狀態標籤</strong>：每次正式回覆使用者時，第一行固定輸出：
+  <code>【任務階段：＜階段名稱＞｜建議模型與檔位：Hydrogen (LOW / MEDIUM / HIGH / EXTRA) 或 Argon｜治理模式：輕量 / L1+L2 / 完整 XML】</code></li>
+<li><strong>四階調度與降檔紀律</strong>：<code>[TIER: LOW]</code> 負責 <code>FOLDER_INDEX</code> / 簽章 / 靜態表清洗；<code>[TIER: MEDIUM]</code> 負責黃金樣板施工；<code>[TIER: HIGH]</code> 負責單／跨模組功能與 CLI 驗證；<code>[TIER: EXTRA / Argon]</code> 負責架構定錨、多版本相容層重寫與新對話冷面漂移審查（<code>Cold-Context Drift Audit</code>）。若發現高檔位執行 <code>[TIER: LOW]</code> 任務，須主動建議降檔。</li>
+<li><strong>反漂移與資料隔離</strong>：遵守 Index-First（先查 <code>PROJECT_MEMORY.md</code>、<code>00_INDEX.md</code>、<code>FOLDER_INDEX.html</code>、<code>EventAlertMod.toc</code>），嚴禁解除 <code>table.freeze</code>，嚴禁在 <code>Core/Services/UI</code> 混入靜態法術清單（須隔離於 <code>EventAlertMod/Data/</code>），嚴格區隔 <code>Retail 12.1.5</code> 與 <code>Forever 1.60.1</code>（繁中「永恆」／簡中「无限」，Interface <code>16001</code>，非 <code>Classic Era</code>）。</li>
+<li><strong>Level 3 閉合 XML 契約</strong>：動及底層事件引擎或跨 3+ 核心模組時，須先依 <code>&lt;level3_closed_xml_ticket_standard&gt;</code> 輸出完整閉合 <code>&lt;argon_ticket&gt;</code> XML（含 <code>&lt;scope&gt;</code>、<code>&lt;immutable_files&gt;</code>、<code>&lt;invariants&gt;</code>、<code>&lt;verification&gt;</code>、<code>&lt;cold_context_review&gt;</code>）獲確認後方可施工。</li>
 </ul>
 <h2 id="token-secret-token-security-governance">機密憑證與 Token 安全防護規範 (Secret &amp; Token Security Governance)</h2>
 <p>為防止創作者 API Token、私鑰與敏感金鑰意外洩漏，實施以下絕對安全與隔離邊界：</p>
@@ -1034,6 +1043,14 @@
 <ul>
 <li>Never instantiate anonymous closures or ephemeral tables inside <code>OnUpdate</code> scripts or high-frequency event handlers.</li>
 <li>Use <code>StatePool.acquire()</code> and <code>StatePool.release()</code> to recycle state objects, completely eliminating LuaJIT garbage collection stutter.</li>
+</ul>
+<hr />
+<h2 id="dual-track-model-orchestration-level-3-closed-xml-track-a-track-b">Dual-Track Model Orchestration &amp; Level 3 Closed XML (Track A / Track B)</h2>
+<ul>
+<li><strong>Active Orchestration Track</strong>: <strong>Track B</strong> (<code>Gemini 4 Hydrogen (XHigh)</code> Chief Arbiter &amp; Cold-Context Drift Auditor + <code>Gemini 4 Hydrogen</code> 4-tier dynamic execution workers <code>LOW / MEDIUM / HIGH / XHIGH</code>), switched on <code>2026-11-13</code> due to Argon quota limits. <strong>Track A</strong> (<code>Gemini 4 Argon (High)</code> Arbiter + <code>Hydrogen</code> dynamic) remains on standby for explicit user-directed restoration (<code>AI_GOVERNANCE_DIRECTIVE.xml</code> v1.4 &amp; <code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code>).</li>
+<li><strong>Mandatory First-Line Status Header</strong>: Begin every user reply with <code>【任務階段：＜階段名稱＞｜建議模型與檔位：Hydrogen (LOW / MEDIUM / HIGH / EXTRA) 或 Argon｜治理模式：輕量 / L1+L2 / 完整 XML】</code>.</li>
+<li><strong>4-Tier Routing &amp; Downgrade Discipline</strong>: <code>[TIER: LOW]</code> handles <code>FOLDER_INDEX</code> / signatures / static <code>Data/</code> cleanup; <code>[TIER: MEDIUM]</code> applies golden-reference edits; <code>[TIER: HIGH]</code> builds feature modules &amp; runs CLI tests; <code>[TIER: EXTRA / Argon]</code> handles core architecture anchoring, multi-flavor compatibility (<code>Retail 12.1.5</code> vs <code>Forever 1.60.1</code>, distinct from <code>Classic Era</code>), and Clean-Session Cold-Context Drift Audits.</li>
+<li><strong>Anti-Drift Invariants</strong>: Enforce Index-First context (<code>PROJECT_MEMORY.md</code>, <code>00_INDEX.md</code>, <code>FOLDER_INDEX.html</code>, <code>EventAlertMod.toc</code>), never bypass <code>table.freeze()</code>, isolate static catalogs inside <code>EventAlertMod/Data/</code>, avoid unrelated diffs, and issue the closed <code>&lt;argon_ticket&gt;</code> XML schema before Level 3 high-risk refactors.</li>
 </ul>
 <hr />
 <h2 id="deployment-verification-commands">Deployment &amp; Verification Commands</h2>

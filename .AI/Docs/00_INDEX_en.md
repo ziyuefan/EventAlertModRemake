@@ -1,11 +1,11 @@
 # EventAlertMod Remake Documentation Hub
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Release](https://img.shields.io/badge/release-Alpha%208.8-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
-[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5-blue)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Release](https://img.shields.io/badge/release-Alpha%209.0-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
+[![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
-> 🚀 **Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.5 / 12.1 / 12.0+)!**
+> 🚀 **Ultra-lightweight, zero-taint, pure event-driven spell monitoring and combat alert AddOn built specifically for World of Warcraft: Retail (12.1.5 / 12.1 / 12.0+) and Forever (1.60.1, zhTW: 永恆 / zhCN: 无限)!**
 
 Welcome to the EventAlertMod (EAM) Retail Rewrite Documentation Hub. This portal provides tailored navigation and architectural references for both **AddOn users/players** and **AI/Human developers**.
 
@@ -22,23 +22,34 @@ Welcome to the EventAlertMod (EAM) Retail Rewrite Documentation Hub. This portal
 
 ---
 
-## ✨ 8 Independent Alert Modules
+## ✨ 9 Independent Alert Modules
 
-EAM features 8 decoupled, independently positioned and freely draggable alert modules:
+EAM features 9 decoupled, independently positioned and freely draggable alert modules:
 
-1. 🔮 **Player Buff / Debuff**: Self buffs & debuffs with stack counts, real-time shield absorb amounts (e.g. `45.2k`, `1.2M`, `3(45k)`), and high-precision countdown timers.
-2. 🎯 **Target Buff / Debuff**: Precise tracking of target auras, CC, and debuff states with anonymous Tooltip probes and zero-taint sampling.
-3. ⚔️ **Cross-Class / Target Cast**: Key enemy burst cooldowns and crucial friendly buffs, featuring interactive confirmation dialogs for non-class spells.
+1. 🔮 **Player Buff / Debuff**: Self buffs & debuffs with stack counts, real-time shield absorb amounts (e.g. `45.2k`, `1.2M`, `3(45k)`), high-precision countdown timers, and Global + Per-Spell tri-state "Hide Auras Outside Combat".
+2. 🎯 **Target Buff / Debuff**: Precise tracking of target auras, CC, and debuff states with anonymous Tooltip probes, zero-taint sampling, and out-of-combat visibility control.
+3. ⚔️ **Cross-Class / Target Cast**: Key enemy burst cooldowns and crucial friendly buffs, featuring interactive confirmation dialogs for non-class spells and out-of-combat visibility control.
 4. ⏳ **Spell Cooldown**: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports 2D Grid Layout with customizable columns per row, Radial Ring Mode, outer linear bars (`TOP/BOTTOM/LEFT/RIGHT`), cooldown swipe color/alpha customization, and non-linear cooldown curves.
 5. 🎒 **Item Cooldown**: Trinkets, on-use equipment, and consumables monitoring with 2D Grid Layout support.
 6. 🌋 **Ground Effect**: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, AMZ) with Base/Override talent family matching, Multi-Duration Candidate Scraping, and 2D Grid Layout support.
-7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types (including official 5-locale Evoker "Essence" naming), supporting per-resource independent dragging & 9-point frame attachment, dynamic max points (5/6/7) auto-segmentation & custom segments (0~20), custom solid/two-color gradients, bidirectional conditional alerts (`>=` / `<=` bar recolor & rising-edge sound), and a dedicated 6-slot Death Knight Runes dashboard (`/eam rune`).
-8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles with 18 core stats (Primary, Secondary, 4-in-1 Speeds, Armor, Total Shield Absorbs, and Heal Absorbs), powered by a modular 4-Tab settings layout and per-stat draggable positioning.
+7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5 (with independent dragging, 9-point attachment, dynamic/custom segments, two-color gradients, conditional alerts, and DK Runes dashboard `/eam rune`), plus Forever 1.60.1 classic 60-level 9-class topologies (Warrior Rage, Rogue Energy/Combo Points, Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form shifts, Paladin/Priest/Shaman/Mage Mana).
+8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles across 18+ core Retail attributes (including 4-in-1 gliding velocities) and Forever 1.60.1 calibrated stats (11 attributes + native GameTooltip knowledge formulas such as `14 AP = 1 DPS`, `440` Defense Boss Crit Immunity, `75%` Armor cap, `+33%` sit/sleep regen; Five Magic Resistances; `mana` & Spirit 5SR three-state alerts + `EAM_SpiritActiveGlowFrame` continuous soft blue screen vignette).
+9. 🗡️ **Weapon Enchant**: Dedicated `WeaponEnchantService` built directly on native `GetWeaponEnchantInfo()`, tracking temporary Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) weapon enchants across Forever (sharpening/weight stones, poisons, oils, Windfury/Flametongue) and Retail (Runeforging, whetstones, weapon oils/poisons) with missing-enchant glow + throttled audio warnings, expiring countdown highlights, and `/eam enchant` independent HUD positioning.
 
 ---
 
 ## 🔥 Recent Release Milestones
 
+- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13**
+    - **Independent Weapon Enchant Service (`WeaponEnchantService`) [Shared]**: Tracks Slot 16/17/18 temporary weapon enchants via `GetWeaponEnchantInfo()`, offering missing-enchant glow & audio alerts, expiration countdowns, and `/eam enchant` HUD drag positioning.
+    - **Forever 11-Stat Calibration & Native Tooltip Knowledge Base [Forever 1.60.1]**: Calibrated Strength/Stamina/Agility/Intellect/Spirit/AP (`14 AP = 1 DPS`)/Crit/Defense (`440` Boss Crit Immunity & 150% Crushing Blow rule)/Dodge/Parry (Parry Haste)/Armor (`75%` mitigation cap) formulas with native `GameTooltip` details across HUD and panel rows; expanded `attackPower`, `dodge`, `parry`, and `block`.
+    - **Mana Stat, 5-Second Rule (5SR) Three-State Alerts & Continuous Full-Screen Soft Blue Glow [Forever 1.60.1]**: Added `mana` stat tracking with ice-blue vs dark-amber 5SR bar contrast, icon glow, 1.32x text scaling, and `EAM_SpiritActiveGlowFrame` soft blue screen vignette fade-in/fade-out in `CombatFlash.lua`.
+    - **Hide Auras Outside Combat (Global + Tri-State Per-Spell Override) [Shared]**: Added global toggle and per-spell tri-state override (`Global Default` / `Force Show` / `Force Hide`) seamlessly wired across Legacy `AuraService` and Retail 12.1+ Native Aura containers.
+    - **Dual-Track AI Governance v1.4 & Track B Activation**: Completed Level 3 closed `<argon_ticket>` XML schema in `AI_GOVERNANCE_DIRECTIVE.xml` v1.4, activated **Track B (`Gemini 4 Hydrogen (XHigh)` Arbiter + `Hydrogen` 4-tier dynamic routing)** due to Argon quota exhaustion, calibrated Forever bilingual names (`永恆` / `无限`, distinct from Classic Era), and added `eam-dual-track-orchestration` skill.
+- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08**
+    - **Multi-Flavor Unified Architecture**: Single addon directory (`[AllowLoadGameType camelot, forever]`) supporting Retail 12.1.5 (`120105`) and Forever 1.60.1 (`16001`) with `EAM.detectGameFlavor` and zero-allocation `TimedSignalMap` scheduler.
+    - **Full Pipeline Spell Rank Management, Five Magic Resistances & Spirit 5SR Machine [Forever 1.60.1]**: Dynamic multi-rank `includeSpellIDs` matching, classic 9-class resource topologies, resistance thresholds, and Spirit MP5/HP5 monitoring.
+    - **Native Aura Dual Bars, Pandemic 3-State Animations & EAMAP2 Deflate Profiles [Retail 12.1.5 & Shared]**: Native `SetApplicationBar`/`SetDurationBar`, Pandemic breathing micro-animations, `PixelUtil` retina snapping, `/eam reset`, and `C_EncodingUtil` Deflate profile compression.
 - 🌟 **[Retail 12.1.5 Alpha 8.8] - 2026.10.23**
     - **Independent Resource Positioning & 9-Point Frame Attachment**: Each player resource bar now supports independent Free Dragging (`FREE`) or Frame Attachment (`ATTACH`) to Player, Target, Focus, Personal Resource Display, or EAM Main Anchor with 9-point directional alignment and X/Y offsets.
     - **Dynamic & Custom StatusBar Segments**: Discrete point resources (Combo Points, Holy Power, Chi, Arcane Charges, Soul Shards, Essence) automatically adjust segment dividers to talent-modified max points (5/6/7), plus a Custom Segments slider (`0~20`) for arbitrary percentage tick marks on any bar.
@@ -106,7 +117,7 @@ EAM features 8 decoupled, independently positioned and freely draggable alert mo
 ## 🎮 Players & Users Portal
 
 *   📖 **[Quick Start Guide (README)](README.md.html)**
-    *   Installation guide, slash commands, screenshot showcase, custom icons, and 8 module feature details.
+    *   Installation guide, slash commands, screenshot showcase, custom icons, and 9 independent alert module details.
 *   📜 **[Changelog (Updates)](changelog.txt.html)**
     *   Full release history and technical change details for all Alpha releases.
 
@@ -125,10 +136,10 @@ EAM features 8 decoupled, independently positioned and freely draggable alert mo
     *   Graded review of Retail 12.1 Aura readiness, Secret/Taint protection, performance, and documentation governance.
 *   🚀 **[Antigravity Takeover Baseline Assessment](31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md.html)**
     *   Authoritative baseline assessment of AI governance, WoW Retail 12.x API boundaries, zero-GC performance architecture, player resources, and deployment workflow.
-*   🧠 **[21 Core SKILLs Ecosystem & Agentic AI Philosophy](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
-    *   **Everything-as-a-Skill Operational Runbook**. Covers all 21 standardized skills across 5 domains, progressive disclosure, deterministic execution, and anti-regression governance.
+*   🧠 **[EAM SKILLs Ecosystem & Agentic AI Philosophy](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
+    *   **Everything-as-a-Skill Operational Runbook**. Covers EAM skills across 5 domains (expanded to 29 `eam-*` skills including `eam-dual-track-orchestration`), progressive disclosure, deterministic execution, and anti-regression governance.
 *   📜 **[AI Agent Structured XML Governance Directive](33_AI_GOVERNANCE_DIRECTIVE.md.html)**
-    *   **Structured XML directive for LLMs & Subagents**. Defines when to establish/ingest XML directives, 5 absolute iron rules, Retail 12.x Secret sentinel firewalls, architecture layer contracts, Proactive Failure Prediction Protocol (v1.3), and zero cold-start memory anchoring. Physical XML stored at `AI_GOVERNANCE_DIRECTIVE.xml`.
+    *   **Structured XML directive for LLMs & Subagents (`v1.4`)**. Defines Track A / Track B Dual-Track Orchestration (Active: **Track B — `Gemini 4 Hydrogen (XHigh)` Arbiter + `Hydrogen` 4-tier dynamic routing**), 4-tier mandatory status header, Retail 12.x Secret sentinel firewalls, Proactive Failure Prediction Protocol, and completed Level 3 closed `<argon_ticket>` XML schema. Physical XML stored at `AI_GOVERNANCE_DIRECTIVE.xml`.
 *   📝 **[CurseForge Markdown Authoring & Sanitizer Guide](34_CURSEFORGE_MARKDOWN_AUTHORING_GUIDE.md.html)**
     *   **Dual-platform Markdown authoring standard for CurseForge & GitHub**. Covers HTML sanitizer whitelists, table-free nested list formatting, callout blocks, and automated validation contracts.
 *   🧭 **[WoW MCP & Tool Routing Policy](35_WOW_MCP_TOOL_ROUTING_POLICY.md.html)**

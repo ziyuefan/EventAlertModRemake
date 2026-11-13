@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Diagnostic Layer">
   <meta name="ai-governance-security" content="Non-Combat Gated / Developer Mode">
   <meta name="ai-governance-invariants" content="僅在開發或手動除錯指令下執行，戰鬥中嚴禁高頻 dump 或引發 UI 阻塞 | 杜絕任何可能造成 Secure Execution Path 污染的除錯行為">
-  <meta name="ai-scan-timestamp" content="2026-10-23T01:48:34.596361+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.623723+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -28,10 +28,10 @@
     "僅在開發或手動除錯指令下執行，戰鬥中嚴禁高頻 dump 或引發 UI 阻塞",
     "杜絕任何可能造成 Secure Execution Path 污染的除錯行為"
   ],
-  "timestamp": "2026-10-23T01:48:34.596361+08:00",
-  "fileCount": 12,
+  "timestamp": "2026-11-13T12:35:11.623723+08:00",
+  "fileCount": 13,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 694444,
+  "totalSizeBytes": 705699,
   "files": [
     {
       "name": "CooldownTrace.lua",
@@ -45,10 +45,19 @@
     {
       "name": "DebugState.lua",
       "extension": ".lua",
-      "sizeBytes": 5428,
-      "lineCount": 138,
+      "sizeBytes": 5697,
+      "lineCount": 142,
       "purpose": "Debug snapshot 提供 AI 與人工分析用的最小結構化狀態。；facts/derived/boundaryWarnings 分離，避免把猜測當事實。 | 日後收集各模組 snapshot 並組合 DebugSnapshot。",
       "role": "Debug/DebugState",
+      "security": "Safe"
+    },
+    {
+      "name": "EngineProfiler.lua",
+      "extension": ".lua",
+      "sizeBytes": 4148,
+      "lineCount": 123,
+      "purpose": "集中暴雪原生 C++ AddOn Profiler (C_AddOnProfiler) 遙測指標讀取與格式化。；監控 CPU 耗時、峰值、首領戰均值與刺波 (spike) 幀數，輔助除錯與效能調優。 | 查詢 C_AddOnProfiler 原生引擎計量 (RecentAverageTime, PeakTime, CountTimeOver1Ms, EncounterAverageTime 等)。；提供安全能力檢定 (Capability Gate)，API 不可用或被客戶端停用時安全回退。",
+      "role": "Debug/EngineProfiler",
       "security": "Safe"
     },
     {
@@ -63,8 +72,8 @@
     {
       "name": "FlowTestRunner.lua",
       "extension": ".lua",
-      "sizeBytes": 475997,
-      "lineCount": 10597,
+      "sizeBytes": 481989,
+      "lineCount": 10930,
       "purpose": "使用同一組案例支援離線 Mock 與 Retail/PTR 實機流程驗證。；將限制檢查、語法檢查以外的事件、排程、初始化、設定與報告流程轉成可重播證據。 | 註冊流程案例、執行 suite、處理同步與非同步結果。；產生不含 Secret 原值的 JSON 報告，保存最近一次使用者觸發結果。",
       "role": "Debug/FlowTestRunner",
       "security": "Taint-Sensitive"
@@ -72,8 +81,8 @@
     {
       "name": "LiveTestPanel.lua",
       "extension": ".lua",
-      "sizeBytes": 19636,
-      "lineCount": 497,
+      "sizeBytes": 19862,
+      "lineCount": 502,
       "purpose": "以玩家逐案操作與確認取代任何遊戲自動化，讓 PTR／XPTR／正式服結果可安全回灌。 | 選擇 client directory、瀏覽案例與步驟、記錄 pass/fail/blocked/note、建立 reload checkpoint、全選 JSON 供玩家手動複製。",
       "role": "Debug/LiveTestPanel",
       "security": "Safe"
@@ -99,8 +108,8 @@
     {
       "name": "PromptExport.lua",
       "extension": ".lua",
-      "sizeBytes": 40793,
-      "lineCount": 862,
+      "sizeBytes": 41200,
+      "lineCount": 883,
       "purpose": "將 DebugSnapshot、RuntimeProbe 與 EAM.DebugLog 轉成 AI 可讀、compact JSON-like output。；提供可手動複製的 UI 彈出視窗（Debug Export Window），方便玩家全選診斷資訊後回報給 AI。 | 收集環境資訊、EAM 實體框架座標狀態、EventRouter 註冊事件、設定統計、提醒數量、Runtime 狀態、最近 40 條事件運行日誌與邊界警告。；建立並管理診斷 UI 視窗、多行 EditBox、捲軸與「全選診斷資訊」按鈕。",
       "role": "Debug/PromptExport",
       "security": "Taint-Sensitive"
@@ -108,8 +117,8 @@
     {
       "name": "RuntimeProbe.lua",
       "extension": ".lua",
-      "sizeBytes": 17962,
-      "lineCount": 366,
+      "sizeBytes": 18856,
+      "lineCount": 377,
       "purpose": "P3 實機驗證需要一個低風險、on-demand 的環境診斷入口。；診斷只確認 API / widget / template 是否存在，不嘗試繞過 Secret 或 Protected Data。 | 提供 `/eam doctor` 與 `/eam validate` 可使用的 Retail/PTR feature detection。；輸出 build、Interface、combat 狀態、API 可用性與需要實機確認的降級資訊。",
       "role": "Debug/RuntimeProbe",
       "security": "Taint-Sensitive"
@@ -117,8 +126,8 @@
     {
       "name": "SVGCapabilityProbe.lua",
       "extension": ".lua",
-      "sizeBytes": 20791,
-      "lineCount": 577,
+      "sizeBytes": 20312,
+      "lineCount": 578,
       "purpose": "由玩家啟動 Texture:SetSVG 與 Frame:CreateVectorGraphics A/B 顯示測試。；驗證 SetSVG、HasSVG、GetSVGFileID 分類及 ClearSVG/reload 生命週期。",
       "role": "Debug/SVGCapabilityProbe",
       "security": "Taint-Sensitive"
@@ -126,7 +135,7 @@
     {
       "name": "UnitPowerCapabilityProbe.lua",
       "extension": ".lua",
-      "sizeBytes": 18970,
+      "sizeBytes": 18574,
       "lineCount": 486,
       "purpose": "由玩家啟停 UnitPower 能力測試，持續把 UnitPowerPercent 直接送入原生顯示 sink。；產生不含 power/max/percent 原值的結構化 JSON 報告。",
       "role": "Debug/UnitPowerCapabilityProbe",
@@ -135,8 +144,8 @@
     {
       "name": "ValidationEnvironment.lua",
       "extension": ".lua",
-      "sizeBytes": 7354,
-      "lineCount": 213,
+      "sizeBytes": 7548,
+      "lineCount": 223,
       "purpose": "將系統觀測的 build/interface 與玩家宣告的安裝目錄分欄，避免 PTR、XPTR、正式服互相誤標。 | 讀取 GetBuildInfo 與 test-build flags，保存玩家宣告的 client directory，產生去識別環境證據。",
       "role": "Debug/ValidationEnvironment",
       "security": "Taint-Sensitive"
@@ -615,7 +624,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">12</span>
+          <span class="stat-val">13</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">子目錄數量</span>
@@ -623,7 +632,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">678.2 KB</span>
+          <span class="stat-val">689.2 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -646,7 +655,7 @@
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (12)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (13)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -695,7 +704,25 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            5.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 138 行</span>
+            5.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 142 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./EngineProfiler.lua" title="檢視檔案內容">EngineProfiler.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">集中暴雪原生 C++ AddOn Profiler (C_AddOnProfiler) 遙測指標讀取與格式化。；監控 CPU 耗時、峰值、首領戰均值與刺波 (spike) 幀數，輔助除錯與效能調優。 | 查詢 C_AddOnProfiler 原生引擎計量 (RecentAverageTime, PeakTime, CountTimeOver1Ms, EncounterAverageTime 等)。；提供安全能力檢定 (Capability Gate)，API 不可用或被客戶端停用時安全回退。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Debug/EngineProfiler</div>
+          </td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            4.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 123 行</span>
           </td>
         </tr>
         
@@ -731,7 +758,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            464.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 10597 行</span>
+            470.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 10930 行</span>
           </td>
         </tr>
         
@@ -749,7 +776,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            19.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 497 行</span>
+            19.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 502 行</span>
           </td>
         </tr>
         
@@ -803,7 +830,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            39.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 862 行</span>
+            40.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 883 行</span>
           </td>
         </tr>
         
@@ -821,7 +848,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            17.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 366 行</span>
+            18.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 377 行</span>
           </td>
         </tr>
         
@@ -839,7 +866,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            20.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 577 行</span>
+            19.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 578 行</span>
           </td>
         </tr>
         
@@ -857,7 +884,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            18.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 486 行</span>
+            18.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 486 行</span>
           </td>
         </tr>
         
@@ -875,7 +902,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            7.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 213 行</span>
+            7.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 223 行</span>
           </td>
         </tr>
         
@@ -887,7 +914,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-10-23T01:48:34.596361+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.623723+08:00</p>
     </footer>
   </div>
 

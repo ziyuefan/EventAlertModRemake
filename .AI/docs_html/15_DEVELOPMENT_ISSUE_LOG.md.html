@@ -515,6 +515,81 @@
 
     <div id="doc-content-zh" class="lang-content active">
         <a href="index.html" class="back-btn">← 返回說明文件首頁 (Index)</a>
+<h3 id="2026-11-13-eam-20261113-governance-v14-track-b-and-hub-sync-level-3-argon_ticket-xml-track-b-hydrogen-xhigh-eam-dual-track-orchestration-github">2026-11-13 EAM-20261113-GOVERNANCE-V14-TRACK-B-AND-HUB-SYNC：完成 Level 3 閉合 <code>&lt;argon_ticket&gt;</code> XML 規範補完、正式切換至 Track B (<code>Hydrogen XHigh</code> 仲裁)、新增 <code>eam-dual-track-orchestration</code> 技能與同步文件導航中心／GitHub</h3>
+<ul>
+<li>狀態：已完成（<code>AI_GOVERNANCE_DIRECTIVE.xml</code> v1.4 通過 <code>xml.etree.ElementTree</code> 與內嵌 CDATA <code>&lt;argon_ticket&gt;</code> 雙重解析驗證；<code>ProjectContinuity.json</code> JSON 解析通過；<code>.AI/docs_html/</code> 離線編譯與 GitHub 同步就緒）。</li>
+<li>需求背景與治理策略：
+  依據少年欸指示，完成兩大架構治理任務並全面更新文件中心與技能體系：<ol>
+<li><strong>項次 1 補完（Level 3 閉合 <code>&lt;argon_ticket&gt;</code> XML 與實務對齊）</strong>：</li>
+<li>補完先前輸入遭截斷的 <code>&lt;immutable_files&gt;</code> 後續結構，確立標準閉合 <code>&lt;argon_ticket&gt;</code> XML（涵蓋 <code>&lt;meta&gt;</code>、<code>&lt;scope&gt;/&lt;allowed_files&gt;</code>、<code>&lt;immutable_files&gt;</code>、<code>&lt;invariants&gt;</code>、<code>&lt;execution_plan&gt;</code>、<code>&lt;verification&gt;</code> 與 <code>&lt;cold_context_review&gt;</code>）；</li>
+<li>將防漂移規則精確對齊真實專案邊界：<code>EventAlertMod/Data/</code> 靜態資料目錄隔離、<code>table.freeze()</code> 不可繞過、<code>FOLDER_INDEX.html</code> 與 <code>00_INDEX.md</code> 先行、以及 <code>Forever 1.60.1</code>（繁中「永恆」／簡中「无限」，Interface <code>16001</code>）嚴格區隔非 <code>Classic Era</code>。</li>
+<li><strong>項次 2 切換至 Track B</strong>：</li>
+<li>經即時探測 <code>Gemini 4 Argon</code> 剩餘額度為 <code>1%</code>、<code>Gemini 4 Hydrogen</code> 為 <code>98%</code>；依使用者授權正式切換 <code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code> (<code>active_track="TRACK_B"</code>) 至 <strong>Track B (<code>Gemini 4 Hydrogen (XHigh)</code> 首席仲裁 ＋ <code>Gemini 4 Hydrogen</code> 四階動態強度)</strong>，保留 Track A 待機待命。</li>
+<li>規範每個正式回覆第一行固定輸出任務階段與建議模型／檔位標籤，並釐清 <code>swarm add</code> 可顯式鎖定子代理模型、<code>invoke_subagent</code> 採繼承模式之實務邊界。</li>
+<li><strong>技能與文件導航中心同步</strong>：</li>
+<li>新建 <code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code>，更新 <code>eam-project-continuity-governor</code> 與 <code>eam-docs-site-builder</code>；</li>
+<li>將 <code>.AI/Docs/00_INDEX.md</code>、<code>00_INDEX_en.md</code>、根目錄與 <code>EventAlertMod/</code> 之雙語 <code>README</code> 更新對齊 <strong>Alpha 9.0</strong> 與 <strong>9 大獨立告警模組</strong>（補上獨立武器臨時附魔模組 <code>WeaponEnchantService</code> 與 <code>/eam enchant</code>、Forever 11 大屬性知識引擎、法力／5SR 柔和藍光與光環脫戰隱藏），並以 <code>EAM_DOCS_OFFLINE=1</code> 重新建置 <code>.AI/docs_html/</code>。</li>
+</ol>
+</li>
+<li>落地成果：<ol>
+<li><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code> 升級至 <strong>v1.4</strong>（13 大核心節點）；</li>
+<li>新增 <code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code>，同步 <code>.AI/AGENTS.md</code>、<code>17_SUBAGENT_WORKFLOW.md</code>、<code>32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md(.en)</code>、<code>33_AI_GOVERNANCE_DIRECTIVE.md(.en)</code>、<code>00_INDEX.md(.en)</code>、雙語 <code>README</code>、<code>PROJECT_MEMORY.md</code>、<code>28_PROJECT_CONTINUITY.md(.en)</code> 與 <code>ProjectContinuity.json</code>；</li>
+<li><code>.AI/docs_html/</code> 與 GitHub <code>main</code> 分支完整同步。</li>
+</ol>
+</li>
+</ul>
+<h3 id="2026-11-12-eam-20261112-mana-stat-5sr-three-state-and-fullscreen-blue-glowforever-1601-mana-stat5-5sr-three-state-alerts-continuous-full-screen-soft-blue-glow">2026-11-12 EAM-20261112-MANA-STAT-5SR-THREE-STATE-AND-FULLSCREEN-BLUE-GLOW：Forever 1.60.1 法力屬性 (Mana Stat)、5 秒精神回魔三態醒目提醒 (5SR Three-State Alerts) 與全螢幕柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow) 深度實裝</h3>
+<ul>
+<li>狀態：已完成 (全專案 84 個 Lua 語法通過，24 大深層測試套件 100% 綠燈，5 語系字典檔完整同步)。</li>
+<li>需求背景與治理策略：
+  針對《魔獸世界：永恆》經典環境法系與治療職業之控魔節奏感知，深度延伸人物屬性與精神回魔狀態機架構：<ol>
+<li><strong>法力屬性與 5 秒精神回魔三態醒目提醒 (Mana Stat &amp; 5SR Three-State Alerts)</strong>：</li>
+<li>於人物屬性監控 (<code>PlayerStatService.lua</code>) 擴展法力 (<code>mana</code>) 屬性，支援當前法力/最大法力 (百分比) 監控；</li>
+<li>深度整合精神 5 秒規則 (5SR) 狀態機，提供 StatusBar 進度條雙色反差（5SR 全速回魔作用中切換為耀眼冰晶藍色 <code>(0.20, 0.85, 1.00, 1.00)</code>，5 秒施法懲罰期間切換為暗琥珀色 <code>(0.85, 0.45, 0.15, 0.95)</code>）；</li>
+<li>圖示 (Icon) 於 5SR 作用中觸發 <code>LibButtonGlow</code> 冰藍/金色光環；</li>
+<li>文字於 5SR 作用中放大 1.32x 且明亮冰藍高亮，懲罰期間以 <code>%.1fs</code> 倒數等待時長；</li>
+<li>Tooltip 詳盡呈現坐下/躺下回血加成 33%、5 秒規則作用狀態與數值。</li>
+<li><strong>模擬全螢幕持續柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow)</strong>：</li>
+<li>於 <code>CombatFlash.lua</code> 建立專屬微光全螢幕圖層 <code>EAM_SpiritActiveGlowFrame</code>，採用暴雪原生 <code>Interface\FullScreenTextures\LowHealth</code> 紋理與 <code>ADD</code> 混色 (<code>0.15, 0.65, 1.00, 0.35</code>)；</li>
+<li>提供平滑淡入 (0 -&gt; 0.35 費時 0.40s) 與淡出 (0.35 -&gt; 0 費時 0.30s) 動畫；</li>
+<li>施法耗魔瞬間淡出，脫離 5 秒懲罰進入全速回魔瞬間平滑淡入，大幅提升經典版補師與法系控魔節奏感知；</li>
+<li>於屬性設定面板 (<code>PlayerStatPanel.lua</code>) 提供「全螢幕藍色泛光 (精神回魔作用中常駐)」(<code>spiritBlueScreenGlow</code>) 獨立開關。</li>
+</ol>
+</li>
+<li>落地成果：<ol>
+<li><code>EventAlertMod/Services/PlayerStatService.lua</code> 擴展 <code>mana</code> 屬性定義、5SR StatusBar 顏色覆蓋、LibButtonGlow 整合、文字動態縮放與倒數、以及 GameTooltip 知識整合；</li>
+<li><code>EventAlertMod/UI/CombatFlash.lua</code> 實裝 <code>createSpiritActiveGlowFrame</code> 與 <code>CombatFlash.setSpiritActiveGlow</code>；</li>
+<li><code>EventAlertMod/UI/PlayerStatPanel.lua</code> 實裝 <code>spiritBlueScreenGlowCb</code> 控制項與即時預覽；</li>
+<li>5 語系字典檔同步新增 <code>EAM_STAT_SPIRIT_BLUE_GLOW</code> 與 <code>EAM_STAT_SPIRIT_BLUE_GLOW_TIP</code> 等詞條；</li>
+<li>離線語法與深層單元測試 100% 綠燈通過。</li>
+</ol>
+</li>
+</ul>
+<h3 id="2026-11-12-eam-20261112-forever-11stats-calibration-and-weapon-enchant-serviceforever-1601-11-tooltip-weaponenchantservice">2026-11-12 EAM-20261112-FOREVER-11STATS-CALIBRATION-AND-WEAPON-ENCHANT-SERVICE：Forever 1.60.1 11 大角色屬性實機校準、原生 Tooltip 知識引擎與獨立武器臨時附魔模組 (WeaponEnchantService) 全面實裝</h3>
+<ul>
+<li>狀態：已完成 (全專案 84 個 Lua 語法通過，24 大深層測試套件 100% 綠燈，5 語系字典檔完整同步)。</li>
+<li>需求背景與治理策略：
+  依據少年欸實機操作上傳之 11 張 Forever 角色屬性截圖與工作指示，進行以下重大演進：<ol>
+<li><strong>雙模型架構強制切換</strong>：全面落實「Flash + Flash」雙模型協同模式（主架構師：Flash；執行工程師：Flash）。</li>
+<li><strong>Forever 1.60.1 角色屬性知識庫與 Tooltip/計算校準</strong>：</li>
+<li>依據實機截圖完整校準：1 力量 = 2 AP / 盾牌格擋值提高 = 力量 / 20、1 耐力 = 10 生命力、1 敏捷 = 2 護甲 / 提高致命與閃躲、智力提高法力與法術致命以及<strong>【關鍵機制：提高武器技能/熟練度提升機率】</strong>、精神 HP5/MP5 5秒規則 (5SR) 以及<strong>【關鍵機制：坐下或躺下時生命力恢復速度提高 33%】</strong>、攻擊強度<strong>【核心換算：每 14 AP 提高 1 點武器 DPS (14 AP = 1 DPS)】</strong>、致命一擊近戰 200% 傷害 / 法術治療 150% 效果 / 多數 DoT/HoT 可致命、防禦技能生物致命 200% / <strong>【高 3 級生物造成 150% 碾壓傷害 / 防禦達 440 點首領免暴 (-5.60% 致命)】</strong>、閃躲機率<strong>【核心機制：對玩家來說只有來自正面的近戰攻擊可閃躲；對生物來說來自任何方向均可閃躲】</strong>、招架機率<strong>【招架提速 Parry Haste】</strong>、護甲值<strong>【免傷上限：來自護甲的傷害減免不能超過 75.00%】</strong>。</li>
+<li>擴充屬性目錄：新增 <code>attackPower</code>, <code>dodge</code>, <code>parry</code>, <code>block</code>，納入 <code>FOREVER_ORDERED_KEYS</code> 與 <code>RETAIL_ORDERED_KEYS</code>。</li>
+<li>原生 Tooltip 知識引擎：HUD 框架與選項列表 row 懸停顯示完整數值計算與機制說明。</li>
+<li><strong>獨立武器臨時附魔模組 (WeaponEnchantService)</strong>：</li>
+<li>底層調查確認：武器附魔為物品槽位臨時附魔（Slot 16/17/18），無 AuraInstanceID，在 <code>C_UnitAuras</code> 查無資料，採用專用 API <code>GetWeaponEnchantInfo()</code> 與事件 <code>WEAPON_ENCHANT_CHANGED</code>, <code>PLAYER_EQUIPMENT_CHANGED</code>, <code>UNIT_INVENTORY_CHANGED</code>, <code>PLAYER_ENTERING_WORLD</code>。</li>
+<li>正式服 (Retail 12.x) 與永恆服 (Forever 1.60.1) 雙端均採用原生 API 支援（磨刀石、毒藥、風怒/火舌、符文熔鑄、法力油）。</li>
+<li>獨立模組 <code>WeaponEnchantService.lua</code> 封裝完成：提供裝備感知、缺少武器附魔醒目警示 (Missing Enchant Warning, LibButtonGlow 外框發光與節流音效)、即將到期倒數警告 (Expiring Warning, 預設 5 分鐘)、獨立 HUD 渲染與移動模式 (<code>/eam enchant</code> 與 PlayerStatPanel 快捷入口)。</li>
+</ol>
+</li>
+<li>落地成果：<ol>
+<li>新增獨立模組 <code>EventAlertMod/Services/WeaponEnchantService.lua</code> (480+ 行)；</li>
+<li><code>PlayerStatService.lua</code> 實裝 11 大屬性公式與原生 GameTooltip 浮動提示；</li>
+<li><code>PlayerStatPanel.lua</code> 與 <code>Slash.lua</code> 整合武器附魔移動與定位快捷入口；</li>
+<li>5 語系檔 (<code>zhTW</code>, <code>zhCN</code>, <code>enUS</code>, <code>koKR</code>, <code>ruRU</code>) 100% 同步新增 10 大新詞條；</li>
+<li>測試套件擴充至 24 大深層 Suite，100% 通過。</li>
+</ol>
+</li>
+</ul>
 <h3 id="2026-11-08-eam-20261108-forever-naming-calibration-and-alpha-90-openingworld-of-warcraft-forever-1601-alpha-90">2026-11-08 EAM-20261108-FOREVER-NAMING-CALIBRATION-AND-ALPHA-9.0-OPENING：World of Warcraft: Forever 1.60.1 雙語區官方名稱校準（繁中「永恆」、簡中「无限」）與 Alpha 9.0 開發週期啟動</h3>
 <ul>
 <li>狀態：已完成 (公開產物消滅「永恆之樹」、Alpha 9.0 開發週期開啟、5 語系新增 6 個詞條 100% 對齊、五大門檻全過)。</li>
@@ -4485,6 +4560,58 @@ esetSpiritRegenState()。</li>
 <li>Run-FlowValidation.ps1 -Suite all：110/110 passed。</li>
 <li>Test-ValidationContracts.ps1：502/502 passed。</li>
 <li>Build-Package.ps1 -DryRun -SkipFlowValidation：PASS (80/80 Lua files syntax balanced)。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="2026-11-12-issue-074-hideauraoutsidecombat">2026-11-12: ISSUE-074 (光環脫戰自動隱藏 hideAuraOutsideCombat 全域與單技能三態覆寫支援)</h2>
+<ul>
+<li><strong>問題回報 (Argon 總架構師派工單 EAM-AURA-OUT-OF-COMBAT-VISIBILITY)</strong>：<ul>
+<li>玩家反饋希望光環圖示在非戰鬥（脫戰）狀態下能自動隱藏（脫戰消失），避免常駐 Buff 佔據視覺中央。</li>
+<li>需求：</li>
+<li>全域設定 (<code>EAM.db.config.hideAuraOutsideCombat</code>，預設為 <code>false</code>)；</li>
+<li>單技能三態覆寫 (<code>alert.hideAuraOutsideCombat</code>：<code>nil</code> = 繼承全域、<code>true</code> = 強制脫戰消失、<code>false</code> = 強制脫戰保留)；</li>
+<li>完整支援 Legacy/Readable 光環後端 (<code>AuraService.lua</code>) 與 Retail 12.1+ 原生光環容器 (<code>AuraRuleCompiler.lua</code> / <code>NativeAuraRenderer.lua</code> / <code>AuraContainerService.lua</code>)；</li>
+<li>ProfileCodec 匯出入、Options UI、5 語系本地化與離線 Flow 驗證。</li>
+</ul>
+</li>
+<li><strong>根因分析 (5-Whys)</strong>：<ul>
+<li>既有 EAM 光環架構在脫戰狀態下一律根據光環存在與否渲染，缺少脫戰狀態檢定與全域/個別三態繼承邏輯；</li>
+<li>Retail 12.1+ 原生光環容器採用 C++ 引擎管理按鈕生命週期，戰鬥中無法 mutate 結構，必須透過 <code>SetAlpha(0/1)</code> 與指紋群組分離 (<code>groupID_hideOutsideCombat</code>) 實現安全無 Taint 隱藏。</li>
+</ul>
+</li>
+<li><strong>修復方案</strong>：<ol>
+<li><code>SavedVariables.lua</code>：</li>
+<li><code>defaults.config.hideAuraOutsideCombat = false</code>；新增 <code>AURA_BEHAVIOR_FIELDS</code>；</li>
+<li><code>addAlert</code> 支援 <code>hideAuraOutsideCombat</code>；新增 <code>updateAuraBehavior(unit, spellID, field, value)</code>；</li>
+<li><code>buildImportedAlert</code> 與 <code>exportComparableImportedAlert</code> 完整編解碼；</li>
+<li><code>applyProfileImport</code> 支援 <code>hideAuraOutsideCombat</code> 與 <code>auraChanged = true</code> 廣播；</li>
+<li><code>updateConfigBoolean</code> 放行 <code>hideAuraOutsideCombat</code> 並廣播 <code>EAM_AURA_CONFIG_CHANGED</code>。</li>
+<li><code>ProfileCodec.lua</code>：</li>
+<li><code>normalizeAuraRecord</code> 白名單與欄位解析；</li>
+<li><code>normalizeGeneralConfigRecord</code> 僅當 <code>== true</code> 時寫入（確保預設 false 時 hash 與序列化字串 100% 不變）；</li>
+<li><code>exportRecord</code> 支援 <code>hideAuraOutsideCombat</code>。</li>
+<li><code>AuraService.lua</code>：</li>
+<li>新增 <code>AuraService.inCombat = false</code>、<code>isInCombat</code>、<code>resolveHideAuraOutsideCombat</code>、<code>shouldSuppressAuraOutsideCombat</code>；</li>
+<li><code>renderAuraForAlerts</code> 與 <code>renderBoundaryUnit</code> 於脫戰隱藏時調用 <code>renderInactiveAlert</code>；</li>
+<li>註冊 <code>PLAYER_REGEN_DISABLED</code> (<code>onRegenDisabled</code>) 與 <code>EAM_AURA_CONFIG_CHANGED</code> (<code>onAuraConfigChanged</code>)，<code>PLAYER_REGEN_ENABLED</code> 同步重設 <code>inCombat = false</code>。</li>
+<li>Native Aura 12.1 Pipeline：</li>
+<li><code>AuraRuleCompiler.lua</code>：<code>collectAlerts</code> 收集 <code>hideAuraOutsideCombat</code>，<code>buildBaseRule</code> 寫入 <code>rule.style.hideOutsideCombat</code>，容器指紋納入 <code>hideOutsideCombat</code>，<code>groupID</code> 串接 <code>_hideOutsideCombat</code> 確保規則群組正確分離；</li>
+<li><code>NativeAuraRenderer.lua</code>：<code>snapshotStyle</code> 包含 <code>hideOutsideCombat</code>，<code>initializeButton</code> 計算初始戰鬥透明度與 <code>OnShow</code> hook，新增 <code>updateCombatVisibility(inCombatNow)</code>，<code>onCombatEnd</code> 調用 <code>updateCombatVisibility(false)</code> 且嚴格保留 <code>return true, "noPostInitializationMutation"</code> 合約；</li>
+<li><code>AuraContainerService.lua</code>：新增 <code>onCombatStart</code> 並註冊 <code>PLAYER_REGEN_DISABLED</code>，<code>requestRebuild</code> 套用時即時更新按鈕戰鬥能見度。</li>
+<li><code>Options.lua</code> &amp; 5 語系：</li>
+<li>Tab 1 新增「脫戰後隱藏光環 (脫戰消失)」全域勾選框；</li>
+<li><code>condFrame</code> 新增單技能三態按鈕 <code>auraHideOutsideBtn</code> (預設/覆寫開/覆寫關)；</li>
+<li><code>zhTW</code>、<code>zhCN</code>、<code>enUS</code>、<code>koKR</code>、<code>ruRU</code> 5 語系完整同步新增 4 個詞條。</li>
+<li><code>FlowTestRunner.lua</code>：</li>
+<li>新增測試案例 <code>aura.hide_outside_combat_override</code>，驗證預設常規、全域開啟、戰鬥切換、單技能覆寫開/關與 ProfileCodec 匯出入。</li>
+</ol>
+</li>
+<li><strong>驗證指標</strong>：<ul>
+<li>Lua 語法檢查：82/82 PASS (<code>CheckLuaSyntax.ps1</code>)。</li>
+<li>Native API &amp; Deep Test Suites：22/22 deep test suites PASS (<code>test_native_apis.py</code>)。</li>
+<li>5 語系詞條對稱：100% 對齊。</li>
+<li>鏡像檔案 SHA-256：<code>changelog.txt</code>、<code>changelog_en.txt</code>、<code>changelog.html</code> 100% 對齊。</li>
 </ul>
 </li>
 </ul>

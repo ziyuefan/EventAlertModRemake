@@ -1,7 +1,45 @@
--- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Regional Localization Alignment] 2026.11.08
+﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Character Attributes Engine, Independent Weapon Enchant Service & Aura Out-of-Combat Visibility] 2026.11.12
+     -- [Features]:
+        -- Independent Weapon Enchant Service Pipeline:
+           -- Implemented dedicated WeaponEnchantService.lua calling Blizzard native GetWeaponEnchantInfo() API, fully supporting Main Hand (Slot 16), Off Hand (Slot 17), and Ranged (Slot 18) temporary enchants;
+           -- Supported cross-flavor enchant mechanisms: Sharpening Stones, Weightstones, Wizard/Mana Oils, Rogue Poisons, Shaman Windfury/Flametongue/Frostbrand, DK Runeforging, Shadowcore Oil, etc.;
+           -- Missing Weapon Enchant Warning: Triggers prominent alerts (LibButtonGlow overlay and throttled audio warning) when a weapon is equipped without temporary enchant;
+           -- Expiring Enchant Warning: Glow alert and highlighted timer countdown when remaining duration is below threshold (default 5 minutes) or charges are depleted;
+           -- Independent mover HUD and saved layout positioning (/eam enchant or button in PlayerStatPanel, left drag, right click to finish).
+        -- Forever 1.60.1 11 Character Attributes Knowledge Base & Native Tooltip Engine:
+           -- Calibrated 11 attribute formulas and mechanics based on in-game screenshots, adding native GameTooltip hover previews to HUD stat frames and option rows:
+              -- Strength: +AP (1 Str = 2 AP), Shield Block Value = Str / 20;
+              -- Stamina: +Max Health (1 Sta = 10 HP);
+              -- Agility: +Armor (1 Agi = 2 Armor), Melee/Ranged Crit & Dodge chance;
+              -- Intellect: +Mana, Spell Crit, and Key Mechanic: Increases chance of weapon skill/proficiency level-ups;
+              -- Spirit: HP5 out-of-combat, MP5 out-of-casting (5SR), and Key Mechanic: Health regeneration rate increased by 33% when sitting or lying down;
+              -- Attack Power (AP): Core Conversion: Every 14 Attack Power increases weapon damage by 1 DPS (14 AP = 1 DPS);
+              -- Critical Strike: Melee crits deal 200% damage (+100%), Spell/Heal crits deal 150% effect (+50%), and Most periodic effects (DoTs/HoTs) can critically strike;
+              -- Defense Skill: Increases Dodge/Block/Parry, Mob crits deal 200% damage, Boss Mechanic: Mobs 3+ levels higher deal 150% Crushing Blows, Boss crit immunity at 440 Defense (-5.60% crit chance);
+              -- Dodge: Agility & Defense scale dodge, Key Mechanic: Players can only dodge frontal melee attacks; creatures can dodge from any direction;
+              -- Parry: Deflects frontal melee attacks, Triggers Parry Haste on success;
+              -- Armor: Reduces physical damage taken, Max Damage Reduction Cap cannot exceed 75.00%.
+           -- Expanded attribute catalog: Added attackPower, dodge, parry, block for both Forever and Retail.
+        -- Aura Out-of-Combat Visibility Control (Hide Auras Outside Combat):
+           -- Added global "Hide Auras Outside Combat" setting in General options (disabled by default to maintain classic behavior);
+           -- Added per-spell tri-state override in Condition Settings (Default Global / Override: On [Force Hide Out of Combat] / Override: Off [Force Keep Out of Combat]);
+           -- Full dual-engine compatibility: seamlessly supports both Legacy/Readable Aura backend (AuraService) and Retail 12.1+ native Aura containers (NativeAuraRenderer / AuraContainerService / AuraRuleCompiler);
+           -- Instant combat state transitions: automatically restores visibility upon entering combat (PLAYER_REGEN_DISABLED) and suppresses upon combat end (PLAYER_REGEN_ENABLED);
+           -- Profile sharing & migration: ProfileCodec fully preserves per-aura out-of-combat overrides and general config during export and import.
+        -- Mana Stat Monitoring & 5SR Three-State Alerts (Mana Stat & 5SR Three-State Alerts):
+           -- Expanded PlayerStatService with Mana attribute, supporting current mana / max mana (percentage) monitoring;
+           -- Deep integration with Spirit 5-Second Rule (5SR) state machine, providing high-contrast dual-color status bars (glowing ice-blue (0.20, 0.85, 1.00) while full-speed spirit regen is active, switching to dark amber (0.85, 0.45, 0.15) during 5-second casting penalty);
+           -- Icon triggers LibButtonGlow overlay effect when 5SR active regen is running;
+           -- Text scales 1.32x with bright ice-blue highlight during active regen, counting down remaining penalty time in %.1fs during the 5-second window;
+           -- Rich GameTooltip displaying 33% sitting/lying health regen bonus, 5SR active state, and MP5/HP5 metrics.
+        -- Continuous Full-Screen Soft Blue Vignette Glow (Continuous Full-Screen Soft Blue Glow):
+           -- Created dedicated full-screen soft glow frame EAM_SpiritActiveGlowFrame in CombatFlash.lua, utilizing Blizzard's LowHealth vignette texture with ADD blend mode;
+           -- Smooth fade-in (0 -> 0.35 in 0.40s) and fade-out (0.35 -> 0 in 0.30s) animations;
+           -- Instantly fades out on mana-spending spellcasts and smoothly fades in upon exiting the 5-second penalty, greatly enhancing pacing and resource awareness for classic healers and casters;
+           -- Added dedicated toggle "Continuous Blue Vignette Glow (Spirit Regen Active)" in the player stats options panel.
      -- [Localization]:
         -- Calibrated official regional client names for Forever: Traditional Chinese (zhTW) unified as "永恆" (World of Warcraft: Forever) and Simplified Chinese (zhCN) unified as "无限" (World of Warcraft: Infinite).
-        -- Synchronized Simplified Chinese TOC description, LiveTest panel, Spirit 5SR dynamic regen alert tooltips, and DebugCenter five resistance localized entries.
+        -- 100% synchronized all 5 locales (enUS, zhTW, zhCN, koKR, ruRU) for weapon enchants, mana stat, continuous soft blue glow, new attributes, and slash command help.
 
 -- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 8.9][Multi-Flavor Unified Architecture, Forever 60-Level Resource Topology, Classic Stat Monitoring & Retail 12.1.5 Native Aura Overhaul] 2026.11.08
      -- [Features]:

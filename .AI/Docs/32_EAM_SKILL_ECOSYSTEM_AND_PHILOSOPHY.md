@@ -65,7 +65,9 @@
 
 ---
 
-## 🏛️ 2. 五大領域 21 項 SKILL 全景目錄 (The 21 SKILLs Catalog)
+## 🏛️ 2. 核心領域與標準化 SKILL 全景目錄 (Core Domain SKILLs Catalog)
+
+> 💡 **技能庫演進說明**：初始建置為 5 大領域 21 項核心規範；隨 `Retail 12.1.5` 與 `Forever 1.60.1` 雙版本推進，現已擴展至 29 項 `eam-*` 專用技能（新增雙軌模型調度 `eam-dual-track-orchestration`、Flow 實機驗證、API 變更預警、版本日誌策展、GitHub/奇樂發布等），完整清冊見 `.AI/Docs/00_INDEX.md` 與 `.AI/skills/`。
 
 ### 領域一：核心架構與 WoW 12.x 現代 API 治理 (Core Engine & 12.x API)
 
@@ -211,4 +213,9 @@
 
 ## 🏁 4. 結語 (Conclusion)
 
-EventAlertMod 透過這 21 項高度專業化、模組化且相互協同的 SKILL 體系，將龐大的魔獸插件重構工程轉化為**高度結構化、可確定性重複執行、且完全免除 AI 失憶與幻覺風險的現代化軟體資產**。這不僅是 WoW 插件開發的標竿，更是現代 Agentic AI 協同治理的典範實踐。
+22. **`eam-dual-track-orchestration` (雙軌動態模型調度與 Level 3 閉合 XML 派工治理)**
+    - 規範 Track A（`Gemini 4 Argon (High)` 仲裁 + `Hydrogen` 動態）與現行 **Track B（`Gemini 4 Hydrogen (XHigh)` 仲裁 + `Hydrogen` 四階動態 `LOW/MEDIUM/HIGH/XHIGH`）**、每回合首行狀態標籤強制輸出、Index-First 反漂移守則、完整閉合 `<argon_ticket>` XML 契約與冷面漂移審查（`Cold-Context Drift Audit`）。
+
+---
+
+EventAlertMod 透過這套高度專業化、模組化且相互協同的 SKILL 體系，將龐大的魔獸插件重構工程轉化為**高度結構化、可確定性重複執行、且完全免除 AI 失憶與幻覺風險的現代化軟體資產**。這不僅是 WoW 插件開發的標竿，更是現代 Agentic AI 協同治理的典範實踐。

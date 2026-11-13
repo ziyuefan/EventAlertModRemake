@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.9-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%209.0-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -23,18 +23,19 @@
 
 ---
 
-## ✨ 8 Independent Alert Modules
+## ✨ 9 Independent Alert Modules
 
-EAM features 8 completely decoupled, independently positioned, and freely draggable alert modules:
+EAM features 9 completely decoupled, independently positioned, and freely draggable alert modules:
 
-1. 🔮 **Player Buff / Debuff**: Self buffs & debuffs with stack counts, remaining shield absorb amount, and high-precision timers.
-2. 🎯 **Target Buff / Debuff**: Precise tracking of target auras, CC, and debuff states.
-3. ⚔️ **Cross-Class / Target Cast**: Key enemy burst cooldowns and crucial friendly buffs.
+1. 🔮 **Player Buff / Debuff**: Self buffs & debuffs with stack counts, remaining shield absorb amount, high-precision timers, and Global + Per-Spell tri-state "Hide Auras Outside Combat".
+2. 🎯 **Target Buff / Debuff**: Precise tracking of target auras, CC, and debuff states with out-of-combat visibility control.
+3. ⚔️ **Cross-Class / Target Cast**: Key enemy burst cooldowns and crucial friendly buffs with out-of-combat visibility control.
 4. ⏳ **Spell Cooldown**: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode & outer linear bars (`TOP/BOTTOM/LEFT/RIGHT`), custom reordering (drag & drop, up/down), and desaturated placeholder masks.
 5. 🎒 **Item Cooldown**: Trinkets, on-use equipment, and consumables monitoring; fully supports dual-track monitoring (19 equipment slots & item IDs), 3-tier robust cooldown fallback, and real-time gear swap synchronization.
 6. 🌋 **Ground Effect**: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.
-7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).
-8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles with 18 core stats in Retail, plus classic stat tracking in Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (Five Magic Resistances, Spirit 5-Second Rule MP5/HP5 with Active visual & full-screen blue-border flash alerts, Defense Skill crit immunity, Pet Happiness/Loyalty, Ranged Ammo Status, Armor Penetration).
+7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (zhTW: 永恆 / zhCN: 无限) (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).
+8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles with 18+ core stats in Retail, plus Forever 1.60.1 classic stat tracking (Five Magic Resistances, 11 calibrated stats with native GameTooltip knowledge formulas such as `14 AP = 1 DPS`, `440` Defense boss crit immunity, `75%` Armor mitigation cap, `+33%` sit/sleep regen; `mana` & Spirit 5SR three-state alerts + `EAM_SpiritActiveGlowFrame` continuous soft blue screen vignette; Pet Happiness/Loyalty, Ranged Ammo Status).
+9. 🗡️ **Weapon Enchant**: Dedicated `WeaponEnchantService` calling Blizzard's native `GetWeaponEnchantInfo()`, tracking temporary Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) weapon enchants across Forever and Retail with missing-enchant glow & audio warnings, expiring countdown alerts, and `/eam enchant` standalone HUD mover mode.
 
 ---
 
@@ -43,7 +44,7 @@ EAM features 8 completely decoupled, independently positioned, and freely dragga
 - 📖 **Next-Gen Master Spell Catalog & Intelligent Presets**: Built-in 5-language offline database (4,463 core spells & 466 auras) with collapsible spec trees, one-click talent book auto-sync, target module redirection (cooldowns/auras/ground), and native GameTooltip hovering.
 - 🏷️ **Multi-dimensional Tactical Groups & Tag Management**: Many-to-many tag associations, 4 built-in tactical groups (Burst, Mitigation, CC/Interrupt, Ground AoE) + custom groups, secondary docking manager panel, combat-only filters, and multi-select group dropdown in spell conditions.
 - 🎵 **Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration**: Dynamic runtime discovery of third-party sounds, fonts, and borders (`ensureLSM`), adaptive scrollable dropdowns with mouse wheel support, and zero-delay global font hot-swapping (no `/reload` needed).
-- 🐮 **Classic Cow Head Anchor Preview**: Displays classic cow head icons (`Spell_Nature_Polymorph_Cow`) to preview all 8 alert frame positions during layout configuration.
+- 🐮 **Classic Cow Head Anchor Preview**: Displays classic cow head icons (`Spell_Nature_Polymorph_Cow`) to preview all 8 core alert frame positions during layout configuration (plus standalone `/eam enchant` HUD positioning).
 - 🖼️ **Custom Icon Override Across All Modules**: Enter any official FileDataID (e.g. `132307`) or texture path to override default icons, with live texture preview box and Wago.tools lookup reference.
 - 💀 **Death Knight Runes Dashboard**: Dynamic spec-specific rune textures with 6 micro charge bars (0%..100% smooth animation) and `/eam rune` slot diagnostics.
 - ⚡ **60fps Real-Time Live Preview**: Adjust sizes, spacing, opacity, cooldown swipes, text sizes, and positions with immediate 60fps dynamic UI response out of combat.
@@ -117,6 +118,7 @@ EAM provides a rich suite of slash commands via `/eam` or `/eventalertmod` (case
 | `/eam lookupfull <fullName>` | `/eam lf <fullName>` | Exact search candidate spells and Spell IDs for current class |
 | `/eam showcast` | `/eam showc` | Start/stop logging spells cast successfully during current session |
 | `/eam profile` | `/eam profile export`, `/eam profile import` | Open Profile Export/Import and string sharing panel |
+| `/eam enchant` | `/eam weapon`, `/eam we` | Toggle standalone temporary weapon enchant HUD mover mode |
 | `/eam rune` | `/eam runes`, `/eam probe rune` | Open Death Knight 6-slot rune dashboard, charge status & diagnostic JSON |
 | `/eam unitpower background <KEY>` | None | Mark background resource missing event, triggering 0.5s demand-driven sampler |
 | `/eam doctor` | `/eam validate` | Run client API boundary and environment diagnostic report |
@@ -151,6 +153,18 @@ In-game, you never need to manually look up Spell IDs:
 
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.5 & Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+
+### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13
+- **Independent Weapon Enchant Service (`WeaponEnchantService`) [Shared]**:
+  - Dedicated service built on Blizzard's native `GetWeaponEnchantInfo()`, tracking Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) temporary enchants across Forever and Retail (sharpening stones, poisons, oils, Windfury/Flametongue, Runeforging).
+  - Features missing-enchant glow + throttled audio alert, expiring countdown alerts (default 5m threshold), and `/eam enchant` independent HUD mover mode.
+- **[Forever 1.60.1 Exclusive] 11-Stat Calibration & Native GameTooltip Knowledge Engine**:
+  - Calibrated formulas (`14 AP = 1 DPS`, `440` Defense boss crit immunity & 150% crushing blow rule, `75.00%` Armor cap, `+33%` sit/sleep Spirit regen, frontal-only player Dodge & Parry Haste), expanded `attackPower`/`dodge`/`parry`/`block`, and wired native `GameTooltip` details on HUD icons & option rows.
+- **[Forever 1.60.1 Exclusive] Mana Stat, 5-Second Rule (5SR) Three-State Alerts & Continuous Full-Screen Soft Blue Glow**:
+  - Added `mana` monitoring integrated with the 5SR state machine (ice-blue vs dark-amber StatusBar contrast, icon glow, `1.32x` active text scaling / `%.1fs` penalty countdown) and `EAM_SpiritActiveGlowFrame` smooth screen vignette fade-in/out in `CombatFlash.lua`.
+- **Hide Auras Outside Combat (Global + Per-Spell Tri-State Override) [Shared]**:
+  - Global out-of-combat visibility toggle paired with per-spell tri-state overrides (`Global Default` / `Force Show` / `Force Hide`) across both Legacy `AuraService` and Retail 12.1+ Native Aura containers.
+- **Forever Bilingual Naming & 5-Locale Sync**: Standardized `zhTW` to `永恆` and `zhCN` to `无限` across TOC, locale dictionaries, and documentation.
 
 ### 🌟 [Retail 12.1.5 & Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Alpha 8.9] - 2026.11.08
 - **Multi-Flavor Unified Architecture**:

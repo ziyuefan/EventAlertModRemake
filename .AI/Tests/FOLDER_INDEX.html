@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Automated QA Layer">
   <meta name="ai-governance-security" content="Offline Test Fixture">
   <meta name="ai-governance-invariants" content="支援離線自動化回歸測試，隔離遊戲執行期環境">
-  <meta name="ai-scan-timestamp" content="2026-10-23T01:48:34.238627+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.577020+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -27,16 +27,16 @@
   "invariants": [
     "支援離線自動化回歸測試，隔離遊戲執行期環境"
   ],
-  "timestamp": "2026-10-23T01:48:34.238627+08:00",
-  "fileCount": 2,
+  "timestamp": "2026-11-13T12:35:11.577020+08:00",
+  "fileCount": 3,
   "subdirectoryCount": 2,
-  "totalSizeBytes": 17477,
+  "totalSizeBytes": 63473,
   "files": [
     {
       "name": "FlowValidationHarness.lua",
       "extension": ".lua",
-      "sizeBytes": 14794,
-      "lineCount": 540,
+      "sizeBytes": 14914,
+      "lineCount": 542,
       "purpose": "在 Lua 5.1 離線環境直接載入正式模組，執行與實機相同的流程案例。；使用最小 WoW API mock 驗證 EventRouter、Scheduler、SavedVariables 與報告閉環。 | 建立 deterministic 時間與 Frame mock。；執行指定 suite、推進 Scheduler、輸出 JSON 並以 exit code 表示結果。",
       "role": ".AI/Tests/FlowValidationHarness",
       "security": "Safe"
@@ -46,6 +46,15 @@
       "extension": ".py",
       "sizeBytes": 2683,
       "lineCount": 72,
+      "purpose": "Python 輔助工具腳本",
+      "role": "Python Tool",
+      "security": "Offline Tool"
+    },
+    {
+      "name": "test_native_apis.py",
+      "extension": ".py",
+      "sizeBytes": 45876,
+      "lineCount": 773,
       "purpose": "Python 輔助工具腳本",
       "role": "Python Tool",
       "security": "Offline Tool"
@@ -537,7 +546,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">2</span>
+          <span class="stat-val">3</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">子目錄數量</span>
@@ -545,7 +554,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">17.1 KB</span>
+          <span class="stat-val">62.0 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -603,7 +612,7 @@
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (2)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (3)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -634,7 +643,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            14.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 540 行</span>
+            14.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 542 行</span>
           </td>
         </tr>
         
@@ -656,6 +665,24 @@
           </td>
         </tr>
         
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./test_native_apis.py" title="檢視檔案內容">test_native_apis.py</a>
+            </div>
+          </td>
+          <td><span class="badge badge-tool">PY</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">Python 輔助工具腳本</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Python Tool</div>
+          </td>
+          <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            44.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 773 行</span>
+          </td>
+        </tr>
+        
           </tbody>
         </table>
       </div>
@@ -664,7 +691,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-10-23T01:48:34.238627+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.577020+08:00</p>
     </footer>
   </div>
 

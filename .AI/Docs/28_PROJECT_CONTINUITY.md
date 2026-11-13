@@ -5,9 +5,56 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-11-08.03 (Forever 雙語區官方名稱校準：繁中「永恆」、簡中「无限」，消滅「永恆之樹」誤植；Alpha 9.0 開發週期正式開啟，5 語系詞條 100% 對齊) (Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備完成，21 大深層測試、110 Flow、502 契約滿分通過)。
+目前快照版本：2026-11-13.01 (AI_GOVERNANCE_DIRECTIVE.xml 升級 v1.4 補完 Level 3 閉合 XML 派工契約；正式切換至 Track B：Hydrogen XHigh 仲裁 + Hydrogen 動態四階；同步 eam-dual-track-orchestration 技能、00_INDEX 文件導航中心、雙語 README 與 GitHub Pages 離線編譯)。
 
-## 2026-11-08 多進度儲存點：Forever 1.60.1 雙語區官方名稱校準（繁中「永恆」、簡中「无限」）與 Alpha 9.0 開發週期啟動（現行儲存點）
+## 2026-11-13 多進度儲存點：AI 雙軌治理升級 (v1.4)、Track B 切換、技能生態補完與文件導航中心/GitHub 同步（現行儲存點）
+
+- current-of-truth：依據少年欸兩項核心指令，完成治理架構補完、Track B 軌道切換與全站同步：
+  1. **項次 1 補完 (`Level 3 <argon_ticket>` 閉合 XML 與實務對齊)**：於 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` v1.4 新增 `<dual_track_model_routing>` 與 `<level3_closed_xml_ticket_standard>` 兩大節點（共 13 個頂層節點），補齊 `<scope>`、`<immutable_files>`、`EventAlertMod/Data/` 靜態表隔離、`table.freeze()` 不可解除、Forever 1.60.1（繁中「永恆」／簡中「无限」）非 `Classic Era`、Zero Unrelated Diff、實機指令驗證清單與 `Cold-Context Drift Audit` 冷面審查標準。
+  2. **項次 2 切換至 Track B**：因應 Argon 額度受限（實測餘 `1%`），正式將 `active_track` 切換至 **Track B（`Gemini 4 Hydrogen (XHigh)` 首席仲裁 ＋ `Gemini 4 Hydrogen` 動態 `LOW/MEDIUM/HIGH/XHIGH`）**，Track A（`Gemini 4 Argon (High)` 仲裁）維持 `STANDBY`，須由使用者明確指示方得切回。強制每次回覆首行輸出狀態標籤。
+  3. **技能與文件導航中心全面同步**：新增 `.AI/skills/eam-dual-track-orchestration/SKILL.md`；同步更新 `.AI/AGENTS.md`、`17_SUBAGENT_WORKFLOW.md`、`32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md(.en)`、`33_AI_GOVERNANCE_DIRECTIVE.md(.en)`、`00_INDEX.md(.en)`（更新至 Alpha 9.0 / 九大獨立告警模組含 `WeaponEnchantService`）、根目錄及 `EventAlertMod/` 之雙語 `README`、`eam-project-continuity-governor`、`eam-docs-site-builder`，並離線產出 `.AI/docs_html/` 供 GitHub Pages 部署。
+
+## 2026-11-12 多進度儲存點：Forever 1.60.1 法力屬性 (Mana Stat)、5 秒精神回魔三態醒目提醒 (5SR Three-State Alerts) 與全螢幕柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow) 深度實裝（前一儲存點）
+
+- current-of-truth：全面實裝法力屬性監控、精神 5SR 三態醒目提醒與微光全螢幕暗角泛光：
+  1. **法力屬性與 5 秒精神回魔三態醒目提醒 (Mana Stat & 5SR Three-State Alerts)**：
+     - 於人物屬性監控 (`PlayerStatService.lua`) 擴展法力 (`mana`) 屬性，支援當前法力/最大法力 (百分比) 監控；
+     - 深度整合精神 5 秒規則 (5SR) 狀態機，提供 StatusBar 進度條雙色反差（5SR 全速回魔作用中切換為耀眼冰晶藍色 `(0.20, 0.85, 1.00, 1.00)`，5 秒施法懲罰期間切換為暗琥珀色 `(0.85, 0.45, 0.15, 0.95)`）；
+     - 圖示 (Icon) 於 5SR 作用中觸發 `LibButtonGlow` 冰藍/金色光環；
+     - 文字於 5SR 作用中放大 1.32x 且明亮冰藍高亮，懲罰期間以 `%.1fs` 倒數等待時長；
+     - Tooltip 詳盡呈現坐下/躺下回血加成 33%、5 秒規則作用狀態與數值。
+  2. **模擬全螢幕持續柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow)**：
+     - 於 `CombatFlash.lua` 建立專屬微光全螢幕圖層 `EAM_SpiritActiveGlowFrame`，採用暴雪原生 `Interface\FullScreenTextures\LowHealth` 紋理與 `ADD` 混色 (`0.15, 0.65, 1.00, 0.35`)；
+     - 提供平滑淡入 (0 -> 0.35 費時 0.40s) 與淡出 (0.35 -> 0 費時 0.30s) 動畫；
+     - 施法耗魔瞬間淡出，脫離 5 秒懲罰進入全速回魔瞬間平滑淡入，大幅提升經典版補師與法系控魔節奏感知；
+     - 於屬性設定面板 (`PlayerStatPanel.lua`) 提供「全螢幕藍色泛光 (精神回魔作用中常駐)」(`spiritBlueScreenGlow`) 獨立開關。
+  3. **門禁與驗證全數通過**：
+     - 全專案 84 個 Lua 檔案語法與區塊平衡 100% 正確；
+     - `test_native_apis.py` 24 大深層測試套件 100% 綠燈 PASS WITH ZERO ERRORS；
+     - 5 語系字典檔同步新增 `EAM_STAT_SPIRIT_BLUE_GLOW` 與 `EAM_STAT_SPIRIT_BLUE_GLOW_TIP` 詞條。
+
+## 2026-11-12 多進度儲存點：Forever 1.60.1 11 大角色屬性實機校準、原生 Tooltip 知識引擎與獨立武器臨時附魔模組 (WeaponEnchantService) 全面實裝（前一儲存點）
+
+- current-of-truth：全面實作 11 大角色屬性知識庫與獨立武器臨時附魔模組：
+  1. **雙模型架構**：Coordinator (Flash) + Subagent (Flash) 雙模型協同模式開發完成。
+  2. **Forever 1.60.1 11 大角色屬性實機校準與原生 Tooltip 知識引擎 (`PlayerStatService.lua`, `PlayerStatPanel.lua`)**：
+     - 依據 11 張實機截圖校準：1 力量 = 2 AP / 格擋值 = 力量 / 20、1 耐力 = 10 HP、1 敏捷 = 2 護甲 / 提升致命與閃躲、智力提升法力/法術致命與【提高武器技能/熟練度提升機率】、精神 HP5/MP5/5SR 與【坐下或躺下時生命力恢復速度提高 33%】、攻擊強度【每 14 AP 提高 1 點武器 DPS (14 AP = 1 DPS)】、致命一擊近戰 200% / 法術治療 150% / DoT/HoT 可致命、防禦技能生物致命 200% / 【高 3 級碾壓 150% / 440 防禦副本首領免暴 (-5.60% 致命)】、閃躲機率【對玩家來說只有來自正面的近戰攻擊可閃躲；對生物來說來自任何方向均可閃躲】、招架機率【招架提速 Parry Haste】、護甲值【免傷上限不能超過 75.00%】；
+     - 擴充屬性目錄：新增 `attackPower`, `dodge`, `parry`, `block`，全面納入 `FOREVER_ORDERED_KEYS` 與 `RETAIL_ORDERED_KEYS`；
+     - 原生 GameTooltip 知識引擎：HUD 框架與選項 row 懸停顯示完整換算與機制說明。
+  3. **獨立武器臨時附魔模組 (`WeaponEnchantService.lua`)**：
+     - 底層機制：物品槽位臨時附魔（Slot 16/17/18），無 AuraInstanceID，以專用 API `GetWeaponEnchantInfo()` 與專用事件 `WEAPON_ENCHANT_CHANGED` 採樣；
+     - 雙版本相容：Retail 12.x 與 Forever 1.60.1 雙端原生支援（磨刀石、毒藥、風怒/火舌、符文熔鑄、法力油）；
+     - 告警功能：【缺少武器附魔警告 (Missing Enchant Warning)】（裝備武器但無附魔時深紅發光 + 節流音效警報）、【附魔即將到期倒數 (Expiring Warning)】（低於 5 分鐘或次數耗盡橘紅發光）；
+     - 獨立移動 HUD：支援 `/eam enchant` 與 PlayerStatPanel 按鈕快捷拖曳移動，即時保存至 `layout.frames.weaponEnchant`；
+     - 系統整合：`EventAlertMod.toc`、`Constants.lua`、`SavedVariables.lua`、`ModuleController.lua` 與 5 語系字典檔 100% 同步。
+  4. **光環脫戰自動隱藏 (Hide Auras Outside Combat)**：
+     - 一般設定全域開關 + 單技能條件三態覆寫 (`hideAuraOutsideCombat`)；
+     - 雙核心後端全面支援（Legacy `AuraService` + Retail 12.1+ 原生光環容器 `AuraRuleCompiler` / `NativeAuraRenderer` / `AuraContainerService`）。
+  5. **門禁與驗證全數通過**：
+     - 全專案 84 個 Lua 檔案語法與區塊平衡 100% 正確；
+     - `test_native_apis.py` 擴充至 24 大深層測試套件，100% 綠燈 PASS WITH ZERO ERRORS。
+
+## 2026-11-08 多進度儲存點：Forever 1.60.1 雙語區官方名稱校準（繁中「永恆」、簡中「无限」）與 Alpha 9.0 開發週期啟動（前一儲存點）
 
 - current-of-truth：全面校準《World of Warcraft: Forever 1.60.1》官方客戶端名稱並開啟 Alpha 9.0 開發週期：
   1. **雙語區官方名稱全面對齊**：繁體中文 (zhTW) 官方名稱為「永恆」（徹底消滅誤植之「永恆之樹」），簡體中文 (zhCN) 官方名稱為「无限 / 無限」（徹底消滅誤植之「永恒」或「永恒服」）；
@@ -18,6 +65,9 @@
      - 5 語系新增 6 個 UI 互動詞條 (`EAM_DEBUG_STATUS_FOREVER_REFRESHED`, `EAM_STAT_SPIRIT_MODE_TIP`, `EAM_STAT_SPIRIT_ACTIVE_ALERT_TITLE`, `EAM_STAT_SPIRIT_ACTIVE_ALERT_TIP`, `EAM_STAT_SPIRIT_BLUE_FLASH_TITLE`, `EAM_STAT_SPIRIT_BLUE_FLASH_TIP`)，維持 5 語系鍵值 100% 對齊；
      - `LiveTestPanel.lua`、`DebugCenterPanel.lua`（五系抗性本地化詞條動態載入）與 `DeploymentTargets.json` 部署標籤同步對齊；
      - `changelog.txt` / `changelog_en.txt` / `changelog.md` / `changelog.html` 鏡像雙端 100% SHA-256 對齊。
+  4. **Forever 1.60.1 與 Classic Era 嚴格區分治理規範（Forever vs. Classic Era Strict Distinction Rule）**：
+     - 依據少年欸明確指示，確立《魔獸世界：永恆 / 無限》(World of Warcraft: Forever 1.60.1, `_forever_`, Interface 16001) 是搭載現代 12.1.5+ 引擎之獨立客戶端分支，與傳統經典舊世 `Classic Era` (`_classic_era_`, 1.15.x) 本質完全不同；
+     - 嚴禁將 Forever 1.60.1 誤稱為 Classic Era 或將兩者混為一談；所有程式碼註解、公開文件、更新日誌、AI 治理文檔（`AGENTS.md`、`PROJECT_MEMORY.md`、`AI_GOVERNANCE_DIRECTIVE.xml`）與 Agent 回報中，必須明確標示為 `Forever 1.60.1（繁中：永恆 / 簡中：無限）`，傳統 `Classic Era` 嚴格排除在專案支援範圍之外。
 
 ## 2026-11-08 多進度儲存點：Retail 12.1.5 & Forever 1.60.1 Alpha 8.9 全專案文件同步與三平台發布產物整備（前一儲存點）
 
@@ -1141,3 +1191,17 @@
 - 最終核心離線證據：Lua `78/78`、Flow all `86/86`（`.AI/TestResults/EAM_FlowValidation_all_20260913_234114.json`）、Validation Contracts `499/499`（`.AI/Tools/Test-ValidationContracts.ps1`）。41 份 HTML 文件無瑕疵重新編譯。
 - 本輪修改前備份位於 `.AI/backup/*__20260913233659`。尚未部署、未讀寫 WoW/WTF、未做真人操作（嚴守鐵律 R1 零自動部署）。
 
+## 2026-11-12 Alpha 9.0 光環脫戰隱藏 (hideAuraOutsideCombat) 全域與單技能三態覆寫快照
+
+- continuity snapshot 已升至 `2026-11-12.01`。
+- 光環脫戰隱藏雙引擎完整實裝：
+  - 全域設定 `EAM.db.config.hideAuraOutsideCombat`（預設 false 保持向後相容）；
+  - 單技能個別三態覆寫 `alert.hideAuraOutsideCombat`（nil: 繼承全域 / true: 強制脫戰隱藏 / false: 強制脫戰保留）；
+  - Legacy/Readable 後端 (`AuraService`)：脫戰時抑制渲染 (`shouldSuppressAuraOutsideCombat`)，進戰 (`PLAYER_REGEN_DISABLED`) 自動喚醒，脫戰 (`PLAYER_REGEN_ENABLED`) 自動隱藏；
+  - Retail 12.1+ Native Aura 原生容器：指紋與 groupID 分離 (`AuraRuleCompiler`)、按鈕級純透明度切換 (`NativeAuraRenderer.updateCombatVisibility`)、零戰鬥 Taint 與 `onCombatEnd` 合約完整守護；
+  - ProfileCodec 匯出入全鏈路相容，Options UI (一般設定 + 條件設定三態按鈕) 與 5 語系詞條 100% 對稱。
+- 離線驗證：
+  - `CheckLuaSyntax.ps1`：82/82 PASS。
+  - `test_native_apis.py`：22/22 suites PASS（含全新 Suite 22）。
+  - `FlowTestRunner.lua`：新增 `aura.hide_outside_combat_override` 完整狀態機驗證。
+  - 雙軌鏡像檔案 SHA-256 100% 吻合。

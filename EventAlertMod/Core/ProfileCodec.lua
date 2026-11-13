@@ -785,7 +785,7 @@ local function normalizeAuraRecord(record)
     local ok, reason = hasOnlyKeys(record, {
         spellID = true, enabled = true, fromPlayer = true, catalogScope = true, auraFilter = true,
         showStacks = true, showName = true, showCountdown = true, priority = true,
-        sound = true,
+        sound = true, hideAuraOutsideCombat = true,
     })
     if not ok then
         return nil, reason
@@ -826,6 +826,12 @@ local function normalizeAuraRecord(record)
         local sound, soundReason = normalizeAuraSound(record.sound)
         if not sound then return nil, soundReason end
         normalized.sound = sound
+    end
+    if record.hideAuraOutsideCombat ~= nil then
+        if type(record.hideAuraOutsideCombat) ~= "boolean" then
+            return nil, "auraBehaviorInvalid"
+        end
+        normalized.hideAuraOutsideCombat = record.hideAuraOutsideCombat
     end
     return normalized
 end
@@ -1070,7 +1076,7 @@ end
 
 local function normalizeGeneralConfigRecord(config)
     if type(config) ~= "table" or not isSafeValue(config) then return nil, "generalConfigInvalid" end
-    return {
+    local normalized = {
         showFrame = config.showFrame ~= false,
         showSpellName = config.showSpellName ~= false,
         showTimeVal = config.showTimeVal ~= false,
@@ -1084,6 +1090,15 @@ local function normalizeGeneralConfigRecord(config)
         glowSCDWhenUsable = config.glowSCDWhenUsable ~= false,
         theme = isSafeString(config.theme, 32) and config.theme or "eam",
     }
+    if config.hideAuraOutsideCombat ~= nil then
+        if type(config.hideAuraOutsideCombat) ~= "boolean" then
+            return nil, "generalConfigBooleanInvalid"
+        end
+        if config.hideAuraOutsideCombat == true then
+            normalized.hideAuraOutsideCombat = true
+        end
+    end
+    return normalized
 end
 
 local function exportLayout()
@@ -1194,6 +1209,7 @@ local function exportRecord(moduleName, alert)
             showCountdown = alert.showCountdown ~= false,
             priority = alert.priority or 10,
             sound = alert.sound,
+            hideAuraOutsideCombat = type(alert.hideAuraOutsideCombat) == "boolean" and alert.hideAuraOutsideCombat or nil,
         })
         return record
     elseif moduleName == "groundEffect" then

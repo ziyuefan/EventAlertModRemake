@@ -41,11 +41,13 @@
 - 高修改連接，例如同時改變 `SavedVariables` schema、migration、Options UI、Slash command 且尚未開始開始範圍。
 - 尚無明確的探索性問題。
 
-## 角色使用建議
+## 角色使用建議與雙軌動態模型調度 (Track A / Track B)
 
-- explorer：用於特定問題的複雜調查，例如「尋找活動 Lua 中所有冷卻時間 API 通話」。
--worker：用於可分割的實作，例如「只修改UI/Options.lua，新增某個設定欄位，不碰SavedVariables」。
-除非任務有明確理由，子代理程式使用預設繼承模型；不指定較昂貴或不同模型。
+- **現行作用中軌道**：**Track B**（自 `2026-11-13` 因 Argon 額度受限啟用：`Gemini 4 Hydrogen (XHigh)` 擔任首席架構仲裁與冷面漂移審查 ＋ `Gemini 4 Hydrogen` 動態 `LOW / MEDIUM / HIGH / XHIGH` 執行群）；Track A（`Gemini 4 Argon (High)` 仲裁 ＋ `Hydrogen` 動態）處於待機狀態，僅於使用者明確指示後切換回 Track A。
+- `explorer` / `[TIER: LOW]`：用於探勘目錄、提取簽章與跨檔查找（優先先讀 `00_INDEX.md` 與 `FOLDER_INDEX.html`）。
+- `worker` / `[TIER: MEDIUM | HIGH]`：用於照樣板施工或跨模組邏輯實作，Strict Scope 不可碰觸 `<immutable_files>`。
+- **派工實作差異**：使用 `invoke_subagent` 時預設採用 `Model: "inherit"` 繼承主代理模型與思考檔位；若需為特定 worker 顯式鎖定 `Hydrogen` 不同模型／檔位（如低階清洗或平行審計），須透過原生 `swarm`（`swarm add` 指定 `model`）派遣，並以 `<level3_closed_xml_ticket_standard>`（`<argon_ticket>`）規範高風險大改之派工邊界與冷面審查。
+- 詳見權威規範：[`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](AI_GOVERNANCE_DIRECTIVE.xml) v1.4 與 [`.AI/skills/eam-dual-track-orchestration/SKILL.md`](../skills/eam-dual-track-orchestration/SKILL.md)。
 
 ## 派工模板
 ```text

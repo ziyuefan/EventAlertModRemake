@@ -23,6 +23,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 $utf8 = [System.Text.UTF8Encoding]::new($false)
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $addonRoot = Join-Path $projectRoot "EventAlertMod"

@@ -6,7 +6,7 @@
 <p>
   <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/source-GitHub-181717" alt="GitHub"></a>
   <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" alt="Docs"></a>
-  <a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img src="https://img.shields.io/badge/release-Alpha%208.9-orange" alt="Release"></a>
+  <a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img src="https://img.shields.io/badge/release-Alpha%209.0-orange" alt="Release"></a>
   <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue" alt="Retail"></a>
   <a href="https://github.com/ziyuefan/EventAlertModRemake"><img src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen" alt="Interface"></a>
 </p>
@@ -60,11 +60,11 @@
 
 <hr>
 
-<h2>✨ 八大獨立告警模組 (8 Independent Alert Modules)</h2>
+<h2>✨ 九大獨立告警模組 (9 Independent Alert Modules)</h2>
 <details>
   <summary>點擊展開</summary>
   <div class="details-content">
-    <p>EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>
+    <p>EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>
     <ol>
       <li>🔮 <strong>自身光環 (Player Buff / Debuff)</strong>：監控自身增益與減益，支援堆疊層數與高精度倒數。</li>
       <li>🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態。</li>
@@ -73,7 +73,8 @@
       <li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控。</li>
       <li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。</li>
       <li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。</li>
-      <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。</li>
+      <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：全方位即時監控角色數值（正式服 18 種主副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、精神與法力 5 秒回魔規則 MP5/HP5 雙恢復、StatusBar 冰晶藍/暗琥珀色反差、全螢幕藍色泛光提醒、防禦技能、寵物快樂度與遠程彈藥等）。</li>
+      <li>🗡️ <strong>獨立武器臨時附魔 (Weapon Enchant)</strong>：全面監控主手 (16)、副手 (17) 與遠程 (18) 臨時附魔（磨刀石、法力/巫術之油、毒藥、薩滿風怒/火舌、符文熔鑄等），支援【缺少附魔高亮提醒】、【即將到期倒數警告】與專屬獨立拖曳排版。</li>
     </ol>
   </div>
 </details>
@@ -256,7 +257,56 @@
 
 <h2>📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 
-<h3>🌟 Retail 12.1.5 &amp; Forever 1.60.1 Alpha 8 系列 (最新架構重構)</h3>
+<h3>🌟 Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9 系列 (最新架構重構)</h3>
+
+<h4>🌟 [Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0] - 2026.11.12</h4>
+<details>
+  <summary>點擊展開</summary>
+  <div class="details-content">
+    <p><strong>獨立武器臨時附魔模組 (Independent Weapon Enchant Service Pipeline)</strong>：</p>
+    <ul>
+      <li><strong>專屬底層架構</strong>：建立專屬服務 <code>WeaponEnchantService.lua</code>，底層呼叫暴雪原生專用 API <code>GetWeaponEnchantInfo()</code>，全面支援主手 (Slot 16)、副手 (Slot 17) 與遠程 (Slot 18) 之臨時附魔。</li>
+      <li><strong>跨版本武器增益機制</strong>：支援永恆服之磨刀石、平衡石、巫術之油、法力之油、盜賊毒藥、薩滿風怒/火舌/冰封武器；正式服之武器符文熔鑄、磨刀石、暗影之核之油與毒藥。</li>
+      <li><strong>缺少武器附魔警告 (Missing Enchant Warning)</strong>：當角色裝備了武器但未施加臨時附魔時，觸發高亮醒目警告（支援 LibButtonGlow 發光與節流音效警報）。</li>
+      <li><strong>附魔即將到期倒數 (Expiring Warning)</strong>：當附魔剩餘時間低於設定閾值（預設 5 分鐘）或次數耗盡時，橘紅邊框發光提醒。</li>
+      <li><strong>獨立 HUD 自由拖曳排版</strong>：支援 <code>/eam enchant</code> 獨立移動模式與版面定位保存。</li>
+    </ul>
+    <p><strong>永恆服 11 大角色屬性機制校準與原生 Tooltip 知識引擎 (Forever 1.60.1 11 Stats Knowledge Base)</strong>：</p>
+    <ul>
+      <li><strong>精確換算公式</strong>：依據實機面板數據校準 11 大屬性公式（力量 1 Str = 2 AP，格擋值 = Str / 20；耐力 1 Sta = 10 HP；敏捷 1 Agi = 2 護甲、暴擊與閃躲；智力提升法力暴擊與武器熟練度提升機率；精神 HP5/MP5 與坐下/躺下回血加成 33%；AP 每 14 AP 增加 1 DPS；暴擊近戰 200%、法術治療 150%、週期性 DoT/HoT 可致命；防禦技能免爆免碾壓等）。</li>
+      <li><strong>原生 GameTooltip 浮動提示</strong>：畫面 HUD 圖示/文字與設定面板 row 實裝原生 GameTooltip 說明。</li>
+      <li><strong>屬性清單擴充</strong>：新增 <code>attackPower</code> (攻擊強度)、<code>dodge</code> (閃躲機率)、<code>parry</code> (招架機率)、<code>block</code> (格擋機率與格擋值)，適配 Forever 與 Retail 雙端。</li>
+    </ul>
+    <p><strong>法力屬性與 5 秒精神回魔三態醒目提醒 (Mana Stat &amp; 5SR Three-State Alerts)</strong>：</p>
+    <ul>
+      <li><strong>法力數值監控</strong>：於人物屬性監控擴展法力 (Mana) 屬性，支援當前法力/最大法力 (百分比) 監控。</li>
+      <li><strong>StatusBar 雙色反差</strong>：5SR 全速回魔作用中切換為耀眼冰晶藍色 (0.20, 0.85, 1.00)，5 秒施法懲罰期間切換為暗琥珀色 (0.85, 0.45, 0.15)。</li>
+      <li><strong>Icon 光環提醒</strong>：作用中觸發 LibButtonGlow 冰藍/金色光環提醒；懲罰期間自動隱藏。</li>
+      <li><strong>文字放大與倒數</strong>：文字於作用中放大 1.32x 且呈明亮冰藍色；懲罰期間以 <code>%.1fs</code> 提示等待秒數。</li>
+    </ul>
+    <p><strong>模擬全螢幕持續柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow)</strong>：</p>
+    <ul>
+      <li><strong>專屬微光全螢幕圖層</strong>：於 <code>CombatFlash.lua</code> 建立專屬微光圖層 <code>EAM_SpiritActiveGlowFrame</code>，採用 <code>LowHealth</code> 紋理與 <code>ADD</code> 混色。</li>
+      <li><strong>平滑淡入淡出動畫</strong>：提供 0.40s 淡入與 0.30s 淡出動畫；施法耗魔瞬間淡出，脫離 5 秒懲罰進入全速回魔瞬間平滑淡入，大幅提升控魔節奏感知。</li>
+      <li><strong>獨立開關控制</strong>：屬性設定面板提供「全螢幕藍色泛光 (精神回魔作用中常駐)」獨立開關。</li>
+    </ul>
+    <p><strong>光環脫戰自動隱藏 (Hide Auras Outside Combat)</strong>：</p>
+    <ul>
+      <li><strong>全域開關與單技能覆寫</strong>：一般設定新增全域開關，單技能條件設定支援三態獨立覆寫。</li>
+      <li><strong>雙核心引擎深度相容</strong>：完整支援 Legacy/Readable 後端與 Retail 12.1+ 原生光環容器。</li>
+      <li><strong>戰鬥切換瞬時響應</strong>：進戰鬥即刻還原顯示，脫戰即刻安全隱藏。</li>
+    </ul>
+    <p><strong>在地化支援 (Localization)</strong>：</p>
+    <ul>
+      <li>校準 Forever 雙語區官方客戶端名稱：繁體中文 (zhTW) 統一為「永恆」（《魔獸世界：永恆》）、簡體中文 (zhCN) 統一為「无限」（《魔兽世界：无限》）。</li>
+      <li>5 語系（繁中、簡中、英文、韓文、俄文）100% 同步新增武器附魔、新屬性、法力屬性、全螢幕藍光與快捷指令詞條。</li>
+    </ul>
+  </div>
+</details>
+
+<hr>
+
+<h3>🌟 Retail 12.1.5 &amp; Forever 1.60.1 Alpha 8 系列 (歷史架構重構)</h3>
 
 <h4>🌟 [Retail 12.1.5 &amp; Forever 1.60.1 Alpha 8.9] - 2026.11.08</h4>
 <details>

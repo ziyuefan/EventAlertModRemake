@@ -590,8 +590,8 @@
 </table>
 <hr />
 <h2 id="4-xml-directives-overview">🛡️ 4. 核心治理節點架構一覽 (XML Directives Overview)</h2>
-<p>實體 XML 檔案包含 11 大核心模組節點（v1.3 最新版次）：</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">&lt;eam_ai_governance</span><span class="w"> </span><span class="na">version=</span><span class="s">"1.3"</span><span class="w"> </span><span class="na">last_updated=</span><span class="s">"2026-10-16"</span><span class="nt">&gt;</span>
+<p>實體 XML 檔案包含 13 大核心模組節點（v1.4 最新版次，已補完雙軌模型調度與 Level 3 閉合 XML 契約）：</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">&lt;eam_ai_governance</span><span class="w"> </span><span class="na">version=</span><span class="s">"1.4"</span><span class="w"> </span><span class="na">last_updated=</span><span class="s">"2026-11-13"</span><span class="nt">&gt;</span>
 <span class="w">    </span><span class="cm">&lt;!-- 1. 元資料與受眾：界定專案路徑、台灣繁中與「少年欸」稱呼習慣 --&gt;</span>
 <span class="w">    </span><span class="nt">&lt;metadata&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/metadata&gt;</span>
 
@@ -624,6 +624,12 @@
 
 <span class="w">    </span><span class="cm">&lt;!-- 11. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核、開發完成主動執行故障預測與威脅推論 (&lt;failure_prediction_protocol&gt;) --&gt;</span>
 <span class="w">    </span><span class="nt">&lt;agent_behavior_protocol&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/agent_behavior_protocol&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 12. 雙軌動態模型調度與防漂移鐵律：Track A (Argon High 仲裁) / Track B (Hydrogen XHigh 仲裁, 現行) + 四階強度自檢 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dual_track_model_routing</span><span class="w"> </span><span class="na">active_track=</span><span class="s">"TRACK_B"</span><span class="nt">&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/dual_track_model_routing&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 13. Level 3 高風險核心大改專用：完整閉合 XML 派工契約範本與冷面審查 (Cold-Context Drift Audit) --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;level3_closed_xml_ticket_standard</span><span class="w"> </span><span class="na">schema_version=</span><span class="s">"1.0"</span><span class="nt">&gt;</span><span class="w"> </span>...<span class="w"> </span><span class="nt">&lt;/level3_closed_xml_ticket_standard&gt;</span>
 <span class="nt">&lt;/eam_ai_governance&gt;</span>
 </code></pre></div>
 
@@ -631,7 +637,8 @@
 <h2 id="5-physical-file-reference">📌 5. 權威實體檔案位置 (Physical File Reference)</h2>
 <ul>
 <li><strong>AI 治理專用 XML 實體檔</strong>：<a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a></li>
-<li><strong>語法合規驗證</strong>：已通過 Python <code>xml.etree.ElementTree</code> 完整語法與結構檢定（11 大核心子節點完整就位，v1.3 版次）。</li>
+<li><strong>語法合規驗證</strong>：已通過 Python <code>xml.etree.ElementTree</code> 完整語法與結構檢定（13 大核心子節點完整就位，v1.4 版次；含 <code>&lt;dual_track_model_routing active_track="TRACK_B"&gt;</code> 雙軌調度與 <code>&lt;level3_closed_xml_ticket_standard&gt;</code> 完整閉合 XML 派工契約）。</li>
+<li><strong>關聯技能手冊</strong>：<a href="../skills/eam-dual-track-orchestration/SKILL.md"><code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code></a> 定義 Track A (<code>Gemini 4 Argon (High)</code>) 與現行 <strong>Track B (<code>Gemini 4 Hydrogen (XHigh)</code> 仲裁 + <code>Hydrogen</code> 四階動態強度)</strong> 切換及冷面審查規範。</li>
 <li><strong>抗漂移備援機制</strong>：當 Markdown 文本在多輪對話或上下文截斷中出現記憶漂移時，本 XML 作為最高結構化備援保險箱，所有 Agent 必須無條件回溯並以 XML 標籤為唯一硬性約束基準。</li>
 </ul>
     </div>
@@ -671,30 +678,43 @@
 <tr>
 <td style="text-align: left;"><strong>C1_CROSS_MODEL_CONTINUITY</strong></td>
 <td style="text-align: left;"><strong>Model Switch / Context Window Truncation</strong></td>
-<td style="text-align: left;"><strong>Mandatory Ingestion</strong>. When an agent experiences memory reset, ingesting <code>AI_GOVERNANCE_DIRECTIVE.xml</code> is the first required step.</td>
+<td style="text-align: left;"><strong>Mandatory Ingestion</strong>. When an agent experiences memory reset or switches between Track A / Track B, ingesting <code>AI_GOVERNANCE_DIRECTIVE.xml</code> restores architectural alignment immediately.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>C2_SUBAGENT_PROMPT_INJECTION</strong></td>
 <td style="text-align: left;"><strong>Subagent Task Delegation</strong></td>
-<td style="text-align: left;"><strong>Dynamic Slicing</strong>. Extract corresponding XML nodes based on subagent duties and inject into prompts.</td>
+<td style="text-align: left;"><strong>Dynamic Slicing</strong>. Extract corresponding XML nodes based on subagent duties (including <code>&lt;level3_closed_xml_ticket_standard&gt;</code> for high-risk Level 3 tickets) and inject into prompts.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>C3_COMPLEX_MODULE_REFACTOR</strong></td>
 <td style="text-align: left;"><strong>Major Module Refactoring</strong></td>
-<td style="text-align: left;"><strong>Structured Expansion</strong>. Update state machine and pool boundaries within <code>&lt;architecture_contracts&gt;</code>.</td>
+<td style="text-align: left;"><strong>Structured Expansion</strong>. Update state machine and pool boundaries within <code>&lt;architecture_contracts&gt;</code> and issue a closed <code>&lt;argon_ticket&gt;</code> XML dispatch contract.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>C4_PROTECTED_API_INCIDENT</strong></td>
 <td style="text-align: left;"><strong>Blizzard API Change / Taint Incident</strong></td>
 <td style="text-align: left;"><strong>Immediate Lockdown</strong>. Append forbidden operations into <code>&lt;secret_values_sentinel&gt;</code> as an unbreakable firewall.</td>
 </tr>
+<tr>
+<td style="text-align: left;"><strong>C5_DUAL_TRACK_SWITCH</strong></td>
+<td style="text-align: left;"><strong>Arbiter Quota Shift (Track A ↔ Track B)</strong></td>
+<td style="text-align: left;"><strong>Track State Synchronization</strong>. Switch <code>active_track</code> (<code>TRACK_B</code>: <code>Gemini 4 Hydrogen (XHigh)</code> Arbiter + <code>Hydrogen</code> dynamic; <code>TRACK_A</code>: <code>Gemini 4 Argon (High)</code> Arbiter + <code>Hydrogen</code> dynamic) per explicit user directive and sync continuity docs + <code>eam-dual-track-orchestration</code>.</td>
+</tr>
 </tbody>
 </table>
 <hr />
-<h2 id="4-physical-file-reference">📌 4. Physical File Reference</h2>
+<h2 id="4-active-dual-track-orchestration-level-3-closed-xml-schema">🎯 4. Active Dual-Track Orchestration &amp; Level 3 Closed XML Schema</h2>
 <ul>
-<li><strong>Physical AI Governance XML Directive</strong>: <a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a></li>
-<li><strong>Validation</strong>: Fully validated with Python <code>xml.etree.ElementTree</code> parser with 8 top-level structural modules intact.</li>
+<li><strong>Active Orchestration Track (<code>2026-11-13</code>)</strong>: <strong>Track B</strong> (<code>Gemini 4 Hydrogen (XHigh)</code> Chief Arbiter &amp; Cold-Context Drift Auditor + <code>Gemini 4 Hydrogen</code> 4-Tier Dynamic Workers <code>LOW / MEDIUM / HIGH / XHIGH</code>). Track A (<code>Gemini 4 Argon (High)</code> Chief Arbiter) remains on standby for explicit restoration.</li>
+<li><strong>4-Tier Self-Routing &amp; Reply Header</strong>: Every user response begins with <code>【任務階段：＜階段名稱＞｜建議模型與檔位：Hydrogen (LOW / MEDIUM / HIGH / EXTRA) 或 Argon｜治理模式：輕量 / L1+L2 / 完整 XML】</code>.</li>
+<li><strong>Level 3 Closed <code>&lt;argon_ticket&gt;</code> XML</strong>: Node #13 defines the complete closed schema (<code>&lt;meta&gt;</code>, <code>&lt;scope&gt;/&lt;allowed_files&gt;</code>, <code>&lt;immutable_files&gt;</code>, <code>&lt;invariants&gt;</code>, <code>&lt;execution_plan&gt;</code>, <code>&lt;verification&gt;</code>, <code>&lt;cold_context_review&gt;</code>) for high-risk core engine or multi-module refactors.</li>
+</ul>
+<hr />
+<h2 id="5-physical-file-reference">📌 5. Physical File Reference</h2>
+<ul>
+<li><strong>Physical AI Governance XML Directive</strong>: <a href="file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a> (<code>v1.4</code>, updated <code>2026-11-13</code>)</li>
+<li><strong>Related Skill</strong>: <a href="file:///d:/Project_EventAlertMod_AGY/.AI/skills/eam-dual-track-orchestration/SKILL.md"><code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code></a></li>
+<li><strong>Validation</strong>: Validated with Python <code>xml.etree.ElementTree</code> parser across all 13 top-level structural nodes (including <code>&lt;dual_track_model_routing&gt;</code> and <code>&lt;level3_closed_xml_ticket_standard&gt;</code>).</li>
 </ul>
     </div>
 

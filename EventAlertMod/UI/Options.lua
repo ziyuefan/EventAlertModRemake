@@ -698,6 +698,14 @@ function Options.refreshCooldownBehaviorControls()
     end
 end
 
+function Options.refreshAuraBehaviorControls()
+    local condFrame = Options.condFrame
+    if not condFrame or not condFrame.auraHideOutsideBtn then
+        return
+    end
+    condFrame.auraHideOutsideBtn:SetText(((EAM.L and EAM.L.EAM_OPT_COND_AURA_HIDE_OUTSIDE) or "脫戰後消失") .. ": " .. cooldownBehaviorStateLabel(condFrame.auraHideOutsideBtn.eamValue, false))
+end
+
 function Options.refreshItemTypeControls()
     local cf = Options.condFrame
     local data = Options.currentEditingAlert
@@ -811,6 +819,9 @@ function Options.refreshLocalizedText()
     end
     Options.refreshSpecDropdown()
     Options.refreshConditionsLocalizedText()
+    if Options.refreshAuraBehaviorControls then
+        Options.refreshAuraBehaviorControls()
+    end
     Options.refreshList()
 end
 
@@ -2669,6 +2680,29 @@ local function createFrame()
     bindText(escCb.text, "EAM_OPT_ALLOW_ESC", "ESC 關閉提示圖示")
 
     createCheckbox(pageGeneral, localized("EAM_OPT_SHOW_EXTRA_ALERT", "顯示額外輔助提醒"), "showExtraAlert", 16, -214, nil, "啟用特異光環與特殊職業機制的輔助提示", "顯示額外輔助提醒")
+
+    local hideAuraOutsideCb = createCheckbox(pageGeneral, localized("EAM_OPT_HIDE_AURA_OUTSIDE_COMBAT", "脫戰後隱藏光環 (脫戰消失)"), "hideAuraOutsideCombat", 300, -214, function(checked)
+        if EAM.db then EAM.db.revision = (EAM.db.revision or 0) + 1 end
+        local router = (EAM.Core and EAM.Core.EventRouter) or (EAM.Modules and EAM.Modules.EventRouter)
+        if router and router.fire then
+            router.fire("EAM_AURA_CONFIG_CHANGED", {
+                reason = "optionsHideAuraOutsideCombat",
+                value = checked == true,
+                revision = EAM.db and EAM.db.revision or 0,
+            })
+        end
+        if EAM.Services and EAM.Services.AuraService and EAM.Services.AuraService.refreshAll then
+            EAM.Services.AuraService.refreshAll("OPTIONS_HIDE_AURA_OUTSIDE_COMBAT")
+        end
+        if EAM.UI and EAM.UI.NativeAuraRenderer and EAM.UI.NativeAuraRenderer.updateCombatVisibility then
+            EAM.UI.NativeAuraRenderer.updateCombatVisibility()
+        end
+        triggerSafeRebuild("OPTIONS_HIDE_AURA_OUTSIDE_COMBAT")
+        if Options.refreshAuraBehaviorControls then
+            Options.refreshAuraBehaviorControls()
+        end
+    end, localized("EAM_OPT_HIDE_AURA_OUTSIDE_COMBAT_TIP", "勾選後，非戰鬥狀態下將自動隱藏已觸發的光環圖示（各技能可於條件設定中個別覆寫此規則）。"), "脫戰後隱藏光環 (脫戰消失)")
+    bindText(hideAuraOutsideCb.text, "EAM_OPT_HIDE_AURA_OUTSIDE_COMBAT", "脫戰後隱藏光環 (脫戰消失)")
 
     local generalDesc = pageGeneral:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     generalDesc:SetPoint("TOPLEFT", pageGeneral, "TOPLEFT", 16, -260)
@@ -5546,6 +5580,21 @@ local function createFrame()
     setTooltip(val4Cb, "在圖示旁顯示暴雪光環數據中的第 4 個附加數值", "顯示數值 4")
     condFrame.val4Cb = val4Cb
 
+    local auraHideOutsideBtn = createThemedButton(condFrame, "", 175, -315, 160, 24, function(self)
+        if self.eamValue == nil then
+            self.eamValue = true
+        elseif self.eamValue == true then
+            self.eamValue = false
+        else
+            self.eamValue = nil
+        end
+        if Options.refreshAuraBehaviorControls then
+            Options.refreshAuraBehaviorControls()
+        end
+    end, localized("EAM_OPT_COND_AURA_HIDE_OUTSIDE_TIP", "切換此光環是否於脫戰後自動隱藏：\n• 預設 (全域)：跟隨一般設定中的「脫戰後隱藏光環」\n• 覆寫：開：無論全域設定為何，脫戰後一律隱藏\n• 覆寫：關：無論全域設定為何，脫戰後仍保持顯示"), localized("EAM_OPT_COND_AURA_HIDE_OUTSIDE", "脫戰後消失"))
+    auraHideOutsideBtn:Hide()
+    condFrame.auraHideOutsideBtn = auraHideOutsideBtn
+
     -- 物品冷卻：冷卻目標類型 (物品 ID 或 裝備欄位)
     local itemTargetLabel = condFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     itemTargetLabel:SetPoint("TOPLEFT", condFrame, "TOPLEFT", 175, -272)
@@ -6209,6 +6258,25 @@ local function createFrame()
                     soundUpdated = soundOK and soundState == "updated"
                 end
 
+                if isAura and condFrame.auraHideOutsideBtn and savedVariables and savedVariables.updateAuraBehavior then
+                    local desiredHideOutside = condFrame.auraHideOutsideBtn.eamValue
+                    local okHide, statusHide = savedVariables.updateAuraBehavior(d.unit, d.spellID, "hideAuraOutsideCombat", desiredHideOutside)
+                    if not okHide then
+                        printError("儲存光環脫戰消失設定失敗: " .. tostring(statusHide))
+                        return
+                    end
+                    d.hideAuraOutsideCombat = desiredHideOutside
+                    if statusHide == "updated" then
+                        detailsChanged = true
+                        if EAM.Services and EAM.Services.AuraService and EAM.Services.AuraService.refreshAll then
+                            EAM.Services.AuraService.refreshAll("OPTIONS_COND_AURA_BEHAVIOR")
+                        end
+                        if EAM.UI and EAM.UI.NativeAuraRenderer and EAM.UI.NativeAuraRenderer.updateCombatVisibility then
+                            EAM.UI.NativeAuraRenderer.updateCombatVisibility()
+                        end
+                    end
+                end
+
                 if isAura and detailsChanged and not soundUpdated then
                     if savedVariables and savedVariables.markRevisionChanged then
                         savedVariables.markRevisionChanged()
@@ -6429,6 +6497,10 @@ function Options.openConditionsFrame(data)
             cf.cooldownBehaviorButtons[definition.field]:Hide()
         end
 
+        if cf.auraHideOutsideBtn then
+            cf.auraHideOutsideBtn.eamValue = nil
+            cf.auraHideOutsideBtn:Hide()
+        end
         -- 隱藏物品冷卻專屬控制項 (地面效果絕不關聯物品或裝備)
         cf.selectedItemType = nil
         cf.selectedSlotID = nil
@@ -6486,6 +6558,19 @@ function Options.openConditionsFrame(data)
             end
         end
         Options.refreshCooldownBehaviorControls()
+
+        if cf.auraHideOutsideBtn then
+            if isAura then
+                cf.auraHideOutsideBtn.eamValue = type(data.hideAuraOutsideCombat) == "boolean" and data.hideAuraOutsideCombat or nil
+                cf.auraHideOutsideBtn:Show()
+                if Options.refreshAuraBehaviorControls then
+                    Options.refreshAuraBehaviorControls()
+                end
+            else
+                cf.auraHideOutsideBtn.eamValue = nil
+                cf.auraHideOutsideBtn:Hide()
+            end
+        end
 
         local isItemCooldown = (data.kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN or data.kind == "itemCooldown")
         if isItemCooldown then

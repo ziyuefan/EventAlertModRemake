@@ -260,6 +260,10 @@ function AuraContainerService.requestRebuild(reason)
                 if AuraContainerService.current.target.Show then AuraContainerService.current.target:Show() end
             end
         end
+        local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+        if nativeRenderer and nativeRenderer.updateCombatVisibility then
+            nativeRenderer.updateCombatVisibility(inCombat())
+        end
         local soundService = EAM.Services.AuraSoundService
         if soundService then
             local soundOK, soundReason = soundService.sync(plan, capabilitySnapshot)
@@ -323,6 +327,11 @@ function AuraContainerService.requestRebuild(reason)
         end
     end
 
+    local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+    if nativeRenderer and nativeRenderer.updateCombatVisibility then
+        nativeRenderer.updateCombatVisibility(inCombat())
+    end
+
     local router = EAM.Modules and EAM.Modules.EventRouter
     if router and router.fire then
         router.fire("EAM_AURA_BACKEND_SWITCHED", capabilitySnapshot.selectedBackend, true)
@@ -344,6 +353,13 @@ function AuraContainerService.markSettingsDirty(reason)
     AuraContainerService.settingsDirty = true
     AuraContainerService.lastReason = reason or "settingsDirty"
     return true, "settingsDirty"
+end
+
+function AuraContainerService.onCombatStart()
+    local nativeRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
+    if nativeRenderer and nativeRenderer.updateCombatVisibility then
+        nativeRenderer.updateCombatVisibility(true)
+    end
 end
 
 function AuraContainerService.onCombatEnd()
@@ -424,6 +440,7 @@ function AuraContainerService.initialize()
     local router = EAM.Modules.EventRouter
     if router then
         router.register("PLAYER_REGEN_ENABLED", AuraContainerService.onCombatEnd)
+        router.register("PLAYER_REGEN_DISABLED", AuraContainerService.onCombatStart)
         router.register("PLAYER_TARGET_CHANGED", AuraContainerService.onTargetChanged)
         router.register("PLAYER_SPECIALIZATION_CHANGED", AuraContainerService.requestRebuild)
         router.register("EAM_AURA_CONFIG_CHANGED", AuraContainerService.requestRebuild)

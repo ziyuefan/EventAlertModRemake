@@ -76,7 +76,7 @@ def build_alert_modules_html():
         '<details>\n'
         '  <summary>點擊展開</summary>\n'
         '  <div class="details-content">\n'
-        '    <p>EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>\n'
+        '    <p>EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>\n'
         '    <ol>\n'
         '      <li>🔮 <strong>自身光環 (Player Buff / Debuff)</strong>：監控自身增益與減益，支援堆疊層數與高精度倒數。</li>\n'
         '      <li>🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態。</li>\n'
@@ -85,7 +85,8 @@ def build_alert_modules_html():
         '      <li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控。</li>\n'
         '      <li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。</li>\n'
         '      <li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點（法力、怒氣、能量、連擊點、真氣、狂亂、符能、奧術充能、靈魂裂片、神聖能量、精華等）。</li>\n'
-        '      <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）。</li>\n'
+        '      <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：全方位即時監控角色數值（正式服 18 種主副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、精神與法力 5 秒回魔規則 MP5/HP5 雙恢復、StatusBar 冰晶藍/暗琥珀色反差、全螢幕藍色泛光提醒、防禦技能、寵物快樂度與遠程彈藥等）。</li>\n'
+        '      <li>🗡️ <strong>獨立武器臨時附魔 (Weapon Enchant)</strong>：全面監控主手 (16)、副手 (17) 與遠程 (18) 臨時附魔（磨刀石、法力/巫術之油、毒藥、薩滿風怒/火舌、符文熔鑄等），支援【缺少附魔高亮提醒】、【即將到期倒數警告】與專屬獨立拖曳排版。</li>\n'
         '    </ol>\n'
         '  </div>\n'
         '</details>'
@@ -382,13 +383,13 @@ def main():
         # 區塊 7: 安裝說明 (Installation)
         elif spoiler_idx == 7:
             return build_installation_html()
-        # 區塊 30: 相容性與支援邊界
-        elif spoiler_idx == 31:
-            return build_compatibility_html()
-        # 區塊 32: 說明文件與相關連結
+        # 區塊 32: 相容性與支援邊界
         elif spoiler_idx == 32:
+            return build_compatibility_html()
+        # 區塊 33: 說明文件與相關連結
+        elif spoiler_idx == 33:
             return build_docs_links_html()
-        # 區塊 8~30: 版本更新歷史 Changelog
+        # 區塊 8~31: 版本更新歷史 Changelog
         else:
             return convert_changelog_spoiler(inner)
 
@@ -419,10 +420,10 @@ def main():
     ol_count = len(re.findall(r'<ol[\s>]', final_html))
     code_count = len(re.findall(r'<code[\s>]', final_html))
 
-    assert details_count == 32, f"Expected 31 details, got {details_count}"
-    assert details_end_count == 32, f"Expected 31 closing details, got {details_end_count}"
-    assert summary_count == 32, f"Expected 31 summaries, got {summary_count}"
-    assert details_content_count == 32, f"Expected 31 details-content, got {details_content_count}"
+    assert details_count == 33, f"Expected 33 details, got {details_count}"
+    assert details_end_count == 33, f"Expected 33 closing details, got {details_end_count}"
+    assert summary_count == 33, f"Expected 33 summaries, got {summary_count}"
+    assert details_content_count == 33, f"Expected 33 details-content, got {details_content_count}"
     assert len(remaining_tables) == 0, f"Expected 0 tables, got {len(remaining_tables)}"
     assert remaining_spoilers == 0, f"Expected 0 spoilers, got {remaining_spoilers}"
     assert remaining_slashes == 0, f"Expected 0 self-closing slashes, got {remaining_slashes}"

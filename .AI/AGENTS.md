@@ -8,7 +8,7 @@
 - 預設使用台灣慣用繁體中文（zh-TW）。
 - 稱呼使用者為「少年欸」。
 - 回覆直接切入任務，保持技術精確、架構清晰。
-- WoW AddOn 相關任務必須先確認正式服與經典服差異；本專案唯一支援目標為正式服（Retail 12.x / 午夜 Midnight），不支援經典服（Classic）。
+- WoW AddOn 相關任務必須先確認版本分支差異；本專案支援目標為正式服（Retail 12.x / 至暗之夜 Midnight）與永恆服（Forever 1.60.1 / Interface 16001，繁中「永恆」／簡中「無限」），不支援傳統經典懷舊服（Classic Era 1.15.x、MoP Classic、TBC/Wrath/Cata Classic）。嚴禁將 Forever 1.60.1 誤稱為 Classic Era 或與 Classic Era 混為一談。
 - 涉及 12.x API、Secret Values、C_* 命名空間或 Widget 行為時，需優先參考 `Docs` 與最新 Warcraft Wiki API 變更資訊。
 - 尚未在 WoW Retail 中實際加載並測試過的功能，嚴禁宣稱已完成實機驗證。
 - 進行開發時，程式碼與相關文檔必須主動同步更新，保持文檔與代碼一致性（主動出擊，不得被動等待指示）。
@@ -110,8 +110,8 @@
 
 ## 專案目標
 
-- 目標遊戲：僅限魔獸世界正式服（World of Warcraft Retail）。
-- 目標 API 世代：正式服 12.x / 午夜時代（Midnight）AddOn API。
+- 目標遊戲：魔獸世界正式服（World of Warcraft Retail 12.x）與永恆／無限（World of Warcraft: Forever 1.60.1, _forever_）。
+- 目標 API 世代：現代 12.x / 12.1.5+（Interface 120105 / 120100 / 120007）與 Forever 現代引擎分支（Interface 16001）AddOn API。
 - 架構方向：事件驅動、極限零分配（Zero-Allocation）、低 GC、模組化、高可維護性。
 - 使用者體驗：保留 EAM「比 WeakAuras 簡單輕量、專注光環與冷卻提醒」的核心定位。
 - 既有資料表、在地化字串、斜線命令語意與直覺視覺化予以保留；內部系統架構徹底現代化重構。
@@ -124,14 +124,14 @@
 - 2026-08-21 唯讀 metadata：`_retail_` 與 `_ptr_` 為 `12.1.0.69382`，`_xptr_` 為 `12.0.7.68887`；版本會變動，部署與實測前須重新讀取執行檔 `ProductVersion`。
 - 部署目標固定為各版本目錄下的 `Interface\AddOns\EventAlertMod`。安全實體資料夾可先備份後更新；missing 目標可建立；Reparse Point 與檔案目標一律停止。
 - WoW 各客戶端的 `Interface\AddOns\EventAlertMod` 若為 SymbolicLink／Junction／Reparse Point，任何部署或清理都必須立即停止；不得追蹤、覆蓋、刪除或重建連結（fail-closed 防禦）。
-- Classic 不在支援範圍。PTR／XPTR 互動部署時須再詢問是否同時部署 Retail，並在確認畫面列出全部候選版本。
+- 傳統經典服（Classic Era _classic_era_ 等）不在支援範圍（注意：Forever _forever_ 1.60.1 為支援範圍內之獨立現代引擎分支，與 Classic Era 截然不同）。PTR／XPTR／Forever 互動部署時須列出全部候選版本。
 - `WTF` 路徑只在明確測試任務中動態組合；未經授權不得讀取或列出 `WTF\Account` 的帳號與角色資料。
 - 🚨 部署腳本異動通報義務：若因應需求修改 `Deploy/` 目錄下任何腳本，必須主動明確向少年欸報告具體改動內容。
 - 完整規則見 `.AI/Docs/27_LOCAL_WOW_ENVIRONMENT.md`。
 
 ## 硬性限制與邊界
 
-- 不支援 Classic 經典服。
+- 不支援傳統 Classic Era（_classic_era_ 經典舊世）等舊版懷舊服；所有文件、治理與報告必須嚴格區分 Forever 1.60.1（永恆／無限）與 Classic Era，嚴禁混稱。
 - 嚴禁直接繼承或複製舊 EAM 的架構邏輯。
 
 ## 秘密/受保護資料規則與安全檢查 (Secret & Protected Values)
@@ -286,6 +286,15 @@ Retail 12.x 可能將光環、冷卻、作用、時間、單位或字串資料�
 - 子代理的查證結果必須由主代理整合核實；嚴禁將子代理的 API 判定直接視為已實機驗證。
 - 所有協作與 PR 審查必須遵循 `.AI/Docs/21_RACI_EXPERTS_MATRIX.md` 的權責分工與審查原則。
 - **子代理 API 變更即時探測協議**：派發涉及 WoW API、FrameXML、原生光環、冷卻、事件或底層工具之子代理時，Prompt 必須明確注入或指示其調研 `https://warcraft.wiki.gg/wiki/Patch_12.1.5/API_changes` 之最新情報（目前基準為 PTR 3 Build 69952），嚴禁依賴過期假設或猜測參數。
+
+## 雙軌動態模型調度與 Level 3 XML 派工契約 (Track A / Track B)
+
+- **現行作用中軌道（Active Track）**：**Track B**（`Gemini 4 Hydrogen (XHigh)` 擔任首席架構師與冷面審查仲裁者 ＋ `Gemini 4 Hydrogen` 動態四階 `LOW / MEDIUM / HIGH / XHIGH` 執行群）。Track A（`Gemini 4 Argon (High)` 仲裁 ＋ `Hydrogen` 動態）留存為高配額恢復備援軌；非經使用者明確指示不跨軌自動切換（權威定義見 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` v1.4 與 `.AI/skills/eam-dual-track-orchestration/SKILL.md`）。
+- **強制首行回覆狀態標籤**：每次正式回覆使用者時，第一行固定輸出：
+  `【任務階段：＜階段名稱＞｜建議模型與檔位：Hydrogen (LOW / MEDIUM / HIGH / EXTRA) 或 Argon｜治理模式：輕量 / L1+L2 / 完整 XML】`
+- **四階調度與降檔紀律**：`[TIER: LOW]` 負責 `FOLDER_INDEX` / 簽章 / 靜態表清洗；`[TIER: MEDIUM]` 負責黃金樣板施工；`[TIER: HIGH]` 負責單／跨模組功能與 CLI 驗證；`[TIER: EXTRA / Argon]` 負責架構定錨、多版本相容層重寫與新對話冷面漂移審查（`Cold-Context Drift Audit`）。若發現高檔位執行 `[TIER: LOW]` 任務，須主動建議降檔。
+- **反漂移與資料隔離**：遵守 Index-First（先查 `PROJECT_MEMORY.md`、`00_INDEX.md`、`FOLDER_INDEX.html`、`EventAlertMod.toc`），嚴禁解除 `table.freeze`，嚴禁在 `Core/Services/UI` 混入靜態法術清單（須隔離於 `EventAlertMod/Data/`），嚴格區隔 `Retail 12.1.5` 與 `Forever 1.60.1`（繁中「永恆」／簡中「无限」，Interface `16001`，非 `Classic Era`）。
+- **Level 3 閉合 XML 契約**：動及底層事件引擎或跨 3+ 核心模組時，須先依 `<level3_closed_xml_ticket_standard>` 輸出完整閉合 `<argon_ticket>` XML（含 `<scope>`、`<immutable_files>`、`<invariants>`、`<verification>`、`<cold_context_review>`）獲確認後方可施工。
 
 ## 機密憑證與 Token 安全防護規範 (Secret & Token Security Governance)
 

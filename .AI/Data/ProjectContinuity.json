@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-11-08.03",
-  "updatedAt": "2026-11-08",
+  "snapshotVersion": "2026-11-13.01",
+  "updatedAt": "2026-11-13",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -22,7 +22,7 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "World of Warcraft: Forever 1.60.1 雙語區官方名稱校準（繁中「永恆」、簡中「无限」，消滅「永恆之樹」誤植）完成；Alpha 9.0 開發週期啟動，5 語系新增 6 個互動詞條並 100% 鍵值對齊，全套驗證門檻通過。",
+    "objective": "完成 AI_GOVERNANCE_DIRECTIVE.xml v1.4（補完 Level 3 閉合 <argon_ticket> XML 契約並切換作用中軌道至 Track B：Gemini 4 Hydrogen (XHigh) 仲裁 + Hydrogen 動態四階）；新增 eam-dual-track-orchestration 技能，同步 AGENTS/Workflow/00_INDEX 文件導航中心/雙語 README 至 Alpha 9.0 九大模組，並重建 .AI/docs_html/ 與同步 GitHub。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 110,
@@ -714,6 +714,58 @@
         ".AI/AGENTS.md",
         ".AI/PROJECT_MEMORY.md",
         ".AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml"
+      ]
+    },
+    {
+      "id": "FACT-20261112-001",
+      "statement": "法力屬性 (Mana Stat) 擴展至 PlayerStatService，深度整合精神 5 秒規則 (5SR) 狀態機，StatusBar 支援全速回魔冰晶藍 (0.20, 0.85, 1.00) 與施法懲罰暗琥珀色 (0.85, 0.45, 0.15) 雙色反差，圖示支援 LibButtonGlow，文字支援 1.32x/1.45x 放大與等待倒數，Tooltip 詳盡呈現 33% 坐下回血加成與 5SR 數值。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "EventAlertMod/Services/PlayerStatService.lua",
+        "EventAlertMod/UI/PlayerStatPanel.lua",
+        "EventAlertMod/Locale/zhTW.lua",
+        "EventAlertMod/Locale/enUS.lua"
+      ]
+    },
+    {
+      "id": "FACT-20261112-002",
+      "statement": "CombatFlash.lua 建立專屬微光全螢幕圖層 EAM_SpiritActiveGlowFrame，採用 LowHealth 紋理與 ADD 混色 (0.15, 0.65, 1.00, 0.35)，支援 0.40s 平滑淡入與 0.30s 淡出動畫，施法耗魔瞬時淡出、脫離 5 秒懲罰瞬時淡入，並於屬性設定面板提供獨立開關 (spiritBlueScreenGlow)。",
+      "state": "confirmed",
+      "provenance": "code-contract",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "EventAlertMod/UI/CombatFlash.lua",
+        "EventAlertMod/UI/PlayerStatPanel.lua",
+        "EventAlertMod/Services/PlayerStatService.lua"
+      ]
+    },
+    {
+      "id": "FACT-20261113-001",
+      "statement": "AI_GOVERNANCE_DIRECTIVE.xml 已升級至 v1.4（13 個頂層節點），補完 <level3_closed_xml_ticket_standard> 閉合 <argon_ticket> 派工契約標準（對齊 EventAlertMod/Data/ 靜態資料隔離、table.freeze()、Forever 1.60.1 非 Classic Era 與冷面漂移審查），並將 <dual_track_model_routing> 之 active_track 切換至 TRACK_B（Gemini 4 Hydrogen XHigh 仲裁 + Hydrogen 四階動態強度）。",
+      "state": "confirmed",
+      "provenance": "project-rule",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "Docs/AI_GOVERNANCE_DIRECTIVE.xml",
+        "AGENTS.md",
+        "Docs/17_SUBAGENT_WORKFLOW.md",
+        "Docs/33_AI_GOVERNANCE_DIRECTIVE.md",
+        "skills/eam-dual-track-orchestration/SKILL.md"
+      ]
+    },
+    {
+      "id": "FACT-20261113-002",
+      "statement": "文件導航中心 (.AI/Docs/00_INDEX.md 與 00_INDEX_en.md)、雙語 README 與 EventAlertMod 內置 README 已全面同步至 Alpha 9.0 與九大獨立告警模組（納入 WeaponEnchantService、Forever 11 大屬性 Tooltip、mana/5SR 藍光與光環脫戰隱藏），並於 EAM_DOCS_OFFLINE=1 下重建 .AI/docs_html/。",
+      "state": "confirmed",
+      "provenance": "offline-test",
+      "environment": "cross-client",
+      "evidenceRefs": [
+        "Docs/00_INDEX.md",
+        "Docs/00_INDEX_en.md",
+        "README.md",
+        "README_en.md"
       ]
     }
   ],

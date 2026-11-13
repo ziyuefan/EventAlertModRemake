@@ -56,10 +56,10 @@
 
 ## 🛡️ 4. 核心治理節點架構一覽 (XML Directives Overview)
 
-實體 XML 檔案包含 11 大核心模組節點（v1.3 最新版次）：
+實體 XML 檔案包含 13 大核心模組節點（v1.4 最新版次，已補完雙軌模型調度與 Level 3 閉合 XML 契約）：
 
 ```xml
-<eam_ai_governance version="1.3" last_updated="2026-10-16">
+<eam_ai_governance version="1.4" last_updated="2026-11-13">
     <!-- 1. 元資料與受眾：界定專案路徑、台灣繁中與「少年欸」稱呼習慣 -->
     <metadata> ... </metadata>
 
@@ -92,6 +92,12 @@
 
     <!-- 11. 對話協同指引：主動同步文檔、問題記錄、嚴格事實查核、開發完成主動執行故障預測與威脅推論 (<failure_prediction_protocol>) -->
     <agent_behavior_protocol> ... </agent_behavior_protocol>
+
+    <!-- 12. 雙軌動態模型調度與防漂移鐵律：Track A (Argon High 仲裁) / Track B (Hydrogen XHigh 仲裁, 現行) + 四階強度自檢 -->
+    <dual_track_model_routing active_track="TRACK_B"> ... </dual_track_model_routing>
+
+    <!-- 13. Level 3 高風險核心大改專用：完整閉合 XML 派工契約範本與冷面審查 (Cold-Context Drift Audit) -->
+    <level3_closed_xml_ticket_standard schema_version="1.0"> ... </level3_closed_xml_ticket_standard>
 </eam_ai_governance>
 ```
 
@@ -100,6 +106,7 @@
 ## 📌 5. 權威實體檔案位置 (Physical File Reference)
 
 - **AI 治理專用 XML 實體檔**：[`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml)
-- **語法合規驗證**：已通過 Python `xml.etree.ElementTree` 完整語法與結構檢定（11 大核心子節點完整就位，v1.3 版次）。
+- **語法合規驗證**：已通過 Python `xml.etree.ElementTree` 完整語法與結構檢定（13 大核心子節點完整就位，v1.4 版次；含 `<dual_track_model_routing active_track="TRACK_B">` 雙軌調度與 `<level3_closed_xml_ticket_standard>` 完整閉合 XML 派工契約）。
+- **關聯技能手冊**：[`.AI/skills/eam-dual-track-orchestration/SKILL.md`](../skills/eam-dual-track-orchestration/SKILL.md) 定義 Track A (`Gemini 4 Argon (High)`) 與現行 **Track B (`Gemini 4 Hydrogen (XHigh)` 仲裁 + `Hydrogen` 四階動態強度)** 切換及冷面審查規範。
 - **抗漂移備援機制**：當 Markdown 文本在多輪對話或上下文截斷中出現記憶漂移時，本 XML 作為最高結構化備援保險箱，所有 Agent 必須無條件回溯並以 XML 標籤為唯一硬性約束基準。
 

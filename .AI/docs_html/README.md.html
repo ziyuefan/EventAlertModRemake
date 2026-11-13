@@ -518,7 +518,7 @@
 <h1 id="eventalertmod-retail-1215-forever-1601-eam">EventAlertMod Retail 12.1.5 &amp; Forever 1.60.1 (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.9-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%209.0-orange" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen" /></a></p>
 <blockquote>
@@ -554,17 +554,18 @@
 </tbody>
 </table>
 <hr />
-<h2 id="8-independent-alert-modules">✨ 八大獨立告警模組 (8 Independent Alert Modules)</h2>
-<p>EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>
+<h2 id="9-independent-alert-modules">✨ 九大獨立告警模組 (9 Independent Alert Modules)</h2>
+<p>EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>
 <ol>
-<li>🔮 <strong>自身光環 (Player Buff / Debuff)</strong>：監控自身增益與減益，支援堆疊層數與高精度倒數。</li>
-<li>🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態。</li>
-<li>⚔️ <strong>跨職業光環 (Cross-Class / Target Cast)</strong>：監控敵方關鍵爆發或隊友重要增益。</li>
+<li>🔮 <strong>自身光環 (Player Buff / Debuff)</strong>：監控自身增益與減益，支援堆疊層數、高精度倒數，以及全域＋單技能三態「脫戰後隱藏光環」控制。</li>
+<li>🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態，支援脫戰自動隱藏設定。</li>
+<li>⚔️ <strong>跨職業光環 (Cross-Class / Target Cast)</strong>：監控敵方關鍵爆發或隊友重要增益，支援脫戰自動隱藏設定。</li>
 <li>⏳ <strong>技能冷卻 (Spell Cooldown)</strong>：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (<code>Radial Mode</code>) 與框外線性條 (<code>TOP/BOTTOM/LEFT/RIGHT</code>)。</li>
 <li>🎒 <strong>物品冷卻 (Item Cooldown)</strong>：飾品、主動使用裝備與消耗品冷卻監控；全面支援 19 部位裝備欄位代號與具體物品 ID 雙軌監控、穿戴裝備三軌冷卻備援機制與即時換裝響應。</li>
 <li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。</li>
 <li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援全 13 職業、40 組專精、17 種資源獨立節點（正式服至暗之夜全職業現代專精資源；經典 60 級 9 職業經典能量拓樸如獵人法力/寵物集中值、術士法力/靈魂碎片、德魯伊四形態切換、盜賊能量/連擊點、戰士怒氣等）。</li>
-<li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：全方位即時監控角色數值（正式服 18 種主副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、精神 5 秒回魔規則 MP5/HP5 與 Active 動態提醒/全螢幕藍框閃爍、防禦技能、寵物快樂度與遠程彈藥等）。</li>
+<li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：全方位即時監控角色數值（正式服 18+ 種核心屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、11 大實機校準屬性公式與原生 Tooltip 知識引擎、法力屬性與精神 5 秒回魔規則 MP5/HP5 三態醒目提醒、全螢幕持續柔和暗角藍色泛光 <code>EAM_SpiritActiveGlowFrame</code>、防禦技能 440 免暴、寵物快樂度與遠程彈藥等）。</li>
+<li>🗡️ <strong>武器臨時附魔 (Weapon Enchant)</strong>：獨立專屬服務模組 (<code>WeaponEnchantService</code>)，底層直通暴雪原生 <code>GetWeaponEnchantInfo()</code> API，即時追蹤主手 (<code>Slot 16</code>)、副手 (<code>Slot 17</code>) 與遠程 (<code>Slot 18</code>) 磨刀石／毒藥／巫術與法力油／風怒火舌／正式服符文熔鑄；具備缺附魔發光＋節流音效警示、到期倒數發光與 <code>/eam enchant</code> 獨立 HUD 拖曳定位。</li>
 </ol>
 <hr />
 <h2 id="_1">🎨 現代化視覺與極致操作體驗</h2>
@@ -572,7 +573,7 @@
 <li>📖 <strong>次世代全量法術庫與智慧預設 (Master Spell Catalog)</strong>：內建 5 語系先驗資料庫（收錄 4,463 個技能與 466 個光環），支援專精樹展開/收合、一鍵天賦技能智慧同步、目標模組清單自由指派（冷卻/光環/地面效果）與全法術 GameTooltip 懸停說明。</li>
 <li>🏷️ <strong>多維戰術群組與標籤管理 (Group Management)</strong>：支援技能多對多標籤歸屬、內建 4 大系統戰術群組（爆發/減傷/控場/地面）與自訂群組、獨立二級管理側窗、戰鬥情境過濾與技能細節視窗下拉複選器。</li>
 <li>🎵 <strong>LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合</strong>：動態探測所有第三方 SharedMedia 音效、字型與材質包，支援自適應長清單滑鼠滾輪選單與字型全域 60fps 熱套用（免 /reload 即時生效）。</li>
-<li>🐮 <strong>經典奶牛頭位置預覽</strong>：排版模式下以經典奶牛頭圖示 (<code>Spell_Nature_Polymorph_Cow</code>) 清楚標記 8 大告警框架定位。</li>
+<li>🐮 <strong>經典奶牛頭位置預覽</strong>：排版模式下以經典奶牛頭圖示 (<code>Spell_Nature_Polymorph_Cow</code>) 清楚標記 8 大核心告警框架定位（另含 <code>/eam enchant</code> 武器附魔獨立 HUD 定位）。</li>
 <li>🖼️ <strong>全模組自訂替代圖示 (Custom Icon Override)</strong>：所有模組均可輸入官方 FileID（例如 <code>132307</code>）或材質路徑，自訂取代預設圖示，並附即時動態預覽方塊與 Wago.tools 查詢指引。</li>
 <li>💀 <strong>死亡騎士符文儀表板</strong>：依專精動態切換專屬圖示，內建 6 格微型充能冷卻條（0%..100% 平滑動畫）與 <code>/eam rune</code> 槽位診斷視窗。</li>
 <li>⚡ <strong>60fps 全方位即時熱預覽</strong>：調整尺寸、間距、透明度、轉圈動畫、文字大小等，畫面上即時動態響應，非戰鬥不需 <code>/reload</code>。</li>
@@ -789,6 +790,11 @@
 <td style="text-align: left;">開啟 Profile 設定檔匯出／匯入與字串分享面板</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>/eam enchant</code></td>
+<td style="text-align: left;"><code>/eam weapon</code>, <code>/eam we</code></td>
+<td style="text-align: left;">開啟或關閉武器臨時附魔獨立 HUD 位置移動模式</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>/eam rune</code></td>
 <td style="text-align: left;"><code>/eam runes</code>, <code>/eam probe rune</code></td>
 <td style="text-align: left;">開啟死亡騎士 6 格符文槽位即時狀態、充能秒數與診斷 JSON 視窗</td>
@@ -849,6 +855,27 @@
 <h2 id="beautified-changelogtxt">📜 版本更新歷史 (Beautified CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.5 &amp; Forever 1.60.1 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+<h3 id="retail-1215-forever-1601-alpha-90-20261113">🌟 [Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0] - 2026.11.13</h3>
+<ul>
+<li><strong>獨立武器臨時附魔模組 (<code>WeaponEnchantService</code>) [雙版本共通]</strong>：<ul>
+<li>建立獨立服務呼叫暴雪原生 <code>GetWeaponEnchantInfo()</code> API，支援主手 (<code>Slot 16</code>)、副手 (<code>Slot 17</code>) 與遠程 (<code>Slot 18</code>) 臨時附魔（Forever 磨刀石／毒藥／巫術與法力之油／風怒火舌；Retail 符文熔鑄／磨刀石／油／毒藥）。</li>
+<li>提供缺少武器附魔亮框＋節流音效警示、附魔即將到期倒數（預設 5 分鐘）橘紅發光提醒，以及 <code>/eam enchant</code> 獨立 HUD 拖曳定位。</li>
+</ul>
+</li>
+<li><strong>[Forever 1.60.1 永恆服專屬] 11 大角色屬性實機校準與原生 Tooltip 知識引擎</strong>：<ul>
+<li>依實機面板數據精確校準 11 大屬性換算公式與規則（<code>14 AP = 1 DPS</code>、防禦 <code>440</code> 點首領免暴、護甲 <code>75.00%</code> 免傷上限、智力提高武器技能提升機率、精神坐下或躺下生命力恢復提高 <code>33%</code>、閃躲正側面規則與招架提速 Parry Haste），新增 <code>attackPower</code>、<code>dodge</code>、<code>parry</code>、<code>block</code> 並實裝 HUD/面板原生 <code>GameTooltip</code>。</li>
+</ul>
+</li>
+<li><strong>[Forever 1.60.1 永恆服專屬] 法力屬性、5 秒精神回魔三態提醒與全螢幕持續藍色泛光</strong>：<ul>
+<li>擴展 <code>mana</code> 屬性監控，深度整合 5SR 狀態機：StatusBar 冰晶藍／暗琥珀雙色反差、圖示 <code>LibButtonGlow</code>、文字 <code>1.32x</code> 放大／<code>%.1fs</code> 懲罰倒數，並於 <code>CombatFlash.lua</code> 新增常駐柔和暗角藍色泛光圖層 <code>EAM_SpiritActiveGlowFrame</code>。</li>
+</ul>
+</li>
+<li><strong>光環脫戰自動隱藏 (Hide Auras Outside Combat) [雙版本共通]</strong>：<ul>
+<li>於一般設定提供全域開關，並於單技能條件提供「跟隨全域／強制開／強制關」三態覆寫，全面打通 Legacy <code>AuraService</code> 與 Retail 12.1+ 原生光環容器。</li>
+</ul>
+</li>
+<li><strong>Forever 名稱校準與雙語同步</strong>：繁體中文 (<code>zhTW</code>) 統一為「永恆」、簡體中文 (<code>zhCN</code>) 統一為「无限」，5 語系字典檔 100% 對齊。</li>
+</ul>
 <h3 id="retail-1215-forever-1601-alpha-89-20261108">🌟 [Retail 12.1.5 &amp; Forever 1.60.1 Alpha 8.9] - 2026.11.08</h3>
 <ul>
 <li><strong>雙版本無縫統一架構 (Multi-Flavor Unified Architecture)</strong>：<ul>
@@ -1484,7 +1511,7 @@
 <h1 id="eventalertmod-retail-1215-forever-1601-zhtw-zhcn-eam">EventAlertMod Retail 12.1.5 &amp; Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (EAM)</h1>
 <p><a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717" /></a>
 <a href="https://ziyuefan.github.io/EventAlertModRemake/"><img alt="Docs" src="https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet" /></a>
-<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%208.9-orange" /></a>
+<a href="https://github.com/ziyuefan/EventAlertModRemake/releases"><img alt="Release" src="https://img.shields.io/badge/release-Alpha%209.0-orange" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Retail" src="https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue" /></a>
 <a href="https://github.com/ziyuefan/EventAlertModRemake"><img alt="Interface" src="https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen" /></a></p>
 <blockquote>
@@ -1520,17 +1547,18 @@
 </tbody>
 </table>
 <hr />
-<h2 id="8-independent-alert-modules">✨ 8 Independent Alert Modules</h2>
-<p>EAM features 8 completely decoupled, independently positioned, and freely draggable alert modules:</p>
+<h2 id="9-independent-alert-modules">✨ 9 Independent Alert Modules</h2>
+<p>EAM features 9 completely decoupled, independently positioned, and freely draggable alert modules:</p>
 <ol>
-<li>🔮 <strong>Player Buff / Debuff</strong>: Self buffs &amp; debuffs with stack counts, remaining shield absorb amount, and high-precision timers.</li>
-<li>🎯 <strong>Target Buff / Debuff</strong>: Precise tracking of target auras, CC, and debuff states.</li>
-<li>⚔️ <strong>Cross-Class / Target Cast</strong>: Key enemy burst cooldowns and crucial friendly buffs.</li>
+<li>🔮 <strong>Player Buff / Debuff</strong>: Self buffs &amp; debuffs with stack counts, remaining shield absorb amount, high-precision timers, and Global + Per-Spell tri-state "Hide Auras Outside Combat".</li>
+<li>🎯 <strong>Target Buff / Debuff</strong>: Precise tracking of target auras, CC, and debuff states with out-of-combat visibility control.</li>
+<li>⚔️ <strong>Cross-Class / Target Cast</strong>: Key enemy burst cooldowns and crucial friendly buffs with out-of-combat visibility control.</li>
 <li>⏳ <strong>Spell Cooldown</strong>: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode &amp; outer linear bars (<code>TOP/BOTTOM/LEFT/RIGHT</code>), custom reordering (drag &amp; drop, up/down), and desaturated placeholder masks.</li>
 <li>🎒 <strong>Item Cooldown</strong>: Trinkets, on-use equipment, and consumables monitoring; fully supports dual-track monitoring (19 equipment slots &amp; item IDs), 3-tier robust cooldown fallback, and real-time gear swap synchronization.</li>
 <li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.</li>
-<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).</li>
-<li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18 core stats in Retail, plus classic stat tracking in Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) (Five Magic Resistances, Spirit 5-Second Rule MP5/HP5 with Active visual &amp; full-screen blue-border flash alerts, Defense Skill crit immunity, Pet Happiness/Loyalty, Ranged Ammo Status, Armor Penetration).</li>
+<li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (zhTW: 永恆 / zhCN: 无限) (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).</li>
+<li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles with 18+ core stats in Retail, plus Forever 1.60.1 classic stat tracking (Five Magic Resistances, 11 calibrated stats with native GameTooltip knowledge formulas such as <code>14 AP = 1 DPS</code>, <code>440</code> Defense boss crit immunity, <code>75%</code> Armor mitigation cap, <code>+33%</code> sit/sleep regen; <code>mana</code> &amp; Spirit 5SR three-state alerts + <code>EAM_SpiritActiveGlowFrame</code> continuous soft blue screen vignette; Pet Happiness/Loyalty, Ranged Ammo Status).</li>
+<li>🗡️ <strong>Weapon Enchant</strong>: Dedicated <code>WeaponEnchantService</code> calling Blizzard's native <code>GetWeaponEnchantInfo()</code>, tracking temporary Main Hand (<code>Slot 16</code>), Off Hand (<code>Slot 17</code>), and Ranged (<code>Slot 18</code>) weapon enchants across Forever and Retail with missing-enchant glow &amp; audio warnings, expiring countdown alerts, and <code>/eam enchant</code> standalone HUD mover mode.</li>
 </ol>
 <hr />
 <h2 id="modern-visuals-streamlined-experience">🎨 Modern Visuals &amp; Streamlined Experience</h2>
@@ -1538,7 +1566,7 @@
 <li>📖 <strong>Next-Gen Master Spell Catalog &amp; Intelligent Presets</strong>: Built-in 5-language offline database (4,463 core spells &amp; 466 auras) with collapsible spec trees, one-click talent book auto-sync, target module redirection (cooldowns/auras/ground), and native GameTooltip hovering.</li>
 <li>🏷️ <strong>Multi-dimensional Tactical Groups &amp; Tag Management</strong>: Many-to-many tag associations, 4 built-in tactical groups (Burst, Mitigation, CC/Interrupt, Ground AoE) + custom groups, secondary docking manager panel, combat-only filters, and multi-select group dropdown in spell conditions.</li>
 <li>🎵 <strong>Full LibSharedMedia-3.0 (SharedMedia) Ecosystem Integration</strong>: Dynamic runtime discovery of third-party sounds, fonts, and borders (<code>ensureLSM</code>), adaptive scrollable dropdowns with mouse wheel support, and zero-delay global font hot-swapping (no <code>/reload</code> needed).</li>
-<li>🐮 <strong>Classic Cow Head Anchor Preview</strong>: Displays classic cow head icons (<code>Spell_Nature_Polymorph_Cow</code>) to preview all 8 alert frame positions during layout configuration.</li>
+<li>🐮 <strong>Classic Cow Head Anchor Preview</strong>: Displays classic cow head icons (<code>Spell_Nature_Polymorph_Cow</code>) to preview all 8 core alert frame positions during layout configuration (plus standalone <code>/eam enchant</code> HUD positioning).</li>
 <li>🖼️ <strong>Custom Icon Override Across All Modules</strong>: Enter any official FileDataID (e.g. <code>132307</code>) or texture path to override default icons, with live texture preview box and Wago.tools lookup reference.</li>
 <li>💀 <strong>Death Knight Runes Dashboard</strong>: Dynamic spec-specific rune textures with 6 micro charge bars (0%..100% smooth animation) and <code>/eam rune</code> slot diagnostics.</li>
 <li>⚡ <strong>60fps Real-Time Live Preview</strong>: Adjust sizes, spacing, opacity, cooldown swipes, text sizes, and positions with immediate 60fps dynamic UI response out of combat.</li>
@@ -1742,6 +1770,11 @@
 <td style="text-align: left;">Open Profile Export/Import and string sharing panel</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>/eam enchant</code></td>
+<td style="text-align: left;"><code>/eam weapon</code>, <code>/eam we</code></td>
+<td style="text-align: left;">Toggle standalone temporary weapon enchant HUD mover mode</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>/eam rune</code></td>
 <td style="text-align: left;"><code>/eam runes</code>, <code>/eam probe rune</code></td>
 <td style="text-align: left;">Open Death Knight 6-slot rune dashboard, charge status &amp; diagnostic JSON</td>
@@ -1802,6 +1835,27 @@
 <h2 id="version-history-changelogtxt">📜 Version History (CHANGELOG.TXT)</h2>
 <details open="open">
 <summary><b>🔥 Retail 12.1.5 &amp; Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Redux &amp; Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
+<h3 id="retail-1215-forever-1601-alpha-90-20261113">🌟 [Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0] - 2026.11.13</h3>
+<ul>
+<li><strong>Independent Weapon Enchant Service (<code>WeaponEnchantService</code>) [Shared]</strong>:<ul>
+<li>Dedicated service built on Blizzard's native <code>GetWeaponEnchantInfo()</code>, tracking Main Hand (<code>Slot 16</code>), Off Hand (<code>Slot 17</code>), and Ranged (<code>Slot 18</code>) temporary enchants across Forever and Retail (sharpening stones, poisons, oils, Windfury/Flametongue, Runeforging).</li>
+<li>Features missing-enchant glow + throttled audio alert, expiring countdown alerts (default 5m threshold), and <code>/eam enchant</code> independent HUD mover mode.</li>
+</ul>
+</li>
+<li><strong>[Forever 1.60.1 Exclusive] 11-Stat Calibration &amp; Native GameTooltip Knowledge Engine</strong>:<ul>
+<li>Calibrated formulas (<code>14 AP = 1 DPS</code>, <code>440</code> Defense boss crit immunity &amp; 150% crushing blow rule, <code>75.00%</code> Armor cap, <code>+33%</code> sit/sleep Spirit regen, frontal-only player Dodge &amp; Parry Haste), expanded <code>attackPower</code>/<code>dodge</code>/<code>parry</code>/<code>block</code>, and wired native <code>GameTooltip</code> details on HUD icons &amp; option rows.</li>
+</ul>
+</li>
+<li><strong>[Forever 1.60.1 Exclusive] Mana Stat, 5-Second Rule (5SR) Three-State Alerts &amp; Continuous Full-Screen Soft Blue Glow</strong>:<ul>
+<li>Added <code>mana</code> monitoring integrated with the 5SR state machine (ice-blue vs dark-amber StatusBar contrast, icon glow, <code>1.32x</code> active text scaling / <code>%.1fs</code> penalty countdown) and <code>EAM_SpiritActiveGlowFrame</code> smooth screen vignette fade-in/out in <code>CombatFlash.lua</code>.</li>
+</ul>
+</li>
+<li><strong>Hide Auras Outside Combat (Global + Per-Spell Tri-State Override) [Shared]</strong>:<ul>
+<li>Global out-of-combat visibility toggle paired with per-spell tri-state overrides (<code>Global Default</code> / <code>Force Show</code> / <code>Force Hide</code>) across both Legacy <code>AuraService</code> and Retail 12.1+ Native Aura containers.</li>
+</ul>
+</li>
+<li><strong>Forever Bilingual Naming &amp; 5-Locale Sync</strong>: Standardized <code>zhTW</code> to <code>永恆</code> and <code>zhCN</code> to <code>无限</code> across TOC, locale dictionaries, and documentation.</li>
+</ul>
 <h3 id="retail-1215-forever-1601-zhtw-zhcn-alpha-89-20261108">🌟 [Retail 12.1.5 &amp; Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Alpha 8.9] - 2026.11.08</h3>
 <ul>
 <li><strong>Multi-Flavor Unified Architecture</strong>:<ul>

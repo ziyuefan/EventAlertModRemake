@@ -10763,3 +10763,168 @@ FlowTestRunner.registerCase({
     end,
 })
 
+FlowTestRunner.registerCase({
+    id = "aura.hide_outside_combat_override",
+    primarySuite = "aura",
+    suites = { quick = true, core = true, aura121 = true, aura = true },
+    run = function()
+        local originalDB = EAM.db
+        local ok, err = pcall(function()
+            local SavedVariables = EAM.Modules.SavedVariables
+            local AuraService = EAM.Services.AuraService
+            local ProfileCodec = EAM.Core.ProfileCodec or EAM.Modules.ProfileCodec
+            local NativeAuraRenderer = EAM.UI.NativeAuraRenderer
+            local testSpellID = 99901
+            
+            -- Setup isolated test DB
+            local testDB = {
+                schemaVersion = EAM.Constants.SCHEMA_VERSION,
+                revision = 1,
+                alerts = {
+                    playerAuras = {},
+                    targetAuras = {},
+                    spellCooldowns = {},
+                    itemCooldowns = {},
+                    groundEffects = {},
+                },
+                config = {
+                    hideAuraOutsideCombat = false,
+                    showFrame = true,
+                    showSpellName = true,
+                    showTimeVal = true,
+                    showFlash = false,
+                    showSound = false,
+                },
+            }
+            local activeClass = (SavedVariables.getActiveClassToken and SavedVariables.getActiveClassToken()) or "MAGE"
+            testDB.profiles = {
+                classes = {
+                    [activeClass] = {
+                        alerts = testDB.alerts,
+                    },
+                },
+            }
+            EAM.db = testDB
+
+            -- Add test aura alert
+            local addOk, alertID = SavedVariables.addAlert(EAM.Constants.ALERT_KIND_AURA, "player", testSpellID, nil, {
+                enabled = true,
+                auraFilter = "HELPFUL",
+            })
+            assert(addOk == true, "Alert added successfully")
+            local alert = testDB.alerts.playerAuras and testDB.alerts.playerAuras[alertID]
+            assert(alert ~= nil, "Test alert exists in DB")
+            assert(alert.hideAuraOutsideCombat == nil, "Initial alert.hideAuraOutsideCombat is nil")
+
+            -- Mock out-of-combat environment
+            AuraService.inCombat = false
+
+            -- 1. Default: global hideAuraOutsideCombat == false, alert hideAuraOutsideCombat == nil
+            local shouldHide = AuraService.resolveHideAuraOutsideCombat(alert)
+            assert(shouldHide == false, "Step 1: default should not hide outside combat")
+            local shouldSuppress = AuraService.shouldSuppressAuraOutsideCombat(alert, "UNIT_AURA")
+            assert(shouldSuppress == false, "Step 1: default should not suppress outside combat")
+
+            -- 2. Turn on global hideAuraOutsideCombat == true
+            local okCfg = SavedVariables.updateConfigBoolean("hideAuraOutsideCombat", true)
+            assert(okCfg == true, "Step 2: global hideAuraOutsideCombat updated to true")
+            assert(testDB.config.hideAuraOutsideCombat == true, "db config updated")
+
+            shouldHide = AuraService.resolveHideAuraOutsideCombat(alert)
+            assert(shouldHide == true, "Step 2: alert inherits global hideAuraOutsideCombat == true")
+
+            -- When out-of-combat, should suppress
+            shouldSuppress = AuraService.shouldSuppressAuraOutsideCombat(alert, "UNIT_AURA")
+            assert(shouldSuppress == true, "Step 2: suppressed out of combat")
+
+            -- Enter combat: PLAYER_REGEN_DISABLED
+            AuraService.onRegenDisabled()
+            assert(AuraService.inCombat == true, "Step 2: inCombat is true after onRegenDisabled")
+            shouldSuppress = AuraService.shouldSuppressAuraOutsideCombat(alert, "PLAYER_REGEN_DISABLED")
+            assert(shouldSuppress == false, "Step 2: not suppressed during combat")
+
+            -- Leave combat: PLAYER_REGEN_ENABLED
+            AuraService.onRegenEnabled()
+            assert(AuraService.inCombat == false, "Step 2: inCombat is false after onRegenEnabled")
+            shouldSuppress = AuraService.shouldSuppressAuraOutsideCombat(alert, "PLAYER_REGEN_ENABLED")
+            assert(shouldSuppress == true, "Step 2: suppressed again after leaving combat")
+
+            -- 3. Per-alert override: force keep visible out of combat (hideAuraOutsideCombat = false)
+            local okBhv, statusBhv = SavedVariables.updateAuraBehavior("player", testSpellID, "hideAuraOutsideCombat", false)
+            assert(okBhv == true and statusBhv == "updated", "Step 3: behavior override updated to false")
+            assert(alert.hideAuraOutsideCombat == false, "alert.hideAuraOutsideCombat is false")
+
+            shouldHide = AuraService.resolveHideAuraOutsideCombat(alert)
+            assert(shouldHide == false, "Step 3: override false takes precedence over global true")
+            shouldSuppress = AuraService.shouldSuppressAuraOutsideCombat(alert, "UNIT_AURA")
+            assert(shouldSuppress == false, "Step 3: forced visible out of combat")
+
+            -- 4. Per-alert override: force hide out of combat (hideAuraOutsideCombat = true) while global is false
+            SavedVariables.updateConfigBoolean("hideAuraOutsideCombat", false)
+            assert(testDB.config.hideAuraOutsideCombat == false, "global set back to false")
+
+            SavedVariables.updateAuraBehavior("player", testSpellID, "hideAuraOutsideCombat", true)
+            assert(alert.hideAuraOutsideCombat == true, "alert.hideAuraOutsideCombat is true")
+
+            shouldHide = AuraService.resolveHideAuraOutsideCombat(alert)
+            assert(shouldHide == true, "Step 4: override true takes precedence over global false")
+            shouldSuppress = AuraService.shouldSuppressAuraOutsideCombat(alert, "UNIT_AURA")
+            assert(shouldSuppress == true, "Step 4: suppressed out of combat")
+
+            -- In combat, suppression lifts
+            AuraService.onRegenDisabled()
+            shouldSuppress = AuraService.shouldSuppressAuraOutsideCombat(alert, "PLAYER_REGEN_DISABLED")
+            assert(shouldSuppress == false, "Step 4: visible in combat")
+            AuraService.onRegenEnabled()
+
+            -- 5. NativeAuraRenderer combat visibility testing
+            if NativeAuraRenderer then
+                local mockButton = {
+                    alpha = 1,
+                    SetAlpha = function(self, a) self.alpha = a end,
+                }
+                NativeAuraRenderer.buttons[mockButton] = {
+                    hideOutsideCombat = true,
+                    combatVisible = false,
+                }
+                NativeAuraRenderer.updateCombatVisibility(false)
+                assert(mockButton.alpha == 0, "Native button hidden outside combat")
+                NativeAuraRenderer.updateCombatVisibility(true)
+                assert(mockButton.alpha == 1, "Native button visible in combat")
+                local endOk, endReason = NativeAuraRenderer.onCombatEnd()
+                assert(endOk == true and endReason == "noPostInitializationMutation", "onCombatEnd preserves contract")
+                assert(mockButton.alpha == 0, "Native button hidden after onCombatEnd")
+                NativeAuraRenderer.buttons[mockButton] = nil
+            end
+
+            -- 6. ProfileCodec export and import round-trip
+            if ProfileCodec and ProfileCodec.exportProfile and ProfileCodec.previewImport then
+                local exportedStr, exportErr = ProfileCodec.exportProfile({
+                    modules = { "playerAura" },
+                    sections = { generalConfig = true },
+                })
+                assert(exportedStr ~= nil, "ProfileCodec exportProfile succeeded: " .. tostring(exportErr))
+
+                local plan, previewErr = ProfileCodec.previewImport(exportedStr, { mode = "merge" })
+                assert(plan ~= nil and plan.payload ~= nil, "ProfileCodec previewImport succeeded: " .. tostring(previewErr))
+                local importedAlert = nil
+                if plan.payload.modules and plan.payload.modules.playerAura then
+                    for _, rec in ipairs(plan.payload.modules.playerAura) do
+                        if rec.spellID == testSpellID then
+                            importedAlert = rec
+                            break
+                        end
+                    end
+                end
+                assert(importedAlert ~= nil, "Imported alert found")
+                assert(importedAlert.hideAuraOutsideCombat == true, "Imported alert preserved hideAuraOutsideCombat == true")
+            end
+        end)
+
+        EAM.db = originalDB
+        if not ok then
+            return false, tostring(err)
+        end
+        return true, "Aura hideOutsideCombat global and tri-state override flow fully validated"
+    end,
+})

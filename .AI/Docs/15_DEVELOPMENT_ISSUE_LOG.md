@@ -1,3 +1,66 @@
+### 2026-11-13 EAM-20261113-GOVERNANCE-V14-TRACK-B-AND-HUB-SYNC：完成 Level 3 閉合 `<argon_ticket>` XML 規範補完、正式切換至 Track B (`Hydrogen XHigh` 仲裁)、新增 `eam-dual-track-orchestration` 技能與同步文件導航中心／GitHub
+
+- 狀態：已完成（`AI_GOVERNANCE_DIRECTIVE.xml` v1.4 通過 `xml.etree.ElementTree` 與內嵌 CDATA `<argon_ticket>` 雙重解析驗證；`ProjectContinuity.json` JSON 解析通過；`.AI/docs_html/` 離線編譯與 GitHub 同步就緒）。
+- 需求背景與治理策略：
+  依據少年欸指示，完成兩大架構治理任務並全面更新文件中心與技能體系：
+  1. **項次 1 補完（Level 3 閉合 `<argon_ticket>` XML 與實務對齊）**：
+     - 補完先前輸入遭截斷的 `<immutable_files>` 後續結構，確立標準閉合 `<argon_ticket>` XML（涵蓋 `<meta>`、`<scope>/<allowed_files>`、`<immutable_files>`、`<invariants>`、`<execution_plan>`、`<verification>` 與 `<cold_context_review>`）；
+     - 將防漂移規則精確對齊真實專案邊界：`EventAlertMod/Data/` 靜態資料目錄隔離、`table.freeze()` 不可繞過、`FOLDER_INDEX.html` 與 `00_INDEX.md` 先行、以及 `Forever 1.60.1`（繁中「永恆」／簡中「无限」，Interface `16001`）嚴格區隔非 `Classic Era`。
+  2. **項次 2 切換至 Track B**：
+     - 經即時探測 `Gemini 4 Argon` 剩餘額度為 `1%`、`Gemini 4 Hydrogen` 為 `98%`；依使用者授權正式切換 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` (`active_track="TRACK_B"`) 至 **Track B (`Gemini 4 Hydrogen (XHigh)` 首席仲裁 ＋ `Gemini 4 Hydrogen` 四階動態強度)**，保留 Track A 待機待命。
+     - 規範每個正式回覆第一行固定輸出任務階段與建議模型／檔位標籤，並釐清 `swarm add` 可顯式鎖定子代理模型、`invoke_subagent` 採繼承模式之實務邊界。
+  3. **技能與文件導航中心同步**：
+     - 新建 `.AI/skills/eam-dual-track-orchestration/SKILL.md`，更新 `eam-project-continuity-governor` 與 `eam-docs-site-builder`；
+     - 將 `.AI/Docs/00_INDEX.md`、`00_INDEX_en.md`、根目錄與 `EventAlertMod/` 之雙語 `README` 更新對齊 **Alpha 9.0** 與 **9 大獨立告警模組**（補上獨立武器臨時附魔模組 `WeaponEnchantService` 與 `/eam enchant`、Forever 11 大屬性知識引擎、法力／5SR 柔和藍光與光環脫戰隱藏），並以 `EAM_DOCS_OFFLINE=1` 重新建置 `.AI/docs_html/`。
+- 落地成果：
+  1. `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` 升級至 **v1.4**（13 大核心節點）；
+  2. 新增 `.AI/skills/eam-dual-track-orchestration/SKILL.md`，同步 `.AI/AGENTS.md`、`17_SUBAGENT_WORKFLOW.md`、`32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md(.en)`、`33_AI_GOVERNANCE_DIRECTIVE.md(.en)`、`00_INDEX.md(.en)`、雙語 `README`、`PROJECT_MEMORY.md`、`28_PROJECT_CONTINUITY.md(.en)` 與 `ProjectContinuity.json`；
+  3. `.AI/docs_html/` 與 GitHub `main` 分支完整同步。
+
+### 2026-11-12 EAM-20261112-MANA-STAT-5SR-THREE-STATE-AND-FULLSCREEN-BLUE-GLOW：Forever 1.60.1 法力屬性 (Mana Stat)、5 秒精神回魔三態醒目提醒 (5SR Three-State Alerts) 與全螢幕柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow) 深度實裝
+
+- 狀態：已完成 (全專案 84 個 Lua 語法通過，24 大深層測試套件 100% 綠燈，5 語系字典檔完整同步)。
+- 需求背景與治理策略：
+  針對《魔獸世界：永恆》經典環境法系與治療職業之控魔節奏感知，深度延伸人物屬性與精神回魔狀態機架構：
+  1. **法力屬性與 5 秒精神回魔三態醒目提醒 (Mana Stat & 5SR Three-State Alerts)**：
+     - 於人物屬性監控 (`PlayerStatService.lua`) 擴展法力 (`mana`) 屬性，支援當前法力/最大法力 (百分比) 監控；
+     - 深度整合精神 5 秒規則 (5SR) 狀態機，提供 StatusBar 進度條雙色反差（5SR 全速回魔作用中切換為耀眼冰晶藍色 `(0.20, 0.85, 1.00, 1.00)`，5 秒施法懲罰期間切換為暗琥珀色 `(0.85, 0.45, 0.15, 0.95)`）；
+     - 圖示 (Icon) 於 5SR 作用中觸發 `LibButtonGlow` 冰藍/金色光環；
+     - 文字於 5SR 作用中放大 1.32x 且明亮冰藍高亮，懲罰期間以 `%.1fs` 倒數等待時長；
+     - Tooltip 詳盡呈現坐下/躺下回血加成 33%、5 秒規則作用狀態與數值。
+  2. **模擬全螢幕持續柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow)**：
+     - 於 `CombatFlash.lua` 建立專屬微光全螢幕圖層 `EAM_SpiritActiveGlowFrame`，採用暴雪原生 `Interface\FullScreenTextures\LowHealth` 紋理與 `ADD` 混色 (`0.15, 0.65, 1.00, 0.35`)；
+     - 提供平滑淡入 (0 -> 0.35 費時 0.40s) 與淡出 (0.35 -> 0 費時 0.30s) 動畫；
+     - 施法耗魔瞬間淡出，脫離 5 秒懲罰進入全速回魔瞬間平滑淡入，大幅提升經典版補師與法系控魔節奏感知；
+     - 於屬性設定面板 (`PlayerStatPanel.lua`) 提供「全螢幕藍色泛光 (精神回魔作用中常駐)」(`spiritBlueScreenGlow`) 獨立開關。
+- 落地成果：
+  1. `EventAlertMod/Services/PlayerStatService.lua` 擴展 `mana` 屬性定義、5SR StatusBar 顏色覆蓋、LibButtonGlow 整合、文字動態縮放與倒數、以及 GameTooltip 知識整合；
+  2. `EventAlertMod/UI/CombatFlash.lua` 實裝 `createSpiritActiveGlowFrame` 與 `CombatFlash.setSpiritActiveGlow`；
+  3. `EventAlertMod/UI/PlayerStatPanel.lua` 實裝 `spiritBlueScreenGlowCb` 控制項與即時預覽；
+  4. 5 語系字典檔同步新增 `EAM_STAT_SPIRIT_BLUE_GLOW` 與 `EAM_STAT_SPIRIT_BLUE_GLOW_TIP` 等詞條；
+  5. 離線語法與深層單元測試 100% 綠燈通過。
+
+### 2026-11-12 EAM-20261112-FOREVER-11STATS-CALIBRATION-AND-WEAPON-ENCHANT-SERVICE：Forever 1.60.1 11 大角色屬性實機校準、原生 Tooltip 知識引擎與獨立武器臨時附魔模組 (WeaponEnchantService) 全面實裝
+
+- 狀態：已完成 (全專案 84 個 Lua 語法通過，24 大深層測試套件 100% 綠燈，5 語系字典檔完整同步)。
+- 需求背景與治理策略：
+  依據少年欸實機操作上傳之 11 張 Forever 角色屬性截圖與工作指示，進行以下重大演進：
+  1. **雙模型架構強制切換**：全面落實「Flash + Flash」雙模型協同模式（主架構師：Flash；執行工程師：Flash）。
+  2. **Forever 1.60.1 角色屬性知識庫與 Tooltip/計算校準**：
+     - 依據實機截圖完整校準：1 力量 = 2 AP / 盾牌格擋值提高 = 力量 / 20、1 耐力 = 10 生命力、1 敏捷 = 2 護甲 / 提高致命與閃躲、智力提高法力與法術致命以及**【關鍵機制：提高武器技能/熟練度提升機率】**、精神 HP5/MP5 5秒規則 (5SR) 以及**【關鍵機制：坐下或躺下時生命力恢復速度提高 33%】**、攻擊強度**【核心換算：每 14 AP 提高 1 點武器 DPS (14 AP = 1 DPS)】**、致命一擊近戰 200% 傷害 / 法術治療 150% 效果 / 多數 DoT/HoT 可致命、防禦技能生物致命 200% / **【高 3 級生物造成 150% 碾壓傷害 / 防禦達 440 點首領免暴 (-5.60% 致命)】**、閃躲機率**【核心機制：對玩家來說只有來自正面的近戰攻擊可閃躲；對生物來說來自任何方向均可閃躲】**、招架機率**【招架提速 Parry Haste】**、護甲值**【免傷上限：來自護甲的傷害減免不能超過 75.00%】**。
+     - 擴充屬性目錄：新增 `attackPower`, `dodge`, `parry`, `block`，納入 `FOREVER_ORDERED_KEYS` 與 `RETAIL_ORDERED_KEYS`。
+     - 原生 Tooltip 知識引擎：HUD 框架與選項列表 row 懸停顯示完整數值計算與機制說明。
+  3. **獨立武器臨時附魔模組 (WeaponEnchantService)**：
+     - 底層調查確認：武器附魔為物品槽位臨時附魔（Slot 16/17/18），無 AuraInstanceID，在 `C_UnitAuras` 查無資料，採用專用 API `GetWeaponEnchantInfo()` 與事件 `WEAPON_ENCHANT_CHANGED`, `PLAYER_EQUIPMENT_CHANGED`, `UNIT_INVENTORY_CHANGED`, `PLAYER_ENTERING_WORLD`。
+     - 正式服 (Retail 12.x) 與永恆服 (Forever 1.60.1) 雙端均採用原生 API 支援（磨刀石、毒藥、風怒/火舌、符文熔鑄、法力油）。
+     - 獨立模組 `WeaponEnchantService.lua` 封裝完成：提供裝備感知、缺少武器附魔醒目警示 (Missing Enchant Warning, LibButtonGlow 外框發光與節流音效)、即將到期倒數警告 (Expiring Warning, 預設 5 分鐘)、獨立 HUD 渲染與移動模式 (`/eam enchant` 與 PlayerStatPanel 快捷入口)。
+- 落地成果：
+  1. 新增獨立模組 `EventAlertMod/Services/WeaponEnchantService.lua` (480+ 行)；
+  2. `PlayerStatService.lua` 實裝 11 大屬性公式與原生 GameTooltip 浮動提示；
+  3. `PlayerStatPanel.lua` 與 `Slash.lua` 整合武器附魔移動與定位快捷入口；
+  4. 5 語系檔 (`zhTW`, `zhCN`, `enUS`, `koKR`, `ruRU`) 100% 同步新增 10 大新詞條；
+  5. 測試套件擴充至 24 大深層 Suite，100% 通過。
+
 ### 2026-11-08 EAM-20261108-FOREVER-NAMING-CALIBRATION-AND-ALPHA-9.0-OPENING：World of Warcraft: Forever 1.60.1 雙語區官方名稱校準（繁中「永恆」、簡中「无限」）與 Alpha 9.0 開發週期啟動
 
 - 狀態：已完成 (公開產物消滅「永恆之樹」、Alpha 9.0 開發週期開啟、5 語系新增 6 個詞條 100% 對齊、五大門檻全過)。
@@ -3407,3 +3470,48 @@ esetSpiritRegenState()。
   - Run-FlowValidation.ps1 -Suite all：110/110 passed。
   - Test-ValidationContracts.ps1：502/502 passed。
   - Build-Package.ps1 -DryRun -SkipFlowValidation：PASS (80/80 Lua files syntax balanced)。
+
+---
+
+## 2026-11-12: ISSUE-074 (光環脫戰自動隱藏 hideAuraOutsideCombat 全域與單技能三態覆寫支援)
+
+- **問題回報 (Argon 總架構師派工單 EAM-AURA-OUT-OF-COMBAT-VISIBILITY)**：
+  - 玩家反饋希望光環圖示在非戰鬥（脫戰）狀態下能自動隱藏（脫戰消失），避免常駐 Buff 佔據視覺中央。
+  - 需求：
+    1. 全域設定 (`EAM.db.config.hideAuraOutsideCombat`，預設為 `false`)；
+    2. 單技能三態覆寫 (`alert.hideAuraOutsideCombat`：`nil` = 繼承全域、`true` = 強制脫戰消失、`false` = 強制脫戰保留)；
+    3. 完整支援 Legacy/Readable 光環後端 (`AuraService.lua`) 與 Retail 12.1+ 原生光環容器 (`AuraRuleCompiler.lua` / `NativeAuraRenderer.lua` / `AuraContainerService.lua`)；
+    4. ProfileCodec 匯出入、Options UI、5 語系本地化與離線 Flow 驗證。
+- **根因分析 (5-Whys)**：
+  - 既有 EAM 光環架構在脫戰狀態下一律根據光環存在與否渲染，缺少脫戰狀態檢定與全域/個別三態繼承邏輯；
+  - Retail 12.1+ 原生光環容器採用 C++ 引擎管理按鈕生命週期，戰鬥中無法 mutate 結構，必須透過 `SetAlpha(0/1)` 與指紋群組分離 (`groupID_hideOutsideCombat`) 實現安全無 Taint 隱藏。
+- **修復方案**：
+  1. `SavedVariables.lua`：
+     - `defaults.config.hideAuraOutsideCombat = false`；新增 `AURA_BEHAVIOR_FIELDS`；
+     - `addAlert` 支援 `hideAuraOutsideCombat`；新增 `updateAuraBehavior(unit, spellID, field, value)`；
+     - `buildImportedAlert` 與 `exportComparableImportedAlert` 完整編解碼；
+     - `applyProfileImport` 支援 `hideAuraOutsideCombat` 與 `auraChanged = true` 廣播；
+     - `updateConfigBoolean` 放行 `hideAuraOutsideCombat` 並廣播 `EAM_AURA_CONFIG_CHANGED`。
+  2. `ProfileCodec.lua`：
+     - `normalizeAuraRecord` 白名單與欄位解析；
+     - `normalizeGeneralConfigRecord` 僅當 `== true` 時寫入（確保預設 false 時 hash 與序列化字串 100% 不變）；
+     - `exportRecord` 支援 `hideAuraOutsideCombat`。
+  3. `AuraService.lua`：
+     - 新增 `AuraService.inCombat = false`、`isInCombat`、`resolveHideAuraOutsideCombat`、`shouldSuppressAuraOutsideCombat`；
+     - `renderAuraForAlerts` 與 `renderBoundaryUnit` 於脫戰隱藏時調用 `renderInactiveAlert`；
+     - 註冊 `PLAYER_REGEN_DISABLED` (`onRegenDisabled`) 與 `EAM_AURA_CONFIG_CHANGED` (`onAuraConfigChanged`)，`PLAYER_REGEN_ENABLED` 同步重設 `inCombat = false`。
+  4. Native Aura 12.1 Pipeline：
+     - `AuraRuleCompiler.lua`：`collectAlerts` 收集 `hideAuraOutsideCombat`，`buildBaseRule` 寫入 `rule.style.hideOutsideCombat`，容器指紋納入 `hideOutsideCombat`，`groupID` 串接 `_hideOutsideCombat` 確保規則群組正確分離；
+     - `NativeAuraRenderer.lua`：`snapshotStyle` 包含 `hideOutsideCombat`，`initializeButton` 計算初始戰鬥透明度與 `OnShow` hook，新增 `updateCombatVisibility(inCombatNow)`，`onCombatEnd` 調用 `updateCombatVisibility(false)` 且嚴格保留 `return true, "noPostInitializationMutation"` 合約；
+     - `AuraContainerService.lua`：新增 `onCombatStart` 並註冊 `PLAYER_REGEN_DISABLED`，`requestRebuild` 套用時即時更新按鈕戰鬥能見度。
+  5. `Options.lua` & 5 語系：
+     - Tab 1 新增「脫戰後隱藏光環 (脫戰消失)」全域勾選框；
+     - `condFrame` 新增單技能三態按鈕 `auraHideOutsideBtn` (預設/覆寫開/覆寫關)；
+     - `zhTW`、`zhCN`、`enUS`、`koKR`、`ruRU` 5 語系完整同步新增 4 個詞條。
+  6. `FlowTestRunner.lua`：
+     - 新增測試案例 `aura.hide_outside_combat_override`，驗證預設常規、全域開啟、戰鬥切換、單技能覆寫開/關與 ProfileCodec 匯出入。
+- **驗證指標**：
+  - Lua 語法檢查：82/82 PASS (`CheckLuaSyntax.ps1`)。
+  - Native API & Deep Test Suites：22/22 deep test suites PASS (`test_native_apis.py`)。
+  - 5 語系詞條對稱：100% 對齊。
+  - 鏡像檔案 SHA-256：`changelog.txt`、`changelog_en.txt`、`changelog.html` 100% 對齊。

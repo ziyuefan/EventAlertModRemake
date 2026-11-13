@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Service Layer">
   <meta name="ai-governance-security" content="Taint-Sensitive / Combat Protection Gated">
   <meta name="ai-governance-invariants" content="戰鬥中數值保護機制：戰鬥中 GetUnitSpeed 等受限 API 自動安全回退至真實脫戰記憶快取 (lastKnownStats) | 目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染 | 零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回">
-  <meta name="ai-scan-timestamp" content="2026-10-23T01:48:35.005749+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.651300+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,15 +29,15 @@
     "目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染",
     "零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回"
   ],
-  "timestamp": "2026-10-23T01:48:35.005749+08:00",
-  "fileCount": 19,
+  "timestamp": "2026-11-13T12:35:11.651300+08:00",
+  "fileCount": 20,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 461816,
+  "totalSizeBytes": 557373,
   "files": [
     {
       "name": "AuraCapabilityService.lua",
       "extension": ".lua",
-      "sizeBytes": 9799,
+      "sizeBytes": 9610,
       "lineCount": 229,
       "purpose": "將 12.1 AuraContainer 能力探測與後端選擇集中管理。；Interface 只作初篩；真正啟用 Native 前仍需以實體 AuraContainer 驗證公開方法。 | 記錄客戶端 build、AuraContainer、AuraSlot、AuraGroup 與 AuraSound 能力。；12.1 探測失敗時選擇 Unsupported，禁止偷偷回退到 Secret AuraData 舊路徑。",
       "role": "Services/AuraCapabilityService",
@@ -46,8 +46,8 @@
     {
       "name": "AuraContainerService.lua",
       "extension": ".lua",
-      "sizeBytes": 19758,
-      "lineCount": 483,
+      "sizeBytes": 20036,
+      "lineCount": 500,
       "purpose": "只在非戰鬥建立 player/target AuraContainer，套用 AuraSlot/AuraGroup 規則。；戰鬥中設定變更只記錄 pending，PLAYER_REGEN_ENABLED 後批次重建一次。",
       "role": "Services/AuraContainerService",
       "security": "Safe"
@@ -55,8 +55,8 @@
     {
       "name": "AuraService.lua",
       "extension": ".lua",
-      "sizeBytes": 38345,
-      "lineCount": 1034,
+      "sizeBytes": 41950,
+      "lineCount": 1117,
       "purpose": "作為 player/target aura facts 的唯一 adapter，隔離 Retail aura API 與 UI 層。；採取極致健壯且低 GC 的直讀策略，避免過度包裝導致普通屬性被誤判定為 restricted。 | 接收 UNIT_AURA/target change 後更新 aura runtime cache。；在 timer 中寫入完整的 startTime、duration、expirationTime，對齊 Renderer 要求。",
       "role": "Services/AuraService",
       "security": "Zero-Alloc"
@@ -64,8 +64,8 @@
     {
       "name": "AuraSoundService.lua",
       "extension": ".lua",
-      "sizeBytes": 8342,
-      "lineCount": 233,
+      "sizeBytes": 8511,
+      "lineCount": 235,
       "purpose": "依編譯後的普通設定值註冊與解除 12.1 C_UnitAuras Aura Sound。；精確管理 Added、ApplicationsIncreased、Removed 的註冊 ID 生命週期。",
       "role": "Services/AuraSoundService",
       "security": "Safe"
@@ -82,8 +82,8 @@
     {
       "name": "CooldownService.lua",
       "extension": ".lua",
-      "sizeBytes": 85094,
-      "lineCount": 2015,
+      "sizeBytes": 86405,
+      "lineCount": 2076,
       "purpose": "技能與物品冷卻追蹤服務，具備玩家精確施法過濾、三態設定與可用發光判定",
       "role": "Service / Cooldown Tracker",
       "security": "Taint-Sensitive"
@@ -91,8 +91,8 @@
     {
       "name": "GroundEffectService.lua",
       "extension": ".lua",
-      "sizeBytes": 44003,
-      "lineCount": 1080,
+      "sizeBytes": 43433,
+      "lineCount": 1091,
       "purpose": "將 canonical SavedVariables 與安全 Base／Override 法術族群編譯成 event spellID 索引，監聽玩家成功施法並建立地面效果計時。；非戰鬥、低頻解析法術說明；解析失敗時明確降級到使用者設定秒數。",
       "role": "Services/GroundEffectService",
       "security": "Taint-Sensitive"
@@ -109,8 +109,8 @@
     {
       "name": "ItemCooldownService.lua",
       "extension": ".lua",
-      "sizeBytes": 29095,
-      "lineCount": 778,
+      "sizeBytes": 31183,
+      "lineCount": 830,
       "purpose": "直接 itemID 監控歸此模組，不讓 item cooldown 邏輯散入 renderer。；採取極致健壯且低 GC 的直讀策略，避免過度安全檢查導致普通冷卻數據被誤攔截。 | 管理 item cooldown cache、ItemCooldownState 與 opt-in cache build 狀態。；接收 BAG_UPDATE_COOLDOWN 事件並刷新物品冷卻狀態。",
       "role": "Services/ItemCooldownService",
       "security": "Zero-Alloc"
@@ -127,8 +127,8 @@
     {
       "name": "MediaService.lua",
       "extension": ".lua",
-      "sizeBytes": 12443,
-      "lineCount": 349,
+      "sizeBytes": 14358,
+      "lineCount": 408,
       "purpose": "多媒體服務，支援 LibSharedMedia-3.0 音效/字型動態探測與原生雙軌安全播放",
       "role": "Service / Media Host",
       "security": "Safe"
@@ -136,7 +136,7 @@
     {
       "name": "PlayerResourceCapability.lua",
       "extension": ".lua",
-      "sizeBytes": 5002,
+      "sizeBytes": 4883,
       "lineCount": 139,
       "purpose": "在冷路徑判斷指定 UnitPower 資源為 NUMERIC、SECRET_DISPLAY 或 UNAVAILABLE。；只回傳安全 metadata，不回傳任何即時資源值。",
       "role": "Services/PlayerResourceCapability",
@@ -145,8 +145,8 @@
     {
       "name": "PlayerResourceService.lua",
       "extension": ".lua",
-      "sizeBytes": 55975,
-      "lineCount": 1352,
+      "sizeBytes": 56052,
+      "lineCount": 1353,
       "purpose": "依職業、專精、使用者設定與 12.1 runtime capability 編譯多資源 registry。；以 power token O(1) 分派 UNIT_POWER_UPDATE/FREQUENT/MAXPOWER。",
       "role": "Services/PlayerResourceService",
       "security": "Taint-Sensitive"
@@ -154,8 +154,8 @@
     {
       "name": "PlayerStatService.lua",
       "extension": ".lua",
-      "sizeBytes": 74746,
-      "lineCount": 1777,
+      "sizeBytes": 126668,
+      "lineCount": 2963,
       "purpose": "18 大人物屬性與滑翔速度即時監控服務，具備 12.1+ 戰鬥速度受限自動安全回退至快取機制",
       "role": "Service / Stat Monitor",
       "security": "Taint-Sensitive"
@@ -172,11 +172,20 @@
     {
       "name": "SpellInfoService.lua",
       "extension": ".lua",
-      "sizeBytes": 4941,
-      "lineCount": 140,
+      "sizeBytes": 6603,
+      "lineCount": 175,
       "purpose": "集中 spell name/icon/link lookup，讓其他服務不重複查詢。；查詢結果只作為 safe facts cache，不承擔 alert 判斷。 | 提供 spellID lookup 與快取入口。",
       "role": "Services/SpellInfoService",
       "security": "Safe"
+    },
+    {
+      "name": "SpellRankService.lua",
+      "extension": ".lua",
+      "sizeBytes": 13593,
+      "lineCount": 421,
+      "purpose": "為永恆服 (Forever 1.60.1 / Interface 16001 / Camelot) 提供全鏈路經典法術等級 (Spell Rank) 歸併管理。；暴雪原生 C_SpellBook 保留了所有等級 (Rank 1 ~ Rank N)，而原生 AuraContainer / Cooldown / Ground 需要將同一家族所有等級展開為雜湊集合。 | 載入 ForeverCatalog 靜態多等級法術家族表。；於非戰鬥冷路徑掃描 C_SpellBook (Player & Pet bank) 自動歸併已學等級與未知等級。",
+      "role": "Services/SpellRankService",
+      "security": "Taint-Sensitive"
     },
     {
       "name": "TooltipMonitorService.lua",
@@ -199,11 +208,11 @@
     {
       "name": "WeaponEnchantService.lua",
       "extension": ".lua",
-      "sizeBytes": 5656,
-      "lineCount": 175,
-      "purpose": "將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/影之哀傷等) 作為標準 AuraState 提供給渲染器。；與自身增益光環流式並列，消除傳統獨立輪詢視窗。 | 監聽裝備變更與定時器，解析 GetWeaponEnchantInfo。；生成標準化 AuraState 並派發至 selfAura 告警框架。",
+      "sizeBytes": 25471,
+      "lineCount": 659,
+      "purpose": "將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/盜賊毒藥/DK符文熔鑄/影之哀傷等) 作為獨立告警模組提供全面監控。；為什麼不是常規光環？底層是裝備槽位（Slot 16 主手、17 副手、18 遠程）之物品臨時附魔 (Item Temporary Enchantment)， | 主手 (16)、副手 (17) 與遠程 (18) 臨時附魔之狀態取樣（剩餘時間、剩餘次數、裝備圖示）。；【缺少武器附魔提醒 (Missing Weapon Enchant Warning)】：當角色裝備了武器但未附魔時發出告警（圖示高亮、邊框發光、音效）。",
       "role": "Services/WeaponEnchantService",
-      "security": "Safe"
+      "security": "Taint-Sensitive"
     }
   ],
   "subdirectories": []
@@ -679,7 +688,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">檔案數量</span>
-          <span class="stat-val">19</span>
+          <span class="stat-val">20</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">子目錄數量</span>
@@ -687,7 +696,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">451.0 KB</span>
+          <span class="stat-val">544.3 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -710,7 +719,7 @@
     <!-- 檔案清單表格 -->
     <section>
       <div class="filter-toolbar">
-        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (19)</h2>
+        <h2 class="section-title" style="margin: 0;">📄 檔案清單 (20)</h2>
         <input type="text" id="fileFilter" class="search-input" placeholder="🔍 快速篩選檔案名稱、用途或標籤..." oninput="filterFiles()">
       </div>
 
@@ -741,7 +750,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            9.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 229 行</span>
+            9.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 229 行</span>
           </td>
         </tr>
         
@@ -759,7 +768,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            19.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 483 行</span>
+            19.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 500 行</span>
           </td>
         </tr>
         
@@ -777,7 +786,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            37.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1034 行</span>
+            41.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1117 行</span>
           </td>
         </tr>
         
@@ -795,7 +804,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            8.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 233 行</span>
+            8.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 235 行</span>
           </td>
         </tr>
         
@@ -831,7 +840,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            83.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2015 行</span>
+            84.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2076 行</span>
           </td>
         </tr>
         
@@ -849,7 +858,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            43.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1080 行</span>
+            42.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1091 行</span>
           </td>
         </tr>
         
@@ -885,7 +894,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            28.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 778 行</span>
+            30.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 830 行</span>
           </td>
         </tr>
         
@@ -921,7 +930,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            12.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 349 行</span>
+            14.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 408 行</span>
           </td>
         </tr>
         
@@ -939,7 +948,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            4.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 139 行</span>
+            4.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 139 行</span>
           </td>
         </tr>
         
@@ -957,7 +966,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            54.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1352 行</span>
+            54.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1353 行</span>
           </td>
         </tr>
         
@@ -975,7 +984,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            73.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1777 行</span>
+            123.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2963 行</span>
           </td>
         </tr>
         
@@ -1011,7 +1020,25 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            4.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 140 行</span>
+            6.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 175 行</span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            <div class="file-name-cell">
+              <span>📄</span>
+              <a href="./SpellRankService.lua" title="檢視檔案內容">SpellRankService.lua</a>
+            </div>
+          </td>
+          <td><span class="badge badge-lua">LUA</span></td>
+          <td>
+            <div style="font-weight: 500; color: #f1f5f9;">為永恆服 (Forever 1.60.1 / Interface 16001 / Camelot) 提供全鏈路經典法術等級 (Spell Rank) 歸併管理。；暴雪原生 C_SpellBook 保留了所有等級 (Rank 1 ~ Rank N)，而原生 AuraContainer / Cooldown / Ground 需要將同一家族所有等級展開為雜湊集合。 | 載入 ForeverCatalog 靜態多等級法術家族表。；於非戰鬥冷路徑掃描 C_SpellBook (Player &amp; Pet bank) 自動歸併已學等級與未知等級。</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/SpellRankService</div>
+          </td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
+            13.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 421 行</span>
           </td>
         </tr>
         
@@ -1060,12 +1087,12 @@
           </td>
           <td><span class="badge badge-lua">LUA</span></td>
           <td>
-            <div style="font-weight: 500; color: #f1f5f9;">將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/影之哀傷等) 作為標準 AuraState 提供給渲染器。；與自身增益光環流式並列，消除傳統獨立輪詢視窗。 | 監聽裝備變更與定時器，解析 GetWeaponEnchantInfo。；生成標準化 AuraState 並派發至 selfAura 告警框架。</div>
+            <div style="font-weight: 500; color: #f1f5f9;">將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/盜賊毒藥/DK符文熔鑄/影之哀傷等) 作為獨立告警模組提供全面監控。；為什麼不是常規光環？底層是裝備槽位（Slot 16 主手、17 副手、18 遠程）之物品臨時附魔 (Item Temporary Enchantment)， | 主手 (16)、副手 (17) 與遠程 (18) 臨時附魔之狀態取樣（剩餘時間、剩餘次數、裝備圖示）。；【缺少武器附魔提醒 (Missing Weapon Enchant Warning)】：當角色裝備了武器但未附魔時發出告警（圖示高亮、邊框發光、音效）。</div>
             <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/WeaponEnchantService</div>
           </td>
-          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
+          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            5.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 175 行</span>
+            24.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 659 行</span>
           </td>
         </tr>
         
@@ -1077,7 +1104,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-10-23T01:48:35.005749+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.651300+08:00</p>
     </footer>
   </div>
 

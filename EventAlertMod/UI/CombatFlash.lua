@@ -32,6 +32,8 @@ local CombatFlash = {
     animGroup = nil,
     spiritFrame = nil,
     spiritAnimGroup = nil,
+    spiritGlowFrame = nil,
+    isGlowActive = false,
 }
 EAM.UI.CombatFlash = CombatFlash
 
@@ -103,6 +105,92 @@ function CombatFlash.triggerSpiritActive()
         return true, "spiritCustom"
     end
     return false, "unavailable"
+end
+
+local function createSpiritActiveGlowFrame()
+    if CombatFlash.spiritGlowFrame then
+        return CombatFlash.spiritGlowFrame
+    end
+
+    local parent = _G.UIParent
+    if not parent then return nil end
+
+    local frame = api.CreateFrame and api.CreateFrame("Frame", "EAM_SpiritActiveGlowFrame", parent)
+    if not frame then return nil end
+
+    frame:SetAllPoints(parent)
+    frame:SetFrameStrata("BACKGROUND")
+    frame:EnableMouse(false)
+    frame:Hide()
+
+    local texture = frame:CreateTexture(nil, "BACKGROUND")
+    texture:SetAllPoints(frame)
+    local texPath = "Interface\\FullScreenTextures\\LowHealth"
+    texture:SetTexture(texPath)
+    texture:SetBlendMode("ADD")
+    texture:SetVertexColor(0.15, 0.65, 1.00, 0.35)
+    frame.texture = texture
+
+    if frame.CreateAnimationGroup then
+        local inAg = frame:CreateAnimationGroup()
+        local inA = inAg:CreateAnimation("Alpha")
+        inA:SetFromAlpha(0)
+        inA:SetToAlpha(0.35)
+        inA:SetDuration(0.40)
+        inAg:SetScript("OnFinished", function()
+            frame:SetAlpha(0.35)
+        end)
+        frame.fadeInGroup = inAg
+
+        local outAg = frame:CreateAnimationGroup()
+        local outA = outAg:CreateAnimation("Alpha")
+        outA:SetFromAlpha(0.35)
+        outA:SetToAlpha(0)
+        outA:SetDuration(0.30)
+        outAg:SetScript("OnFinished", function()
+            frame:SetAlpha(0)
+            frame:Hide()
+        end)
+        frame.fadeOutGroup = outAg
+    end
+
+    CombatFlash.spiritGlowFrame = frame
+    return frame
+end
+
+function CombatFlash.setSpiritActiveGlow(active)
+    local isAct = (active == true)
+    if CombatFlash.isGlowActive == isAct and CombatFlash.spiritGlowFrame and CombatFlash.spiritGlowFrame:IsShown() == isAct then
+        return true, isAct and "active" or "inactive"
+    end
+    CombatFlash.isGlowActive = isAct
+
+    local frame = createSpiritActiveGlowFrame()
+    if not frame then return false, "unavailable" end
+
+    if isAct then
+        frame:Show()
+        if frame.fadeOutGroup then frame.fadeOutGroup:Stop() end
+        if frame.fadeInGroup then
+            frame.fadeInGroup:Stop()
+            frame.fadeInGroup:Play()
+        else
+            frame:SetAlpha(0.35)
+        end
+        return true, "glowActive"
+    else
+        if frame:IsShown() then
+            if frame.fadeInGroup then frame.fadeInGroup:Stop() end
+            if frame.fadeOutGroup then
+                frame.fadeOutGroup:Stop()
+                frame.fadeOutGroup:Play()
+            else
+                frame:SetAlpha(0)
+                frame:Hide()
+            end
+        end
+        return true, "glowInactive"
+    end
 end
 
 local function createFlashFrame()

@@ -2,7 +2,7 @@
 # EventAlertMod Remake 說明文件導航中心 / Documentation Hub
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
-[![Release](https://img.shields.io/badge/release-Alpha%208.9-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%209.0-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -23,23 +23,30 @@
 
 ---
 
-## ✨ 八大獨立告警模組 (8 Independent Alert Modules)
+## ✨ 九大獨立告警模組 (9 Independent Alert Modules)
 
-EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：
+EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：
 
-1. 🔮 **自身光環 (Player Buff / Debuff)**：監控自身增益與減益，支援堆疊層數、剩餘吸收盾量即時顯示（如 `45.2k`、`1.2M`、`3(45k)`）與高精度倒數。
-2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態，支援 Tooltip 匿名回呼與無污染安全採集。
-3. ⚔️ **跨職業光環 (Cross-Class / Target Cast)**：監控敵方關鍵爆發或隊友重要增益，支援非本職業法術防誤加互動式確認對話框。
+1. 🔮 **自身光環 (Player Buff / Debuff)**：監控自身增益與減益，支援堆疊層數、剩餘吸收盾量即時顯示（如 `45.2k`、`1.2M`、`3(45k)`）、高精度倒數，以及全域＋單技能三態「脫戰後隱藏光環 (Hide Auras Outside Combat)」。
+2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態，支援 Tooltip 匿名回呼與無污染安全採集，並支援脫戰自動隱藏設定。
+3. ⚔️ **跨職業光環 (Cross-Class / Target Cast)**：監控敵方關鍵爆發或隊友重要增益，支援非本職業法術防誤加互動式確認對話框與脫戰隱藏控制。
 4. ⏳ **技能冷卻 (Spell Cooldown)**：純透明度（Alpha=0）常駐預載模式，0.00ms 零排版延遲；支援 2D 矩陣折行 (2D Grid Layout)、每列欄數控制 (Columns per Row)、圓形環狀進度條 (`Radial Ring Mode`)、框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)、扇形倒數色彩與透明度自訂、以及非線性衝刺進度曲線。
 5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控，支援 2D 矩陣折行排版。
 6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊、多時間組別候選擷取（Duration Group Selector）與 2D 矩陣折行。
-7. ⚡ **玩家職業資源 (Player Resource)**：支援 Retail 全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（`>=` / `<=` 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（`/eam rune`）；同步支援《魔獸世界：永恆 / 無限》(Forever 1.60.1，繁中「永恆」、簡中「無限」) 經典 60 級 9 大職業資源拓撲（戰士怒氣、盜賊能量與 5 格連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力），徹底隔離現代專精雜訊。
-8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：依職業獨立配置，全方位即時監控 18 種角色數值（主屬性、副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量），採 4-Tab 模組化設定面板與單項獨立座標自訂拖曳；永恆服 (Forever 1.60.1) 專屬支援五大魔法抗性（秘法、火焰、冰霜、自然、暗影）有效數值監控、經典精神 (Spirit) 5 秒回魔規則 (5SR) 狀態機、`FULL` / `REGEN_ONLY` / `STAT_ONLY` 三種數值呈現模式、Active 動態圖示高亮/文字放大脈衝、以及可選全螢幕寶石藍呼吸閃爍。
+7. ⚡ **玩家職業資源 (Player Resource)**：支援 Retail 全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（`>=` / `<=` 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（`/eam rune`）；同步支援《魔獸世界：永恆 / 無限》(Forever 1.60.1，繁中「永恆」、簡中「无限」) 經典 60 級 9 大職業資源拓撲（戰士怒氣、盜賊能量與 5 格連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力），徹底隔離現代專精雜訊。
+8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：依職業獨立配置，全方位即時監控角色數值（正式服 18+ 種核心屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）；永恆服 (Forever 1.60.1) 專屬支援 11 大實機校準屬性換算與原生 `GameTooltip` 知識引擎（含攻擊強度 `14 AP = 1 DPS`、防禦 440 首領免暴、護甲 `75%` 免傷上限、精神坐臥回血 `+33%`）、五大魔法抗性、法力 (`mana`) 與精神 5 秒回魔規則 (5SR) 三態視覺提醒，以及全螢幕柔和暗角藍色泛光 (`EAM_SpiritActiveGlowFrame`)。
+9. 🗡️ **武器臨時附魔 (Weapon Enchant)**：獨立服務模組 (`WeaponEnchantService`)，底層直通暴雪原生 `GetWeaponEnchantInfo()` API，完美支援主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 之經典磨刀石／毒藥／巫術與法力之油／風怒火舌／正式服符文熔鑄監控；具備缺附魔醒目發光警示、到期前倒數高亮與 `/eam enchant` 獨立 HUD 拖曳定位。
 
 ---
 
 ## 🔥 近期版本重大里程碑 (Recent Release Milestones)
 
+- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13**
+    - **獨立武器臨時附魔模組 (`WeaponEnchantService`) [雙版本共通]**：實裝獨立服務監控主／副／遠程武器槽位臨時附魔，涵蓋缺少附魔發光＋節流音效警示、到期前倒數亮框、以及 `/eam enchant` 獨立 HUD 定位。
+    - **永恆服 11 大角色屬性機制校準與原生 Tooltip 知識引擎 [Forever 1.60.1 專屬]**：依實機面板數據精準校準力量/耐力/敏捷/智力/精神/攻擊強度 (`14 AP = 1 DPS`)/致命/防禦 (`440` 首領免暴與碾壓機制)/閃躲/招架 (Parry Haste)/護甲 (`75%` 上限)，並擴充 `attackPower`、`dodge`、`parry`、`block` 與 HUD/面板原生 `GameTooltip`。
+    - **法力屬性、5 秒精神回魔 (5SR) 三態提醒與全螢幕柔和藍色泛光 [Forever 1.60.1 專屬]**：整合 `mana` 監控、StatusBar 冰藍/暗琥珀反差條、圖示雙態發光、文字 1.32x 放大倒數，以及 `CombatFlash` 常駐柔和暗角藍色泛光圖層 `EAM_SpiritActiveGlowFrame`。
+    - **光環脫戰自動隱藏全域與單技能三態覆寫 [雙版本共通]**：於一般設定與單技能條件提供全域開關與「跟隨全域／強制開／強制關」三態覆寫，全面貫通 Legacy `AuraService` 與 Retail 12.1+ 原生容器。
+    - **Forever 名稱校準與 AI 雙軌治理升級 (Track B 啟用)**：統一繁中「永恆」／簡中「无限」，明確區隔非 `Classic Era`；升級 `AI_GOVERNANCE_DIRECTIVE.xml` 至 **v1.4**（補完 Level 3 閉合 `<argon_ticket>` XML 契約並切換至 **Track B：`Gemini 4 Hydrogen (XHigh)` 仲裁 ＋ `Hydrogen` 四階動態強度**，新增 `eam-dual-track-orchestration` 技能）。
 - 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08**
     - **雙版本跨時代統一架構 (Multi-Flavor Unified Architecture)**：全面適配魔獸世界正式服 12.1.5（Interface: `120105`，向下相容 `120100` / `120007`）與《魔獸世界：永恆 / 無限》1.60.1（繁中「永恆」、簡中「無限」）（Interface: `16001`，專案代號 Camelot），單一程式碼庫自動偵測環境，實現零程式碼分岔。
     - **暴雪 12.1.5 & 1.60.1 秘密值 (Secret Values) 終極安全防護熱修復**：徹底修復失去控制冷卻 `locDur`（Secret Number 比較）與光環全量更新 `isFullUpdate`（Secret Boolean 判斷）在戰鬥中引發的運算中斷；採用 `issecretvalue()` 與 `canaccessvalue()` 雙重防禦檢驗，受保護數值直接單向傳遞至原生 `Cooldown:SetCooldown`、`DurationObject` 與 `StatusBar:SetValue`，戰鬥中零黃字噴錯、零 UI 污染。
@@ -128,7 +135,7 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 如果您是使用此插件的玩家，請造訪以下檔案了解如何安裝、使用插件以及查看完整的更新歷史：
 
 *   📖 **[快速使用指南 (README)](README.md.html)**
-    *   插件安裝指引、命令列指令大全、圖文介面導覽、自訂圖示與 8 大模組特色功能詳解。
+    *   插件安裝指引、命令列指令大全、圖文介面導覽、自訂圖示與 9 大獨立監控模組特色功能詳解。
 *   📜 **[版本更新日誌 (Changelog)](changelog.txt.html)**
     *   查看自重構以來所有 Alpha 版本的完整更新條目與修正細節。
 
@@ -149,10 +156,10 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
     *   Retail 12.1 Aura readiness、Secret／Taint、效能與文件治理的分級檢討結果。
 *   🚀 **[Antigravity 接手理解基準檔 (Baseline Assessment)](31_TAKEOVER_UNDERSTANDING_BASELINE_20260823_200615.md.html)**
     *   AI 治理、WoW Retail 12.x API 邊界、零 GC 效能架構、多職業資源與發布體系之權威理解基準點。
-*   🧠 **[21 大核心技能體系與 Agentic AI 治理哲學 (Skill Ecosystem & Philosophy)](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
-    *   **全面技能化（Everything as a Skill）核心手冊**。涵蓋 5 大領域 21 項技能全景目錄、漸進式揭露（Progressive Disclosure）、確定性交付與永續維護哲學。
+*   🧠 **[EAM 核心技能體系與 Agentic AI 治理哲學 (Skill Ecosystem & Philosophy)](32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md.html)**
+    *   **全面技能化（Everything as a Skill）核心手冊**。涵蓋 5 大領域 29 項 `eam-*` 專用技能（含 `eam-dual-track-orchestration`）、漸進式揭露（Progressive Disclosure）、確定性交付與永續維護哲學。
 *   📜 **[AI 代理人專用結構化 XML 治理指引 (AI Governance Directive)](33_AI_GOVERNANCE_DIRECTIVE.md.html)**
-    *   **大語言模型與子代理人專用結構化 XML 指導檔**。定義何時增設/加載 XML 準則、5 大不可逾越鐵律、Retail 12.x Secret 哨兵防線、模組分層契約、主動故障預測與威脅推論協議（v1.3）與零暖機記憶錨定。實體 XML 儲存於 `AI_GOVERNANCE_DIRECTIVE.xml`。
+    *   **大語言模型與子代理人專用結構化 XML 指導檔 (v1.4)**。定義何時增設/加載 XML 準則、不可逾越鐵律、Track A / Track B 雙軌動態模型調度（現行啟用 **Track B：`Gemini 4 Hydrogen (XHigh)` 仲裁 + `Hydrogen` 四階強度**）、Retail 12.x Secret 哨兵防線、主動故障預測協議，以及補完 Level 3 閉合 `<argon_ticket>` XML 派工契約。實體 XML 儲存於 `AI_GOVERNANCE_DIRECTIVE.xml`。
 *   📝 **[CurseForge 專案說明與更新日誌 Markdown 語法權威規範](34_CURSEFORGE_MARKDOWN_AUTHORING_GUIDE.md.html)**
     *   **CurseForge 與 GitHub 雙平台發布排版標準**。涵蓋 HTML Sanitizer 白名單、禁用表格轉嵌套清單規範、安全警報框與自動化審計契約。
 *   🧭 **[WoW AddOn 開發之 MCP 與工具路由權威政策 (WoW MCP Tool Routing Policy)](35_WOW_MCP_TOOL_ROUTING_POLICY.md.html)**

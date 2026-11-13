@@ -44,6 +44,8 @@ local COOLDOWN_BEHAVIOR_FIELDS = {
     "cooldownPreRender",
 }
 
+local AURA_BEHAVIOR_FIELDS = { "hideAuraOutsideCombat" }
+
 local function normalizeCooldownBehaviorOverride(value)
     if type(value) == "boolean" then
         return value
@@ -128,10 +130,25 @@ local defaults = {
             totem = { growDirection = 1, x = 0, y = -240, point = "CENTER", columns = 8 },
             playerStat = { growDirection = 1, x = 0, y = -220, point = "CENTER", columns = 8 },
             petAlert = { growDirection = 1, x = -120, y = 120, point = "CENTER", columns = 8 },
+            weaponEnchant = { growDirection = 1, x = 120, y = -120, point = "CENTER", columns = 4 },
         }
     },
     playerStats = {},
     groups = {},
+    weaponEnchant = {
+        enabled = true,
+        showMainHand = true,
+        showOffHand = true,
+        showRanged = false,
+        warnMissing = true,
+        warnExpiring = true,
+        expireThreshold = 300,
+        glowMissing = true,
+        glowExpiring = true,
+        playSound = false,
+        soundName = "ShayBell",
+        iconSize = 40,
+    },
     config = {
         language = "auto",
         theme = "eam",
@@ -148,6 +165,7 @@ local defaults = {
             playerStat = true,
             tooltipMonitor = true,
             petAlert = true,
+            weaponEnchant = true,
         },
         showFrame = true,
         showSpellName = true,
@@ -158,6 +176,7 @@ local defaults = {
         soundName = "ShayBell",
         allowEscCancel = false,
         showExtraAlert = false,
+        hideAuraOutsideCombat = false,
         cooldownRemoveAura = false,
         showSCDOutsideCombat = true,
         glowSCDWhenUsable = true,
@@ -220,6 +239,7 @@ local defaults = {
             itemCooldown = { 0.15, 0.95, 0.25, 1.00 },
             groundEffect = { 0.72, 0.25, 1.00, 1.00 },
             petAlert = { 0.35, 0.95, 0.55, 1.00 },
+            weaponEnchant = { 0.85, 0.55, 1.00, 1.00 },
         },
         borderEnabled = {
             selfHelpful = true,
@@ -230,6 +250,7 @@ local defaults = {
             itemCooldown = true,
             groundEffect = true,
             petAlert = true,
+            weaponEnchant = true,
         },
         chargeBarLayout = "BOTTOM",
         chargeBarLengthPercent = 150,
@@ -2674,6 +2695,8 @@ function SavedVariables.updateModuleToggle(key, enabled)
     toggles[key] = enabled
     if key == EAM.Constants.MODULE_KEYS.itemCooldown then
         db.config.enableItemCooldown = enabled
+    elseif key == EAM.Constants.MODULE_KEYS.weaponEnchant then
+        db.config.enableWeaponEnchant = enabled
     end
     touchRevision(db)
     local router = EAM.Modules.EventRouter
@@ -2868,6 +2891,10 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
                     changed = true
                 end
             end
+            if options.hideAuraOutsideCombat ~= nil and existing.hideAuraOutsideCombat ~= options.hideAuraOutsideCombat then
+                existing.hideAuraOutsideCombat = (type(options.hideAuraOutsideCombat) == "boolean") and options.hideAuraOutsideCombat or nil
+                changed = true
+            end
         end
         if kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT and options then
             local durationMode = normalizeGroundDurationMode(options.durationMode)
@@ -2981,6 +3008,7 @@ function SavedVariables.addAlert(kind, unit, spellID, itemID, options)
             and (type(options and options.groundEffectPreRender) == "boolean" and options.groundEffectPreRender or nil) or nil,
         customName = options and type(options.customName) == "string" and options.customName ~= "" and options.customName or nil,
         customIcon = options and options.customIcon ~= "" and options.customIcon or nil,
+        hideAuraOutsideCombat = kind == EAM.Constants.ALERT_KIND_AURA and options and (type(options.hideAuraOutsideCombat) == "boolean" and options.hideAuraOutsideCombat or nil) or nil,
     }
     if (kind == EAM.Constants.ALERT_KIND_SPELL_COOLDOWN or kind == EAM.Constants.ALERT_KIND_ITEM_COOLDOWN) and options then
         for index = 1, #COOLDOWN_BEHAVIOR_FIELDS do
@@ -3110,6 +3138,46 @@ function SavedVariables.updateAuraSound(unit, spellID, sound)
     return true, "updated", db.revision
 end
 
+function SavedVariables.updateAuraBehavior(unit, spellID, field, value)
+    local db = EAM.db
+    local numericSpellID = normalizePositiveInteger(spellID)
+    if type(db) ~= "table" or (unit ~= "player" and unit ~= "target" and unit ~= "pet") or not numericSpellID then
+        return false, "invalidAuraTarget", type(db) == "table" and db.revision or 0
+    end
+    if field ~= "hideAuraOutsideCombat" then
+        return false, "invalidAuraBehaviorField", db.revision
+    end
+    if value ~= nil and type(value) ~= "boolean" then
+        return false, "invalidAuraBehaviorValue", db.revision
+    end
+
+    local list = getAlertList(db, EAM.Constants.ALERT_KIND_AURA, unit)
+    local id = buildAlertID(EAM.Constants.ALERT_KIND_AURA, unit, numericSpellID)
+    local alert = (id and list) and list[id] or nil
+    if not alert then
+        return false, "notFound", db.revision
+    end
+    if alert[field] == value then
+        return true, "unchanged", db.revision
+    end
+
+    alert[field] = value
+    touchRevision(db)
+    local revision = db.revision
+    local router = (EAM.Core and EAM.Core.EventRouter) or (EAM.Modules and EAM.Modules.EventRouter)
+    if router and router.fire then
+        router.fire("EAM_AURA_CONFIG_CHANGED", {
+            reason = "auraBehaviorUpdated",
+            unit = unit,
+            spellID = numericSpellID,
+            field = field,
+            value = value,
+            revision = revision,
+        })
+    end
+    return true, "updated", revision
+end
+
 local PROFILE_IMPORT_DEFINITIONS = {
     playerAura = { listName = "playerAuras", kind = EAM.Constants.ALERT_KIND_AURA, unit = "player", idField = "spellID" },
     targetAura = { listName = "targetAuras", kind = EAM.Constants.ALERT_KIND_AURA, unit = "target", idField = "spellID" },
@@ -3158,6 +3226,12 @@ local function buildImportedAlert(moduleName, record)
                 return nil, "soundInvalid"
             end
         end
+        if record.hideAuraOutsideCombat ~= nil then
+            if type(record.hideAuraOutsideCombat) ~= "boolean" then
+                return nil, "auraBehaviorInvalid"
+            end
+            alert.hideAuraOutsideCombat = record.hideAuraOutsideCombat
+        end
     elseif definition.kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT then
         alert.durationMode = normalizeGroundDurationMode(record.durationMode)
         alert.manualDuration = normalizeGroundDuration(record.manualDuration, 8)
@@ -3198,6 +3272,9 @@ local function exportComparableImportedAlert(moduleName, alert)
         record.showCountdown = alert.showCountdown ~= false
         record.priority = normalizeAlertPriority(alert.priority)
         record.sound = normalizeAuraSound(alert.sound)
+        if type(alert.hideAuraOutsideCombat) == "boolean" then
+            record.hideAuraOutsideCombat = alert.hideAuraOutsideCombat
+        end
     elseif definition.kind == EAM.Constants.ALERT_KIND_GROUND_EFFECT then
         record.durationMode = normalizeGroundDurationMode(alert.durationMode)
         record.manualDuration = normalizeGroundDuration(alert.manualDuration, 8)
@@ -3423,7 +3500,7 @@ function SavedVariables.applyProfileImport(classToken, moduleRecordsOrPayload, m
 
     if applyConfig then
         db.config = db.config or {}
-        local fields = { "showFrame", "showSpellName", "showTimeVal", "showFlash", "showSound", "soundName", "allowEscCancel", "showExtraAlert", "cooldownRemoveAura", "showSCDOutsideCombat", "glowSCDWhenUsable", "theme" }
+        local fields = { "showFrame", "showSpellName", "showTimeVal", "showFlash", "showSound", "soundName", "allowEscCancel", "showExtraAlert", "cooldownRemoveAura", "showSCDOutsideCombat", "glowSCDWhenUsable", "theme", "hideAuraOutsideCombat" }
         for i = 1, #fields do
             local field = fields[i]
             if generalConfigData[field] ~= nil then
@@ -3432,6 +3509,9 @@ function SavedVariables.applyProfileImport(classToken, moduleRecordsOrPayload, m
         end
         if generalConfigData.theme and EAM.Theme and type(EAM.Theme.setSelection) == "function" then
             EAM.Theme.setSelection(generalConfigData.theme)
+        end
+        if generalConfigData.hideAuraOutsideCombat ~= nil then
+            auraChanged = true
         end
         changed = true
     end
@@ -3744,7 +3824,19 @@ function SavedVariables.updateConfigNumber(key, value)
     end
     EAM.db.config[key] = numberValue
     touchRevision(EAM.db)
-    return true, "updated", EAM.db.revision
+    local revision = EAM.db.revision
+    if key == "hideAuraOutsideCombat" then
+        local router = (EAM.Core and EAM.Core.EventRouter) or (EAM.Modules and EAM.Modules.EventRouter)
+        if router and router.fire then
+            router.fire("EAM_AURA_CONFIG_CHANGED", {
+                reason = "configBooleanUpdated",
+                key = key,
+                value = booleanValue,
+                revision = revision,
+            })
+        end
+    end
+    return true, "updated", revision
 end
 
 function SavedVariables.updateChargeBarLayout(layout)
@@ -3765,6 +3857,7 @@ function SavedVariables.updateConfigBoolean(key, value)
         showApplicationBar = true,
         auraStackBar = true,
         showDurationBar = true,
+        hideAuraOutsideCombat = true,
     }
     if not allowed[key] or type(EAM.db) ~= "table" then
         return false, "invalidConfigKey"

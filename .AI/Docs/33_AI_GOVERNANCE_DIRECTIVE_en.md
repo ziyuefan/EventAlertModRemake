@@ -31,14 +31,24 @@ The architecture framework delegates the timing and triggers for establishing an
 
 | Trigger ID | Scenario | Required Action |
 | :--- | :--- | :--- |
-| **C1_CROSS_MODEL_CONTINUITY** | **Model Switch / Context Window Truncation** | **Mandatory Ingestion**. When an agent experiences memory reset, ingesting `AI_GOVERNANCE_DIRECTIVE.xml` is the first required step. |
-| **C2_SUBAGENT_PROMPT_INJECTION** | **Subagent Task Delegation** | **Dynamic Slicing**. Extract corresponding XML nodes based on subagent duties and inject into prompts. |
-| **C3_COMPLEX_MODULE_REFACTOR** | **Major Module Refactoring** | **Structured Expansion**. Update state machine and pool boundaries within `<architecture_contracts>`. |
+| **C1_CROSS_MODEL_CONTINUITY** | **Model Switch / Context Window Truncation** | **Mandatory Ingestion**. When an agent experiences memory reset or switches between Track A / Track B, ingesting `AI_GOVERNANCE_DIRECTIVE.xml` restores architectural alignment immediately. |
+| **C2_SUBAGENT_PROMPT_INJECTION** | **Subagent Task Delegation** | **Dynamic Slicing**. Extract corresponding XML nodes based on subagent duties (including `<level3_closed_xml_ticket_standard>` for high-risk Level 3 tickets) and inject into prompts. |
+| **C3_COMPLEX_MODULE_REFACTOR** | **Major Module Refactoring** | **Structured Expansion**. Update state machine and pool boundaries within `<architecture_contracts>` and issue a closed `<argon_ticket>` XML dispatch contract. |
 | **C4_PROTECTED_API_INCIDENT** | **Blizzard API Change / Taint Incident** | **Immediate Lockdown**. Append forbidden operations into `<secret_values_sentinel>` as an unbreakable firewall. |
+| **C5_DUAL_TRACK_SWITCH** | **Arbiter Quota Shift (Track A ↔ Track B)** | **Track State Synchronization**. Switch `active_track` (`TRACK_B`: `Gemini 4 Hydrogen (XHigh)` Arbiter + `Hydrogen` dynamic; `TRACK_A`: `Gemini 4 Argon (High)` Arbiter + `Hydrogen` dynamic) per explicit user directive and sync continuity docs + `eam-dual-track-orchestration`. |
 
 ---
 
-## 📌 4. Physical File Reference
+## 🎯 4. Active Dual-Track Orchestration & Level 3 Closed XML Schema
 
-- **Physical AI Governance XML Directive**: [`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml)
-- **Validation**: Fully validated with Python `xml.etree.ElementTree` parser with 8 top-level structural modules intact.
+- **Active Orchestration Track (`2026-11-13`)**: **Track B** (`Gemini 4 Hydrogen (XHigh)` Chief Arbiter & Cold-Context Drift Auditor + `Gemini 4 Hydrogen` 4-Tier Dynamic Workers `LOW / MEDIUM / HIGH / XHIGH`). Track A (`Gemini 4 Argon (High)` Chief Arbiter) remains on standby for explicit restoration.
+- **4-Tier Self-Routing & Reply Header**: Every user response begins with `【任務階段：＜階段名稱＞｜建議模型與檔位：Hydrogen (LOW / MEDIUM / HIGH / EXTRA) 或 Argon｜治理模式：輕量 / L1+L2 / 完整 XML】`.
+- **Level 3 Closed `<argon_ticket>` XML**: Node #13 defines the complete closed schema (`<meta>`, `<scope>/<allowed_files>`, `<immutable_files>`, `<invariants>`, `<execution_plan>`, `<verification>`, `<cold_context_review>`) for high-risk core engine or multi-module refactors.
+
+---
+
+## 📌 5. Physical File Reference
+
+- **Physical AI Governance XML Directive**: [`.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml`](file:///d:/Project_EventAlertMod_AGY/.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml) (`v1.4`, updated `2026-11-13`)
+- **Related Skill**: [`.AI/skills/eam-dual-track-orchestration/SKILL.md`](file:///d:/Project_EventAlertMod_AGY/.AI/skills/eam-dual-track-orchestration/SKILL.md)
+- **Validation**: Validated with Python `xml.etree.ElementTree` parser across all 13 top-level structural nodes (including `<dual_track_model_routing>` and `<level3_closed_xml_ticket_standard>`).

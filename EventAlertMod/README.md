@@ -2,7 +2,7 @@
 
 [![GitHub](https://img.shields.io/badge/source-GitHub-181717)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blueviolet)](https://ziyuefan.github.io/EventAlertModRemake/)
-[![Release](https://img.shields.io/badge/release-Alpha%208.9-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
+[![Release](https://img.shields.io/badge/release-Alpha%209.0-orange)](https://github.com/ziyuefan/EventAlertModRemake/releases)
 [![Retail](https://img.shields.io/badge/WoW-Retail%2012.1.5%20%7C%20Forever%201.60.1-blue)](https://github.com/ziyuefan/EventAlertModRemake)
 [![Interface](https://img.shields.io/badge/Interface-120007%20%7C%20120100%20%7C%20120105%20%7C%2016001-brightgreen)](https://github.com/ziyuefan/EventAlertModRemake)
 
@@ -23,18 +23,19 @@
 
 ---
 
-## ✨ 八大獨立告警模組 (8 Independent Alert Modules)
+## ✨ 九大獨立告警模組 (9 Independent Alert Modules)
 
-EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組：
+EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：
 
-1. 🔮 **自身光環 (Player Buff / Debuff)**：監控自身增益與減益，支援堆疊層數與高精度倒數。
-2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態。
-3. ⚔️ **跨職業光環 (Cross-Class / Target Cast)**：監控敵方關鍵爆發或隊友重要增益。
+1. 🔮 **自身光環 (Player Buff / Debuff)**：監控自身增益與減益，支援堆疊層數、高精度倒數，以及全域＋單技能三態「脫戰後隱藏光環」控制。
+2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態，支援脫戰自動隱藏設定。
+3. ⚔️ **跨職業光環 (Cross-Class / Target Cast)**：監控敵方關鍵爆發或隊友重要增益，支援脫戰自動隱藏設定。
 4. ⏳ **技能冷卻 (Spell Cooldown)**：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (`Radial Mode`) 與框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)。
 5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控；全面支援 19 部位裝備欄位代號與具體物品 ID 雙軌監控、穿戴裝備三軌冷卻備援機制與即時換裝響應。
 6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。
 7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（正式服至暗之夜全職業現代專精資源；經典 60 級 9 職業經典能量拓樸如獵人法力/寵物集中值、術士法力/靈魂碎片、德魯伊四形態切換、盜賊能量/連擊點、戰士怒氣等）。
-8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位即時監控角色數值（正式服 18 種主副屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、精神 5 秒回魔規則 MP5/HP5 與 Active 動態提醒/全螢幕藍框閃爍、防禦技能、寵物快樂度與遠程彈藥等）。
+8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位即時監控角色數值（正式服 18+ 種核心屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、11 大實機校準屬性公式與原生 Tooltip 知識引擎、法力屬性與精神 5 秒回魔規則 MP5/HP5 三態醒目提醒、全螢幕持續柔和暗角藍色泛光 `EAM_SpiritActiveGlowFrame`、防禦技能 440 免暴、寵物快樂度與遠程彈藥等）。
+9. 🗡️ **武器臨時附魔 (Weapon Enchant)**：獨立專屬服務模組 (`WeaponEnchantService`)，底層直通暴雪原生 `GetWeaponEnchantInfo()` API，即時追蹤主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 磨刀石／毒藥／巫術與法力油／風怒火舌／正式服符文熔鑄；具備缺附魔發光＋節流音效警示、到期倒數發光與 `/eam enchant` 獨立 HUD 拖曳定位。
 
 ---
 
@@ -43,7 +44,7 @@ EAM 擁有 8 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 - 📖 **次世代全量法術庫與智慧預設 (Master Spell Catalog)**：內建 5 語系先驗資料庫（收錄 4,463 個技能與 466 個光環），支援專精樹展開/收合、一鍵天賦技能智慧同步、目標模組清單自由指派（冷卻/光環/地面效果）與全法術 GameTooltip 懸停說明。
 - 🏷️ **多維戰術群組與標籤管理 (Group Management)**：支援技能多對多標籤歸屬、內建 4 大系統戰術群組（爆發/減傷/控場/地面）與自訂群組、獨立二級管理側窗、戰鬥情境過濾與技能細節視窗下拉複選器。
 - 🎵 **LibSharedMedia-3.0 (SharedMedia) 素材生態全面整合**：動態探測所有第三方 SharedMedia 音效、字型與材質包，支援自適應長清單滑鼠滾輪選單與字型全域 60fps 熱套用（免 /reload 即時生效）。
-- 🐮 **經典奶牛頭位置預覽**：排版模式下以經典奶牛頭圖示 (`Spell_Nature_Polymorph_Cow`) 清楚標記 8 大告警框架定位。
+- 🐮 **經典奶牛頭位置預覽**：排版模式下以經典奶牛頭圖示 (`Spell_Nature_Polymorph_Cow`) 清楚標記 8 大核心告警框架定位（另含 `/eam enchant` 武器附魔獨立 HUD 定位）。
 - 🖼️ **全模組自訂替代圖示 (Custom Icon Override)**：所有模組均可輸入官方 FileID（例如 `132307`）或材質路徑，自訂取代預設圖示，並附即時動態預覽方塊與 Wago.tools 查詢指引。
 - 💀 **死亡騎士符文儀表板**：依專精動態切換專屬圖示，內建 6 格微型充能冷卻條（0%..100% 平滑動畫）與 `/eam rune` 槽位診斷視窗。
 - ⚡ **60fps 全方位即時熱預覽**：調整尺寸、間距、透明度、轉圈動畫、文字大小等，畫面上即時動態響應，非戰鬥不需 `/reload`。
@@ -124,6 +125,7 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 | `/eam lookupfull <全名>` | `/eam lf <全名>` | 依完整名稱精確查詢目前職業可用法術候選與 Spell ID |
 | `/eam showcast` | `/eam showc` | 開始或停止記錄本次登入成功施放的法術（方便查詢自己剛放的技能 ID） |
 | `/eam profile` | `/eam profile export`, `/eam profile import` | 開啟 Profile 設定檔匯出／匯入與字串分享面板 |
+| `/eam enchant` | `/eam weapon`, `/eam we` | 開啟或關閉武器臨時附魔獨立 HUD 位置移動模式 |
 | `/eam rune` | `/eam runes`, `/eam probe rune` | 開啟死亡騎士 6 格符文槽位即時狀態、充能秒數與診斷 JSON 視窗 |
 | `/eam unitpower background <KEY>` | 無 | 標記指定背景資源缺少事件，啟動 0.5s demand-driven 共用取樣器 |
 | `/eam doctor` | `/eam validate` | 執行客戶端 API 邊界與運行環境診斷報告 |
@@ -158,6 +160,18 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.5 & Forever 1.60.1 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
+
+### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13
+- **獨立武器臨時附魔模組 (`WeaponEnchantService`) [雙版本共通]**：
+  - 建立獨立服務呼叫暴雪原生 `GetWeaponEnchantInfo()` API，支援主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 臨時附魔（Forever 磨刀石／毒藥／巫術與法力之油／風怒火舌；Retail 符文熔鑄／磨刀石／油／毒藥）。
+  - 提供缺少武器附魔亮框＋節流音效警示、附魔即將到期倒數（預設 5 分鐘）橘紅發光提醒，以及 `/eam enchant` 獨立 HUD 拖曳定位。
+- **[Forever 1.60.1 永恆服專屬] 11 大角色屬性實機校準與原生 Tooltip 知識引擎**：
+  - 依實機面板數據精確校準 11 大屬性換算公式與規則（`14 AP = 1 DPS`、防禦 `440` 點首領免暴、護甲 `75.00%` 免傷上限、智力提高武器技能提升機率、精神坐下或躺下生命力恢復提高 `33%`、閃躲正側面規則與招架提速 Parry Haste），新增 `attackPower`、`dodge`、`parry`、`block` 並實裝 HUD/面板原生 `GameTooltip`。
+- **[Forever 1.60.1 永恆服專屬] 法力屬性、5 秒精神回魔三態提醒與全螢幕持續藍色泛光**：
+  - 擴展 `mana` 屬性監控，深度整合 5SR 狀態機：StatusBar 冰晶藍／暗琥珀雙色反差、圖示 `LibButtonGlow`、文字 `1.32x` 放大／`%.1fs` 懲罰倒數，並於 `CombatFlash.lua` 新增常駐柔和暗角藍色泛光圖層 `EAM_SpiritActiveGlowFrame`。
+- **光環脫戰自動隱藏 (Hide Auras Outside Combat) [雙版本共通]**：
+  - 於一般設定提供全域開關，並於單技能條件提供「跟隨全域／強制開／強制關」三態覆寫，全面打通 Legacy `AuraService` 與 Retail 12.1+ 原生光環容器。
+- **Forever 名稱校準與雙語同步**：繁體中文 (`zhTW`) 統一為「永恆」、簡體中文 (`zhCN`) 統一為「无限」，5 語系字典檔 100% 對齊。
 
 ### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08
 - **雙版本無縫統一架構 (Multi-Flavor Unified Architecture)**：

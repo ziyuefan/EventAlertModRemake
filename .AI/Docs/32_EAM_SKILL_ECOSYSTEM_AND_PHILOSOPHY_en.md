@@ -91,3 +91,4 @@ To decisively eliminate these bottlenecks, EventAlertMod (EAM) implements an ind
 19. **`eam-local-wow-deployer`**: Windows Registry root discovery, Reparse Point / Symlink fail-closed guards, and WTF backups.
 20. **`eam-docs-site-builder`**: Automated HTML documentation site generator (`batch_convert_docs.py`), navbar injection, and bilingual content switching.
 21. **`eam-project-continuity-governor`**: Single source of truth governance, `ProjectContinuity.json`, and context compression handoff.
+22. **`eam-dual-track-orchestration`**: Track A (`Argon High`) / Track B (`Hydrogen XHigh`) Chief Arbiter switching, 4-tier `Hydrogen` self-routing, Index-First anti-drift guardrails, Level 3 closed `<argon_ticket>` XML schema, and Cold-Context Drift Audit. (Note: Total active EAM skills in `.AI/skills/` have grown beyond 22 to include release curation, MiliUI publishing, API change intelligence, native aura/flow validation, and skill discovery utilities.)

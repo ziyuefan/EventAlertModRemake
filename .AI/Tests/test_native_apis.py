@@ -539,5 +539,235 @@ for loc in ['zhTW', 'zhCN', 'enUS', 'koKR', 'ruRU']:
 
 print('  [PASS] Forever Spirit 5SR State Machine, MP5/HP5, Active Alert and UI verified')
 
-print('\n>>> ALL 21 DEEP TEST SUITES PASSED WITH ZERO ERRORS! <<<')
+print('=== 22. Testing Aura Out-Of-Combat Visibility Pipeline & 5-Locale Keys ===')
+
+# 1. 5-Locale synchronization
+aura_ooc_keys = [
+    'EAM_OPT_HIDE_AURA_OUTSIDE_COMBAT',
+    'EAM_OPT_HIDE_AURA_OUTSIDE_COMBAT_TIP',
+    'EAM_OPT_COND_AURA_HIDE_OUTSIDE',
+    'EAM_OPT_COND_AURA_HIDE_OUTSIDE_TIP',
+]
+for loc in ['zhTW', 'zhCN', 'enUS', 'koKR', 'ruRU']:
+    loc_src = open(f'EventAlertMod/Locale/{loc}.lua', 'r', encoding='utf-8').read()
+    for ak in aura_ooc_keys:
+        assert (f'L.{ak}' in loc_src or f'L["{ak}"]' in loc_src), f'Missing {ak} in Locale/{loc}.lua'
+
+# 2. SavedVariables.lua
+sv_src = open('EventAlertMod/Core/SavedVariables.lua', 'r', encoding='utf-8').read()
+assert 'hideAuraOutsideCombat = false,' in sv_src, 'defaults.config must have hideAuraOutsideCombat = false'
+assert 'local AURA_BEHAVIOR_FIELDS = { "hideAuraOutsideCombat" }' in sv_src, 'Missing AURA_BEHAVIOR_FIELDS in SavedVariables'
+assert 'function SavedVariables.updateAuraBehavior(unit, spellID, field, value)' in sv_src, 'Missing updateAuraBehavior in SavedVariables'
+assert 'hideAuraOutsideCombat = true,' in sv_src, 'SavedVariables.updateConfigBoolean must allow hideAuraOutsideCombat'
+
+# 3. ProfileCodec.lua
+codec_src = open('EventAlertMod/Core/ProfileCodec.lua', 'r', encoding='utf-8').read()
+assert 'hideAuraOutsideCombat = true,' in codec_src, 'normalizeAuraRecord must whitelist hideAuraOutsideCombat'
+assert 'normalized.hideAuraOutsideCombat = record.hideAuraOutsideCombat' in codec_src, 'normalizeAuraRecord must parse hideAuraOutsideCombat'
+assert 'normalized.hideAuraOutsideCombat = true' in codec_src, 'normalizeGeneralConfigRecord must handle hideAuraOutsideCombat'
+
+# 4. AuraService.lua
+aura_src = open('EventAlertMod/Services/AuraService.lua', 'r', encoding='utf-8').read()
+assert 'inCombat = false,' in aura_src, 'AuraService must initialize inCombat = false'
+assert 'AuraService.resolveHideAuraOutsideCombat' in aura_src, 'AuraService must expose resolveHideAuraOutsideCombat'
+assert 'AuraService.shouldSuppressAuraOutsideCombat' in aura_src, 'AuraService must expose shouldSuppressAuraOutsideCombat'
+assert 'function AuraService.onRegenDisabled()' in aura_src, 'AuraService must implement onRegenDisabled'
+assert 'function AuraService.onAuraConfigChanged()' in aura_src, 'AuraService must implement onAuraConfigChanged'
+
+# 5. Native pipeline
+compiler_src = open('EventAlertMod/Managers/AuraRuleCompiler.lua', 'r', encoding='utf-8').read()
+assert 'hideOutsideCombat = hideOutsideCombat,' in compiler_src, 'AuraRuleCompiler must populate rule.style.hideOutsideCombat'
+assert 'tostring(rule.style and rule.style.hideOutsideCombat == true)' in compiler_src, 'AuraRuleCompiler must include hideOutsideCombat in fingerprint'
+
+renderer_src = open('EventAlertMod/UI/NativeAuraRenderer.lua', 'r', encoding='utf-8').read()
+assert 'function NativeAuraRenderer.updateCombatVisibility(inCombatNow)' in renderer_src, 'NativeAuraRenderer must implement updateCombatVisibility'
+assert 'return true, "noPostInitializationMutation"' in renderer_src, 'NativeAuraRenderer contract preserved'
+
+container_src = open('EventAlertMod/Services/AuraContainerService.lua', 'r', encoding='utf-8').read()
+assert 'function AuraContainerService.onCombatStart()' in container_src, 'AuraContainerService must implement onCombatStart'
+assert 'router.register("PLAYER_REGEN_DISABLED", AuraContainerService.onCombatStart)' in container_src, 'AuraContainerService must register PLAYER_REGEN_DISABLED'
+
+# 6. Options.lua
+opt_src = open('EventAlertMod/UI/Options.lua', 'r', encoding='utf-8').read()
+assert 'function Options.refreshAuraBehaviorControls()' in opt_src, 'Options must implement refreshAuraBehaviorControls'
+assert 'condFrame.auraHideOutsideBtn' in opt_src, 'Options must create auraHideOutsideBtn'
+assert 'EAM_OPT_HIDE_AURA_OUTSIDE_COMBAT' in opt_src, 'Options must create global hideAuraOutsideCombat checkbox'
+assert re.search(r'if isAura then\s*cf\.fromPlayerCb:Show\(\)\s*else\s*cf\.fromPlayerCb:Hide\(\)\s*end\s*\n\s*for index = 1, #COOLDOWN_BEHAVIOR_OPTIONS', opt_src), 'Options.lua violates Test-ValidationContracts.ps1 L1391 contract'
+
+# 7. FlowTestRunner.lua
+flow_src = open('EventAlertMod/Debug/FlowTestRunner.lua', 'r', encoding='utf-8').read()
+assert 'aura.hide_outside_combat_override' in flow_src, 'FlowTestRunner must contain aura.hide_outside_combat_override case'
+
+print('  [PASS] Aura Out-Of-Combat Visibility Pipeline, 5-Locale Keys & Flow Test verified')
+
+print('=== 23. Testing Forever 1.60.1 11 Character Attributes, Tooltip Engine & Formulas ===')
+
+stat_service_src = open('EventAlertMod/Services/PlayerStatService.lua', 'r', encoding='utf-8').read()
+
+# 1. Check STAT_DEFINITIONS has attackPower, dodge, parry, block
+for key in ['attackPower', 'dodge', 'parry', 'block']:
+    assert f'key = "{key}"' in stat_service_src, f'Missing {key} in PlayerStatService.DEFINITIONS'
+
+# 2. Check FOREVER_ORDERED_KEYS has attackPower, dodge, parry, block
+for key in ['attackPower', 'dodge', 'parry', 'block']:
+    assert f'"{key}"' in stat_service_src, f'Missing {key} in FOREVER_ORDERED_KEYS'
+
+# 3. Check Forever 11 character attribute formulas and mechanics in getStatTooltipInfo
+assert 'PlayerStatService.getStatTooltipInfo' in stat_service_src, 'Missing getStatTooltipInfo in PlayerStatService'
+assert 'PlayerStatService.showStatTooltip' in stat_service_src, 'Missing showStatTooltip in PlayerStatService'
+
+# Formula 1: 1 Str = 2 AP
+assert '1 點力量 = 2 AP' in stat_service_src, 'Missing 1 Str = 2 AP mechanic in tooltip'
+# Formula 2: 1 Agi = 2 Armor
+assert '1 點敏捷 = 2 護甲' in stat_service_src, 'Missing 1 Agi = 2 Armor mechanic in tooltip'
+# Formula 3: 1 Sta = 10 HP
+assert '1 點耐力 = 10 生命力' in stat_service_src, 'Missing 1 Sta = 10 HP mechanic in tooltip'
+# Formula 4: Int increases weapon skill level-up chance
+assert '智力影響升熟練度速度' in stat_service_src, 'Missing Int weapon skill level-up mechanic in tooltip'
+# Formula 5: Spirit 5SR + sitting/lying 33% HP regen
+assert '坐下或躺下時，生命力恢復速度提高 33%' in stat_service_src, 'Missing sitting 33% HP regen in tooltip'
+# Formula 6: 14 AP = 1 DPS
+assert '14 AP = 1 DPS' in stat_service_src, 'Missing 14 AP = 1 DPS formula in tooltip'
+# Formula 7: 200% melee crit & 150% spell crit & DoT crit
+assert '造成 200% 傷害' in stat_service_src, 'Missing 200% melee crit damage in tooltip'
+assert '造成 150% 效果' in stat_service_src, 'Missing 150% spell crit damage in tooltip'
+assert 'DoT/HoT' in stat_service_src, 'Missing DoT crit mechanic in tooltip'
+# Formula 8: 150% crushing blow & 440 defense boss uncrittable
+assert '150% 碾壓傷害' in stat_service_src, 'Missing 150% crushing blow mechanic in tooltip'
+assert '防禦達 440 點' in stat_service_src and '-5.60%' in stat_service_src, 'Missing 440 defense uncrittable mechanic in tooltip'
+# Formula 9: Dodge frontal only for player, all directions for mobs
+assert '只有來自正面的近戰攻擊可閃躲' in stat_service_src, 'Missing frontal-only dodge mechanic in tooltip'
+# Formula 10: Parry haste
+assert 'Parry Haste' in stat_service_src, 'Missing Parry Haste mechanic in tooltip'
+# Formula 11: 75% max armor DR cap
+assert '75.00%' in stat_service_src, 'Missing 75% armor damage reduction cap in tooltip'
+
+# 4. Check UI event wiring for tooltips
+assert 'PlayerStatService.showStatTooltip(self, self.statKey)' in stat_service_src, 'Missing OnEnter tooltip wiring in statItemFrames'
+assert 'item:EnableMouse(true)' in stat_service_src, 'statItemFrames must have mouse enabled for tooltips'
+
+stat_panel_src = open('EventAlertMod/UI/PlayerStatPanel.lua', 'r', encoding='utf-8').read()
+assert 'PlayerStatService.showStatTooltip(self, self.statKey)' in stat_panel_src, 'PlayerStatPanel rows must wire showStatTooltip on hover'
+
+print('  [PASS] Forever 1.60.1 11 Character Attributes, Tooltip Engine & Formulas verified')
+
+print('=== 24. Testing Independent WeaponEnchantService Pipeline, HUD & 5-Locale Synchronization ===')
+
+# 1. TOC verification
+toc_src = open('EventAlertMod/EventAlertMod.toc', 'r', encoding='utf-8').read()
+assert 'Services\\WeaponEnchantService.lua' in toc_src, 'WeaponEnchantService.lua must be registered in EventAlertMod.toc'
+
+# 2. Constants verification
+const_src = open('EventAlertMod/Core/Constants.lua', 'r', encoding='utf-8').read()
+assert 'ALERT_KIND_WEAPON_ENCHANT = "weaponEnchant"' in const_src, 'Missing ALERT_KIND_WEAPON_ENCHANT in Constants'
+assert 'weaponEnchant = "weaponEnchant"' in const_src, 'Missing weaponEnchant in MODULE_KEYS / ALERT_FRAME_TYPES'
+
+# 3. SavedVariables verification
+sv_src = open('EventAlertMod/Core/SavedVariables.lua', 'r', encoding='utf-8').read()
+assert 'weaponEnchant = {' in sv_src, 'Missing weaponEnchant default settings in SavedVariables'
+assert 'weaponEnchant = { growDirection = 1, x = 120, y = -120' in sv_src, 'Missing layout.frames.weaponEnchant in SavedVariables'
+assert 'warnMissing = true' in sv_src, 'Missing warnMissing in SavedVariables defaults'
+assert 'warnExpiring = true' in sv_src, 'Missing warnExpiring in SavedVariables defaults'
+
+# 4. ModuleController verification
+mc_src = open('EventAlertMod/Core/ModuleController.lua', 'r', encoding='utf-8').read()
+assert 'weaponEnchant = true,' in mc_src, 'Missing weaponEnchant in ModuleController.validKeys'
+assert 'weaponEnchant = "WeaponEnchantService",' in mc_src, 'Missing weaponEnchant in ModuleController.serviceNames'
+
+# 5. WeaponEnchantService implementation details
+we_src = open('EventAlertMod/Services/WeaponEnchantService.lua', 'r', encoding='utf-8').read()
+assert 'WeaponEnchantService.sampleWeaponEnchants' in we_src, 'Missing sampleWeaponEnchants in WeaponEnchantService'
+assert 'WeaponEnchantService.formatDuration' in we_src, 'Missing formatDuration in WeaponEnchantService'
+assert 'WeaponEnchantService.getEnchantTooltipInfo' in we_src, 'Missing getEnchantTooltipInfo in WeaponEnchantService'
+assert 'WeaponEnchantService.showEnchantTooltip' in we_src, 'Missing showEnchantTooltip in WeaponEnchantService'
+assert 'WeaponEnchantService.setActiveAnchors' in we_src, 'Missing setActiveAnchors in WeaponEnchantService'
+assert 'isMissing' in we_src, 'WeaponEnchantService must support isMissing warning state'
+assert 'isExpiring' in we_src, 'WeaponEnchantService must support isExpiring warning state'
+assert 'expireThreshold' in we_src, 'WeaponEnchantService must respect expireThreshold'
+assert 'WEAPON_ENCHANT_CHANGED' in we_src, 'WeaponEnchantService must register WEAPON_ENCHANT_CHANGED'
+assert 'PLAYER_EQUIPMENT_CHANGED' in we_src, 'WeaponEnchantService must register PLAYER_EQUIPMENT_CHANGED'
+
+# 6. 5-Locale synchronization for all new keys
+new_locale_keys = [
+    'EAM_STAT_ATTACK_POWER',
+    'EAM_STAT_DODGE',
+    'EAM_STAT_PARRY',
+    'EAM_STAT_BLOCK',
+    'EAM_WEAPON_ENCHANT_TITLE',
+    'EAM_WEAPON_ENCHANT_MISSING',
+    'EAM_WEAPON_ENCHANT_EXPIRING',
+    'EAM_WEAPON_ENCHANT_WARN_MISSING',
+    'EAM_WEAPON_ENCHANT_WARN_EXPIRING',
+]
+for loc in ['zhTW', 'zhCN', 'enUS', 'koKR', 'ruRU']:
+    loc_src = open(f'EventAlertMod/Locale/{loc}.lua', 'r', encoding='utf-8').read()
+    for k in new_locale_keys:
+        assert (f'L.{k}' in loc_src or f'L["{k}"]' in loc_src), f'Missing {k} in Locale/{loc}.lua'
+
+print('  [PASS] Independent WeaponEnchantService Pipeline, HUD & 5-Locale Synchronization verified')
+
+print('=== 25. Testing Mana Stat, StatusBar/Icon/Text 5SR Active Alerts, Continuous Full-Screen Blue Glow & 5-Locale Keys ===')
+
+stat_service_src = open('EventAlertMod/Services/PlayerStatService.lua', 'r', encoding='utf-8').read()
+combat_flash_src = open('EventAlertMod/UI/CombatFlash.lua', 'r', encoding='utf-8').read()
+stat_panel_src = open('EventAlertMod/UI/PlayerStatPanel.lua', 'r', encoding='utf-8').read()
+
+# 1. Verify mana in STAT_DEFINITIONS and ordered keys
+assert 'key = "mana"' in stat_service_src, 'Missing mana definition in PlayerStatService.DEFINITIONS'
+assert '"mana"' in stat_service_src, 'Missing mana in ORDERED_KEYS'
+
+# 2. Verify mana in getStatTooltipInfo
+assert 'key == "mana"' in stat_service_src, 'Missing mana handling in getStatTooltipInfo'
+assert '【5秒精神回魔作用中】' in stat_service_src, 'Missing 5SR active line in mana tooltip'
+assert '【5秒規則等待中】' in stat_service_src, 'Missing 5SR penalty countdown in mana tooltip'
+
+# 3. Verify formatSpiritDisplay handles mana
+assert 'if key == "mana" then' in stat_service_src, 'Missing mana in formatSpiritDisplay'
+
+# 4. Verify StatusBar/Icon/Text 5SR Active Alerts in PlayerStatService.lua
+assert 'data.key == "spirit" or data.key == "spiritManaRegen" or data.key == "mana"' in stat_service_src, \
+    'PlayerStatService.update must include mana in isSpiritSpecial'
+assert 'item.statusBar:SetStatusBarColor(0.20, 0.85, 1.00, 1.00)' in stat_service_src, \
+    'Missing ice-blue StatusBar color for 5SR active regen'
+assert 'item.statusBar:SetStatusBarColor(0.85, 0.45, 0.15, 0.95)' in stat_service_src, \
+    'Missing amber StatusBar color for 5SR penalty window'
+assert 'item:SetBackdropBorderColor(0.85, 0.45, 0.15, 0.85)' in stat_service_src, \
+    'Missing amber border color for 5SR penalty window on icon'
+assert 'item.valText:SetTextColor(0.95, 0.65, 0.25, 0.95)' in stat_service_src, \
+    'Missing amber text color for 5SR penalty window'
+
+# 5. Verify Continuous Full-Screen Blue Glow in CombatFlash.lua & PlayerStatService.lua
+assert 'function CombatFlash.setSpiritActiveGlow(active)' in combat_flash_src, \
+    'Missing CombatFlash.setSpiritActiveGlow in CombatFlash.lua'
+assert 'EAM_SpiritActiveGlowFrame' in combat_flash_src, \
+    'Missing EAM_SpiritActiveGlowFrame in CombatFlash.lua'
+assert '0.15, 0.65, 1.00, 0.35' in combat_flash_src, \
+    'Missing soft ice-blue vertex color in CombatFlash.lua'
+assert 'CF.setSpiritActiveGlow' in stat_service_src, \
+    'PlayerStatService must drive CombatFlash.setSpiritActiveGlow'
+
+# 6. Verify PlayerStatPanel UI controls & wiring
+assert 'spiritBlueScreenGlowCb' in stat_panel_src, 'Missing spiritBlueScreenGlowCb in PlayerStatPanel.lua'
+assert 'cfg.spiritBlueScreenGlow = spiritBlueScreenGlowCb:GetChecked()' in stat_panel_src, \
+    'Missing spiritBlueScreenGlow in applyLiveChange'
+assert 'spiritBlueScreenGlowCb:SetChecked(cfg.spiritBlueScreenGlow == true)' in stat_panel_src, \
+    'Missing spiritBlueScreenGlow in loadStatToDetail'
+assert 'statKey == "spirit" or statKey == "spiritManaRegen" or statKey == "mana"' in stat_panel_src, \
+    'PlayerStatPanel must show spiritSection for mana as well'
+
+# 7. Verify 5-Locale keys synchronization
+suite25_locale_keys = [
+    'EAM_STAT_MANA',
+    'EAM_STAT_SPIRIT_BLUE_GLOW',
+    'EAM_STAT_SPIRIT_BLUE_GLOW_TIP',
+]
+for loc in ['zhTW', 'zhCN', 'enUS', 'koKR', 'ruRU']:
+    loc_src = open(f'EventAlertMod/Locale/{loc}.lua', 'r', encoding='utf-8').read()
+    for k in suite25_locale_keys:
+        assert (f'L.{k}' in loc_src or f'L["{k}"]' in loc_src), f'Missing {k} in Locale/{loc}.lua'
+
+print('  [PASS] Mana Stat, StatusBar/Icon/Text 5SR Active Alerts, Continuous Full-Screen Blue Glow & 5-Locale Keys verified')
+
+print('\n>>> ALL 25 DEEP TEST SUITES PASSED WITH ZERO ERRORS! <<<')
+
 

@@ -588,7 +588,10 @@
 <li>專案不僅包含魔獸插件源碼，更隨附了自我維護、自我修復、自動測試與安全發布的智慧資產，具備極高的長期可維護性。</li>
 </ol>
 <hr />
-<h2 id="2-21-skill-the-21-skills-catalog">🏛️ 2. 五大領域 21 項 SKILL 全景目錄 (The 21 SKILLs Catalog)</h2>
+<h2 id="2-skill-core-domain-skills-catalog">🏛️ 2. 核心領域與標準化 SKILL 全景目錄 (Core Domain SKILLs Catalog)</h2>
+<blockquote>
+<p>💡 <strong>技能庫演進說明</strong>：初始建置為 5 大領域 21 項核心規範；隨 <code>Retail 12.1.5</code> 與 <code>Forever 1.60.1</code> 雙版本推進，現已擴展至 29 項 <code>eam-*</code> 專用技能（新增雙軌模型調度 <code>eam-dual-track-orchestration</code>、Flow 實機驗證、API 變更預警、版本日誌策展、GitHub/奇樂發布等），完整清冊見 <code>.AI/Docs/00_INDEX.md</code> 與 <code>.AI/skills/</code>。</p>
+</blockquote>
 <h3 id="wow-12x-api-core-engine-12x-api">領域一：核心架構與 WoW 12.x 現代 API 治理 (Core Engine &amp; 12.x API)</h3>
 <ol>
 <li><strong><code>eam-secret-taint-sentinel</code> (12.x Secret 數值防禦與 Taint 隔離防護)</strong></li>
@@ -788,7 +791,14 @@
 
 <hr />
 <h2 id="4-conclusion">🏁 4. 結語 (Conclusion)</h2>
-<p>EventAlertMod 透過這 21 項高度專業化、模組化且相互協同的 SKILL 體系，將龐大的魔獸插件重構工程轉化為<strong>高度結構化、可確定性重複執行、且完全免除 AI 失憶與幻覺風險的現代化軟體資產</strong>。這不僅是 WoW 插件開發的標竿，更是現代 Agentic AI 協同治理的典範實踐。</p>
+<ol>
+<li><strong><code>eam-dual-track-orchestration</code> (雙軌動態模型調度與 Level 3 閉合 XML 派工治理)</strong><ul>
+<li>規範 Track A（<code>Gemini 4 Argon (High)</code> 仲裁 + <code>Hydrogen</code> 動態）與現行 <strong>Track B（<code>Gemini 4 Hydrogen (XHigh)</code> 仲裁 + <code>Hydrogen</code> 四階動態 <code>LOW/MEDIUM/HIGH/XHIGH</code>）</strong>、每回合首行狀態標籤強制輸出、Index-First 反漂移守則、完整閉合 <code>&lt;argon_ticket&gt;</code> XML 契約與冷面漂移審查（<code>Cold-Context Drift Audit</code>）。</li>
+</ul>
+</li>
+</ol>
+<hr />
+<p>EventAlertMod 透過這套高度專業化、模組化且相互協同的 SKILL 體系，將龐大的魔獸插件重構工程轉化為<strong>高度結構化、可確定性重複執行、且完全免除 AI 失憶與幻覺風險的現代化軟體資產</strong>。這不僅是 WoW 插件開發的標竿，更是現代 Agentic AI 協同治理的典範實踐。</p>
     </div>
     <div id="doc-content-en" class="lang-content">
         <a href="index.html" class="back-btn">← Back to Documentation Hub (Index)</a>
@@ -883,6 +893,7 @@
 <li><strong><code>eam-local-wow-deployer</code></strong>: Windows Registry root discovery, Reparse Point / Symlink fail-closed guards, and WTF backups.</li>
 <li><strong><code>eam-docs-site-builder</code></strong>: Automated HTML documentation site generator (<code>batch_convert_docs.py</code>), navbar injection, and bilingual content switching.</li>
 <li><strong><code>eam-project-continuity-governor</code></strong>: Single source of truth governance, <code>ProjectContinuity.json</code>, and context compression handoff.</li>
+<li><strong><code>eam-dual-track-orchestration</code></strong>: Track A (<code>Argon High</code>) / Track B (<code>Hydrogen XHigh</code>) Chief Arbiter switching, 4-tier <code>Hydrogen</code> self-routing, Index-First anti-drift guardrails, Level 3 closed <code>&lt;argon_ticket&gt;</code> XML schema, and Cold-Context Drift Audit. (Note: Total active EAM skills in <code>.AI/skills/</code> have grown beyond 22 to include release curation, MiliUI publishing, API change intelligence, native aura/flow validation, and skill discovery utilities.)</li>
 </ol>
     </div>
 

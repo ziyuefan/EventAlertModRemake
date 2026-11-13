@@ -562,13 +562,15 @@
 <li>高修改連接，例如同時改變 <code>SavedVariables</code> schema、migration、Options UI、Slash command 且尚未開始開始範圍。</li>
 <li>尚無明確的探索性問題。</li>
 </ul>
-<h2 id="_5">角色使用建議</h2>
+<h2 id="track-a-track-b">角色使用建議與雙軌動態模型調度 (Track A / Track B)</h2>
 <ul>
-<li>explorer：用於特定問題的複雜調查，例如「尋找活動 Lua 中所有冷卻時間 API 通話」。
--worker：用於可分割的實作，例如「只修改UI/Options.lua，新增某個設定欄位，不碰SavedVariables」。
-除非任務有明確理由，子代理程式使用預設繼承模型；不指定較昂貴或不同模型。</li>
+<li><strong>現行作用中軌道</strong>：<strong>Track B</strong>（自 <code>2026-11-13</code> 因 Argon 額度受限啟用：<code>Gemini 4 Hydrogen (XHigh)</code> 擔任首席架構仲裁與冷面漂移審查 ＋ <code>Gemini 4 Hydrogen</code> 動態 <code>LOW / MEDIUM / HIGH / XHIGH</code> 執行群）；Track A（<code>Gemini 4 Argon (High)</code> 仲裁 ＋ <code>Hydrogen</code> 動態）處於待機狀態，僅於使用者明確指示後切換回 Track A。</li>
+<li><code>explorer</code> / <code>[TIER: LOW]</code>：用於探勘目錄、提取簽章與跨檔查找（優先先讀 <code>00_INDEX.md</code> 與 <code>FOLDER_INDEX.html</code>）。</li>
+<li><code>worker</code> / <code>[TIER: MEDIUM | HIGH]</code>：用於照樣板施工或跨模組邏輯實作，Strict Scope 不可碰觸 <code>&lt;immutable_files&gt;</code>。</li>
+<li><strong>派工實作差異</strong>：使用 <code>invoke_subagent</code> 時預設採用 <code>Model: "inherit"</code> 繼承主代理模型與思考檔位；若需為特定 worker 顯式鎖定 <code>Hydrogen</code> 不同模型／檔位（如低階清洗或平行審計），須透過原生 <code>swarm</code>（<code>swarm add</code> 指定 <code>model</code>）派遣，並以 <code>&lt;level3_closed_xml_ticket_standard&gt;</code>（<code>&lt;argon_ticket&gt;</code>）規範高風險大改之派工邊界與冷面審查。</li>
+<li>詳見權威規範：<a href="AI_GOVERNANCE_DIRECTIVE.xml"><code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code></a> v1.4 與 <a href="../skills/eam-dual-track-orchestration/SKILL.md"><code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code></a>。</li>
 </ul>
-<h2 id="_6">派工模板</h2>
+<h2 id="_5">派工模板</h2>
 <div class="codehilite"><pre><span></span><code>你是 EventAlertMod Retail rewrite 的 subagent。
 
 範圍：
@@ -593,7 +595,7 @@
 - 風險與建議。
 </code></pre></div>
 
-<h2 id="_7">主代理整合規則</h2>
+<h2 id="_6">主代理整合規則</h2>
 <ul>
 <li>分代理完成後，主代理需快速審查結果與文件差異。</li>
 <li>若子代理程式修改方案代碼，主代理程式仍需執行專案靜態驗證。</li>
@@ -619,7 +621,7 @@
 1. <strong>R (Responsible)</strong>：派工時，應指定被屬於該任務領域 <strong>R</strong> 的專家作為子代理的角色與職能（例如修改 Class DB 時指派 <code>EAM_Class_Expert</code>）。
 2. <strong>A (Accountable)</strong>：子代理提交 PR 或結果後，主代理必須遷移到該任務領域 <strong>A</strong> 的專家進行審查與批准。
 3. <strong>C（諮詢）</strong>：子代理在開發中遇到疑難問題時，必須主動向該任務領域被來自 <strong>C</strong> 的專家諮詢。</p>
-<h2 id="_8">專案品質管制與要因分析原則</h2>
+<h2 id="_7">專案品質管制與要因分析原則</h2>
 <p>為確保程式碼品質與開發的嚴謹性，本專案導入5 Whys (WHY-WHY要因分析)、魚骨圖、對策評估矩陣與PDPC異常防禦機制。</p>
 <p>詳細QC規格與指引請見：<a href="22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md.html">Docs/22_QC_ROOT_CAUSE_ANALYSIS_GUIDE.md</a>。
 後續開發遵循要求：
@@ -638,7 +640,7 @@
 <hr />
 <h2 id="24">預定義子代理專家目錄（24 位）</h2>
 <p>本節提供派工時的角色摘要；完整縮寫、責任邊界及唯一問責者以 <code>Docs/21_RACI_EXPERTS_MATRIX.md</code> 為準。</p>
-<h3 id="_9">證據等級與能力邊界</h3>
+<h3 id="_8">證據等級與能力邊界</h3>
 <ul>
 <li><code>文件已查證</code>：具有官方公告、官方 UI 原始碼或 Warcraft Wiki 修訂來源。</li>
 <li><code>靜態通過</code>：只代表語法或靜態掃描通過。</li>
@@ -674,7 +676,7 @@
 <li><code>EAM_Retail_Client_QA_Expert</code>（<code>RQA</code>）：Retail／PTR 實機案例、taint log、Lua error、CPU／GC 證據與驗證簽收。無遊戲環境時只能設計與判讀測試。</li>
 <li><code>EAM_Documentation_Governance_Expert</code>（<code>DOC</code>）：Facts-of-Truth、來源日期、驗證狀態、Markdown→HTML 單向同步與 <code>EAMCODE placeholder</code> 污染門檻。</li>
 </ul>
-<h3 id="_10">新增角色禁止事項</h3>
+<h3 id="_9">新增角色禁止事項</h3>
 <ul>
 <li><code>APICHG</code> 不得取代 <code>SEC</code> 的安全終審，不得把 Wiki revision time 當成 patch 發布日期，也不得宣稱未執行的 PTR／Retail 實機結果。</li>
 <li><code>AURA121</code> 不得設計 Secret／Forbidden Aspect 繞過；通用安全終審仍由 <code>SEC</code> 負責。</li>

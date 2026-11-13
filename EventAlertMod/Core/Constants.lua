@@ -56,6 +56,7 @@ EAM.Constants = freeze({
     ALERT_KIND_SPELL_COOLDOWN = "spellCooldown",
     ALERT_KIND_ITEM_COOLDOWN = "itemCooldown",
     ALERT_KIND_GROUND_EFFECT = "groundEffect",
+    ALERT_KIND_WEAPON_ENCHANT = "weaponEnchant",
     AURA_CATALOG_SCOPE_SELF = "SELF",
     AURA_CATALOG_SCOPE_CROSS_CLASS = "CROSS_CLASS",
     AURA_FILTERS = freeze({
@@ -114,9 +115,10 @@ EAM.Constants = freeze({
         playerStat = "playerStat",
         tooltipMonitor = "tooltipMonitor",
         petAlert = "petAlert",
+        weaponEnchant = "weaponEnchant",
     }),
 
-    -- 9 大獨立告警框架名稱
+    -- 10 大獨立告警框架名稱
     ALERT_FRAME_TYPES = freeze({
         selfAura = "selfAura",
         targetAura = "targetAura",
@@ -127,6 +129,7 @@ EAM.Constants = freeze({
         totem = "totem",
         playerStat = "playerStat",
         petAlert = "petAlert",
+        weaponEnchant = "weaponEnchant",
     }),
 
     ALERT_BORDER_STYLE_KEYS = freeze({
@@ -138,6 +141,7 @@ EAM.Constants = freeze({
         itemCooldown = "itemCooldown",
         groundEffect = "groundEffect",
         petAlert = "petAlert",
+        weaponEnchant = "weaponEnchant",
     }),
 
     FONT_FAMILY_DEFAULT = "STANDARD",
@@ -156,6 +160,7 @@ EAM.Constants = freeze({
         itemCooldown = freeze({ 0.15, 0.95, 0.25, 1.00 }),
         groundEffect = freeze({ 0.72, 0.25, 1.00, 1.00 }),
         petAlert = freeze({ 0.35, 0.95, 0.55, 1.00 }),
+        weaponEnchant = freeze({ 0.85, 0.55, 1.00, 1.00 }),
     }),
     -- 1 = RIGHT, 2 = LEFT, 3 = UP, 4 = DOWN
     -- 凍結為連續數字索引陣列 (Array Part)，以空間換時間，消除雜湊衝突與查詢消耗

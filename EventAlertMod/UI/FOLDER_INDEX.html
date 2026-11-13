@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Presentation Layer">
   <meta name="ai-governance-security" content="Theme-Driven / Drag-Interactive / Combat Deferred">
   <meta name="ai-governance-invariants" content="現代化 UI 互動：支援側窗無縫吸附 (APPEND 模式)、連動拖曳、螢幕邊界鎖定與 /eam reset 復原 | 戰鬥中排版遞延：戰鬥期間使用者若調整 UI，僅記錄設定值，脫離戰鬥後一次性安全套用 | 主題系統：11 組深色主題無縫切換，統一管理按鈕背景、邊框與文字配色">
-  <meta name="ai-scan-timestamp" content="2026-10-23T01:48:35.133416+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.662709+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,16 +29,16 @@
     "戰鬥中排版遞延：戰鬥期間使用者若調整 UI，僅記錄設定值，脫離戰鬥後一次性安全套用",
     "主題系統：11 組深色主題無縫切換，統一管理按鈕背景、邊框與文字配色"
   ],
-  "timestamp": "2026-10-23T01:48:35.133416+08:00",
+  "timestamp": "2026-11-13T12:35:11.662709+08:00",
   "fileCount": 22,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 964863,
+  "totalSizeBytes": 997790,
   "files": [
     {
       "name": "AboutPanel.lua",
       "extension": ".lua",
-      "sizeBytes": 8701,
-      "lineCount": 236,
+      "sizeBytes": 8941,
+      "lineCount": 238,
       "purpose": "關於面板，顯示插件版本資訊、授權條款、開發團隊與官方導航連結",
       "role": "UI / About View",
       "security": "Presentation"
@@ -64,8 +64,8 @@
     {
       "name": "CombatFlash.lua",
       "extension": ".lua",
-      "sizeBytes": 7605,
-      "lineCount": 242,
+      "sizeBytes": 12600,
+      "lineCount": 410,
       "purpose": "WoW Lua 模組程式碼",
       "role": "Lua Module",
       "security": "Protected"
@@ -73,8 +73,8 @@
     {
       "name": "DebugCenterPanel.lua",
       "extension": ".lua",
-      "sizeBytes": 22781,
-      "lineCount": 557,
+      "sizeBytes": 26078,
+      "lineCount": 625,
       "purpose": "集中整合所有 EAM 診斷、符文探針、流程測試與提示詞匯出功能於單一視窗。 | 提供 4 大診斷分頁：",
       "role": "UI/DebugCenterPanel",
       "security": "Safe"
@@ -109,8 +109,8 @@
     {
       "name": "NativeAuraRenderer.lua",
       "extension": ".lua",
-      "sizeBytes": 27020,
-      "lineCount": 645,
+      "sizeBytes": 35231,
+      "lineCount": 850,
       "purpose": "為每條 Native Aura rule 建立 initializeFrame callback。；僅在 Blizzard 允許的初始化窗口建立、定位並綁定 AuraButton 子元件。",
       "role": "UI/NativeAuraRenderer",
       "security": "Zero-Alloc"
@@ -118,8 +118,8 @@
     {
       "name": "Options.lua",
       "extension": ".lua",
-      "sizeBytes": 307871,
-      "lineCount": 6699,
+      "sizeBytes": 309478,
+      "lineCount": 6844,
       "purpose": "插件核心設定主視窗，提供直觀的圖形化設定、滑桿、多選方塊與側窗吸附切換",
       "role": "UI / Options Frame",
       "security": "Presentation"
@@ -136,8 +136,8 @@
     {
       "name": "PlayerStatPanel.lua",
       "extension": ".lua",
-      "sizeBytes": 77221,
-      "lineCount": 1587,
+      "sizeBytes": 86408,
+      "lineCount": 1733,
       "purpose": "角色屬性與吸收量監控之獨立二級設定面板。；支援 18 種核心屬性每單項開關、替代圖示、字型大小、替代名稱、小數位數與數值高亮閾值自訂。 | 管理屬性清單與細部設定表單之建立與狀態更新。；支援即時熱預覽與 SavedVariables 雙向保存。",
       "role": "UI/PlayerStatPanel",
       "security": "Safe"
@@ -145,8 +145,8 @@
     {
       "name": "PowerRenderer.lua",
       "extension": ".lua",
-      "sizeBytes": 42721,
-      "lineCount": 985,
+      "sizeBytes": 43312,
+      "lineCount": 1004,
       "purpose": "在脫戰初始化期為 17 種玩家資源各自預建獨立 Frame 與 StatusBar。；Secret 百分比只直送對應 StatusBar:SetValue；普通數值才允許產生數字文字。",
       "role": "UI/PowerRenderer",
       "security": "Taint-Sensitive"
@@ -181,8 +181,8 @@
     {
       "name": "Renderer.lua",
       "extension": ".lua",
-      "sizeBytes": 117593,
-      "lineCount": 2732,
+      "sizeBytes": 121901,
+      "lineCount": 2831,
       "purpose": "Renderer 只把 normalized render state 寫入 UI，資料來源完全在 services。；支援多個完全隔離的 Alert Frame（告警框架），每個框架有各自的坐標與成長方向。 | 管理 7 大獨立告警框架的建立、顯示、隱藏與滑鼠拖曳定位保存。；接收並將 AlertState 渲染到特定的 UI 框架中，使用 Icon 緩衝池 (IconPool)。",
       "role": "UI/Renderer",
       "security": "Zero-Alloc"
@@ -190,8 +190,8 @@
     {
       "name": "Slash.lua",
       "extension": ".lua",
-      "sizeBytes": 30548,
-      "lineCount": 679,
+      "sizeBytes": 31039,
+      "lineCount": 687,
       "purpose": "/eam 是使用者低成本入口，負責協調模組而非承擔業務邏輯。；在 Retail 12.1 安全邊界內恢復經典 EAM 的 list、lookup 與 showcast 使用習慣。 | 註冊 slash command、解析文字、呼叫 Options/Debug/SavedVariables/service API。",
       "role": "UI/Slash",
       "security": "Safe"
@@ -714,7 +714,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">942.2 KB</span>
+          <span class="stat-val">974.4 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -768,7 +768,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            8.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 236 行</span>
+            8.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 238 行</span>
           </td>
         </tr>
         
@@ -822,7 +822,7 @@
           </td>
           <td><span class="sec-badge sec-vault">🔒 Protected</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            7.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 242 行</span>
+            12.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 410 行</span>
           </td>
         </tr>
         
@@ -840,7 +840,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            22.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 557 行</span>
+            25.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 625 行</span>
           </td>
         </tr>
         
@@ -912,7 +912,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            26.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 645 行</span>
+            34.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 850 行</span>
           </td>
         </tr>
         
@@ -930,7 +930,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Presentation</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            300.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 6699 行</span>
+            302.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 6844 行</span>
           </td>
         </tr>
         
@@ -966,7 +966,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            75.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1587 行</span>
+            84.4 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1733 行</span>
           </td>
         </tr>
         
@@ -984,7 +984,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            41.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 985 行</span>
+            42.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1004 行</span>
           </td>
         </tr>
         
@@ -1056,7 +1056,7 @@
           </td>
           <td><span class="sec-badge sec-hotpath">⚡ Zero-Alloc</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            114.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2732 行</span>
+            119.0 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2831 行</span>
           </td>
         </tr>
         
@@ -1074,7 +1074,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            29.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 679 行</span>
+            30.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 687 行</span>
           </td>
         </tr>
         
@@ -1158,7 +1158,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-10-23T01:48:35.133416+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.662709+08:00</p>
     </footer>
   </div>
 

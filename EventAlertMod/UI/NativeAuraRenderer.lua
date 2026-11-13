@@ -120,6 +120,13 @@ local function snapshotStyle(rule)
     if ruleStyle and ruleStyle.showDurationBar ~= nil then
         showDurationBar = ruleStyle.showDurationBar == true
     end
+    local hideOutsideCombat = false
+    if config and config.hideAuraOutsideCombat ~= nil then
+        hideOutsideCombat = config.hideAuraOutsideCombat == true
+    end
+    if ruleStyle and ruleStyle.hideOutsideCombat ~= nil then
+        hideOutsideCombat = ruleStyle.hideOutsideCombat == true
+    end
     local swipeR, swipeG, swipeB = safeColorRGB(config and config.cooldownSwipeColor)
     return {
         iconSize = safePositive(config and config.iconSize, 40),
@@ -145,6 +152,7 @@ local function snapshotStyle(rule)
         applicationBarMax = applicationBarMax,
         applicationBarMin = applicationBarMin,
         showDurationBar = showDurationBar,
+        hideOutsideCombat = hideOutsideCombat,
         showPandemic = ruleStyle and ruleStyle.showPandemic == true or false,
         dispelMode = ruleStyle and ruleStyle.dispelMode or nil,
         dispelShowAlways = ruleStyle and ruleStyle.dispelShowAlways == true or false,
@@ -664,10 +672,36 @@ local function initializeButton(auraButton, rule, container, slotIndex, style)
     auraButton.eamTimerText = timerText
     auraButton.eamStackText = stackText
     auraButton.eamNameText = nameText
+
+    local inCombatNow = (api.InCombatLockdown and api.InCombatLockdown() == true)
+        or (api.UnitAffectingCombat and api.UnitAffectingCombat("player") == true)
+        or false
+    local hideOutsideCombat = style and style.hideOutsideCombat == true or false
+    local combatVisible = (not hideOutsideCombat) or inCombatNow
+    auraButton.eamHideOutsideCombat = hideOutsideCombat
+    auraButton.eamCombatVisible = combatVisible
+    if hasButtonMethod(auraButton, "SetAlpha") then
+        pcall(auraButton.SetAlpha, auraButton, combatVisible and 1 or 0)
+    end
+    if hasButtonMethod(auraButton, "HookScript") then
+        pcall(auraButton.HookScript, auraButton, "OnShow", function(btn)
+            local info = NativeAuraRenderer.buttons[btn]
+            if info and info.hideOutsideCombat then
+                local ic = (api.InCombatLockdown and api.InCombatLockdown() == true)
+                    or (api.UnitAffectingCombat and api.UnitAffectingCombat("player") == true)
+                    or false
+                if not ic and hasButtonMethod(btn, "SetAlpha") then
+                    pcall(btn.SetAlpha, btn, 0)
+                end
+            end
+        end)
+    end
     NativeAuraRenderer.buttons[auraButton] = {
         timer = timerText,
         stack = stackText,
         name = nameText,
+        hideOutsideCombat = hideOutsideCombat,
+        combatVisible = combatVisible,
     }
     NativeAuraRenderer.initializedButtonCount =
         NativeAuraRenderer.initializedButtonCount + 1
@@ -747,7 +781,30 @@ function NativeAuraRenderer.applyTextLayout()
     return false, "nativeRebuildRequired"
 end
 
+function NativeAuraRenderer.updateCombatVisibility(inCombatNow)
+    if inCombatNow == nil then
+        inCombatNow = (api.InCombatLockdown and api.InCombatLockdown() == true)
+            or (api.UnitAffectingCombat and api.UnitAffectingCombat("player") == true)
+            or false
+    end
+    local count = 0
+    for button, info in pairs(NativeAuraRenderer.buttons) do
+        if button and type(info) == "table" then
+            local visible = (not info.hideOutsideCombat) or (inCombatNow == true)
+            info.combatVisible = visible
+            button.eamCombatVisible = visible
+            local isLocked = rawget(button, "_eamInitializationLocked") == true
+            if not isLocked and hasButtonMethod(button, "SetAlpha") then
+                pcall(button.SetAlpha, button, visible and 1 or 0)
+            end
+            count = count + 1
+        end
+    end
+    return true, count
+end
+
 function NativeAuraRenderer.onCombatEnd()
+    NativeAuraRenderer.updateCombatVisibility(false)
     return true, "noPostInitializationMutation"
 end
 

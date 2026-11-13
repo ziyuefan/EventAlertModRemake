@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Application Layer">
   <meta name="ai-governance-security" content="Safe">
   <meta name="ai-governance-invariants" content="維護模組單一職責原則，嚴格遵守專案架構規範">
-  <meta name="ai-scan-timestamp" content="2026-10-23T01:48:34.304976+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.597244+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -27,10 +27,10 @@
   "invariants": [
     "維護模組單一職責原則，嚴格遵守專案架構規範"
   ],
-  "timestamp": "2026-10-23T01:48:34.304976+08:00",
+  "timestamp": "2026-11-13T12:35:11.597244+08:00",
   "fileCount": 31,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 2524424,
+  "totalSizeBytes": 2525138,
   "files": [
     {
       "name": ".translation_cache.json",
@@ -44,7 +44,7 @@
     {
       "name": "Build-AndUploadCurseForge.ps1",
       "extension": ".ps1",
-      "sizeBytes": 451,
+      "sizeBytes": 454,
       "lineCount": 12,
       "purpose": "EventAlertMod Retail Rewrite 檔案: .AI\\Tools\\Build-AndUploadCurseForge.ps1",
       "role": "PowerShell Script",
@@ -53,7 +53,7 @@
     {
       "name": "Build-CurseForgePackage.ps1",
       "extension": ".ps1",
-      "sizeBytes": 1562,
+      "sizeBytes": 1565,
       "lineCount": 45,
       "purpose": "保留舊命令名稱，轉交給 Deploy\\Build-Package.ps1。；插件包永遠以 EventAlertMod 整個資料夾為唯一來源。",
       "role": "Module / Asset",
@@ -62,8 +62,8 @@
     {
       "name": "Build-MiliUIDoc.py",
       "extension": ".py",
-      "sizeBytes": 33034,
-      "lineCount": 456,
+      "sizeBytes": 33887,
+      "lineCount": 458,
       "purpose": "Build-MiliUIDoc.py",
       "role": "Python Tool",
       "security": "Offline Tool"
@@ -71,8 +71,8 @@
     {
       "name": "CheckLuaSyntax.ps1",
       "extension": ".ps1",
-      "sizeBytes": 1986,
-      "lineCount": 61,
+      "sizeBytes": 2858,
+      "lineCount": 86,
       "purpose": "提供可重複執行的 Lua 5.1 語法檢查入口。；明確區分插件執行期與 .AI 離線測試來源。",
       "role": "Module / Asset",
       "security": "Safe"
@@ -80,7 +80,7 @@
     {
       "name": "Import-EAMFlowReport.ps1",
       "extension": ".ps1",
-      "sizeBytes": 33357,
+      "sizeBytes": 33360,
       "lineCount": 797,
       "purpose": "將 Flow、真人實機、UnitPower 或 SVG 能力 JSON 從檔案／WTF SavedVariables 回灌至開發環境。；不信任報告自稱的 source/status；重新核對環境、矩陣與 summary。",
       "role": "Module / Asset",
@@ -89,7 +89,7 @@
     {
       "name": "Resolve-EAMProject.ps1",
       "extension": ".ps1",
-      "sizeBytes": 1432,
+      "sizeBytes": 1435,
       "lineCount": 39,
       "purpose": "為治理工具提供唯一的新專案路徑契約。；明確區分 Git 專案根、插件來源、AI 治理、Dist 與 Deploy。",
       "role": "Module / Asset",
@@ -98,8 +98,8 @@
     {
       "name": "Run-FlowValidation.ps1",
       "extension": ".ps1",
-      "sizeBytes": 4721,
-      "lineCount": 118,
+      "sizeBytes": 5288,
+      "lineCount": 127,
       "purpose": "執行 .AI/Tests/FlowValidationHarness.lua，產生可回灌的 JSON 與 Markdown 離線證據。；Harness 從 EventAlertMod/ 載入正式插件模組。",
       "role": "Module / Asset",
       "security": "Safe"
@@ -116,8 +116,8 @@
     {
       "name": "Test-ValidationContracts.ps1",
       "extension": ".ps1",
-      "sizeBytes": 119041,
-      "lineCount": 2114,
+      "sizeBytes": 117356,
+      "lineCount": 2124,
       "purpose": "使用 JSON Schema 驗證標準資料，再交叉比對 WoW 執行期 Lua 靜態映射。；離線 fixture 永遠只能證明契約，不得成為 PTR／XPTR／正式服實機證據。",
       "role": "Module / Asset",
       "security": "Safe"
@@ -134,7 +134,7 @@
     {
       "name": "Upload-CurseForgePackage.ps1",
       "extension": ".ps1",
-      "sizeBytes": 450,
+      "sizeBytes": 453,
       "lineCount": 12,
       "purpose": "EventAlertMod Retail Rewrite 檔案: .AI\\Tools\\Upload-CurseForgePackage.ps1",
       "role": "PowerShell Script",
@@ -188,8 +188,8 @@
     {
       "name": "generate_changelog_html.py",
       "extension": ".py",
-      "sizeBytes": 25703,
-      "lineCount": 820,
+      "sizeBytes": 25795,
+      "lineCount": 822,
       "purpose": "generate_changelog_html.py",
       "role": "Python Tool",
       "security": "Offline Tool"
@@ -865,7 +865,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            451 B<span style="font-size: 0.78rem; color: #64748b;"> • 12 行</span>
+            454 B<span style="font-size: 0.78rem; color: #64748b;"> • 12 行</span>
           </td>
         </tr>
         
@@ -901,7 +901,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            32.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 456 行</span>
+            33.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 458 行</span>
           </td>
         </tr>
         
@@ -919,7 +919,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            1.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 61 行</span>
+            2.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 86 行</span>
           </td>
         </tr>
         
@@ -973,7 +973,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            4.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 118 行</span>
+            5.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 127 行</span>
           </td>
         </tr>
         
@@ -1009,7 +1009,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            116.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2114 行</span>
+            114.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 2124 行</span>
           </td>
         </tr>
         
@@ -1045,7 +1045,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            450 B<span style="font-size: 0.78rem; color: #64748b;"> • 12 行</span>
+            453 B<span style="font-size: 0.78rem; color: #64748b;"> • 12 行</span>
           </td>
         </tr>
         
@@ -1153,7 +1153,7 @@
           </td>
           <td><span class="sec-badge sec-tool">⚙️ Offline Tool</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            25.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 820 行</span>
+            25.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 822 行</span>
           </td>
         </tr>
         
@@ -1399,7 +1399,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-10-23T01:48:34.304976+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.597244+08:00</p>
     </footer>
   </div>
 

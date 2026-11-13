@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- EAM_AI_GOVERNANCE_DIRECTIVE: 專供 AI 代理人（Agentic AI / Subagents）執行指導之權威結構化規範 -->
-<eam_ai_governance version="1.3" last_updated="2026-10-16">
+<eam_ai_governance version="1.4" last_updated="2026-11-13">
     <!-- 1. 元資料與受眾 (Metadata & Audience) -->
     <metadata>
         <title>EventAlertMod AI 代理人核心治理與架構指導規範 (AI Governance Directive)</title>
@@ -12,7 +12,7 @@
         <canonical_root>D:\Project_EventAlertMod_AGY</canonical_root>
         <addon_source_root>D:\Project_EventAlertMod_AGY\EventAlertMod</addon_source_root>
         <governance_root>D:\Project_EventAlertMod_AGY\.AI</governance_root>
-        <target_game>World of Warcraft: Retail 12.x / Midnight</target_game>
+        <target_game>World of Warcraft: Retail 12.x (Midnight) &amp; Forever 1.60.1 (永恆 / 無限)</target_game>
         <summary>本 XML 為專案專用之結構化 AI 治理指引，作為對抗大語言模型長對話截斷與跨模型語意記憶漂移（Memory Drift）之最高結構化確定性備援錨點、子代理任務切片注入、以及跨版本防禦性架構約束。</summary>
     </metadata>
 
@@ -54,8 +54,8 @@
             <notification_requirement>若因應需求修改 Deploy/ 目錄下任何腳本（Deploy-EventAlertMod.ps1, Build-Package.ps1, Upload-CurseForge.ps1 等），必須主動明確向少年欸報告具體改動內容。</notification_requirement>
         </rule>
         <rule id="R2_RETAIL_ONLY" severity="CRITICAL">
-            <directive>專案唯一目標為《魔獸世界：正式服 (Retail 12.x / Midnight)》。</directive>
-            <prohibition>嚴禁引入、相容或修復 Classic（經典服）、MoP、Cata 等舊版分支程式碼。</prohibition>
+            <directive>專案支援目標為《魔獸世界：正式服 (Retail 12.x / Midnight)》與現代引擎分支《魔獸世界：永恆 / 無限 (World of Warcraft: Forever 1.60.1, _forever_, Interface 16001，繁中「永恆」／簡中「無限」)》。</directive>
+            <prohibition>嚴禁引入、相容或修復傳統 Classic Era (_classic_era_, 1.15.x 經典舊世)、MoP、Cata 等舊版經典服分支程式碼；且嚴禁在任何文件、治理或報告中將 Forever 1.60.1 誤稱為 Classic Era 或將兩者混為一談。</prohibition>
         </rule>
         <rule id="R3_NO_TOUCH_LEGACY_ROOT" severity="CRITICAL">
             <directive>舊目錄 D:\EventAlertMod 已完全永久停用。</directive>
@@ -264,4 +264,107 @@
             </dimensions>
         </failure_prediction_protocol>
     </agent_behavior_protocol>
+
+    <!-- 12. 雙軌動態模型調度與防漂移鐵律 (Dual-Track Orchestration & 4-Tier Self-Routing) -->
+    <dual_track_model_routing active_track="TRACK_B" updated_at="2026-11-13" switch_policy="USER_EXPLICIT_DIRECTIVE">
+        <tracks>
+            <track id="TRACK_A" status="STANDBY" label="Argon Chief Arbiter + Hydrogen 4-Tier Dynamic">
+                <chief_arbiter>Gemini 4 Argon (High)</chief_arbiter>
+                <execution_workers>Gemini 4 Hydrogen (Low / Medium / High / XHigh)</execution_workers>
+                <usage_condition>僅於 Argon 額度充足且使用者明確指示切換回 Track A 時啟用。</usage_condition>
+            </track>
+            <track id="TRACK_B" status="ACTIVE" label="Hydrogen XHigh Chief Arbiter + Hydrogen 4-Tier Dynamic">
+                <chief_arbiter>Gemini 4 Hydrogen (XHigh)</chief_arbiter>
+                <execution_workers>Gemini 4 Hydrogen (Low / Medium / High / XHigh)</execution_workers>
+                <usage_condition>自 2026-11-13 因 Argon 額度受限啟用為主戰架構；由 Hydrogen (XHigh) 擔任首席架構與冷面審查仲裁者。</usage_condition>
+            </track>
+        </tracks>
+
+        <mandatory_reply_header>
+            每次正式回覆使用者時，第一行必須固定輸出狀態標籤：
+            【任務階段：＜階段名稱＞｜建議模型與檔位：Hydrogen (LOW / MEDIUM / HIGH / EXTRA) 或 Argon｜治理模式：輕量 / L1+L2 / 完整 XML】
+        </mandatory_reply_header>
+
+        <four_tier_routing>
+            <tier level="LOW" model="Hydrogen - Low" governance="輕量">
+                <scope>掃描目錄更新 FOLDER_INDEX、提取函式簽章、清洗外部資料並生成 Data/ 靜態表、重複文件同步。</scope>
+                <rule>秒速執行、嚴禁進行架構決策；若偵測高檔位執行此類任務，主動建議降檔至 LOW。</rule>
+            </tier>
+            <tier level="MEDIUM" model="Hydrogen - Medium" governance="L1+L2">
+                <scope>依據已定案黃金樣板（Golden Reference）執行多檔 API 替換、局部 UI 微調與註解補齊。</scope>
+                <rule>嚴格照樣板施工，不得擅自更改無關縮排與程式碼。</rule>
+            </tier>
+            <tier level="HIGH" model="Hydrogen - High" governance="L1+L2">
+                <scope>單一或跨模組邏輯開發（光環、冷卻、武器附魔、屬性、UI 設定）、邊界破壞測試與靜態檢查。</scope>
+            </tier>
+            <tier level="EXTRA_OR_ARBITER" track_a="Argon (High)" track_b="Hydrogen (XHigh)" governance="完整 XML">
+                <scope>底層事件引擎重寫、跨 3+ 核心模組重構、多版本 API 相容層設計（Retail 12.1.5 vs Forever 1.60.1）與冷面漂移審查（Cold-Context Drift Audit）。</scope>
+                <dispatch_note>swarm add 可明確指定 worker 之 model；invoke_subagent 預設繼承主代理模型與檔位。</dispatch_note>
+            </tier>
+        </four_tier_routing>
+
+        <anti_drift_guardrails>
+            <guard id="G1_INDEX_FIRST">探勘階段優先讀取 .AI/PROJECT_MEMORY.md、.AI/Docs/00_INDEX.md、FOLDER_INDEX.html 與 EventAlertMod/EventAlertMod.toc，禁止無差別全文讀取大量 .lua 檔塞爆 1M Context。</guard>
+            <guard id="G2_IMMUTABLE_INVARIANTS">
+                嚴禁繞過或解除 table.freeze()；靜態資料目錄 EventAlertMod/Data/（如 SpellArray.lua、SpellItem.lua、SpellHeuristics.lua、PlayerResourceCatalog.lua、Forever/ForeverCatalog.lua）須與 Core/Services/UI 嚴格分離；禁止洩漏未授權全域變數；嚴格區分 Retail 12.1.5 與 Forever 1.60.1（繁中「永恆」／簡中「无限」，Interface 16001），禁止混為 Classic Era。
+            </guard>
+            <guard id="G3_ZERO_UNRELATED_DIFF">禁止順手重排整個檔案縮排、修改無關註解風格或更動未列入 Scope 之 .toc / FrameXML 檔。</guard>
+        </anti_drift_guardrails>
+    </dual_track_model_routing>
+
+    <!-- 13. Level 3 高風險核心大改專用：閉合 XML 派工契約標準 (Completed Level 3 Closed XML Dispatch Contract) -->
+    <level3_closed_xml_ticket_standard schema_version="1.0" completed_at="2026-11-13">
+        <trigger_criteria>動及底層事件排程引擎、跨 3 個以上核心模組重構，或 Retail 12.x / Forever 1.60.1 相容層大改時觸發；唯讀規劃階段先輸出完整契約並經使用者確認後方可施工。</trigger_criteria>
+        <canonical_template><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<argon_ticket id="EAM-TICKET-YYYYMMDD-01" status="PENDING">
+  <meta>
+    <project_name>EventAlertModRemake</project_name>
+    <active_track>TRACK_B</active_track>
+    <target_model tier="hydrogen-4-high" reviewer_tier="hydrogen-4-xhigh" execution_mode="surgical" />
+    <objective>本次修改之單一明確核心目標</objective>
+  </meta>
+  <scope>
+    <allowed_files>
+      <file path="EventAlertMod/Core/Example.lua" action="MODIFY" notes="限修改目標函式" />
+      <file path=".AI/Tests/test_native_apis.py" action="MODIFY" notes="新增對應迴歸測試" />
+    </allowed_files>
+    <immutable_files>
+      <file path="EventAlertMod/EventAlertMod.toc" reason="未納入本票載入順序異動範圍" />
+      <file path="EventAlertMod/Data/SpellArray.lua" reason="靜態法術資料禁止於邏輯單混編" />
+      <file path="EventAlertMod/Data/PlayerResourceCatalog.lua" reason="受 table.freeze 保護之靜態拓樸表" />
+      <file path="EventAlertMod/Data/Forever/ForeverCatalog.lua" reason="永恆服靜態資料隔離紅線" />
+      <file path=".AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml" reason="AI 治理憲章禁止施工單順手竄改" />
+    </immutable_files>
+  </scope>
+  <invariants>
+    <invariant id="INV-1">不可解除或繞過既有 table.freeze 保護結構</invariant>
+    <invariant id="INV-2">不可新增任何未掛載於 EAM 命名空間的全域變數</invariant>
+    <invariant id="INV-3">Retail 12.1+ Secret Value 僅能透過 issecretvalue/canaccessvalue 四大檢查或原生 C-Level Sink 傳遞</invariant>
+    <invariant id="INV-4">Forever (1.60.1 / 永恆 / 无限) 與 Retail (12.1.5) 相容分支須顯式區隔，嚴禁混同 Classic Era</invariant>
+    <invariant id="INV-5">Zero Unrelated Diff：不重排無關程式碼縮排、不更動無關註解與 docstring</invariant>
+    <invariant id="INV-6">修改既有檔案前必須先備份至 .AI/backup/&lt;filename&gt;__yyyyMMddHHmmss</invariant>
+  </invariants>
+  <execution_plan>
+    <step id="1" owner="worker-impl" model_tier="HIGH">依 scope 實施核心修改與單元測試補齊</step>
+    <step id="2" owner="worker-qa" model_tier="LOW">執行離線語法與合約驗證腳本確認全數通過</step>
+  </execution_plan>
+  <verification>
+    <command>powershell -NoProfile -File .\.AI\Tools\CheckLuaSyntax.ps1 -AddonOnly</command>
+    <command>python .\.AI\Tests\test_native_apis.py</command>
+    <command>powershell -NoProfile -File .\.AI\Tools\Test-ValidationContracts.ps1</command>
+    <command>powershell -NoProfile -File .\.AI\Tools\Run-FlowValidation.ps1</command>
+  </verification>
+  <cold_context_review required="true" audit_mode="clean_session">
+    <reviewer_track_a>Gemini 4 Argon (High)</reviewer_track_a>
+    <reviewer_track_b>Gemini 4 Hydrogen (XHigh)</reviewer_track_b>
+    <checklist>
+      <item>git diff --name-only 100% 落於 &lt;allowed_files&gt; 內且未觸及 &lt;immutable_files&gt;</item>
+      <item>無未授權全域變數、無 Secret Value 算術比較或 table 索引污染風險</item>
+      <item>無任何與目標無關之縮排重排、註解刪除或殘留除錯輸出</item>
+      <item>全部驗證指令皆於最終編輯後實測全數綠燈（零 skip、零放寬斷言）</item>
+    </checklist>
+    <verdict>PENDING | APPROVED | REJECTED</verdict>
+  </cold_context_review>
+</argon_ticket>]]></canonical_template>
+    </level3_closed_xml_ticket_standard>
 </eam_ai_governance>

@@ -118,6 +118,7 @@ local function collectAlerts(db)
                         showName = alert.showName ~= false,
                         showCountdown = alert.showCountdown ~= false,
                         showPandemic = alert.showPandemic == true,
+                        hideAuraOutsideCombat = type(alert.hideAuraOutsideCombat) == "boolean" and alert.hideAuraOutsideCombat or nil,
                         showApplicationBar = alert.showApplicationBar,
                         applicationBarMax = alert.applicationBarMax,
                         applicationBarMin = alert.applicationBarMin,
@@ -210,6 +211,13 @@ local function buildBaseRule(record, capability, defaultSound, soundEnabled, db)
     if record.showDurationBar ~= nil then
         showDurationBar = record.showDurationBar == true
     end
+    local hideOutsideCombat = false
+    if config and config.hideAuraOutsideCombat ~= nil then
+        hideOutsideCombat = config.hideAuraOutsideCombat == true
+    end
+    if record.hideAuraOutsideCombat ~= nil then
+        hideOutsideCombat = record.hideAuraOutsideCombat == true
+    end
 
     local ruleSound = soundEnabled and (record.sound or defaultSound) or nil
     if ruleSound and type(ruleSound) == "table" and config and tonumber(config.audioThrottle) then
@@ -247,6 +255,7 @@ local function buildBaseRule(record, capability, defaultSound, soundEnabled, db)
             applicationBarMax = applicationBarMax,
             applicationBarMin = applicationBarMin,
             showDurationBar = showDurationBar,
+            hideOutsideCombat = hideOutsideCombat,
             dispelMode = record.dispelMode,
             dispelShowAlways = record.dispelShowAlways,
             dispelStealableFilter = record.dispelStealableFilter,
@@ -394,6 +403,7 @@ local function buildContainerFingerprint(plan)
         append(parts, tostring(rule.style and rule.style.applicationBarMax or "-"))
         append(parts, tostring(rule.style and rule.style.applicationBarMin or "-"))
         append(parts, tostring(rule.style and rule.style.showDurationBar == true))
+        append(parts, tostring(rule.style and rule.style.hideOutsideCombat == true))
         append(parts, tostring(rule.style and rule.style.dispelMode or "-"))
         append(parts, tostring(rule.style and rule.style.dispelShowAlways == true))
         append(parts, tostring(rule.style and rule.style.dispelStealableFilter or "-"))
@@ -598,6 +608,7 @@ function AuraRuleCompiler.compile(db, capability)
                     .. "_" .. tostring(rule.style.dispelShowAlways)
                     .. "_" .. tostring(rule.style.dispelStealableFilter or "-")
                     .. "_" .. tostring(rule.style.dispelStyle or "-")
+                    .. "_" .. tostring(rule.style.hideOutsideCombat == true)
                     .. "_" .. tostring(rule.style.customName or "-")
                     .. "_" .. tostring(rule.style.customIcon or "-")
                 local group = groups[groupID]

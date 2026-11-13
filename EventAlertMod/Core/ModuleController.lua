@@ -42,6 +42,7 @@ local validKeys = freeze({
     playerStat = true,
     tooltipMonitor = true,
     petAlert = true,
+    weaponEnchant = true,
 })
 
 local moduleOptions = {
@@ -68,6 +69,7 @@ local frameModules = freeze({
     totem = Keys.totem,
     playerStat = Keys.playerStat,
     petAlert = Keys.petAlert,
+    weaponEnchant = Keys.weaponEnchant,
 })
 
 local serviceNames = freeze({
@@ -78,6 +80,7 @@ local serviceNames = freeze({
     totem = "TotemService",
     playerStat = "PlayerStatService",
     tooltipMonitor = "TooltipMonitorService",
+    weaponEnchant = "WeaponEnchantService",
 })
 
 function ModuleController.isValidKey(key)

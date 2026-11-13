@@ -39,6 +39,7 @@ local ModuleController = EAM.Modules and EAM.Modules.ModuleController
 
 local AuraService = {
     states = {},
+    inCombat = false,
     unitCaches = {
         player = { byInstance = {}, spellCounts = {} },
         target = { byInstance = {}, spellCounts = {} },
@@ -567,6 +568,36 @@ local function alertMatchesAura(alert, auraData)
     return true
 end
 
+local function isInCombat(eventName)
+    if eventName == "PLAYER_REGEN_DISABLED" then
+        return true
+    elseif eventName == "PLAYER_REGEN_ENABLED" then
+        return false
+    end
+    if type(api.InCombatLockdown) == "function" and api.InCombatLockdown() == true then
+        return true
+    end
+    if type(api.UnitAffectingCombat) == "function" and api.UnitAffectingCombat("player") == true then
+        return true
+    end
+    return AuraService.inCombat == true
+end
+
+local function resolveHideAuraOutsideCombat(alert)
+    if type(alert) == "table" and type(alert.hideAuraOutsideCombat) == "boolean" then
+        return alert.hideAuraOutsideCombat
+    end
+    local config = EAM.db and EAM.db.config
+    return type(config) == "table" and config.hideAuraOutsideCombat == true or false
+end
+
+local function shouldSuppressAuraOutsideCombat(alert, eventName)
+    return resolveHideAuraOutsideCombat(alert) and not isInCombat(eventName)
+end
+
+AuraService.resolveHideAuraOutsideCombat = resolveHideAuraOutsideCombat
+AuraService.shouldSuppressAuraOutsideCombat = shouldSuppressAuraOutsideCombat
+
 local function renderAuraForAlerts(unit, spellID, auraData, eventName, apiName, matchedAlerts)
     local alerts = getAlertsForSpell(unit, spellID)
     if EAM.addDebugLog then
@@ -579,22 +610,29 @@ local function renderAuraForAlerts(unit, spellID, auraData, eventName, apiName, 
     local fired = false
     for _, alert in pairs(alerts) do
         if alertMatchesAura(alert, auraData) then
-            local state = AuraService.states[alert.id]
-            if not state then
-                state = AuraStatePool.acquire()
-                AuraService.states[alert.id] = state
-            end
-
-            resetState(state, alert)
-            if readAuraIntoState(unit, state, auraData, eventName, apiName) then
-                local router = EAM.Modules.EventRouter
-                if router then
-                    local frameName = resolveAuraFrameName(alert.unit)
-                    router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
-                    fired = true
-                end
+            if shouldSuppressAuraOutsideCombat(alert, eventName) then
+                renderInactiveAlert(alert, eventName)
                 if matchedAlerts then
                     matchedAlerts[alert.id] = true
+                end
+            else
+                local state = AuraService.states[alert.id]
+                if not state then
+                    state = AuraStatePool.acquire()
+                    AuraService.states[alert.id] = state
+                end
+
+                resetState(state, alert)
+                if readAuraIntoState(unit, state, auraData, eventName, apiName) then
+                    local router = EAM.Modules.EventRouter
+                    if router then
+                        local frameName = resolveAuraFrameName(alert.unit)
+                        router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
+                        fired = true
+                    end
+                    if matchedAlerts then
+                        matchedAlerts[alert.id] = true
+                    end
                 end
             end
         end
@@ -647,23 +685,27 @@ local function renderBoundaryUnit(unit, eventName, code)
 
     for _, alerts in pairs(unitIndex) do
         for _, alert in pairs(alerts) do
-            local state = AuraService.states[alert.id]
-            if not state then
-                state = AuraStatePool.acquire()
-                AuraService.states[alert.id] = state
-            end
+            if shouldSuppressAuraOutsideCombat(alert, eventName) then
+                renderInactiveAlert(alert, eventName)
+            else
+                local state = AuraService.states[alert.id]
+                if not state then
+                    state = AuraStatePool.acquire()
+                    AuraService.states[alert.id] = state
+                end
 
-            resetState(state, alert)
-            Util.markBoundary(state, "aura", code)
-            state.timer.mode = EAM.Constants.TIMER_PROTECTED
-            state.source.event = eventName
-            state.source.api = code
-            state.source.updatedAt = api.GetTime and api.GetTime() or 0
-            
-            local router = EAM.Modules.EventRouter
-            if router then
-                local frameName = alert.unit == "target" and EAM.Constants.ALERT_FRAME_TYPES.targetAura or EAM.Constants.ALERT_FRAME_TYPES.selfAura
-                router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
+                resetState(state, alert)
+                Util.markBoundary(state, "aura", code)
+                state.timer.mode = EAM.Constants.TIMER_PROTECTED
+                state.source.event = eventName
+                state.source.api = code
+                state.source.updatedAt = api.GetTime and api.GetTime() or 0
+                
+                local router = EAM.Modules.EventRouter
+                if router then
+                    local frameName = alert.unit == "target" and EAM.Constants.ALERT_FRAME_TYPES.targetAura or EAM.Constants.ALERT_FRAME_TYPES.selfAura
+                    router.fire("EAM_AURA_STATE_CHANGED", state, frameName)
+                end
             end
         end
     end
@@ -766,6 +808,7 @@ local function fullScanUnit(unit, eventName)
 end
 
 function AuraService.onRegenEnabled()
+    AuraService.inCombat = false
     local capability = EAM.Services.AuraCapabilityService
     if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
         return
@@ -802,6 +845,24 @@ function AuraService.onUnitPet(eventName, unit)
     end
 end
 
+function AuraService.onRegenDisabled()
+    AuraService.inCombat = true
+    local capability = EAM.Services.AuraCapabilityService
+    if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
+        return
+    end
+    AuraService.refreshAll("PLAYER_REGEN_DISABLED")
+end
+
+function AuraService.onAuraConfigChanged()
+    AuraService.indexedRevision = nil
+    local capability = EAM.Services.AuraCapabilityService
+    if AuraService.backendDisabled or (capability and not capability.isLegacy()) then
+        return
+    end
+    AuraService.refreshAll("EAM_AURA_CONFIG_CHANGED")
+end
+
 local legacyEventsRegistered = false
 
 local function registerLegacyEvents()
@@ -815,6 +876,8 @@ local function registerLegacyEvents()
     router.register("UNIT_AURA", AuraService.onUnitAura)
     router.register("PLAYER_TARGET_CHANGED", AuraService.onTargetChanged)
     router.register("PLAYER_REGEN_ENABLED", AuraService.onRegenEnabled)
+    router.register("PLAYER_REGEN_DISABLED", AuraService.onRegenDisabled)
+    router.register("EAM_AURA_CONFIG_CHANGED", AuraService.onAuraConfigChanged)
     router.register("UNIT_PET", AuraService.onUnitPet)
     legacyEventsRegistered = true
 end
@@ -830,6 +893,8 @@ local function unregisterLegacyEvents()
     router.unregister("UNIT_AURA", AuraService.onUnitAura)
     router.unregister("PLAYER_TARGET_CHANGED", AuraService.onTargetChanged)
     router.unregister("PLAYER_REGEN_ENABLED", AuraService.onRegenEnabled)
+    router.unregister("PLAYER_REGEN_DISABLED", AuraService.onRegenDisabled)
+    router.unregister("EAM_AURA_CONFIG_CHANGED", AuraService.onAuraConfigChanged)
     router.unregister("UNIT_PET", AuraService.onUnitPet)
     legacyEventsRegistered = false
 end

@@ -43,7 +43,10 @@ $ghPath = Get-Command gh -ErrorAction SilentlyContinue
 if (-not $ghPath) {
     throw "未找到 GitHub CLI (gh.exe)！請確認已安裝並加入 PATH。"
 }
+$prevEap = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 $ghAuth = gh auth status 2>&1 | Out-String
+$ErrorActionPreference = $prevEap
 if ($LASTEXITCODE -ne 0 -or $ghAuth -notmatch "Logged in") {
     throw "GitHub CLI 尚未登入！請先執行 gh auth login 完成授權。"
 }

@@ -101,6 +101,15 @@ Retail 12.x may mark auras, cooldowns, timers, points, or unit values as Secret 
 
 ---
 
+## Dual-Track Model Orchestration & Level 3 Closed XML (Track A / Track B)
+
+- **Active Orchestration Track**: **Track B** (`Gemini 4 Hydrogen (XHigh)` Chief Arbiter & Cold-Context Drift Auditor + `Gemini 4 Hydrogen` 4-tier dynamic execution workers `LOW / MEDIUM / HIGH / XHIGH`), switched on `2026-11-13` due to Argon quota limits. **Track A** (`Gemini 4 Argon (High)` Arbiter + `Hydrogen` dynamic) remains on standby for explicit user-directed restoration (`AI_GOVERNANCE_DIRECTIVE.xml` v1.4 & `.AI/skills/eam-dual-track-orchestration/SKILL.md`).
+- **Mandatory First-Line Status Header**: Begin every user reply with `【任務階段：＜階段名稱＞｜建議模型與檔位：Hydrogen (LOW / MEDIUM / HIGH / EXTRA) 或 Argon｜治理模式：輕量 / L1+L2 / 完整 XML】`.
+- **4-Tier Routing & Downgrade Discipline**: `[TIER: LOW]` handles `FOLDER_INDEX` / signatures / static `Data/` cleanup; `[TIER: MEDIUM]` applies golden-reference edits; `[TIER: HIGH]` builds feature modules & runs CLI tests; `[TIER: EXTRA / Argon]` handles core architecture anchoring, multi-flavor compatibility (`Retail 12.1.5` vs `Forever 1.60.1`, distinct from `Classic Era`), and Clean-Session Cold-Context Drift Audits.
+- **Anti-Drift Invariants**: Enforce Index-First context (`PROJECT_MEMORY.md`, `00_INDEX.md`, `FOLDER_INDEX.html`, `EventAlertMod.toc`), never bypass `table.freeze()`, isolate static catalogs inside `EventAlertMod/Data/`, avoid unrelated diffs, and issue the closed `<argon_ticket>` XML schema before Level 3 high-risk refactors.
+
+---
+
 ## Deployment & Verification Commands
 
 - **Build Package**: `pwsh -NoProfile -File .\Deploy\Build-Package.ps1`
