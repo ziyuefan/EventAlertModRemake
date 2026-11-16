@@ -140,14 +140,47 @@ local defaults = {
         showMainHand = true,
         showOffHand = true,
         showRanged = false,
+        showActive = true,
+        glowActive = false,
         warnMissing = true,
         warnExpiring = true,
         expireThreshold = 300,
         glowMissing = true,
         glowExpiring = true,
+        showEnchantBadge = true,
+        badgeOutside = true,
+        badgePosition = "TOPLEFT",
+        badgeScale = 0.45,
         playSound = false,
         soundName = "ShayBell",
         iconSize = 40,
+        growDirection = 1,
+        spacing = 6,
+        x = 120,
+        y = -120,
+        point = "CENTER",
+    },
+    totem = {
+        enabled = true,
+        showFire = true,
+        showEarth = true,
+        showWater = true,
+        showAir = true,
+        showName = true,
+        showCooldownText = true,
+        showSwipe = true,
+        glowActive = false,
+        warnExpiring = true,
+        glowExpiring = true,
+        expireThreshold = 5,
+        playSound = false,
+        soundName = "ShayBell",
+        iconSize = 40,
+        growDirection = 1,
+        spacing = 6,
+        x = 0,
+        y = -240,
+        point = "CENTER",
     },
     config = {
         language = "auto",
@@ -185,6 +218,7 @@ local defaults = {
         showDKRune = true,
         enableItemCooldown = true,
         enableWeaponEnchant = true,
+        enableTotem = true,
         enableCDM = false,
         
         -- 滑桿數值
@@ -226,7 +260,7 @@ local defaults = {
             normalColor = { 1.0, 1.0, 1.0, 1.0 },
         },
         cooldownShadow = true,
-        cooldownSwipeAlpha = 0.8,
+        cooldownSwipeAlpha = 0.5,
         cooldownSwipeColor = { r = 0.0, g = 0.0, b = 0.0 },
         cooldownProgressCurve = "LINEAR",
         showBorder = true,
@@ -1236,7 +1270,7 @@ local function normalizeCooldownSwipeConfig(db)
 
     local alpha = config.cooldownSwipeAlpha
     if not EAM.Util.isSafeNumber(alpha) then
-        alpha = 0.8
+        alpha = 0.5
     elseif alpha < 0 then
         alpha = 0
     elseif alpha > 1 then
@@ -1244,7 +1278,7 @@ local function normalizeCooldownSwipeConfig(db)
     end
     if config.cooldownSwipeColor == nil then
         if config.cooldownSwipeAlpha == 1 then
-            alpha = 0.8
+            alpha = 0.5
         end
         config.cooldownSwipeColor = { r = 0.0, g = 0.0, b = 0.0 }
     else
@@ -2697,6 +2731,14 @@ function SavedVariables.updateModuleToggle(key, enabled)
         db.config.enableItemCooldown = enabled
     elseif key == EAM.Constants.MODULE_KEYS.weaponEnchant then
         db.config.enableWeaponEnchant = enabled
+        if type(db.weaponEnchant) == "table" then
+            db.weaponEnchant.enabled = enabled
+        end
+    elseif key == EAM.Constants.MODULE_KEYS.totem then
+        db.config.enableTotem = enabled
+        if type(db.totem) == "table" then
+            db.totem.enabled = enabled
+        end
     end
     touchRevision(db)
     local router = EAM.Modules.EventRouter

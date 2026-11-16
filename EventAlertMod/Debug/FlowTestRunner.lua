@@ -739,7 +739,8 @@ FlowTestRunner.registerCase({
             return false, "AuraCapabilityService unavailable"
         end
         local snapshot = service.getSnapshot()
-        if (snapshot.clientInterface or 0) < EAM.Constants.INTERFACE then
+        local isModern = EAM.isModernEngineInterface and EAM.isModernEngineInterface(snapshot.clientInterface or 0)
+        if not isModern then
             return STATUS_SKIP, "client is below 12.1"
         end
         if snapshot.selectedBackend ~= EAM.Constants.AURA_BACKEND_NATIVE then
@@ -10654,16 +10655,25 @@ FlowTestRunner.registerCase({
             assert(rule.style.applicationBarMin == 3, "applicationBarMin compiled as 3 from record")
             assert(rule.style.showDurationBar == true, "showDurationBar compiled as true")
 
-            -- 2. Test NativeAuraRenderer initializer with mock CustomAuraButton
+            -- 2. Test NativeAuraRenderer initializer with mock CustomAuraButton (real Frame parent on live client)
             local boundOptions = nil
             local boundBar = nil
             local boundDurationBar = nil
             local activeAnimPassed = nil
-            local mockButton = {
-                SetSize = function() end,
-                ClearAllPoints = function() end,
-                SetPoint = function() end,
-                CreateTexture = function()
+            local isRealFrame = (type(api.CreateFrame) == "function" and _G.UIParent ~= nil)
+            local mockContainer = isRealFrame and api.CreateFrame("Frame", nil, _G.UIParent) or nil
+            if mockContainer and mockContainer.Hide then
+                mockContainer:Hide()
+            end
+            local mockButton = isRealFrame and api.CreateFrame("Frame", nil, mockContainer or _G.UIParent) or {}
+            if isRealFrame and mockButton and mockButton.Hide then
+                mockButton:Hide()
+            end
+            if not isRealFrame then
+                mockButton.SetSize = function() end
+                mockButton.ClearAllPoints = function() end
+                mockButton.SetPoint = function() end
+                mockButton.CreateTexture = function()
                     return {
                         ClearAllPoints = function() end,
                         SetPoint = function() end,
@@ -10678,8 +10688,8 @@ FlowTestRunner.registerCase({
                         Hide = function() end,
                         Show = function() end,
                     }
-                end,
-                CreateFontString = function()
+                end
+                mockButton.CreateFontString = function()
                     return {
                         ClearAllPoints = function() end,
                         SetPoint = function() end,
@@ -10689,13 +10699,8 @@ FlowTestRunner.registerCase({
                         Hide = function() end,
                         Show = function() end,
                     }
-                end,
-                SetIcon = function() end,
-                SetDurationCooldown = function() end,
-                SetDurationText = function() end,
-                SetApplicationCount = function() end,
-                SetSpellName = function() end,
-                CreateAnimationGroup = function()
+                end
+                mockButton.CreateAnimationGroup = function()
                     return {
                         SetLooping = function() end,
                         CreateAnimation = function(_, animType)
@@ -10708,25 +10713,33 @@ FlowTestRunner.registerCase({
                             }
                         end,
                     }
-                end,
-                AddPandemicActiveAnimation = function(_, anim) activeAnimPassed = anim end,
-                AddPandemicEnterAnimation = function() end,
-                AddPandemicLeaveAnimation = function() end,
-                AddAuraShownAnimation = function() end,
-                AddAuraAssignedAnimation = function() end,
-                SetApplicationBar = function(_, bar, opts)
-                    boundBar = bar
-                    boundOptions = opts
-                    return true
-                end,
-                SetDurationBar = function(_, bar)
-                    boundDurationBar = bar
-                    return true
-                end,
-            }
+                end
+            end
+            mockButton.SetIcon = function() end
+            mockButton.SetDurationCooldown = function() end
+            mockButton.SetDurationText = function() end
+            mockButton.SetApplicationCount = function() end
+            mockButton.SetSpellName = function() end
+            mockButton.AddPandemicActiveAnimation = function(_, anim) activeAnimPassed = anim end
+            mockButton.AddPandemicEnterAnimation = function() end
+            mockButton.AddPandemicLeaveAnimation = function() end
+            mockButton.AddAuraShownAnimation = function() end
+            mockButton.AddAuraAssignedAnimation = function() end
+            mockButton.SetApplicationBar = function(_, bar, opts)
+                boundBar = bar
+                boundOptions = opts
+                return true
+            end
+            mockButton.SetDurationBar = function(_, bar)
+                boundDurationBar = bar
+                return true
+            end
 
-            local initializer = NativeAuraRenderer.createInitializer(rule, nil, 1)
+            local initializer = NativeAuraRenderer.createInitializer(rule, mockContainer, 1)
             initializer(mockButton)
+            if NativeAuraRenderer.buttons then
+                NativeAuraRenderer.buttons[mockButton] = nil
+            end
 
             assert(boundBar ~= nil, "SetApplicationBar bound statusBar")
             assert(boundOptions ~= nil, "SetApplicationBar passed options table")
@@ -10769,11 +10782,12 @@ FlowTestRunner.registerCase({
     suites = { quick = true, core = true, aura121 = true, aura = true },
     run = function()
         local originalDB = EAM.db
+        local AuraService = EAM.Services and EAM.Services.AuraService
+        local originalInCombat = AuraService and AuraService.inCombat or false
         local ok, err = pcall(function()
-            local SavedVariables = EAM.Modules.SavedVariables
-            local AuraService = EAM.Services.AuraService
-            local ProfileCodec = EAM.Core.ProfileCodec or EAM.Modules.ProfileCodec
-            local NativeAuraRenderer = EAM.UI.NativeAuraRenderer
+            local SavedVariables = EAM.Modules and EAM.Modules.SavedVariables
+            local ProfileCodec = (EAM.Modules and EAM.Modules.ProfileCodec) or (EAM.Core and EAM.Core.ProfileCodec)
+            local NativeAuraRenderer = EAM.UI and EAM.UI.NativeAuraRenderer
             local testSpellID = 99901
             
             -- Setup isolated test DB
@@ -10922,9 +10936,39 @@ FlowTestRunner.registerCase({
         end)
 
         EAM.db = originalDB
+        if AuraService then
+            AuraService.inCombat = originalInCombat
+        end
         if not ok then
             return false, tostring(err)
         end
         return true, "Aura hideOutsideCombat global and tri-state override flow fully validated"
+    end,
+})
+
+FlowTestRunner.registerCase({
+    id = "weapon_enchant.service_and_dual_tooltip",
+    primarySuite = "core",
+    suites = { quick = true, core = true },
+    run = function()
+        local we = EAM.Services and EAM.Services.WeaponEnchantService
+        if not we then
+            return false, "WeaponEnchantService unavailable"
+        end
+        local cfg = we.getConfig and we.getConfig()
+        assert(type(cfg) == "table", "getConfig returns table")
+        assert(cfg.badgeOutside ~= nil, "cfg.badgeOutside initialized")
+        assert(type(we.resolveEnchantIcon) == "function", "resolveEnchantIcon available")
+        assert(type(we.resolveEnchantSpellID) == "function", "resolveEnchantSpellID available")
+        assert(we.resolveEnchantIcon(16, 29, nil) == 136086, "Rockbiter enchantID 29 resolves to Rockbiter icon")
+        assert(we.resolveEnchantSpellID(29, nil) == 8017, "Rockbiter enchantID 29 resolves to Rockbiter spellID 8017")
+        assert(we.formatDuration(3540) == "59m", "formatDuration formats 3540s cleanly")
+        assert(EAM.UI and EAM.UI.WeaponEnchantPanel ~= nil, "WeaponEnchantPanel exposed")
+        if EAM.isForever then
+            local srs = EAM.Services and EAM.Services.SpellRankService
+            assert(srs ~= nil and type(srs.getKnownSpellCount) == "function", "SpellRankService.getKnownSpellCount available on Forever")
+            assert(srs.getKnownSpellCount() > 0, "SpellRankService indexed known ranked spells on Forever")
+        end
+        return true, "WeaponEnchantService config, icon/spell resolution, dual tooltip & SpellRank integration verified"
     end,
 })

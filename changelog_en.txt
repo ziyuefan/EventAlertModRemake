@@ -1,11 +1,15 @@
-﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Character Attributes Engine, Independent Weapon Enchant Service & Aura Out-of-Combat Visibility] 2026.11.12
+﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Totem & Weapon Enchant Independent Modules, Forever Character Attributes Engine, Mana 5SR Soft Glow & Aura Out-of-Combat Visibility] 2026.11.16
      -- [Features]:
-        -- Independent Weapon Enchant Service Pipeline:
-           -- Implemented dedicated WeaponEnchantService.lua calling Blizzard native GetWeaponEnchantInfo() API, fully supporting Main Hand (Slot 16), Off Hand (Slot 17), and Ranged (Slot 18) temporary enchants;
-           -- Supported cross-flavor enchant mechanisms: Sharpening Stones, Weightstones, Wizard/Mana Oils, Rogue Poisons, Shaman Windfury/Flametongue/Frostbrand, DK Runeforging, Shadowcore Oil, etc.;
-           -- Missing Weapon Enchant Warning: Triggers prominent alerts (LibButtonGlow overlay and throttled audio warning) when a weapon is equipped without temporary enchant;
-           -- Expiring Enchant Warning: Glow alert and highlighted timer countdown when remaining duration is below threshold (default 5 minutes) or charges are depleted;
-           -- Independent mover HUD and saved layout positioning (/eam enchant or button in PlayerStatPanel, left drag, right click to finish).
+        -- Independent Totem Monitor Service & Standalone Settings Panel:
+           -- Upgraded totem tracking into a completely decoupled standalone module (TotemService) with pre-created out-of-combat HUD slot frames (EAM_TotemFrame / EAM_TotemSlotFrame1..4) and a dedicated AlertManager route guard, fixing the issue where totems dropped in combat failed to appear due to generic Renderer combatDeferred allocation or strict secret early returns;
+           -- Added standalone settings panel (TotemPanel / Main Options "★ Totem Status Monitor" / /eam totem) synced with all 11 UI themes, supporting Fire/Earth/Water/Air slot toggles, totem name & countdown text toggles, cooldown swipe overlay, active glow, expiring threshold slider (2-30s) & glow, 30s throttled audio alerts, custom X/Y offsets & grow direction, independent anchor mover (/eam totem move), and a 15-second test preview mode (/eam totem test);
+           -- Supports both 12.x native DurationObject swipe/countdown rendering and Forever 1.60.1 string icon paths, native GameTooltip:SetTotem(slot) on hover, and right-click totem dismissal out of combat.
+        -- Independent Weapon Enchant Service & Standalone Settings Panel:
+           -- Implemented dedicated WeaponEnchantService.lua prioritizing C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot) alongside Forever C_Item.GetWeaponEnchantInfo(slot - 16) (with GetWeaponEnchantInfo() legacy fallback), tracking Main Hand (Slot 16), Off Hand (Slot 17), and Ranged (Slot 18) temporary enchants across Forever and Retail;
+           -- Added standalone settings panel (WeaponEnchantPanel / Main Options "★ Weapon Temp Enchant" / /eam enchant), offering per-slot toggles, custom X/Y offsets & grow direction, icon size/spacing, active/expiring/missing highlight glow toggles, expiring threshold (default 5 min), and 30s throttled audio alerts;
+           -- Added corner enchant sub-icon badge and outer-frame placement mode (badgeOutside): keeps the main icon as the equipped weapon while anchoring the enchant sub-icon cleanly outside the frame (configurable corner & 30%~65% scale) with elevated FrameLevel to prevent LibButtonGlow overlap;
+           -- Added side-by-side Equipped Weapon & Enchant Spell Dual Tooltip: hovering either the weapon icon or outer enchant badge renders the full equipped weapon tooltip (SetInventoryItem) on the left and the spell enchant description (SetSpellByID / tooltip parsing) with live remaining time & charges on the right;
+           -- Separated lightweight tickCountdown scheduler and independent mover HUD (/eam enchant, left-drag / right-click to save).
         -- Forever 1.60.1 11 Character Attributes Knowledge Base & Native Tooltip Engine:
            -- Calibrated 11 attribute formulas and mechanics based on in-game screenshots, adding native GameTooltip hover previews to HUD stat frames and option rows:
               -- Strength: +AP (1 Str = 2 AP), Shield Block Value = Str / 20;
@@ -37,9 +41,14 @@
            -- Smooth fade-in (0 -> 0.35 in 0.40s) and fade-out (0.35 -> 0 in 0.30s) animations;
            -- Instantly fades out on mana-spending spellcasts and smoothly fades in upon exiting the 5-second penalty, greatly enhancing pacing and resource awareness for classic healers and casters;
            -- Added dedicated toggle "Continuous Blue Vignette Glow (Spirit Regen Active)" in the player stats options panel.
+     -- [Optimizations & Bug Fixes]:
+        -- Default Cooldown Shadow Alpha Adjusted to 50%: Lowered the default and reset value of cooldownSwipeAlpha from 80% (0.8) to 50% (0.5) across IconPool, NativeAuraRenderer, Renderer, PreviewPanel, TotemService, and ProfileCodec for clearer icon readability;
+        -- Forever 1.60.1 Resource Panel Topology Filtering: Updated PlayerResourcePanel to consume Catalog.GetFlavorCandidateKeys so Forever 1.60.1 cleanly shows classic player resources (Mana, Rage, Energy, 5-point Combo Points; Pet Happiness handled in Player Stats) without Retail specialization clutter;
+        -- Automatic Forever SpellRankService Initialization: Wired SpellRankService into Main.initialize() and added SpellRankService.getKnownSpellCount() so multi-rank spell families are indexed automatically on login;
+        -- Dynamic Theme Integration for Weapon Enchant Panel: Fixed load-order theme lookup so EAM_WeaponEnchantOptionsFrame adopts all 11 UI themes and cleaned up label wrapping/truncation.
      -- [Localization]:
         -- Calibrated official regional client names for Forever: Traditional Chinese (zhTW) unified as "永恆" (World of Warcraft: Forever) and Simplified Chinese (zhCN) unified as "无限" (World of Warcraft: Infinite).
-        -- 100% synchronized all 5 locales (enUS, zhTW, zhCN, koKR, ruRU) for weapon enchants, mana stat, continuous soft blue glow, new attributes, and slash command help.
+        -- 100% synchronized all 5 locales (enUS, zhTW, zhCN, koKR, ruRU) for weapon enchant standalone panel, outer badge toggle, mana stat, continuous soft blue glow, new attributes, and slash command help.
 
 -- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 8.9][Multi-Flavor Unified Architecture, Forever 60-Level Resource Topology, Classic Stat Monitoring & Retail 12.1.5 Native Aura Overhaul] 2026.11.08
      -- [Features]:

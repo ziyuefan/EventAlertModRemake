@@ -5,9 +5,26 @@
 
 本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 `Data/ProjectContinuity.json` 為準；詳細試錯時間線保留在 `Docs/15_DEVELOPMENT_ISSUE_LOG.md`；真人實機案例定義保留在 `Data/LiveValidationMatrix.json`。三者不得互相複製整段內容。
 
-目前快照版本：2026-11-13.01 (AI_GOVERNANCE_DIRECTIVE.xml 升級 v1.4 補完 Level 3 閉合 XML 派工契約；正式切換至 Track B：Hydrogen XHigh 仲裁 + Hydrogen 動態四階；同步 eam-dual-track-orchestration 技能、00_INDEX 文件導航中心、雙語 README 與 GitHub Pages 離線編譯)。
+目前快照版本：2026-11-16.02 (Alpha 9.0 獨立圖騰監控模組 `TotemService`/`TotemPanel` 修復戰鬥中不顯示、預設冷卻陰影透明度 50%、武器附魔框外小圖示與雙 Tooltip、Forever 1.60.1 實機修復，以及全平台發布前文件定稿)。
 
-## 2026-11-13 多進度儲存點：AI 雙軌治理升級 (v1.4)、Track B 切換、技能生態補完與文件導航中心/GitHub 同步（現行儲存點）
+## 2026-11-16 多進度儲存點：Alpha 9.0 獨立圖騰模組、預設陰影透明度 50% 與全平台發布文件定稿（現行儲存點）
+
+- current-of-truth：完成 Alpha 9.0 發布前最終機能補完與全域文件定稿：
+  1. **獨立圖騰狀態監控模組與戰鬥安全預建框 (`TotemService.lua`, `SavedVariables.lua`, `AlertManager.lua`, `Options.lua`, `Slash.lua`, `Env.lua`)**：
+     - 定位並修復薩滿圖騰不顯示雙重根因：(a) 經通用 `Renderer.lua` 在戰鬥中放下圖騰時因未預先建框觸發 `combatDeferred` 延遲阻塞；(b) `TotemService.refreshSlot` 遭遇 Secret 名稱早期返回而未建立狀態、且 Forever 字串材質路徑被僅接受數值型別過濾；
+     - 將圖騰監控全面升級為獨立模組 (`TotemService.hasDedicatedHUD = true`)，預先建立 `EAM_TotemFrame` 與 `EAM_TotemSlotFrame1..4` 四色槽位框體，於 `AlertManager` 接入 `totemDedicatedHUDHandled` 路由保護；
+     - 新增主題連動獨立設定面板 `EAM.UI.TotemPanel` (`EAM_TotemOptionsFrame`，主選單第 10 項與 `/eam totem`)，支援火/地/水/風開關、名稱/倒數/轉圈開關、作用中與到期發光高亮、警戒門檻 (`2~30s`)、30 秒節流音效、自由 X/Y 座標與成長方向、移動錨點 (`/eam totem move`)、15 秒測試預覽 (`/eam totem test`)、原生 `GameTooltip:SetTotem(slot)` 與非戰鬥右鍵收回圖騰。
+  2. **預設冷卻陰影透明度調整為 50% (`cooldownSwipeAlpha = 0.5`)**：
+     - 將預設值、遷移/正規化回退值與重置按鈕統一從 `0.8` 改為 `0.5`（涵蓋 `SavedVariables.lua`, `ProfileCodec.lua`, `AuraRuleCompiler.lua`, `IconPool.lua`, `NativeAuraRenderer.lua`, `Renderer.lua`, `Options.lua`, `PreviewPanel.lua`, `TotemService.lua`）。
+  3. **武器臨時附魔模組全面完善 (`WeaponEnchantService.lua`, `SavedVariables.lua`, `Locale/*.lua`)**：
+     - 跨客戶端審查對齊 `C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot)` 與 Forever `C_Item.GetWeaponEnchantInfo(slot - 16)`（保留 `GetWeaponEnchantInfo()` 降級層），分離 `tickCountdown` 跳秒與狀態採樣；
+     - 建立獨立設定面板 `EAM.UI.WeaponEnchantPanel` (`EAM_WeaponEnchantOptionsFrame`)、主選單獨立入口、`/eam enchant` 指令與屬性面板捷徑，改為 `getTheme()`/`getLocale()` 動態連動 11 套主題配色；
+     - 實作預設開啟之框外角落小圖示 (`badgeOutside = true`) 與 `SetFrameLevel` 提權防 `LibButtonGlow` 遮擋，並實裝並排武器 (`SetInventoryItem`) ＋附魔 (`EAM_WeaponEnchantSubTooltip` / `SetSpellByID`) 雙重 Tooltip。
+  4. **Forever 1.60.1 實機測試與資源過濾修復 (`Main.lua`, `SpellRankService.lua`, `FlowTestRunner.lua`, `PreviewPanel.lua`, `PlayerResourcePanel.lua`, `ForeverCatalog.lua`)**：
+     - 將 `SpellRankService` 納入 `Main.initialize()` 並新增 `getKnownSpellCount()`；修復 `FlowTestRunner.lua` 兩項實機錯誤並通過 `weapon_enchant.service_and_dual_tooltip`；更新 `PlayerResourcePanel.lua` 改用 `Catalog.GetFlavorCandidateKeys` 對齊 60 級經典資源；
+     - 完成 `changelog.*`、`README*.md`、`Deploy/*`、`Dist/RELEASE_NOTES_Alpha_9.0.md`、`Dist/GITHUB_RELEASE_NOTES_alpha-9.0.md`、`00_INDEX*.md` 與 `.AI/docs_html/` 發布前定稿。
+
+## 2026-11-13 多進度儲存點：AI 雙軌治理升級 (v1.4)、Track B 切換、技能生態補完與文件導航中心/GitHub 同步（前一儲存點）
 
 - current-of-truth：依據少年欸兩項核心指令，完成治理架構補完、Track B 軌道切換與全站同步：
   1. **項次 1 補完 (`Level 3 <argon_ticket>` 閉合 XML 與實務對齊)**：於 `.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml` v1.4 新增 `<dual_track_model_routing>` 與 `<level3_closed_xml_ticket_standard>` 兩大節點（共 13 個頂層節點），補齊 `<scope>`、`<immutable_files>`、`EventAlertMod/Data/` 靜態表隔離、`table.freeze()` 不可解除、Forever 1.60.1（繁中「永恆」／簡中「无限」）非 `Classic Era`、Zero Unrelated Diff、實機指令驗證清單與 `Cold-Context Drift Audit` 冷面審查標準。

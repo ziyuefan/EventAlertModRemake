@@ -28,7 +28,7 @@ EAM.Services.SpellRankService = SpellRankService
 local api = EAM.API or {}
 local Util = EAM.Util or {}
 
-local isForever = false
+local isForever = (EAM.isForever == true)
 local initialized = false
 local pendingScan = false
 
@@ -381,6 +381,20 @@ function SpellRankService.getSummary()
         spellCount = spCount,
         pendingScan = pendingScan,
     }
+end
+
+function SpellRankService.getKnownSpellCount()
+    if not (EAM.isForever == true or isForever) then
+        return 0
+    end
+    if not initialized then
+        SpellRankService.initialize()
+    end
+    local count = 0
+    for _ in pairs(spellIDToFamily) do
+        count = count + 1
+    end
+    return count
 end
 
 -------------------------------------------------------------------------------

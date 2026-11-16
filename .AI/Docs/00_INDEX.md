@@ -23,9 +23,9 @@
 
 ---
 
-## ✨ 九大獨立告警模組 (9 Independent Alert Modules)
+## ✨ 十大獨立告警模組 (10 Independent Alert Modules)
 
-EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：
+EAM 擁有 10 個完全解耦、獨立排版、自由拖曳的專業監控模組：
 
 1. 🔮 **自身光環 (Player Buff / Debuff)**：監控自身增益與減益，支援堆疊層數、剩餘吸收盾量即時顯示（如 `45.2k`、`1.2M`、`3(45k)`）、高精度倒數，以及全域＋單技能三態「脫戰後隱藏光環 (Hide Auras Outside Combat)」。
 2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態，支援 Tooltip 匿名回呼與無污染安全採集，並支援脫戰自動隱藏設定。
@@ -35,16 +35,18 @@ EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊、多時間組別候選擷取（Duration Group Selector）與 2D 矩陣折行。
 7. ⚡ **玩家職業資源 (Player Resource)**：支援 Retail 全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（`>=` / `<=` 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（`/eam rune`）；同步支援《魔獸世界：永恆 / 無限》(Forever 1.60.1，繁中「永恆」、簡中「无限」) 經典 60 級 9 大職業資源拓撲（戰士怒氣、盜賊能量與 5 格連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力），徹底隔離現代專精雜訊。
 8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：依職業獨立配置，全方位即時監控角色數值（正式服 18+ 種核心屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）；永恆服 (Forever 1.60.1) 專屬支援 11 大實機校準屬性換算與原生 `GameTooltip` 知識引擎（含攻擊強度 `14 AP = 1 DPS`、防禦 440 首領免暴、護甲 `75%` 免傷上限、精神坐臥回血 `+33%`）、五大魔法抗性、法力 (`mana`) 與精神 5 秒回魔規則 (5SR) 三態視覺提醒，以及全螢幕柔和暗角藍色泛光 (`EAM_SpiritActiveGlowFrame`)。
-9. 🗡️ **武器臨時附魔 (Weapon Enchant)**：獨立服務模組 (`WeaponEnchantService`)，底層直通暴雪原生 `GetWeaponEnchantInfo()` API，完美支援主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 之經典磨刀石／毒藥／巫術與法力之油／風怒火舌／正式服符文熔鑄監控；具備缺附魔醒目發光警示、到期前倒數高亮與 `/eam enchant` 獨立 HUD 拖曳定位。
+9. 🗡️ **武器臨時附魔 (Weapon Enchant)**：獨立專屬服務 (`WeaponEnchantService`) 與獨立設定視窗 (`WeaponEnchantPanel` / `/eam enchant`)，優先串接 `C_PaperDollInfo.GetTemporaryEnchantmentInfo` 與 `C_Item.GetWeaponEnchantInfo`（含 `GetWeaponEnchantInfo()` 備援），即時追蹤主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 磨刀石／毒藥／油類／薩滿灌注與聖騎士神聖儀式；支援「框外附魔小圖示」(`badgeOutside`) 防 Glow 遮擋、並排武器介紹＋附魔內容雙重 Tooltip、缺附魔／到期亮框＋節流音效與自由定位。
+10. 🗿 **圖騰狀態監控 (Totem)**：獨立專屬服務 (`TotemService`) 與獨立設定面板 (`TotemPanel` / `/eam totem`)，預先建構戰鬥安全槽位框體 (`Slot 1..4` 火／地／水／風) 與 `AlertManager` 專用路由守衛，相容正式服 `DurationObject` 與永恆服 `GetTotemInfo`；支援四槽位獨立開關、作用中／到期發光高亮、倒數門檻、節流音效、原生 `SetTotem` Tooltip 與 15 秒一鍵模擬預覽 (`/eam totem test`)。
 
 ---
 
 ## 🔥 近期版本重大里程碑 (Recent Release Milestones)
 
-- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13**
-    - **獨立武器臨時附魔模組 (`WeaponEnchantService`) [雙版本共通]**：實裝獨立服務監控主／副／遠程武器槽位臨時附魔，涵蓋缺少附魔發光＋節流音效警示、到期前倒數亮框、以及 `/eam enchant` 獨立 HUD 定位。
-    - **永恆服 11 大角色屬性機制校準與原生 Tooltip 知識引擎 [Forever 1.60.1 專屬]**：依實機面板數據精準校準力量/耐力/敏捷/智力/精神/攻擊強度 (`14 AP = 1 DPS`)/致命/防禦 (`440` 首領免暴與碾壓機制)/閃躲/招架 (Parry Haste)/護甲 (`75%` 上限)，並擴充 `attackPower`、`dodge`、`parry`、`block` 與 HUD/面板原生 `GameTooltip`。
-    - **法力屬性、5 秒精神回魔 (5SR) 三態提醒與全螢幕柔和藍色泛光 [Forever 1.60.1 專屬]**：整合 `mana` 監控、StatusBar 冰藍/暗琥珀反差條、圖示雙態發光、文字 1.32x 放大倒數，以及 `CombatFlash` 常駐柔和暗角藍色泛光圖層 `EAM_SpiritActiveGlowFrame`。
+- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.16**
+    - **獨立圖騰狀態監控模組與專屬設定面板 (`TotemService` & `TotemPanel`) [雙版本共通]**：預先建立非戰鬥安全 HUD 槽位框體並與通用 Renderer 解耦，徹底修復戰鬥中施放圖騰因 `combatDeferred` 或過嚴 Secret 檢查而不顯示的問題；提供主題連動設定面板 (`/eam totem`) 與 15 秒模擬預覽 (`/eam totem test`)。
+    - **獨立武器臨時附魔模組、專屬面板與雙 Tooltip (`WeaponEnchantService`) [雙版本共通]**：雙軌採樣 `C_PaperDollInfo.GetTemporaryEnchantmentInfo` 與 `C_Item.GetWeaponEnchantInfo`，提供主題連動獨立面板 (`/eam enchant`)、框外角落小圖示 (`badgeOutside`) 防 Glow 遮擋、並排武器介紹＋附魔內容雙重 Tooltip 與節流音效警示。
+    - **預設冷卻倒數陰影透明度調降至 50% (`cooldownSwipeAlpha = 0.5`) [雙版本共通]**：全面調整轉圈遮罩透明度預設與重設值，提升倒數期間圖示清晰度（含獨立圖騰框架轉圈遮罩）。
+    - **永恆服 11 大角色屬性機制校準、法力 5SR 與資源面板過濾 [Forever 1.60.1 專屬]**：依實機面板數據校準 11 大屬性換算 (`14 AP = 1 DPS`、`440` 防禦首領免暴、護甲 `75%` 上限、精神坐臥回血 `+33%`、招架提速)、擴展 `mana` / 5SR 藍光 (`EAM_SpiritActiveGlowFrame`)、精簡 Forever 經典資源清單與自動啟動 `SpellRankService`。
     - **光環脫戰自動隱藏全域與單技能三態覆寫 [雙版本共通]**：於一般設定與單技能條件提供全域開關與「跟隨全域／強制開／強制關」三態覆寫，全面貫通 Legacy `AuraService` 與 Retail 12.1+ 原生容器。
     - **Forever 名稱校準與 AI 雙軌治理升級 (Track B 啟用)**：統一繁中「永恆」／簡中「无限」，明確區隔非 `Classic Era`；升級 `AI_GOVERNANCE_DIRECTIVE.xml` 至 **v1.4**（補完 Level 3 閉合 `<argon_ticket>` XML 契約並切換至 **Track B：`Gemini 4 Hydrogen (XHigh)` 仲裁 ＋ `Hydrogen` 四階動態強度**，新增 `eam-dual-track-orchestration` 技能）。
 - 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08**

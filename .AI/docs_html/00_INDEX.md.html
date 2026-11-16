@@ -553,8 +553,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="9-independent-alert-modules">✨ 九大獨立告警模組 (9 Independent Alert Modules)</h2>
-<p>EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>
+<h2 id="10-independent-alert-modules">✨ 十大獨立告警模組 (10 Independent Alert Modules)</h2>
+<p>EAM 擁有 10 個完全解耦、獨立排版、自由拖曳的專業監控模組：</p>
 <ol>
 <li>🔮 <strong>自身光環 (Player Buff / Debuff)</strong>：監控自身增益與減益，支援堆疊層數、剩餘吸收盾量即時顯示（如 <code>45.2k</code>、<code>1.2M</code>、<code>3(45k)</code>）、高精度倒數，以及全域＋單技能三態「脫戰後隱藏光環 (Hide Auras Outside Combat)」。</li>
 <li>🎯 <strong>目標光環 (Target Buff / Debuff)</strong>：精確監控當前目標之光環、控制與 Debuff 狀態，支援 Tooltip 匿名回呼與無污染安全採集，並支援脫戰自動隱藏設定。</li>
@@ -564,15 +564,17 @@
 <li>🌋 <strong>地面效果 (Ground Effect)</strong>：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊、多時間組別候選擷取（Duration Group Selector）與 2D 矩陣折行。</li>
 <li>⚡ <strong>玩家職業資源 (Player Resource)</strong>：支援 Retail 全 13 職業、40 組專精、17 種資源獨立節點（含喚能師五語系官方「龍能 / 精華 / Essence」正名），支援單一資源獨立拖曳與常見框架九宮格依附、動態最大點數（5/6/7 格）自動分割與自訂格數（0~20 格）、自訂單色與雙色漸層條、雙向條件告警（<code>&gt;=</code> / <code>&lt;=</code> 變色與邊緣觸發音效）、以及死亡騎士專屬 6 格動態符文儀表板（<code>/eam rune</code>）；同步支援《魔獸世界：永恆 / 無限》(Forever 1.60.1，繁中「永恆」、簡中「无限」) 經典 60 級 9 大職業資源拓撲（戰士怒氣、盜賊能量與 5 格連擊點、獵人法力與寵物集中值、術士法力與靈魂碎片、德魯伊四形態切換、聖騎/牧師/薩滿/法師法力），徹底隔離現代專精雜訊。</li>
 <li>📊 <strong>角色屬性與吸收量 (Player Stats &amp; Absorbs)</strong>：依職業獨立配置，全方位即時監控角色數值（正式服 18+ 種核心屬性、四合一速度、護甲值、總吸收盾量與治療吸收量）；永恆服 (Forever 1.60.1) 專屬支援 11 大實機校準屬性換算與原生 <code>GameTooltip</code> 知識引擎（含攻擊強度 <code>14 AP = 1 DPS</code>、防禦 440 首領免暴、護甲 <code>75%</code> 免傷上限、精神坐臥回血 <code>+33%</code>）、五大魔法抗性、法力 (<code>mana</code>) 與精神 5 秒回魔規則 (5SR) 三態視覺提醒，以及全螢幕柔和暗角藍色泛光 (<code>EAM_SpiritActiveGlowFrame</code>)。</li>
-<li>🗡️ <strong>武器臨時附魔 (Weapon Enchant)</strong>：獨立服務模組 (<code>WeaponEnchantService</code>)，底層直通暴雪原生 <code>GetWeaponEnchantInfo()</code> API，完美支援主手 (<code>Slot 16</code>)、副手 (<code>Slot 17</code>) 與遠程 (<code>Slot 18</code>) 之經典磨刀石／毒藥／巫術與法力之油／風怒火舌／正式服符文熔鑄監控；具備缺附魔醒目發光警示、到期前倒數高亮與 <code>/eam enchant</code> 獨立 HUD 拖曳定位。</li>
+<li>🗡️ <strong>武器臨時附魔 (Weapon Enchant)</strong>：獨立專屬服務 (<code>WeaponEnchantService</code>) 與獨立設定視窗 (<code>WeaponEnchantPanel</code> / <code>/eam enchant</code>)，優先串接 <code>C_PaperDollInfo.GetTemporaryEnchantmentInfo</code> 與 <code>C_Item.GetWeaponEnchantInfo</code>（含 <code>GetWeaponEnchantInfo()</code> 備援），即時追蹤主手 (<code>Slot 16</code>)、副手 (<code>Slot 17</code>) 與遠程 (<code>Slot 18</code>) 磨刀石／毒藥／油類／薩滿灌注與聖騎士神聖儀式；支援「框外附魔小圖示」(<code>badgeOutside</code>) 防 Glow 遮擋、並排武器介紹＋附魔內容雙重 Tooltip、缺附魔／到期亮框＋節流音效與自由定位。</li>
+<li>🗿 <strong>圖騰狀態監控 (Totem)</strong>：獨立專屬服務 (<code>TotemService</code>) 與獨立設定面板 (<code>TotemPanel</code> / <code>/eam totem</code>)，預先建構戰鬥安全槽位框體 (<code>Slot 1..4</code> 火／地／水／風) 與 <code>AlertManager</code> 專用路由守衛，相容正式服 <code>DurationObject</code> 與永恆服 <code>GetTotemInfo</code>；支援四槽位獨立開關、作用中／到期發光高亮、倒數門檻、節流音效、原生 <code>SetTotem</code> Tooltip 與 15 秒一鍵模擬預覽 (<code>/eam totem test</code>)。</li>
 </ol>
 <hr />
 <h2 id="recent-release-milestones">🔥 近期版本重大里程碑 (Recent Release Milestones)</h2>
 <ul>
-<li>🌟 <strong>[Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0] - 2026.11.13</strong><ul>
-<li><strong>獨立武器臨時附魔模組 (<code>WeaponEnchantService</code>) [雙版本共通]</strong>：實裝獨立服務監控主／副／遠程武器槽位臨時附魔，涵蓋缺少附魔發光＋節流音效警示、到期前倒數亮框、以及 <code>/eam enchant</code> 獨立 HUD 定位。</li>
-<li><strong>永恆服 11 大角色屬性機制校準與原生 Tooltip 知識引擎 [Forever 1.60.1 專屬]</strong>：依實機面板數據精準校準力量/耐力/敏捷/智力/精神/攻擊強度 (<code>14 AP = 1 DPS</code>)/致命/防禦 (<code>440</code> 首領免暴與碾壓機制)/閃躲/招架 (Parry Haste)/護甲 (<code>75%</code> 上限)，並擴充 <code>attackPower</code>、<code>dodge</code>、<code>parry</code>、<code>block</code> 與 HUD/面板原生 <code>GameTooltip</code>。</li>
-<li><strong>法力屬性、5 秒精神回魔 (5SR) 三態提醒與全螢幕柔和藍色泛光 [Forever 1.60.1 專屬]</strong>：整合 <code>mana</code> 監控、StatusBar 冰藍/暗琥珀反差條、圖示雙態發光、文字 1.32x 放大倒數，以及 <code>CombatFlash</code> 常駐柔和暗角藍色泛光圖層 <code>EAM_SpiritActiveGlowFrame</code>。</li>
+<li>🌟 <strong>[Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0] - 2026.11.16</strong><ul>
+<li><strong>獨立圖騰狀態監控模組與專屬設定面板 (<code>TotemService</code> &amp; <code>TotemPanel</code>) [雙版本共通]</strong>：預先建立非戰鬥安全 HUD 槽位框體並與通用 Renderer 解耦，徹底修復戰鬥中施放圖騰因 <code>combatDeferred</code> 或過嚴 Secret 檢查而不顯示的問題；提供主題連動設定面板 (<code>/eam totem</code>) 與 15 秒模擬預覽 (<code>/eam totem test</code>)。</li>
+<li><strong>獨立武器臨時附魔模組、專屬面板與雙 Tooltip (<code>WeaponEnchantService</code>) [雙版本共通]</strong>：雙軌採樣 <code>C_PaperDollInfo.GetTemporaryEnchantmentInfo</code> 與 <code>C_Item.GetWeaponEnchantInfo</code>，提供主題連動獨立面板 (<code>/eam enchant</code>)、框外角落小圖示 (<code>badgeOutside</code>) 防 Glow 遮擋、並排武器介紹＋附魔內容雙重 Tooltip 與節流音效警示。</li>
+<li><strong>預設冷卻倒數陰影透明度調降至 50% (<code>cooldownSwipeAlpha = 0.5</code>) [雙版本共通]</strong>：全面調整轉圈遮罩透明度預設與重設值，提升倒數期間圖示清晰度（含獨立圖騰框架轉圈遮罩）。</li>
+<li><strong>永恆服 11 大角色屬性機制校準、法力 5SR 與資源面板過濾 [Forever 1.60.1 專屬]</strong>：依實機面板數據校準 11 大屬性換算 (<code>14 AP = 1 DPS</code>、<code>440</code> 防禦首領免暴、護甲 <code>75%</code> 上限、精神坐臥回血 <code>+33%</code>、招架提速)、擴展 <code>mana</code> / 5SR 藍光 (<code>EAM_SpiritActiveGlowFrame</code>)、精簡 Forever 經典資源清單與自動啟動 <code>SpellRankService</code>。</li>
 <li><strong>光環脫戰自動隱藏全域與單技能三態覆寫 [雙版本共通]</strong>：於一般設定與單技能條件提供全域開關與「跟隨全域／強制開／強制關」三態覆寫，全面貫通 Legacy <code>AuraService</code> 與 Retail 12.1+ 原生容器。</li>
 <li><strong>Forever 名稱校準與 AI 雙軌治理升級 (Track B 啟用)</strong>：統一繁中「永恆」／簡中「无限」，明確區隔非 <code>Classic Era</code>；升級 <code>AI_GOVERNANCE_DIRECTIVE.xml</code> 至 <strong>v1.4</strong>（補完 Level 3 閉合 <code>&lt;argon_ticket&gt;</code> XML 契約並切換至 <strong>Track B：<code>Gemini 4 Hydrogen (XHigh)</code> 仲裁 ＋ <code>Hydrogen</code> 四階動態強度</strong>，新增 <code>eam-dual-track-orchestration</code> 技能）。</li>
 </ul>
@@ -855,8 +857,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="9-independent-alert-modules">✨ 9 Independent Alert Modules</h2>
-<p>EAM features 9 decoupled, independently positioned and freely draggable alert modules:</p>
+<h2 id="10-independent-alert-modules">✨ 10 Independent Alert Modules</h2>
+<p>EAM features 10 decoupled, independently positioned and freely draggable alert modules:</p>
 <ol>
 <li>🔮 <strong>Player Buff / Debuff</strong>: Self buffs &amp; debuffs with stack counts, real-time shield absorb amounts (e.g. <code>45.2k</code>, <code>1.2M</code>, <code>3(45k)</code>), high-precision countdown timers, and Global + Per-Spell tri-state "Hide Auras Outside Combat".</li>
 <li>🎯 <strong>Target Buff / Debuff</strong>: Precise tracking of target auras, CC, and debuff states with anonymous Tooltip probes, zero-taint sampling, and out-of-combat visibility control.</li>
@@ -866,15 +868,17 @@
 <li>🌋 <strong>Ground Effect</strong>: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, AMZ) with Base/Override talent family matching, Multi-Duration Candidate Scraping, and 2D Grid Layout support.</li>
 <li>⚡ <strong>Player Resource</strong>: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5 (with independent dragging, 9-point attachment, dynamic/custom segments, two-color gradients, conditional alerts, and DK Runes dashboard <code>/eam rune</code>), plus Forever 1.60.1 classic 60-level 9-class topologies (Warrior Rage, Rogue Energy/Combo Points, Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form shifts, Paladin/Priest/Shaman/Mage Mana).</li>
 <li>📊 <strong>Player Stats &amp; Absorbs</strong>: Per-class customizable profiles across 18+ core Retail attributes (including 4-in-1 gliding velocities) and Forever 1.60.1 calibrated stats (11 attributes + native GameTooltip knowledge formulas such as <code>14 AP = 1 DPS</code>, <code>440</code> Defense Boss Crit Immunity, <code>75%</code> Armor cap, <code>+33%</code> sit/sleep regen; Five Magic Resistances; <code>mana</code> &amp; Spirit 5SR three-state alerts + <code>EAM_SpiritActiveGlowFrame</code> continuous soft blue screen vignette).</li>
-<li>🗡️ <strong>Weapon Enchant</strong>: Dedicated <code>WeaponEnchantService</code> built directly on native <code>GetWeaponEnchantInfo()</code>, tracking temporary Main Hand (<code>Slot 16</code>), Off Hand (<code>Slot 17</code>), and Ranged (<code>Slot 18</code>) weapon enchants across Forever (sharpening/weight stones, poisons, oils, Windfury/Flametongue) and Retail (Runeforging, whetstones, weapon oils/poisons) with missing-enchant glow + throttled audio warnings, expiring countdown highlights, and <code>/eam enchant</code> independent HUD positioning.</li>
+<li>🗡️ <strong>Weapon Enchant</strong>: Dedicated <code>WeaponEnchantService</code> and standalone <code>WeaponEnchantPanel</code> (<code>/eam enchant</code>), prioritizing <code>C_PaperDollInfo.GetTemporaryEnchantmentInfo</code> and Forever <code>C_Item.GetWeaponEnchantInfo</code> (with <code>GetWeaponEnchantInfo()</code> fallback) for Main Hand (<code>Slot 16</code>), Off Hand (<code>Slot 17</code>), and Ranged (<code>Slot 18</code>) enchants; features outer-frame corner enchant badge (<code>badgeOutside</code>, raised above <code>LibButtonGlow</code>), side-by-side Equipped Weapon &amp; Enchant Spell Dual Tooltips, missing/expiring glow &amp; audio alerts, and standalone HUD mover mode.</li>
+<li>🗿 <strong>Totem Status Monitor</strong>: Dedicated <code>TotemService</code> and standalone <code>TotemPanel</code> (<code>/eam totem</code>) with pre-warmed combat-safe slot frames (<code>Slot 1..4</code> Fire/Earth/Water/Air) and <code>AlertManager</code> route protection, supporting Retail <code>DurationObject</code> and Forever <code>GetTotemInfo</code>, per-element toggles, active/expiring glow, audio alerts, native <code>SetTotem</code> hover tooltips, and a 15s test preview (<code>/eam totem test</code>).</li>
 </ol>
 <hr />
 <h2 id="recent-release-milestones">🔥 Recent Release Milestones</h2>
 <ul>
-<li>🌟 <strong>[Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0] - 2026.11.13</strong><ul>
-<li><strong>Independent Weapon Enchant Service (<code>WeaponEnchantService</code>) [Shared]</strong>: Tracks Slot 16/17/18 temporary weapon enchants via <code>GetWeaponEnchantInfo()</code>, offering missing-enchant glow &amp; audio alerts, expiration countdowns, and <code>/eam enchant</code> HUD drag positioning.</li>
-<li><strong>Forever 11-Stat Calibration &amp; Native Tooltip Knowledge Base [Forever 1.60.1]</strong>: Calibrated Strength/Stamina/Agility/Intellect/Spirit/AP (<code>14 AP = 1 DPS</code>)/Crit/Defense (<code>440</code> Boss Crit Immunity &amp; 150% Crushing Blow rule)/Dodge/Parry (Parry Haste)/Armor (<code>75%</code> mitigation cap) formulas with native <code>GameTooltip</code> details across HUD and panel rows; expanded <code>attackPower</code>, <code>dodge</code>, <code>parry</code>, and <code>block</code>.</li>
-<li><strong>Mana Stat, 5-Second Rule (5SR) Three-State Alerts &amp; Continuous Full-Screen Soft Blue Glow [Forever 1.60.1]</strong>: Added <code>mana</code> stat tracking with ice-blue vs dark-amber 5SR bar contrast, icon glow, 1.32x text scaling, and <code>EAM_SpiritActiveGlowFrame</code> soft blue screen vignette fade-in/fade-out in <code>CombatFlash.lua</code>.</li>
+<li>🌟 <strong>[Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0] - 2026.11.16</strong><ul>
+<li><strong>Independent Totem Monitor Service &amp; Standalone Panel (<code>TotemService</code> &amp; <code>TotemPanel</code>) [Shared]</strong>: Pre-creates combat-safe HUD slot frames and bypasses generic Renderer <code>combatDeferred</code> / secret early exits so totems dropped in combat always display reliably across Forever 1.60.1 and Retail 12.1.5, alongside a theme-synced panel (<code>/eam totem</code>) and 15s test preview (<code>/eam totem test</code>).</li>
+<li><strong>Independent Weapon Enchant Service, Standalone Panel &amp; Dual Tooltip (<code>WeaponEnchantService</code>) [Shared]</strong>: Dual-track native sampling (<code>C_PaperDollInfo.GetTemporaryEnchantmentInfo</code> + <code>C_Item.GetWeaponEnchantInfo</code>), standalone theme-synced panel (<code>/eam enchant</code>), outer-frame corner enchant badge (<code>badgeOutside</code>), side-by-side Equipped Weapon + Enchant Spell Dual Tooltips, and throttled audio alerts.</li>
+<li><strong>Default Cooldown Shadow Opacity Lowered to 50% (<code>cooldownSwipeAlpha = 0.5</code>) [Shared]</strong>: Adjusted default and reset cooldown swipe opacity across all renderers and standalone Totem frames for crisper icon visibility.</li>
+<li><strong>Forever 11-Stat Calibration, Mana 5SR &amp; Classic Resource Filtering [Forever 1.60.1]</strong>: Calibrated all 11 stats (<code>14 AP = 1 DPS</code>, <code>440</code> Defense boss crit immunity, <code>75%</code> Armor cap, <code>+33%</code> sit/sleep regen, Parry Haste) with native <code>GameTooltip</code>, added <code>mana</code> / 5SR <code>EAM_SpiritActiveGlowFrame</code>, filtered classic resource panels via <code>GetFlavorCandidateKeys</code>, and wired <code>SpellRankService</code> auto-startup.</li>
 <li><strong>Hide Auras Outside Combat (Global + Tri-State Per-Spell Override) [Shared]</strong>: Added global toggle and per-spell tri-state override (<code>Global Default</code> / <code>Force Show</code> / <code>Force Hide</code>) seamlessly wired across Legacy <code>AuraService</code> and Retail 12.1+ Native Aura containers.</li>
 <li><strong>Dual-Track AI Governance v1.4 &amp; Track B Activation</strong>: Completed Level 3 closed <code>&lt;argon_ticket&gt;</code> XML schema in <code>AI_GOVERNANCE_DIRECTIVE.xml</code> v1.4, activated <strong>Track B (<code>Gemini 4 Hydrogen (XHigh)</code> Arbiter + <code>Hydrogen</code> 4-tier dynamic routing)</strong> due to Argon quota exhaustion, calibrated Forever bilingual names (<code>永恆</code> / <code>无限</code>, distinct from Classic Era), and added <code>eam-dual-track-orchestration</code> skill.</li>
 </ul>

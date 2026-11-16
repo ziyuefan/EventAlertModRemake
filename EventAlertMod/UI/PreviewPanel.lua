@@ -516,7 +516,7 @@ function PreviewPanel.refreshAlertPreview()
         local shadowEnabled = (db and db.cooldownShadow ~= false)
         if shadowEnabled then
             local swipeAlpha = (db and db.cooldownSwipeAlpha)
-            if swipeAlpha == nil then swipeAlpha = 0.8 end
+            if swipeAlpha == nil then swipeAlpha = 0.5 end
             local swipeColor = (db and db.cooldownSwipeColor) or { r = 0, g = 0, b = 0 }
             safeCall(ai.cooldown, "SetSwipeColor", swipeColor.r or 0, swipeColor.g or 0, swipeColor.b or 0, swipeAlpha)
             local totalDur = 10
@@ -1038,6 +1038,23 @@ function PreviewPanel.generateDiagnosticReport()
     end
     add("  - PlayerStatService: " .. (statService and "正常載入" or "未載入") .. " (活躍屬性條目: " .. tostring(statActiveCount) .. ")")
 
+    local weService = EAM.Services and EAM.Services.WeaponEnchantService
+    local weActiveCount = 0
+    if weService and weService.states then
+        for _, st in pairs(weService.states) do
+            if st and (st.hasEnchant or st.isMissing) then
+                weActiveCount = weActiveCount + 1
+            end
+        end
+    end
+    add("  - WeaponEnchantService: " .. (weService and "正常載入" or "未載入") .. " (追蹤武器槽位: " .. tostring(weActiveCount) .. ")")
+
+    local srsService = EAM.Services and EAM.Services.SpellRankService
+    if EAM.isForever and srsService then
+        local knownCount = srsService.getKnownSpellCount and srsService.getKnownSpellCount() or 0
+        add("  - SpellRankService (Forever): 正常載入 (已知法術等級項目: " .. tostring(knownCount) .. ")")
+    end
+
     local cdmHost = EAM.Services and EAM.Services.CDMShadowHost
     add("  - CooldownViewer (CDM 影子載體): " .. (cdmHost and (cdmHost.isHooked and cdmHost.isHooked() and "已成功 Hook 攔截" or "已載入") or "未啟用"))
 
@@ -1068,13 +1085,20 @@ function PreviewPanel.generateDiagnosticReport()
     local db = EAM.db
     if db then
         add("  - EAM.db: 正常載入")
-        add("  - 設定檔版本: " .. tostring(db.version or "N/A"))
-        local alertDb = db.alerts and (type(db.alerts) == "table" and "存在" or "無效") or "未初始化"
-        add("  - 告警法術庫 (alerts): " .. alertDb)
-        local resDb = db.playerResources and (type(db.playerResources) == "table" and "存在" or "無效") or "未初始化"
+        add("  - Schema 版本: " .. tostring(db.schemaVersion or db.version or "N/A"))
+        local saved = EAM.Modules and EAM.Modules.SavedVariables
+        local activeClass = saved and saved.getActiveClassToken and saved.getActiveClassToken()
+        local activeProfile = saved and saved.getClassProfile and activeClass and saved.getClassProfile(activeClass, db) or nil
+        local alertsTbl = (saved and saved.getActiveAlerts and saved.getActiveAlerts(db)) or (activeProfile and activeProfile.alerts) or db.alerts
+        local alertDb = alertsTbl and (type(alertsTbl) == "table" and "存在" or "無效") or "未初始化"
+        add("  - 告警法術庫 (alerts): " .. alertDb .. (activeClass and (" [" .. tostring(activeClass) .. "]") or ""))
+        local resTbl = (activeProfile and activeProfile.playerResources) or db.playerResources
+        local resDb = resTbl and (type(resTbl) == "table" and "存在" or "無效") or "未初始化"
         add("  - 資源設定庫 (playerResources): " .. resDb)
         local statDb = db.playerStats and (type(db.playerStats) == "table" and "存在" or "無效") or "未初始化"
         add("  - 屬性設定庫 (playerStats): " .. statDb)
+        local weDb = db.weaponEnchant and (type(db.weaponEnchant) == "table" and "存在" or "無效") or "未初始化"
+        add("  - 武器附魔設定庫 (weaponEnchant): " .. weDb)
     else
         add("  - EAM.db: 【警告】尚未載入或為 nil！")
     end

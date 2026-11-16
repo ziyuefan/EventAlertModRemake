@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "type": "EAM_PROJECT_CONTINUITY",
-  "snapshotVersion": "2026-11-13.01",
-  "updatedAt": "2026-11-13",
+  "snapshotVersion": "2026-11-16.02",
+  "updatedAt": "2026-11-16",
   "project": {
     "name": "EventAlertModRemake",
     "product": "wow_retail",
@@ -10,7 +10,8 @@
     "supportedClients": [
       "PTR_12_1",
       "XPTR_12_0_7",
-      "RETAIL_12_1"
+      "RETAIL_12_1",
+      "FOREVER_1_60_1"
     ]
   },
   "routes": {
@@ -22,7 +23,7 @@
     "liveGuide": "Docs/29_LIVE_TEST_STEP_GUIDE.md"
   },
   "current": {
-    "objective": "完成 AI_GOVERNANCE_DIRECTIVE.xml v1.4（補完 Level 3 閉合 <argon_ticket> XML 契約並切換作用中軌道至 Track B：Gemini 4 Hydrogen (XHigh) 仲裁 + Hydrogen 動態四階）；新增 eam-dual-track-orchestration 技能，同步 AGENTS/Workflow/00_INDEX 文件導航中心/雙語 README 至 Alpha 9.0 九大模組，並重建 .AI/docs_html/ 與同步 GitHub。",
+    "objective": "完成 Alpha 9.0 獨立圖騰狀態監控模組 (`TotemService`/`TotemPanel`)、預設冷卻陰影透明度調降至 50%、武器臨時附魔獨立面板與雙重 Tooltip、Forever 1.60.1 實機修復與全平台文件定稿；就緒進行打包與發布。",
     "offlineValidation": {
       "source": "offline-mock",
       "total": 110,

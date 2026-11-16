@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Core Layer">
   <meta name="ai-governance-security" content="Zero-Alloc / Taint-Sensitive">
   <meta name="ai-governance-invariants" content="擁有唯一 EventRouter 孤兒 Frame，禁止各模組自行建立事件監聽 Frame 造成資源浪費 | 嚴禁在熱路徑 (OnUpdate / Event Dispatch) 建立臨時 Closure 或垃圾回收負擔 | StatePool 必須嚴格回收所有狀態物件，確保長期戰鬥記憶體零增長 (0 Alloc)">
-  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.613000+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-16T21:01:00.168863+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "嚴禁在熱路徑 (OnUpdate / Event Dispatch) 建立臨時 Closure 或垃圾回收負擔",
     "StatePool 必須嚴格回收所有狀態物件，確保長期戰鬥記憶體零增長 (0 Alloc)"
   ],
-  "timestamp": "2026-11-13T12:35:11.613000+08:00",
+  "timestamp": "2026-11-16T21:01:00.168863+08:00",
   "fileCount": 11,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 321462,
+  "totalSizeBytes": 322758,
   "files": [
     {
       "name": "Constants.lua",
@@ -55,8 +55,8 @@
     {
       "name": "Env.lua",
       "extension": ".lua",
-      "sizeBytes": 8423,
-      "lineCount": 217,
+      "sizeBytes": 8499,
+      "lineCount": 219,
       "purpose": "作為 Retail rewrite 的 namespace 與 API alias 錨點，讓後續模組只依賴 EAM 命名空間。；將常用 WoW API 集中到 EAM.API，降低全域查找與錯誤覆寫風險。 | 初始化 addon 名稱、版本、Retail-only 旗標與各模組容器。；建立 EAM.API 靜態 API alias table，供 Core/Services/UI/Debug 使用。",
       "role": "Core/Env",
       "security": "Safe"
@@ -73,8 +73,8 @@
     {
       "name": "Main.lua",
       "extension": ".lua",
-      "sizeBytes": 4691,
-      "lineCount": 122,
+      "sizeBytes": 4764,
+      "lineCount": 123,
       "purpose": "作為新架構的唯一啟動器，取代舊 XML OnLoad 工作流。；初始化順序固定為 SavedVariables -> UI -> Services -> 初次刷新。 | 監聽 PLAYER_LOGIN，啟動資料遷移、Renderer 與各 service。；提供第一輪 Retail-only rewrite 的載入錨點。",
       "role": "Core/Main",
       "security": "Safe"
@@ -109,8 +109,8 @@
     {
       "name": "SavedVariables.lua",
       "extension": ".lua",
-      "sizeBytes": 152220,
-      "lineCount": 4071,
+      "sizeBytes": 153367,
+      "lineCount": 4113,
       "purpose": "用版本化 schema 接管舊 EAM SavedVariables，讓重寫可穩定 migration。；SavedVariables 只保存設定，不保存 runtime facts。 | 初始化 EAM_DB、保存 defaults、執行舊 EA_* migration、提供語系與 alert add/remove mutation API。",
       "role": "Core/SavedVariables",
       "security": "Safe"
@@ -615,7 +615,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">313.9 KB</span>
+          <span class="stat-val">315.2 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -705,7 +705,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            8.2 KB<span style="font-size: 0.78rem; color: #64748b;"> • 217 行</span>
+            8.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 219 行</span>
           </td>
         </tr>
         
@@ -741,7 +741,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            4.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 122 行</span>
+            4.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 123 行</span>
           </td>
         </tr>
         
@@ -813,7 +813,7 @@
           </td>
           <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            148.7 KB<span style="font-size: 0.78rem; color: #64748b;"> • 4071 行</span>
+            149.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 4113 行</span>
           </td>
         </tr>
         
@@ -861,7 +861,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.613000+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-16T21:01:00.168863+08:00</p>
     </footer>
   </div>
 

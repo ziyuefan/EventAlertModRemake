@@ -1,3 +1,34 @@
+### 2026-11-16 EAM-20261116-ALPHA90-TOTEM-MODULE-50PCT-SHADOW-AND-RELEASE-SYNC：完成獨立圖騰狀態監控模組 (`TotemService`/`TotemPanel`)、預設冷卻陰影透明度調降至 50% 與 Alpha 9.0 發布前全文件定稿
+
+- 狀態：已完成（`test_native_apis.py` 27/27 測試套件全數通過、`CheckLuaSyntax.ps1 -AddonOnly` 80/80 通過、`Build-MiliUIDoc.py` 15 項 HTML5 契約通過；文件導航中心、雙語日誌與專案連續性資料 100% 同步）。
+- 需求背景與處理重點：
+  1. **獨立圖騰狀態監控模組與戰鬥不顯示根因修復 (`TotemService.lua`, `SavedVariables.lua`, `AlertManager.lua`, `Options.lua`, `Slash.lua`, `Env.lua`)**：
+     - 定位並修正兩大根因：(a) 戰鬥中施放圖騰透過 `AlertManager` 進入通用 `Renderer.render` 時，因沒有預先建框被 `combatDeferred` 攔截導致不顯示；(b) `GetTotemInfo(slot)` 名稱為 Secret 時原 `preserveBoundaryState` 未為新圖騰建立狀態，且 Forever 1.60.1 字串圖示路徑未能通過數值型別檢查；
+     - 升級 `TotemService.lua` 為獨立模組 (`hasDedicatedHUD = true`)，於非戰鬥預先建置 `EAM_TotemFrame` 與 `EAM_TotemSlotFrame1..4` 並接入 `AlertManager` 路由守衛；同時相容 12.x `DurationObject` 與 Forever 字串圖示，實作原生 `GameTooltip:SetTotem(slot)` 與非戰鬥右鍵單鍵收回；
+     - 建立主題連動獨立設定面板 `EAM.UI.TotemPanel` (`EAM_TotemOptionsFrame`，主選單第 10 項與 `/eam totem`)，提供火/地/水/風開關、名稱/倒數/轉圈開關、作用中與到期發光高亮、警戒門檻 (`2~30s`)、30 秒節流音效、自由 X/Y 座標與成長方向、移動錨點 (`/eam totem move`) 與 15 秒一鍵測試預覽 (`/eam totem test`)；5 語系補齊 39 項 `EAM_TOTEM_*` / `EAM_OPT_CAT_TOTEM` / `EAM_SLASH_HELP_TOTEM` 詞條並保持完全對齊。
+  2. **預設倒數陰影透明度調整為 50% (`cooldownSwipeAlpha = 0.5`)**：
+     - 將預設值、遷移回退與重設按鈕值從 `0.8` 調整為 `0.5`（涵蓋 `SavedVariables.lua`, `ProfileCodec.lua`, `AuraRuleCompiler.lua`, `IconPool.lua`, `NativeAuraRenderer.lua`, `Renderer.lua`, `Options.lua`, `PreviewPanel.lua`, `TotemService.lua`）。
+  3. **Alpha 9.0 全平台發布文件定稿與建置**：
+     - 更新 `changelog.*`、雙端鏡像 `README*.md`、`Deploy/CURSEFORGE-DESCRIPTION.md`、`Build-MiliUIDoc.py` / `addons_miliui_eventalertmod.html`、`Dist/RELEASE_NOTES_Alpha_9.0.md`、`Dist/GITHUB_RELEASE_NOTES_alpha-9.0.md`、`00_INDEX*.md`、`28_PROJECT_CONTINUITY.md`、`ProjectContinuity.json` 與 `.AI/docs_html/`。
+
+### 2026-11-16 EAM-20261116-ALPHA90-WEAPON-ENCHANT-AND-FOREVER-LIVE-HARDENING：完成 Alpha 9.0 武器附魔雙軌採樣／框外小圖示／主題面板／雙 Tooltip、Forever 1.60.1 實機測試修復與發布前文件同步
+
+- 狀態：已完成（`test_native_apis.py` 26/26 測試套件全數通過、`CheckLuaSyntax.ps1 -AddonOnly` 80/80 通過、`Build-MiliUIDoc.py` 15 項 HTML5 契約通過；待實機重跑確認 `FlowTest` 0 FAIL）。
+- 需求背景與處理重點：
+  1. **武器臨時附魔模組深化 (`WeaponEnchantService.lua`, `SavedVariables.lua`, `Locale/*.lua`)**：
+     - 比對 Retail 12.1.5、Forever 1.60.1 CASC 原始碼及 Warcraft Wiki，實裝 `C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot)` + Forever `C_Item.GetWeaponEnchantInfo(slot - 16)` + `GetWeaponEnchantInfo()` 降級相容層與 `tickCountdown` 跳秒分離；
+     - 建立獨立設定面板 `EAM.UI.WeaponEnchantPanel`（主選單第 12 分類與 `/eam enchant`）、修正載入順序導致的主題配色缺失（改由 `getTheme()`/`getLocale()` 動態解析）並消除標籤換行/截斷；
+     - 新增角落附魔小圖示與預設啟用之「小圖示置於框外 (`badgeOutside = true`)」模式，並在 `applyFrameHighlight` 後將 `badgeFrame:SetFrameLevel` 設為 `mathMax(baseLevel + 10, glowLevel + 2)` 防 `LibButtonGlow` 遮擋；
+     - 實裝並排武器＋附魔雙重 Tooltip（左側 `SetInventoryItem`、右側 `EAM_WeaponEnchantSubTooltip` 搭配 `ENCHANT_ID_SPELL_MAP` / `SetSpellByID` 與綠字解析降級）。
+  2. **Forever 1.60.1 實機測試與診斷修復 (`Core/Main.lua`, `Services/SpellRankService.lua`, `Debug/FlowTestRunner.lua`, `UI/PreviewPanel.lua`)**：
+     - 依實機 Build 70938 (TOC 16001) 回報修復 `aura.1215_native_aura_and_timed_signal_map`（真實隱藏 Frame 底座）、`aura.hide_outside_combat_override`（修正 `EAM.Modules.ProfileCodec`）及 `aura121.capability.native_complete`（使用 `EAM.isModernEngineInterface`），並新增 `weapon_enchant.service_and_dual_tooltip`；
+     - 將 `SpellRankService` 納入 `Main.initialize()` 並實作 `SpellRankService.getKnownSpellCount()`；
+     - 更新 `PreviewPanel.lua` 系統即時診斷報告對齊 Schema v6 職業設定結構並顯示 `WeaponEnchantService` 與 `SpellRankService`。
+  3. **Forever 1.60.1 職業資源清單過濾 (`PlayerResourcePanel.lua`, `ForeverCatalog.lua`, `PlayerResourceCatalog.lua`)**：
+     - `PlayerResourcePanel.lua` 改用 `Catalog.GetFlavorCandidateKeys`，消除 Forever 介面上的現代專精資源；精簡 Forever 玩家資源至經典 60 級機制（法力、怒氣、能量、5 星連擊點數；寵物快樂度歸屬屬性面板）。
+  4. **Alpha 9.0 發布前雙物料與多語文件同步**：
+     - 更新 `changelog.txt/.en/.md/.html`、`README.md/.en`、`Deploy/CURSEFORGE-DESCRIPTION.md`、`Deploy/addons_miliui_eventalertmod.html`（新增 Forever 1.60.1 支援範圍）、`Dist/RELEASE_NOTES_Alpha_9.0.md`、`Dist/GITHUB_RELEASE_NOTES_alpha-9.0.md` 與專案連續性索引。
+
 ### 2026-11-13 EAM-20261113-GOVERNANCE-V14-TRACK-B-AND-HUB-SYNC：完成 Level 3 閉合 `<argon_ticket>` XML 規範補完、正式切換至 Track B (`Hydrogen XHigh` 仲裁)、新增 `eam-dual-track-orchestration` 技能與同步文件導航中心／GitHub
 
 - 狀態：已完成（`AI_GOVERNANCE_DIRECTIVE.xml` v1.4 通過 `xml.etree.ElementTree` 與內嵌 CDATA `<argon_ticket>` 雙重解析驗證；`ProjectContinuity.json` JSON 解析通過；`.AI/docs_html/` 離線編譯與 GitHub 同步就緒）。

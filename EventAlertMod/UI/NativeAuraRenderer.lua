@@ -54,7 +54,7 @@ end
 
 local function safeAlpha(value)
     if not EAM.Util.isSafeNumber(value) then
-        return 0.8
+        return 0.5
     end
     if value < 0 then
         return 0

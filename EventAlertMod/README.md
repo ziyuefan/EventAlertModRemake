@@ -23,9 +23,9 @@
 
 ---
 
-## ✨ 九大獨立告警模組 (9 Independent Alert Modules)
+## ✨ 十大獨立告警模組 (10 Independent Alert Modules)
 
-EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組：
+EAM 擁有 10 個完全解耦、獨立排版、自由拖曳的專業監控模組：
 
 1. 🔮 **自身光環 (Player Buff / Debuff)**：監控自身增益與減益，支援堆疊層數、高精度倒數，以及全域＋單技能三態「脫戰後隱藏光環」控制。
 2. 🎯 **目標光環 (Target Buff / Debuff)**：精確監控當前目標之光環、控制與 Debuff 狀態，支援脫戰自動隱藏設定。
@@ -33,9 +33,10 @@ EAM 擁有 9 個完全解耦、獨立排版、自由拖曳的專業監控模組�
 4. ⏳ **技能冷卻 (Spell Cooldown)**：精確監控技能冷卻與充能層數；支援圓形環狀進度條 (`Radial Mode`) 與框外線性條 (`TOP/BOTTOM/LEFT/RIGHT`)。
 5. 🎒 **物品冷卻 (Item Cooldown)**：飾品、主動使用裝備與消耗品冷卻監控；全面支援 19 部位裝備欄位代號與具體物品 ID 雙軌監控、穿戴裝備三軌冷卻備援機制與即時換裝響應。
 6. 🌋 **地面效果 (Ground Effect)**：監控玩家施放的無光環地面範圍技能（如死亡凋零、褻瀆、冰霜之球、反魔法立場），支援天賦法術族群智能對齊。
-7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（正式服至暗之夜全職業現代專精資源；經典 60 級 9 職業經典能量拓樸如獵人法力/寵物集中值、術士法力/靈魂碎片、德魯伊四形態切換、盜賊能量/連擊點、戰士怒氣等）。
+7. ⚡ **玩家職業資源 (Player Resource)**：支援全 13 職業、40 組專精、17 種資源獨立節點（正式服至暗之夜全職業現代專精資源；永恆服 60 級經典 9 職業純粹能量拓樸：法力、怒氣、能量與 5 星連擊點數；獵人寵物快樂度由屬性面板獨立追蹤）。
 8. 📊 **角色屬性與吸收量 (Player Stats & Absorbs)**：全方位即時監控角色數值（正式服 18+ 種核心屬性、四合一速度、護甲值、總吸收盾量與治療吸收量；永恆服經典五大魔法抗性、11 大實機校準屬性公式與原生 Tooltip 知識引擎、法力屬性與精神 5 秒回魔規則 MP5/HP5 三態醒目提醒、全螢幕持續柔和暗角藍色泛光 `EAM_SpiritActiveGlowFrame`、防禦技能 440 免暴、寵物快樂度與遠程彈藥等）。
-9. 🗡️ **武器臨時附魔 (Weapon Enchant)**：獨立專屬服務模組 (`WeaponEnchantService`)，底層直通暴雪原生 `GetWeaponEnchantInfo()` API，即時追蹤主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 磨刀石／毒藥／巫術與法力油／風怒火舌／正式服符文熔鑄；具備缺附魔發光＋節流音效警示、到期倒數發光與 `/eam enchant` 獨立 HUD 拖曳定位。
+9. 🗡️ **武器臨時附魔 (Weapon Enchant)**：獨立專屬服務 (`WeaponEnchantService`) 與獨立設定視窗 (`WeaponEnchantPanel` / `/eam enchant`)，優先串接 `C_PaperDollInfo.GetTemporaryEnchantmentInfo` 與 `C_Item.GetWeaponEnchantInfo`（含 `GetWeaponEnchantInfo()` 備援），即時追蹤主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 磨刀石／毒藥／油類／薩滿灌注與聖騎士神聖儀式；支援「框外附魔小圖示」防 Glow 遮擋、並排武器介紹＋附魔內容雙重 Tooltip、缺附魔／到期亮框＋節流音效與自由定位。
+10. 🗿 **圖騰狀態監控 (Totem)**：獨立專屬服務 (`TotemService`) 與獨立設定面板 (`TotemPanel` / `/eam totem`)，預先建構戰鬥安全槽位框體 (`Slot 1..4` 火／地／水／風)，相容正式服 `DurationObject` 與永恆服 `GetTotemInfo`；支援四槽位獨立開關、作用中／到期發光高亮、倒數門檻、節流音效、原生 `SetTotem` Tooltip 與 15 秒一鍵模擬預覽。
 
 ---
 
@@ -125,7 +126,8 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 | `/eam lookupfull <全名>` | `/eam lf <全名>` | 依完整名稱精確查詢目前職業可用法術候選與 Spell ID |
 | `/eam showcast` | `/eam showc` | 開始或停止記錄本次登入成功施放的法術（方便查詢自己剛放的技能 ID） |
 | `/eam profile` | `/eam profile export`, `/eam profile import` | 開啟 Profile 設定檔匯出／匯入與字串分享面板 |
-| `/eam enchant` | `/eam weapon`, `/eam we` | 開啟或關閉武器臨時附魔獨立 HUD 位置移動模式 |
+| `/eam enchant` | `/eam weapon`, `/eam we` | 開啟武器臨時附魔設定面板（加 `move` 切換移動模式） |
+| `/eam totem` | `/eam totems [move/test]` | 開啟圖騰狀態監控設定面板（支援 `move` 拖曳與 `test` 15 秒預覽） |
 | `/eam rune` | `/eam runes`, `/eam probe rune` | 開啟死亡騎士 6 格符文槽位即時狀態、充能秒數與診斷 JSON 視窗 |
 | `/eam unitpower background <KEY>` | 無 | 標記指定背景資源缺少事件，啟動 0.5s demand-driven 共用取樣器 |
 | `/eam doctor` | `/eam validate` | 執行客戶端 API 邊界與運行環境診斷報告 |
@@ -161,16 +163,22 @@ EAM 提供豐富完整的斜線命令，主入口為 `/eam` 或 `/eventalertmod`
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.5 & Forever 1.60.1 重構與 Alpha 系列更新紀錄 (點擊展開/收合)</b></summary>
 
-### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13
-- **獨立武器臨時附魔模組 (`WeaponEnchantService`) [雙版本共通]**：
-  - 建立獨立服務呼叫暴雪原生 `GetWeaponEnchantInfo()` API，支援主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 臨時附魔（Forever 磨刀石／毒藥／巫術與法力之油／風怒火舌；Retail 符文熔鑄／磨刀石／油／毒藥）。
-  - 提供缺少武器附魔亮框＋節流音效警示、附魔即將到期倒數（預設 5 分鐘）橘紅發光提醒，以及 `/eam enchant` 獨立 HUD 拖曳定位。
+### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.16
+- **獨立圖騰狀態監控模組與專屬設定面板 (`TotemService` & `TotemPanel`) [雙版本共通]**：
+  - 預先建立非戰鬥安全 HUD 槽位框體並與通用 Renderer 解耦，徹底修復戰鬥中施放圖騰因 `combatDeferred` 或過嚴 Secret 檢查而無法顯示的問題；
+  - 提供獨立主題連動設定面板（`/eam totem`），涵蓋火/地/水/風槽位開關、作用中與到期發光高亮、警戒門檻、節流音效、自由座標調整與 15 秒模擬預覽 (`/eam totem test`)。
+- **獨立武器臨時附魔模組、專屬面板與雙 Tooltip (`WeaponEnchantService` & `WeaponEnchantPanel`) [雙版本共通]**：
+  - 雙軌原生 API 優先採樣 `C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot)` 與 Forever `C_Item.GetWeaponEnchantInfo(slot - 16)`（保留 `GetWeaponEnchantInfo()` 備援），追蹤主手 (`Slot 16`)、副手 (`Slot 17`) 與遠程 (`Slot 18`) 臨時附魔（磨刀石、油類、毒藥、薩滿灌注、聖騎士神聖儀式與魚餌）。
+  - 提供獨立設定面板（主選單獨立入口「★ 武器臨時附魔監控」／`/eam enchant`／動態連動 11 套主題配色），支援「角落／框外附魔小圖示」（`badgeOutside` 提權防 Glow 遮擋）、武器介紹＋附魔說明並排雙重 Tooltip、缺附魔與到期發光及節流音效、自由座標調整與移動 HUD。
 - **[Forever 1.60.1 永恆服專屬] 11 大角色屬性實機校準與原生 Tooltip 知識引擎**：
   - 依實機面板數據精確校準 11 大屬性換算公式與規則（`14 AP = 1 DPS`、防禦 `440` 點首領免暴、護甲 `75.00%` 免傷上限、智力提高武器技能提升機率、精神坐下或躺下生命力恢復提高 `33%`、閃躲正側面規則與招架提速 Parry Haste），新增 `attackPower`、`dodge`、`parry`、`block` 並實裝 HUD/面板原生 `GameTooltip`。
 - **[Forever 1.60.1 永恆服專屬] 法力屬性、5 秒精神回魔三態提醒與全螢幕持續藍色泛光**：
   - 擴展 `mana` 屬性監控，深度整合 5SR 狀態機：StatusBar 冰晶藍／暗琥珀雙色反差、圖示 `LibButtonGlow`、文字 `1.32x` 放大／`%.1fs` 懲罰倒數，並於 `CombatFlash.lua` 新增常駐柔和暗角藍色泛光圖層 `EAM_SpiritActiveGlowFrame`。
+- **[Forever 1.60.1 永恆服專屬] 職業資源清單過濾與法術全等級自動啟動**：
+  - 修正資源設定面板過濾邏輯，自動對齊永恆服經典資源拓樸（法力、怒氣、能量與 5 星連擊點數）排除正式服雜訊；登入自動啟動 `SpellRankService` 索引法術書全部等級。
 - **光環脫戰自動隱藏 (Hide Auras Outside Combat) [雙版本共通]**：
   - 於一般設定提供全域開關，並於單技能條件提供「跟隨全域／強制開／強制關」三態覆寫，全面打通 Legacy `AuraService` 與 Retail 12.1+ 原生光環容器。
+- **預設冷卻倒數陰影透明度調降至 50% (`cooldownSwipeAlpha = 0.5`)**：全面調降轉圈遮罩透明度預設值與重設值，讓技能與光環圖示在倒數期間更清晰易辨。
 - **Forever 名稱校準與雙語同步**：繁體中文 (`zhTW`) 統一為「永恆」、簡體中文 (`zhCN`) 統一為「无限」，5 語系字典檔 100% 對齊。
 
 ### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08

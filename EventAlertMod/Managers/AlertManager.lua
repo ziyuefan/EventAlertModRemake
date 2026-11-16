@@ -196,6 +196,14 @@ function AlertManager.onAlertStateChanged(_, state, frameName)
         end
     end
 
+    -- 獨立圖騰 HUD 模組接管：避免經由通用 Renderer 導致戰鬥中建框延遲 (combatDeferred) 與重複渲染
+    local totemFrameType = EAM.Constants and EAM.Constants.ALERT_FRAME_TYPES and EAM.Constants.ALERT_FRAME_TYPES.totem or "totem"
+    if frameName == totemFrameType
+        and EAM.Services and EAM.Services.TotemService and EAM.Services.TotemService.hasDedicatedHUD
+    then
+        return false, "totemDedicatedHUDHandled"
+    end
+
     -- 被動裝飾：若此 spellID 當前正處於發光狀態，自動套用發光屬性
     if Util.isSafeTableKey(state.spellID) and glowSpells[state.spellID] then
         state.overlayGlow = true

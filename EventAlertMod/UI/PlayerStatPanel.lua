@@ -152,8 +152,18 @@ local function createFrame()
     enchantBtn:SetPoint("LEFT", previewBtn, "RIGHT", 8, 0)
     enchantBtn:SetText(localized("EAM_WEAPON_ENCHANT_TITLE", "武器附魔"))
     if Theme and Theme.registerButton then Theme.registerButton(enchantBtn) end
-    if EAM.UI.setTooltip then EAM.UI.setTooltip(enchantBtn, "開啟或關閉獨立的武器臨時附魔移動與定位錨點", "武器附魔") end
+    if EAM.UI.setTooltip then EAM.UI.setTooltip(enchantBtn, "開啟或關閉獨立的武器臨時附魔設定面板與定位選項", "武器附魔") end
     enchantBtn:SetScript("OnClick", function()
+        local WEP = EAM.UI and EAM.UI.WeaponEnchantPanel
+        if WEP and WEP.open then
+            if EAM.UI and EAM.UI.closeAllSidePanels then
+                EAM.UI.closeAllSidePanels("weaponEnchant")
+            else
+                Panel.hide()
+            end
+            WEP.open()
+            return
+        end
         local WES = EAM.Services and EAM.Services.WeaponEnchantService
         if WES and WES.setActiveAnchors then
             WES.setActiveAnchors(not WES.isMoving)

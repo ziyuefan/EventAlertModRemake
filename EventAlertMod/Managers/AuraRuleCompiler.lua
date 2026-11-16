@@ -506,7 +506,7 @@ local function buildVisualFingerprint(db)
         spellNameColorStr,
         tostring(config and config.showSpellName ~= false),
         tostring(config and config.showTimeVal ~= false),
-        tostring(config and config.cooldownSwipeAlpha or 0.8),
+        tostring(config and config.cooldownSwipeAlpha or 0.5),
         colorStr,
         tostring(config and config.iconAlpha or 1.0),
         tostring(config and config.nativeAuraDualCountdownProbe == true),

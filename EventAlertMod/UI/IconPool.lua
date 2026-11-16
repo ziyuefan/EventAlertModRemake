@@ -96,7 +96,7 @@ end
 local function normalizeSwipeAlpha(config)
     local alpha = config and config.cooldownSwipeAlpha
     if not EAM.Util.isSafeNumber(alpha) then
-        return 0.8
+        return 0.5
     end
     if alpha < 0 then
         return 0

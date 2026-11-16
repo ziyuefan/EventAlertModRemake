@@ -378,15 +378,19 @@
         <h1>📜 EventAlertMod 完整版本更新日誌 (Changelog)</h1>
         <div class="changelog-container">
 <ul class="changelog-mainlist">
-<li><strong>﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Character Attributes Engine, Independent Weapon Enchant Service &amp; Aura Out-of-Combat Visibility] 2026.11.12</strong></li>
+<li><strong>﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Totem &amp; Weapon Enchant Independent Modules, Forever Character Attributes Engine, Mana 5SR Soft Glow &amp; Aura Out-of-Combat Visibility] 2026.11.16</strong></li>
 <li><strong>【✨ 新增功能 (Features)】:</strong></li>
 <ul class="changelog-sublist">
-<li>獨立武器臨時附魔模組 (Independent Weapon Enchant Service Pipeline):</li>
-<li>建立專屬服務 WeaponEnchantService.lua，底層呼叫暴雪原生專用 API GetWeaponEnchantInfo()，完美支援主手 (Slot 16)、副手 (Slot 17) 與遠程 (Slot 18) 之臨時附魔；</li>
-<li>支援各版本武器增益機制：經典舊世/永恆服之磨刀石、平衡石、巫術之油、法力之油、盜賊毒藥、薩滿風怒/火舌/冰封武器；正式服之武器符文熔鑄、磨刀石、暗影之核之油與毒藥；</li>
-<li>【缺少武器附魔警告 (Missing Enchant Warning)】：當角色裝備了武器但未施加臨時附魔時，觸發高亮醒目警告（支援 LibButtonGlow 發光與節流音效警報）；</li>
-<li>【附魔即將到期倒數 (Expiring Warning)】：當附魔剩餘時間低於設定閾值（預設 5 分鐘）或次數耗盡時，橘紅邊框發光提醒；</li>
-<li>支援獨立移動模式與 HUD 定位保存（/eam enchant 或屬性面板頂部按鈕，左鍵拖曳、右鍵完成）。</li>
+<li>獨立圖騰狀態監控模組與專屬設定面板 (Independent Totem Monitor Service &amp; Standalone Panel):</li>
+<li>將原併入通用渲染器的圖騰監控升級為完全解耦的獨立模組 TotemService，預先於非戰鬥期間建立專屬父框架與 4 個槽位框體 (EAM_TotemFrame / EAM_TotemSlotFrame1..4)，並接入 AlertManager 專用路由保護，徹底修復戰鬥中施放圖騰因通用 Renderer 延遲建框 (combatDeferred) 及 Secret 早期攔截而無法顯示之問題；</li>
+<li>獨立設定面板 (TotemPanel / 主選單第 10 項「★ 圖騰狀態監控設定 (Totem)」與 /eam totem)：完整連動全 11 套主題配色，支援火/地/水/風四槽位開關、圖騰名稱與剩餘秒數顯示、冷卻轉圈遮罩 (Swipe)、作用中發光高亮、即將到期警戒閾值 (2~30s) 與橘紅發光、30 秒節流警示音效、自訂 X/Y 座標與成長方向、自由拖曳錨點 (/eam totem move) 與 15 秒一鍵模擬預覽測試 (/eam totem test)；</li>
+<li>原生相容與右鍵互動：支援 12.x DurationObject 原生轉圈/Secret 數字渲染及 Forever 1.60.1 字串圖示路徑，滑鼠懸停呈現原生 GameTooltip:SetTotem(slot)（非戰鬥右鍵可單鍵收回圖騰）。</li>
+<li>獨立武器臨時附魔模組與專屬設定面板 (Independent Weapon Enchant Service &amp; Standalone Panel):</li>
+<li>建立專屬服務 WeaponEnchantService.lua，採樣優先串接暴雪原生 C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot) 與永恆服 C_Item.GetWeaponEnchantInfo(slot - 16)（保留 GetWeaponEnchantInfo() 相容備援），完整追蹤主手 (Slot 16)、副手 (Slot 17) 與遠程 (Slot 18) 臨時附魔（磨刀石、平衡石、巫術/法力/暗影/冰霜之油、盜賊毒藥、薩滿全等級圖騰/武器灌注、聖騎士神聖儀式與魚餌）；</li>
+<li>獨立設定面板 (WeaponEnchantPanel / 主選單獨立分類「★ 武器臨時附魔監控」與 /eam enchant)：支援單槽位開關、自訂 X/Y 座標與成長方向、圖示大小與間距、作用中發光高亮 (Active Glow)、即將到期倒數閾值與橘紅警示、缺少武器附魔告警與 30 秒節流音效；</li>
+<li>角落附魔專屬小圖示與【置於框外】防遮擋模式：主圖示維持顯示裝備武器，角落或圖示框外側可獨立懸停顯示當前附魔圖示（支援四角位置與 30%~65% 縮放比例），並提高層級確保不被發光特效 (Glow) 遮擋；</li>
+<li>武器與附魔並排雙重 Tooltip (Equipped Weapon + Spell Enchant Dual Tooltip)：滑鼠懸停於武器圖示或附魔小圖示時，左側顯示已裝備武器完整介紹（SetInventoryItem），右側並排顯示該附魔之詳細法術效果說明（SetSpellByID / 綠字解析）與即時剩餘時間/次數；</li>
+<li>輕量高精度跳秒機制 (tickCountdown) 與獨立移動 HUD 定位保存（/eam enchant 左鍵拖曳、右鍵完成）。</li>
 <li>永恆服 11 大角色屬性機制校準與原生 Tooltip 知識引擎 (Forever 1.60.1 11 Stats Knowledge Base):</li>
 <li>依據實機面板數據精確校準 11 大屬性公式與換算比例，並為畫面 HUD 圖示/文字與面板 row 實裝原生 GameTooltip 浮動提示：</li>
 <li>力量：提高近戰 AP (1 力量 = 2 AP)，格擋值提高 = 力量 / 20；</li>
@@ -419,10 +423,17 @@
 <li>施法耗魔瞬間淡出，脫離 5 秒懲罰進入全速回魔瞬間平滑淡入，大幅提升經典版補師與法系控魔節奏感知；</li>
 <li>於屬性設定面板提供「全螢幕藍色泛光 (精神回魔作用中常駐)」獨立開關。</li>
 </ul>
+<li><strong>【🐛 體驗優化與缺陷修復 (Optimizations &amp; Fixes)】:</strong></li>
+<ul class="changelog-sublist">
+<li>預設倒數陰影透明度調整：將全域冷卻轉圈／倒數陰影遮罩透明度 (cooldownSwipeAlpha) 預設值與重設值由 80% 調降至 50%，提升圖示辨識清晰度（支援獨立圖騰框架轉圈遮罩）；</li>
+<li>永恆服 (Forever 1.60.1) 職業資源清單過濾與經典純淨化：修正 PlayerResourcePanel 職業資源列表過濾，自動對齊永恆服 60 級經典資源拓樸（法力、怒氣、能量、5 星連擊點數；獵人寵物快樂度由人物屬性面板獨立追蹤；徹底排除正式服專精資源與戰士/法/牧/術/薩/聖多餘選項）；</li>
+<li>永恆服法術全等級管理自動啟動：啟動初始化時自動載入並索引法術書全部技能等級，確保多等級法術匹配與系統診斷顯示正確計數；</li>
+<li>主題配色即時連動修復：修復武器臨時附魔獨立設定面板在 11 套主題切換時未能自動套用視窗背景、框線與按鈕配色的問題，並優化標籤換行與滑桿截斷排版。</li>
+</ul>
 <li><strong>【🌐 在地化支援 (Localization)】:</strong></li>
 <ul class="changelog-sublist">
 <li>校準 Forever 雙語區官方客戶端名稱：繁體中文 (zhTW) 統一為「永恆」（《魔獸世界：永恆》）、簡體中文 (zhCN) 統一為「无限」（《魔兽世界：无限》）。</li>
-<li>5 語系（繁中、簡中、英文、韓文、俄文）100% 同步新增武器附魔、法力屬性、精神暗角藍色泛光、新屬性與快捷指令詞條。</li>
+<li>5 語系（繁中、簡中、英文、韓文、俄文）100% 同步新增武器附魔獨立設定、框外小圖示、法力屬性、精神暗角藍色泛光、新屬性與快捷指令詞條。</li>
 </ul>
 </ul>
 <div class="changelog-card">
@@ -3027,7 +3038,7 @@
         <h1>📜 EventAlertMod Complete Version History (Changelog)</h1>
         <div class="changelog-container">
 <ul class="changelog-mainlist">
-<li><strong>﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Forever Character Attributes Engine, Independent Weapon Enchant Service &amp; Aura Out-of-Combat Visibility] 2026.11.12</strong></li>
+<li><strong>﻿-- [Retail][Forever][MN 12.1.5][1.60.1][Alpha 9.0][Totem &amp; Weapon Enchant Independent Modules, Forever Character Attributes Engine, Mana 5SR Soft Glow &amp; Aura Out-of-Combat Visibility] 2026.11.16</strong></li>
 </ul>
 <div class="changelog-card">
     <div class="changelog-header">
@@ -3036,12 +3047,16 @@
     </div>
     <div class="changelog-body">
 <ul class="changelog-sublist">
-<li>Independent Weapon Enchant Service Pipeline:</li>
-<li>Implemented dedicated WeaponEnchantService.lua calling Blizzard native GetWeaponEnchantInfo() API, fully supporting Main Hand (Slot 16), Off Hand (Slot 17), and Ranged (Slot 18) temporary enchants;</li>
-<li>Supported cross-flavor enchant mechanisms: Sharpening Stones, Weightstones, Wizard/Mana Oils, Rogue Poisons, Shaman Windfury/Flametongue/Frostbrand, DK Runeforging, Shadowcore Oil, etc.;</li>
-<li>Missing Weapon Enchant Warning: Triggers prominent alerts (LibButtonGlow overlay and throttled audio warning) when a weapon is equipped without temporary enchant;</li>
-<li>Expiring Enchant Warning: Glow alert and highlighted timer countdown when remaining duration is below threshold (default 5 minutes) or charges are depleted;</li>
-<li>Independent mover HUD and saved layout positioning (/eam enchant or button in PlayerStatPanel, left drag, right click to finish).</li>
+<li>Independent Totem Monitor Service &amp; Standalone Settings Panel:</li>
+<li>Upgraded totem tracking into a completely decoupled standalone module (TotemService) with pre-created out-of-combat HUD slot frames (EAM_TotemFrame / EAM_TotemSlotFrame1..4) and a dedicated AlertManager route guard, fixing the issue where totems dropped in combat failed to appear due to generic Renderer combatDeferred allocation or strict secret early returns;</li>
+<li>Added standalone settings panel (TotemPanel / Main Options &quot;★ Totem Status Monitor&quot; / /eam totem) synced with all 11 UI themes, supporting Fire/Earth/Water/Air slot toggles, totem name &amp; countdown text toggles, cooldown swipe overlay, active glow, expiring threshold slider (2-30s) &amp; glow, 30s throttled audio alerts, custom X/Y offsets &amp; grow direction, independent anchor mover (/eam totem move), and a 15-second test preview mode (/eam totem test);</li>
+<li>Supports both 12.x native DurationObject swipe/countdown rendering and Forever 1.60.1 string icon paths, native GameTooltip:SetTotem(slot) on hover, and right-click totem dismissal out of combat.</li>
+<li>Independent Weapon Enchant Service &amp; Standalone Settings Panel:</li>
+<li>Implemented dedicated WeaponEnchantService.lua prioritizing C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot) alongside Forever C_Item.GetWeaponEnchantInfo(slot - 16) (with GetWeaponEnchantInfo() legacy fallback), tracking Main Hand (Slot 16), Off Hand (Slot 17), and Ranged (Slot 18) temporary enchants across Forever and Retail;</li>
+<li>Added standalone settings panel (WeaponEnchantPanel / Main Options &quot;★ Weapon Temp Enchant&quot; / /eam enchant), offering per-slot toggles, custom X/Y offsets &amp; grow direction, icon size/spacing, active/expiring/missing highlight glow toggles, expiring threshold (default 5 min), and 30s throttled audio alerts;</li>
+<li>Added corner enchant sub-icon badge and outer-frame placement mode (badgeOutside): keeps the main icon as the equipped weapon while anchoring the enchant sub-icon cleanly outside the frame (configurable corner &amp; 30%~65% scale) with elevated FrameLevel to prevent LibButtonGlow overlap;</li>
+<li>Added side-by-side Equipped Weapon &amp; Enchant Spell Dual Tooltip: hovering either the weapon icon or outer enchant badge renders the full equipped weapon tooltip (SetInventoryItem) on the left and the spell enchant description (SetSpellByID / tooltip parsing) with live remaining time &amp; charges on the right;</li>
+<li>Separated lightweight tickCountdown scheduler and independent mover HUD (/eam enchant, left-drag / right-click to save).</li>
 <li>Forever 1.60.1 11 Character Attributes Knowledge Base &amp; Native Tooltip Engine:</li>
 <li>Calibrated 11 attribute formulas and mechanics based on in-game screenshots, adding native GameTooltip hover previews to HUD stat frames and option rows:</li>
 <li>Strength: +AP (1 Str = 2 AP), Shield Block Value = Str / 20;</li>
@@ -3077,13 +3092,26 @@
 </div></div>
 <div class="changelog-card">
     <div class="changelog-header">
+        <span class="changelog-tag">🏷️ [Optimizations &amp; Bug Fixes]</span>
+        <span class="changelog-date">📅 </span>
+    </div>
+    <div class="changelog-body">
+<ul class="changelog-sublist">
+<li>Default Cooldown Shadow Alpha Adjusted to 50%: Lowered the default and reset value of cooldownSwipeAlpha from 80% (0.8) to 50% (0.5) across IconPool, NativeAuraRenderer, Renderer, PreviewPanel, TotemService, and ProfileCodec for clearer icon readability;</li>
+<li>Forever 1.60.1 Resource Panel Topology Filtering: Updated PlayerResourcePanel to consume Catalog.GetFlavorCandidateKeys so Forever 1.60.1 cleanly shows classic player resources (Mana, Rage, Energy, 5-point Combo Points; Pet Happiness handled in Player Stats) without Retail specialization clutter;</li>
+<li>Automatic Forever SpellRankService Initialization: Wired SpellRankService into Main.initialize() and added SpellRankService.getKnownSpellCount() so multi-rank spell families are indexed automatically on login;</li>
+<li>Dynamic Theme Integration for Weapon Enchant Panel: Fixed load-order theme lookup so EAM_WeaponEnchantOptionsFrame adopts all 11 UI themes and cleaned up label wrapping/truncation.</li>
+</ul>
+</div></div>
+<div class="changelog-card">
+    <div class="changelog-header">
         <span class="changelog-tag">🏷️ [Localization]</span>
         <span class="changelog-date">📅 </span>
     </div>
     <div class="changelog-body">
 <ul class="changelog-sublist">
 <li>Calibrated official regional client names for Forever: Traditional Chinese (zhTW) unified as &quot;永恆&quot; (World of Warcraft: Forever) and Simplified Chinese (zhCN) unified as &quot;无限&quot; (World of Warcraft: Infinite).</li>
-<li>100% synchronized all 5 locales (enUS, zhTW, zhCN, koKR, ruRU) for weapon enchants, mana stat, continuous soft blue glow, new attributes, and slash command help.</li>
+<li>100% synchronized all 5 locales (enUS, zhTW, zhCN, koKR, ruRU) for weapon enchant standalone panel, outer badge toggle, mana stat, continuous soft blue glow, new attributes, and slash command help.</li>
 </ul>
 </div></div>
 <div class="changelog-card">

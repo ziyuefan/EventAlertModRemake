@@ -23,9 +23,9 @@
 
 ---
 
-## ✨ 9 Independent Alert Modules
+## ✨ 10 Independent Alert Modules
 
-EAM features 9 completely decoupled, independently positioned, and freely draggable alert modules:
+EAM features 10 completely decoupled, independently positioned, and freely draggable alert modules:
 
 1. 🔮 **Player Buff / Debuff**: Self buffs & debuffs with stack counts, remaining shield absorb amount, high-precision timers, and Global + Per-Spell tri-state "Hide Auras Outside Combat".
 2. 🎯 **Target Buff / Debuff**: Precise tracking of target auras, CC, and debuff states with out-of-combat visibility control.
@@ -33,9 +33,10 @@ EAM features 9 completely decoupled, independently positioned, and freely dragga
 4. ⏳ **Spell Cooldown**: Zero-Alpha (Alpha=0) persistent pre-anchored mode with 0.00ms layout latency; supports Radial Ring Mode & outer linear bars (`TOP/BOTTOM/LEFT/RIGHT`), custom reordering (drag & drop, up/down), and desaturated placeholder masks.
 5. 🎒 **Item Cooldown**: Trinkets, on-use equipment, and consumables monitoring; fully supports dual-track monitoring (19 equipment slots & item IDs), 3-tier robust cooldown fallback, and real-time gear swap synchronization.
 6. 🌋 **Ground Effect**: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, Anti-Magic Zone) with Base/Override talent family matching.
-7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus dedicated classic 60-level 9-class resource topologies in Forever 1.60.1 (zhTW: 永恆 / zhCN: 无限) (Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form transformations, Rogue Energy/Combo Points, Warrior Rage, etc.).
+7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5, plus filtered classic 60-level player resources in Forever 1.60.1 (zhTW: 永恆 / zhCN: 无限) (Mana, Rage, Energy, and 5 Combo Points; Pet Happiness handled in Player Stats).
 8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles with 18+ core stats in Retail, plus Forever 1.60.1 classic stat tracking (Five Magic Resistances, 11 calibrated stats with native GameTooltip knowledge formulas such as `14 AP = 1 DPS`, `440` Defense boss crit immunity, `75%` Armor mitigation cap, `+33%` sit/sleep regen; `mana` & Spirit 5SR three-state alerts + `EAM_SpiritActiveGlowFrame` continuous soft blue screen vignette; Pet Happiness/Loyalty, Ranged Ammo Status).
-9. 🗡️ **Weapon Enchant**: Dedicated `WeaponEnchantService` calling Blizzard's native `GetWeaponEnchantInfo()`, tracking temporary Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) weapon enchants across Forever and Retail with missing-enchant glow & audio warnings, expiring countdown alerts, and `/eam enchant` standalone HUD mover mode.
+9. 🗡️ **Weapon Enchant**: Dedicated `WeaponEnchantService` and standalone `WeaponEnchantPanel` (`/eam enchant`), prioritizing `C_PaperDollInfo.GetTemporaryEnchantmentInfo` and Forever `C_Item.GetWeaponEnchantInfo` (with `GetWeaponEnchantInfo()` fallback) for Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) enchants; features outer-frame sub-icon badge (`badgeOutside`, raised above `LibButtonGlow`), side-by-side Equipped Weapon & Enchant Spell Dual Tooltips, missing/expiring glow & audio alerts, and standalone HUD mover mode.
+10. 🗿 **Totem Status Monitor**: Dedicated `TotemService` and standalone `TotemPanel` (`/eam totem`) with pre-warmed combat-safe slot frames (`Slot 1..4` Fire/Earth/Water/Air), full 12.x `DurationObject` & Forever `GetTotemInfo` support, per-element toggles, active/expiring glow, audio alerts, native `SetTotem` tooltips, and a 15s test preview (`/eam totem test`).
 
 ---
 
@@ -118,7 +119,8 @@ EAM provides a rich suite of slash commands via `/eam` or `/eventalertmod` (case
 | `/eam lookupfull <fullName>` | `/eam lf <fullName>` | Exact search candidate spells and Spell IDs for current class |
 | `/eam showcast` | `/eam showc` | Start/stop logging spells cast successfully during current session |
 | `/eam profile` | `/eam profile export`, `/eam profile import` | Open Profile Export/Import and string sharing panel |
-| `/eam enchant` | `/eam weapon`, `/eam we` | Toggle standalone temporary weapon enchant HUD mover mode |
+| `/eam enchant` | `/eam weapon`, `/eam we` | Open Weapon Enchant panel (append `move` to toggle anchor) |
+| `/eam totem` | `/eam totems [move/test]` | Open Totem Monitor panel (`move` anchor / `test` 15s preview) |
 | `/eam rune` | `/eam runes`, `/eam probe rune` | Open Death Knight 6-slot rune dashboard, charge status & diagnostic JSON |
 | `/eam unitpower background <KEY>` | None | Mark background resource missing event, triggering 0.5s demand-driven sampler |
 | `/eam doctor` | `/eam validate` | Run client API boundary and environment diagnostic report |
@@ -154,16 +156,22 @@ In-game, you never need to manually look up Spell IDs:
 <details open markdown="1">
 <summary><b>🔥 Retail 12.1.5 & Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Redux & Alpha Series Highlights (Click to Expand/Collapse)</b></summary>
 
-### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13
-- **Independent Weapon Enchant Service (`WeaponEnchantService`) [Shared]**:
-  - Dedicated service built on Blizzard's native `GetWeaponEnchantInfo()`, tracking Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) temporary enchants across Forever and Retail (sharpening stones, poisons, oils, Windfury/Flametongue, Runeforging).
-  - Features missing-enchant glow + throttled audio alert, expiring countdown alerts (default 5m threshold), and `/eam enchant` independent HUD mover mode.
+### 🌟 [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.16
+- **Independent Totem Monitor Service & Standalone Panel (`TotemService` & `TotemPanel`) [Shared]**:
+  - Pre-creates combat-safe HUD slot frames and bypasses generic Renderer `combatDeferred` / secret early exits so totems dropped in combat always display reliably across Forever 1.60.1 and Retail 12.1.5;
+  - Adds a standalone theme-synced settings panel (`/eam totem`) with Fire/Earth/Water/Air slot toggles, active/expiring glow, threshold & 30s audio alert, custom coordinates, and 15s test preview (`/eam totem test`).
+- **Independent Weapon Enchant Service, Standalone Panel & Dual Tooltip (`WeaponEnchantService` & `WeaponEnchantPanel`) [Shared]**:
+  - Dedicated service prioritizing `C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot)` alongside Forever `C_Item.GetWeaponEnchantInfo(slot - 16)` (with `GetWeaponEnchantInfo()` fallback), tracking Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) temporary enchants (stones, oils, poisons, Shaman imbues, Paladin rites, lures).
+  - Includes a standalone theme-synced settings panel (`EAM_WeaponEnchantOptionsFrame` / `/eam enchant`), outer-frame corner enchant sub-icon (`badgeOutside`, elevated above `LibButtonGlow`), side-by-side Equipped Weapon + Enchant Spell Dual Tooltips, active/expiring/missing glow toggles, throttled audio alerts, and custom X/Y HUD mover mode.
 - **[Forever 1.60.1 Exclusive] 11-Stat Calibration & Native GameTooltip Knowledge Engine**:
   - Calibrated formulas (`14 AP = 1 DPS`, `440` Defense boss crit immunity & 150% crushing blow rule, `75.00%` Armor cap, `+33%` sit/sleep Spirit regen, frontal-only player Dodge & Parry Haste), expanded `attackPower`/`dodge`/`parry`/`block`, and wired native `GameTooltip` details on HUD icons & option rows.
 - **[Forever 1.60.1 Exclusive] Mana Stat, 5-Second Rule (5SR) Three-State Alerts & Continuous Full-Screen Soft Blue Glow**:
   - Added `mana` monitoring integrated with the 5SR state machine (ice-blue vs dark-amber StatusBar contrast, icon glow, `1.32x` active text scaling / `%.1fs` penalty countdown) and `EAM_SpiritActiveGlowFrame` smooth screen vignette fade-in/out in `CombatFlash.lua`.
+- **[Forever 1.60.1 Exclusive] Classic Resource Panel Filtering & Automatic SpellRankService Startup**:
+  - Updated `PlayerResourcePanel` to consume `Catalog.GetFlavorCandidateKeys`, keeping Forever options strictly aligned with classic resources (Mana, Rage, Energy, 5 Combo Points), and wired `SpellRankService` into `Main.initialize()` with `getKnownSpellCount()`.
 - **Hide Auras Outside Combat (Global + Per-Spell Tri-State Override) [Shared]**:
   - Global out-of-combat visibility toggle paired with per-spell tri-state overrides (`Global Default` / `Force Show` / `Force Hide`) across both Legacy `AuraService` and Retail 12.1+ Native Aura containers.
+- **Default Cooldown Shadow Opacity Lowered to 50% (`cooldownSwipeAlpha = 0.5`)**: Adjusted default and reset cooldown swipe opacity across all renderers and standalone Totem frames for crisper icon visibility.
 - **Forever Bilingual Naming & 5-Locale Sync**: Standardized `zhTW` to `永恆` and `zhCN` to `无限` across TOC, locale dictionaries, and documentation.
 
 ### 🌟 [Retail 12.1.5 & Forever 1.60.1 (zhTW: 永恆 / zhCN: 無限) Alpha 8.9] - 2026.11.08

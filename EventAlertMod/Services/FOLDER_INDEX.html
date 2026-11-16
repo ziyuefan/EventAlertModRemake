@@ -10,7 +10,7 @@
   <meta name="ai-governance-layer" content="Addon Service Layer">
   <meta name="ai-governance-security" content="Taint-Sensitive / Combat Protection Gated">
   <meta name="ai-governance-invariants" content="戰鬥中數值保護機制：戰鬥中 GetUnitSpeed 等受限 API 自動安全回退至真實脫戰記憶快取 (lastKnownStats) | 目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染 | 零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回">
-  <meta name="ai-scan-timestamp" content="2026-11-13T12:35:11.651300+08:00">
+  <meta name="ai-scan-timestamp" content="2026-11-16T21:01:00.244204+08:00">
   <meta name="generator" content="EventAlertMod AI Governance Tool Suite">
 
   <!-- JSON-LD Structured Data for AI Agents / RAG -->
@@ -29,10 +29,10 @@
     "目標光環探針使用 Tooltip 匿名回呼機制，杜絕直接遍歷敵方/隊友 Nameplate Frame 造成 Taint 感染",
     "零讀回原則：Secret 數值僅單向注入原生 StatusBar:SetValue 或 DurationObject，絕不於 Lua 讀回"
   ],
-  "timestamp": "2026-11-13T12:35:11.651300+08:00",
+  "timestamp": "2026-11-16T21:01:00.244204+08:00",
   "fileCount": 20,
   "subdirectoryCount": 0,
-  "totalSizeBytes": 557373,
+  "totalSizeBytes": 669601,
   "files": [
     {
       "name": "AuraCapabilityService.lua",
@@ -181,8 +181,8 @@
     {
       "name": "SpellRankService.lua",
       "extension": ".lua",
-      "sizeBytes": 13593,
-      "lineCount": 421,
+      "sizeBytes": 13925,
+      "lineCount": 435,
       "purpose": "為永恆服 (Forever 1.60.1 / Interface 16001 / Camelot) 提供全鏈路經典法術等級 (Spell Rank) 歸併管理。；暴雪原生 C_SpellBook 保留了所有等級 (Rank 1 ~ Rank N)，而原生 AuraContainer / Cooldown / Ground 需要將同一家族所有等級展開為雜湊集合。 | 載入 ForeverCatalog 靜態多等級法術家族表。；於非戰鬥冷路徑掃描 C_SpellBook (Player & Pet bank) 自動歸併已學等級與未知等級。",
       "role": "Services/SpellRankService",
       "security": "Taint-Sensitive"
@@ -199,20 +199,20 @@
     {
       "name": "TotemService.lua",
       "extension": ".lua",
-      "sizeBytes": 8338,
-      "lineCount": 264,
-      "purpose": "作為圖騰（主要是薩滿的 4 大圖騰插槽）的事實監控層。；使用 12.x 全域 GetTotemInfo 與 GetTotemDuration API 取得圖騰事實與原生時間物件。 | 監聽 PLAYER_TOTEM_UPDATE 與 PLAYER_ENTERING_WORLD 事件。；逐一掃描 4 個圖騰插槽，獲取圖騰圖示、持續時間與開始時間。",
+      "sizeBytes": 61989,
+      "lineCount": 1563,
+      "purpose": "獨立完整之圖騰狀態監控模組（薩滿四系火／地／水／風圖騰及通用召喚圖騰）。；預先於非戰鬥期間建立專屬 HUD 框架與 4 個槽位框體（EAM_TotemFrame / EAM_TotemSlotFrame1..4）， | 監聽 PLAYER_TOTEM_UPDATE、PLAYER_ENTERING_WORLD、PLAYER_LOGIN 與戰鬥進出事件。；逐一掃描 4 個圖騰插槽，保存 TotemService.activeStates 與觸發 EAM_TOTEM_STATE_CHANGED（並確保 TotemStatePool 與 secret boundary 測試契約完整）。",
       "role": "Services/TotemService",
       "security": "Taint-Sensitive"
     },
     {
       "name": "WeaponEnchantService.lua",
       "extension": ".lua",
-      "sizeBytes": 25471,
-      "lineCount": 659,
-      "purpose": "將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/盜賊毒藥/DK符文熔鑄/影之哀傷等) 作為獨立告警模組提供全面監控。；為什麼不是常規光環？底層是裝備槽位（Slot 16 主手、17 副手、18 遠程）之物品臨時附魔 (Item Temporary Enchantment)， | 主手 (16)、副手 (17) 與遠程 (18) 臨時附魔之狀態取樣（剩餘時間、剩餘次數、裝備圖示）。；【缺少武器附魔提醒 (Missing Weapon Enchant Warning)】：當角色裝備了武器但未附魔時發出告警（圖示高亮、邊框發光、音效）。",
+      "sizeBytes": 83716,
+      "lineCount": 1997,
+      "purpose": "將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/盜賊毒藥/DK符文熔鑄/影之哀傷等) 作為獨立告警模組提供全面監控。；為什麼不是常規光環？底層是裝備槽位（Slot 16 主手、17 副手、18 遠程）之物品臨時附魔 (Item Temporary Enchantment)， | 主手 (16)、副手 (17) 與遠程 (18) 臨時附魔之狀態取樣（剩餘時間、到期旗標、剩餘次數、裝備與附魔圖示）。；【缺少武器附魔提醒 (Missing Enchant Warning)】：裝備武器但未施加臨時附魔時發出告警（可獨立切換顯示與高亮）。",
       "role": "Services/WeaponEnchantService",
-      "security": "Taint-Sensitive"
+      "security": "Safe"
     }
   ],
   "subdirectories": []
@@ -696,7 +696,7 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">總容量</span>
-          <span class="stat-val">544.3 KB</span>
+          <span class="stat-val">653.9 KB</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">安全防護層級</span>
@@ -1038,7 +1038,7 @@
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            13.3 KB<span style="font-size: 0.78rem; color: #64748b;"> • 421 行</span>
+            13.6 KB<span style="font-size: 0.78rem; color: #64748b;"> • 435 行</span>
           </td>
         </tr>
         
@@ -1069,12 +1069,12 @@
           </td>
           <td><span class="badge badge-lua">LUA</span></td>
           <td>
-            <div style="font-weight: 500; color: #f1f5f9;">作為圖騰（主要是薩滿的 4 大圖騰插槽）的事實監控層。；使用 12.x 全域 GetTotemInfo 與 GetTotemDuration API 取得圖騰事實與原生時間物件。 | 監聽 PLAYER_TOTEM_UPDATE 與 PLAYER_ENTERING_WORLD 事件。；逐一掃描 4 個圖騰插槽，獲取圖騰圖示、持續時間與開始時間。</div>
+            <div style="font-weight: 500; color: #f1f5f9;">獨立完整之圖騰狀態監控模組（薩滿四系火／地／水／風圖騰及通用召喚圖騰）。；預先於非戰鬥期間建立專屬 HUD 框架與 4 個槽位框體（EAM_TotemFrame / EAM_TotemSlotFrame1..4）， | 監聽 PLAYER_TOTEM_UPDATE、PLAYER_ENTERING_WORLD、PLAYER_LOGIN 與戰鬥進出事件。；逐一掃描 4 個圖騰插槽，保存 TotemService.activeStates 與觸發 EAM_TOTEM_STATE_CHANGED（並確保 TotemStatePool 與 secret boundary 測試契約完整）。</div>
             <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/TotemService</div>
           </td>
           <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            8.1 KB<span style="font-size: 0.78rem; color: #64748b;"> • 264 行</span>
+            60.5 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1563 行</span>
           </td>
         </tr>
         
@@ -1087,12 +1087,12 @@
           </td>
           <td><span class="badge badge-lua">LUA</span></td>
           <td>
-            <div style="font-weight: 500; color: #f1f5f9;">將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/盜賊毒藥/DK符文熔鑄/影之哀傷等) 作為獨立告警模組提供全面監控。；為什麼不是常規光環？底層是裝備槽位（Slot 16 主手、17 副手、18 遠程）之物品臨時附魔 (Item Temporary Enchantment)， | 主手 (16)、副手 (17) 與遠程 (18) 臨時附魔之狀態取樣（剩餘時間、剩餘次數、裝備圖示）。；【缺少武器附魔提醒 (Missing Weapon Enchant Warning)】：當角色裝備了武器但未附魔時發出告警（圖示高亮、邊框發光、音效）。</div>
+            <div style="font-weight: 500; color: #f1f5f9;">將武器暫時性附魔 (磨刀石/巫術之油/薩滿火舌風怒/盜賊毒藥/DK符文熔鑄/影之哀傷等) 作為獨立告警模組提供全面監控。；為什麼不是常規光環？底層是裝備槽位（Slot 16 主手、17 副手、18 遠程）之物品臨時附魔 (Item Temporary Enchantment)， | 主手 (16)、副手 (17) 與遠程 (18) 臨時附魔之狀態取樣（剩餘時間、到期旗標、剩餘次數、裝備與附魔圖示）。；【缺少武器附魔提醒 (Missing Enchant Warning)】：裝備武器但未施加臨時附魔時發出告警（可獨立切換顯示與高亮）。</div>
             <div style="font-size: 0.78rem; color: #94a3b8; font-family: var(--font-mono); margin-top: 2px;">Services/WeaponEnchantService</div>
           </td>
-          <td><span class="sec-badge sec-taint">🛡️ Taint-Sensitive</span></td>
+          <td><span class="sec-badge sec-safe">✅ Safe</span></td>
           <td style="text-align: right; font-family: var(--font-mono); color: #cbd5e1;">
-            24.9 KB<span style="font-size: 0.78rem; color: #64748b;"> • 659 行</span>
+            81.8 KB<span style="font-size: 0.78rem; color: #64748b;"> • 1997 行</span>
           </td>
         </tr>
         
@@ -1104,7 +1104,7 @@
     <!-- 頁尾宣告 -->
     <footer class="footer">
       <p>EventAlertMod Remake • 專為魔獸世界 Retail 12.1 打造之次世代告警架構</p>
-      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-13T12:35:11.651300+08:00</p>
+      <p style="margin-top: 4px; font-size: 0.78rem;">本索引由 AI 治理工具 <code>.AI/Tools/generate_folder_indexes.py</code> 自動產生與維護 • 掃描時間: 2026-11-16T21:01:00.244204+08:00</p>
     </footer>
   </div>
 

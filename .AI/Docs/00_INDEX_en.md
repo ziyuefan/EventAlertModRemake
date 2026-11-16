@@ -22,9 +22,9 @@ Welcome to the EventAlertMod (EAM) Retail Rewrite Documentation Hub. This portal
 
 ---
 
-## ✨ 9 Independent Alert Modules
+## ✨ 10 Independent Alert Modules
 
-EAM features 9 decoupled, independently positioned and freely draggable alert modules:
+EAM features 10 decoupled, independently positioned and freely draggable alert modules:
 
 1. 🔮 **Player Buff / Debuff**: Self buffs & debuffs with stack counts, real-time shield absorb amounts (e.g. `45.2k`, `1.2M`, `3(45k)`), high-precision countdown timers, and Global + Per-Spell tri-state "Hide Auras Outside Combat".
 2. 🎯 **Target Buff / Debuff**: Precise tracking of target auras, CC, and debuff states with anonymous Tooltip probes, zero-taint sampling, and out-of-combat visibility control.
@@ -34,16 +34,18 @@ EAM features 9 decoupled, independently positioned and freely draggable alert mo
 6. 🌋 **Ground Effect**: Aura-less ground AoE spells (Death and Decay, Defile, Frozen Orb, AMZ) with Base/Override talent family matching, Multi-Duration Candidate Scraping, and 2D Grid Layout support.
 7. ⚡ **Player Resource**: All 13 classes, 40 specs, and 17 resource types in Retail 12.1.5 (with independent dragging, 9-point attachment, dynamic/custom segments, two-color gradients, conditional alerts, and DK Runes dashboard `/eam rune`), plus Forever 1.60.1 classic 60-level 9-class topologies (Warrior Rage, Rogue Energy/Combo Points, Hunter Mana/Pet Focus, Warlock Mana/Soul Shards, Druid 4-form shifts, Paladin/Priest/Shaman/Mage Mana).
 8. 📊 **Player Stats & Absorbs**: Per-class customizable profiles across 18+ core Retail attributes (including 4-in-1 gliding velocities) and Forever 1.60.1 calibrated stats (11 attributes + native GameTooltip knowledge formulas such as `14 AP = 1 DPS`, `440` Defense Boss Crit Immunity, `75%` Armor cap, `+33%` sit/sleep regen; Five Magic Resistances; `mana` & Spirit 5SR three-state alerts + `EAM_SpiritActiveGlowFrame` continuous soft blue screen vignette).
-9. 🗡️ **Weapon Enchant**: Dedicated `WeaponEnchantService` built directly on native `GetWeaponEnchantInfo()`, tracking temporary Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) weapon enchants across Forever (sharpening/weight stones, poisons, oils, Windfury/Flametongue) and Retail (Runeforging, whetstones, weapon oils/poisons) with missing-enchant glow + throttled audio warnings, expiring countdown highlights, and `/eam enchant` independent HUD positioning.
+9. 🗡️ **Weapon Enchant**: Dedicated `WeaponEnchantService` and standalone `WeaponEnchantPanel` (`/eam enchant`), prioritizing `C_PaperDollInfo.GetTemporaryEnchantmentInfo` and Forever `C_Item.GetWeaponEnchantInfo` (with `GetWeaponEnchantInfo()` fallback) for Main Hand (`Slot 16`), Off Hand (`Slot 17`), and Ranged (`Slot 18`) enchants; features outer-frame corner enchant badge (`badgeOutside`, raised above `LibButtonGlow`), side-by-side Equipped Weapon & Enchant Spell Dual Tooltips, missing/expiring glow & audio alerts, and standalone HUD mover mode.
+10. 🗿 **Totem Status Monitor**: Dedicated `TotemService` and standalone `TotemPanel` (`/eam totem`) with pre-warmed combat-safe slot frames (`Slot 1..4` Fire/Earth/Water/Air) and `AlertManager` route protection, supporting Retail `DurationObject` and Forever `GetTotemInfo`, per-element toggles, active/expiring glow, audio alerts, native `SetTotem` hover tooltips, and a 15s test preview (`/eam totem test`).
 
 ---
 
 ## 🔥 Recent Release Milestones
 
-- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.13**
-    - **Independent Weapon Enchant Service (`WeaponEnchantService`) [Shared]**: Tracks Slot 16/17/18 temporary weapon enchants via `GetWeaponEnchantInfo()`, offering missing-enchant glow & audio alerts, expiration countdowns, and `/eam enchant` HUD drag positioning.
-    - **Forever 11-Stat Calibration & Native Tooltip Knowledge Base [Forever 1.60.1]**: Calibrated Strength/Stamina/Agility/Intellect/Spirit/AP (`14 AP = 1 DPS`)/Crit/Defense (`440` Boss Crit Immunity & 150% Crushing Blow rule)/Dodge/Parry (Parry Haste)/Armor (`75%` mitigation cap) formulas with native `GameTooltip` details across HUD and panel rows; expanded `attackPower`, `dodge`, `parry`, and `block`.
-    - **Mana Stat, 5-Second Rule (5SR) Three-State Alerts & Continuous Full-Screen Soft Blue Glow [Forever 1.60.1]**: Added `mana` stat tracking with ice-blue vs dark-amber 5SR bar contrast, icon glow, 1.32x text scaling, and `EAM_SpiritActiveGlowFrame` soft blue screen vignette fade-in/fade-out in `CombatFlash.lua`.
+- 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.16**
+    - **Independent Totem Monitor Service & Standalone Panel (`TotemService` & `TotemPanel`) [Shared]**: Pre-creates combat-safe HUD slot frames and bypasses generic Renderer `combatDeferred` / secret early exits so totems dropped in combat always display reliably across Forever 1.60.1 and Retail 12.1.5, alongside a theme-synced panel (`/eam totem`) and 15s test preview (`/eam totem test`).
+    - **Independent Weapon Enchant Service, Standalone Panel & Dual Tooltip (`WeaponEnchantService`) [Shared]**: Dual-track native sampling (`C_PaperDollInfo.GetTemporaryEnchantmentInfo` + `C_Item.GetWeaponEnchantInfo`), standalone theme-synced panel (`/eam enchant`), outer-frame corner enchant badge (`badgeOutside`), side-by-side Equipped Weapon + Enchant Spell Dual Tooltips, and throttled audio alerts.
+    - **Default Cooldown Shadow Opacity Lowered to 50% (`cooldownSwipeAlpha = 0.5`) [Shared]**: Adjusted default and reset cooldown swipe opacity across all renderers and standalone Totem frames for crisper icon visibility.
+    - **Forever 11-Stat Calibration, Mana 5SR & Classic Resource Filtering [Forever 1.60.1]**: Calibrated all 11 stats (`14 AP = 1 DPS`, `440` Defense boss crit immunity, `75%` Armor cap, `+33%` sit/sleep regen, Parry Haste) with native `GameTooltip`, added `mana` / 5SR `EAM_SpiritActiveGlowFrame`, filtered classic resource panels via `GetFlavorCandidateKeys`, and wired `SpellRankService` auto-startup.
     - **Hide Auras Outside Combat (Global + Tri-State Per-Spell Override) [Shared]**: Added global toggle and per-spell tri-state override (`Global Default` / `Force Show` / `Force Hide`) seamlessly wired across Legacy `AuraService` and Retail 12.1+ Native Aura containers.
     - **Dual-Track AI Governance v1.4 & Track B Activation**: Completed Level 3 closed `<argon_ticket>` XML schema in `AI_GOVERNANCE_DIRECTIVE.xml` v1.4, activated **Track B (`Gemini 4 Hydrogen (XHigh)` Arbiter + `Hydrogen` 4-tier dynamic routing)** due to Argon quota exhaustion, calibrated Forever bilingual names (`永恆` / `无限`, distinct from Classic Era), and added `eam-dual-track-orchestration` skill.
 - 🌟 **[Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08**

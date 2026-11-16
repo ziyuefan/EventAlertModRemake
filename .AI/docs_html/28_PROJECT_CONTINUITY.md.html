@@ -519,8 +519,27 @@
 <h1 id="eventalertmod">EventAlertMod 專案續接與試錯索引</h1>
 <h2 id="1">1. 用途與權責</h2>
 <p>本文件是上下文壓縮、代理交接或長時間中斷後的第一個人類可讀續接點。機器可讀的當前狀態以 <code>Data/ProjectContinuity.json</code> 為準；詳細試錯時間線保留在 <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>；真人實機案例定義保留在 <code>Data/LiveValidationMatrix.json</code>。三者不得互相複製整段內容。</p>
-<p>目前快照版本：2026-11-13.01 (AI_GOVERNANCE_DIRECTIVE.xml 升級 v1.4 補完 Level 3 閉合 XML 派工契約；正式切換至 Track B：Hydrogen XHigh 仲裁 + Hydrogen 動態四階；同步 eam-dual-track-orchestration 技能、00_INDEX 文件導航中心、雙語 README 與 GitHub Pages 離線編譯)。</p>
-<h2 id="2026-11-13-ai-v14track-b-github">2026-11-13 多進度儲存點：AI 雙軌治理升級 (v1.4)、Track B 切換、技能生態補完與文件導航中心/GitHub 同步（現行儲存點）</h2>
+<p>目前快照版本：2026-11-16.02 (Alpha 9.0 獨立圖騰監控模組 <code>TotemService</code>/<code>TotemPanel</code> 修復戰鬥中不顯示、預設冷卻陰影透明度 50%、武器附魔框外小圖示與雙 Tooltip、Forever 1.60.1 實機修復，以及全平台發布前文件定稿)。</p>
+<h2 id="2026-11-16-alpha-90-50">2026-11-16 多進度儲存點：Alpha 9.0 獨立圖騰模組、預設陰影透明度 50% 與全平台發布文件定稿（現行儲存點）</h2>
+<ul>
+<li>current-of-truth：完成 Alpha 9.0 發布前最終機能補完與全域文件定稿：<ol>
+<li><strong>獨立圖騰狀態監控模組與戰鬥安全預建框 (<code>TotemService.lua</code>, <code>SavedVariables.lua</code>, <code>AlertManager.lua</code>, <code>Options.lua</code>, <code>Slash.lua</code>, <code>Env.lua</code>)</strong>：</li>
+<li>定位並修復薩滿圖騰不顯示雙重根因：(a) 經通用 <code>Renderer.lua</code> 在戰鬥中放下圖騰時因未預先建框觸發 <code>combatDeferred</code> 延遲阻塞；(b) <code>TotemService.refreshSlot</code> 遭遇 Secret 名稱早期返回而未建立狀態、且 Forever 字串材質路徑被僅接受數值型別過濾；</li>
+<li>將圖騰監控全面升級為獨立模組 (<code>TotemService.hasDedicatedHUD = true</code>)，預先建立 <code>EAM_TotemFrame</code> 與 <code>EAM_TotemSlotFrame1..4</code> 四色槽位框體，於 <code>AlertManager</code> 接入 <code>totemDedicatedHUDHandled</code> 路由保護；</li>
+<li>新增主題連動獨立設定面板 <code>EAM.UI.TotemPanel</code> (<code>EAM_TotemOptionsFrame</code>，主選單第 10 項與 <code>/eam totem</code>)，支援火/地/水/風開關、名稱/倒數/轉圈開關、作用中與到期發光高亮、警戒門檻 (<code>2~30s</code>)、30 秒節流音效、自由 X/Y 座標與成長方向、移動錨點 (<code>/eam totem move</code>)、15 秒測試預覽 (<code>/eam totem test</code>)、原生 <code>GameTooltip:SetTotem(slot)</code> 與非戰鬥右鍵收回圖騰。</li>
+<li><strong>預設冷卻陰影透明度調整為 50% (<code>cooldownSwipeAlpha = 0.5</code>)</strong>：</li>
+<li>將預設值、遷移/正規化回退值與重置按鈕統一從 <code>0.8</code> 改為 <code>0.5</code>（涵蓋 <code>SavedVariables.lua</code>, <code>ProfileCodec.lua</code>, <code>AuraRuleCompiler.lua</code>, <code>IconPool.lua</code>, <code>NativeAuraRenderer.lua</code>, <code>Renderer.lua</code>, <code>Options.lua</code>, <code>PreviewPanel.lua</code>, <code>TotemService.lua</code>）。</li>
+<li><strong>武器臨時附魔模組全面完善 (<code>WeaponEnchantService.lua</code>, <code>SavedVariables.lua</code>, <code>Locale/*.lua</code>)</strong>：</li>
+<li>跨客戶端審查對齊 <code>C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot)</code> 與 Forever <code>C_Item.GetWeaponEnchantInfo(slot - 16)</code>（保留 <code>GetWeaponEnchantInfo()</code> 降級層），分離 <code>tickCountdown</code> 跳秒與狀態採樣；</li>
+<li>建立獨立設定面板 <code>EAM.UI.WeaponEnchantPanel</code> (<code>EAM_WeaponEnchantOptionsFrame</code>)、主選單獨立入口、<code>/eam enchant</code> 指令與屬性面板捷徑，改為 <code>getTheme()</code>/<code>getLocale()</code> 動態連動 11 套主題配色；</li>
+<li>實作預設開啟之框外角落小圖示 (<code>badgeOutside = true</code>) 與 <code>SetFrameLevel</code> 提權防 <code>LibButtonGlow</code> 遮擋，並實裝並排武器 (<code>SetInventoryItem</code>) ＋附魔 (<code>EAM_WeaponEnchantSubTooltip</code> / <code>SetSpellByID</code>) 雙重 Tooltip。</li>
+<li><strong>Forever 1.60.1 實機測試與資源過濾修復 (<code>Main.lua</code>, <code>SpellRankService.lua</code>, <code>FlowTestRunner.lua</code>, <code>PreviewPanel.lua</code>, <code>PlayerResourcePanel.lua</code>, <code>ForeverCatalog.lua</code>)</strong>：</li>
+<li>將 <code>SpellRankService</code> 納入 <code>Main.initialize()</code> 並新增 <code>getKnownSpellCount()</code>；修復 <code>FlowTestRunner.lua</code> 兩項實機錯誤並通過 <code>weapon_enchant.service_and_dual_tooltip</code>；更新 <code>PlayerResourcePanel.lua</code> 改用 <code>Catalog.GetFlavorCandidateKeys</code> 對齊 60 級經典資源；</li>
+<li>完成 <code>changelog.*</code>、<code>README*.md</code>、<code>Deploy/*</code>、<code>Dist/RELEASE_NOTES_Alpha_9.0.md</code>、<code>Dist/GITHUB_RELEASE_NOTES_alpha-9.0.md</code>、<code>00_INDEX*.md</code> 與 <code>.AI/docs_html/</code> 發布前定稿。</li>
+</ol>
+</li>
+</ul>
+<h2 id="2026-11-13-ai-v14track-b-github">2026-11-13 多進度儲存點：AI 雙軌治理升級 (v1.4)、Track B 切換、技能生態補完與文件導航中心/GitHub 同步（前一儲存點）</h2>
 <ul>
 <li>current-of-truth：依據少年欸兩項核心指令，完成治理架構補完、Track B 軌道切換與全站同步：<ol>
 <li><strong>項次 1 補完 (<code>Level 3 &lt;argon_ticket&gt;</code> 閉合 XML 與實務對齊)</strong>：於 <code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code> v1.4 新增 <code>&lt;dual_track_model_routing&gt;</code> 與 <code>&lt;level3_closed_xml_ticket_standard&gt;</code> 兩大節點（共 13 個頂層節點），補齊 <code>&lt;scope&gt;</code>、<code>&lt;immutable_files&gt;</code>、<code>EventAlertMod/Data/</code> 靜態表隔離、<code>table.freeze()</code> 不可解除、Forever 1.60.1（繁中「永恆」／簡中「无限」）非 <code>Classic Era</code>、Zero Unrelated Diff、實機指令驗證清單與 <code>Cold-Context Drift Audit</code> 冷面審查標準。</li>
@@ -1923,17 +1942,18 @@
 - Chronological engineering trial details are logged in <code>Docs/15_DEVELOPMENT_ISSUE_LOG.md</code>.
 - Live client verification matrices are maintained in <code>Data/LiveValidationMatrix.json</code>.</p>
 <hr />
-<h2 id="2-current-state-snapshot-alpha-90-track-b-ai-governance-active-baseline-2026-11-13">2. Current State Snapshot: Alpha 9.0 &amp; Track B AI Governance (Active Baseline, 2026-11-13)</h2>
+<h2 id="2-current-state-snapshot-alpha-90-finalization-track-b-ai-governance-active-baseline-2026-11-16">2. Current State Snapshot: Alpha 9.0 Finalization &amp; Track B AI Governance (Active Baseline, 2026-11-16)</h2>
 <ul>
 <li><strong>Dual-Track Model Orchestration &amp; Level 3 Closed XML (AI Governance v1.4)</strong>:<ul>
 <li>Upgraded <code>.AI/Docs/AI_GOVERNANCE_DIRECTIVE.xml</code> to <strong>v1.4</strong> (<code>13</code> top-level nodes), adding <code>&lt;dual_track_model_routing active_track="TRACK_B"&gt;</code> and <code>&lt;level3_closed_xml_ticket_standard&gt;</code>.</li>
-<li>Switched active orchestration track to <strong>Track B</strong> (<code>Gemini 4 Hydrogen (XHigh)</code> Chief Arbiter + <code>Gemini 4 Hydrogen</code> 4-tier dynamic intensity <code>LOW/MEDIUM/HIGH/XHIGH</code>) due to Argon quota exhaustion, while retaining Track A (<code>Gemini 4 Argon (High)</code> Arbiter) on standby for explicit restoration.</li>
-<li>Added <code>.AI/skills/eam-dual-track-orchestration/SKILL.md</code> and synchronized <code>.AI/AGENTS.md</code>, <code>17_SUBAGENT_WORKFLOW.md</code>, <code>32_EAM_SKILL_ECOSYSTEM_AND_PHILOSOPHY.md(.en)</code>, <code>33_AI_GOVERNANCE_DIRECTIVE.md(.en)</code>, <code>00_INDEX.md(.en)</code>, bilingual <code>README</code>s, and <code>eam-project-continuity-governor</code>/<code>eam-docs-site-builder</code> skills.</li>
+<li>Switched active orchestration track to <strong>Track B</strong> (<code>Gemini 4 Hydrogen (XHigh)</code> Chief Arbiter + <code>Gemini 4 Hydrogen</code> 4-tier dynamic intensity <code>LOW/MEDIUM/HIGH/XHIGH</code>), while retaining Track A (<code>Gemini 4 Argon (High)</code> Arbiter) on standby for explicit restoration.</li>
 </ul>
 </li>
 <li><strong>Retail 12.1.5 &amp; Forever 1.60.1 Alpha 9.0 AddOn Features</strong>:<ul>
-<li><strong>9th Module (<code>WeaponEnchantService</code>)</strong>: Tracks Slot 16/17/18 temporary weapon enchants via <code>GetWeaponEnchantInfo()</code>, with missing-enchant glow &amp; audio warnings, expiration alerts, and <code>/eam enchant</code> HUD mover mode.</li>
-<li><strong>Forever 1.60.1 (zhTW: 永恆 / zhCN: 无限) 11-Stat Calibration &amp; Mana/5SR Glow</strong>: Calibrated all 11 stats (<code>14 AP = 1 DPS</code>, <code>440</code> Defense boss crit immunity, <code>75%</code> Armor cap, <code>+33%</code> sit/sleep regen) with native <code>GameTooltip</code> details; added <code>mana</code> stat, 5SR three-state alerts, and <code>EAM_SpiritActiveGlowFrame</code> continuous soft blue screen vignette.</li>
+<li><strong>10th Module (<code>TotemService</code> &amp; <code>TotemPanel</code>)</strong>: Upgraded totem monitoring into an independent pre-warmed HUD (<code>EAM_TotemFrame</code> / <code>EAM_TotemSlotFrame1..4</code>) with <code>AlertManager</code> route guard (<code>totemDedicatedHUDHandled</code>), fixing combat <code>combatDeferred</code> and strict secret non-display issues; includes a theme-synced panel (<code>/eam totem</code>), per-element toggles, active/expiring glow, threshold audio alerts, native <code>SetTotem</code> tooltips, and 15s test preview (<code>/eam totem test</code>).</li>
+<li><strong>9th Module (<code>WeaponEnchantService</code> &amp; <code>WeaponEnchantPanel</code>)</strong>: Dual-track native API sampling (<code>C_PaperDollInfo.GetTemporaryEnchantmentInfo</code> + <code>C_Item.GetWeaponEnchantInfo</code>), standalone theme-synced panel (<code>/eam enchant</code>), outer-frame corner enchant badge (<code>badgeOutside</code>), side-by-side Equipped Weapon + Enchant Spell Dual Tooltips, and custom HUD positioning.</li>
+<li><strong>Default Cooldown Shadow Opacity (<code>cooldownSwipeAlpha = 0.5</code>)</strong>: Adjusted default and reset cooldown swipe opacity from 80% to 50% across all renderers and standalone Totem frames.</li>
+<li><strong>Forever 1.60.1 (zhTW: 永恆 / zhCN: 无限) Live Fixes &amp; 11-Stat Calibration</strong>: Calibrated all 11 stats (<code>14 AP = 1 DPS</code>, <code>440</code> Defense boss crit immunity, <code>75%</code> Armor cap, <code>+33%</code> sit/sleep regen) with native <code>GameTooltip</code>; added <code>mana</code> / 5SR alerts and <code>EAM_SpiritActiveGlowFrame</code>; filtered <code>PlayerResourcePanel</code> via <code>GetFlavorCandidateKeys</code>; wired <code>SpellRankService</code> auto-startup.</li>
 <li><strong>Hide Auras Outside Combat</strong>: Global out-of-combat visibility toggle + per-spell tri-state override across Legacy <code>AuraService</code> and Retail 12.1+ Native Aura containers.</li>
 </ul>
 </li>

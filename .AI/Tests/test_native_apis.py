@@ -368,6 +368,12 @@ assert 'FOREVER_DEFAULT_ALERTS' in fc_src, 'Missing FOREVER_DEFAULT_ALERTS'
 assert 'FOREVER_SPELL_HEURISTICS' in fc_src, 'Missing FOREVER_SPELL_HEURISTICS'
 for cls in ['WARRIOR', 'PALADIN', 'HUNTER', 'ROGUE', 'PRIEST', 'SHAMAN', 'MAGE', 'WARLOCK', 'DRUID']:
     assert f'{cls} = {{' in fc_src, f'Missing {cls} topology in ForeverCatalog'
+assert 'WARLOCK = { "MANA" }' in fc_src, 'Forever 60-era Warlock UnitPower should only contain MANA'
+assert 'HUNTER  = { "MANA" }' in fc_src, 'Forever 60-era Hunter player UnitPower should only contain MANA'
+pr_panel_src = open('EventAlertMod/UI/PlayerResourcePanel.lua', 'r', encoding='utf-8').read()
+assert 'Catalog.GetFlavorCandidateKeys' in pr_panel_src, 'PlayerResourcePanel must use Catalog.GetFlavorCandidateKeys for Forever filtering'
+pr_cat_src = open('EventAlertMod/Data/PlayerResourceCatalog.lua', 'r', encoding='utf-8').read()
+assert 'EAM.isForever and 5 or 7' in pr_cat_src, 'COMBO_POINTS maxPoints should use 5 on Forever and 7 on Retail'
 
 # D. PlayerStatService.lua & Dynamic Filter
 stat_src = open('EventAlertMod/Services/PlayerStatService.lua', 'r', encoding='utf-8').read()
@@ -452,7 +458,10 @@ assert 'Services\\SpellRankService.lua' in toc_src, 'SpellRankService must be re
 rank_src = open('EventAlertMod/Services/SpellRankService.lua', 'r', encoding='utf-8').read()
 assert 'SpellRankService.getRankSpellIDs' in rank_src, 'Missing getRankSpellIDs in SpellRankService'
 assert 'SpellRankService.populateSpellIDSet' in rank_src, 'Missing populateSpellIDSet in SpellRankService'
-assert 'not EAM.isForever' in rank_src, 'SpellRankService must short-circuit when not EAM.isForever'
+assert 'SpellRankService.getKnownSpellCount' in rank_src, 'Missing getKnownSpellCount in SpellRankService'
+assert 'not EAM.isForever' in rank_src or 'isForever = (EAM.isForever == true)' in rank_src, 'SpellRankService must short-circuit when not EAM.isForever'
+main_src = open('EventAlertMod/Core/Main.lua', 'r', encoding='utf-8').read()
+assert 'SpellRankService' in main_src, 'Main.lua must initialize SpellRankService'
 
 compiler_src = open('EventAlertMod/Managers/AuraRuleCompiler.lua', 'r', encoding='utf-8').read()
 assert 'EAM.Services.SpellRankService.populateSpellIDSet' in compiler_src, 'AuraRuleCompiler must populate spell ranks for Forever'
@@ -680,12 +689,33 @@ assert 'WeaponEnchantService.sampleWeaponEnchants' in we_src, 'Missing sampleWea
 assert 'WeaponEnchantService.formatDuration' in we_src, 'Missing formatDuration in WeaponEnchantService'
 assert 'WeaponEnchantService.getEnchantTooltipInfo' in we_src, 'Missing getEnchantTooltipInfo in WeaponEnchantService'
 assert 'WeaponEnchantService.showEnchantTooltip' in we_src, 'Missing showEnchantTooltip in WeaponEnchantService'
+assert 'WeaponEnchantService.hideEnchantTooltip' in we_src, 'Missing hideEnchantTooltip in WeaponEnchantService'
+assert 'ENCHANT_ID_SPELL_MAP' in we_src and 'WeaponEnchantService.resolveEnchantSpellID' in we_src, 'WeaponEnchantService must provide ENCHANT_ID_SPELL_MAP and resolveEnchantSpellID'
+assert 'SetInventoryItem' in we_src and 'SetSpellByID' in we_src and 'EAM_WeaponEnchantSubTooltip' in we_src, 'WeaponEnchantService must display equipped weapon and spell enchant dual tooltips'
 assert 'WeaponEnchantService.setActiveAnchors' in we_src, 'Missing setActiveAnchors in WeaponEnchantService'
+assert 'WeaponEnchantService.tickCountdown' in we_src, 'Missing tickCountdown in WeaponEnchantService'
+assert 'WeaponEnchantService.initialized' in we_src, 'WeaponEnchantService must have idempotent initialized guard'
+assert 'C_PaperDollInfo' in we_src and 'GetTemporaryEnchantmentInfo' in we_src, 'WeaponEnchantService must prioritize C_PaperDollInfo.GetTemporaryEnchantmentInfo'
+assert 'ENCHANT_ID_ICON_MAP' in we_src and 'WeaponEnchantService.resolveEnchantIcon' in we_src, 'WeaponEnchantService must provide ENCHANT_ID_ICON_MAP and resolveEnchantIcon'
+assert 'badgeFrame' in we_src and 'badgeIcon' in we_src, 'WeaponEnchantService must build corner badgeFrame & badgeIcon'
+assert 'showEnchantBadge' in we_src and 'badgePosition' in we_src and 'badgeScale' in we_src and 'badgeOutside' in we_src, 'WeaponEnchantService must support badge settings including badgeOutside'
+assert 'getTheme' in we_src and 'theme.registerFrame' in we_src and 'theme.registerButton' in we_src and 'theme.registerText' in we_src, 'WeaponEnchantPanel must dynamically resolve EAM.Theme after load'
+assert 'anchorBadgeToCorner(frame.badgeFrame, frame, badgeCorner, cfg.badgeOutside ~= false)' in we_src, 'WeaponEnchantService must pass badgeOutside to anchorBadgeToCorner'
+assert 'frame.__LBGoverlay' in we_src and 'SetFrameLevel' in we_src, 'WeaponEnchantService must keep badgeFrame above button glow overlay'
+assert 'glowActive' in we_src and 'glowMissing' in we_src and 'glowExpiring' in we_src and 'showActive' in we_src, 'WeaponEnchantService must support active and inactive highlight options'
+assert 'EAM.UI.WeaponEnchantPanel' in we_src and 'EAM_WeaponEnchantOptionsFrame' in we_src, 'WeaponEnchantService must provide standalone WeaponEnchantPanel'
+assert 'posX' in we_src and 'posY' in we_src, 'WeaponEnchantPanel must provide custom X/Y position controls'
 assert 'isMissing' in we_src, 'WeaponEnchantService must support isMissing warning state'
 assert 'isExpiring' in we_src, 'WeaponEnchantService must support isExpiring warning state'
 assert 'expireThreshold' in we_src, 'WeaponEnchantService must respect expireThreshold'
 assert 'WEAPON_ENCHANT_CHANGED' in we_src, 'WeaponEnchantService must register WEAPON_ENCHANT_CHANGED'
 assert 'PLAYER_EQUIPMENT_CHANGED' in we_src, 'WeaponEnchantService must register PLAYER_EQUIPMENT_CHANGED'
+
+opt_src = open('EventAlertMod/UI/Options.lua', 'r', encoding='utf-8').read()
+assert 'EAM.UI.WeaponEnchantPanel' in opt_src and 'EAM_OPT_CAT_WEAPON_ENCHANT' in opt_src, 'Options.lua must wire WeaponEnchantPanel entry'
+slash_src = open('EventAlertMod/UI/Slash.lua', 'r', encoding='utf-8').read()
+assert 'EAM.UI.WeaponEnchantPanel' in slash_src, 'Slash.lua must wire /eam enchant to WeaponEnchantPanel'
+assert 'EAM.UI.WeaponEnchantPanel' in stat_panel_src, 'PlayerStatPanel.lua must wire enchantBtn to WeaponEnchantPanel'
 
 # 6. 5-Locale synchronization for all new keys
 new_locale_keys = [
@@ -694,10 +724,41 @@ new_locale_keys = [
     'EAM_STAT_PARRY',
     'EAM_STAT_BLOCK',
     'EAM_WEAPON_ENCHANT_TITLE',
+    'EAM_WEAPON_ENCHANT_MH',
+    'EAM_WEAPON_ENCHANT_OH',
     'EAM_WEAPON_ENCHANT_MISSING',
     'EAM_WEAPON_ENCHANT_EXPIRING',
     'EAM_WEAPON_ENCHANT_WARN_MISSING',
     'EAM_WEAPON_ENCHANT_WARN_EXPIRING',
+    'EAM_OPT_CAT_WEAPON_ENCHANT',
+    'EAM_WEAPON_ENCHANT_OPEN',
+    'EAM_WEAPON_ENCHANT_PANEL_TITLE',
+    'EAM_WEAPON_ENCHANT_RANGED',
+    'EAM_WEAPON_ENCHANT_SHOW_MH',
+    'EAM_WEAPON_ENCHANT_SHOW_OH',
+    'EAM_WEAPON_ENCHANT_SHOW_RANGED',
+    'EAM_WEAPON_ENCHANT_SHOW_ACTIVE',
+    'EAM_WEAPON_ENCHANT_GLOW_ACTIVE',
+    'EAM_WEAPON_ENCHANT_GLOW_EXPIRING',
+    'EAM_WEAPON_ENCHANT_GLOW_MISSING',
+    'EAM_WEAPON_ENCHANT_SHOW_BADGE',
+    'EAM_WEAPON_ENCHANT_BADGE_POS',
+    'EAM_WEAPON_ENCHANT_BADGE_SCALE',
+    'EAM_WEAPON_ENCHANT_EXPIRE_THRESHOLD',
+    'EAM_WEAPON_ENCHANT_PLAY_SOUND',
+    'EAM_WEAPON_ENCHANT_MOVE_BTN',
+    'EAM_WEAPON_ENCHANT_RESET_POS_BTN',
+    'EAM_WEAPON_ENCHANT_POS_X',
+    'EAM_WEAPON_ENCHANT_POS_Y',
+    'EAM_WEAPON_ENCHANT_CORNER_TL',
+    'EAM_WEAPON_ENCHANT_CORNER_TR',
+    'EAM_WEAPON_ENCHANT_CORNER_BL',
+    'EAM_WEAPON_ENCHANT_CORNER_BR',
+    'EAM_WEAPON_ENCHANT_BADGE_OUTSIDE',
+    'EAM_WEAPON_ENCHANT_PANEL_WARN_EXPIRING',
+    'EAM_WEAPON_ENCHANT_PANEL_WARN_MISSING',
+    'EAM_WEAPON_ENCHANT_ICON_SIZE',
+    'EAM_WEAPON_ENCHANT_SPACING',
 ]
 for loc in ['zhTW', 'zhCN', 'enUS', 'koKR', 'ruRU']:
     loc_src = open(f'EventAlertMod/Locale/{loc}.lua', 'r', encoding='utf-8').read()
@@ -768,6 +829,81 @@ for loc in ['zhTW', 'zhCN', 'enUS', 'koKR', 'ruRU']:
 
 print('  [PASS] Mana Stat, StatusBar/Icon/Text 5SR Active Alerts, Continuous Full-Screen Blue Glow & 5-Locale Keys verified')
 
-print('\n>>> ALL 25 DEEP TEST SUITES PASSED WITH ZERO ERRORS! <<<')
+print('=== 26. Testing Live Forever 1.60.1 FlowTestRunner, SpellRank Init & Schema v6 Diagnostics ===')
+ft_src = open('EventAlertMod/Debug/FlowTestRunner.lua', 'r', encoding='utf-8').read()
+assert 'EAM.Core.ProfileCodec or' not in ft_src, 'FlowTestRunner must not index nil EAM.Core directly'
+assert 'EAM.isModernEngineInterface' in ft_src, 'aura121.capability.native_complete must route Forever 16001 via isModernEngineInterface'
+assert 'mockContainer' in ft_src and 'api.CreateFrame("Frame", nil, _G.UIParent)' in ft_src, 'aura.1215_native_aura_and_timed_signal_map must use real Frame on live client'
+assert 'weapon_enchant.service_and_dual_tooltip' in ft_src, 'Missing weapon_enchant.service_and_dual_tooltip flow test'
+pp_src = open('EventAlertMod/UI/PreviewPanel.lua', 'r', encoding='utf-8').read()
+assert 'db.schemaVersion' in pp_src and 'getActiveAlerts' in pp_src, 'PreviewPanel diagnostics must inspect Schema v6 class profile'
+print('  [PASS] Live Forever 1.60.1 FlowTestRunner, SpellRank Init & Schema v6 Diagnostics verified')
+
+print('=== 27. Testing Independent TotemService Pipeline, Pre-warmed Combat HUD, TotemPanel & 5-Locale Sync ===')
+totem_src = open('EventAlertMod/Services/TotemService.lua', 'r', encoding='utf-8').read()
+sv_src = open('EventAlertMod/Core/SavedVariables.lua', 'r', encoding='utf-8').read()
+am_src = open('EventAlertMod/Managers/AlertManager.lua', 'r', encoding='utf-8').read()
+opt_src = open('EventAlertMod/UI/Options.lua', 'r', encoding='utf-8').read()
+slash_src = open('EventAlertMod/UI/Slash.lua', 'r', encoding='utf-8').read()
+
+assert 'totem = {' in sv_src and 'enableTotem = true' in sv_src, 'Missing totem standalone defaults in SavedVariables'
+assert 'hasDedicatedHUD = true' in totem_src, 'TotemService must declare hasDedicatedHUD = true'
+assert 'totemDedicatedHUDHandled' in am_src and 'TotemService.hasDedicatedHUD' in am_src, 'AlertManager must defer totem rendering to dedicated HUD'
+assert 'EAM_TotemFrame' in totem_src and 'EAM_TotemSlotFrame' in totem_src and 'prewarmHUDFrames' in totem_src, 'TotemService must prewarm combat-safe slot frames'
+assert 'SetCooldownFromDurationObject' in totem_src and 'SetHideCountdownNumbers' in totem_src, 'TotemService must support DurationObject swipe and secret countdown fallback'
+assert 'EAM.UI.TotemPanel' in totem_src and 'EAM_TotemOptionsFrame' in totem_src, 'TotemService must expose standalone EAM.UI.TotemPanel'
+assert 'getTheme' in totem_src and 'theme.registerFrame' in totem_src and 'theme.registerButton' in totem_src and 'theme.registerText' in totem_src, 'TotemPanel must integrate with EAM 11-theme system'
+assert 'TotemService.triggerTestPreview' in totem_src and 'TotemService.setActiveAnchors' in totem_src, 'TotemService must provide 15s test preview and anchor mover'
+assert 'EAM.UI.TotemPanel' in opt_src and 'EAM_OPT_CAT_TOTEM' in opt_src, 'Options.lua must wire TotemPanel category entry'
+assert 'EAM.UI.TotemPanel' in slash_src and 'command == "totem"' in slash_src, 'Slash.lua must wire /eam totem command'
+
+suite27_locale_keys = [
+    'EAM_OPT_CAT_TOTEM',
+    'EAM_TOTEM_OPEN',
+    'EAM_TOTEM_TITLE',
+    'EAM_TOTEM_PANEL_TITLE',
+    'EAM_TOTEM_SEC_SLOTS',
+    'EAM_TOTEM_SEC_HIGHLIGHT',
+    'EAM_TOTEM_SEC_LAYOUT',
+    'EAM_TOTEM_ENABLE',
+    'EAM_TOTEM_SHOW_FIRE',
+    'EAM_TOTEM_SHOW_EARTH',
+    'EAM_TOTEM_SHOW_WATER',
+    'EAM_TOTEM_SHOW_AIR',
+    'EAM_TOTEM_SHOW_NAME',
+    'EAM_TOTEM_SHOW_TIME',
+    'EAM_TOTEM_SHOW_SWIPE',
+    'EAM_TOTEM_GLOW_ACTIVE',
+    'EAM_TOTEM_WARN_EXPIRING',
+    'EAM_TOTEM_GLOW_EXPIRING',
+    'EAM_TOTEM_PLAY_SOUND',
+    'EAM_TOTEM_EXPIRE_THRESHOLD',
+    'EAM_TOTEM_ICON_SIZE',
+    'EAM_TOTEM_SPACING',
+    'EAM_TOTEM_POS_X',
+    'EAM_TOTEM_POS_Y',
+    'EAM_TOTEM_MOVE_BTN',
+    'EAM_TOTEM_RESET_POS_BTN',
+    'EAM_TOTEM_PREVIEW_BTN',
+    'EAM_TOTEM_SLOT_FIRE',
+    'EAM_TOTEM_SLOT_EARTH',
+    'EAM_TOTEM_SLOT_WATER',
+    'EAM_TOTEM_SLOT_AIR',
+    'EAM_TOTEM_TOOLTIP_REMAINING',
+    'EAM_TOTEM_PREVIEW_HINT',
+    'EAM_TOTEM_PREVIEW_STARTED',
+    'EAM_TOTEM_SAMPLE_FIRE',
+    'EAM_TOTEM_SAMPLE_EARTH',
+    'EAM_TOTEM_SAMPLE_WATER',
+    'EAM_TOTEM_SAMPLE_AIR',
+    'EAM_SLASH_HELP_TOTEM',
+]
+for loc in ['zhTW', 'zhCN', 'enUS', 'koKR', 'ruRU']:
+    loc_src = open(f'EventAlertMod/Locale/{loc}.lua', 'r', encoding='utf-8').read()
+    for k in suite27_locale_keys:
+        assert (f'L.{k}' in loc_src or f'L["{k}"]' in loc_src), f'Missing {k} in Locale/{loc}.lua'
+
+print('  [PASS] Independent TotemService Pipeline, Pre-warmed Combat HUD, TotemPanel & 5-Locale Sync verified')
+print('\n>>> ALL 27 DEEP TEST SUITES PASSED WITH ZERO ERRORS! <<<')
 
 

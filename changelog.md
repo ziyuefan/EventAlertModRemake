@@ -7,49 +7,35 @@
 
 ## 📅 版本紀錄 (Version History)
 
-### [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.12
+### [Retail 12.1.5 & Forever 1.60.1 Alpha 9.0] - 2026.11.16
 - **【✨ 新增功能】(Features)**：
-  - **獨立武器臨時附魔模組 (Independent Weapon Enchant Service Pipeline)**：
-    - 建立專屬服務 `WeaponEnchantService.lua`，底層呼叫暴雪原生專用 API `GetWeaponEnchantInfo()`，完美支援主手 (Slot 16)、副手 (Slot 17) 與遠程 (Slot 18) 之臨時附魔；
-    - 支援各版本武器增益機制：經典舊世/永恆服之磨刀石、平衡石、巫術之油、法力之油、盜賊毒藥、薩滿風怒/火舌/冰封武器；正式服之武器符文熔鑄、磨刀石、暗影之核之油與毒藥；
-    - **【缺少武器附魔警告 (Missing Enchant Warning)】**：當角色裝備了武器但未施加臨時附魔時，觸發高亮醒目警告（支援 LibButtonGlow 發光與節流音效警報）；
-    - **【附魔即將到期倒數 (Expiring Warning)】**：當附魔剩餘時間低於設定閾值（預設 5 分鐘）或次數耗盡時，橘紅邊框發光提醒；
-    - 支援獨立移動模式與 HUD 定位保存（`/eam enchant` 或屬性面板頂部按鈕，左鍵拖曳、右鍵完成）。
+  - **獨立圖騰狀態監控模組與專屬設定面板 (Independent Totem Monitor Service & Standalone Panel)**：
+    - 全面升級 `Services/TotemService.lua` 為完全獨立且預先建框的 HUD 模組 (`EAM_TotemFrame` / `EAM_TotemSlotFrame1..4`)，搭配 `Managers/AlertManager.lua` 專用路由守衛 (`totemDedicatedHUDHandled`) 與邊界降級 (`preserveBoundaryState`)，徹底修復戰鬥中施放圖騰因通用 `Renderer` 延遲建框 (`combatDeferred`) 或 Secret 早期攔截而無法顯示之問題；
+    - 建立主題聯動獨立設定面板 (`EAM.UI.TotemPanel` / `EAM_TotemOptionsFrame`，主選單第 10 項與 `/eam totem`)，提供火/地/水/風 4 槽位開關、名稱/倒數/轉圈開關、作用中與到期發光高亮、警戒閾值滑桿 (2~30s)、30 秒節流音效、自訂 X/Y 座標與成長方向、移動錨點 (`/eam totem move`) 與 15 秒測試預覽 (`/eam totem test`)。
+  - **獨立武器臨時附魔模組與專屬設定面板 (Independent Weapon Enchant Service & Standalone Panel)**：
+    - 建立專屬服務 `WeaponEnchantService.lua`，採樣優先串接 `C_PaperDollInfo.GetTemporaryEnchantmentInfo(slot)` 與 Forever 專屬 `C_Item.GetWeaponEnchantInfo(slot - 16)`（保留 `GetWeaponEnchantInfo()` 降級備援），完整追蹤主手 (Slot 16)、副手 (Slot 17) 與遠程 (Slot 18) 之臨時附魔；
+    - 建立獨立設定視窗 (`EAM.UI.WeaponEnchantPanel` / `EAM_WeaponEnchantOptionsFrame`)，串接主選單第 12 個入口 `★ 武器臨時附魔監控`、`/eam enchant` 與屬性面板捷徑，動態同步全 11 套主題配色 (`EAM.Theme`)；
+    - 新增 **角落附魔專屬小圖示 (`badgeFrame`) 與「小圖示置於框外 (`badgeOutside`)」選項**：主圖示維持武器圖片，附魔小圖示可置於四角內側或框外並提高層級高於 `LibButtonGlow` 特效 (`frame.__LBGoverlay`)，徹底避免被發光特效遮擋；
+    - 實裝 **並排武器介紹＋附魔詳細內容雙重 Tooltip**：滑鼠懸停武器主框或框外附魔小圖示時，左側 `GameTooltip` 透過 `SetInventoryItem` 顯示裝備武器完整資訊，右側並排 `EAM_WeaponEnchantSubTooltip` 透過 `SetSpellByID`（含綠字擷取降級）顯示附魔效果與即時剩餘時間/次數；
+    - 支援作用中／即將到期／未附魔獨立發光選擇、30 秒節流音效警報、自訂 X/Y 座標與成長方向，以及輕量倒數排程 (`tickCountdown`) 分離與 `/eam enchant` 獨立移動 HUD。
   - **永恆服 11 大角色屬性機制校準與原生 Tooltip 知識引擎 (Forever 1.60.1 11 Stats Knowledge Base)**：
-    - 依據實機面板數據精確校準 11 大屬性公式與換算比例，並為畫面 HUD 圖示/文字與面板 row 實裝原生 `GameTooltip` 浮動提示：
-      - 力量：提高近戰 AP (1 力量 = 2 AP)，格擋值提高 = 力量 / 20；
-      - 耐力：提高生命力上限 (1 耐力 = 10 生命力)；
-      - 敏捷：提高護甲值 (1 敏捷 = 2 護甲)，提升近戰/遠程致命與閃躲機率；
-      - 智力：提高法力與法術致命，**【關鍵機制：提高武器技能/熟練度提升機率】**；
-      - 精神：HP5 非戰鬥回血、MP5 未施法回魔、5 秒規則 (5SR)，**【關鍵機制：坐下或躺下時，生命力恢復速度提高 33%】**；
-      - 攻擊強度 (AP)：**【核心換算：每 14 點攻擊強度提高 1 點武器 DPS (14 AP = 1 DPS)】**；
-      - 致命一擊：近戰致命造成 200% 傷害 (+100%)，法術/治療致命效果提高 50% (150% 效果)，多數週期性持續傷害/治療 (DoT/HoT) 可致命；
-      - 防禦技能：提高閃躲/格擋/招架，生物致命 200%，**【首領機制：高 3 級生物造成 150% 碾壓傷害；防禦達 440 點時團隊副本首領無法造成致命 (-5.60% 致命機率)】**；
-      - 閃躲機率：敏捷與防禦可提升，**【核心機制：對玩家來說只有來自正面的近戰攻擊可閃躲；對生物來說來自任何方向均可閃躲】**；
-      - 招架機率：完全偏斜正面近戰攻擊，**【成功招架時觸發招架提速 (Parry Haste)】**；
-      - 護甲值：減免物理傷害，**【免傷上限：來自護甲的傷害減免不能超過 75.00%】**。
-    - 屬性清單擴充：新增 `attackPower` (攻擊強度)、`dodge` (閃躲機率)、`parry` (招架機率)、`block` (格擋機率與格擋值)，適配 Forever 與 Retail 雙端。
+    - 依據實機面板數據精確校準 11 大屬性公式與換算比例，並為畫面 HUD 圖示/文字與面板 row 實裝原生 `GameTooltip` 浮動提示（力量 1 Str = 2 AP / 格擋 = Str / 20、耐力 1 Sta = 10 HP、敏捷 1 Agi = 2 護甲、智力提高武器熟練度提升機率、精神坐下/躺下回血 +33%、AP `14 AP = 1 DPS`、暴擊 DoT/HoT 可致命、防禦 440 免暴與 +3 級 150% 碾壓、閃躲正側面規則、招架提速、護甲 75.00% 上限）；
+    - 屬性清單擴充 `attackPower`、`dodge`、`parry`、`block`，適配 Forever 與 Retail 雙端。
   - **光環脫戰自動隱藏 (Hide Auras Outside Combat)**：
-    - 於一般設定新增「脫戰後隱藏光環 (脫戰消失)」全域開關（預設為關閉）。
-    - 於各技能條件設定支援單技能三態獨立覆寫（預設全域 / 覆寫：開 [強制脫戰消失] / 覆寫：關 [強制脫戰保留]）。
-    - 雙核心架構全面適配：支援 Legacy/Readable 光環後端 (`AuraService`) 與 Retail 12.1+ 原生容器後端 (`AuraRuleCompiler` / `NativeAuraRenderer` / `AuraContainerService`)。
-    - 戰鬥切換瞬時響應：`PLAYER_REGEN_DISABLED` 即刻還原顯示，`PLAYER_REGEN_ENABLED` 即刻安全隱藏。
-    - 設定檔分享：`ProfileCodec` 完整匯出入支援。
+    - 一般設定全域開關 + 單技能三態獨立覆寫（預設全域 / 強制開 / 強制關），全面相容 Legacy `AuraService` 與 Retail 12.1+ 原生容器及 `ProfileCodec` 匯出入。
   - **法力屬性與 5 秒精神回魔三態醒目提醒 (Mana Stat & 5SR Three-State Alerts)**：
-    - 於人物屬性監控擴展法力 (`mana`) 屬性，支援當前法力/最大法力 (百分比) 監控；
-    - 深度整合精神 5 秒規則 (5SR) 狀態機，提供 StatusBar 進度條雙色反差（5SR 全速回魔作用中切換為耀眼冰晶藍色 `(0.20, 0.85, 1.00)`，5 秒施法懲罰期間切換為暗琥珀色 `(0.85, 0.45, 0.15)`）；
-    - 圖示 (Icon) 於 5SR 作用中觸發 LibButtonGlow 冰藍/金色光環；
-    - 文字於 5SR 作用中放大 1.32x 且明亮冰藍高亮，懲罰期間以 `%.1fs` 倒數等待時長；
-    - Tooltip 詳盡呈現坐下/躺下回血加成 33%、5 秒規則作用狀態與數值。
+    - 擴展 `mana` 屬性並深度整合 5SR 狀態機：StatusBar 冰晶藍／暗琥珀雙色反差、圖示 `LibButtonGlow`、文字 `1.32x` 放大／`%.1fs` 懲罰倒數。
   - **模擬全螢幕持續柔和暗角藍色泛光 (Continuous Full-Screen Soft Blue Glow)**：
-    - 於 `CombatFlash.lua` 建立專屬微光全螢幕圖層 `EAM_SpiritActiveGlowFrame`，採用 `LowHealth` 紋理與 `ADD` 混色；
-    - 提供平滑淡入 (0 -> 0.35 費時 0.40s) 與淡出 (0.35 -> 0 費時 0.30s) 動畫；
-    - 施法耗魔瞬間淡出，脫離 5 秒懲罰進入全速回魔瞬間平滑淡入，大幅提升經典版補師與法系控魔節奏感知；
-    - 於屬性設定面板提供「全螢幕藍色泛光 (精神回魔作用中常駐)」獨立開關。
+    - `CombatFlash.lua` 新增全螢幕暗角藍色泛光圖層 `EAM_SpiritActiveGlowFrame` 與平滑淡入淡出動畫，並於屬性面板提供獨立開關。
+- **【🐛 體驗優化與實機修復】(Optimizations & Bug Fixes)**：
+  - **預設倒數陰影透明度調降至 50%**：將 `cooldownSwipeAlpha` 預設值、舊版遷移回退與重設按鈕值統一由 `0.8` 調降至 `0.5`，並同步套用至 `TotemService` 原生冷卻轉圈遮罩；
+  - **Forever 1.60.1 實機驗證修復**：
+    - `Core/Main.lua` 與 `Services/SpellRankService.lua` 補齊登入自動初始化與 `getKnownSpellCount()` 實作；
+    - `UI/PlayerResourcePanel.lua` 改用 `Catalog.GetFlavorCandidateKeys`，搭配 `ForeverCatalog` 精簡經典資源拓樸與 5 星連擊點，徹底消除正式服專精資源雜訊；
+    - `Debug/FlowTestRunner.lua` 修復 Forever 16001 實機測試兩項誤判／錯誤（真實 Frame 底座、`EAM.Modules.ProfileCodec` 路徑、`isModernEngineInterface` 判讀）並補齊 `weapon_enchant.service_and_dual_tooltip` 案例；
+    - `UI/PreviewPanel.lua` 診斷報告對齊 Schema v6 職業設定結構並納入 `WeaponEnchantService` 狀態。
 - **【🌐 在地化支援】(Localization)**：
-  - 校準 Forever 雙語區官方客戶端名稱：繁體中文 (zhTW) 統一為「永恆」（《魔獸世界：永恆》）、簡體中文 (zhCN) 統一為「无限」（《魔兽世界：无限》）。
-  - 同步校準簡中插件說明、實機測試面板、精神 5 秒回藍動態提醒提示框與除錯中心五系抗性本地化詞條。
-  - 5 語系（繁中、簡中、英文、韓文、俄文）完整對齊新增光環脫戰、武器附魔、法力屬性、精神暗角藍色泛光與新屬性說明詞條。
+  - 繁體中文 (`zhTW`) 統一為「永恆」、簡體中文 (`zhCN`) 統一為「无限」；5 語系完整同步武器附魔獨立設定、框外小圖示、法力屬性與精神暗角藍色泛光詞條。
 
 ### [Retail 12.1.5 & Forever 1.60.1 Alpha 8.9] - 2026.11.08
 - **雙版本無縫統一架構 (Multi-Flavor Unified Architecture)**：

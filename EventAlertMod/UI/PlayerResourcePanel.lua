@@ -1004,7 +1004,8 @@ function Panel.refresh()
         Panel.scope = "class"
     end
     local classToken = getClassToken()
-    local resourceKeys = classToken and Catalog.getSpecResourceKeys(classToken, Panel.specializationID) or nil
+    local getCandidateFn = Catalog.GetFlavorCandidateKeys or Catalog.getSpecResourceKeys
+    local resourceKeys = classToken and getCandidateFn(classToken, Panel.specializationID) or nil
     local selectedAvailable = false
 
     for index = 1, #Panel.rows do

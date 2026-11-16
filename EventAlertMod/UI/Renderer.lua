@@ -2425,7 +2425,7 @@ function Renderer.refreshPreviewLayout()
     local spacing = cfg.iconSpacing or layoutCfg.spacing or Renderer.spacing
     local vertSpacing = cfg.verticalSpacing or spacing
     local alpha = cfg.iconAlpha or 1.0
-    local swipeAlpha = cfg.cooldownSwipeAlpha or 0.8
+    local swipeAlpha = cfg.cooldownSwipeAlpha or 0.5
     local swipeColor = cfg.cooldownSwipeColor or {}
     local swipeR = tonumber(swipeColor.r) or 0
     local swipeG = tonumber(swipeColor.g) or 0

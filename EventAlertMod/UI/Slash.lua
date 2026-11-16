@@ -89,6 +89,7 @@ local function printHelp()
     printLine(EAM.L.EAM_SLASH_HELP_UNITPOWER or "/eam unitpower background <資源類型> - 標記背景資源缺少事件，啟用共用採樣器")
     printLine(EAM.L.EAM_SLASH_HELP_METRICS or "/eam metrics (或 /eam hotpaths) [reset/save/export] - 檢視高頻路徑呼叫統計與即時頻率")
     printLine(EAM.L.EAM_SLASH_HELP_ENCHANT or "/eam enchant (或 /eam weapon / we) - 開啟或關閉武器臨時附魔位置移動模式")
+    printLine(EAM.L.EAM_SLASH_HELP_TOTEM or "/eam totem (或 /eam totems [move/test]) - 開啟圖騰狀態監控獨立設定／移動錨點／測試預覽")
     printLine(EAM.L.EAM_SLASH_HELP_LANG or "/eam lang <auto/zhTW/zhCN/enUS/koKR/ruRU> - 即時切換外掛介面語系")
 end
 
@@ -635,11 +636,46 @@ local function handleSlash(input)
             printLine("EAM: PreviewPanel 模組尚未載入。")
         end
     elseif command == "enchant" or command == "weapon" or command == "we" then
+        local subCmd = commandIterator()
+        subCmd = subCmd and string.lower(subCmd)
         local WES = EAM.Services and EAM.Services.WeaponEnchantService
-        if WES and WES.setActiveAnchors then
+        local WEP = EAM.UI and EAM.UI.WeaponEnchantPanel
+        if subCmd == "move" or subCmd == "anchor" then
+            if WES and WES.setActiveAnchors then
+                WES.setActiveAnchors(not WES.isMoving)
+            else
+                printLine("EAM: WeaponEnchantService 模組尚未載入。")
+            end
+        elseif WEP and WEP.toggle then
+            WEP.toggle()
+        elseif WES and WES.setActiveAnchors then
             WES.setActiveAnchors(not WES.isMoving)
         else
             printLine("EAM: WeaponEnchantService 模組尚未載入。")
+        end
+    elseif command == "totem" or command == "totems" then
+        local subCmd = commandIterator()
+        subCmd = subCmd and string.lower(subCmd)
+        local TS = EAM.Services and EAM.Services.TotemService
+        local TP = EAM.UI and EAM.UI.TotemPanel
+        if subCmd == "move" or subCmd == "anchor" then
+            if TS and TS.setActiveAnchors then
+                TS.setActiveAnchors(not TS.isMoving)
+            else
+                printLine("EAM: TotemService 模組尚未載入。")
+            end
+        elseif subCmd == "test" or subCmd == "preview" then
+            if TS and TS.triggerTestPreview then
+                TS.triggerTestPreview()
+            else
+                printLine("EAM: TotemService 模組尚未載入。")
+            end
+        elseif TP and TP.toggle then
+            TP.toggle()
+        elseif TS and TS.setActiveAnchors then
+            TS.setActiveAnchors(not TS.isMoving)
+        else
+            printLine("EAM: TotemService 模組尚未載入。")
         end
     elseif command == "lang" or command == "language" or command == "locale" then
         local iterator = nextToken(input)

@@ -27,16 +27,16 @@ local ForeverCatalog = {}
 -------------------------------------------------------------------------------
 -- 1. Forever 經典 60 級全職業資源拓樸 (Resource Topology)
 -------------------------------------------------------------------------------
--- 經典 60 級無專精資源分化，各職業依原始能量規則運行
+-- 經典 60 級無專精資源分化，玩家本體 UnitPower 依經典規則運行 (寵物集中值/快樂度屬 pet 單位，術士裂片為背包物品)
 local FOREVER_RESOURCE_TOPOLOGY = {
     WARRIOR = { "RAGE" },
     PALADIN = { "MANA" },
-    HUNTER  = { "MANA", "FOCUS" }, -- 獵人本體法力 + 寵物集中值 (Pet Focus)
+    HUNTER  = { "MANA" },
     ROGUE   = { "ENERGY", "COMBO_POINTS" },
     PRIEST  = { "MANA" },
     SHAMAN  = { "MANA" },
     MAGE    = { "MANA" },
-    WARLOCK = { "MANA", "SOUL_SHARDS" },
+    WARLOCK = { "MANA" },
     DRUID   = { "MANA", "RAGE", "ENERGY", "COMBO_POINTS" }, -- 德魯伊人/熊/豹形態切換全拓樸
 }
 
