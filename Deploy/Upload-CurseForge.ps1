@@ -261,6 +261,7 @@ function Get-CurseForgeGameVersions {
     }
 
     # 2. 備援：HttpClient (明確帶上 User-Agent)
+    Add-Type -AssemblyName System.Net.Http
     $handler = [System.Net.Http.HttpClientHandler]::new()
     $client = [System.Net.Http.HttpClient]::new($handler)
     $client.Timeout = [System.TimeSpan]::FromSeconds(15)
@@ -319,8 +320,11 @@ function Invoke-CurseForgeUpload {
     # 1. 優先使用 Windows 內建 curl.exe (最穩固支援大檔串流與 Cloudflare WAF 白名單)
     $curlCmd = Get-Command "curl.exe" -ErrorAction SilentlyContinue
     if ($curlCmd) {
+        $tempMetaFile = Join-Path ([System.IO.Path]::GetTempPath()) ("eam_cf_meta_" + [guid]::NewGuid().ToString("N") + ".json")
         try {
-            $metaArgs = "metadata=$metadataJson;type=application/json"
+            # 透過暫存 UTF-8 (無 BOM) JSON 檔傳入，避免 Windows PowerShell 5.1 剝離命令列引數內的雙引號
+            [System.IO.File]::WriteAllText($tempMetaFile, $metadataJson, [System.Text.UTF8Encoding]::new($false))
+            $metaArgs = "metadata=<$tempMetaFile;type=application/json"
             $fileArgs = "file=@$ZipFilePath;type=application/zip"
 
             $curlArgs = @(
@@ -367,10 +371,15 @@ function Invoke-CurseForgeUpload {
             }
         } catch {
             Write-Warning "curl.exe 上傳嘗試失敗，切換至 .NET HttpClient 備援通道：$($_.Exception.Message)"
+        } finally {
+            if (Test-Path -LiteralPath $tempMetaFile) {
+                Remove-Item -LiteralPath $tempMetaFile -Force -ErrorAction SilentlyContinue
+            }
         }
     }
 
     # 2. 備援通道：.NET HttpClient (帶有完整 User-Agent 與 Content-Type)
+    Add-Type -AssemblyName System.Net.Http
     $handler = [System.Net.Http.HttpClientHandler]::new()
     $client = [System.Net.Http.HttpClient]::new($handler)
     $client.Timeout = [System.TimeSpan]::FromMinutes(3)
